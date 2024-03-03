@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import http from "http";
 import { extname, join, relative } from "path";
 import handler from "serve-handler";
@@ -7,49 +13,7 @@ import { stat } from "fs/promises";
 import { createReadStream } from "fs";
 import { DebugOptions } from "../commandTypes.js";
 import { __dirname } from "../debug.js";
-import { rollup } from "rollup";
-import virtualDefault from "@rollup/plugin-virtual";
-import nodeResolveDefault from "@rollup/plugin-node-resolve";
-import commonjsDefault from "@rollup/plugin-commonjs";
-
-import jsonDefault from "@rollup/plugin-json";
-
-type KitData = {
-  file: string;
-  code: string;
-};
-
-const virtual = virtualDefault as unknown as typeof virtualDefault.default;
-const nodeResolve =
-  nodeResolveDefault as unknown as typeof nodeResolveDefault.default;
-const json = jsonDefault as unknown as typeof jsonDefault.default;
-const commonjs = commonjsDefault as unknown as typeof commonjsDefault.default;
-
-/*
-  This function compiles and bundles known 'node_module' into a single string.
-
-  If the compilation fails, it will throw an error and halt the entire application.
-*/
-const compile = async (file: string) => {
-  console.log(`Compiling ${file}`);
-  const bundle = await rollup({
-    input: "entry",
-    // Hide our sins like circular dependencies.
-    logLevel: "silent",
-    plugins: [
-      virtual({
-        entry: `import * as kit from "${file}"; export default kit.default;`,
-      }),
-      json(),
-      commonjs(),
-      nodeResolve(),
-    ],
-  });
-
-  const { output } = await bundle.generate({ format: "es" });
-
-  return output[0].code;
-};
+import { getKits } from "./kits.js";
 
 export const startServer = async (file: string, options: DebugOptions) => {
   const distDir = join(__dirname, "..", "..", "debugger");
@@ -58,14 +22,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
   const isDirectory = fileStat.isDirectory();
   const kitNames = [...new Set([...(options.kit || []), ...defaultKits])];
 
-  const kits: Record<string, KitData> = {};
-
-  for (const kit of kitNames) {
-    kits[kit] = {
-      file: kit,
-      code: await compile(kit),
-    };
-  }
+  const kits = await getKits(kitNames);
 
   let boards: Array<BoardMetaData> = []; // Boards are dynamically loaded based on the "/boards.js" request.
 
