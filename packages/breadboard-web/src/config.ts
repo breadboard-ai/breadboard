@@ -11,7 +11,6 @@ import {
   defineServeConfig,
   RunConfig,
 } from "@google-labs/breadboard/harness";
-import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
@@ -45,7 +44,6 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
 
 const kitConstructors = [
   TemplateKit,
-  Core,
   GeminiKit,
   NodeNurseryWeb,
   JSONKit,

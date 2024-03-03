@@ -20,6 +20,7 @@ export default defineConfig((_) => {
           preview: "./preview.html",
           embed: "src/embed.ts",
           "palm-kit": "src/palm-kit.ts",
+          "core-kit": "src/core-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
