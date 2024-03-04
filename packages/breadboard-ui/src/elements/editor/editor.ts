@@ -458,21 +458,21 @@ export class Editor extends LitElement {
   #onGraphEdgeChange(evt: Event) {
     const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
     this.dispatchEvent(
-      new EdgeChangeEvent("remove", {
-        from: fromEdge.from.descriptor.id,
-        to: fromEdge.to.descriptor.id,
-        out: fromEdge.out,
-        in: fromEdge.in,
-      })
-    );
-
-    this.dispatchEvent(
-      new EdgeChangeEvent("add", {
-        from: toEdge.from.descriptor.id,
-        to: toEdge.to.descriptor.id,
-        out: toEdge.out,
-        in: toEdge.in,
-      })
+      new EdgeChangeEvent(
+        "move",
+        {
+          from: fromEdge.from.descriptor.id,
+          to: fromEdge.to.descriptor.id,
+          out: fromEdge.out,
+          in: fromEdge.in,
+        },
+        {
+          from: toEdge.from.descriptor.id,
+          to: toEdge.to.descriptor.id,
+          out: toEdge.out,
+          in: toEdge.in,
+        }
+      )
     );
   }
 
