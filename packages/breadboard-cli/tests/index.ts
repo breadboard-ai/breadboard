@@ -177,39 +177,33 @@ test.before(() => {
   });
 });
 
-test.after.always(() => {
-  console.debug("Cleaning up test files");
-  testFiles.forEach((p) => {
-    console.debug();
-    const filename = path.basename(p.path);
-    const dirname = path.dirname(p.path);
-    const filenameWithoutExtension = filename.split(".")[0];
-
-    console.debug([`Searching for`, p.path].join("\t"));
-
-    ["json", "ts", "js"]
-      .map((ext) => [
-        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
-        path.resolve(
-          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
-        ),
-      ])
-      .flat()
-      .forEach((testDirPath) => {
-        if (fs.existsSync(testDirPath)) {
-          console.debug(["Removing", testDirPath].join("\t"));
-          fs.rmSync(testDirPath);
-        }
-      });
-  });
-  fs.rmSync(testDataDir, { recursive: true });
-});
-
-test("import can import an openapi spec", async (t) => {
-  const outputDir = path.join(testDataDir, "import_all")
+test("import can import an openapi spec from URL", async (t) => {
+  const outputDir = path.join(testDataDir, "import_all_from_url")
   mkdirSync(outputDir)
 
   await importGraph("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/3.1.0/examples/v3.0/petstore.yaml", {
+    api: undefined,
+    output: outputDir,
+    root: "",
+    save: false,
+    watch: false
+  })
+
+  const routes: string[] = ["createPets.json", "listPets.json", "showPetById.json"]
+    .map(f =>
+      path.resolve(outputDir, f)
+    )
+
+  routes.forEach(f => {
+    t.true(fs.existsSync(f))
+  })
+})
+
+test("import can import an openapi spec from file", async (t) => {
+  const outputDir = path.join(testDataDir, "import_all_from_file")
+  mkdirSync(outputDir)
+
+  await importGraph(`file://${path.relative(process.cwd(), "tests/data/")}/petstore.yaml`, {
     api: undefined,
     output: outputDir,
     root: "",
@@ -422,4 +416,32 @@ test("can run a json board", async (t) => {
     .replace(/:\s*'([^']+)'/g, ': "$1"');
 
   t.deepEqual(JSON.parse(resultString), inputData);
+});
+
+test.after.always(() => {
+  console.debug("Cleaning up test files");
+  testFiles.forEach((p) => {
+    console.debug();
+    const filename = path.basename(p.path);
+    const dirname = path.dirname(p.path);
+    const filenameWithoutExtension = filename.split(".")[0];
+
+    console.debug([`Searching for`, p.path].join("\t"));
+
+    ["json", "ts", "js"]
+      .map((ext) => [
+        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
+        path.resolve(
+          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
+        ),
+      ])
+      .flat()
+      .forEach((testDirPath) => {
+        if (fs.existsSync(testDirPath)) {
+          console.debug(["Removing", testDirPath].join("\t"));
+          fs.rmSync(testDirPath);
+        }
+      });
+  });
+  fs.rmSync(testDataDir, { recursive: true });
 });
