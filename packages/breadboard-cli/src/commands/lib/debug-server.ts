@@ -10,13 +10,18 @@ import handler from "serve-handler";
 import { pathToFileURL, URL } from "url";
 import { BoardMetaData, defaultKits } from "./utils.js";
 import { stat } from "fs/promises";
-import { createReadStream } from "fs";
+import { URLPattern } from "urlpattern-polyfill";
+
 import { DebugOptions } from "../commandTypes.js";
 import { __dirname } from "../debug.js";
 import { KitData, getKits } from "./kits.js";
 
-import { URLPattern } from "urlpattern-polyfill";
-import { routes } from "./routes.js";
+import { boards } from "./debug-routes/boards.js";
+import { kits } from "./debug-routes/kits.js";
+import { kit } from "./debug-routes/kit.js";
+import { debug } from "./debug-routes/debug.js";
+import { board } from "./debug-routes/board.js";
+import { index } from "./debug-routes/index.js";
 
 export type Routes = Record<
   string,
@@ -38,6 +43,17 @@ export type ServerGlobals = {
   kits: Array<KitData>;
   base: URL;
   clients: Record<string, http.ServerResponse>;
+};
+
+// This is the main routing table for the debug server.
+const routes: Routes = {
+  "/": index,
+  "/index.html": index,
+  "/boards.js": boards,
+  "/kits.json": kits,
+  "/kits/:kitName(.*)": kit,
+  "/~~debug": debug,
+  "/*.json": board, // after kits.json
 };
 
 export const startServer = async (file: string, options: DebugOptions) => {
@@ -75,34 +91,17 @@ export const startServer = async (file: string, options: DebugOptions) => {
       const routePattern = new URLPattern(route, base.origin);
       const match = routePattern.exec(requestURL);
       if (match) {
-        const routeResponse = routes[route](request, response, match, globals);
+        const routeResponse = await routes[route](
+          request,
+          response,
+          match,
+          globals
+        );
         if (routeResponse == undefined) {
           continue;
         } else {
           return routeResponse;
         }
-      }
-    }
-
-    if ("watch" in options) {
-      if (
-        requestURL.pathname === "/" ||
-        requestURL.pathname === "/index.html"
-      ) {
-        response.writeHead(200, {
-          "Content-Type": "text/html",
-        });
-
-        // Need to check this doesn't include "../" and other escape characters.
-        const fileStream = createReadStream(`${distDir}/index.html`);
-        fileStream.pipe(response, { end: false });
-        fileStream.on("end", () => {
-          response.write(`<!-- Added by Debug command --><script>
-const evtSource = new EventSource("/~~debug");
-evtSource.addEventListener("update", () => { window.location.reload(); });</script>`);
-          response.end();
-        });
-        return;
       }
     }
 

@@ -21,5 +21,5 @@ export async function debug(
     delete clients[clientId];
   });
   clients[clientId] = response;
-  return;
+  return response;
 }
