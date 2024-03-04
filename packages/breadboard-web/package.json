@@ -120,11 +120,24 @@
         {
           "script": "generate:graphs",
           "cascade": false
+        },
+        {
+          "script": "copy-light-kits",
+          "cascade": false
         }
       ],
       "files": [
         "vite.config.ts",
         ".env"
+      ]
+    },
+    "copy-light-kits": {
+      "command": "tsx src/copy-light-kits.ts",
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "public/*.kit.json"
       ]
     },
     "generate:graphs": {
