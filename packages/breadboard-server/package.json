@@ -121,7 +121,7 @@
     "@typescript-eslint/parser": "^6.20.0",
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
-    "typedoc": "^0.25.1",
+    "typedoc": "^0.25.10",
     "typescript": "^5.3.3",
     "@google-labs/core-kit": "^0.4.0"
   },

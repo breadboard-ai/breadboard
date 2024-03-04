@@ -195,7 +195,7 @@
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
     "tsx": "^4.7.1",
-    "typedoc": "^0.25.1",
+    "typedoc": "^0.25.10",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.3.3",
     "vite": "^5.1.4",
