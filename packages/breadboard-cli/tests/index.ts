@@ -9,6 +9,7 @@ import test from "ava";
 import { ExecException, exec } from "child_process";
 import * as fs from "fs";
 import path from "path";
+import { importGraph } from "../src/commands/import.js";
 
 const packageDir = getPackageDir("@google-labs/breadboard-cli");
 console.debug("packageDir", packageDir);
@@ -202,6 +203,25 @@ test.after.always(() => {
   });
   fs.rmSync(testDataDir, { recursive: true });
 });
+
+test("import can import an openapi spec", async (t) => {
+  await importGraph("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/3.1.0/examples/v3.0/petstore.yaml", {
+    api: undefined,
+    output: testDataDir,
+    root: "",
+    save: false,
+    watch: false
+  })
+
+  const routes: string[] = ["createPets.json", "listPets.json", "showPetById.json"]
+    .map(f =>
+      path.resolve(testDataDir, f)
+    )
+
+  routes.forEach(f => {
+    t.true(fs.existsSync(f))
+  })
+})
 
 //////////////////////////////////////////////////
 test("all test files exist", (t) => {
