@@ -1,18 +1,27 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import http from "http";
 import { extname, join, relative } from "path";
 import handler from "serve-handler";
 import { pathToFileURL } from "url";
-import { BoardMetaData, loadBoards } from "./utils.js";
+import { BoardMetaData, defaultKits, loadBoards } from "./utils.js";
 import { stat } from "fs/promises";
 import { createReadStream } from "fs";
 import { DebugOptions } from "../commandTypes.js";
 import { __dirname } from "../debug.js";
+import { getKits } from "./kits.js";
 
 export const startServer = async (file: string, options: DebugOptions) => {
   const distDir = join(__dirname, "..", "..", "debugger");
   const fileStat = await stat(file);
   const fileUrl = pathToFileURL(file);
   const isDirectory = fileStat.isDirectory();
+
+  const kits = await getKits(defaultKits, options.kit);
 
   let boards: Array<BoardMetaData> = []; // Boards are dynamically loaded based on the "/boards.js" request.
 
@@ -47,6 +56,37 @@ export const startServer = async (file: string, options: DebugOptions) => {
       });
 
       return response.end(responseText);
+    }
+
+    if (requestURL.pathname === "/kits.json") {
+      const responseText = JSON.stringify(
+        kits.map((kit) => `/kits/${kit.file}`) || []
+      );
+      response.writeHead(200, {
+        "Content-Type": "application/javascript",
+        "Content-Length": responseText.length,
+      });
+
+      return response.end(responseText);
+    }
+
+    if (requestURL.pathname.startsWith("/kits/")) {
+      const kitName = requestURL.pathname.replace("/kits/", "");
+      const kit = kits.find((kit) => kit.file === kitName);
+      if (kit) {
+        if ("data" in kit) {
+          response.writeHead(200, {
+            "Content-Type": "application/javascript",
+          });
+
+          return response.end(kit.data);
+        } else {
+          response.writeHead(302, {
+            Location: kit.url,
+          });
+          return response.end();
+        }
+      }
     }
 
     if ("watch" in options) {

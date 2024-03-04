@@ -27,11 +27,15 @@ program
     "Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided."
   )
   .option(
+    "-k, --kit <kit...>",
+    "The kit to use can be an NPM package name or a URL to the bundled kit (for heavy kits) or a kit manifest (for light kits)."
+  )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
+  .option(
     "-o, --output <path>",
     "The path where the boards will be output the board(s) to.",
     process.cwd()
   )
-  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(debug);
 

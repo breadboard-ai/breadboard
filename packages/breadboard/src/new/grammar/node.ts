@@ -38,7 +38,7 @@ import { isLambda } from "./board.js";
 
 export class BuilderNode<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >
   extends BaseNode<I, O>
   implements
@@ -399,6 +399,7 @@ export class BuilderNode<
         ...(this.configuration as OriginalInputValues),
         $board: "#" + this.id,
       },
+      metadata: this.metadata,
     };
 
     return [node, invokeGraph];
@@ -533,7 +534,7 @@ export class BuilderNode<
 
   to<
     ToO extends OutputValues = OutputValues,
-    ToC extends InputValues = InputValues
+    ToC extends InputValues = InputValues,
   >(
     to:
       | NodeProxy<O & ToC, ToO>
@@ -605,7 +606,7 @@ export class BuilderNode<
 // TODO: Identify where they don't and possibly use a different is* there.
 export function isBuilderNodeProxy<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 >(node: unknown): node is BuilderNodeInterface<I, O> {
   return typeof (node as BuilderNodeInterface<I, O>).unProxy === "function";
 }

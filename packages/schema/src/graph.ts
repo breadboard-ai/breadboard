@@ -121,6 +121,12 @@ export type NodeMetadata = {
    * A more detailed description of the node.
    */
   description?: string;
+  /**
+   * Metadata that conveys visual informationa about the node. Can be used by
+   * visual editors to store information about the node's appearance, current
+   * position, etc.
+   */
+  visual?: NodeValue;
 };
 
 /**
@@ -150,6 +156,19 @@ export type KitDescriptor = KitReference & {
    * [semver](https://semver.org/) format is encouraged.
    */
   version?: string;
+};
+
+/**
+ * Describes a light kit: a kit where each node is backed by a graph.
+ */
+export type KitManifest = KitDescriptor & {
+  /**
+   * A map of nodes. Each key in this object is the node that is provided by
+   * the kit. Each value is the URL (string) pointing to the graph or the
+   * `GraphDescriptor` containing the graph. This graph will be run (runOnce)
+   * when the `invoke` of the node's `NodeHandler` is called.
+   */
+  nodes: Record<NodeIdentifier, string | GraphDescriptor>;
 };
 
 /**

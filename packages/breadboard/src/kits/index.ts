@@ -7,3 +7,4 @@
 export { SchemaBuilder } from "../schema.js";
 export { GraphToKitAdapter } from "./graph-to-kit.js";
 export { KitBuilder, type KitBuilderOptions } from "./builder.js";
+export { load } from "./load.js";

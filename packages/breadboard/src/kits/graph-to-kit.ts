@@ -11,10 +11,12 @@ import {
   GraphDescriptor,
   InputValues,
   Kit,
+  NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
 } from "../types.js";
+import { inspect } from "../index.js";
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
@@ -58,6 +60,25 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
+      describe: async (): Promise<NodeDescriberResult> => {
+        const emptyResult: NodeDescriberResult = {
+          inputSchema: { type: "object" },
+          outputSchema: { type: "object" },
+        };
+
+        if (this.graph.graphs != undefined && id in this.graph.graphs) {
+          const subGraph = this.graph.graphs[id] as GraphDescriptor;
+          if (subGraph == undefined) return emptyResult;
+          return await inspect(subGraph).describe();
+        } else if (node.type === "invoke") {
+          const { $board } = node.configuration as { $board?: GraphDescriptor };
+          if ($board) {
+            return await inspect($board).describe();
+          }
+        }
+
+        return emptyResult;
+      },
       invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
         const configuration = node.configuration;
         if (configuration) {
