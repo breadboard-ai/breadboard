@@ -714,22 +714,15 @@ export class Editor extends LitElement {
                 if (!configuration || port.star) return;
                 const schema = port.schema || {};
                 const name = port.name;
-                const value = configuration[name] ?? "";
+                const configurationValue = configuration[name];
 
                 let input;
                 const type = port.schema?.type || "string";
                 switch (type) {
                   case "object": {
-                    let schema = value as Schema;
-                    if (value === "") {
-                      schema = {
-                        type: "object",
-                        properties: {},
-                        required: [],
-                      };
-                    }
+                    const schema = configurationValue as Schema;
 
-                    if (schema.properties) {
+                    if (schema && schema.properties) {
                       input = html`<bb-schema-editor
                         .editable=${this.editable}
                         .schema=${schema}
@@ -753,7 +746,8 @@ export class Editor extends LitElement {
                         class="mono"
                         contenteditable="plaintext-only"
                         data-id="${name}"
-                      >${JSON.stringify(value, null, 2)}</div>`;
+                        data-type="${type}"
+                      >${JSON.stringify(configurationValue, null, 2)}</div>`;
                     }
                     break;
                   }
@@ -762,7 +756,7 @@ export class Editor extends LitElement {
                     input = html`<div>
                       <input
                         type="number"
-                        value="${value}"
+                        value="${configurationValue}"
                         name="${name}"
                         id=${name}
                       />
@@ -777,7 +771,7 @@ export class Editor extends LitElement {
                         name="${name}"
                         id=${name}
                         value="true"
-                        ?checked=${value === "true"}
+                        ?checked=${configurationValue === "true"}
                       />
                     </div>`;
                     break;
@@ -788,7 +782,7 @@ export class Editor extends LitElement {
                     input = html`<div
                             contenteditable="plaintext-only"
                             data-id="${name}"
-                          >${value}</div>`;
+                          >${configurationValue}</div>`;
                     break;
                   }
                 }
@@ -822,6 +816,7 @@ export class Editor extends LitElement {
       return;
     }
 
+    const toConvert = new Set<string>();
     const data = new FormData(evt.target);
     for (const field of evt.target.querySelectorAll("div[contenteditable]")) {
       if (
@@ -832,6 +827,10 @@ export class Editor extends LitElement {
         )
       ) {
         continue;
+      }
+
+      if (field.dataset.type && field.dataset.type === "object") {
+        toConvert.add(field.dataset.id);
       }
 
       data.set(field.dataset.id, field.textContent);
@@ -847,6 +846,14 @@ export class Editor extends LitElement {
       if (!schemaEditor.applyPendingChanges()) {
         return;
       }
+
+      if (
+        !schemaEditor.schema.properties ||
+        Object.keys(schemaEditor.schema.properties).length === 0
+      ) {
+        continue;
+      }
+
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
     }
 
@@ -882,7 +889,7 @@ export class Editor extends LitElement {
         continue;
       }
 
-      if (name === "schema") {
+      if (name === "schema" || toConvert.has(name)) {
         configuration[name] = JSON.parse(value);
         continue;
       }
