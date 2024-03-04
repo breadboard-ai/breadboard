@@ -70,6 +70,7 @@ export class GraphRenderer extends LitElement {
 
     canvas {
       display: block;
+      touch-action: none;
     }
   `;
 

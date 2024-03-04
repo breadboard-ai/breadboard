@@ -14,6 +14,7 @@ export const styles = css`
     display: grid;
     height: 100%;
     overscroll-behavior: contain;
+    overflow: auto;
     --diagram-display: flex;
     margin: 8px;
   }
