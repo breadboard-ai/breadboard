@@ -41,7 +41,11 @@ export const inspectableGraph = (
 
 const maybeURL = (url?: string): URL | undefined => {
   url = url || "";
-  return URL.canParse(url) ? new URL(url) : undefined;
+  try {
+    return new URL(url);
+  } catch {
+    return undefined;
+  }
 };
 
 class Graph implements InspectableGraphWithStore {
