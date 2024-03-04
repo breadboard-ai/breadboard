@@ -177,6 +177,34 @@ test.before(() => {
   });
 });
 
+test.after.always(() => {
+  console.debug("Cleaning up test files");
+  testFiles.forEach((p) => {
+    console.debug();
+    const filename = path.basename(p.path);
+    const dirname = path.dirname(p.path);
+    const filenameWithoutExtension = filename.split(".")[0];
+
+    console.debug([`Searching for`, p.path].join("\t"));
+
+    ["json", "ts", "js"]
+      .map((ext) => [
+        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
+        path.resolve(
+          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
+        ),
+      ])
+      .flat()
+      .forEach((testDirPath) => {
+        if (fs.existsSync(testDirPath)) {
+          console.debug(["Removing", testDirPath].join("\t"));
+          fs.rmSync(testDirPath);
+        }
+      });
+  });
+  fs.rmSync(testDataDir, { recursive: true });
+});
+
 test("import can import an openapi spec from URL", async (t) => {
   const outputDir = path.join(testDataDir, "import_all_from_url")
   mkdirSync(outputDir)
@@ -416,32 +444,4 @@ test("can run a json board", async (t) => {
     .replace(/:\s*'([^']+)'/g, ': "$1"');
 
   t.deepEqual(JSON.parse(resultString), inputData);
-});
-
-test.after.always(() => {
-  console.debug("Cleaning up test files");
-  testFiles.forEach((p) => {
-    console.debug();
-    const filename = path.basename(p.path);
-    const dirname = path.dirname(p.path);
-    const filenameWithoutExtension = filename.split(".")[0];
-
-    console.debug([`Searching for`, p.path].join("\t"));
-
-    ["json", "ts", "js"]
-      .map((ext) => [
-        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
-        path.resolve(
-          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
-        ),
-      ])
-      .flat()
-      .forEach((testDirPath) => {
-        if (fs.existsSync(testDirPath)) {
-          console.debug(["Removing", testDirPath].join("\t"));
-          fs.rmSync(testDirPath);
-        }
-      });
-  });
-  fs.rmSync(testDataDir, { recursive: true });
 });
