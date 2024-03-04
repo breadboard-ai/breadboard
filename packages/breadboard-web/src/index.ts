@@ -656,12 +656,21 @@ export class Main extends LitElement {
             let editResult: Promise<EditResult>;
             switch (evt.changeType) {
               case "add": {
-                editResult = editableGraph.addEdge(evt.edge);
+                editResult = editableGraph.addEdge(evt.from);
                 break;
               }
 
               case "remove": {
-                editResult = editableGraph.removeEdge(evt.edge);
+                editResult = editableGraph.removeEdge(evt.from);
+                break;
+              }
+
+              case "move": {
+                if (!evt.to) {
+                  throw new Error("Unable to move edge - no `to` provided");
+                }
+
+                editResult = editableGraph.changeEdge(evt.from, evt.to);
                 break;
               }
             }

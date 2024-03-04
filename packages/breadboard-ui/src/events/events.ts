@@ -151,8 +151,9 @@ export class EdgeChangeEvent extends Event {
   static eventName = "breadboardedgechange";
 
   constructor(
-    public changeType: "add" | "remove",
-    public edge: { from: string; to: string; in: string; out: string }
+    public changeType: "add" | "remove" | "move",
+    public from: { from: string; to: string; in: string; out: string },
+    public to?: { from: string; to: string; in: string; out: string }
   ) {
     super(EdgeChangeEvent.eventName, {
       bubbles: true,
