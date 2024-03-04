@@ -3,5 +3,6 @@
   "/core-kit.js",
   "/json-kit.js",
   "/template-kit.js",
-  "/node-nursery-web-kit.js"
+  "/node-nursery-web-kit.js",
+  "/agent.kit.json"
 ]
