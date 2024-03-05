@@ -6,7 +6,7 @@
 
 import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEntry, LoadArgs, STATUS } from "../../types/types.js";
+import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
   InputEnterEvent,
   MessageTraversalEvent,
@@ -61,9 +61,6 @@ export class UI extends LitElement {
 
   @property()
   boards: Board[] = [];
-
-  @state()
-  historyEntries: HistoryEntry[] = [];
 
   @state()
   messages: HarnessRunResult[] = [];
