@@ -278,6 +278,14 @@ export class GraphRenderer extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
 
+    window.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
     this.#app.start();
     this.#app.resize();
     this.#app.renderer.addListener("resize", () => {
