@@ -20,6 +20,7 @@ import {
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
+import { RunInspector } from "./utils/hacks.js";
 
 export const getBoardInfo = async (
   url: string
@@ -73,6 +74,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
+  #inspector = new RunInspector();
 
   static styles = css`
     :host {
@@ -390,13 +392,16 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
-    ui.clearMessages();
+
+    // Clear message history.
+    this.#inspector = new RunInspector();
+    ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of runner) {
+    for await (const result of this.#inspector.observe(runner)) {
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -502,6 +507,7 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
+    this.#inspector = new RunInspector();
     this.#uiRef.value.unloadCurrentBoard();
   }
 
@@ -514,7 +520,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#uiRef.value.messages;
+    const messages = this.#inspector.messages;
 
     const secrets = [];
     const inputs = [];
@@ -633,6 +639,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
+          .inspectableRun=${this.#inspector}
           .kits=${this.kits}
           .status=${this.status}
           @breadboardedgechange=${(
