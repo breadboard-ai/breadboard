@@ -16,7 +16,7 @@ import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
 
-const SERVER_URL = "https://localhost:3000";
+export const SERVER_URL = "http://localhost:3000";
 
 export const defaultKits = [
   "@google-labs/palm-kit",
