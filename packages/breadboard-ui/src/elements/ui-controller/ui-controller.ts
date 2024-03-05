@@ -20,7 +20,6 @@ import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
-import { NodeHighlightHelper } from "../../utils/highlights.js";
 import { cache } from "lit/directives/cache.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -29,6 +28,11 @@ const CONFIG_MEMORY_KEY = "ui-config";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
+};
+
+export type InspectableRun = {
+  messages: HarnessRunResult[];
+  currentNode(position: number): string;
 };
 
 /**
@@ -60,7 +64,7 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
-  messages: HarnessRunResult[] = [];
+  inspectableRun: InspectableRun | null = null;
 
   @property()
   boards: Board[] = [];
@@ -79,7 +83,6 @@ export class UI extends LitElement {
   #isUpdatingMemory = false;
   #messagePosition = 0;
   #messageDurations: Map<HarnessRunResult, number> = new Map();
-  #highlightHelper = new NodeHighlightHelper();
   #resizeObserver = new ResizeObserver(() => {
     const isPortrait = window.matchMedia("(orientation: portrait)").matches;
     if (isPortrait && this.orientation === "landscape") {
@@ -127,7 +130,6 @@ export class UI extends LitElement {
   }
 
   clearPosition() {
-    this.#highlightHelper.clear();
     this.#messagePosition = 0;
   }
 
@@ -207,9 +209,9 @@ export class UI extends LitElement {
     message: HarnessRunResult,
     duration: number
   ): Promise<Record<string, unknown> | void> {
-    this.#highlightHelper.add(message);
     if (this.status === STATUS.RUNNING) {
-      this.#messagePosition = this.messages.length - 1;
+      const messages = this.inspectableRun?.messages || [];
+      this.#messagePosition = messages.length - 1;
     }
     this.#messageDurations.set(message, duration);
     this.requestUpdate();
@@ -260,12 +262,14 @@ export class UI extends LitElement {
   }
 
   render() {
-    const typeOfNewestMessage = this.messages[this.messages.length - 1]?.type;
+    const messages = this.inspectableRun?.messages || [];
+    const typeOfNewestMessage = messages[messages.length - 1]?.type;
     const disabled =
-      this.#messagePosition < this.messages.length - 1 ||
+      this.#messagePosition < messages.length - 1 ||
       (typeOfNewestMessage !== "input" && typeOfNewestMessage !== "secret");
 
-    const nodeId = this.#highlightHelper.currentNode(this.#messagePosition);
+    const nodeId =
+      this.inspectableRun?.currentNode(this.#messagePosition) || "";
 
     /**
      * Create all the elements we need.
@@ -288,20 +292,20 @@ export class UI extends LitElement {
           @input=${() => this.#toggleConfigOption("showNarrowTimeline")}
         />
         <div id="value">
-          ${Math.min(this.messages.length, this.#messagePosition + 1)} /
-          <span id="max">&nbsp;${this.messages.length}</span>
+          ${Math.min(messages.length, this.#messagePosition + 1)} /
+          <span id="max">&nbsp;${messages.length}</span>
         </div>
         <div id="run-status" class=${classMap({ [this.status]: true })}>
           ${this.status}
         </div>
       </header>
       <bb-timeline-controls
-        .messages=${this.messages}
+        .messages=${messages}
         .messagePosition=${this.#messagePosition}
         .messageDurations=${this.#messageDurations}
         .narrow=${this.config.showNarrowTimeline}
         @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
-          if (evt.index < 0 || evt.index > this.messages.length) {
+          if (evt.index < 0 || evt.index > messages.length) {
             return;
           }
 
@@ -323,11 +327,11 @@ export class UI extends LitElement {
       <div id="inputs-list">
         <bb-input-list
           ${ref(this.#inputListRef)}
-          .messages=${this.messages}
+          .messages=${messages}
           .messagePosition=${this.#messagePosition}
           @breadboardinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < this.messages.length - 1) {
+            if (this.#messagePosition < messages.length - 1) {
               // The user has attempted to provide input for a stale
               // request.
               // TODO: Enable resuming from this point.
@@ -357,13 +361,13 @@ export class UI extends LitElement {
     const outputs = html` <h1>Outputs</h1>
       <div id="outputs-list">
         <bb-output-list
-          .messages=${this.messages}
+          .messages=${messages}
           .messagePosition=${this.#messagePosition}
         ></bb-output-list>
       </div>`;
 
     const history = html`<bb-history-tree
-      .messages=${this.messages}
+      .messages=${messages}
       .messagePosition=${this.#messagePosition}
     ></bb-history-tree>`;
 

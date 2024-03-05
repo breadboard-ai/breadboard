@@ -5,17 +5,25 @@
  */
 
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { NodeHighlightHelper } from "./highlights.js";
 
 // Temporary hacks while extruding the inspectRun API.
+
 type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export class RunInspector {
   messages: HarnessRunResult[] = [];
+  #highlightHelper = new NodeHighlightHelper();
 
   observe(runner: Runner): Runner {
     return new Observer(runner, (message) => {
       this.messages.push(message);
+      this.#highlightHelper.add(message);
     });
+  }
+
+  currentNode(position: number) {
+    return this.#highlightHelper.currentNode(position);
   }
 }
 

@@ -520,7 +520,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#uiRef.value.messages;
+    const messages = this.#inspector.messages;
 
     const secrets = [];
     const inputs = [];
@@ -639,7 +639,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .messages=${this.#inspector.messages}
+          .inspectableRun=${this.#inspector}
           .kits=${this.kits}
           .status=${this.status}
           @breadboardedgechange=${(
