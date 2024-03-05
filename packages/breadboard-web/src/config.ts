@@ -12,7 +12,6 @@ import {
   RunConfig,
 } from "@google-labs/breadboard/harness";
 import GeminiKit from "@google-labs/gemini-kit";
-import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader";
 
 const PROXY_NODES = [
@@ -39,7 +38,7 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kitConstructors = [GeminiKit, AgentKit];
+const kitConstructors = [GeminiKit];
 
 export const createRunConfig = async (url: string): Promise<RunConfig> => {
   const harness =

@@ -8,7 +8,7 @@ import http, { IncomingMessage, ServerResponse } from "http";
 import { join, relative } from "path";
 import handler from "serve-handler";
 import { pathToFileURL, URL } from "url";
-import { BoardMetaData, defaultKits } from "./utils.js";
+import { BoardMetaData, SERVER_URL, defaultKits } from "./utils.js";
 import { stat } from "fs/promises";
 import { URLPattern } from "urlpattern-polyfill";
 
@@ -53,7 +53,7 @@ const routes: Routes = {
   "/kits.json": kits,
   "/kits/:kitName(.*)": kit,
   "/~~debug": debug,
-  "/*.json": board, // after kits.json
+  "/*.(json|ts)": board, // after kits.json
 };
 
 export const startServer = async (file: string, options: DebugOptions) => {
@@ -64,7 +64,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
   const boards: Array<BoardMetaData> = []; // Boards are dynamically loaded based on the "/boards.js" request.
   const kits = await getKits(defaultKits, options.kit);
   const clients: Record<string, http.ServerResponse> = {};
-  const base = new URL("http://localhost:3000");
+  const base = new URL(SERVER_URL);
 
   const globals: ServerGlobals = {
     distDir,
@@ -115,7 +115,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
     const urlPath = isDirectory
       ? ""
       : `?board=/${relative(process.cwd(), fileUrl.pathname)}`;
-    console.log(`Running at http://localhost:3000/${urlPath}`);
+    console.log(`Running at ${SERVER_URL}/${urlPath}`);
   });
 
   return { notifyClients };

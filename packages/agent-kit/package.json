@@ -34,6 +34,9 @@
       "dependencies": [
         "build:tsc"
       ],
+      "files": [
+        "src/generate-kit-manifest.ts"
+      ],
       "output": [
         "agent.kit.json"
       ]

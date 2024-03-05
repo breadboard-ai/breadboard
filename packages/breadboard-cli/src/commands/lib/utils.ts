@@ -16,12 +16,15 @@ import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
 
+export const SERVER_URL = "http://localhost:3000";
+
 export const defaultKits = [
   "@google-labs/palm-kit",
   "@google-labs/core-kit",
   "@google-labs/json-kit",
   "@google-labs/template-kit",
   "@google-labs/node-nursery-web",
+  `${SERVER_URL}/agent.kit.json`,
 ];
 
 export type BoardMetaData = {

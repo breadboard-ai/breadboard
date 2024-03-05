@@ -12,16 +12,20 @@ export async function board(
   const { boards, options, base } = globals;
   const requestURL = new URL(request.url ?? "", base);
   let board = boards.find((board) => board.url == requestURL.pathname);
-  if (!board && extname(requestURL.pathname) === ".json") {
-    // Attempt to load the board and append it to the list of boards.
-    const possibleBoardPath = join(process.cwd(), requestURL.pathname);
-    try {
-      const newBoards = await loadBoards(possibleBoardPath, options);
-      const [newBoard] = newBoards;
-      boards.push(newBoard);
-      board = newBoard;
-    } catch (err) {
-      // This board was not found.
+  if (!board) {
+    const isKitManifest = requestURL.pathname.endsWith(".kit.json");
+    const isJSON = extname(requestURL.pathname) === ".json";
+    if (isJSON && !isKitManifest) {
+      // Attempt to load the board and append it to the list of boards.
+      const possibleBoardPath = join(process.cwd(), requestURL.pathname);
+      try {
+        const newBoards = await loadBoards(possibleBoardPath, options);
+        const [newBoard] = newBoards;
+        boards.push(newBoard);
+        board = newBoard;
+      } catch (err) {
+        // This board was not found.
+      }
     }
   }
 

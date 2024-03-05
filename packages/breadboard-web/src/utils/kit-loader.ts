@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { KitConstructor, Kit, asRuntimeKit } from "@google-labs/breadboard";
 import { load } from "@google-labs/breadboard/kits";
 
@@ -13,7 +19,7 @@ export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
   const kits = await Promise.all(
     kitList.map(async (kitURL: string) => {
       // workaround for vite prod/dev mode difference
-      if (import.meta.env.DEV) {
+      if (kitURL.endsWith(".js") && import.meta.env.DEV) {
         kitURL = `/src/${kitURL.replace(/\.js$/, ".ts")}`;
       }
       return await load(new URL(kitURL, base));
