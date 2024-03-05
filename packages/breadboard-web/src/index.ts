@@ -395,7 +395,7 @@ export class Main extends LitElement {
 
     // Clear message history.
     this.#inspector = new RunInspector();
-    ui.clearMessages();
+    ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 

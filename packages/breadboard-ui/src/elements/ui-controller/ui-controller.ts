@@ -126,7 +126,7 @@ export class UI extends LitElement {
     this.requestUpdate();
   }
 
-  clearMessages() {
+  clearPosition() {
     this.#highlightHelper.clear();
     this.#messagePosition = 0;
   }
