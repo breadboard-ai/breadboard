@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
+import { run } from "@google-labs/breadboard/harness";
 import { createRunConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -20,7 +20,7 @@ import {
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
-import { observe } from "./utils/hacks.js";
+import { RunInspector } from "./utils/hacks.js";
 
 export const getBoardInfo = async (
   url: string
@@ -65,9 +65,6 @@ export class Main extends LitElement {
   embed = false;
 
   @state()
-  messages: HarnessRunResult[] = [];
-
-  @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -77,6 +74,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
+  #inspector = new RunInspector();
 
   static styles = css`
     :host {
@@ -396,14 +394,14 @@ export class Main extends LitElement {
     ui.load(this.loadInfo);
 
     // Clear message history.
-    this.messages.length = 0;
+    this.#inspector = new RunInspector();
     ui.clearMessages();
 
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of observe(runner)) {
+    for await (const result of this.#inspector.observe(runner)) {
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -417,8 +415,6 @@ export class Main extends LitElement {
         console.log("Skipping", result);
       }
 
-      // Add message to history.
-      this.messages.push(result);
       const answer = await ui.handleStateChange(result, runDuration);
       await this.#waitIfPaused(answer);
 
@@ -511,7 +507,7 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
-    this.messages.length = 0;
+    this.#inspector = new RunInspector();
     this.#uiRef.value.unloadCurrentBoard();
   }
 
@@ -643,7 +639,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .messages=${this.messages}
+          .messages=${this.#inspector.messages}
           .kits=${this.kits}
           .status=${this.status}
           @breadboardedgechange=${(
