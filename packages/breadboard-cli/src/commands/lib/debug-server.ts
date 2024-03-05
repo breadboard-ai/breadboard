@@ -53,7 +53,7 @@ const routes: Routes = {
   "/kits.json": kits,
   "/kits/:kitName(.*)": kit,
   "/~~debug": debug,
-  "/*.json": board, // after kits.json
+  "/*.(json|ts)": board, // after kits.json
 };
 
 export const startServer = async (file: string, options: DebugOptions) => {
