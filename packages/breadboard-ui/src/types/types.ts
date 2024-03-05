@@ -94,3 +94,26 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
+
+export const BreadboardElementErrorCode = {
+	PARSE: "parseError",
+	RENDER: "renderError"
+} as const;
+
+export type BreadboardElementErrorCode =
+	(typeof BreadboardElementErrorCode)[keyof typeof BreadboardElementErrorCode];
+
+export type BreadboardElementError = {
+	code: BreadboardElementErrorCode,
+	message: string;
+};
+
+export type BreadboardErrorHandler = (error: BreadboardElementError) => void;
+
+export interface BreadboardWebElement {
+	onError: BreadboardErrorHandler;
+}
+
+export type BreadboardReactComponentProps = {
+	onError?: BreadboardErrorHandler;
+}
