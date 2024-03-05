@@ -20,6 +20,7 @@ import {
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
+import { observe } from "./utils/hacks.js";
 
 export const getBoardInfo = async (
   url: string
@@ -402,7 +403,7 @@ export class Main extends LitElement {
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of runner) {
+    for await (const result of observe(runner)) {
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
