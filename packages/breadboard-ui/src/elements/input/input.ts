@@ -227,14 +227,13 @@ export class Input extends LitElement {
         const input = form[key];
         if (input && input.value) {
           try {
-			const parsedValue = parseValue(property.type, input);
-          	data[key] = parsedValue;
-			//throw new Error("Error when parsing input values.");
-			
-		  } catch (e) {
-			const event = new InputErrorEvent(`${e}`);
-			this.dispatchEvent(event);
-		  }
+            const parsedValue = parseValue(property.type, input);
+            data[key] = parsedValue;
+            //throw new Error("Error when parsing input values.");
+          } catch (e) {
+            const event = new InputErrorEvent(`${e}`);
+            this.dispatchEvent(event);
+          }
         } else {
           // Custom elements don't look like form elements, so they need to be
           // processed separately.
@@ -283,15 +282,13 @@ export class Input extends LitElement {
       return;
     }
 
-	try {
-		//throw new Error("Error when rendering input form.");
-		return this.#renderForm(properties, values);
-		
-		
-	  } catch (e) {
-		const event = new InputErrorEvent(`${e}`);
-		this.dispatchEvent(event);
-	  }
+    try {
+      //throw new Error("Error when rendering input form.");
+      return this.#renderForm(properties, values);
+    } catch (e) {
+      const event = new InputErrorEvent(`${e}`);
+      this.dispatchEvent(event);
+    }
   }
 
   #renderForm(properties: Record<string, Schema>, values: InputData) {
