@@ -9,7 +9,6 @@
 
 const { JSDOM } = require("jsdom");
 
-const TEXT_NODE = 3;
 module.exports = function (content) {
   const dom = new JSDOM(content);
   const headers = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5");
@@ -40,14 +39,12 @@ module.exports = function (content) {
       html += "</ol>\n".repeat(lastLevel - level);
     }
 
-    for (const node of header.childNodes) {
-      if (node.nodeType !== TEXT_NODE) {
-        continue;
-      }
-
-      const name = node.textContent;
-      html += `<li><a href="#${toID(name)}">${name}</a></li>\n`;
+    for (const link of header.querySelectorAll('a')) {
+      link.remove();
     }
+
+    const name = header.textContent.replace(/\W$/, '');
+    html += `<li><a href="#${toID(name)}">${name}</a></li>\n`;
 
     lastLevel = level;
   }
