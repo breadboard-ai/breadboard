@@ -13,6 +13,7 @@ import {
   Schema,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { InputErrorEvent } from "../events/events.js";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -95,24 +96,17 @@ export type OutputArgs = {
   } & Record<string, unknown>;
 };
 
-export const BreadboardElementErrorCode = {
-	PARSE: "parseError",
-	RENDER: "renderError"
+export const ErrorNames = {
+	INPUT_ERROR: "inputError",
+	//possibility to add more values here (as required) in the future, e.g., embedError, toastError, and so on
 } as const;
 
-export type BreadboardElementErrorCode =
-	(typeof BreadboardElementErrorCode)[keyof typeof BreadboardElementErrorCode];
+export type ErrorNames =
+	(typeof ErrorNames)[keyof typeof ErrorNames];
 
-export type BreadboardElementError = {
-	code: BreadboardElementErrorCode,
-	message: string;
-};
+export type BreadboardElementError = InputErrorEvent; //more error types can be added for different components later on i.e., "& ElementErrorEvent & OtherElementErrorEvent" and so on
 
 export type BreadboardErrorHandler = (error: BreadboardElementError) => void;
-
-export interface BreadboardWebElement {
-	onError: BreadboardErrorHandler;
-}
 
 export type BreadboardReactComponentProps = {
 	onError?: BreadboardErrorHandler;

@@ -8,6 +8,7 @@ import {
   type InspectableEdge,
   type NodeConfiguration,
 } from "@google-labs/breadboard";
+import { ErrorNames } from "../types/types.js";
 
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
@@ -103,6 +104,16 @@ export class InputEnterEvent extends Event {
       composed: true,
     });
   }
+}
+
+export class InputErrorEvent extends Event {
+	static eventName = ErrorNames.INPUT_ERROR;
+
+	constructor(public detail: string) {
+		super(InputErrorEvent.eventName, {
+			bubbles: true
+		})
+	}
 }
 
 export class BoardUnloadEvent extends Event {

@@ -21,15 +21,10 @@ import {
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { InputEnterEvent } from "../../events/events.js";
+import { InputEnterEvent, InputErrorEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
-import {
-  BreadboardElementError,
-  BreadboardElementErrorCode,
-  BreadboardWebElement,
-  InputArgs,
-} from "../../types/types.js";
+import { InputArgs } from "../../types/types.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 export type InputData = Record<string, unknown>;
@@ -53,12 +48,7 @@ const parseValue = (type: Schema["type"], input: HTMLInputElement) => {
 };
 
 @customElement("bb-input")
-export class Input extends LitElement implements BreadboardWebElement {
-  @property()
-  onError = (error: BreadboardElementError) => {
-    console.log(error.code, error.message);
-  };
-
+export class Input extends LitElement {
   @property({ reflect: false })
   remember = false;
 
@@ -237,22 +227,14 @@ export class Input extends LitElement implements BreadboardWebElement {
         const input = form[key];
         if (input && input.value) {
           try {
-            const parsedValue = parseValue(property.type, input);
-            data[key] = parsedValue;
-            //throw new Error("Error when parsing input values.");
-          } catch (error) {
-            if (error instanceof Error) {
-              const event = new CustomEvent(
-                `${BreadboardElementErrorCode.PARSE}`,
-                { bubbles: true, detail: error.message }
-              );
-              this.dispatchEvent(event);
-              this.onError({
-                code: event.type as BreadboardElementErrorCode,
-                message: event.detail,
-              });
-            }
-          }
+			const parsedValue = parseValue(property.type, input);
+          	data[key] = parsedValue;
+			//throw new Error("Error when parsing input values.");
+			
+		  } catch (e) {
+			const event = new InputErrorEvent(`${e}`);
+			this.dispatchEvent(event);
+		  }
         } else {
           // Custom elements don't look like form elements, so they need to be
           // processed separately.
@@ -301,22 +283,15 @@ export class Input extends LitElement implements BreadboardWebElement {
       return;
     }
 
-    try {
-      return this.#renderForm(properties, values);
-      //throw new Error("Error when rendering input form.");
-    } catch (error) {
-      if (error instanceof Error) {
-        const event = new CustomEvent(`${BreadboardElementErrorCode.RENDER}`, {
-          bubbles: true,
-          detail: error.message,
-        });
-        this.dispatchEvent(event);
-        this.onError({
-          code: event.type as BreadboardElementErrorCode,
-          message: event.detail,
-        });
-      }
-    }
+	try {
+		//throw new Error("Error when rendering input form.");
+		return this.#renderForm(properties, values);
+		
+		
+	  } catch (e) {
+		const event = new InputErrorEvent(`${e}`);
+		this.dispatchEvent(event);
+	  }
   }
 
   #renderForm(properties: Record<string, Schema>, values: InputData) {
