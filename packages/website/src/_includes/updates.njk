@@ -1,41 +1,33 @@
 ---
-title: Breadboard | Docs
+title: Breadboard | Updates
 ---
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{title}} | Docs | Breadboard</title>
+    <title>{{title}} | Updates | Breadboard</title>
     <link rel="icon" type="image/x-icon" href="/breadboard/static/icon.png" />
     <link rel="stylesheet" href="/breadboard/static/third_party/styles/prism-syntax-highlight.css" />
     <link rel="stylesheet" href="/breadboard/static/common.css" />
-    <link rel="stylesheet" href="/breadboard/static/docs.css" />
+    <link rel="stylesheet" href="/breadboard/static/updates.css" />
   </head>
   <body>
-  {% include "navigation-docs.njk" %}
-  <main>
+  {% include "navigation-updates.njk" %}
 
-  <aside class="documentation">
-    {% include "documentation-list.njk" %}
+  <aside class="updates">
+    {% include "update-list.njk" %}
   </aside>
 
-  {% if not hide_toc %}
-  {{content | toc | safe }}
-  {% endif %}
-
-  {%- for tag in tags -%}
-    {%- if tag == 'wip' -%}
-      <div class="wip">
-        <strong>Please note:</strong>this document is a work in progress.
-      </div>
+  <main>
+    {%- if not isIndex -%}
+    <div><a class="back-to-main-list" href="/breadboard/updates/">Back to Updates</a></div>
     {%- endif -%}
-  {%- endfor -%}
 
-  <h1>{{ title }}</h1>
-
-  {{content | safe}}
+    <h1>{{ title }}</h1>
+    {{content | safe}}
   </main>
+
   {% include "footer.njk" %}
 
   {% raw %}
