@@ -30,6 +30,7 @@ type UIConfig = {
   showNarrowTimeline: boolean;
 };
 
+// TODO: Move to Breadboard proper.
 export type InspectableRun = {
   messages: HarnessRunResult[];
   currentNode(position: number): string;
