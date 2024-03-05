@@ -60,10 +60,10 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
-  boards: Board[] = [];
-
-  @state()
   messages: HarnessRunResult[] = [];
+
+  @property()
+  boards: Board[] = [];
 
   @state()
   config: UIConfig = {
@@ -127,7 +127,6 @@ export class UI extends LitElement {
   }
 
   clearMessages() {
-    this.messages.length = 0;
     this.#highlightHelper.clear();
     this.#messagePosition = 0;
   }
@@ -135,7 +134,6 @@ export class UI extends LitElement {
   unloadCurrentBoard() {
     this.url = null;
     this.loadInfo = null;
-    this.clearMessages();
 
     this.#messageDurations.clear();
   }
@@ -209,8 +207,6 @@ export class UI extends LitElement {
     message: HarnessRunResult,
     duration: number
   ): Promise<Record<string, unknown> | void> {
-    // Store it for later, render, then actually handle the work.
-    this.messages.push(message);
     this.#highlightHelper.add(message);
     if (this.status === STATUS.RUNNING) {
       this.#messagePosition = this.messages.length - 1;

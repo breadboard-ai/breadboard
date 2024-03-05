@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { run } from "@google-labs/breadboard/harness";
+import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { createRunConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -62,6 +62,9 @@ export class Main extends LitElement {
 
   @state()
   embed = false;
+
+  @state()
+  messages: HarnessRunResult[] = [];
 
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
@@ -390,6 +393,9 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
+
+    // Clear message history.
+    this.messages.length = 0;
     ui.clearMessages();
 
     const currentBoardId = this.#boardId;
@@ -410,6 +416,8 @@ export class Main extends LitElement {
         console.log("Skipping", result);
       }
 
+      // Add message to history.
+      this.messages.push(result);
       const answer = await ui.handleStateChange(result, runDuration);
       await this.#waitIfPaused(answer);
 
@@ -502,6 +510,7 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
+    this.messages.length = 0;
     this.#uiRef.value.unloadCurrentBoard();
   }
 
@@ -633,6 +642,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
+          .messages=${this.messages}
           .kits=${this.kits}
           .status=${this.status}
           @breadboardedgechange=${(
