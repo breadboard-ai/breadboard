@@ -39,11 +39,11 @@ module.exports = function (content) {
       html += "</ol>\n".repeat(lastLevel - level);
     }
 
-    for (const link of header.querySelectorAll('a')) {
+    for (const link of header.querySelectorAll("a")) {
       link.remove();
     }
 
-    const name = header.textContent.replace(/\W$/, '');
+    const name = header.textContent.replace(/:$/, "");
     html += `<li><a href="#${toID(name)}">${name}</a></li>\n`;
 
     lastLevel = level;
