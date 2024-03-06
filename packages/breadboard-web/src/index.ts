@@ -17,10 +17,10 @@ import {
   edit,
   EditResult,
   GraphDescriptor,
+  inspectRun,
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
-import { RunInspector } from "./utils/hacks.js";
 
 export const getBoardInfo = async (
   url: string
@@ -74,7 +74,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #inspector = new RunInspector();
+  #inspector = inspectRun();
 
   static styles = css`
     :host {
@@ -394,7 +394,7 @@ export class Main extends LitElement {
     ui.load(this.loadInfo);
 
     // Clear message history.
-    this.#inspector = new RunInspector();
+    this.#inspector = inspectRun();
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -507,7 +507,7 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
-    this.#inspector = new RunInspector();
+    this.#inspector = inspectRun();
     this.#uiRef.value.unloadCurrentBoard();
   }
 
