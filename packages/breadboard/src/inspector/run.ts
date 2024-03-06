@@ -98,6 +98,7 @@ export class Run implements InspectableRun {
   observe(runner: Runner): Runner {
     return new Observer(runner, (message) => {
       this.messages.push(message);
+      this.events.push(message);
       this.#highlightHelper.add(message);
     });
   }

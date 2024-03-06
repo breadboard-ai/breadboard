@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorObject } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { ErrorObject, InspectableRunEvent } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -13,10 +12,10 @@ import { classMap } from "lit/directives/class-map.js";
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
   @property({ reflect: false })
-  messages: HarnessRunResult[] | null = null;
+  events: InspectableRunEvent[] | null = null;
 
   @property({ reflect: true })
-  messagePosition = 0;
+  eventPosition = 0;
 
   static styles = css`
     :host {
@@ -171,13 +170,13 @@ export class ActivityLog extends LitElement {
   render() {
     return html`
       <h1>Activity Log</h1>
-      ${this.messages
-        ? this.messages.map((message, idx) => {
+      ${this.events
+        ? this.events.map((event, idx) => {
             let content: HTMLTemplateResult | symbol = nothing;
-            switch (message.type) {
+            switch (event.type) {
               case "graphstart": {
                 // TODO: Support subgraphs.
-                if (message.data.path.length > 0) {
+                if (event.data.path.length > 0) {
                   return nothing;
                 }
 
@@ -187,11 +186,11 @@ export class ActivityLog extends LitElement {
 
               case "error": {
                 let output = "";
-                if (typeof message.data.error === "string") {
-                  output = message.data.error.toString();
+                if (typeof event.data.error === "string") {
+                  output = event.data.error.toString();
                 } else {
                   let messageOutput = "";
-                  let error = message.data.error;
+                  let error = event.data.error;
                   while (typeof error === "object") {
                     if (error && "message" in error) {
                       messageOutput += `${error.message}\n`;
@@ -211,21 +210,20 @@ export class ActivityLog extends LitElement {
               case "nodeend": {
                 // TODO: Support subgraphs.
                 if (
-                  message.type === "nodeend" &&
-                  (message.data.path.length > 1 ||
-                    message.data.node.type === "output")
+                  event.type === "nodeend" &&
+                  (event.data.path.length > 1 ||
+                    event.data.node.type === "output")
                 ) {
                   return nothing;
                 }
 
                 content = html`<section>
-                  <h1 data-message-idx=${idx}>${message.data.node.type}</h1>
-                  ${message.type === "output" ||
-                  message.data.node.type === "input"
+                  <h1 data-message-idx=${idx}>${event.data.node.type}</h1>
+                  ${event.type === "output" || event.data.node.type === "input"
                     ? html` <aside class="node-output">
                         <details open>
                           <summary>text</summary>
-                          <div>${message.data.outputs.text}</div>
+                          <div>${event.data.outputs.text}</div>
                         </details>
                       </aside>`
                     : nothing}
@@ -235,14 +233,14 @@ export class ActivityLog extends LitElement {
 
               case "input":
               case "nodestart": {
-                if (idx !== this.messagePosition) {
+                if (idx !== this.eventPosition) {
                   return nothing;
                 }
 
-                content = html`${message.type === "input"
+                content = html`${event.type === "input"
                   ? "Waiting..."
                   : // prettier-ignore
-                    html`Working: (<pre>${message.data.node.id}</pre>)`}`;
+                    html`Working: (<pre>${event.data.node.id}</pre>)`}`;
                 break;
               }
 
@@ -253,11 +251,11 @@ export class ActivityLog extends LitElement {
 
             const classes: Record<string, boolean> = {
               "activity-entry": true,
-              [message.type]: true,
+              [event.type]: true,
             };
 
-            if (message.type === "nodeend") {
-              classes[message.data.node.type] = true;
+            if (event.type === "nodeend") {
+              classes[event.data.node.type] = true;
             }
 
             return html`<div class="${classMap(classes)}">

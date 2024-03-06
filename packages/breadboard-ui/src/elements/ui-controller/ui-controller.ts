@@ -307,8 +307,8 @@ export class UI extends LitElement {
     const sidePanel = html`
       <bb-switcher slots="3">
         <bb-activity-log
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
+          .events=${messages}
+          .eventPosition=${this.#messagePosition}
           @pointerdown=${(evt: PointerEvent) => {
             if (!this.#detailsRef.value) {
               return;

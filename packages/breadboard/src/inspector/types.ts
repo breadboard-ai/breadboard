@@ -389,20 +389,19 @@ export type InspectableVersionedGraph = {
   runs: InspectableRun[];
 };
 
+// type InspectableEvent<RunType> = RunType extends {
+//   data: infer Data;
+//   type: infer Type;
+// }
+//   ? { type: Type; data: Data }
+//   : never;
+
 /**
  * Represents pairs of nodestart and nodeend results that were generated
  * during the run.
  */
-export type InspectableRunEvent = {
-  // TODO: Figure out what goes here.
-
-  /**
-   * Any nested graph runs that may have happened during the event.
-   * This is usually a result of `core.invoke` or `core.map` or `core.reduce`
-   * nodess running subgraphs.
-   */
-  nested: InspectableRun[];
-};
+// export type InspectableRunEvent = InspectableEvent<HarnessRunResult>;
+export type InspectableRunEvent = HarnessRunResult;
 
 /**
  * Represents a single run of a graph.
