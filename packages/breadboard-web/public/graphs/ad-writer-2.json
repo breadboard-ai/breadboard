@@ -292,7 +292,7 @@
               "type": "array",
               "default": "[]",
               "examples": [
-                "Write an ad for Generative AI API. The ad must incorporate the following key messages: \n      - Google AI for Developers\n      - Iterate with Google AI Studio\n      - Integrate AI Into Your Project\n      - Meet Our Most Capable AI Model\n      - Customize Models Easily\n      - Start Your AI Project Today\n      - Prompt the Next Gen AI Model\n      - Integrate AI Into Your Project\n      - AI for Developers\n      - Try Google Gemini\n      - Use Gemini in Your Application\n      - Get Your Developer API Key"
+                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n      - Breadboard for Developers\n      - Iterate with Gemini APIs \n      - Integrate AI Into Your Project\n      - Start Your AI Project Today\n      - Create graphs with prompts\n      - AI for Developers\n      - Try Google Gemini"
               ],
               "format": "multiline"
             }

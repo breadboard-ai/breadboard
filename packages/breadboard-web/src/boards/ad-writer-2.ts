@@ -66,19 +66,14 @@ export default await board(({ context }) => {
     .title("Ad specs")
     .format("multiline")
     .examples(
-      `Write an ad for Generative AI API. The ad must incorporate the following key messages: 
-      - Google AI for Developers
-      - Iterate with Google AI Studio
+      `Write an ad for Breadboard. The ad must incorporate the following key messages: 
+      - Breadboard for Developers
+      - Iterate with Gemini APIs 
       - Integrate AI Into Your Project
-      - Meet Our Most Capable AI Model
-      - Customize Models Easily
       - Start Your AI Project Today
-      - Prompt the Next Gen AI Model
-      - Integrate AI Into Your Project
+      - Create graphs with prompts
       - AI for Developers
-      - Try Google Gemini
-      - Use Gemini in Your Application
-      - Get Your Developer API Key`
+      - Try Google Gemini`
     );
 
   const adWriter = agents.structuredWorker({
