@@ -168,84 +168,69 @@ export class ActivityLog extends LitElement {
   `;
 
   render() {
-    console.log(
-      "rendering activity log",
-      this.events?.length,
-      this.eventPosition
-    );
     return html`
       <h1>Activity Log</h1>
       ${this.events
         ? this.events.map((event, idx) => {
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
-              case "graphstart": {
-                // TODO: Support subgraphs.
-                if (event.data.path.length > 0) {
-                  return nothing;
+              case "node": {
+                const { node, end, inputs, outputs } = event;
+                // `end` is null if the node is still running
+                // that is, the `nodeend` for this node hasn't yet
+                // been received.
+                if (end === null) {
+                  if (event.result) {
+                    console.log("RESULT", event.result);
+                  }
+                  if (idx !== this.eventPosition) {
+                    return nothing;
+                  }
+                  content = html`${node.type === "input"
+                    ? "Waiting..."
+                    : // prettier-ignore
+                      html`Working: (<pre>${node.id}</pre>)`}`;
+                } else {
+                  // This is fiddly. Output nodes don't have any outputs.
+                  const adjustedOutputs =
+                    node.type === "output" ? inputs : outputs;
+                  content = html`<section>
+                    <h1 data-message-idx=${idx}>${node.type}</h1>
+                    ${node.type === "output" || node.type === "input"
+                      ? html` <aside class="node-output">
+                          <details open>
+                            <summary>text</summary>
+                            <bb-json-tree
+                              .json=${adjustedOutputs}
+                            ></bb-json-tree>
+                          </details>
+                        </aside>`
+                      : nothing}
+                  </section>`;
+                  break;
                 }
-
-                content = html`Board started`;
                 break;
               }
-
               case "error": {
+                const { error } = event;
                 let output = "";
-                if (typeof event.data.error === "string") {
-                  output = event.data.error.toString();
+                if (typeof error === "string") {
+                  output = error;
                 } else {
                   let messageOutput = "";
-                  let error = event.data.error;
-                  while (typeof error === "object") {
+                  let errorData = error.error;
+                  while (typeof errorData === "object") {
                     if (error && "message" in error) {
                       messageOutput += `${error.message}\n`;
                     }
 
-                    error = error.error as ErrorObject;
+                    errorData = error.error as ErrorObject;
                   }
 
                   output = messageOutput;
                 }
 
                 content = html`${output}`;
-                break;
-              }
-
-              case "output":
-              case "nodeend": {
-                // TODO: Support subgraphs.
-                if (
-                  event.type === "nodeend" &&
-                  (event.data.path.length > 1 ||
-                    event.data.node.type === "output")
-                ) {
-                  return nothing;
-                }
-
-                content = html`<section>
-                  <h1 data-message-idx=${idx}>${event.data.node.type}</h1>
-                  ${event.type === "output" || event.data.node.type === "input"
-                    ? html` <aside class="node-output">
-                        <details open>
-                          <summary>text</summary>
-                          <div>${event.data.outputs.text}</div>
-                        </details>
-                      </aside>`
-                    : nothing}
-                </section>`;
-                break;
-              }
-
-              case "input":
-              case "nodestart": {
-                if (idx !== this.eventPosition) {
-                  return nothing;
-                }
-
-                content = html`${event.type === "input"
-                  ? "Waiting..."
-                  : // prettier-ignore
-                    html`Working: (<pre>${event.data.node.id}</pre>)`}`;
                 break;
               }
 
@@ -259,8 +244,8 @@ export class ActivityLog extends LitElement {
               [event.type]: true,
             };
 
-            if (event.type === "nodeend") {
-              classes[event.data.node.type] = true;
+            if (event.type === "node" && event.end) {
+              classes[event.node.type] = true;
             }
 
             return html`<div class="${classMap(classes)}">

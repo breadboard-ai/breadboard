@@ -7,6 +7,7 @@
 import { HarnessRunResult } from "../harness/types.js";
 import {
   Edge,
+  ErrorResponse,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -16,6 +17,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  OutputValues,
   Schema,
 } from "../types.js";
 
@@ -396,12 +398,47 @@ export type InspectableVersionedGraph = {
 //   ? { type: Type; data: Data }
 //   : never;
 
+export type InspectableRunNodeEvent = {
+  type: "node";
+  node: NodeDescriptor;
+  /**
+   * The timestamp of the `nodestart` event.
+   */
+  start: number;
+  /**
+   * The timestamp of the `nodeend` event. Can be null when the `nodeend` has
+   * not been received yet.
+   */
+  end: number | null;
+  /**
+   * The inputs that were provided to the node
+   */
+  inputs: InputValues;
+  /**
+   * The outputs that were produced by the node. Can be null when the `nodeend`
+   * has not been received yet.
+   */
+  outputs: OutputValues | null;
+  /**
+   * The underlying result that generated this event.
+   * Only available for `input` and `secret` nodes, and
+   * only before `nodeend` event has been received.
+   * Can be used to reply to the `input` or `secret` node.
+   */
+  result: HarnessRunResult | null;
+  // TODO: Add nested `InspectableRunEvent` array for subgraphs.
+};
+
 /**
  * Represents pairs of nodestart and nodeend results that were generated
  * during the run.
  */
-// export type InspectableRunEvent = InspectableEvent<HarnessRunResult>;
-export type InspectableRunEvent = HarnessRunResult;
+export type InspectableRunEvent =
+  | InspectableRunNodeEvent
+  | {
+      type: "error";
+      error: ErrorResponse;
+    };
 
 /**
  * Represents a single run of a graph.
