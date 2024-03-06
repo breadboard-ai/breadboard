@@ -127,32 +127,38 @@
         "test"
       ]
     },
-    "syncpack:check": {
-      "command": "syncpack list-mismatches --config syncpack.config.ts --types all",
+    "syncpack:files": {
       "files": [
+        "syncpack.config.ts",
         "package.json",
         "package-lock.json",
         "packages/*/package.json",
         "packages/*/package-lock.json"
       ]
+    },
+    "syncpack:check": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types all",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
     },
     "syncpack:check:prod": {
       "command": "syncpack list-mismatches --config syncpack.config.ts --types prod",
-      "files": [
-        "package.json",
-        "package-lock.json",
-        "packages/*/package.json",
-        "packages/*/package-lock.json"
-      ]
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
     },
     "syncpack:check:dev": {
       "command": "syncpack list-mismatches --config syncpack.config.ts --types dev",
-      "files": [
-        "package.json",
-        "package-lock.json",
-        "packages/*/package.json",
-        "packages/*/package-lock.json"
-      ]
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
     }
   },
   "keywords": [],
