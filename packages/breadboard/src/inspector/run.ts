@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeDescriptor } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "../harness/types.js";
+import { NodeDescriptor } from "../types.js";
+import { InspectableRun, InspectableRunEvent } from "./types.js";
 
 type GraphRecord = {
   nodes: NodeDescriptor[];
 };
 
-export class NodeHighlightHelper {
+class NodeHighlightHelper {
   #history: (NodeDescriptor | undefined)[] = [];
   #graphStack: GraphRecord[] = [];
   #currentNode?: NodeDescriptor;
@@ -76,5 +77,62 @@ export class NodeHighlightHelper {
       return "";
     }
     return entry.id;
+  }
+}
+
+export const inspectableRun = (): InspectableRun => {
+  return new Run();
+};
+
+type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
+
+export class Run implements InspectableRun {
+  id = 0;
+  graphId = crypto.randomUUID();
+  graphVersion = 0;
+  events: InspectableRunEvent[] = [];
+  messages: HarnessRunResult[] = [];
+
+  #highlightHelper = new NodeHighlightHelper();
+
+  observe(runner: Runner): Runner {
+    return new Observer(runner, (message) => {
+      this.messages.push(message);
+      this.#highlightHelper.add(message);
+    });
+  }
+
+  currentNode(position: number) {
+    return this.#highlightHelper.currentNode(position);
+  }
+}
+
+type OnResult = (message: HarnessRunResult) => void;
+
+class Observer implements Runner {
+  #runner: Runner;
+  #onResult: OnResult;
+
+  constructor(runner: Runner, onResult: OnResult) {
+    this.#onResult = onResult;
+    this.#runner = runner;
+  }
+
+  async next() {
+    const result = await this.#runner.next();
+    if (result.done) {
+      return result;
+    }
+    this.#onResult(result.value);
+    return result;
+  }
+  async return() {
+    return this.#runner.return();
+  }
+  async throw(error?: unknown) {
+    return this.#runner.throw(error);
+  }
+  [Symbol.asyncIterator]() {
+    return this;
   }
 }

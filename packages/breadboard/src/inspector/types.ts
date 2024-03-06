@@ -387,6 +387,8 @@ export type InspectableVersionedGraphStore = {
   ): Promise<InspectableGraphWithVersions>;
 };
 
+type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
+
 /**
  * Combines both nodestart and nodeend results into a single entry.
  */
@@ -417,4 +419,9 @@ export type InspectableRun = {
   events: InspectableRunEvent[];
   messages: HarnessRunResult[];
   currentNode(position: number): string;
+
+  // TODO: Figure out what to do here. I don't really like how observing is
+  // part of the otherwise read-only API. But I can't think of an elegant
+  // solution right now.
+  observe(runner: Runner): Runner;
 };
