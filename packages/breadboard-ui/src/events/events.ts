@@ -21,6 +21,18 @@ export class StartEvent extends Event {
   }
 }
 
+export class RunEvent extends Event {
+  static eventName = "breadboardrunboard";
+
+  constructor() {
+    super(RunEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
@@ -30,7 +42,10 @@ export enum ToastType {
 export class ToastEvent extends Event {
   static eventName = "breadboardtoast";
 
-  constructor(public message: string, public toastType: ToastType) {
+  constructor(
+    public message: string,
+    public toastType: ToastType
+  ) {
     super(ToastEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -66,7 +81,10 @@ export class NodeSelectEvent extends Event {
 export class InputEnterEvent extends Event {
   static eventName = "breadboardinputenter";
 
-  constructor(public id: string, public data: Record<string, unknown>) {
+  constructor(
+    public id: string,
+    public data: Record<string, unknown>
+  ) {
     super(InputEnterEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -114,7 +132,10 @@ export class ResumeEvent extends Event {
 export class NodeCreateEvent extends Event {
   static eventName = "breadboardnodecreate";
 
-  constructor(public id: string, public nodeType: string) {
+  constructor(
+    public id: string,
+    public nodeType: string
+  ) {
     super(NodeCreateEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -138,7 +159,10 @@ export class NodeDeleteEvent extends Event {
 export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
-  constructor(public id: string, public configuration: NodeConfiguration) {
+  constructor(
+    public id: string,
+    public configuration: NodeConfiguration
+  ) {
     super(NodeUpdateEvent.eventName, {
       bubbles: true,
       cancelable: true,

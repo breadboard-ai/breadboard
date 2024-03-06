@@ -289,13 +289,19 @@ export class GraphRenderer extends LitElement {
     this.#resizeObserver.observe(this);
 
     if (!this.#background) {
-      PIXI.Texture.fromURL("/images/pattern.png").then((texture) => {
-        this.#background = new PIXI.TilingSprite(texture);
-        this.#background.width = this.#app.renderer.width;
-        this.#background.height = this.#app.renderer.height;
-
-        this.#app.stage.addChildAt(this.#background, 0);
+      const buffer = new Uint8Array([0xed, 0xed, 0xed]);
+      const texture = PIXI.Texture.fromBuffer(buffer, 1, 1, {
+        type: PIXI.TYPES.UNSIGNED_BYTE,
+        format: PIXI.FORMATS.RGB,
+        mipmap: PIXI.MIPMAP_MODES.OFF,
+        scaleMode: PIXI.SCALE_MODES.LINEAR,
       });
+
+      this.#background = new PIXI.TilingSprite(texture);
+      this.#background.width = this.#app.renderer.width;
+      this.#background.height = this.#app.renderer.height;
+
+      this.#app.stage.addChildAt(this.#background, 0);
     } else {
       this.#app.stage.addChildAt(this.#background, 0);
     }
