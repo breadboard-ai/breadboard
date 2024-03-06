@@ -93,7 +93,7 @@ export class Editor extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: rgb(244, 247, 252);
+      background-color: #ededed;
       overflow: auto;
       position: relative;
       user-select: none;
