@@ -616,6 +616,10 @@ export class Main extends LitElement {
   }
 
   render() {
+    const toasts = html`${this.toasts.map(({ message, type }) => {
+      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
+    })}`;
+
     if (this.mode === MODE.LIST) {
       return html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
@@ -623,13 +627,13 @@ export class Main extends LitElement {
         </header>
         <bb-board-list
           @breadboardstart=${this.#onStartBoard}
+          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
           .boards=${this.config.boards}
-        ></bb-board-list>`;
+        ></bb-board-list>
+        ${toasts}`;
     }
-
-    const toasts = html`${this.toasts.map(({ message, type }) => {
-      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
-    })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
