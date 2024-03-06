@@ -334,11 +334,30 @@ export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
 export type UUID = ReturnType<Crypto["randomUUID"]>;
 
 /**
- * A graph with multiple versions.
+ * Represents a store of graph versions.
  */
-export type InspectableGraphWithVersions = {
+export type InspectableGraphVersionsStore = {
   /**
-   * The unique identifier of the graph.
+   * Retrieves a graph with the given id, and optionally, version and run.
+   * @param id -- the id of the graph to retrieve
+   * @param version -- the version of the graph to retrieve (optional,
+   * defaults to 0)
+   * @param run -- the run of the graph to retrieve (optional, defaults to 0)
+   */
+  get(
+    id: UUID,
+    version?: number,
+    run?: number
+  ): Promise<InspectableGraphVersions>;
+};
+
+/**
+ * Represents a sequence of versions of a graph.
+ * This sequence of versions grows as the graph is edited.
+ */
+export type InspectableGraphVersions = {
+  /**
+   * The unique identifier of the sequence of graph versions.
    */
   id: UUID;
   /**
@@ -347,6 +366,12 @@ export type InspectableGraphWithVersions = {
    * version of the graph. The last item is the latest version.
    */
   versions: InspectableVersionedGraph[];
+  /**
+   * Returns only major versions of the graph.
+   * A "major" version of the graph is a version that has one or more runs
+   * associated with it. A "minor" version is a version that has no runs.
+   */
+  major(): InspectableVersionedGraph[];
 };
 
 /**
@@ -364,40 +389,24 @@ export type InspectableVersionedGraph = {
   runs: InspectableRun[];
 };
 
-export type VersionOptions = {
-  /**
-   * If false (default), only return major versions.
-   * A "major" version of the graph is a version that has one or more runs
-   * associated with it. A "minor" version is a version that has no runs.
-   */
-  minor: boolean;
-};
-
-export type InspectableVersionedGraphStore = {
-  /**
-   * Retrieves a graph with the given id, and optionally, version and run.
-   * @param id -- the id of the graph to retrieve
-   * @param version -- the version of the graph to retrieve (optional)
-   * @param run -- the run of the graph to retrieve (optional)
-   */
-  get(
-    id: UUID,
-    version?: number,
-    run?: number
-  ): Promise<InspectableGraphWithVersions>;
-};
-
-type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
-
 /**
- * Combines both nodestart and nodeend results into a single entry.
+ * Represents pairs of nodestart and nodeend results that were generated
+ * during the run.
  */
 export type InspectableRunEvent = {
-  /** */
-  graph?: InspectableRun;
+  // TODO: Figure out what goes here.
+
+  /**
+   * Any nested graph runs that may have happened during the event.
+   * This is usually a result of `core.invoke` or `core.map` or `core.reduce`
+   * nodess running subgraphs.
+   */
+  nested: InspectableRun[];
 };
 
-// TODO: Move to Breadboard proper.
+/**
+ * Represents a single run of a graph.
+ */
 export type InspectableRun = {
   /**
    * The unique identifier for the run, starting from 0.
@@ -414,9 +423,13 @@ export type InspectableRun = {
    */
   graphVersion: number;
   /**
-   * All events that have occurred during the run.
+   * All events within this graph that have occurred during the run.
+   * The nested graph events aren't included.
    */
   events: InspectableRunEvent[];
+  /**
+   * This will likely go away. This is what is currently used by the UI.
+   */
   messages: HarnessRunResult[];
   currentNode(position: number): string;
 
@@ -425,3 +438,5 @@ export type InspectableRun = {
   // solution right now.
   observe(runner: Runner): Runner;
 };
+
+type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
