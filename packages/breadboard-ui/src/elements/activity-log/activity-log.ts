@@ -180,6 +180,8 @@ export class ActivityLog extends LitElement {
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
                 if (end === null) {
+                  // The `event.result` will be non-null when the
+                  // node is ready to ask for input or secrets.
                   if (event.result) {
                     console.log("RESULT", event.result);
                   }
@@ -192,17 +194,14 @@ export class ActivityLog extends LitElement {
                       html`Working: (<pre>${node.id}</pre>)`}`;
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
-                  const adjustedOutputs =
-                    node.type === "output" ? inputs : outputs;
+                  const result = node.type === "output" ? inputs : outputs;
                   content = html`<section>
                     <h1 data-message-idx=${idx}>${node.type}</h1>
                     ${node.type === "output" || node.type === "input"
                       ? html` <aside class="node-output">
                           <details open>
                             <summary>text</summary>
-                            <bb-json-tree
-                              .json=${adjustedOutputs}
-                            ></bb-json-tree>
+                            <bb-json-tree .json=${result}></bb-json-tree>
                           </details>
                         </aside>`
                       : nothing}

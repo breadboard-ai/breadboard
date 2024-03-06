@@ -391,13 +391,10 @@ export type InspectableVersionedGraph = {
   runs: InspectableRun[];
 };
 
-// type InspectableEvent<RunType> = RunType extends {
-//   data: infer Data;
-//   type: infer Type;
-// }
-//   ? { type: Type; data: Data }
-//   : never;
-
+/**
+ * Represents a pair of the nodestart and nodeend results that were generated
+ * during the run.
+ */
 export type InspectableRunNodeEvent = {
   type: "node";
   node: NodeDescriptor;
@@ -430,15 +427,19 @@ export type InspectableRunNodeEvent = {
 };
 
 /**
- * Represents pairs of nodestart and nodeend results that were generated
- * during the run.
+ * Represents an error event that was generated during the run.
+ */
+export type InspectableRunErrorEvent = {
+  type: "error";
+  error: ErrorResponse;
+};
+
+/**
+ * Represent all events that can be inspected during a run.
  */
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
-  | {
-      type: "error";
-      error: ErrorResponse;
-    };
+  | InspectableRunErrorEvent;
 
 /**
  * Represents a single run of a graph.
