@@ -173,7 +173,7 @@ Workers are very happy to take JSON output, so we can simply pass this work as c
 
 Because it is given a task to adhere to a strict schema, the Structured Worker validates its own output and, if the output is invalid, will automatically try again, up to five times. Typically, this is enough to overcome any validation-related challenges, but in the worst case, the Structured Worker will throw an error and give up, halting the workflow.
 
-## Repeater
+## Repeater (agents.repeater)
 
 The Repeater node creates a repeating loop of workers, enabling us to create cycles within our workflows.
 
@@ -297,3 +297,34 @@ const bot = agents.repeater({
   }),
 });
 ```
+
+## Tool Worker (agents.toolWorker)
+
+[Function-calling](https://ai.google.dev/docs/function_calling) is very popular with LLMs right now, and for a good reason: it turns out, LLMs are pretty good at making good choices on which tool to choose and have enough wherewithal to construct a call for any given API.
+
+The Tool Worker is a node that relies on this capability to provide a synthetic worker that, given a list of tools and a work context, will choose the right tool, invoke it, process the results and pass them on to the next worker.
+
+To make the job easier for the Tool Worker, all tools must be presented as boards.
+
+Here's how we would engage a Tool Worker:
+
+```ts
+const sampleProblem = "What is the square root of pi?";
+
+// A stable URL to the The Calculator board.
+const mathTool =
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json";
+
+const hipMathematician = agents.toolWorker({
+  $metadata: { title: "Hip Mathematician" },
+  instruction: `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. Use the math tool for solving the problems and reply without engaging the tool otherwise. After using the tool, make sure to summarize and expand the answer in a humorous way to help the user enjoy the beauty of math.`,
+  context: sampleProblem,
+  tools: [mathTool],
+});
+```
+
+As with any worker, the Tool Worker has a `context` output port, which contains the accumulated context of the entire body of work performed so far, including any function calls and responses.
+
+We can also use the `text` output port to get just the response from the Tool Worker, if we aren't interested in the entire context.
+
+At the moment, the tools must be supplied as URLs. Under the hood, the Tool Worker loads each board and uses its metadata (`title` and `description`) to formulate the function-calling request to the LLM.

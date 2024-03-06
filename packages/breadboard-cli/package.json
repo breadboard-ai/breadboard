@@ -98,7 +98,7 @@
       "output": []
     },
     "pack:install": {
-      "command": "npm --verbose install -g $(npm pack)",
+      "command": "npm pack && npm --verbose install -g $(find . -name \"$(npm pkg get name | tr -d '\"' | sed 's/@//;s/\\//-/g').tgz\")",
       "dependencies": [
         "build"
       ],
@@ -147,7 +147,7 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.11.20",
+    "@types/node": "^20.11.24",
     "@types/serve-handler": "^6.1.4",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
@@ -159,10 +159,16 @@
     "@google-labs/breadboard-web": "^1.2.2",
     "@google-labs/core-kit": "^0.4.0",
     "@google-labs/template-kit": "^0.2.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-virtual": "^3.0.2",
     "commander": "^12.0.0",
     "esbuild": "^0.20.1",
+    "rollup": "^4.12.1",
     "serve": "^14.2.1",
-    "vite": "^5.1.4",
-    "yaml": "^2.4.0"
+    "urlpattern-polyfill": "^10.0.0",
+    "vite": "^5.1.5",
+    "yaml": "^2.4.1"
   }
 }

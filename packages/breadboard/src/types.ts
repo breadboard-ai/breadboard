@@ -27,6 +27,7 @@ export type {
   InputIdentifier,
   InputValues,
   KitDescriptor,
+  KitManifest,
   KitReference,
   NodeConfiguration,
   NodeDescriptor,

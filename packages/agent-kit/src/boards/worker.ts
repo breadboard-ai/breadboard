@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  NewNodeFactory,
-  NewNodeValue,
-  board,
-  code,
-} from "@google-labs/breadboard";
+import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
 import { gemini } from "@google-labs/gemini-kit";
+import { contextAssembler, contextBuilder } from "../context.js";
 
 export type WorkerType = NewNodeFactory<
   {
@@ -47,40 +43,6 @@ Given any topic, you can quickly whip up a two-line rhyming poem about it.
 Look at the topic below and do your magic`;
 
 const sampleContext = `the universe within us`;
-
-type ContextItem = {
-  role: string;
-  parts: { text: string }[];
-};
-
-const contextAssembler = code(({ context, generated }) => {
-  if (!context) throw new Error("Context is required");
-  return { context: [...(context as ContextItem[]), generated as ContextItem] };
-});
-
-const contextBuilder = code(({ context, instruction }) => {
-  if (typeof context === "string") {
-    // A clever trick. Let's see if this works
-    // A user can supply context as either ContextItem[] or as a string.
-    // When it's a string, let's just conjure up the proper ContextItem[]
-    // from that.
-    context = [{ role: "user", parts: [{ text: context }] }];
-  }
-  const list = (context as unknown[]) || [];
-  if (list.length > 0) {
-    const last = list[list.length - 1] as ContextItem;
-    if (last.role === "user") {
-      // A trick: the instruction typically sits in front of the actual task
-      // that the user requests. So do just that -- add it at the front of the
-      // user part list, rather than at the end.
-      last.parts.unshift({ text: instruction as string });
-      return { context: list };
-    }
-  }
-  return {
-    context: [...list, { role: "user", parts: [{ text: instruction }] }],
-  };
-});
 
 export default await board(({ context, instruction, stopSequences }) => {
   context.title("Context").isArray().examples(sampleContext);

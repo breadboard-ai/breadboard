@@ -94,7 +94,8 @@ export class Input extends LitElement {
       flex: 1;
       margin: calc(var(--bb-grid-size) * 2) 0;
       border: var(--bb-input-fieldset-border, 1px solid rgb(200, 200, 200));
-      border-radius: var(--bb-grid-size);
+      border-radius: calc(var(--bb-grid-size) * 3);
+      background: #fff;
       position: relative;
       padding-bottom: calc(var(--bb-grid-size) * 3);
     }
@@ -200,27 +201,20 @@ export class Input extends LitElement {
       height: auto;
     }
 
-    input[type="submit"] {
-      font-size: 0;
-      width: calc(var(--bb-grid-size) * 8);
-      height: calc(var(--bb-grid-size) * 8);
-      position: absolute;
-      right: calc(var(--bb-grid-size) * 1.5);
-      top: calc(var(--bb-grid-size) * 0.5);
-      border-radius: 50%;
-      background: var(--bb-icon-start) center center no-repeat;
-      border: none;
-    }
-
-    input[type="submit"][disabled] {
-      opacity: 50%;
-    }
-
     .parsed-value img {
       width: 100%;
       border-radius: calc(var(--bb-grid-size) * 6);
       object-fit: cover;
       aspect-ratio: auto;
+    }
+
+    input[type="submit"] {
+      background: #987ee5;
+      color: #fff;
+      border-radius: 20px;
+      border: none;
+      height: 100%;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
     }
   `;
 
@@ -397,9 +391,10 @@ export class Input extends LitElement {
 
     return html`<form id="choice-container">
       <fieldset>
-        <legend>${this.id}</legend>
         ${Object.entries(properties).map(([key, property]) => {
-          const label = html`<label for="${key}">${property.title}</label>`;
+          const label = html`<label for="${key}"
+            >${this.id}: ${property.title}</label
+          >`;
           const value = renderProperty(key, property, processedValues[key]);
 
           return html`${label}${value}`;
@@ -412,9 +407,10 @@ export class Input extends LitElement {
     return html`<div id="input">
       <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
         <fieldset>
-          <legend>${this.id}</legend>
           ${Object.entries(properties).map(([key, property]) => {
-            const label = html`<label for="${key}">${property.title}</label>`;
+            const label = html`<label for="${key}"
+              >${this.id}: ${property.title}</label
+            >`;
             let input;
             if (isMultipartImage(property)) {
               // Webcam input.
@@ -486,6 +482,7 @@ export class Input extends LitElement {
             return html`${label}${input}`;
           })}
         </fieldset>
+        <input type="submit" value="Submit" />
       </form>
     </div>`;
   }

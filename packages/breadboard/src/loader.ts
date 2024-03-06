@@ -43,8 +43,8 @@ export const resolveURL = (
   const result: ResolverResult = path
     ? { type: "file", location: path, href }
     : href
-    ? { type: "fetch", location: hrefWithoutHash, href }
-    : { type: "unknown", location: "", href };
+      ? { type: "fetch", location: hrefWithoutHash, href }
+      : { type: "unknown", location: "", href };
   results.push(result);
   return !hash;
 };
@@ -69,7 +69,7 @@ export const loadFromFile = async (path: string) => {
   return JSON.parse(await readFileFn(path, "utf-8"));
 };
 
-export const loadWithFetch = async (url: string) => {
+export const loadWithFetch = async (url: string | URL) => {
   const response = await fetch(url);
   return await response.json();
 };

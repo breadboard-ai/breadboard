@@ -134,8 +134,9 @@
               "title": "context"
             },
             "json": {
-              "type": "string",
-              "title": "json"
+              "title": "json",
+              "description": "The validated JSON.",
+              "type": "string"
             }
           }
         }
@@ -176,10 +177,11 @@
           "properties": {
             "schema": {
               "title": "Schema",
+              "description": "The schema to convert to schemish.",
+              "type": "object",
               "examples": [
                 "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"poems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"inspiration\": {\n            \"type\": \"string\",\n            \"description\": \"The inspiration behind the poem\"\n          },\n          \"poem\": {\n            \"type\": \"string\",\n            \"description\": \"The poem itself\"\n          }\n        }\n      }\n    }\n  }\n}"
               ],
-              "type": "object",
               "format": "multiline",
               "default": "{}"
             },
@@ -221,8 +223,32 @@
           "type": "object",
           "properties": {
             "$error": {
-              "type": "string",
-              "title": "$error"
+              "title": "$error",
+              "description": "The error if the JSON is invalid.",
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "error"
+                  ]
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "parsing",
+                        "validation"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
             },
             "context": {
               "type": "string",

@@ -15,21 +15,11 @@ const metaData = {
   version: "0.0.3",
 };
 
-const urlSchema = {
-  type: "object",
-  properties: {
-    url: {
-      type: "string",
-      title: "URL",
-      description: "The URL of the ATOM feed to fetch.",
-    },
-  },
-};
+export default await board(({ url }) => {
+  url.title("url").description("The URL of the ATOM feed to fetch.");
 
-export default await board(() => {
-  const fetchFeed = base
-    .input({ $id: "input", schema: urlSchema })
-    .url.to(
+  const fetchFeed = url
+    .to(
       core.fetch({
         $id: "fetch",
         raw: true,

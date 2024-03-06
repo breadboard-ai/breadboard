@@ -1,0 +1,18 @@
+<details open>
+  <summary>Breadboard Updates</summary>
+  <ul>
+  {%- for item in collections.update -%}
+    <li>
+      {% if page.url != item.url %}
+        <a href="/breadboard{{ item.url }}">
+      {% endif %}
+
+        {{ item.data.title }}
+
+      {% if page.url != item.url %}
+        </a>
+      {% endif %}
+      </li>
+  {%- endfor -%}
+  </ul>
+</details>

@@ -148,7 +148,8 @@ export class BoardItem extends LitElement {
     div > a:hover {
       background: rgb(113, 106, 162);
       border: 1px solid rgb(88, 79, 138);
-      box-shadow: 0 2px 7px 0 rgba(0, 0, 0, 0.14),
+      box-shadow:
+        0 2px 7px 0 rgba(0, 0, 0, 0.14),
         0 13px 27px 0 rgba(0, 0, 0, 0.23);
       transition: all 0.15s cubic-bezier(0, 0, 0.3, 1);
     }
@@ -199,7 +200,8 @@ export class BoardItem extends LitElement {
 
     #copy-to-clipboard:hover {
       background-color: #ffffffcc;
-      transition: opacity var(--bb-easing-duration-in) var(--bb-easing),
+      transition:
+        opacity var(--bb-easing-duration-in) var(--bb-easing),
         background-color var(--bb-easing-duration-in) var(--bb-easing);
       opacity: 1;
     }
@@ -255,6 +257,7 @@ export class BoardItem extends LitElement {
     this.#copying = true;
     const linkUrl = new URL(window.location.href);
     linkUrl.searchParams.set("board", this.boardUrl);
+    linkUrl.searchParams.set("mode", "build");
 
     await navigator.clipboard.writeText(linkUrl.toString());
     this.dispatchEvent(

@@ -32,7 +32,7 @@ export class Graph extends PIXI.Container {
   #layout = new Map<string, { x: number; y: number; pendingSize?: boolean }>();
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
-  #highlightedNodeColor = 0xff04a4;
+  #highlightedNodeColor = 0x0084ff;
   #highlightPadding = 8;
   #editable = false;
 
@@ -508,9 +508,9 @@ export class Graph extends PIXI.Container {
       const { width, height } = graphNode.dimensions;
       this.#highlightedNode.clear();
       this.#highlightedNode.lineStyle({
-        width: 5,
+        width: this.#highlightPadding - 2,
         color: this.#highlightedNodeColor,
-        alpha: 0.4,
+        alpha: 0.25,
       });
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,

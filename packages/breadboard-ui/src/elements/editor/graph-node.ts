@@ -26,6 +26,8 @@ export class GraphNode extends PIXI.Graphics {
   #color = 0x333333;
   #titleTextColor = 0x333333;
   #portTextColor = 0x333333;
+  #borderColor = 0xd9d9d9;
+  #selectedColor = 0x0084ff;
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 10;
@@ -407,7 +409,7 @@ export class GraphNode extends PIXI.Graphics {
   #drawBackground() {
     if (this.selected) {
       const borderSize = 2;
-      this.beginFill(0x999999);
+      this.beginFill(this.#selectedColor);
       this.drawRoundedRect(
         -borderSize,
         -borderSize,
@@ -419,7 +421,7 @@ export class GraphNode extends PIXI.Graphics {
     }
 
     const borderSize = 1;
-    this.beginFill(0xbbbbbb);
+    this.beginFill(this.#borderColor);
     this.drawRoundedRect(
       -borderSize,
       -borderSize,

@@ -13,7 +13,6 @@ export enum DIRECTION {
 }
 
 const STORAGE_PREFIX = "bb-split";
-const HANDLE_SIZE = 8;
 
 @customElement("bb-splitter")
 export class Splitter extends LitElement {
@@ -54,14 +53,32 @@ export class Splitter extends LitElement {
     :host {
       display: grid;
       overflow: auto;
+      --handle-size: 16px;
     }
 
-    :host([direction="horizontal"]) #drag-handle {
+    .drag-handle {
+      z-index: 1;
+      position: relative;
+    }
+
+    :host([direction="horizontal"].active) {
       cursor: ew-resize;
     }
 
-    :host([direction="vertical"]) #drag-handle {
+    :host([direction="vertical"].active) {
       cursor: ns-resize;
+    }
+
+    :host([direction="horizontal"]) .drag-handle {
+      cursor: ew-resize;
+      width: var(--handle-size);
+      translate: calc(var(--handle-size) * -0.5) 0;
+    }
+
+    :host([direction="vertical"]) .drag-handle {
+      cursor: ns-resize;
+      height: var(--handle-size);
+      translate: 0 calc(var(--handle-size) * -0.5);
     }
   `;
 
@@ -79,13 +96,11 @@ export class Splitter extends LitElement {
   #onPointerDown(evt: PointerEvent) {
     const [handle] = evt.composedPath();
     if (!(handle instanceof HTMLElement)) {
-      console.log("g", handle);
       return;
     }
 
     const idx = Number.parseInt(handle.dataset.idx || "");
     if (Number.isNaN(idx)) {
-      console.log("a", idx);
       return;
     }
 
@@ -106,6 +121,7 @@ export class Splitter extends LitElement {
     this.#bounds.height = end.bottom - start.top;
 
     this.style.userSelect = "none";
+    this.classList.add("active");
 
     document.addEventListener("pointermove", this.#onPointerMoveBound);
     document.addEventListener("pointerup", this.#onPointerUpBound);
@@ -142,6 +158,7 @@ export class Splitter extends LitElement {
   #onPointerUp() {
     this.#handleIdx = null;
     this.style.userSelect = "initial";
+    this.classList.remove("active");
     document.removeEventListener("pointermove", this.#onPointerMoveBound);
   }
 
@@ -190,7 +207,7 @@ export class Splitter extends LitElement {
   #updateStyles() {
     const styles = this.split
       .map((_, idx) => `var(--slot-${idx})`)
-      .join(` ${HANDLE_SIZE}px `);
+      .join(` 0px `);
 
     switch (this.direction) {
       case DIRECTION.VERTICAL: {
@@ -218,7 +235,7 @@ export class Splitter extends LitElement {
         idx < this.split.length - 1
           ? html`<div
               @pointerdown=${this.#onPointerDown}
-              id="drag-handle"
+              class="drag-handle"
               data-idx="${idx}"
             ></div>`
           : nothing;

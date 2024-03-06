@@ -1,0 +1,308 @@
+{
+  "title": "Ad Writer (variant 2)",
+  "description": "An example of chain of agents working on writing an ad",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "structuredWorker-10",
+      "to": "output-2",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "structuredWorker-9",
+      "to": "structuredWorker-10",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-8",
+      "to": "structuredWorker-9",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-7",
+      "to": "structuredWorker-8",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-6",
+      "to": "structuredWorker-7",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-5",
+      "to": "structuredWorker-6",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-4",
+      "to": "structuredWorker-5",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker-3",
+      "to": "structuredWorker-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "structuredWorker-3",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "structuredWorker-10",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Write ad copy that conforms to the specified requirements, shortening it to fit into the 300 character limit of the ad platform.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ad": {
+              "type": "string",
+              "description": "the ad copy"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Ad Writer"
+      }
+    },
+    {
+      "id": "structuredWorker-9",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Update the requirements based on the review, removing or adjusting the requirements that can't be satisfied",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "requirement": {
+                    "type": "string",
+                    "description": "the requirement"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "reasoning behind including this requirement"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Requirements Extractor"
+      }
+    },
+    {
+      "id": "structuredWorker-8",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Look at the requirements and compare them with the content of the original ad spec. Does the content of the ad spec contain information necessary to satisfy the requiremnts?",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "requirementsReview": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "requirement": {
+                    "type": "string",
+                    "description": "the requirement"
+                  },
+                  "problem": {
+                    "type": "string",
+                    "description": "why can't it be satisfied"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Requirements Rewriter"
+      }
+    },
+    {
+      "id": "structuredWorker-7",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Incorporate all feedback above into new, improved requirements. If the feedback can not be satisfied because it's not in the original ad spec, think of ways of how it could be addressed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "requirement": {
+                    "type": "string",
+                    "description": "the requirement"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "reasoning behind including this requirement"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Requirements Extractor"
+      }
+    },
+    {
+      "id": "structuredWorker-6",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Imagine you are a customer. You are a software developer who is overrun with ads and are weary of all the hype around AI. You just want to get going and get something done. Review the ad and offer three improvements that would increase the likelihood of you trusting it.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "requirement": {
+                    "type": "string",
+                    "description": "the requirement"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "reasoning behind including this requirement"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Customer"
+      }
+    },
+    {
+      "id": "structuredWorker-5",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Write ad copy that incorporates the 3 points in the critique into a new, improved ad for Google AdWords service.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ad": {
+              "type": "string",
+              "description": "the ad copy"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Ad Improveer"
+      }
+    },
+    {
+      "id": "structuredWorker-4",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "critique": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "summary": {
+                    "type": "string",
+                    "description": "summary of a point in the critique"
+                  },
+                  "details": {
+                    "type": "string",
+                    "description": "reasoning behind the point in a critique"
+                  },
+                  "suggestions": {
+                    "type": "string",
+                    "description": "suggestions for improvement"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Ad Writing Pro"
+      }
+    },
+    {
+      "id": "structuredWorker-3",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Write ad copy that incorporates the key messages in the ad spec into a compelling, engaging ad for Google AdWords service, staying within the 300 character limit.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ad": {
+              "type": "string",
+              "description": "the ad copy"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Ad Writer"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Ad specs",
+              "type": "array",
+              "default": "[]",
+              "examples": [
+                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n      - Breadboard for Developers\n      - Iterate with Gemini APIs \n      - Integrate AI Into Your Project\n      - Start Your AI Project Today\n      - Create graphs with prompts\n      - AI for Developers\n      - Try Google Gemini"
+              ],
+              "format": "multiline"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

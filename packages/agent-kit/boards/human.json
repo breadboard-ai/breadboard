@@ -115,6 +115,10 @@
       "type": "invoke",
       "configuration": {
         "$board": "#fn-4"
+      },
+      "metadata": {
+        "title": "Create Schema",
+        "description": "Create a schema for user input"
       }
     },
     {
@@ -155,6 +159,10 @@
       "type": "invoke",
       "configuration": {
         "$board": "#fn-3"
+      },
+      "metadata": {
+        "title": "Maybe Output",
+        "description": "If the last message was from the model, output it"
       }
     },
     {

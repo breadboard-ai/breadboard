@@ -17,9 +17,11 @@ import {
   edit,
   EditResult,
   GraphDescriptor,
+  inspectRun,
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
 
 export const getBoardInfo = async (
   url: string
@@ -55,6 +57,9 @@ export class Main extends LitElement {
   loadInfo: BreadboardUI.Types.LoadArgs | null = null;
 
   @state()
+  kits: Kit[] = [];
+
+  @state()
   mode = MODE.LIST;
 
   @state()
@@ -70,18 +75,17 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #kits: Kit[] = [];
+  #inspector = inspectRun();
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       flex: 1 0 auto;
       display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 11) auto;
-      grid-template-columns: calc(var(--bb-grid-size) * 16) auto;
-
-      --rhs-top: 10fr;
-      --rhs-mid: 45fr;
-      --rhs-bottom: 45fr;
+      grid-template-rows: calc(var(--bb-grid-size) * 12) auto;
     }
 
     bb-toast {
@@ -107,13 +111,47 @@ export class Main extends LitElement {
     }
 
     #header-bar {
-      background: rgb(113, 106, 162);
+      background: #f3f3f6;
       display: flex;
       align-items: center;
-      color: rgb(255, 255, 255);
-      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-      grid-column: 1 / 3;
+      color: #1a1a1a;
+      border-bottom: 1px solid #d9d9d9;
       z-index: 1;
+      height: calc(var(--bb-grid-size) * 12);
+      padding: calc(var(--bb-grid-size) * 2);
+    }
+
+    #get-log,
+    #get-board,
+    #toggle-preview {
+      padding: 0 16px 0 42px;
+      font-size: var(--bb-text-medium);
+      margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
+      cursor: pointer;
+      background: 12px center var(--bb-icon-download);
+      background-repeat: no-repeat;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      border-radius: 20px;
+      border: none;
+    }
+
+    #get-log:hover,
+    #get-board:hover,
+    #toggle-preview:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    #toggle-preview {
+      margin-right: 0;
+      background: 12px center var(--bb-icon-preview);
+      background-repeat: no-repeat;
+    }
+
+    #toggle-preview.active {
+      background-color: #ffffff;
     }
 
     #new-board {
@@ -134,41 +172,8 @@ export class Main extends LitElement {
       display: block;
       width: 16px;
       height: 16px;
-      background: var(--bb-icon-arrow-back-white) center center no-repeat;
-      margin: 0 calc(var(--bb-grid-size) * 5);
-    }
-
-    #run-board-locally,
-    #download-board,
-    #download-log {
-      font-size: var(--bb-text-pico);
-      padding: 4px 8px 4px 24px;
-      border-radius: 32px;
-      background: #fff;
-      color: #333;
-      margin-right: 8px;
-      cursor: default;
-      transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
-      opacity: 0.8;
-      text-decoration: none;
-      border: none;
-    }
-
-    #run-board-locally:hover,
-    #download-board:hover,
-    #download-log:hover {
-      transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
-      opacity: 1;
-    }
-
-    #run-board-locally {
-      padding: 4px 8px;
-    }
-
-    #download-board,
-    #download-log {
-      background: #fff var(--bb-icon-download) 4px 2px no-repeat;
-      background-size: 16px 16px;
+      background: var(--bb-icon-arrow-back) center center no-repeat;
+      margin: 0 calc(var(--bb-grid-size) * 3);
     }
 
     #header-bar h1 {
@@ -182,62 +187,6 @@ export class Main extends LitElement {
       color: rgb(90, 64, 119);
       margin: 0;
       display: inline;
-    }
-
-    #side-bar {
-      background: rgb(255, 255, 255);
-      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-      padding: calc(var(--bb-grid-size) * 2);
-    }
-
-    #side-bar button {
-      width: 100%;
-      font-size: var(--bb-text-small);
-      color: rgb(57, 57, 57);
-      text-align: center;
-      background: none;
-      cursor: pointer;
-      margin: calc(var(--bb-grid-size) * 2) 0;
-      padding-top: 32px;
-      border: none;
-      opacity: 0.5;
-      position: relative;
-    }
-
-    #side-bar button:hover,
-    #side-bar button[active] {
-      opacity: 1;
-    }
-
-    #side-bar button[active] {
-      pointer-events: none;
-    }
-
-    #side-bar button::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 30px;
-      border-radius: 14px;
-      background-position: center center;
-      background-repeat: no-repeat;
-    }
-
-    #side-bar #select-build::before {
-      background-image: var(--bb-icon-board);
-    }
-
-    #side-bar #select-preview::before {
-      background-image: var(--bb-icon-preview);
-    }
-
-    #side-bar button[active]::before {
-      background-color: rgb(240, 231, 249);
     }
 
     #content {
@@ -372,9 +321,9 @@ export class Main extends LitElement {
       return;
     }
 
-    const runConfig = createRunConfig(this.url);
+    const runConfig = await createRunConfig(this.url);
 
-    this.#kits = runConfig.kits;
+    this.kits = runConfig.kits;
 
     const runner = run(runConfig);
     await this.#runBoard(runner);
@@ -388,13 +337,16 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
-    ui.clearMessages();
+
+    // Clear message history.
+    this.#inspector = inspectRun();
+    ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of runner) {
+    for await (const result of this.#inspector.observe(runner)) {
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -500,10 +452,11 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
+    this.#inspector = inspectRun();
     this.#uiRef.value.unloadCurrentBoard();
   }
 
-  #downloadLog(evt: Event) {
+  #getRunLog(evt: Event) {
     if (!(evt.target instanceof HTMLAnchorElement && this.#uiRef.value)) {
       return;
     }
@@ -512,7 +465,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#uiRef.value.messages;
+    const messages = this.#inspector.messages;
 
     const secrets = [];
     const inputs = [];
@@ -565,7 +518,7 @@ export class Main extends LitElement {
     );
   }
 
-  #downloadBoard(evt: Event) {
+  #getBoardJson(evt: Event) {
     if (
       !(evt.target instanceof HTMLAnchorElement) ||
       !this.loadInfo ||
@@ -595,8 +548,8 @@ export class Main extends LitElement {
     this.mode = MODE.BUILD;
 
     if (this.loadInfo.url) {
-      const config = createRunConfig(this.loadInfo.url);
-      this.#kits = config.kits;
+      const config = await createRunConfig(this.loadInfo.url);
+      this.kits = config.kits;
     }
   }
 
@@ -608,6 +561,10 @@ export class Main extends LitElement {
   }
 
   render() {
+    const toasts = html`${this.toasts.map(({ message, type }) => {
+      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
+    })}`;
+
     if (this.mode === MODE.LIST) {
       return html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
@@ -615,13 +572,13 @@ export class Main extends LitElement {
         </header>
         <bb-board-list
           @breadboardstart=${this.#onStartBoard}
+          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
           .boards=${this.config.boards}
-        ></bb-board-list>`;
+        ></bb-board-list>
+        ${toasts}`;
     }
-
-    const toasts = html`${this.toasts.map(({ message, type }) => {
-      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
-    })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
@@ -631,8 +588,31 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .kits=${this.#kits}
+          .inspectableRun=${this.#inspector}
+          .kits=${this.kits}
           .status=${this.status}
+          @breadboardrunboard=${async () => {
+            if (
+              !this.loadInfo?.graphDescriptor ||
+              !this.loadInfo.graphDescriptor.url
+            ) {
+              return;
+            }
+
+            const runner = await BoardRunner.fromGraphDescriptor(
+              this.loadInfo.graphDescriptor
+            );
+
+            const runConfig = await createRunConfig(
+              this.loadInfo.graphDescriptor.url
+            );
+            runConfig.remote = false;
+            runConfig.proxy = [];
+            runConfig.runner = runner;
+            this.kits = runConfig.kits;
+
+            this.#runBoard(run(runConfig));
+          }}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
@@ -648,18 +628,27 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
 
             let editResult: Promise<EditResult>;
             switch (evt.changeType) {
               case "add": {
-                editResult = editableGraph.addEdge(evt.edge);
+                editResult = editableGraph.addEdge(evt.from);
                 break;
               }
 
               case "remove": {
-                editResult = editableGraph.removeEdge(evt.edge);
+                editResult = editableGraph.removeEdge(evt.from);
+                break;
+              }
+
+              case "move": {
+                if (!evt.to) {
+                  throw new Error("Unable to move edge - no `to` provided");
+                }
+
+                editResult = editableGraph.changeEdge(evt.from, evt.to);
                 break;
               }
             }
@@ -693,7 +682,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
             editableGraph.addNode(newNode).then((result) => {
               if (!result.success) {
@@ -721,7 +710,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
 
             editableGraph
@@ -757,7 +746,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
             editableGraph.removeNode(evt.id).then((result) => {
               if (!result.success) {
@@ -822,60 +811,23 @@ export class Main extends LitElement {
       }
     }
 
-    // Only show the local run button when there is no URL set.
-    const localRunButton = this.url
-      ? nothing
-      : html`<button
-          id="run-board-locally"
-          @click=${async () => {
-            if (
-              !this.loadInfo?.graphDescriptor ||
-              !this.loadInfo.graphDescriptor.url
-            ) {
-              return;
-            }
-
-            const runner = await BoardRunner.fromGraphDescriptor(
-              this.loadInfo.graphDescriptor
-            );
-
-            const runConfig = createRunConfig(
-              this.loadInfo.graphDescriptor.url
-            );
-            runConfig.remote = false;
-            runConfig.proxy = [];
-            runConfig.runner = runner;
-            this.#kits = runConfig.kits;
-
-            this.#runBoard(run(runConfig));
-          }}
-        >
-          Run this board
-        </button>`;
-
     tmpl = html`<div id="header-bar">
         <a id="back" href="/" @click=${this.#unloadCurrentBoard}
           >Back to list</a
         >
         <h1>${this.loadInfo?.title || "Untitled board"}</h1>
-        ${localRunButton}
-        <a id="download-board" @click=${this.#downloadBoard}>Download board</a>
-        <a id="download-log" @click=${this.#downloadLog}>Download log</a>
-      </div>
-      <div id="side-bar">
+        <a id="get-board" @click=${this.#getBoardJson}>Get code</a>
+        <a id="get-log" @click=${this.#getRunLog}>Get log</a>
         <button
-          id="select-build"
-          ?active=${this.mode === MODE.BUILD}
-          @click=${() => (this.mode = MODE.BUILD)}
+          class=${classMap({ active: this.mode === MODE.PREVIEW })}
+          id="toggle-preview"
+          @click=${() => {
+            console.log(this.mode, MODE.BUILD, this.mode === MODE.BUILD);
+            this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
+            console.log(this.mode);
+          }}
         >
-          Build
-        </button>
-        <button
-          id="select-preview"
-          ?active=${this.mode === MODE.PREVIEW}
-          @click=${() => (this.mode = MODE.PREVIEW)}
-        >
-          Preview
+          Toggle Preview
         </button>
       </div>
       <div id="content" class="${this.mode}">${cache(content)}</div>`;

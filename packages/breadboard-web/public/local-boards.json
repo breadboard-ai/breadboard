@@ -5,6 +5,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Ad Writer (variant 2)",
+    "url": "/graphs/ad-writer-2.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Ad Writer",
     "url": "/graphs/ad-writer.json",
     "version": "0.0.3"
