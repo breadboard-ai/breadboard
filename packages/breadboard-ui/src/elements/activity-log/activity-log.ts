@@ -162,6 +162,10 @@ export class ActivityLog extends LitElement {
       font-family: var(--bb-font-family-mono);
       line-height: 1.65;
     }
+
+    pre {
+      display: inline-block;
+    }
   `;
 
   render() {
@@ -237,7 +241,8 @@ export class ActivityLog extends LitElement {
 
                 content = html`${message.type === "input"
                   ? "Waiting..."
-                  : `Working: (${message.data.node.id})`}`;
+                  : // prettier-ignore
+                    html`Working: (<pre>${message.data.node.id}</pre>)`}`;
                 break;
               }
 
