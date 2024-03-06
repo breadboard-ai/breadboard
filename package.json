@@ -137,7 +137,7 @@
       ]
     },
     "syncpack:check": {
-      "command": "syncpack list-mismatches --config syncpack.config.ts --types all",
+      "command": "syncpack list-mismatches --config syncpack.config.ts",
       "dependencies": [
         "syncpack:files"
       ],
