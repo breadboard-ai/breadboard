@@ -1,5 +1,22 @@
-<div class="inline-list">
-  <a href="/breadboard/docs/">Docs</a>
-  <a href="/breadboard/updates/">Updates</a>
-  <a id="github" href="https://github.com/breadboard-ai/breadboard">GitHub</a>
-</div>
+<header id="navigation">
+  {% if not isHome %}
+  <div class="home">
+    <a href="/breadboard/">Breadboard</a>
+  </div>
+  {% endif %}
+
+  <div class="toggle-list">
+    <input type="checkbox" id="item-list-toggle">
+    <label for="item-list-toggle">Show docs</label>
+    <div class="item-list">
+      {% include "documentation-list.njk" %}
+      {% include "update-list.njk" %}
+    </div>
+  </div>
+
+  <div class="inline-list">
+    <a href="/breadboard/docs/">Docs</a>
+    <a href="/breadboard/updates/">Updates</a>
+    <a id="github" href="https://github.com/breadboard-ai/breadboard">GitHub</a>
+  </div>
+</header>

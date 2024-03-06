@@ -6,6 +6,7 @@
 
 import { GraphDescriptor } from "../types.js";
 import { inspectableGraph } from "./graph.js";
+import { inspectableRun } from "./run.js";
 import { InspectableGraph, InspectableGraphOptions } from "./types.js";
 
 export const inspect = (
@@ -14,3 +15,5 @@ export const inspect = (
 ): InspectableGraph => {
   return inspectableGraph(graph, options);
 };
+
+export const inspectRun = inspectableRun;

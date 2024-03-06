@@ -14,7 +14,7 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { Kit } from "@google-labs/breadboard";
+import { InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -28,12 +28,6 @@ const CONFIG_MEMORY_KEY = "ui-config";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
-};
-
-// TODO: Move to Breadboard proper.
-export type InspectableRun = {
-  messages: HarnessRunResult[];
-  currentNode(position: number): string;
 };
 
 /**

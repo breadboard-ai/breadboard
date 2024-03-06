@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult } from "../harness/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -326,3 +327,116 @@ export type EdgeStoreMutator = {
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
+
+/**
+ * Represents an UUID that is used to identify a graph.
+ */
+export type UUID = ReturnType<Crypto["randomUUID"]>;
+
+/**
+ * Represents a store of graph versions.
+ */
+export type InspectableGraphVersionsStore = {
+  /**
+   * Retrieves a graph with the given id, and optionally, version and run.
+   * @param id -- the id of the graph to retrieve
+   * @param version -- the version of the graph to retrieve (optional,
+   * defaults to 0)
+   * @param run -- the run of the graph to retrieve (optional, defaults to 0)
+   */
+  get(
+    id: UUID,
+    version?: number,
+    run?: number
+  ): Promise<InspectableGraphVersions>;
+};
+
+/**
+ * Represents a sequence of versions of a graph.
+ * This sequence of versions grows as the graph is edited.
+ */
+export type InspectableGraphVersions = {
+  /**
+   * The unique identifier of the sequence of graph versions.
+   */
+  id: UUID;
+  /**
+   * A list of versions for the given graph. Every edit to the graph
+   * results in a new version. The first item in the list is the initial
+   * version of the graph. The last item is the latest version.
+   */
+  versions: InspectableVersionedGraph[];
+  /**
+   * Returns only major versions of the graph.
+   * A "major" version of the graph is a version that has one or more runs
+   * associated with it. A "minor" version is a version that has no runs.
+   */
+  major(): InspectableVersionedGraph[];
+};
+
+/**
+ * Represents a versioned graph.
+ * A versioned graph has zero or more runs associated with it.
+ */
+export type InspectableVersionedGraph = {
+  /**
+   * The unique identifier of the versioned graph. This is a monotonically
+   * increasing number, starting from 0. Same as the index of the `versions`
+   * array in the `InspectableGraphWithVersions` object.
+   */
+  id: number;
+  graph: InspectableGraph;
+  runs: InspectableRun[];
+};
+
+/**
+ * Represents pairs of nodestart and nodeend results that were generated
+ * during the run.
+ */
+export type InspectableRunEvent = {
+  // TODO: Figure out what goes here.
+
+  /**
+   * Any nested graph runs that may have happened during the event.
+   * This is usually a result of `core.invoke` or `core.map` or `core.reduce`
+   * nodess running subgraphs.
+   */
+  nested: InspectableRun[];
+};
+
+/**
+ * Represents a single run of a graph.
+ */
+export type InspectableRun = {
+  /**
+   * The unique identifier for the run, starting from 0.
+   * It monotonically increases for each run. Same as the index of the `runs`
+   * array in the `InspectableVersionedGraph` object.
+   */
+  id: number;
+  /**
+   * The id graph that was run.
+   */
+  graphId: UUID;
+  /**
+   * The version graph that was run.
+   */
+  graphVersion: number;
+  /**
+   * All events within this graph that have occurred during the run.
+   * The nested graph events aren't included.
+   */
+  events: InspectableRunEvent[];
+  /**
+   * This will likely go away. This is what is currently used by the UI.
+   */
+  messages: HarnessRunResult[];
+  currentNode(position: number): string;
+
+  // TODO: Figure out what to do here. I don't really like how observing is
+  // part of the otherwise read-only API. But I can't think of an elegant
+  // solution right now.
+  observe(runner: Runner): Runner;
+};
+
+type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
