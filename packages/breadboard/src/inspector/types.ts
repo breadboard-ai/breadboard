@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult } from "../harness/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -326,3 +327,94 @@ export type EdgeStoreMutator = {
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
+
+/**
+ * Represents an UUID that is used to identify a graph.
+ */
+export type UUID = ReturnType<Crypto["randomUUID"]>;
+
+/**
+ * A graph with multiple versions.
+ */
+export type InspectableGraphWithVersions = {
+  /**
+   * The unique identifier of the graph.
+   */
+  id: UUID;
+  /**
+   * A list of versions for the given graph. Every edit to the graph
+   * results in a new version. The first item in the list is the initial
+   * version of the graph. The last item is the latest version.
+   */
+  versions: InspectableVersionedGraph[];
+};
+
+/**
+ * Represents a versioned graph.
+ * A versioned graph has zero or more runs associated with it.
+ */
+export type InspectableVersionedGraph = {
+  /**
+   * The unique identifier of the versioned graph. This is a monotonically
+   * increasing number, starting from 0. Same as the index of the `versions`
+   * array in the `InspectableGraphWithVersions` object.
+   */
+  id: number;
+  graph: InspectableGraph;
+  runs: InspectableRun[];
+};
+
+export type VersionOptions = {
+  /**
+   * If false (default), only return major versions.
+   * A "major" version of the graph is a version that has one or more runs
+   * associated with it. A "minor" version is a version that has no runs.
+   */
+  minor: boolean;
+};
+
+export type InspectableVersionedGraphStore = {
+  /**
+   * Retrieves a graph with the given id, and optionally, version and run.
+   * @param id -- the id of the graph to retrieve
+   * @param version -- the version of the graph to retrieve (optional)
+   * @param run -- the run of the graph to retrieve (optional)
+   */
+  get(
+    id: UUID,
+    version?: number,
+    run?: number
+  ): Promise<InspectableGraphWithVersions>;
+};
+
+/**
+ * Combines both nodestart and nodeend results into a single entry.
+ */
+export type InspectableRunEvent = {
+  /** */
+  graph?: InspectableRun;
+};
+
+// TODO: Move to Breadboard proper.
+export type InspectableRun = {
+  /**
+   * The unique identifier for the run, starting from 0.
+   * It monotonically increases for each run. Same as the index of the `runs`
+   * array in the `InspectableVersionedGraph` object.
+   */
+  id: number;
+  /**
+   * The id graph that was run.
+   */
+  graphId: UUID;
+  /**
+   * The version graph that was run.
+   */
+  graphVersion: number;
+  /**
+   * All events that have occurred during the run.
+   */
+  events: InspectableRunEvent[];
+  messages: HarnessRunResult[];
+  currentNode(position: number): string;
+};
