@@ -168,6 +168,11 @@ export class ActivityLog extends LitElement {
   `;
 
   render() {
+    console.log(
+      "rendering activity log",
+      this.events?.length,
+      this.eventPosition
+    );
     return html`
       <h1>Activity Log</h1>
       ${this.events
