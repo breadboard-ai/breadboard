@@ -136,7 +136,8 @@ img {
   margin: 40px auto 80px auto;
   background: #ffffff;
   border: 1px solid #dcdcdc;
-  box-shadow: 0px 25px 13.1px rgba(0, 0, 0, 0.05),
+  box-shadow:
+    0px 25px 13.1px rgba(0, 0, 0, 0.05),
     0px 45px 50px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
 }
@@ -198,7 +199,7 @@ code[class*="language-"] {
 .updates ul {
   margin: 0;
   list-style: none;
-  padding: 0 0 0 32px;
+  padding: 0 16px 0 32px;
   font-size: 0.875rem;
 }
 
