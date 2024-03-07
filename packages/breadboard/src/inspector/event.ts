@@ -35,6 +35,7 @@ export class EventManager {
         break;
       }
       case "input": {
+        this.#registry.input(result.data.path, result);
         // const last = this.#events[this.#events.length - 1];
         // if (last.type !== "node" || last.node.type !== result.type) {
         //   // This is a bubbled input.

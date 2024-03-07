@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeEndResponse, NodeStartResponse } from "../types.js";
+import { HarnessRunResult } from "../harness/types.js";
+import { InputResponse, NodeEndResponse, NodeStartResponse } from "../types.js";
 import {
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -101,6 +102,17 @@ export class PathRegistry {
           nested: null,
         })
     );
+  }
+
+  input(path: number[], result: HarnessRunResult) {
+    this.#traverse(true, path, (entry) => {
+      const existing = entry.event;
+      if (!existing) {
+        console.error("Expected an existing event for", path);
+        return;
+      }
+      existing.result = result;
+    });
   }
 
   nodeend(path: number[], data: NodeEndResponse) {

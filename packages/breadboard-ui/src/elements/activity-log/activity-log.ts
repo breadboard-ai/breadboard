@@ -184,6 +184,13 @@ export class ActivityLog extends LitElement {
                   // if (idx !== this.eventPosition) {
                   //   return nothing;
                   // }
+                  if (node.type === "input" && event.result) {
+                    // can ask for inputs here. Use `event.result` to get to
+                    // the `HarnessRunResult`.
+                    // TODO: Figure out how the actual asking for input
+                    //       will work.
+                    console.log("✨ Can ask for input", event.result);
+                  }
                   content = html`${node.type === "input"
                     ? "Waiting..."
                     : // prettier-ignore
@@ -209,7 +216,7 @@ export class ActivityLog extends LitElement {
               case "secret": {
                 // can ask for secret here. Use
                 // `event.result` to get to the `HarnessRunResult`.
-                // TODO: Figure out how the actual input/output will work
+                // TODO: Figure out how the actual asking for secret will work
                 // TODO: Figure out how to signal when already know the secret
                 //       (probably just return `nothing`)
                 return nothing;
