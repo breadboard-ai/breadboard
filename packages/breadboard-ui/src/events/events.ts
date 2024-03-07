@@ -187,11 +187,11 @@ export class EdgeChangeEvent extends Event {
   }
 }
 
-export class GraphNodeDblClickEvent extends Event {
-  static eventName = "breadboardgraphnodedblclick";
+export class GraphNodeSelectedEvent extends Event {
+  static eventName = "breadboardgraphnodeselected";
 
-  constructor(public id: string) {
-    super(GraphNodeDblClickEvent.eventName, {
+  constructor(public id: string | null) {
+    super(GraphNodeSelectedEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -199,11 +199,11 @@ export class GraphNodeDblClickEvent extends Event {
   }
 }
 
-export class GraphNodeEdgeAttach extends Event {
+export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "breadboardgraphedgeattach";
 
   constructor(public edge: InspectableEdge) {
-    super(GraphNodeEdgeAttach.eventName, {
+    super(GraphNodeEdgeAttachEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -211,11 +211,11 @@ export class GraphNodeEdgeAttach extends Event {
   }
 }
 
-export class GraphNodeEdgeDetach extends Event {
+export class GraphNodeEdgeDetachEvent extends Event {
   static eventName = "breadboardgraphedgedetach";
 
   constructor(public edge: InspectableEdge) {
-    super(GraphNodeEdgeDetach.eventName, {
+    super(GraphNodeEdgeDetachEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -223,14 +223,14 @@ export class GraphNodeEdgeDetach extends Event {
   }
 }
 
-export class GraphNodeEdgeChange extends Event {
+export class GraphNodeEdgeChangeEvent extends Event {
   static eventName = "breadboardgraphedgechange";
 
   constructor(
     public fromEdge: InspectableEdge,
     public toEdge: InspectableEdge
   ) {
-    super(GraphNodeEdgeChange.eventName, {
+    super(GraphNodeEdgeChangeEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -238,11 +238,11 @@ export class GraphNodeEdgeChange extends Event {
   }
 }
 
-export class GraphNodeDelete extends Event {
+export class GraphNodeDeleteEvent extends Event {
   static eventName = "breadboardgraphnodedelete";
 
   constructor(public id: string) {
-    super(GraphNodeDelete.eventName, {
+    super(GraphNodeDeleteEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

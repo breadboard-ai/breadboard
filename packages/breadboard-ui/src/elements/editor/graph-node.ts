@@ -101,22 +101,9 @@ export class GraphNode extends PIXI.Graphics {
   addPointerEventListeners() {
     let dragStart: PIXI.IPointData | null = null;
     let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
-    let lastClickTime = Number.NEGATIVE_INFINITY;
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphNode)) {
-        return;
-      }
-
-      const now = window.performance.now();
-      const timeDelta = now - lastClickTime;
-
-      lastClickTime = now;
-      if (timeDelta < 500) {
-        this.parent.emit(
-          GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-          evt.target.id
-        );
         return;
       }
 

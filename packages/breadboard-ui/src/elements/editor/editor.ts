@@ -4,14 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  PropertyValueMap,
-  HTMLTemplateResult,
-  nothing,
-} from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
@@ -20,26 +13,20 @@ import {
   Kit,
   NodeConfiguration,
   InspectableNodePorts,
-  Schema,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import {
   EdgeChangeEvent,
-  GraphNodeDblClickEvent,
-  GraphNodeDelete,
-  GraphNodeEdgeAttach,
-  GraphNodeEdgeChange,
-  GraphNodeEdgeDetach,
+  GraphNodeDeleteEvent,
+  GraphNodeEdgeAttachEvent,
+  GraphNodeEdgeChangeEvent,
+  GraphNodeEdgeDetachEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
-  NodeUpdateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
-import { until } from "lit/directives/until.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { SchemaEditor } from "../schema-editor/schema-editor.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -77,16 +64,12 @@ export class Editor extends LitElement {
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
-  #onGraphNodeDblClickBound = this.#onGraphNodeDblClick.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
-  #onKeyDownBound = this.#onKeyDown.bind(this);
   #top = 0;
   #left = 0;
-  #formRef: Ref<HTMLFormElement> = createRef();
-  #schemaVersion = 0;
 
   static styles = css`
     :host {
@@ -161,129 +144,6 @@ export class Editor extends LitElement {
       top: 0;
     }
 
-    #properties {
-      background: rgba(0, 0, 0, 0.05);
-      position: absolute;
-      height: 100%;
-      right: 0;
-      top: 0;
-      width: 100%;
-      z-index: 10;
-      overflow: hidden;
-    }
-
-    #node-properties {
-      box-sizing: border-box;
-      width: max(400px, 30%);
-      position: absolute;
-      height: 100%;
-      right: 0;
-      top: 0;
-      background: #fff;
-      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-      display: flex;
-      flex-direction: column;
-    }
-
-    #properties header {
-      display: flex;
-      align-items: center;
-      padding: calc(var(--bb-grid-size) * 2);
-      border-bottom: 1px solid rgb(227, 227, 227);
-    }
-
-    #properties h1 {
-      padding: calc(var(--bb-grid-size) * 2);
-      font-size: var(--bb-text-small);
-      font-weight: bold;
-      margin: 0;
-      position: sticky;
-      top: 0;
-      background: rgb(255, 255, 255);
-      z-index: 1;
-      flex: 1;
-    }
-
-    #properties form {
-      display: grid;
-      font-size: var(--bb-text-small);
-      overflow: auto;
-    }
-
-    #properties #fields {
-      overflow: auto;
-      scrollbar-gutter: stable;
-      margin: calc(var(--bb-grid-size) * 2);
-      display: grid;
-    }
-
-    #properties label {
-      grid-column: 1/3;
-      font-family: var(--bb-font-family);
-      font-size: var(--bb-text-small);
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
-    }
-
-    #properties input[type="number"],
-    #properties div[contenteditable] {
-      border-radius: var(
-        --bb-input-border-radius,
-        calc(var(--bb-grid-size) * 3)
-      );
-      background: rgb(255, 255, 255);
-      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-      border: 1px solid rgb(209, 209, 209);
-    }
-
-    #properties div[contenteditable].mono {
-      font-family: var(--bb-font-family-mono);
-    }
-
-    #properties .configuration-item {
-      margin: calc(var(--bb-grid-size) * 2);
-    }
-
-    #properties .configuration-item > label {
-      font-weight: bold;
-    }
-
-    #properties .configuration-item > div {
-      margin-top: calc(var(--bb-grid-size) * 2);
-    }
-
-    #properties #reset-to-defaults,
-    #properties input[type="submit"] {
-      background: rgb(209, 203, 255);
-      border-radius: calc(var(--bb-grid-size) * 3);
-      font-size: var(--bb-text-small);
-      font-weight: bold;
-      height: calc(var(--bb-grid-size) * 5);
-      border: none;
-      padding: 0 var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-    }
-
-    #properties #reset-to-defaults {
-      background: #eee;
-      margin-right: calc(var(--bb-grid-size) * 2);
-    }
-
-    #properties .cancel {
-      width: 24px;
-      height: 24px;
-      font-size: 0;
-      border: none;
-      background: no-repeat center center var(--bb-icon-close);
-    }
-
-    #form-controls {
-      display: grid;
-      column-gap: calc(var(--bb-grid-size) * 2);
-    }
-
-    #reset-to-defaults {
-      justify-self: end;
-    }
-
     bb-graph-renderer {
       display: block;
       width: 100%;
@@ -302,7 +162,6 @@ export class Editor extends LitElement {
     this.#lastGraphUrl = descriptor.url || null;
 
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
-
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
@@ -313,29 +172,6 @@ export class Editor extends LitElement {
       }
     }
 
-    // Check that the active node is available and that it has ports.
-    if (this.nodeValueBeingEdited) {
-      const portInfo = ports.get(this.nodeValueBeingEdited.id);
-      if (!portInfo) {
-        this.#resetNodeValueBeingEdited();
-      } else {
-        const inPortNames = new Set(
-          portInfo.inputs.ports.map((port) => port.name)
-        );
-        const outPortNames = new Set(
-          portInfo.outputs.ports.map((port) => port.name)
-        );
-
-        inPortNames.delete("*");
-        outPortNames.delete("*");
-        outPortNames.delete("$error");
-
-        if (inPortNames.size === 0 && outPortNames.size === 0) {
-          this.#resetNodeValueBeingEdited();
-        }
-      }
-    }
-
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
@@ -343,32 +179,26 @@ export class Editor extends LitElement {
 
   connectedCallback(): void {
     this.#graphRenderer.addEventListener(
-      GraphNodeDblClickEvent.eventName,
-      this.#onGraphNodeDblClickBound
-    );
-
-    this.#graphRenderer.addEventListener(
-      GraphNodeEdgeAttach.eventName,
+      GraphNodeEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodeEdgeDetach.eventName,
+      GraphNodeEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodeEdgeChange.eventName,
+      GraphNodeEdgeChangeEvent.eventName,
       this.#onGraphEdgeChangeBound
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodeDelete.eventName,
+      GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
-    window.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
 
@@ -377,32 +207,26 @@ export class Editor extends LitElement {
 
   disconnectedCallback(): void {
     this.#graphRenderer.removeEventListener(
-      GraphNodeDblClickEvent.eventName,
-      this.#onGraphNodeDblClickBound
-    );
-
-    this.#graphRenderer.removeEventListener(
-      GraphNodeEdgeAttach.eventName,
+      GraphNodeEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodeEdgeDetach.eventName,
+      GraphNodeEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodeEdgeChange.eventName,
+      GraphNodeEdgeChangeEvent.eventName,
       this.#onGraphEdgeChangeBound
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodeDelete.eventName,
+      GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
-    window.addEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
 
@@ -423,16 +247,8 @@ export class Editor extends LitElement {
     }
   }
 
-  #onGraphNodeDblClick(evt: Event) {
-    const { id } = evt as GraphNodeDblClickEvent;
-    this.nodeValueBeingEdited = {
-      editAction: "update",
-      id,
-    };
-  }
-
   #onGraphEdgeAttach(evt: Event) {
-    const { edge } = evt as GraphNodeEdgeAttach;
+    const { edge } = evt as GraphNodeEdgeAttachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent("add", {
         from: edge.from.descriptor.id,
@@ -444,7 +260,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeDetach(evt: Event) {
-    const { edge } = evt as GraphNodeEdgeDetach;
+    const { edge } = evt as GraphNodeEdgeDetachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent("remove", {
         from: edge.from.descriptor.id,
@@ -456,7 +272,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeChange(evt: Event) {
-    const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
+    const { fromEdge, toEdge } = evt as GraphNodeEdgeChangeEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "move",
@@ -477,7 +293,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphNodeDelete(evt: Event) {
-    const { id } = evt as GraphNodeDelete;
+    const { id } = evt as GraphNodeDeleteEvent;
     this.dispatchEvent(new NodeDeleteEvent(id));
   }
 
@@ -504,33 +320,12 @@ export class Editor extends LitElement {
     this.#graph.setNodeLayoutPosition(id, { x, y });
 
     this.dispatchEvent(new NodeCreateEvent(id, data));
-
-    this.nodeValueBeingEdited = {
-      editAction: "add",
-      id,
-    };
   }
 
   #onResize() {
     const bounds = this.getBoundingClientRect();
     this.#top = bounds.top;
     this.#left = bounds.left;
-  }
-
-  #onKeyDown(evt: KeyboardEvent) {
-    if (!this.nodeValueBeingEdited) {
-      return;
-    }
-
-    if (evt.key === "Escape") {
-      this.#resetNodeValueBeingEdited();
-      return;
-    }
-  }
-
-  #resetNodeValueBeingEdited() {
-    this.defaultConfiguration = null;
-    this.nodeValueBeingEdited = null;
   }
 
   // TODO: Find a better way of getting the defaults for any given node.
@@ -614,322 +409,12 @@ export class Editor extends LitElement {
     </div>`;
   }
 
-  async #setDefaultConfiguration(activeNode: EditedNode) {
-    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
-      return;
-    }
-
-    const descriptor = this.loadInfo.graphDescriptor;
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
-    const node = breadboardGraph.nodeById(activeNode.id);
-    if (!node) {
-      return;
-    }
-
-    // Setting this will trigger a re-render.
-    this.defaultConfiguration = {} satisfies NodeConfiguration;
-
-    const { inputs } = await node.ports();
-    for (const port of inputs.ports) {
-      if (!port.schema?.default && !port.schema?.examples) {
-        continue;
-      }
-
-      this.defaultConfiguration[port.name] =
-        port.schema?.examples ?? port.schema?.default;
-    }
-  }
-
-  #createNodePropertiesPanel(
-    activeNode: EditedNode,
-    configuration: NodeConfiguration | null
-  ) {
-    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
-      return;
-    }
-
-    const descriptor = this.loadInfo.graphDescriptor;
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
-    const node = breadboardGraph.nodeById(activeNode.id);
-    if (!node) {
-      return;
-    }
-
-    configuration = configuration || node.configuration() || {};
-
-    const details = (async () => {
-      const { inputs } = await node.ports();
-      const ports = structuredClone(inputs.ports).sort((portA, portB) =>
-        portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
-      );
-
-      return html` <div
-        id="properties"
-        @pointerdown=${() => (this.nodeValueBeingEdited = null)}
-      >
-        <div
-          id="node-properties"
-          @pointerdown=${(evt: Event) => evt.stopPropagation()}
-        >
-          <form ${ref(this.#formRef)} @submit=${this.#onFormSubmit}>
-            <header>
-              <button
-                type="button"
-                class="cancel"
-                @click=${() => {
-                  if (!this.#graph) {
-                    return;
-                  }
-
-                  this.#resetNodeValueBeingEdited();
-                }}
-              >
-                Cancel
-              </button>
-              <h1>${node.descriptor.type} (${node.title()})</h1>
-              <button
-                ?disabled=${!this.editable}
-                @click=${() => this.#setDefaultConfiguration(activeNode)}
-                type="button"
-                id="reset-to-defaults"
-              >
-                Use defaults
-              </button>
-              <input ?disabled=${!this.editable} type="submit" value="Update" />
-            </header>
-            <div id="fields">
-              <input
-                id="$id"
-                name="$id"
-                type="hidden"
-                value="${activeNode.id}"
-              />
-              <input
-                id="$type"
-                name="$type"
-                type="hidden"
-                value="${node.descriptor.type}"
-              />
-              ${map(ports, (port) => {
-                if (!configuration || port.star) return;
-                const schema = port.schema || {};
-                const name = port.name;
-                const configurationValue = configuration[name];
-
-                let input;
-                const type = port.schema?.type || "string";
-                switch (type) {
-                  case "object": {
-                    const schema = configurationValue as Schema;
-
-                    if (schema && schema.properties) {
-                      input = html`<bb-schema-editor
-                        .editable=${this.editable}
-                        .schema=${schema}
-                        .schemaVersion=${this.#schemaVersion}
-                        @breadboardschemachange=${() => {
-                          if (!this.#formRef.value) {
-                            return;
-                          }
-
-                          this.#schemaVersion++;
-                          this.#formRef.value.dispatchEvent(
-                            new SubmitEvent("submit")
-                          );
-                        }}
-                        id="${name}"
-                        name="${name}"
-                      ></bb-schema-editor>`;
-                    } else {
-                      // prettier-ignore
-                      input = html`<div
-                        class="mono"
-                        contenteditable="plaintext-only"
-                        data-id="${name}"
-                        data-type="${type}"
-                      >${JSON.stringify(configurationValue, null, 2)}</div>`;
-                    }
-                    break;
-                  }
-
-                  case "number": {
-                    input = html`<div>
-                      <input
-                        type="number"
-                        value="${configurationValue}"
-                        name="${name}"
-                        id=${name}
-                      />
-                    </div>`;
-                    break;
-                  }
-
-                  case "boolean": {
-                    input = html`<div>
-                      <input
-                        type="checkbox"
-                        name="${name}"
-                        id=${name}
-                        value="true"
-                        ?checked=${configurationValue === "true"}
-                      />
-                    </div>`;
-                    break;
-                  }
-
-                  default: {
-                    // prettier-ignore
-                    input = html`<div
-                            contenteditable="plaintext-only"
-                            data-id="${name}"
-                          >${configurationValue}</div>`;
-                    break;
-                  }
-                }
-
-                return html`<div class="configuration-item">
-                  <label title="${schema.description}" for="${name}"
-                    >${name}
-                    (${Array.isArray(schema.type)
-                      ? schema.type.join(", ")
-                      : schema.type || "No type"}):
-                  </label>
-                  ${input}
-                </div>`;
-              })}
-            </div>
-          </form>
-        </div>
-      </div>`;
-    })();
-
-    return html`${until(details, html`Loading...`)}`;
-  }
-
-  async #onFormSubmit(evt: SubmitEvent) {
-    evt.preventDefault();
-
-    if (
-      !(evt.target instanceof HTMLFormElement) ||
-      !this.nodeValueBeingEdited
-    ) {
-      return;
-    }
-
-    const toConvert = new Set<string>();
-    const data = new FormData(evt.target);
-    for (const field of evt.target.querySelectorAll("div[contenteditable]")) {
-      if (
-        !(
-          field instanceof HTMLDivElement &&
-          field.dataset.id &&
-          field.textContent
-        )
-      ) {
-        continue;
-      }
-
-      if (field.dataset.type && field.dataset.type === "object") {
-        toConvert.add(field.dataset.id);
-      }
-
-      data.set(field.dataset.id, field.textContent);
-    }
-
-    for (const schemaEditor of evt.target.querySelectorAll(
-      "bb-schema-editor"
-    )) {
-      if (!(schemaEditor instanceof SchemaEditor && schemaEditor.id)) {
-        continue;
-      }
-
-      if (!schemaEditor.applyPendingChanges()) {
-        return;
-      }
-
-      if (
-        !schemaEditor.schema.properties ||
-        Object.keys(schemaEditor.schema.properties).length === 0
-      ) {
-        continue;
-      }
-
-      data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
-    }
-
-    const id = data.get("$id") as string;
-    const nodeType = data.get("$type") as string;
-    if (!(id && nodeType)) {
-      console.warn("Unable to configure node - ID and type are missing");
-      return;
-    }
-
-    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
-      return;
-    }
-
-    const descriptor = this.loadInfo.graphDescriptor;
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
-    const node = breadboardGraph.nodeById(id);
-    if (!node) {
-      return;
-    }
-
-    const configuration: NodeConfiguration = structuredClone(
-      node.configuration()
-    );
-
-    // Copy data into the configuration.
-    for (const [name, value] of data) {
-      if (typeof value !== "string") {
-        continue;
-      }
-
-      if (name === "$id" || name === "$type") {
-        continue;
-      }
-
-      if (name === "schema" || toConvert.has(name)) {
-        configuration[name] = JSON.parse(value);
-        continue;
-      }
-
-      configuration[name] = value;
-    }
-
-    // Check for any removed items.
-    for (const [name, value] of Object.entries(configuration)) {
-      if (data.get(name)) {
-        continue;
-      }
-
-      // Override boolean values rather than deleting them.
-      if (value === "true") {
-        configuration[name] = "false";
-        continue;
-      }
-
-      delete configuration[name];
-    }
-
-    this.defaultConfiguration = null;
-    this.dispatchEvent(new NodeUpdateEvent(id, configuration));
-  }
-
   firstUpdated(): void {
     this.#onResizeBound();
     this.#graphRenderer.addGraph(this.#graph);
   }
 
   render() {
-    let activeNode: HTMLTemplateResult | symbol = nothing;
-    if (this.nodeValueBeingEdited) {
-      activeNode = html`${this.#createNodePropertiesPanel(
-        this.nodeValueBeingEdited,
-        this.defaultConfiguration
-      )}`;
-    }
-
     if (this.#graph) {
       this.#graph.highlightedNodeId = this.highlightedNodeId;
     }
@@ -938,6 +423,6 @@ export class Editor extends LitElement {
       this.#graphRenderer.editable = this.editable;
     }
 
-    return html`${this.#graphRenderer} ${activeNode} ${this.#getNodeMenu()}`;
+    return html`${this.#graphRenderer} ${this.#getNodeMenu()}`;
   }
 }

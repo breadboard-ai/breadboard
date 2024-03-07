@@ -8,11 +8,11 @@ import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
-  GraphNodeDblClickEvent,
-  GraphNodeDelete,
-  GraphNodeEdgeAttach,
-  GraphNodeEdgeChange,
-  GraphNodeEdgeDetach,
+  GraphNodeSelectedEvent,
+  GraphNodeDeleteEvent,
+  GraphNodeEdgeAttachEvent,
+  GraphNodeEdgeChangeEvent,
+  GraphNodeEdgeDetachEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -183,22 +183,25 @@ export class GraphRenderer extends LitElement {
   addGraph(graph: Graph) {
     graph.editable = this.editable;
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeDblClickEvent(id));
-    });
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
+      (id: string | null) => {
+        this.dispatchEvent(new GraphNodeSelectedEvent(id));
+      }
+    );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
-      this.dispatchEvent(new GraphNodeEdgeAttach(edge));
+      this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: InspectableEdge) => {
-      this.dispatchEvent(new GraphNodeEdgeDetach(edge));
+      this.dispatchEvent(new GraphNodeEdgeDetachEvent(edge));
     });
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
       (from: InspectableEdge, to: InspectableEdge) => {
-        this.dispatchEvent(new GraphNodeEdgeChange(from, to));
+        this.dispatchEvent(new GraphNodeEdgeChangeEvent(from, to));
       }
     );
 
@@ -265,7 +268,7 @@ export class GraphRenderer extends LitElement {
           continue;
         }
 
-        this.dispatchEvent(new GraphNodeDelete(child.name));
+        this.dispatchEvent(new GraphNodeDeleteEvent(child.name));
       }
     }
   }
