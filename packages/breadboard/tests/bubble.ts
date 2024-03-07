@@ -25,7 +25,8 @@ test("InputSchemaReader works as expected", async (t) => {
           },
           required: ["a"],
         },
-      }
+      },
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -39,7 +40,7 @@ test("InputSchemaReader works as expected", async (t) => {
     t.deepEqual(result, { a: "a", b: "b" });
   }
   {
-    const requester = new InputSchemaReader({}, {});
+    const requester = new InputSchemaReader({}, {}, []);
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
       inputs.push({ name, schema, required });
@@ -49,7 +50,7 @@ test("InputSchemaReader works as expected", async (t) => {
     t.deepEqual(result, {});
   }
   {
-    const requester = new InputSchemaReader({}, { schema: {} });
+    const requester = new InputSchemaReader({}, { schema: {} }, []);
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
       inputs.push({ name, schema, required });
@@ -69,7 +70,8 @@ test("InputSchemaReader works as expected", async (t) => {
             b: { type: "number" },
           },
         },
-      }
+      },
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -96,7 +98,8 @@ test("InputSchemaReader correctly handles existing outputs", async (t) => {
             b: { type: "number" },
           },
         },
-      }
+      },
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -120,7 +123,8 @@ test("InputSchemaReader correctly handles existing outputs", async (t) => {
           },
           required: ["a"],
         },
-      }
+      },
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -135,7 +139,8 @@ test("InputSchemaReader correctly handles existing outputs", async (t) => {
   {
     const requester = new InputSchemaReader(
       { a: "existingA", c: "existingC" },
-      {}
+      {},
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -148,7 +153,8 @@ test("InputSchemaReader correctly handles existing outputs", async (t) => {
   {
     const requester = new InputSchemaReader(
       { a: "existingA", c: "existingC" },
-      { schema: {} }
+      { schema: {} },
+      []
     );
     const inputs: unknown[] = [];
     const result = await requester.read(async (name, schema, required) => {
@@ -185,17 +191,17 @@ test("createBubbleHandler works as expected", async (t) => {
   {
     const handler = createBubbleHandler({}, {}, descriptor);
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true),
+      handler("foo", { type: "string" }, true, []),
       undefined,
       'Missing required input "foo".'
     );
     await t.throwsAsync(
-      handler("foo", { type: "string" }, false),
+      handler("foo", { type: "string" }, false, []),
       undefined,
       'Missing input "foo".'
     );
     t.deepEqual(
-      await handler("foo", { type: "string", default: "bar" }, false),
+      await handler("foo", { type: "string", default: "bar" }, false, []),
       "bar"
     );
   }
@@ -208,7 +214,7 @@ test("createBubbleHandler works as expected", async (t) => {
       descriptor
     );
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true),
+      handler("foo", { type: "string" }, true, []),
       undefined,
       'Missing required input "foo" for board "Foo".'
     );
@@ -221,9 +227,9 @@ test("createBubbleHandler works as expected", async (t) => {
       } satisfies NodeHandlerContext,
       descriptor
     );
-    t.deepEqual(await handler("foo", { type: "string" }, false), "bar");
+    t.deepEqual(await handler("foo", { type: "string" }, false, []), "bar");
     await t.throwsAsync(
-      handler("foo", { type: "string" }, true),
+      handler("foo", { type: "string" }, true, []),
       undefined,
       'Missing required input "foo".'
     );
@@ -231,22 +237,23 @@ test("createBubbleHandler works as expected", async (t) => {
   {
     const handler = createBubbleHandler({}, {}, descriptor);
     t.deepEqual(
-      await handler("foo", { type: "string", default: "bar" }, false),
+      await handler("foo", { type: "string", default: "bar" }, false, []),
       "bar"
     );
     t.deepEqual(
-      await handler("foo", { type: "boolean", default: "false" }, false),
+      await handler("foo", { type: "boolean", default: "false" }, false, []),
       false
     );
     t.deepEqual(
-      await handler("foo", { type: "array", default: "[]" }, false),
+      await handler("foo", { type: "array", default: "[]" }, false, []),
       []
     );
     t.deepEqual(
       await handler(
         "foo",
         { type: "object", default: '{ "foo": "bar" }' },
-        false
+        false,
+        []
       ),
       { foo: "bar" }
     );

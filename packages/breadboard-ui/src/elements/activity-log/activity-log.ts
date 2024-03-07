@@ -175,7 +175,7 @@ export class ActivityLog extends LitElement {
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {
-                const { node, end, inputs, outputs } = event;
+                const { node, end, inputs, outputs, bubbled } = event;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
@@ -184,6 +184,16 @@ export class ActivityLog extends LitElement {
                   // if (idx !== this.eventPosition) {
                   //   return nothing;
                   // }
+                  if (node.type === "input" && event.result) {
+                    // can ask for inputs here. Use `event.result` to get to
+                    // the `HarnessRunResult`.
+                    // TODO: Figure out how the actual asking for input
+                    //       will work.
+                    console.groupCollapsed(`✨ Can ask for input (${node.id})`);
+                    console.log("Reply:", event.result.reply);
+                    console.log("Bubbled:", bubbled);
+                    console.groupEnd();
+                  }
                   content = html`${node.type === "input"
                     ? "Waiting..."
                     : // prettier-ignore
@@ -209,6 +219,9 @@ export class ActivityLog extends LitElement {
               case "secret": {
                 // can ask for secret here. Use
                 // `event.result` to get to the `HarnessRunResult`.
+                // TODO: Figure out how the actual asking for secret will work
+                // TODO: Figure out how to signal when already know the secret
+                //       (probably just return `nothing`)
                 return nothing;
               }
               case "error": {
