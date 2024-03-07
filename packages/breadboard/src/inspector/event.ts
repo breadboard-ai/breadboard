@@ -4,15 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, SecretResult } from "../harness/types.js";
-import { ClientRunResult } from "../remote/run.js";
-import {
-  ErrorResponse,
-  InputResponse,
-  NodeEndResponse,
-  NodeStartResponse,
-  RunState,
-} from "../types.js";
+import { HarnessRunResult } from "../harness/types.js";
+import { NodeEndResponse, NodeStartResponse } from "../types.js";
 import {
   InspectableRunErrorEvent,
   InspectableRunEvent,
