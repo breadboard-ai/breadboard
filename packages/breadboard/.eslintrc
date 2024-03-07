@@ -1,8 +1,21 @@
 {
-  "plugins": ["eslint-plugin-expect-type"],
-  "extends": ["plugin:expect-type/recommended"],
+  "plugins": [
+    "eslint-plugin-expect-type",
+    "import"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": true
+    }
+  },
+  "extends": [
+    "plugin:expect-type/recommended",
+    "plugin:import/typescript"
+  ],
   "parserOptions": {
-    "project": ["./tsconfig.json"]
+    "project": [
+      "./tsconfig.json"
+    ]
   },
   "rules": {
     "@typescript-eslint/ban-types": [
@@ -12,6 +25,12 @@
           "Function": false
         },
         "extendDefaults": true
+      }
+    ],
+    "import/no-cycle": [
+      "error",
+      {
+        "maxDepth": 10
       }
     ]
   }
