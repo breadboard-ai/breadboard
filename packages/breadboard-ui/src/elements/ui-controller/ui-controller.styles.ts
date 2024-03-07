@@ -33,7 +33,7 @@ export const styles = css`
   }
 
   #run {
-    background: #987EE5;
+    background: var(--bb-selected-color);
     color: #FFF;
     border-radius: 20px;
     border: none;

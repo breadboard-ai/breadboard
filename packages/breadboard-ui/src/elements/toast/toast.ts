@@ -29,7 +29,8 @@ export class Toast extends LitElement {
       display: block;
       background: rgb(255, 255, 255);
       border: 1px solid #ccc;
-      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.13),
+      box-shadow:
+        0 2px 3px 0 rgba(0, 0, 0, 0.13),
         0 7px 9px 0 rgba(0, 0, 0, 0.16);
       border-radius: calc(var(--bb-grid-size) * 8);
       padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)

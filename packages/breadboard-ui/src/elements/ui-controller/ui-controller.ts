@@ -4,10 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HTMLTemplateResult, LitElement, html, nothing } from "lit";
+import {
+  HTMLTemplateResult,
+  LitElement,
+  PropertyValueMap,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
+  GraphNodeSelectedEvent,
   InputEnterEvent,
   RunEvent,
   ToastEvent,
@@ -16,23 +23,15 @@ import {
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { longTermMemory } from "../../utils/long-term-memory.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
 import { JSONTree } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
-const CONFIG_MEMORY_KEY = "ui-config";
-
 type UIConfig = {
   showNarrowTimeline: boolean;
 };
-
-enum SIDEPANEL_MODE {
-  BOARD = "board",
-  NODE = "node",
-}
 
 /**
  * Breadboard UI controller element.
@@ -74,13 +73,12 @@ export class UI extends LitElement {
   };
 
   @state()
-  sidePanel = SIDEPANEL_MODE.BOARD;
+  selectedNodeId: string | null = null;
 
+  #autoSwitchSidePanel = false;
   #detailsRef: Ref<HTMLElement> = createRef();
   #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
-  #memory = longTermMemory;
-  #isUpdatingMemory = false;
   #messagePosition = 0;
   #messageDurations: Map<HarnessRunResult, number> = new Map();
 
@@ -89,14 +87,6 @@ export class UI extends LitElement {
   constructor() {
     super();
 
-    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
-      if (!value) {
-        return;
-      }
-
-      this.config = JSON.parse(value) as UIConfig;
-    });
-
     this.addEventListener("pointerdown", () => {
       if (!this.#detailsRef.value) {
         return;
@@ -104,19 +94,6 @@ export class UI extends LitElement {
 
       this.#detailsRef.value.classList.remove("active");
     });
-  }
-
-  async #toggleConfigOption(key: keyof UIConfig) {
-    if (this.#isUpdatingMemory) {
-      return;
-    }
-
-    this.#isUpdatingMemory = true;
-    this.config[key] = !this.config[key];
-    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
-    this.#isUpdatingMemory = false;
-
-    this.requestUpdate();
   }
 
   clearPosition() {
@@ -251,6 +228,23 @@ export class UI extends LitElement {
     this.#inputListRef.value.captureNewestInput();
   }
 
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ selectedNodeId: string | null }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (
+      changedProperties.has("selectedNodeId") &&
+      changedProperties.get("selectedNodeId") === null
+    ) {
+      this.#autoSwitchSidePanel = true;
+    }
+  }
+
+  protected updated(): void {
+    this.#autoSwitchSidePanel = false;
+  }
+
   render() {
     const messages = this.inspectableRun?.messages || [];
     const newestMessage = messages[messages.length - 1];
@@ -268,6 +262,9 @@ export class UI extends LitElement {
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
+      @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+        this.selectedNodeId = evt.id;
+      }}
     ></bb-editor>`;
 
     let currentInput: HTMLTemplateResult | symbol = nothing;
@@ -308,7 +305,10 @@ export class UI extends LitElement {
     }
 
     const sidePanel = html`
-      <bb-switcher slots="3">
+      <bb-switcher
+        slots="3"
+        .selected=${this.#autoSwitchSidePanel ? 1 : nothing}
+      >
         <bb-activity-log
           .events=${events}
           .eventPosition=${eventPosition}
@@ -319,7 +319,6 @@ export class UI extends LitElement {
 
             const [top] = evt.composedPath();
             if (!(top instanceof HTMLElement) || !top.dataset.messageIdx) {
-              console.log("Not an element", top);
               return;
             }
 
@@ -349,7 +348,14 @@ export class UI extends LitElement {
           name="Board"
           slot="slot-0"
         ></bb-activity-log>
-        <bb-node-info name="Selected Node" slot="slot-1"></bb-node-info>
+        <bb-node-info
+          .selectedNodeId=${this.selectedNodeId}
+          .loadInfo=${this.loadInfo}
+          .kits=${this.kits}
+          .editable=${this.url === null}
+          name="Selected Node"
+          slot="slot-1"
+        ></bb-node-info>
         <bb-history-tree
           name="History"
           slot="slot-2"

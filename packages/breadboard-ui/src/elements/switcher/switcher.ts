@@ -9,7 +9,11 @@ import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-switcher")
 export class Switcher extends LitElement {
-  @property()
+  @property({
+    hasChanged(value: unknown) {
+      return typeof value === "number";
+    },
+  })
   selected = 0;
 
   @property({ reflect: true, type: Number })
@@ -49,7 +53,7 @@ export class Switcher extends LitElement {
     #buttons button[active]::after {
       content: "";
       border-radius: 10px 10px 0 0;
-      background: #987ee5;
+      background: var(--bb-selected-color);
       position: absolute;
       left: 0;
       height: 3px;

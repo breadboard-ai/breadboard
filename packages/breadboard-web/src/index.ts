@@ -716,12 +716,7 @@ export class Main extends LitElement {
             editableGraph
               .changeConfiguration(evt.id, evt.configuration)
               .then((result) => {
-                if (result.success) {
-                  this.toast(
-                    "Configuration updated",
-                    BreadboardUI.Events.ToastType.INFORMATION
-                  );
-                } else {
+                if (!result.success) {
                   this.toast(
                     "Unable to update configuration",
                     BreadboardUI.Events.ToastType.ERROR
@@ -822,9 +817,7 @@ export class Main extends LitElement {
           class=${classMap({ active: this.mode === MODE.PREVIEW })}
           id="toggle-preview"
           @click=${() => {
-            console.log(this.mode, MODE.BUILD, this.mode === MODE.BUILD);
             this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
-            console.log(this.mode);
           }}
         >
           Toggle Preview

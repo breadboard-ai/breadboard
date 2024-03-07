@@ -21,6 +21,8 @@ function edgeToString(edge: InspectableEdge): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
+type LayoutInfo = { x: number; y: number; justAdded?: boolean };
+
 export class Graph extends PIXI.Container {
   #isDirty = true;
   #edgeContainer = new PIXI.Container();
@@ -29,7 +31,7 @@ export class Graph extends PIXI.Container {
   #nodes: InspectableNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
   #nodeById = new Map<string, GraphNode>();
-  #layout = new Map<string, { x: number; y: number; pendingSize?: boolean }>();
+  #layout = new Map<string, LayoutInfo>();
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = 0x0084ff;
@@ -57,6 +59,8 @@ export class Graph extends PIXI.Container {
 
       if (evt.target instanceof GraphNode) {
         evt.target.selected = true;
+
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
 
         for (const child of this.children) {
           if (
@@ -307,14 +311,16 @@ export class Graph extends PIXI.Container {
 
       child.selected = false;
     }
+
+    this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
   }
 
   setNodeLayoutPosition(
     node: string,
     position: PIXI.IPointData,
-    pendingSize = true
+    justAdded = true
   ) {
-    this.#layout.set(node, { ...this.toLocal(position), pendingSize });
+    this.#layout.set(node, { ...this.toLocal(position), justAdded });
   }
 
   layout() {
@@ -546,27 +552,34 @@ export class Graph extends PIXI.Container {
      */
     const isInitialDraw = this.#layout.size === 0;
     let nodesLeftToDraw = this.#nodes.length;
-    const onDraw = function (this: GraphNode) {
+    const onDraw = function (this: {
+      graphNode: GraphNode;
+      layout: LayoutInfo | null;
+    }) {
       nodesLeftToDraw--;
 
+      // Freshly added nodes are auto-selected and repositioned to the middle
+      // of the drop location.
+      if (this.layout && this.layout.justAdded) {
+        this.layout.x -= this.graphNode.width / 2;
+        this.layout.y -= this.graphNode.height / 2;
+        this.layout.justAdded = false;
+
+        this.graphNode.selected = true;
+        this.graphNode.position.set(this.layout.x, this.layout.y);
+        this.graphNode.parent.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
+          this.graphNode.name
+        );
+      }
+
       if (nodesLeftToDraw === 0) {
-        this.parent.emit(GRAPH_OPERATIONS.GRAPH_DRAW);
+        this.graphNode.parent.emit(GRAPH_OPERATIONS.GRAPH_DRAW);
 
         if (isInitialDraw) {
-          this.parent.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
+          this.graphNode.parent.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
         }
       }
-    };
-
-    const adjustLayoutForDroppedNode = function (this: {
-      graphNode: GraphNode;
-      layout: { x: number; y: number; pendingSize?: boolean };
-    }) {
-      this.layout.x -= this.graphNode.width / 2;
-      this.layout.y -= this.graphNode.height / 2;
-      this.layout.pendingSize = false;
-
-      this.graphNode.position.set(this.layout.x, this.layout.y);
     };
 
     for (const node of this.#nodes) {
@@ -575,20 +588,8 @@ export class Graph extends PIXI.Container {
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
-        this.#nodeById.set(id, graphNode);
 
-        // This is a dropped node.
-        const layout = this.#layout.get(id);
-        if (layout && layout.pendingSize) {
-          graphNode.once(
-            GRAPH_OPERATIONS.GRAPH_NODE_DRAWN,
-            adjustLayoutForDroppedNode,
-            {
-              graphNode,
-              layout,
-            }
-          );
-        }
+        this.#nodeById.set(id, graphNode);
       }
 
       const portInfo = this.#ports.get(id);
@@ -609,7 +610,10 @@ export class Graph extends PIXI.Container {
         id,
       });
 
-      graphNode.once(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, onDraw, graphNode);
+      graphNode.once(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, onDraw, {
+        graphNode,
+        layout: this.#layout.get(id) || null,
+      });
       this.addChild(graphNode);
     }
 
