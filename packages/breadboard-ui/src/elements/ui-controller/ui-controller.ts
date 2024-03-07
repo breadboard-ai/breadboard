@@ -257,6 +257,9 @@ export class UI extends LitElement {
     const nodeId =
       this.inspectableRun?.currentNode(this.#messagePosition) || "";
 
+    const events = this.inspectableRun?.events || [];
+    const eventPosition = events.length - 1;
+
     /**
      * Create all the elements we need.
      */
@@ -307,8 +310,8 @@ export class UI extends LitElement {
     const sidePanel = html`
       <bb-switcher slots="3">
         <bb-activity-log
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
+          .events=${events}
+          .eventPosition=${eventPosition}
           @pointerdown=${(evt: PointerEvent) => {
             if (!this.#detailsRef.value) {
               return;

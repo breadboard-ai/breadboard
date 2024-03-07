@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorObject } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { ErrorObject, InspectableRunEvent } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -13,10 +12,10 @@ import { classMap } from "lit/directives/class-map.js";
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
   @property({ reflect: false })
-  messages: HarnessRunResult[] | null = null;
+  events: InspectableRunEvent[] | null = null;
 
   @property({ reflect: true })
-  messagePosition = 0;
+  eventPosition = 0;
 
   static styles = css`
     :host {
@@ -171,78 +170,67 @@ export class ActivityLog extends LitElement {
   render() {
     return html`
       <h1>Activity Log</h1>
-      ${this.messages
-        ? this.messages.map((message, idx) => {
+      ${this.events
+        ? this.events.map((event, idx) => {
             let content: HTMLTemplateResult | symbol = nothing;
-            switch (message.type) {
-              case "graphstart": {
-                // TODO: Support subgraphs.
-                if (message.data.path.length > 0) {
-                  return nothing;
+            switch (event.type) {
+              case "node": {
+                const { node, end, inputs, outputs } = event;
+                // `end` is null if the node is still running
+                // that is, the `nodeend` for this node hasn't yet
+                // been received.
+                if (end === null) {
+                  // TODO: Figure out why this doesn't work.
+                  // if (idx !== this.eventPosition) {
+                  //   return nothing;
+                  // }
+                  content = html`${node.type === "input"
+                    ? "Waiting..."
+                    : // prettier-ignore
+                      html`Working: (<pre>${node.id}</pre>)`}`;
+                } else {
+                  // This is fiddly. Output nodes don't have any outputs.
+                  const result = node.type === "output" ? inputs : outputs;
+                  content = html`<section>
+                    <h1 data-message-idx=${idx}>${node.type}</h1>
+                    ${node.type === "output" || node.type === "input"
+                      ? html` <aside class="node-output">
+                          <details open>
+                            <summary>text</summary>
+                            <bb-json-tree .json=${result}></bb-json-tree>
+                          </details>
+                        </aside>`
+                      : nothing}
+                  </section>`;
+                  break;
                 }
-
-                content = html`Board started`;
                 break;
               }
-
+              case "secret": {
+                // can ask for secret here. Use
+                // `event.result` to get to the `HarnessRunResult`.
+                return nothing;
+              }
               case "error": {
+                const { error } = event;
                 let output = "";
-                if (typeof message.data.error === "string") {
-                  output = message.data.error.toString();
+                if (typeof error === "string") {
+                  output = error;
                 } else {
                   let messageOutput = "";
-                  let error = message.data.error;
-                  while (typeof error === "object") {
+                  let errorData = error.error;
+                  while (typeof errorData === "object") {
                     if (error && "message" in error) {
                       messageOutput += `${error.message}\n`;
                     }
 
-                    error = error.error as ErrorObject;
+                    errorData = error.error as ErrorObject;
                   }
 
                   output = messageOutput;
                 }
 
                 content = html`${output}`;
-                break;
-              }
-
-              case "output":
-              case "nodeend": {
-                // TODO: Support subgraphs.
-                if (
-                  message.type === "nodeend" &&
-                  (message.data.path.length > 1 ||
-                    message.data.node.type === "output")
-                ) {
-                  return nothing;
-                }
-
-                content = html`<section>
-                  <h1 data-message-idx=${idx}>${message.data.node.type}</h1>
-                  ${message.type === "output" ||
-                  message.data.node.type === "input"
-                    ? html` <aside class="node-output">
-                        <details open>
-                          <summary>text</summary>
-                          <div>${message.data.outputs.text}</div>
-                        </details>
-                      </aside>`
-                    : nothing}
-                </section>`;
-                break;
-              }
-
-              case "input":
-              case "nodestart": {
-                if (idx !== this.messagePosition) {
-                  return nothing;
-                }
-
-                content = html`${message.type === "input"
-                  ? "Waiting..."
-                  : // prettier-ignore
-                    html`Working: (<pre>${message.data.node.id}</pre>)`}`;
                 break;
               }
 
@@ -253,11 +241,11 @@ export class ActivityLog extends LitElement {
 
             const classes: Record<string, boolean> = {
               "activity-entry": true,
-              [message.type]: true,
+              [event.type]: true,
             };
 
-            if (message.type === "nodeend") {
-              classes[message.data.node.type] = true;
+            if (event.type === "node" && event.end) {
+              classes[event.node.type] = true;
             }
 
             return html`<div class="${classMap(classes)}">

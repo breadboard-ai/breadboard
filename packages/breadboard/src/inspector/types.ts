@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
   Edge,
+  ErrorResponse,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -16,6 +17,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  OutputValues,
   Schema,
 } from "../types.js";
 
@@ -390,19 +392,66 @@ export type InspectableVersionedGraph = {
 };
 
 /**
- * Represents pairs of nodestart and nodeend results that were generated
+ * Represents a pair of the nodestart and nodeend results that were generated
  * during the run.
  */
-export type InspectableRunEvent = {
-  // TODO: Figure out what goes here.
-
+export type InspectableRunNodeEvent = {
+  type: "node";
+  node: NodeDescriptor;
   /**
-   * Any nested graph runs that may have happened during the event.
-   * This is usually a result of `core.invoke` or `core.map` or `core.reduce`
-   * nodess running subgraphs.
+   * The timestamp of the `nodestart` event.
    */
-  nested: InspectableRun[];
+  start: number;
+  /**
+   * The timestamp of the `nodeend` event. Can be null when the `nodeend` has
+   * not been received yet.
+   */
+  end: number | null;
+  /**
+   * The inputs that were provided to the node
+   */
+  inputs: InputValues;
+  /**
+   * The outputs that were produced by the node. Can be null when the `nodeend`
+   * has not been received yet.
+   */
+  outputs: OutputValues | null;
+  /**
+   * The underlying result that generated this event.
+   * Only available for `input` and `secret` nodes, and
+   * only before `nodeend` event has been received.
+   * Can be used to reply to the `input` or `secret` node.
+   */
+  result: HarnessRunResult | null;
+  /**
+   * Returns true when the input or output node was bubbled up from a nested
+   * graph. This is only populated for the top-level graph.
+   */
+  bubbled: boolean;
+  nested: InspectableRun[] | null;
 };
+
+/**
+ * Represents an error event that was generated during the run.
+ */
+export type InspectableRunErrorEvent = {
+  type: "error";
+  error: ErrorResponse;
+};
+
+export type InspectableRunSecretEvent = {
+  type: "secret";
+  data: SecretResult["data"];
+  result: HarnessRunResult | null;
+};
+
+/**
+ * Represent all events that can be inspected during a run.
+ */
+export type InspectableRunEvent =
+  | InspectableRunNodeEvent
+  | InspectableRunSecretEvent
+  | InspectableRunErrorEvent;
 
 /**
  * Represents a single run of a graph.

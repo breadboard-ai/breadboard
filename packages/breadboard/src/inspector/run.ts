@@ -6,6 +6,7 @@
 
 import { HarnessRunResult } from "../harness/types.js";
 import { NodeDescriptor } from "../types.js";
+import { EventManager } from "./event.js";
 import { InspectableRun, InspectableRunEvent } from "./types.js";
 
 type GraphRecord = {
@@ -87,18 +88,23 @@ export const inspectableRun = (): InspectableRun => {
 type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export class Run implements InspectableRun {
+  #events: EventManager = new EventManager();
+  #highlightHelper = new NodeHighlightHelper();
+
   id = 0;
   graphId = crypto.randomUUID();
   graphVersion = 0;
-  events: InspectableRunEvent[] = [];
   messages: HarnessRunResult[] = [];
 
-  #highlightHelper = new NodeHighlightHelper();
+  get events(): InspectableRunEvent[] {
+    return this.#events.events;
+  }
 
   observe(runner: Runner): Runner {
-    return new Observer(runner, (message) => {
-      this.messages.push(message);
-      this.#highlightHelper.add(message);
+    return new Observer(runner, (event) => {
+      this.messages.push(event);
+      this.#events.add(event);
+      this.#highlightHelper.add(event);
     });
   }
 
