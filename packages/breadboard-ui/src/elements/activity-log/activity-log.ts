@@ -181,9 +181,9 @@ export class ActivityLog extends LitElement {
                 // been received.
                 if (end === null) {
                   // The `event.result` will be non-null when the
-                  // node is ready to ask for input or secrets.
+                  // node is ready to ask for input.
                   if (event.result) {
-                    console.log("RESULT", event.result);
+                    console.log("RESULT", node.type, event.result);
                   }
                   if (idx !== this.eventPosition) {
                     return nothing;
@@ -208,6 +208,11 @@ export class ActivityLog extends LitElement {
                   </section>`;
                   break;
                 }
+                break;
+              }
+              case "secret": {
+                // can ask for secret here. Use
+                // `event.result` to get to the `HarnessRunResult`.
                 break;
               }
               case "error": {

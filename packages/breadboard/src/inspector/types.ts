@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -423,7 +423,12 @@ export type InspectableRunNodeEvent = {
    * Can be used to reply to the `input` or `secret` node.
    */
   result: HarnessRunResult | null;
-  // TODO: Add nested `InspectableRunEvent` array for subgraphs.
+  /**
+   * Returns true when the input or output node was bubbled up from a nested
+   * graph. This is only populated for the top-level graph.
+   */
+  bubbled: boolean;
+  nested: InspectableRun[] | null;
 };
 
 /**
@@ -434,11 +439,18 @@ export type InspectableRunErrorEvent = {
   error: ErrorResponse;
 };
 
+export type InspectableRunSecretEvent = {
+  type: "secret";
+  data: SecretResult["data"];
+  result: HarnessRunResult | null;
+};
+
 /**
  * Represent all events that can be inspected during a run.
  */
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
+  | InspectableRunSecretEvent
   | InspectableRunErrorEvent;
 
 /**

@@ -88,7 +88,9 @@ export const inspectableRun = (): InspectableRun => {
 type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export class Run implements InspectableRun {
-  #events: EventManager = new EventManager();
+  #events: EventManager = new EventManager(() => {
+    return new Run();
+  });
   #highlightHelper = new NodeHighlightHelper();
 
   id = 0;
