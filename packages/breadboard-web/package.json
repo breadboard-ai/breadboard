@@ -98,7 +98,10 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
-        "generate:graphs"
+        {
+          "script": "generate:graphs",
+          "cascade": false
+        }
       ],
       "files": [
         "vite.config.ts",
