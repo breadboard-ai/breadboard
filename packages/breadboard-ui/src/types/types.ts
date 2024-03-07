@@ -96,18 +96,10 @@ export type OutputArgs = {
   } & Record<string, unknown>;
 };
 
-export const ErrorNames = {
-	INPUT_ERROR: "inputError",
-	//possibility to add more values here (as required) in the future, e.g., embedError, toastError, and so on
-} as const;
-
-export type ErrorNames =
-	(typeof ErrorNames)[keyof typeof ErrorNames];
-
 export type BreadboardElementError = InputErrorEvent; //more error types can be added for different components later on i.e., "& ElementErrorEvent & OtherElementErrorEvent" and so on
 
 export type BreadboardErrorHandler = (error: BreadboardElementError) => void;
 
 export type BreadboardReactComponentProps = {
-	onError?: BreadboardErrorHandler;
-}
+  onError?: BreadboardErrorHandler;
+};

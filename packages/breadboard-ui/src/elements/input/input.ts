@@ -229,7 +229,6 @@ export class Input extends LitElement {
           try {
             const parsedValue = parseValue(property.type, input);
             data[key] = parsedValue;
-            //throw new Error("Error when parsing input values.");
           } catch (e) {
             const event = new InputErrorEvent(`${e}`);
             this.dispatchEvent(event);
@@ -283,7 +282,6 @@ export class Input extends LitElement {
     }
 
     try {
-      //throw new Error("Error when rendering input form.");
       return this.#renderForm(properties, values);
     } catch (e) {
       const event = new InputErrorEvent(`${e}`);
