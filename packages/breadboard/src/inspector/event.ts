@@ -124,6 +124,7 @@ class PathRegistry {
   }
 
   error(error: InspectableRunErrorEvent) {
+    // Add as a sidecar to the current last entry in the registry.
     this.registry[this.registry.length - 1].after.push(error);
     this.#eventsIsDirty = true;
   }
