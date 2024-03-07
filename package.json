@@ -13,7 +13,12 @@
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit"
+    "generate:docs": "wireit",
+    "syncpack:check": "wireit",
+    "syncpack:check:dev": "wireit",
+    "syncpack:check:prod": "wireit",
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
+    "check": "wireit"
   },
   "wireit": {
     "build": {
@@ -96,9 +101,7 @@
     "ci:local": {
       "dependencies": [
         "build",
-        "check:format",
-        "lint",
-        "test"
+        "check"
       ]
     },
     "generate:docs": {
@@ -115,6 +118,47 @@
         "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
+    },
+    "check": {
+      "dependencies": [
+        "syncpack:check",
+        "check:format",
+        "lint",
+        "test"
+      ]
+    },
+    "syncpack:files": {
+      "files": [
+        "syncpack.config.ts",
+        "package.json",
+        "package-lock.json",
+        "packages/*/package.json",
+        "packages/*/package-lock.json"
+      ]
+    },
+    "syncpack:check": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
+    },
+    "syncpack:check:prod": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types prod",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
+    },
+    "syncpack:check:dev": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types dev",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
     }
   },
   "keywords": [],
@@ -130,8 +174,9 @@
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
     "npm-ci": "^0.0.2",
-    "rimraf": "^5.0.1",
+    "rimraf": "^5.0.5",
     "rollup": "^4.12.1",
+    "syncpack": "^12.3.0",
     "typescript": "^5.3.3",
     "wireit": "^0.14.4"
   },
