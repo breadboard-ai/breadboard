@@ -213,7 +213,7 @@ export class ActivityLog extends LitElement {
               case "secret": {
                 // can ask for secret here. Use
                 // `event.result` to get to the `HarnessRunResult`.
-                break;
+                return nothing;
               }
               case "error": {
                 const { error } = event;
