@@ -36,13 +36,14 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
 ) => {
   const { type, node, timestamp } = result;
   if (type === "input") {
-    const { inputArguments, path } = result;
+    const { inputArguments, path, invocationId } = result;
     return {
       type,
       data: {
         node,
         inputArguments,
         path,
+        bubbled: invocationId == -1,
         timestamp,
       },
       reply: async (value) => {

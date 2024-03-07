@@ -104,15 +104,33 @@ export class PathRegistry {
     );
   }
 
-  input(path: number[], result: HarnessRunResult) {
-    this.#traverse(true, path, (entry) => {
-      const existing = entry.event;
-      if (!existing) {
-        console.error("Expected an existing event for", path);
-        return;
-      }
-      existing.result = result;
-    });
+  input(path: number[], result: HarnessRunResult, bubbled: boolean) {
+    console.log("INPUT", path, result, bubbled);
+    if (bubbled) {
+      const input = result.data as InputResponse;
+      // Add a sidecar to the current last entry in the registry.
+      this.registry[this.registry.length - 1].after.push({
+        type: "node",
+        node: input.node,
+        start: input.timestamp,
+        end: null,
+        inputs: input.inputArguments,
+        outputs: null,
+        result,
+        bubbled: true,
+        nested: null,
+      });
+      this.#eventsIsDirty = true;
+    } else {
+      this.#traverse(true, path, (entry) => {
+        const existing = entry.event;
+        if (!existing) {
+          console.error("Expected an existing event for", path);
+          return;
+        }
+        existing.result = result;
+      });
+    }
   }
 
   nodeend(path: number[], data: NodeEndResponse) {

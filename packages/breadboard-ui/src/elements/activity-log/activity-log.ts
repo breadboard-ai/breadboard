@@ -175,7 +175,7 @@ export class ActivityLog extends LitElement {
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {
-                const { node, end, inputs, outputs } = event;
+                const { node, end, inputs, outputs, bubbled } = event;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
@@ -189,7 +189,10 @@ export class ActivityLog extends LitElement {
                     // the `HarnessRunResult`.
                     // TODO: Figure out how the actual asking for input
                     //       will work.
-                    console.log("✨ Can ask for input", event.result);
+                    console.groupCollapsed(`✨ Can ask for input (${node.id})`);
+                    console.log("Reply:", event.result.reply);
+                    console.log("Bubbled:", bubbled);
+                    console.groupEnd();
                   }
                   content = html`${node.type === "input"
                     ? "Waiting..."

@@ -35,29 +35,7 @@ export class EventManager {
         break;
       }
       case "input": {
-        this.#registry.input(result.data.path, result);
-        // const last = this.#events[this.#events.length - 1];
-        // if (last.type !== "node" || last.node.type !== result.type) {
-        //   // This is a bubbled input.
-        //   // Create a "bubbled" event for it.
-        //   const event: EventWithPath = {
-        //     type: "node",
-        //     node: result.data.node,
-        //     start: result.data.timestamp,
-        //     // Because it is bubbled, it will not have a corresponding
-        //     // "nodeend" event.
-        //     end: result.data.timestamp,
-        //     inputs: result.data.inputArguments,
-        //     // TODO: Find a way to populate this field. Currently, this event
-        //     // will have no outputs.
-        //     outputs: null,
-        //     result,
-        //     bubbled: true,
-        //     nested: null,
-        //     path: [],
-        //   };
-        //   this.#events = [...this.#events, event];
-        // }
+        this.#registry.input(result.data.path, result, result.data.bubbled);
         break;
       }
       case "secret": {

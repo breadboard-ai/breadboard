@@ -465,7 +465,17 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  /**
+   * The path to the node in the invocation tree, from the root graph.
+   */
   path: number[];
+  /**
+   * Whether or not this input was bubbled.
+   */
+  bubbled: boolean;
+  /**
+   * The timestamp of the request.
+   */
   timestamp: number;
 };
 
