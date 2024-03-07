@@ -75,7 +75,7 @@ export class UI extends LitElement {
   @state()
   selectedNodeId: string | null = null;
 
-  #autoSwitchSidePanel = false;
+  #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
   #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
@@ -235,14 +235,16 @@ export class UI extends LitElement {
   ): void {
     if (
       changedProperties.has("selectedNodeId") &&
-      changedProperties.get("selectedNodeId") === null
+      changedProperties.get("selectedNodeId") !== undefined &&
+      changedProperties.get("selectedNodeId") !== this.selectedNodeId
     ) {
-      this.#autoSwitchSidePanel = true;
+      console.log(changedProperties.get("selectedNodeId"), this.selectedNodeId);
+      this.#autoSwitchSidePanel = 1;
     }
   }
 
   protected updated(): void {
-    this.#autoSwitchSidePanel = false;
+    this.#autoSwitchSidePanel = null;
   }
 
   render() {
@@ -307,7 +309,9 @@ export class UI extends LitElement {
     const sidePanel = html`
       <bb-switcher
         slots="3"
-        .selected=${this.#autoSwitchSidePanel ? 1 : nothing}
+        .selected=${this.#autoSwitchSidePanel !== null
+          ? this.#autoSwitchSidePanel
+          : nothing}
       >
         <bb-activity-log
           .events=${events}
@@ -391,6 +395,7 @@ export class UI extends LitElement {
             id="run"
             ?disabled=${this.status !== STATUS.STOPPED}
             @click=${() => {
+              this.#autoSwitchSidePanel = 0;
               this.dispatchEvent(new RunEvent());
             }}
           >
