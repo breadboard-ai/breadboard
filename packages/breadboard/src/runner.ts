@@ -186,13 +186,31 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(
-            new InputStageResult(result, await stack.state(), invocationId)
+            new InputStageResult(
+              result,
+              await stack.state(),
+              invocationId,
+              path()
+            )
           );
-          await bubbleUpInputsIfNeeded(this, context, descriptor, result);
+          await bubbleUpInputsIfNeeded(
+            this,
+            context,
+            descriptor,
+            result,
+            path()
+          );
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          if (!(await bubbleUpOutputsIfNeeded(inputs, descriptor, context))) {
-            await next(new OutputStageResult(result, invocationId));
+          if (
+            !(await bubbleUpOutputsIfNeeded(
+              inputs,
+              descriptor,
+              context,
+              path()
+            ))
+          ) {
+            await next(new OutputStageResult(result, invocationId, path()));
           }
           outputsPromise = result.outputsPromise;
         } else {

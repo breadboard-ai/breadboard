@@ -249,8 +249,13 @@ export interface BreadboardRunResult {
   /**
    * The invocation id of the current node. This is useful for tracking
    * the node within the run, similar to an "index" property in map/forEach.
+   * @deprecated Use `path` instead.
    */
   get invocationId(): number;
+  /**
+   * The path of the current node. Superseeds the `invocationId` property.
+   */
+  get path(): number[];
   /**
    * The timestamp of when this result was issued.
    */
@@ -417,6 +422,7 @@ export type OutputResponse = {
    * @see [OutputValues]
    */
   outputs: OutputValues;
+  path: number[];
   timestamp: number;
 };
 
@@ -459,6 +465,7 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  path: number[];
   timestamp: number;
 };
 
@@ -546,7 +553,8 @@ export interface NodeHandlerContext {
   readonly requestInput?: (
     name: string,
     schema: Schema,
-    node: NodeDescriptor
+    node: NodeDescriptor,
+    path: number[]
   ) => Promise<NodeValue>;
   /**
    * Provide output directly to the user. This will bypass the normal output
@@ -557,7 +565,8 @@ export interface NodeHandlerContext {
    */
   readonly provideOutput?: (
     outputs: OutputValues,
-    descriptor: NodeDescriptor
+    descriptor: NodeDescriptor,
+    path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
   readonly state?: RunState;
