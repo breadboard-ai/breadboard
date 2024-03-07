@@ -180,14 +180,10 @@ export class ActivityLog extends LitElement {
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
                 if (end === null) {
-                  // The `event.result` will be non-null when the
-                  // node is ready to ask for input.
-                  if (event.result) {
-                    console.log("RESULT", node.type, event.result);
-                  }
-                  if (idx !== this.eventPosition) {
-                    return nothing;
-                  }
+                  // TODO: Figure out why this doesn't work.
+                  // if (idx !== this.eventPosition) {
+                  //   return nothing;
+                  // }
                   content = html`${node.type === "input"
                     ? "Waiting..."
                     : // prettier-ignore
