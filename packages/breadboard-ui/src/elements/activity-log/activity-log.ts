@@ -200,6 +200,12 @@ export class ActivityLog extends LitElement {
       display: inline-block;
       margin: 0;
     }
+
+    #click-run {
+      font-size: var(--bb-text-small);
+      color: #9c9c9c;
+      padding: 0 var(--padding-x) var(--padding-y) var(--padding-x);
+    }
   `;
 
   #isImageData(
@@ -215,7 +221,7 @@ export class ActivityLog extends LitElement {
   render() {
     return html`
       <h1>Activity Log</h1>
-      ${this.events
+      ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
@@ -383,7 +389,7 @@ export class ActivityLog extends LitElement {
               <div class="content">${content}</div>
             </div>`;
           })
-        : html`No activity yet`}
+        : html`<div id="click-run">Click "Run" to get started</div>`}
     `;
   }
 }
