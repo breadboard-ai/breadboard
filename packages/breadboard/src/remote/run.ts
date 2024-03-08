@@ -109,8 +109,12 @@ export class RunServer {
             }
           }
         } else if (stop.type === "output") {
-          const { node, outputs, timestamp, path } = stop;
-          await responses.write(["output", { node, outputs, timestamp, path }]);
+          const { node, outputs, timestamp, path, invocationId } = stop;
+          const bubbled = invocationId == -1;
+          await responses.write([
+            "output",
+            { node, outputs, timestamp, path, bubbled },
+          ]);
         }
       }
       await responses.write(["end", { timestamp: timestamp() }]);

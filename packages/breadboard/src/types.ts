@@ -422,6 +422,10 @@ export type OutputResponse = {
    * @see [OutputValues]
    */
   outputs: OutputValues;
+  /**
+   * Whether or not this input was bubbled.
+   */
+  bubbled: boolean;
   path: number[];
   timestamp: number;
 };

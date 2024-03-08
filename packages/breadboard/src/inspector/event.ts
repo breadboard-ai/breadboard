@@ -38,6 +38,10 @@ export class EventManager {
         this.#registry.input(result.data.path, result, result.data.bubbled);
         break;
       }
+      case "output": {
+        this.#registry.output(result.data.path, result, result.data.bubbled);
+        break;
+      }
       case "secret": {
         this.#registry.secret({
           type: "secret",

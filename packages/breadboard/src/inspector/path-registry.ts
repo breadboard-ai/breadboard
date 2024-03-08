@@ -5,7 +5,12 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { InputResponse, NodeEndResponse, NodeStartResponse } from "../types.js";
+import {
+  InputResponse,
+  NodeEndResponse,
+  NodeStartResponse,
+  OutputResponse,
+} from "../types.js";
 import {
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -142,6 +147,37 @@ export class PathRegistry {
           return;
         }
         existing.result = result;
+      });
+    }
+  }
+
+  output(path: number[], result: HarnessRunResult, bubbled: boolean) {
+    if (bubbled) {
+      // Create a new entry for the sidecar output event.
+      const output = result.data as OutputResponse;
+      const entry: InspectableRunEvent = {
+        type: "node",
+        node: output.node,
+        start: output.timestamp,
+        end: null,
+        inputs: output.outputs,
+        outputs: null,
+        result,
+        bubbled: true,
+        nested: null,
+      };
+      // Add a sidecar to the current last entry in the registry.
+      this.registry[this.registry.length - 1].sidecars.push(entry);
+      this.#trackedSidecars.set(path.join("-"), entry);
+      this.#eventsIsDirty = true;
+    } else {
+      this.#traverse(true, path, (entry) => {
+        const existing = entry.event;
+        if (!existing) {
+          console.error("Expected an existing event for", path);
+          return;
+        }
+        existing.inputs = (result.data as OutputResponse).outputs;
       });
     }
   }
