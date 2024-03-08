@@ -71,7 +71,7 @@ export class PathRegistry {
   // Keep track of some sidecar events so that we can clean them up later.
   // We only need to keep track of input and output events, since the
   // secret and events do not have a corresponding `nodeend` event.
-  #trackedSidecars: Map<number[], InspectableRunEvent> = new Map();
+  #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   #updateEvents() {
     this.#events = this.registry
@@ -132,7 +132,7 @@ export class PathRegistry {
       };
       // Add a sidecar to the current last entry in the registry.
       this.registry[this.registry.length - 1].sidecars.push(entry);
-      this.#trackedSidecars.set(path, entry);
+      this.#trackedSidecars.set(path.join("-"), entry);
       this.#eventsIsDirty = true;
     } else {
       this.#traverse(true, path, (entry) => {
@@ -157,12 +157,13 @@ export class PathRegistry {
       existing.outputs = data.outputs;
       existing.result = null;
     });
-    const sidecar = this.#trackedSidecars.get(path) as InspectableRunNodeEvent;
+    const key = path.join("-");
+    const sidecar = this.#trackedSidecars.get(key) as InspectableRunNodeEvent;
     if (sidecar) {
       sidecar.end = data.timestamp;
       sidecar.outputs = data.outputs;
       sidecar.result = null;
-      this.#trackedSidecars.delete(path);
+      this.#trackedSidecars.delete(key);
       this.#eventsIsDirty = true;
     }
   }
