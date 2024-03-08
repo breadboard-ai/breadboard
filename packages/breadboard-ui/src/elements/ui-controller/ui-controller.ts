@@ -250,6 +250,10 @@ export class UI extends LitElement {
         <bb-activity-log
           .events=${events}
           .eventPosition=${eventPosition}
+          @breadboardinputrequested=${() => {
+            this.#autoSwitchSidePanel = 0;
+            this.requestUpdate();
+          }}
           @pointerdown=${(evt: PointerEvent) => {
             if (!this.#detailsRef.value) {
               return;

@@ -12,6 +12,8 @@ import {
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { InputRequestedEvent } from "../../events/events.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -20,6 +22,39 @@ export class ActivityLog extends LitElement {
 
   @property({ reflect: true })
   eventPosition = 0;
+
+  #newestEntry: Ref<HTMLElement> = createRef();
+  #isHidden = false;
+  #observer = new IntersectionObserver((entries) => {
+    if (entries.length === 0) {
+      return;
+    }
+
+    const [entry] = entries;
+    if (!entry.rootBounds) {
+      return;
+    }
+
+    this.#isHidden =
+      entry.rootBounds.width === 0 && entry.rootBounds.height === 0;
+
+    if (
+      !this.#isHidden &&
+      this.#newestEntry.value &&
+      this.#newestEntry.value.querySelector(".user-required")
+    ) {
+      this.#newestEntry.value.scrollIntoView(true);
+      this.#newestEntry.value
+        .querySelector(".user-required")
+        ?.addEventListener("animationend", (evt: Event) => {
+          if (!(evt.target instanceof HTMLElement)) {
+            return;
+          }
+
+          evt.target.classList.remove("user-required");
+        });
+    }
+  });
 
   static styles = css`
     :host {
@@ -61,6 +96,10 @@ export class ActivityLog extends LitElement {
       position: relative;
       font-size: var(--bb-font-medium);
       user-select: none;
+    }
+
+    .activity-entry:last-of-type {
+      margin-bottom: 100px;
     }
 
     .activity-entry.error {
@@ -206,6 +245,44 @@ export class ActivityLog extends LitElement {
       color: #9c9c9c;
       padding: 0 var(--padding-x) var(--padding-y) var(--padding-x);
     }
+
+    .user-required {
+      position: relative;
+    }
+
+    .user-required::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: -10px;
+      right: -10px;
+      bottom: -10px;
+      background: var(--bb-selected-color);
+      border-radius: var(--bb-grid-size);
+      animation: fadeOut 1s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 0;
+      }
+
+      25% {
+        opacity: 0.15;
+      }
+
+      50% {
+        opacity: 0;
+      }
+
+      75% {
+        opacity: 0.15;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
   `;
 
   #isImageData(
@@ -216,6 +293,28 @@ export class ActivityLog extends LitElement {
     }
 
     return "inline_data" in nodeValue;
+  }
+
+  protected updated(): void {
+    if (!this.#newestEntry.value) {
+      return;
+    }
+
+    if (this.#newestEntry.value.querySelector(".user-required")) {
+      this.dispatchEvent(new InputRequestedEvent());
+    }
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#observer.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#observer.disconnect();
   }
 
   render() {
@@ -242,7 +341,9 @@ export class ActivityLog extends LitElement {
                       break;
                     }
 
-                    content = html` <section>
+                    content = html`<section
+                      class=${classMap({ "user-required": this.#isHidden })}
+                    >
                       <h1 data-message-idx=${idx}>${node.type}</h1>
                       <bb-input
                         id="${node.id}"
@@ -322,7 +423,10 @@ export class ActivityLog extends LitElement {
                 // TODO: Figure out how the actual asking for secret will work
                 // TODO: Figure out how to signal when already know the secret
                 //       (probably just return `nothing`)
-                content = html` <h1 data-message-idx=${idx}>${event.type}</h1>
+                content = html`<section
+                  class=${classMap({ "user-required": this.#isHidden })}
+                >
+                  <h1 data-message-idx=${idx}>${event.type}</h1>
                   ${event.data.keys.map((id) => {
                     const configuration = {
                       schema: {
@@ -342,7 +446,8 @@ export class ActivityLog extends LitElement {
                       .remember=${true}
                       .configuration=${configuration}
                     ></bb-input>`;
-                  })}`;
+                  })}
+                </section>`;
                 break;
               }
 
@@ -385,7 +490,10 @@ export class ActivityLog extends LitElement {
               classes[event.node.type] = true;
             }
 
-            return html`<div class="${classMap(classes)}">
+            return html`<div
+              ${ref(this.#newestEntry)}
+              class="${classMap(classes)}"
+            >
               <div class="content">${content}</div>
             </div>`;
           })

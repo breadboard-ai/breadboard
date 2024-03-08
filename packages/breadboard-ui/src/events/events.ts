@@ -78,6 +78,18 @@ export class NodeSelectEvent extends Event {
   }
 }
 
+export class InputRequestedEvent extends Event {
+  static eventName = "breadboardinputrequested";
+
+  constructor() {
+    super(InputRequestedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class InputEnterEvent extends Event {
   static eventName = "breadboardinputenter";
 
