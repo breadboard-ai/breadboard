@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  HTMLTemplateResult,
-  LitElement,
-  PropertyValueMap,
-  html,
-  nothing,
-} from "lit";
+import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
@@ -218,16 +212,6 @@ export class UI extends LitElement {
     }
   }
 
-  #notifyInputList(evt: Event) {
-    if (!this.#inputListRef.value) {
-      return;
-    }
-
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    this.#inputListRef.value.captureNewestInput();
-  }
-
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{ selectedNodeId: string | null }>
@@ -249,7 +233,6 @@ export class UI extends LitElement {
 
   render() {
     const messages = this.inspectableRun?.messages || [];
-    const newestMessage = messages[messages.length - 1];
     const nodeId =
       this.inspectableRun?.currentNode(this.#messagePosition) || "";
 
@@ -268,43 +251,6 @@ export class UI extends LitElement {
         this.selectedNodeId = evt.id;
       }}
     ></bb-editor>`;
-
-    let currentInput: HTMLTemplateResult | symbol = nothing;
-    if (newestMessage?.type === "input" || newestMessage?.type === "secret") {
-      currentInput = html`<div id="inputs-list">
-        <bb-input-list
-          ${ref(this.#inputListRef)}
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
-          @breadboardinputenter=${(event: InputEnterEvent) => {
-            // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < messages.length - 1) {
-              // The user has attempted to provide input for a stale
-              // request.
-              // TODO: Enable resuming from this point.
-              this.dispatchEvent(
-                new ToastEvent(
-                  "Unable to submit: board evaluation has already passed this point",
-                  ToastType.ERROR
-                )
-              );
-              return;
-            }
-
-            const data = event.data;
-            const handlers = this.#handlers.get(event.id) || [];
-            if (handlers.length === 0) {
-              console.warn(
-                `Received event for input(id="${event.id}") but no handlers were found`
-              );
-            }
-            for (const handler of handlers) {
-              handler.call(null, data);
-            }
-          }}
-        ></bb-input-list>
-      </div>`;
-    }
 
     const sidePanel = html`
       <bb-switcher
@@ -349,6 +295,33 @@ export class UI extends LitElement {
             tree.json = message.data as unknown as Record<string, string>;
             tree.autoExpand = true;
           }}
+          @breadboardinputenter=${(event: InputEnterEvent) => {
+            // Notify any pending handlers that the input has arrived.
+            if (this.#messagePosition < messages.length - 1) {
+              // The user has attempted to provide input for a stale
+              // request.
+              // TODO: Enable resuming from this point.
+              this.dispatchEvent(
+                new ToastEvent(
+                  "Unable to submit: board evaluation has already passed this point",
+                  ToastType.ERROR
+                )
+              );
+              return;
+            }
+
+            const data = event.data;
+            const handlers = this.#handlers.get(event.id) || [];
+            if (handlers.length === 0) {
+              console.warn(
+                `Received event for input(id="${event.id}") but no handlers were found`
+              );
+            }
+            for (const handler of handlers) {
+              console.log("handler handling");
+              handler.call(null, data);
+            }
+          }}
           name="Board"
           slot="slot-0"
         ></bb-activity-log>
@@ -386,7 +359,7 @@ export class UI extends LitElement {
     >
       <section id="diagram" slot="slot-0">
         <div id="breadcrumbs"></div>
-        ${editor} ${currentInput}
+        ${editor}
       </section>
 
       <section id="controls-activity" slot="slot-1">

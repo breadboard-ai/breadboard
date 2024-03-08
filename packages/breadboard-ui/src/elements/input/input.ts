@@ -66,74 +66,30 @@ export class Input extends LitElement {
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
-    :host {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-    }
-
     * {
       box-sizing: border-box;
-      font-size: var(--bb-input-font-size, var(--bb-text-nano));
     }
 
-    bb-json-tree {
-      width: 100%;
-    }
-
-    form,
-    #choice-container {
-      flex: 1;
-    }
-
-    fieldset {
-      display: grid;
-      justify-items: start;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      row-gap: calc(var(--bb-grid-size) * 2);
-      flex: 1;
-      margin: calc(var(--bb-grid-size) * 2) 0;
-      border: var(--bb-input-fieldset-border, 1px solid rgb(200, 200, 200));
-      border-radius: calc(var(--bb-grid-size) * 3);
-      background: #fff;
-      position: relative;
-      padding-bottom: calc(var(--bb-grid-size) * 3);
-    }
-
-    legend {
-      display: var(--bb-input-legend-display, block);
-      padding: 0 calc(var(--bb-grid-size) * 2);
+    :host {
+      display: block;
+      font-family: var(--bb-font-family);
+      font-size: var(--bb-text-medium);
     }
 
     label {
-      grid-column: 1/3;
-      font-family: var(--bb-font-family);
       font-size: var(--bb-text-small);
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
-    }
-
-    #choice-container label:not(:first-of-type) {
-      padding-top: calc(var(--bb-grid-size) * 2);
-    }
-
-    label.first-of-type {
-      grid-column: 1 / 5;
+      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
+      display: block;
     }
 
     #input {
       position: relative;
-      flex: 1;
     }
 
     .multiline {
-      grid-column: 1 / 5;
-      flex: 1;
-      width: 100%;
+      display: flex;
       overflow: hidden;
-      border-radius: var(
-        --bb-input-border-radius,
-        calc(var(--bb-grid-size) * 3)
-      );
+      border-radius: var(--bb-grid-size);
       border: 1px solid rgb(209, 209, 209);
       min-height: calc(var(--bb-grid-size) * 50);
     }
@@ -144,19 +100,11 @@ export class Input extends LitElement {
     bb-webcam-input,
     textarea,
     .parsed-value {
-      grid-column: 1 / 5;
-      border-radius: var(
-        --bb-input-border-radius,
-        calc(var(--bb-grid-size) * 3)
-      );
+      border-radius: var(--bb-grid-size);
       background: rgb(255, 255, 255);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       width: 100%;
       border: 1px solid rgb(209, 209, 209);
-    }
-
-    bb-multipart-input {
-      grid-column: 1 / 5;
     }
 
     textarea {
@@ -166,14 +114,14 @@ export class Input extends LitElement {
       padding-bottom: calc(var(--bb-grid-size) * 2);
       line-height: 1.4;
       border: none;
-      height: 100%;
+      flex: 1 0 auto;
     }
 
     #choice-container img,
     bb-drawable-input,
     bb-webcam-input {
       display: block;
-      border-radius: calc(var(--bb-grid-size) * 2);
+      border-radius: var(--bb-grid-size);
       border: 1px solid rgb(209, 209, 209);
       padding: 0;
       --bb-box-shadow: none;
@@ -192,29 +140,14 @@ export class Input extends LitElement {
       grid-column: 1 / 5;
     }
 
-    .parsed-value {
-      background: rgb(250, 250, 250);
-      color: var(--bb-font-color-faded);
-      display: flex;
-      align-items: center;
-      font-size: var(--bb-text-nano);
-      height: auto;
-    }
-
-    .parsed-value img {
-      width: 100%;
-      border-radius: calc(var(--bb-grid-size) * 6);
-      object-fit: cover;
-      aspect-ratio: auto;
-    }
-
     input[type="submit"] {
-      background: #987ee5;
+      background: var(--bb-selected-color);
       color: #fff;
       border-radius: 20px;
       border: none;
       height: 100%;
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
     }
   `;
 
@@ -339,150 +272,83 @@ export class Input extends LitElement {
       return;
     }
 
-    if (this.processedValues) {
-      return this.#renderProcessedValues(properties, this.processedValues);
-    }
-
     return this.#renderForm(properties, values);
-  }
-
-  #renderProcessedValues(
-    properties: Record<string, Schema>,
-    processedValues: Record<string, NodeValue>
-  ) {
-    if (!this.processedValues) {
-      return;
-    }
-
-    const renderProperty = (
-      key: string,
-      property: Schema,
-      value: unknown
-    ): HTMLTemplateResult => {
-      // Only recursively render when the items themselves are an array.
-      if (Array.isArray(property.items)) {
-        const items = property.items as Schema[];
-        const values = value as unknown[];
-        return html`${items.map((item, idx) =>
-          renderProperty(key, item, values[idx])
-        )}`;
-      }
-
-      if (isMultipartImage(property)) {
-        const data = value as {
-          inline_data: { mime_type: string; data: string };
-        };
-        const src = `data:${data.inline_data.mime_type};base64,${data.inline_data.data}`;
-        return html`<div class="parsed-value">
-          <img src="${src}" />
-        </div>`;
-      } else if (isMultipartText(property)) {
-        return html`<div class="parsed-value">
-          ${(value as { text: string }).text}
-        </div>`;
-      } else if (typeof value === "object") {
-        return html`<div class="parsed-value">
-          <bb-json-tree .json=${value}></bb-json-tree>
-        </div>`;
-      } else {
-        return html`<div class="parsed-value">${value}</div>`;
-      }
-    };
-
-    return html`<form id="choice-container">
-      <fieldset>
-        ${Object.entries(properties).map(([key, property]) => {
-          const label = html`<label for="${key}"
-            >${this.id}: ${property.title}</label
-          >`;
-          const value = renderProperty(key, property, processedValues[key]);
-
-          return html`${label}${value}`;
-        })}
-      </fieldset>
-    </form>`;
   }
 
   #renderForm(properties: Record<string, Schema>, values: InputData) {
     return html`<div id="input">
       <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
-        <fieldset>
-          ${Object.entries(properties).map(([key, property]) => {
-            const label = html`<label for="${key}"
-              >${this.id}: ${property.title}</label
-            >`;
-            let input;
-            if (isMultipartImage(property)) {
-              // Webcam input.
-              if (isWebcam(property)) {
-                input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
-              } else if (isDrawable(property)) {
-                input = html`<bb-drawable-input
+        ${Object.entries(properties).map(([key, property]) => {
+          const label = html`<label for="${key}">${property.title}</label>`;
+          let input;
+          if (isMultipartImage(property)) {
+            // Webcam input.
+            if (isWebcam(property)) {
+              input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
+            } else if (isDrawable(property)) {
+              input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
+            } else {
+              input = html`Image type not supported yet.`;
+            }
+          } else if (isSelect(property)) {
+            // Select input.
+            const options = property.enum || [];
+            input = html`<select name="${key}" id="${key}">
+              ${options.map((option) => {
+                const isSelected = option === property.default;
+                return html`<option ?selected=${isSelected} value=${option}>
+                  ${option}
+                </option>`;
+              })}
+            </select>`;
+          } else if (isBoolean(property)) {
+            // Checkbox / Boolean input.
+            const checked = !!values[key] ?? property.default ?? false;
+            input = html`<input
+              name="${key}"
+              id="${key}"
+              type="checkbox"
+              ?checked=${checked}
+            />`;
+          } else if (isMultipart(property)) {
+            // Multi-part input.
+            const multipart = createMultipartInput(property, key);
+            input = html`${multipart}`;
+          } else {
+            // Text inputs: multi line and single line.
+            const value =
+              (values[key] as string) ??
+              property.examples ??
+              property.default ??
+              "";
+            if (isMultiline(property)) {
+              // Multi line input.
+              input = html`<div class="multiline">
+                <textarea
+                  name="${key}"
                   id="${key}"
-                ></bb-drawable-input>`;
-              } else {
-                input = html`Image type not supported yet.`;
-              }
-            } else if (isSelect(property)) {
-              // Select input.
-              const options = property.enum || [];
-              input = html`<select name="${key}" id="${key}">
-                ${options.map((option) => {
-                  const isSelected = option === property.default;
-                  return html`<option ?selected=${isSelected} value=${option}>
-                    ${option}
-                  </option>`;
-                })}
-              </select>`;
-            } else if (isBoolean(property)) {
-              // Checkbox / Boolean input.
-              const checked = !!values[key] ?? property.default ?? false;
+                  placeholder="${property.description || ""}"
+                  .value=${value}
+                ></textarea>
+              </div>`;
+            } else {
+              // Single line input.
               input = html`<input
                 name="${key}"
                 id="${key}"
-                type="checkbox"
-                ?checked=${checked}
+                required="true"
+                type="${this.secret ? "password" : "text"}"
+                autocomplete="${this.secret ? "off" : "on"}"
+                placeholder="${property.description || ""}"
+                autofocus="true"
+                value="${value}"
               />`;
-            } else if (isMultipart(property)) {
-              // Multi-part input.
-              const multipart = createMultipartInput(property, key);
-              input = html`${multipart}`;
-            } else {
-              // Text inputs: multi line and single line.
-              const value =
-                (values[key] as string) ??
-                property.examples ??
-                property.default ??
-                "";
-              if (isMultiline(property)) {
-                // Multi line input.
-                input = html`<div class="multiline">
-                  <textarea
-                    name="${key}"
-                    id="${key}"
-                    placeholder="${property.description || ""}"
-                    .value=${value}
-                  ></textarea>
-                </div>`;
-              } else {
-                // Single line input.
-                input = html`<input
-                  name="${key}"
-                  id="${key}"
-                  required="true"
-                  type="${this.secret ? "password" : "text"}"
-                  autocomplete="${this.secret ? "off" : "on"}"
-                  placeholder="${property.description || ""}"
-                  autofocus="true"
-                  value="${value}"
-                />`;
-              }
             }
+          }
 
-            return html`${label}${input}`;
-          })}
-        </fieldset>
-        <input type="submit" value="Submit" />
+          return html`${label}${input}`;
+        })}
+        <input type="submit" value="Continue" />
       </form>
     </div>`;
   }

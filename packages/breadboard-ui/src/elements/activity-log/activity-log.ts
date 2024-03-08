@@ -109,7 +109,7 @@ export class ActivityLog extends LitElement {
       background: #c9daf8ff;
     }
 
-    .activity-entry.secrets::after {
+    .activity-entry.secret::after {
       background: #f4cccc;
     }
 
@@ -164,6 +164,7 @@ export class ActivityLog extends LitElement {
 
     pre {
       display: inline-block;
+      margin: 0;
     }
   `;
 
@@ -175,7 +176,7 @@ export class ActivityLog extends LitElement {
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {
-                const { node, end, inputs, outputs, bubbled } = event;
+                const { node, end, inputs, outputs } = event;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
@@ -185,19 +186,25 @@ export class ActivityLog extends LitElement {
                   //   return nothing;
                   // }
                   if (node.type === "input" && event.result) {
-                    // can ask for inputs here. Use `event.result` to get to
-                    // the `HarnessRunResult`.
-                    // TODO: Figure out how the actual asking for input
-                    //       will work.
-                    console.groupCollapsed(`✨ Can ask for input (${node.id})`);
-                    console.log("Reply:", event.result.reply);
-                    console.log("Bubbled:", bubbled);
-                    console.groupEnd();
+                    if (event.result.type !== "input") {
+                      content = html`Input types don't match - unable to request
+                      input`;
+                      break;
+                    }
+
+                    content = html` <section>
+                      <h1 data-message-idx=${idx}>${node.type}</h1>
+                      <bb-input
+                        id="${node.id}"
+                        .secret=${false}
+                        .remember=${false}
+                        .configuration=${event.result.data.inputArguments}
+                      ></bb-input>
+                    </section>`;
+                    break;
                   }
-                  content = html`${node.type === "input"
-                    ? "Waiting..."
-                    : // prettier-ignore
-                      html`Working: (<pre>${node.id}</pre>)`}`;
+                  // prettier-ignore
+                  content = html`Working: (<pre>${node.id}</pre>)`;
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
                   const result = node.type === "output" ? inputs : outputs;
@@ -216,14 +223,41 @@ export class ActivityLog extends LitElement {
                 }
                 break;
               }
+
               case "secret": {
+                if (event.result === null) {
+                  return nothing;
+                }
+
                 // can ask for secret here. Use
                 // `event.result` to get to the `HarnessRunResult`.
                 // TODO: Figure out how the actual asking for secret will work
                 // TODO: Figure out how to signal when already know the secret
                 //       (probably just return `nothing`)
-                return html`<section>🔒 Secret ${event.result}</section>`;
+                content = html` <h1 data-message-idx=${idx}>${event.type}</h1>
+                  ${event.data.keys.map((id) => {
+                    const configuration = {
+                      schema: {
+                        properties: {
+                          secret: {
+                            title: id,
+                            description: `Enter ${id}`,
+                            type: "string",
+                          },
+                        },
+                      },
+                    };
+
+                    return html`<bb-input
+                      id="${id}"
+                      .secret=${true}
+                      .remember=${true}
+                      .configuration=${configuration}
+                    ></bb-input>`;
+                  })}`;
+                break;
               }
+
               case "error": {
                 const { error } = event;
                 let output = "";
@@ -233,11 +267,13 @@ export class ActivityLog extends LitElement {
                   let messageOutput = "";
                   let errorData = error.error;
                   while (typeof errorData === "object") {
-                    if (error && "message" in error) {
-                      messageOutput += `${error.message}\n`;
+                    console.log(errorData);
+                    if (errorData && "message" in errorData) {
+                      console.log(errorData.message, "lol");
+                      messageOutput += `${errorData.message}\n`;
                     }
 
-                    errorData = error.error as ErrorObject;
+                    errorData = errorData.error as ErrorObject;
                   }
 
                   output = messageOutput;
@@ -257,7 +293,7 @@ export class ActivityLog extends LitElement {
               [event.type]: true,
             };
 
-            if (event.type === "node" && event.end) {
+            if (event.type === "node") {
               classes[event.node.type] = true;
             }
 
