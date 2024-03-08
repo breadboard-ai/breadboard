@@ -60,6 +60,7 @@ export class GraphRenderer extends LitElement {
   });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onWheelBound = this.#onWheel.bind(this);
 
   static styles = css`
     :host {
@@ -273,18 +274,16 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  #onWheel(evt: WheelEvent) {
+    evt.preventDefault();
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
     window.addEventListener("keydown", this.#onKeyDownBound);
 
-    window.addEventListener(
-      "wheel",
-      (e) => {
-        e.preventDefault();
-      },
-      { passive: false }
-    );
+    this.addEventListener("wheel", this.#onWheelBound);
 
     this.#app.start();
     this.#app.resize();
@@ -324,6 +323,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stop();
     this.#resizeObserver.disconnect();
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("wheel", this.#onWheelBound);
   }
 
   render() {
