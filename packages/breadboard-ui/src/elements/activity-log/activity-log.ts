@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorObject, InspectableRunEvent } from "@google-labs/breadboard";
+import {
+  ErrorObject,
+  InspectableRunEvent,
+  Schema,
+} from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -162,11 +166,49 @@ export class ActivityLog extends LitElement {
       line-height: 1.65;
     }
 
+    .node-output img {
+      border-radius: var(--bb-grid-size);
+      display: block;
+      width: 100%;
+    }
+
+    dl {
+      margin: 0;
+      padding: 0;
+    }
+
+    dd {
+      display: block;
+      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
+      font-size: var(--bb-text-small);
+    }
+
+    dt {
+      font-size: var(--bb-text-medium);
+    }
+
+    dt .value {
+      border-radius: var(--bb-grid-size);
+      background: rgb(255, 255, 255);
+      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+      border: 1px solid rgb(209, 209, 209);
+    }
+
     pre {
       display: inline-block;
       margin: 0;
     }
   `;
+
+  #isImageData(
+    nodeValue: unknown
+  ): nodeValue is { inline_data: { data: string; mime_type: string } } {
+    if (typeof nodeValue !== "object" || !nodeValue) {
+      return false;
+    }
+
+    return "inline_data" in nodeValue;
+  }
 
   render() {
     return html`
@@ -206,6 +248,48 @@ export class ActivityLog extends LitElement {
                   // prettier-ignore
                   content = html`Working: (<pre>${node.id}</pre>)`;
                 } else {
+                  if (node.type === "input") {
+                    content = html`<section>
+                      <h1 data-message-idx=${idx}>${node.type}</h1>
+                      <dl class="node-output">
+                        ${event.outputs
+                          ? Object.entries(event.outputs).map(
+                              ([key, nodeValue]) => {
+                                let title = key;
+                                if (node.configuration?.schema) {
+                                  const schema = node.configuration
+                                    .schema as Schema;
+                                  if (schema.properties) {
+                                    title = schema.properties[key].title || key;
+                                  }
+                                }
+
+                                let value: HTMLTemplateResult | symbol =
+                                  nothing;
+                                if (typeof nodeValue === "object") {
+                                  if (this.#isImageData(nodeValue)) {
+                                    value = html`<img
+                                      src="data:image/${nodeValue.inline_data
+                                        .mime_type};base64,${nodeValue
+                                        .inline_data.data}"
+                                    />`;
+                                  }
+                                } else {
+                                  value = html`<div class="value">
+                                    ${nodeValue}
+                                  </div>`;
+                                }
+
+                                return html`<dd>${title}</dd>
+                                  <dt>${value}</dt>`;
+                              }
+                            )
+                          : html`No outputs provided`}
+                      </dl>
+                    </section>`;
+                    break;
+                  }
+
                   // This is fiddly. Output nodes don't have any outputs.
                   const result = node.type === "output" ? inputs : outputs;
                   content = html`<section>

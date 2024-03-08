@@ -180,9 +180,6 @@ export class UI extends LitElement {
     const { data, type } = message;
     switch (type) {
       case "nodestart": {
-        console.log(
-          `Initialize nodestart handlers for (id="${data.node.id}", type="${data.node.type}")`
-        );
         if (!this.#handlers.has(data.node.id)) {
           this.#handlers.set(data.node.id, []);
         }
@@ -190,24 +187,16 @@ export class UI extends LitElement {
       }
 
       case "nodeend": {
-        console.log(`Clear nodestart handlers for input(id="${data.node.id}")`);
         this.#handlers.delete(data.node.id);
         return;
       }
 
       case "input": {
-        console.log(`Input (id="${data.node.id}") requested`);
         return this.#registerInputHandler(data.node.id);
       }
 
       case "secret": {
-        console.log(`Secrets (${data.keys.join(", ")}) requested`);
         return this.#registerSecretsHandler(data.keys);
-      }
-
-      case "error": {
-        console.error(`Error:`, data.error);
-        return;
       }
     }
   }
@@ -222,7 +211,6 @@ export class UI extends LitElement {
       changedProperties.get("selectedNodeId") !== undefined &&
       changedProperties.get("selectedNodeId") !== this.selectedNodeId
     ) {
-      console.log(changedProperties.get("selectedNodeId"), this.selectedNodeId);
       this.#autoSwitchSidePanel = 1;
     }
   }
@@ -279,7 +267,11 @@ export class UI extends LitElement {
 
             evt.stopImmediatePropagation();
 
-            const message = messages[idx];
+            const event = events[idx];
+            if (event.type !== "node") {
+              return;
+            }
+
             const bounds = top.getBoundingClientRect();
             const details = this.#detailsRef.value;
             details.classList.toggle("active");
@@ -292,7 +284,7 @@ export class UI extends LitElement {
             details.style.setProperty("--top", `${bounds.top + 20}px`);
 
             const tree = details.querySelector("bb-json-tree") as JSONTree;
-            tree.json = message.data as unknown as Record<string, string>;
+            tree.json = event as unknown as Record<string, string>;
             tree.autoExpand = true;
           }}
           @breadboardinputenter=${(event: InputEnterEvent) => {
@@ -318,7 +310,6 @@ export class UI extends LitElement {
               );
             }
             for (const handler of handlers) {
-              console.log("handler handling");
               handler.call(null, data);
             }
           }}
