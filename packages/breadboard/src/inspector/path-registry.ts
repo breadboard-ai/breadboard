@@ -33,14 +33,20 @@ type PathRegistryEntry = {
   sidecars: InspectableRunEvent[];
 };
 
+class Entry implements PathRegistryEntry {
+  path: number[] = [];
+  children: PathRegistryEntry[] = [];
+  event: InspectableRunNodeEvent | null = null;
+  sidecars: InspectableRunEvent[] = [];
+}
+
 type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
 
-const traverse = (
+const find = (
   readonly: boolean,
   registry: PathRegistryEntry[],
   fullPath: number[],
-  path: number[],
-  updater: PathRegistryEntryUpdater
+  path: number[]
 ) => {
   const [head, ...tail] = path;
   if (head === undefined) {
@@ -55,18 +61,12 @@ const traverse = (
       console.warn("Path registry is read-only. Not adding", fullPath);
       return;
     }
-    entry = registry[head] = {
-      path: [],
-      children: [],
-      event: null,
-      sidecars: [],
-    };
+    entry = registry[head] = new Entry();
   }
   if (tail.length === 0) {
-    updater(entry);
-    return;
+    return entry;
   }
-  traverse(readonly, entry.children, fullPath, tail, updater);
+  find(readonly, entry.children, fullPath, tail);
 };
 
 export class PathRegistry {
@@ -90,7 +90,9 @@ export class PathRegistry {
     path: number[],
     replacer: PathRegistryEntryUpdater
   ) {
-    traverse(readonly, this.registry, path, path, replacer);
+    const entry = find(readonly, this.registry, path, path);
+    if (!entry) return;
+    replacer(entry);
     this.#eventsIsDirty = true;
   }
 
