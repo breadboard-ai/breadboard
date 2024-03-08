@@ -11,6 +11,7 @@
 html {
   --bb-grid-size: 4px;
   --bb-selected-color: rgb(46, 139, 232);
+  --bb-continue-color: rgb(192, 223, 255);
   --bb-font-family-header: "Fira Code";
   --bb-font-family-mono: "Fira Code", "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -64,6 +65,7 @@ html {
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-reset: url(/third_party/icons/reset.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
+  --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);

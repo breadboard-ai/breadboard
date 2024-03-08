@@ -141,12 +141,16 @@ export class Input extends LitElement {
     }
 
     input[type="submit"] {
-      background: var(--bb-selected-color);
-      color: #fff;
+      background: var(--bb-continue-color);
+      background-image: var(--bb-icon-resume-blue);
+      background-size: 16px 16px;
+      background-position: 8px 4px;
+      background-repeat: no-repeat;
+      color: #246db5;
       border-radius: 20px;
       border: none;
-      height: 100%;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+      height: 24px;
+      padding: 0 16px 0 28px;
       margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
     }
   `;

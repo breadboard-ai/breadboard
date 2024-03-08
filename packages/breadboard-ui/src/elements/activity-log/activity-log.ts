@@ -189,8 +189,10 @@ export class ActivityLog extends LitElement {
 
     dt .value {
       border-radius: var(--bb-grid-size);
-      background: rgb(255, 255, 255);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+    }
+
+    dt .value.input {
       border: 1px solid rgb(209, 209, 209);
     }
 
@@ -248,60 +250,56 @@ export class ActivityLog extends LitElement {
                   // prettier-ignore
                   content = html`Working: (<pre>${node.id}</pre>)`;
                 } else {
-                  if (node.type === "input") {
-                    content = html`<section>
-                      <h1 data-message-idx=${idx}>${node.type}</h1>
-                      <dl class="node-output">
-                        ${event.outputs
-                          ? Object.entries(event.outputs).map(
-                              ([key, nodeValue]) => {
-                                let title = key;
-                                if (node.configuration?.schema) {
-                                  const schema = node.configuration
-                                    .schema as Schema;
-                                  if (schema.properties) {
-                                    title = schema.properties[key].title || key;
-                                  }
-                                }
-
-                                let value: HTMLTemplateResult | symbol =
-                                  nothing;
-                                if (typeof nodeValue === "object") {
-                                  if (this.#isImageData(nodeValue)) {
-                                    value = html`<img
-                                      src="data:image/${nodeValue.inline_data
-                                        .mime_type};base64,${nodeValue
-                                        .inline_data.data}"
-                                    />`;
-                                  }
-                                } else {
-                                  value = html`<div class="value">
-                                    ${nodeValue}
-                                  </div>`;
-                                }
-
-                                return html`<dd>${title}</dd>
-                                  <dt>${value}</dt>`;
+                  // This is fiddly. Output nodes don't have any outputs.
+                  let additionalData: HTMLTemplateResult | symbol = nothing;
+                  if (node.type === "input" || node.type === "output") {
+                    const result = node.type === "output" ? inputs : outputs;
+                    additionalData = html`<dl class="node-output">
+                      ${result
+                        ? Object.entries(result).map(([key, nodeValue]) => {
+                            let title = key;
+                            if (node.configuration?.schema) {
+                              const schema = node.configuration
+                                .schema as Schema;
+                              if (schema.properties && schema.properties[key]) {
+                                title = schema.properties[key].title ?? key;
                               }
-                            )
-                          : html`No outputs provided`}
-                      </dl>
-                    </section>`;
-                    break;
+                            }
+
+                            let value: HTMLTemplateResult | symbol = nothing;
+                            if (typeof nodeValue === "object") {
+                              if (this.#isImageData(nodeValue)) {
+                                value = html`<img
+                                  src="data:image/${nodeValue.inline_data
+                                    .mime_type};base64,${nodeValue.inline_data
+                                    .data}"
+                                />`;
+                              } else {
+                                value = html`<bb-json-tree
+                                  .json=${nodeValue}
+                                ></bb-json-tree>`;
+                              }
+                            } else {
+                              value = html`<div
+                                class=${classMap({
+                                  value: true,
+                                  [node.type]: true,
+                                })}
+                              >
+                                ${nodeValue}
+                              </div>`;
+                            }
+
+                            return html`<dd>${title}</dd>
+                              <dt>${value}</dt>`;
+                          })
+                        : html`No data provided`}
+                    </dl>`;
                   }
 
-                  // This is fiddly. Output nodes don't have any outputs.
-                  const result = node.type === "output" ? inputs : outputs;
                   content = html`<section>
                     <h1 data-message-idx=${idx}>${node.type}</h1>
-                    ${node.type === "output" || node.type === "input"
-                      ? html` <aside class="node-output">
-                          <details open>
-                            <summary>text</summary>
-                            <bb-json-tree .json=${result}></bb-json-tree>
-                          </details>
-                        </aside>`
-                      : nothing}
+                    ${additionalData}
                   </section>`;
                   break;
                 }
