@@ -19,7 +19,6 @@ import {
 } from "./types.js";
 
 type PathRegistryEntry = {
-  path: number[];
   children: PathRegistryEntry[];
   event: InspectableRunNodeEvent | null;
   /**
@@ -33,44 +32,60 @@ type PathRegistryEntry = {
   sidecars: InspectableRunEvent[];
 };
 
-class Entry implements PathRegistryEntry {
-  path: number[] = [];
-  children: PathRegistryEntry[] = [];
-  event: InspectableRunNodeEvent | null = null;
-  sidecars: InspectableRunEvent[] = [];
-}
-
 type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
 
-const find = (
-  readonly: boolean,
-  registry: PathRegistryEntry[],
-  fullPath: number[],
-  path: number[]
-) => {
-  const [head, ...tail] = path;
-  if (head === undefined) {
-    return;
-  }
-  let entry = registry[head];
-  if (!entry) {
-    if (tail.length !== 0) {
-      console.warn("Path registry entry not found for", path, "in", fullPath);
-    }
-    if (readonly) {
-      console.warn("Path registry is read-only. Not adding", fullPath);
+class Entry implements PathRegistryEntry {
+  #children: Entry[] = [];
+  event: InspectableRunNodeEvent | null = null;
+  sidecars: InspectableRunEvent[] = [];
+
+  /**
+   * The main traversal function for the path registry. It will find the
+   * entry for the given path, creating it if permitted, and return it.
+   *
+   * This function is what builds the graph tree.
+   *
+   * @param readonly -- If true, the registry is read-only and will not be
+   *    modified.
+   * @param registry -- The registry to traverse. Used in recursion.
+   * @param fullPath -- The full path to the current node. Passed along during
+   *   recursion.
+   * @param path -- The current path to the node. Used in recursion.
+   * @returns -- The entry for the given path, or undefined if the path is
+   *  empty or invalid.
+   */
+  findOrCreate(
+    readonly: boolean,
+    fullPath: number[],
+    path: number[]
+  ): PathRegistryEntry | undefined {
+    const [head, ...tail] = path;
+    if (head === undefined) {
       return;
     }
-    entry = registry[head] = new Entry();
+    let entry = this.#children[head];
+    if (!entry) {
+      if (tail.length !== 0) {
+        console.warn("Path registry entry not found for", path, "in", fullPath);
+      }
+      if (readonly) {
+        console.warn("Path registry is read-only. Not adding", fullPath);
+        return;
+      }
+      entry = this.#children[head] = new Entry();
+    }
+    if (tail.length === 0) {
+      return entry;
+    }
+    return entry.findOrCreate(readonly, fullPath, tail);
   }
-  if (tail.length === 0) {
-    return entry;
-  }
-  find(readonly, entry.children, fullPath, tail);
-};
 
-export class PathRegistry {
-  registry: PathRegistryEntry[] = [];
+  get children() {
+    return this.#children;
+  }
+}
+
+export class PathRegistry extends Entry {
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
   // Keep track of some sidecar events so that we can clean them up later.
@@ -79,7 +94,7 @@ export class PathRegistry {
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   #updateEvents() {
-    this.#events = this.registry
+    this.#events = this.children
       .filter(Boolean)
       .flatMap((entry) => [entry.event, ...entry.sidecars])
       .filter(Boolean) as InspectableRunEvent[];
@@ -90,7 +105,7 @@ export class PathRegistry {
     path: number[],
     replacer: PathRegistryEntryUpdater
   ) {
-    const entry = find(readonly, this.registry, path, path);
+    const entry = this.findOrCreate(readonly, path, path);
     if (!entry) return;
     replacer(entry);
     this.#eventsIsDirty = true;
@@ -147,7 +162,7 @@ export class PathRegistry {
         nested: null,
       };
       // Add a sidecar to the current last entry in the registry.
-      this.registry[this.registry.length - 1].sidecars.push(entry);
+      this.children[this.children.length - 1].sidecars.push(entry);
       this.#trackedSidecars.set(path.join("-"), entry);
       this.#eventsIsDirty = true;
     } else {
@@ -178,7 +193,7 @@ export class PathRegistry {
         nested: null,
       };
       // Add a sidecar to the current last entry in the registry.
-      this.registry[this.registry.length - 1].sidecars.push(entry);
+      this.children[this.children.length - 1].sidecars.push(entry);
       this.#trackedSidecars.set(path.join("-"), entry);
       this.#eventsIsDirty = true;
     } else {
@@ -217,14 +232,14 @@ export class PathRegistry {
 
   secret(event: InspectableRunSecretEvent) {
     // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].sidecars.push(event);
+    this.children[this.children.length - 1].sidecars.push(event);
     this.#trackedSidecars.set("secret", event);
     this.#eventsIsDirty = true;
   }
 
   error(error: InspectableRunErrorEvent) {
     // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].sidecars.push(error);
+    this.children[this.children.length - 1].sidecars.push(error);
     this.#eventsIsDirty = true;
   }
 
