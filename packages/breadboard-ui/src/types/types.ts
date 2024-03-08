@@ -95,11 +95,3 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
-
-export type BreadboardElementError = InputErrorEvent; //more error types can be added for different components later on i.e., "& ElementErrorEvent & OtherElementErrorEvent" and so on
-
-export type BreadboardErrorHandler = (error: BreadboardElementError) => void;
-
-export type BreadboardReactComponentProps = {
-  onError?: BreadboardErrorHandler;
-};
