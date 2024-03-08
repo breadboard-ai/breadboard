@@ -106,7 +106,7 @@ export class InputEnterEvent extends Event {
 }
 
 export class InputErrorEvent extends Event {
-  static eventName = "inputerror";
+  static eventName = "breadboardinputerror";
 
   constructor(public detail: string) {
     super(InputErrorEvent.eventName, {
