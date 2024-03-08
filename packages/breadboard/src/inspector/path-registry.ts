@@ -43,9 +43,15 @@ type PathRegistryEntry = {
 type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
 
 class Entry implements PathRegistryEntry {
+  #events: InspectableRunEvent[] = [];
+  #eventsIsDirty = false;
   #children: Entry[] = [];
   event: InspectableRunNodeEvent | null = null;
   sidecars: InspectableRunEvent[] = [];
+
+  markEventsDirty() {
+    this.#eventsIsDirty = true;
+  }
 
   /**
    * The main traversal function for the path registry. It will find the
@@ -67,6 +73,9 @@ class Entry implements PathRegistryEntry {
     fullPath: number[],
     path: number[]
   ): PathRegistryEntry | undefined {
+    // Marking events dirty, because we're about to mutate something within
+    // this swath of the registry.
+    this.#eventsIsDirty = true;
     const [head, ...tail] = path;
     if (head === undefined) {
       return;
@@ -96,18 +105,26 @@ class Entry implements PathRegistryEntry {
     return this.#children;
   }
 
-  #getEvents() {
-    return this.children
+  #updateEvents() {
+    this.#events = this.children
       .filter(Boolean)
       .flatMap((entry) => [entry.event, ...entry.sidecars])
       .filter(Boolean) as InspectableRunEvent[];
+  }
+
+  get events() {
+    if (this.#eventsIsDirty) {
+      this.#updateEvents();
+      this.#eventsIsDirty = false;
+    }
+    return this.#events;
   }
 
   nested(): InspectableRun[] {
     if (this.#children.length === 0) {
       return [];
     }
-    const events = this.#getEvents();
+    const events = this.events;
     // a bit of a hack: what I actually need is to find out whether this is
     // a map or not.
     // Maps have a peculiar structure: their children will have no events, but
@@ -135,7 +152,7 @@ class Entry implements PathRegistryEntry {
           messages: [],
           observe: (runner) => runner,
           currentNode: () => "",
-          events: entry.#getEvents(),
+          events: entry.events,
         };
       });
     }
@@ -180,19 +197,10 @@ class Event implements InspectableRunNodeEvent {
 }
 
 export class PathRegistry extends Entry {
-  #events: InspectableRunEvent[] = [];
-  #eventsIsDirty = false;
   // Keep track of some sidecar events so that we can clean them up later.
   // We only need to keep track of input and output events, since the
   // secret and events do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
-
-  #updateEvents() {
-    this.#events = this.children
-      .filter(Boolean)
-      .flatMap((entry) => [entry.event, ...entry.sidecars])
-      .filter(Boolean) as InspectableRunEvent[];
-  }
 
   #traverse(
     readonly: boolean,
@@ -202,7 +210,6 @@ export class PathRegistry extends Entry {
     const entry = this.findOrCreate(readonly, path, path);
     if (!entry) return;
     replacer(entry);
-    this.#eventsIsDirty = true;
   }
 
   cleanUpSecrets() {
@@ -243,7 +250,7 @@ export class PathRegistry extends Entry {
       // Add a sidecar to the current last entry in the registry.
       this.children[this.children.length - 1].sidecars.push(event);
       this.#trackedSidecars.set(path.join("-"), event);
-      this.#eventsIsDirty = true;
+      this.markEventsDirty();
     } else {
       this.#traverse(true, path, (entry) => {
         const existing = entry.event;
@@ -271,7 +278,7 @@ export class PathRegistry extends Entry {
       // Add a sidecar to the current last entry in the registry.
       this.children[this.children.length - 1].sidecars.push(event);
       this.#trackedSidecars.set(path.join("-"), event);
-      this.#eventsIsDirty = true;
+      this.markEventsDirty();
     } else {
       this.#traverse(true, path, (entry) => {
         const existing = entry.event;
@@ -302,7 +309,7 @@ export class PathRegistry extends Entry {
       sidecar.outputs = data.outputs;
       sidecar.result = null;
       this.#trackedSidecars.delete(key);
-      this.#eventsIsDirty = true;
+      this.markEventsDirty();
     }
   }
 
@@ -310,20 +317,12 @@ export class PathRegistry extends Entry {
     // Add as a sidecar to the current last entry in the registry.
     this.children[this.children.length - 1].sidecars.push(event);
     this.#trackedSidecars.set("secret", event);
-    this.#eventsIsDirty = true;
+    this.markEventsDirty();
   }
 
   error(error: InspectableRunErrorEvent) {
     // Add as a sidecar to the current last entry in the registry.
     this.children[this.children.length - 1].sidecars.push(error);
-    this.#eventsIsDirty = true;
-  }
-
-  events() {
-    if (this.#eventsIsDirty) {
-      this.#updateEvents();
-      this.#eventsIsDirty = false;
-    }
-    return this.#events;
+    this.markEventsDirty();
   }
 }

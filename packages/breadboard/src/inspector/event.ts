@@ -61,6 +61,6 @@ export class EventManager {
   }
 
   get events(): InspectableRunEvent[] {
-    return this.#registry.events();
+    return this.#registry.events;
   }
 }
