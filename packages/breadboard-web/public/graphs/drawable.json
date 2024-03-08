@@ -1,0 +1,124 @@
+{
+  "title": "Drawable",
+  "description": "An example of using Gemini Kit's vision node with a drawable canvas",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "describePicture",
+      "to": "output-2",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "combinePictureAndPrompt",
+      "to": "describePicture",
+      "out": "parts",
+      "in": "parts"
+    },
+    {
+      "from": "input-1",
+      "to": "combinePictureAndPrompt",
+      "out": "picture",
+      "in": "picture"
+    },
+    {
+      "from": "input-1",
+      "to": "combinePictureAndPrompt",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "describePicture",
+      "type": "vision",
+      "configuration": {}
+    },
+    {
+      "id": "combinePictureAndPrompt",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#combinePictureAndPrompt"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "picture": {
+              "type": "image/png",
+              "title": "Image",
+              "format": "drawable"
+            },
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "examples": [
+                "Describe what you see in the picture"
+              ]
+            }
+          },
+          "required": [
+            "picture",
+            "prompt"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "combinePictureAndPrompt": {
+      "edges": [
+        {
+          "from": "combinePictureAndPrompt-input",
+          "to": "combinePictureAndPrompt-run",
+          "out": "*"
+        },
+        {
+          "from": "combinePictureAndPrompt-run",
+          "to": "combinePictureAndPrompt-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "combinePictureAndPrompt-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "combinePictureAndPrompt-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function combinePictureAndPrompt({picture,prompt}) {return{parts:[picture,{text:prompt}]}}",
+            "name": "combinePictureAndPrompt",
+            "raw": true
+          }
+        },
+        {
+          "id": "combinePictureAndPrompt-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
