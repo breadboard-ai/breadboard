@@ -276,8 +276,6 @@ export class ActivityLog extends LitElement {
                     errorData = errorData.error as ErrorObject;
                   }
 
-                  console.log(messageOutput);
-
                   output = messageOutput;
                 }
 
