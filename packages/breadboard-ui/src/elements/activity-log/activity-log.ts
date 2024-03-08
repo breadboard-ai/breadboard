@@ -209,6 +209,7 @@ export class ActivityLog extends LitElement {
       border-radius: var(--bb-grid-size);
       display: block;
       width: 100%;
+      border: 1px solid rgb(209, 209, 209);
     }
 
     dl {
