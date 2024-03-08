@@ -94,6 +94,15 @@ export class PathRegistry {
     this.#eventsIsDirty = true;
   }
 
+  cleanUpSecrets() {
+    const secret = this.#trackedSidecars.get(
+      "secret"
+    ) as InspectableRunSecretEvent;
+    if (!secret) return;
+    this.#trackedSidecars.delete("secret");
+    secret.result = null;
+  }
+
   graphstart(path: number[]) {
     this.#traverse(false, path, () => {});
   }
@@ -207,6 +216,7 @@ export class PathRegistry {
   secret(event: InspectableRunSecretEvent) {
     // Add as a sidecar to the current last entry in the registry.
     this.registry[this.registry.length - 1].sidecars.push(event);
+    this.#trackedSidecars.set("secret", event);
     this.#eventsIsDirty = true;
   }
 

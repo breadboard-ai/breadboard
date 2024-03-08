@@ -222,7 +222,7 @@ export class ActivityLog extends LitElement {
                 // TODO: Figure out how the actual asking for secret will work
                 // TODO: Figure out how to signal when already know the secret
                 //       (probably just return `nothing`)
-                return nothing;
+                return html`<section>🔒 Secret ${event.result}</section>`;
               }
               case "error": {
                 const { error } = event;
