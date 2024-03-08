@@ -7,11 +7,15 @@
 import { HarnessRunResult } from "../harness/types.js";
 import {
   InputResponse,
+  InputValues,
+  NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
+  OutputValues,
 } from "../types.js";
 import {
+  InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -30,6 +34,10 @@ type PathRegistryEntry = {
    * - Error events.
    */
   sidecars: InspectableRunEvent[];
+  /**
+   * Computes nested runs for the given path.
+   */
+  nested(): InspectableRun[];
 };
 
 type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
@@ -66,6 +74,10 @@ class Entry implements PathRegistryEntry {
     let entry = this.#children[head];
     if (!entry) {
       if (tail.length !== 0) {
+        // If you see this message in the console, it's a problem with the
+        // underlying runner. The runner should always provide paths
+        // incrementally, so there should never be a situation where we don't
+        // have a registry entry for an index in the middle of the path.
         console.warn("Path registry entry not found for", path, "in", fullPath);
       }
       if (readonly) {
@@ -82,6 +94,88 @@ class Entry implements PathRegistryEntry {
 
   get children() {
     return this.#children;
+  }
+
+  #getEvents() {
+    return this.children
+      .filter(Boolean)
+      .flatMap((entry) => [entry.event, ...entry.sidecars])
+      .filter(Boolean) as InspectableRunEvent[];
+  }
+
+  nested(): InspectableRun[] {
+    if (this.#children.length === 0) {
+      return [];
+    }
+    const events = this.#getEvents();
+    // a bit of a hack: what I actually need is to find out whether this is
+    // a map or not.
+    // Maps have a peculiar structure: their children will have no events, but
+    // their children's children (the parallel runs) will have events.
+    if (events.length > 0) {
+      // This is an ordinary run.
+      return [
+        {
+          id: -10,
+          graphId: crypto.randomUUID(),
+          graphVersion: 0,
+          messages: [],
+          events,
+          observe: (runner) => runner,
+          currentNode: () => "",
+        },
+      ];
+    } else {
+      // This is a map.
+      return this.#children.map((entry) => {
+        return {
+          id: -10,
+          graphId: crypto.randomUUID(),
+          graphVersion: 0,
+          messages: [],
+          observe: (runner) => runner,
+          currentNode: () => "",
+          events: entry.#getEvents(),
+        };
+      });
+    }
+  }
+}
+
+class Event implements InspectableRunNodeEvent {
+  type: "node";
+  node: NodeDescriptor;
+  start: number;
+  end: number | null;
+  inputs: InputValues;
+  outputs: OutputValues | null;
+  result: HarnessRunResult | null;
+  bubbled: boolean;
+
+  /**
+   * The path registry entry associated with this event.
+   */
+  #entry: PathRegistryEntry | null;
+
+  constructor(
+    entry: PathRegistryEntry | null,
+    node: NodeDescriptor,
+    start: number,
+    inputs: InputValues
+  ) {
+    this.#entry = entry;
+    this.type = "node";
+    this.node = node;
+    this.start = start;
+    this.end = null;
+    this.inputs = inputs;
+    this.outputs = null;
+    this.result = null;
+    this.bubbled = false;
+  }
+
+  get nested() {
+    return this.#entry?.nested() || [];
   }
 }
 
@@ -129,41 +223,26 @@ export class PathRegistry extends Entry {
   }
 
   nodestart(path: number[], data: NodeStartResponse) {
-    this.#traverse(
-      false,
-      path,
-      (entry) =>
-        (entry.event = {
-          type: "node",
-          node: data.node,
-          start: data.timestamp,
-          end: null,
-          inputs: data.inputs,
-          outputs: null,
-          result: null,
-          bubbled: false,
-          nested: null,
-        })
-    );
+    this.#traverse(false, path, (entry) => {
+      const event = new Event(entry, data.node, data.timestamp, data.inputs);
+      entry.event = event;
+    });
   }
 
   input(path: number[], result: HarnessRunResult, bubbled: boolean) {
     if (bubbled) {
       const input = result.data as InputResponse;
-      const entry: InspectableRunEvent = {
-        type: "node",
-        node: input.node,
-        start: input.timestamp,
-        end: null,
-        inputs: input.inputArguments,
-        outputs: null,
-        result,
-        bubbled: true,
-        nested: null,
-      };
+      const event = new Event(
+        null,
+        input.node,
+        input.timestamp,
+        input.inputArguments
+      );
+      event.bubbled = true;
+      event.result = result;
       // Add a sidecar to the current last entry in the registry.
-      this.children[this.children.length - 1].sidecars.push(entry);
-      this.#trackedSidecars.set(path.join("-"), entry);
+      this.children[this.children.length - 1].sidecars.push(event);
+      this.#trackedSidecars.set(path.join("-"), event);
       this.#eventsIsDirty = true;
     } else {
       this.#traverse(true, path, (entry) => {
@@ -181,20 +260,17 @@ export class PathRegistry extends Entry {
     if (bubbled) {
       // Create a new entry for the sidecar output event.
       const output = result.data as OutputResponse;
-      const entry: InspectableRunEvent = {
-        type: "node",
-        node: output.node,
-        start: output.timestamp,
-        end: null,
-        inputs: output.outputs,
-        outputs: null,
-        result,
-        bubbled: true,
-        nested: null,
-      };
+      const event = new Event(
+        null,
+        output.node,
+        output.timestamp,
+        output.outputs
+      );
+      event.bubbled = true;
+      event.result = result;
       // Add a sidecar to the current last entry in the registry.
-      this.children[this.children.length - 1].sidecars.push(entry);
-      this.#trackedSidecars.set(path.join("-"), entry);
+      this.children[this.children.length - 1].sidecars.push(event);
+      this.#trackedSidecars.set(path.join("-"), event);
       this.#eventsIsDirty = true;
     } else {
       this.#traverse(true, path, (entry) => {

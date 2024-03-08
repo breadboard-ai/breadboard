@@ -14,6 +14,7 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { InputRequestedEvent } from "../../events/events.js";
+import { map } from "lit/directives/map.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -356,7 +357,7 @@ export class ActivityLog extends LitElement {
                     break;
                   }
                   // prettier-ignore
-                  content = html`Working: (<pre>${node.id}</pre>)`;
+                  content = html`Working: (<pre>${node.id} (${map(event.nested || [], (run) => html`<div>${map(run.events, (event) => event.type == "node" ? html`<span>${event.node.id}</span>✨` : nothing )}</div>`)})</pre>)`;
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
                   let additionalData: HTMLTemplateResult | symbol = nothing;
