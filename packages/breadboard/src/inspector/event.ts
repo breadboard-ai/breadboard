@@ -13,11 +13,7 @@ export class EventManager {
   #level = 0;
 
   add(result: HarnessRunResult) {
-    // Clean up after the `secret` event.
-    // const maybeSecret = this.#events[this.#events.length - 1];
-    // if (maybeSecret && maybeSecret.type === "secret") {
-    //   maybeSecret.result = null;
-    // }
+    this.#registry.cleanUpSecrets();
 
     switch (result.type) {
       case "graphstart": {
@@ -36,6 +32,10 @@ export class EventManager {
       }
       case "input": {
         this.#registry.input(result.data.path, result, result.data.bubbled);
+        break;
+      }
+      case "output": {
+        this.#registry.output(result.data.path, result, result.data.bubbled);
         break;
       }
       case "secret": {

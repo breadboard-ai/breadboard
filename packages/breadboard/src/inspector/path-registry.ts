@@ -5,7 +5,12 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { InputResponse, NodeEndResponse, NodeStartResponse } from "../types.js";
+import {
+  InputResponse,
+  NodeEndResponse,
+  NodeStartResponse,
+  OutputResponse,
+} from "../types.js";
 import {
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -17,7 +22,15 @@ type PathRegistryEntry = {
   path: number[];
   children: PathRegistryEntry[];
   event: InspectableRunNodeEvent | null;
-  after: InspectableRunEvent[];
+  /**
+   * Sidecars are events that are displayed at a top-level, but aren't
+   * part of the main event list. Currently, sidecar events are:
+   * - Input events that have bubbled up.
+   * - Output events that have bubbled up.
+   * - Secret events.
+   * - Error events.
+   */
+  sidecars: InspectableRunEvent[];
 };
 
 type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
@@ -46,7 +59,7 @@ const traverse = (
       path: [],
       children: [],
       event: null,
-      after: [],
+      sidecars: [],
     };
   }
   if (tail.length === 0) {
@@ -60,11 +73,15 @@ export class PathRegistry {
   registry: PathRegistryEntry[] = [];
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
+  // Keep track of some sidecar events so that we can clean them up later.
+  // We only need to keep track of input and output events, since the
+  // secret and events do not have a corresponding `nodeend` event.
+  #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   #updateEvents() {
     this.#events = this.registry
       .filter(Boolean)
-      .flatMap((entry) => [entry.event, ...entry.after])
+      .flatMap((entry) => [entry.event, ...entry.sidecars])
       .filter(Boolean) as InspectableRunEvent[];
   }
 
@@ -75,6 +92,15 @@ export class PathRegistry {
   ) {
     traverse(readonly, this.registry, path, path, replacer);
     this.#eventsIsDirty = true;
+  }
+
+  cleanUpSecrets() {
+    const secret = this.#trackedSidecars.get(
+      "secret"
+    ) as InspectableRunSecretEvent;
+    if (!secret) return;
+    this.#trackedSidecars.delete("secret");
+    secret.result = null;
   }
 
   graphstart(path: number[]) {
@@ -105,11 +131,9 @@ export class PathRegistry {
   }
 
   input(path: number[], result: HarnessRunResult, bubbled: boolean) {
-    console.log("INPUT", path, result, bubbled);
     if (bubbled) {
       const input = result.data as InputResponse;
-      // Add a sidecar to the current last entry in the registry.
-      this.registry[this.registry.length - 1].after.push({
+      const entry: InspectableRunEvent = {
         type: "node",
         node: input.node,
         start: input.timestamp,
@@ -119,7 +143,10 @@ export class PathRegistry {
         result,
         bubbled: true,
         nested: null,
-      });
+      };
+      // Add a sidecar to the current last entry in the registry.
+      this.registry[this.registry.length - 1].sidecars.push(entry);
+      this.#trackedSidecars.set(path.join("-"), entry);
       this.#eventsIsDirty = true;
     } else {
       this.#traverse(true, path, (entry) => {
@@ -129,6 +156,37 @@ export class PathRegistry {
           return;
         }
         existing.result = result;
+      });
+    }
+  }
+
+  output(path: number[], result: HarnessRunResult, bubbled: boolean) {
+    if (bubbled) {
+      // Create a new entry for the sidecar output event.
+      const output = result.data as OutputResponse;
+      const entry: InspectableRunEvent = {
+        type: "node",
+        node: output.node,
+        start: output.timestamp,
+        end: null,
+        inputs: output.outputs,
+        outputs: null,
+        result,
+        bubbled: true,
+        nested: null,
+      };
+      // Add a sidecar to the current last entry in the registry.
+      this.registry[this.registry.length - 1].sidecars.push(entry);
+      this.#trackedSidecars.set(path.join("-"), entry);
+      this.#eventsIsDirty = true;
+    } else {
+      this.#traverse(true, path, (entry) => {
+        const existing = entry.event;
+        if (!existing) {
+          console.error("Expected an existing event for", path);
+          return;
+        }
+        existing.inputs = (result.data as OutputResponse).outputs;
       });
     }
   }
@@ -144,17 +202,27 @@ export class PathRegistry {
       existing.outputs = data.outputs;
       existing.result = null;
     });
+    const key = path.join("-");
+    const sidecar = this.#trackedSidecars.get(key) as InspectableRunNodeEvent;
+    if (sidecar) {
+      sidecar.end = data.timestamp;
+      sidecar.outputs = data.outputs;
+      sidecar.result = null;
+      this.#trackedSidecars.delete(key);
+      this.#eventsIsDirty = true;
+    }
   }
 
   secret(event: InspectableRunSecretEvent) {
     // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].after.push(event);
+    this.registry[this.registry.length - 1].sidecars.push(event);
+    this.#trackedSidecars.set("secret", event);
     this.#eventsIsDirty = true;
   }
 
   error(error: InspectableRunErrorEvent) {
     // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].after.push(error);
+    this.registry[this.registry.length - 1].sidecars.push(error);
     this.#eventsIsDirty = true;
   }
 

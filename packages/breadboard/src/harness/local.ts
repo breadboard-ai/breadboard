@@ -34,18 +34,13 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
 const fromRunnerResult = <Result extends BreadboardRunResult>(
   result: Result
 ) => {
-  const { type, node, timestamp } = result;
+  const { type, node, timestamp, invocationId } = result;
+  const bubbled = invocationId == -1;
   if (type === "input") {
-    const { inputArguments, path, invocationId } = result;
+    const { inputArguments, path } = result;
     return {
       type,
-      data: {
-        node,
-        inputArguments,
-        path,
-        bubbled: invocationId == -1,
-        timestamp,
-      },
+      data: { node, inputArguments, path, bubbled, timestamp },
       reply: async (value) => {
         result.inputs = value.inputs;
       },
@@ -54,12 +49,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
     const { outputs, path } = result;
     return {
       type,
-      data: {
-        node,
-        outputs,
-        path,
-        timestamp,
-      },
+      data: { node, outputs, path, timestamp, bubbled },
       reply: async () => {
         // Do nothing
       },
