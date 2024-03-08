@@ -18,9 +18,8 @@ import {
   isMultiline,
   isSelect,
   isWebcam,
-  isMultipartText,
 } from "../../utils/index.js";
-import { LitElement, html, css, HTMLTemplateResult } from "lit";
+import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { InputEnterEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
@@ -105,6 +104,7 @@ export class Input extends LitElement {
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       width: 100%;
       border: 1px solid rgb(209, 209, 209);
+      font-size: var(--bb-text-medium);
     }
 
     textarea {
