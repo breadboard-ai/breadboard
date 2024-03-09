@@ -12,14 +12,16 @@ const toUUID = (url: string): GraphUUID => {
 };
 
 export class GraphStore implements InspectableGraphStore {
-  #entries = new Map<string, GraphDescriptor>();
-  #ids = new Map<string, string>();
+  #entries = new Map<GraphUUID, GraphDescriptor>();
+  #ids = new Map<string, GraphUUID>();
 
   #getOrSetGraphId(graph: GraphDescriptor): GraphUUID {
     if (graph.url) {
       return toUUID(graph.url);
     }
-    // if there's no URL, fallback to stringifying the graph and making a blob URL
+    // if there's no URL, fallback to stringifying the graph
+    // and making a blob URL.
+    // TODO: Remove the needs for this. All graphs must have a URL.
     const key = JSON.stringify(graph);
     if (this.#ids.has(key)) {
       return this.#ids.get(key) as GraphUUID;
@@ -31,7 +33,7 @@ export class GraphStore implements InspectableGraphStore {
     return id;
   }
 
-  has(id: string) {
+  has(id: GraphUUID) {
     return this.#entries.has(id);
   }
 
@@ -42,7 +44,7 @@ export class GraphStore implements InspectableGraphStore {
     return id;
   }
 
-  get(id: string) {
+  get(id: GraphUUID) {
     return this.#entries.get(id);
   }
 }
