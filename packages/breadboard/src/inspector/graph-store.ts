@@ -5,24 +5,33 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { InspectableGraphStore, UUID } from "./types.js";
+import { GraphUUID, InspectableGraphStore } from "./types.js";
+
+const toUUID = (url: string): GraphUUID => {
+  return `0|${url}`;
+};
 
 export class GraphStore implements InspectableGraphStore {
-  #entries = new Map<UUID, GraphDescriptor>();
-  #ids = new Map<string, UUID>();
+  #entries = new Map<string, GraphDescriptor>();
+  #ids = new Map<string, string>();
 
-  #getOrSetGraphId(graph: GraphDescriptor) {
-    // if there's no URL, fallback to stringifying the graph.
-    const key = graph.url ?? JSON.stringify(graph);
-    if (this.#ids.has(key)) {
-      return this.#ids.get(key) as UUID;
+  #getOrSetGraphId(graph: GraphDescriptor): GraphUUID {
+    if (graph.url) {
+      return toUUID(graph.url);
     }
-    const id = crypto.randomUUID();
+    // if there's no URL, fallback to stringifying the graph and making a blob URL
+    const key = JSON.stringify(graph);
+    if (this.#ids.has(key)) {
+      return this.#ids.get(key) as GraphUUID;
+    }
+    const id = toUUID(
+      URL.createObjectURL(new Blob([key], { type: "application/json" }))
+    );
     this.#ids.set(key, id);
     return id;
   }
 
-  has(id: UUID) {
+  has(id: string) {
     return this.#entries.has(id);
   }
 
@@ -33,7 +42,7 @@ export class GraphStore implements InspectableGraphStore {
     return id;
   }
 
-  get(id: UUID) {
+  get(id: string) {
     return this.#entries.get(id);
   }
 }

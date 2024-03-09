@@ -9,6 +9,7 @@ import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
 import { GraphStore } from "./graph-store.js";
 import {
+  GraphUUID,
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
@@ -86,10 +87,9 @@ class NodeHighlightHelper {
   }
 }
 
-export const inspectableRun = (graph?: GraphDescriptor): InspectableRun => {
+export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
   const store = new GraphStore();
-  if (graph) store.add(graph);
-  return new Run(store);
+  return new Run(store, graph);
 };
 
 type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
@@ -98,12 +98,13 @@ export class Run implements InspectableRun {
   #events: EventManager;
   #highlightHelper = new NodeHighlightHelper();
 
-  graphId = crypto.randomUUID();
+  graphId: GraphUUID;
   graphVersion = 0;
   messages: HarnessRunResult[] = [];
 
-  constructor(graphStore: InspectableGraphStore) {
+  constructor(graphStore: InspectableGraphStore, graph: GraphDescriptor) {
     this.#events = new EventManager(graphStore);
+    this.graphId = graphStore.add(graph);
   }
 
   get events(): InspectableRunEvent[] {

@@ -21,6 +21,15 @@ import {
   Schema,
 } from "../types.js";
 
+export type GraphVersion = number;
+
+export type GraphURL = string;
+
+/**
+ * Represents an UUID that is used to identify a graph.
+ */
+export type GraphUUID = `${GraphVersion}|${GraphURL}`;
+
 export type InspectableNode = {
   /**
    * The `NodeDescriptor` for the node.
@@ -331,11 +340,6 @@ export type EdgeStoreMutator = {
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
 
 /**
- * Represents an UUID that is used to identify a graph.
- */
-export type UUID = ReturnType<Crypto["randomUUID"]>;
-
-/**
  * Represents a store of graph versions.
  */
 export type InspectableGraphVersionsStore = {
@@ -347,7 +351,7 @@ export type InspectableGraphVersionsStore = {
    * @param run -- the run of the graph to retrieve (optional, defaults to 0)
    */
   get(
-    id: UUID,
+    id: GraphUUID,
     version?: number,
     run?: number
   ): Promise<InspectableGraphVersions>;
@@ -361,7 +365,7 @@ export type InspectableGraphVersions = {
   /**
    * The unique identifier of the sequence of graph versions.
    */
-  id: UUID;
+  id: GraphUUID;
   /**
    * A list of versions for the given graph. Every edit to the graph
    * results in a new version. The first item in the list is the initial
@@ -399,17 +403,17 @@ export type InspectableGraphStore = {
    * Retrieves a graph with the given id.
    * @param id -- the id of the graph to retrieve
    */
-  get(id: UUID): GraphDescriptor | undefined;
+  get(id: GraphUUID): GraphDescriptor | undefined;
   /**
    * Checks if the store has a graph with the given id.
    * @param id -- the id of the graph
    */
-  has(id: UUID): boolean;
+  has(id: GraphUUID): boolean;
   /**
    * Adds a graph to the store and returns the UUID. If the graph is already
    * in the store, returns the UUID of the existing graph.
    */
-  add(graph: GraphDescriptor): UUID;
+  add(graph: GraphDescriptor): GraphUUID;
 };
 
 /**
@@ -481,7 +485,7 @@ export type InspectableRun = {
   /**
    * The id graph that was run.
    */
-  graphId: UUID;
+  graphId: GraphUUID;
   /**
    * The version graph that was run.
    */
@@ -507,7 +511,7 @@ type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export type PathRegistryEntry = {
   children: PathRegistryEntry[];
-  graphId: UUID | null;
+  graphId: GraphUUID | null;
   event: InspectableRunNodeEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't

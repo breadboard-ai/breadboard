@@ -339,8 +339,9 @@ export class Main extends LitElement {
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
 
-    // Clear message history.
-    this.#inspector = inspectRun(this.loadInfo.graphDescriptor);
+    this.#inspector = inspectRun(
+      this.loadInfo.graphDescriptor as GraphDescriptor
+    );
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;

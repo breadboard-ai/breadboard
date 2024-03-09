@@ -6,11 +6,11 @@
 
 import { OutputValues } from "../types.js";
 import {
+  GraphUUID,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
-  UUID,
 } from "./types.js";
 
 export const SECRET_PATH = [-2];
@@ -27,7 +27,7 @@ class Entry implements PathRegistryEntry {
   // secret and events do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
-  graphId: UUID | null = null;
+  graphId: GraphUUID | null = null;
 
   addSidecar(path: number[], event: InspectableRunEvent) {
     const key = path.join("-");
@@ -141,7 +141,7 @@ class Entry implements PathRegistryEntry {
       // This is an ordinary run.
       return [
         {
-          graphId: this.graphId as UUID,
+          graphId: this.graphId as GraphUUID,
           graphVersion: 0,
           messages: [],
           events,
@@ -153,7 +153,7 @@ class Entry implements PathRegistryEntry {
       // This is a map.
       return this.#children.filter(Boolean).map((entry) => {
         return {
-          graphId: entry.graphId as UUID,
+          graphId: entry.graphId as GraphUUID,
           graphVersion: 0,
           messages: [],
           observe: (runner) => runner,
