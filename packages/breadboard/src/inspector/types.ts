@@ -392,6 +392,27 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents a store of all graphs that the system has seen so far.
+ */
+export type InspectableGraphStore = {
+  /**
+   * Retrieves a graph with the given id.
+   * @param id -- the id of the graph to retrieve
+   */
+  get(id: UUID): GraphDescriptor | undefined;
+  /**
+   * Checks if the store has a graph with the given id.
+   * @param id -- the id of the graph
+   */
+  has(id: UUID): boolean;
+  /**
+   * Adds a graph to the store and returns the UUID. If the graph is already
+   * in the store, returns the UUID of the existing graph.
+   */
+  add(graph: GraphDescriptor): UUID;
+};
+
+/**
  * Represents a pair of the nodestart and nodeend results that were generated
  * during the run.
  */

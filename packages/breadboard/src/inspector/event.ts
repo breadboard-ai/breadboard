@@ -6,7 +6,6 @@
 
 import { HarnessRunResult } from "../harness/types.js";
 import {
-  GraphDescriptor,
   GraphStartProbeData,
   InputResponse,
   InputValues,
@@ -16,6 +15,7 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
+import { GraphStore } from "./graph-store.js";
 import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
 import {
   InspectableRunErrorEvent,
@@ -23,7 +23,6 @@ import {
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
-  UUID,
 } from "./types.js";
 
 class RunNodeEvent implements InspectableRunNodeEvent {
@@ -63,39 +62,8 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   }
 }
 
-class GraphRegistry {
-  #entries = new Map<UUID, GraphDescriptor>();
-  #ids = new Map<string, UUID>();
-
-  #getOrSetGraphId(graph: GraphDescriptor) {
-    // This does not work consistently.
-    // First, it's slow. JSONifying the graph is slow.
-    // Second, it's unreliable, because it depends on string interning,
-    // and will result in duplicate IDs for the same graph.
-    // TODO: Make this fast and reliable.
-    const graphString = JSON.stringify(graph);
-    if (this.#ids.has(graphString)) {
-      return this.#ids.get(graphString) as UUID;
-    }
-    const id = crypto.randomUUID();
-    this.#ids.set(graphString, id);
-    return id;
-  }
-
-  add(graph: GraphDescriptor) {
-    const id = this.#getOrSetGraphId(graph);
-    if (this.#entries.has(id)) return id;
-    this.#entries.set(id, graph);
-    return id;
-  }
-
-  get(id: UUID) {
-    return this.#entries.get(id);
-  }
-}
-
 export class EventManager {
-  #graphRegistry = new GraphRegistry();
+  #graphRegistry = new GraphStore();
   #registry = new PathRegistry();
 
   #addGraphstart(data: GraphStartProbeData) {
