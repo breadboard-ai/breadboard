@@ -93,6 +93,8 @@ export class Run implements InspectableRun {
 
   id = 0;
   graphId = crypto.randomUUID();
+  // TODO: Connect this to the actual graph.
+  graph = null;
   graphVersion = 0;
   messages: HarnessRunResult[] = [];
 

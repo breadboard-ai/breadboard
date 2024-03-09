@@ -8,7 +8,6 @@ import type {
   Capability,
   Edge,
   GraphDescriptor,
-  GraphMetadata,
   InputValues,
   KitDescriptor,
   NodeDescriptor,
@@ -363,20 +362,25 @@ export type RunStackEntry = {
  */
 export type RunState = RunStackEntry[];
 
-export type GraphProbeData = {
-  metadata: GraphMetadata;
+export type GraphStartProbeData = {
+  graph: GraphDescriptor;
   path: number[];
   timestamp: number;
 };
 
 export type GraphStartProbeMessage = {
   type: "graphstart";
-  data: GraphProbeData;
+  data: GraphStartProbeData;
+};
+
+export type GraphEndProbeData = {
+  path: number[];
+  timestamp: number;
 };
 
 export type GraphEndProbeMessage = {
   type: "graphend";
-  data: GraphProbeData;
+  data: GraphEndProbeData;
 };
 
 export type SkipProbeMessage = {

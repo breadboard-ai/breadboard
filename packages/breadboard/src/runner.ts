@@ -144,7 +144,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphstart",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { graph: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
@@ -262,7 +262,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphend",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { path: invocationPath, timestamp: timestamp() },
       });
     });
   }
@@ -327,7 +327,7 @@ export class BoardRunner implements BreadboardRunner {
           });
           await probe?.report?.({
             type: "graphend",
-            data: { metadata: this, path, timestamp: timestamp() },
+            data: { path, timestamp: timestamp() },
           });
           break;
         }

@@ -6,6 +6,8 @@
 
 import { HarnessRunResult } from "../harness/types.js";
 import {
+  GraphDescriptor,
+  GraphStartProbeData,
   InputResponse,
   InputValues,
   NodeDescriptor,
@@ -21,6 +23,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
+  UUID,
 } from "./types.js";
 
 class RunNodeEvent implements InspectableRunNodeEvent {
@@ -60,16 +63,45 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   }
 }
 
+class GraphRegistry {
+  #entries = new Map<UUID, GraphDescriptor>();
+  #ids = new Map<string, UUID>();
+
+  #getOrSetGraphId(graph: GraphDescriptor) {
+    const graphString = JSON.stringify(graph);
+    if (this.#ids.has(graphString)) {
+      return this.#ids.get(graphString) as UUID;
+    }
+    const id = crypto.randomUUID();
+    this.#ids.set(graphString, id);
+    return id;
+  }
+
+  add(graph: GraphDescriptor) {
+    // TODO: Make this fast.
+    const id = this.#getOrSetGraphId(graph);
+    if (this.#entries.has(id)) return id;
+    this.#entries.set(id, graph);
+    return id;
+  }
+}
+
 export class EventManager {
+  #graphRegistry = new GraphRegistry();
   #registry = new PathRegistry();
 
-  #addGraphstart(path: number[]) {
+  #addGraphstart(data: GraphStartProbeData) {
+    const { path, graph } = data;
+    const graphId = this.#graphRegistry.add(graph);
     const entry = this.#registry.create(path);
-    console.log("Graphstart", path, entry?.event);
+    if (entry) entry.graphId = graphId;
   }
 
   #addGraphend(path: number[]) {
     this.#registry.find(path);
+    console.groupCollapsed("🌻 Graph Registry");
+    console.log(this.#graphRegistry);
+    console.groupEnd();
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {
@@ -169,7 +201,7 @@ export class EventManager {
     switch (result.type) {
       case "graphstart": {
         // TODO: Figure out what to do with these.
-        this.#addGraphstart(result.data.path);
+        this.#addGraphstart(result.data);
         break;
       }
       case "graphend": {

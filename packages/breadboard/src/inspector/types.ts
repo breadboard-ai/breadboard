@@ -492,6 +492,7 @@ type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export type PathRegistryEntry = {
   children: PathRegistryEntry[];
+  graphId: UUID | null;
   event: InspectableRunNodeEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't
