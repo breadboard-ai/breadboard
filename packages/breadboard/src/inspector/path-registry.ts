@@ -93,7 +93,7 @@ class Entry implements PathRegistryEntry {
    * @returns -- The entry for the given path, or undefined if the path is
    *  empty or invalid.
    */
-  findOrCreate(
+  #findOrCreate(
     readonly: boolean,
     fullPath: number[],
     path: number[]
@@ -123,7 +123,15 @@ class Entry implements PathRegistryEntry {
     if (tail.length === 0) {
       return entry;
     }
-    return entry.findOrCreate(readonly, fullPath, tail);
+    return entry.#findOrCreate(readonly, fullPath, tail);
+  }
+
+  find(path: number[]) {
+    return this.#findOrCreate(true, path, path);
+  }
+
+  create(path: number[]) {
+    return this.#findOrCreate(false, path, path);
   }
 
   get children() {
@@ -222,24 +230,20 @@ class Event implements InspectableRunNodeEvent {
 }
 
 export class PathRegistry extends Entry {
-  #traverse(readonly: boolean, path: number[]) {
-    return this.findOrCreate(readonly, path, path);
-  }
-
   cleanUpSecrets() {
     this.finalizeSidecar(SECRET_PATH);
   }
 
   graphstart(path: number[]) {
-    this.#traverse(false, path);
+    this.create(path);
   }
 
   graphend(path: number[]) {
-    this.#traverse(true, path);
+    this.find(path);
   }
 
   nodestart(path: number[], data: NodeStartResponse) {
-    const entry = this.#traverse(false, path) as Entry;
+    const entry = this.create(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
@@ -260,7 +264,7 @@ export class PathRegistry extends Entry {
       event.result = result;
       this.addSidecar(path, event);
     } else {
-      const entry = this.#traverse(true, path);
+      const entry = this.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
@@ -289,7 +293,7 @@ export class PathRegistry extends Entry {
       event.result = result;
       this.addSidecar(path, event);
     } else {
-      const entry = this.#traverse(true, path);
+      const entry = this.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
@@ -305,7 +309,7 @@ export class PathRegistry extends Entry {
   }
 
   nodeend(path: number[], data: NodeEndResponse) {
-    const entry = this.#traverse(true, path);
+    const entry = this.find(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
