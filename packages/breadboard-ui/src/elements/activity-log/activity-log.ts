@@ -420,11 +420,6 @@ export class ActivityLog extends LitElement {
                   return nothing;
                 }
 
-                // can ask for secret here. Use
-                // `event.result` to get to the `HarnessRunResult`.
-                // TODO: Figure out how the actual asking for secret will work
-                // TODO: Figure out how to signal when already know the secret
-                //       (probably just return `nothing`)
                 content = html`<section
                   class=${classMap({ "user-required": this.#isHidden })}
                 >

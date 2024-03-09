@@ -149,7 +149,7 @@ class Entry implements PathRegistryEntry {
       ];
     } else {
       // This is a map.
-      return this.#children.map((entry) => {
+      return this.#children.filter(Boolean).map((entry) => {
         return {
           id: -10,
           graphId: crypto.randomUUID(),

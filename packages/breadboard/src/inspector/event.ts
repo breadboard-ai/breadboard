@@ -23,7 +23,7 @@ import {
   PathRegistryEntry,
 } from "./types.js";
 
-class Event implements InspectableRunNodeEvent {
+class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
   node: NodeDescriptor;
   start: number;
@@ -68,7 +68,8 @@ export class EventManager {
   }
 
   #addGraphend(path: number[]) {
-    this.#registry.find(path);
+    const entry = this.#registry.find(path);
+    console.log("Graphend", path, entry);
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {
@@ -77,14 +78,14 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     const { node, timestamp, inputs } = result.data as NodeStartResponse;
-    const event = new Event(entry, node, timestamp, inputs);
+    const event = new RunNodeEvent(entry, node, timestamp, inputs);
     entry.event = event;
   }
 
   #addInput(path: number[], result: HarnessRunResult, bubbled: boolean) {
     if (bubbled) {
       const input = result.data as InputResponse;
-      const event = new Event(
+      const event = new RunNodeEvent(
         null,
         input.node,
         input.timestamp,
@@ -113,7 +114,7 @@ export class EventManager {
     if (bubbled) {
       // Create a new entry for the sidecar output event.
       const output = result.data as OutputResponse;
-      const event = new Event(
+      const event = new RunNodeEvent(
         null,
         output.node,
         output.timestamp,
