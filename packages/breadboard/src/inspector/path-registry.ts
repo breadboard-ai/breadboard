@@ -22,6 +22,9 @@ import {
   InspectableRunSecretEvent,
 } from "./types.js";
 
+const SECRET_PATH = [-2];
+const ERROR_PATH = [-3];
+
 type PathRegistryEntry = {
   children: PathRegistryEntry[];
   event: InspectableRunNodeEvent | null;
@@ -48,9 +51,33 @@ class Entry implements PathRegistryEntry {
   #children: Entry[] = [];
   event: InspectableRunNodeEvent | null = null;
   sidecars: InspectableRunEvent[] = [];
+  // Keep track of some sidecar events so that we can clean them up later.
+  // We only need to keep track of input and output events, since the
+  // secret and events do not have a corresponding `nodeend` event.
+  #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
-  markEventsDirty() {
+  addSidecar(path: number[], event: InspectableRunEvent) {
+    const key = path.join("-");
+    this.children[this.children.length - 1].sidecars.push(event);
+    this.#trackedSidecars.set(key, event);
     this.#eventsIsDirty = true;
+  }
+
+  finalizeSidecar(
+    path: number[],
+    data?: { timestamp: number; outputs: OutputValues }
+  ) {
+    const key = path.join("-");
+    const sidecar = this.#trackedSidecars.get(key) as InspectableRunNodeEvent;
+    if (sidecar) {
+      if (data) {
+        sidecar.end = data.timestamp;
+        sidecar.outputs = data.outputs;
+      }
+      sidecar.result = null;
+      this.#trackedSidecars.delete(key);
+      this.#eventsIsDirty = true;
+    }
   }
 
   /**
@@ -197,11 +224,6 @@ class Event implements InspectableRunNodeEvent {
 }
 
 export class PathRegistry extends Entry {
-  // Keep track of some sidecar events so that we can clean them up later.
-  // We only need to keep track of input and output events, since the
-  // secret and events do not have a corresponding `nodeend` event.
-  #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
-
   #traverse(
     readonly: boolean,
     path: number[],
@@ -213,12 +235,7 @@ export class PathRegistry extends Entry {
   }
 
   cleanUpSecrets() {
-    const secret = this.#trackedSidecars.get(
-      "secret"
-    ) as InspectableRunSecretEvent;
-    if (!secret) return;
-    this.#trackedSidecars.delete("secret");
-    secret.result = null;
+    this.finalizeSidecar(SECRET_PATH);
   }
 
   graphstart(path: number[]) {
@@ -247,10 +264,7 @@ export class PathRegistry extends Entry {
       );
       event.bubbled = true;
       event.result = result;
-      // Add a sidecar to the current last entry in the registry.
-      this.children[this.children.length - 1].sidecars.push(event);
-      this.#trackedSidecars.set(path.join("-"), event);
-      this.markEventsDirty();
+      this.addSidecar(path, event);
     } else {
       this.#traverse(true, path, (entry) => {
         const existing = entry.event;
@@ -275,10 +289,7 @@ export class PathRegistry extends Entry {
       );
       event.bubbled = true;
       event.result = result;
-      // Add a sidecar to the current last entry in the registry.
-      this.children[this.children.length - 1].sidecars.push(event);
-      this.#trackedSidecars.set(path.join("-"), event);
-      this.markEventsDirty();
+      this.addSidecar(path, event);
     } else {
       this.#traverse(true, path, (entry) => {
         const existing = entry.event;
@@ -302,27 +313,14 @@ export class PathRegistry extends Entry {
       existing.outputs = data.outputs;
       existing.result = null;
     });
-    const key = path.join("-");
-    const sidecar = this.#trackedSidecars.get(key) as InspectableRunNodeEvent;
-    if (sidecar) {
-      sidecar.end = data.timestamp;
-      sidecar.outputs = data.outputs;
-      sidecar.result = null;
-      this.#trackedSidecars.delete(key);
-      this.markEventsDirty();
-    }
+    this.finalizeSidecar(path, data);
   }
 
   secret(event: InspectableRunSecretEvent) {
-    // Add as a sidecar to the current last entry in the registry.
-    this.children[this.children.length - 1].sidecars.push(event);
-    this.#trackedSidecars.set("secret", event);
-    this.markEventsDirty();
+    this.addSidecar(SECRET_PATH, event);
   }
 
   error(error: InspectableRunErrorEvent) {
-    // Add as a sidecar to the current last entry in the registry.
-    this.children[this.children.length - 1].sidecars.push(error);
-    this.markEventsDirty();
+    this.addSidecar(ERROR_PATH, error);
   }
 }
