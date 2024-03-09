@@ -64,12 +64,12 @@ export class EventManager {
   #registry = new PathRegistry();
 
   #addGraphstart(path: number[]) {
-    this.#registry.create(path);
+    const entry = this.#registry.create(path);
+    console.log("Graphstart", path, entry?.event);
   }
 
   #addGraphend(path: number[]) {
-    const entry = this.#registry.find(path);
-    console.log("Graphend", path, entry);
+    this.#registry.find(path);
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {

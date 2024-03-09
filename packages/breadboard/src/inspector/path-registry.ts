@@ -113,7 +113,7 @@ class Entry implements PathRegistryEntry {
   #updateEvents() {
     this.#events = this.children
       .filter(Boolean)
-      .flatMap((entry) => [entry.event, ...entry.sidecars])
+      .flatMap((entry) => [...entry.sidecars, entry.event])
       .filter(Boolean) as InspectableRunEvent[];
   }
 
