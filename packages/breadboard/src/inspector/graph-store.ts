@@ -12,17 +12,13 @@ export class GraphStore implements InspectableGraphStore {
   #ids = new Map<string, UUID>();
 
   #getOrSetGraphId(graph: GraphDescriptor) {
-    // This does not work consistently.
-    // First, it's slow. JSONifying the graph is slow.
-    // Second, it's unreliable, because it depends on string interning,
-    // and will result in duplicate IDs for the same graph.
-    // TODO: Make this fast and reliable.
-    const graphString = JSON.stringify(graph);
-    if (this.#ids.has(graphString)) {
-      return this.#ids.get(graphString) as UUID;
+    // if there's no URL, fallback to stringifying the graph.
+    const key = graph.url ?? JSON.stringify(graph);
+    if (this.#ids.has(key)) {
+      return this.#ids.get(key) as UUID;
     }
     const id = crypto.randomUUID();
-    this.#ids.set(graphString, id);
+    this.#ids.set(key, id);
     return id;
   }
 
