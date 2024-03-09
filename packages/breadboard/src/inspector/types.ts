@@ -392,6 +392,27 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents a store of all graphs that the system has seen so far.
+ */
+export type InspectableGraphStore = {
+  /**
+   * Retrieves a graph with the given id.
+   * @param id -- the id of the graph to retrieve
+   */
+  get(id: UUID): GraphDescriptor | undefined;
+  /**
+   * Checks if the store has a graph with the given id.
+   * @param id -- the id of the graph
+   */
+  has(id: UUID): boolean;
+  /**
+   * Adds a graph to the store and returns the UUID. If the graph is already
+   * in the store, returns the UUID of the existing graph.
+   */
+  add(graph: GraphDescriptor): UUID;
+};
+
+/**
  * Represents a pair of the nodestart and nodeend results that were generated
  * during the run.
  */
@@ -458,12 +479,6 @@ export type InspectableRunEvent =
  */
 export type InspectableRun = {
   /**
-   * The unique identifier for the run, starting from 0.
-   * It monotonically increases for each run. Same as the index of the `runs`
-   * array in the `InspectableVersionedGraph` object.
-   */
-  id: number;
-  /**
    * The id graph that was run.
    */
   graphId: UUID;
@@ -492,6 +507,7 @@ type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export type PathRegistryEntry = {
   children: PathRegistryEntry[];
+  graphId: UUID | null;
   event: InspectableRunNodeEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't

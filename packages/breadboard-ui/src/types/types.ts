@@ -6,7 +6,7 @@
 
 import {
   GraphDescriptor,
-  GraphProbeData,
+  GraphStartProbeData,
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
@@ -34,7 +34,7 @@ export type Board = {
 };
 
 export type AnyHistoryEvent =
-  | GraphProbeData
+  | GraphStartProbeData
   | NodeStartResponse
   | NodeEndResponse;
 

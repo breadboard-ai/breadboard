@@ -6,6 +6,7 @@
 
 import { HarnessRunResult } from "../harness/types.js";
 import {
+  GraphStartProbeData,
   InputResponse,
   InputValues,
   NodeDescriptor,
@@ -16,6 +17,7 @@ import {
 } from "../types.js";
 import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
 import {
+  InspectableGraphStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -61,19 +63,29 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 }
 
 export class EventManager {
-  #registry = new PathRegistry();
+  #graphStore;
+  #pathRegistry = new PathRegistry();
 
-  #addGraphstart(path: number[]) {
-    this.#registry.create(path);
+  constructor(store: InspectableGraphStore) {
+    this.#graphStore = store;
+  }
+
+  #addGraphstart(data: GraphStartProbeData) {
+    const { path, graph } = data;
+    const graphId = this.#graphStore.add(graph);
+    const entry = this.#pathRegistry.create(path);
+    if (entry) entry.graphId = graphId;
   }
 
   #addGraphend(path: number[]) {
-    const entry = this.#registry.find(path);
-    console.log("Graphend", path, entry);
+    this.#pathRegistry.find(path);
+    console.groupCollapsed("🌻 Graph Registry");
+    console.log(this.#graphStore);
+    console.groupEnd();
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {
-    const entry = this.#registry.create(path);
+    const entry = this.#pathRegistry.create(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
@@ -93,9 +105,9 @@ export class EventManager {
       );
       event.bubbled = true;
       event.result = result;
-      this.#registry.addSidecar(path, event);
+      this.#pathRegistry.addSidecar(path, event);
     } else {
-      const entry = this.#registry.find(path);
+      const entry = this.#pathRegistry.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
@@ -122,9 +134,9 @@ export class EventManager {
       );
       event.bubbled = true;
       event.result = result;
-      this.#registry.addSidecar(path, event);
+      this.#pathRegistry.addSidecar(path, event);
     } else {
-      const entry = this.#registry.find(path);
+      const entry = this.#pathRegistry.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
@@ -140,7 +152,7 @@ export class EventManager {
   }
 
   #addNodeend(path: number[], data: NodeEndResponse) {
-    const entry = this.#registry.find(path);
+    const entry = this.#pathRegistry.find(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
@@ -152,24 +164,24 @@ export class EventManager {
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
     existing.result = null;
-    this.#registry.finalizeSidecar(path, data);
+    this.#pathRegistry.finalizeSidecar(path, data);
   }
 
   #addSecret(event: InspectableRunSecretEvent) {
-    this.#registry.addSidecar(SECRET_PATH, event);
+    this.#pathRegistry.addSidecar(SECRET_PATH, event);
   }
 
   #addError(error: InspectableRunErrorEvent) {
-    this.#registry.addSidecar(ERROR_PATH, error);
+    this.#pathRegistry.addSidecar(ERROR_PATH, error);
   }
 
   add(result: HarnessRunResult) {
-    this.#registry.finalizeSidecar(SECRET_PATH);
+    this.#pathRegistry.finalizeSidecar(SECRET_PATH);
 
     switch (result.type) {
       case "graphstart": {
         // TODO: Figure out what to do with these.
-        this.#addGraphstart(result.data.path);
+        this.#addGraphstart(result.data);
         break;
       }
       case "graphend": {
@@ -212,6 +224,6 @@ export class EventManager {
   }
 
   get events(): InspectableRunEvent[] {
-    return this.#registry.events;
+    return this.#pathRegistry.events;
   }
 }
