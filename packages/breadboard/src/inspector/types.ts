@@ -458,12 +458,6 @@ export type InspectableRunEvent =
  */
 export type InspectableRun = {
   /**
-   * The unique identifier for the run, starting from 0.
-   * It monotonically increases for each run. Same as the index of the `runs`
-   * array in the `InspectableVersionedGraph` object.
-   */
-  id: number;
-  /**
    * The id graph that was run.
    */
   graphId: UUID;

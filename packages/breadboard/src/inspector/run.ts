@@ -91,10 +91,7 @@ export class Run implements InspectableRun {
   #events: EventManager = new EventManager();
   #highlightHelper = new NodeHighlightHelper();
 
-  id = 0;
   graphId = crypto.randomUUID();
-  // TODO: Connect this to the actual graph.
-  graph = null;
   graphVersion = 0;
   messages: HarnessRunResult[] = [];
 

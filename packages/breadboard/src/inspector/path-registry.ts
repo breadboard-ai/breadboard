@@ -141,7 +141,6 @@ class Entry implements PathRegistryEntry {
       // This is an ordinary run.
       return [
         {
-          id: -10,
           graphId: this.graphId as UUID,
           graphVersion: 0,
           messages: [],
@@ -154,7 +153,6 @@ class Entry implements PathRegistryEntry {
       // This is a map.
       return this.#children.filter(Boolean).map((entry) => {
         return {
-          id: -10,
           graphId: entry.graphId as UUID,
           graphVersion: 0,
           messages: [],
