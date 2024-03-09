@@ -17,6 +17,7 @@ import {
   edit,
   EditResult,
   GraphDescriptor,
+  InspectableRun,
   inspectRun,
   Kit,
 } from "@google-labs/breadboard";
@@ -75,7 +76,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #inspector = inspectRun();
+  #inspector: InspectableRun | null = null;
 
   static styles = css`
     * {
@@ -339,7 +340,7 @@ export class Main extends LitElement {
     ui.load(this.loadInfo);
 
     // Clear message history.
-    this.#inspector = inspectRun();
+    this.#inspector = inspectRun(this.loadInfo.graphDescriptor);
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -452,7 +453,7 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
-    this.#inspector = inspectRun();
+    this.#inspector = null;
     this.#uiRef.value.unloadCurrentBoard();
   }
 
@@ -465,7 +466,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#inspector.messages;
+    const messages = this.#inspector?.messages || [];
 
     const secrets = [];
     const inputs = [];
