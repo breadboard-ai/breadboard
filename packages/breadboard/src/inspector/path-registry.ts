@@ -43,8 +43,6 @@ type PathRegistryEntry = {
   nested(): InspectableRun[];
 };
 
-type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
-
 class Entry implements PathRegistryEntry {
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
@@ -224,14 +222,8 @@ class Event implements InspectableRunNodeEvent {
 }
 
 export class PathRegistry extends Entry {
-  #traverse(
-    readonly: boolean,
-    path: number[],
-    replacer: PathRegistryEntryUpdater
-  ) {
-    const entry = this.findOrCreate(readonly, path, path);
-    if (!entry) return;
-    replacer(entry);
+  #traverse(readonly: boolean, path: number[]) {
+    return this.findOrCreate(readonly, path, path);
   }
 
   cleanUpSecrets() {
@@ -239,18 +231,20 @@ export class PathRegistry extends Entry {
   }
 
   graphstart(path: number[]) {
-    this.#traverse(false, path, () => {});
+    this.#traverse(false, path);
   }
 
   graphend(path: number[]) {
-    this.#traverse(true, path, () => {});
+    this.#traverse(true, path);
   }
 
   nodestart(path: number[], data: NodeStartResponse) {
-    this.#traverse(false, path, (entry) => {
-      const event = new Event(entry, data.node, data.timestamp, data.inputs);
-      entry.event = event;
-    });
+    const entry = this.#traverse(false, path) as Entry;
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
+    const event = new Event(entry, data.node, data.timestamp, data.inputs);
+    entry.event = event;
   }
 
   input(path: number[], result: HarnessRunResult, bubbled: boolean) {
@@ -266,14 +260,18 @@ export class PathRegistry extends Entry {
       event.result = result;
       this.addSidecar(path, event);
     } else {
-      this.#traverse(true, path, (entry) => {
-        const existing = entry.event;
-        if (!existing) {
-          console.error("Expected an existing event for", path);
-          return;
-        }
-        existing.result = result;
-      });
+      const entry = this.#traverse(true, path);
+      if (!entry) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
+      const existing = entry.event;
+      if (!existing) {
+        console.error("Expected an existing event for", path);
+        return;
+      }
+      existing.result = result;
     }
   }
 
@@ -291,28 +289,34 @@ export class PathRegistry extends Entry {
       event.result = result;
       this.addSidecar(path, event);
     } else {
-      this.#traverse(true, path, (entry) => {
-        const existing = entry.event;
-        if (!existing) {
-          console.error("Expected an existing event for", path);
-          return;
-        }
-        existing.inputs = (result.data as OutputResponse).outputs;
-      });
-    }
-  }
-
-  nodeend(path: number[], data: NodeEndResponse) {
-    this.#traverse(true, path, (entry) => {
+      const entry = this.#traverse(true, path);
+      if (!entry) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);
         return;
       }
-      existing.end = data.timestamp;
-      existing.outputs = data.outputs;
-      existing.result = null;
-    });
+      existing.inputs = (result.data as OutputResponse).outputs;
+    }
+  }
+
+  nodeend(path: number[], data: NodeEndResponse) {
+    const entry = this.#traverse(true, path);
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
+    const existing = entry.event;
+    if (!existing) {
+      console.error("Expected an existing event for", path);
+      return;
+    }
+    existing.end = data.timestamp;
+    existing.outputs = data.outputs;
+    existing.result = null;
     this.finalizeSidecar(path, data);
   }
 
