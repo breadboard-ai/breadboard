@@ -413,7 +413,7 @@ export type InspectableGraphStore = {
    * Adds a graph to the store and returns the UUID. If the graph is already
    * in the store, returns the UUID of the existing graph.
    */
-  add(graph: GraphDescriptor): GraphUUID;
+  add(graph: GraphDescriptor, version: number): GraphUUID;
 };
 
 /**

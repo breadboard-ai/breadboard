@@ -72,7 +72,7 @@ export class EventManager {
 
   #addGraphstart(data: GraphStartProbeData) {
     const { path, graph } = data;
-    const graphId = this.#graphStore.add(graph);
+    const graphId = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
     if (entry) entry.graphId = graphId;
   }

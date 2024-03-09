@@ -99,12 +99,13 @@ export class Run implements InspectableRun {
   #highlightHelper = new NodeHighlightHelper();
 
   graphId: GraphUUID;
-  graphVersion = 0;
+  graphVersion: number;
   messages: HarnessRunResult[] = [];
 
   constructor(graphStore: InspectableGraphStore, graph: GraphDescriptor) {
     this.#events = new EventManager(graphStore);
-    this.graphId = graphStore.add(graph);
+    this.graphVersion = 0;
+    this.graphId = graphStore.add(graph, this.graphVersion);
   }
 
   get events(): InspectableRunEvent[] {
