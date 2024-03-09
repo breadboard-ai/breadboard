@@ -4,44 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
-import {
-  InputResponse,
-  InputValues,
-  NodeDescriptor,
-  NodeEndResponse,
-  NodeStartResponse,
-  OutputResponse,
-  OutputValues,
-} from "../types.js";
+import { OutputValues } from "../types.js";
 import {
   InspectableRun,
-  InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
-  InspectableRunSecretEvent,
+  PathRegistryEntry,
 } from "./types.js";
 
-const SECRET_PATH = [-2];
-const ERROR_PATH = [-3];
-
-type PathRegistryEntry = {
-  children: PathRegistryEntry[];
-  event: InspectableRunNodeEvent | null;
-  /**
-   * Sidecars are events that are displayed at a top-level, but aren't
-   * part of the main event list. Currently, sidecar events are:
-   * - Input events that have bubbled up.
-   * - Output events that have bubbled up.
-   * - Secret events.
-   * - Error events.
-   */
-  sidecars: InspectableRunEvent[];
-  /**
-   * Computes nested runs for the given path.
-   */
-  nested(): InspectableRun[];
-};
+export const SECRET_PATH = [-2];
+export const ERROR_PATH = [-3];
 
 class Entry implements PathRegistryEntry {
   #events: InspectableRunEvent[] = [];
@@ -192,143 +164,4 @@ class Entry implements PathRegistryEntry {
   }
 }
 
-class Event implements InspectableRunNodeEvent {
-  type: "node";
-  node: NodeDescriptor;
-  start: number;
-  end: number | null;
-  inputs: InputValues;
-  outputs: OutputValues | null;
-  result: HarnessRunResult | null;
-  bubbled: boolean;
-
-  /**
-   * The path registry entry associated with this event.
-   */
-  #entry: PathRegistryEntry | null;
-
-  constructor(
-    entry: PathRegistryEntry | null,
-    node: NodeDescriptor,
-    start: number,
-    inputs: InputValues
-  ) {
-    this.#entry = entry;
-    this.type = "node";
-    this.node = node;
-    this.start = start;
-    this.end = null;
-    this.inputs = inputs;
-    this.outputs = null;
-    this.result = null;
-    this.bubbled = false;
-  }
-
-  get nested() {
-    return this.#entry?.nested() || [];
-  }
-}
-
-export class PathRegistry extends Entry {
-  cleanUpSecrets() {
-    this.finalizeSidecar(SECRET_PATH);
-  }
-
-  graphstart(path: number[]) {
-    this.create(path);
-  }
-
-  graphend(path: number[]) {
-    this.find(path);
-  }
-
-  nodestart(path: number[], data: NodeStartResponse) {
-    const entry = this.create(path);
-    if (!entry) {
-      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
-    }
-    const event = new Event(entry, data.node, data.timestamp, data.inputs);
-    entry.event = event;
-  }
-
-  input(path: number[], result: HarnessRunResult, bubbled: boolean) {
-    if (bubbled) {
-      const input = result.data as InputResponse;
-      const event = new Event(
-        null,
-        input.node,
-        input.timestamp,
-        input.inputArguments
-      );
-      event.bubbled = true;
-      event.result = result;
-      this.addSidecar(path, event);
-    } else {
-      const entry = this.find(path);
-      if (!entry) {
-        throw new Error(
-          `Expected an existing entry for ${JSON.stringify(path)}`
-        );
-      }
-      const existing = entry.event;
-      if (!existing) {
-        console.error("Expected an existing event for", path);
-        return;
-      }
-      existing.result = result;
-    }
-  }
-
-  output(path: number[], result: HarnessRunResult, bubbled: boolean) {
-    if (bubbled) {
-      // Create a new entry for the sidecar output event.
-      const output = result.data as OutputResponse;
-      const event = new Event(
-        null,
-        output.node,
-        output.timestamp,
-        output.outputs
-      );
-      event.bubbled = true;
-      event.result = result;
-      this.addSidecar(path, event);
-    } else {
-      const entry = this.find(path);
-      if (!entry) {
-        throw new Error(
-          `Expected an existing entry for ${JSON.stringify(path)}`
-        );
-      }
-      const existing = entry.event;
-      if (!existing) {
-        console.error("Expected an existing event for", path);
-        return;
-      }
-      existing.inputs = (result.data as OutputResponse).outputs;
-    }
-  }
-
-  nodeend(path: number[], data: NodeEndResponse) {
-    const entry = this.find(path);
-    if (!entry) {
-      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
-    }
-    const existing = entry.event;
-    if (!existing) {
-      console.error("Expected an existing event for", path);
-      return;
-    }
-    existing.end = data.timestamp;
-    existing.outputs = data.outputs;
-    existing.result = null;
-    this.finalizeSidecar(path, data);
-  }
-
-  secret(event: InspectableRunSecretEvent) {
-    this.addSidecar(SECRET_PATH, event);
-  }
-
-  error(error: InspectableRunErrorEvent) {
-    this.addSidecar(ERROR_PATH, error);
-  }
-}
+export class PathRegistry extends Entry {}

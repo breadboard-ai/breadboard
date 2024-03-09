@@ -489,3 +489,21 @@ export type InspectableRun = {
 };
 
 type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
+
+export type PathRegistryEntry = {
+  children: PathRegistryEntry[];
+  event: InspectableRunNodeEvent | null;
+  /**
+   * Sidecars are events that are displayed at a top-level, but aren't
+   * part of the main event list. Currently, sidecar events are:
+   * - Input events that have bubbled up.
+   * - Output events that have bubbled up.
+   * - Secret events.
+   * - Error events.
+   */
+  sidecars: InspectableRunEvent[];
+  /**
+   * Computes nested runs for the given path.
+   */
+  nested(): InspectableRun[];
+};
