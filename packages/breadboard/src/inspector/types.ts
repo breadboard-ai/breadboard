@@ -536,7 +536,7 @@ export type PathRegistryEntry = {
   graphId: GraphUUID | null;
   graphStart: number;
   graphEnd: number | null;
-  event: InspectableRunNodeEvent | null;
+  event: InspectableRunEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't
    * part of the main event list. Currently, sidecar events are:

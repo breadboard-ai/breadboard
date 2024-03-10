@@ -17,7 +17,7 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
-import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
+import { PathRegistry, SECRET_PATH } from "./path-registry.js";
 import {
   GraphUUID,
   InspectableGraphStore,
@@ -201,6 +201,11 @@ export class EventManager {
         console.error("Expected an existing event for", path);
         return;
       }
+      if (existing.type !== "node") {
+        throw new Error(
+          `Expected an existing event to be of type "node", but got ${existing.type}`
+        );
+      }
       existing.inputs = (result.data as OutputResponse).outputs;
     }
   }
@@ -215,6 +220,11 @@ export class EventManager {
       console.error("Expected an existing event for", path);
       return;
     }
+    if (existing.type !== "node") {
+      throw new Error(
+        `Expected an existing event to be of type "node", but got ${existing.type}`
+      );
+    }
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
     this.#pathRegistry.finalizeSidecar(path, data);
@@ -225,7 +235,7 @@ export class EventManager {
   }
 
   #addError(error: InspectableRunErrorEvent) {
-    this.#pathRegistry.addSidecar(ERROR_PATH, error);
+    this.#pathRegistry.addError(error);
   }
 
   add(result: HarnessRunResult) {
