@@ -357,20 +357,20 @@ export class ActivityLog extends LitElement {
                     break;
                   }
                   // prettier-ignore
-                  content = html`Working: (
-                    <pre>${node.id} (${map(
+                  content = html`Working: (<pre>${node.id} (${map(
                         event.nested || [],
                         (run) =>
-                          html`<div>
-                            ${map(run.events, (event) =>
+                        {
+                          // If run has ended, don't show it.
+                          if (run.end !== null) return nothing;
+
+                          return html`<div>${map(run.events, (event) => {
                               event.type == "node"
                                 ? html`<span>${event.node.id}</span>✨`
                                 : nothing
-                            )}
+                          })}
                           </div>`
-                      )})</pre
-                    >
-                    )`;
+                        })})</pre>)`;
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
                   let additionalData: HTMLTemplateResult | symbol = nothing;

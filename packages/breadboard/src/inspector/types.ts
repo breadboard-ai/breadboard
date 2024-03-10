@@ -491,6 +491,14 @@ export type InspectableRun = {
    */
   graphVersion: number;
   /**
+   * Start time of the run.
+   */
+  start: number;
+  /**
+   * End time of the run. Can be null if the run has not finished yet.
+   */
+  end: number | null;
+  /**
    * All events within this graph that have occurred during the run.
    * The nested graph events aren't included.
    */
@@ -512,6 +520,8 @@ type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 export type PathRegistryEntry = {
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;
+  graphStart: number;
+  graphEnd: number | null;
   event: InspectableRunNodeEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't

@@ -5,6 +5,7 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
+import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
 import { GraphStore } from "./graph-store.js";
@@ -99,12 +100,15 @@ export class Run implements InspectableRun {
   #highlightHelper = new NodeHighlightHelper();
 
   graphId: GraphUUID;
+  start: number;
+  end: number | null = null;
   graphVersion: number;
   messages: HarnessRunResult[] = [];
 
   constructor(graphStore: InspectableGraphStore, graph: GraphDescriptor) {
     this.#events = new EventManager(graphStore);
     this.graphVersion = 0;
+    this.start = timestamp();
     this.graphId = graphStore.add(graph, this.graphVersion);
   }
 

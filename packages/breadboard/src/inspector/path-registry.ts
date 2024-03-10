@@ -28,6 +28,9 @@ class Entry implements PathRegistryEntry {
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   graphId: GraphUUID | null = null;
+  // Wait until `graphstart` event to set the start time.
+  graphStart: number = 0;
+  graphEnd: number | null = null;
 
   addSidecar(path: number[], event: InspectableRunEvent) {
     const key = path.join("-");
@@ -142,6 +145,8 @@ class Entry implements PathRegistryEntry {
       return [
         {
           graphId: this.graphId as GraphUUID,
+          start: this.graphStart,
+          end: this.graphEnd,
           graphVersion: 0,
           messages: [],
           events,
@@ -154,6 +159,8 @@ class Entry implements PathRegistryEntry {
       return this.#children.filter(Boolean).map((entry) => {
         return {
           graphId: entry.graphId as GraphUUID,
+          start: entry.graphStart,
+          end: entry.graphEnd,
           graphVersion: 0,
           messages: [],
           observe: (runner) => runner,

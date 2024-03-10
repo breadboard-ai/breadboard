@@ -6,6 +6,7 @@
 
 import { HarnessRunResult } from "../harness/types.js";
 import {
+  GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
   InputValues,
@@ -71,14 +72,22 @@ export class EventManager {
   }
 
   #addGraphstart(data: GraphStartProbeData) {
-    const { path, graph } = data;
+    const { path, graph, timestamp } = data;
     const graphId = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
-    if (entry) entry.graphId = graphId;
+    if (entry) {
+      entry.graphId = graphId;
+      entry.graphStart = timestamp;
+    }
   }
 
-  #addGraphend(path: number[]) {
-    this.#pathRegistry.find(path);
+  #addGraphend(data: GraphEndProbeData) {
+    const { path, timestamp } = data;
+    const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
+    entry.graphEnd = timestamp;
     console.groupCollapsed("🌻 Graph Registry");
     console.log(this.#graphStore);
     console.groupEnd();
@@ -186,7 +195,7 @@ export class EventManager {
       }
       case "graphend": {
         // TODO: Figure out what to do with these.
-        this.#addGraphend(result.data.path);
+        this.#addGraphend(result.data);
         break;
       }
       case "nodestart": {
