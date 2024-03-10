@@ -28,6 +28,10 @@ import {
   PathRegistryEntry,
 } from "./types.js";
 
+/**
+ * Meant to be a very lightweight wrapper around the
+ * data in the `PathRegistryEntry`.
+ */
 class NestedRun implements InspectableRun {
   graphId: GraphUUID;
   start: number;
@@ -86,7 +90,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     this.bubbled = false;
   }
 
-  get nested(): InspectableRun[] {
+  get runs(): InspectableRun[] {
     if (!this.#entry || this.#entry.empty()) {
       return [];
     }
@@ -130,12 +134,14 @@ export class EventManager {
     const { path, timestamp } = data;
     const entry = this.#pathRegistry.find(path);
     if (!entry) {
-      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+      if (path.length > 0) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
+      return;
     }
     entry.graphEnd = timestamp;
-    console.groupCollapsed("🌻 Graph Registry");
-    console.log(this.#graphStore);
-    console.groupEnd();
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {

@@ -457,7 +457,11 @@ export type InspectableRunNodeEvent = {
    * graph. This is only populated for the top-level graph.
    */
   bubbled: boolean;
-  nested: InspectableRun[] | null;
+  /**
+   * Returns the list of nested runs that were (or are being) create when
+   * this node was (is being) invoked.
+   */
+  runs: InspectableRun[] | null;
 };
 
 /**
