@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
+import { HarnessRunResult } from "../harness/types.js";
+import { timestamp } from "../timestamp.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -16,7 +17,7 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
-import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
+import { PathRegistry, SECRET_PATH } from "./path-registry.js";
 import {
   GraphUUID,
   InspectableGraphStore,
@@ -36,7 +37,7 @@ class NestedRun implements InspectableRun {
   graphId: GraphUUID;
   start: number;
   end: number | null;
-  graphVersion: number;
+  graphVersion = 0;
   messages: HarnessRunResult[] = [];
   events: InspectableRunEvent[];
 
@@ -44,17 +45,11 @@ class NestedRun implements InspectableRun {
     this.graphId = entry.graphId as GraphUUID;
     this.start = entry.graphStart;
     this.end = entry.graphEnd;
-    this.graphVersion = 0;
-    this.messages = [];
     this.events = entry.events;
   }
 
   currentNode(): string {
     return "";
-  }
-
-  observe(runner: HarnessRunner) {
-    return runner;
   }
 }
 
@@ -178,7 +173,6 @@ export class EventManager {
         console.error("Expected an existing event for", path);
         return;
       }
-      existing.result = result;
     }
   }
 
@@ -207,6 +201,11 @@ export class EventManager {
         console.error("Expected an existing event for", path);
         return;
       }
+      if (existing.type !== "node") {
+        throw new Error(
+          `Expected an existing event to be of type "node", but got ${existing.type}`
+        );
+      }
       existing.inputs = (result.data as OutputResponse).outputs;
     }
   }
@@ -221,9 +220,13 @@ export class EventManager {
       console.error("Expected an existing event for", path);
       return;
     }
+    if (existing.type !== "node") {
+      throw new Error(
+        `Expected an existing event to be of type "node", but got ${existing.type}`
+      );
+    }
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
-    existing.result = null;
     this.#pathRegistry.finalizeSidecar(path, data);
   }
 
@@ -232,7 +235,7 @@ export class EventManager {
   }
 
   #addError(error: InspectableRunErrorEvent) {
-    this.#pathRegistry.addSidecar(ERROR_PATH, error);
+    this.#pathRegistry.addError(error);
   }
 
   add(result: HarnessRunResult) {
@@ -240,12 +243,10 @@ export class EventManager {
 
     switch (result.type) {
       case "graphstart": {
-        // TODO: Figure out what to do with these.
         this.#addGraphstart(result.data);
         break;
       }
       case "graphend": {
-        // TODO: Figure out what to do with these.
         this.#addGraphend(result.data);
         break;
       }
@@ -265,7 +266,8 @@ export class EventManager {
         this.#addSecret({
           type: "secret",
           data: result.data,
-          result,
+          start: timestamp(),
+          end: null,
         });
         break;
       }

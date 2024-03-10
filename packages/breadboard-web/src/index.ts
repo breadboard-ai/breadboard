@@ -18,11 +18,12 @@ import {
   EditResult,
   GraphDescriptor,
   InspectableRun,
-  inspectRun,
+  InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
+import { createRunObserver } from "@google-labs/breadboard";
 
 export const getBoardInfo = async (
   url: string
@@ -61,6 +62,9 @@ export class Main extends LitElement {
   kits: Kit[] = [];
 
   @state()
+  runs: InspectableRun[] | null = null;
+
+  @state()
   mode = MODE.LIST;
 
   @state()
@@ -76,7 +80,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #inspector: InspectableRun | null = null;
+  #runObserver: InspectableRunObserver = createRunObserver();
 
   static styles = css`
     * {
@@ -339,16 +343,15 @@ export class Main extends LitElement {
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
 
-    this.#inspector = inspectRun(
-      this.loadInfo.graphDescriptor as GraphDescriptor
-    );
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of this.#inspector.observe(runner)) {
+    for await (const result of runner) {
+      // Update "runs" to ensure the UI is aware when the new run begins.
+      this.runs = this.#runObserver?.observe(result);
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -454,7 +457,6 @@ export class Main extends LitElement {
     if (!this.#uiRef.value) {
       return;
     }
-    this.#inspector = null;
     this.#uiRef.value.unloadCurrentBoard();
   }
 
@@ -467,7 +469,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#inspector?.messages || [];
+    const messages = this.#runObserver?.runs()[0].messages || [];
 
     const secrets = [];
     const inputs = [];
@@ -584,13 +586,14 @@ export class Main extends LitElement {
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
+    const currentRun = this.#runObserver.runs()[0];
     switch (this.mode) {
       case MODE.BUILD: {
         content = html`<bb-ui-controller
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .inspectableRun=${this.#inspector}
+          .run=${currentRun}
           .kits=${this.kits}
           .status=${this.status}
           @breadboardrunboard=${async () => {

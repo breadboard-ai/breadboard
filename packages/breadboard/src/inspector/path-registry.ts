@@ -4,26 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { timestamp } from "../timestamp.js";
 import { OutputValues } from "../types.js";
 import {
   GraphUUID,
+  InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
 } from "./types.js";
 
 export const SECRET_PATH = [-2];
-export const ERROR_PATH = [-3];
 
 class Entry implements PathRegistryEntry {
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
   #children: Entry[] = [];
-  event: InspectableRunNodeEvent | null = null;
+  event: InspectableRunEvent | null = null;
   sidecars: InspectableRunEvent[] = [];
   // Keep track of some sidecar events so that we can clean them up later.
   // We only need to keep track of input and output events, since the
-  // secret and events do not have a corresponding `nodeend` event.
+  // secret and error do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   graphId: GraphUUID | null = null;
@@ -42,21 +43,38 @@ class Entry implements PathRegistryEntry {
     this.#eventsIsDirty = true;
   }
 
+  /**
+   * We handle error specially, because unlike sidecars, errors result
+   * in stopping the run, and we need to display them at the end of the run.
+   * @param event -- The error event to add.
+   */
+  addError(event: InspectableRunErrorEvent) {
+    const entry = this.create([this.#children.length]);
+    entry.event = event as unknown as InspectableRunNodeEvent;
+  }
+
   finalizeSidecar(
     path: number[],
     data?: { timestamp: number; outputs: OutputValues }
   ) {
     const key = path.join("-");
-    const sidecar = this.#trackedSidecars.get(key) as InspectableRunNodeEvent;
-    if (sidecar) {
-      if (data) {
-        sidecar.end = data.timestamp;
-        sidecar.outputs = data.outputs;
+    const sidecar = this.#trackedSidecars.get(key);
+    switch (sidecar?.type) {
+      // These are bubbling inputs and inputs.
+      case "node": {
+        if (data) {
+          sidecar.end = data.timestamp;
+          sidecar.outputs = data.outputs;
+        }
+        break;
       }
-      sidecar.result = null;
-      this.#trackedSidecars.delete(key);
-      this.#eventsIsDirty = true;
+      case "secret": {
+        sidecar.end = timestamp();
+        break;
+      }
     }
+    this.#trackedSidecars.delete(key);
+    this.#eventsIsDirty = true;
   }
 
   /**
@@ -112,7 +130,7 @@ class Entry implements PathRegistryEntry {
   }
 
   create(path: number[]) {
-    return this.#findOrCreate(false, path, path);
+    return this.#findOrCreate(false, path, path) as Entry;
   }
 
   get children() {

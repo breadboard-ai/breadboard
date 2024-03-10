@@ -65,6 +65,10 @@
     "version": "0.0.2"
   },
   {
+    "title": "Error board",
+    "url": "/graphs/error.json"
+  },
+  {
     "title": "Gemini Pro Generator",
     "url": "/graphs/gemini-generator.json",
     "version": "0.0.2"

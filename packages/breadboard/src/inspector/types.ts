@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  HarnessRunResult,
-  HarnessRunner,
-  SecretResult,
-} from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -400,6 +396,23 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents an observer of the graph runs.
+ */
+export type InspectableRunObserver = {
+  /**
+   * Returns the list of runs that were observed. The current run is always
+   * at the top of the list.
+   */
+  runs(): InspectableRun[];
+  /**
+   * Observes the given result and collects it into the list of runs.
+   * @param result -- the result to observe
+   * @returns -- the list of runs that were observed
+   */
+  observe(result: HarnessRunResult): InspectableRun[];
+};
+
+/**
  * Represents a store of all graphs that the system has seen so far.
  */
 export type InspectableGraphStore = {
@@ -446,13 +459,6 @@ export type InspectableRunNodeEvent = {
    */
   outputs: OutputValues | null;
   /**
-   * The underlying result that generated this event.
-   * Only available for `input` and `secret` nodes, and
-   * only before `nodeend` event has been received.
-   * Can be used to reply to the `input` or `secret` node.
-   */
-  result: HarnessRunResult | null;
-  /**
    * Returns true when the input or output node was bubbled up from a nested
    * graph. This is only populated for the top-level graph.
    */
@@ -475,7 +481,14 @@ export type InspectableRunErrorEvent = {
 export type InspectableRunSecretEvent = {
   type: "secret";
   data: SecretResult["data"];
-  result: HarnessRunResult | null;
+  /**
+   * When the `secrets` node was first observerd.
+   */
+  start: number;
+  /**
+   * When the `secrets` node was handled.
+   */
+  end: number | null;
 };
 
 /**
@@ -516,11 +529,6 @@ export type InspectableRun = {
    */
   messages: HarnessRunResult[];
   currentNode(position: number): string;
-
-  // TODO: Figure out what to do here. I don't really like how observing is
-  // part of the otherwise read-only API. But I can't think of an elegant
-  // solution right now.
-  observe(runner: HarnessRunner): HarnessRunner;
 };
 
 export type PathRegistryEntry = {
@@ -528,7 +536,7 @@ export type PathRegistryEntry = {
   graphId: GraphUUID | null;
   graphStart: number;
   graphEnd: number | null;
-  event: InspectableRunNodeEvent | null;
+  event: InspectableRunEvent | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't
    * part of the main event list. Currently, sidecar events are:

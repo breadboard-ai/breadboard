@@ -5,6 +5,7 @@
  */
 
 import { Diagnostics } from "../harness/diagnostics.js";
+import { extractError } from "../harness/error.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
 import {
@@ -14,7 +15,6 @@ import {
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
 import {
-  ErrorObject,
   InputValues,
   NodeHandlerContext,
   OutputValues,
@@ -120,19 +120,9 @@ export class RunServer {
       await responses.write(["end", { timestamp: timestamp() }]);
       await responses.close();
     } catch (e) {
-      const error = e as Error;
-      let message;
-      if (error?.cause) {
-        const { cause } = error as { cause: ErrorObject };
-        message = cause;
-      } else {
-        message = error.message;
-      }
-      console.error("Run Server error:", message);
-      await responses.write([
-        "error",
-        { error: message, timestamp: timestamp() },
-      ]);
+      const error = extractError(e);
+      console.error("Run Server error:", error);
+      await responses.write(["error", { error, timestamp: timestamp() }]);
       await responses.close();
     }
   }

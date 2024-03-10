@@ -1,0 +1,70 @@
+{
+  "title": "Error board",
+  "description": "Use this board to test error handling. It will throw an error when run.",
+  "edges": [
+    {
+      "from": "jsonata-3",
+      "to": "output-2",
+      "out": "result",
+      "in": "stub"
+    },
+    {
+      "from": "input-1",
+      "to": "jsonata-3",
+      "out": "text",
+      "in": "json"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stub": {
+              "title": "result",
+              "description": "The result of the Jsonata expression",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "jsonata-3",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$assert(false, \"Here is an error!\")"
+      },
+      "metadata": {
+        "title": "Throw An Error"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "json",
+              "description": "The JSON object to evaluate",
+              "type": [
+                "object",
+                "string"
+              ],
+              "default": "Could you please throw an error?"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

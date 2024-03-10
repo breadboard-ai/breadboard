@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
+import { HarnessRunResult } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
-import { GraphStore } from "./graph-store.js";
 import {
   GraphUUID,
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunObserver,
 } from "./types.js";
 
 type GraphRecord = {
@@ -88,10 +88,39 @@ class NodeHighlightHelper {
   }
 }
 
-export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
-  const store = new GraphStore();
-  return new Run(store, graph);
-};
+export class RunObserver implements InspectableRunObserver {
+  #store: InspectableGraphStore;
+  #runs: Run[] = [];
+
+  constructor(store: InspectableGraphStore) {
+    this.#store = store;
+  }
+
+  runs() {
+    return this.#runs;
+  }
+
+  observe(result: HarnessRunResult): InspectableRun[] {
+    if (result.type === "graphstart") {
+      const { path } = result.data;
+      if (path.length === 0) {
+        // start a new run
+        const run = new Run(this.#store, result.data.graph);
+        this.#runs = [run, ...this.#runs];
+      }
+    } else if (result.type === "graphend") {
+      const { path, timestamp } = result.data;
+      if (path.length === 0) {
+        // close out the run
+        const run = this.#runs[0];
+        run.end = timestamp;
+      }
+    }
+    const run = this.#runs[0];
+    run.addResult(result);
+    return this.#runs;
+  }
+}
 
 export class Run implements InspectableRun {
   #events: EventManager;
@@ -114,45 +143,13 @@ export class Run implements InspectableRun {
     return this.#events.events;
   }
 
-  observe(runner: HarnessRunner): HarnessRunner {
-    return new Observer(runner, (event) => {
-      this.messages.push(event);
-      this.#events.add(event);
-      this.#highlightHelper.add(event);
-    });
+  addResult(result: HarnessRunResult) {
+    this.messages.push(result);
+    this.#events.add(result);
+    this.#highlightHelper.add(result);
   }
 
   currentNode(position: number) {
     return this.#highlightHelper.currentNode(position);
-  }
-}
-
-type OnResult = (message: HarnessRunResult) => void;
-
-class Observer implements HarnessRunner {
-  #runner: HarnessRunner;
-  #onResult: OnResult;
-
-  constructor(runner: HarnessRunner, onResult: OnResult) {
-    this.#onResult = onResult;
-    this.#runner = runner;
-  }
-
-  async next() {
-    const result = await this.#runner.next();
-    if (result.done) {
-      return result;
-    }
-    this.#onResult(result.value);
-    return result;
-  }
-  async return() {
-    return this.#runner.return();
-  }
-  async throw(error?: unknown) {
-    return this.#runner.throw(error);
-  }
-  [Symbol.asyncIterator]() {
-    return this;
   }
 }

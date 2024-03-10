@@ -56,7 +56,7 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
-  inspectableRun: InspectableRun | null = null;
+  run: InspectableRun | null = null;
 
   @property()
   boards: Board[] = [];
@@ -171,7 +171,7 @@ export class UI extends LitElement {
     duration: number
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
-      const messages = this.inspectableRun?.messages || [];
+      const messages = this.run?.messages || [];
       this.#messagePosition = messages.length - 1;
     }
     this.#messageDurations.set(message, duration);
@@ -220,11 +220,10 @@ export class UI extends LitElement {
   }
 
   render() {
-    const messages = this.inspectableRun?.messages || [];
-    const nodeId =
-      this.inspectableRun?.currentNode(this.#messagePosition) || "";
+    const messages = this.run?.messages || [];
+    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
 
-    const events = this.inspectableRun?.events || [];
+    const events = this.run?.events || [];
     const eventPosition = events.length - 1;
 
     /**
