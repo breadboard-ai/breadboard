@@ -6,8 +6,14 @@
 
 import { Board, asyncGen } from "../index.js";
 import { timestamp } from "../timestamp.js";
-import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
+import {
+  BreadboardRunResult,
+  ErrorObject,
+  Kit,
+  ProbeMessage,
+} from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
+import { extractError } from "./error.js";
 import { RunConfig } from "./run.js";
 import { HarnessRunResult } from "./types.js";
 import { baseURL } from "./url.js";
@@ -68,7 +74,7 @@ const endResult = () => {
   } as HarnessRunResult;
 };
 
-const errorResult = (error: string) => {
+const errorResult = (error: string | ErrorObject) => {
   return {
     type: "error",
     data: { error, timestamp: timestamp() },
@@ -95,21 +101,9 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
       }
       await next(endResult());
     } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        // In the event we get a cause that has no inner error, we will
-        // propagate the cause instead.
-        error = (error.cause as { error: Error | undefined }).error ?? {
-          name: "Unexpected Error",
-          message: JSON.stringify(error.cause, null, 2),
-        };
-        if (error && "message" in error) {
-          message += `\n${error.message}`;
-        }
-      }
-      console.error(message, error);
-      await next(errorResult(message));
+      const error = extractError(e);
+      console.error("Local Run error:", error);
+      await next(errorResult(error));
     }
   });
 }

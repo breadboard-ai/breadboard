@@ -324,7 +324,6 @@ export class ActivityLog extends LitElement {
       <h1>Activity Log</h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
-            console.log("🌻 event", event);
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {

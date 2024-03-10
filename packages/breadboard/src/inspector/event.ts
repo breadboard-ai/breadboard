@@ -243,12 +243,10 @@ export class EventManager {
 
     switch (result.type) {
       case "graphstart": {
-        // TODO: Figure out what to do with these.
         this.#addGraphstart(result.data);
         break;
       }
       case "graphend": {
-        // TODO: Figure out what to do with these.
         this.#addGraphend(result.data);
         break;
       }
