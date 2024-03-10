@@ -611,8 +611,6 @@ export class Main extends LitElement {
             const runConfig = await createRunConfig(
               this.loadInfo.graphDescriptor.url
             );
-            runConfig.remote = false;
-            runConfig.proxy = [];
             runConfig.runner = runner;
             this.kits = runConfig.kits;
 
