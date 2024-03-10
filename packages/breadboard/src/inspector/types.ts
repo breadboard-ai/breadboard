@@ -459,13 +459,6 @@ export type InspectableRunNodeEvent = {
    */
   outputs: OutputValues | null;
   /**
-   * The underlying result that generated this event.
-   * Only available for `input` and `secret` nodes, and
-   * only before `nodeend` event has been received.
-   * Can be used to reply to the `input` or `secret` node.
-   */
-  result: HarnessRunResult | null;
-  /**
    * Returns true when the input or output node was bubbled up from a nested
    * graph. This is only populated for the top-level graph.
    */
@@ -488,7 +481,6 @@ export type InspectableRunErrorEvent = {
 export type InspectableRunSecretEvent = {
   type: "secret";
   data: SecretResult["data"];
-  result: HarnessRunResult | null;
   /**
    * When the `secrets` node was first observerd.
    */

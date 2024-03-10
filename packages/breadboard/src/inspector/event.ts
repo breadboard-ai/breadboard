@@ -173,7 +173,6 @@ export class EventManager {
         console.error("Expected an existing event for", path);
         return;
       }
-      existing.result = result;
     }
   }
 
@@ -218,7 +217,6 @@ export class EventManager {
     }
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
-    existing.result = null;
     this.#pathRegistry.finalizeSidecar(path, data);
   }
 
@@ -260,7 +258,6 @@ export class EventManager {
         this.#addSecret({
           type: "secret",
           data: result.data,
-          result,
           start: timestamp(),
           end: null,
         });

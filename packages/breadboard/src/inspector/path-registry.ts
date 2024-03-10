@@ -55,12 +55,10 @@ class Entry implements PathRegistryEntry {
           sidecar.end = data.timestamp;
           sidecar.outputs = data.outputs;
         }
-        sidecar.result = null;
         break;
       }
       case "secret": {
         sidecar.end = timestamp();
-        sidecar.result = null;
         break;
       }
     }
