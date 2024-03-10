@@ -350,6 +350,7 @@ export class Main extends LitElement {
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
     for await (const result of runner) {
+      // Update "runs" to ensure the UI is aware when the new run begins.
       this.runs = this.#runObserver?.observe(result);
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {

@@ -489,6 +489,14 @@ export type InspectableRunSecretEvent = {
   type: "secret";
   data: SecretResult["data"];
   result: HarnessRunResult | null;
+  /**
+   * When the `secrets` node was first observerd.
+   */
+  start: number;
+  /**
+   * When the `secrets` node was handled.
+   */
+  end: number | null;
 };
 
 /**

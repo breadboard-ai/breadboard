@@ -5,6 +5,7 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
+import { timestamp } from "../timestamp.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -260,6 +261,8 @@ export class EventManager {
           type: "secret",
           data: result.data,
           result,
+          start: timestamp(),
+          end: null,
         });
         break;
       }

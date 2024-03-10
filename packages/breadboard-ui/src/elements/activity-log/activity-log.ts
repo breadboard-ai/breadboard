@@ -336,13 +336,7 @@ export class ActivityLog extends LitElement {
                   // if (idx !== this.eventPosition) {
                   //   return nothing;
                   // }
-                  if (node.type === "input" && event.result) {
-                    if (event.result.type !== "input") {
-                      content = html`Input types don't match - unable to request
-                      input`;
-                      break;
-                    }
-
+                  if (node.type === "input") {
                     content = html`<section
                       class=${classMap({ "user-required": this.#isHidden })}
                     >
@@ -351,7 +345,7 @@ export class ActivityLog extends LitElement {
                         id="${node.id}"
                         .secret=${false}
                         .remember=${false}
-                        .configuration=${event.result.data.inputArguments}
+                        .configuration=${event.inputs}
                       ></bb-input>
                     </section>`;
                     break;
@@ -429,7 +423,7 @@ export class ActivityLog extends LitElement {
               }
 
               case "secret": {
-                if (event.result === null) {
+                if (event.end !== null) {
                   return nothing;
                 }
 
