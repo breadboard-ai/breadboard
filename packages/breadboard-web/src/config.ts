@@ -32,11 +32,12 @@ const HARNESS_SWITCH_KEY = "bb-harness";
 
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const WORKER_HARNESS_VALUE = "worker";
+const LOCAL_HARNESS_VALUE = "local";
 
 const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL;
 const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
-  : WORKER_HARNESS_VALUE;
+  : LOCAL_HARNESS_VALUE;
 
 const kitConstructors = [GeminiKit];
 
