@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
+import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
 import { GraphStore } from "./graph-store.js";
 import {
+  GraphUUID,
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
@@ -86,31 +88,33 @@ class NodeHighlightHelper {
   }
 }
 
-export const inspectableRun = (graph?: GraphDescriptor): InspectableRun => {
+export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
   const store = new GraphStore();
-  if (graph) store.add(graph);
-  return new Run(store);
+  return new Run(store, graph);
 };
-
-type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export class Run implements InspectableRun {
   #events: EventManager;
   #highlightHelper = new NodeHighlightHelper();
 
-  graphId = crypto.randomUUID();
-  graphVersion = 0;
+  graphId: GraphUUID;
+  start: number;
+  end: number | null = null;
+  graphVersion: number;
   messages: HarnessRunResult[] = [];
 
-  constructor(graphStore: InspectableGraphStore) {
+  constructor(graphStore: InspectableGraphStore, graph: GraphDescriptor) {
     this.#events = new EventManager(graphStore);
+    this.graphVersion = 0;
+    this.start = timestamp();
+    this.graphId = graphStore.add(graph, this.graphVersion);
   }
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
   }
 
-  observe(runner: Runner): Runner {
+  observe(runner: HarnessRunner): HarnessRunner {
     return new Observer(runner, (event) => {
       this.messages.push(event);
       this.#events.add(event);
@@ -125,11 +129,11 @@ export class Run implements InspectableRun {
 
 type OnResult = (message: HarnessRunResult) => void;
 
-class Observer implements Runner {
-  #runner: Runner;
+class Observer implements HarnessRunner {
+  #runner: HarnessRunner;
   #onResult: OnResult;
 
-  constructor(runner: Runner, onResult: OnResult) {
+  constructor(runner: HarnessRunner, onResult: OnResult) {
     this.#onResult = onResult;
     this.#runner = runner;
   }

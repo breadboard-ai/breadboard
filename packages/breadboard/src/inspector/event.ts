@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
 import {
+  GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
   InputValues,
@@ -17,13 +18,45 @@ import {
 } from "../types.js";
 import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
 import {
+  GraphUUID,
   InspectableGraphStore,
+  InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
 } from "./types.js";
+
+/**
+ * Meant to be a very lightweight wrapper around the
+ * data in the `PathRegistryEntry`.
+ */
+class NestedRun implements InspectableRun {
+  graphId: GraphUUID;
+  start: number;
+  end: number | null;
+  graphVersion: number;
+  messages: HarnessRunResult[] = [];
+  events: InspectableRunEvent[];
+
+  constructor(entry: PathRegistryEntry) {
+    this.graphId = entry.graphId as GraphUUID;
+    this.start = entry.graphStart;
+    this.end = entry.graphEnd;
+    this.graphVersion = 0;
+    this.messages = [];
+    this.events = entry.events;
+  }
+
+  currentNode(): string {
+    return "";
+  }
+
+  observe(runner: HarnessRunner) {
+    return runner;
+  }
+}
 
 class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
@@ -57,8 +90,25 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     this.bubbled = false;
   }
 
-  get nested() {
-    return this.#entry?.nested() || [];
+  get runs(): InspectableRun[] {
+    if (!this.#entry || this.#entry.empty()) {
+      return [];
+    }
+    const entry = this.#entry;
+    const events = entry.events;
+    // a bit of a hack: what I actually need is to find out whether this is
+    // a map or not.
+    // Maps have a peculiar structure: their children will have no events, but
+    // their children's children (the parallel runs) will have events.
+    if (events.length > 0) {
+      // This is an ordinary run.
+      return [new NestedRun(entry)];
+    } else {
+      // This is a map.
+      return entry.children.filter(Boolean).map((childEntry) => {
+        return new NestedRun(childEntry);
+      });
+    }
   }
 }
 
@@ -71,17 +121,27 @@ export class EventManager {
   }
 
   #addGraphstart(data: GraphStartProbeData) {
-    const { path, graph } = data;
-    const graphId = this.#graphStore.add(graph);
+    const { path, graph, timestamp } = data;
+    const graphId = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
-    if (entry) entry.graphId = graphId;
+    if (entry) {
+      entry.graphId = graphId;
+      entry.graphStart = timestamp;
+    }
   }
 
-  #addGraphend(path: number[]) {
-    this.#pathRegistry.find(path);
-    console.groupCollapsed("🌻 Graph Registry");
-    console.log(this.#graphStore);
-    console.groupEnd();
+  #addGraphend(data: GraphEndProbeData) {
+    const { path, timestamp } = data;
+    const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      if (path.length > 0) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
+      return;
+    }
+    entry.graphEnd = timestamp;
   }
 
   #addNodestart(path: number[], result: HarnessRunResult) {
@@ -186,7 +246,7 @@ export class EventManager {
       }
       case "graphend": {
         // TODO: Figure out what to do with these.
-        this.#addGraphend(result.data.path);
+        this.#addGraphend(result.data);
         break;
       }
       case "nodestart": {

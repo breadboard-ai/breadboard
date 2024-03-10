@@ -5,39 +5,47 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { InspectableGraphStore, UUID } from "./types.js";
+import { GraphUUID, InspectableGraphStore } from "./types.js";
+
+const toUUID = (url: string, version: number): GraphUUID => {
+  return `${version}|${url}`;
+};
 
 export class GraphStore implements InspectableGraphStore {
-  #entries = new Map<UUID, GraphDescriptor>();
-  #ids = new Map<string, UUID>();
+  #entries = new Map<GraphUUID, GraphDescriptor>();
+  #ids = new Map<string, GraphUUID>();
 
-  #getOrSetGraphId(graph: GraphDescriptor) {
-    // This does not work consistently.
-    // First, it's slow. JSONifying the graph is slow.
-    // Second, it's unreliable, because it depends on string interning,
-    // and will result in duplicate IDs for the same graph.
-    // TODO: Make this fast and reliable.
-    const graphString = JSON.stringify(graph);
-    if (this.#ids.has(graphString)) {
-      return this.#ids.get(graphString) as UUID;
+  #getOrSetGraphId(graph: GraphDescriptor, version: number): GraphUUID {
+    if (graph.url) {
+      return toUUID(graph.url, version);
     }
-    const id = crypto.randomUUID();
-    this.#ids.set(graphString, id);
+    // if there's no URL, fallback to stringifying the graph
+    // and making a blob URL.
+    // TODO: Remove the needs for this. All graphs must have a URL.
+    const key = JSON.stringify(graph);
+    if (this.#ids.has(key)) {
+      return this.#ids.get(key) as GraphUUID;
+    }
+    const id = toUUID(
+      URL.createObjectURL(new Blob([key], { type: "application/json" })),
+      version
+    );
+    this.#ids.set(key, id);
     return id;
   }
 
-  has(id: UUID) {
+  has(id: GraphUUID) {
     return this.#entries.has(id);
   }
 
-  add(graph: GraphDescriptor) {
-    const id = this.#getOrSetGraphId(graph);
+  add(graph: GraphDescriptor, version: number) {
+    const id = this.#getOrSetGraphId(graph, version);
     if (this.#entries.has(id)) return id;
     this.#entries.set(id, graph);
     return id;
   }
 
-  get(id: UUID) {
+  get(id: GraphUUID) {
     return this.#entries.get(id);
   }
 }

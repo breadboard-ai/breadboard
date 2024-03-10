@@ -6,11 +6,10 @@
 
 import { OutputValues } from "../types.js";
 import {
-  InspectableRun,
+  GraphUUID,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
-  UUID,
 } from "./types.js";
 
 export const SECRET_PATH = [-2];
@@ -27,7 +26,14 @@ class Entry implements PathRegistryEntry {
   // secret and events do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
-  graphId: UUID | null = null;
+  graphId: GraphUUID | null = null;
+  // Wait until `graphstart` event to set the start time.
+  graphStart: number = 0;
+  graphEnd: number | null = null;
+
+  empty(): boolean {
+    return this.#children.length === 0;
+  }
 
   addSidecar(path: number[], event: InspectableRunEvent) {
     const key = path.join("-");
@@ -126,42 +132,6 @@ class Entry implements PathRegistryEntry {
       this.#eventsIsDirty = false;
     }
     return this.#events;
-  }
-
-  nested(): InspectableRun[] {
-    if (this.#children.length === 0) {
-      return [];
-    }
-    const events = this.events;
-    // a bit of a hack: what I actually need is to find out whether this is
-    // a map or not.
-    // Maps have a peculiar structure: their children will have no events, but
-    // their children's children (the parallel runs) will have events.
-    if (events.length > 0) {
-      // This is an ordinary run.
-      return [
-        {
-          graphId: this.graphId as UUID,
-          graphVersion: 0,
-          messages: [],
-          events,
-          observe: (runner) => runner,
-          currentNode: () => "",
-        },
-      ];
-    } else {
-      // This is a map.
-      return this.#children.filter(Boolean).map((entry) => {
-        return {
-          graphId: entry.graphId as UUID,
-          graphVersion: 0,
-          messages: [],
-          observe: (runner) => runner,
-          currentNode: () => "",
-          events: entry.events,
-        };
-      });
-    }
   }
 }
 

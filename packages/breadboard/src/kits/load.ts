@@ -12,13 +12,19 @@ import { asRuntimeKit } from "./ctors.js";
 
 type ManifestEntry = string | GraphDescriptor;
 
-const getGraphDescriptor = async (base: URL, entry: ManifestEntry) => {
+const getGraphDescriptor = async (
+  base: URL,
+  key: string,
+  entry: ManifestEntry
+) => {
   if (typeof entry === "string") {
     const loader = new BoardLoader({ base });
     const result = await loader.load(entry);
     return result.graph;
   } else if (entry.edges && entry.nodes) {
-    return entry;
+    const url = new URL(base);
+    url.searchParams.set("graph", key);
+    return { ...entry, url: url.href };
   } else {
     throw new Error("Invalid graph descriptor");
   }
@@ -31,11 +37,11 @@ const createHandlersFromManifest = (base: URL, nodes: KitManifest["nodes"]) => {
         key,
         {
           describe: async () => {
-            const graph = await getGraphDescriptor(base, value);
+            const graph = await getGraphDescriptor(base, key, value);
             return await inspect(graph).describe();
           },
           invoke: async (inputs, context) => {
-            const graph = await getGraphDescriptor(base, value);
+            const graph = await getGraphDescriptor(base, key, value);
             const board = await BoardRunner.fromGraphDescriptor(graph);
             return await board.runOnce(inputs, context);
           },
