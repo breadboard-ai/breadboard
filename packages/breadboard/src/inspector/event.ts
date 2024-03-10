@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -18,13 +18,41 @@ import {
 } from "../types.js";
 import { PathRegistry, SECRET_PATH, ERROR_PATH } from "./path-registry.js";
 import {
+  GraphUUID,
   InspectableGraphStore,
+  InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
 } from "./types.js";
+
+class NestedRun implements InspectableRun {
+  graphId: GraphUUID;
+  start: number;
+  end: number | null;
+  graphVersion: number;
+  messages: HarnessRunResult[] = [];
+  events: InspectableRunEvent[];
+
+  constructor(entry: PathRegistryEntry) {
+    this.graphId = entry.graphId as GraphUUID;
+    this.start = entry.graphStart;
+    this.end = entry.graphEnd;
+    this.graphVersion = 0;
+    this.messages = [];
+    this.events = entry.events;
+  }
+
+  currentNode(): string {
+    return "";
+  }
+
+  observe(runner: HarnessRunner) {
+    return runner;
+  }
+}
 
 class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
@@ -58,8 +86,25 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     this.bubbled = false;
   }
 
-  get nested() {
-    return this.#entry?.nested() || [];
+  get nested(): InspectableRun[] {
+    if (!this.#entry || this.#entry.empty()) {
+      return [];
+    }
+    const entry = this.#entry;
+    const events = entry.events;
+    // a bit of a hack: what I actually need is to find out whether this is
+    // a map or not.
+    // Maps have a peculiar structure: their children will have no events, but
+    // their children's children (the parallel runs) will have events.
+    if (events.length > 0) {
+      // This is an ordinary run.
+      return [new NestedRun(entry)];
+    } else {
+      // This is a map.
+      return entry.children.filter(Boolean).map((childEntry) => {
+        return new NestedRun(childEntry);
+      });
+    }
   }
 }
 

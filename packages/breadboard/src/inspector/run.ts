@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
@@ -93,8 +93,6 @@ export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
   return new Run(store, graph);
 };
 
-type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
-
 export class Run implements InspectableRun {
   #events: EventManager;
   #highlightHelper = new NodeHighlightHelper();
@@ -116,7 +114,7 @@ export class Run implements InspectableRun {
     return this.#events.events;
   }
 
-  observe(runner: Runner): Runner {
+  observe(runner: HarnessRunner): HarnessRunner {
     return new Observer(runner, (event) => {
       this.messages.push(event);
       this.#events.add(event);
@@ -131,11 +129,11 @@ export class Run implements InspectableRun {
 
 type OnResult = (message: HarnessRunResult) => void;
 
-class Observer implements Runner {
-  #runner: Runner;
+class Observer implements HarnessRunner {
+  #runner: HarnessRunner;
   #onResult: OnResult;
 
-  constructor(runner: Runner, onResult: OnResult) {
+  constructor(runner: HarnessRunner, onResult: OnResult) {
     this.#onResult = onResult;
     this.#runner = runner;
   }

@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, SecretResult } from "../harness/types.js";
+import {
+  HarnessRunResult,
+  HarnessRunner,
+  SecretResult,
+} from "../harness/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -512,10 +516,8 @@ export type InspectableRun = {
   // TODO: Figure out what to do here. I don't really like how observing is
   // part of the otherwise read-only API. But I can't think of an elegant
   // solution right now.
-  observe(runner: Runner): Runner;
+  observe(runner: HarnessRunner): HarnessRunner;
 };
-
-type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
 
 export type PathRegistryEntry = {
   children: PathRegistryEntry[];
@@ -533,7 +535,11 @@ export type PathRegistryEntry = {
    */
   sidecars: InspectableRunEvent[];
   /**
-   * Computes nested runs for the given path.
+   * Returns true if the entry has no children.
    */
-  nested(): InspectableRun[];
+  empty(): boolean;
+  /**
+   * Returns nested events for this entry.
+   */
+  events: InspectableRunEvent[];
 };
