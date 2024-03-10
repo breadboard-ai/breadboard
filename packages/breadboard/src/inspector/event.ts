@@ -36,7 +36,7 @@ class NestedRun implements InspectableRun {
   graphId: GraphUUID;
   start: number;
   end: number | null;
-  graphVersion: number;
+  graphVersion = 0;
   messages: HarnessRunResult[] = [];
   events: InspectableRunEvent[];
 
@@ -44,8 +44,6 @@ class NestedRun implements InspectableRun {
     this.graphId = entry.graphId as GraphUUID;
     this.start = entry.graphStart;
     this.end = entry.graphEnd;
-    this.graphVersion = 0;
-    this.messages = [];
     this.events = entry.events;
   }
 

@@ -23,7 +23,7 @@ class Entry implements PathRegistryEntry {
   sidecars: InspectableRunEvent[] = [];
   // Keep track of some sidecar events so that we can clean them up later.
   // We only need to keep track of input and output events, since the
-  // secret and events do not have a corresponding `nodeend` event.
+  // secret and error do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   graphId: GraphUUID | null = null;
