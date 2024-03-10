@@ -400,6 +400,23 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents an observer of the graph runs.
+ */
+export type InspectableRunObserver = {
+  /**
+   * Returns the list of runs that were observed. The current run is always
+   * at the top of the list.
+   */
+  runs(): InspectableRun[];
+  /**
+   * Observes the given result and collects it into the list of runs.
+   * @param result -- the result to observe
+   * @returns -- the list of runs that were observed
+   */
+  observe(result: HarnessRunResult): InspectableRun[];
+};
+
+/**
  * Represents a store of all graphs that the system has seen so far.
  */
 export type InspectableGraphStore = {

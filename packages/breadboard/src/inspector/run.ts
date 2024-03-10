@@ -14,6 +14,7 @@ import {
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunObserver,
 } from "./types.js";
 
 type GraphRecord = {
@@ -88,6 +89,40 @@ class NodeHighlightHelper {
   }
 }
 
+export class RunObserver implements InspectableRunObserver {
+  #store: InspectableGraphStore;
+  #runs: Run[] = [];
+
+  constructor(store: InspectableGraphStore) {
+    this.#store = store;
+  }
+
+  runs() {
+    return this.#runs;
+  }
+
+  observe(result: HarnessRunResult): InspectableRun[] {
+    if (result.type === "graphstart") {
+      const { path } = result.data;
+      if (path.length === 0) {
+        // start a new run
+        const run = new Run(this.#store, result.data.graph);
+        this.#runs = [run, ...this.#runs];
+      }
+    } else if (result.type === "graphend") {
+      const { path, timestamp } = result.data;
+      if (path.length === 0) {
+        // close out the run
+        const run = this.#runs[0];
+        run.end = timestamp;
+      }
+    }
+    const run = this.#runs[0];
+    run.addResult(result);
+    return this.#runs;
+  }
+}
+
 export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
   const store = new GraphStore();
   return new Run(store, graph);
@@ -112,6 +147,12 @@ export class Run implements InspectableRun {
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
+  }
+
+  addResult(result: HarnessRunResult) {
+    this.messages.push(result);
+    this.#events.add(result);
+    this.#highlightHelper.add(result);
   }
 
   observe(runner: HarnessRunner): HarnessRunner {
