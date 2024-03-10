@@ -23,7 +23,7 @@ import {
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
-import { createRunObserver } from "../../breadboard/dist/src/inspector";
+import { createRunObserver } from "@google-labs/breadboard";
 
 export const getBoardInfo = async (
   url: string

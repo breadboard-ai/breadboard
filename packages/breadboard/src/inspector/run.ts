@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
+import { HarnessRunResult } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
-import { GraphStore } from "./graph-store.js";
 import {
   GraphUUID,
   InspectableGraphStore,
@@ -123,11 +122,6 @@ export class RunObserver implements InspectableRunObserver {
   }
 }
 
-export const inspectableRun = (graph: GraphDescriptor): InspectableRun => {
-  const store = new GraphStore();
-  return new Run(store, graph);
-};
-
 export class Run implements InspectableRun {
   #events: EventManager;
   #highlightHelper = new NodeHighlightHelper();
@@ -155,45 +149,7 @@ export class Run implements InspectableRun {
     this.#highlightHelper.add(result);
   }
 
-  observe(runner: HarnessRunner): HarnessRunner {
-    return new Observer(runner, (event) => {
-      this.messages.push(event);
-      this.#events.add(event);
-      this.#highlightHelper.add(event);
-    });
-  }
-
   currentNode(position: number) {
     return this.#highlightHelper.currentNode(position);
-  }
-}
-
-type OnResult = (message: HarnessRunResult) => void;
-
-class Observer implements HarnessRunner {
-  #runner: HarnessRunner;
-  #onResult: OnResult;
-
-  constructor(runner: HarnessRunner, onResult: OnResult) {
-    this.#onResult = onResult;
-    this.#runner = runner;
-  }
-
-  async next() {
-    const result = await this.#runner.next();
-    if (result.done) {
-      return result;
-    }
-    this.#onResult(result.value);
-    return result;
-  }
-  async return() {
-    return this.#runner.return();
-  }
-  async throw(error?: unknown) {
-    return this.#runner.throw(error);
-  }
-  [Symbol.asyncIterator]() {
-    return this;
   }
 }

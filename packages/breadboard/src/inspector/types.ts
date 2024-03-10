@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  HarnessRunResult,
-  HarnessRunner,
-  SecretResult,
-} from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -533,11 +529,6 @@ export type InspectableRun = {
    */
   messages: HarnessRunResult[];
   currentNode(position: number): string;
-
-  // TODO: Figure out what to do here. I don't really like how observing is
-  // part of the otherwise read-only API. But I can't think of an elegant
-  // solution right now.
-  observe(runner: HarnessRunner): HarnessRunner;
 };
 
 export type PathRegistryEntry = {

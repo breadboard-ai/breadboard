@@ -7,7 +7,7 @@
 import { GraphDescriptor } from "../types.js";
 import { GraphStore } from "./graph-store.js";
 import { inspectableGraph } from "./graph.js";
-import { RunObserver, inspectableRun } from "./run.js";
+import { RunObserver } from "./run.js";
 import {
   InspectableGraph,
   InspectableGraphOptions,
@@ -25,5 +25,3 @@ export const createRunObserver = (): InspectableRunObserver => {
   const store = new GraphStore();
   return new RunObserver(store);
 };
-
-export const inspectRun = inspectableRun;

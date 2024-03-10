@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, HarnessRunner } from "../harness/types.js";
+import { HarnessRunResult } from "../harness/types.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -49,10 +49,6 @@ class NestedRun implements InspectableRun {
 
   currentNode(): string {
     return "";
-  }
-
-  observe(runner: HarnessRunner) {
-    return runner;
   }
 }
 
