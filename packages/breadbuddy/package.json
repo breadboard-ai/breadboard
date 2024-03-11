@@ -80,7 +80,7 @@
     "@types/node": "^20.11.25",
     "@types/nunjucks": "^3.2.6",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/parser": "^7.1.1",
     "vite": "^5.1.5",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.5.1",

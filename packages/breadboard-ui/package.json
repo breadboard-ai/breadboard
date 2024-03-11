@@ -129,7 +129,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.11.25",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/parser": "^7.1.1",
     "rollup": "^4.12.1",
     "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^3.16.0",
