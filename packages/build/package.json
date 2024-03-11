@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "wireit",
+    "build:tsc": "wireit",
     "test": "wireit",
     "test:only": "wireit",
     "lint": "wireit",
@@ -89,6 +90,9 @@
         "lint"
       ]
     }
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.11.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.25",
