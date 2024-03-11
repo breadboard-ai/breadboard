@@ -202,7 +202,7 @@ export enum PortStatus {
    * The port status impossible to determine. This only happens when the node
    * has a star wire ("*") and the port is not connected.
    */
-  Inteterminate = "indeterminate",
+  Indeterminate = "indeterminate",
   /**
    * The port is correctly connected to another node or specified using node's
    * configuration, according to this node's schema.
@@ -467,7 +467,7 @@ export type InspectableRunNodeEvent = {
    * Returns the list of nested runs that were (or are being) create when
    * this node was (is being) invoked.
    */
-  runs: InspectableRun[] | null;
+  runs: InspectableRun[];
 };
 
 /**
@@ -475,14 +475,18 @@ export type InspectableRunNodeEvent = {
  */
 export type InspectableRunErrorEvent = {
   type: "error";
-  error: ErrorResponse;
+  error: ErrorResponse["error"];
+  /**
+   * When the error was first observed.
+   */
+  start: number;
 };
 
 export type InspectableRunSecretEvent = {
   type: "secret";
-  data: SecretResult["data"];
+  keys: SecretResult["data"]["keys"];
   /**
-   * When the `secrets` node was first observerd.
+   * When the `secrets` node was first observed.
    */
   start: number;
   /**
@@ -525,9 +529,12 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
-   * This will likely go away. This is what is currently used by the UI.
+   * @deprecated Use `events` instead.
    */
   messages: HarnessRunResult[];
+  /**
+   * @deprecated Use `events` instead.
+   */
   currentNode(position: number): string;
 };
 
