@@ -5,6 +5,10 @@
  */
 
 import { NodeInstance } from "./instance.js";
+import type {
+  NodeHandlerFunction,
+  NodeDescriberFunction,
+} from "@google-labs/breadboard";
 import type { PortConfigMap } from "./port.js";
 import type { TypeScriptTypeFromBreadboardType } from "./type.js";
 
@@ -59,9 +63,8 @@ export function defineNodeType<
   const def = () => {
     return new NodeInstance(inputs, outputs);
   };
-  def.inputs = inputs;
-  def.outputs = outputs;
-  def.invoke = invoke;
+  def.invoke = makeInvokeFunction(invoke);
+  def.describe = makeDescribeFunction(inputs, outputs);
   return def;
 }
 
@@ -70,14 +73,81 @@ export interface NodeDefinition<
   O extends PortConfigMap,
 > {
   (): NodeInstance<I, O>;
-  readonly inputs: I;
-  readonly outputs: O;
-  readonly invoke: InvokeFunction<I, O>;
+  readonly invoke: NodeHandlerFunction;
+  readonly describe: NodeDescriberFunction;
 }
 
-type InvokeFunction<I extends PortConfigMap, O extends PortConfigMap> = (
+/**
+ * Wrap the user's invoke function so that it (1) consistently returns a
+ * promise, and (2) is typed for compatibility with the NodeHandlerFunction type
+ * that is expected by the Breadboard runner, KitBuilder, etc.
+ */
+function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
+  invoke: InvokeFunction<I, O>
+): NodeHandlerFunction {
+  return (inputs) => {
+    // The user's invoke function is allowed to return a promise or a concrete
+    // value, but we always return a promise so that any sync -> async change
+    // this node might need to make in the future will not be a breaking change
+    // for its consumers.
+    return Promise.resolve(
+      invoke(
+        // TODO(aomarks) This cast is needed because at runtime we don't get any
+        // guarantee about port shape and types. Consider adding schema
+        // validation here so that we can raise type errors automatically and
+        // prevent the invoke function from being invoked with unexpected input
+        // types.
+        inputs as InvokeParams<I>
+      )
+    );
+  };
+}
+
+/**
+ * Generate a JSON schema that describes the input and output ports of this node
+ * type, and wrap that in a promise-returning function (a function is expected
+ * because some node types change their shape at runtime).
+ */
+function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
+  inputs: I,
+  outputs: O
+): NodeDescriberFunction {
+  // Note result is memoized. This is a monmorphic node, so the ports never
+  // change.
+  const result = Promise.resolve({
+    inputSchema: {
+      type: "object",
+      properties: Object.fromEntries(
+        [...Object.entries(inputs)].map(([title, { description, type }]) => {
+          return [title, { title, description, type }];
+        })
+      ),
+      required: [...Object.keys(inputs)],
+    },
+    outputSchema: {
+      type: "object",
+      properties: Object.fromEntries(
+        [...Object.entries(outputs)].map(([title, { description, type }]) => {
+          return [title, { title, description, type }];
+        })
+      ),
+      required: [...Object.keys(outputs)],
+    },
+  });
+  return () => result;
+}
+
+type InvokeFunction<I extends PortConfigMap, O extends PortConfigMap> =
+  | InvokeFunctionSync<I, O>
+  | InvokeFunctionAsync<I, O>;
+
+type InvokeFunctionSync<I extends PortConfigMap, O extends PortConfigMap> = (
   params: InvokeParams<I>
 ) => InvokeReturn<O>;
+
+type InvokeFunctionAsync<I extends PortConfigMap, O extends PortConfigMap> = (
+  params: InvokeParams<I>
+) => Promise<InvokeReturn<O>>;
 
 type InvokeParams<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
@@ -85,7 +155,7 @@ type InvokeParams<Ports extends PortConfigMap> = {
   >;
 };
 
-export type InvokeReturn<Ports extends PortConfigMap> = {
+type InvokeReturn<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
     Ports[PortName]["type"]
   >;
