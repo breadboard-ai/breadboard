@@ -5,7 +5,7 @@
  */
 
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "../index.js";
+import { InspectableGraph, InspectableGraphOptions } from "../inspector/types.js";
 import {
   Edge,
   GraphDescriptor,
