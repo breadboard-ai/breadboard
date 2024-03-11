@@ -6,7 +6,6 @@
 
 import { defineNodeType } from "@breadboard-ai/build";
 import { test } from "node:test";
-import type { InvokeReturn } from "../definition.js";
 
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType NodeDefinition<{}, {}>
