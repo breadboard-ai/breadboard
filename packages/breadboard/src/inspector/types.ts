@@ -202,7 +202,7 @@ export enum PortStatus {
    * The port status impossible to determine. This only happens when the node
    * has a star wire ("*") and the port is not connected.
    */
-  Inteterminate = "indeterminate",
+  Indeterminate = "indeterminate",
   /**
    * The port is correctly connected to another node or specified using node's
    * configuration, according to this node's schema.
