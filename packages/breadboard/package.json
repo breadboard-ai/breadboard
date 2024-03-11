@@ -161,7 +161,7 @@
     "eslint-plugin-expect-type": "^0.3.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.12.1",
-    "typedoc": "^0.25.11",
+    "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.3.3"
   },
