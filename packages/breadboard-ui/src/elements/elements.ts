@@ -8,6 +8,7 @@ export { ActivityLog } from "./activity-log/activity-log.js";
 export { BoardList } from "./board-list/board-list.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
+export { NodeSelector } from "./editor/node-selector.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
 export { HistoryTree } from "./history-tree/history-tree.js";
 export { Input } from "./input/input.js";

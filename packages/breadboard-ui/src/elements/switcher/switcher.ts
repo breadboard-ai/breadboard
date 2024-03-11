@@ -43,6 +43,7 @@ export class Switcher extends LitElement {
       height: calc(var(--bb-grid-size) * 8);
       font-size: var(--bb-font-medium);
       opacity: 0.4;
+      white-space: nowrap;
     }
 
     #buttons button:hover,
