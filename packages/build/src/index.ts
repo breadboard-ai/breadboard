@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { defineNodeType } from "./define.js";
+export { defineNodeType } from "./definition.js";
