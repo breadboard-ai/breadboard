@@ -5,7 +5,6 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { timestamp } from "../timestamp.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -139,27 +138,21 @@ export class EventManager {
     entry.graphEnd = timestamp;
   }
 
-  #addNodestart(path: number[], result: HarnessRunResult) {
+  #addNodestart(data: NodeStartResponse) {
+    const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
-    const { node, timestamp, inputs } = result.data as NodeStartResponse;
     const event = new RunNodeEvent(entry, node, timestamp, inputs);
     entry.event = event;
   }
 
-  #addInput(path: number[], result: HarnessRunResult, bubbled: boolean) {
+  #addInput(data: InputResponse) {
+    const { path, bubbled, inputArguments, node, timestamp } = data;
     if (bubbled) {
-      const input = result.data as InputResponse;
-      const event = new RunNodeEvent(
-        null,
-        input.node,
-        input.timestamp,
-        input.inputArguments
-      );
+      const event = new RunNodeEvent(null, node, timestamp, inputArguments);
       event.bubbled = true;
-      event.result = result;
       this.#pathRegistry.addSidecar(path, event);
     } else {
       const entry = this.#pathRegistry.find(path);
@@ -176,18 +169,12 @@ export class EventManager {
     }
   }
 
-  #addOutput(path: number[], result: HarnessRunResult, bubbled: boolean) {
+  #addOutput(data: OutputResponse) {
+    const { path, bubbled, node, timestamp, outputs } = data;
     if (bubbled) {
       // Create a new entry for the sidecar output event.
-      const output = result.data as OutputResponse;
-      const event = new RunNodeEvent(
-        null,
-        output.node,
-        output.timestamp,
-        output.outputs
-      );
+      const event = new RunNodeEvent(null, node, timestamp, outputs);
       event.bubbled = true;
-      event.result = result;
       this.#pathRegistry.addSidecar(path, event);
     } else {
       const entry = this.#pathRegistry.find(path);
@@ -206,11 +193,12 @@ export class EventManager {
           `Expected an existing event to be of type "node", but got ${existing.type}`
         );
       }
-      existing.inputs = (result.data as OutputResponse).outputs;
+      existing.inputs = data.outputs;
     }
   }
 
-  #addNodeend(path: number[], data: NodeEndResponse) {
+  #addNodeend(data: NodeEndResponse) {
+    const { path } = data;
     const entry = this.#pathRegistry.find(path);
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
@@ -251,35 +239,29 @@ export class EventManager {
         break;
       }
       case "nodestart": {
-        this.#addNodestart(result.data.path, result);
+        this.#addNodestart(result.data);
         break;
       }
       case "input": {
-        this.#addInput(result.data.path, result, result.data.bubbled);
+        this.#addInput(result.data);
         break;
       }
       case "output": {
-        this.#addOutput(result.data.path, result, result.data.bubbled);
+        this.#addOutput(result.data);
         break;
       }
       case "secret": {
-        this.#addSecret({
-          type: "secret",
-          data: result.data,
-          start: timestamp(),
-          end: null,
-        });
+        const { timestamp: start, keys } = result.data;
+        this.#addSecret({ type: "secret", keys, start, end: null });
         break;
       }
       case "nodeend": {
-        this.#addNodeend(result.data.path, result.data);
+        this.#addNodeend(result.data);
         break;
       }
       case "error": {
-        this.#addError({
-          type: "error",
-          error: result.data,
-        });
+        const { timestamp: start, error } = result.data;
+        this.#addError({ type: "error", start, error });
         break;
       }
     }

@@ -431,7 +431,7 @@ export class ActivityLog extends LitElement {
                   class=${classMap({ "user-required": this.#isHidden })}
                 >
                   <h1 data-message-idx=${idx}>${event.type}</h1>
-                  ${event.data.keys.map((id) => {
+                  ${event.keys.map((id) => {
                     const configuration = {
                       schema: {
                         properties: {
@@ -462,7 +462,7 @@ export class ActivityLog extends LitElement {
                   output = error;
                 } else {
                   let messageOutput = "";
-                  let errorData = error.error;
+                  let errorData = error;
                   while (typeof errorData === "object") {
                     console.log(errorData);
                     if (errorData && "message" in errorData) {
