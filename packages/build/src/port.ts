@@ -30,6 +30,7 @@ export interface PortConfig {
  * A Breadboard node port which receives values.
  */
 export class InputPort<I extends PortConfig> {
+  readonly __InputPortBrand__!: never;
   readonly type: I["type"];
 
   constructor(config: I) {
@@ -41,6 +42,7 @@ export class InputPort<I extends PortConfig> {
  * A Breadboard node port which sends values.
  */
 export class OutputPort<O extends PortConfig> {
+  readonly __OutputPortBrand__!: never;
   readonly type: O["type"];
 
   constructor(config: O) {

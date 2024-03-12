@@ -5,3 +5,4 @@
  */
 
 export { defineNodeType } from "./definition.js";
+export { board } from "./board.js";
