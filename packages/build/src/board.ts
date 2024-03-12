@@ -13,6 +13,8 @@ import { NodeInstance, type InstantiateParams } from "./instance.js";
 import type { InputPort, OutputPort, PortConfig } from "./port.js";
 import type { BreadboardType } from "./type.js";
 
+// TODO(aomarks) Support primary nodes in boards too.
+
 // TODO(aomarks) There should be a chance to add data to the output node. You
 // pass in the port, which determines the type, but everything else should be
 // configurable (e.g. description). Maybe there is an option to automatically
@@ -72,6 +74,7 @@ function boardPortsConfig<
   for (const [portName, { type }] of Object.entries(portMap)) {
     configMap[portName] = { type };
   }
+  // TODO(aomarks) It might be possible to avoid this cast.
   return configMap as BoardPortConfig<PortMap>;
 }
 

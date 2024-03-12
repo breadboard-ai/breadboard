@@ -31,7 +31,8 @@ import type { PortConfigMap, ConcreteValues } from "./port.js";
  *   // Outputs
  *   {
  *     backwards: {
- *       type: "string"
+ *       type: "string",
+ *       primary: true
  *     }
  *   },
  *   // Invoke function
