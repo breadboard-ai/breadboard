@@ -33,7 +33,7 @@
     "build:tsc": {
       "command": "tsc -b",
       "dependencies": [
-        "../schema:build:tsc"
+        "../schema:build"
       ],
       "env": {
         "FORCE_COLOR": "1"

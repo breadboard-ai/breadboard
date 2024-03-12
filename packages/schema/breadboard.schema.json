@@ -1,178 +1,323 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
-  "title": "Breadboard",
-  "description": "An executable program graph",
-  "$defs": {
-    "identifier": {
-      "type": "string",
-      "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$"
-    }
-  },
-  "type": "object",
-  "required": [
-    "nodes",
-    "edges"
-  ],
-  "additionalProperties": false,
-  "properties": {
-    "$schema": {
-      "type": "string",
-      "format": "uri-reference"
-    },
-    "title": {
-      "description": "A human-readable title for the graph",
-      "type": "string"
-    },
-    "description": {
-      "description": "Description of the graph",
-      "type": "string"
-    },
-    "version": {
-      "description": "Semantic version of the graph\nSee https://semver.org/",
-      "type": "string",
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
-    },
-    "nodes": {
-      "description": "All of the nodes in the graph",
-      "type": "array",
-      "items": {
-        "description": "A \"step\" or \"function\" in the program which performs computation",
-        "type": "object",
-        "required": [
-          "id",
-          "type"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "description": "Identifier for this node that is unique to this graph",
-            "$ref": "#/$defs/identifier"
-          },
-          "type": {
-            "description": "The type of the node. Must be either a built-in type or a type provided by a kit.",
-            "$ref": "#/$defs/identifier"
-          },
-          "configuration": {
-            "description": "Type-specific configuration of the node",
-            "type": "object",
-            "additionalProperties": true
-          }
-        }
-      }
-    },
-    "edges": {
-      "description": "All of the edges in the graph",
-      "type": "array",
-      "items": {
-        "description": "A connection between two nodes through which data flows",
-        "type": "object",
-        "required": [
-          "from",
-          "to"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "from": {
-            "description": "The ID of the source node",
-            "$ref": "#/$defs/identifier"
-          },
-          "to": {
-            "description": "The ID of the destination node",
-            "$ref": "#/$defs/identifier"
-          },
-          "out": {
-            "description": "The output port of the `from` node.\nIf \"*\", then all outputs of the `from` node are passed to the `to` node. In this case `in` must be empty string or undefined.\nIf undefined or empty string, then no data is passed, and the nodes are instead connected purely for yielding control flow. In this case `in` must be empty string or undefined.",
-            "type": "string"
-          },
-          "in": {
-            "description": "The input port of the `to` node.\nMust be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined.",
-            "type": "string"
-          },
-          "optional": {
-            "description": "If true, nodes connected to this edge won't wait for data to appear before proceding with execution.",
-            "type": "boolean"
-          },
-          "constant": {
-            "description": "If true, the most recent data that passed through this edge will remain available indefinitely, instead of being destructively consumed.",
-            "type": "boolean"
-          }
-        },
-        "oneOf": [
-          {
-            "required": [],
-            "properties": {
-              "out": {
-                "const": ""
-              },
-              "in": {
-                "const": ""
-              }
-            }
-          },
-          {
-            "required": [
-              "out"
-            ],
-            "properties": {
-              "out": {
-                "const": "*"
-              },
-              "in": {
-                "const": ""
-              }
-            }
-          },
-          {
-            "required": [
-              "out",
-              "in"
-            ],
-            "properties": {
-              "out": {
-                "$ref": "#/$defs/identifier"
-              },
-              "in": {
-                "$ref": "#/$defs/identifier"
-              }
-            }
-          }
-        ]
-      }
-    },
-    "kits": {
-      "description": "All of the kits this graph depends on",
-      "type": "array",
-      "items": {
-        "description": "A library that will be imported prior to execution for providing handlers for non built-in node types.",
-        "type": "object",
-        "required": [
-          "url"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "url": {
-            "description": "Address of the kit",
-            "type": "string",
-            "format": "uri"
-          }
-        }
-      }
-    },
-    "graphs": {
-      "description": "Sub-graphs that can be referred to by nodes in the parent graph.",
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[a-zA-Z_][a-zA-Z0-9_-]*$": {
-          "$ref": "#"
-        }
-      }
-    },
-    "args": {
-      "description": "Arguments that are passed to the graph, useful to bind values to lambdas.",
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$ref": "#/definitions/GraphDescriptor",
+	"definitions": {
+		"GraphDescriptor": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"inputs": {
+					"type": "object",
+					"propertyNames": {
+						"description": "Unique identifier of a node's input."
+					},
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"outputs": {
+					"anyOf": [
+						{
+							"type": "object",
+							"propertyNames": {
+								"description": "Unique identifier of a node's input."
+							}
+						},
+						{
+							"type": "array",
+							"items": {
+								"type": "object",
+								"propertyNames": {
+									"description": "Unique identifier of a node's input."
+								}
+							}
+						}
+					],
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"sequence": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeIdentifier"
+					},
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"throws": {
+					"type": "boolean",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"safe": {
+					"type": "boolean",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"expectedLabels": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"explanation": {
+					"type": "string",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"edges": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Edge"
+					},
+					"description": "The collection of all edges in the graph."
+				},
+				"nodes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeDescriptor"
+					},
+					"description": "The collection of all nodes in the graph."
+				},
+				"kits": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/KitDescriptor"
+					},
+					"description": "All the kits (collections of node handlers) that are used by the graph."
+				},
+				"graphs": {
+					"$ref": "#/definitions/SubGraphs",
+					"description": "Sub-graphs that are also described by this graph representation."
+				},
+				"args": {
+					"$ref": "#/definitions/InputValues",
+					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
+				},
+				"$schema": {
+					"type": "string",
+					"description": "The schema of the graph."
+				},
+				"url": {
+					"type": "string",
+					"description": "The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory."
+				},
+				"title": {
+					"type": "string",
+					"description": "The title of the graph."
+				},
+				"description": {
+					"type": "string",
+					"description": "The description of the graph."
+				},
+				"version": {
+					"type": "string",
+					"description": "Version of the graph. [semver](https://semver.org/) format is encouraged."
+				}
+			},
+			"required": [
+				"edges",
+				"nodes"
+			],
+			"description": "Represents a graph."
+		},
+		"NodeIdentifier": {
+			"type": "string",
+			"description": "Unique identifier of a node in a graph."
+		},
+		"Edge": {
+			"type": "object",
+			"properties": {
+				"from": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "The node that the edge is coming from."
+				},
+				"to": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "The node that the edge is going to."
+				},
+				"in": {
+					"$ref": "#/definitions/InputIdentifier",
+					"description": "The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node."
+				},
+				"out": {
+					"$ref": "#/definitions/OutputIdentifier",
+					"description": "The output of the `from` node. If this value is \"*\", then all outputs of the `from` node are passed to the `to` node. If this value is undefined, then no data is passed to any inputs of the `to` node."
+				},
+				"optional": {
+					"type": "boolean",
+					"description": "If true, this edge is optional: the data that passes through it is not considered a required input to the node."
+				},
+				"constant": {
+					"type": "boolean",
+					"description": "If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it."
+				}
+			},
+			"required": [
+				"from",
+				"to"
+			],
+			"additionalProperties": false,
+			"description": "Represents an edge in a graph."
+		},
+		"InputIdentifier": {
+			"type": "string",
+			"description": "Unique identifier of a node's input."
+		},
+		"OutputIdentifier": {
+			"type": "string",
+			"description": "Unique identifier of a node's output."
+		},
+		"NodeDescriptor": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "Unique id of the node in graph."
+				},
+				"type": {
+					"$ref": "#/definitions/NodeTypeIdentifier",
+					"description": "Type of the node. Used to look up the handler for the node."
+				},
+				"configuration": {
+					"$ref": "#/definitions/NodeConfiguration",
+					"description": "Configuration of the node."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the node. Use this provide additional information about the node."
+				}
+			},
+			"required": [
+				"id",
+				"type"
+			],
+			"additionalProperties": false,
+			"description": "Represents a node in a graph."
+		},
+		"NodeTypeIdentifier": {
+			"type": "string",
+			"description": "Unique identifier of a node's type."
+		},
+		"NodeConfiguration": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
+		},
+		"NodeValue": {
+			"anyOf": [
+				{
+					"type": "string"
+				},
+				{
+					"type": "number"
+				},
+				{
+					"type": "boolean"
+				},
+				{
+					"type": "null"
+				},
+				{
+					"not": {}
+				},
+				{
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeValue"
+					}
+				},
+				{
+					"$ref": "#/definitions/Capability"
+				},
+				{
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/NodeValue"
+					}
+				}
+			],
+			"description": "A type representing a valid JSON value."
+		},
+		"Capability": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"kind"
+			],
+			"additionalProperties": false
+		},
+		"NodeMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "The title of the node."
+				},
+				"description": {
+					"type": "string",
+					"description": "A more detailed description of the node."
+				}
+			},
+			"additionalProperties": false,
+			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
+		},
+		"KitDescriptor": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "The title of the kit."
+				},
+				"description": {
+					"type": "string",
+					"description": "The description of the kit."
+				},
+				"version": {
+					"type": "string",
+					"description": "Version of the kit. [semver](https://semver.org/) format is encouraged.",
+					"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+				},
+				"url": {
+					"type": "string",
+					"description": "The URL pointing to the location of the kit."
+				}
+			},
+			"required": [
+				"url"
+			]
+		},
+		"SubGraphs": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/GraphDescriptor"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a graph."
+			},
+			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
+		},
+		"InputValues": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's input."
+			},
+			"description": "Values that are supplied as inputs to the `NodeHandler`."
+		}
+	}
 }
