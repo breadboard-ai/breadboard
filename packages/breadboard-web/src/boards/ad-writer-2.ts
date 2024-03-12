@@ -125,12 +125,12 @@ export default await board(({ context }) => {
     .examples(
       `Write an ad for Breadboard. The ad must incorporate the following key messages: 
       - Breadboard for Developers
-      - Iterate with Gemini APIs 
+      - Play and experiment with AI Patterns
+      - Prototype quickly
+      - Use with Gemini APIs 
       - Integrate AI Into Your Project
-      - Start Your AI Project Today
       - Create graphs with prompts
-      - AI for Developers
-      - Try Google Gemini`
+      - Accessible AI for Developers`
     );
 
   const customerPromptMaker = agents.structuredWorker({
