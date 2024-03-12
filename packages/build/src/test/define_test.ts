@@ -475,6 +475,7 @@ test("invoke returns value from async function", async () => {
   );
 
   const instanceA = definitionA({});
+  const instanceB = definitionB({ in1: "foo", in2: 123 });
 
   test("can instantiate node with concrete values", () => {
     definitionB({
@@ -524,6 +525,15 @@ test("invoke returns value from async function", async () => {
       in1: instanceA.outputs.out1,
       // @ts-expect-error Expect number, got string
       in2: instanceA.outputs.out1,
+    });
+  });
+
+  test("expect error: wrong kind of port", () => {
+    definitionB({
+      // @ts-expect-error Expect OutputPort, got InputPort
+      in1: instanceB.inputs.in1,
+      // @ts-expect-error Expect OutputPort, got InputPort
+      in2: instanceB.inputs.in2,
     });
   });
 }
