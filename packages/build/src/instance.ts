@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputPort, OutputPort, type PortConfigMap } from "./port.js";
+import {
+  InputPort,
+  OutputPort,
+  type PortConfigMap,
+  type ValuesOrOutputPorts,
+} from "./port.js";
 
 /**
  * An instance of a Breadboard node, constructed from a Breadboard node
@@ -13,9 +18,11 @@ import { InputPort, OutputPort, type PortConfigMap } from "./port.js";
 export class NodeInstance<I extends PortConfigMap, O extends PortConfigMap> {
   readonly inputs: InputPorts<I>;
   readonly outputs: OutputPorts<O>;
-  constructor(inputs: I, outputs: O) {
+  readonly params: ValuesOrOutputPorts<I>;
+  constructor(inputs: I, outputs: O, params: ValuesOrOutputPorts<I>) {
     this.inputs = inputPortsFromPortConfigMap(inputs);
     this.outputs = outputPortsFromPortConfigMap(outputs);
+    this.params = params;
   }
 }
 
@@ -38,7 +45,7 @@ function outputPortsFromPortConfigMap<O extends PortConfigMap>(
       name,
       new OutputPort(config),
     ])
-  ) as InputPorts<O>;
+  ) as OutputPorts<O>;
 }
 
 type InputPorts<I extends PortConfigMap> = {
@@ -48,3 +55,6 @@ type InputPorts<I extends PortConfigMap> = {
 type OutputPorts<O extends PortConfigMap> = {
   [PortName in keyof O]: OutputPort<O[PortName]>;
 };
+
+export type InstantiateParams<Ports extends PortConfigMap> =
+  ValuesOrOutputPorts<Ports>;

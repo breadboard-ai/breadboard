@@ -7,6 +7,7 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  base,
   board,
   code,
 } from "@google-labs/breadboard";
@@ -68,6 +69,8 @@ export default await board(({ context, worker, max }) => {
     $board: worker.memoize(),
     context,
   });
+
+  base.output({ $id: "exit", context: invokeAgent.exit });
 
   const count = counter({
     $id: "counter",

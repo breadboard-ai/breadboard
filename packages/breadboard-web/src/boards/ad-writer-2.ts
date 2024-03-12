@@ -4,15 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, board } from "@google-labs/breadboard";
+import { Schema, base, board, code } from "@google-labs/breadboard";
 import { agents } from "@google-labs/agent-kit";
 
 const adSchema = {
   type: "object",
   properties: {
-    ad: {
+    headline: {
       type: "string",
-      description: "the ad copy",
+      description: "a headline that fits into the 30 character limit",
+    },
+    description: {
+      type: "string",
+      description: "a description that fits into the 90 character limit",
     },
   },
 } satisfies Schema;
@@ -39,27 +43,80 @@ const requirementsSchema = {
   },
 } satisfies Schema;
 
-const reqiurementsReviewSchema = {
-  type: "object",
-  properties: {
-    requirementsReview: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          requirement: {
-            type: "string",
-            description: "the requirement",
-          },
-          problem: {
-            type: "string",
-            description: "why can't it be satisfied",
-          },
-        },
-      },
+const extractPrompt = code(({ json }) => {
+  const { prompt } = json as { prompt: string };
+  return { prompt };
+});
+
+const extractJson = code(({ context }) => {
+  const list = (context as ContextItem[]) || [];
+  const last = list[list.length - 1];
+  const json = JSON.parse(last.parts.text);
+  return { json };
+});
+
+type ContextItem = {
+  role: string;
+  parts: { text: string };
+};
+
+/**
+ * Will check character limits and insert a special prompt
+ * if the limits are exceeded.
+ */
+const checkCharacterLimits = code(({ context }) => {
+  const list = (context as ContextItem[]) || [];
+  const last = list[list.length - 1] as ContextItem;
+  const json = JSON.parse(last.parts.text);
+  const { headline, description } = json as {
+    headline: string;
+    description: string;
+  };
+  const warning = [
+    `You are a brilliant copy editor who is famous brevity, making ads fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`,
+  ];
+  if (headline.length > 30) {
+    warning.push(
+      `- The headline is ${headline.length} characters long, but needs to be 30 characters. Shorten it .`
+    );
+  }
+  if (description.length > 90) {
+    warning.push(
+      `- The description is ${description.length} characters long, but needs to be 90 characters. Shorten it.`
+    );
+  }
+  if (warning.length > 1) {
+    return { warning: warning.join("\n\n") };
+  }
+  return { context };
+});
+
+const refineAd = board(({ context }) => {
+  const limitChecker = checkCharacterLimits({
+    $metadata: {
+      title: "Character Limit Checker",
     },
-  },
-} satisfies Schema;
+    context: context,
+  });
+
+  const shortener = agents.structuredWorker({
+    $metadata: {
+      title: "Ad Shortener",
+    },
+    instruction: limitChecker.warning,
+    context,
+    schema: adSchema,
+  });
+
+  base.output({
+    $metadata: {
+      title: "Successful exit",
+    },
+    exit: limitChecker.context,
+  });
+
+  return { context: shortener.context };
+});
 
 export default await board(({ context }) => {
   context
@@ -68,160 +125,86 @@ export default await board(({ context }) => {
     .examples(
       `Write an ad for Breadboard. The ad must incorporate the following key messages: 
       - Breadboard for Developers
-      - Iterate with Gemini APIs 
+      - Play and experiment with AI Patterns
+      - Prototype quickly
+      - Use with Gemini APIs 
       - Integrate AI Into Your Project
-      - Start Your AI Project Today
       - Create graphs with prompts
-      - AI for Developers
-      - Try Google Gemini`
+      - Accessible AI for Developers`
     );
+
+  const customerPromptMaker = agents.structuredWorker({
+    $metadata: {
+      title: "Customer Prompt Maker",
+    },
+    instruction: `Using the audience information in the search engine marketing overview, create a prompt for a bot who will pretend to be the target audience for the ad. The prompt needs to incorporate the sense of skepticism and weariness of ads, yet willingness to provide constructive feedback. The prompt needs to be in the form of:
+    
+    "You are [persona]. You are [list of traits]."`,
+    schema: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          description: "the prompt for the bot",
+        },
+      },
+    },
+    context,
+  });
 
   const adWriter = agents.structuredWorker({
     $metadata: {
       title: "Ad Writer",
     },
-    instruction: `Write ad copy that incorporates the key messages in the ad spec into a compelling, engaging ad for Google AdWords service, staying within the 300 character limit.`,
+    instruction: `Write a headline and a description and that transforms the search engine marketing overview into a compelling, engaging ad.`,
     context,
     schema: adSchema,
   });
 
-  const adExec = agents.structuredWorker({
+  const promptExtractor = extractPrompt({
     $metadata: {
-      title: "Ad Writing Pro",
+      title: "Prompt Extractor",
     },
-    instruction: `You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.`,
-    context: adWriter,
-    schema: {
-      type: "object",
-      properties: {
-        critique: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              summary: {
-                type: "string",
-                description: "summary of a point in the critique",
-              },
-              details: {
-                type: "string",
-                description: "reasoning behind the point in a critique",
-              },
-              suggestions: {
-                type: "string",
-                description: "suggestions for improvement",
-              },
-            },
-          },
-        },
-      },
-    } satisfies Schema,
-  });
-
-  const improver1 = agents.structuredWorker({
-    $metadata: {
-      title: "Ad Improveer",
-    },
-    context: adExec.context,
-    instruction: `Write ad copy that incorporates the 3 points in the critique into a new, improved ad for Google AdWords service.`,
-    schema: adSchema,
+    json: customerPromptMaker.json,
   });
 
   const customer = agents.structuredWorker({
     $metadata: {
       title: "Customer",
     },
-    instruction: `Imagine you are a customer. You are a software developer who is overrun with ads and are weary of all the hype around AI. You just want to get going and get something done. Review the ad and offer three improvements that would increase the likelihood of you trusting it.`,
-    context: improver1,
+    instruction: promptExtractor.prompt,
+    context: adWriter.context,
     schema: requirementsSchema,
   });
 
-  const requirementsExtractor = agents.structuredWorker({
+  const editor = agents.structuredWorker({
     $metadata: {
-      title: "Requirements Extractor",
+      title: "Ad Editor",
     },
-    instruction: `Incorporate all feedback above into new, improved requirements. If the feedback can not be satisfied because it's not in the original ad spec, think of ways of how it could be addressed`,
+    instruction: `Given the customer critique, generate a new ad. Make sure to conform to the requirements in the Search Engine Marketing document.`,
     context: customer,
-    schema: requirementsSchema,
-  });
-
-  const requirementsReviewer = agents.structuredWorker({
-    $metadata: {
-      title: "Requirements Rewriter",
-    },
-    instruction: `Look at the requirements and compare them with the content of the original ad spec. Does the content of the ad spec contain information necessary to satisfy the requiremnts?`,
-    context: requirementsExtractor,
-    schema: reqiurementsReviewSchema,
-  });
-
-  const requirementsExtractor2 = agents.structuredWorker({
-    $metadata: {
-      title: "Requirements Extractor",
-    },
-    instruction: `Update the requirements based on the review, removing or adjusting the requirements that can't be satisfied`,
-    context: requirementsReviewer,
-    schema: requirementsSchema,
-  });
-
-  const adWriter2 = agents.structuredWorker({
-    $metadata: {
-      title: "Ad Writer",
-    },
-    context: requirementsExtractor2.context,
-    instruction: `Write ad copy that conforms to the specified requirements, shortening it to fit into the 300 character limit of the ad platform.`,
     schema: adSchema,
   });
 
-  // const improver = agents.structuredWorker({
-  //   $metadata: {
-  //     title: "Ad Editor",
-  //   },
-  //   instruction: `Given the 3 point critique try to generate a new response.`,
-  //   context: adExec,
-  //   schema: adSchema,
-  // });
+  const adRefinery = agents.repeater({
+    $metadata: {
+      title: "Ad refinery",
+    },
+    context: editor.context,
+    worker: refineAd,
+    max: 4,
+  });
 
-  // const assessor = agents.structuredWorker({
-  //   $metadata: {
-  //     title: "Ad Evaluator",
-  //   },
-  //   instruction: `Given the list of requirements assess how well the newest response conforms to the requirements.`,
-  //   context: improver.context,
-  //   schema: {
-  //     type: "object",
-  //     properties: {
-  //       assessment: {
-  //         type: "array",
-  //         items: {
-  //           type: "object",
-  //           properties: {
-  //             summary: {
-  //               type: "string",
-  //               description: "summary of an point in the assessment",
-  //             },
-  //             details: {
-  //               type: "string",
-  //               description: "reasoning behind the point in an assessment",
-  //             },
-  //           },
-  //         },
-  //       },
-  //     },
-  //   } satisfies Schema,
-  // });
+  const jsonExtractor = extractJson({
+    $metadata: {
+      title: "JSON Extractor",
+    },
+    context: adRefinery.context,
+  });
 
-  // const improver2 = agents.structuredWorker({
-  //   $metadata: {
-  //     title: "Ad Editor",
-  //   },
-  //   instruction: `You are a Google Ads Professional. Write the ad copy that satisfies the requirements and is improved based on the assessment`,
-  //   context: assessor.context,
-  //   schema: adSchema,
-  // });
-
-  return { ...adWriter2 };
+  return { context: adRefinery.context, json: jsonExtractor.json };
 }).serialize({
   title: "Ad Writer (variant 2)",
   description: "An example of chain of agents working on writing an ad",
-  version: "0.0.1",
+  version: "0.0.2",
 });

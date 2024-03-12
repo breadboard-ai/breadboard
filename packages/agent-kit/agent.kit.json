@@ -327,6 +327,12 @@
         },
         {
           "from": "invokeAgent",
+          "to": "exit",
+          "out": "exit",
+          "in": "context"
+        },
+        {
+          "from": "invokeAgent",
           "to": "counter",
           "out": "context",
           "in": "context"
@@ -411,6 +417,21 @@
               "required": [
                 "worker"
               ]
+            }
+          }
+        },
+        {
+          "id": "exit",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "title": "context"
+                }
+              }
             }
           }
         }
