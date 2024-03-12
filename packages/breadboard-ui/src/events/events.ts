@@ -105,6 +105,16 @@ export class InputEnterEvent extends Event {
   }
 }
 
+export class InputErrorEvent extends Event {
+  static eventName = "breadboardinputerror";
+
+  constructor(public detail: string) {
+    super(InputErrorEvent.eventName, {
+      bubbles: true,
+    });
+  }
+}
+
 export class BoardUnloadEvent extends Event {
   static eventName = "breadboardboardunload";
 
