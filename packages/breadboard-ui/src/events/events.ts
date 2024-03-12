@@ -209,6 +209,38 @@ export class EdgeChangeEvent extends Event {
   }
 }
 
+export class NodeMoveEvent extends Event {
+  static eventName = "breadboardnodemove";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(NodeMoveEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeMoveEvent extends Event {
+  static eventName = "breadboardgraphnodemove";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphNodeMoveEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "breadboardgraphnodeselected";
 
