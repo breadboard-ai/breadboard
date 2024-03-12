@@ -18,7 +18,7 @@ test("expect types: 0 in, 0 out", () => {
   // $ExpectType NodeDefinition<{}, {}>
   const definition = defineNodeType({}, {}, () => ({}));
   // $ExpectType NodeInstance<{}, {}>
-  const instance = definition();
+  const instance = definition({});
   // $ExpectType InputPorts<{}>
   instance.inputs;
   // $ExpectType OutputPorts<{}>
@@ -35,7 +35,7 @@ test("expect types: 1 in, 0 out", () => {
     },
     {},
     (params) => {
-      // $ExpectType InvokeParams<{ in1: { type: "string"; }; }>
+      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
       params.in1;
@@ -43,7 +43,9 @@ test("expect types: 1 in, 0 out", () => {
     }
   );
   // $ExpectType NodeInstance<{ in1: { type: "string"; }; }, {}>
-  const instance = definition();
+  const instance = definition({
+    in1: "foo",
+  });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; }>
   instance.inputs;
   // $ExpectType InputPort<{ type: "string"; }>
@@ -68,7 +70,7 @@ test("expect types: 0 in, 1 out", () => {
     }
   );
   // $ExpectType NodeInstance<{}, { out1: { type: "string"; }; }>
-  const instance = definition();
+  const instance = definition({});
   // $ExpectType InputPorts<{}>
   instance.inputs;
   // $ExpectType OutputPorts<{ out1: { type: "string"; }; }>
@@ -91,7 +93,7 @@ test("expect types: 1 in, 1 out", () => {
       },
     },
     (params) => {
-      // $ExpectType InvokeParams<{ in1: { type: "string"; }; }>
+      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
       params.in1;
@@ -101,7 +103,9 @@ test("expect types: 1 in, 1 out", () => {
     }
   );
   // $ExpectType NodeInstance<{ in1: { type: "string"; }; }, { out1: { type: "string"; }; }>
-  const instance = definition();
+  const instance = definition({
+    in1: "foo",
+  });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; }>
   instance.inputs;
   // $ExpectType InputPort<{ type: "string"; }>
@@ -132,7 +136,7 @@ test("expect types: 2 in, 2 out", () => {
       },
     },
     (params) => {
-      // $ExpectType InvokeParams<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
+      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
       params;
       // $ExpectType string
       params.in1;
@@ -145,7 +149,10 @@ test("expect types: 2 in, 2 out", () => {
     }
   );
   // $ExpectType NodeInstance<{ in1: { type: "string"; }; in2: { type: "number"; }; }, { out1: { type: "boolean"; }; out2: { type: "string"; }; }>
-  const instance = definition();
+  const instance = definition({
+    in1: "foo",
+    in2: 123,
+  });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
   instance.inputs;
   // $ExpectType InputPort<{ type: "string"; }>
@@ -245,6 +252,53 @@ test.skip("expect type error: unknown return port", () => {
       };
     }
   );
+});
+
+test("expect type error: missing make instance param", () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: "string",
+      },
+      in2: {
+        type: "number",
+      },
+    },
+    {},
+    () => {
+      return {};
+    }
+  );
+  // @ts-expect-error missing both
+  definition();
+  // @ts-expect-error missing both
+  definition({});
+  // @ts-expect-error missing in1
+  definition({ in2: 123 });
+  // @ts-expect-error missing in2
+  definition({ in1: "foo" });
+});
+
+test("expect type error: incorrect make instance param type", () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: "string",
+      },
+      in2: {
+        type: "number",
+      },
+    },
+    {},
+    () => {
+      return {};
+    }
+  );
+  definition({
+    in1: "foo",
+    // @ts-expect-error in2 should be number, not string
+    in2: "123",
+  });
 });
 
 test("expect types: definitions are NodeHandlers", () => {
@@ -385,3 +439,91 @@ test("invoke returns value from async function", async () => {
   assert(result instanceof Promise);
   assert.deepEqual(await result, { concat: "foobar" });
 });
+
+{
+  const definitionA = defineNodeType(
+    {},
+    {
+      out1: {
+        type: "string",
+      },
+      out2: {
+        type: "number",
+      },
+    },
+    () => {
+      return {
+        out1: "foo",
+        out2: 123,
+      };
+    }
+  );
+
+  const definitionB = defineNodeType(
+    {
+      in1: {
+        type: "string",
+      },
+      in2: {
+        type: "number",
+      },
+    },
+    {},
+    () => {
+      return {};
+    }
+  );
+
+  const instanceA = definitionA({});
+
+  test("can instantiate node with concrete values", () => {
+    definitionB({
+      in1: "foo",
+      in2: 123,
+    });
+  });
+
+  test("can instantiate node with output ports", () => {
+    definitionB({
+      in1: instanceA.outputs.out1,
+      in2: instanceA.outputs.out2,
+    });
+  });
+
+  test("can instantiate node with mix of concrete values and output ports", () => {
+    definitionB({
+      in1: "foo",
+      in2: instanceA.outputs.out2,
+    });
+    definitionB({
+      in1: instanceA.outputs.out1,
+      in2: 123,
+    });
+  });
+
+  test("expect error: instantiate with incorrectlty typed concrete value", () => {
+    definitionB({
+      // @ts-expect-error Expect string, got number
+      in1: 123,
+      in2: 123,
+    });
+    definitionB({
+      in1: "foo",
+      // @ts-expect-error Expect number, got string
+      in2: "123",
+    });
+  });
+
+  test("expect error: instantiate with incorrectly typed output port", () => {
+    definitionB({
+      // @ts-expect-error Expect string, got number
+      in1: instanceA.outputs.out2,
+      in2: instanceA.outputs.out2,
+    });
+    definitionB({
+      in1: instanceA.outputs.out1,
+      // @ts-expect-error Expect number, got string
+      in2: instanceA.outputs.out1,
+    });
+  });
+}

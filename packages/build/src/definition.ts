@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeInstance } from "./instance.js";
+import { NodeInstance, type InstantiateParams } from "./instance.js";
 import type {
   NodeHandlerFunction,
   NodeDescriberFunction,
 } from "@google-labs/breadboard";
-import type { PortConfigMap } from "./port.js";
-import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import type { PortConfigMap, ConcreteValues } from "./port.js";
 
 /**
  * Define a new Breadboard node type.
@@ -60,8 +59,8 @@ export function defineNodeType<
   I extends PortConfigMap,
   O extends PortConfigMap,
 >(inputs: I, outputs: O, invoke: InvokeFunction<I, O>): NodeDefinition<I, O> {
-  const def = () => {
-    return new NodeInstance(inputs, outputs);
+  const def = (params: InstantiateParams<I>) => {
+    return new NodeInstance(inputs, outputs, params);
   };
   def.invoke = makeInvokeFunction(invoke);
   def.describe = makeDescribeFunction(inputs, outputs);
@@ -72,7 +71,7 @@ export interface NodeDefinition<
   I extends PortConfigMap,
   O extends PortConfigMap,
 > {
-  (): NodeInstance<I, O>;
+  (params: InstantiateParams<I>): NodeInstance<I, O>;
   readonly invoke: NodeHandlerFunction;
   readonly describe: NodeDescriberFunction;
 }
@@ -97,7 +96,7 @@ function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
         // validation here so that we can raise type errors automatically and
         // prevent the invoke function from being invoked with unexpected input
         // types.
-        inputs as InvokeParams<I>
+        inputs as ConcreteValues<I>
       )
     );
   };
@@ -149,14 +148,6 @@ type InvokeFunctionAsync<I extends PortConfigMap, O extends PortConfigMap> = (
   params: InvokeParams<I>
 ) => Promise<InvokeReturn<O>>;
 
-type InvokeParams<Ports extends PortConfigMap> = {
-  [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
-    Ports[PortName]["type"]
-  >;
-};
+type InvokeParams<Ports extends PortConfigMap> = ConcreteValues<Ports>;
 
-type InvokeReturn<Ports extends PortConfigMap> = {
-  [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
-    Ports[PortName]["type"]
-  >;
-};
+type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;
