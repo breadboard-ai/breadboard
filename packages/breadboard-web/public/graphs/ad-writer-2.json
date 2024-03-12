@@ -1,29 +1,29 @@
 {
   "title": "Ad Writer (variant 2)",
   "description": "An example of chain of agents working on writing an ad",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
     {
-      "from": "structuredWorker-10",
+      "from": "repeater-8",
+      "to": "fn-9",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "repeater-8",
       "to": "output-2",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "structuredWorker-9",
-      "to": "structuredWorker-10",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "structuredWorker-8",
-      "to": "structuredWorker-9",
-      "out": "context",
-      "in": "context"
+      "from": "fn-9",
+      "to": "output-2",
+      "out": "json",
+      "in": "json"
     },
     {
       "from": "structuredWorker-7",
-      "to": "structuredWorker-8",
+      "to": "repeater-8",
       "out": "context",
       "in": "context"
     },
@@ -34,26 +34,32 @@
       "in": "context"
     },
     {
-      "from": "structuredWorker-5",
+      "from": "fn-5",
+      "to": "structuredWorker-6",
+      "out": "prompt",
+      "in": "instruction"
+    },
+    {
+      "from": "structuredWorker-4",
       "to": "structuredWorker-6",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "structuredWorker-4",
-      "to": "structuredWorker-5",
-      "out": "context",
-      "in": "context"
+      "from": "structuredWorker-3",
+      "to": "fn-5",
+      "out": "json",
+      "in": "json"
     },
     {
-      "from": "structuredWorker-3",
-      "to": "structuredWorker-4",
+      "from": "input-1",
+      "to": "structuredWorker-3",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "structuredWorker-3",
+      "to": "structuredWorker-4",
       "out": "context",
       "in": "context"
     }
@@ -62,125 +68,233 @@
     {
       "id": "output-2",
       "type": "output",
-      "configuration": {}
-    },
-    {
-      "id": "structuredWorker-10",
-      "type": "structuredWorker",
       "configuration": {
-        "instruction": "Write ad copy that conforms to the specified requirements, shortening it to fit into the 300 character limit of the ad platform.",
         "schema": {
           "type": "object",
           "properties": {
-            "ad": {
+            "context": {
               "type": "string",
-              "description": "the ad copy"
+              "title": "context"
+            },
+            "json": {
+              "type": "string",
+              "title": "json"
             }
           }
         }
-      },
-      "metadata": {
-        "title": "Ad Writer"
       }
     },
     {
-      "id": "structuredWorker-9",
-      "type": "structuredWorker",
+      "id": "repeater-8",
+      "type": "repeater",
       "configuration": {
-        "instruction": "Update the requirements based on the review, removing or adjusting the requirements that can't be satisfied",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "requirements": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "requirement": {
-                    "type": "string",
-                    "description": "the requirement"
-                  },
-                  "justification": {
-                    "type": "string",
-                    "description": "reasoning behind including this requirement"
+        "worker": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "structuredWorker-4",
+                "to": "output-2",
+                "out": "context",
+                "in": "context"
+              },
+              {
+                "from": "fn-3",
+                "to": "structuredWorker-4",
+                "out": "warning",
+                "in": "instruction"
+              },
+              {
+                "from": "fn-3",
+                "to": "output-5",
+                "out": "context",
+                "in": "exit"
+              },
+              {
+                "from": "input-1",
+                "to": "fn-3",
+                "out": "context",
+                "in": "context"
+              },
+              {
+                "from": "input-1",
+                "to": "structuredWorker-4",
+                "out": "context",
+                "in": "context"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "type": "string",
+                        "title": "context"
+                      }
+                    }
                   }
                 }
+              },
+              {
+                "id": "structuredWorker-4",
+                "type": "structuredWorker",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "headline": {
+                        "type": "string",
+                        "description": "a headline that fits into the 30 character limit"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "a description that fits into the 90 character limit"
+                      }
+                    }
+                  }
+                },
+                "metadata": {
+                  "title": "Ad Shortener"
+                }
+              },
+              {
+                "id": "fn-3",
+                "type": "invoke",
+                "configuration": {
+                  "$board": "#fn-3"
+                },
+                "metadata": {
+                  "title": "Character Limit Checker"
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "title": "Context",
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "context"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "output-5",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "exit": {
+                        "type": "string",
+                        "title": "exit"
+                      }
+                    }
+                  }
+                },
+                "metadata": {
+                  "title": "Successful exit"
+                }
+              }
+            ],
+            "graphs": {
+              "fn-3": {
+                "edges": [
+                  {
+                    "from": "fn-3-input",
+                    "to": "fn-3-run",
+                    "out": "*"
+                  },
+                  {
+                    "from": "fn-3-run",
+                    "to": "fn-3-output",
+                    "out": "*"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "fn-3-input",
+                    "type": "input",
+                    "configuration": {}
+                  },
+                  {
+                    "id": "fn-3-run",
+                    "type": "runJavascript",
+                    "configuration": {
+                      "code": "function fn_3({context}) {const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);const{headline,description}=json;const warning=[`You are a brilliant copy editor who is famous brevity, making ads fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`];if(headline.length>30){warning.push(`- The headline is ${headline.length} characters long, but needs to be 30 characters. Shorten it .`)}if(description.length>90){warning.push(`- The description is ${description.length} characters long, but needs to be 90 characters. Shorten it.`)}if(warning.length>1){return{warning:warning.join(\"\\n\\n\")}}return{context}}",
+                      "name": "fn_3",
+                      "raw": true
+                    }
+                  },
+                  {
+                    "id": "fn-3-output",
+                    "type": "output",
+                    "configuration": {}
+                  }
+                ]
               }
             }
           }
-        }
+        },
+        "max": 4
       },
       "metadata": {
-        "title": "Requirements Extractor"
+        "title": "Ad refinery"
       }
     },
     {
-      "id": "structuredWorker-8",
-      "type": "structuredWorker",
+      "id": "fn-9",
+      "type": "invoke",
       "configuration": {
-        "instruction": "Look at the requirements and compare them with the content of the original ad spec. Does the content of the ad spec contain information necessary to satisfy the requiremnts?",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "requirementsReview": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "requirement": {
-                    "type": "string",
-                    "description": "the requirement"
-                  },
-                  "problem": {
-                    "type": "string",
-                    "description": "why can't it be satisfied"
-                  }
-                }
-              }
-            }
-          }
-        }
+        "$board": "#fn-9"
       },
       "metadata": {
-        "title": "Requirements Rewriter"
+        "title": "JSON Extractor"
       }
     },
     {
       "id": "structuredWorker-7",
       "type": "structuredWorker",
       "configuration": {
-        "instruction": "Incorporate all feedback above into new, improved requirements. If the feedback can not be satisfied because it's not in the original ad spec, think of ways of how it could be addressed",
+        "instruction": "Given the customer critique, generate a new ad. Make sure to conform to the requirements in the Search Engine Marketing document.",
         "schema": {
           "type": "object",
           "properties": {
-            "requirements": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "requirement": {
-                    "type": "string",
-                    "description": "the requirement"
-                  },
-                  "justification": {
-                    "type": "string",
-                    "description": "reasoning behind including this requirement"
-                  }
-                }
-              }
+            "headline": {
+              "type": "string",
+              "description": "a headline that fits into the 30 character limit"
+            },
+            "description": {
+              "type": "string",
+              "description": "a description that fits into the 90 character limit"
             }
           }
         }
       },
       "metadata": {
-        "title": "Requirements Extractor"
+        "title": "Ad Editor"
       }
     },
     {
       "id": "structuredWorker-6",
       "type": "structuredWorker",
       "configuration": {
-        "instruction": "Imagine you are a customer. You are a software developer who is overrun with ads and are weary of all the hype around AI. You just want to get going and get something done. Review the ad and offer three improvements that would increase the likelihood of you trusting it.",
         "schema": {
           "type": "object",
           "properties": {
@@ -208,76 +322,55 @@
       }
     },
     {
-      "id": "structuredWorker-5",
-      "type": "structuredWorker",
+      "id": "fn-5",
+      "type": "invoke",
       "configuration": {
-        "instruction": "Write ad copy that incorporates the 3 points in the critique into a new, improved ad for Google AdWords service.",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "ad": {
-              "type": "string",
-              "description": "the ad copy"
-            }
-          }
-        }
+        "$board": "#fn-5"
       },
       "metadata": {
-        "title": "Ad Improveer"
+        "title": "Prompt Extractor"
       }
     },
     {
       "id": "structuredWorker-4",
       "type": "structuredWorker",
       "configuration": {
-        "instruction": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
+        "instruction": "Write a headline and a description and that transforms the search engine marketing overview into a compelling, engaging ad.",
         "schema": {
           "type": "object",
           "properties": {
-            "critique": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "summary": {
-                    "type": "string",
-                    "description": "summary of a point in the critique"
-                  },
-                  "details": {
-                    "type": "string",
-                    "description": "reasoning behind the point in a critique"
-                  },
-                  "suggestions": {
-                    "type": "string",
-                    "description": "suggestions for improvement"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "metadata": {
-        "title": "Ad Writing Pro"
-      }
-    },
-    {
-      "id": "structuredWorker-3",
-      "type": "structuredWorker",
-      "configuration": {
-        "instruction": "Write ad copy that incorporates the key messages in the ad spec into a compelling, engaging ad for Google AdWords service, staying within the 300 character limit.",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "ad": {
+            "headline": {
               "type": "string",
-              "description": "the ad copy"
+              "description": "a headline that fits into the 30 character limit"
+            },
+            "description": {
+              "type": "string",
+              "description": "a description that fits into the 90 character limit"
             }
           }
         }
       },
       "metadata": {
         "title": "Ad Writer"
+      }
+    },
+    {
+      "id": "structuredWorker-3",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Using the audience information in the search engine marketing overview, create a prompt for a bot who will pretend to be the target audience for the ad. The prompt needs to incorporate the sense of skepticism and weariness of ads, yet willingness to provide constructive feedback. The prompt needs to be in the form of:\n    \n    \"You are [persona]. You are [list of traits].\"",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "the prompt for the bot"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Customer Prompt Maker"
       }
     },
     {
@@ -292,7 +385,7 @@
               "type": "array",
               "default": "[]",
               "examples": [
-                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n      - Breadboard for Developers\n      - Iterate with Gemini APIs \n      - Integrate AI Into Your Project\n      - Start Your AI Project Today\n      - Create graphs with prompts\n      - AI for Developers\n      - Try Google Gemini"
+                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n      - Breadboard for Developers\n      - Play and experiment with AI Patterns\n      - Prototype quickly\n      - Use with Gemini APIs \n      - Integrate AI Into Your Project\n      - Create graphs with prompts\n      - Accessible AI for Developers"
               ],
               "format": "multiline"
             }
@@ -304,5 +397,76 @@
       }
     }
   ],
-  "graphs": {}
+  "graphs": {
+    "fn-9": {
+      "edges": [
+        {
+          "from": "fn-9-input",
+          "to": "fn-9-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-9-run",
+          "to": "fn-9-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-9-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-9-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_9({context}) {const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);return{json}}",
+            "name": "fn_9",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-9-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-5": {
+      "edges": [
+        {
+          "from": "fn-5-input",
+          "to": "fn-5-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-5-run",
+          "to": "fn-5-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-5-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-5-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_5({json}) {const{prompt}=json;return{prompt}}",
+            "name": "fn_5",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-5-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
 }
