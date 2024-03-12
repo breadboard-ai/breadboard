@@ -24,7 +24,32 @@ export interface PortConfig {
    * and debugging.
    */
   description?: string;
+
+  /**
+   * If true, this port is is the `primary` input or output port of the node it
+   * belongs to.
+   *
+   * When a node definition has one primary input port, and/or one primary
+   * output port, then instances of that node will themselves behave like that
+   * primary input and/or output ports, depending on the context. Note that it
+   * is an error for a node to have more than 1 primary input ports, or more
+   * than 1 primary output ports.
+   *
+   * For example, an LLM node might have a primary input for `prompt`, and a
+   * primary output for `completion`. This would mean that in API locations
+   * where an input port is expected, instead of writing `llm.inputs.prompt`,
+   * one could simply write `llm`, and the `prompt` port will be selected
+   * automatically. Likewise for `completion`, where `llm` would be equivalent
+   * to `llm.outputs.completion` where an output port is expected.
+   *
+   * Note this has no effect on Breadboard runtime behavior, it is purely a hint
+   * to the JavaScript/TypeScript API to help make board construction more
+   * concise.
+   */
+  primary?: boolean;
 }
+
+export const OutputPortGetter = Symbol();
 
 /**
  * A Breadboard node port which receives values.
@@ -41,13 +66,19 @@ export class InputPort<I extends PortConfig> {
 /**
  * A Breadboard node port which sends values.
  */
-export class OutputPort<O extends PortConfig> {
-  readonly __OutputPortBrand__!: never;
+export class OutputPort<O extends PortConfig>
+  implements OutputPortReference<O>
+{
+  readonly [OutputPortGetter] = this;
   readonly type: O["type"];
 
   constructor(config: O) {
     this.type = config.type;
   }
+}
+
+export interface OutputPortReference<O extends PortConfig> {
+  readonly [OutputPortGetter]: OutputPort<O>;
 }
 
 /**
@@ -72,5 +103,5 @@ export type ConcreteValues<Ports extends PortConfigMap> = {
 export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]:
     | TypeScriptTypeFromBreadboardType<Ports[PortName]["type"]>
-    | OutputPort<Ports[PortName]>;
+    | OutputPortReference<Ports[PortName]>;
 };
