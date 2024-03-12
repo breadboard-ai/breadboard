@@ -104,14 +104,28 @@ The exact architecture of kits is still in active development, but the current k
 
 ### Light and heavy kits
 
+The current thinking on Kits is that they can be light or heavy.
+
+- **Heavy kits** contain node handlers that are made with the typical imperative code of the environment, like TypeScript or Python. A heavy kit is a good choice when there are external dependencies that need to be brought in as part of the kit. In the example of the `validateJson` handler above, a proper JSON validator might be such an external dependencies.
+
+- **Light kits** contain node handlers that are thin wrappers around boards. In other words, each node handler is just a board that is invoked (or inspected) wheneve the backend (or frontend) interacts with it. As the name implies, light kits are much more lightweight to build and eventually would even be buildable with a Breadboard visual editor.
+
+The Core, JSON, and Template Kits are examples of the heavy kits, and the Agent Kit is a light kit.
+
+Our intuition is that there will be a lot more light kits than heavy kits in the Breadboard ecosystem as it grows. The heavy kits will bring in the necessary building blocks of external dependencies, and light kits will act as a way for people to organize their boards and share them with others.
+
 ### Kit interoperability
 
-Late binding means that the same node type may have multiple implementations for different runtimes.
+Late binding means that the same node type may have multiple implementations for different backend/frontend enviornment.
 
 While this approach provides portability, it also incurs a cost of interoperability. We are cognizant of this cost and, as new backends/frontends appear, want to develop automated ways (interop tests, etc.) to keep it low.
 
+Light kits are typically more portable than heavy kits, since they are just boards. Of course, the actual portability depends on the transitive set of all node handlers these boards rely on to provide the light kit functionality.
+
+At this moment, there are only kits implemented for the TypeScript (Node + Web) environment.
+
 ### Distributed computing
 
-This also enables [actor model](https://en.wikipedia.org/wiki/Actor_model)-inspired setups, where the runtimes can choose where to run individual nodes and distribute graphs across multiple environments.
+The late binding also enables [actor model](https://en.wikipedia.org/wiki/Actor_model)-inspired setups, where the runtimes can choose where to run individual nodes and distribute graphs across multiple environments.
 
 Currently, the TypeScript runtime supports node proxy servers, where a runtime can be configured to run sets of nodes from a remote server.

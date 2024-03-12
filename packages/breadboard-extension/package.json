@@ -190,13 +190,13 @@
     "@google-labs/node-nursery-web": "^1.0.3",
     "@google-labs/palm-kit": "^0.0.5",
     "@google-labs/template-kit": "^0.2.0",
-    "@types/node": "^20.11.20",
-    "@types/vscode": "^1.85.0",
-    "@vscode/debugadapter": "^1.64.0",
-    "@vscode/vsce": "^2.22.0",
+    "@types/node": "^20.11.25",
+    "@types/vscode": "^1.87.0",
+    "@vscode/debugadapter": "^1.65.0",
+    "@vscode/vsce": "^2.24.0",
     "dotenv": "^16.4.5",
     "esbuild": "^0.20.1",
-    "mermaid": "^10.7.0",
+    "mermaid": "^10.9.0",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
   }

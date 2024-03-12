@@ -33,6 +33,20 @@ export class SchemaEditor extends LitElement {
       display: none;
     }
 
+    #add-new-item {
+      width: 24px;
+      height: 24px;
+      background: var(--bb-icon-add-circle) center center no-repeat;
+      border: none;
+      font-size: 0;
+      opacity: 0.5;
+      cursor: pointer;
+    }
+
+    #add-new-item:hover {
+      opacity: 1;
+    }
+
     details {
       border: 1px solid #cccccc;
       border-radius: 4px;
@@ -81,8 +95,7 @@ export class SchemaEditor extends LitElement {
       justify-content: flex-end;
     }
 
-    .delete-schema-item,
-    #controls button {
+    .delete-schema-item {
       background: #5e5e5e;
       color: #fff;
       font-size: var(--bb-text-nano);
@@ -345,8 +358,7 @@ export class SchemaEditor extends LitElement {
       this.schema.required || []
     );
 
-    return html`<form ${ref(this.#formRef)}>${properties}</form>
-      <div id="controls">
+    return html` <div id="controls">
         <button
           id="add-new-item"
           type="button"
@@ -355,6 +367,7 @@ export class SchemaEditor extends LitElement {
         >
           Add a new item
         </button>
-      </div>`;
+      </div>
+      <form ${ref(this.#formRef)}>${properties}</form>`;
   }
 }

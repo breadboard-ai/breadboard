@@ -98,16 +98,18 @@ const getBoardURL = async (config: ServeConfig, factory: TransportFactory) => {
  * Start the Breadboard run server. Currently, this function is somewhat
  * specialized to the worker transport, but (one hopes) will eventually
  * grow up to be more general and flexible.
- * @param config - The configuration for the server.
+ * @param config - The configuration for the server or a promise that resolves
+ * to the configuration for the server.
  * @returns - a promise that resolves when the server is done serving.
  */
-export const serve = async (config: ServeConfig) => {
-  if (config.transport !== "worker") {
-    throw new Error("Only worker transport is supported at this time.");
-  }
+export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
   const inWorker = isInWorker();
   const worker = inWorker ? (self as unknown as Worker) : maybeCreateWorker();
   const factory = new WorkerTransportFactory(new PortDispatcher(worker));
+  config = await config;
+  if (config.transport !== "worker") {
+    throw new Error("Only worker transport is supported at this time.");
+  }
   const kits = configureKits(config.kits, factory);
   // TODO: Figure out how to initalize.
   const isRunServer = true;

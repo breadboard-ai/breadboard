@@ -6,8 +6,7 @@
 
 import { InspectablePort } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
-import { InteractionTracker } from "./interaction-tracker.js";
-import { GRAPH_NODE_DRAWN, GraphNodePortType } from "./types.js";
+import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 
 export class GraphNode extends PIXI.Graphics {
@@ -19,7 +18,7 @@ export class GraphNode extends PIXI.Graphics {
   #type = "";
   // A title that is provided in the constructor, not
   // the one that shows up in the graph.
-  #nodeTtitle = "";
+  #nodeTitle = "";
   // The title that shows up in the graph.
   #title = "";
   #titleText: PIXI.Text | null = null;
@@ -27,6 +26,8 @@ export class GraphNode extends PIXI.Graphics {
   #color = 0x333333;
   #titleTextColor = 0x333333;
   #portTextColor = 0x333333;
+  #borderColor = 0xd9d9d9;
+  #selectedColor = 0x0084ff;
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 10;
@@ -40,8 +41,6 @@ export class GraphNode extends PIXI.Graphics {
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #editable = false;
   #selected = false;
-  #background = new PIXI.Graphics();
-  #selectedBackground = new PIXI.Graphics();
 
   public edgeColor: number;
   public portConnectedColor: number;
@@ -49,7 +48,7 @@ export class GraphNode extends PIXI.Graphics {
   constructor(id: string, type: string, title: string) {
     super();
 
-    this.#nodeTtitle = title;
+    this.#nodeTitle = title;
     this.id = id;
     this.type = type;
     this.edgeColor = 0xcccccc;
@@ -96,19 +95,49 @@ export class GraphNode extends PIXI.Graphics {
     this.portTextColor = 0x333333;
 
     this.eventMode = "static";
-    this.#background.cursor = "pointer";
+    this.cursor = "pointer";
+  }
 
-    this.on("pointerdown", () => {
-      InteractionTracker.instance().activeGraphNode = this;
+  addPointerEventListeners() {
+    let dragStart: PIXI.IPointData | null = null;
+    let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
+
+    this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
+      if (!(evt.target instanceof GraphNode)) {
+        return;
+      }
+
+      dragStart = evt.global.clone();
+      originalPosition = this.position.clone();
     });
 
-    this.on("pointerover", () => {
-      InteractionTracker.instance().hoveredGraphNode = this;
-    });
+    this.addEventListener(
+      "globalpointermove",
+      (evt: PIXI.FederatedPointerEvent) => {
+        if (!dragStart || !originalPosition) {
+          return;
+        }
 
-    this.on("pointerout", () => {
-      InteractionTracker.instance().hoveredGraphNode = null;
-    });
+        const scale = this.worldTransform.a;
+        const dragPosition = evt.global;
+        const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
+        const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
+
+        this.x = Math.round(originalPosition.x + dragDeltaX);
+        this.y = Math.round(originalPosition.y + dragDeltaY);
+
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
+      }
+    );
+
+    const onPointerUp = () => {
+      dragStart = null;
+      originalPosition = null;
+      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
+    };
+
+    this.addEventListener("pointerupoutside", onPointerUp);
+    this.addEventListener("pointerup", onPointerUp);
   }
 
   #clearOldTitle() {
@@ -135,11 +164,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set selected(selected: boolean) {
     this.#selected = selected;
-    if (selected) {
-      this.addChildAt(this.#selectedBackground, 0);
-    } else {
-      this.#selectedBackground.removeFromParent();
-    }
+    this.#isDirty = true;
   }
 
   get type() {
@@ -148,7 +173,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set type(type: string) {
     this.#type = type;
-    this.#title = `${type} (${this.#nodeTtitle})`;
+    this.#title = `${type} (${this.#nodeTitle})`;
     this.#clearOldTitle();
 
     this.#isDirty = true;
@@ -245,8 +270,7 @@ export class GraphNode extends PIXI.Graphics {
       this.#isDirty = false;
       this.#draw();
 
-      // We use this to trigger the edge drawing.
-      this.emit(GRAPH_NODE_DRAWN);
+      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN);
     }
   }
 
@@ -346,13 +370,11 @@ export class GraphNode extends PIXI.Graphics {
       width = Math.max(
         width,
         this.#padding + // Left hand side.
-          2 * this.#portRadius + // Left hand port diameter.
           this.#portPadding + // Left hand port padding on right.
           inPortWidth + // Left label at this row.
           2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
           outPortWidth + // Right label at this row.
           this.#portPadding + // Right hand port padding on right.
-          2 * this.#portRadius + // Right hand port diameter.
           this.#padding // Right hand side padding.
       );
     }
@@ -364,75 +386,55 @@ export class GraphNode extends PIXI.Graphics {
   #draw() {
     this.forceUpdateDimensions();
     this.clear();
-
     this.removeChildren();
-    this.addChildAt(this.#background, 0);
-    if (this.selected) {
-      this.addChildAt(this.#selectedBackground, 0);
-    }
 
-    this.#drawSelectedBackground();
     this.#drawBackground();
     const portStartY = this.#drawTitle();
     this.#drawInPorts(portStartY);
     this.#drawOutPorts(portStartY);
   }
 
-  #drawSelectedBackground() {
-    const borderSize = 2;
-    this.#selectedBackground.clear();
-    this.#selectedBackground.beginFill(0x999999);
-    this.#selectedBackground.drawRoundedRect(
-      -borderSize,
-      -borderSize,
-      this.#width + 2 * borderSize,
-      this.#height + 2 * borderSize,
-      this.#borderRadius + borderSize
-    );
-    this.#selectedBackground.endFill();
-  }
-
   #drawBackground() {
+    if (this.selected) {
+      const borderSize = 2;
+      this.beginFill(this.#selectedColor);
+      this.drawRoundedRect(
+        -borderSize,
+        -borderSize,
+        this.#width + 2 * borderSize,
+        this.#height + 2 * borderSize,
+        this.#borderRadius + borderSize
+      );
+      this.endFill();
+    }
+
     const borderSize = 1;
-    this.#background.clear();
-    this.#background.beginFill(0xbbbbbb);
-    this.#background.drawRoundedRect(
+    this.beginFill(this.#borderColor);
+    this.drawRoundedRect(
       -borderSize,
       -borderSize,
       this.#width + 2 * borderSize,
       this.#height + 2 * borderSize,
       this.#borderRadius + borderSize
     );
-    this.#background.endFill();
+    this.endFill();
 
-    this.#background.beginFill(this.#backgroundColor);
-    this.#background.drawRoundedRect(
-      0,
-      0,
-      this.#width,
-      this.#height,
-      this.#borderRadius
-    );
-    this.#background.endFill();
+    this.beginFill(this.#backgroundColor);
+    this.drawRoundedRect(0, 0, this.#width, this.#height, this.#borderRadius);
+    this.endFill();
 
     if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
-      this.#background.beginFill(this.#color);
-      this.#background.drawRoundedRect(
-        0,
-        0,
-        this.#width,
-        titleHeight,
-        this.#borderRadius
-      );
-      this.#background.drawRect(
+      this.beginFill(this.#color);
+      this.drawRoundedRect(0, 0, this.#width, titleHeight, this.#borderRadius);
+      this.drawRect(
         0,
         titleHeight - 2 * this.#borderRadius,
         this.#width,
         2 * this.#borderRadius
       );
-      this.#background.endFill();
+      this.endFill();
     }
   }
 
@@ -468,7 +470,7 @@ export class GraphNode extends PIXI.Graphics {
       const nodePort = new GraphNodePort(GraphNodePortType.IN);
       nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
-      nodePort.x = this.#padding + this.#portRadius;
+      nodePort.x = 0;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
@@ -500,7 +502,7 @@ export class GraphNode extends PIXI.Graphics {
       const nodePort = new GraphNodePort(GraphNodePortType.OUT);
       nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
-      nodePort.x = this.#width - this.#padding - this.#portRadius;
+      nodePort.x = this.#width;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;

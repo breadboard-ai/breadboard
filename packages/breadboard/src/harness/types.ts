@@ -83,3 +83,5 @@ export type TransportFactory = {
   client<Request, Response>(label: string): ClientTransport<Request, Response>;
   server<Request, Response>(label: string): ServerTransport<Request, Response>;
 };
+
+export type HarnessRunner = AsyncGenerator<HarnessRunResult, void, unknown>;

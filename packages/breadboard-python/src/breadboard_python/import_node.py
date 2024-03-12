@@ -53,16 +53,15 @@ def require(package_name):
 
         if hasattr(self.output_schema1, "additionalProperties") and self.output_schema1.additionalProperties:
           self.output["*"] = self
-      def describe(self, input):
-        self.output = AttrDict(converted_output_schema)
-        return self.output
+      def describe(self, input, output):
+        pass
       def get_configuration(self):
         config = super().get_configuration()
         if "schema" in config:
           config.pop("schema")
         return config
       
-      __package_name = package_name
+      _package_name = package_name
     
 
     output[handler_name] = ImportedClass

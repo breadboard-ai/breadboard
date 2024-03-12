@@ -63,7 +63,8 @@ test("writes input", async (t) => {
     },
     "input",
     undefined,
-    0
+    0,
+    []
   );
   await writer.writeInput(stop);
   t.is(
@@ -92,7 +93,8 @@ test("writes output", async (t) => {
     },
     "output",
     undefined,
-    0
+    0,
+    []
   );
   await writer.writeOutput(stop);
   t.is(
@@ -135,7 +137,8 @@ test("transforms state", async (t) => {
     },
     "output",
     undefined,
-    0
+    0,
+    []
   );
   await writer.writeOutput(stop);
   t.is(

@@ -6,13 +6,14 @@
 
 import {
   GraphDescriptor,
-  GraphProbeData,
+  GraphStartProbeData,
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
   Schema,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { InputErrorEvent } from "../events/events.js";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -34,7 +35,7 @@ export type Board = {
 };
 
 export type AnyHistoryEvent =
-  | GraphProbeData
+  | GraphStartProbeData
   | NodeStartResponse
   | NodeEndResponse;
 

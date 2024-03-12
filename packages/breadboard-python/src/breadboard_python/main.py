@@ -308,6 +308,8 @@ class Board(Generic[T, S]):
   SHARED_INDEX = {}
   output = {}
   components = {}
+  input_board: Optional[Self] = None
+  output_board: Optional[Self] = None
 
   # This is only used within the context of the parent of this Board, if there is one.
   # If there is no parent, this identifier is not used.
@@ -345,6 +347,8 @@ class Board(Generic[T, S]):
     self.set_inputs: Dict[str, Any] = {"*": []}
     self.id = None
     self.loaded = False
+    self.input_board = None
+    self.output_board = None
 
     for k, v in kwargs.items():
       if k == "id":
@@ -394,9 +398,6 @@ class Board(Generic[T, S]):
     self.loaded = False
 
   def __getattr__(self, name):
-    if name == "_ImportedClass__package_name":
-      raise AttributeError(name)
-      return super().__getattr__(name)
     if name in self.output:
       v = self.output[name]
     elif "*" in self.output: # when this Board outputs wildcard.
@@ -440,38 +441,30 @@ class Board(Generic[T, S]):
       self.id = f"{self.type}-{__class__.SHARED_INDEX[self.type]}"
       __class__.SHARED_INDEX[self.type] += 1
     return self.id
-
-  def __json__(self):
-    output = {}
-    if self.title is not None:
-      output["title"] = self.title
-    if self.description is not None:
-      output["description"] = self.description
-    if self.version is not None:
-      output["version"] = self.version
-    # TODO: Find out what graphs are.
-    output["graphs"] = {}
-    output["nodes"] = []
-
-    # When constructing the graph, two adhoc Boards are added, representing input and output.
-
+  
+  def get_or_create_input_output_nodes(self) -> Tuple[Self, Self]:
+    if self.input_board is not None:
+      return self.input_board, self.output_board
+    
     # Populate input node.
-    all_nodes = []
     class InputBoard(Board[self.input_schema, self.input_schema]):
       type = "input"
     
-    input_board = InputBoard()
-    input_board.get_or_assign_id("input")
+    self.input_board = InputBoard()
+    self.input_board.get_or_assign_id("input")
     class OutputBoard(Board[self.output_schema, Any]):
       type = "output"
 
-    output_board = OutputBoard()
-    output_board.get_or_assign_id("output")
+    self.output_board = OutputBoard()
+    self.output_board.get_or_assign_id("output")
 
-    kits = set()
+    return self.input_board, self.output_board
+  
+  def get_all_components(self) -> List[Self]:
+    # This can only be ran after describe is called.
+    all_nodes = []
 
-    self.describe(input_board, output_board)
-
+    _input_board, output_board = self.get_or_create_input_output_nodes()
     all_components = [(k, v) for k, v in self.components.items()] + [(output_board.get_or_assign_id(required=True), output_board)]
 
     # Component can be a Board or an AttrDict.
@@ -485,19 +478,8 @@ class Board(Generic[T, S]):
           return nodes
         already_visited_nodes.add(component)
         inputs = component.set_inputs
-        node = {
-          # Assign type if is dependency. Assign name if is the Board.
-          "id": component.get_or_assign_id(name) if name != "*" and assign_name else component.get_or_assign_id(),
-          "type": component.type,
-          "configuration": component.get_configuration(),
-        }
-        nodes.append(node)
-        all_nodes.append(component)
-
-        # check for kit
-        package_name = getattr(component, "_ImportedClass__package_name", None)
-        if package_name:
-          kits.add(package_name)
+        component.get_or_assign_id(name) if name != "*" and assign_name else component.get_or_assign_id(),
+        nodes.append(component)
 
       elif isinstance(component, AttrDict):
         inputs = component
@@ -517,7 +499,69 @@ class Board(Generic[T, S]):
       return nodes
 
     for name, component in all_components:
-      output["nodes"].extend(iterate_component(name, component))
+      all_nodes.extend(iterate_component(name, component))
+
+    return all_nodes
+
+  def __json__(self):
+    output = {}
+    if self.title is not None:
+      output["title"] = self.title
+    if self.description is not None:
+      output["description"] = self.description
+    if self.version is not None:
+      output["version"] = self.version
+    # TODO: Find out what graphs are.
+    output["graphs"] = {}
+    output["nodes"] = []
+
+    # When constructing the graph, two adhoc Boards are added, representing input and output.
+    input_board, output_board = self.get_or_create_input_output_nodes()
+    self.describe(input_board, output_board)
+
+    kits = set()
+    all_nodes = []
+
+    all_nodes = self.get_all_components()
+
+    # Generate nodes
+    for component in all_nodes:
+      inputs = component.set_inputs
+      node = {
+        # Assign type if is dependency. Assign name if is the Board.
+        "id": component.get_or_assign_id(required=True),
+        "type": component.type,
+        "configuration": component.get_configuration(),
+      }
+      output["nodes"].append(node)
+
+      # check for kit
+      package_name = getattr(component, "_package_name", None)
+      if package_name:
+        kits.add(package_name)
+
+
+    replace_mapping = {}
+    """
+    initial_all_nodes = [x for x in all_nodes]
+    all_nodes = set(all_nodes)
+    for each_component in initial_all_nodes:
+      class InputBoard(Board[each_component.input_schema, each_component.input_schema]):
+        type = "input"
+      
+      input_component = InputBoard()
+      input_component.get_or_assign_id(f"{each_component.get_or_assign_id(required=True)}-input")
+      class OutputBoard(Board[each_component.output_schema, each_component.output_schema]):
+        type = "output"
+
+      output_component = OutputBoard()
+      output_component.get_or_assign_id(f"{each_component.get_or_assign_id(required=True)}-output")
+      each_component.describe(input_component, output_component)
+      all_nodes.update([input_component, output_component] + each_component.get_all_components())
+      replace_mapping[each_component] = output_component
+      if each_component in all_nodes:
+        all_nodes.remove(each_component)
+    """
 
     # Populate Edges
     output["edges"] = []
@@ -527,6 +571,8 @@ class Board(Generic[T, S]):
       inputs = n.set_inputs
       for k, vs in inputs.items():
         for v in vs:
+          if v in replace_mapping:
+            v = replace_mapping[v]
           if isinstance(v, Board):
             edge = {
               "from": v.get_or_assign_id(required=True),

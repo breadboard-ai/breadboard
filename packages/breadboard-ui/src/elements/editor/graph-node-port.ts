@@ -1,23 +1,22 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
-import { InteractionTracker } from "./interaction-tracker.js";
 import { PortStatus } from "@google-labs/breadboard";
 
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
   #radius = 3;
-  #status: PortStatus = PortStatus.Inteterminate;
+  #status: PortStatus = PortStatus.Indeterminate;
   #colors: { [K in PortStatus]: number } = {
     [PortStatus.Connected]: 0xaced8f,
     [PortStatus.Dangling]: 0xdf4646,
-    [PortStatus.Inteterminate]: 0xcccccc,
+    [PortStatus.Indeterminate]: 0xcccccc,
     [PortStatus.Missing]: 0xdf4646,
     [PortStatus.Ready]: 0xeeeeee,
   };
   #borderColors: { [K in PortStatus]: number } = {
     [PortStatus.Connected]: 0x475d3f,
     [PortStatus.Dangling]: 0x990808,
-    [PortStatus.Inteterminate]: 0xbbbbbb,
+    [PortStatus.Indeterminate]: 0xbbbbbb,
     [PortStatus.Missing]: 0x990808,
     [PortStatus.Ready]: 0xaaaaaa,
   };
@@ -29,29 +28,6 @@ export class GraphNodePort extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
-    this.on("pointerdown", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().activeGraphNodePort = this;
-    });
-
-    this.on("pointerover", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().hoveredGraphNodePort = this;
-    });
-
-    this.on("pointerout", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().hoveredGraphNodePort = null;
-    });
   }
 
   set connectedColor(color: number) {

@@ -116,7 +116,7 @@ body {
   display: none;
 }
 
-#doc-list-toggle {
+#item-list-toggle {
   width: 0;
   height: 0;
 }
@@ -135,7 +135,7 @@ body {
   width: 24px;
 }
 
-.toggle-list .documentation-list {
+.toggle-list .item-list {
   position: fixed;
   background: #fff;
   width: 100%;
@@ -149,11 +149,11 @@ body {
   display: none;
 }
 
-#doc-list-toggle:checked ~ .documentation-list {
+#item-list-toggle:checked ~ .item-list {
   display: block;
 }
 
-.toggle-list .documentation-list summary {
+.toggle-list .item-list summary {
   color: var(--bb-font-color-accent);
   font-size: 0.875rem;
   margin: 0 0 8px;
@@ -162,23 +162,23 @@ body {
   font-weight: bold;
 }
 
-.toggle-list .documentation-list ul {
+.toggle-list .item-list ul {
   margin: 0;
   list-style: none;
   padding: 0 0 0 32px;
   font-size: 0.875rem;
 }
 
-.toggle-list .documentation-list li {
+.toggle-list .item-list li {
   font-weight: bold;
   margin: 0 0 8px 0;
 }
 
-.toggle-list .documentation-list > ul {
+.toggle-list .item-list > ul {
   padding: 20px;
 }
 
-.toggle-list .documentation-list a {
+.toggle-list .item-list a {
   color: var(--bb-font-color-accent);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
@@ -186,7 +186,7 @@ body {
   font-weight: normal;
 }
 
-.toggle-list .documentation-list a:hover {
+.toggle-list .item-list a:hover {
   transition-duration: 0.1s;
   opacity: 1;
 }

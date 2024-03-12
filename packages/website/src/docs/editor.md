@@ -2,7 +2,7 @@
 layout: docs.njk
 title: Editor API
 tags:
-  - general
+  - api
   - wip
 ---
 

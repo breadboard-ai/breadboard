@@ -66,8 +66,8 @@
               "title": "context"
             },
             "text": {
-              "title": "Output",
               "type": "string",
+              "title": "Output",
               "description": "Agent's output"
             }
           }
@@ -118,8 +118,12 @@
               "type": "string"
             },
             "stopSequences": {
-              "title": "Stop Sequences",
               "type": "array",
+              "title": "Stop Sequences",
+              "description": "An array of strings that will stop the output",
+              "items": {
+                "type": "string"
+              },
               "default": "[]"
             }
           },

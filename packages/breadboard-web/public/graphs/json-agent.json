@@ -47,8 +47,9 @@
               "title": "context"
             },
             "json": {
-              "type": "string",
-              "title": "json"
+              "title": "json",
+              "description": "The validated JSON.",
+              "type": "string"
             }
           }
         }
@@ -84,10 +85,11 @@
             },
             "schema": {
               "title": "Schema",
+              "description": "The schema to convert to schemish.",
+              "type": "object",
               "examples": [
                 "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
               ],
-              "type": "object",
               "format": "multiline",
               "default": "{}"
             }

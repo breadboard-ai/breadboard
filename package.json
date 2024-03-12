@@ -5,7 +5,7 @@
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "clean": "git clean -Xdf -e .vscode/settings.json",
+    "clean": "git clean -Xdf -e !.vscode/settings.json",
     "update": "rimraf package-lock.json && npm i",
     "test": "wireit",
     "build": "wireit",
@@ -13,7 +13,12 @@
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit"
+    "generate:docs": "wireit",
+    "syncpack:check": "wireit",
+    "syncpack:check:dev": "wireit",
+    "syncpack:check:prod": "wireit",
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
+    "check": "wireit"
   },
   "wireit": {
     "build": {
@@ -26,6 +31,7 @@
         "./packages/breadboard-extension:build",
         "./packages/breadboard-web:build",
         "./packages/breadbuddy:build",
+        "./packages/build:build",
         "./packages/cloud-function:build",
         "./packages/coffee-bot-board:build",
         "./packages/core-kit:build",
@@ -52,6 +58,7 @@
         "./packages/breadboard-cli:test",
         "./packages/breadboard-server:test",
         "./packages/breadboard-ui:test",
+        "./packages/build:test",
         "./packages/cloud-function:test",
         "./packages/coffee-bot-board:test",
         "./packages/core-kit:test",
@@ -76,6 +83,7 @@
         "./packages/breadboard-extension:lint",
         "./packages/breadboard-ui:lint",
         "./packages/breadbuddy:lint",
+        "./packages/build:lint",
         "./packages/coffee-bot-board:lint",
         "./packages/core-kit:lint",
         "./packages/create-breadboard:lint",
@@ -96,9 +104,7 @@
     "ci:local": {
       "dependencies": [
         "build",
-        "check:format",
-        "lint",
-        "test"
+        "check"
       ]
     },
     "generate:docs": {
@@ -115,6 +121,47 @@
         "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
+    },
+    "check": {
+      "dependencies": [
+        "syncpack:check",
+        "check:format",
+        "lint",
+        "test"
+      ]
+    },
+    "syncpack:files": {
+      "files": [
+        "syncpack.config.ts",
+        "package.json",
+        "package-lock.json",
+        "packages/*/package.json",
+        "packages/*/package-lock.json"
+      ]
+    },
+    "syncpack:check": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
+    },
+    "syncpack:check:prod": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types prod",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
+    },
+    "syncpack:check:dev": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types dev",
+      "dependencies": [
+        "syncpack:files"
+      ],
+      "files": [],
+      "output": []
     }
   },
   "keywords": [],
@@ -124,14 +171,15 @@
     "@changesets/cli": "^2.27.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.11.20",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@types/node": "^20.11.25",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.57.0",
     "npm-ci": "^0.0.2",
-    "rimraf": "^5.0.1",
-    "rollup": "^4.12.0",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.12.1",
+    "syncpack": "^12.3.0",
     "typescript": "^5.3.3",
     "wireit": "^0.14.4"
   },

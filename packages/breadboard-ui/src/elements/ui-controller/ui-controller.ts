@@ -4,28 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html } from "lit";
+import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEntry, LoadArgs, STATUS } from "../../types/types.js";
+import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
+  GraphNodeSelectedEvent,
   InputEnterEvent,
-  MessageTraversalEvent,
+  RunEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { Kit } from "@google-labs/breadboard";
+import { InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { longTermMemory } from "../../utils/long-term-memory.js";
-import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
-import { NodeHighlightHelper } from "../../utils/highlights.js";
-import { cache } from "lit/directives/cache.js";
+import { JSONTree } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
-
-const CONFIG_MEMORY_KEY = "ui-config";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
@@ -60,13 +56,10 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
+  run: InspectableRun | null = null;
+
+  @property()
   boards: Board[] = [];
-
-  @state()
-  historyEntries: HistoryEntry[] = [];
-
-  @state()
-  messages: HarnessRunResult[] = [];
 
   @state()
   config: UIConfig = {
@@ -74,72 +67,36 @@ export class UI extends LitElement {
   };
 
   @state()
-  orientation: "portrait" | "landscape" = "landscape";
+  selectedNodeId: string | null = null;
 
-  #editorRenderCount = 0;
+  #autoSwitchSidePanel: number | null = null;
+  #detailsRef: Ref<HTMLElement> = createRef();
   #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
-  #memory = longTermMemory;
-  #isUpdatingMemory = false;
   #messagePosition = 0;
   #messageDurations: Map<HarnessRunResult, number> = new Map();
-  #highlightHelper = new NodeHighlightHelper();
-  #resizeObserver = new ResizeObserver(() => {
-    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    if (isPortrait && this.orientation === "landscape") {
-      this.orientation = "portrait";
-    } else if (!isPortrait && this.orientation === "portrait") {
-      this.orientation = "landscape";
-    }
-  });
 
   static styles = uiControllerStyles;
 
   constructor() {
     super();
 
-    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
-      if (!value) {
+    this.addEventListener("pointerdown", () => {
+      if (!this.#detailsRef.value) {
         return;
       }
 
-      this.config = JSON.parse(value) as UIConfig;
+      this.#detailsRef.value.classList.remove("active");
     });
   }
 
-  connectedCallback(): void {
-    super.connectedCallback();
-    this.#resizeObserver.observe(this);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#resizeObserver.disconnect();
-  }
-
-  async #toggleConfigOption(key: keyof UIConfig) {
-    if (this.#isUpdatingMemory) {
-      return;
-    }
-
-    this.#isUpdatingMemory = true;
-    this.config[key] = !this.config[key];
-    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
-    this.#isUpdatingMemory = false;
-
-    this.requestUpdate();
-  }
-
-  clearMessages() {
-    this.messages.length = 0;
-    this.#highlightHelper.clear();
+  clearPosition() {
     this.#messagePosition = 0;
   }
 
   unloadCurrentBoard() {
     this.url = null;
     this.loadInfo = null;
-    this.clearMessages();
 
     this.#messageDurations.clear();
   }
@@ -213,11 +170,9 @@ export class UI extends LitElement {
     message: HarnessRunResult,
     duration: number
   ): Promise<Record<string, unknown> | void> {
-    // Store it for later, render, then actually handle the work.
-    this.messages.push(message);
-    this.#highlightHelper.add(message);
     if (this.status === STATUS.RUNNING) {
-      this.#messagePosition = this.messages.length - 1;
+      const messages = this.run?.messages || [];
+      this.#messagePosition = messages.length - 1;
     }
     this.#messageDurations.set(message, duration);
     this.requestUpdate();
@@ -225,9 +180,6 @@ export class UI extends LitElement {
     const { data, type } = message;
     switch (type) {
       case "nodestart": {
-        console.log(
-          `Initialize nodestart handlers for (id="${data.node.id}", type="${data.node.type}")`
-        );
         if (!this.#handlers.has(data.node.id)) {
           this.#handlers.set(data.node.id, []);
         }
@@ -235,45 +187,44 @@ export class UI extends LitElement {
       }
 
       case "nodeend": {
-        console.log(`Clear nodestart handlers for input(id="${data.node.id}")`);
         this.#handlers.delete(data.node.id);
         return;
       }
 
       case "input": {
-        console.log(`Input (id="${data.node.id}") requested`);
         return this.#registerInputHandler(data.node.id);
       }
 
       case "secret": {
-        console.log(`Secrets (${data.keys.join(", ")}) requested`);
         return this.#registerSecretsHandler(data.keys);
-      }
-
-      case "error": {
-        console.error(`Error:`, data.error);
-        return;
       }
     }
   }
 
-  #notifyInputList(evt: Event) {
-    if (!this.#inputListRef.value) {
-      return;
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ selectedNodeId: string | null }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (
+      changedProperties.has("selectedNodeId") &&
+      changedProperties.get("selectedNodeId") !== undefined &&
+      changedProperties.get("selectedNodeId") !== this.selectedNodeId
+    ) {
+      this.#autoSwitchSidePanel = 1;
     }
+  }
 
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    this.#inputListRef.value.captureNewestInput();
+  protected updated(): void {
+    this.#autoSwitchSidePanel = null;
   }
 
   render() {
-    const typeOfNewestMessage = this.messages[this.messages.length - 1]?.type;
-    const disabled =
-      this.#messagePosition < this.messages.length - 1 ||
-      (typeOfNewestMessage !== "input" && typeOfNewestMessage !== "secret");
+    const messages = this.run?.messages || [];
+    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
 
-    const nodeId = this.#highlightHelper.currentNode(this.#messagePosition);
+    const events = this.run?.events || [];
+    const eventPosition = events.length - 1;
 
     /**
      * Create all the elements we need.
@@ -283,60 +234,65 @@ export class UI extends LitElement {
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
-      .renderCount=${this.#editorRenderCount++}
+      @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+        this.selectedNodeId = evt.id;
+      }}
     ></bb-editor>`;
 
-    const timeline = html`<header>
-        <h1>Events</h1>
-        <label for="narrow">Narrow</label>
-        <input
-          name="narrow"
-          id="narrow"
-          type="checkbox"
-          ?checked=${this.config.showNarrowTimeline}
-          @input=${() => this.#toggleConfigOption("showNarrowTimeline")}
-        />
-        <div id="value">
-          ${Math.min(this.messages.length, this.#messagePosition + 1)} /
-          <span id="max">&nbsp;${this.messages.length}</span>
-        </div>
-        <div id="run-status" class=${classMap({ [this.status]: true })}>
-          ${this.status}
-        </div>
-      </header>
-      <bb-timeline-controls
-        .messages=${this.messages}
-        .messagePosition=${this.#messagePosition}
-        .messageDurations=${this.#messageDurations}
-        .narrow=${this.config.showNarrowTimeline}
-        @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
-          if (evt.index < 0 || evt.index > this.messages.length) {
-            return;
-          }
+    const sidePanel = html`
+      <bb-switcher
+        slots="3"
+        .selected=${this.#autoSwitchSidePanel !== null
+          ? this.#autoSwitchSidePanel
+          : nothing}
+      >
+        <bb-activity-log
+          .events=${events}
+          .eventPosition=${eventPosition}
+          @breadboardinputrequested=${() => {
+            this.#autoSwitchSidePanel = 0;
+            this.requestUpdate();
+          }}
+          @pointerdown=${(evt: PointerEvent) => {
+            if (!this.#detailsRef.value) {
+              return;
+            }
 
-          this.#messagePosition = evt.index;
-          this.requestUpdate();
-        }}
-      ></bb-timeline-controls>`;
+            const [top] = evt.composedPath();
+            if (!(top instanceof HTMLElement) || !top.dataset.messageIdx) {
+              return;
+            }
 
-    const inputs = html`<header>
-        <h1>Inputs</h1>
-        <button
-          id="continue"
-          ?disabled=${disabled}
-          @click=${this.#notifyInputList}
-        >
-          Continue
-        </button>
-      </header>
-      <div id="inputs-list">
-        <bb-input-list
-          ${ref(this.#inputListRef)}
-          .messages=${this.messages}
-          .messagePosition=${this.#messagePosition}
+            const idx = Number.parseInt(top.dataset.messageIdx);
+            if (Number.isNaN(idx)) {
+              return;
+            }
+
+            evt.stopImmediatePropagation();
+
+            const event = events[idx];
+            if (event.type !== "node") {
+              return;
+            }
+
+            const bounds = top.getBoundingClientRect();
+            const details = this.#detailsRef.value;
+            details.classList.toggle("active");
+
+            if (!details.classList.contains("active")) {
+              return;
+            }
+
+            details.style.setProperty("--left", `${bounds.left}px`);
+            details.style.setProperty("--top", `${bounds.top + 20}px`);
+
+            const tree = details.querySelector("bb-json-tree") as JSONTree;
+            tree.json = event as unknown as Record<string, string>;
+            tree.autoExpand = true;
+          }}
           @breadboardinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < this.messages.length - 1) {
+            if (this.#messagePosition < messages.length - 1) {
               // The user has attempted to provide input for a stale
               // request.
               // TODO: Enable resuming from this point.
@@ -360,77 +316,62 @@ export class UI extends LitElement {
               handler.call(null, data);
             }
           }}
-        ></bb-input-list>
-      </div>`;
-
-    const outputs = html` <h1>Outputs</h1>
-      <div id="outputs-list">
-        <bb-output-list
-          .messages=${this.messages}
+          name="Board"
+          slot="slot-0"
+        ></bb-activity-log>
+        <bb-node-info
+          .selectedNodeId=${this.selectedNodeId}
+          .loadInfo=${this.loadInfo}
+          .kits=${this.kits}
+          .editable=${this.url === null}
+          name="Selected Node"
+          slot="slot-1"
+        ></bb-node-info>
+        <bb-history-tree
+          name="History"
+          slot="slot-2"
+          .messages=${messages}
           .messagePosition=${this.#messagePosition}
-        ></bb-output-list>
-      </div>`;
+        ></bb-history-tree>
+      </bb-switcher>
 
-    const history = html`<bb-history-tree
-      .messages=${this.messages}
-      .messagePosition=${this.#messagePosition}
-    ></bb-history-tree>`;
+      <div
+        id="details"
+        ${ref(this.#detailsRef)}
+        @pointerdown=${(evt: PointerEvent) => {
+          evt.stopImmediatePropagation();
+        }}
+      >
+        <bb-json-tree></bb-json-tree>
+      </div>
+    `;
 
-    /**
-     * Create both layouts.
-     */
-    const landscapeLayout = html`<bb-splitter
+    return html`<bb-splitter
       direction="horizontal"
       name="landscape-main"
-      split="[0.66, 0.34]"
+      split="[0.75, 0.25]"
     >
-      <bb-splitter
-        direction="vertical"
-        name="landscape-diagram-timeline"
-        split="[0.85, 0.15]"
-        slot="slot-0"
-      >
-        <section id="diagram" slot="slot-0">${editor}</section>
-        <section id="timeline" slot="slot-1">${timeline}</section>
-      </bb-splitter>
+      <section id="diagram" slot="slot-0">
+        <div id="breadcrumbs"></div>
+        ${editor}
+      </section>
 
-      <bb-splitter
-        split="[0.33, 0.33, 0.34]"
-        direction="vertical"
-        name="landscape-io-history"
-        slot="slot-1"
-      >
-        <section id="inputs" slot="slot-0">${inputs}</section>
-        <section id="outputs" slot="slot-1">${outputs}</section>
-        <section id="history" slot="slot-2">${history}</section>
-      </bb-splitter>
-    </bb-splitter>`;
-
-    const portraitLayout = html`<bb-splitter
-      direction="vertical"
-      name="portrait-main"
-      split="[0.4, 0.2, 0.2, 0.2]"
-    >
-        <section id="diagram" slot="slot-0">${editor}</section>
-        <section id="timeline" slot="slot-1">${timeline}</section>
-        <bb-splitter
-            split="[0.5, 0.5]"
-            direction="horizontal"
-            name="portrait-io"
-            slot="slot-2"
+      <section id="controls-activity" slot="slot-1">
+        <div id="controls">
+          <button
+            id="run"
+            ?disabled=${this.status !== STATUS.STOPPED}
+            @click=${() => {
+              this.#autoSwitchSidePanel = 0;
+              this.dispatchEvent(new RunEvent());
+            }}
           >
-          <section id="inputs" slot="slot-0">${inputs}</section>
-          <section id="outputs" slot="slot-1">${outputs}</section>
-        </bb-splitter>
-        <section id="history" slot="slot-3">${history}</section>
-      </bb-splitter>
-    </bb-splitter>`;
+            Run
+          </button>
+        </div>
 
-    /**
-     * Choose based on the window orientation.
-     */
-    return cache(
-      this.orientation === "portrait" ? portraitLayout : landscapeLayout
-    );
+        ${sidePanel}
+      </section>
+    </bb-splitter>`;
   }
 }

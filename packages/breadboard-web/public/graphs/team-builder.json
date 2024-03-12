@@ -49,12 +49,14 @@
           "type": "object",
           "properties": {
             "prompts": {
-              "type": "string",
-              "title": "prompts"
+              "title": "List",
+              "type": "array",
+              "description": "The list of outputs from the board."
             },
             "json": {
-              "type": "string",
-              "title": "json"
+              "title": "json",
+              "description": "The validated JSON.",
+              "type": "string"
             }
           }
         }
@@ -91,8 +93,9 @@
                     "type": "object",
                     "properties": {
                       "item": {
-                        "type": "string",
-                        "title": "json"
+                        "title": "json",
+                        "description": "The validated JSON.",
+                        "type": "string"
                       }
                     }
                   }

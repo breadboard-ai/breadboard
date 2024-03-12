@@ -69,56 +69,42 @@ export class InputList extends LitElement {
     // Infer from the messages received which inputs need to be shown to the
     // user.
     const inputs: InputDescription[] = [];
-    for (let idx = this.messagePosition; idx >= 0; idx--) {
-      const message = this.messages[idx];
-      if (!message || (message.type !== "input" && message.type !== "secret")) {
-        continue;
-      }
+    const message = this.messages[this.messagePosition];
+    if (!message || (message.type !== "input" && message.type !== "secret")) {
+      return;
+    }
 
-      // Any secrets that are not the most recent message don't need to be
-      // captured here; they should already have been handled and don't need to
-      // be rendered. In fact, if rendered they would immediately fire an event
-      // (which won't be captured). We can therefore skip them.
-      const isMostRecentMessage = idx === this.messages.length - 1;
-      if (message.type === "secret" && isMostRecentMessage) {
-        for (const id of message.data.keys) {
-          inputs.push({
-            id,
-            configuration: {
-              schema: {
-                properties: {
-                  secret: {
-                    title: id,
-                    description: `Enter ${id}`,
-                    type: "string",
-                  },
+    // Any secrets that are not the most recent message don't need to be
+    // captured here; they should already have been handled and don't need to
+    // be rendered. In fact, if rendered they would immediately fire an event
+    // (which won't be captured). We can therefore skip them.
+    if (message.type === "secret") {
+      for (const id of message.data.keys) {
+        inputs.push({
+          id,
+          configuration: {
+            schema: {
+              properties: {
+                secret: {
+                  title: id,
+                  description: `Enter ${id}`,
+                  type: "string",
                 },
               },
             },
-            remember: true,
-            secret: true,
-            processedValues: null,
-          });
-        }
-        continue;
+          },
+          remember: true,
+          secret: true,
+          processedValues: null,
+        });
       }
-
-      // Capture all inputs.
-      if (message.type !== "input") {
-        continue;
-      }
-      const processedValues = this.#obtainProcessedValuesIfAvailable(
-        message.data.node.id,
-        idx,
-        this.messages
-      );
-
+    } else {
       inputs.push({
         id: message.data.node.id,
         configuration: message.data.inputArguments,
         remember: false,
         secret: false,
-        processedValues,
+        processedValues: null,
       });
     }
 

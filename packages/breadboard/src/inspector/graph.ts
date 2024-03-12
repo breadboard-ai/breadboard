@@ -41,7 +41,11 @@ export const inspectableGraph = (
 
 const maybeURL = (url?: string): URL | undefined => {
   url = url || "";
-  return URL.canParse(url) ? new URL(url) : undefined;
+  try {
+    return new URL(url);
+  } catch {
+    return undefined;
+  }
 };
 
 class Graph implements InspectableGraphWithStore {
@@ -133,13 +137,13 @@ class Graph implements InspectableGraphWithStore {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edges.get(edge) as InspectableEdge);
+      .map((edge) => this.#edges.getOrCreate(edge));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#edges.get(edge) as InspectableEdge);
+      .map((edge) => this.#edges.getOrCreate(edge));
   }
 
   entries(): InspectableNode[] {

@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
   Edge,
+  ErrorResponse,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -15,8 +17,18 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  OutputValues,
   Schema,
 } from "../types.js";
+
+export type GraphVersion = number;
+
+export type GraphURL = string;
+
+/**
+ * Represents an UUID that is used to identify a graph.
+ */
+export type GraphUUID = `${GraphVersion}|${GraphURL}`;
 
 export type InspectableNode = {
   /**
@@ -190,7 +202,7 @@ export enum PortStatus {
    * The port status impossible to determine. This only happens when the node
    * has a star wire ("*") and the port is not connected.
    */
-  Inteterminate = "indeterminate",
+  Indeterminate = "indeterminate",
   /**
    * The port is correctly connected to another node or specified using node's
    * configuration, according to this node's schema.
@@ -326,3 +338,227 @@ export type EdgeStoreMutator = {
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
+
+/**
+ * Represents a store of graph versions.
+ */
+export type InspectableGraphVersionsStore = {
+  /**
+   * Retrieves a graph with the given id, and optionally, version and run.
+   * @param id -- the id of the graph to retrieve
+   * @param version -- the version of the graph to retrieve (optional,
+   * defaults to 0)
+   * @param run -- the run of the graph to retrieve (optional, defaults to 0)
+   */
+  get(
+    id: GraphUUID,
+    version?: number,
+    run?: number
+  ): Promise<InspectableGraphVersions>;
+};
+
+/**
+ * Represents a sequence of versions of a graph.
+ * This sequence of versions grows as the graph is edited.
+ */
+export type InspectableGraphVersions = {
+  /**
+   * The unique identifier of the sequence of graph versions.
+   */
+  id: GraphUUID;
+  /**
+   * A list of versions for the given graph. Every edit to the graph
+   * results in a new version. The first item in the list is the initial
+   * version of the graph. The last item is the latest version.
+   */
+  versions: InspectableVersionedGraph[];
+  /**
+   * Returns only major versions of the graph.
+   * A "major" version of the graph is a version that has one or more runs
+   * associated with it. A "minor" version is a version that has no runs.
+   */
+  major(): InspectableVersionedGraph[];
+};
+
+/**
+ * Represents a versioned graph.
+ * A versioned graph has zero or more runs associated with it.
+ */
+export type InspectableVersionedGraph = {
+  /**
+   * The unique identifier of the versioned graph. This is a monotonically
+   * increasing number, starting from 0. Same as the index of the `versions`
+   * array in the `InspectableGraphWithVersions` object.
+   */
+  id: number;
+  graph: InspectableGraph;
+  runs: InspectableRun[];
+};
+
+/**
+ * Represents an observer of the graph runs.
+ */
+export type InspectableRunObserver = {
+  /**
+   * Returns the list of runs that were observed. The current run is always
+   * at the top of the list.
+   */
+  runs(): InspectableRun[];
+  /**
+   * Observes the given result and collects it into the list of runs.
+   * @param result -- the result to observe
+   * @returns -- the list of runs that were observed
+   */
+  observe(result: HarnessRunResult): InspectableRun[];
+};
+
+/**
+ * Represents a store of all graphs that the system has seen so far.
+ */
+export type InspectableGraphStore = {
+  /**
+   * Retrieves a graph with the given id.
+   * @param id -- the id of the graph to retrieve
+   */
+  get(id: GraphUUID): GraphDescriptor | undefined;
+  /**
+   * Checks if the store has a graph with the given id.
+   * @param id -- the id of the graph
+   */
+  has(id: GraphUUID): boolean;
+  /**
+   * Adds a graph to the store and returns the UUID. If the graph is already
+   * in the store, returns the UUID of the existing graph.
+   */
+  add(graph: GraphDescriptor, version: number): GraphUUID;
+};
+
+/**
+ * Represents a pair of the nodestart and nodeend results that were generated
+ * during the run.
+ */
+export type InspectableRunNodeEvent = {
+  type: "node";
+  node: NodeDescriptor;
+  /**
+   * The timestamp of the `nodestart` event.
+   */
+  start: number;
+  /**
+   * The timestamp of the `nodeend` event. Can be null when the `nodeend` has
+   * not been received yet.
+   */
+  end: number | null;
+  /**
+   * The inputs that were provided to the node
+   */
+  inputs: InputValues;
+  /**
+   * The outputs that were produced by the node. Can be null when the `nodeend`
+   * has not been received yet.
+   */
+  outputs: OutputValues | null;
+  /**
+   * Returns true when the input or output node was bubbled up from a nested
+   * graph. This is only populated for the top-level graph.
+   */
+  bubbled: boolean;
+  /**
+   * Returns the list of nested runs that were (or are being) create when
+   * this node was (is being) invoked.
+   */
+  runs: InspectableRun[];
+};
+
+/**
+ * Represents an error event that was generated during the run.
+ */
+export type InspectableRunErrorEvent = {
+  type: "error";
+  error: ErrorResponse["error"];
+  /**
+   * When the error was first observed.
+   */
+  start: number;
+};
+
+export type InspectableRunSecretEvent = {
+  type: "secret";
+  keys: SecretResult["data"]["keys"];
+  /**
+   * When the `secrets` node was first observed.
+   */
+  start: number;
+  /**
+   * When the `secrets` node was handled.
+   */
+  end: number | null;
+};
+
+/**
+ * Represent all events that can be inspected during a run.
+ */
+export type InspectableRunEvent =
+  | InspectableRunNodeEvent
+  | InspectableRunSecretEvent
+  | InspectableRunErrorEvent;
+
+/**
+ * Represents a single run of a graph.
+ */
+export type InspectableRun = {
+  /**
+   * The id graph that was run.
+   */
+  graphId: GraphUUID;
+  /**
+   * The version graph that was run.
+   */
+  graphVersion: number;
+  /**
+   * Start time of the run.
+   */
+  start: number;
+  /**
+   * End time of the run. Can be null if the run has not finished yet.
+   */
+  end: number | null;
+  /**
+   * All events within this graph that have occurred during the run.
+   * The nested graph events aren't included.
+   */
+  events: InspectableRunEvent[];
+  /**
+   * @deprecated Use `events` instead.
+   */
+  messages: HarnessRunResult[];
+  /**
+   * @deprecated Use `events` instead.
+   */
+  currentNode(position: number): string;
+};
+
+export type PathRegistryEntry = {
+  children: PathRegistryEntry[];
+  graphId: GraphUUID | null;
+  graphStart: number;
+  graphEnd: number | null;
+  event: InspectableRunEvent | null;
+  /**
+   * Sidecars are events that are displayed at a top-level, but aren't
+   * part of the main event list. Currently, sidecar events are:
+   * - Input events that have bubbled up.
+   * - Output events that have bubbled up.
+   * - Secret events.
+   * - Error events.
+   */
+  sidecars: InspectableRunEvent[];
+  /**
+   * Returns true if the entry has no children.
+   */
+  empty(): boolean;
+  /**
+   * Returns nested events for this entry.
+   */
+  events: InspectableRunEvent[];
+};

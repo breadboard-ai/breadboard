@@ -21,6 +21,18 @@ export class StartEvent extends Event {
   }
 }
 
+export class RunEvent extends Event {
+  static eventName = "breadboardrunboard";
+
+  constructor() {
+    super(RunEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
@@ -30,7 +42,10 @@ export enum ToastType {
 export class ToastEvent extends Event {
   static eventName = "breadboardtoast";
 
-  constructor(public message: string, public toastType: ToastType) {
+  constructor(
+    public message: string,
+    public toastType: ToastType
+  ) {
     super(ToastEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -63,14 +78,39 @@ export class NodeSelectEvent extends Event {
   }
 }
 
+export class InputRequestedEvent extends Event {
+  static eventName = "breadboardinputrequested";
+
+  constructor() {
+    super(InputRequestedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class InputEnterEvent extends Event {
   static eventName = "breadboardinputenter";
 
-  constructor(public id: string, public data: Record<string, unknown>) {
+  constructor(
+    public id: string,
+    public data: Record<string, unknown>
+  ) {
     super(InputEnterEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
+    });
+  }
+}
+
+export class InputErrorEvent extends Event {
+  static eventName = "breadboardinputerror";
+
+  constructor(public detail: string) {
+    super(InputErrorEvent.eventName, {
+      bubbles: true,
     });
   }
 }
@@ -114,7 +154,10 @@ export class ResumeEvent extends Event {
 export class NodeCreateEvent extends Event {
   static eventName = "breadboardnodecreate";
 
-  constructor(public id: string, public nodeType: string) {
+  constructor(
+    public id: string,
+    public nodeType: string
+  ) {
     super(NodeCreateEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -138,7 +181,10 @@ export class NodeDeleteEvent extends Event {
 export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
-  constructor(public id: string, public configuration: NodeConfiguration) {
+  constructor(
+    public id: string,
+    public configuration: NodeConfiguration
+  ) {
     super(NodeUpdateEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -151,8 +197,9 @@ export class EdgeChangeEvent extends Event {
   static eventName = "breadboardedgechange";
 
   constructor(
-    public changeType: "add" | "remove",
-    public edge: { from: string; to: string; in: string; out: string }
+    public changeType: "add" | "remove" | "move",
+    public from: { from: string; to: string; in: string; out: string },
+    public to?: { from: string; to: string; in: string; out: string }
   ) {
     super(EdgeChangeEvent.eventName, {
       bubbles: true,
@@ -162,11 +209,15 @@ export class EdgeChangeEvent extends Event {
   }
 }
 
-export class GraphNodeDblClickEvent extends Event {
-  static eventName = "breadboardgraphnodedblclick";
+export class NodeMoveEvent extends Event {
+  static eventName = "breadboardnodemove";
 
-  constructor(public id: string) {
-    super(GraphNodeDblClickEvent.eventName, {
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(NodeMoveEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -174,11 +225,39 @@ export class GraphNodeDblClickEvent extends Event {
   }
 }
 
-export class GraphNodeEdgeAttach extends Event {
+export class GraphNodeMoveEvent extends Event {
+  static eventName = "breadboardgraphnodemove";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphNodeMoveEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeSelectedEvent extends Event {
+  static eventName = "breadboardgraphnodeselected";
+
+  constructor(public id: string | null) {
+    super(GraphNodeSelectedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "breadboardgraphedgeattach";
 
   constructor(public edge: InspectableEdge) {
-    super(GraphNodeEdgeAttach.eventName, {
+    super(GraphNodeEdgeAttachEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -186,11 +265,11 @@ export class GraphNodeEdgeAttach extends Event {
   }
 }
 
-export class GraphNodeEdgeDetach extends Event {
+export class GraphNodeEdgeDetachEvent extends Event {
   static eventName = "breadboardgraphedgedetach";
 
   constructor(public edge: InspectableEdge) {
-    super(GraphNodeEdgeDetach.eventName, {
+    super(GraphNodeEdgeDetachEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -198,14 +277,14 @@ export class GraphNodeEdgeDetach extends Event {
   }
 }
 
-export class GraphNodeEdgeChange extends Event {
+export class GraphNodeEdgeChangeEvent extends Event {
   static eventName = "breadboardgraphedgechange";
 
   constructor(
     public fromEdge: InspectableEdge,
     public toEdge: InspectableEdge
   ) {
-    super(GraphNodeEdgeChange.eventName, {
+    super(GraphNodeEdgeChangeEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -213,11 +292,11 @@ export class GraphNodeEdgeChange extends Event {
   }
 }
 
-export class GraphNodeDelete extends Event {
+export class GraphNodeDeleteEvent extends Event {
   static eventName = "breadboardgraphnodedelete";
 
   constructor(public id: string) {
-    super(GraphNodeDelete.eventName, {
+    super(GraphNodeDeleteEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

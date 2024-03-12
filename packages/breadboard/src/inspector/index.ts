@@ -5,12 +5,23 @@
  */
 
 import { GraphDescriptor } from "../types.js";
+import { GraphStore } from "./graph-store.js";
 import { inspectableGraph } from "./graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "./types.js";
+import { RunObserver } from "./run.js";
+import {
+  InspectableGraph,
+  InspectableGraphOptions,
+  InspectableRunObserver,
+} from "./types.js";
 
 export const inspect = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraph => {
   return inspectableGraph(graph, options);
+};
+
+export const createRunObserver = (): InspectableRunObserver => {
+  const store = new GraphStore();
+  return new RunObserver(store);
 };

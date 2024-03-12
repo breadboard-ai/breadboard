@@ -9,7 +9,7 @@ export const buildCustomAllowList = (value?: string) => {
   return { fs: { allow: [value] } };
 };
 
-export default defineConfig(async (_) => {
+export default defineConfig((_) => {
   config();
   return {
     build: {
@@ -19,6 +19,11 @@ export default defineConfig(async (_) => {
           sample: "./index.html",
           preview: "./preview.html",
           embed: "src/embed.ts",
+          "palm-kit": "src/palm-kit.ts",
+          "core-kit": "src/core-kit.ts",
+          "json-kit": "src/json-kit.ts",
+          "template-kit": "src/template-kit.ts",
+          "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
@@ -35,6 +40,10 @@ export default defineConfig(async (_) => {
       watchAndRun([
         {
           watch: path.resolve("src/boards/**/*.ts"),
+          run: "npm run generate:graphs",
+        },
+        {
+          watch: path.resolve("src/boards/*.py"),
           run: "npm run generate:graphs",
         },
       ]),

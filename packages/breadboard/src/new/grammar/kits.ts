@@ -13,8 +13,8 @@ import {
 } from "../../types.js";
 
 import { BuilderNode } from "./node.js";
-import { getCurrentContextScope } from "./default-scope.js";
 import { handlersFromKit } from "../runner/kits.js";
+import { getCurrentContextScope } from "./scope.js";
 
 export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string | undefined,

@@ -118,8 +118,9 @@
               "title": "list"
             },
             "rank": {
-              "type": "string",
-              "title": "json"
+              "title": "json",
+              "description": "The validated JSON.",
+              "type": "string"
             }
           }
         }

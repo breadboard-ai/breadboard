@@ -144,7 +144,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphstart",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { graph: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
@@ -186,13 +186,31 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(
-            new InputStageResult(result, await stack.state(), invocationId)
+            new InputStageResult(
+              result,
+              await stack.state(),
+              invocationId,
+              path()
+            )
           );
-          await bubbleUpInputsIfNeeded(this, context, descriptor, result);
+          await bubbleUpInputsIfNeeded(
+            this,
+            context,
+            descriptor,
+            result,
+            path()
+          );
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          if (!(await bubbleUpOutputsIfNeeded(inputs, descriptor, context))) {
-            await next(new OutputStageResult(result, invocationId));
+          if (
+            !(await bubbleUpOutputsIfNeeded(
+              inputs,
+              descriptor,
+              context,
+              path()
+            ))
+          ) {
+            await next(new OutputStageResult(result, invocationId, path()));
           }
           outputsPromise = result.outputsPromise;
         } else {
@@ -244,7 +262,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphend",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { path: invocationPath, timestamp: timestamp() },
       });
     });
   }
@@ -309,7 +327,7 @@ export class BoardRunner implements BreadboardRunner {
           });
           await probe?.report?.({
             type: "graphend",
-            data: { metadata: this, path, timestamp: timestamp() },
+            data: { path, timestamp: timestamp() },
           });
           break;
         }

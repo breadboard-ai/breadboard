@@ -5,6 +5,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Ad Writer (variant 2)",
+    "url": "/graphs/ad-writer-2.json",
+    "version": "0.0.2"
+  },
+  {
     "title": "Ad Writer",
     "url": "/graphs/ad-writer.json",
     "version": "0.0.3"
@@ -53,6 +58,15 @@
     "title": "Data Board",
     "url": "/graphs/data-board.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "Drawable",
+    "url": "/graphs/drawable.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Error board",
+    "url": "/graphs/error.json"
   },
   {
     "title": "Gemini Pro Generator",
@@ -176,15 +190,5 @@
     "title": "Webcam",
     "url": "/graphs/webcam.json",
     "version": "0.0.2"
-  },
-  {
-    "title": "Accumulating Context (Python)",
-    "url": "/graphs/accumulating-context-python.json",
-    "version": "0.0.2"
-  },
-  {
-    "title": "The Python Calculator Recipe",
-    "url": "/graphs/math-python.json",
-    "version": "0.0.3"
   }
 ]

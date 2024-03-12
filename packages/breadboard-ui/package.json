@@ -127,11 +127,11 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.11.20",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@types/node": "^20.11.25",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "rollup": "^4.12.0",
-    "typedoc": "^0.25.1",
+    "rollup": "^4.12.1",
+    "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.3.3"
   },
@@ -141,7 +141,8 @@
   "dependencies": {
     "@dagrejs/dagre": "^1.0.4",
     "@google-labs/breadboard": "^0.11.2",
-    "lit": "^3.1.0",
+    "@lit/task": "^1.0.0",
+    "lit": "^3.1.1",
     "pixi.js": "^7.4.0"
   }
 }

@@ -167,25 +167,27 @@ Here's a sample output of our critic above:
 }
 ```
 
-Asking for structured outputs can dramatically elevate the quality of worker's output. Think of the structure as rails that encourage the worker to reason about the problem in a certain way. Especially in situation where we're asking the worker do something that requires critical thinking, thinking in steps, or relying on own reasoning to zero in on a solution, Structured Worker will be your favorite synthetic colleage.
+Asking for structured outputs can dramatically elevate the quality of worker's output. Think of the structure as rails that encourage the worker to reason about the problem in a certain way. Especially in situation where we're asking the worker do something that requires critical thinking, thinking in steps, or relying on own reasoning to zero in on a solution, Structured Worker will be your favorite synthetic colleague.
 
 Workers are very happy to take JSON output, so we can simply pass this work as context to another worker, whether it's a structured worker or not.
 
 Because it is given a task to adhere to a strict schema, the Structured Worker validates its own output and, if the output is invalid, will automatically try again, up to five times. Typically, this is enough to overcome any validation-related challenges, but in the worst case, the Structured Worker will throw an error and give up, halting the workflow.
 
-## Repeater
+## Repeater (agents.repeater)
 
 The Repeater node creates a repeating loop of workers, enabling us to create cycles within our workflows.
 
-The repeater takes in a work `context` and, with each iteration, appends the work to it. This way, the workers inside of the iteration can build on the work they've done before.
+The repeater takes in a work `context` port and, with each iteration, appends the work to it. This way, the workers inside of the iteration can build on the work they've done before.
 
-In addition to the the `context` input and output, it expects the following inputs:
+In addition to the the `context` input port and output port, it expects the following inputs:
 
 - `worker` -- required, a worker to repeat. Typically, here we supply another board that does some useful repeatable chunk of work.
 
 - `max` -- optional, maximum number of repetitions to make. Set it to `-1` to go infinitely (this is also the default value).
 
 If the repeater is configured to exit (the `max` value isn't `-1`), it will return the full context of work accumulated through all iterations.
+
+The worker to repeat must be shaped like a worker: receive a `context` as an input port and produce `context` as the output port.
 
 Let's suppose we have a small sub-team of Structured Workers that does one iteration of the task of summarizing dense documents:
 
@@ -257,6 +259,58 @@ What will happen here is that once the first worker (the "Summarizer") is done, 
 
 As a result, the team will deliver an iteratively improved summary of the text.
 
+The inner worker that the Repeater invokes has the power to exit the iteration even if the maximum iteration count has not yet been reached.
+
+To do that, it needs to pass work context out as the `exit` port, rather than the `context` port:
+
+```ts
+// The worker that knows how to refine an ad to fit it into character limits
+const refineAd = board(({ context }) => {
+  // The `checkCharacterLimits` is defined elsewhere.
+  const limitChecker = checkCharacterLimits({
+    $metadata: {
+      title: "Character Limit Checker",
+    },
+    context: context,
+  });
+
+  const shortener = agents.structuredWorker({
+    $metadata: {
+      title: "Ad Shortener",
+    },
+    instruction: limitChecker.instruction,
+    context,
+    schema: adSchema,
+  });
+
+  // Early exit.
+  base.output({
+    $metadata: {
+      title: "Success",
+    },
+    // Specify "exit" rather than "context" port.
+    exit: limitChecker.context,
+  });
+
+  return { context: shortener.context };
+});
+```
+
+When such a worker is used with a Repeater, there's no need to make any changes to how we invoke it:
+
+```ts
+const adRefinery = agents.repeater({
+  $metadata: {
+    title: "Ad refinery",
+  },
+  context: editor.context,
+  // Supply the worker that can exit early.
+  worker: refineAd,
+  // Provide a limit.
+  max: 4,
+});
+```
+
 ## Human (agents.human)
 
 The Human node is a way to insert a real person into our team of synthetic workers. Such a person may steer the work with comments, accept or reject work, collaborating with the synthetic workers.
@@ -297,3 +351,34 @@ const bot = agents.repeater({
   }),
 });
 ```
+
+## Tool Worker (agents.toolWorker)
+
+[Function-calling](https://ai.google.dev/docs/function_calling) is very popular with LLMs right now, and for a good reason: it turns out, LLMs are pretty good at making good choices on which tool to choose and have enough wherewithal to construct a call for any given API.
+
+The Tool Worker is a node that relies on this capability to provide a synthetic worker that, given a list of tools and a work context, will choose the right tool, invoke it, process the results and pass them on to the next worker.
+
+To make the job easier for the Tool Worker, all tools must be presented as boards.
+
+Here's how we would engage a Tool Worker:
+
+```ts
+const sampleProblem = "What is the square root of pi?";
+
+// A stable URL to the The Calculator board.
+const mathTool =
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json";
+
+const hipMathematician = agents.toolWorker({
+  $metadata: { title: "Hip Mathematician" },
+  instruction: `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. Use the math tool for solving the problems and reply without engaging the tool otherwise. After using the tool, make sure to summarize and expand the answer in a humorous way to help the user enjoy the beauty of math.`,
+  context: sampleProblem,
+  tools: [mathTool],
+});
+```
+
+As with any worker, the Tool Worker has a `context` output port, which contains the accumulated context of the entire body of work performed so far, including any function calls and responses.
+
+We can also use the `text` output port to get just the response from the Tool Worker, if we aren't interested in the entire context.
+
+At the moment, the tools must be supplied as URLs. Under the hood, the Tool Worker loads each board and uses its metadata (`title` and `description`) to formulate the function-calling request to the LLM.

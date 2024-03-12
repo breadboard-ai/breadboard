@@ -1,12 +1,12 @@
 ---
 layout: docs.njk
-title: Inspector API
+title: Graph Inspector API
 tags:
-  - general
+  - api
   - wip
 ---
 
-The Inspector API provides a way to inspect a graph to make sense of it. Because a serialized graph representation (also known as the [BGL document](../concepts/#breadboard-graph-language-bgl)) is basically just JSON containing arrays of nodes and edges, a the actual semantics of the graph need to be added separately. This is what the Inspector API does. Think of it as the DOM API for the graph.
+The Inspector API provides a way to inspect a graph to make sense of it. Because a serialized graph representation (also known as the [BGL document](../../concepts/#breadboard-graph-language-bgl)) is basically just JSON containing arrays of nodes and edges, a the actual semantics of the graph need to be added separately. This is what the Inspector API does. Think of it as the DOM API for the graph.
 
 > [!NOTE]
 > The full list of types of Inspector API can be found in [/packages/breadboard/src/inspector/types.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/inspector/types.ts)
@@ -108,7 +108,7 @@ const inPort = edge.in;
 ```
 
 > [!NOTE]
-> The `InspectableEdge` instances are stable across the lifetime of a particular edge within the graph. Any method or property within this API will return the same instance of an `InspectableEdge` for a given eddge. This means that, for example, we can use `InspectableEdge` instances as keys in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+> The `InspectableEdge` instances are stable across the lifetime of a particular edge within the graph. Any method or property within this API will return the same instance of an `InspectableEdge` for a given edge. This means that, for example, we can use `InspectableEdge` instances as keys in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
 
 ## Kits
 
@@ -141,7 +141,7 @@ for (const kit of kits) {
 }
 ```
 
-The `nodeTypes` of the `InspectableKit` contains a list of items each representing a node type contined within a kit. An item has two methods: one to get the type of the node, and the other is an asynchronous method to query the ports that will be available on the node of this type when it has no edges.
+The `nodeTypes` of the `InspectableKit` contains a list of items each representing a node type contained within a kit. An item has two methods: one to get the type of the node, and the other is an asynchronous method to query the ports that will be available on the node of this type when it has no edges.
 
 ```ts
 // Returns string.
@@ -198,7 +198,7 @@ const inputPorts = inputs.ports;
 const areInputsFixed = inputs.fixed;
 ```
 
-The `fixed` property teturns `true` if the list of ports is fixed and `false` if the node expects a dynamic number of ports.
+The `fixed` property returns `true` if the list of ports is fixed and `false` if the node expects a dynamic number of ports.
 
 For example, the value will be `true` for the `json.validateJson` input ports, since it has two fixed input ports: `json` and `schema`.
 
@@ -290,7 +290,7 @@ The port status can be one of the following values:
 
 ## Subgraphs
 
-Some nodes may represent entire subgraphs. For instance, `core.invoke` node takes a `board` as its argument, and invokes that graph, passing its own inputs to this subgaph and returning its results as own outputs.
+Some nodes may represent entire subgraphs. For instance, `core.invoke` node takes a `board` as its argument, and invokes that graph, passing its own inputs to this subgraph and returning its results as own outputs.
 
 > [!TIP]
 > Make sure that when calling `inspect`, the BGL document argument has the `url` property set to

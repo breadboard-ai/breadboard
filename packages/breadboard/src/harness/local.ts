@@ -6,8 +6,14 @@
 
 import { Board, asyncGen } from "../index.js";
 import { timestamp } from "../timestamp.js";
-import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
+import {
+  BreadboardRunResult,
+  ErrorObject,
+  Kit,
+  ProbeMessage,
+} from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
+import { extractError } from "./error.js";
 import { RunConfig } from "./run.js";
 import { HarnessRunResult } from "./types.js";
 import { baseURL } from "./url.js";
@@ -34,28 +40,22 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
 const fromRunnerResult = <Result extends BreadboardRunResult>(
   result: Result
 ) => {
-  const { type, node, timestamp } = result;
+  const { type, node, timestamp, invocationId } = result;
+  const bubbled = invocationId == -1;
   if (type === "input") {
-    const { inputArguments } = result;
+    const { inputArguments, path } = result;
     return {
       type,
-      data: {
-        node,
-        inputArguments,
-      },
+      data: { node, inputArguments, path, bubbled, timestamp },
       reply: async (value) => {
         result.inputs = value.inputs;
       },
     } as HarnessRunResult;
   } else if (type === "output") {
-    const { outputs } = result;
+    const { outputs, path } = result;
     return {
       type,
-      data: {
-        node,
-        outputs,
-        timestamp,
-      },
+      data: { node, outputs, path, timestamp, bubbled },
       reply: async () => {
         // Do nothing
       },
@@ -74,7 +74,7 @@ const endResult = () => {
   } as HarnessRunResult;
 };
 
-const errorResult = (error: string) => {
+const errorResult = (error: string | ErrorObject) => {
   return {
     type: "error",
     data: { error, timestamp: timestamp() },
@@ -101,21 +101,9 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
       }
       await next(endResult());
     } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        // In the event we get a cause that has no inner error, we will
-        // propagate the cause instead.
-        error = (error.cause as { error: Error | undefined }).error ?? {
-          name: "Unexpected Error",
-          message: JSON.stringify(error.cause, null, 2),
-        };
-        if (error && "message" in error) {
-          message += `\n${error.message}`;
-        }
-      }
-      console.error(message, error);
-      await next(errorResult(message));
+      const error = extractError(e);
+      console.error("Local Run error:", error);
+      await next(errorResult(error));
     }
   });
 }

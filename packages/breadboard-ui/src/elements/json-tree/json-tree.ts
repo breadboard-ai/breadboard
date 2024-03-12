@@ -8,7 +8,13 @@ import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 
-type JSONObjectValue = number | string | boolean | JSONObject;
+type JSONObjectValue =
+  | null
+  | undefined
+  | number
+  | string
+  | boolean
+  | JSONObject;
 
 interface JSONObject {
   [key: string]: JSONObjectValue;
@@ -56,7 +62,8 @@ export class JSONTree extends LitElement {
 
     #copy-to-clipboard:hover {
       background-color: #ffffffcc;
-      transition: opacity var(--bb-easing-duration-in) var(--bb-easing),
+      transition:
+        opacity var(--bb-easing-duration-in) var(--bb-easing),
         background-color var(--bb-easing-duration-in) var(--bb-easing);
       opacity: 1;
     }
@@ -106,6 +113,14 @@ export class JSONTree extends LitElement {
       return value.length > 0 ? "[...]" : "[]";
     }
 
+    if (value === null) {
+      return "(null)";
+    }
+
+    if (value === undefined) {
+      return "(undefined)";
+    }
+
     if (typeof value === "object") {
       return Object.keys(value).length > 0 ? "{...}" : "{}";
     }
@@ -139,6 +154,14 @@ export class JSONTree extends LitElement {
   }
 
   #convertToHtml(obj: JSONObject) {
+    if (obj === null) {
+      return html`<span class="empty">(null)</span>`;
+    }
+
+    if (obj === undefined) {
+      return html`<span class="empty">(undefined)</span>`;
+    }
+
     const entries = Object.entries(obj);
     if (entries.length === 0) {
       if (Array.isArray(obj)) {

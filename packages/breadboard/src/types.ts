@@ -8,7 +8,6 @@ import type {
   Capability,
   Edge,
   GraphDescriptor,
-  GraphMetadata,
   InputValues,
   KitDescriptor,
   NodeDescriptor,
@@ -27,6 +26,7 @@ export type {
   InputIdentifier,
   InputValues,
   KitDescriptor,
+  KitManifest,
   KitReference,
   NodeConfiguration,
   NodeDescriptor,
@@ -248,8 +248,13 @@ export interface BreadboardRunResult {
   /**
    * The invocation id of the current node. This is useful for tracking
    * the node within the run, similar to an "index" property in map/forEach.
+   * @deprecated Use `path` instead.
    */
   get invocationId(): number;
+  /**
+   * The path of the current node. Superseeds the `invocationId` property.
+   */
+  get path(): number[];
   /**
    * The timestamp of when this result was issued.
    */
@@ -357,20 +362,25 @@ export type RunStackEntry = {
  */
 export type RunState = RunStackEntry[];
 
-export type GraphProbeData = {
-  metadata: GraphMetadata;
+export type GraphStartProbeData = {
+  graph: GraphDescriptor;
   path: number[];
   timestamp: number;
 };
 
 export type GraphStartProbeMessage = {
   type: "graphstart";
-  data: GraphProbeData;
+  data: GraphStartProbeData;
+};
+
+export type GraphEndProbeData = {
+  path: number[];
+  timestamp: number;
 };
 
 export type GraphEndProbeMessage = {
   type: "graphend";
-  data: GraphProbeData;
+  data: GraphEndProbeData;
 };
 
 export type SkipProbeMessage = {
@@ -416,6 +426,11 @@ export type OutputResponse = {
    * @see [OutputValues]
    */
   outputs: OutputValues;
+  /**
+   * Whether or not this input was bubbled.
+   */
+  bubbled: boolean;
+  path: number[];
   timestamp: number;
 };
 
@@ -458,6 +473,17 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  /**
+   * The path to the node in the invocation tree, from the root graph.
+   */
+  path: number[];
+  /**
+   * Whether or not this input was bubbled.
+   */
+  bubbled: boolean;
+  /**
+   * The timestamp of the request.
+   */
   timestamp: number;
 };
 
@@ -545,7 +571,8 @@ export interface NodeHandlerContext {
   readonly requestInput?: (
     name: string,
     schema: Schema,
-    node: NodeDescriptor
+    node: NodeDescriptor,
+    path: number[]
   ) => Promise<NodeValue>;
   /**
    * Provide output directly to the user. This will bypass the normal output
@@ -556,7 +583,8 @@ export interface NodeHandlerContext {
    */
   readonly provideOutput?: (
     outputs: OutputValues,
-    descriptor: NodeDescriptor
+    descriptor: NodeDescriptor,
+    path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
   readonly state?: RunState;

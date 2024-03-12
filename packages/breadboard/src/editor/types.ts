@@ -5,7 +5,7 @@
  */
 
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "../index.js";
+import { InspectableGraph, InspectableGraphOptions } from "../inspector/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -26,6 +26,25 @@ export type EditableGraph = {
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  /**
+   * Returns whether the edge can be changed from `from` to `to`.
+   *  @param from -- the edge spec to change from
+   * @param to  -- the edge spec to change to
+   */
+  canChangeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<EditResult>;
+  /**
+   * Changes the edge from `from` to `to`, if it can be changed.
+   * This operation does not change the identity of the edge, but rather
+   * mutates the properties of the edge. This is not an `addEdge` combined
+   * with a `removeEdge`, but rather a true mutation of the edge.
+   * @param from -- the edge spec to change from
+   * @param to  -- the edge spec to change to
+   */
+  changeEdge(from: EditableEdgeSpec, to: EditableEdgeSpec): Promise<EditResult>;
 
   canChangeConfiguration(id: NodeIdentifier): Promise<EditResult>;
   changeConfiguration(

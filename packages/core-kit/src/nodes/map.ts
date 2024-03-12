@@ -13,6 +13,7 @@ import {
   Board,
   BreadboardCapability,
   NodeHandlerContext,
+  SchemaBuilder,
 } from "@google-labs/breadboard";
 
 export type MapInputs = InputValues & {
@@ -41,12 +42,23 @@ export type RunnableBoard = GraphDescriptor & {
   url?: string;
 };
 
-export default async (
+const invoke = async (
   inputs: InputValues,
   context?: NodeHandlerContext
 ): Promise<OutputValues> => {
-  const { list, board } = inputs as MapInputs;
+  let { list } = inputs as MapInputs;
+  const { board } = inputs as MapInputs;
+  if (typeof list === "string") {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      throw new Error(
+        `List was a string, tried and failed parsing it: ${list}`
+      );
+    }
+  }
   if (!Array.isArray(list)) {
+    console.log("list", JSON.parse(list));
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
   if (!board) return { list };
@@ -69,3 +81,30 @@ export default async (
   );
   return { list: result };
 };
+
+const describe = async () => {
+  const inputSchema = new SchemaBuilder()
+    .addProperty("list", {
+      title: "List",
+      type: "array",
+      description: "The list to iterate over.",
+    })
+    .addProperty("board", {
+      title: "Board",
+      type: "object",
+      description: "The board to run for each element of the list.",
+    })
+    .build();
+
+  const outputSchema = new SchemaBuilder()
+    .addProperty("list", {
+      title: "List",
+      type: "array",
+      description: "The list of outputs from the board.",
+    })
+    .build();
+
+  return { inputSchema, outputSchema };
+};
+
+export default { invoke, describe };
