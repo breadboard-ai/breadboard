@@ -479,7 +479,12 @@ export class Graph extends PIXI.Container {
     return this.#edgeGraphics.get(edgeToString(edge)) || null;
   }
 
-  #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
+  #onChildMoved(
+    this: { graph: Graph; id: string },
+    x: number,
+    y: number,
+    hasSettled: boolean
+  ) {
     this.graph.setNodeLayoutPosition(
       this.id,
       this.graph.toGlobal({ x, y }),
@@ -488,6 +493,13 @@ export class Graph extends PIXI.Container {
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
+
+    if (!hasSettled) {
+      return;
+    }
+
+    // Propagate the move event out to the graph renderer when the cursor is released.
+    this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
   }
 
   #drawNodeHighlight() {

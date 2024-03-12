@@ -126,13 +126,14 @@ export class GraphNode extends PIXI.Graphics {
         this.x = Math.round(originalPosition.x + dragDeltaX);
         this.y = Math.round(originalPosition.y + dragDeltaY);
 
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y);
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
     );
 
     const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
+      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 
     this.addEventListener("pointerupoutside", onPointerUp);

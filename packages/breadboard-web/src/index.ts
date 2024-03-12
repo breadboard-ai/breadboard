@@ -664,6 +664,35 @@ export class Main extends LitElement {
               this.#updateLoadInfo(editableGraph.raw());
             });
           }}
+          @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn(
+                "Unable to update node metadata; no graph descriptor"
+              );
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.kits,
+            });
+
+            const { id, x, y } = evt;
+            editableGraph
+              .changeMetadata(id, { visual: { x, y } })
+              .then((result) => {
+                if (!result.success) {
+                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+                }
+
+                this.#updateLoadInfo(editableGraph.raw());
+              });
+          }}
           @breadboardnodecreate=${(
             evt: BreadboardUI.Events.NodeCreateEvent
           ) => {

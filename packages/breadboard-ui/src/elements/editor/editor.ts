@@ -20,8 +20,10 @@ import {
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
+  GraphNodeMoveEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
+  NodeMoveEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
@@ -64,6 +66,7 @@ export class Editor extends LitElement {
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
+  #onGraphNodeMoveBound = this.#onGraphNodeMove.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
@@ -174,6 +177,11 @@ export class Editor extends LitElement {
       this.#onGraphNodeDeleteBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodeMoveEvent.eventName,
+      this.#onGraphNodeMoveBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
@@ -203,6 +211,11 @@ export class Editor extends LitElement {
       this.#onGraphNodeDeleteBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphNodeMoveEvent.eventName,
+      this.#onGraphNodeMoveBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
@@ -225,12 +238,25 @@ export class Editor extends LitElement {
     }
   }
 
-  #onPointerDown() {
+  #onPointerDown(evt: Event) {
     if (!this.#addButtonRef.value) {
       return;
     }
 
+    const [top] = evt.composedPath();
+    if (
+      top instanceof HTMLLabelElement &&
+      top.getAttribute("for") === "add-node"
+    ) {
+      return;
+    }
+
     this.#addButtonRef.value.checked = false;
+  }
+
+  #onGraphNodeMove(evt: Event) {
+    const { id, x, y } = evt as GraphNodeMoveEvent;
+    this.dispatchEvent(new NodeMoveEvent(id, x, y));
   }
 
   #onGraphEdgeAttach(evt: Event) {
