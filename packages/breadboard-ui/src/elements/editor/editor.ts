@@ -334,7 +334,7 @@ export class Editor extends LitElement {
     const y = evt.pageY - this.#top - window.scrollY;
 
     // Store the middle of the node for later.
-    this.#graph.setNodeLayoutPosition(id, { x, y });
+    this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
     this.dispatchEvent(new NodeCreateEvent(id, data));
   }

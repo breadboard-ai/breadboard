@@ -318,7 +318,7 @@ export class Graph extends PIXI.Container {
   setNodeLayoutPosition(
     node: string,
     position: PIXI.IPointData,
-    justAdded = true
+    justAdded = false
   ) {
     this.#layout.set(node, { ...this.toLocal(position), justAdded });
   }
@@ -485,11 +485,7 @@ export class Graph extends PIXI.Container {
     y: number,
     hasSettled: boolean
   ) {
-    this.graph.setNodeLayoutPosition(
-      this.id,
-      this.graph.toGlobal({ x, y }),
-      false
-    );
+    this.graph.setNodeLayoutPosition(this.id, this.graph.toGlobal({ x, y }));
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
@@ -602,6 +598,16 @@ export class Graph extends PIXI.Container {
         graphNode.editable = this.editable;
 
         this.#nodeById.set(id, graphNode);
+      }
+
+      if (node.descriptor.metadata?.visual) {
+        const { x, y } = node.descriptor.metadata.visual as {
+          x: number;
+          y: number;
+        };
+
+        const pos = this.toGlobal({ x, y });
+        this.setNodeLayoutPosition(id, pos);
       }
 
       const portInfo = this.#ports.get(id);
