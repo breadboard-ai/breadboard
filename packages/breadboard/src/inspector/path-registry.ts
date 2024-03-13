@@ -133,14 +133,28 @@ class Entry implements PathRegistryEntry {
     return this.#findOrCreate(false, path, path) as Entry;
   }
 
+  arrangeSidecars() {
+    const before: InspectableRunNodeEvent[] = [];
+    const after: InspectableRunNodeEvent[] = [];
+    this.sidecars.forEach((sidecar) => {
+      const event = sidecar as InspectableRunNodeEvent;
+      if (event.end === null) {
+        after.push(event);
+      } else {
+        before.push(event);
+      }
+    });
+    return [...before, this.event, ...after];
+  }
+
   get children() {
     return this.#children;
   }
 
   #updateEvents() {
-    this.#events = this.children
+    this.#events = this.#children
       .filter(Boolean)
-      .flatMap((entry) => [...entry.sidecars, entry.event])
+      .flatMap((entry) => entry.arrangeSidecars())
       .filter(Boolean) as InspectableRunEvent[];
   }
 
