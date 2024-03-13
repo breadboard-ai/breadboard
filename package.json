@@ -49,7 +49,8 @@
         "./packages/palm-kit:build",
         "./packages/pinecone-kit:build",
         "./packages/website:build",
-        "./packages/schema:build"
+        "./packages/schema:build",
+        "./packages/team-kit:build"
       ]
     },
     "test": {
