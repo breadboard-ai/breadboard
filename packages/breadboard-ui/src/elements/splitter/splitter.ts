@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 export enum DIRECTION {
@@ -227,6 +227,18 @@ export class Splitter extends LitElement {
       const split = this.split[idx];
       this.style.setProperty(`--slot-${idx}`, `${split}fr`);
     }
+  }
+
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ direction: DIRECTION }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (!changedProperties.has("direction")) {
+      return;
+    }
+
+    this.#updateStyles();
   }
 
   render() {
