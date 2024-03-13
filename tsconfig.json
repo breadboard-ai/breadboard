@@ -26,6 +26,7 @@
     { "path": "packages/palm-kit" },
     { "path": "packages/pinecone-kit" },
     { "path": "packages/schema" },
+    { "path": "packages/team-kit" },
     { "path": "packages/template-kit" }
   ]
 }
