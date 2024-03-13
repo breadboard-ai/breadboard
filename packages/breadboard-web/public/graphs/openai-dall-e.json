@@ -162,7 +162,7 @@
           "id": "fn-7-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_7({response}) {const{data}=response;return{response:{inline_data:{data:data[0].b64_json,mime_type:\"image/png\"}}}}",
+            "code": "function fn_7({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
             "name": "fn_7",
             "raw": true
           }
@@ -232,7 +232,7 @@
           "id": "fn-5-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_5({prompt}) {return{body:{model:\"dall-e-3\",prompt,response_format:\"b64_json\"}}}",
+            "code": "function fn_5({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
             "name": "fn_5",
             "raw": true
           }

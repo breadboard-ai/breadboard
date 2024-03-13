@@ -287,6 +287,14 @@ export class ActivityLog extends LitElement {
     }
   `;
 
+  #isImageURL(nodeValue: unknown): nodeValue is { image_url: string } {
+    if (typeof nodeValue !== "object" || !nodeValue) {
+      return false;
+    }
+
+    return "image_url" in nodeValue;
+  }
+
   #isImageData(
     nodeValue: unknown
   ): nodeValue is { inline_data: { data: string; mime_type: string } } {
@@ -389,6 +397,10 @@ export class ActivityLog extends LitElement {
                                   src="data:image/${nodeValue.inline_data
                                     .mime_type};base64,${nodeValue.inline_data
                                     .data}"
+                                />`;
+                              } else if (this.#isImageURL(nodeValue)) {
+                                value = html`<img
+                                  src=${nodeValue.image_url}
                                 />`;
                               } else {
                                 value = html`<bb-json-tree
