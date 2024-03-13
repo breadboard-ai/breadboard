@@ -49,6 +49,7 @@ export default await board(({ context, worker, max }) => {
     .title("Context")
     .isArray()
     .format("multiline")
+    .behavior("llm-content")
     .optional()
     .default("[]")
     .description("Initial conversation context");
@@ -62,7 +63,11 @@ export default await board(({ context, worker, max }) => {
     .default("-1")
     .examples("3");
 
-  worker.title("Worker").description("Worker to repeat").isObject();
+  worker
+    .title("Worker")
+    .description("Worker to repeat")
+    .isObject()
+    .behavior("board");
 
   const invokeAgent = core.invoke({
     $id: "invokeAgent",

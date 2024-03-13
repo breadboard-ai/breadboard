@@ -138,6 +138,7 @@ export default await board(({ context, instruction, schema }) => {
   context
     .title("Context")
     .isArray()
+    .behavior("llm-content")
     .optional()
     .default("[]")
     .examples(sampleContext);
@@ -215,7 +216,8 @@ export default await board(({ context, instruction, schema }) => {
 
   assembleContext.context
     .title("Context")
-    .isObject()
+    .isArray()
+    .behavior("llm-content")
     .description("Agent context after generation");
   generate.text.title("Output").isString().description("Agent's output");
 

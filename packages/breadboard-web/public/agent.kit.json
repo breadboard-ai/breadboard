@@ -80,6 +80,9 @@
               "properties": {
                 "context": {
                   "type": "array",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "title": "Context"
                 },
                 "text": {
@@ -136,7 +139,10 @@
                 "context": {
                   "title": "Context",
                   "description": "Incoming conversation context",
-                  "type": "object",
+                  "type": "array",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "examples": [
                     "[]"
                   ],
@@ -394,6 +400,9 @@
               "properties": {
                 "worker": {
                   "title": "Worker",
+                  "behavior": [
+                    "board"
+                  ],
                   "description": "Worker to repeat",
                   "type": "object"
                 },
@@ -401,6 +410,9 @@
                   "title": "Context",
                   "type": "array",
                   "format": "multiline",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "default": "[]",
                   "description": "Initial conversation context"
                 },
@@ -663,6 +675,9 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "default": "[]",
                   "examples": [
                     "the universe within us"
@@ -1235,6 +1250,9 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "default": "What is the square root of e?"
                 },
                 "instruction": {
@@ -1249,6 +1267,9 @@
                   "title": "Tools",
                   "type": "array",
                   "description": "The list to iterate over.",
+                  "behavior": [
+                    "board"
+                  ],
                   "examples": [
                     "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
                   ],
@@ -1639,6 +1660,9 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
+                  "behavior": [
+                    "llm-content"
+                  ],
                   "examples": [
                     "the universe within us"
                   ]

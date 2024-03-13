@@ -288,6 +288,9 @@
             "context": {
               "title": "Ad specs",
               "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "default": "[]",
               "examples": [
                 "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."

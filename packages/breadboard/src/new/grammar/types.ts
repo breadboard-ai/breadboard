@@ -9,6 +9,7 @@ import {
   NodeDescriberFunction,
   GraphMetadata,
   Schema,
+  BehaviorSchema,
 } from "../../types.js";
 
 import {
@@ -29,7 +30,7 @@ export type OutputValues = { [key: string]: NodeValue };
 
 export type InputsMaybeAsValues<
   T extends InputValues,
-  NI extends InputValues = InputValues
+  NI extends InputValues = InputValues,
 > = Partial<{
   [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>> | T[K];
 }> & {
@@ -41,7 +42,7 @@ export type InputsMaybeAsValues<
 
 export type OutputsMaybeAsValues<
   T extends OutputValuesOrUnknown,
-  NI extends InputValues = InputValues
+  NI extends InputValues = InputValues,
 > = Partial<{
   [K in keyof T]:
     | AbstractValue<T[K]>
@@ -62,7 +63,7 @@ export type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
 
 export type NodeFactory<
   I extends InputValues = InputValues,
-  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown,
 > = (
   config?:
     | AbstractNode<InputValues, I>
@@ -87,7 +88,7 @@ export type InputsForGraphDeclaration<T extends InputValues> = {
 
 export type OutputsForGraphDeclaration<
   T extends OutputValuesOrUnknown,
-  NI extends InputValues = InputValues
+  NI extends InputValues = InputValues,
 > =
   | ({
       [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>>;
@@ -101,7 +102,7 @@ export type OutputsForGraphDeclaration<
 
 export type NodeProxyHandlerFunction<
   I extends InputValues = InputValues,
-  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown,
 > = (
   inputs: InputsForHandler<I>,
   node: AbstractNode<I, ProjectBackToOutputValues<O>>
@@ -113,7 +114,7 @@ export type NodeProxyHandlerFunction<
 
 export type GraphDeclarationFunction<
   I extends InputValues = InputValues,
-  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown,
 > = (
   inputs: InputsForGraphDeclaration<I>,
   base: { [key: string]: NodeFactory<InputValues, OutputValues> }
@@ -121,7 +122,7 @@ export type GraphDeclarationFunction<
 
 export type Lambda<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > = NodeFactory<I, O> & Serializeable & ClosureNodeInterface;
 
 export interface BoardFactory {
@@ -170,7 +171,7 @@ export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
   ): PromiseLike<TResult1 | TResult2>;
   to<
     ToO extends OutputValues = OutputValues,
-    ToC extends InputValues = InputValues
+    ToC extends InputValues = InputValues,
   >(
     to:
       | NodeProxy<O & ToC, ToO>
@@ -189,7 +190,7 @@ export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
 
 export interface BuilderNodeInterface<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > extends AbstractNode<I, O> {
   addInputsAsValues(values: InputsMaybeAsValues<I>): void;
   addInputsFromNode(
@@ -211,7 +212,7 @@ export type BuilderNodeConfig<I extends InputValues = InputValues> =
 
 export type ClosureNodeInterface<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > = Pick<BuilderNodeInterface<I, O>, "unProxy"> &
   Pick<NodeProxyMethods<I, O>, "in"> &
   Pick<AbstractValue<NodeValue>, "invoke"> & {
@@ -234,12 +235,12 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
     AbstractNode,
     { [key: string]: string },
     boolean,
-    Schema
+    Schema,
   ];
 
   abstract to<
     ToO extends OutputValues = OutputValues,
-    ToC extends InputValues = InputValues
+    ToC extends InputValues = InputValues,
   >(
     to:
       | NodeProxy<OutputValue<T> & ToC, ToO>
@@ -271,15 +272,20 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
 
   abstract title(title: string): AbstractValue<T>;
   abstract format(format: string): AbstractValue<T>;
+
   abstract description(description: string): AbstractValue<T>;
   abstract examples(...examples: string[]): AbstractValue<T>;
   abstract default(value: string): AbstractValue<T>;
   abstract optional(): AbstractValue<T>;
+
   /**
-   * When true, Breadboard will continue asking for input even when the value
-   * has already been asked for.
+   * Specifies additional behaviors for the value.
+   * Use this to better identify the shape of the value.
+   * @see [BehaviorSchema]
+   * @param tags -- a list of behavior tags to apply to the
+   * value. Must be one of the values in `BehaviorSchema`.
    */
-  abstract transient(): AbstractValue<T>;
+  abstract behavior(...tags: BehaviorSchema[]): AbstractValue<T>;
 }
 
 /**
@@ -290,7 +296,7 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
  */
 export type NodeProxy<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > = {
   [K in keyof O]: AbstractValue<O[K]> & ((...args: unknown[]) => unknown);
 } & {

@@ -45,7 +45,11 @@ Look at the topic below and do your magic`;
 const sampleContext = `the universe within us`;
 
 export default await board(({ context, instruction, stopSequences }) => {
-  context.title("Context").isArray().examples(sampleContext);
+  context
+    .title("Context")
+    .isArray()
+    .behavior("llm-content")
+    .examples(sampleContext);
   instruction
     .title("Instruction")
     .format("multiline")
@@ -73,7 +77,8 @@ export default await board(({ context, instruction, stopSequences }) => {
 
   assembleContext.context
     .title("Context")
-    .isObject()
+    .isArray()
+    .behavior("llm-content")
     .description("Agent context after generation");
   output.title("Output").isString().description("Agent's output");
 
