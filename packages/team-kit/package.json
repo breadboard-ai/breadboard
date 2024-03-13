@@ -1,22 +1,18 @@
 {
-  "name": "@google-labs/agent-kit",
+  "name": "@google-labs/team-kit",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.2.0",
-  "description": "A Breadboard Kit for building agent-like experiences",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A Breadboard kit containing nodes to organize teams of synthetic workers",
   "main": "./dist/src/index.js",
-  "exports": {
-    ".": "./dist/src/index.js",
-    "./agent.kit.json": "./agent.kit.json"
-  },
+  "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
     "dev": "wireit",
-    "dev:samples": "npm run samples --watch",
-    "samples": "wireit",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit"
@@ -38,15 +34,7 @@
         "src/generate-kit-manifest.ts"
       ],
       "output": [
-        "agent.kit.json"
-      ]
-    },
-    "samples": {
-      "command": "breadboard debug src/samples --watch -n",
-      "service": true,
-      "dependencies": [
-        "build",
-        "../breadboard-cli:build"
+        "team.kit.json"
       ]
     },
     "build": {
@@ -54,6 +42,7 @@
         "../breadboard:build",
         "../core-kit:build",
         "../json-kit:build",
+        "../agent-kit:build",
         "../template-kit:build",
         "../gemini-kit:build",
         "build:tsc",
@@ -70,7 +59,8 @@
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../gemini-kit:build:tsc"
+        "../gemini-kit:build:tsc",
+        "../agent-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -110,13 +100,12 @@
     }
   },
   "repository": {
-    "directory": "packages/agent-kit",
+    "directory": "packages/team-kit",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src",
-    "agent.kit.json"
+    "dist/src"
   ],
   "ava": {
     "timeout": "30s",
@@ -140,6 +129,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/agent-kit": "^0.2.0",
     "@google-labs/breadboard": "^0.11.2",
     "@google-labs/core-kit": "^0.4.0",
     "@google-labs/gemini-kit": "^0.1.3",
