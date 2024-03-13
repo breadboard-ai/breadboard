@@ -69,12 +69,17 @@ export class UI extends LitElement {
   @state()
   selectedNodeId: string | null = null;
 
+  @state()
+  isPortrait = window.matchMedia("(orientation: portrait)").matches;
+
   #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
-  #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
   #messageDurations: Map<HarnessRunResult, number> = new Map();
+  #resizeObserver = new ResizeObserver(() => {
+    this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
+  });
 
   static styles = uiControllerStyles;
 
@@ -88,6 +93,16 @@ export class UI extends LitElement {
 
       this.#detailsRef.value.classList.remove("active");
     });
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.#resizeObserver.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#resizeObserver.unobserve(this);
   }
 
   clearPosition() {
@@ -201,20 +216,6 @@ export class UI extends LitElement {
     }
   }
 
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{ selectedNodeId: string | null }>
-      | Map<PropertyKey, unknown>
-  ): void {
-    if (
-      changedProperties.has("selectedNodeId") &&
-      changedProperties.get("selectedNodeId") !== undefined &&
-      changedProperties.get("selectedNodeId") !== this.selectedNodeId
-    ) {
-      this.#autoSwitchSidePanel = 1;
-    }
-  }
-
   protected updated(): void {
     this.#autoSwitchSidePanel = null;
   }
@@ -236,6 +237,8 @@ export class UI extends LitElement {
       .highlightedNodeId=${nodeId}
       @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
+        this.#autoSwitchSidePanel = 1;
+        this.requestUpdate();
       }}
     ></bb-editor>`;
 
@@ -347,8 +350,8 @@ export class UI extends LitElement {
     `;
 
     return html`<bb-splitter
-      direction="horizontal"
-      name="landscape-main"
+      direction=${this.isPortrait ? "vertical" : "horizontal"}
+      name="layout-main"
       split="[0.75, 0.25]"
     >
       <section id="diagram" slot="slot-0">
