@@ -683,8 +683,12 @@ export class Main extends LitElement {
             });
 
             const { id, x, y } = evt;
+            const existingNode = loadInfo.graphDescriptor.nodes.find(
+              (node) => node.id === id
+            );
+            const metadata = existingNode?.metadata || {};
             editableGraph
-              .changeMetadata(id, { visual: { x, y } })
+              .changeMetadata(id, { ...metadata, visual: { x, y } })
               .then((result) => {
                 if (!result.success) {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
