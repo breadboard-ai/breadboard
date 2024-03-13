@@ -101,12 +101,14 @@ export class GraphNode extends PIXI.Graphics {
   addPointerEventListeners() {
     let dragStart: PIXI.IPointData | null = null;
     let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
+    let hasMoved = false;
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphNode)) {
         return;
       }
 
+      hasMoved = false;
       dragStart = evt.global.clone();
       originalPosition = this.position.clone();
     });
@@ -125,6 +127,7 @@ export class GraphNode extends PIXI.Graphics {
 
         this.x = Math.round(originalPosition.x + dragDeltaX);
         this.y = Math.round(originalPosition.y + dragDeltaY);
+        hasMoved = true;
 
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
@@ -133,6 +136,11 @@ export class GraphNode extends PIXI.Graphics {
     const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
+      if (!hasMoved) {
+        return;
+      }
+
+      hasMoved = false;
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 
