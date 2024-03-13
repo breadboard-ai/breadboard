@@ -150,7 +150,7 @@
     "@types/node": "^20.11.25",
     "@types/serve-handler": "^6.1.4",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/parser": "^7.2.0",
     "ava": "^5.2.0",
     "typescript": "^5.3.3"
   },
