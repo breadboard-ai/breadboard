@@ -22,8 +22,8 @@ const environment = (): Environment =>
   typeof globalThis.process !== "undefined"
     ? "node"
     : typeof globalThis.window !== "undefined"
-    ? "browser"
-    : "worker";
+      ? "browser"
+      : "worker";
 
 export type SecretInputs = {
   keys: string[];
@@ -58,10 +58,31 @@ export const requireNonEmpty = (key: string, value?: string | null) => {
   return value;
 };
 
+const getKeys = (
+  inputs: InputValues = { keys: [] },
+  safe: boolean
+): string[] => {
+  const { keys } = inputs as SecretInputs;
+  if (typeof keys === "string") {
+    try {
+      return JSON.parse(keys);
+    } catch (e) {
+      const error = e as Error;
+      const message = `Error parsing keys: ${error.message}`;
+      if (safe) {
+        console.error(message);
+        return [];
+      }
+      throw new Error(message);
+    }
+  }
+  return keys;
+};
+
 export const secretsDescriber: NodeDescriberFunction = async (
   inputs?: InputValues
 ) => {
-  const { keys } = (inputs ? inputs : {}) as SecretInputs;
+  const keys = getKeys(inputs, true);
   const properties = keys
     ? Object.fromEntries(
         keys.map((key) => [
@@ -94,7 +115,7 @@ export const secretsDescriber: NodeDescriberFunction = async (
 export default {
   describe: secretsDescriber,
   invoke: async (inputs: InputValues) => {
-    const { keys = [] } = inputs as SecretInputs;
+    const keys = getKeys(inputs, false);
     return Object.fromEntries(
       await Promise.all(
         keys.map(async (key) => [
