@@ -127,6 +127,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "OpenAI DALL·E",
+    "url": "/graphs/openai-dall-e.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "OpenAI GPT-3.5-turbo",
     "url": "/graphs/openai-gpt-35-turbo.json",
     "version": "0.0.2"

@@ -1,0 +1,248 @@
+{
+  "title": "OpenAI DALL·E",
+  "description": "This board is the simplest possible invocation of OpenAI's DALL·E API to generate images from text.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fn-7",
+      "to": "output-2",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "fetch-6",
+      "to": "fn-7",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "fn-4",
+      "to": "fetch-6",
+      "out": "headers",
+      "in": "headers"
+    },
+    {
+      "from": "fn-5",
+      "to": "fetch-6",
+      "out": "body",
+      "in": "body"
+    },
+    {
+      "from": "secrets-3",
+      "to": "fn-4",
+      "out": "OPENAI_API_KEY",
+      "in": "key"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-5",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "response": {
+              "type": "object",
+              "format": "image",
+              "title": "response"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-7",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#fn-7"
+      },
+      "metadata": {
+        "title": "Extract Response",
+        "description": "Extract the response from the API call"
+      }
+    },
+    {
+      "id": "fetch-6",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST"
+      },
+      "metadata": {
+        "title": "Call OpenAI DALL·E",
+        "description": "Call the OpenAI DALL·E API to generate images from text."
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#fn-4"
+      },
+      "metadata": {
+        "title": "Make Headers",
+        "description": "Make the headers for the API request"
+      }
+    },
+    {
+      "id": "fn-5",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#fn-5"
+      },
+      "metadata": {
+        "title": "Make Body",
+        "description": "Make the body for the API request"
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "metadata": {
+        "title": "API Key",
+        "description": "The API key for the OpenAI DALL·E API."
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "description": "The prompt to generate images from.",
+              "examples": [
+                "A painting of a breadboard"
+              ]
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "fn-7": {
+      "edges": [
+        {
+          "from": "fn-7-input",
+          "to": "fn-7-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-7-run",
+          "to": "fn-7-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-7-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-7-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_7({response}) {const{data}=response;return{response:{inline_data:{data:data[0].b64_json,mime_type:\"image/png\"}}}}",
+            "name": "fn_7",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-7-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-4": {
+      "edges": [
+        {
+          "from": "fn-4-input",
+          "to": "fn-4-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-4-run",
+          "to": "fn-4-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-4-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-4-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_4({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
+            "name": "fn_4",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-4-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-5": {
+      "edges": [
+        {
+          "from": "fn-5-input",
+          "to": "fn-5-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-5-run",
+          "to": "fn-5-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-5-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-5-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_5({prompt}) {return{body:{model:\"dall-e-3\",prompt,response_format:\"b64_json\"}}}",
+            "name": "fn_5",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-5-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
