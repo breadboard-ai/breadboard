@@ -18,17 +18,27 @@ const makeHeaders = code(({ key }) => {
 
 const makeBody = code(({ prompt }) => {
   return {
-    body: { model: "dall-e-3", prompt, response_format: "b64_json" },
+    body: { model: "dall-e-3", prompt /* response_format: "b64_json" */ },
   };
 });
 
 const extractResponse = code(({ response }) => {
-  const { data } = response as { data: { b64_json: string }[] };
-  return {
-    response: {
-      inline_data: { data: data[0].b64_json, mime_type: "image/png" },
-    },
-  };
+  const { data } = response as { data: { url: string }[] };
+  return { response: { image_url: data[0].url } };
+  // const { data } = response as { data: { b64_json: string }[] };
+  // const b64 = atob(data[0].b64_json);
+  // const buffer = new ArrayBuffer(b64.length);
+  // const view = new Uint8Array(buffer);
+  // for (let i = 0; i < b64.length; i++) {
+  //   view[i] = b64.charCodeAt(i);
+  // }
+  // const blob = new Blob([buffer], { type: "image/png" });
+  // return {
+  //   response: {
+  //     image_url: URL.createObjectURL(blob),
+  //     // inline_data: { data: data[0].b64_json, mime_type: "image/png" },
+  //   },
+  // };
 });
 
 export default await board(({ prompt }) => {
