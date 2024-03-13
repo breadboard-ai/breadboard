@@ -327,9 +327,9 @@ export class Editor extends LitElement {
       return;
     }
 
-    const nextNodeId =
-      (this.loadInfo?.graphDescriptor?.nodes.length || 1_000) + 1;
-    const id = `${data}-${nextNodeId}`;
+    const nextNodeId = globalThis.crypto.getRandomValues(new Uint8Array(3));
+    // TODO: Check for clashes
+    const id = `${data}-${nextNodeId.join("-")}`;
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
