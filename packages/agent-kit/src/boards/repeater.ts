@@ -71,14 +71,29 @@ export default await board(({ context, worker, max }) => {
 
   const invokeAgent = core.invoke({
     $id: "invokeAgent",
+    $metadata: {
+      title: "Invoke Worker",
+      description: "Invoking the worker",
+    },
     $board: worker.memoize(),
     context,
   });
 
-  base.output({ $id: "exit", context: invokeAgent.exit });
+  base.output({
+    $id: "exit",
+    $metadata: {
+      title: "Exit",
+      description: "Exiting early from the repeater",
+    },
+    context: invokeAgent.exit,
+  });
 
   const count = counter({
     $id: "counter",
+    $metadata: {
+      title: "Counter",
+      description: "Counting the number of repetitions",
+    },
     context: invokeAgent.context,
     count: max,
   });
