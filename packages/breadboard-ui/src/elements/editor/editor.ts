@@ -327,9 +327,10 @@ export class Editor extends LitElement {
       return;
     }
 
-    const nextNodeId = globalThis.crypto.getRandomValues(new Uint8Array(3));
+    const randomId = globalThis.crypto.randomUUID();
+    const nextNodeId = randomId.split("-");
     // TODO: Check for clashes
-    const id = `${data}-${nextNodeId.join("-")}`;
+    const id = `${data}-${nextNodeId[0]}`;
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
