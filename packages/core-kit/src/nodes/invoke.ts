@@ -114,6 +114,7 @@ const describe = async (
     },
     $board: {
       title: "board",
+      behavior: ["board"],
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",
       type: "string", // TODO: Make this a union type

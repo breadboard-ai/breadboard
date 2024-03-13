@@ -20,7 +20,7 @@ import {
   NodeTypeIdentifier,
   KeyMap,
 } from "../runner/types.js";
-import { Schema } from "../../types.js";
+import { BehaviorSchema, Schema } from "../../types.js";
 
 import { BuilderNode, isBuilderNodeProxy } from "./node.js";
 import { BuilderScope } from "./scope.js";
@@ -85,14 +85,14 @@ export class Value<T extends NodeValue = NodeValue>
     BuilderNodeInterface<InputValues, OutputValue<T>>,
     { [key: string]: string },
     boolean,
-    Schema
+    Schema,
   ] {
     return [this.#node.unProxy(), this.#keymap, this.#constant, this.#schema];
   }
 
   to<
     ToO extends OutputValues = OutputValues,
-    ToC extends InputValues = InputValues
+    ToC extends InputValues = InputValues,
   >(
     to:
       | NodeProxy<OutputValue<T> & ToC, ToO>
@@ -268,10 +268,10 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
-  transient(): AbstractValue<T> {
+  behavior(...tags: BehaviorSchema[]): AbstractValue<T> {
     const schema = this.#schema;
     schema.behavior ??= [];
-    schema.behavior.push("transient");
+    schema.behavior.push(...tags);
     return this;
   }
 

@@ -111,12 +111,23 @@ const boardToFunction = board(({ item }) => {
 });
 
 export default await board(({ context, instruction, tools }) => {
-  context.title("Context").isArray().optional().default(sampleContext);
+  context
+    .title("Context")
+    .isArray()
+    .behavior("llm-content")
+    .optional()
+    .default(sampleContext);
   instruction
     .title("Instruction")
     .format("multiline")
     .examples(sampleInstruction);
-  tools.title("Tools").isArray().optional().examples(sampleTools).default("[]");
+  tools
+    .title("Tools")
+    .isArray()
+    .behavior("board")
+    .optional()
+    .examples(sampleTools)
+    .default("[]");
 
   const buildContext = contextBuilder({
     $metadata: {

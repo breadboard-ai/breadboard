@@ -79,7 +79,8 @@ export default await board(({ context, title, description }) => {
   context
     .title("Context")
     .description("Incoming conversation context")
-    .isObject()
+    .isArray()
+    .behavior("llm-content")
     .optional()
     .examples(JSON.stringify([]))
     .default("[]");
@@ -145,7 +146,10 @@ export default await board(({ context, title, description }) => {
   });
 
   return {
-    context: appendContext.context.isArray().title("Context"),
+    context: appendContext.context
+      .isArray()
+      .behavior("llm-content")
+      .title("Context"),
     text: input.text.title("Text"),
   };
 }).serialize({
