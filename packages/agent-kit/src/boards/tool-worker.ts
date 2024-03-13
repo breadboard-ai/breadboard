@@ -130,57 +130,84 @@ export default await board(({ context, instruction, tools }) => {
     .default("[]");
 
   const buildContext = contextBuilder({
+    $id: "buildContext",
     $metadata: {
       title: "Build Context",
+      description:
+        "Combining the context and instruction into a single context",
     },
     context,
     instruction,
   });
 
   const turnBoardsToFunctions = core.map({
-    $metadata: { title: "Turn Boards into Functions" },
+    $id: "turnBoardsToFunctions",
+    $metadata: {
+      title: "Turn Boards into Functions",
+      description: "Turning provided boards into functions",
+    },
     board: boardToFunction,
     list: tools.isArray(),
   });
 
   const formatFunctionDeclarations = formatResults({
+    $id: "formatFunctionDeclarations",
     $metadata: {
       title: "Format Function Declarations",
+      description: "Formatting the function declarations",
     },
     list: turnBoardsToFunctions.list,
   });
 
   const doWork = gemini.text({
-    $metadata: { title: "Do Work" },
+    $id: "doWork",
+    $metadata: { title: "Do Work", description: "Using Gemini to do the work" },
     tools: formatFunctionDeclarations.tools,
     context: buildContext.context,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
   const router = functionCallOrText({
-    $metadata: { title: "Router" },
+    $id: "router",
+    $metadata: {
+      title: "Router",
+      description: "Routing to either function call invocation or text reply",
+    },
     context: doWork.context,
   });
 
   const assembleBoardInvoke = boardInvokeAssembler({
-    $metadata: { title: "Assemble Board Invoke" },
+    $id: "assembleBoardInvoke",
+    $metadata: {
+      title: "Assemble Board Invoke",
+      description: "Assembling the board invocation based on Gemini response",
+    },
     urlMap: formatFunctionDeclarations.urlMap,
     context: router.context,
     functionCall: router.functionCall,
   });
 
   const invokeBoard = core.invoke({
-    $metadata: { title: "Invoke Board" },
+    $id: "invokeBoard",
+    $metadata: { title: "Invoke Board", description: "Invoking the board" },
     ...assembleBoardInvoke,
   });
 
   const extractBoardResponse = boardResponseExtractor({
-    $metadata: { title: "Format Board Response" },
+    $id: "extractBoardResponse",
+    $metadata: {
+      title: "Format Board Response",
+      description: "Extracting the board response from the invocation",
+    },
     ...invokeBoard,
   });
 
   const formatFunctionResponse = functionResponseFormatter({
-    $metadata: { title: "Format Function Response" },
+    $id: "formatFunctionResponse",
+    $metadata: {
+      title: "Format Function Response",
+      description: "Formatting the function response",
+    },
     context: buildContext.context,
     generated: router.context,
     functionCall: router.functionCall,
@@ -188,20 +215,32 @@ export default await board(({ context, instruction, tools }) => {
   });
 
   const replyToFunction = gemini.text({
-    $metadata: { title: "Reply to Function" },
+    $id: "replyToFunction",
+    $metadata: {
+      title: "Reply to Function",
+      description: "Using Gemini to reply to function results",
+    },
     tools: formatFunctionDeclarations.tools,
     context: formatFunctionResponse.context,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
   const assembleContext = contextAssembler({
-    $metadata: { title: "Assemble Context" },
+    $id: "assembleContext",
+    $metadata: {
+      title: "Assemble Context",
+      description: "Assembling the final context for the output",
+    },
     generated: replyToFunction.context,
     context: formatFunctionResponse.context,
   });
 
   base.output({
-    $metadata: { title: "Function Call" },
+    $id: "functionOutput",
+    $metadata: {
+      title: "Function Call Output",
+      description: "Outputting the function call results",
+    },
     context: assembleContext.context,
     text: replyToFunction.text,
   });

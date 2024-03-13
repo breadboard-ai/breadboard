@@ -49,31 +49,36 @@ export default await board(({ prompt }) => {
     .examples("A painting of a breadboard");
 
   const headerMaker = makeHeaders({
+    $id: "headerMaker",
     $metadata: {
       title: "Make Headers",
-      description: "Make the headers for the API request",
+      description: "Making the headers for the API request",
     },
     key: core.secrets({
+      $id: "openaiApiKey",
       $metadata: {
-        title: "API Key",
-        description: "The API key for the OpenAI DALL·E API.",
+        title: "Get OPEN API Key",
+        description: "Getting the API key for the OpenAI DALL·E API.",
       },
       keys: ["OPENAI_API_KEY"],
     }).OPENAI_API_KEY,
   });
 
   const bodyMaker = makeBody({
+    $id: "bodyMaker",
     $metadata: {
       title: "Make Body",
-      description: "Make the body for the API request",
+      description: "Making the body for the API request",
     },
     prompt,
   });
 
   const dalleCaller = core.fetch({
+    $id: "dalleCaller",
     $metadata: {
       title: "Call OpenAI DALL·E",
-      description: "Call the OpenAI DALL·E API to generate images from text.",
+      description:
+        "Calling the OpenAI DALL·E API to generate images from text.",
     },
     url: "https://api.openai.com/v1/images/generations",
     method: "POST",
@@ -82,19 +87,20 @@ export default await board(({ prompt }) => {
   });
 
   const responseExtractor = extractResponse({
+    $id: "responseExtractor",
     $metadata: {
       title: "Extract Response",
-      description: "Extract the response from the API call",
+      description: "Extracting the response from the API call",
     },
     response: dalleCaller.response,
   });
 
-  const response = responseExtractor.response.isObject().format("image");
+  const response = responseExtractor.response.isObject().behavior("image");
 
   return { response };
 }).serialize({
-  title: "OpenAI DALL·E",
+  title: "OpenAI DALL-E Image Generator",
   description:
-    "This board is the simplest possible invocation of OpenAI's DALL·E API to generate images from text.",
+    "Generate images from a text prompt using the OpenAI DALL-E API.",
   version: "0.0.1",
 });

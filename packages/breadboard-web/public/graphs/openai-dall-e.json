@@ -1,41 +1,41 @@
 {
-  "title": "OpenAI DALL·E",
-  "description": "This board is the simplest possible invocation of OpenAI's DALL·E API to generate images from text.",
+  "title": "OpenAI DALL-E Image Generator",
+  "description": "Generate images from a text prompt using the OpenAI DALL-E API.",
   "version": "0.0.1",
   "edges": [
     {
-      "from": "fn-7",
+      "from": "responseExtractor",
       "to": "output-2",
       "out": "response",
       "in": "response"
     },
     {
-      "from": "fetch-6",
-      "to": "fn-7",
+      "from": "dalleCaller",
+      "to": "responseExtractor",
       "out": "response",
       "in": "response"
     },
     {
-      "from": "fn-4",
-      "to": "fetch-6",
+      "from": "headerMaker",
+      "to": "dalleCaller",
       "out": "headers",
       "in": "headers"
     },
     {
-      "from": "fn-5",
-      "to": "fetch-6",
+      "from": "bodyMaker",
+      "to": "dalleCaller",
       "out": "body",
       "in": "body"
     },
     {
-      "from": "secrets-3",
-      "to": "fn-4",
+      "from": "openaiApiKey",
+      "to": "headerMaker",
       "out": "OPENAI_API_KEY",
       "in": "key"
     },
     {
       "from": "input-1",
-      "to": "fn-5",
+      "to": "bodyMaker",
       "out": "prompt",
       "in": "prompt"
     }
@@ -50,7 +50,9 @@
           "properties": {
             "response": {
               "type": "object",
-              "format": "image",
+              "behavior": [
+                "image"
+              ],
               "title": "response"
             }
           }
@@ -58,18 +60,18 @@
       }
     },
     {
-      "id": "fn-7",
+      "id": "responseExtractor",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-7"
+        "$board": "#responseExtractor"
       },
       "metadata": {
         "title": "Extract Response",
-        "description": "Extract the response from the API call"
+        "description": "Extracting the response from the API call"
       }
     },
     {
-      "id": "fetch-6",
+      "id": "dalleCaller",
       "type": "fetch",
       "configuration": {
         "url": "https://api.openai.com/v1/images/generations",
@@ -77,33 +79,33 @@
       },
       "metadata": {
         "title": "Call OpenAI DALL·E",
-        "description": "Call the OpenAI DALL·E API to generate images from text."
+        "description": "Calling the OpenAI DALL·E API to generate images from text."
       }
     },
     {
-      "id": "fn-4",
+      "id": "headerMaker",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-4"
+        "$board": "#headerMaker"
       },
       "metadata": {
         "title": "Make Headers",
-        "description": "Make the headers for the API request"
+        "description": "Making the headers for the API request"
       }
     },
     {
-      "id": "fn-5",
+      "id": "bodyMaker",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-5"
+        "$board": "#bodyMaker"
       },
       "metadata": {
         "title": "Make Body",
-        "description": "Make the body for the API request"
+        "description": "Making the body for the API request"
       }
     },
     {
-      "id": "secrets-3",
+      "id": "openaiApiKey",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -111,8 +113,8 @@
         ]
       },
       "metadata": {
-        "title": "API Key",
-        "description": "The API key for the OpenAI DALL·E API."
+        "title": "Get OPEN API Key",
+        "description": "Getting the API key for the OpenAI DALL·E API."
       }
     },
     {
@@ -139,106 +141,106 @@
     }
   ],
   "graphs": {
-    "fn-7": {
+    "responseExtractor": {
       "edges": [
         {
-          "from": "fn-7-input",
-          "to": "fn-7-run",
+          "from": "responseExtractor-input",
+          "to": "responseExtractor-run",
           "out": "*"
         },
         {
-          "from": "fn-7-run",
-          "to": "fn-7-output",
+          "from": "responseExtractor-run",
+          "to": "responseExtractor-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-7-input",
+          "id": "responseExtractor-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-7-run",
+          "id": "responseExtractor-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_7({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
-            "name": "fn_7",
+            "code": "function responseExtractor({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
+            "name": "responseExtractor",
             "raw": true
           }
         },
         {
-          "id": "fn-7-output",
+          "id": "responseExtractor-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-4": {
+    "headerMaker": {
       "edges": [
         {
-          "from": "fn-4-input",
-          "to": "fn-4-run",
+          "from": "headerMaker-input",
+          "to": "headerMaker-run",
           "out": "*"
         },
         {
-          "from": "fn-4-run",
-          "to": "fn-4-output",
+          "from": "headerMaker-run",
+          "to": "headerMaker-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-4-input",
+          "id": "headerMaker-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-4-run",
+          "id": "headerMaker-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_4({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
-            "name": "fn_4",
+            "code": "function headerMaker({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
+            "name": "headerMaker",
             "raw": true
           }
         },
         {
-          "id": "fn-4-output",
+          "id": "headerMaker-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-5": {
+    "bodyMaker": {
       "edges": [
         {
-          "from": "fn-5-input",
-          "to": "fn-5-run",
+          "from": "bodyMaker-input",
+          "to": "bodyMaker-run",
           "out": "*"
         },
         {
-          "from": "fn-5-run",
-          "to": "fn-5-output",
+          "from": "bodyMaker-run",
+          "to": "bodyMaker-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-5-input",
+          "id": "bodyMaker-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-5-run",
+          "id": "bodyMaker-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_5({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
-            "name": "fn_5",
+            "code": "function bodyMaker({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
+            "name": "bodyMaker",
             "raw": true
           }
         },
         {
-          "id": "fn-5-output",
+          "id": "bodyMaker-output",
           "type": "output",
           "configuration": {}
         }

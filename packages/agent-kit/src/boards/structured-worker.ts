@@ -154,10 +154,21 @@ export default await board(({ context, instruction, schema }) => {
     .optional()
     .default("{}");
 
-  const schemish = json.schemish({ $id: "schemish", schema });
+  const schemish = json.schemish({
+    $id: "schemish",
+    $metadata: {
+      title: "Schemish",
+      description: "Converting JSON schema to a more compact format",
+    },
+    schema,
+  });
 
   const format = templates.promptTemplate({
     $id: "format",
+    $metadata: {
+      title: "Reply Structure Formatter",
+      description: "Formatting the reply structure for the agent.",
+    },
     template: `Reply as valid JSON of the following format:
 
 \`\`\`json
@@ -169,6 +180,10 @@ export default await board(({ context, instruction, schema }) => {
 
   const buildContext = contextBuilder({
     $id: "buildContext",
+    $metadata: {
+      title: "Build Context",
+      description: "Building the context for the agent",
+    },
     context,
     instruction,
     format: format.prompt,
@@ -176,12 +191,20 @@ export default await board(({ context, instruction, schema }) => {
 
   const initialValues = core.passthrough({
     $id: "initialValues",
+    $metadata: {
+      title: "Initial Values",
+      description: "Populating initial values for the counter",
+    },
     count: 5,
     error: "stub",
   });
 
   const count = counter({
     $id: "count",
+    $metadata: {
+      title: "Counter",
+      description: "Counting the JSON healing iteration",
+    },
     count: initialValues.count,
     error: initialValues.error,
     context: buildContext.context.memoize(),
@@ -190,12 +213,20 @@ export default await board(({ context, instruction, schema }) => {
 
   const generate = gemini.text({
     $id: "generate",
+    $metadata: {
+      title: "Generate",
+      description: "Generating the agent's output with Gemini",
+    },
     context: count.continue,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
   const validate = json.validateJson({
     $id: "validate",
+    $metadata: {
+      title: "Validate JSON",
+      description: "Validating the generated JSON",
+    },
     json: generate.text.isString(),
     schema: schema.memoize(),
   });
@@ -203,13 +234,21 @@ export default await board(({ context, instruction, schema }) => {
   validate.$error.as("error").to(count);
 
   base.output({
-    $id: "validationError",
+    $id: "errorOutput",
+    $metadata: {
+      title: "Error Output",
+      description: "Displaying error output, giving up on JSON healing",
+    },
     $error: validate.$error,
     context: count.stop,
   });
 
   const assembleContext = contextAssembler({
     $id: "assembleContext",
+    $metadata: {
+      title: "Assemble Context",
+      description: "Assembling the context for the agent",
+    },
     context: buildContext.context,
     json: validate.json,
   });
