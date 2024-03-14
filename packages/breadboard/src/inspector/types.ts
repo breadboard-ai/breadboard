@@ -568,3 +568,23 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
 };
+
+export type RunObserverLogLevel =
+  /**
+   * Show only events that are marked as info.
+   * Typically, these are useful for communicating the
+   * broad picture of what the graph is doing.
+   */
+  | "info"
+  /**
+   * Show info events and debug events. This includes all
+   * events that are emitted by the graph.
+   */
+  | "debug";
+
+export type RunObserverOptions = {
+  /**
+   * Logging level.
+   */
+  logLevel?: RunObserverLogLevel;
+};

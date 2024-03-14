@@ -32,10 +32,30 @@ import {
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
+  RunObserverLogLevel,
+  RunObserverOptions,
 } from "./types.js";
 
 const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
+};
+
+const shouldSkipEvent = (
+  options: RunObserverOptions,
+  node: NodeDescriptor,
+  isTopLevel: boolean
+): boolean => {
+  // Never skip input or output events.
+  if (isTopLevel && (node.type === "input" || node.type === "output"))
+    return false;
+
+  const isAskingForDebug = !!options.logLevel && options.logLevel == "debug";
+  // If asking for debug, show all events, regardless of the node's log level.
+  if (isAskingForDebug) return false;
+
+  const nodelogLevel =
+    (node.metadata?.logLevel as RunObserverLogLevel) || "debug";
+  return nodelogLevel !== "info";
 };
 
 /**
@@ -122,10 +142,12 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 
 export class EventManager {
   #graphStore;
+  #options;
   #pathRegistry = new PathRegistry([]);
 
-  constructor(store: InspectableGraphStore) {
+  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
+    this.#options = options;
   }
 
   #addGraphstart(data: GraphStartProbeData) {
@@ -155,6 +177,10 @@ export class EventManager {
   #addNodestart(data: NodeStartResponse) {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
+
+    if (shouldSkipEvent(this.#options, node, path.length === 1)) {
+      return;
+    }
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
@@ -219,7 +245,9 @@ export class EventManager {
     }
     const existing = entry.event;
     if (!existing) {
-      console.error("Expected an existing event for", path);
+      // This is an event that was skipped because the log levels didn't
+      // match.
+      this.#pathRegistry.finalizeSidecar(path, data);
       return;
     }
     if (existing.type !== "node") {

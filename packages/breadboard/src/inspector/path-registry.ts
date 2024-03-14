@@ -171,6 +171,7 @@ class Entry implements PathRegistryEntry {
   get events() {
     if (this.#eventsIsDirty) {
       this.#updateEvents();
+      console.log("events updated", this.#events);
       this.#eventsIsDirty = false;
     }
     return this.#events;

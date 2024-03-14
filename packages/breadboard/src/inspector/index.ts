@@ -12,6 +12,7 @@ import {
   InspectableGraph,
   InspectableGraphOptions,
   InspectableRunObserver,
+  RunObserverOptions,
 } from "./types.js";
 
 export const inspect = (
@@ -21,7 +22,9 @@ export const inspect = (
   return inspectableGraph(graph, options);
 };
 
-export const createRunObserver = (): InspectableRunObserver => {
+export const createRunObserver = (
+  options?: RunObserverOptions
+): InspectableRunObserver => {
   const store = new GraphStore();
-  return new RunObserver(store);
+  return new RunObserver(store, options || {});
 };

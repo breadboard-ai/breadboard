@@ -8,28 +8,19 @@
 			"additionalProperties": false,
 			"properties": {
 				"inputs": {
-					"type": "object",
-					"propertyNames": {
-						"description": "Unique identifier of a node's input."
-					},
+					"$ref": "#/definitions/InputValues",
 					"description": "For internal testing only. Do not use.",
 					"deprecated": "For internal testing only. Do not use."
 				},
 				"outputs": {
 					"anyOf": [
 						{
-							"type": "object",
-							"propertyNames": {
-								"description": "Unique identifier of a node's input."
-							}
+							"$ref": "#/definitions/OutputValues"
 						},
 						{
 							"type": "array",
 							"items": {
-								"type": "object",
-								"propertyNames": {
-									"description": "Unique identifier of a node's input."
-								}
+								"$ref": "#/definitions/OutputValues"
 							}
 						}
 					],
@@ -126,6 +117,70 @@
 			],
 			"description": "Represents a graph."
 		},
+		"InputValues": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's input."
+			},
+			"description": "Values that are supplied as inputs to the `NodeHandler`."
+		},
+		"NodeValue": {
+			"anyOf": [
+				{
+					"type": "string"
+				},
+				{
+					"type": "number"
+				},
+				{
+					"type": "boolean"
+				},
+				{
+					"type": "null"
+				},
+				{
+					"not": {}
+				},
+				{
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeValue"
+					}
+				},
+				{
+					"$ref": "#/definitions/Capability"
+				},
+				{
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/NodeValue"
+					}
+				}
+			],
+			"description": "A type representing a valid JSON value."
+		},
+		"Capability": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"kind"
+			],
+			"additionalProperties": false
+		},
+		"OutputValues": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"description": "Values that the `NodeHandler` outputs."
+		},
 		"NodeIdentifier": {
 			"type": "string",
 			"description": "Unique identifier of a node in a graph."
@@ -211,53 +266,6 @@
 			},
 			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
 		},
-		"NodeValue": {
-			"anyOf": [
-				{
-					"type": "string"
-				},
-				{
-					"type": "number"
-				},
-				{
-					"type": "boolean"
-				},
-				{
-					"type": "null"
-				},
-				{
-					"not": {}
-				},
-				{
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/NodeValue"
-					}
-				},
-				{
-					"$ref": "#/definitions/Capability"
-				},
-				{
-					"type": "object",
-					"additionalProperties": {
-						"$ref": "#/definitions/NodeValue"
-					}
-				}
-			],
-			"description": "A type representing a valid JSON value."
-		},
-		"Capability": {
-			"type": "object",
-			"properties": {
-				"kind": {
-					"type": "string"
-				}
-			},
-			"required": [
-				"kind"
-			],
-			"additionalProperties": false
-		},
 		"NodeMetadata": {
 			"type": "object",
 			"properties": {
@@ -299,7 +307,15 @@
 							}
 						}
 					],
-					"description": "Metadata that conveys visual informationa about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
+					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
+				},
+				"logLevel": {
+					"type": "string",
+					"enum": [
+						"debug",
+						"info"
+					],
+					"description": "Logging level."
 				}
 			},
 			"additionalProperties": false,
@@ -340,16 +356,6 @@
 				"description": "Unique identifier of a graph."
 			},
 			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
-		},
-		"InputValues": {
-			"type": "object",
-			"additionalProperties": {
-				"$ref": "#/definitions/NodeValue"
-			},
-			"propertyNames": {
-				"description": "Unique identifier of a node's input."
-			},
-			"description": "Values that are supplied as inputs to the `NodeHandler`."
 		}
 	}
 }
