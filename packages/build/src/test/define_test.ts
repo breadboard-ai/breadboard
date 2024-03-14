@@ -580,3 +580,27 @@ test("node with primary output acts like that output port", () => {
     in1: instance,
   });
 });
+
+test("type error: node without primary output doesn't act like an output port", () => {
+  const definition = defineNodeType(
+    {},
+    {
+      out1: {
+        type: "string",
+      },
+    },
+    () => {
+      return {
+        out1: "foo",
+      };
+    }
+  );
+  const instance = definition({ in1: "foo" });
+  // @ts-expect-error no primary output, not an output
+  instance satisfies OutputPortReference<{ type: "string" }>;
+  assert.equal(
+    // $ExpectType undefined
+    instance[OutputPortGetter],
+    undefined
+  );
+});

@@ -87,5 +87,5 @@ type GetPrimaryPortType<Ports extends PortConfigMap> = {
 
 type PrimaryOutputPort<O extends PortConfigMap> =
   GetPrimaryPortType<O> extends never
-    ? never
+    ? undefined
     : OutputPort<{ type: GetPrimaryPortType<O> }>;
