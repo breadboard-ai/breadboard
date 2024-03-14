@@ -6,23 +6,20 @@
 
 import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { customElement, property, state } from "lit/decorators.js";
-import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
+import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
   Board,
-  Schema,
   type InputValues,
-  clone,
-  StreamCapabilityType,
-  OutputValues,
-  NodeStartResponse,
   Kit,
+  InspectableRunObserver,
+  createRunObserver,
+  InspectableRun,
 } from "@google-labs/breadboard";
-import { until } from "lit/directives/until.js";
-import { classMap } from "lit/directives/class-map.js";
-import { Ref, createRef, ref } from "lit-html/directives/ref.js";
+import { InputResolveRequest } from "@google-labs/breadboard/remote";
+import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
 
-type ChunkOutputs = OutputValues & { chunk: string };
+type inputCallback = (data: Record<string, unknown>) => void;
 
 export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url, { base: new URL(window.location.href) });
@@ -44,21 +41,23 @@ export class PreviewRun extends LitElement {
   @property({ type: Array })
   kits: Kit[] = [];
 
-  @state()
-  uiElement: HTMLTemplateResult | symbol = nothing;
-
-  @state()
-  showContinueButton = false;
+  @property({ reflect: true })
+  status = BreadboardUI.Types.STATUS.STOPPED;
 
   @state()
   boardInfo: Awaited<ReturnType<typeof getBoardInfo>> | null = null;
 
-  #hasOutputs = false;
-  #outputs: HTMLTemplateResult[] = [];
-  #nodesVisited: Array<{ data: NodeStartResponse }> = [];
-  #inputRef: Ref<BreadboardUI.Elements.Input> = createRef();
+  @state()
+  runs: InspectableRun[] | null = null;
+
+  #runObserver: InspectableRunObserver = createRunObserver();
+  #handlers: Map<string, inputCallback[]> = new Map();
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
       margin: 0;
@@ -66,510 +65,187 @@ export class PreviewRun extends LitElement {
       font-family: var(--bb-font-family);
       height: 100%;
       width: 100%;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    :host {
-      display: flex;
-      flex-direction: column;
-      background: #f4f7fc url(/images/pattern.png);
+      color: #1a1a1a;
+      --padding: calc(var(--bb-grid-size) * 4);
     }
 
     main {
-      flex: 1 0 auto;
       display: flex;
       flex-direction: column;
-    }
-
-    #continue {
-      border-radius: 32px;
-      background: var(--bb-accent-color);
-      border: none;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-      margin: 0 calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 3) 0;
-      position: relative;
-      font-size: var(--bb-text-medium);
-      color: #fff;
-      align-self: flex-end;
-    }
-
-    h1 {
-      font-size: 24px;
-      margin: 0;
-      padding: 42px calc(var(--bb-grid-size) * 2) 24px;
-      font-weight: normal;
-      text-align: center;
-      text-transform: uppercase;
-      color: var(--bb-accent-color);
-    }
-
-    footer {
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 16px 36px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-
-    footer span {
-      font-weight: bold;
-    }
-
-    @media (min-width: 600px) {
-      h1 {
-        padding: 32px calc(var(--bb-grid-size) * 2);
-        font-size: 32px;
-      }
-    }
-
-    @media (min-width: 900px) {
-      h1 {
-        padding: 40px calc(var(--bb-grid-size) * 2);
-        font-size: 40px;
-      }
-    }
-
-    .working,
-    .error,
-    .output {
-      line-height: 1.5;
-    }
-
-    .working,
-    .error {
-      text-align: center;
-    }
-
-    .error bb-json-tree {
-      text-align: left;
-    }
-
-    .error code {
-      text-align: left;
-    }
-
-    .error {
-      color: #cc0011;
-    }
-
-    .ui {
-      padding: 0 32px;
-      max-width: 960px;
-      margin: 0 auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .outputs {
-      padding: 32px;
-      flex: 1 0 auto;
-      padding-bottom: 100px;
-      overflow-y: scroll;
-      mask-image: linear-gradient(
-        rgba(0, 0, 0, 0),
-        rgba(0, 0, 0, 1) 32px,
-        rgba(0, 0, 0, 1) calc(100% - 32px),
-        rgba(0, 0, 0, 0)
-      );
-      /* Set so we get the overflow scroll behavior */
-      height: 0px;
-    }
-
-    .output-item {
-      line-height: 1.5;
-      font-size: var(--bb-text-medium);
-      max-width: 960px;
-      margin: 0 auto;
-      margin-bottom: 32px;
-      width: 100%;
-    }
-
-    .output-item h1 {
-      padding: 0;
-      margin: 0 0 8px;
-      font-size: var(--bb-text-large);
-      text-align: left;
-    }
-
-    .working {
-      display: flex;
-      flex-direction: column;
+      height: 100%;
+      overflow: auto;
       align-items: center;
-      margin: 0 auto;
-      margin-bottom: 60px;
-      position: relative;
-      width: 60%;
-      box-sizing: border-box;
-      padding: 0 32px;
-
-      --size: 16px;
-    }
-
-    .working h1 {
-      font-size: var(--bb-text-default);
-      margin: 0;
-      padding: 0 0 16px 0;
-    }
-
-    .working .container {
-      height: 80px;
-      width: 100%;
       background: #fff;
-      border-radius: 50px;
-      box-shadow: 0 30px 32px rgba(0, 0, 0, 0.1), 0 10px 12px rgba(0, 0, 0, 0.1),
-        0 2px 2px rgba(0, 0, 0, 0.1);
     }
 
-    .working ol {
-      list-style: none;
-      padding: 0;
-      margin: 20px 40px;
+    header {
+      height: 174px;
+      background: #ebf5ff;
+      border-bottom: 1px solid #c0dfff;
+      width: 100%;
+      z-index: 1;
+    }
+
+    header #masthead {
+      height: 48px;
+      background: #3399ff;
+    }
+
+    header #info {
+      padding: var(--padding);
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0 0 var(--bb-grid-size) 0;
+      font-size: var(--bb-text-regular);
+      font-weight: normal;
+      white-space: nowrap;
       overflow: hidden;
-      font-size: var(--bb-text-pico);
-      white-space: nowrap;
-      display: flex;
-      justify-content: flex-end;
-      mask-image: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0),
-        rgb(0, 0, 0) 40px
-      );
-    }
-
-    .working ol li {
-      display: inline-block;
-      flex: 0 0 auto;
-      position: relative;
-      width: 20%;
-      height: 42px;
-      color: rgb(119, 119, 119);
-      overflow-x: hidden;
-      white-space: nowrap;
       text-overflow: ellipsis;
-      padding-top: 25px;
-    }
-
-    .working ol li:before {
-      content: "";
-      position: absolute;
-      top: calc((var(--size) - 4px) * 0.5);
-      left: 0;
-      height: 4px;
-      background: rgb(218, 218, 218);
       width: 100%;
     }
 
-    .working ol li:last-of-type::before {
-      width: 50%;
-    }
-
-    .working ol li:first-child:before {
-      width: 50%;
-      left: 50%;
-    }
-
-    .working ol li:only-child:before {
-      display: none;
-    }
-
-    .working ol li:after {
-      box-sizing: border-box;
+    header h2 {
+      margin: 0 0 calc(var(--bb-grid-size) * 5) 0;
       font-size: var(--bb-text-small);
-      font-weight: bold;
-      content: "";
-      width: var(--size);
-      height: var(--size);
-      display: block;
-      border-radius: 50%;
-      position: absolute;
-      left: 50%;
-      top: 0;
-      translate: -50% 0;
-      border: 1px solid hsl(33.6, 100%, 52.5%);
-      background: hsl(44.7, 100%, 80%);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      font-weight: normal;
+      color: #595959;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
     }
 
-    .working ol li.error::after {
-      background: #cc0000;
-      border: 1px solid #cc0000;
-    }
-
-    .working ol li.result::after {
-      background: #ffa500;
-      border: 1px solid #ffa500;
-    }
-
-    .working ol li.input::after {
-      background: #c9daf8ff;
-      border: 1px solid #3c78d8;
-    }
-
-    .working ol li.secrets::after {
-      background: #f4cccc;
-      border: 1px solid #db4437;
-    }
-
-    .working ol li.output::after {
-      background: #b6d7a8ff;
-      border: 1px solid #38761d;
-    }
-
-    .working ol li.load::after,
-    .working ol li.end::after {
-      background: var(--bb-done-color);
-      border: 1px solid var(--bb-done-color);
-    }
-
-    .working ol li:last-of-type::after {
-      background: radial-gradient(
-          var(--bb-progress-color) 0%,
-          var(--bb-progress-color) 30%,
-          var(--bb-progress-color-faded) 30%,
-          var(--bb-progress-color-faded) 50%,
-          transparent 50%,
-          transparent 100%
-        ),
-        conic-gradient(transparent 0deg, var(--bb-progress-color) 360deg),
-        linear-gradient(
-          var(--bb-progress-color-faded),
-          var(--bb-progress-color-faded)
-        );
-
-      box-shadow: none;
+    #run {
+      background: var(--bb-selected-color);
+      color: #fff;
+      border-radius: 20px;
       border: none;
-      animation: rotate 0.5s linear infinite;
+      height: 32px;
+      padding: 0 calc(var(--bb-grid-size) * 4);
     }
 
-    @keyframes rotate {
-      from {
-        transform: rotate(0);
-      }
-
-      to {
-        transform: rotate(360deg);
-      }
+    #run[disabled] {
+      opacity: 0.4;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
+    bb-activity-log {
+      flex: 1;
+      width: 100%;
+      max-width: 740px;
     }
   `;
 
-  protected updated(changedProperties: Map<PropertyKey, unknown>): void {
-    if (changedProperties.has("url")) {
-      this.#runBoard(this.url);
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ url: string }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (!changedProperties.has("url")) {
+      return;
     }
+
+    getBoardInfo(this.url).then((info) => {
+      this.boardInfo = info;
+    });
   }
 
-  #renderOutput(output: Record<string, unknown>) {
-    const schema = output.schema as Schema;
-    if (!schema || !schema.properties) {
-      return html`<bb-json-tree
-        .json=${output}
-        .autoExpand=${true}
-      ></bb-json-tree>`;
+  async #runBoard() {
+    if (!this.url) {
+      return;
     }
 
-    return html`${Object.entries(schema.properties).map(
-      ([property, schema]) => {
-        const value = output[property];
-        let valueTmpl;
-        if (schema.format === "stream") {
-          let value = "";
-          const streamedValue = clone(output[property] as StreamCapabilityType)
-            .pipeTo(
-              new WritableStream({
-                write(chunk) {
-                  // For now, presume that the chunk is an `OutputValues` object
-                  // and the relevant item is keyed as `chunk`.
-                  const outputs = chunk as ChunkOutputs;
-                  value += outputs.chunk;
-                },
-              })
-            )
-            .then(() => html`${value}`);
+    const config = { url: this.url, kits: this.kits, diagnostics: true };
 
-          valueTmpl = html`${until(streamedValue, html`Loading...`)}`;
-        } else {
-          valueTmpl =
-            typeof value === "object"
-              ? html`<bb-json-tree
-                  .json=${value}
-                  .autoExpand=${true}
-                ></bb-json-tree>`
-              : html`${value}`;
-        }
+    this.status = BreadboardUI.Types.STATUS.RUNNING;
+    for await (const result of run(config)) {
+      this.runs = this.#runObserver?.observe(result);
+      const answer = await this.#handleStateChange(result);
 
-        return html`<section class="output-item">
-          <h1 title="${schema.description || "Undescribed property"}">
-            ${schema.title || "Untitled property"}
-          </h1>
-          <div>${valueTmpl}</div>
-        </section>`;
+      if (answer) {
+        await result.reply({ inputs: answer } as InputResolveRequest);
       }
-    )}`;
+    }
+    this.status = BreadboardUI.Types.STATUS.STOPPED;
+  }
+
+  /**
+   * Handler method for registering input.
+   *
+   * Handle a specific input ID and return a promise that resolves with the data received by the handler.
+   *
+   * @param {string} id - Associates a specific input handler with a unique identifier.
+   *
+   * @returns {Promise<InputValues>}
+   */
+  async #registerInputHandler(id: string): Promise<InputValues> {
+    const handlers = this.#handlers.get(id);
+    if (!handlers) {
+      return Promise.reject(`Unable to set up handler for input ${id}`);
+    }
+
+    return new Promise((resolve) => {
+      handlers.push((data: Record<string, unknown>) => {
+        resolve(data as InputValues);
+      });
+    });
+  }
+
+  /**
+   * Handler method for registering secret values.
+   *
+   * Asynchronously register handlers for a list of keys and
+   * return a promise that resolves to an object mapping each key to its corresponding secret value.
+   *
+   * @param {string[]} keys - The keys for which secrets need to be
+   * registered.
+   *
+   * @returns {Promise<InputValues>}
+   */
+  async #registerSecretsHandler(keys: string[]): Promise<InputValues> {
+    const values = await Promise.all(
+      keys.map((key) => {
+        return new Promise<[string, unknown]>((resolve) => {
+          const callback = ({ secret }: Record<string, unknown>) => {
+            resolve([key, secret]);
+          };
+          this.#handlers.set(key, [callback]);
+        });
+      })
+    );
+
+    return Object.fromEntries(values) as InputValues;
   }
 
   async #handleStateChange(
     result: HarnessRunResult
   ): Promise<void | InputValues> {
-    this.showContinueButton = false;
-    switch (result.type) {
+    this.requestUpdate();
+
+    const { data, type } = result;
+    switch (type) {
+      case "nodestart": {
+        if (!this.#handlers.has(data.node.id)) {
+          this.#handlers.set(data.node.id, []);
+        }
+        return;
+      }
+
+      case "nodeend": {
+        this.#handlers.delete(data.node.id);
+        return;
+      }
+
+      case "input": {
+        return this.#registerInputHandler(data.node.id);
+      }
+
       case "secret": {
-        this.showContinueButton = true;
-
-        // Set up a placeholder for the secrets.
-        const secrets: HTMLTemplateResult[] = [];
-        this.uiElement = html`${secrets}`;
-
-        // By setting the uiElement above we have requested a render, but before
-        // that we step through each secret and create inputs. We await each
-        // input that we create here.
-        const values = await Promise.all(
-          result.data.keys.map((key) => {
-            return new Promise<[string, string]>((secretResolve) => {
-              const id = key;
-              const configuration = {
-                schema: {
-                  properties: {
-                    secret: {
-                      title: id,
-                      description: `Enter ${id}`,
-                      type: "string",
-                    },
-                  },
-                },
-              };
-
-              const secret = html`<bb-input
-                id=${id}
-                ${ref(this.#inputRef)}
-                .secret=${true}
-                .remember=${true}
-                .configuration=${configuration}
-                @breadboardinputenter=${(
-                  event: BreadboardUI.Events.InputEnterEvent
-                ) => {
-                  secretResolve([key, event.data.secret as string]);
-                }}
-              ></bb-input>`;
-              secrets.push(secret);
-            });
-          })
-        );
-
-        // Once all the secrets are resolved we can remove the UI element and
-        // return the secrets.
-        this.uiElement = nothing;
-
-        return Object.fromEntries(values);
-      }
-
-      case "input":
-        this.showContinueButton = true;
-
-        return new Promise((resolve) => {
-          this.uiElement = html`<bb-input
-            id="${result.data.node.id}"
-            ${ref(this.#inputRef)}
-            .configuration=${result.data.inputArguments}
-            @breadboardinputenter=${(
-              event: BreadboardUI.Events.InputEnterEvent
-            ) => {
-              this.uiElement = nothing;
-              resolve(event.data as InputValues);
-            }}
-          ></bb-input>`;
-        });
-
-      case "error":
-        if (typeof result.data.error === "string") {
-          this.uiElement = html`<div class="error">
-            😩 ${result.data.error}
-          </div>`;
-        } else {
-          this.uiElement = html`<div class="error">
-            😩 Error
-            <bb-json-tree .json=${result.data.error.error}></bb-json-tree>
-            in "${result.data.error.descriptor.id}"
-          </div>`;
-        }
-        return Promise.resolve(void 0);
-
-      case "output":
-        this.uiElement = nothing;
-        this.#hasOutputs = true;
-        this.#outputs.unshift(this.#renderOutput(result.data.outputs));
-        this.requestUpdate();
-        return Promise.resolve(void 0);
-
-      case "graphstart":
-      case "graphend":
-      case "nodeend":
-      case "skip":
-        return Promise.resolve(void 0);
-
-      case "end":
-        if (!this.#hasOutputs) {
-          this.uiElement = html`<div class="output">All done!</div>`;
-        } else {
-          this.uiElement = nothing;
-        }
-        return Promise.resolve(void 0);
-
-      case "nodestart":
-        this.#nodesVisited.push(result);
-        this.uiElement = html`<div class="working">
-          <h1>Working...</h1>
-          <div class="container">
-            <ol>
-              ${this.#nodesVisited.map((node) => {
-                return html`<li
-                  class="${classMap({ [node.data.node.type]: true })}"
-                >
-                  ${node.data.node.id}
-                </li>`;
-              })}
-            </ol>
-          </div>
-        </div> `;
-        return Promise.resolve(void 0);
-    }
-  }
-
-  async #runBoard(url: string) {
-    this.#nodesVisited.length = 0;
-
-    const config = { url, kits: this.kits, diagnostics: true };
-
-    this.boardInfo = await getBoardInfo(this.url);
-
-    for await (const result of run(config)) {
-      const answer = await this.#handleStateChange(result);
-      this.showContinueButton = false;
-
-      if (answer) {
-        await result.reply({ inputs: answer });
+        return this.#registerSecretsHandler(data.keys);
       }
     }
-  }
-
-  #continue() {
-    if (!this.#inputRef.value) {
-      return;
-    }
-
-    this.#inputRef.value.processInput();
   }
 
   render() {
@@ -577,15 +253,44 @@ export class PreviewRun extends LitElement {
       return nothing;
     }
 
-    const continueButton = this.showContinueButton
-      ? html`<button @click=${this.#continue} id="continue">Continue</button>`
-      : nothing;
+    const currentRun = this.#runObserver.runs()[0];
+    const events = currentRun?.events || [];
+    const eventPosition = events.length - 1;
 
     return html`<main>
-        <h1>${this.boardInfo?.title}</h1>
-        <section class="ui">${this.uiElement} ${continueButton}</section>
-        <section class="outputs">${this.#outputs}</section>
-      </main>
-      <footer>Made with Breadboard</footer>`;
+      <header>
+        <div id="masthead"></div>
+        <div id="info">
+          <h1 id="board-title">${this.boardInfo?.title || "Untitled board"}</h1>
+          <h2>${this.boardInfo?.description || "No board description"}</h2>
+          <button
+            id="run"
+            ?disabled=${this.status === BreadboardUI.Types.STATUS.RUNNING}
+            @click=${() => this.#runBoard()}
+          >
+            Run
+          </button>
+        </div>
+      </header>
+      <bb-activity-log
+        logTitle="Activity"
+        .events=${events}
+        .eventPosition=${eventPosition}
+        @breadboardinputenter=${(event: InputEnterEvent) => {
+          const data = event.data;
+          const handlers = this.#handlers.get(event.id) || [];
+          if (handlers.length === 0) {
+            console.warn(
+              `Received event for input(id="${event.id}") but no handlers were found`
+            );
+          }
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+        name="Board"
+        slot="slot-0"
+      ></bb-activity-log>
+    </main>`;
   }
 }

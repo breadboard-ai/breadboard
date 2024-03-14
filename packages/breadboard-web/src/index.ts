@@ -212,15 +212,16 @@ export class Main extends LitElement {
     }
 
     iframe {
-      flex: 1 0 auto;
-      margin: 0 calc(var(--bb-grid-size) * 2);
-      border-radius: calc(var(--bb-grid-size) * 5);
-      border: 1px solid rgb(227, 227, 227);
+      grid-row: 1 / 3;
+      grid-column: 1 / 3;
+      margin: 0;
+      border: none;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     #embed {
-      display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
       grid-column: 1/3;
       grid-row: 1/3;
     }
@@ -423,16 +424,6 @@ export class Main extends LitElement {
       pageUrl.searchParams.delete("mode");
     } else {
       pageUrl.searchParams.set("mode", mode);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setEmbed(embed: boolean | null) {
-    const pageUrl = new URL(window.location.href);
-    if (embed === null || embed === false) {
-      pageUrl.searchParams.delete("embed");
-    } else {
-      pageUrl.searchParams.set("embed", `${embed}`);
     }
     window.history.replaceState(null, "", pageUrl);
   }
@@ -683,8 +674,13 @@ export class Main extends LitElement {
               (node) => node.id === id
             );
             const metadata = existingNode?.metadata || {};
+            let visual = metadata?.visual || {};
+            if (typeof visual !== "object") {
+              visual = {};
+            }
+
             editableGraph
-              .changeMetadata(id, { ...metadata, visual: { x, y } })
+              .changeMetadata(id, { ...metadata, visual: { ...visual, x, y } })
               .then((result) => {
                 if (!result.success) {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
@@ -858,19 +854,9 @@ export class Main extends LitElement {
       <div id="content" class="${this.mode}">${cache(content)}</div>`;
 
     if (this.embed) {
-      tmpl = html`<main id="embed">
-        <header>
-          <button
-            @click=${() => {
-              this.#setEmbed(null);
-              this.embed = false;
-            }}
-          >
-            View in Debugger
-          </button>
-        </header>
-        <iframe src="/preview.html?board=${this.url}&embed=true"></iframe>
-      </main>`;
+      tmpl = html`<iframe
+        src="/preview.html?board=${this.url}&embed=true"
+      ></iframe>`;
     }
 
     return html`${tmpl} ${toasts}`;

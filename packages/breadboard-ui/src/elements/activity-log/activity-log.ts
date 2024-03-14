@@ -6,6 +6,7 @@
 
 import {
   ErrorObject,
+  InspectableRun,
   InspectableRunEvent,
   Schema,
 } from "@google-labs/breadboard";
@@ -15,6 +16,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -23,6 +25,12 @@ export class ActivityLog extends LitElement {
 
   @property({ reflect: true })
   eventPosition = 0;
+
+  @property({ reflect: true })
+  logTitle = "Activity Log";
+
+  @property({ reflect: true })
+  showExtendedInfo = false;
 
   #newestEntry: Ref<HTMLElement> = createRef();
   #isHidden = false;
@@ -93,13 +101,18 @@ export class ActivityLog extends LitElement {
     }
 
     .activity-entry {
-      padding: var(--padding-y) var(--padding-x);
+      padding: var(--padding-y) 0;
       position: relative;
       font-size: var(--bb-font-medium);
       user-select: none;
     }
 
-    .activity-entry:last-of-type {
+    :host > .activity-entry {
+      padding-left: var(--padding-x);
+      padding-right: var(--padding-x);
+    }
+
+    :host > .activity-entry:last-of-type {
       margin-bottom: 100px;
     }
 
@@ -115,13 +128,27 @@ export class ActivityLog extends LitElement {
 
     .activity-entry::after {
       content: "";
-      width: calc(var(--bb-grid-size) * 2);
-      height: calc(var(--bb-grid-size) * 2);
+      width: calc(var(--bb-grid-size) * 4);
+      height: calc(var(--bb-grid-size) * 4);
       border-radius: 50%;
-      left: var(--padding-x);
-      top: calc(var(--padding-y) + 5px);
+      top: calc(var(--padding-y) + var(--bb-grid-size) - 3px);
+      left: -2px;
       position: absolute;
-      background: hsl(44.7, 100%, 80%);
+      --background: #ffcc33;
+    }
+
+    :host > .activity-entry::after {
+      left: calc(var(--padding-x) + 10px);
+    }
+
+    .activity-entry.icon::after {
+      width: calc(var(--bb-grid-size) * 7);
+      height: calc(var(--bb-grid-size) * 7);
+      left: calc(var(--padding-x) + 3px);
+      top: calc(var(--padding-y) - var(--bb-grid-size));
+      background: #fff var(--node-icon) center center no-repeat;
+      background-size: 20px 20px;
+      border: 1px solid #d9d9d9;
     }
 
     .activity-entry::before {
@@ -129,36 +156,86 @@ export class ActivityLog extends LitElement {
       content: "";
       width: 2px;
       height: 100%;
-      left: calc(var(--padding-x) + 3px);
+      left: 5px;
       top: 0;
       height: 100%;
       position: absolute;
       background: #d9d9d9;
     }
 
+    :host > .activity-entry::before {
+      left: calc(var(--padding-x) + 17px);
+    }
+
+    .neural-activity {
+      width: calc(var(--bb-grid-size) * 4);
+      height: calc(var(--bb-grid-size) * 4);
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: -2px;
+      margin-top: -2px;
+      margin-right: calc(var(--bb-grid-size) * 2);
+      position: relative;
+      z-index: 1;
+      --background: #ffcc33;
+    }
+
+    .neural-activity:last-of-type {
+      margin-right: 0;
+    }
+
+    .neural-activity.graphstart,
+    .neural-activity.graphend,
     .activity-entry.graphstart::after,
     .activity-entry.graphend::after {
-      background: rgb(110, 84, 139);
+      --background: rgb(110, 84, 139);
     }
 
+    .neural-activity.error,
     .activity-entry.error::after {
-      background: #cc0000;
+      --background: #cc0000;
     }
 
+    .neural-activity.result,
     .activity-entry.result::after {
-      background: #ffa500;
+      --background: #ffa500;
     }
 
+    .neural-activity.input,
     .activity-entry.input::after {
-      background: #c9daf8ff;
+      --background: #c9daf8ff;
     }
 
+    .neural-activity.secret,
     .activity-entry.secret::after {
-      background: #f4cccc;
+      --background: #f4cccc;
     }
 
+    .neural-activity.output,
     .activity-entry.output::after {
-      background: #b6d7a8ff;
+      --background: #b6d7a8ff;
+    }
+
+    .neural-activity,
+    .activity-entry::after {
+      background: radial-gradient(
+        var(--background) 0%,
+        var(--background) 50%,
+        transparent 50%
+      );
+    }
+
+    .neural-activity.pending,
+    .activity-entry.pending::after {
+      box-shadow: 0 0 0 4px #3399ff40;
+      box-sizing: border-box;
+      background: radial-gradient(
+          var(--background) 0%,
+          var(--background) 50%,
+          transparent 50%
+        ),
+        linear-gradient(#3399ff40, #3399ffff);
+      animation: rotate 1s linear infinite forwards;
     }
 
     .activity-entry:first-of-type::before {
@@ -174,8 +251,62 @@ export class ActivityLog extends LitElement {
       display: none;
     }
 
-    .activity-entry .content {
-      padding-left: calc(var(--bb-grid-size) * 4);
+    .activity-entry > .content {
+      padding-left: calc(var(--bb-grid-size) * 6);
+    }
+
+    :host > .activity-entry > .content {
+      padding-left: calc(var(--bb-grid-size) * 10);
+    }
+
+    .subgraph-info {
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+    }
+
+    .subgraph-info summary {
+      margin-left: -20px;
+      display: grid;
+      grid-template-columns: 20px auto;
+      align-items: center;
+    }
+
+    .subgraph-info summary::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      background: var(--bb-expand-arrow) 1px -2px no-repeat;
+      display: inline-block;
+    }
+
+    .subgraph-info[open] > summary::before {
+      background: var(--bb-collapse-arrow) 1px 2px no-repeat;
+    }
+
+    .subgraph-info[open] > summary {
+      margin-bottom: -20px;
+    }
+
+    .activity-summary {
+      width: fit-content;
+      position: relative;
+    }
+
+    .activity-summary::before {
+      content: "";
+      position: absolute;
+      background: #ededed;
+      border-radius: 8px;
+      bottom: 6px;
+      right: 2px;
+      left: 1px;
+      top: 1px;
+      z-index: 0;
+    }
+
+    .subgraph-info[open] > summary .activity-summary {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
     }
 
     section h1[data-message-idx] {
@@ -235,6 +366,7 @@ export class ActivityLog extends LitElement {
 
     dt .value.input {
       border: 1px solid rgb(209, 209, 209);
+      white-space: pre;
     }
 
     pre {
@@ -262,6 +394,16 @@ export class ActivityLog extends LitElement {
       background: var(--bb-selected-color);
       border-radius: var(--bb-grid-size);
       animation: fadeOut 1s ease-out forwards;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     @keyframes fadeOut {
@@ -313,6 +455,8 @@ export class ActivityLog extends LitElement {
     if (this.#newestEntry.value.querySelector(".user-required")) {
       this.dispatchEvent(new InputRequestedEvent());
     }
+
+    this.#newestEntry.value.scrollIntoView(true);
   }
 
   connectedCallback(): void {
@@ -327,9 +471,56 @@ export class ActivityLog extends LitElement {
     this.#observer.disconnect();
   }
 
+  #createRunInfo(runs: InspectableRun[] = []): HTMLTemplateResult {
+    return html`${map(runs, (run) => {
+      return html`<details class="subgraph-info">
+        <summary>
+          <span class="activity-summary"
+            >${run.events.map((event, idx) => {
+              if (event.type !== "node") {
+                return nothing;
+              }
+
+              const classes: Record<string, boolean> = {
+                "neural-activity": true,
+                pending: idx === run.events.length - 1 && run.end === null,
+                [event.node.type]: true,
+              };
+
+              return html`<div class=${classMap(classes)}></div>`;
+            })}</span
+          >
+        </summary>
+        ${map(run.events, (event, idx) => {
+          if (event.type !== "node") {
+            return nothing;
+          }
+
+          const classes: Record<string, boolean> = {
+            "activity-entry": true,
+            pending: idx === run.events.length - 1 && run.end === null,
+            [event.node.type]: true,
+          };
+
+          return html`<div class=${classMap(classes)}>
+            <div class="content">
+              <h1>
+                ${event.node.metadata?.description ??
+                event.node.metadata?.title ??
+                event.node.id ??
+                event.node.type}
+              </h1>
+              ${this.#createRunInfo(event.runs)}
+            </div>
+          </div>`;
+        })}
+      </details>`;
+    })}`;
+  }
+
   render() {
     return html`
-      <h1>Activity Log</h1>
+      <h1>${this.logTitle}</h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             let content: HTMLTemplateResult | symbol = nothing;
@@ -340,15 +531,17 @@ export class ActivityLog extends LitElement {
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
                 if (end === null) {
-                  // TODO: Figure out why this doesn't work.
-                  // if (idx !== this.eventPosition) {
-                  //   return nothing;
-                  // }
                   if (node.type === "input") {
                     content = html`<section
                       class=${classMap({ "user-required": this.#isHidden })}
                     >
-                      <h1 data-message-idx=${idx}>${node.type}</h1>
+                      <h1
+                        ?data-message-idx=${this.showExtendedInfo
+                          ? idx
+                          : nothing}
+                      >
+                        ${node.metadata?.title ?? node.id ?? node.type}
+                      </h1>
                       <bb-input
                         id="${node.id}"
                         .secret=${false}
@@ -358,21 +551,11 @@ export class ActivityLog extends LitElement {
                     </section>`;
                     break;
                   }
-                  content = html`Working:
-                    <pre>${node.id}</pre>
-                    <div style="padding-left: 20px">
-                      ${map(event.runs || [], (run) => {
-                        const running = run.end === null ? "⏳" : "✅";
 
-                        return html`<div>
-                          ${running}${map(run.events, (event) => {
-                            return event.type == "node"
-                              ? html`<span>${event.node.id}</span>✨`
-                              : nothing;
-                          })}
-                        </div>`;
-                      })}
-                    </div>`;
+                  content = html`
+                    <h1>${node.metadata?.title ?? node.id ?? node.type}</h1>
+                    ${this.#createRunInfo(event.runs)}
+                  `;
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
                   let additionalData: HTMLTemplateResult | symbol = nothing;
@@ -408,13 +591,13 @@ export class ActivityLog extends LitElement {
                                 ></bb-json-tree>`;
                               }
                             } else {
+                              // prettier-ignore
                               value = html`<div
                                 class=${classMap({
                                   value: true,
                                   [node.type]: true,
                                 })}
-                              >
-                                ${nodeValue}
+                              >${nodeValue}
                               </div>`;
                             }
 
@@ -426,8 +609,12 @@ export class ActivityLog extends LitElement {
                   }
 
                   content = html`<section>
-                    <h1 data-message-idx=${idx}>${node.type}</h1>
-                    ${additionalData}
+                    <h1
+                      ?data-message-idx=${this.showExtendedInfo ? idx : nothing}
+                    >
+                      ${node.metadata?.title ?? node.id ?? node.type}
+                    </h1>
+                    ${additionalData} ${this.#createRunInfo(event.runs)}
                   </section>`;
                   break;
                 }
@@ -476,9 +663,7 @@ export class ActivityLog extends LitElement {
                   let messageOutput = "";
                   let errorData = error;
                   while (typeof errorData === "object") {
-                    console.log(errorData);
                     if (errorData && "message" in errorData) {
-                      console.log(errorData.message, "lol");
                       messageOutput += `${errorData.message}\n`;
                     }
 
@@ -506,8 +691,24 @@ export class ActivityLog extends LitElement {
               classes[event.node.type] = true;
             }
 
+            const styles: Record<string, string> = {};
+            if (
+              event.type === "node" &&
+              event.node.metadata &&
+              event.node.metadata.visual &&
+              typeof event.node.metadata.visual === "object"
+            ) {
+              const visual = event.node.metadata.visual as Record<
+                string,
+                string
+              >;
+              classes.icon = true;
+              styles["--node-icon"] = `url(${visual.icon})`;
+            }
+
             return html`<div
               ${ref(this.#newestEntry)}
+              style="${styleMap(styles)}"
               class="${classMap(classes)}"
             >
               <div class="content">${content}</div>
