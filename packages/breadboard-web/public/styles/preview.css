@@ -8,24 +8,12 @@
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "FiraCode";
-  font-weight: normal;
-  font-style: normal;
-  src: url("/third_party/firacode/FiraCode-Regular.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "FiraCode";
-  font-weight: bold;
-  font-style: bold;
-  src: url("/third_party/firacode/FiraCode-Bold.woff2") format("woff2");
-}
-
 html {
   --bb-grid-size: 4px;
-  --bb-font-family-header: "FiraCode";
-  --bb-font-family-mono: "FiraCode", "Courier New", Courier, monospace;
+  --bb-selected-color: rgb(46, 139, 232);
+  --bb-continue-color: rgb(192, 223, 255);
+  --bb-font-family-header: "Fira Code";
+  --bb-font-family-mono: "Fira Code", "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bb-font-color: rgb(23, 23, 23);
   --bb-font-color-faded: rgb(59, 59, 59);
@@ -50,9 +38,11 @@ html {
   --bb-easing: cubic-bezier(0, 0, 0.3, 1);
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
+  --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
   --bb-icon-arrow: url(/third_party/icons/arrow.svg);
+  --bb-icon-arrow-back: url(/third_party/icons/arrow-back.svg);
   --bb-icon-arrow-back-white: url(/third_party/icons/arrow-back-white.svg);
   --bb-icon-before: url(/third_party/icons/before.svg);
   --bb-icon-board: url(/third_party/icons/board.svg);
@@ -73,12 +63,18 @@ html {
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
+  --bb-icon-reset: url(/third_party/icons/reset.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
+  --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
+  --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);
   --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
   --bb-grid-pattern: url(/images/pattern.png);
+
+  --bb-expand-arrow: url(/images/expand.svg);
+  --bb-collapse-arrow: url(/images/collapse.svg);
 
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);
@@ -96,17 +92,14 @@ body {
   color: var(--bb-font-color);
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: rgb(244, 247, 252);
-  background-image: var(--bb-grid-pattern);
+  background: rgb(253, 253, 253);
+  display: block;
+}
 
-  --bb-font-family: "FiraCode", Arial, Helvetica, sans-serif;
-  --bb-submit-input-text-transform: uppercase;
-  --bb-input-font-size: 16px;
-  --bb-input-padding: 16px 24px;
-  --bb-input-border-radius: 32px;
-  --bb-accent-color: #6b5484;
-  --bb-input-legend-display: none;
-  --bb-input-fieldset-border: none;
+#dgraphDiv {
+  position: fixed;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }

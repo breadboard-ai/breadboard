@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, PropertyValueMap, html, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
@@ -18,7 +18,6 @@ import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { type InputList } from "../input/input-list/input-list.js";
 import { JSONTree } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -252,6 +251,7 @@ export class UI extends LitElement {
         <bb-activity-log
           .events=${events}
           .eventPosition=${eventPosition}
+          .showExtendedInfo=${true}
           @breadboardinputrequested=${() => {
             this.#autoSwitchSidePanel = 0;
             this.requestUpdate();
