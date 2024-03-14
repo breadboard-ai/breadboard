@@ -372,7 +372,10 @@ export class ActivityLog extends LitElement {
 
     dt .value.input {
       border: 1px solid rgb(209, 209, 209);
-      white-space: pre-wrap;
+      white-space: pre-line;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
     }
 
     pre {
