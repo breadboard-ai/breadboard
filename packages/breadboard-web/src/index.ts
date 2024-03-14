@@ -293,10 +293,7 @@ export class Main extends LitElement {
     const currentUrl = new URL(window.location.href);
     const embedIsNotSet = currentUrl.searchParams.get("embed") === null;
 
-    console.log(isPortrait, hasTouch, this.url, embedIsNotSet);
-
     if (isPortrait && hasTouch && this.url && embedIsNotSet) {
-      console.log("Setting embed");
       this.embed = true;
       this.#setEmbed(true);
 
