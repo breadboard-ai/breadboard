@@ -230,7 +230,7 @@ export class UI extends LitElement {
      * Create all the elements we need.
      */
     const editor = html`<bb-editor
-      .editable=${this.url === null}
+      .editable=${true}
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
@@ -326,7 +326,7 @@ export class UI extends LitElement {
           .selectedNodeId=${this.selectedNodeId}
           .loadInfo=${this.loadInfo}
           .kits=${this.kits}
-          .editable=${this.url === null}
+          .editable=${true}
           name="Selected Node"
           slot="slot-1"
         ></bb-node-info>

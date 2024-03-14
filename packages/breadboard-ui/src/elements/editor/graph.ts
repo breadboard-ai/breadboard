@@ -76,6 +76,10 @@ export class Graph extends PIXI.Container {
         return;
       }
 
+      if (!this.editable) {
+        return;
+      }
+
       if (evt.target instanceof GraphNodePort) {
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
