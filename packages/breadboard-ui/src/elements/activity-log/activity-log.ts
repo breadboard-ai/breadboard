@@ -121,9 +121,15 @@ export class ActivityLog extends LitElement {
     }
 
     .activity-entry h1 {
-      font-size: var(--bb-font-medium);
+      font-size: var(--bb-text-regular);
       margin: 0;
-      font-weight: normal;
+      font-weight: 400;
+    }
+
+    .activity-entry h1 .newest-task {
+      font-size: var(--bb-text-medium);
+      font-weight: 300;
+      margin-left: var(--bb-grid-size);
     }
 
     .activity-entry::after {
@@ -366,7 +372,7 @@ export class ActivityLog extends LitElement {
 
     dt .value.input {
       border: 1px solid rgb(209, 209, 209);
-      white-space: pre;
+      white-space: pre-wrap;
     }
 
     pre {
@@ -518,6 +524,26 @@ export class ActivityLog extends LitElement {
     })}`;
   }
 
+  #getNewestSubtask(runs: InspectableRun[] = []): HTMLTemplateResult | symbol {
+    if (runs.length === 0) {
+      return nothing;
+    }
+
+    const newestRun = runs[runs.length - 1];
+    const newestEvent = newestRun.events[newestRun.events.length - 1];
+
+    if (newestEvent.type !== "node") {
+      return nothing;
+    }
+
+    return html`<span class="newest-task"
+      >${newestEvent.node.metadata?.description ??
+      newestEvent.node.metadata?.title ??
+      newestEvent.node.id ??
+      newestEvent.node.type}</span
+    >`;
+  }
+
   render() {
     return html`
       <h1>${this.logTitle}</h1>
@@ -553,7 +579,10 @@ export class ActivityLog extends LitElement {
                   }
 
                   content = html`
-                    <h1>${node.metadata?.title ?? node.id ?? node.type}</h1>
+                    <h1>
+                      ${node.metadata?.title ?? node.id ?? node.type}
+                      ${this.#getNewestSubtask(event.runs)}
+                    </h1>
                     ${this.#createRunInfo(event.runs)}
                   `;
                 } else {
