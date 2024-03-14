@@ -134,6 +134,12 @@ class Graph implements EditableGraph {
         error: `The "*" output port cannot be connected to a specific input port`,
       };
     }
+    if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
+      return {
+        success: false,
+        error: `A specific input port cannot be connected to a "*" output port`,
+      };
+    }
     const inspector = this.#inspector;
     if (inspector.hasEdge(spec)) {
       return {

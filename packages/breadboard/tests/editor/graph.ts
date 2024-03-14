@@ -374,3 +374,11 @@ test("editor API allows changing edge", async (t) => {
   const after = graph.inspect().edges()[0];
   t.assert(before === after);
 });
+
+test("editor API does not allow connecting a specific output port to a star port", async (t) => {
+  const graph = testEditGraph();
+
+  const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
+  const result = await graph.canAddEdge(edgeSpec);
+  t.false(result.success);
+});
