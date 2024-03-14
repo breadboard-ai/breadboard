@@ -480,8 +480,16 @@ export class ActivityLog extends LitElement {
     this.#observer.disconnect();
   }
 
-  #createRunInfo(runs: InspectableRun[] = []): HTMLTemplateResult {
+  #createRunInfo(runs: InspectableRun[] = []): HTMLTemplateResult | symbol {
+    if (runs.length === 0) {
+      return nothing;
+    }
+
     return html`${map(runs, (run) => {
+      if (run.events.length === 0) {
+        return nothing;
+      }
+
       return html`<details class="subgraph-info">
         <summary>
           <span class="activity-summary"
@@ -535,7 +543,7 @@ export class ActivityLog extends LitElement {
     const newestRun = runs[runs.length - 1];
     const newestEvent = newestRun.events[newestRun.events.length - 1];
 
-    if (newestEvent.type !== "node") {
+    if (!newestEvent || newestEvent.type !== "node") {
       return nothing;
     }
 
