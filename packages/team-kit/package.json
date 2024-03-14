@@ -3,11 +3,13 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.0.1",
   "description": "A Breadboard kit containing nodes to organize teams of synthetic workers",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./team.kit.json": "./team.kit.json"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
