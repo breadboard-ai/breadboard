@@ -439,6 +439,7 @@ export type InspectableGraphStore = {
  */
 export type InspectableRunNodeEvent = {
   type: "node";
+  id: EventIdentifier;
   node: NodeDescriptor;
   /**
    * The timestamp of the `nodestart` event.
@@ -475,6 +476,7 @@ export type InspectableRunNodeEvent = {
  */
 export type InspectableRunErrorEvent = {
   type: "error";
+  id: EventIdentifier;
   error: ErrorResponse["error"];
   /**
    * When the error was first observed.
@@ -484,6 +486,7 @@ export type InspectableRunErrorEvent = {
 
 export type InspectableRunSecretEvent = {
   type: "secret";
+  id: EventIdentifier;
   keys: SecretResult["data"]["keys"];
   /**
    * When the `secrets` node was first observed.
@@ -494,6 +497,8 @@ export type InspectableRunSecretEvent = {
    */
   end: number | null;
 };
+
+export type EventIdentifier = string;
 
 /**
  * Represent all events that can be inspected during a run.
@@ -539,6 +544,7 @@ export type InspectableRun = {
 };
 
 export type PathRegistryEntry = {
+  id: string;
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;
   graphStart: number;

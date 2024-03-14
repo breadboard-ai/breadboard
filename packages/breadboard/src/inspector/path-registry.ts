@@ -15,8 +15,14 @@ import {
 } from "./types.js";
 
 export const SECRET_PATH = [-2];
+export const ERROR_PATH = [-3];
+
+export const idFromPath = (path: number[]): string => {
+  return path.join("-");
+};
 
 class Entry implements PathRegistryEntry {
+  id: string = "";
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
   #children: Entry[] = [];
@@ -32,12 +38,16 @@ class Entry implements PathRegistryEntry {
   graphStart: number = 0;
   graphEnd: number | null = null;
 
+  constructor(public path: number[]) {
+    this.id = idFromPath(path);
+  }
+
   empty(): boolean {
     return this.#children.length === 0;
   }
 
   addSidecar(path: number[], event: InspectableRunEvent) {
-    const key = path.join("-");
+    const key = idFromPath(path);
     this.children[this.children.length - 1].sidecars.push(event);
     this.#trackedSidecars.set(key, event);
     this.#eventsIsDirty = true;
@@ -57,7 +67,7 @@ class Entry implements PathRegistryEntry {
     path: number[],
     data?: { timestamp: number; outputs: OutputValues }
   ) {
-    const key = path.join("-");
+    const key = idFromPath(path);
     const sidecar = this.#trackedSidecars.get(key);
     switch (sidecar?.type) {
       // These are bubbling inputs and inputs.
@@ -117,7 +127,7 @@ class Entry implements PathRegistryEntry {
         console.warn("Path registry is read-only. Not adding", fullPath);
         return;
       }
-      entry = this.#children[head] = new Entry();
+      entry = this.#children[head] = new Entry(fullPath);
     }
     if (tail.length === 0) {
       return entry;
