@@ -73,6 +73,9 @@ html {
   --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
   --bb-grid-pattern: url(/images/pattern.png);
 
+  --bb-expand-arrow: url(/images/expand.svg);
+  --bb-collapse-arrow: url(/images/collapse.svg);
+
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);
   --bb-depth-2: hsl(45deg, 60%, 96%);
