@@ -7,19 +7,54 @@
 import { Schema, base, board, code } from "@google-labs/breadboard";
 import { agents } from "@google-labs/agent-kit";
 
-const adSchema = {
+const adCampaignSchema = {
   type: "object",
   properties: {
-    headline: {
-      type: "string",
-      description: "a headline that fits into the 30 character limit",
-    },
-    description: {
-      type: "string",
-      description: "a description that fits into the 90 character limit",
+    adCampaign: {
+      type: "object",
+      description: "the ad campaign",
+      properties: {
+        headlines: {
+          type: "array",
+          items: {
+            type: "string",
+            description:
+              "an ad headline (30 character limit, up to 15 headlines)",
+          },
+        },
+        descriptions: {
+          type: "array",
+          items: {
+            type: "string",
+            description:
+              "the  description (90 character limit, up to 4 descriptions)",
+          },
+        },
+      },
     },
   },
 } satisfies Schema;
+
+type AdCampaign = {
+  adCampaign: {
+    headlines: string[];
+    descriptions: string[];
+  };
+};
+
+// const adSchema = {
+//   type: "object",
+//   properties: {
+//     headline: {
+//       type: "string",
+//       description: "a headline that fits into the 30 character limit",
+//     },
+//     description: {
+//       type: "string",
+//       description: "a description that fits into the 90 character limit",
+//     },
+//   },
+// } satisfies Schema;
 
 const requirementsSchema = {
   type: "object",
@@ -68,22 +103,23 @@ const checkCharacterLimits = code(({ context }) => {
   const list = (context as ContextItem[]) || [];
   const last = list[list.length - 1] as ContextItem;
   const json = JSON.parse(last.parts.text);
-  const { headline, description } = json as {
-    headline: string;
-    description: string;
-  };
+  const { adCampaign } = json as AdCampaign;
   const warning = [
-    `You are a brilliant copy editor who is famous brevity, making ads fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`,
+    `You are a brilliant copy editor who is famous brevity, making ads in the ad campaign fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`,
   ];
-  if (headline.length > 30) {
-    warning.push(
-      `- The headline is ${headline.length} characters long, but needs to be 30 characters. Shorten it .`
-    );
+  for (const headline of adCampaign.headlines) {
+    if (headline.length > 30) {
+      warning.push(
+        `The headline "${headline}" is ${headline.length} characters long, but needs to be 30 characters. Shorten it.`
+      );
+    }
   }
-  if (description.length > 90) {
-    warning.push(
-      `- The description is ${description.length} characters long, but needs to be 90 characters. Shorten it.`
-    );
+  for (const description of adCampaign.descriptions) {
+    if (description.length > 90) {
+      warning.push(
+        `The description "${description}" is ${description.length} characters long, but needs to be 90 characters. Shorten it.`
+      );
+    }
   }
   if (warning.length > 1) {
     return { warning: warning.join("\n\n") };
@@ -105,7 +141,7 @@ const refineAd = board(({ context }) => {
     },
     instruction: limitChecker.warning,
     context,
-    schema: adSchema,
+    schema: adCampaignSchema,
   });
 
   base.output({
@@ -118,20 +154,17 @@ const refineAd = board(({ context }) => {
   return { context: shortener.context };
 });
 
+const adExample = `Write an ad for Breadboard. The ad must incorporate the following key messages: 
+- Breadboard for Developers
+- Play and experiment with AI Patterns
+- Prototype quickly
+- Use with Gemini APIs 
+- Integrate AI Into Your Project
+- Create graphs with prompts
+- Accessible AI for Developers`;
+
 export default await board(({ context }) => {
-  context
-    .title("Ad specs")
-    .format("multiline")
-    .examples(
-      `Write an ad for Breadboard. The ad must incorporate the following key messages: 
-      - Breadboard for Developers
-      - Play and experiment with AI Patterns
-      - Prototype quickly
-      - Use with Gemini APIs 
-      - Integrate AI Into Your Project
-      - Create graphs with prompts
-      - Accessible AI for Developers`
-    );
+  context.title("Ad specs").format("multiline").examples(adExample);
 
   const customerPromptMaker = agents.structuredWorker({
     $metadata: {
@@ -156,9 +189,9 @@ export default await board(({ context }) => {
     $metadata: {
       title: "Ad Writer",
     },
-    instruction: `Write a headline and a description and that transforms the search engine marketing overview into a compelling, engaging ad.`,
+    instruction: `Write an ad campaign (up to 15 headlines and and 4 descriptions) and that transforms the search engine marketing overview into a compelling, engaging ad.`,
     context,
-    schema: adSchema,
+    schema: adCampaignSchema,
   });
 
   const promptExtractor = extractPrompt({
@@ -181,9 +214,9 @@ export default await board(({ context }) => {
     $metadata: {
       title: "Ad Editor",
     },
-    instruction: `Given the customer critique, generate a new ad. Make sure to conform to the requirements in the Search Engine Marketing document.`,
+    instruction: `Given the customer critique, update the ad campaign. Make sure to conform to the requirements in the Search Engine Marketing document. Remove any uses of the word "free".`,
     context: customer,
-    schema: adSchema,
+    schema: adCampaignSchema,
   });
 
   const adRefinery = agents.repeater({
