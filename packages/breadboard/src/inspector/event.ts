@@ -34,6 +34,10 @@ import {
   PathRegistryEntry,
 } from "./types.js";
 
+const eventIdFromEntryId = (entryId?: string): string => {
+  return `e-${entryId || "0"}`;
+};
+
 /**
  * Meant to be a very lightweight wrapper around the
  * data in the `PathRegistryEntry`.
@@ -91,7 +95,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get id(): EventIdentifier {
-    return `e-${this.#entry?.id || "0"}`;
+    return eventIdFromEntryId(this.#entry?.id);
   }
 
   get runs(): InspectableRun[] {
@@ -263,7 +267,7 @@ export class EventManager {
       case "secret": {
         const { timestamp: start, keys } = result.data;
         this.#addSecret({
-          id: idFromPath(SECRET_PATH),
+          id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
           type: "secret",
           keys,
           start,
@@ -278,7 +282,7 @@ export class EventManager {
       case "error": {
         const { timestamp: start, error } = result.data;
         this.#addError({
-          id: idFromPath(ERROR_PATH),
+          id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
           type: "error",
           start,
           error,
