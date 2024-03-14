@@ -16,8 +16,14 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
-import { PathRegistry, SECRET_PATH } from "./path-registry.js";
 import {
+  ERROR_PATH,
+  PathRegistry,
+  SECRET_PATH,
+  idFromPath,
+} from "./path-registry.js";
+import {
+  EventIdentifier,
   GraphUUID,
   InspectableGraphStore,
   InspectableRun,
@@ -27,6 +33,10 @@ import {
   InspectableRunSecretEvent,
   PathRegistryEntry,
 } from "./types.js";
+
+const eventIdFromEntryId = (entryId?: string): string => {
+  return `e-${entryId || "0"}`;
+};
 
 /**
  * Meant to be a very lightweight wrapper around the
@@ -84,6 +94,10 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     this.bubbled = false;
   }
 
+  get id(): EventIdentifier {
+    return eventIdFromEntryId(this.#entry?.id);
+  }
+
   get runs(): InspectableRun[] {
     if (!this.#entry || this.#entry.empty()) {
       return [];
@@ -108,7 +122,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 
 export class EventManager {
   #graphStore;
-  #pathRegistry = new PathRegistry();
+  #pathRegistry = new PathRegistry([]);
 
   constructor(store: InspectableGraphStore) {
     this.#graphStore = store;
@@ -252,7 +266,13 @@ export class EventManager {
       }
       case "secret": {
         const { timestamp: start, keys } = result.data;
-        this.#addSecret({ type: "secret", keys, start, end: null });
+        this.#addSecret({
+          id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
+          type: "secret",
+          keys,
+          start,
+          end: null,
+        });
         break;
       }
       case "nodeend": {
@@ -261,7 +281,12 @@ export class EventManager {
       }
       case "error": {
         const { timestamp: start, error } = result.data;
-        this.#addError({ type: "error", start, error });
+        this.#addError({
+          id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
+          type: "error",
+          start,
+          error,
+        });
         break;
       }
     }
