@@ -445,10 +445,6 @@ export class Main extends LitElement {
   #unloadCurrentBoard(evt: Event) {
     evt.preventDefault();
 
-    if (!confirm("Are you sure you want to change boards?")) {
-      return;
-    }
-
     this.url = null;
     this.loadInfo = null;
     this.mode = MODE.LIST;
