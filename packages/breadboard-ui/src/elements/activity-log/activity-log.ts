@@ -32,6 +32,7 @@ export class ActivityLog extends LitElement {
   @property({ reflect: true })
   showExtendedInfo = false;
 
+  #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #isHidden = false;
   #observer = new IntersectionObserver((entries) => {
@@ -105,6 +106,10 @@ export class ActivityLog extends LitElement {
       position: relative;
       font-size: var(--bb-font-medium);
       user-select: none;
+    }
+
+    .activity-entry.new {
+      animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
     :host > .activity-entry {
@@ -393,6 +398,18 @@ export class ActivityLog extends LitElement {
       animation: fadeOut 1s ease-out forwards;
     }
 
+    @keyframes slideIn {
+      from {
+        translate: 0 -5px;
+        opacity: 0;
+      }
+
+      to {
+        translate: 0 0;
+        opacity: 1;
+      }
+    }
+
     @keyframes rotate {
       from {
         transform: rotate(0);
@@ -544,10 +561,17 @@ export class ActivityLog extends LitElement {
   }
 
   render() {
+    if (!this.events || this.#seenItems.size > this.events.length) {
+      this.#seenItems.clear();
+    }
+
     return html`
       <h1>${this.logTitle}</h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
+            const isNew = this.#seenItems.has(event.id);
+            this.#seenItems.add(event.id);
+
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {
@@ -712,6 +736,7 @@ export class ActivityLog extends LitElement {
 
             const classes: Record<string, boolean> = {
               "activity-entry": true,
+              new: isNew,
               [event.type]: true,
             };
 
