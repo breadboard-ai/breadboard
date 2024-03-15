@@ -8,7 +8,7 @@ import {
   InputPort,
   OutputPort,
   OutputPortGetter,
-  type PortConfigMap,
+  type StaticPortConfigMap,
   type ValuesOrOutputPorts,
 } from "./port.js";
 
@@ -16,7 +16,10 @@ import {
  * An instance of a Breadboard node, constructed from a Breadboard node
  * definition.
  */
-export class NodeInstance<I extends PortConfigMap, O extends PortConfigMap> {
+export class NodeInstance<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+> {
   readonly inputs: InputPorts<I>;
   readonly outputs: OutputPorts<O>;
   readonly params: ValuesOrOutputPorts<I>;
@@ -44,7 +47,7 @@ export class NodeInstance<I extends PortConfigMap, O extends PortConfigMap> {
   }
 }
 
-function inputPortsFromPortConfigMap<I extends PortConfigMap>(
+function inputPortsFromPortConfigMap<I extends StaticPortConfigMap>(
   inputs: I
 ): InputPorts<I> {
   return Object.fromEntries(
@@ -56,7 +59,7 @@ function inputPortsFromPortConfigMap<I extends PortConfigMap>(
   ) as InputPorts<I>;
 }
 
-function outputPortsFromPortConfigMap<O extends PortConfigMap>(
+function outputPortsFromPortConfigMap<O extends StaticPortConfigMap>(
   outputs: O
 ): OutputPorts<O> {
   return Object.fromEntries(
@@ -68,24 +71,21 @@ function outputPortsFromPortConfigMap<O extends PortConfigMap>(
   ) as OutputPorts<O>;
 }
 
-type InputPorts<I extends PortConfigMap> = {
+type InputPorts<I extends StaticPortConfigMap> = {
   [PortName in keyof I]: InputPort<I[PortName]>;
 };
 
-type OutputPorts<O extends PortConfigMap> = {
+type OutputPorts<O extends StaticPortConfigMap> = {
   [PortName in keyof O]: OutputPort<O[PortName]>;
 };
 
-export type InstantiateParams<Ports extends PortConfigMap> =
-  ValuesOrOutputPorts<Ports>;
-
-type GetPrimaryPortType<Ports extends PortConfigMap> = {
+type GetPrimaryPortType<Ports extends StaticPortConfigMap> = {
   [Name in keyof Ports]: Ports[Name] extends { primary: true }
     ? Ports[Name]
     : never;
 }[keyof Ports]["type"];
 
-type PrimaryOutputPort<O extends PortConfigMap> =
+type PrimaryOutputPort<O extends StaticPortConfigMap> =
   GetPrimaryPortType<O> extends never
     ? undefined
     : OutputPort<{ type: GetPrimaryPortType<O> }>;

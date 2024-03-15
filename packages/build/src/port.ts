@@ -9,10 +9,13 @@ import type {
   TypeScriptTypeFromBreadboardType,
 } from "./type.js";
 
+export type PortConfig = StaticPortConfig | DynamicPortConfig;
+
 /**
- * Configuration parameters for a Breadboard node port.
+ * Configuration parameters for a static Breadboard node port. A port is static
+ * if it always exists for all instances of a node type.
  */
-export interface PortConfig {
+export interface StaticPortConfig {
   /**
    * The {@link BreadboardType} that values sent or received on this port will
    * be required to conform to.
@@ -20,8 +23,8 @@ export interface PortConfig {
   type: BreadboardType;
 
   /**
-   * An optional brief description of this node type. Useful when introspecting
-   * and debugging.
+   * An optional brief description of this port. Useful when introspecting and
+   * debugging.
    */
   description?: string;
 
@@ -49,12 +52,39 @@ export interface PortConfig {
   primary?: boolean;
 }
 
+/**
+ * Configuration parameters that apply to all dynamic Breadboard ports on a
+ * node.
+ *
+ * A port is dynamic if its existence, name, type, or other metadata can be
+ * different across different instances of a node type.
+ */
+export interface DynamicPortConfig {
+  /**
+   * The {@link BreadboardType} that values sent or received on these ports will
+   * be required to conform to.
+   */
+  type: BreadboardType;
+
+  /**
+   * An optional brief description for each port. Useful when introspecting and
+   * debugging.
+   */
+  description?: string;
+
+  /**
+   * The `primary` property should never be set on a dynamic port config,
+   * because it is not possible for a dynamic port to be primary.
+   */
+  primary?: never;
+}
+
 export const OutputPortGetter = Symbol();
 
 /**
  * A Breadboard node port which receives values.
  */
-export class InputPort<I extends PortConfig> {
+export class InputPort<I extends StaticPortConfig> {
   readonly __InputPortBrand__!: never;
   readonly type: I["type"];
 
@@ -66,7 +96,7 @@ export class InputPort<I extends PortConfig> {
 /**
  * A Breadboard node port which sends values.
  */
-export class OutputPort<O extends PortConfig>
+export class OutputPort<O extends StaticPortConfig>
   implements OutputPortReference<O>
 {
   readonly [OutputPortGetter] = this;
@@ -77,9 +107,17 @@ export class OutputPort<O extends PortConfig>
   }
 }
 
-export interface OutputPortReference<O extends PortConfig> {
+export interface OutputPortReference<O extends StaticPortConfig> {
   readonly [OutputPortGetter]: OutputPort<O>;
 }
+
+/**
+ * A map from port name to port config.
+ *
+ * TODO(aomarks) Should be deleted, because we shouldn't have any API which
+ * doesn't understand Dynamic ports.
+ */
+export type StaticPortConfigMap = Record<string, StaticPortConfig>;
 
 /**
  * A map from port name to port config.
@@ -87,20 +125,20 @@ export interface OutputPortReference<O extends PortConfig> {
 export type PortConfigMap = Record<string, PortConfig>;
 
 /**
- * Convert a {@link PortConfigMap} to an object with concrete values for each
+ * Convert a {@link StaticPortConfigMap} to an object with concrete values for each
  * port.
  */
-export type ConcreteValues<Ports extends PortConfigMap> = {
+export type ConcreteValues<Ports extends StaticPortConfigMap> = {
   [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
     Ports[PortName]["type"]
   >;
 };
 
 /**
- * Convert a {@link PortConfigMap} to an object with either concrete values for
+ * Convert a {@link StaticPortConfigMap} to an object with either concrete values for
  * each port, or an output port for each port.
  */
-export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
+export type ValuesOrOutputPorts<Ports extends StaticPortConfigMap> = {
   [PortName in keyof Ports]:
     | TypeScriptTypeFromBreadboardType<Ports[PortName]["type"]>
     | OutputPortReference<Ports[PortName]>;
