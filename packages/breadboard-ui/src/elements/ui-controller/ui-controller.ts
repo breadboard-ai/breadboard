@@ -57,6 +57,9 @@ export class UI extends LitElement {
   @property()
   boards: Board[] = [];
 
+  @property()
+  boardId: number = -1;
+
   @state()
   config: UIConfig = {
     showNarrowTimeline: false,
@@ -230,6 +233,7 @@ export class UI extends LitElement {
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
+      .boardId=${this.boardId}
       @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
         this.#autoSwitchSidePanel = 1;
