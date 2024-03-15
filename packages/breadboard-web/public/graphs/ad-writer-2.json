@@ -409,7 +409,9 @@
         }
       },
       "metadata": {
-        "title": "Customer Prompt Maker"
+        "title": "Customer Prompt Maker",
+        "description": "Conjuring up a persona to represent a customer",
+        "logLevel": "info"
       }
     },
     {

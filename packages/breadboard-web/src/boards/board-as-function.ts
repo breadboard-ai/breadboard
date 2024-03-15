@@ -75,7 +75,15 @@ export default await board(() => {
   });
 
   core
-    .fetch({ $id: "getBoard", url: input.boardURL as V<string> })
+    .fetch({
+      $id: "getBoard",
+      $metadata: {
+        title: "Get Board",
+        description: "Fetching the board from the given URL",
+        logLevel: "info",
+      },
+      url: input.boardURL as V<string>,
+    })
     .response.as("json")
     .to(getFunctionSignature)
     .to(output);

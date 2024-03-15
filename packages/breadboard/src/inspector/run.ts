@@ -14,6 +14,7 @@ import {
   InspectableRun,
   InspectableRunEvent,
   InspectableRunObserver,
+  RunObserverOptions,
 } from "./types.js";
 
 type GraphRecord = {
@@ -90,10 +91,12 @@ class NodeHighlightHelper {
 
 export class RunObserver implements InspectableRunObserver {
   #store: InspectableGraphStore;
+  #options: RunObserverOptions;
   #runs: Run[] = [];
 
-  constructor(store: InspectableGraphStore) {
+  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#store = store;
+    this.#options = options;
   }
 
   runs() {
@@ -105,7 +108,7 @@ export class RunObserver implements InspectableRunObserver {
       const { path } = result.data;
       if (path.length === 0) {
         // start a new run
-        const run = new Run(this.#store, result.data.graph);
+        const run = new Run(this.#store, result.data.graph, this.#options);
         this.#runs = [run, ...this.#runs];
       }
     } else if (result.type === "graphend") {
@@ -132,8 +135,12 @@ export class Run implements InspectableRun {
   graphVersion: number;
   messages: HarnessRunResult[] = [];
 
-  constructor(graphStore: InspectableGraphStore, graph: GraphDescriptor) {
-    this.#events = new EventManager(graphStore);
+  constructor(
+    graphStore: InspectableGraphStore,
+    graph: GraphDescriptor,
+    options: RunObserverOptions
+  ) {
+    this.#events = new EventManager(graphStore, options);
     this.graphVersion = 0;
     this.start = timestamp();
     this.graphId = graphStore.add(graph, this.graphVersion);

@@ -601,13 +601,17 @@ export class ActivityLog extends LitElement {
                     break;
                   }
 
-                  content = html`
-                    <h1>
-                      ${node.metadata?.title ?? node.id ?? node.type}
-                      ${this.#getNewestSubtask(event.runs)}
-                    </h1>
-                    ${this.#createRunInfo(event.runs)}
-                  `;
+                  if (event.hidden) {
+                    content = html`<h1>Working</h1>`;
+                  } else {
+                    content = html`
+                      <h1>
+                        ${node.metadata?.title ?? node.id ?? node.type}
+                        ${this.#getNewestSubtask(event.runs)}
+                      </h1>
+                      ${this.#createRunInfo(event.runs)}
+                    `;
+                  }
                 } else {
                   // This is fiddly. Output nodes don't have any outputs.
                   let additionalData: HTMLTemplateResult | symbol = nothing;

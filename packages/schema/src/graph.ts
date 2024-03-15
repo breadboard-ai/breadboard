@@ -19,7 +19,7 @@ export type NodeValue =
   | undefined
   | NodeValue[]
   | Capability
-  | { [key: string]: NodeValue; };
+  | { [key: string]: NodeValue };
 
 /**
  * Unique identifier of a node in a graph.
@@ -122,16 +122,20 @@ export type NodeMetadata = {
    */
   description?: string;
   /**
-   * Metadata that conveys visual informationa about the node. Can be used by
+   * Metadata that conveys visual information about the node. Can be used by
    * visual editors to store information about the node's appearance, current
    * position, etc.
    */
   visual?: NodeValue;
+  /**
+   * Logging level.
+   */
+  logLevel?: "debug" | "info";
 };
 
 /**
  * Represents references to a "kit": a collection of `NodeHandlers`.
- * The basic permise here is that people can publish kits with interesting
+ * The basic premise here is that people can publish kits with interesting
  * handlers, and then graphs can specify which ones they use.
  * The `@google-labs/core-kit` package is an example of kit.
  */
@@ -225,18 +229,18 @@ type TestProperties = {
    * For internal testing only. Do not use.
    * @deprecated For internal testing only. Do not use.
    */
-  inputs?: Record<InputIdentifier, any>;
+  inputs?: InputValues;
 
   /**
    * For internal testing only. Do not use.
    * @deprecated For internal testing only. Do not use.
-  */
-  outputs?: Record<InputIdentifier, any> | Record<InputIdentifier, any>[];
+   */
+  outputs?: OutputValues | OutputValues[];
 
   /**
-  * For internal testing only. Do not use.
-  * @deprecated For internal testing only. Do not use.
-  */
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
   sequence?: NodeIdentifier[];
 
   /**

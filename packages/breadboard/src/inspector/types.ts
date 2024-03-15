@@ -439,7 +439,13 @@ export type InspectableGraphStore = {
  */
 export type InspectableRunNodeEvent = {
   type: "node";
+  /**
+   * Unique identifier of the event.
+   */
   id: EventIdentifier;
+  /**
+   * The descriptor of a node that is associated with this event.
+   */
   node: NodeDescriptor;
   /**
    * The timestamp of the `nodestart` event.
@@ -464,6 +470,10 @@ export type InspectableRunNodeEvent = {
    * graph. This is only populated for the top-level graph.
    */
   bubbled: boolean;
+  /**
+   * Returns true if the event should be hidden in the UI.
+   */
+  hidden: boolean;
   /**
    * Returns the list of nested runs that were (or are being) create when
    * this node was (is being) invoked.
@@ -567,4 +577,24 @@ export type PathRegistryEntry = {
    * Returns nested events for this entry.
    */
   events: InspectableRunEvent[];
+};
+
+export type RunObserverLogLevel =
+  /**
+   * Show only events that are marked as info.
+   * Typically, these are useful for communicating the
+   * broad picture of what the graph is doing.
+   */
+  | "info"
+  /**
+   * Show info events and debug events. This includes all
+   * events that are emitted by the graph.
+   */
+  | "debug";
+
+export type RunObserverOptions = {
+  /**
+   * Logging level.
+   */
+  logLevel?: RunObserverLogLevel;
 };

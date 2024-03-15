@@ -132,7 +132,7 @@ export type NodeValuesQueuesMap = Map<NodeIdentifier, NodeValuesQueues>;
 export interface QueuedNodeValuesState {
   state: NodeValuesQueuesMap;
   constants: NodeValuesQueuesMap;
-  wireOutputs(opportunites: Edge[], outputs: OutputValues): void;
+  wireOutputs(opportunities: Edge[], outputs: OutputValues): void;
   getAvailableInputs(nodeId: NodeIdentifier): InputValues;
   useInputs(node: NodeIdentifier, inputs: InputValues): void;
 }
@@ -283,7 +283,7 @@ export interface BreadboardRunResult {
    */
   get invocationId(): number;
   /**
-   * The path of the current node. Superseeds the `invocationId` property.
+   * The path of the current node. Supersedes the `invocationId` property.
    */
   get path(): number[];
   /**
@@ -660,7 +660,7 @@ export type NodeConfigurationConstructor = Record<
 >; // extends NodeConfiguration
 
 /**
- * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * Syntactic sugar for node factories that accept lambdas. This allows passing
  * either
  *  - A JS function that is a lambda function defining the board
  *  - A board capability, i.e. the result of calling lambda()

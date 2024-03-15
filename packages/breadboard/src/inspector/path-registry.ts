@@ -154,6 +154,11 @@ class Entry implements PathRegistryEntry {
         before.push(event);
       }
     });
+    if (this.event?.type === "node") {
+      if (this.event.end !== null && this.event.hidden) {
+        return null;
+      }
+    }
     return [...before, this.event, ...after];
   }
 

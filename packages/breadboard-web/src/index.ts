@@ -80,7 +80,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #runObserver: InspectableRunObserver = createRunObserver();
+  #runObserver: InspectableRunObserver | null = null;
 
   static styles = css`
     * {
@@ -374,10 +374,11 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
+    if (!this.#runObserver) this.#runObserver = createRunObserver();
     let lastEventTime = globalThis.performance.now();
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
-      this.runs = this.#runObserver?.observe(result);
+      this.runs = this.#runObserver.observe(result);
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -608,7 +609,7 @@ export class Main extends LitElement {
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
-    const currentRun = this.#runObserver.runs()[0];
+    const currentRun = this.#runObserver?.runs()[0];
     switch (this.mode) {
       case MODE.BUILD: {
         content = html`<bb-ui-controller

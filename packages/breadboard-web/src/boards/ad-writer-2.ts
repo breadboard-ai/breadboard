@@ -169,6 +169,8 @@ export default await board(({ context }) => {
   const customerPromptMaker = agents.structuredWorker({
     $metadata: {
       title: "Customer Prompt Maker",
+      description: "Conjuring up a persona to represent a customer",
+      logLevel: "info",
     },
     instruction: `Using the audience information in the search engine marketing overview, create a prompt for a bot who will pretend to be the target audience for the ad. The prompt needs to incorporate the sense of skepticism and weariness of ads, yet willingness to provide constructive feedback. The prompt needs to be in the form of:
     
