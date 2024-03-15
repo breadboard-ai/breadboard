@@ -307,14 +307,17 @@ export class Input extends LitElement {
           } else if (isSelect(property)) {
             // Select input.
             const options = property.enum || [];
-            input = html`<select name="${key}" id="${key}">
-              ${options.map((option) => {
-                const isSelected = option === property.default;
-                return html`<option ?selected=${isSelected} value=${option}>
-                  ${option}
-                </option>`;
-              })}
-            </select>`;
+            input = html`<div>
+              <select name="${key}" id="${key}">
+                ${options.map((option) => {
+                  const isSelected = option === property.default;
+                  return html`<option ?selected=${isSelected} value=${option}>
+                    ${option}
+                  </option>`;
+                })}
+              </select>
+              <div></div>
+            </div>`;
           } else if (isBoolean(property)) {
             // Checkbox / Boolean input.
             const checked = !!values[key] ?? property.default ?? false;
