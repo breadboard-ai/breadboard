@@ -9,8 +9,13 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import type { NodeDefinition } from "./definition.js";
-import { NodeInstance, type InstantiateParams } from "./instance.js";
-import type { InputPort, OutputPort, StaticPortConfig } from "./port.js";
+import { NodeInstance } from "./instance.js";
+import type {
+  InputPort,
+  OutputPort,
+  StaticPortConfig,
+  ValuesOrOutputPorts,
+} from "./port.js";
 import type { BreadboardType } from "./type.js";
 
 // TODO(aomarks) Support primary nodes in boards too.
@@ -49,7 +54,7 @@ export function board<
   O extends Record<string, OutputPort<StaticPortConfig>>,
 >(inputs: I, outputs: O): BoardDefinition<I, O> {
   const def = (
-    params: InstantiateParams<BoardPortConfig<I>>
+    params: ValuesOrOutputPorts<BoardPortConfig<I>>
   ): BoardInstance<I, O> => {
     return new NodeInstance(
       boardPortsConfig(inputs),
@@ -61,7 +66,8 @@ export function board<
   // invoke and describe?)
   def.invoke = (() => ({})) as unknown as NodeHandlerFunction;
   def.describe = (() => ({})) as unknown as NodeDescriberFunction;
-  return def;
+  // TODO(aomarks) Remove this cast.
+  return def as unknown as BoardDefinition<I, O>;
 }
 
 function boardPortsConfig<

@@ -79,9 +79,6 @@ type OutputPorts<O extends StaticPortConfigMap> = {
   [PortName in keyof O]: OutputPort<O[PortName]>;
 };
 
-export type InstantiateParams<Ports extends StaticPortConfigMap> =
-  ValuesOrOutputPorts<Ports>;
-
 type GetPrimaryPortType<Ports extends StaticPortConfigMap> = {
   [Name in keyof Ports]: Ports[Name] extends { primary: true }
     ? Ports[Name]
