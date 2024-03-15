@@ -228,12 +228,19 @@ export class Editor extends LitElement {
     changedProperties:
       | PropertyValueMap<{
           loadInfo: LoadArgs;
+          kits: Kit[];
         }>
       | Map<PropertyKey, unknown>
   ): void {
-    const shouldProcessGraph = changedProperties.has("loadInfo");
+    const shouldProcessGraph =
+      changedProperties.has("loadInfo") || changedProperties.has("kits");
 
-    if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
+    if (
+      shouldProcessGraph &&
+      this.loadInfo &&
+      this.loadInfo.graphDescriptor &&
+      this.kits.length > 0
+    ) {
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
   }

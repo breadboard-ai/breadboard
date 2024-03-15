@@ -38,7 +38,7 @@ type UIConfig = {
  * @property {string | null} url
  * @property {STATUS}
  * @property {Board[]}
- * @property {"mermaid" | "visualblocks" | "editor"} - the type of visualizer to use
+ * @property {"mermaid" | "editor"} - the type of visualizer to use
  **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
