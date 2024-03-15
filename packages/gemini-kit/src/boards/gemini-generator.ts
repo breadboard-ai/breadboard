@@ -124,6 +124,13 @@ const parametersSchema = {
       description: "The text to generate",
       examples: ["What is the square root of pi?"],
     },
+    model: {
+      type: "string",
+      title: "Model",
+      description: "The model to use for generation",
+      enum: ["gemini-pro", "gemini-ultra"],
+      examples: ["gemini-pro"],
+    },
     tools: {
       type: "array",
       title: "Tools",
@@ -231,8 +238,9 @@ export default await board(() => {
   const makeUrl = templates.urlTemplate({
     $id: "makeURL",
     template:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
+      "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
     GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
+    model: parameters.model,
     ...chooseMethod,
   });
 
