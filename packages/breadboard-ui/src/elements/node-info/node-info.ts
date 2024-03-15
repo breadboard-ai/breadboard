@@ -347,7 +347,7 @@ export class NodeInfo extends LitElement {
     // before we go ahead and render.
     if (changedProperties.has("loadInfo")) {
       // We have gone from no info to some - render.
-      if (changedProperties.has("loadInfo") === null) {
+      if (changedProperties.get("loadInfo") === null) {
         return true;
       }
 

@@ -319,6 +319,10 @@ export class Graph extends PIXI.Container {
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
   }
 
+  clearNodeLayoutPositions() {
+    this.#layout.clear();
+  }
+
   setNodeLayoutPosition(
     node: string,
     position: PIXI.IPointData,

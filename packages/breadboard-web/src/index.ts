@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { run } from "@google-labs/breadboard/harness";
-import { createRunConfig } from "./config";
+import { run, RunConfig } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -24,8 +23,10 @@ import {
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
+import { loadKits } from "./utils/kit-loader";
+import GeminiKit from "@google-labs/gemini-kit";
 
-export const getBoardInfo = async (
+const getBoardInfo = async (
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
   const runner = await Board.load(url, { base: new URL(window.location.href) });
@@ -34,6 +35,21 @@ export const getBoardInfo = async (
   const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
+
+  return { title, description, version, diagram, url, graphDescriptor, nodes };
+};
+
+const getBoardFromDescriptor = async (
+  url: string,
+  descriptor: GraphDescriptor
+): Promise<BreadboardUI.Types.LoadArgs> => {
+  const runner = await Board.fromGraphDescriptor(descriptor);
+
+  const { title, description, version } = runner;
+  const diagram = runner.mermaid("TD", true, true);
+  const nodes = runner.nodes;
+  const graphDescriptor: GraphDescriptor = runner;
+  graphDescriptor.url = url;
 
   return { title, description, version, diagram, url, graphDescriptor, nodes };
 };
@@ -54,6 +70,9 @@ export class Main extends LitElement {
 
   @property({ reflect: true })
   url: string | null = null;
+
+  @property({ reflect: false })
+  descriptor: GraphDescriptor | null = null;
 
   @property({ reflect: false })
   loadInfo: BreadboardUI.Types.LoadArgs | null = null;
@@ -79,7 +98,6 @@ export class Main extends LitElement {
   #lastBoardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
-  #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
   #runObserver: InspectableRunObserver | null = null;
 
   static styles = css`
@@ -259,11 +277,20 @@ export class Main extends LitElement {
     const modeFromUrl = currentUrl.searchParams.get("mode");
     const embedFromUrl = currentUrl.searchParams.get("embed");
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
-    if (boardFromUrl) {
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-    } else if (modeFromUrl === MODE.BUILD) {
-      this.#createBlankBoard();
-    }
+
+    loadKits([GeminiKit]).then((kits) => {
+      this.kits = kits;
+
+      if (boardFromUrl) {
+        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+      } else if (modeFromUrl === MODE.BUILD) {
+        getBoardInfo("/graphs/blank.json").then((loadInfo) => {
+          this.#onStartBoard(
+            new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
+          );
+        });
+      }
+    });
 
     if (modeFromUrl) {
       switch (modeFromUrl) {
@@ -317,21 +344,18 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setActiveBreadboard(startEvent.url);
     this.url = startEvent.url;
+    this.descriptor = startEvent.descriptor;
     this.mode = MODE.BUILD;
 
     this.#checkForPossibleEmbed();
   }
 
   protected async updated(changedProperties: Map<PropertyKey, unknown>) {
-    if (!changedProperties.has("mode")) {
-      return;
-    }
-
     if (changedProperties.has("mode")) {
       this.#setActiveMode(this.mode);
     }
 
-    if (!this.url) {
+    if (!this.url && !this.descriptor) {
       return;
     }
 
@@ -341,24 +365,17 @@ export class Main extends LitElement {
     }
 
     this.#lastBoardId = this.#boardId;
-    this.loadInfo = await getBoardInfo(this.url);
-
-    if (this.mode === MODE.BUILD) {
-      await this.#createHarnessAndRunFromUrl();
-    }
-  }
-
-  async #createHarnessAndRunFromUrl() {
-    if (!(this.url && this.loadInfo)) {
+    if (this.url) {
+      this.loadInfo = await getBoardInfo(this.url);
+    } else if (this.descriptor) {
+      this.loadInfo = await getBoardFromDescriptor(
+        this.descriptor.url || window.location.href,
+        this.descriptor
+      );
+      this.loadInfo.title = "New Board";
+    } else {
       return;
     }
-
-    const runConfig = await createRunConfig(this.url);
-
-    this.kits = runConfig.kits;
-
-    const runner = run(runConfig);
-    await this.#runBoard(runner);
   }
 
   // TODO: Allow this to run boards directly.
@@ -369,7 +386,6 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
-
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -394,7 +410,6 @@ export class Main extends LitElement {
       }
 
       const answer = await ui.handleStateChange(result, runDuration);
-      await this.#waitIfPaused(answer);
 
       // We reset the time here because we don't want to include the user input
       // round trip in the "board time".
@@ -404,35 +419,6 @@ export class Main extends LitElement {
       }
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
-  }
-
-  #waitIfPaused(answer: unknown) {
-    // We can use the answer as a signal for whether or not to proceed. In cases
-    // where user input is not required, the answer will be void/undefined, and
-    // we should honor the pause signal. When a user submits an answer (which
-    // they can only do for the most recent message going to the UI) then its
-    // value will not be void/undefined, and we can treat that as a signal to
-    // unpause.
-    const shouldUnpause = typeof answer !== "undefined";
-    if (shouldUnpause && this.status === BreadboardUI.Types.STATUS.PAUSED) {
-      if (confirm("Are you sure you wish to resume?")) {
-        this.status = BreadboardUI.Types.STATUS.RUNNING;
-      }
-    }
-
-    if (this.status !== BreadboardUI.Types.STATUS.PAUSED) {
-      return Promise.resolve();
-    }
-
-    return new Promise<void>((resolve) => {
-      this.#statusObservers.push((status: BreadboardUI.Types.STATUS) => {
-        if (status !== BreadboardUI.Types.STATUS.RUNNING) {
-          return;
-        }
-
-        resolve();
-      });
-    });
   }
 
   #setActiveBreadboard(url: string | null) {
@@ -570,17 +556,6 @@ export class Main extends LitElement {
     );
   }
 
-  async #createBlankBoard() {
-    this.loadInfo = await getBoardInfo("/graphs/blank.json");
-    this.loadInfo.title = "New board";
-    this.mode = MODE.BUILD;
-
-    if (this.loadInfo.url) {
-      const config = await createRunConfig(this.loadInfo.url);
-      this.kits = config.kits;
-    }
-  }
-
   #updateLoadInfo(graphDescriptor: GraphDescriptor) {
     this.loadInfo = {
       ...this.loadInfo,
@@ -620,11 +595,27 @@ export class Main extends LitElement {
           .run=${currentRun}
           .kits=${this.kits}
           .status=${this.status}
+          @breadboardfiledrop=${async (
+            evt: BreadboardUI.Events.FileDropEvent
+          ) => {
+            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
+              this.toast(
+                "Unable to update; board is already running",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            this.#onStartBoard(
+              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
+            );
+          }}
           @breadboardrunboard=${async () => {
             if (
               !this.loadInfo?.graphDescriptor ||
               !this.loadInfo.graphDescriptor.url
             ) {
+              console.log("No graph descriptor url or somthign", this.loadInfo);
               return;
             }
 
@@ -632,12 +623,12 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const runConfig = await createRunConfig(
-              this.loadInfo.graphDescriptor.url
-            );
-            runConfig.runner = runner;
-            this.kits = runConfig.kits;
-
+            const runConfig: RunConfig = {
+              url: this.loadInfo.graphDescriptor.url,
+              runner,
+              diagnostics: true,
+              kits: this.kits,
+            };
             this.#runBoard(run(runConfig));
           }}
           @breadboardedgechange=${(

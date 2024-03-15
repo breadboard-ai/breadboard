@@ -4,16 +4,47 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type InspectableEdge,
-  type NodeConfiguration,
+import type {
+  GraphDescriptor,
+  InspectableEdge,
+  NodeConfiguration,
 } from "@google-labs/breadboard";
 
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
 
-  constructor(public url: string) {
+  constructor(
+    public url: string | null = null,
+    public descriptor: GraphDescriptor | null = null
+  ) {
     super(StartEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+
+    if (!url && !descriptor) {
+      throw new Error(
+        "You must provide either a URL or descriptor; none provided"
+      );
+    }
+
+    if (url && descriptor) {
+      throw new Error(
+        "You must provide either a URL or descriptor, but not both"
+      );
+    }
+  }
+}
+
+export class FileDropEvent extends Event {
+  static eventName = "breadboardfiledrop";
+
+  constructor(
+    public readonly url: string,
+    public readonly descriptor: GraphDescriptor
+  ) {
+    super(FileDropEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
