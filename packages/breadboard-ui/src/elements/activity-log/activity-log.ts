@@ -140,7 +140,7 @@ export class ActivityLog extends LitElement {
       top: calc(var(--padding-y) + var(--bb-grid-size) - 3px);
       left: -2px;
       position: absolute;
-      --background: #ffcc33;
+      --background: var(--bb-nodes-400);
     }
 
     :host > .activity-entry::after {
@@ -166,7 +166,7 @@ export class ActivityLog extends LitElement {
       top: 0;
       height: 100%;
       position: absolute;
-      background: #d9d9d9;
+      background: var(--bb-neutral-300);
     }
 
     :host > .activity-entry::before {
@@ -183,18 +183,11 @@ export class ActivityLog extends LitElement {
       margin-right: calc(var(--bb-grid-size) * 2);
       position: relative;
       z-index: 1;
-      --background: #ffcc33;
+      --background: var(--bb-nodes-400);
     }
 
     .neural-activity:last-of-type {
       margin-right: 0;
-    }
-
-    .neural-activity.graphstart,
-    .neural-activity.graphend,
-    .activity-entry.graphstart::after,
-    .activity-entry.graphend::after {
-      --background: rgb(110, 84, 139);
     }
 
     .neural-activity.error,
@@ -202,24 +195,19 @@ export class ActivityLog extends LitElement {
       --background: #cc0000;
     }
 
-    .neural-activity.result,
-    .activity-entry.result::after {
-      --background: #ffa500;
-    }
-
     .neural-activity.input,
     .activity-entry.input::after {
-      --background: #c9daf8ff;
+      --background: var(--bb-inputs-300);
     }
 
     .neural-activity.secret,
     .activity-entry.secret::after {
-      --background: #f4cccc;
+      --background: var(--bb-inputs-300);
     }
 
     .neural-activity.output,
     .activity-entry.output::after {
-      --background: #b6d7a8ff;
+      --background: var(--bb-output-300);
     }
 
     .neural-activity,
@@ -347,7 +335,7 @@ export class ActivityLog extends LitElement {
       border-radius: var(--bb-grid-size);
       display: block;
       width: 100%;
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-300);
     }
 
     dl {
@@ -371,7 +359,7 @@ export class ActivityLog extends LitElement {
     }
 
     dt .value.input {
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-300);
       white-space: pre-line;
       max-height: 300px;
       overflow-y: auto;
