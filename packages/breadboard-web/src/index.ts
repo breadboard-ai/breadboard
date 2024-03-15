@@ -285,6 +285,10 @@ export class Main extends LitElement {
         this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
       } else if (modeFromUrl === MODE.BUILD) {
         getBoardInfo("/graphs/blank.json").then((loadInfo) => {
+          if (loadInfo.graphDescriptor) {
+            loadInfo.graphDescriptor.title = "New Board";
+          }
+
           this.#onStartBoard(
             new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
           );
@@ -346,6 +350,7 @@ export class Main extends LitElement {
     this.url = startEvent.url;
     this.descriptor = startEvent.descriptor;
     this.mode = MODE.BUILD;
+    this.#runObserver = null;
 
     this.#checkForPossibleEmbed();
   }
@@ -372,7 +377,6 @@ export class Main extends LitElement {
         this.descriptor.url || window.location.href,
         this.descriptor
       );
-      this.loadInfo.title = "New Board";
     } else {
       return;
     }
