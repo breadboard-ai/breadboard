@@ -439,7 +439,7 @@ export const importGraph = async (url: string, options: ImportOptions) => {
       in: "headers",
     });
 
-    if (api.requestBody != undefined) {
+    if (Object.keys(api.requestBody).length > 0) {
       // Only support JSON Schema for now.  If you need XML, talk to Paul.
       board.addNode({
         id: "input-requestBody",
