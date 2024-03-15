@@ -49,9 +49,6 @@ export class UI extends LitElement {
   kits: Kit[] = [];
 
   @property({ reflect: true })
-  url: string | null = "";
-
-  @property({ reflect: true })
   status = STATUS.RUNNING;
 
   @property()
@@ -109,7 +106,6 @@ export class UI extends LitElement {
   }
 
   unloadCurrentBoard() {
-    this.url = null;
     this.loadInfo = null;
 
     this.#messageDurations.clear();
@@ -243,7 +239,7 @@ export class UI extends LitElement {
 
     const sidePanel = html`
       <bb-switcher
-        slots="3"
+        slots="2"
         .selected=${this.#autoSwitchSidePanel !== null
           ? this.#autoSwitchSidePanel
           : nothing}
@@ -253,10 +249,12 @@ export class UI extends LitElement {
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}
           @breadboardinputrequested=${() => {
+            console.log("Input requested");
             this.#autoSwitchSidePanel = 0;
             this.requestUpdate();
           }}
           @pointerdown=${(evt: PointerEvent) => {
+            console.log("pointer down");
             if (!this.#detailsRef.value) {
               return;
             }
@@ -330,12 +328,6 @@ export class UI extends LitElement {
           name="Selected Node"
           slot="slot-1"
         ></bb-node-info>
-        <bb-history-tree
-          name="History"
-          slot="slot-2"
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
-        ></bb-history-tree>
       </bb-switcher>
 
       <div

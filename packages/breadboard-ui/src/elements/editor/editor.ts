@@ -16,6 +16,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
+  FileDropEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
@@ -135,10 +136,11 @@ export class Editor extends LitElement {
   async #processGraph(descriptor: GraphDescriptor) {
     this.#graphVersion++;
 
-    if (this.#lastGraphUrl !== descriptor.url) {
-      // TODO: Notify the Graph Renderer to forget node locations.
+    if (this.loadInfo && this.#lastGraphUrl !== this.loadInfo.url) {
+      this.#graph.clearNodeLayoutPositions();
     }
-    this.#lastGraphUrl = descriptor.url || null;
+
+    this.#lastGraphUrl = this.loadInfo?.url || null;
 
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
     const ports = new Map<string, InspectableNodePorts>();
@@ -325,6 +327,19 @@ export class Editor extends LitElement {
 
     const [top] = evt.composedPath();
     if (!(top instanceof HTMLCanvasElement)) {
+      return;
+    }
+
+    if (evt.dataTransfer?.files) {
+      const fileDropped = evt.dataTransfer.files[0];
+      try {
+        fileDropped.text().then((data) => {
+          const descriptor = JSON.parse(data) as GraphDescriptor;
+          this.dispatchEvent(new FileDropEvent(fileDropped.name, descriptor));
+        });
+      } catch (err) {
+        console.warn(err);
+      }
       return;
     }
 

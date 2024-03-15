@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-switcher")
@@ -78,6 +78,11 @@ export class Switcher extends LitElement {
     const renderableChildren = new Array(this.slots).fill(null);
     return html` <div id="buttons">
       ${renderableChildren.map((_, idx) => {
+        if (!this.children[idx]) {
+          console.warn(`No child found in index ${idx}`);
+          return nothing;
+        }
+
         return html`<button
           ?active=${this.selected === idx}
           @click=${() => (this.selected = idx)}
