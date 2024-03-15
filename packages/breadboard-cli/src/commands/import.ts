@@ -351,7 +351,6 @@ export const importGraph = async (url: string, options: ImportOptions) => {
         });
       }
 
-      console.log(api.parameters);
       board.addNode({
         id: "path-inputs",
         type: "input",
