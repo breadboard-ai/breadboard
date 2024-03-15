@@ -595,6 +595,7 @@ export class Main extends LitElement {
           .run=${currentRun}
           .kits=${this.kits}
           .status=${this.status}
+          .boardId=${this.#boardId}
           @breadboardfiledrop=${async (
             evt: BreadboardUI.Events.FileDropEvent
           ) => {
