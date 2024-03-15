@@ -119,8 +119,8 @@ export class Main extends LitElement {
       background: #f3f3f6;
       display: flex;
       align-items: center;
-      color: #1a1a1a;
-      border-bottom: 1px solid #d9d9d9;
+      color: var(--bb-neutral-900);
+      border-bottom: 1px solid var(--bb-neutral-300);
       z-index: 1;
       height: calc(var(--bb-grid-size) * 12);
       padding: calc(var(--bb-grid-size) * 2);
@@ -129,6 +129,7 @@ export class Main extends LitElement {
     #get-log,
     #get-board,
     #toggle-preview {
+      color: var(--bb-neutral-900);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
       margin: 0 calc(var(--bb-grid-size) * 3) 0 0;

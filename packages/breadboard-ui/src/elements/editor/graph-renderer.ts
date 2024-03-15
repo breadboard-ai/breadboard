@@ -134,11 +134,13 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    this.#app.stage.addEventListener("pointerup", () => {
+    const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
       tilePosition = null;
-    });
+    };
+    this.#app.stage.addEventListener("pointerup", onPointerUp);
+    this.#app.stage.addEventListener("pointerupoutside", onPointerUp);
 
     this.#app.stage.on(
       "wheel",
