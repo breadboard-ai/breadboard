@@ -68,11 +68,27 @@ export function defineNodeType<
   return def;
 }
 
-export interface NodeDefinition<
+/**
+ * The return type for {@link defineNodeType}. An instantiation function for use
+ * in boards, and also a {@link NodeHandler} which can be added to kits.
+ */
+export type NodeDefinition<
   I extends StaticPortConfigMap,
   O extends StaticPortConfigMap,
-> {
-  (params: InstantiateParams<I>): NodeInstance<I, O>;
+> = InstantiateFunction<I, O> & StrictNodeHandler;
+
+/**
+ * A function that creates a {@link NodeInstance}.
+ */
+export type InstantiateFunction<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+> = (params: InstantiateParams<I>) => NodeInstance<I, O>;
+
+/**
+ * A more tightly constrained version of {@link NodeHandler}.
+ */
+export interface StrictNodeHandler {
   readonly invoke: NodeHandlerFunction;
   readonly describe: NodeDescriberFunction;
 }
