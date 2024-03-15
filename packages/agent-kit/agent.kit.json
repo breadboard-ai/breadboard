@@ -666,7 +666,8 @@
           "configuration": {},
           "metadata": {
             "title": "Validate JSON",
-            "description": "Validating the generated JSON"
+            "logLevel": "info",
+            "description": "Checking my work"
           }
         },
         {
@@ -688,7 +689,8 @@
           },
           "metadata": {
             "title": "Generate",
-            "description": "Generating the agent's output with Gemini"
+            "logLevel": "info",
+            "description": "Generating an answer"
           }
         },
         {

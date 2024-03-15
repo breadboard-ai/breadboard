@@ -215,7 +215,8 @@ export default await board(({ context, instruction, schema }) => {
     $id: "generate",
     $metadata: {
       title: "Generate",
-      description: "Generating the agent's output with Gemini",
+      logLevel: "info",
+      description: "Generating an answer",
     },
     context: count.continue,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
@@ -225,7 +226,8 @@ export default await board(({ context, instruction, schema }) => {
     $id: "validate",
     $metadata: {
       title: "Validate JSON",
-      description: "Validating the generated JSON",
+      logLevel: "info",
+      description: "Checking my work",
     },
     json: generate.text.isString(),
     schema: schema.memoize(),

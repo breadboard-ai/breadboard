@@ -178,8 +178,21 @@ export class EventManager {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
 
-    if (shouldSkipEvent(this.#options, node, path.length === 1)) {
-      return;
+    const isTopLevel = path.length === 1;
+    if (shouldSkipEvent(this.#options, node, isTopLevel)) {
+      if (isTopLevel) {
+        this.#pathRegistry.addSidecar(path, {
+          id: eventIdFromEntryId(idFromPath(path)),
+          type: "node",
+          node,
+          start: timestamp,
+          end: null,
+          inputs,
+          outputs: null,
+          runs: [],
+          bubbled: false,
+        });
+      }
     }
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
