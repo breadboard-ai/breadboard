@@ -43,6 +43,9 @@ export class Editor extends LitElement {
   loadInfo: LoadArgs | null = null;
 
   @property()
+  boardId: number = -1;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -62,7 +65,7 @@ export class Editor extends LitElement {
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
   #graphVersion = 0;
-  #lastGraphUrl: string | null = null;
+  #lastBoardId: number = -1;
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
@@ -136,11 +139,11 @@ export class Editor extends LitElement {
   async #processGraph(descriptor: GraphDescriptor) {
     this.#graphVersion++;
 
-    if (this.loadInfo && this.#lastGraphUrl !== this.loadInfo.url) {
+    if (this.loadInfo && this.#lastBoardId !== this.boardId) {
       this.#graph.clearNodeLayoutPositions();
     }
 
-    this.#lastGraphUrl = this.loadInfo?.url || null;
+    this.#lastBoardId = this.boardId;
 
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
     const ports = new Map<string, InspectableNodePorts>();
