@@ -322,6 +322,11 @@ export const importGraph = async (url: string, options: ImportOptions) => {
     if (api == undefined) {
       continue;
     }
+
+    if (apiPathFilter != undefined && apiPathFilter != api.operationId) {
+      continue;
+    }
+
     const board = new Board({
       title: api?.operationId,
       description: api?.description,

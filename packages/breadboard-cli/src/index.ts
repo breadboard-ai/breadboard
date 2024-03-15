@@ -55,10 +55,7 @@ program
 program
   .command("import [url]")
   .description("Imports an OpenAPI spec and creates a dedicated board.")
-  .option(
-    "-a, --api <path>",
-    "Which API path / name will be exported. If this is left out, -o is required."
-  )
+  .option("-a, --api <path>", "Which API path / name will be exported.")
   .option(
     "-o, --output <path>",
     "The path where the boards will be output the board(s) to (current directory by default.)",
