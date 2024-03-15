@@ -41,6 +41,11 @@ type ExcluedRequestBody = Exclude<
   OpenAPIV3.ReferenceObject | OpenAPIV3_1.ReferenceObject
 >;
 
+type ExcludedParameter = Exclude<
+  OpenAPI.Parameter,
+  OpenAPIV3.ReferenceObject | OpenAPIV3_1.ReferenceObject
+>;
+
 type MediaTypeObject = OpenAPIV3_1.MediaTypeObject | OpenAPIV3.MediaTypeObject;
 
 function parseParametersFromRequest<
@@ -111,11 +116,6 @@ function parseParametersFromRequest<
   }
   return accumulator;
 }
-
-type ExcludedParameter = Exclude<
-  OpenAPI.Parameter,
-  OpenAPIV3.ReferenceObject | OpenAPIV3_1.ReferenceObject
->;
 
 function parseParametersFromPathOrQueryString<
   D extends OpenAPI.Document<OpenAPIV3.Document | OpenAPIV3_1.Document>,
@@ -398,43 +398,20 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
     const authorizationHeader = api.secrets
       ? {
-          Authorization: {
-            type: "string",
-            title: "Authorization",
-            description: "The authorization header",
-            default: `Bearer `,
-          },
+          Authorization: `Bearer `,
         }
       : {};
 
     const contentTypeHeader = api.requestBody
       ? {
-          "Content-Type": {
-            type: "string",
-            title: "Content-Type",
-            description: "The content type of the request body",
-            default: "application/json",
-          },
+          "Content-Type": "application/json",
         }
       : {};
 
     board.addNode({
-      id: "input_headers",
-      type: "input",
-      configuration: {
-        schema: {
-          type: "object",
-          properties: {
-            ...contentTypeHeader,
-            ...authorizationHeader,
-          },
-        },
-      },
-    });
-
-    board.addNode({
       id: "make-headers",
       type: "runJavascript",
+
       configuration: {
         raw: true,
         code: `function(inputs) {
@@ -450,21 +427,9 @@ export const importGraph = async (url: string, options: ImportOptions) => {
           
           return { headers };
       }`,
+        ...contentTypeHeader,
+        ...authorizationHeader,
       },
-    });
-
-    board.addEdge({
-      from: "input_headers",
-      to: "make-headers",
-      out: "Authorization",
-      in: "Authorization",
-    });
-
-    board.addEdge({
-      from: "input_headers",
-      to: "make-headers",
-      out: "Content-Type",
-      in: "Content-Type",
     });
 
     board.addEdge({
@@ -486,9 +451,7 @@ export const importGraph = async (url: string, options: ImportOptions) => {
               requestBody: {
                 type: "object",
                 title: "requestBody",
-                description:
-                  //api.requestBody["application/json"]?.schema? ||
-                  "The request body for the API call (JSON)",
+                description: "The request body for the API call (JSON)",
               },
             },
           },
@@ -524,30 +487,11 @@ export const importGraph = async (url: string, options: ImportOptions) => {
       type: "output",
     });
 
-    // // For each POST request parameter, we need to add an input node to the board.
-    // api?.requestBody.forEach((param) => {
-    //   board.addNode({
-    //     id: param?.name || "",
-    //     type: "input",
-    //     configuration: {
-    //       type: "object",
-    //       description: param?.schema.description || "",
-    //       name: param?.name || "",
-    //       required: param?.required || true,
-    //       default: param?.default || "",
-    //       //schema: param?.schema,
-    //     },
-    //   });
-    // });
-
     console.log(board);
     if (api.operationId != undefined && outputPath != undefined) {
       outputBoard(board, api.operationId, outputPath);
     }
   }
-
-  //const editableGraph = edit(board);
-  //editableGraph.addNode();
 };
 
 const outputBoard = async (
