@@ -439,7 +439,13 @@ export type InspectableGraphStore = {
  */
 export type InspectableRunNodeEvent = {
   type: "node";
+  /**
+   * Unique identifier of the event.
+   */
   id: EventIdentifier;
+  /**
+   * The descriptor of a node that is associated with this event.
+   */
   node: NodeDescriptor;
   /**
    * The timestamp of the `nodestart` event.
@@ -464,6 +470,10 @@ export type InspectableRunNodeEvent = {
    * graph. This is only populated for the top-level graph.
    */
   bubbled: boolean;
+  /**
+   * Returns true if the event should be hidden in the UI.
+   */
+  hidden: boolean;
   /**
    * Returns the list of nested runs that were (or are being) create when
    * this node was (is being) invoked.

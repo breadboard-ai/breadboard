@@ -40,6 +40,7 @@ const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const shouldSkipEvent = (
   options: RunObserverOptions,
   node: NodeDescriptor,
@@ -91,6 +92,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   outputs: OutputValues | null;
   result: HarnessRunResult | null;
   bubbled: boolean;
+  hidden: boolean;
 
   /**
    * The path registry entry associated with this event.
@@ -112,6 +114,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     this.outputs = null;
     this.result = null;
     this.bubbled = false;
+    this.hidden = false;
   }
 
   get id(): EventIdentifier {
@@ -178,26 +181,15 @@ export class EventManager {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
 
-    const isTopLevel = path.length === 1;
-    if (shouldSkipEvent(this.#options, node, isTopLevel)) {
-      if (isTopLevel) {
-        this.#pathRegistry.addSidecar(path, {
-          id: eventIdFromEntryId(idFromPath(path)),
-          type: "node",
-          node,
-          start: timestamp,
-          end: null,
-          inputs,
-          outputs: null,
-          runs: [],
-          bubbled: false,
-        });
-      }
-    }
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     const event = new RunNodeEvent(entry, node, timestamp, inputs);
+    event.hidden = shouldSkipEvent(
+      this.#options,
+      node,
+      entry.path.length === 1
+    );
     entry.event = event;
   }
 
