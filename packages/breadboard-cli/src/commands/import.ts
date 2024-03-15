@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, NodeValue } from "@google-labs/breadboard";
 import yaml from "yaml";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
@@ -330,31 +330,40 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
     if (api.parameters.length > 0) {
       // For each QS or Path parameter on the API, we need to add an input node to the board.
+      const params: Record<string, NodeValue> = {};
+
+      for (const param of api.parameters) {
+        if (param.name == undefined) {
+          continue;
+        }
+        params[param.name] = {
+          title: param?.name,
+          type: param?.schema.type,
+          description: param?.description || `The data for ${param.name}`,
+          example: param?.schema?.example,
+        };
+
+        board.addEdge({
+          from: "path-inputs",
+          to: "url",
+          out: param?.name,
+          in: param?.name,
+        });
+      }
+
+      console.log(api.parameters);
       board.addNode({
         id: "path-inputs",
         type: "input",
         configuration: {
           schema: {
             type: "object",
-            ...api.parameters.map((param) => {
-              return {
-                name: param?.name,
-                type: param?.schema.type,
-                description: param?.description || "",
-              };
-            }),
+            properties: params,
             required: api.parameters
               .filter((param) => param?.required)
               .map((param) => param?.name),
           },
         },
-      });
-
-      board.addEdge({
-        from: "path-inputs",
-        to: "url",
-        out: "*",
-        in: "*",
       });
     }
 
