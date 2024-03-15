@@ -32,6 +32,7 @@ export class ActivityLog extends LitElement {
   @property({ reflect: true })
   showExtendedInfo = false;
 
+  #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #isHidden = false;
   #observer = new IntersectionObserver((entries) => {
@@ -107,6 +108,10 @@ export class ActivityLog extends LitElement {
       user-select: none;
     }
 
+    .activity-entry.new {
+      animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
     :host > .activity-entry {
       padding-left: var(--padding-x);
       padding-right: var(--padding-x);
@@ -140,7 +145,7 @@ export class ActivityLog extends LitElement {
       top: calc(var(--padding-y) + var(--bb-grid-size) - 3px);
       left: -2px;
       position: absolute;
-      --background: #ffcc33;
+      --background: var(--bb-nodes-400);
     }
 
     :host > .activity-entry::after {
@@ -166,7 +171,7 @@ export class ActivityLog extends LitElement {
       top: 0;
       height: 100%;
       position: absolute;
-      background: #d9d9d9;
+      background: var(--bb-neutral-300);
     }
 
     :host > .activity-entry::before {
@@ -183,18 +188,11 @@ export class ActivityLog extends LitElement {
       margin-right: calc(var(--bb-grid-size) * 2);
       position: relative;
       z-index: 1;
-      --background: #ffcc33;
+      --background: var(--bb-nodes-400);
     }
 
     .neural-activity:last-of-type {
       margin-right: 0;
-    }
-
-    .neural-activity.graphstart,
-    .neural-activity.graphend,
-    .activity-entry.graphstart::after,
-    .activity-entry.graphend::after {
-      --background: rgb(110, 84, 139);
     }
 
     .neural-activity.error,
@@ -202,24 +200,19 @@ export class ActivityLog extends LitElement {
       --background: #cc0000;
     }
 
-    .neural-activity.result,
-    .activity-entry.result::after {
-      --background: #ffa500;
-    }
-
     .neural-activity.input,
     .activity-entry.input::after {
-      --background: #c9daf8ff;
+      --background: var(--bb-inputs-300);
     }
 
     .neural-activity.secret,
     .activity-entry.secret::after {
-      --background: #f4cccc;
+      --background: var(--bb-inputs-300);
     }
 
     .neural-activity.output,
     .activity-entry.output::after {
-      --background: #b6d7a8ff;
+      --background: var(--bb-output-300);
     }
 
     .neural-activity,
@@ -347,7 +340,7 @@ export class ActivityLog extends LitElement {
       border-radius: var(--bb-grid-size);
       display: block;
       width: 100%;
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-300);
     }
 
     dl {
@@ -371,7 +364,7 @@ export class ActivityLog extends LitElement {
     }
 
     dt .value.input {
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-300);
       white-space: pre-line;
       max-height: 300px;
       overflow-y: auto;
@@ -403,6 +396,18 @@ export class ActivityLog extends LitElement {
       background: var(--bb-selected-color);
       border-radius: var(--bb-grid-size);
       animation: fadeOut 1s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        translate: 0 -5px;
+        opacity: 0;
+      }
+
+      to {
+        translate: 0 0;
+        opacity: 1;
+      }
     }
 
     @keyframes rotate {
@@ -556,10 +561,17 @@ export class ActivityLog extends LitElement {
   }
 
   render() {
+    if (!this.events || this.#seenItems.size > this.events.length) {
+      this.#seenItems.clear();
+    }
+
     return html`
       <h1>${this.logTitle}</h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
+            const isNew = this.#seenItems.has(event.id);
+            this.#seenItems.add(event.id);
+
             let content: HTMLTemplateResult | symbol = nothing;
             switch (event.type) {
               case "node": {
@@ -728,6 +740,7 @@ export class ActivityLog extends LitElement {
 
             const classes: Record<string, boolean> = {
               "activity-entry": true,
+              new: isNew,
               [event.type]: true,
             };
 

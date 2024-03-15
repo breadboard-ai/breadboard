@@ -146,8 +146,8 @@ export class BoardItem extends LitElement {
     }
 
     div > a:hover {
-      background: rgb(113, 106, 162);
-      border: 1px solid rgb(88, 79, 138);
+      background: var(--bb-output-600);
+      border: 1px solid var(--bb-output-700);
       box-shadow:
         0 2px 7px 0 rgba(0, 0, 0, 0.14),
         0 13px 27px 0 rgba(0, 0, 0, 0.23);

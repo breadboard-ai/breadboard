@@ -38,6 +38,7 @@ html {
   --bb-easing: cubic-bezier(0, 0, 0.3, 1);
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
+
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
@@ -75,6 +76,75 @@ html {
 
   --bb-expand-arrow: url(/images/expand.svg);
   --bb-collapse-arrow: url(/images/collapse.svg);
+
+  --bb-inputs-50: #eaf7e7;
+  --bb-inputs-100: #bbe7b0;
+  --bb-inputs-200: #9adc8a;
+  --bb-inputs-300: #6ccb55;
+  --bb-inputs-400: #4fc134;
+  --bb-inputs-500: #24b202;
+  --bb-inputs-600: #20a202;
+  --bb-inputs-700: #1a7e01;
+  --bb-inputs-800: #136202;
+  --bb-inputs-900: #0f4b00;
+
+  --bb-nodes-50: #fff9e6;
+  --bb-nodes-100: #ffebb0;
+  --bb-nodes-200: #ffe28b;
+  --bb-nodes-300: #ffd454;
+  --bb-nodes-400: #ffcc33;
+  --bb-nodes-500: #ffbf00;
+  --bb-nodes-600: #e8af02;
+  --bb-nodes-700: #b68902;
+  --bb-nodes-800: #8c6900;
+  --bb-nodes-900: #6b5000;
+
+  --bb-boards-50: #fff4eb;
+  --bb-boards-100: #ffdfc0;
+  --bb-boards-200: #ffcea1;
+  --bb-boards-300: #feb876;
+  --bb-boards-400: #feab5c;
+  --bb-boards-500: #fe9533;
+  --bb-boards-600: #e7882e;
+  --bb-boards-700: #b46b24;
+  --bb-boards-800: #8c521b;
+  --bb-boards-900: #6b3f15;
+
+  --bb-output-50: #ecf5ff;
+  --bb-output-100: #c0dfff;
+  --bb-output-200: #a1d0ff;
+  --bb-output-300: #77bbff;
+  --bb-output-400: #5cadff;
+  --bb-output-500: #3399ff;
+  --bb-output-600: #2e8be8;
+  --bb-output-700: #246db5;
+  --bb-output-800: #1b548c;
+  --bb-output-900: #1b548c;
+
+  --bb-neutral-10: #fafafa;
+  --bb-neutral-50: #f6f6f6;
+  --bb-neutral-100: #ededed;
+  --bb-neutral-200: #e3e3e3;
+  --bb-neutral-300: #d9d9d9;
+  --bb-neutral-400: #c2c2c2;
+  --bb-neutral-500: #9c9c9c;
+  --bb-neutral-600: #7a7a7a;
+  --bb-neutral-700: #595959;
+  --bb-neutral-800: #333333;
+  --bb-neutral-900: #1a1a1a;
+
+  --bb-title-large: 22px/28px;
+  --bb-title-medium: 16px/24px;
+  --bb-title-small: 14px/20px;
+
+  --bb-label-large: 14px/20px;
+  --bb-label-medium: 12px/16px;
+  --bb-label-small: 11px/16px;
+
+  --bb-body-large: 16px/24px;
+  --bb-body-medium: 14px/20px;
+  --bb-body-small: 12px/16px;
+  --bb-body-x-small: 10px/13px;
 
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);
