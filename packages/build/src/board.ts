@@ -10,7 +10,7 @@ import type {
 } from "@google-labs/breadboard";
 import type { NodeDefinition } from "./definition.js";
 import { NodeInstance, type InstantiateParams } from "./instance.js";
-import type { InputPort, OutputPort, PortConfig } from "./port.js";
+import type { InputPort, OutputPort, StaticPortConfig } from "./port.js";
 import type { BreadboardType } from "./type.js";
 
 // TODO(aomarks) Support primary nodes in boards too.
@@ -45,8 +45,8 @@ import type { BreadboardType } from "./type.js";
  * board.
  */
 export function board<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
+  I extends Record<string, InputPort<StaticPortConfig>>,
+  O extends Record<string, OutputPort<StaticPortConfig>>,
 >(inputs: I, outputs: O): BoardDefinition<I, O> {
   const def = (
     params: InstantiateParams<BoardPortConfig<I>>
@@ -67,7 +67,7 @@ export function board<
 function boardPortsConfig<
   PortMap extends Record<
     string,
-    InputPort<PortConfig> | OutputPort<PortConfig>
+    InputPort<StaticPortConfig> | OutputPort<StaticPortConfig>
   >,
 >(portMap: PortMap): BoardPortConfig<PortMap> {
   const configMap: Record<string, { type: BreadboardType }> = {};
@@ -79,19 +79,19 @@ function boardPortsConfig<
 }
 
 export type BoardDefinition<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
+  I extends Record<string, InputPort<StaticPortConfig>>,
+  O extends Record<string, OutputPort<StaticPortConfig>>,
 > = NodeDefinition<BoardPortConfig<I>, BoardPortConfig<O>>;
 
 export type BoardInstance<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
+  I extends Record<string, InputPort<StaticPortConfig>>,
+  O extends Record<string, OutputPort<StaticPortConfig>>,
 > = NodeInstance<BoardPortConfig<I>, BoardPortConfig<O>>;
 
 type BoardPortConfig<
   PortMap extends Record<
     string,
-    InputPort<PortConfig> | OutputPort<PortConfig>
+    InputPort<StaticPortConfig> | OutputPort<StaticPortConfig>
   >,
 > = {
   [PortName in keyof PortMap]: PortMap[PortName] extends

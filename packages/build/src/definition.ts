@@ -9,7 +9,7 @@ import type {
   NodeHandlerFunction,
   NodeDescriberFunction,
 } from "@google-labs/breadboard";
-import type { PortConfigMap, ConcreteValues } from "./port.js";
+import type { StaticPortConfigMap, ConcreteValues } from "./port.js";
 
 /**
  * Define a new Breadboard node type.
@@ -57,8 +57,8 @@ import type { PortConfigMap, ConcreteValues } from "./port.js";
  * `board` for execution.
  */
 export function defineNodeType<
-  I extends PortConfigMap,
-  O extends PortConfigMap,
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
 >(inputs: I, outputs: O, invoke: InvokeFunction<I, O>): NodeDefinition<I, O> {
   const def = (params: InstantiateParams<I>) => {
     return new NodeInstance(inputs, outputs, params);
@@ -69,8 +69,8 @@ export function defineNodeType<
 }
 
 export interface NodeDefinition<
-  I extends PortConfigMap,
-  O extends PortConfigMap,
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
 > {
   (params: InstantiateParams<I>): NodeInstance<I, O>;
   readonly invoke: NodeHandlerFunction;
@@ -82,9 +82,10 @@ export interface NodeDefinition<
  * promise, and (2) is typed for compatibility with the NodeHandlerFunction type
  * that is expected by the Breadboard runner, KitBuilder, etc.
  */
-function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
-  invoke: InvokeFunction<I, O>
-): NodeHandlerFunction {
+function makeInvokeFunction<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+>(invoke: InvokeFunction<I, O>): NodeHandlerFunction {
   return (inputs) => {
     // The user's invoke function is allowed to return a promise or a concrete
     // value, but we always return a promise so that any sync -> async change
@@ -108,10 +109,10 @@ function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
  * type, and wrap that in a promise-returning function (a function is expected
  * because some node types change their shape at runtime).
  */
-function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
-  inputs: I,
-  outputs: O
-): NodeDescriberFunction {
+function makeDescribeFunction<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+>(inputs: I, outputs: O): NodeDescriberFunction {
   // Note result is memoized. This is a monmorphic node, so the ports never
   // change.
   const result = Promise.resolve({
@@ -137,18 +138,21 @@ function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
   return () => result;
 }
 
-type InvokeFunction<I extends PortConfigMap, O extends PortConfigMap> =
-  | InvokeFunctionSync<I, O>
-  | InvokeFunctionAsync<I, O>;
+type InvokeFunction<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+> = InvokeFunctionSync<I, O> | InvokeFunctionAsync<I, O>;
 
-type InvokeFunctionSync<I extends PortConfigMap, O extends PortConfigMap> = (
-  params: InvokeParams<I>
-) => InvokeReturn<O>;
+type InvokeFunctionSync<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+> = (params: InvokeParams<I>) => InvokeReturn<O>;
 
-type InvokeFunctionAsync<I extends PortConfigMap, O extends PortConfigMap> = (
-  params: InvokeParams<I>
-) => Promise<InvokeReturn<O>>;
+type InvokeFunctionAsync<
+  I extends StaticPortConfigMap,
+  O extends StaticPortConfigMap,
+> = (params: InvokeParams<I>) => Promise<InvokeReturn<O>>;
 
-type InvokeParams<Ports extends PortConfigMap> = ConcreteValues<Ports>;
+type InvokeParams<Ports extends StaticPortConfigMap> = ConcreteValues<Ports>;
 
-type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;
+type InvokeReturn<Ports extends StaticPortConfigMap> = ConcreteValues<Ports>;
