@@ -108,10 +108,6 @@ export class ActivityLog extends LitElement {
       user-select: none;
     }
 
-    .activity-entry.new {
-      animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
-    }
-
     :host > .activity-entry {
       padding-left: var(--padding-x);
       padding-right: var(--padding-x);
