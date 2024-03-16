@@ -333,7 +333,7 @@ export class Editor extends LitElement {
       return;
     }
 
-    if (evt.dataTransfer?.files) {
+    if (evt.dataTransfer?.files && evt.dataTransfer.files.length) {
       const fileDropped = evt.dataTransfer.files[0];
       try {
         fileDropped.text().then((data) => {
