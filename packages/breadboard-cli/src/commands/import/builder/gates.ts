@@ -1,4 +1,4 @@
-import { AtLeastV3, AtLeastV3ReferenceObject } from "./types.js";
+import { AtLeastV3Document, AtLeastV3ReferenceObject } from "./types.js";
 
 export function isReferenceObject(
   obj: object
@@ -6,7 +6,7 @@ export function isReferenceObject(
   return "$ref" in obj;
 }
 
-export function isOpenAPI(json: object): json is AtLeastV3 {
+export function isOpenAPI(json: object): json is AtLeastV3Document {
   if ("openapi" in json == false) {
     throw new Error("Not an Open API spec.");
   }

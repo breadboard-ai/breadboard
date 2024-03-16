@@ -1,10 +1,15 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { isReferenceObject } from "./gates.js";
 import {
   parseParametersFromRequest,
   parseParametersFromPathOrQueryString,
 } from "./parseParameters.js";
-import { APISpec, AtLeastV3, AtLeastV3ReferenceObject } from "./types.js";
+import {
+  APISpec,
+  AtLeastV3Document,
+  AtLeastV3Operation,
+  AtLeastV3ReferenceObject,
+  AtLeastV3SecuritySchemeObject,
+} from "./types.js";
 
 /*
     If there is no operation ID, we need to generate one from the path, but format it like a JS function name.
@@ -23,7 +28,7 @@ const inferOperationId = (path: string, method: string) => {
   return `${method}${newName}`;
 };
 
-export const generateAPISpecs = (json: AtLeastV3): APISpec[] => {
+export const generateAPISpecs = (json: AtLeastV3Document): APISpec[] => {
   const { paths } = json;
 
   const baseUrl = json.servers?.[0].url;
@@ -32,7 +37,7 @@ export const generateAPISpecs = (json: AtLeastV3): APISpec[] => {
     throw new Error("No base URL in Open API spec.");
   }
 
-  const apis: [string, string, OpenAPIV3.OperationObject][] = [];
+  const apis: [string, string, AtLeastV3Operation][] = [];
   // Generate a list of APIs
   for (const apiPath in paths) {
     const pathInfo = paths[apiPath];
@@ -64,8 +69,7 @@ export const generateAPISpecs = (json: AtLeastV3): APISpec[] => {
         : parseParametersFromRequest(json, data.requestBody);
 
     let secrets:
-      | OpenAPIV3.SecuritySchemeObject
-      | OpenAPIV3_1.SecuritySchemeObject
+      | AtLeastV3SecuritySchemeObject
       | AtLeastV3ReferenceObject
       | undefined = undefined;
     // We can only support Bearer tokens for now.

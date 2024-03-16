@@ -1,7 +1,9 @@
 import { OpenAPI, OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import {
+  AtLeastV3ReferenceObject,
+  AtLeastV3RequestBodyObject,
   ExcludedParameter,
-  ExcluedRequestBody,
+  ExcludeRequestBody,
   MediaTypeObject,
   SupportedOpenAPIDocuments,
 } from "./types.js";
@@ -9,12 +11,8 @@ import { isReferenceObject } from "./gates.js";
 
 export function parseParametersFromRequest<
   D extends SupportedOpenAPIDocuments,
-  P extends
-    | OpenAPIV3_1.ReferenceObject
-    | OpenAPIV3.ReferenceObject
-    | OpenAPIV3.RequestBodyObject
-    | OpenAPIV3_1.RequestBodyObject,
->(json: D, request: P): ExcluedRequestBody["content"] {
+  P extends AtLeastV3ReferenceObject | AtLeastV3RequestBodyObject,
+>(json: D, request: P): ExcludeRequestBody["content"] {
   if (isReferenceObject(request)) {
     return {}; // Can't deal with this yet.
   }
@@ -40,7 +38,7 @@ export function parseParametersFromRequest<
     }
   );
 
-  const accumulator: ExcluedRequestBody["content"] = {};
+  const accumulator: ExcludeRequestBody["content"] = {};
   for (const [contentType, requestParams] of requestThing) {
     if (requestParams == undefined || requestParams.schema == undefined) {
       continue;

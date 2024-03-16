@@ -1,14 +1,19 @@
 import { Board, NodeValue } from "@google-labs/breadboard";
 import { loadOpenAPI } from "./loader.js";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { isOpenAPI } from "./gates.js";
 import { generateAPISpecs } from "./generateAPISpecs.js";
-import { APISpec, ExcludedParameter } from "./types.js";
-
+import {
+  APISpec,
+  AtLeastV3ReferenceObject,
+  ExcludedParameter,
+  AtLeastV3Document,
+  AtLeastV3MediaObjectMap,
+  AtLeastV3SecuritySchemeObject,
+} from "./types.js";
 export class OpenAPIBoardBuilder {
   #url: string;
   #board: Board | undefined;
-  #json: OpenAPIV3_1.Document<{}> | OpenAPIV3.Document<{}> | undefined;
+  #json: AtLeastV3Document | undefined;
   constructor(url: string) {
     this.#url = url;
   }
@@ -46,6 +51,7 @@ export class OpenAPIBoardBuilder {
         version: "0.0.1",
       });
 
+      // Creates the URL, path-inputs, and mergeHTTPHeaders nodes for the board.
       buildURL(board, apiSpec);
 
       buildSecrets(apiSpec, json, board);
@@ -88,13 +94,10 @@ function buildRequestBody(
     description: string | undefined;
     summary: string | undefined;
     parameters: ExcludedParameter[];
-    requestBody:
-      | { [media: string]: OpenAPIV3.MediaTypeObject }
-      | { [media: string]: OpenAPIV3_1.MediaTypeObject };
+    requestBody: AtLeastV3MediaObjectMap;
     secrets:
-      | OpenAPIV3.ReferenceObject
-      | OpenAPIV3_1.ReferenceObject
-      | OpenAPIV3.SecuritySchemeObject
+      | AtLeastV3ReferenceObject
+      | AtLeastV3SecuritySchemeObject
       | undefined;
   },
   board: Board
@@ -135,19 +138,17 @@ function buildSecrets(
     description: string | undefined;
     summary: string | undefined;
     parameters: ExcludedParameter[];
-    requestBody:
-      | { [media: string]: OpenAPIV3.MediaTypeObject }
-      | { [media: string]: OpenAPIV3_1.MediaTypeObject };
+    requestBody: AtLeastV3MediaObjectMap;
     secrets:
-      | OpenAPIV3.ReferenceObject
-      | OpenAPIV3_1.ReferenceObject
-      | OpenAPIV3.SecuritySchemeObject
+      | AtLeastV3ReferenceObject
+      | AtLeastV3SecuritySchemeObject
       | undefined;
   },
-  json: OpenAPIV3.Document<{}> | OpenAPIV3_1.Document<{}>,
+  json: AtLeastV3Document,
   board: Board
 ) {
   if (api.secrets != undefined) {
+    // We generate a secret node for the API key based on the name of the API
     const apiKeyName = `${json.info.title
       .replace(/[^a-zA-Z0-9]+/g, "_")
       .toUpperCase()}_KEY`;
@@ -160,6 +161,8 @@ function buildSecrets(
       },
     });
 
+    // We are expecting the secrets to be a Bearer token.
+    // TODO: Support other types of secrets (api_key path etc)
     board.addEdge({
       from: "input-secrets",
       to: "mergeHTTPHeaders",
@@ -183,13 +186,10 @@ function buildURL(
     description: string | undefined;
     summary: string | undefined;
     parameters: ExcludedParameter[];
-    requestBody:
-      | { [media: string]: OpenAPIV3.MediaTypeObject }
-      | { [media: string]: OpenAPIV3_1.MediaTypeObject };
+    requestBody: AtLeastV3MediaObjectMap;
     secrets:
-      | OpenAPIV3.ReferenceObject
-      | OpenAPIV3_1.ReferenceObject
-      | OpenAPIV3.SecuritySchemeObject
+      | AtLeastV3ReferenceObject
+      | AtLeastV3SecuritySchemeObject
       | undefined;
   }
 ) {
@@ -257,13 +257,10 @@ function buildHTTPHeaders(
     description: string | undefined;
     summary: string | undefined;
     parameters: ExcludedParameter[];
-    requestBody:
-      | { [media: string]: OpenAPIV3.MediaTypeObject }
-      | { [media: string]: OpenAPIV3_1.MediaTypeObject };
+    requestBody: AtLeastV3MediaObjectMap;
     secrets:
-      | OpenAPIV3.ReferenceObject
-      | OpenAPIV3_1.ReferenceObject
-      | OpenAPIV3.SecuritySchemeObject
+      | AtLeastV3ReferenceObject
+      | AtLeastV3SecuritySchemeObject
       | undefined;
   },
   board: Board
