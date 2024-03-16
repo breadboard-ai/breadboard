@@ -1,10 +1,9 @@
 import yaml from "yaml";
 import { readFile } from "fs/promises";
-import { OpenAPI, OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { AtLeastV3 } from "./types.js";
 
-export async function loadOpenAPI(
-  url: string
-): Promise<OpenAPIV3.Document | OpenAPIV3_1.Document> {
+export async function loadOpenAPI(url: string): Promise<AtLeastV3> {
   let openAPIData = "";
   try {
     if (url.startsWith("file://")) {

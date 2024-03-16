@@ -1,13 +1,30 @@
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { isReferenceObject } from "./gate.js";
-import { inferOperationId } from "./inferOperationId.js";
-import { parseParametersFromPathOrQueryString } from "./parseParametersFromPathOrQueryString.js";
-import { parseParametersFromRequest } from "./parseParametersFromRequest.js";
+import { isReferenceObject } from "./gates.js";
+import {
+  parseParametersFromRequest,
+  parseParametersFromPathOrQueryString,
+} from "./parseParameters.js";
+import { APISpec, AtLeastV3, AtLeastV3ReferenceObject } from "./types.js";
 
-export const generateAPISpecs = (
-  json: OpenAPIV3.Document | OpenAPIV3_1.Document
-) => {
-  const { paths, info } = json;
+/*
+    If there is no operation ID, we need to generate one from the path, but format it like a JS function name.
+   */
+
+const inferOperationId = (path: string, method: string) => {
+  const newName = path
+    .split("/")
+    .map((part) =>
+      part.length == 0 ? part : part[0].toUpperCase() + part.slice(1)
+    )
+    .join("")
+    .replace(/[.-]/g, "") // Remove dashes and dots
+    .replace(/[{}]/g, ""); // Remove curly braces (need to improve this)
+
+  return `${method}${newName}`;
+};
+
+export const generateAPISpecs = (json: AtLeastV3): APISpec[] => {
+  const { paths } = json;
 
   const baseUrl = json.servers?.[0].url;
 
@@ -49,8 +66,7 @@ export const generateAPISpecs = (
     let secrets:
       | OpenAPIV3.SecuritySchemeObject
       | OpenAPIV3_1.SecuritySchemeObject
-      | OpenAPIV3.ReferenceObject
-      | OpenAPIV3_1.ReferenceObject
+      | AtLeastV3ReferenceObject
       | undefined = undefined;
     // We can only support Bearer tokens for now.
     if (
@@ -89,13 +105,13 @@ export const generateAPISpecs = (
       operationId,
       url: baseUrl.replace(/\/$/, "") + path,
       method: method.toUpperCase(),
-      description: data.description,
-      summary: data.summary,
+      description: data.description || "",
+      summary: data.summary || "",
       parameters,
       requestBody,
       secrets,
     };
   });
 
-  return outputApis;
+  return outputApis as APISpec[];
 };

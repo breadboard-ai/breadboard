@@ -1,14 +1,12 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { AtLeastV3, AtLeastV3ReferenceObject } from "./types.js";
 
 export function isReferenceObject(
-  obj: object //OpenAPIV3.SchemaObject | OpenAPIV3_1.SchemaObject
-): obj is OpenAPIV3.ReferenceObject | OpenAPIV3_1.ReferenceObject {
+  obj: object
+): obj is AtLeastV3ReferenceObject {
   return "$ref" in obj;
 }
 
-export function isOpenAPI(
-  json: object
-): json is OpenAPIV3.Document | OpenAPIV3_1.Document {
+export function isOpenAPI(json: object): json is AtLeastV3 {
   if ("openapi" in json == false) {
     throw new Error("Not an Open API spec.");
   }
