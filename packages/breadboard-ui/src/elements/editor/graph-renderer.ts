@@ -217,6 +217,8 @@ export class GraphRenderer extends LitElement {
     );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+      this.#container.scale.set(1, 1);
+
       const graphPosition = graph.getGlobalPosition();
       const graphBounds = graph.getBounds();
       const rendererBounds = this.getBoundingClientRect();

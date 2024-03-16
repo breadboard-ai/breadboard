@@ -15,6 +15,7 @@ export { Input } from "./input/input.js";
 export { InputContainer } from "./input/input-container/input-container.js";
 export { InputList } from "./input/input-list/input-list.js";
 export { JSONTree } from "./json-tree/json-tree.js";
+export { Navigation } from "./nav/nav.js";
 export { NodeInfo } from "./node-info/node-info.js";
 export { Output } from "./output/output.js";
 export { OutputList } from "./output/output-list/output-list.js";

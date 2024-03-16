@@ -39,6 +39,7 @@ html {
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
 
+  --bb-icon-access-request: url(/third_party/icons/access-request.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
@@ -53,17 +54,21 @@ html {
   --bb-icon-delay: url(/third_party/icons/delay.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
+  --bb-icon-eject: url(/third_party/icons/eject.svg);
   --bb-icon-error: url(/third_party/icons/error.svg);
   --bb-icon-expand: url(/third_party/icons/expand.svg);
+  --bb-icon-file-add: url(/third_party/icons/file-add.svg);
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-frame-reload: url(/third_party/icons/frame-reload.svg);
   --bb-icon-history: url(/third_party/icons/history.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
+  --bb-icon-menu: url(/third_party/icons/menu.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
+  --bb-icon-refresh: url(/third_party/icons/refresh.svg);
   --bb-icon-reset: url(/third_party/icons/reset.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
@@ -133,18 +138,35 @@ html {
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
 
-  --bb-title-large: 22px/28px;
-  --bb-title-medium: 16px/24px;
-  --bb-title-small: 14px/20px;
+  --bb-title-large: 22px;
+  --bb-title-line-height-large: 28px;
 
-  --bb-label-large: 14px/20px;
-  --bb-label-medium: 12px/16px;
-  --bb-label-small: 11px/16px;
+  --bb-title-medium: 16px;
+  --bb-title-line-height-medium: 24px;
 
-  --bb-body-large: 16px/24px;
-  --bb-body-medium: 14px/20px;
-  --bb-body-small: 12px/16px;
-  --bb-body-x-small: 10px/13px;
+  --bb-title-small: 14px;
+  --bb-title-line-height-small: 20px;
+
+  --bb-label-large: 14px;
+  --bb-label-line-height-large: 20px;
+
+  --bb-label-medium: 12px;
+  --bb-label-line-height-medium: 16px;
+
+  --bb-label-small: 11px;
+  --bb-label-line-height-small: 16px;
+
+  --bb-body-large: 16px;
+  --bb-body-line-height-large: 24px;
+
+  --bb-body-medium: 14px;
+  --bb-body-line-height-medium: 20px;
+
+  --bb-body-small: 12px;
+  --bb-body-line-height-small: 16px;
+
+  --bb-body-x-small: 10px;
+  --bb-body-line-height-x-small: 13px;
 
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);

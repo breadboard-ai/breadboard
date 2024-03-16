@@ -52,6 +52,81 @@ export class FileDropEvent extends Event {
   }
 }
 
+export class BlankBoardRequestEvent extends Event {
+  static eventName = "breadboardblankboardrequest";
+
+  constructor() {
+    super(BlankBoardRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRequestEvent extends Event {
+  static eventName = "breadboardfilestoragerequest";
+
+  constructor() {
+    super(FileStorageRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageLoadRequestEvent extends Event {
+  static eventName = "breadboardfilestorageloadrequest";
+
+  constructor(
+    public readonly location: string,
+    public readonly fileName: string
+  ) {
+    super(FileStorageLoadRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRenewAccessRequestEvent extends Event {
+  static eventName = "breadboardfilestoragerenewaccesssrequest";
+
+  constructor(public readonly location: string) {
+    super(FileStorageRenewAccessRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageDisconnectEvent extends Event {
+  static eventName = "breadboardfilestoragedisconnect";
+
+  constructor(public readonly location: string) {
+    super(FileStorageDisconnectEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRefreshEvent extends Event {
+  static eventName = "breadboardfilestoragerefresh";
+
+  constructor(public readonly location: string) {
+    super(FileStorageRefreshEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class RunEvent extends Event {
   static eventName = "breadboardrunboard";
 
