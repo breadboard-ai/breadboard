@@ -913,6 +913,10 @@ export class Main extends LitElement {
           evt: BreadboardUI.Events.FileStorageRefreshEvent
         ) => {
           await this.#boardStorage.refresh(evt.location);
+          this.toast(
+            "Source files refreshed",
+            BreadboardUI.Events.ToastType.INFORMATION
+          );
           this.requestUpdate();
         }}
         @breadboardfilestoragedisconnect=${async (
