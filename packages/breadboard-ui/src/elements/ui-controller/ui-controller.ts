@@ -253,12 +253,10 @@ export class UI extends LitElement {
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}
           @breadboardinputrequested=${() => {
-            console.log("Input requested");
             this.#autoSwitchSidePanel = 0;
             this.requestUpdate();
           }}
           @pointerdown=${(evt: PointerEvent) => {
-            console.log("pointer down");
             if (!this.#detailsRef.value) {
               return;
             }
