@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, nothing } from "lit";
+import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
@@ -58,7 +58,7 @@ export class UI extends LitElement {
   boards: Board[] = [];
 
   @property()
-  boardId: number = -1;
+  boardId = -1;
 
   @state()
   config: UIConfig = {
@@ -71,11 +71,11 @@ export class UI extends LitElement {
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
+  #lastBoardId = -1;
   #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
-  #messageDurations: Map<HarnessRunResult, number> = new Map();
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
@@ -106,12 +106,6 @@ export class UI extends LitElement {
 
   clearPosition() {
     this.#messagePosition = 0;
-  }
-
-  unloadCurrentBoard() {
-    this.loadInfo = null;
-
-    this.#messageDurations.clear();
   }
 
   async load(loadInfo: LoadArgs) {
@@ -180,14 +174,12 @@ export class UI extends LitElement {
    * @returns {Promise<Record<string, unknown> | void>}
    */
   async handleStateChange(
-    message: HarnessRunResult,
-    duration: number
+    message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
       const messages = this.run?.messages || [];
       this.#messagePosition = messages.length - 1;
     }
-    this.#messageDurations.set(message, duration);
     this.requestUpdate();
 
     const { data, type } = message;
@@ -211,6 +203,20 @@ export class UI extends LitElement {
       case "secret": {
         return this.#registerSecretsHandler(data.keys);
       }
+    }
+  }
+
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ boardId: number }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (changedProperties.has("boardId")) {
+      if (this.boardId === this.#lastBoardId) {
+        return;
+      }
+
+      this.#handlers.clear();
     }
   }
 

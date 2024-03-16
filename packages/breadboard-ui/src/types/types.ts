@@ -13,7 +13,6 @@ import {
   Schema,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { InputErrorEvent } from "../events/events.js";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -95,3 +94,7 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
+
+export interface BoardStorageSupported {
+  fileSystem: boolean;
+}

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { FileStorage } from "./file-storage/file-storage.js";
 import { run, RunConfig } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -55,7 +56,6 @@ const getBoardFromDescriptor = async (
 };
 
 const enum MODE {
-  LIST = "list",
   BUILD = "build",
   PREVIEW = "preview",
 }
@@ -84,10 +84,13 @@ export class Main extends LitElement {
   runs: InspectableRun[] | null = null;
 
   @state()
-  mode = MODE.LIST;
+  mode = MODE.BUILD;
 
   @state()
   embed = false;
+
+  @state()
+  showNav = false;
 
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
@@ -99,6 +102,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
+  #boardStorage = FileStorage.instance();
 
   static styles = css`
     * {
@@ -127,6 +131,16 @@ export class Main extends LitElement {
     :host > header a {
       text-decoration: none;
       white-space: nowrap;
+    }
+
+    #show-nav {
+      font-size: 0;
+      width: 24px;
+      height: 24px;
+      background: var(--bb-icon-menu) center center no-repeat;
+      border: none;
+      margin-right: calc(var(--bb-grid-size) * 2);
+      cursor: pointer;
     }
 
     #new-board {
@@ -278,39 +292,42 @@ export class Main extends LitElement {
     const embedFromUrl = currentUrl.searchParams.get("embed");
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
-    loadKits([GeminiKit]).then((kits) => {
+    if (modeFromUrl) {
+      switch (modeFromUrl) {
+        case "preview":
+          this.mode = MODE.PREVIEW;
+          break;
+
+        default:
+          this.mode = MODE.BUILD;
+          break;
+      }
+    }
+
+    Promise.all([
+      loadKits([GeminiKit]),
+      this.#boardStorage.restoreAndValidateHandles(),
+    ]).then(([kits]) => {
       this.kits = kits;
 
       if (boardFromUrl) {
         this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-      } else if (modeFromUrl === MODE.BUILD) {
-        getBoardInfo("/graphs/blank.json").then((loadInfo) => {
-          if (loadInfo.graphDescriptor) {
-            loadInfo.graphDescriptor.title = "New Board";
-          }
-
-          this.#onStartBoard(
-            new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
-          );
-        });
+        return;
       }
+
+      this.#createBlankBoard();
     });
+  }
 
-    if (modeFromUrl) {
-      switch (modeFromUrl) {
-        case "list":
-          this.mode = MODE.LIST;
-          break;
-
-        case "build":
-          this.mode = MODE.BUILD;
-          break;
-
-        case "preview":
-          this.mode = MODE.PREVIEW;
-          break;
-      }
+  async #createBlankBoard() {
+    const loadInfo = await getBoardInfo("/graphs/blank.json");
+    if (loadInfo.graphDescriptor) {
+      loadInfo.graphDescriptor.title = "New Board";
     }
+
+    this.#onStartBoard(
+      new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
+    );
   }
 
   connectedCallback(): void {
@@ -349,7 +366,7 @@ export class Main extends LitElement {
     this.#setActiveBreadboard(startEvent.url);
     this.url = startEvent.url;
     this.descriptor = startEvent.descriptor;
-    this.mode = MODE.BUILD;
+    this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
 
     this.#checkForPossibleEmbed();
@@ -396,11 +413,9 @@ export class Main extends LitElement {
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     if (!this.#runObserver) this.#runObserver = createRunObserver();
-    let lastEventTime = globalThis.performance.now();
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
       this.runs = this.#runObserver.observe(result);
-      const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
       }
@@ -409,15 +424,7 @@ export class Main extends LitElement {
         return;
       }
 
-      if (result.type === "skip") {
-        console.log("Skipping", result);
-      }
-
-      const answer = await ui.handleStateChange(result, runDuration);
-
-      // We reset the time here because we don't want to include the user input
-      // round trip in the "board time".
-      lastEventTime = globalThis.performance.now();
+      const answer = await ui.handleStateChange(result);
       if (answer) {
         await result.reply({ inputs: answer } as InputResolveRequest);
       }
@@ -458,20 +465,6 @@ export class Main extends LitElement {
   toast(message: string, type: BreadboardUI.Events.ToastType) {
     this.toasts.push({ message, type });
     this.requestUpdate();
-  }
-
-  #unloadCurrentBoard(evt: Event) {
-    evt.preventDefault();
-
-    this.url = null;
-    this.loadInfo = null;
-    this.mode = MODE.LIST;
-    this.#setActiveBreadboard(null);
-
-    if (!this.#uiRef.value) {
-      return;
-    }
-    this.#uiRef.value.unloadCurrentBoard();
   }
 
   #getRunLog(evt: Event) {
@@ -572,27 +565,12 @@ export class Main extends LitElement {
       return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
     })}`;
 
-    if (this.mode === MODE.LIST) {
-      return html`<header>
-          <a href="/"><h1 id="title">Breadboard Playground</h1></a>
-          <a id="new-board" href="/?mode=build">Create new board</a>
-        </header>
-        <bb-board-list
-          @breadboardstart=${this.#onStartBoard}
-          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          .boards=${this.config.boards}
-        ></bb-board-list>
-        ${toasts}`;
-    }
-
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
     const currentRun = this.#runObserver?.runs()[0];
     switch (this.mode) {
       case MODE.BUILD: {
-        content = html`<bb-ui-controller
+        content = html` <bb-ui-controller
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
@@ -713,7 +691,10 @@ export class Main extends LitElement {
             }
 
             editableGraph
-              .changeMetadata(id, { ...metadata, visual: { ...visual, x, y } })
+              .changeMetadata(id, {
+                ...metadata,
+                visual: { ...visual, x, y },
+              })
               .then((result) => {
                 if (!result.success) {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
@@ -868,10 +849,20 @@ export class Main extends LitElement {
     }
 
     tmpl = html`<div id="header-bar">
-        <a id="back" href="/" @click=${this.#unloadCurrentBoard}
-          >Back to list</a
-        >
-        <h1>${this.loadInfo?.title || "Untitled board"}</h1>
+        <button
+          id="show-nav"
+          @click=${() => {
+            this.showNav = !this.showNav;
+            document.body.addEventListener(
+              "pointerdown",
+              () => {
+                this.showNav = false;
+              },
+              { once: true }
+            );
+          }}
+        ></button>
+        <h1>${this.loadInfo?.title || "..."}</h1>
         <a id="get-board" @click=${this.#getBoardJson}>Get code</a>
         <a id="get-log" @click=${this.#getRunLog}>Get log</a>
         <button
@@ -884,7 +875,96 @@ export class Main extends LitElement {
           Toggle Preview
         </button>
       </div>
-      <div id="content" class="${this.mode}">${cache(content)}</div>`;
+      <div id="content" class="${this.mode}">${cache(content)}</div>
+      <bb-nav
+        .storageSupported=${this.#boardStorage.getSupported()}
+        .storageItems=${this.#boardStorage.items()}
+        .exampleBoards=${this.config.boards}
+        .visible=${this.showNav}
+        .url=${this.url}
+        @pointerdown=${(evt: Event) => {
+          evt.stopImmediatePropagation();
+        }}
+        @breadboardblankboardrequest=${async () => {
+          if (
+            !confirm(
+              "Are you sure you want to create a blank board? You will lose any unsaved work"
+            )
+          ) {
+            return;
+          }
+
+          await this.#createBlankBoard();
+        }}
+        @breadboardstart=${(evt: BreadboardUI.Events.StartEvent) => {
+          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+            if (
+              !confirm(
+                "A board is currently running. Do you want to load this file?"
+              )
+            ) {
+              return;
+            }
+          }
+
+          this.#onStartBoard(evt);
+        }}
+        @breadboardfilestoragerefresh=${async (
+          evt: BreadboardUI.Events.FileStorageRefreshEvent
+        ) => {
+          await this.#boardStorage.refresh(evt.location);
+          this.requestUpdate();
+        }}
+        @breadboardfilestoragedisconnect=${async (
+          evt: BreadboardUI.Events.FileStorageDisconnectEvent
+        ) => {
+          await this.#boardStorage.disconnect(evt.location);
+          this.requestUpdate();
+        }}
+        @breadboardfilestoragerenewaccesssrequest=${async (
+          evt: BreadboardUI.Events.FileStorageRenewAccessRequestEvent
+        ) => {
+          await this.#boardStorage.renewAccessRequest(evt.location);
+          this.requestUpdate();
+        }}
+        @breadboardfilestorageloadrequest=${async (
+          evt: BreadboardUI.Events.FileStorageLoadRequestEvent
+        ) => {
+          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+            if (
+              !confirm(
+                "A board is currently running. Do you want to load this file?"
+              )
+            ) {
+              return;
+            }
+          }
+
+          try {
+            const descriptor = await this.#boardStorage.getBoardFile(
+              evt.location,
+              evt.fileName
+            );
+
+            this.#onStartBoard(
+              new BreadboardUI.Events.StartEvent(null, descriptor)
+            );
+          } catch (err) {
+            this.toast(
+              `Unable to load file: ${evt.fileName}`,
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        }}
+        @breadboardfilestoragerequest=${async () => {
+          const success = await this.#boardStorage.request("fileSystem");
+          if (!success) {
+            return;
+          }
+
+          this.requestUpdate();
+        }}
+      ></bb-nav> `;
 
     if (this.embed) {
       tmpl = html`<iframe
