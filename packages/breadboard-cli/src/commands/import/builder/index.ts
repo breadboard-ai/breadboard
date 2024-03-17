@@ -2,6 +2,7 @@ import { Board, NodeValue } from "@google-labs/breadboard";
 import { loadOpenAPI } from "./loader.js";
 import { isOpenAPI } from "./gates.js";
 import { generateAPISpecs } from "./generateAPISpecs.js";
+
 import {
   APISpec,
   AtLeastV3ReferenceObject,
@@ -63,7 +64,6 @@ export class OpenAPIBoardBuilder {
         type: "fetch",
         configuration: {
           method: apiSpec?.method,
-          raw: true,
         },
       });
 
@@ -79,6 +79,18 @@ export class OpenAPIBoardBuilder {
       board.addNode({
         id: "output",
         type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              api_json_response: {
+                type: "object",
+                title: "API response",
+                description: "The response from the API call (JSON)",
+              },
+            },
+          },
+        },
       });
 
       yield { board, apiSpec };
