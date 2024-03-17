@@ -22,6 +22,7 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
+  KitNodeChosenEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
   NodeMoveEvent,
@@ -352,10 +353,7 @@ export class Editor extends LitElement {
       return;
     }
 
-    const randomId = globalThis.crypto.randomUUID();
-    const nextNodeId = randomId.split("-");
-    // TODO: Check for clashes
-    const id = `${data}-${nextNodeId[0]}`;
+    const id = this.#createRandomID(data);
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
@@ -363,6 +361,13 @@ export class Editor extends LitElement {
     this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
     this.dispatchEvent(new NodeCreateEvent(id, data));
+  }
+
+  #createRandomID(type: string) {
+    const randomId = globalThis.crypto.randomUUID();
+    const nextNodeId = randomId.split("-");
+    // TODO: Check for clashes
+    return `${type}-${nextNodeId[0]}`;
   }
 
   #onResize() {
@@ -397,6 +402,10 @@ export class Editor extends LitElement {
       <bb-node-selector
         .loadInfo=${this.loadInfo}
         .kits=${this.kits}
+        @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
+          const id = this.#createRandomID(evt.nodeType);
+          this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+        }}
       ></bb-node-selector>`;
   }
 }

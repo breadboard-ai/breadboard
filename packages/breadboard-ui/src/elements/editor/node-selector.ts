@@ -5,6 +5,7 @@ import { LoadArgs } from "../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { KitNodeChosenEvent } from "../../events/events.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -306,6 +307,9 @@ export class NodeSelector extends LitElement {
                         ["kit-item"]: true,
                       })}
                       draggable="true"
+                      @dblclick=${() => {
+                        this.dispatchEvent(new KitNodeChosenEvent(kitItemName));
+                      }}
                       @dragstart=${(evt: DragEvent) => {
                         if (!evt.dataTransfer) {
                           return;
