@@ -5,6 +5,7 @@
  */
 
 import { handlersFromKits } from "../handler.js";
+import { createLoader } from "../loader/index.js";
 import { combineSchemas } from "../schema.js";
 import {
   Edge,
@@ -97,6 +98,7 @@ class Graph implements InspectableGraphWithStore {
     }
     const context: NodeDescriberContext = {
       outerGraph: this.#graph,
+      loader: createLoader(this.#options.graphProviders),
     };
     if (this.#url) {
       context.base = this.#url;

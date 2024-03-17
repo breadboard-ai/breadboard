@@ -13,6 +13,7 @@ import {
   Kit,
   NodeConfiguration,
   InspectableNodePorts,
+  GraphProvider,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -50,6 +51,9 @@ export class Editor extends LitElement {
 
   @property()
   kits: Kit[] = [];
+
+  @property()
+  graphProviders: GraphProvider[] = [];
 
   @property()
   editable = false;
@@ -150,7 +154,10 @@ export class Editor extends LitElement {
 
     this.#lastBoardId = this.boardId;
 
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    const breadboardGraph = inspect(descriptor, {
+      kits: this.kits,
+      graphProviders: this.graphProviders || [],
+    });
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {

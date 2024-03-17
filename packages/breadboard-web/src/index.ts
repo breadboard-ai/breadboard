@@ -579,6 +579,7 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .run=${currentRun}
           .kits=${this.kits}
+          .graphProviders=${[this.#boardStorage]}
           .status=${this.status}
           .boardId=${this.#boardId}
           @breadboardfiledrop=${async (
@@ -601,7 +602,10 @@ export class Main extends LitElement {
               !this.loadInfo?.graphDescriptor ||
               !this.loadInfo.graphDescriptor.url
             ) {
-              console.log("No graph descriptor url or somthign", this.loadInfo);
+              console.log(
+                "No graph descriptor url or something",
+                this.loadInfo
+              );
               return;
             }
 
@@ -614,6 +618,7 @@ export class Main extends LitElement {
               runner,
               diagnostics: true,
               kits: this.kits,
+              graphProviders: [this.#boardStorage],
             };
             this.#runBoard(run(runConfig));
           }}

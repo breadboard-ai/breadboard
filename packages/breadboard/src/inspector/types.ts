@@ -5,6 +5,7 @@
  */
 
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
+import { GraphProvider } from "../loader/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -174,6 +175,11 @@ export type InspectableGraphOptions = {
    * supplied, the graph will be inspected without any kits.
    */
   kits?: Kit[];
+  /**
+   * Optional, a list of graph providers to use when
+   * inspecting the graph.
+   */
+  graphProviders?: GraphProvider[];
 };
 
 /**

@@ -5,9 +5,11 @@
  */
 
 import { Board, asyncGen } from "../index.js";
+import { createLoader } from "../loader/index.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
+  BreadboardRunner,
   ErrorObject,
   Kit,
   ProbeMessage,
@@ -84,10 +86,15 @@ const errorResult = (error: string | ErrorObject) => {
   } as HarnessRunResult;
 };
 
+const load = async (config: RunConfig): Promise<BreadboardRunner> => {
+  const base = baseURL(config);
+  return await Board.load(config.url, { base });
+};
+
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
-    const base = baseURL(config);
-    const runner = config.runner || (await Board.load(config.url, { base }));
+    const runner = config.runner || (await load(config));
+    const loader = createLoader(config.graphProviders || []);
 
     try {
       const probe = config.diagnostics
@@ -96,7 +103,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({ probe, kits })) {
+      for await (const data of runner.run({ probe, kits, loader })) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());

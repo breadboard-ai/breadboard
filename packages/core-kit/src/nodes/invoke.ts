@@ -34,9 +34,10 @@ export const loadBoardFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
+  const loader = context.loader;
   const base = relativeBaseURL(context);
   const outerGraph = context.outerGraph;
-  return await BoardRunner.load(path, { base, outerGraph });
+  return await BoardRunner.load(path, { base, outerGraph, loader });
 };
 
 type RunnableBoardWithArgs = {

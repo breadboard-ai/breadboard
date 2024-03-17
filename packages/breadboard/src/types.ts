@@ -16,6 +16,7 @@ import type {
   NodeValue,
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
+import { GraphLoader } from "./index.js";
 
 export type {
   Capability,
@@ -197,6 +198,10 @@ export type NodeDescriberContext = {
    * The graph in which the node is described.
    */
   outerGraph: GraphDescriptor;
+  /**
+   * The loader that can be used to load graphs.
+   */
+  loader?: GraphLoader;
 };
 
 /**
@@ -596,6 +601,7 @@ export interface NodeHandlerContext {
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
   readonly base?: URL;
+  readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
