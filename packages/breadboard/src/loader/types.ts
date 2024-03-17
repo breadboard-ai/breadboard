@@ -6,8 +6,13 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
+export type GraphProviderCapabilities = {
+  load: boolean;
+  save: boolean;
+};
+
 export type GraphProvider = {
-  canHandle(url: URL): boolean;
+  canProvide(url: URL): false | GraphProviderCapabilities;
   load: (url: URL) => Promise<GraphDescriptor | null>;
 };
 

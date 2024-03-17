@@ -13,7 +13,11 @@ export const createLoader = (graphProviders?: GraphProvider[]): GraphLoader => {
         return null;
       }
       for (const provider of graphProviders) {
-        if (provider.canHandle(url)) {
+        const capabilities = provider.canProvide(url);
+        if (capabilities === false) {
+          continue;
+        }
+        if (capabilities.load) {
           return await provider.load(url);
         }
       }

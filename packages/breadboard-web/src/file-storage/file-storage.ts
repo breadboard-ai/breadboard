@@ -6,7 +6,11 @@
 
 import * as KeyVal from "idb-keyval";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  GraphProvider,
+  GraphProviderCapabilities,
+} from "@google-labs/breadboard";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -159,11 +163,11 @@ export class FileStorage implements GraphProvider {
     return this.#refreshItems();
   }
 
-  canHandle(url: URL): boolean {
-    return (
+  canProvide(url: URL): false | GraphProviderCapabilities {
+    const canLoad =
       url.protocol === FILE_SYSTEM_PROTOCOL &&
-      url.host.startsWith(FILE_SYSTEM_HOST_PREFIX)
-    );
+      url.host.startsWith(FILE_SYSTEM_HOST_PREFIX);
+    return canLoad ? { load: true, save: false } : false;
   }
 
   async load(url: URL) {
