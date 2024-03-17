@@ -14,6 +14,7 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
+  GraphNodePositionsCalculatedEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -247,6 +248,10 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+
+      this.dispatchEvent(
+        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
+      );
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
