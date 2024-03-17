@@ -6,7 +6,7 @@
 
 import * as KeyVal from "idb-keyval";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { GraphDescriptor } from "@google-labs/breadboard";
+import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -35,8 +35,9 @@ declare global {
 }
 
 const KEY = `bb-storage-locations`;
+const FILE_SYSTEM_PROTOCOL = "fsapi:";
 
-export class FileStorage {
+export class FileStorage implements GraphProvider {
   static #instance: FileStorage;
   static instance() {
     if (!this.#instance) {
@@ -131,6 +132,22 @@ export class FileStorage {
 
     this.#locations = locations;
     return this.#refreshItems();
+  }
+
+  canHandle(url: URL): boolean {
+    return url.protocol === FILE_SYSTEM_PROTOCOL;
+  }
+
+  async load(url: URL) {
+    if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
+      throw new Error("Unsupported protocol");
+    }
+    const pathname = url.pathname;
+    const [location, fileName] = pathname.split("/", 1);
+    if (!location || !fileName) {
+      throw new Error("Invalid path");
+    }
+    return this.getBoardFile(location, fileName);
   }
 
   async getBoardFile(location: string, fileName: string) {
