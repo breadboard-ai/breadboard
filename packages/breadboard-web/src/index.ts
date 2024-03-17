@@ -367,7 +367,7 @@ export class Main extends LitElement {
 
     if (isPortrait && hasTouch && this.url && embedIsNotSet) {
       this.embed = true;
-      this.#setEmbed(true);
+      this.#setUrlParam("embed", "true");
 
       return true;
     }
@@ -386,7 +386,7 @@ export class Main extends LitElement {
 
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
     this.#boardId++;
-    this.#setActiveBreadboard(startEvent.url);
+    this.#setUrlParam("board", startEvent.url);
     this.url = startEvent.url;
     this.descriptor = startEvent.descriptor;
     this.status = BreadboardUI.Types.STATUS.STOPPED;
@@ -397,7 +397,7 @@ export class Main extends LitElement {
 
   protected async updated(changedProperties: Map<PropertyKey, unknown>) {
     if (changedProperties.has("mode")) {
-      this.#setActiveMode(this.mode);
+      this.#setUrlParam("mode", this.mode);
     }
 
     if (!this.url && !this.descriptor) {
@@ -455,32 +455,12 @@ export class Main extends LitElement {
     this.status = BreadboardUI.Types.STATUS.STOPPED;
   }
 
-  #setActiveBreadboard(url: string | null) {
+  #setUrlParam(param: string, value: string | null) {
     const pageUrl = new URL(window.location.href);
-    if (url === null) {
-      pageUrl.searchParams.delete("board");
+    if (value === null) {
+      pageUrl.searchParams.delete(param);
     } else {
-      pageUrl.searchParams.set("board", url);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setActiveMode(mode: string | null) {
-    const pageUrl = new URL(window.location.href);
-    if (mode === null) {
-      pageUrl.searchParams.delete("mode");
-    } else {
-      pageUrl.searchParams.set("mode", mode);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setEmbed(embed: boolean | null) {
-    const pageUrl = new URL(window.location.href);
-    if (embed === null) {
-      pageUrl.searchParams.delete("embed");
-    } else {
-      pageUrl.searchParams.set("embed", "");
+      pageUrl.searchParams.set(param, value);
     }
     window.history.replaceState(null, "", pageUrl);
   }
