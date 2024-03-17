@@ -163,6 +163,10 @@ export class FileStorage implements GraphProvider {
     return this.#refreshItems();
   }
 
+  createGraphURL(location: string, fileName: string) {
+    return createFileSystemURL(location, fileName);
+  }
+
   canProvide(url: URL): false | GraphProviderCapabilities {
     const canLoad =
       url.protocol === FILE_SYSTEM_PROTOCOL &&

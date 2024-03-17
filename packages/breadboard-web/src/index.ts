@@ -30,7 +30,10 @@ import GeminiKit from "@google-labs/gemini-kit";
 const getBoardInfo = async (
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.load(url, { base: new URL(window.location.href) });
+  const runner = await Board.load(url, {
+    base: new URL(window.location.href),
+    graphProviders: [FileStorage.instance()],
+  });
 
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
@@ -638,6 +641,7 @@ export class Main extends LitElement {
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
               kits: this.kits,
+              graphProviders: [this.#boardStorage],
             });
 
             let editResult: Promise<EditResult>;
@@ -1008,14 +1012,12 @@ export class Main extends LitElement {
           }
 
           try {
-            const descriptor = await this.#boardStorage.getBoardFile(
+            const url = this.#boardStorage.createGraphURL(
               evt.location,
               evt.fileName
             );
 
-            this.#onStartBoard(
-              new BreadboardUI.Events.StartEvent(null, descriptor)
-            );
+            this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
           } catch (err) {
             this.toast(
               `Unable to load file: ${evt.fileName}`,

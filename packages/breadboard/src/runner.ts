@@ -40,7 +40,7 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
-import { GraphLoader } from "./index.js";
+import { GraphProvider } from "./loader/types.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -395,14 +395,14 @@ export class BoardRunner implements BreadboardRunner {
       base: URL;
       slotted?: BreadboardSlotSpec;
       outerGraph?: GraphDescriptor;
-      loader?: GraphLoader;
+      graphProviders?: GraphProvider[];
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = new BoardLoader({
       base,
       graphs: outerGraph?.graphs,
-      loader: options.loader,
+      graphProviders: options.graphProviders,
     });
     const { isSubgraph, graph } = await loader.load(url);
     const board = await BoardRunner.fromGraphDescriptor(graph);
