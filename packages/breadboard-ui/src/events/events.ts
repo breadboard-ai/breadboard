@@ -52,6 +52,18 @@ export class FileDropEvent extends Event {
   }
 }
 
+export class KitNodeChosenEvent extends Event {
+  static eventName = "breadboardkitnodechosen";
+
+  constructor(public nodeType: string) {
+    super(KitNodeChosenEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class BreadboardOverlayDismissedEvent extends Event {
   static eventName = "breadboardboardoverlaydismissed";
 
