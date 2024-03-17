@@ -579,6 +579,7 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .run=${currentRun}
           .kits=${this.kits}
+          .graphProviders=${[this.#boardStorage]}
           .status=${this.status}
           .boardId=${this.#boardId}
           @breadboardfiledrop=${async (

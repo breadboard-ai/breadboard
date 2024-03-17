@@ -35,7 +35,28 @@ declare global {
 }
 
 const KEY = `bb-storage-locations`;
-const FILE_SYSTEM_PROTOCOL = "fsapi:";
+const FILE_SYSTEM_PROTOCOL = "file:";
+const FILE_SYSTEM_HOST_PREFIX = "fsapi";
+
+const createFileSystemURL = (location: string, fileName: string) => {
+  return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
+};
+
+const parseFileSystemURL = (url: URL) => {
+  if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
+    throw new Error("Unsupported protocol");
+  }
+  const fileName = url.pathname?.substring(1);
+  const [prefix, location] = url.host.split("~");
+  if (prefix !== "fsapi") {
+    throw new Error("Unsupported protocol");
+  }
+  if (!location || !fileName) {
+    throw new Error("Invalid path");
+  }
+
+  return { location, fileName };
+};
 
 export class FileStorage implements GraphProvider {
   static #instance: FileStorage;
@@ -90,6 +111,8 @@ export class FileStorage implements GraphProvider {
         continue;
       }
 
+      const entries: [string, FileSystemFileHandle][] = [];
+
       for await (const [name, entry] of handle.entries()) {
         if (entry.kind === "directory") {
           continue;
@@ -99,8 +122,10 @@ export class FileStorage implements GraphProvider {
           continue;
         }
 
-        files.items.set(name, entry);
+        entries.push([name, entry]);
       }
+
+      files.items = new Map(entries.sort());
     }
   }
 
@@ -135,23 +160,19 @@ export class FileStorage implements GraphProvider {
   }
 
   canHandle(url: URL): boolean {
-    return url.protocol === FILE_SYSTEM_PROTOCOL;
+    return (
+      url.protocol === FILE_SYSTEM_PROTOCOL &&
+      url.host.startsWith(FILE_SYSTEM_HOST_PREFIX)
+    );
   }
 
   async load(url: URL) {
-    if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
-      throw new Error("Unsupported protocol");
-    }
-    const pathname = url.pathname;
-    const [location, fileName] = pathname.split("/", 1);
-    if (!location || !fileName) {
-      throw new Error("Invalid path");
-    }
+    const { location, fileName } = parseFileSystemURL(url);
     return this.getBoardFile(location, fileName);
   }
 
   async getBoardFile(location: string, fileName: string) {
-    const items = await this.items();
+    const items = this.items();
 
     const fileLocation = items.get(location);
     if (!fileLocation) {
@@ -166,7 +187,9 @@ export class FileStorage implements GraphProvider {
     const data = await handle.getFile();
     const boardDataAsText = await data.text();
     try {
-      return JSON.parse(boardDataAsText) as GraphDescriptor;
+      const descriptor = JSON.parse(boardDataAsText) as GraphDescriptor;
+      descriptor.url = createFileSystemURL(location, fileName);
+      return descriptor;
     } catch (err) {
       // Bad data.
       console.error(err);

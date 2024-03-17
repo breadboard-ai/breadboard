@@ -10,3 +10,7 @@ export type GraphProvider = {
   canHandle(url: URL): boolean;
   load: (url: URL) => Promise<GraphDescriptor | null>;
 };
+
+export type GraphLoader = {
+  load: (url: URL) => Promise<GraphDescriptor | null>;
+};
