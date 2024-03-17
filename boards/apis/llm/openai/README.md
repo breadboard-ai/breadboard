@@ -1,6 +1,6 @@
 ## Update the API to the latest version of OpenAPI (or the latest implementation of breadboard)
 
-```
+```bash
 npx breadboard import https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml -o boards/apis/llm/openai/api
 ```
 
