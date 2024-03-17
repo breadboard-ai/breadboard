@@ -22,10 +22,12 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
+  GraphNodePositionsCalculatedEvent,
   KitNodeChosenEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
   NodeMoveEvent,
+  NodeMultiLayoutEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
@@ -76,6 +78,8 @@ export class Editor extends LitElement {
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
+  #onGraphNodePositionsCalculatedBound =
+    this.#onGraphNodePositionsCalculated.bind(this);
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -188,6 +192,11 @@ export class Editor extends LitElement {
       this.#onGraphNodeMoveBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodePositionsCalculatedEvent.eventName,
+      this.#onGraphNodePositionsCalculatedBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
@@ -220,6 +229,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodeMoveEvent.eventName,
       this.#onGraphNodeMoveBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodePositionsCalculatedEvent.eventName,
+      this.#onGraphNodePositionsCalculatedBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -320,6 +334,11 @@ export class Editor extends LitElement {
   #onGraphNodeDelete(evt: Event) {
     const { id } = evt as GraphNodeDeleteEvent;
     this.dispatchEvent(new NodeDeleteEvent(id));
+  }
+
+  #onGraphNodePositionsCalculated(evt: Event) {
+    const { layout } = evt as GraphNodePositionsCalculatedEvent;
+    this.dispatchEvent(new NodeMultiLayoutEvent(layout));
   }
 
   #onDragOver(evt: DragEvent) {

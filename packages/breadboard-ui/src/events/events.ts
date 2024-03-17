@@ -324,6 +324,18 @@ export class NodeDeleteEvent extends Event {
   }
 }
 
+export class NodeMultiLayoutEvent extends Event {
+  static eventName = "breadboardnodemultilayout";
+
+  constructor(public layout: Map<string, { x: number; y: number }>) {
+    super(NodeMultiLayoutEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
@@ -364,6 +376,18 @@ export class NodeMoveEvent extends Event {
     public readonly y: number
   ) {
     super(NodeMoveEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodePositionsCalculatedEvent extends Event {
+  static eventName = "breadboardgraphnodepositionscalculated";
+
+  constructor(public readonly layout: Map<string, { x: number; y: number }>) {
+    super(GraphNodePositionsCalculatedEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
