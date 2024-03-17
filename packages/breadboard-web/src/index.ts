@@ -93,6 +93,9 @@ export class Main extends LitElement {
   showNav = false;
 
   @state()
+  showOverlay = false;
+
+  @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -143,15 +146,33 @@ export class Main extends LitElement {
       cursor: pointer;
     }
 
+    #edit-board-info {
+      font-size: 0;
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-edit) center center no-repeat;
+      background-size: 20px 20px;
+      border: none;
+      margin-left: calc(var(--bb-grid-size) * 3);
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #edit-board-info:hover {
+      transition-duration: 0.1s;
+      opacity: 1;
+    }
+
     #new-board {
       font-size: var(--bb-text-nano);
     }
 
     #header-bar {
-      background: #f3f3f6;
+      background: var(--bb-output-600);
       display: flex;
       align-items: center;
-      color: var(--bb-neutral-900);
+      color: var(--bb-neutral-50);
       border-bottom: 1px solid var(--bb-neutral-300);
       z-index: 1;
       height: calc(var(--bb-grid-size) * 12);
@@ -161,7 +182,7 @@ export class Main extends LitElement {
     #get-log,
     #get-board,
     #toggle-preview {
-      color: var(--bb-neutral-900);
+      color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
       margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
@@ -179,7 +200,7 @@ export class Main extends LitElement {
     #get-log:hover,
     #get-board:hover,
     #toggle-preview:hover {
-      background-color: rgba(0, 0, 0, 0.05);
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     #toggle-preview {
@@ -189,7 +210,7 @@ export class Main extends LitElement {
     }
 
     #toggle-preview.active {
-      background-color: #ffffff;
+      background-color: var(--bb-output-800);
     }
 
     #new-board {
@@ -218,6 +239,8 @@ export class Main extends LitElement {
       font-size: var(--bb-text-default);
       font-weight: normal;
       flex: 1;
+      display: flex;
+      align-items: center;
     }
 
     #title {
@@ -848,7 +871,7 @@ export class Main extends LitElement {
       }
     }
 
-    tmpl = html`<div id="header-bar">
+    tmpl = html`<div id="header-bar" ?inert=${this.showOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -862,7 +885,17 @@ export class Main extends LitElement {
             );
           }}
         ></button>
-        <h1>${this.loadInfo?.title || "..."}</h1>
+        <h1>
+          ${this.loadInfo?.title || "..."}
+          <button
+            @click=${() => {
+              this.showOverlay = true;
+            }}
+            id="edit-board-info"
+          >
+            Edit
+          </button>
+        </h1>
         <a id="get-board" @click=${this.#getBoardJson}>Get code</a>
         <a id="get-log" @click=${this.#getRunLog}>Get log</a>
         <button
@@ -875,13 +908,16 @@ export class Main extends LitElement {
           Toggle Preview
         </button>
       </div>
-      <div id="content" class="${this.mode}">${cache(content)}</div>
+      <div id="content" ?inert=${this.showOverlay} class="${this.mode}">
+        ${cache(content)}
+      </div>
       <bb-nav
         .storageSupported=${this.#boardStorage.getSupported()}
         .storageItems=${this.#boardStorage.items()}
         .exampleBoards=${this.config.boards}
         .visible=${this.showNav}
         .url=${this.url}
+        ?inert=${this.showOverlay}
         @pointerdown=${(evt: Event) => {
           evt.stopImmediatePropagation();
         }}
@@ -976,6 +1012,43 @@ export class Main extends LitElement {
       ></iframe>`;
     }
 
-    return html`${tmpl} ${toasts}`;
+    let overlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showOverlay && this.loadInfo) {
+      overlay = html`<bb-board-edit-overlay
+        .boardTitle=${this.loadInfo.title}
+        .boardVersion=${this.loadInfo.version}
+        .boardDescription=${this.loadInfo.description}
+        @breadboardboardoverlaydismissed=${() => {
+          this.showOverlay = false;
+        }}
+        @breadboardboardinfoupdate=${(
+          evt: BreadboardUI.Events.BoardInfoUpdateEvent
+        ) => {
+          if (!this.loadInfo) {
+            return;
+          }
+
+          this.loadInfo.title = evt.title;
+          this.loadInfo.version = evt.version;
+          this.loadInfo.description = evt.description;
+
+          if (this.loadInfo.graphDescriptor) {
+            this.loadInfo.graphDescriptor.title = evt.title;
+            this.loadInfo.graphDescriptor.version = evt.version;
+            this.loadInfo.graphDescriptor.description = evt.description;
+          }
+
+          this.toast(
+            "Board information updated",
+            BreadboardUI.Events.ToastType.INFORMATION
+          );
+
+          this.showOverlay = false;
+          this.requestUpdate();
+        }}
+      ></bb-board-edit-overlay>`;
+    }
+
+    return html`${tmpl} ${overlay} ${toasts} `;
   }
 }

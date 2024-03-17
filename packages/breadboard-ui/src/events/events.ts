@@ -52,6 +52,34 @@ export class FileDropEvent extends Event {
   }
 }
 
+export class BreadboardOverlayDismissedEvent extends Event {
+  static eventName = "breadboardboardoverlaydismissed";
+
+  constructor() {
+    super(BreadboardOverlayDismissedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class BoardInfoUpdateEvent extends Event {
+  static eventName = "breadboardboardinfoupdate";
+
+  constructor(
+    public readonly title: string,
+    public readonly version: string,
+    public readonly description: string
+  ) {
+    super(BoardInfoUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class BlankBoardRequestEvent extends Event {
   static eventName = "breadboardblankboardrequest";
 
