@@ -35,7 +35,7 @@ test("expect types: 1 in, 0 out", () => {
     },
     {},
     (params) => {
-      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
+      // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
       params.in1;
@@ -93,7 +93,7 @@ test("expect types: 1 in, 1 out", () => {
       },
     },
     (params) => {
-      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
+      // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
       params.in1;
@@ -136,7 +136,7 @@ test("expect types: 2 in, 2 out", () => {
       },
     },
     (params) => {
-      // $ExpectType ConcreteValues<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
+      // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
       params;
       // $ExpectType string
       params.in1;
