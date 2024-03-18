@@ -78,7 +78,7 @@ export function defineNodeType<
     return new NodeInstance(inputs, outputs, params);
   }) as InstantiateFunction<I, O>;
   const handler: StrictNodeHandler = {
-    invoke: makeInvokeFunction(invoke),
+    invoke: makeInvokeFunction(invoke, inputs),
     describe: makeDescribeFunction(inputs, outputs),
   };
   return Object.assign(fn, handler);
@@ -202,21 +202,49 @@ interface StrictNodeHandler {
  * that is expected by the Breadboard runner, KitBuilder, etc.
  */
 function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
-  invoke: InvokeFunction<I, O>
+  invoke: InvokeFunction<I, O>,
+  inputs: I
 ): NodeHandlerFunction {
-  return (inputs) => {
-    // The user's invoke function is allowed to return a promise or a concrete
-    // value, but we always return a promise so that any sync -> async change
-    // this node might need to make in the future will not be a breaking change
-    // for its consumers.
+  if (inputs["*"]) {
+    // Dynamic ports are possible. In this case, we split the values between
+    // static and dynamic ports. We do this for type safety, because in
+    // TypeScript it is unfortunately not possible to define an object where the
+    // values of the unknown keys are of one type, and the known keys are of an
+    // incompatible type.
+    return (values) => {
+      const staticValues: Record<string, unknown> = {};
+      const dynamicValues: Record<string, unknown> = {};
+      for (const [name, value] of Object.entries(values)) {
+        if (inputs[name] !== undefined) {
+          staticValues[name] = value;
+        }
+        dynamicValues[name] = value;
+      }
+      // The user's invoke function is allowed to return a promise or a concrete
+      // value, but we always return a promise so that any sync -> async change
+      // this node might need to make in the future will not be a breaking change
+      // for its consumers.
+      return Promise.resolve(
+        invoke(
+          staticValues as StaticInvokeParams<I>,
+          dynamicValues as DynamicInvokeParams<I>
+        )
+      );
+    };
+  }
+  // Static ports only. We can just pass values through.
+  return (values) => {
     return Promise.resolve(
-      invoke(
-        // TODO(aomarks) This cast is needed because at runtime we don't get any
-        // guarantee about port shape and types. Consider adding schema
-        // validation here so that we can raise type errors automatically and
-        // prevent the invoke function from being invoked with unexpected input
-        // types.
-        inputs as ConcreteValues<I>
+      // Cast to StaticInvokeFunction is needed because TypeScript does not seem
+      // to understand the type narrowing automatically here.
+      (invoke as StaticInvokeFunction<I, O>)(
+        // Cast to StaticInvokeParams is needed because at runtime we don't get
+        // any guarantee about port shape and types.
+        //
+        // TODO(aomarks) Consider adding schema validation here so that we can
+        // raise type errors automatically and prevent the invoke function from
+        // being invoked with unexpected input types.
+        values as StaticInvokeParams<I>
       )
     );
   };
@@ -256,18 +284,28 @@ function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
   return () => result;
 }
 
-type InvokeFunction<I extends PortConfigMap, O extends PortConfigMap> =
-  | InvokeFunctionSync<I, O>
-  | InvokeFunctionAsync<I, O>;
+type InvokeFunction<
+  I extends PortConfigMap,
+  O extends PortConfigMap,
+> = I["*"] extends never
+  ? StaticInvokeFunction<I, O>
+  : DynamicInvokeFunction<I, O>;
 
-type InvokeFunctionSync<I extends PortConfigMap, O extends PortConfigMap> = (
-  params: InvokeParams<I>
-) => InvokeReturn<O>;
+type StaticInvokeFunction<I extends PortConfigMap, O extends PortConfigMap> = (
+  params: StaticInvokeParams<I>
+) => InvokeReturn<O> | Promise<InvokeReturn<O>>;
 
-type InvokeFunctionAsync<I extends PortConfigMap, O extends PortConfigMap> = (
-  params: InvokeParams<I>
-) => Promise<InvokeReturn<O>>;
+type DynamicInvokeFunction<I extends PortConfigMap, O extends PortConfigMap> = (
+  staticParams: StaticInvokeParams<I>,
+  dynamicParams: DynamicInvokeParams<I>
+) => InvokeReturn<O> | Promise<InvokeReturn<O>>;
 
-type InvokeParams<Ports extends PortConfigMap> = ConcreteValues<Ports>;
+type StaticInvokeParams<Ports extends PortConfigMap> = Omit<
+  ConcreteValues<Ports>,
+  "*"
+>;
+
+type DynamicInvokeParams<I extends PortConfigMap> = Record<keyof I, never> &
+  Record<string, TypeScriptTypeFromBreadboardType<I["*"]["type"]>>;
 
 type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;

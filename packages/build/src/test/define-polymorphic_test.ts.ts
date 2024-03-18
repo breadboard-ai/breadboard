@@ -25,14 +25,23 @@ test("polymorphic inputs", () => {
     },
 
     (
-      // TODO(aomarks) $ExpectType { in1: string; } & Record<string, number>
-      params
+      // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; "*": { type: "number"; }; }>
+      params,
+      // $ExpectType DynamicInvokeParams<{ in1: { type: "string"; }; "*": { type: "number"; }; }>
+      dynamic
     ) => {
       // $ExpectType string
       params.in1;
-      // TODO(aomarks) $ExpectType number | undefined
-      // @ts-expect-error TODO(aomarks) should compile
+      // @ts-expect-error in2 is dynamic
       params.in2;
+      // @ts-expect-error Not a real port
+      params["*"];
+      // $ExpectType never
+      dynamic.in1;
+      // $ExpectType number | undefined
+      dynamic.in2;
+      // $ExpectType never
+      dynamic["*"];
       return {
         out1: "foo",
       };
