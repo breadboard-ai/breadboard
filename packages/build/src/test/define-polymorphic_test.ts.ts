@@ -53,7 +53,7 @@ test("polymorphic inputs", () => {
     in2: null,
   });
   const instance = definition({ in1: "foo", in2: 123 });
-  // TODO(aomarks) @ts-expect-error Wildcard port isn't real
+  // @ts-expect-error Wildcard port isn't real
   instance.inputs["*"];
   // $ExpectType InputPort<{ type: "string"; }>
   instance.inputs.in1;

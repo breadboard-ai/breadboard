@@ -68,11 +68,11 @@ function outputPortsFromPortConfigMap<O extends PortConfigMap>(
 }
 
 type InputPorts<I extends PortConfigMap> = {
-  [PortName in keyof I]: InputPort<I[PortName]>;
+  [PortName in keyof Omit<I, "*">]: InputPort<I[PortName]>;
 };
 
 type OutputPorts<O extends PortConfigMap> = {
-  [PortName in keyof O]: OutputPort<O[PortName]>;
+  [PortName in keyof Omit<O, "*">]: OutputPort<O[PortName]>;
 };
 
 type GetPrimaryPortType<Ports extends PortConfigMap> = {
