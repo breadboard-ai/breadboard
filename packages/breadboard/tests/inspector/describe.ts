@@ -8,7 +8,7 @@ import test from "ava";
 
 import { inspectableGraph } from "../../src/inspector/graph.js";
 import { GraphDescriptor } from "../../src/types.js";
-import { BoardLoader } from "../../src/loader.js";
+import { BoardLoader } from "../../src/loader/loader.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 

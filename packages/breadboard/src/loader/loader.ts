@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, SubGraphs } from "./types.js";
-import type { GraphProvider, GraphLoader } from "./loader/types.js";
-import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
+import type { GraphDescriptor, SubGraphs } from "../types.js";
+import type { GraphProvider, GraphLoader } from "./types.js";
+import { SENTINEL_BASE_URL, createLoader } from "./index.js";
 
 export type BoardLoaderArguments = {
   graphs?: SubGraphs;
@@ -56,9 +56,7 @@ export type BoardLoaderResult = {
   isSubgraph: boolean;
 };
 
-// TODO: Make this the actual GraphLoader, and use the code in GraphLoader
-// here.
-export class BoardLoader {
+export class BoardLoader implements GraphLoader {
   #graphs?: SubGraphs;
   #loader: GraphLoader;
 

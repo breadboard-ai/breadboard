@@ -7,7 +7,7 @@
 // These test traversal of the inspector API.
 
 import test from "ava";
-import { BoardLoader } from "../../src/loader.js";
+import { BoardLoader } from "../../src/loader/loader.js";
 import { inspectableGraph } from "../../src/inspector/graph.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);

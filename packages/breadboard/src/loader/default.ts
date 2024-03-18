@@ -6,7 +6,7 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import { GraphProvider, GraphProviderCapabilities } from "./types.js";
-import { loadFromFile, loadWithFetch } from "../loader.js";
+import { loadFromFile, loadWithFetch } from "./loader.js";
 
 export class DefaultGraphProvider implements GraphProvider {
   canProvide(url: URL): false | GraphProviderCapabilities {

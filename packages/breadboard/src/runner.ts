@@ -25,7 +25,7 @@ import type {
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { BoardLoader } from "./loader.js";
+import { BoardLoader } from "./loader/loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
