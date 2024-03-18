@@ -5,7 +5,8 @@
  */
 
 import { inspect } from "../inspector/index.js";
-import { BoardLoader, loadWithFetch } from "../loader/loader.js";
+import { loadWithFetch } from "../loader/default.js";
+import { BoardLoader } from "../loader/loader.js";
 import { BoardRunner } from "../runner.js";
 import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";

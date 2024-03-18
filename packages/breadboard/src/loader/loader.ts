@@ -26,36 +26,6 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
-export const loadFromFile = async (path: string) => {
-  if (typeof globalThis.process === "undefined")
-    throw new Error("Unable to use `path` when not running in node");
-  let readFileFn;
-  // The CJS transpilation process for node/vscode seems to miss this import,
-  // and leaves it as an import statement rather than converting it to a
-  // require. We therefore need a runtime check that prefers `require` if it
-  // is available.
-  if (typeof require === "function") {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { readFile } = require("node:fs/promises");
-    readFileFn = readFile;
-  } else {
-    const { readFile } = await import(/* vite-ignore */ "node:fs/promises");
-    readFileFn = readFile;
-  }
-
-  return JSON.parse(await readFileFn(path, "utf-8"));
-};
-
-export const loadWithFetch = async (url: string | URL) => {
-  const response = await fetch(url);
-  return await response.json();
-};
-
-export type BoardLoaderResult = {
-  graph: GraphDescriptor;
-  isSubgraph: boolean;
-};
-
 export class BoardLoader implements GraphLoader {
   #graphs?: SubGraphs;
   #loader: GraphLoader;
