@@ -38,3 +38,5 @@ class Loader {
 export const createLoader = (graphProviders?: GraphProvider[]): GraphLoader => {
   return new Loader(graphProviders);
 };
+
+export const SENTINEL_BASE_URL = new URL("sentinel:///");

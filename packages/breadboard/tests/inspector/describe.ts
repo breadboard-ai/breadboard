@@ -14,8 +14,8 @@ const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 
 const load = async (url: string) => {
   const base = BASE_URL;
-  const loader = new BoardLoader({ base });
-  const result = await loader.load(url);
+  const loader = new BoardLoader({});
+  const result = await loader.load(new URL(url, base));
   if (!result) return undefined;
   return inspectableGraph(result.graph);
 };

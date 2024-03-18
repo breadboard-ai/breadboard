@@ -6,10 +6,9 @@
 
 import type { GraphDescriptor, SubGraphs } from "./types.js";
 import type { GraphProvider, GraphLoader } from "./loader/types.js";
-import { createLoader } from "./loader/index.js";
+import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
 
 export type BoardLoaderArguments = {
-  base: URL;
   graphs?: SubGraphs;
   graphProviders?: GraphProvider[];
   loader?: GraphLoader;
@@ -60,12 +59,10 @@ export type BoardLoaderResult = {
 // TODO: Make this the actual GraphLoader, and use the code in GraphLoader
 // here.
 export class BoardLoader {
-  #base: URL;
   #graphs?: SubGraphs;
   #loader: GraphLoader;
 
-  constructor({ base, graphs, graphProviders, loader }: BoardLoaderArguments) {
-    this.#base = base;
+  constructor({ graphs, graphProviders, loader }: BoardLoaderArguments) {
     this.#graphs = graphs;
     this.#loader = loader || createLoader(graphProviders);
   }
@@ -92,15 +89,12 @@ export class BoardLoader {
     return { graph, isSubgraph: true };
   }
 
-  async load(urlString: string): Promise<BoardLoaderResult> {
-    const base = this.#base;
-    const url = new URL(urlString, base);
+  async load(url: URL): Promise<BoardLoaderResult> {
     if (url.hash) {
       // This is a bit of a special case: some graphs are constructed in
       // memory, so they don't have a URL to base on. In such cases, the
-      // existing machinery gets confused, using the URL of the module
-      // as base. Hilarity ensues. This is a workaround for that.
-      if (sameWithoutHash(url, base)) {
+      // base URL will be the sentinel URL.
+      if (sameWithoutHash(url, SENTINEL_BASE_URL)) {
         return this.#getSubgraph(url, this.#graphs);
       } else {
         const superGraph = await this.#loadWithLoader(removeHash(url));

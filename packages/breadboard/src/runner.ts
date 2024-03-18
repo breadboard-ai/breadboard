@@ -41,6 +41,7 @@ import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 import { GraphLoader, GraphProvider } from "./loader/types.js";
+import { SENTINEL_BASE_URL } from "./loader/index.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -128,7 +129,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const base = context.base || new URL(this.url || "", import.meta.url);
+    const base = context.base || SENTINEL_BASE_URL;
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
@@ -401,12 +402,11 @@ export class BoardRunner implements BreadboardRunner {
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = new BoardLoader({
-      base,
       graphs: outerGraph?.graphs,
       graphProviders: options.graphProviders,
       loader: options.loader,
     });
-    const { isSubgraph, graph } = await loader.load(url);
+    const { isSubgraph, graph } = await loader.load(new URL(url, base));
     const board = await BoardRunner.fromGraphDescriptor(graph);
     if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};

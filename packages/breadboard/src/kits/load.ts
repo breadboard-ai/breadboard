@@ -18,8 +18,8 @@ const getGraphDescriptor = async (
   entry: ManifestEntry
 ) => {
   if (typeof entry === "string") {
-    const loader = new BoardLoader({ base });
-    const result = await loader.load(entry);
+    const loader = new BoardLoader({});
+    const result = await loader.load(new URL(entry, base));
     return result.graph;
   } else if (entry.edges && entry.nodes) {
     const url = new URL(base);
