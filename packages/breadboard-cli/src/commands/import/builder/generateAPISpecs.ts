@@ -44,10 +44,16 @@ export const generateAPISpecs = (json: AtLeastV3Document): APISpec[] => {
     if (pathInfo == undefined) {
       continue;
     }
+    const globalPathParams = pathInfo.parameters || [];
+
     if (pathInfo.get != undefined) {
+      pathInfo.get.parameters = pathInfo.get.parameters || [];
+      pathInfo.get.parameters.push(...globalPathParams);
       apis.push([apiPath, "get", pathInfo.get]);
     }
     if (pathInfo.post != undefined) {
+      pathInfo.post.parameters = pathInfo.post.parameters || [];
+      pathInfo.post.parameters.push(...globalPathParams);
       apis.push([apiPath, "post", pathInfo.post]);
     }
   }

@@ -159,7 +159,9 @@ function buildSecrets(
   json: AtLeastV3Document,
   board: Board
 ) {
-  if (api.secrets != undefined) {
+  const hasKeyInParameters =
+    api.parameters.find((param) => param.name == "key") != undefined;
+  if (api.secrets != undefined || hasKeyInParameters) {
     // We generate a secret node for the API key based on the name of the API
     const apiKeyName = `${json.info.title
       .replace(/[^a-zA-Z0-9]+/g, "_")
@@ -173,14 +175,23 @@ function buildSecrets(
       },
     });
 
-    // We are expecting the secrets to be a Bearer token.
-    // TODO: Support other types of secrets (api_key path etc)
-    board.addEdge({
-      from: "input-secrets",
-      to: "mergeHTTPHeaders",
-      out: apiKeyName,
-      in: "Authorization_Key",
-    });
+    if (hasKeyInParameters) {
+      // This is a hack. If there query_string has a "key" parameter, we need to add it to the URL.
+      board.addEdge({
+        from: "input-secrets",
+        to: "url",
+        out: apiKeyName,
+        in: "key",
+      });
+    } else {
+      // We are expecting the secrets to be a Bearer token.
+      board.addEdge({
+        from: "input-secrets",
+        to: "mergeHTTPHeaders",
+        out: apiKeyName,
+        in: "Authorization_Key",
+      });
+    }
   }
 }
 
@@ -225,6 +236,7 @@ function buildURL(
         to: "url",
         out: param?.name,
         in: param?.name,
+        optional: param.required == undefined || param?.required == false,
       });
     }
 
@@ -248,8 +260,8 @@ function buildURL(
     type: "urlTemplate",
     configuration: {
       template: `${api.url}?${api.parameters
-        .map((param) => `${param?.name}={${param?.name}}`)
-        .join("&")}`,
+        .map((param) => `{&${param?.name}}`)
+        .join("")}`,
     },
   });
 
