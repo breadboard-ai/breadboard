@@ -39,7 +39,6 @@ export class NodeInstance<
         // TODO(aomarks) It might be possible to avoid this cast.
       ] as unknown as PrimaryOutputPort<O>;
     } else if (primaryOutputPortNames.length > 0) {
-      // TODO(aomarks) Also catch this error earlier, inside `defineNodeType`.
       throw new Error(
         `Node was configured with >1 primary output nodes: ${primaryOutputPortNames.join(" ")}`
       );
