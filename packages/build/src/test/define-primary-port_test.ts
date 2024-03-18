@@ -74,3 +74,26 @@ test("type error: node without primary output doesn't act like an output port", 
     undefined
   );
 });
+
+test("don't allow multiple primary output ports", () => {
+  assert.throws(
+    () =>
+      defineNodeType(
+        {},
+        {
+          foo: {
+            type: "string",
+            // @ts-expect-error more than one primary
+            primary: true,
+          },
+          bar: {
+            type: "string",
+            // @ts-expect-error more than one primary
+            primary: true,
+          },
+        },
+        () => ({ foo: "foo", bar: "bar" })
+      ),
+    /Node definition has more than one primary output port: foo, bar/
+  );
+});

@@ -17,6 +17,7 @@ import type {
   PortConfig,
 } from "./port.js";
 import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import type { CountUnion } from "./type-util.js";
 
 /**
  * Define a new Breadboard node type.
@@ -66,7 +67,12 @@ import type { TypeScriptTypeFromBreadboardType } from "./type.js";
 export function defineNodeType<
   I extends StaticPortConfigMap,
   O extends StaticPortConfigMap,
->(inputs: I, outputs: O, invoke: InvokeFunction<I, O>): NodeDefinition<I, O> {
+>(
+  inputs: I,
+  outputs: ForbidMultiplePrimaries<O>,
+  invoke: InvokeFunction<I, O>
+): NodeDefinition<I, O> {
+  validateOutputs(outputs);
   // TODO(aomarks) Remove the cast.
   const fn: InstantiateFunction<I, O> = ((params: ValuesOrOutputPorts<I>) => {
     return new NodeInstance(inputs, outputs, params);
@@ -77,6 +83,34 @@ export function defineNodeType<
   };
   return Object.assign(fn, handler);
 }
+
+function validateOutputs(outputs: StaticPortConfigMap): void {
+  const primaryPortNames = Object.entries(outputs)
+    .filter(([, config]) => config.primary === true)
+    .map(([key]) => key);
+  if (primaryPortNames.length > 1) {
+    throw new Error(
+      "Node definition has more than one primary output port: " +
+        primaryPortNames.join(", ")
+    );
+  }
+}
+
+// To get errors in the right place, we're going to test if there are multiple
+// primaries. If there are not, just return the type, everything is fine. If
+// there are, return a version of the type which disallows primary. That way,
+// the squiggly will appear on all the primaries.
+type ForbidMultiplePrimaries<M extends StaticPortConfigMap> =
+  HasMultiplePrimaries<M> extends true
+    ? { [K in keyof M]: Omit<M[K], "primary"> & { primary: false } }
+    : M;
+
+type HasMultiplePrimaries<M extends StaticPortConfigMap> =
+  CountUnion<PrimaryPortNames<M>> extends 0 | 1 ? false : true;
+
+type PrimaryPortNames<M extends StaticPortConfigMap> = {
+  [K in keyof M]: M[K]["primary"] extends true ? K : never;
+}[keyof M];
 
 /**
  * The return type for {@link defineNodeType}. An instantiation function for use
