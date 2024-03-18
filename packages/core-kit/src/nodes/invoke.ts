@@ -34,10 +34,13 @@ export const loadBoardFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
-  const { loader } = context;
   const base = relativeBaseURL(context);
   const outerGraph = context.outerGraph;
-  return await BoardRunner.load(path, { base, outerGraph, loader });
+  const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
+  const url = new URL(path, baseURL);
+  const graph = await context?.loader?.load(url);
+  if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
+  return BoardRunner.fromGraphDescriptor(graph);
 };
 
 type RunnableBoardWithArgs = {

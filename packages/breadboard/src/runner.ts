@@ -40,7 +40,7 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
-import { GraphLoader, GraphProvider } from "./loader/types.js";
+import { GraphProvider } from "./loader/types.js";
 import { SENTINEL_BASE_URL } from "./loader/index.js";
 
 /**
@@ -397,20 +397,19 @@ export class BoardRunner implements BreadboardRunner {
       slotted?: BreadboardSlotSpec;
       outerGraph?: GraphDescriptor;
       graphProviders?: GraphProvider[];
-      loader?: GraphLoader;
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = new BoardLoader({
-      graphs: outerGraph?.graphs,
+      supergraph: outerGraph,
       graphProviders: options.graphProviders,
     });
-    const url = new URL(path, base);
-    const isSubgraph = url.hash.length > 0;
+    const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
+    const url = new URL(path, baseURL);
     const graph = await loader.load(url);
     if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
-    if (isSubgraph) board.#outerGraph = outerGraph;
+    if (url.hash) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
   }

@@ -11,7 +11,7 @@ import { DefaultGraphProvider } from "./default.js";
 export const SENTINEL_BASE_URL = new URL("sentinel:///");
 
 export type BoardLoaderArguments = {
-  graphs?: SubGraphs;
+  supergraph?: GraphDescriptor;
   graphProviders?: GraphProvider[];
 };
 
@@ -28,11 +28,11 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
 };
 
 export class BoardLoader implements GraphLoader {
-  #graphs?: SubGraphs;
   #graphProviders: GraphProvider[];
+  #supergraph?: GraphDescriptor;
 
-  constructor({ graphs, graphProviders }: BoardLoaderArguments) {
-    this.#graphs = graphs;
+  constructor({ supergraph, graphProviders }: BoardLoaderArguments) {
+    this.#supergraph = supergraph;
     this.#graphProviders = [
       ...(graphProviders || []),
       new DefaultGraphProvider(),
@@ -81,20 +81,28 @@ export class BoardLoader implements GraphLoader {
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    if (url.hash) {
-      // This is a bit of a special case: some graphs are constructed in
-      // memory, so they don't have a URL to base on. In such cases, the
-      // base URL will be the sentinel URL.
-      if (sameWithoutHash(url, SENTINEL_BASE_URL)) {
-        return this.#getSubgraph(url, this.#graphs);
-      } else {
-        const superGraph = await this.#loadOrWarn(removeHash(url));
-        if (!superGraph) {
-          return null;
-        }
-        return this.#getSubgraph(url, superGraph.graphs);
+    // If we don't have a hash, just load the graph.
+    if (!url.hash) {
+      return await this.#loadOrWarn(url);
+    }
+
+    // Check to see if we match a special case:
+    // We are inside of a supergraph (a graph that contains us), _and_ we
+    // are trying to load a peer subgraph.
+    // In this case, do not trigger a load, but instead return the subgraph.
+    if (this.#supergraph) {
+      const supergraphURL = this.#supergraph.url
+        ? new URL(this.#supergraph.url)
+        : SENTINEL_BASE_URL;
+      if (sameWithoutHash(url, supergraphURL)) {
+        return this.#getSubgraph(url, this.#supergraph.graphs);
       }
     }
-    return await this.#loadOrWarn(url);
+    // Otherwise, load the graph and then get its subgraph.
+    const supergraph = await this.#loadOrWarn(removeHash(url));
+    if (!supergraph) {
+      return null;
+    }
+    return this.#getSubgraph(url, supergraph.graphs);
   }
 }
