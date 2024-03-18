@@ -217,8 +217,9 @@ function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
       for (const [name, value] of Object.entries(values)) {
         if (inputs[name] !== undefined) {
           staticValues[name] = value;
+        } else {
+          dynamicValues[name] = value;
         }
-        dynamicValues[name] = value;
       }
       // The user's invoke function is allowed to return a promise or a concrete
       // value, but we always return a promise so that any sync -> async change

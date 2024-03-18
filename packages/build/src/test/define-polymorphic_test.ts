@@ -5,7 +5,9 @@
  */
 
 import { defineNodeType } from "@breadboard-ai/build";
+import type { NodeHandlerContext } from "@google-labs/breadboard";
 import { test } from "node:test";
+import assert from "node:assert/strict";
 
 test("polymorphic inputs", () => {
   // $ExpectType NodeDefinition<{ in1: { type: "string"; }; "*": { type: "number"; }; }, { out1: { type: "string"; }; }>
@@ -23,7 +25,6 @@ test("polymorphic inputs", () => {
         type: "string",
       },
     },
-
     (
       // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; "*": { type: "number"; }; }>
       params,
@@ -94,4 +95,71 @@ test("polymorphic inputs", () => {
   definition({ in1: "foo", in2: instance2.outputs.strOut });
   // @ts-expect-error expected number, got instance
   definition({ in1: "foo", in2: instance2 });
+});
+
+test("polymorphic inputs invoke returns value from sync function", async () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: "string",
+      },
+      "*": {
+        type: "number",
+      },
+    },
+    {
+      out1: {
+        type: "string",
+      },
+    },
+    (staticParams, dynamicParams) => {
+      return {
+        out1:
+          JSON.stringify(staticParams) + "\n" + JSON.stringify(dynamicParams),
+      };
+    }
+  );
+  const result = definition.invoke(
+    { in1: "foo", in2: "bar" },
+    // Not currently used.
+    null as unknown as NodeHandlerContext
+  );
+  assert(result instanceof Promise);
+  assert.deepEqual(await result, {
+    out1: `{"in1":"foo"}\n{"in2":"bar"}`,
+  });
+});
+
+test("polymorphic inputs invoke returns value from async function", async () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: "string",
+      },
+      "*": {
+        type: "number",
+      },
+    },
+    {
+      out1: {
+        type: "string",
+      },
+    },
+    async (staticParams, dynamicParams) => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      return {
+        out1:
+          JSON.stringify(staticParams) + "\n" + JSON.stringify(dynamicParams),
+      };
+    }
+  );
+  const result = definition.invoke(
+    { in1: "foo", in2: "bar" },
+    // Not currently used.
+    null as unknown as NodeHandlerContext
+  );
+  assert(result instanceof Promise);
+  assert.deepEqual(await result, {
+    out1: `{"in1":"foo"}\n{"in2":"bar"}`,
+  });
 });
