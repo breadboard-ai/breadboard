@@ -8,12 +8,8 @@ import { NodeInstance } from "./instance.js";
 import type { StaticInstantiateFunction } from "./definition.js";
 import type { InputPort, OutputPort, PortConfig } from "./port.js";
 
-// TODO(aomarks) Support primary nodes in boards too.
-
-// TODO(aomarks) There should be a chance to add data to the output node. You
-// pass in the port, which determines the type, but everything else should be
-// configurable (e.g. description). Maybe there is an option to automatically
-// pull the description.
+// TODO(aomarks) Support primary ports in boards.
+// TODO(aomarks) Support adding descriptions to board ports.
 
 /**
  * Define a new Breadboard board.
