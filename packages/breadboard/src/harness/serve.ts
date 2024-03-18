@@ -111,7 +111,7 @@ export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
     throw new Error("Only worker transport is supported at this time.");
   }
   const kits = configureKits(config.kits, factory);
-  // TODO: Figure out how to initalize.
+  // TODO: Figure out how to initialize.
   const isRunServer = true;
   if (!isRunServer) return;
 
