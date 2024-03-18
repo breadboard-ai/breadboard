@@ -438,7 +438,10 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver) this.#runObserver = createRunObserver();
+    if (!this.#runObserver)
+      this.#runObserver = createRunObserver({
+        logLevel: "debug",
+      });
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
       this.runs = this.#runObserver.observe(result);
