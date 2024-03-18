@@ -80,6 +80,8 @@ export class BoardLoader implements GraphLoader {
     return graph;
   }
 
+  // TODO: Make Supergraphs an option here. They are part of the particular
+  // load, rather than the loader itself.
   async load(url: URL): Promise<GraphDescriptor | null> {
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
