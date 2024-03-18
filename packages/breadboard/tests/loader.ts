@@ -54,13 +54,14 @@ test("resolveURL resolves URLs with hashes", (t) => {
     const url = new URL("https://example.com/foo/bar");
     const results: ResolverResult[] = [];
     t.false(resolveURL(url, "baz#qux", results));
-    t.deepEqual(results, [
+    t.like(results, [
       {
         href: "https://example.com/foo/baz#qux",
-        location: "https://example.com/foo/baz",
         type: "fetch",
       },
     ]);
+    t.true(results[0].location instanceof URL);
+    t.is(results[0].location.href, "https://example.com/foo/baz");
     t.true(resolveURL(new URL(results[0].href), "baz#qux", results));
     t.deepEqual(results, [
       {

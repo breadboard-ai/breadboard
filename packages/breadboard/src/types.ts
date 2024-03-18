@@ -16,7 +16,7 @@ import type {
   NodeValue,
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
-import { GraphLoader } from "./index.js";
+import { GraphLoader } from "./loader/types.js";
 
 export type {
   Capability,

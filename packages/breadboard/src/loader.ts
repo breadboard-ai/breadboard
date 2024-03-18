@@ -13,6 +13,7 @@ export type BoardLoaderArguments = {
   base: URL;
   graphs?: SubGraphs;
   graphProviders?: GraphProvider[];
+  loader?: GraphLoader;
 };
 
 export type BoardLoaderType = "file" | "fetch" | "hash" | "unknown";
@@ -43,7 +44,7 @@ export const resolveURL = (
     return true;
   }
   let result: ResolverResult;
-  const path = url.pathname;
+  const path = url.protocol === "file:" && url.pathname;
   if (path) {
     // A bit hacky: file URLs typically don't have hostnames, so this is
     // how we detect if this is not a file URL.
@@ -130,15 +131,19 @@ export type BoardLoaderResult = {
   isSubgraph: boolean;
 };
 
+// TODO: Make this the actual GraphLoader, and use the code in GraphLoader
+// here.
 export class BoardLoader {
   #base: URL;
   #graphs?: SubGraphs;
   #graphProviders?: GraphProvider[];
+  #loader?: GraphLoader;
 
-  constructor({ base, graphs, graphProviders }: BoardLoaderArguments) {
+  constructor({ base, graphs, graphProviders, loader }: BoardLoaderArguments) {
     this.#base = base;
     this.#graphs = graphs;
     this.#graphProviders = graphProviders;
+    this.#loader = loader;
   }
 
   async load(urlString: string): Promise<BoardLoaderResult> {
@@ -150,7 +155,7 @@ export class BoardLoader {
     let graph: GraphDescriptor | undefined;
     let subgraphs = this.#graphs;
     let isSubgraph = true;
-    const loader = createLoader(this.#graphProviders);
+    const loader = this.#loader ?? createLoader(this.#graphProviders);
     for (const result of results) {
       if (result.type !== "hash") {
         isSubgraph = false;
