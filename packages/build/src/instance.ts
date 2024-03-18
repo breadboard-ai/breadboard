@@ -8,7 +8,7 @@ import {
   InputPort,
   OutputPort,
   OutputPortGetter,
-  type StaticPortConfigMap,
+  type PortConfigMap,
   type ValuesOrOutputPorts,
 } from "./port.js";
 
@@ -16,10 +16,7 @@ import {
  * An instance of a Breadboard node, constructed from a Breadboard node
  * definition.
  */
-export class NodeInstance<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
-> {
+export class NodeInstance<I extends PortConfigMap, O extends PortConfigMap> {
   readonly inputs: InputPorts<I>;
   readonly outputs: OutputPorts<O>;
   readonly params: ValuesOrOutputPorts<I>;
@@ -39,7 +36,6 @@ export class NodeInstance<
         // TODO(aomarks) It might be possible to avoid this cast.
       ] as unknown as PrimaryOutputPort<O>;
     } else if (primaryOutputPortNames.length > 0) {
-      // TODO(aomarks) Also catch this error earlier, inside `defineNodeType`.
       throw new Error(
         `Node was configured with >1 primary output nodes: ${primaryOutputPortNames.join(" ")}`
       );
@@ -47,7 +43,7 @@ export class NodeInstance<
   }
 }
 
-function inputPortsFromPortConfigMap<I extends StaticPortConfigMap>(
+function inputPortsFromPortConfigMap<I extends PortConfigMap>(
   inputs: I
 ): InputPorts<I> {
   return Object.fromEntries(
@@ -59,7 +55,7 @@ function inputPortsFromPortConfigMap<I extends StaticPortConfigMap>(
   ) as InputPorts<I>;
 }
 
-function outputPortsFromPortConfigMap<O extends StaticPortConfigMap>(
+function outputPortsFromPortConfigMap<O extends PortConfigMap>(
   outputs: O
 ): OutputPorts<O> {
   return Object.fromEntries(
@@ -71,21 +67,21 @@ function outputPortsFromPortConfigMap<O extends StaticPortConfigMap>(
   ) as OutputPorts<O>;
 }
 
-type InputPorts<I extends StaticPortConfigMap> = {
-  [PortName in keyof I]: InputPort<I[PortName]>;
+type InputPorts<I extends PortConfigMap> = {
+  [PortName in keyof Omit<I, "*">]: InputPort<I[PortName]>;
 };
 
-type OutputPorts<O extends StaticPortConfigMap> = {
-  [PortName in keyof O]: OutputPort<O[PortName]>;
+type OutputPorts<O extends PortConfigMap> = {
+  [PortName in keyof Omit<O, "*">]: OutputPort<O[PortName]>;
 };
 
-type GetPrimaryPortType<Ports extends StaticPortConfigMap> = {
+type GetPrimaryPortType<Ports extends PortConfigMap> = {
   [Name in keyof Ports]: Ports[Name] extends { primary: true }
     ? Ports[Name]
     : never;
 }[keyof Ports]["type"];
 
-type PrimaryOutputPort<O extends StaticPortConfigMap> =
+type PrimaryOutputPort<O extends PortConfigMap> =
   GetPrimaryPortType<O> extends never
     ? undefined
     : OutputPort<{ type: GetPrimaryPortType<O> }>;

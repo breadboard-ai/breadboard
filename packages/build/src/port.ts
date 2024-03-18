@@ -84,7 +84,7 @@ export const OutputPortGetter = Symbol();
 /**
  * A Breadboard node port which receives values.
  */
-export class InputPort<I extends StaticPortConfig> {
+export class InputPort<I extends PortConfig> {
   readonly __InputPortBrand__!: never;
   readonly type: I["type"];
 
@@ -96,7 +96,7 @@ export class InputPort<I extends StaticPortConfig> {
 /**
  * A Breadboard node port which sends values.
  */
-export class OutputPort<O extends StaticPortConfig>
+export class OutputPort<O extends PortConfig>
   implements OutputPortReference<O>
 {
   readonly [OutputPortGetter] = this;
@@ -107,17 +107,9 @@ export class OutputPort<O extends StaticPortConfig>
   }
 }
 
-export interface OutputPortReference<O extends StaticPortConfig> {
+export interface OutputPortReference<O extends PortConfig> {
   readonly [OutputPortGetter]: OutputPort<O>;
 }
-
-/**
- * A map from port name to port config.
- *
- * TODO(aomarks) Should be deleted, because we shouldn't have any API which
- * doesn't understand Dynamic ports.
- */
-export type StaticPortConfigMap = Record<string, StaticPortConfig>;
 
 /**
  * A map from port name to port config.
@@ -125,20 +117,20 @@ export type StaticPortConfigMap = Record<string, StaticPortConfig>;
 export type PortConfigMap = Record<string, PortConfig>;
 
 /**
- * Convert a {@link StaticPortConfigMap} to an object with concrete values for each
+ * Convert a {@link PortConfigMap} to an object with concrete values for each
  * port.
  */
-export type ConcreteValues<Ports extends StaticPortConfigMap> = {
+export type ConcreteValues<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
     Ports[PortName]["type"]
   >;
 };
 
 /**
- * Convert a {@link StaticPortConfigMap} to an object with either concrete values for
+ * Convert a {@link PortConfigMap} to an object with either concrete values for
  * each port, or an output port for each port.
  */
-export type ValuesOrOutputPorts<Ports extends StaticPortConfigMap> = {
+export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]:
     | TypeScriptTypeFromBreadboardType<Ports[PortName]["type"]>
     | OutputPortReference<Ports[PortName]>;
