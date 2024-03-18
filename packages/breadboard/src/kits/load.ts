@@ -20,7 +20,7 @@ const getGraphDescriptor = async (
   if (typeof entry === "string") {
     const loader = new BoardLoader({});
     const result = await loader.load(new URL(entry, base));
-    return result.graph;
+    return result;
   } else if (entry.edges && entry.nodes) {
     const url = new URL(base);
     url.searchParams.set("graph", key);

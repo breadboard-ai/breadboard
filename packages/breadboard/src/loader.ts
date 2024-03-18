@@ -76,7 +76,7 @@ export class BoardLoader {
     return graph;
   }
 
-  #getSubgraph(url: URL, subgraphs?: SubGraphs): BoardLoaderResult {
+  #getSubgraph(url: URL, subgraphs?: SubGraphs): GraphDescriptor {
     const hash = url.hash.substring(1);
     if (!subgraphs) {
       throw new Error("No sub-graphs to load from");
@@ -86,10 +86,10 @@ export class BoardLoader {
       throw new Error(`No graph found for hash: #${hash}`);
     }
     graph.url = url.href;
-    return { graph, isSubgraph: true };
+    return graph;
   }
 
-  async load(url: URL): Promise<BoardLoaderResult> {
+  async load(url: URL): Promise<GraphDescriptor> {
     if (url.hash) {
       // This is a bit of a special case: some graphs are constructed in
       // memory, so they don't have a URL to base on. In such cases, the
@@ -101,7 +101,6 @@ export class BoardLoader {
         return this.#getSubgraph(url, superGraph.graphs);
       }
     }
-    const graph = await this.#loadWithLoader(url);
-    return { graph, isSubgraph: false };
+    return await this.#loadWithLoader(url);
   }
 }

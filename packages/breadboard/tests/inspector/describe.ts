@@ -17,7 +17,7 @@ const load = async (url: string) => {
   const loader = new BoardLoader({});
   const result = await loader.load(new URL(url, base));
   if (!result) return undefined;
-  return inspectableGraph(result.graph);
+  return inspectableGraph(result);
 };
 
 test("simple graph description works as expected", async (t) => {

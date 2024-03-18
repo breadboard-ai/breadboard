@@ -391,7 +391,7 @@ export class BoardRunner implements BreadboardRunner {
    * @returns - a new `Board` instance.
    */
   static async load(
-    url: string,
+    path: string,
     options: {
       base: URL;
       slotted?: BreadboardSlotSpec;
@@ -406,7 +406,9 @@ export class BoardRunner implements BreadboardRunner {
       graphProviders: options.graphProviders,
       loader: options.loader,
     });
-    const { isSubgraph, graph } = await loader.load(new URL(url, base));
+    const url = new URL(path, base);
+    const isSubgraph = url.hash.length > 0;
+    const graph = await loader.load(url);
     const board = await BoardRunner.fromGraphDescriptor(graph);
     if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
