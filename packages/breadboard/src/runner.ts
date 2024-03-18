@@ -404,11 +404,11 @@ export class BoardRunner implements BreadboardRunner {
     const loader = new BoardLoader({
       graphs: outerGraph?.graphs,
       graphProviders: options.graphProviders,
-      loader: options.loader,
     });
     const url = new URL(path, base);
     const isSubgraph = url.hash.length > 0;
     const graph = await loader.load(url);
+    if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
     if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
