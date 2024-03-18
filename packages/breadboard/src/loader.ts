@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphLoader } from "./index.js";
-import { GraphDescriptor, SubGraphs } from "./types.js";
-import { GraphProvider } from "./loader/types.js";
+import type { GraphDescriptor, SubGraphs } from "./types.js";
+import type { GraphProvider, GraphLoader } from "./loader/types.js";
 import { createLoader } from "./loader/index.js";
 
 export type BoardLoaderArguments = {
