@@ -16,51 +16,16 @@ export type BoardLoaderArguments = {
   loader?: GraphLoader;
 };
 
-export type BoardLoaderType = "file" | "fetch" | "hash" | "unknown";
+export type BoardLoaderType = "hash" | "other";
 
-export type BoardLoaders = Record<
-  BoardLoaderType,
-  (url: URL) => Promise<GraphDescriptor>
->;
-
-export type ResolverResult = {
-  type: BoardLoaderType;
-  location: URL;
-  href: string;
+export const removeHash = (url: URL): URL => {
+  const newURL = new URL(url.href);
+  newURL.hash = "";
+  return newURL;
 };
 
-export const resolveURL = (
-  base: URL,
-  urlString: string,
-  results: ResolverResult[]
-): boolean => {
-  const url = new URL(urlString, base);
-  const hash = url.hash;
-  const href = url.href;
-  const baseWithoutHash = base.href.replace(base.hash, "");
-  const hrefWithoutHash = href.replace(hash, "");
-  if (baseWithoutHash == hrefWithoutHash && hash) {
-    results.push({ type: "hash", location: url, href });
-    return true;
-  }
-  let result: ResolverResult;
-  const path = url.protocol === "file:" && url.pathname;
-  if (path) {
-    // A bit hacky: file URLs typically don't have hostnames, so this is
-    // how we detect if this is not a file URL.
-    const isUnknown = !!path && !!url.hostname;
-    if (isUnknown) {
-      result = { type: "unknown", location: new URL(hrefWithoutHash), href };
-    } else {
-      result = { type: "file", location: new URL(hrefWithoutHash), href };
-    }
-  } else if (href) {
-    result = { type: "fetch", location: new URL(hrefWithoutHash), href };
-  } else {
-    result = { type: "unknown", location: new URL(hrefWithoutHash), href };
-  }
-  results.push(result);
-  return !hash;
+export const sameWithoutHash = (a: URL, b: URL): boolean => {
+  return removeHash(a).href === removeHash(b).href;
 };
 
 export const loadFromFile = async (path: string) => {
@@ -88,44 +53,6 @@ export const loadWithFetch = async (url: string | URL) => {
   return await response.json();
 };
 
-export class BoardLoadingStep {
-  loaders: BoardLoaders;
-  graphs?: SubGraphs;
-  loader?: GraphLoader;
-
-  constructor(graphs?: SubGraphs, loader?: GraphLoader) {
-    const loadWithLoader = async (url: URL) => {
-      if (loader) {
-        const graph = await loader.load(url);
-        if (graph) return graph;
-      }
-      throw new Error("Unable to determine Board loader type");
-    };
-    this.loaders = {
-      file: loadWithLoader,
-      fetch: loadWithLoader,
-      unknown: loadWithLoader,
-      hash: async (url: URL) => {
-        const hash = url.hash.substring(1);
-        if (!graphs) {
-          throw new Error("No sub-graphs to load from");
-        }
-        const graph = graphs[hash];
-        if (!graph) {
-          throw new Error(`No graph found for hash: #${hash}`);
-        }
-        return graph;
-      },
-    };
-  }
-
-  async load(result: ResolverResult): Promise<GraphDescriptor> {
-    const graph = await this.loaders[result.type](result.location);
-    graph.url = result.href;
-    return graph;
-  }
-}
-
 export type BoardLoaderResult = {
   graph: GraphDescriptor;
   isSubgraph: boolean;
@@ -136,38 +63,52 @@ export type BoardLoaderResult = {
 export class BoardLoader {
   #base: URL;
   #graphs?: SubGraphs;
-  #graphProviders?: GraphProvider[];
-  #loader?: GraphLoader;
+  #loader: GraphLoader;
 
   constructor({ base, graphs, graphProviders, loader }: BoardLoaderArguments) {
     this.#base = base;
     this.#graphs = graphs;
-    this.#graphProviders = graphProviders;
-    this.#loader = loader;
+    this.#loader = loader || createLoader(graphProviders);
+  }
+
+  async #loadWithLoader(url: URL): Promise<GraphDescriptor> {
+    const graph = await this.#loader.load(url);
+    if (!graph) {
+      throw new Error(`Unable to load graph from "${url.href}"`);
+    }
+    graph.url = url.href;
+    return graph;
+  }
+
+  #getSubgraph(url: URL, subgraphs?: SubGraphs): BoardLoaderResult {
+    const hash = url.hash.substring(1);
+    if (!subgraphs) {
+      throw new Error("No sub-graphs to load from");
+    }
+    const graph = subgraphs[hash];
+    if (!graph) {
+      throw new Error(`No graph found for hash: #${hash}`);
+    }
+    graph.url = url.href;
+    return { graph, isSubgraph: true };
   }
 
   async load(urlString: string): Promise<BoardLoaderResult> {
-    const results: ResolverResult[] = [];
-    let base = this.#base;
-    while (!resolveURL(base, urlString, results)) {
-      base = new URL(results[results.length - 1].href);
-    }
-    let graph: GraphDescriptor | undefined;
-    let subgraphs = this.#graphs;
-    let isSubgraph = true;
-    const loader = this.#loader ?? createLoader(this.#graphProviders);
-    for (const result of results) {
-      if (result.type !== "hash") {
-        isSubgraph = false;
+    const base = this.#base;
+    const url = new URL(urlString, base);
+    if (url.hash) {
+      // This is a bit of a special case: some graphs are constructed in
+      // memory, so they don't have a URL to base on. In such cases, the
+      // existing machinery gets confused, using the URL of the module
+      // as base. Hilarity ensues. This is a workaround for that.
+      if (sameWithoutHash(url, base)) {
+        return this.#getSubgraph(url, this.#graphs);
+      } else {
+        const superGraph = await this.#loadWithLoader(removeHash(url));
+        return this.#getSubgraph(url, superGraph.graphs);
       }
-      const step = new BoardLoadingStep(subgraphs, loader);
-      graph = await step.load(result);
-      subgraphs = graph.graphs;
     }
-    if (!graph)
-      throw new Error(
-        "BoardLoader failed to load a graph. This error likely indicates a bug in the BoardLoader."
-      );
-    return { graph, isSubgraph };
+    const graph = await this.#loadWithLoader(url);
+    return { graph, isSubgraph: false };
   }
 }
