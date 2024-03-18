@@ -13,7 +13,7 @@ import { NodeInstance } from "./instance.js";
 import type {
   InputPort,
   OutputPort,
-  StaticPortConfig,
+  PortConfig,
   ValuesOrOutputPorts,
 } from "./port.js";
 import type { BreadboardType } from "./type.js";
@@ -50,8 +50,8 @@ import type { BreadboardType } from "./type.js";
  * board.
  */
 export function board<
-  I extends Record<string, InputPort<StaticPortConfig>>,
-  O extends Record<string, OutputPort<StaticPortConfig>>,
+  I extends Record<string, InputPort<PortConfig>>,
+  O extends Record<string, OutputPort<PortConfig>>,
 >(inputs: I, outputs: O): BoardDefinition<I, O> {
   const def = (
     params: ValuesOrOutputPorts<BoardPortConfig<I>>
@@ -73,7 +73,7 @@ export function board<
 function boardPortsConfig<
   PortMap extends Record<
     string,
-    InputPort<StaticPortConfig> | OutputPort<StaticPortConfig>
+    InputPort<PortConfig> | OutputPort<PortConfig>
   >,
 >(portMap: PortMap): BoardPortConfig<PortMap> {
   const configMap: Record<string, { type: BreadboardType }> = {};
@@ -85,19 +85,19 @@ function boardPortsConfig<
 }
 
 export type BoardDefinition<
-  I extends Record<string, InputPort<StaticPortConfig>>,
-  O extends Record<string, OutputPort<StaticPortConfig>>,
+  I extends Record<string, InputPort<PortConfig>>,
+  O extends Record<string, OutputPort<PortConfig>>,
 > = NodeDefinition<BoardPortConfig<I>, BoardPortConfig<O>>;
 
 export type BoardInstance<
-  I extends Record<string, InputPort<StaticPortConfig>>,
-  O extends Record<string, OutputPort<StaticPortConfig>>,
+  I extends Record<string, InputPort<PortConfig>>,
+  O extends Record<string, OutputPort<PortConfig>>,
 > = NodeInstance<BoardPortConfig<I>, BoardPortConfig<O>>;
 
 type BoardPortConfig<
   PortMap extends Record<
     string,
-    InputPort<StaticPortConfig> | OutputPort<StaticPortConfig>
+    InputPort<PortConfig> | OutputPort<PortConfig>
   >,
 > = {
   [PortName in keyof PortMap]: PortMap[PortName] extends

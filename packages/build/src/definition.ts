@@ -10,7 +10,7 @@ import type {
   NodeDescriberFunction,
 } from "@google-labs/breadboard";
 import type {
-  StaticPortConfigMap,
+  PortConfigMap,
   ConcreteValues,
   OutputPortReference,
   ValuesOrOutputPorts,
@@ -65,8 +65,8 @@ import type { CountUnion } from "./type-util.js";
  * `board` for execution.
  */
 export function defineNodeType<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
+  I extends PortConfigMap,
+  O extends PortConfigMap,
 >(
   inputs: I,
   outputs: ForbidMultiplePrimaries<O>,
@@ -84,7 +84,7 @@ export function defineNodeType<
   return Object.assign(fn, handler);
 }
 
-function validateOutputs(outputs: StaticPortConfigMap): void {
+function validateOutputs(outputs: PortConfigMap): void {
   const primaryPortNames = Object.entries(outputs)
     .filter(([, config]) => config.primary === true)
     .map(([key]) => key);
@@ -100,15 +100,15 @@ function validateOutputs(outputs: StaticPortConfigMap): void {
 // primaries. If there are not, just return the type, everything is fine. If
 // there are, return a version of the type which disallows primary. That way,
 // the squiggly will appear on all the primaries.
-type ForbidMultiplePrimaries<M extends StaticPortConfigMap> =
+type ForbidMultiplePrimaries<M extends PortConfigMap> =
   HasMultiplePrimaries<M> extends true
     ? { [K in keyof M]: Omit<M[K], "primary"> & { primary: false } }
     : M;
 
-type HasMultiplePrimaries<M extends StaticPortConfigMap> =
+type HasMultiplePrimaries<M extends PortConfigMap> =
   CountUnion<PrimaryPortNames<M>> extends 0 | 1 ? false : true;
 
-type PrimaryPortNames<M extends StaticPortConfigMap> = {
+type PrimaryPortNames<M extends PortConfigMap> = {
   [K in keyof M]: M[K]["primary"] extends true ? K : never;
 }[keyof M];
 
@@ -117,34 +117,35 @@ type PrimaryPortNames<M extends StaticPortConfigMap> = {
  * in boards, and also a {@link NodeHandler} which can be added to kits.
  */
 export type NodeDefinition<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
+  I extends PortConfigMap,
+  O extends PortConfigMap,
 > = InstantiateFunction<I, O> & StrictNodeHandler;
 
 /**
  * A function that creates a {@link NodeInstance}.
  */
 export type InstantiateFunction<
-  DEF_INPUT_SHAPE extends StaticPortConfigMap,
-  DEF_OUTPUT_SHAPE extends StaticPortConfigMap,
+  DEF_INPUT_SHAPE extends PortConfigMap,
+  DEF_OUTPUT_SHAPE extends PortConfigMap,
 > =
   HasDynamicPorts<DEF_INPUT_SHAPE> extends true
     ? DynamicInstantiateFunction<DEF_INPUT_SHAPE, DEF_OUTPUT_SHAPE>
     : StaticInstantiateFunction<DEF_INPUT_SHAPE, DEF_OUTPUT_SHAPE>;
 
-type HasDynamicPorts<SHAPE extends StaticPortConfigMap> =
-  SHAPE["*"] extends object ? true : false;
+type HasDynamicPorts<SHAPE extends PortConfigMap> = SHAPE["*"] extends object
+  ? true
+  : false;
 
 type StaticInstantiateFunction<
-  DEF_INPUT_SHAPE extends StaticPortConfigMap,
-  DEF_OUTPUT_SHAPE extends StaticPortConfigMap,
+  DEF_INPUT_SHAPE extends PortConfigMap,
+  DEF_OUTPUT_SHAPE extends PortConfigMap,
 > = (
   params: ValuesOrOutputPorts<DEF_INPUT_SHAPE>
 ) => NodeInstance<DEF_INPUT_SHAPE, DEF_OUTPUT_SHAPE>;
 
 type DynamicInstantiateFunction<
-  DEF_INPUT_SHAPE extends StaticPortConfigMap,
-  DEF_OUTPUT_SHAPE extends StaticPortConfigMap,
+  DEF_INPUT_SHAPE extends PortConfigMap,
+  DEF_OUTPUT_SHAPE extends PortConfigMap,
 > = <INSTANTIATE_PARAMS extends Record<string, unknown>>(
   params: StaticInstantiateParams<DEF_INPUT_SHAPE> & {
     [PORT_NAME in keyof INSTANTIATE_PARAMS]: PORT_NAME extends keyof DEF_INPUT_SHAPE
@@ -160,10 +161,10 @@ type ValueOrPort<CONFIG extends PortConfig> =
   | TypeScriptTypeFromBreadboardType<CONFIG["type"]>
   | OutputPortReference<CONFIG>;
 
-type OmitStarPort<SHAPE extends StaticPortConfigMap> = Omit<SHAPE, "*">;
+type OmitStarPort<SHAPE extends PortConfigMap> = Omit<SHAPE, "*">;
 
 type DynamicShape<
-  DEF_INPUT_SHAPE extends StaticPortConfigMap,
+  DEF_INPUT_SHAPE extends PortConfigMap,
   INSTANTIATE_PARAMS extends Record<string, unknown>,
 > = {
   [PORT_NAME in DynamicPortNames<DEF_INPUT_SHAPE, INSTANTIATE_PARAMS>]: {
@@ -174,11 +175,11 @@ type DynamicShape<
   };
 };
 
-type StaticInstantiateParams<DEF_INPUT_SHAPE extends StaticPortConfigMap> =
+type StaticInstantiateParams<DEF_INPUT_SHAPE extends PortConfigMap> =
   ValuesOrOutputPorts<OmitStarPort<DEF_INPUT_SHAPE>>;
 
 type DynamicPortNames<
-  DEF_INPUT_SHAPE extends StaticPortConfigMap,
+  DEF_INPUT_SHAPE extends PortConfigMap,
   INSTANTIATE_PARAMS extends Record<string, unknown>,
 > = keyof Omit<INSTANTIATE_PARAMS, keyof DEF_INPUT_SHAPE>;
 
@@ -200,10 +201,9 @@ interface StrictNodeHandler {
  * promise, and (2) is typed for compatibility with the NodeHandlerFunction type
  * that is expected by the Breadboard runner, KitBuilder, etc.
  */
-function makeInvokeFunction<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
->(invoke: InvokeFunction<I, O>): NodeHandlerFunction {
+function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
+  invoke: InvokeFunction<I, O>
+): NodeHandlerFunction {
   return (inputs) => {
     // The user's invoke function is allowed to return a promise or a concrete
     // value, but we always return a promise so that any sync -> async change
@@ -227,10 +227,10 @@ function makeInvokeFunction<
  * type, and wrap that in a promise-returning function (a function is expected
  * because some node types change their shape at runtime).
  */
-function makeDescribeFunction<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
->(inputs: I, outputs: O): NodeDescriberFunction {
+function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
+  inputs: I,
+  outputs: O
+): NodeDescriberFunction {
   // Note result is memoized. This is a monmorphic node, so the ports never
   // change.
   const result = Promise.resolve({
@@ -256,21 +256,18 @@ function makeDescribeFunction<
   return () => result;
 }
 
-type InvokeFunction<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
-> = InvokeFunctionSync<I, O> | InvokeFunctionAsync<I, O>;
+type InvokeFunction<I extends PortConfigMap, O extends PortConfigMap> =
+  | InvokeFunctionSync<I, O>
+  | InvokeFunctionAsync<I, O>;
 
-type InvokeFunctionSync<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
-> = (params: InvokeParams<I>) => InvokeReturn<O>;
+type InvokeFunctionSync<I extends PortConfigMap, O extends PortConfigMap> = (
+  params: InvokeParams<I>
+) => InvokeReturn<O>;
 
-type InvokeFunctionAsync<
-  I extends StaticPortConfigMap,
-  O extends StaticPortConfigMap,
-> = (params: InvokeParams<I>) => Promise<InvokeReturn<O>>;
+type InvokeFunctionAsync<I extends PortConfigMap, O extends PortConfigMap> = (
+  params: InvokeParams<I>
+) => Promise<InvokeReturn<O>>;
 
-type InvokeParams<Ports extends StaticPortConfigMap> = ConcreteValues<Ports>;
+type InvokeParams<Ports extends PortConfigMap> = ConcreteValues<Ports>;
 
-type InvokeReturn<Ports extends StaticPortConfigMap> = ConcreteValues<Ports>;
+type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;
