@@ -4,19 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  NodeDescriberFunction,
-  NodeHandlerFunction,
-} from "@google-labs/breadboard";
-import type { NodeDefinition } from "./definition.js";
 import { NodeInstance } from "./instance.js";
-import type {
-  InputPort,
-  OutputPort,
-  PortConfig,
-  ValuesOrOutputPorts,
-} from "./port.js";
-import type { BreadboardType } from "./type.js";
+import type { StaticInstantiateFunction } from "./definition.js";
+import type { InputPort, OutputPort, PortConfig } from "./port.js";
 
 // TODO(aomarks) Support primary nodes in boards too.
 
@@ -49,60 +39,42 @@ import type { BreadboardType } from "./type.js";
  * distribution, and which can be instantiated for composition into another
  * board.
  */
-export function board<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
->(inputs: I, outputs: O): BoardDefinition<I, O> {
-  const def = (
-    params: ValuesOrOutputPorts<BoardPortConfig<I>>
-  ): BoardInstance<I, O> => {
-    return new NodeInstance(
+export function board<I extends BoardInputs, O extends BoardOutputs>(
+  inputs: I,
+  outputs: O
+): BoardDefinition<I, O> {
+  return (params) =>
+    new NodeInstance(
       boardPortsConfig(inputs),
       boardPortsConfig(outputs),
       params
     );
-  };
-  // TODO(aomarks) Implement (though, do we need to? maybe boards shouldn't have
-  // invoke and describe?)
-  def.invoke = (() => ({})) as unknown as NodeHandlerFunction;
-  def.describe = (() => ({})) as unknown as NodeDescriberFunction;
-  // TODO(aomarks) Remove this cast.
-  return def as unknown as BoardDefinition<I, O>;
-}
-
-function boardPortsConfig<
-  PortMap extends Record<
-    string,
-    InputPort<PortConfig> | OutputPort<PortConfig>
-  >,
->(portMap: PortMap): BoardPortConfig<PortMap> {
-  const configMap: Record<string, { type: BreadboardType }> = {};
-  for (const [portName, { type }] of Object.entries(portMap)) {
-    configMap[portName] = { type };
-  }
-  // TODO(aomarks) It might be possible to avoid this cast.
-  return configMap as BoardPortConfig<PortMap>;
 }
 
 export type BoardDefinition<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
-> = NodeDefinition<BoardPortConfig<I>, BoardPortConfig<O>>;
+  I extends BoardInputs,
+  O extends BoardOutputs,
+> = StaticInstantiateFunction<BoardPortConfig<I>, BoardPortConfig<O>>;
 
-export type BoardInstance<
-  I extends Record<string, InputPort<PortConfig>>,
-  O extends Record<string, OutputPort<PortConfig>>,
-> = NodeInstance<BoardPortConfig<I>, BoardPortConfig<O>>;
+type BoardInputs = Record<string, InputPort<PortConfig>>;
 
-type BoardPortConfig<
-  PortMap extends Record<
-    string,
-    InputPort<PortConfig> | OutputPort<PortConfig>
-  >,
-> = {
-  [PortName in keyof PortMap]: PortMap[PortName] extends
+type BoardOutputs = Record<string, OutputPort<PortConfig>>;
+
+type BoardPortConfig<I extends BoardInputs | BoardOutputs> = {
+  [PortName in keyof I]: I[PortName] extends
     | InputPort<infer PortConfig>
     | OutputPort<infer PortConfig>
-    ? PortConfig
+    ? { type: PortConfig["type"] }
     : never;
 };
+
+function boardPortsConfig<IO extends BoardInputs | BoardOutputs>(
+  portMap: IO
+): BoardPortConfig<IO> {
+  return Object.fromEntries(
+    Object.entries(portMap).map(([name, config]) => [
+      name,
+      { type: config.type },
+    ])
+  ) as BoardPortConfig<IO>;
+}

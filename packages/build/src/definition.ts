@@ -136,7 +136,7 @@ type HasDynamicPorts<SHAPE extends PortConfigMap> = SHAPE["*"] extends object
   ? true
   : false;
 
-type StaticInstantiateFunction<
+export type StaticInstantiateFunction<
   DEF_INPUT_SHAPE extends PortConfigMap,
   DEF_OUTPUT_SHAPE extends PortConfigMap,
 > = (
