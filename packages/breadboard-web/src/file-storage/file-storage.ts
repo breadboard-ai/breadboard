@@ -35,6 +35,7 @@ interface FileSystemDirectoryHandle {
 interface FileSystemFileHandle {
   kind: "file";
   name: string;
+  isSameEntry(other: FileSystemFileHandle): Promise<boolean>;
   getFile(): Promise<File>;
   createWritable(): Promise<FileSystemWritableFileStream>;
   remove(): Promise<void>;
@@ -45,6 +46,14 @@ declare global {
     showDirectoryPicker(options?: {
       mode: string;
     }): Promise<FileSystemDirectoryHandle>;
+
+    showSaveFilePicker(options?: {
+      excludeAcceptAllOptions?: boolean;
+      id?: string;
+      startIn?: FileSystemHandle | string;
+      suggestedName?: string;
+      types?: Array<{ description?: string; accept: Record<string, string[]> }>;
+    }): Promise<FileSystemFileHandle>;
   }
 }
 
@@ -270,7 +279,7 @@ export class FileStorage implements GraphProvider {
     const canLoad =
       url.protocol === FILE_SYSTEM_PROTOCOL &&
       url.host.startsWith(FILE_SYSTEM_HOST_PREFIX);
-    return canLoad ? { load: true, save: true } : false;
+    return { load: canLoad, save: true };
   }
 
   async load(url: URL) {
@@ -305,21 +314,66 @@ export class FileStorage implements GraphProvider {
     return null;
   }
 
-  async saveBoardFile(url: URL, descriptor: GraphDescriptor) {
-    if (!this.canProvide(url)) {
-      return null;
+  async saveBoardFile(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string; url?: string }> {
+    if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
+      return this.#saveNewBoardFile(descriptor);
     }
 
+    return this.#saveExistingBoardFile(url, descriptor);
+  }
+
+  async #saveNewBoardFile(descriptor: GraphDescriptor) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        types: [
+          {
+            description: "BGL Files",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      const stream = await handle.createWritable();
+      const data = structuredClone(descriptor);
+      delete data["url"];
+
+      await stream.write(JSON.stringify(data, null, 2));
+      await stream.close();
+
+      await this.#refreshAllItems();
+      const response: { result: boolean; url?: string } = { result: true };
+      search: for (const { items } of this.#items.values()) {
+        for (const entry of items.values()) {
+          const sameFile = await entry.handle.isSameEntry(handle);
+          if (!sameFile) {
+            continue;
+          }
+
+          response.url = entry.url;
+          break search;
+        }
+      }
+
+      return response;
+    } catch (err) {
+      console.error(err);
+      return { result: false };
+    }
+  }
+
+  async #saveExistingBoardFile(url: URL, descriptor: GraphDescriptor) {
     const { location, fileName } = parseFileSystemURL(url);
     const items = this.items();
     const fileLocation = items.get(location);
     if (!fileLocation) {
-      return null;
+      return { result: false };
     }
 
     const file = fileLocation.items.get(fileName);
     if (!file) {
-      return null;
+      return { result: false };
     }
 
     try {
@@ -330,10 +384,10 @@ export class FileStorage implements GraphProvider {
 
       await stream.write(JSON.stringify(data, null, 2));
       await stream.close();
-      return true;
+      return { result: true };
     } catch (err) {
       console.error(err);
-      return null;
+      return { result: false };
     }
   }
 
