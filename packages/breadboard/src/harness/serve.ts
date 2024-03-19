@@ -5,7 +5,6 @@
  */
 
 import { Board } from "../board.js";
-import { createLoader } from "../loader/index.js";
 import { InitServer } from "../remote/init.js";
 import { RunServer } from "../remote/run.js";
 import {
@@ -119,12 +118,7 @@ export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
   const server = new RunServer(factory.server("run"));
   const url = await getBoardURL(config, factory);
   const base = baseURL(config);
-  const loader = createLoader();
-  const graph = await loader.load(new URL(url, base));
-  if (!graph) {
-    throw new Error(`Unable to load graph from "${config.url}"`);
-  }
-  const runner = await Board.fromGraphDescriptor(graph);
+  const runner = await Board.load(url, { base });
   return server.serve(runner, !!config.diagnostics, { kits });
 };
 

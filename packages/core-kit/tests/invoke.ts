@@ -5,18 +5,18 @@
  */
 
 import test from "ava";
-import { baseURLFromContext } from "../src/nodes/invoke.js";
+import { relativeBaseURL } from "../src/nodes/invoke.js";
 import { BoardRunner } from "@google-labs/breadboard";
 
 test("relativeBasePath is relative to invoking board", (t) => {
   t.is(
-    baseURLFromContext({
+    relativeBaseURL({
       board: { url: "http://bar" } as unknown as BoardRunner,
     }).href,
     "http://bar/"
   );
   t.is(
-    baseURLFromContext({
+    relativeBaseURL({
       board: {} as unknown as BoardRunner,
       base: new URL("http://baz"),
     }).href,
@@ -26,7 +26,7 @@ test("relativeBasePath is relative to invoking board", (t) => {
 
 test("relativeBasePath falls back to explicit option", (t) => {
   t.deepEqual(
-    baseURLFromContext({
+    relativeBaseURL({
       board: { url: "file:///bar/foo" } as unknown as BoardRunner,
       base: new URL("http://baz"),
     }).href,
@@ -35,5 +35,5 @@ test("relativeBasePath falls back to explicit option", (t) => {
 });
 
 test("relativeBasePath falls back to import URL", (t) => {
-  t.regex(baseURLFromContext({}).href, /^file:\/\/\/.*\/invoke\..s$/);
+  t.regex(relativeBaseURL({}).href, /^file:\/\/\/.*\/invoke\..s$/);
 });

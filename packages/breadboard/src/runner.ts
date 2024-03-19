@@ -25,6 +25,7 @@ import type {
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
+import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
@@ -39,8 +40,7 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
-import { GraphProvider } from "./loader/types.js";
-import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
+import { GraphLoader, GraphProvider } from "./loader/types.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -128,7 +128,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const base = context.base || SENTINEL_BASE_URL;
+    const base = context.base || new URL(this.url || "", import.meta.url);
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
@@ -390,22 +390,25 @@ export class BoardRunner implements BreadboardRunner {
    * @returns - a new `Board` instance.
    */
   static async load(
-    path: string,
+    url: string,
     options: {
       base: URL;
       slotted?: BreadboardSlotSpec;
       outerGraph?: GraphDescriptor;
       graphProviders?: GraphProvider[];
+      loader?: GraphLoader;
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
-    const loader = createLoader(options.graphProviders ?? []);
-    const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
-    const url = new URL(path, baseURL);
-    const graph = await loader.load(url, outerGraph);
-    if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
+    const loader = new BoardLoader({
+      base,
+      graphs: outerGraph?.graphs,
+      graphProviders: options.graphProviders,
+      loader: options.loader,
+    });
+    const { isSubgraph, graph } = await loader.load(url);
     const board = await BoardRunner.fromGraphDescriptor(graph);
-    if (url.hash) board.#outerGraph = outerGraph;
+    if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
   }
