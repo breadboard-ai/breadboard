@@ -400,13 +400,10 @@ export class BoardRunner implements BreadboardRunner {
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
-    const loader = new BoardLoader({
-      supergraph: outerGraph,
-      graphProviders: options.graphProviders,
-    });
+    const loader = new BoardLoader(options.graphProviders ?? []);
     const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
     const url = new URL(path, baseURL);
-    const graph = await loader.load(url);
+    const graph = await loader.load(url, outerGraph);
     if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
     if (url.hash) board.#outerGraph = outerGraph;

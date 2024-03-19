@@ -10,13 +10,6 @@ import { DefaultGraphProvider } from "./default.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel:///");
 
-export type BoardLoaderArguments = {
-  supergraph?: GraphDescriptor;
-  graphProviders?: GraphProvider[];
-};
-
-export type BoardLoaderType = "hash" | "other";
-
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);
   newURL.hash = "";
@@ -29,14 +22,9 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
 
 export class BoardLoader implements GraphLoader {
   #graphProviders: GraphProvider[];
-  #supergraph?: GraphDescriptor;
 
-  constructor({ supergraph, graphProviders }: BoardLoaderArguments) {
-    this.#supergraph = supergraph;
-    this.#graphProviders = [
-      ...(graphProviders || []),
-      new DefaultGraphProvider(),
-    ];
+  constructor(graphProviders: GraphProvider[]) {
+    this.#graphProviders = [...graphProviders, new DefaultGraphProvider()];
   }
 
   async #loadWithProviders(url: URL): Promise<GraphDescriptor | null> {
@@ -68,21 +56,22 @@ export class BoardLoader implements GraphLoader {
   #getSubgraph(url: URL, subgraphs?: SubGraphs): GraphDescriptor | null {
     const hash = url.hash.substring(1);
     if (!subgraphs) {
-      console.warn(`No sub-graphs to load "#${hash}" from`);
+      console.warn(`No subgraphs to load "#${hash}" from`);
       return null;
     }
     const graph = subgraphs[hash];
     if (!graph) {
-      console.warn(`No graph found for hash: #${hash}`);
+      console.warn(`No subgraph found for hash: #${hash}`);
       return null;
     }
     graph.url = url.href;
     return graph;
   }
 
-  // TODO: Make Supergraphs an option here. They are part of the particular
-  // load, rather than the loader itself.
-  async load(url: URL): Promise<GraphDescriptor | null> {
+  async load(
+    url: URL,
+    supergraph?: GraphDescriptor
+  ): Promise<GraphDescriptor | null> {
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
       return await this.#loadOrWarn(url);
@@ -92,19 +81,19 @@ export class BoardLoader implements GraphLoader {
     // We are inside of a supergraph (a graph that contains us), _and_ we
     // are trying to load a peer subgraph.
     // In this case, do not trigger a load, but instead return the subgraph.
-    if (this.#supergraph) {
-      const supergraphURL = this.#supergraph.url
-        ? new URL(this.#supergraph.url)
+    if (supergraph) {
+      const supergraphURL = supergraph.url
+        ? new URL(supergraph.url)
         : SENTINEL_BASE_URL;
       if (sameWithoutHash(url, supergraphURL)) {
-        return this.#getSubgraph(url, this.#supergraph.graphs);
+        return this.#getSubgraph(url, supergraph.graphs);
       }
     }
     // Otherwise, load the graph and then get its subgraph.
-    const supergraph = await this.#loadOrWarn(removeHash(url));
-    if (!supergraph) {
+    const loadedSupergraph = await this.#loadOrWarn(removeHash(url));
+    if (!loadedSupergraph) {
       return null;
     }
-    return this.#getSubgraph(url, supergraph.graphs);
+    return this.#getSubgraph(url, loadedSupergraph.graphs);
   }
 }
