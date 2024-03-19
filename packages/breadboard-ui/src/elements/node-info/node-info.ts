@@ -9,6 +9,7 @@ import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
+  GraphProvider,
   InspectableNode,
   InspectablePort,
   Kit,
@@ -30,6 +31,9 @@ export class NodeInfo extends LitElement {
   kits: Kit[] = [];
 
   @property()
+  graphProviders: GraphProvider[] = [];
+
+  @property()
   editable = false;
 
   @state()
@@ -46,7 +50,10 @@ export class NodeInfo extends LitElement {
       }
 
       const descriptor = loadInfo.graphDescriptor;
-      const breadboardGraph = inspect(descriptor, { kits: this.kits });
+      const breadboardGraph = inspect(descriptor, {
+        kits: this.kits,
+        graphProviders: this.graphProviders,
+      });
       const node = breadboardGraph.nodeById(nodeId);
 
       if (!node) {
@@ -127,6 +134,11 @@ export class NodeInfo extends LitElement {
 
     #no-node-selected {
       padding: var(--padding-y) var(--padding-x);
+    }
+
+    .node-load-error {
+      padding: var(--padding-y) var(--padding-x);
+      font-size: var(--bb-body-small);
     }
 
     #node-properties {
@@ -269,7 +281,10 @@ export class NodeInfo extends LitElement {
     }
 
     const descriptor = this.loadInfo.graphDescriptor;
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    const breadboardGraph = inspect(descriptor, {
+      kits: this.kits,
+      graphProviders: this.graphProviders,
+    });
     const node = breadboardGraph.nodeById(id);
     if (!node) {
       return;
@@ -523,7 +538,12 @@ export class NodeInfo extends LitElement {
           </form>
         </div>
       `,
-      error: () => html`Error loading node`,
+      error: (err) => {
+        console.warn(err);
+        return html`<div class="node-load-error">
+          Error loading node: (${(err as Error).toString()})
+        </div>`;
+      },
     });
   }
 }
