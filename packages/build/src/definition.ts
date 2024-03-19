@@ -20,6 +20,9 @@ export type ValueOrPort<CONFIG extends PortConfig> =
 
 /**
  * A more tightly constrained version of {@link NodeHandler}.
+ *
+ * TODO(aomarks) Give stronger types to invoke and describe, parameterized by
+ * the node definition they belong to.
  */
 export interface StrictNodeHandler {
   readonly invoke: NodeHandlerFunction;
