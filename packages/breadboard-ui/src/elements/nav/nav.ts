@@ -26,7 +26,11 @@ export class Navigation extends LitElement {
   @property()
   storageItems: Map<
     string,
-    { permission: "prompt" | "granted"; items: Map<string, unknown> }
+    {
+      permission: "prompt" | "granted";
+      items: Map<string, unknown>;
+      title: string;
+    }
   > | null = null;
 
   @property({ reflect: true })
@@ -308,10 +312,10 @@ export class Navigation extends LitElement {
     if (this.storageItems) {
       storageItems = html`${map(
         this.storageItems,
-        ([location, { permission, items }]) => {
+        ([location, { permission, items, title }]) => {
           return html` <details open>
             <summary>
-              <span>${location}</span>
+              <span>${title}</span>
               <button
                 @click=${() => {
                   this.dispatchEvent(new FileStorageRefreshEvent(location));
