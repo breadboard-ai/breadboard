@@ -34,7 +34,7 @@ export default await board(({ agent, context, text, n }) => {
     .description("Agent to apply to the task")
     .examples(sampleAgent);
   context.title("Context").isArray().examples("[]");
-  n.title("Number of parallel attemps").isNumber().examples("4");
+  n.title("Number of parallel attempts").isNumber().examples("4");
 
   const createList = code(({ n }) => {
     return { list: [...Array(n).keys()] };

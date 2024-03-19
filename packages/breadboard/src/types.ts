@@ -601,6 +601,10 @@ export interface NodeHandlerContext {
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
   readonly base?: URL;
+  /**
+   * The loader that can be used to load graphs.
+   * @see [GraphLoader]
+   */
   readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;

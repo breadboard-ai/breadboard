@@ -23,10 +23,14 @@ export type InvokeNodeInputs = InputValues & {
   graph?: GraphDescriptor;
 };
 
-export const relativeBaseURL = (context: NodeHandlerContext) => {
+// This looks like a generic utility function that could be moved to a shared
+// location.
+export const baseURLFromContext = (context: NodeHandlerContext) => {
+  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
   const invokingBoardURL = context.board?.url;
   if (invokingBoardURL) return new URL(invokingBoardURL);
   if (context.base) return context.base;
+  // This should probably return SENTINEL_BASE_URL.
   return new URL(import.meta.url);
 };
 
@@ -34,10 +38,21 @@ export const loadBoardFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
-  const { loader } = context;
-  const base = relativeBaseURL(context);
-  const outerGraph = context.outerGraph;
-  return await BoardRunner.load(path, { base, outerGraph, loader });
+  const base = baseURLFromContext(context);
+  let url: URL | string = new URL(path, base);
+  if (path.startsWith("#")) {
+    if (!context.outerGraph?.url) {
+      // Exceptional case: the outerGraph itself doesn't have a URL.
+      // The baseURLFromContext will fail us here.
+      url = path;
+    }
+  }
+  const graph = await context.loader?.load(url, context.outerGraph);
+  if (!graph)
+    throw new Error(
+      `Unable to load graph from "${typeof url === "string" ? url : url.href}"`
+    );
+  return BoardRunner.fromGraphDescriptor(graph);
 };
 
 type RunnableBoardWithArgs = {
@@ -145,8 +160,20 @@ export default {
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
     const { board, args } = await getRunnableBoard(context, inputs);
-    if (!board) throw new Error("No board provided");
+    if (!board) {
+      console.warn("Could not get a runnable board");
+      throw new Error("Could not get a runnable board");
+    }
+    // If the current board has a URL, pass it as new base.
+    // Otherwise, use the previous base.
+    const base = context.board?.url && new URL(context.board?.url);
+    const invocationContext = base
+      ? {
+          ...context,
+          base,
+        }
+      : { ...context };
 
-    return await board.runOnce(args, context);
+    return await board.runOnce(args, invocationContext);
   },
 };
