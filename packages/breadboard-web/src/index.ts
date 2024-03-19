@@ -412,22 +412,32 @@ export class Main extends LitElement {
       return;
     }
 
-    const url = new URL(this.loadInfo.url);
-    const capabilities = this.#boardStorage.canProvide(url);
+    const boardUrl = new URL(this.loadInfo.url);
+    const capabilities = this.#boardStorage.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
       return;
     }
 
-    const saveResult = await this.#boardStorage.saveBoardFile(
-      url,
+    const { result, url } = await this.#boardStorage.saveBoardFile(
+      boardUrl,
       this.loadInfo.graphDescriptor
     );
-    if (!saveResult) {
-      this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
+    if (!result) {
       return;
     }
 
     this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
+
+    if (!url) {
+      return;
+    }
+    try {
+      this.loadInfo = await getBoardInfo(url);
+      this.#setUrlParam("board", url);
+      this.url = url;
+    } catch (err) {
+      this.toast("Unable to load board", BreadboardUI.Events.ToastType.ERROR);
+    }
   }
 
   get status() {
@@ -989,7 +999,7 @@ export class Main extends LitElement {
 
           if (!result) {
             this.toast(
-              error || "Unexpected error",
+              error || "Unable to save board",
               BreadboardUI.Events.ToastType.WARNING
             );
             return;
@@ -1010,6 +1020,8 @@ export class Main extends LitElement {
           if (evt.isActive) {
             this.url = null;
             this.descriptor = null;
+            this.loadInfo = null;
+            this.#setUrlParam("board", null);
           }
 
           const { result, error } = await this.#boardStorage.deleteFile(
@@ -1022,6 +1034,7 @@ export class Main extends LitElement {
               BreadboardUI.Events.ToastType.WARNING
             );
           }
+
           this.requestUpdate();
         }}
         @breadboardblankboardrequest=${async () => {
