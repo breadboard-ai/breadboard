@@ -19,6 +19,9 @@ export class Toast extends LitElement {
   @property()
   timeout = 8000;
 
+  @property()
+  offset = 0;
+
   static styles = css`
     :host {
       --bb-toast-icon: var(--bb-icon-info);
@@ -36,6 +39,8 @@ export class Toast extends LitElement {
       padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
 
+      translate: 0 calc(var(--offset) * var(--bb-grid-size) * -8);
+      transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
       animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
       max-width: min(360px, 80vw);
     }
@@ -107,6 +112,10 @@ export class Toast extends LitElement {
   }
 
   render() {
+    if (this.offset !== 0) {
+      this.style.setProperty("--offset", this.offset.toString());
+    }
+
     return html`<div>${this.message}</div>`;
   }
 }
