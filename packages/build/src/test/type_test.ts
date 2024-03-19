@@ -9,6 +9,7 @@ import {
   toJSONSchema,
   type BreadboardType,
   type TypeScriptTypeFromBreadboardType,
+  escapeHatch,
 } from "../type.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -73,4 +74,27 @@ test("anyOf", () => {
   // $ExpectType string | number | boolean
   type t3 = TypeScriptTypeFromBreadboardType<typeof with3>;
   /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("escapeHatch", () => {
+  // @ts-expect-error no JSON schema
+  escapeHatch();
+  // @ts-expect-error invalid JSON schema
+  escapeHatch(undefined);
+  // @ts-expect-error invalid JSON schema
+  escapeHatch("string");
+
+  // $ExpectType EscapeHatch<string>
+  const str = escapeHatch<string>({ type: "string" }) satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(str), {
+    type: "string",
+  });
+
+  // $ExpectType EscapeHatch<string | number>
+  const strOrNum = escapeHatch<string | number>({
+    anyOf: [{ type: "string" }, { type: "number" }],
+  }) satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(strOrNum), {
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
 });
