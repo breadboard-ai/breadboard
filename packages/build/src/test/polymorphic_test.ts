@@ -10,7 +10,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 test("polymorphic inputs", () => {
-  // $ExpectType NodeDefinition<{ in1: { type: "string"; }; "*": { type: "number"; }; }, { out1: { type: "string"; }; }>
+  // $ExpectType PolymorphicDefinition<{ in1: { type: "string"; }; "*": { type: "number"; }; }, { out1: { type: "string"; }; }>
   const definition = defineNodeType(
     {
       in1: {
@@ -67,7 +67,7 @@ test("polymorphic inputs", () => {
   instance.inputs["*"];
   // $ExpectType InputPort<{ type: "string"; }>
   instance.inputs.in1;
-  // $ExpectType InputPort<{ type: number; }>
+  // @ts-expect-error dynamic ports not exposed
   instance.inputs.in2;
   // @ts-expect-error No such port
   instance.inputs.in3;
