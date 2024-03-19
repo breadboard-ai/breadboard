@@ -135,3 +135,12 @@ export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
     | TypeScriptTypeFromBreadboardType<Ports[PortName]["type"]>
     | OutputPortReference<Ports[PortName]>;
 };
+export type PrimaryOutputPort<O extends PortConfigMap> =
+  GetPrimaryPortType<O> extends never
+    ? undefined
+    : OutputPort<{ type: GetPrimaryPortType<O> }>;
+export type GetPrimaryPortType<Ports extends PortConfigMap> = {
+  [Name in keyof Ports]: Ports[Name] extends { primary: true }
+    ? Ports[Name]
+    : never;
+}[keyof Ports]["type"];

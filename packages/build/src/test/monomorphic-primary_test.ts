@@ -9,7 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { OutputPortGetter, type OutputPortReference } from "../port.js";
 
-test("node with primary output acts like that output port", () => {
+test("monomorphic node with primary output acts like that output port", () => {
   const withPrimaryOut = defineNodeType(
     {
       in1: {
@@ -51,7 +51,7 @@ test("node with primary output acts like that output port", () => {
   });
 });
 
-test("type error: node without primary output doesn't act like an output port", () => {
+test("type error: monomorphic node without primary output doesn't act like an output port", () => {
   const definition = defineNodeType(
     {},
     {
@@ -65,7 +65,7 @@ test("type error: node without primary output doesn't act like an output port", 
       };
     }
   );
-  const instance = definition({ in1: "foo" });
+  const instance = definition({});
   // @ts-expect-error no primary output, not an output
   instance satisfies OutputPortReference<{ type: "string" }>;
   assert.equal(
@@ -75,7 +75,7 @@ test("type error: node without primary output doesn't act like an output port", 
   );
 });
 
-test("don't allow multiple primary output ports", () => {
+test("don't allow multiple primary output ports on monomorphic node", () => {
   assert.throws(
     () =>
       defineNodeType(
