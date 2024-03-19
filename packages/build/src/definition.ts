@@ -8,6 +8,8 @@ import { NodeInstance } from "./instance.js";
 import type {
   NodeHandlerFunction,
   NodeDescriberFunction,
+  Schema,
+  OutputValues,
 } from "@google-labs/breadboard";
 import type {
   PortConfigMap,
@@ -16,7 +18,7 @@ import type {
   ValuesOrOutputPorts,
   PortConfig,
 } from "./port.js";
-import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import { toJSONSchema, type TypeScriptTypeFromBreadboardType } from "./type.js";
 import type { CountUnion } from "./type-util.js";
 
 /**
@@ -225,29 +227,27 @@ function makeInvokeFunction<I extends PortConfigMap, O extends PortConfigMap>(
       // value, but we always return a promise so that any sync -> async change
       // this node might need to make in the future will not be a breaking change
       // for its consumers.
-      return Promise.resolve(
-        invoke(
-          staticValues as StaticInvokeParams<I>,
-          dynamicValues as DynamicInvokeParams<I>
-        )
-      );
+      const result = invoke(
+        staticValues as StaticInvokeParams<I>,
+        dynamicValues as DynamicInvokeParams<I>
+      ) as OutputValues;
+      return Promise.resolve(result);
     };
   }
   // Static ports only. We can just pass values through.
   return (values) => {
-    return Promise.resolve(
-      // Cast to StaticInvokeFunction is needed because TypeScript does not seem
-      // to understand the type narrowing automatically here.
-      (invoke as StaticInvokeFunction<I, O>)(
-        // Cast to StaticInvokeParams is needed because at runtime we don't get
-        // any guarantee about port shape and types.
-        //
-        // TODO(aomarks) Consider adding schema validation here so that we can
-        // raise type errors automatically and prevent the invoke function from
-        // being invoked with unexpected input types.
-        values as StaticInvokeParams<I>
-      )
-    );
+    // Cast to StaticInvokeFunction is needed because TypeScript does not seem
+    // to understand the type narrowing automatically here.
+    const result = (invoke as StaticInvokeFunction<I, O>)(
+      // Cast to StaticInvokeParams is needed because at runtime we don't get
+      // any guarantee about port shape and types.
+      //
+      // TODO(aomarks) Consider adding schema validation here so that we can
+      // raise type errors automatically and prevent the invoke function from
+      // being invoked with unexpected input types.
+      values as StaticInvokeParams<I>
+    ) as OutputValues;
+    return Promise.resolve(result);
   };
 }
 
@@ -267,20 +267,26 @@ function makeDescribeFunction<I extends PortConfigMap, O extends PortConfigMap>(
       type: "object",
       properties: Object.fromEntries(
         [...Object.entries(inputs)].map(([title, { description, type }]) => {
-          return [title, { title, description, type }];
+          return [
+            title,
+            Object.assign({ title, description }, toJSONSchema(type)),
+          ];
         })
       ),
       required: [...Object.keys(inputs)],
-    },
+    } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: Object.fromEntries(
         [...Object.entries(outputs)].map(([title, { description, type }]) => {
-          return [title, { title, description, type }];
+          return [
+            title,
+            Object.assign({ title, description }, toJSONSchema(type)),
+          ];
         })
       ),
       required: [...Object.keys(outputs)],
-    },
+    } satisfies Schema,
   });
   return () => result;
 }
