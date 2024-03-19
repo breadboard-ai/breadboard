@@ -68,8 +68,14 @@ const invoke = async (
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
+
+      // If the current board has a URL, pass it as new base.
+      // Otherwise, use the previous base.
+      const base = context?.board?.url && new URL(context.board?.url);
+
       const newContext = {
         ...context,
+        base: base || context?.base,
         invocationPath: [...(context?.invocationPath || []), index],
       };
       const outputs = await runnableBoard.runOnce(

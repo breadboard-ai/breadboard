@@ -57,7 +57,7 @@ export type GraphLoader = {
    * @returns -- the loaded graph, or `null` if it could not be loaded.
    */
   load: (
-    url: URL,
+    url: URL | string,
     supergraph?: GraphDescriptor
   ) => Promise<GraphDescriptor | null>;
 };

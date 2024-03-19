@@ -39,9 +39,23 @@ export const loadBoardFromPath = async (
   context: NodeHandlerContext
 ) => {
   const base = baseURLFromContext(context);
-  const url = new URL(path, base);
+  let url: URL | string = new URL(path, base);
+  if (url && url.protocol === "sentinel:") {
+    console.warn("✨ sentinel encountered", path, context);
+  }
+  if (path.startsWith("#")) {
+    console.log("✨ loadBoardFromPath: url", url.href, context);
+    if (!context.outerGraph?.url) {
+      // Exceptional case: the outerGraph itself doesn't have a URL.
+      // The baseURLFromContext will fail us here.
+      url = path;
+    }
+  }
   const graph = await context.loader?.load(url, context.outerGraph);
-  if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
+  if (!graph)
+    throw new Error(
+      `Unable to load graph from "${typeof url === "string" ? url : url.href}"`
+    );
   return BoardRunner.fromGraphDescriptor(graph);
 };
 
@@ -149,9 +163,26 @@ export default {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { board, args } = await getRunnableBoard(context, inputs);
-    if (!board) throw new Error("No board provided");
+    console.log("✨ invoke: start", inputs, context);
 
-    return await board.runOnce(args, context);
+    const { board, args } = await getRunnableBoard(context, inputs);
+    if (!board) {
+      console.warn("Could not get a runnable board");
+      throw new Error("Could not get a runnable board");
+    }
+
+    console.log("✨ invoke: invoking board URL", context.board?.url);
+    console.log("✨ invoke: runnable board", board);
+    // If the current board has a URL, pass it as new base.
+    // Otherwise, use the previous base.
+    const base = context.board?.url && new URL(context.board?.url);
+    const invocationContext = base
+      ? {
+          ...context,
+          base,
+        }
+      : { ...context };
+
+    return await board.runOnce(args, invocationContext);
   },
 };

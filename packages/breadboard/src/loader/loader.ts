@@ -53,8 +53,11 @@ export class BoardLoader implements GraphLoader {
     return graph;
   }
 
-  #getSubgraph(url: URL, subgraphs?: SubGraphs): GraphDescriptor | null {
-    const hash = url.hash.substring(1);
+  #getSubgraph(
+    url: URL | null,
+    hash: string,
+    subgraphs?: SubGraphs
+  ): GraphDescriptor | null {
     if (!subgraphs) {
       console.warn(`No subgraphs to load "#${hash}" from`);
       return null;
@@ -64,14 +67,30 @@ export class BoardLoader implements GraphLoader {
       console.warn(`No subgraph found for hash: #${hash}`);
       return null;
     }
-    graph.url = url.href;
+    if (url) graph.url = url.href;
     return graph;
   }
 
   async load(
-    url: URL,
+    url: URL | string,
     supergraph?: GraphDescriptor
   ): Promise<GraphDescriptor | null> {
+    if (typeof url === "string") {
+      // Can only query the supergraph.
+      if (!supergraph) {
+        throw new Error("Cannot load a graph by path without a supergraph");
+      }
+      const graph = this.#getSubgraph(
+        null,
+        url.substring(1),
+        supergraph.graphs
+      );
+      if (!graph) {
+        console.warn(`Unable to load graph from "${url}"`);
+      }
+      return graph;
+    }
+
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
       return await this.#loadOrWarn(url);
@@ -86,7 +105,8 @@ export class BoardLoader implements GraphLoader {
         ? new URL(supergraph.url)
         : SENTINEL_BASE_URL;
       if (sameWithoutHash(url, supergraphURL)) {
-        return this.#getSubgraph(url, supergraph.graphs);
+        const hash = url.hash.substring(1);
+        return this.#getSubgraph(url, hash, supergraph.graphs);
       }
     }
     // Otherwise, load the graph and then get its subgraph.
@@ -94,6 +114,10 @@ export class BoardLoader implements GraphLoader {
     if (!loadedSupergraph) {
       return null;
     }
-    return this.#getSubgraph(url, loadedSupergraph.graphs);
+    return this.#getSubgraph(
+      url,
+      url.hash.substring(1),
+      loadedSupergraph.graphs
+    );
   }
 }
