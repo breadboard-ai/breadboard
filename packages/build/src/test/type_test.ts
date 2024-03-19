@@ -4,34 +4,97 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  BreadboardType,
-  TypeScriptTypeFromBreadboardType,
+import {
+  anyOf,
+  toJSONSchema,
+  type BreadboardType,
+  type TypeScriptTypeFromBreadboardType,
+  escapeHatch,
 } from "../type.js";
 import { test } from "node:test";
+import assert from "node:assert/strict";
 
-test("basic types are valid", () => {
+test("string", () => {
   "string" satisfies BreadboardType;
-  "number" satisfies BreadboardType;
-  "boolean" satisfies BreadboardType;
-});
-
-test("basic type typos are invalid", () => {
   // @ts-expect-error not a valid basic type
   "xstring" satisfies BreadboardType;
-  // @ts-expect-error not a valid basic type
-  "xnumber" satisfies BreadboardType;
-  // @ts-expect-error not a valid basic type
-  "xboolean" satisfies BreadboardType;
-});
-
-test("convert basic types to typescript", () => {
+  assert.deepEqual(toJSONSchema("string"), { type: "string" });
   /* eslint-disable @typescript-eslint/no-unused-vars */
   // $ExpectType string
-  type s = TypeScriptTypeFromBreadboardType<"string">;
-  // $ExpectType number
-  type n = TypeScriptTypeFromBreadboardType<"number">;
-  // $ExpectType boolean
-  type b = TypeScriptTypeFromBreadboardType<"boolean">;
+  type t = TypeScriptTypeFromBreadboardType<"string">;
   /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("number", () => {
+  "number" satisfies BreadboardType;
+  // @ts-expect-error not a valid basic type
+  "xnumber" satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema("number"), { type: "number" });
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // $ExpectType number
+  type t = TypeScriptTypeFromBreadboardType<"number">;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("boolean", () => {
+  "boolean" satisfies BreadboardType;
+  // @ts-expect-error not a valid basic type
+  "xboolean" satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema("boolean"), { type: "boolean" });
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // $ExpectType boolean
+  type t = TypeScriptTypeFromBreadboardType<"boolean">;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("anyOf", () => {
+  // @ts-expect-error no arguments
+  anyOf();
+  // @ts-expect-error only one argument
+  anyOf("number");
+  // @ts-expect-error not a valid type
+  anyOf(undefined);
+  // @ts-expect-error not a valid type
+  anyOf("xnumber", "xstring");
+
+  const with2 = anyOf("number", "boolean") satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(with2), {
+    anyOf: [{ type: "number" }, { type: "boolean" }],
+  });
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // $ExpectType number | boolean
+  type t2 = TypeScriptTypeFromBreadboardType<typeof with2>;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+
+  const with3 = anyOf("number", "boolean", "string") satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(with3), {
+    anyOf: [{ type: "number" }, { type: "boolean" }, { type: "string" }],
+  });
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // $ExpectType string | number | boolean
+  type t3 = TypeScriptTypeFromBreadboardType<typeof with3>;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("escapeHatch", () => {
+  // @ts-expect-error no JSON schema
+  escapeHatch();
+  // @ts-expect-error invalid JSON schema
+  escapeHatch(undefined);
+  // @ts-expect-error invalid JSON schema
+  escapeHatch("string");
+
+  // $ExpectType EscapeHatch<string>
+  const str = escapeHatch<string>({ type: "string" }) satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(str), {
+    type: "string",
+  });
+
+  // $ExpectType EscapeHatch<string | number>
+  const strOrNum = escapeHatch<string | number>({
+    anyOf: [{ type: "string" }, { type: "number" }],
+  }) satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema(strOrNum), {
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
 });
