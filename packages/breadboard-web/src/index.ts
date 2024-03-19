@@ -557,8 +557,13 @@ export class Main extends LitElement {
   }
 
   render() {
-    const toasts = html`${this.toasts.map(({ message, type }) => {
-      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
+    const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
+      const offset = toasts.length - idx - 1;
+      return html`<bb-toast
+        .offset=${offset}
+        .message=${message}
+        .type=${type}
+      ></bb-toast>`;
     })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
