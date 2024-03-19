@@ -4,15 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import OpenAPI from "./boards/openapi.js";
-import { Board, asRuntimeKit } from "@google-labs/breadboard";
-import yaml from "yaml";
-import CoreKit from "@google-labs/core-kit";
-import templates from "@google-labs/template-kit";
-import { readFile, stat, writeFile } from "fs/promises";
+import { stat, writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
 import { ImportOptions } from "./commandTypes.js";
+import { OpenAPIBoardBuilder } from "./import/builder/index.js";
 
 export const importGraph = async (url: string, options: ImportOptions) => {
   if (URL.canParse(url) == false) {
@@ -25,67 +21,22 @@ export const importGraph = async (url: string, options: ImportOptions) => {
     }
   }
 
-  const apiPath = options.api;
+  const apiPathFilter = options.api;
   const outputPath = options.output;
 
-  if (apiPath == undefined && outputPath == undefined) {
+  if (apiPathFilter == undefined && outputPath == undefined) {
     console.error(
       "You must specify either -a (an API) or a directory to output all of the APIs to."
     );
     return;
   }
 
-  let openAPIData = "";
-  let json;
+  const builder = new OpenAPIBoardBuilder(url);
 
-  try {
-    if (url.startsWith("file://")) {
-      openAPIData = await readFile(url.replace("file://", ""), {
-        encoding: "utf-8",
-      });
-    } else {
-      openAPIData = await (await fetch(url)).text();
-    }
-  } catch (e) {
-    throw new Error(`Unable to fetch OpenAPI spec from ${url}`);
-  }
-
-  try {
-    json = yaml.parse(openAPIData);
-  } catch (yamlLoadError) {
-    try {
-      json = JSON.parse(openAPIData);
-    } catch (jsonLoadError) {
-      throw new Error(
-        `Unable to parse OpenAPI spec from ${url}. It's not a valid JSON or YAML file.`
-      );
-    }
-  }
-
-  const openAPIBoard = await Board.fromGraphDescriptor(OpenAPI);
-
-  const boards = await openAPIBoard.runOnce(
-    { json },
-    { kits: [asRuntimeKit(CoreKit), asRuntimeKit(templates)] }
-  );
-
-  if (boards == undefined || boards == null) {
-    throw new Error("Unable to generate list of boards from an API spec.");
-  }
-
-  for (const api of Object.keys(boards)) {
-    if (apiPath == api || apiPath == undefined) {
-      const apiRef = boards[api] as { board: { kind: string; board: Board } };
-      if (apiRef == undefined) {
-        continue;
-      }
-
-      const board = apiRef;
-      if (outputPath != undefined) {
-        outputBoard(board.board.board, api, outputPath);
-      } else {
-        console.log(JSON.stringify(board.board.board, null, 2));
-      }
+  for await (const { board, apiSpec } of builder.build()) {
+    console.log(board);
+    if (apiSpec.operationId != undefined && outputPath != undefined) {
+      await outputBoard(board, apiSpec.operationId, outputPath);
     }
   }
 };

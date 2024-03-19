@@ -42,3 +42,15 @@ breadboard debug boards/apis/llms/gemini/v1beta3/generativelanguage.models.embed
 ## Recipe for standard implementation generate text and generate embedding
 
 `npx breadboard run generateCompletion.js --kit=@google-labs/core-kit --input-file=tests/general-generateCompletionRequest.json --input="{\"key\":\"$GEMINI_API_KEY\"}"``
+
+## Generate the API from an OpenAPI spec
+
+To generate the API board for Gemini, run the following command from the root of the project:
+
+```bash
+npx breadboard import openapi.yaml -o /api
+```
+
+Note: Google doesn't support OpenAPI, so the `openapi.yaml` is generated indirectly from the following tool: https://github.com/stackql/google-discovery-to-openapi.
+
+Note 2: Open API doesn't support `Bearer` tokens, so uses the `key` input to pass the API key.
