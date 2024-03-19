@@ -997,11 +997,18 @@ export class Main extends LitElement {
         @breadboardfilestoragerefresh=${async (
           evt: BreadboardUI.Events.FileStorageRefreshEvent
         ) => {
-          await this.#boardStorage.refresh(evt.location);
-          this.toast(
-            "Source files refreshed",
-            BreadboardUI.Events.ToastType.INFORMATION
-          );
+          const refreshed = await this.#boardStorage.refresh(evt.location);
+          if (refreshed) {
+            this.toast(
+              "Source files refreshed",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+          } else {
+            this.toast(
+              "Unable to refresh source files",
+              BreadboardUI.Events.ToastType.WARNING
+            );
+          }
           this.requestUpdate();
         }}
         @breadboardfilestoragedisconnect=${async (

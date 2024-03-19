@@ -98,13 +98,10 @@ export class FileStorage implements GraphProvider {
     return this.#items;
   }
 
-  async #refreshItems(location: string | null = null) {
+  async #refreshAllItems() {
     this.#items.clear();
-    for (const [name, handle] of this.#locations) {
-      if (location !== null && name !== location) {
-        continue;
-      }
 
+    for (const [name, handle] of this.#locations) {
       const permission = await handle.queryPermission();
 
       let files = this.#items.get(name);
@@ -117,22 +114,49 @@ export class FileStorage implements GraphProvider {
         continue;
       }
 
-      const entries: [string, FileSystemFileHandle][] = [];
+      files.items = await this.#getFiles(handle);
+    }
+  }
 
-      for await (const [name, entry] of handle.entries()) {
-        if (entry.kind === "directory") {
-          continue;
-        }
+  async #refreshItems(location: string): Promise<boolean> {
+    const handle = this.#locations.get(location);
+    if (!handle) {
+      return false;
+    }
 
-        if (!entry.name.endsWith("json")) {
-          continue;
-        }
+    const permission = await handle.queryPermission();
+    if (permission !== "granted") {
+      return false;
+    }
 
-        entries.push([name, entry]);
+    let files = this.#items.get(location);
+    if (!files) {
+      files = { permission, items: new Map(), title: handle.name };
+      this.#items.set(location, files);
+    }
+
+    files.items = await this.#getFiles(handle);
+    return true;
+  }
+
+  async #getFiles(
+    handle: FileSystemDirectoryHandle
+  ): Promise<Map<string, FileSystemFileHandle>> {
+    const entries: [string, FileSystemFileHandle][] = [];
+
+    for await (const [name, entry] of handle.entries()) {
+      if (entry.kind === "directory") {
+        continue;
       }
 
-      files.items = new Map(entries.sort());
+      if (!entry.name.endsWith("json")) {
+        continue;
+      }
+
+      entries.push([name, entry]);
     }
+
+    return new Map(entries.sort());
   }
 
   async renewAccessRequest(location: string) {
@@ -142,16 +166,16 @@ export class FileStorage implements GraphProvider {
     }
 
     await handle.requestPermission();
-    return this.#refreshItems();
+    return this.#refreshAllItems();
   }
 
   async disconnect(location: string) {
     this.#locations.delete(location);
     await this.#storeLocations();
-    return this.#refreshItems();
+    return this.#refreshAllItems();
   }
 
-  async refresh(location: string) {
+  async refresh(location: string): Promise<boolean> {
     return this.#refreshItems(location);
   }
 
@@ -162,7 +186,7 @@ export class FileStorage implements GraphProvider {
     }
 
     this.#locations = locations;
-    return this.#refreshItems();
+    return this.#refreshAllItems();
   }
 
   createGraphURL(location: string, fileName: string) {
@@ -248,7 +272,7 @@ export class FileStorage implements GraphProvider {
             handle
           );
           await this.#storeLocations();
-          await this.#refreshItems();
+          await this.#refreshAllItems();
         } catch (err) {
           // User cancelled the action.
         }
