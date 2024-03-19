@@ -109,6 +109,7 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
   #boardStorage = FileStorage.instance();
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     * {
@@ -182,6 +183,7 @@ export class Main extends LitElement {
       padding: calc(var(--bb-grid-size) * 2);
     }
 
+    #save-board,
     #get-log,
     #get-board,
     #toggle-preview {
@@ -200,10 +202,16 @@ export class Main extends LitElement {
       border: none;
     }
 
+    #save-board:hover,
     #get-log:hover,
     #get-board:hover,
     #toggle-preview:hover {
       background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    #save-board {
+      background: 12px center var(--bb-icon-save);
+      background-repeat: no-repeat;
     }
 
     #toggle-preview {
@@ -360,6 +368,13 @@ export class Main extends LitElement {
     super.connectedCallback();
 
     this.#checkForPossibleEmbed();
+    window.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
   #checkForPossibleEmbed() {
@@ -376,6 +391,40 @@ export class Main extends LitElement {
     }
 
     return false;
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.key === "s" && evt.metaKey) {
+      evt.preventDefault();
+      this.#attemptBoardSave();
+    }
+  }
+
+  async #attemptBoardSave() {
+    if (
+      !this.loadInfo ||
+      !this.loadInfo.graphDescriptor ||
+      !this.loadInfo.url
+    ) {
+      return;
+    }
+
+    const url = new URL(this.loadInfo.url);
+    const capabilities = this.#boardStorage.canProvide(url);
+    if (!capabilities || !capabilities.save) {
+      return;
+    }
+
+    const saveResult = await this.#boardStorage.saveBoardFile(
+      url,
+      this.loadInfo.graphDescriptor
+    );
+    if (!saveResult) {
+      this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
+      return;
+    }
+
+    this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
   }
 
   get status() {
@@ -474,68 +523,6 @@ export class Main extends LitElement {
   toast(message: string, type: BreadboardUI.Events.ToastType) {
     this.toasts.push({ message, type });
     this.requestUpdate();
-  }
-
-  #getRunLog(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement && this.#uiRef.value)) {
-      return;
-    }
-
-    if (evt.target.href) {
-      URL.revokeObjectURL(evt.target.href);
-    }
-
-    const messages = this.#runObserver?.runs()[0].messages || [];
-
-    const secrets = [];
-    const inputs = [];
-    const outputs = [];
-    const errors = [];
-    for (const message of messages) {
-      if (message.type === "error") {
-        errors.push(message);
-      }
-
-      if (message.type === "output") {
-        outputs.push(message);
-      }
-
-      if (message.type === "nodeend") {
-        switch (message.data.node.type) {
-          case "secrets": {
-            secrets.push(...Object.values(message.data.outputs));
-            break;
-          }
-
-          case "input": {
-            inputs.push(message);
-            break;
-          }
-
-          case "output": {
-            outputs.push(message);
-            break;
-          }
-        }
-      }
-    }
-
-    let data = JSON.stringify(
-      { board: this.loadInfo, inputs, outputs, errors, history: messages },
-      null,
-      2
-    );
-
-    // Attempt to find any secrets and then replace them in the JSON output.
-    for (const secret of secrets) {
-      const re = new RegExp(`\\b${secret}\\b`, "gim");
-      data = data.replaceAll(re, "SECRET");
-    }
-
-    evt.target.download = `${new Date().toISOString()}.json`;
-    evt.target.href = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
   }
 
   #getBoardJson(evt: Event) {
@@ -905,6 +892,25 @@ export class Main extends LitElement {
       }
     }
 
+    let saveButton: HTMLTemplateResult | symbol = nothing;
+    if (this.loadInfo && this.loadInfo.url) {
+      try {
+        const url = new URL(this.loadInfo.url);
+        const capabilities = this.#boardStorage.canProvide(url);
+        if (capabilities && capabilities.save) {
+          saveButton = html`<button
+            id="save-board"
+            title="Save Board BGL"
+            @click=${this.#attemptBoardSave}
+          >
+            Save
+          </button>`;
+        }
+      } catch (err) {
+        // If there are any problems with the URL, etc, don't offer the save button.
+      }
+    }
+
     tmpl = html`<div id="header-bar" ?inert=${this.showOverlay}>
         <button
           id="show-nav"
@@ -926,20 +932,24 @@ export class Main extends LitElement {
               this.showOverlay = true;
             }}
             id="edit-board-info"
+            title="Edit Board Information"
           >
             Edit
           </button>
         </h1>
-        <a id="get-board" @click=${this.#getBoardJson}>Get code</a>
-        <a id="get-log" @click=${this.#getRunLog}>Get log</a>
+        ${saveButton}
+        <a id="get-board" title="Export Board BGL" @click=${this.#getBoardJson}
+          >Export</a
+        >
         <button
           class=${classMap({ active: this.mode === MODE.PREVIEW })}
           id="toggle-preview"
+          title="Toggle Board Preview"
           @click=${() => {
             this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
           }}
         >
-          Toggle Preview
+          Preview
         </button>
       </div>
       <div id="content" ?inert=${this.showOverlay} class="${this.mode}">

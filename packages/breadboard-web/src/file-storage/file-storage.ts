@@ -30,6 +30,7 @@ interface FileSystemFileHandle {
   kind: "file";
   name: string;
   getFile(): Promise<File>;
+  createWritable(): Promise<FileSystemWritableFileStream>;
 }
 
 declare global {
@@ -172,7 +173,7 @@ export class FileStorage implements GraphProvider {
     const canLoad =
       url.protocol === FILE_SYSTEM_PROTOCOL &&
       url.host.startsWith(FILE_SYSTEM_HOST_PREFIX);
-    return canLoad ? { load: true, save: false } : false;
+    return canLoad ? { load: true, save: true } : false;
   }
 
   async load(url: URL) {
@@ -204,6 +205,37 @@ export class FileStorage implements GraphProvider {
       console.error(err);
     }
     return null;
+  }
+
+  async saveBoardFile(url: URL, descriptor: GraphDescriptor) {
+    if (!this.canProvide(url)) {
+      return null;
+    }
+
+    const { location, fileName } = parseFileSystemURL(url);
+    const items = this.items();
+    const fileLocation = items.get(location);
+    if (!fileLocation) {
+      return null;
+    }
+
+    const handle = fileLocation.items.get(fileName);
+    if (!handle) {
+      return null;
+    }
+
+    try {
+      const stream = await handle.createWritable();
+      const data = structuredClone(descriptor);
+      delete data["url"];
+
+      await stream.write(JSON.stringify(data, null, 2));
+      await stream.close();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
   }
 
   async request(type: keyof BreadboardUI.Types.BoardStorageSupported) {
