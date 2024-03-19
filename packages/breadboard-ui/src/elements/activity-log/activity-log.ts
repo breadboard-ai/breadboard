@@ -855,8 +855,10 @@ export class ActivityLog extends LitElement {
                 string,
                 string
               >;
-              classes.icon = true;
-              styles["--node-icon"] = `url(${visual.icon})`;
+              if (visual.icon) {
+                classes.icon = true;
+                styles["--node-icon"] = `url(${visual.icon})`;
+              }
             }
 
             return html`<div
