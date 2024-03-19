@@ -79,7 +79,8 @@ export default await board(({ context, title, description }) => {
   context
     .title("Context")
     .description("Incoming conversation context")
-    .isObject()
+    .isArray()
+    .behavior("llm-content")
     .optional()
     .examples(JSON.stringify([]))
     .default("[]");
@@ -95,17 +96,19 @@ export default await board(({ context, title, description }) => {
     .default("User's question or request");
 
   const maybeOutputRouter = maybeOutput({
+    $id: "maybeOutputRouter",
     $metadata: {
       title: "Maybe Output",
-      description: "If the last message was from the model, output it",
+      description: "Checking if the last message was from the model",
     },
     context,
   });
 
   const createSchema = schema({
+    $id: "createSchema",
     $metadata: {
       title: "Create Schema",
-      description: "Create a schema for user input",
+      description: "Creating a schema for user input",
     },
     title: title.isString(),
     description: description.isString(),
@@ -113,10 +116,10 @@ export default await board(({ context, title, description }) => {
   });
 
   base.output({
+    $id: "output",
     $metadata: {
       title: "Output",
-      description:
-        "The output to display. This output will bubble up to the user.",
+      description: "Displaying the output the user.",
     },
     output: maybeOutputRouter.output,
     schema: {
@@ -134,18 +137,29 @@ export default await board(({ context, title, description }) => {
 
   const input = base.input({
     $id: "input",
+    $metadata: {
+      title: "Input",
+      description: "Asking user for input",
+    },
   });
 
   createSchema.schema.to(input);
 
   const appendContext = contextAppender({
     $id: "appendContext",
+    $metadata: {
+      title: "Append Context",
+      description: "Appending user input to the conversation context",
+    },
     context: createSchema.context.isArray(),
     text: input.text.isString(),
   });
 
   return {
-    context: appendContext.context.isArray().title("Context"),
+    context: appendContext.context
+      .isArray()
+      .behavior("llm-content")
+      .title("Context"),
     text: input.text.title("Text"),
   };
 }).serialize({

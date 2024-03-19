@@ -7,6 +7,7 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  base,
   board,
   code,
 } from "@google-labs/breadboard";
@@ -48,6 +49,7 @@ export default await board(({ context, worker, max }) => {
     .title("Context")
     .isArray()
     .format("multiline")
+    .behavior("llm-content")
     .optional()
     .default("[]")
     .description("Initial conversation context");
@@ -61,16 +63,37 @@ export default await board(({ context, worker, max }) => {
     .default("-1")
     .examples("3");
 
-  worker.title("Worker").description("Worker to repeat").isObject();
+  worker
+    .title("Worker")
+    .description("Worker to repeat")
+    .isObject()
+    .behavior("board");
 
   const invokeAgent = core.invoke({
     $id: "invokeAgent",
+    $metadata: {
+      title: "Invoke Worker",
+      description: "Invoking the worker",
+    },
     $board: worker.memoize(),
     context,
   });
 
+  base.output({
+    $id: "exit",
+    $metadata: {
+      title: "Exit",
+      description: "Exiting early from the repeater",
+    },
+    context: invokeAgent.exit,
+  });
+
   const count = counter({
     $id: "counter",
+    $metadata: {
+      title: "Counter",
+      description: "Counting the number of repetitions",
+    },
     context: invokeAgent.context,
     count: max,
   });

@@ -11,6 +11,7 @@
 html {
   --bb-grid-size: 4px;
   --bb-selected-color: rgb(46, 139, 232);
+  --bb-continue-color: rgb(192, 223, 255);
   --bb-font-family-header: "Fira Code";
   --bb-font-family-mono: "Fira Code", "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -37,6 +38,8 @@ html {
   --bb-easing: cubic-bezier(0, 0, 0.3, 1);
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
+
+  --bb-icon-access-request: url(/third_party/icons/access-request.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
@@ -51,24 +54,120 @@ html {
   --bb-icon-delay: url(/third_party/icons/delay.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
+  --bb-icon-edit: url(/third_party/icons/edit.svg);
+  --bb-icon-eject: url(/third_party/icons/eject.svg);
   --bb-icon-error: url(/third_party/icons/error.svg);
   --bb-icon-expand: url(/third_party/icons/expand.svg);
+  --bb-icon-file-add: url(/third_party/icons/file-add.svg);
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-frame-reload: url(/third_party/icons/frame-reload.svg);
   --bb-icon-history: url(/third_party/icons/history.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
+  --bb-icon-menu: url(/third_party/icons/menu.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
+  --bb-icon-refresh: url(/third_party/icons/refresh.svg);
   --bb-icon-reset: url(/third_party/icons/reset.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
+  --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
+  --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);
   --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
   --bb-grid-pattern: url(/images/pattern.png);
+
+  --bb-expand-arrow: url(/images/expand.svg);
+  --bb-collapse-arrow: url(/images/collapse.svg);
+
+  --bb-inputs-50: #eaf7e7;
+  --bb-inputs-100: #bbe7b0;
+  --bb-inputs-200: #9adc8a;
+  --bb-inputs-300: #6ccb55;
+  --bb-inputs-400: #4fc134;
+  --bb-inputs-500: #24b202;
+  --bb-inputs-600: #20a202;
+  --bb-inputs-700: #1a7e01;
+  --bb-inputs-800: #136202;
+  --bb-inputs-900: #0f4b00;
+
+  --bb-nodes-50: #fff9e6;
+  --bb-nodes-100: #ffebb0;
+  --bb-nodes-200: #ffe28b;
+  --bb-nodes-300: #ffd454;
+  --bb-nodes-400: #ffcc33;
+  --bb-nodes-500: #ffbf00;
+  --bb-nodes-600: #e8af02;
+  --bb-nodes-700: #b68902;
+  --bb-nodes-800: #8c6900;
+  --bb-nodes-900: #6b5000;
+
+  --bb-boards-50: #fff4eb;
+  --bb-boards-100: #ffdfc0;
+  --bb-boards-200: #ffcea1;
+  --bb-boards-300: #feb876;
+  --bb-boards-400: #feab5c;
+  --bb-boards-500: #fe9533;
+  --bb-boards-600: #e7882e;
+  --bb-boards-700: #b46b24;
+  --bb-boards-800: #8c521b;
+  --bb-boards-900: #6b3f15;
+
+  --bb-output-50: #ecf5ff;
+  --bb-output-100: #c0dfff;
+  --bb-output-200: #a1d0ff;
+  --bb-output-300: #77bbff;
+  --bb-output-400: #5cadff;
+  --bb-output-500: #3399ff;
+  --bb-output-600: #2e8be8;
+  --bb-output-700: #246db5;
+  --bb-output-800: #1b548c;
+  --bb-output-900: #1b548c;
+
+  --bb-neutral-10: #fafafa;
+  --bb-neutral-50: #f6f6f6;
+  --bb-neutral-100: #ededed;
+  --bb-neutral-200: #e3e3e3;
+  --bb-neutral-300: #d9d9d9;
+  --bb-neutral-400: #c2c2c2;
+  --bb-neutral-500: #9c9c9c;
+  --bb-neutral-600: #7a7a7a;
+  --bb-neutral-700: #595959;
+  --bb-neutral-800: #333333;
+  --bb-neutral-900: #1a1a1a;
+
+  --bb-title-large: 22px;
+  --bb-title-line-height-large: 28px;
+
+  --bb-title-medium: 16px;
+  --bb-title-line-height-medium: 24px;
+
+  --bb-title-small: 14px;
+  --bb-title-line-height-small: 20px;
+
+  --bb-label-large: 14px;
+  --bb-label-line-height-large: 20px;
+
+  --bb-label-medium: 12px;
+  --bb-label-line-height-medium: 16px;
+
+  --bb-label-small: 11px;
+  --bb-label-line-height-small: 16px;
+
+  --bb-body-large: 16px;
+  --bb-body-line-height-large: 24px;
+
+  --bb-body-medium: 14px;
+  --bb-body-line-height-medium: 20px;
+
+  --bb-body-small: 12px;
+  --bb-body-line-height-small: 16px;
+
+  --bb-body-x-small: 10px;
+  --bb-body-line-height-x-small: 13px;
 
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);

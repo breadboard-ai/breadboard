@@ -55,7 +55,12 @@
     {
       "id": "getBoard",
       "type": "fetch",
-      "configuration": {}
+      "configuration": {},
+      "metadata": {
+        "title": "Get Board",
+        "description": "Fetching the board from the given URL",
+        "logLevel": "info"
+      }
     },
     {
       "id": "input",

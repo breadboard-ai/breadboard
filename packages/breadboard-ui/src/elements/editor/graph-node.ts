@@ -9,6 +9,24 @@ import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 
+const documentStyles = getComputedStyle(document.documentElement);
+
+function getGlobalColor(name: string, defaultValue = "#333333") {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  return parseInt(value || defaultValue, 16);
+}
+
+const edgeColor = getGlobalColor("--bb-neutral-300");
+const borderColor = getGlobalColor("--bb-neutral-300");
+const nodeTextColor = getGlobalColor("--bb-neutral-900");
+
+const defaultNodeColor = getGlobalColor("--bb-nodes-100");
+const inputNodeColor = getGlobalColor("--bb-inputs-100");
+const secretNodeColor = getGlobalColor("--bb-inputs-100");
+const outputNodeColor = getGlobalColor("--bb-output-100");
+// TODO: Enable board node coloring.
+// const boardNodeColor = getGlobalColor('--bb-boards-100');
+
 export class GraphNode extends PIXI.Graphics {
   #width = 0;
   #height = 0;
@@ -23,10 +41,10 @@ export class GraphNode extends PIXI.Graphics {
   #title = "";
   #titleText: PIXI.Text | null = null;
   #borderRadius = 3;
-  #color = 0x333333;
-  #titleTextColor = 0x333333;
-  #portTextColor = 0x333333;
-  #borderColor = 0xd9d9d9;
+  #color = nodeTextColor;
+  #titleTextColor = nodeTextColor;
+  #portTextColor = nodeTextColor;
+  #borderColor = borderColor;
   #selectedColor = 0x0084ff;
   #textSize = 12;
   #backgroundColor = 0x333333;
@@ -42,8 +60,8 @@ export class GraphNode extends PIXI.Graphics {
   #editable = false;
   #selected = false;
 
-  public edgeColor: number;
-  public portConnectedColor: number;
+  public edgeColor = edgeColor;
+  public portConnectedColor = 0xaced8f;
 
   constructor(id: string, type: string, title: string) {
     super();
@@ -51,48 +69,27 @@ export class GraphNode extends PIXI.Graphics {
     this.#nodeTitle = title;
     this.id = id;
     this.type = type;
-    this.edgeColor = 0xcccccc;
 
     switch (type) {
       case "input":
-        this.color = 0xc9daf8;
-        this.edgeColor = 0xb1c1dc;
-        this.portConnectedColor = 0xaced8f;
-        this.titleTextColor = 0x2c5598;
+        this.color = inputNodeColor;
         break;
 
       case "secrets":
-        this.color = 0xf4cccc;
-        this.edgeColor = 0xdeb5b5;
-        this.portConnectedColor = 0xaced8f;
-        this.titleTextColor = 0xac342a;
+        this.color = secretNodeColor;
         break;
 
       case "output":
-        this.color = 0xb6d7a8;
-        this.edgeColor = 0xbdd2b5;
-        this.portConnectedColor = 0xaced8f;
-        this.titleTextColor = 0x2a5a15;
-        break;
-
-      case "slot":
-      case "passthrough":
-        this.color = 0xead1dc;
-        this.edgeColor = 0xe3a7c5;
-        this.portConnectedColor = 0xaced8f;
-        this.titleTextColor = 0x87365e;
+        this.color = outputNodeColor;
         break;
 
       default:
-        this.color = 0xfff2cc;
-        this.edgeColor = 0xe4d2b6;
-        this.portConnectedColor = 0xaced8f;
-        this.titleTextColor = 0xb3772c;
+        this.color = defaultNodeColor;
         break;
     }
 
     this.backgroundColor = 0xffffff;
-    this.portTextColor = 0x333333;
+    this.portTextColor = nodeTextColor;
 
     this.eventMode = "static";
     this.cursor = "pointer";
@@ -101,12 +98,14 @@ export class GraphNode extends PIXI.Graphics {
   addPointerEventListeners() {
     let dragStart: PIXI.IPointData | null = null;
     let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
+    let hasMoved = false;
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphNode)) {
         return;
       }
 
+      hasMoved = false;
       dragStart = evt.global.clone();
       originalPosition = this.position.clone();
     });
@@ -125,14 +124,21 @@ export class GraphNode extends PIXI.Graphics {
 
         this.x = Math.round(originalPosition.x + dragDeltaX);
         this.y = Math.round(originalPosition.y + dragDeltaY);
+        hasMoved = true;
 
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y);
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
     );
 
     const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
+      if (!hasMoved) {
+        return;
+      }
+
+      hasMoved = false;
+      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 
     this.addEventListener("pointerupoutside", onPointerUp);

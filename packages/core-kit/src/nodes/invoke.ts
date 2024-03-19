@@ -34,9 +34,10 @@ export const loadBoardFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
+  const { loader } = context;
   const base = relativeBaseURL(context);
   const outerGraph = context.outerGraph;
-  return await BoardRunner.load(path, { base, outerGraph });
+  return await BoardRunner.load(path, { base, outerGraph, loader });
 };
 
 type RunnableBoardWithArgs = {
@@ -114,6 +115,7 @@ const describe = async (
     },
     $board: {
       title: "board",
+      behavior: ["board"],
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",
       type: "string", // TODO: Make this a union type

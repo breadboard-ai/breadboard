@@ -23,21 +23,28 @@ export class RunResult implements BreadboardRunResult {
   #runState: RunState | undefined;
   // TODO: Remove this once RunState machinery works
   #invocationId;
+  #path: number[];
 
   constructor(
     state: TraversalResult,
     type: RunResultType,
     runState: RunState | undefined,
-    invocationId: number
+    invocationId: number,
+    path: number[]
   ) {
     this.#state = state;
     this.#type = type;
     this.#runState = runState;
     this.#invocationId = invocationId;
+    this.#path = path;
   }
 
   get invocationId(): number {
     return this.#invocationId;
+  }
+
+  get path(): number[] {
+    return this.#path;
   }
 
   get type(): RunResultType {
@@ -86,7 +93,7 @@ export class RunResult implements BreadboardRunResult {
 
   static load(stringifiedResult: string): RunResult {
     const { state, type } = loadRunnerState(stringifiedResult);
-    return new RunResult(state, type, undefined, 0);
+    return new RunResult(state, type, undefined, 0, []);
   }
 }
 
@@ -94,9 +101,10 @@ export class InputStageResult extends RunResult {
   constructor(
     state: TraversalResult,
     runState: RunState | undefined,
-    invocationId: number
+    invocationId: number,
+    path: number[]
   ) {
-    super(state, "input", runState, invocationId);
+    super(state, "input", runState, invocationId, path);
   }
 
   get outputs(): OutputValues {
@@ -105,8 +113,8 @@ export class InputStageResult extends RunResult {
 }
 
 export class OutputStageResult extends RunResult {
-  constructor(state: TraversalResult, invocationId: number) {
-    super(state, "output", undefined, invocationId);
+  constructor(state: TraversalResult, invocationId: number, path: number[]) {
+    super(state, "output", undefined, invocationId, path);
   }
 
   get inputArguments(): InputValues {

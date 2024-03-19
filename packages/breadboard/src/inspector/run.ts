@@ -5,9 +5,17 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { NodeDescriptor } from "../types.js";
+import { timestamp } from "../timestamp.js";
+import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event.js";
-import { InspectableRun, InspectableRunEvent } from "./types.js";
+import {
+  GraphUUID,
+  InspectableGraphStore,
+  InspectableRun,
+  InspectableRunEvent,
+  InspectableRunObserver,
+  RunObserverOptions,
+} from "./types.js";
 
 type GraphRecord = {
   nodes: NodeDescriptor[];
@@ -81,64 +89,74 @@ class NodeHighlightHelper {
   }
 }
 
-export const inspectableRun = (): InspectableRun => {
-  return new Run();
-};
+export class RunObserver implements InspectableRunObserver {
+  #store: InspectableGraphStore;
+  #options: RunObserverOptions;
+  #runs: Run[] = [];
 
-type Runner = AsyncGenerator<HarnessRunResult, void, unknown>;
+  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
+    this.#store = store;
+    this.#options = options;
+  }
+
+  runs() {
+    return this.#runs;
+  }
+
+  observe(result: HarnessRunResult): InspectableRun[] {
+    if (result.type === "graphstart") {
+      const { path } = result.data;
+      if (path.length === 0) {
+        // start a new run
+        const run = new Run(this.#store, result.data.graph, this.#options);
+        this.#runs = [run, ...this.#runs];
+      }
+    } else if (result.type === "graphend") {
+      const { path, timestamp } = result.data;
+      if (path.length === 0) {
+        // close out the run
+        const run = this.#runs[0];
+        run.end = timestamp;
+      }
+    }
+    const run = this.#runs[0];
+    run.addResult(result);
+    return this.#runs;
+  }
+}
 
 export class Run implements InspectableRun {
-  #events: EventManager = new EventManager();
+  #events: EventManager;
   #highlightHelper = new NodeHighlightHelper();
 
-  id = 0;
-  graphId = crypto.randomUUID();
-  graphVersion = 0;
+  graphId: GraphUUID;
+  start: number;
+  end: number | null = null;
+  graphVersion: number;
   messages: HarnessRunResult[] = [];
+
+  constructor(
+    graphStore: InspectableGraphStore,
+    graph: GraphDescriptor,
+    options: RunObserverOptions
+  ) {
+    this.#events = new EventManager(graphStore, options);
+    this.graphVersion = 0;
+    this.start = timestamp();
+    this.graphId = graphStore.add(graph, this.graphVersion);
+  }
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
   }
 
-  observe(runner: Runner): Runner {
-    return new Observer(runner, (event) => {
-      this.messages.push(event);
-      this.#events.add(event);
-      this.#highlightHelper.add(event);
-    });
+  addResult(result: HarnessRunResult) {
+    this.messages.push(result);
+    this.#events.add(result);
+    this.#highlightHelper.add(result);
   }
 
   currentNode(position: number) {
     return this.#highlightHelper.currentNode(position);
-  }
-}
-
-type OnResult = (message: HarnessRunResult) => void;
-
-class Observer implements Runner {
-  #runner: Runner;
-  #onResult: OnResult;
-
-  constructor(runner: Runner, onResult: OnResult) {
-    this.#onResult = onResult;
-    this.#runner = runner;
-  }
-
-  async next() {
-    const result = await this.#runner.next();
-    if (result.done) {
-      return result;
-    }
-    this.#onResult(result.value);
-    return result;
-  }
-  async return() {
-    return this.#runner.return();
-  }
-  async throw(error?: unknown) {
-    return this.#runner.throw(error);
-  }
-  [Symbol.asyncIterator]() {
-    return this;
   }
 }

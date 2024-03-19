@@ -47,7 +47,8 @@ export const styles = css`
 
   #controls,
   #breadcrumbs {
-    border-bottom: 1px solid #d9d9d9;
+    background: var(--bb-output-50);
+    border-bottom: 1px solid var(--bb-output-100);
     display: flex;
     flex-direction: row;
     align-items: center;

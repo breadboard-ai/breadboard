@@ -40,6 +40,7 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
+import { GraphLoader, GraphProvider } from "./loader/types.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -144,7 +145,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphstart",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { graph: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
@@ -186,13 +187,31 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(
-            new InputStageResult(result, await stack.state(), invocationId)
+            new InputStageResult(
+              result,
+              await stack.state(),
+              invocationId,
+              path()
+            )
           );
-          await bubbleUpInputsIfNeeded(this, context, descriptor, result);
+          await bubbleUpInputsIfNeeded(
+            this,
+            context,
+            descriptor,
+            result,
+            path()
+          );
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          if (!(await bubbleUpOutputsIfNeeded(inputs, descriptor, context))) {
-            await next(new OutputStageResult(result, invocationId));
+          if (
+            !(await bubbleUpOutputsIfNeeded(
+              inputs,
+              descriptor,
+              context,
+              path()
+            ))
+          ) {
+            await next(new OutputStageResult(result, invocationId, path()));
           }
           outputsPromise = result.outputsPromise;
         } else {
@@ -244,7 +263,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphend",
-        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
+        data: { path: invocationPath, timestamp: timestamp() },
       });
     });
   }
@@ -309,7 +328,7 @@ export class BoardRunner implements BreadboardRunner {
           });
           await probe?.report?.({
             type: "graphend",
-            data: { metadata: this, path, timestamp: timestamp() },
+            data: { path, timestamp: timestamp() },
           });
           break;
         }
@@ -376,12 +395,16 @@ export class BoardRunner implements BreadboardRunner {
       base: URL;
       slotted?: BreadboardSlotSpec;
       outerGraph?: GraphDescriptor;
+      graphProviders?: GraphProvider[];
+      loader?: GraphLoader;
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = new BoardLoader({
       base,
       graphs: outerGraph?.graphs,
+      graphProviders: options.graphProviders,
+      loader: options.loader,
     });
     const { isSubgraph, graph } = await loader.load(url);
     const board = await BoardRunner.fromGraphDescriptor(graph);

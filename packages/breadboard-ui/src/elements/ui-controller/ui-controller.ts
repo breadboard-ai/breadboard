@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  HTMLTemplateResult,
-  LitElement,
-  PropertyValueMap,
-  html,
-  nothing,
-} from "lit";
+import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
@@ -21,10 +15,9 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { InspectableRun, Kit } from "@google-labs/breadboard";
+import { GraphProvider, InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { type InputList } from "../input/input-list/input-list.js";
 import { JSONTree } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -45,7 +38,7 @@ type UIConfig = {
  * @property {string | null} url
  * @property {STATUS}
  * @property {Board[]}
- * @property {"mermaid" | "visualblocks" | "editor"} - the type of visualizer to use
+ * @property {"mermaid" | "editor"} - the type of visualizer to use
  **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -55,17 +48,20 @@ export class UI extends LitElement {
   @property()
   kits: Kit[] = [];
 
-  @property({ reflect: true })
-  url: string | null = "";
+  @property()
+  graphProviders: GraphProvider[] = [];
 
   @property({ reflect: true })
   status = STATUS.RUNNING;
 
   @property()
-  inspectableRun: InspectableRun | null = null;
+  run: InspectableRun | null = null;
 
   @property()
   boards: Board[] = [];
+
+  @property()
+  boardId = -1;
 
   @state()
   config: UIConfig = {
@@ -75,12 +71,17 @@ export class UI extends LitElement {
   @state()
   selectedNodeId: string | null = null;
 
+  @state()
+  isPortrait = window.matchMedia("(orientation: portrait)").matches;
+
+  #lastBoardId = -1;
   #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
-  #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
-  #messageDurations: Map<HarnessRunResult, number> = new Map();
+  #resizeObserver = new ResizeObserver(() => {
+    this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
+  });
 
   static styles = uiControllerStyles;
 
@@ -96,15 +97,18 @@ export class UI extends LitElement {
     });
   }
 
-  clearPosition() {
-    this.#messagePosition = 0;
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.#resizeObserver.observe(this);
   }
 
-  unloadCurrentBoard() {
-    this.url = null;
-    this.loadInfo = null;
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#resizeObserver.unobserve(this);
+  }
 
-    this.#messageDurations.clear();
+  clearPosition() {
+    this.#messagePosition = 0;
   }
 
   async load(loadInfo: LoadArgs) {
@@ -173,22 +177,17 @@ export class UI extends LitElement {
    * @returns {Promise<Record<string, unknown> | void>}
    */
   async handleStateChange(
-    message: HarnessRunResult,
-    duration: number
+    message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
-      const messages = this.inspectableRun?.messages || [];
+      const messages = this.run?.messages || [];
       this.#messagePosition = messages.length - 1;
     }
-    this.#messageDurations.set(message, duration);
     this.requestUpdate();
 
     const { data, type } = message;
     switch (type) {
       case "nodestart": {
-        console.log(
-          `Initialize nodestart handlers for (id="${data.node.id}", type="${data.node.type}")`
-        );
         if (!this.#handlers.has(data.node.id)) {
           this.#handlers.set(data.node.id, []);
         }
@@ -196,50 +195,31 @@ export class UI extends LitElement {
       }
 
       case "nodeend": {
-        console.log(`Clear nodestart handlers for input(id="${data.node.id}")`);
         this.#handlers.delete(data.node.id);
         return;
       }
 
       case "input": {
-        console.log(`Input (id="${data.node.id}") requested`);
         return this.#registerInputHandler(data.node.id);
       }
 
       case "secret": {
-        console.log(`Secrets (${data.keys.join(", ")}) requested`);
         return this.#registerSecretsHandler(data.keys);
       }
-
-      case "error": {
-        console.error(`Error:`, data.error);
-        return;
-      }
     }
-  }
-
-  #notifyInputList(evt: Event) {
-    if (!this.#inputListRef.value) {
-      return;
-    }
-
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
-    this.#inputListRef.value.captureNewestInput();
   }
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ selectedNodeId: string | null }>
+      | PropertyValueMap<{ boardId: number }>
       | Map<PropertyKey, unknown>
   ): void {
-    if (
-      changedProperties.has("selectedNodeId") &&
-      changedProperties.get("selectedNodeId") !== undefined &&
-      changedProperties.get("selectedNodeId") !== this.selectedNodeId
-    ) {
-      console.log(changedProperties.get("selectedNodeId"), this.selectedNodeId);
-      this.#autoSwitchSidePanel = 1;
+    if (changedProperties.has("boardId")) {
+      if (this.boardId === this.#lastBoardId) {
+        return;
+      }
+
+      this.#handlers.clear();
     }
   }
 
@@ -248,34 +228,81 @@ export class UI extends LitElement {
   }
 
   render() {
-    const messages = this.inspectableRun?.messages || [];
-    const newestMessage = messages[messages.length - 1];
-    const nodeId =
-      this.inspectableRun?.currentNode(this.#messagePosition) || "";
+    const messages = this.run?.messages || [];
+    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
 
-    const events = this.inspectableRun?.events || [];
+    const events = this.run?.events || [];
     const eventPosition = events.length - 1;
 
     /**
      * Create all the elements we need.
      */
     const editor = html`<bb-editor
-      .editable=${this.url === null}
+      .editable=${true}
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
+      .graphProviders=${this.graphProviders}
       .highlightedNodeId=${nodeId}
+      .boardId=${this.boardId}
       @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
+        this.#autoSwitchSidePanel = 1;
+        this.requestUpdate();
       }}
     ></bb-editor>`;
 
-    let currentInput: HTMLTemplateResult | symbol = nothing;
-    if (newestMessage?.type === "input" || newestMessage?.type === "secret") {
-      currentInput = html`<div id="inputs-list">
-        <bb-input-list
-          ${ref(this.#inputListRef)}
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
+    const sidePanel = html`
+      <bb-switcher
+        slots="2"
+        .selected=${this.#autoSwitchSidePanel !== null
+          ? this.#autoSwitchSidePanel
+          : nothing}
+      >
+        <bb-activity-log
+          .events=${events}
+          .eventPosition=${eventPosition}
+          .showExtendedInfo=${true}
+          @breadboardinputrequested=${() => {
+            this.#autoSwitchSidePanel = 0;
+            this.requestUpdate();
+          }}
+          @pointerdown=${(evt: PointerEvent) => {
+            if (!this.#detailsRef.value) {
+              return;
+            }
+
+            const [top] = evt.composedPath();
+            if (!(top instanceof HTMLElement) || !top.dataset.messageIdx) {
+              return;
+            }
+
+            const idx = Number.parseInt(top.dataset.messageIdx);
+            if (Number.isNaN(idx)) {
+              return;
+            }
+
+            evt.stopImmediatePropagation();
+
+            const event = events[idx];
+            if (event.type !== "node") {
+              return;
+            }
+
+            const bounds = top.getBoundingClientRect();
+            const details = this.#detailsRef.value;
+            details.classList.toggle("active");
+
+            if (!details.classList.contains("active")) {
+              return;
+            }
+
+            details.style.setProperty("--left", `${bounds.left}px`);
+            details.style.setProperty("--top", `${bounds.top + 20}px`);
+
+            const tree = details.querySelector("bb-json-tree") as JSONTree;
+            tree.json = event as unknown as Record<string, string>;
+            tree.autoExpand = true;
+          }}
           @breadboardinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
             if (this.#messagePosition < messages.length - 1) {
@@ -302,53 +329,6 @@ export class UI extends LitElement {
               handler.call(null, data);
             }
           }}
-        ></bb-input-list>
-      </div>`;
-    }
-
-    const sidePanel = html`
-      <bb-switcher
-        slots="3"
-        .selected=${this.#autoSwitchSidePanel !== null
-          ? this.#autoSwitchSidePanel
-          : nothing}
-      >
-        <bb-activity-log
-          .events=${events}
-          .eventPosition=${eventPosition}
-          @pointerdown=${(evt: PointerEvent) => {
-            if (!this.#detailsRef.value) {
-              return;
-            }
-
-            const [top] = evt.composedPath();
-            if (!(top instanceof HTMLElement) || !top.dataset.messageIdx) {
-              return;
-            }
-
-            const idx = Number.parseInt(top.dataset.messageIdx);
-            if (Number.isNaN(idx)) {
-              return;
-            }
-
-            evt.stopImmediatePropagation();
-
-            const message = messages[idx];
-            const bounds = top.getBoundingClientRect();
-            const details = this.#detailsRef.value;
-            details.classList.toggle("active");
-
-            if (!details.classList.contains("active")) {
-              return;
-            }
-
-            details.style.setProperty("--left", `${bounds.left}px`);
-            details.style.setProperty("--top", `${bounds.top + 20}px`);
-
-            const tree = details.querySelector("bb-json-tree") as JSONTree;
-            tree.json = message.data as unknown as Record<string, string>;
-            tree.autoExpand = true;
-          }}
           name="Board"
           slot="slot-0"
         ></bb-activity-log>
@@ -356,16 +336,10 @@ export class UI extends LitElement {
           .selectedNodeId=${this.selectedNodeId}
           .loadInfo=${this.loadInfo}
           .kits=${this.kits}
-          .editable=${this.url === null}
+          .editable=${true}
           name="Selected Node"
           slot="slot-1"
         ></bb-node-info>
-        <bb-history-tree
-          name="History"
-          slot="slot-2"
-          .messages=${messages}
-          .messagePosition=${this.#messagePosition}
-        ></bb-history-tree>
       </bb-switcher>
 
       <div
@@ -380,13 +354,13 @@ export class UI extends LitElement {
     `;
 
     return html`<bb-splitter
-      direction="horizontal"
-      name="landscape-main"
+      direction=${this.isPortrait ? "vertical" : "horizontal"}
+      name="layout-main"
       split="[0.75, 0.25]"
     >
       <section id="diagram" slot="slot-0">
         <div id="breadcrumbs"></div>
-        ${editor} ${currentInput}
+        ${editor}
       </section>
 
       <section id="controls-activity" slot="slot-1">

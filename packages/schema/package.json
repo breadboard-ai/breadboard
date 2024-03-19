@@ -32,19 +32,25 @@
     "test": "wireit",
     "prepack": "wireit",
     "build:tsc": "wireit",
-    "build:update-json-schema": "wireit",
-    "test:validate-json-schema": "wireit"
+    "build:schema": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "build:tsc",
-        "build:update-json-schema"
+        "build:schema"
       ]
     },
     "test": {
+      "command": "find dist -name '*.test.js' | xargs node --test",
       "dependencies": [
-        "test:validate-json-schema"
+        "build"
+      ],
+      "files": [
+        "breadboard.schema.json",
+        "package.json",
+        "dist/",
+        "src/tests/**/*.ts"
       ]
     },
     "prepack": {
@@ -56,7 +62,8 @@
     "build:tsc": {
       "command": "tsc --pretty",
       "files": [
-        "src/",
+        "package.json",
+        "src/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],
@@ -65,23 +72,24 @@
         "tsconfig.tsbuildinfo"
       ]
     },
-    "build:update-json-schema": {
-      "command": "node dist/scripts/update-json-schema.js",
-      "dependencies": [
-        "build:tsc"
-      ]
-    },
-    "test:validate-json-schema": {
-      "command": "node dist/scripts/validate-json-schema.js",
+    "build:schema": {
+      "command": "node ./dist/scripts/generate-json-schema.js",
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
-      "output": []
+      "files": [
+        "package.json",
+        "src/**/*.ts"
+      ],
+      "output": [
+        "breadboard.schema.json"
+      ]
     }
   },
   "devDependencies": {
     "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1"
+    "ajv-formats": "^2.1.1",
+    "ts-json-schema-generator": "^1.5.0",
+    "tsx": "^4.7.1"
   }
 }

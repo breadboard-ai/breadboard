@@ -6,7 +6,7 @@
 
 import {
   GraphDescriptor,
-  GraphProbeData,
+  GraphStartProbeData,
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
@@ -34,7 +34,7 @@ export type Board = {
 };
 
 export type AnyHistoryEvent =
-  | GraphProbeData
+  | GraphStartProbeData
   | NodeStartResponse
   | NodeEndResponse;
 
@@ -94,3 +94,7 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
+
+export interface BoardStorageSupported {
+  fileSystem: boolean;
+}

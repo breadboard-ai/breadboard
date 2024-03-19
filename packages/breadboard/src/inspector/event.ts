@@ -5,206 +5,320 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { NodeEndResponse, NodeStartResponse } from "../types.js";
 import {
+  GraphEndProbeData,
+  GraphStartProbeData,
+  InputResponse,
+  InputValues,
+  NodeDescriptor,
+  NodeEndResponse,
+  NodeStartResponse,
+  OutputResponse,
+  OutputValues,
+} from "../types.js";
+import {
+  ERROR_PATH,
+  PathRegistry,
+  SECRET_PATH,
+  idFromPath,
+} from "./path-registry.js";
+import {
+  EventIdentifier,
+  GraphUUID,
+  InspectableGraphStore,
+  InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
+  PathRegistryEntry,
+  RunObserverLogLevel,
+  RunObserverOptions,
 } from "./types.js";
 
-type PathRegistryEntry = {
-  path: number[];
-  children: PathRegistryEntry[];
-  event: InspectableRunNodeEvent | null;
-  after: InspectableRunEvent[];
+const eventIdFromEntryId = (entryId?: string): string => {
+  return `e-${entryId || "0"}`;
 };
 
-type PathRegistryEntryUpdater = (entry: PathRegistryEntry) => void;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const shouldSkipEvent = (
+  options: RunObserverOptions,
+  node: NodeDescriptor,
+  isTopLevel: boolean
+): boolean => {
+  // Never skip input or output events.
+  if (isTopLevel && (node.type === "input" || node.type === "output"))
+    return false;
 
-const traverse = (
-  readonly: boolean,
-  registry: PathRegistryEntry[],
-  fullPath: number[],
-  path: number[],
-  updater: PathRegistryEntryUpdater
-) => {
-  const [head, ...tail] = path;
-  if (head === undefined) {
-    return;
+  const isAskingForDebug = !!options.logLevel && options.logLevel == "debug";
+  // If asking for debug, show all events, regardless of the node's log level.
+  if (isAskingForDebug) return false;
+
+  const nodelogLevel =
+    (node.metadata?.logLevel as RunObserverLogLevel) || "debug";
+  return nodelogLevel !== "info";
+};
+
+/**
+ * Meant to be a very lightweight wrapper around the
+ * data in the `PathRegistryEntry`.
+ */
+class NestedRun implements InspectableRun {
+  graphId: GraphUUID;
+  start: number;
+  end: number | null;
+  graphVersion = 0;
+  messages: HarnessRunResult[] = [];
+  events: InspectableRunEvent[];
+
+  constructor(entry: PathRegistryEntry) {
+    this.graphId = entry.graphId as GraphUUID;
+    this.start = entry.graphStart;
+    this.end = entry.graphEnd;
+    this.events = entry.events;
   }
-  let entry = registry[head];
-  if (!entry) {
-    if (tail.length !== 0) {
-      console.warn("Path registry entry not found for", path, "in", fullPath);
+
+  currentNode(): string {
+    return "";
+  }
+}
+
+class RunNodeEvent implements InspectableRunNodeEvent {
+  type: "node";
+  node: NodeDescriptor;
+  start: number;
+  end: number | null;
+  inputs: InputValues;
+  outputs: OutputValues | null;
+  result: HarnessRunResult | null;
+  bubbled: boolean;
+  hidden: boolean;
+
+  /**
+   * The path registry entry associated with this event.
+   */
+  #entry: PathRegistryEntry | null;
+
+  constructor(
+    entry: PathRegistryEntry | null,
+    node: NodeDescriptor,
+    start: number,
+    inputs: InputValues
+  ) {
+    this.#entry = entry;
+    this.type = "node";
+    this.node = node;
+    this.start = start;
+    this.end = null;
+    this.inputs = inputs;
+    this.outputs = null;
+    this.result = null;
+    this.bubbled = false;
+    this.hidden = false;
+  }
+
+  get id(): EventIdentifier {
+    return eventIdFromEntryId(this.#entry?.id);
+  }
+
+  get runs(): InspectableRun[] {
+    if (!this.#entry || this.#entry.empty()) {
+      return [];
     }
-    if (readonly) {
-      console.warn("Path registry is read-only. Not adding", fullPath);
+    const entry = this.#entry;
+    const events = entry.events;
+    // a bit of a hack: what I actually need is to find out whether this is
+    // a map or not.
+    // Maps have a peculiar structure: their children will have no events, but
+    // their children's children (the parallel runs) will have events.
+    if (events.length > 0) {
+      // This is an ordinary run.
+      return [new NestedRun(entry)];
+    } else {
+      // This is a map.
+      return entry.children.filter(Boolean).map((childEntry) => {
+        return new NestedRun(childEntry);
+      });
+    }
+  }
+}
+
+export class EventManager {
+  #graphStore;
+  #options;
+  #pathRegistry = new PathRegistry([]);
+
+  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
+    this.#graphStore = store;
+    this.#options = options;
+  }
+
+  #addGraphstart(data: GraphStartProbeData) {
+    const { path, graph, timestamp } = data;
+    const graphId = this.#graphStore.add(graph, 0);
+    const entry = this.#pathRegistry.create(path);
+    if (entry) {
+      entry.graphId = graphId;
+      entry.graphStart = timestamp;
+    }
+  }
+
+  #addGraphend(data: GraphEndProbeData) {
+    const { path, timestamp } = data;
+    const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      if (path.length > 0) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
       return;
     }
-    entry = registry[head] = {
-      path: [],
-      children: [],
-      event: null,
-      after: [],
-    };
-  }
-  if (tail.length === 0) {
-    updater(entry);
-    return;
-  }
-  traverse(readonly, entry.children, fullPath, tail, updater);
-};
-
-class PathRegistry {
-  registry: PathRegistryEntry[] = [];
-  #events: InspectableRunEvent[] = [];
-  #eventsIsDirty = false;
-
-  #updateEvents() {
-    this.#events = this.registry
-      .filter(Boolean)
-      .flatMap((entry) => [entry.event, ...entry.after])
-      .filter(Boolean) as InspectableRunEvent[];
+    entry.graphEnd = timestamp;
   }
 
-  #traverse(
-    readonly: boolean,
-    path: number[],
-    replacer: PathRegistryEntryUpdater
-  ) {
-    traverse(readonly, this.registry, path, path, replacer);
-    this.#eventsIsDirty = true;
-  }
+  #addNodestart(data: NodeStartResponse) {
+    const { node, timestamp, inputs, path } = data;
+    const entry = this.#pathRegistry.create(path);
 
-  graphstart(path: number[]) {
-    this.#traverse(false, path, () => {});
-  }
-
-  graphend(path: number[]) {
-    this.#traverse(true, path, () => {});
-  }
-
-  nodestart(path: number[], data: NodeStartResponse) {
-    this.#traverse(
-      false,
-      path,
-      (entry) =>
-        (entry.event = {
-          type: "node",
-          node: data.node,
-          start: data.timestamp,
-          end: null,
-          inputs: data.inputs,
-          outputs: null,
-          result: null,
-          bubbled: false,
-          nested: null,
-        })
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
+    const event = new RunNodeEvent(entry, node, timestamp, inputs);
+    event.hidden = shouldSkipEvent(
+      this.#options,
+      node,
+      entry.path.length === 1
     );
+    entry.event = event;
   }
 
-  nodeend(path: number[], data: NodeEndResponse) {
-    this.#traverse(true, path, (entry) => {
+  #addInput(data: InputResponse) {
+    const { path, bubbled, inputArguments, node, timestamp } = data;
+    if (bubbled) {
+      const event = new RunNodeEvent(null, node, timestamp, inputArguments);
+      event.bubbled = true;
+      this.#pathRegistry.addSidecar(path, event);
+    } else {
+      const entry = this.#pathRegistry.find(path);
+      if (!entry) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);
         return;
       }
-      existing.end = data.timestamp;
-      existing.outputs = data.outputs;
-      existing.result = null;
-    });
-  }
-
-  secret(event: InspectableRunSecretEvent) {
-    // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].after.push(event);
-    this.#eventsIsDirty = true;
-  }
-
-  error(error: InspectableRunErrorEvent) {
-    // Add as a sidecar to the current last entry in the registry.
-    this.registry[this.registry.length - 1].after.push(error);
-    this.#eventsIsDirty = true;
-  }
-
-  events() {
-    if (this.#eventsIsDirty) {
-      this.#updateEvents();
-      this.#eventsIsDirty = false;
     }
-    return this.#events;
   }
-}
 
-export class EventManager {
-  #registry = new PathRegistry();
-  #level = 0;
+  #addOutput(data: OutputResponse) {
+    const { path, bubbled, node, timestamp, outputs } = data;
+    if (bubbled) {
+      // Create a new entry for the sidecar output event.
+      const event = new RunNodeEvent(null, node, timestamp, outputs);
+      event.bubbled = true;
+      this.#pathRegistry.addSidecar(path, event);
+    } else {
+      const entry = this.#pathRegistry.find(path);
+      if (!entry) {
+        throw new Error(
+          `Expected an existing entry for ${JSON.stringify(path)}`
+        );
+      }
+      const existing = entry.event;
+      if (!existing) {
+        console.error("Expected an existing event for", path);
+        return;
+      }
+      if (existing.type !== "node") {
+        throw new Error(
+          `Expected an existing event to be of type "node", but got ${existing.type}`
+        );
+      }
+      existing.inputs = data.outputs;
+    }
+  }
+
+  #addNodeend(data: NodeEndResponse) {
+    const { path } = data;
+    const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
+    const existing = entry.event;
+    if (!existing) {
+      // This is an event that was skipped because the log levels didn't
+      // match.
+      this.#pathRegistry.finalizeSidecar(path, data);
+      return;
+    }
+    if (existing.type !== "node") {
+      throw new Error(
+        `Expected an existing event to be of type "node", but got ${existing.type}`
+      );
+    }
+    existing.end = data.timestamp;
+    existing.outputs = data.outputs;
+    this.#pathRegistry.finalizeSidecar(path, data);
+  }
+
+  #addSecret(event: InspectableRunSecretEvent) {
+    this.#pathRegistry.addSidecar(SECRET_PATH, event);
+  }
+
+  #addError(error: InspectableRunErrorEvent) {
+    this.#pathRegistry.addError(error);
+  }
 
   add(result: HarnessRunResult) {
-    // Clean up after the `secret` event.
-    // const maybeSecret = this.#events[this.#events.length - 1];
-    // if (maybeSecret && maybeSecret.type === "secret") {
-    //   maybeSecret.result = null;
-    // }
+    this.#pathRegistry.finalizeSidecar(SECRET_PATH);
 
     switch (result.type) {
       case "graphstart": {
-        this.#registry.graphstart(result.data.path);
-        this.#level++;
+        this.#addGraphstart(result.data);
         break;
       }
       case "graphend": {
-        this.#registry.graphend(result.data.path);
-        this.#level--;
+        this.#addGraphend(result.data);
         break;
       }
       case "nodestart": {
-        this.#registry.nodestart(result.data.path, result.data);
+        this.#addNodestart(result.data);
         break;
       }
       case "input": {
-        // const last = this.#events[this.#events.length - 1];
-        // if (last.type !== "node" || last.node.type !== result.type) {
-        //   // This is a bubbled input.
-        //   // Create a "bubbled" event for it.
-        //   const event: EventWithPath = {
-        //     type: "node",
-        //     node: result.data.node,
-        //     start: result.data.timestamp,
-        //     // Because it is bubbled, it will not have a corresponding
-        //     // "nodeend" event.
-        //     end: result.data.timestamp,
-        //     inputs: result.data.inputArguments,
-        //     // TODO: Find a way to populate this field. Currently, this event
-        //     // will have no outputs.
-        //     outputs: null,
-        //     result,
-        //     bubbled: true,
-        //     nested: null,
-        //     path: [],
-        //   };
-        //   this.#events = [...this.#events, event];
-        // }
+        this.#addInput(result.data);
+        break;
+      }
+      case "output": {
+        this.#addOutput(result.data);
         break;
       }
       case "secret": {
-        this.#registry.secret({
+        const { timestamp: start, keys } = result.data;
+        this.#addSecret({
+          id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
           type: "secret",
-          data: result.data,
-          result,
+          keys,
+          start,
+          end: null,
         });
         break;
       }
       case "nodeend": {
-        this.#registry.nodeend(result.data.path, result.data);
+        this.#addNodeend(result.data);
         break;
       }
       case "error": {
-        this.#registry.error({
+        const { timestamp: start, error } = result.data;
+        this.#addError({
+          id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
           type: "error",
-          error: result.data,
+          start,
+          error,
         });
         break;
       }
@@ -212,6 +326,6 @@ export class EventManager {
   }
 
   get events(): InspectableRunEvent[] {
-    return this.#registry.events();
+    return this.#pathRegistry.events;
   }
 }

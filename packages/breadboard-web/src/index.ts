@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { run } from "@google-labs/breadboard/harness";
-import { createRunConfig } from "./config";
+import { FileStorage } from "./file-storage/file-storage.js";
+import { run, RunConfig } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -17,16 +17,23 @@ import {
   edit,
   EditResult,
   GraphDescriptor,
-  inspectRun,
+  InspectableRun,
+  InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
+import { createRunObserver } from "@google-labs/breadboard";
+import { loadKits } from "./utils/kit-loader";
+import GeminiKit from "@google-labs/gemini-kit";
 
-export const getBoardInfo = async (
+const getBoardInfo = async (
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.load(url, { base: new URL(window.location.href) });
+  const runner = await Board.load(url, {
+    base: new URL(window.location.href),
+    graphProviders: [FileStorage.instance()],
+  });
 
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
@@ -36,8 +43,22 @@ export const getBoardInfo = async (
   return { title, description, version, diagram, url, graphDescriptor, nodes };
 };
 
+const getBoardFromDescriptor = async (
+  url: string,
+  descriptor: GraphDescriptor
+): Promise<BreadboardUI.Types.LoadArgs> => {
+  const runner = await Board.fromGraphDescriptor(descriptor);
+
+  const { title, description, version } = runner;
+  const diagram = runner.mermaid("TD", true, true);
+  const nodes = runner.nodes;
+  const graphDescriptor: GraphDescriptor = runner;
+  graphDescriptor.url = url;
+
+  return { title, description, version, diagram, url, graphDescriptor, nodes };
+};
+
 const enum MODE {
-  LIST = "list",
   BUILD = "build",
   PREVIEW = "preview",
 }
@@ -54,16 +75,28 @@ export class Main extends LitElement {
   url: string | null = null;
 
   @property({ reflect: false })
+  descriptor: GraphDescriptor | null = null;
+
+  @property({ reflect: false })
   loadInfo: BreadboardUI.Types.LoadArgs | null = null;
 
   @state()
   kits: Kit[] = [];
 
   @state()
-  mode = MODE.LIST;
+  runs: InspectableRun[] | null = null;
+
+  @state()
+  mode = MODE.BUILD;
 
   @state()
   embed = false;
+
+  @state()
+  showNav = false;
+
+  @state()
+  showOverlay = false;
 
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
@@ -74,8 +107,8 @@ export class Main extends LitElement {
   #lastBoardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
-  #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #inspector = inspectRun();
+  #runObserver: InspectableRunObserver | null = null;
+  #boardStorage = FileStorage.instance();
 
   static styles = css`
     * {
@@ -106,16 +139,44 @@ export class Main extends LitElement {
       white-space: nowrap;
     }
 
+    #show-nav {
+      font-size: 0;
+      width: 24px;
+      height: 24px;
+      background: var(--bb-icon-menu) center center no-repeat;
+      border: none;
+      margin-right: calc(var(--bb-grid-size) * 2);
+      cursor: pointer;
+    }
+
+    #edit-board-info {
+      font-size: 0;
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-edit) center center no-repeat;
+      background-size: 20px 20px;
+      border: none;
+      margin-left: calc(var(--bb-grid-size) * 3);
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #edit-board-info:hover {
+      transition-duration: 0.1s;
+      opacity: 1;
+    }
+
     #new-board {
       font-size: var(--bb-text-nano);
     }
 
     #header-bar {
-      background: #f3f3f6;
+      background: var(--bb-output-600);
       display: flex;
       align-items: center;
-      color: #1a1a1a;
-      border-bottom: 1px solid #d9d9d9;
+      color: var(--bb-neutral-50);
+      border-bottom: 1px solid var(--bb-neutral-300);
       z-index: 1;
       height: calc(var(--bb-grid-size) * 12);
       padding: calc(var(--bb-grid-size) * 2);
@@ -124,6 +185,7 @@ export class Main extends LitElement {
     #get-log,
     #get-board,
     #toggle-preview {
+      color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
       margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
@@ -141,7 +203,7 @@ export class Main extends LitElement {
     #get-log:hover,
     #get-board:hover,
     #toggle-preview:hover {
-      background-color: rgba(0, 0, 0, 0.05);
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     #toggle-preview {
@@ -151,7 +213,7 @@ export class Main extends LitElement {
     }
 
     #toggle-preview.active {
-      background-color: #ffffff;
+      background-color: var(--bb-output-800);
     }
 
     #new-board {
@@ -180,6 +242,8 @@ export class Main extends LitElement {
       font-size: var(--bb-text-default);
       font-weight: normal;
       flex: 1;
+      display: flex;
+      align-items: center;
     }
 
     #title {
@@ -207,15 +271,16 @@ export class Main extends LitElement {
     }
 
     iframe {
-      flex: 1 0 auto;
-      margin: 0 calc(var(--bb-grid-size) * 2);
-      border-radius: calc(var(--bb-grid-size) * 5);
-      border: 1px solid rgb(227, 227, 227);
+      grid-row: 1 / 3;
+      grid-column: 1 / 3;
+      margin: 0;
+      border: none;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     #embed {
-      display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
       grid-column: 1/3;
       grid-row: 1/3;
     }
@@ -250,28 +315,67 @@ export class Main extends LitElement {
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
     const modeFromUrl = currentUrl.searchParams.get("mode");
-    this.embed = currentUrl.searchParams.get("embed") !== null;
-    if (boardFromUrl) {
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-    } else if (modeFromUrl === MODE.BUILD) {
-      this.#createBlankBoard();
-    }
+    const embedFromUrl = currentUrl.searchParams.get("embed");
+    this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
     if (modeFromUrl) {
       switch (modeFromUrl) {
-        case "list":
-          this.mode = MODE.LIST;
-          break;
-
-        case "build":
-          this.mode = MODE.BUILD;
-          break;
-
         case "preview":
           this.mode = MODE.PREVIEW;
           break;
+
+        default:
+          this.mode = MODE.BUILD;
+          break;
       }
     }
+
+    Promise.all([
+      loadKits([GeminiKit]),
+      this.#boardStorage.restoreAndValidateHandles(),
+    ]).then(([kits]) => {
+      this.kits = kits;
+
+      if (boardFromUrl) {
+        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+        return;
+      }
+
+      this.#createBlankBoard();
+    });
+  }
+
+  async #createBlankBoard() {
+    const loadInfo = await getBoardInfo("/graphs/blank.json");
+    if (loadInfo.graphDescriptor) {
+      loadInfo.graphDescriptor.title = "New Board";
+    }
+
+    this.#onStartBoard(
+      new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
+    );
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#checkForPossibleEmbed();
+  }
+
+  #checkForPossibleEmbed() {
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    const hasTouch = window.matchMedia("(any-pointer: coarse)").matches;
+    const currentUrl = new URL(window.location.href);
+    const embedIsNotSet = currentUrl.searchParams.get("embed") === null;
+
+    if (isPortrait && hasTouch && this.url && embedIsNotSet) {
+      this.embed = true;
+      this.#setUrlParam("embed", "true");
+
+      return true;
+    }
+
+    return false;
   }
 
   get status() {
@@ -285,21 +389,21 @@ export class Main extends LitElement {
 
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
     this.#boardId++;
-    this.#setActiveBreadboard(startEvent.url);
+    this.#setUrlParam("board", startEvent.url);
     this.url = startEvent.url;
-    this.mode = MODE.BUILD;
+    this.descriptor = startEvent.descriptor;
+    this.status = BreadboardUI.Types.STATUS.STOPPED;
+    this.#runObserver = null;
+
+    this.#checkForPossibleEmbed();
   }
 
   protected async updated(changedProperties: Map<PropertyKey, unknown>) {
-    if (!changedProperties.has("mode")) {
-      return;
-    }
-
     if (changedProperties.has("mode")) {
-      this.#setActiveMode(this.mode);
+      this.#setUrlParam("mode", this.mode);
     }
 
-    if (!this.url) {
+    if (!this.url && !this.descriptor) {
       return;
     }
 
@@ -309,24 +413,16 @@ export class Main extends LitElement {
     }
 
     this.#lastBoardId = this.#boardId;
-    this.loadInfo = await getBoardInfo(this.url);
-
-    if (this.mode === MODE.BUILD) {
-      await this.#createHarnessAndRunFromUrl();
-    }
-  }
-
-  async #createHarnessAndRunFromUrl() {
-    if (!(this.url && this.loadInfo)) {
+    if (this.url) {
+      this.loadInfo = await getBoardInfo(this.url);
+    } else if (this.descriptor) {
+      this.loadInfo = await getBoardFromDescriptor(
+        this.descriptor.url || window.location.href,
+        this.descriptor
+      );
+    } else {
       return;
     }
-
-    const runConfig = await createRunConfig(this.url);
-
-    this.kits = runConfig.kits;
-
-    const runner = run(runConfig);
-    await this.#runBoard(runner);
   }
 
   // TODO: Allow this to run boards directly.
@@ -337,17 +433,18 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.load(this.loadInfo);
-
-    // Clear message history.
-    this.#inspector = inspectRun();
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    let lastEventTime = globalThis.performance.now();
-    for await (const result of this.#inspector.observe(runner)) {
-      const runDuration = result.data.timestamp - lastEventTime;
+    if (!this.#runObserver)
+      this.#runObserver = createRunObserver({
+        logLevel: "debug",
+      });
+    for await (const result of runner) {
+      // Update "runs" to ensure the UI is aware when the new run begins.
+      this.runs = this.#runObserver.observe(result);
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
       }
@@ -356,16 +453,7 @@ export class Main extends LitElement {
         return;
       }
 
-      if (result.type === "skip") {
-        console.log("Skipping", result);
-      }
-
-      const answer = await ui.handleStateChange(result, runDuration);
-      await this.#waitIfPaused(answer);
-
-      // We reset the time here because we don't want to include the user input
-      // round trip in the "board time".
-      lastEventTime = globalThis.performance.now();
+      const answer = await ui.handleStateChange(result);
       if (answer) {
         await result.reply({ inputs: answer } as InputResolveRequest);
       }
@@ -373,61 +461,12 @@ export class Main extends LitElement {
     this.status = BreadboardUI.Types.STATUS.STOPPED;
   }
 
-  #waitIfPaused(answer: unknown) {
-    // We can use the answer as a signal for whether or not to proceed. In cases
-    // where user input is not required, the answer will be void/undefined, and
-    // we should honor the pause signal. When a user submits an answer (which
-    // they can only do for the most recent message going to the UI) then its
-    // value will not be void/undefined, and we can treat that as a signal to
-    // unpause.
-    const shouldUnpause = typeof answer !== "undefined";
-    if (shouldUnpause && this.status === BreadboardUI.Types.STATUS.PAUSED) {
-      if (confirm("Are you sure you wish to resume?")) {
-        this.status = BreadboardUI.Types.STATUS.RUNNING;
-      }
-    }
-
-    if (this.status !== BreadboardUI.Types.STATUS.PAUSED) {
-      return Promise.resolve();
-    }
-
-    return new Promise<void>((resolve) => {
-      this.#statusObservers.push((status: BreadboardUI.Types.STATUS) => {
-        if (status !== BreadboardUI.Types.STATUS.RUNNING) {
-          return;
-        }
-
-        resolve();
-      });
-    });
-  }
-
-  #setActiveBreadboard(url: string | null) {
+  #setUrlParam(param: string, value: string | null) {
     const pageUrl = new URL(window.location.href);
-    if (url === null) {
-      pageUrl.searchParams.delete("board");
+    if (value === null) {
+      pageUrl.searchParams.delete(param);
     } else {
-      pageUrl.searchParams.set("board", url);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setActiveMode(mode: string | null) {
-    const pageUrl = new URL(window.location.href);
-    if (mode === null) {
-      pageUrl.searchParams.delete("mode");
-    } else {
-      pageUrl.searchParams.set("mode", mode);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
-  #setEmbed(embed: boolean | null) {
-    const pageUrl = new URL(window.location.href);
-    if (embed === null || embed === false) {
-      pageUrl.searchParams.delete("embed");
-    } else {
-      pageUrl.searchParams.set("embed", `${embed}`);
+      pageUrl.searchParams.set(param, value);
     }
     window.history.replaceState(null, "", pageUrl);
   }
@@ -435,25 +474,6 @@ export class Main extends LitElement {
   toast(message: string, type: BreadboardUI.Events.ToastType) {
     this.toasts.push({ message, type });
     this.requestUpdate();
-  }
-
-  #unloadCurrentBoard(evt: Event) {
-    evt.preventDefault();
-
-    if (!confirm("Are you sure you want to change boards?")) {
-      return;
-    }
-
-    this.url = null;
-    this.loadInfo = null;
-    this.mode = MODE.LIST;
-    this.#setActiveBreadboard(null);
-
-    if (!this.#uiRef.value) {
-      return;
-    }
-    this.#inspector = inspectRun();
-    this.#uiRef.value.unloadCurrentBoard();
   }
 
   #getRunLog(evt: Event) {
@@ -465,7 +485,7 @@ export class Main extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const messages = this.#inspector.messages;
+    const messages = this.#runObserver?.runs()[0].messages || [];
 
     const secrets = [];
     const inputs = [];
@@ -542,17 +562,6 @@ export class Main extends LitElement {
     );
   }
 
-  async #createBlankBoard() {
-    this.loadInfo = await getBoardInfo("/graphs/blank.json");
-    this.loadInfo.title = "New board";
-    this.mode = MODE.BUILD;
-
-    if (this.loadInfo.url) {
-      const config = await createRunConfig(this.loadInfo.url);
-      this.kits = config.kits;
-    }
-  }
-
   #updateLoadInfo(graphDescriptor: GraphDescriptor) {
     this.loadInfo = {
       ...this.loadInfo,
@@ -565,37 +574,44 @@ export class Main extends LitElement {
       return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
     })}`;
 
-    if (this.mode === MODE.LIST) {
-      return html`<header>
-          <a href="/"><h1 id="title">Breadboard Playground</h1></a>
-          <a id="new-board" href="/?mode=build">Create new board</a>
-        </header>
-        <bb-board-list
-          @breadboardstart=${this.#onStartBoard}
-          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          .boards=${this.config.boards}
-        ></bb-board-list>
-        ${toasts}`;
-    }
-
     let tmpl: HTMLTemplateResult | symbol = nothing;
     let content: HTMLTemplateResult | symbol = nothing;
+    const currentRun = this.#runObserver?.runs()[0];
     switch (this.mode) {
       case MODE.BUILD: {
-        content = html`<bb-ui-controller
+        content = html` <bb-ui-controller
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .inspectableRun=${this.#inspector}
+          .run=${currentRun}
           .kits=${this.kits}
+          .graphProviders=${[this.#boardStorage]}
           .status=${this.status}
+          .boardId=${this.#boardId}
+          @breadboardfiledrop=${async (
+            evt: BreadboardUI.Events.FileDropEvent
+          ) => {
+            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
+              this.toast(
+                "Unable to update; board is already running",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            this.#onStartBoard(
+              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
+            );
+          }}
           @breadboardrunboard=${async () => {
             if (
               !this.loadInfo?.graphDescriptor ||
               !this.loadInfo.graphDescriptor.url
             ) {
+              console.log(
+                "No graph descriptor url or something",
+                this.loadInfo
+              );
               return;
             }
 
@@ -603,14 +619,13 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const runConfig = await createRunConfig(
-              this.loadInfo.graphDescriptor.url
-            );
-            runConfig.remote = false;
-            runConfig.proxy = [];
-            runConfig.runner = runner;
-            this.kits = runConfig.kits;
-
+            const runConfig: RunConfig = {
+              url: this.loadInfo.graphDescriptor.url,
+              runner,
+              diagnostics: true,
+              kits: this.kits,
+              graphProviders: [this.#boardStorage],
+            };
             this.#runBoard(run(runConfig));
           }}
           @breadboardedgechange=${(
@@ -629,6 +644,7 @@ export class Main extends LitElement {
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
               kits: this.kits,
+              graphProviders: [this.#boardStorage],
             });
 
             let editResult: Promise<EditResult>;
@@ -658,6 +674,89 @@ export class Main extends LitElement {
                 this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
               }
 
+              this.#updateLoadInfo(editableGraph.raw());
+            });
+          }}
+          @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn(
+                "Unable to update node metadata; no graph descriptor"
+              );
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.kits,
+            });
+
+            const { id, x, y } = evt;
+            const existingNode = loadInfo.graphDescriptor.nodes.find(
+              (node) => node.id === id
+            );
+            const metadata = existingNode?.metadata || {};
+            let visual = metadata?.visual || {};
+            if (typeof visual !== "object") {
+              visual = {};
+            }
+
+            editableGraph
+              .changeMetadata(id, {
+                ...metadata,
+                visual: { ...visual, x, y },
+              })
+              .then((result) => {
+                if (!result.success) {
+                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+                }
+
+                this.#updateLoadInfo(editableGraph.raw());
+              });
+          }}
+          @breadboardnodemultilayout=${(
+            evt: BreadboardUI.Events.NodeMultiLayoutEvent
+          ) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn(
+                "Unable to update node metadata; no graph descriptor"
+              );
+              return;
+            }
+
+            const graphDescriptor = loadInfo.graphDescriptor;
+            const editableGraph = edit(graphDescriptor, {
+              kits: this.kits,
+            });
+
+            Promise.all(
+              [...evt.layout.entries()].map(([id, { x, y }]) => {
+                const existingNode = graphDescriptor.nodes.find(
+                  (node) => node.id === id
+                );
+
+                const metadata = existingNode?.metadata || {};
+                let visual = metadata?.visual || {};
+                if (typeof visual !== "object") {
+                  visual = {};
+                }
+
+                return editableGraph.changeMetadata(id, {
+                  ...metadata,
+                  visual: { ...visual, x, y },
+                });
+              })
+            ).then(() => {
               this.#updateLoadInfo(editableGraph.raw());
             });
           }}
@@ -806,11 +905,31 @@ export class Main extends LitElement {
       }
     }
 
-    tmpl = html`<div id="header-bar">
-        <a id="back" href="/" @click=${this.#unloadCurrentBoard}
-          >Back to list</a
-        >
-        <h1>${this.loadInfo?.title || "Untitled board"}</h1>
+    tmpl = html`<div id="header-bar" ?inert=${this.showOverlay}>
+        <button
+          id="show-nav"
+          @click=${() => {
+            this.showNav = !this.showNav;
+            document.body.addEventListener(
+              "pointerdown",
+              () => {
+                this.showNav = false;
+              },
+              { once: true }
+            );
+          }}
+        ></button>
+        <h1>
+          ${this.loadInfo?.title || "..."}
+          <button
+            @click=${() => {
+              this.showOverlay = true;
+            }}
+            id="edit-board-info"
+          >
+            Edit
+          </button>
+        </h1>
         <a id="get-board" @click=${this.#getBoardJson}>Get code</a>
         <a id="get-log" @click=${this.#getRunLog}>Get log</a>
         <button
@@ -823,24 +942,145 @@ export class Main extends LitElement {
           Toggle Preview
         </button>
       </div>
-      <div id="content" class="${this.mode}">${cache(content)}</div>`;
+      <div id="content" ?inert=${this.showOverlay} class="${this.mode}">
+        ${cache(content)}
+      </div>
+      <bb-nav
+        .storageSupported=${this.#boardStorage.getSupported()}
+        .storageItems=${this.#boardStorage.items()}
+        .exampleBoards=${this.config.boards}
+        .visible=${this.showNav}
+        .url=${this.url}
+        ?inert=${this.showOverlay}
+        @pointerdown=${(evt: Event) => {
+          evt.stopImmediatePropagation();
+        }}
+        @breadboardblankboardrequest=${async () => {
+          if (
+            !confirm(
+              "Are you sure you want to create a blank board? You will lose any unsaved work"
+            )
+          ) {
+            return;
+          }
+
+          await this.#createBlankBoard();
+        }}
+        @breadboardstart=${(evt: BreadboardUI.Events.StartEvent) => {
+          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+            if (
+              !confirm(
+                "A board is currently running. Do you want to load this file?"
+              )
+            ) {
+              return;
+            }
+          }
+
+          this.#onStartBoard(evt);
+        }}
+        @breadboardfilestoragerefresh=${async (
+          evt: BreadboardUI.Events.FileStorageRefreshEvent
+        ) => {
+          await this.#boardStorage.refresh(evt.location);
+          this.toast(
+            "Source files refreshed",
+            BreadboardUI.Events.ToastType.INFORMATION
+          );
+          this.requestUpdate();
+        }}
+        @breadboardfilestoragedisconnect=${async (
+          evt: BreadboardUI.Events.FileStorageDisconnectEvent
+        ) => {
+          await this.#boardStorage.disconnect(evt.location);
+          this.requestUpdate();
+        }}
+        @breadboardfilestoragerenewaccesssrequest=${async (
+          evt: BreadboardUI.Events.FileStorageRenewAccessRequestEvent
+        ) => {
+          await this.#boardStorage.renewAccessRequest(evt.location);
+          this.requestUpdate();
+        }}
+        @breadboardfilestorageloadrequest=${async (
+          evt: BreadboardUI.Events.FileStorageLoadRequestEvent
+        ) => {
+          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+            if (
+              !confirm(
+                "A board is currently running. Do you want to load this file?"
+              )
+            ) {
+              return;
+            }
+          }
+
+          try {
+            const url = this.#boardStorage.createGraphURL(
+              evt.location,
+              evt.fileName
+            );
+
+            this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+          } catch (err) {
+            this.toast(
+              `Unable to load file: ${evt.fileName}`,
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        }}
+        @breadboardfilestoragerequest=${async () => {
+          const success = await this.#boardStorage.request("fileSystem");
+          if (!success) {
+            return;
+          }
+
+          this.requestUpdate();
+        }}
+      ></bb-nav> `;
 
     if (this.embed) {
-      tmpl = html`<main id="embed">
-        <header>
-          <button
-            @click=${() => {
-              this.#setEmbed(null);
-              this.embed = false;
-            }}
-          >
-            View in Debugger
-          </button>
-        </header>
-        <iframe src="/preview.html?board=${this.url}&embed=true"></iframe>
-      </main>`;
+      tmpl = html`<iframe
+        src="/preview.html?board=${this.url}&embed=true"
+      ></iframe>`;
     }
 
-    return html`${tmpl} ${toasts}`;
+    let overlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showOverlay && this.loadInfo) {
+      overlay = html`<bb-board-edit-overlay
+        .boardTitle=${this.loadInfo.title}
+        .boardVersion=${this.loadInfo.version}
+        .boardDescription=${this.loadInfo.description}
+        @breadboardboardoverlaydismissed=${() => {
+          this.showOverlay = false;
+        }}
+        @breadboardboardinfoupdate=${(
+          evt: BreadboardUI.Events.BoardInfoUpdateEvent
+        ) => {
+          if (!this.loadInfo) {
+            return;
+          }
+
+          this.loadInfo.title = evt.title;
+          this.loadInfo.version = evt.version;
+          this.loadInfo.description = evt.description;
+
+          if (this.loadInfo.graphDescriptor) {
+            this.loadInfo.graphDescriptor.title = evt.title;
+            this.loadInfo.graphDescriptor.version = evt.version;
+            this.loadInfo.graphDescriptor.description = evt.description;
+          }
+
+          this.toast(
+            "Board information updated",
+            BreadboardUI.Events.ToastType.INFORMATION
+          );
+
+          this.showOverlay = false;
+          this.requestUpdate();
+        }}
+      ></bb-board-edit-overlay>`;
+    }
+
+    return html`${tmpl} ${overlay} ${toasts} `;
   }
 }

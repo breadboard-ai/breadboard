@@ -4,49 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, SubGraphs } from "./types.js";
+import type { GraphDescriptor, SubGraphs } from "./types.js";
+import type { GraphProvider, GraphLoader } from "./loader/types.js";
+import { createLoader } from "./loader/index.js";
 
 export type BoardLoaderArguments = {
   base: URL;
   graphs?: SubGraphs;
+  graphProviders?: GraphProvider[];
+  loader?: GraphLoader;
 };
 
-export type BoardLoaderType = "file" | "fetch" | "hash" | "unknown";
+export type BoardLoaderType = "hash" | "other";
 
-export type BoardLoaders = Record<
-  BoardLoaderType,
-  (path: string) => Promise<GraphDescriptor>
->;
-
-export type ResolverResult = {
-  type: BoardLoaderType;
-  location: string;
-  href: string;
+export const removeHash = (url: URL): URL => {
+  const newURL = new URL(url.href);
+  newURL.hash = "";
+  return newURL;
 };
 
-export const resolveURL = (
-  base: URL,
-  urlString: string,
-  results: ResolverResult[]
-): boolean => {
-  const url = new URL(urlString, base);
-  const hash = url.hash;
-  const href = url.href;
-  const path =
-    url.protocol === "file:" ? decodeURIComponent(url.pathname) : undefined;
-  const baseWithoutHash = base.href.replace(base.hash, "");
-  const hrefWithoutHash = href.replace(hash, "");
-  if (baseWithoutHash == hrefWithoutHash && hash) {
-    results.push({ type: "hash", location: hash.substring(1), href });
-    return true;
-  }
-  const result: ResolverResult = path
-    ? { type: "file", location: path, href }
-    : href
-      ? { type: "fetch", location: hrefWithoutHash, href }
-      : { type: "unknown", location: "", href };
-  results.push(result);
-  return !hash;
+export const sameWithoutHash = (a: URL, b: URL): boolean => {
+  return removeHash(a).href === removeHash(b).href;
 };
 
 export const loadFromFile = async (path: string) => {
@@ -74,64 +52,62 @@ export const loadWithFetch = async (url: string | URL) => {
   return await response.json();
 };
 
-export class BoardLoadingStep {
-  loaders: BoardLoaders;
-  graphs?: SubGraphs;
-
-  constructor(graphs?: SubGraphs) {
-    this.loaders = {
-      file: loadFromFile,
-      fetch: loadWithFetch,
-      hash: async (hash: string) => {
-        if (!graphs) throw new Error("No sub-graphs to load from");
-        return graphs[hash];
-      },
-      unknown: async () => {
-        throw new Error("Unable to determine Board loader type");
-      },
-    };
-  }
-
-  async load(result: ResolverResult): Promise<GraphDescriptor> {
-    const graph = await this.loaders[result.type](result.location);
-    graph.url = result.href;
-    return graph;
-  }
-}
-
 export type BoardLoaderResult = {
   graph: GraphDescriptor;
   isSubgraph: boolean;
 };
 
+// TODO: Make this the actual GraphLoader, and use the code in GraphLoader
+// here.
 export class BoardLoader {
   #base: URL;
   #graphs?: SubGraphs;
+  #loader: GraphLoader;
 
-  constructor({ base, graphs }: BoardLoaderArguments) {
+  constructor({ base, graphs, graphProviders, loader }: BoardLoaderArguments) {
     this.#base = base;
     this.#graphs = graphs;
+    this.#loader = loader || createLoader(graphProviders);
+  }
+
+  async #loadWithLoader(url: URL): Promise<GraphDescriptor> {
+    const graph = await this.#loader.load(url);
+    if (!graph) {
+      throw new Error(`Unable to load graph from "${url.href}"`);
+    }
+    graph.url = url.href;
+    return graph;
+  }
+
+  #getSubgraph(url: URL, subgraphs?: SubGraphs): BoardLoaderResult {
+    const hash = url.hash.substring(1);
+    if (!subgraphs) {
+      throw new Error("No sub-graphs to load from");
+    }
+    const graph = subgraphs[hash];
+    if (!graph) {
+      throw new Error(`No graph found for hash: #${hash}`);
+    }
+    graph.url = url.href;
+    return { graph, isSubgraph: true };
   }
 
   async load(urlString: string): Promise<BoardLoaderResult> {
-    const results: ResolverResult[] = [];
-    let base = this.#base;
-    while (!resolveURL(base, urlString, results)) {
-      base = new URL(results[results.length - 1].href);
+    const base = this.#base;
+    const url = new URL(urlString, base);
+    if (url.hash) {
+      // This is a bit of a special case: some graphs are constructed in
+      // memory, so they don't have a URL to base on. In such cases, the
+      // existing machinery gets confused, using the URL of the module
+      // as base. Hilarity ensues. This is a workaround for that.
+      if (sameWithoutHash(url, base)) {
+        return this.#getSubgraph(url, this.#graphs);
+      } else {
+        const superGraph = await this.#loadWithLoader(removeHash(url));
+        return this.#getSubgraph(url, superGraph.graphs);
+      }
     }
-    let graph: GraphDescriptor | undefined;
-    let subgraphs = this.#graphs;
-    let isSubgraph = true;
-    for (const result of results) {
-      if (result.type === "file" || result.type === "fetch") isSubgraph = false;
-      const step = new BoardLoadingStep(subgraphs);
-      graph = await step.load(result);
-      subgraphs = graph.graphs;
-    }
-    if (!graph)
-      throw new Error(
-        "BoardLoader failed to load a graph. This error likely indicates a bug in the BoardLoader."
-      );
-    return { graph, isSubgraph };
+    const graph = await this.#loadWithLoader(url);
+    return { graph, isSubgraph: false };
   }
 }

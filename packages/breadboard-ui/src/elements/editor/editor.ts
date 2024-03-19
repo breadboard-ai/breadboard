@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
+import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
@@ -13,20 +13,26 @@ import {
   Kit,
   NodeConfiguration,
   InspectableNodePorts,
+  GraphProvider,
 } from "@google-labs/breadboard";
-import { map } from "lit/directives/map.js";
 import {
   EdgeChangeEvent,
+  FileDropEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
+  GraphNodeMoveEvent,
+  GraphNodePositionsCalculatedEvent,
+  KitNodeChosenEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
+  NodeMoveEvent,
+  NodeMultiLayoutEvent,
 } from "../../events/events.js";
-import { classMap } from "lit/directives/class-map.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -41,7 +47,13 @@ export class Editor extends LitElement {
   loadInfo: LoadArgs | null = null;
 
   @property()
+  boardId: number = -1;
+
+  @property()
   kits: Kit[] = [];
+
+  @property()
+  graphProviders: GraphProvider[] = [];
 
   @property()
   editable = false;
@@ -60,16 +72,21 @@ export class Editor extends LitElement {
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
   #graphVersion = 0;
-  #lastGraphUrl: string | null = null;
+  #lastBoardId: number = -1;
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
+  #onPointerDownBound = this.#onPointerDown.bind(this);
+  #onGraphNodeMoveBound = this.#onGraphNodeMove.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
+  #onGraphNodePositionsCalculatedBound =
+    this.#onGraphNodePositionsCalculated.bind(this);
   #top = 0;
   #left = 0;
+  #addButtonRef: Ref<HTMLInputElement> = createRef();
 
   static styles = css`
     :host {
@@ -86,62 +103,37 @@ export class Editor extends LitElement {
       position: relative;
     }
 
-    #menu {
+    bb-node-selector {
+      visibility: hidden;
+      pointer-events: none;
       position: absolute;
-      top: 8px;
-      left: 8px;
+      bottom: 72px;
+      right: 16px;
     }
 
-    #menu ul {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      list-style: none;
-      font-size: var(--bb-text-small);
-      color: #222;
-      background: #fff;
-      padding: calc(var(--bb-grid-size) * 2);
-      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-      border-radius: 12px;
-    }
-
-    #menu li {
-      margin-bottom: var(--bb-grid-size);
-      white-space: nowrap;
-    }
-
-    #menu input[type="radio"] {
+    #add-node {
       display: none;
     }
 
-    #menu li.kit-item,
-    #menu label {
-      padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
-      display: block;
-      border-radius: 8px;
-      background: #fff;
-      border: 1px solid #bbb;
-      border-radius: 8px;
-    }
-
-    #menu ul li:hover label {
-      background: #dfdfdf;
-    }
-
-    #menu input[type="radio"]:checked ~ label {
-      background: #ececec;
-    }
-
-    #menu input[type="radio"] ~ ul {
-      display: none;
-    }
-
-    #menu input[type="radio"]:checked ~ ul {
-      display: flex;
-      flex-direction: column;
+    label[for="add-node"] {
       position: absolute;
-      left: calc(100% + var(--bb-grid-size));
-      top: 0;
+      bottom: 16px;
+      right: 16px;
+      border-radius: 50px;
+      padding: 12px 16px;
+      border: 1px solid #d9d9d9;
+      background: #ffffff;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    #add-node:checked ~ bb-node-selector {
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #add-node:checked ~ label[for="add-node"] {
+      opacity: 1;
     }
 
     bb-graph-renderer {
@@ -156,12 +148,16 @@ export class Editor extends LitElement {
   async #processGraph(descriptor: GraphDescriptor) {
     this.#graphVersion++;
 
-    if (this.#lastGraphUrl !== descriptor.url) {
-      // TODO: Notify the Graph Renderer to forget node locations.
+    if (this.loadInfo && this.#lastBoardId !== this.boardId) {
+      this.#graph.clearNodeLayoutPositions();
     }
-    this.#lastGraphUrl = descriptor.url || null;
 
-    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    this.#lastBoardId = this.boardId;
+
+    const breadboardGraph = inspect(descriptor, {
+      kits: this.kits,
+      graphProviders: this.graphProviders || [],
+    });
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
@@ -198,7 +194,18 @@ export class Editor extends LitElement {
       this.#onGraphNodeDeleteBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodeMoveEvent.eventName,
+      this.#onGraphNodeMoveBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodePositionsCalculatedEvent.eventName,
+      this.#onGraphNodePositionsCalculatedBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
+    this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
 
@@ -226,7 +233,18 @@ export class Editor extends LitElement {
       this.#onGraphNodeDeleteBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphNodeMoveEvent.eventName,
+      this.#onGraphNodeMoveBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodePositionsCalculatedEvent.eventName,
+      this.#onGraphNodePositionsCalculatedBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
+    this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
 
@@ -237,14 +255,42 @@ export class Editor extends LitElement {
     changedProperties:
       | PropertyValueMap<{
           loadInfo: LoadArgs;
+          kits: Kit[];
         }>
       | Map<PropertyKey, unknown>
   ): void {
-    const shouldProcessGraph = changedProperties.has("loadInfo");
+    const shouldProcessGraph =
+      changedProperties.has("loadInfo") || changedProperties.has("kits");
 
-    if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
+    if (
+      shouldProcessGraph &&
+      this.loadInfo &&
+      this.loadInfo.graphDescriptor &&
+      this.kits.length > 0
+    ) {
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
+  }
+
+  #onPointerDown(evt: Event) {
+    if (!this.#addButtonRef.value) {
+      return;
+    }
+
+    const [top] = evt.composedPath();
+    if (
+      top instanceof HTMLLabelElement &&
+      top.getAttribute("for") === "add-node"
+    ) {
+      return;
+    }
+
+    this.#addButtonRef.value.checked = false;
+  }
+
+  #onGraphNodeMove(evt: Event) {
+    const { id, x, y } = evt as GraphNodeMoveEvent;
+    this.dispatchEvent(new NodeMoveEvent(id, x, y));
   }
 
   #onGraphEdgeAttach(evt: Event) {
@@ -297,6 +343,11 @@ export class Editor extends LitElement {
     this.dispatchEvent(new NodeDeleteEvent(id));
   }
 
+  #onGraphNodePositionsCalculated(evt: Event) {
+    const { layout } = evt as GraphNodePositionsCalculatedEvent;
+    this.dispatchEvent(new NodeMultiLayoutEvent(layout));
+  }
+
   #onDragOver(evt: DragEvent) {
     evt.preventDefault();
   }
@@ -304,109 +355,51 @@ export class Editor extends LitElement {
   #onDrop(evt: DragEvent) {
     evt.preventDefault();
 
+    const [top] = evt.composedPath();
+    if (!(top instanceof HTMLCanvasElement)) {
+      return;
+    }
+
+    if (evt.dataTransfer?.files && evt.dataTransfer.files.length) {
+      const fileDropped = evt.dataTransfer.files[0];
+      try {
+        fileDropped.text().then((data) => {
+          const descriptor = JSON.parse(data) as GraphDescriptor;
+          this.dispatchEvent(new FileDropEvent(fileDropped.name, descriptor));
+        });
+      } catch (err) {
+        console.warn(err);
+      }
+      return;
+    }
+
     const data = evt.dataTransfer?.getData(DATA_TYPE);
     if (!data || !this.#graph) {
       console.warn("No data in dropped node");
       return;
     }
 
-    const nextNodeId =
-      (this.loadInfo?.graphDescriptor?.nodes.length || 1_000) + 1;
-    const id = `${data}-${nextNodeId}`;
+    const id = this.#createRandomID(data);
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
     // Store the middle of the node for later.
-    this.#graph.setNodeLayoutPosition(id, { x, y });
+    this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
     this.dispatchEvent(new NodeCreateEvent(id, data));
+  }
+
+  #createRandomID(type: string) {
+    const randomId = globalThis.crypto.randomUUID();
+    const nextNodeId = randomId.split("-");
+    // TODO: Check for clashes
+    return `${type}-${nextNodeId[0]}`;
   }
 
   #onResize() {
     const bounds = this.getBoundingClientRect();
     this.#top = bounds.top;
     this.#left = bounds.left;
-  }
-
-  // TODO: Find a better way of getting the defaults for any given node.
-  #getNodeMenu() {
-    if (!this.editable || !this.loadInfo || !this.loadInfo.graphDescriptor) {
-      return nothing;
-    }
-
-    const graph = inspect(this.loadInfo.graphDescriptor, {
-      kits: this.kits,
-    });
-
-    const kits = graph.kits() || [];
-    const kitList = new Map<string, string[]>();
-    kits.sort((kit1, kit2) =>
-      (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
-    );
-
-    for (const kit of kits) {
-      if (!kit.descriptor.title) {
-        continue;
-      }
-
-      kitList.set(
-        kit.descriptor.title,
-        kit.nodeTypes.map((node) => node.type())
-      );
-    }
-
-    let selectedKit: string | null = null;
-    return html`<div id="menu">
-      <form>
-        <ul>
-          ${map(kitList, ([kitName, kitContents]) => {
-            const kitId = kitName.toLocaleLowerCase().replace(/\W/, "-");
-            return html`<li>
-              <input
-                type="radio"
-                name="selected-kit"
-                id="${kitId}"
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLInputElement)) {
-                    return;
-                  }
-
-                  if (evt.target.id === selectedKit) {
-                    evt.target.checked = false;
-                    selectedKit = null;
-                    return;
-                  }
-
-                  selectedKit = evt.target.id;
-                }}
-              /><label for="${kitId}">${kitName}</label>
-              <ul>
-                ${map(kitContents, (kitItemName) => {
-                  const kitItemId = kitItemName
-                    .toLocaleLowerCase()
-                    .replace(/\W/, "-");
-                  return html`<li
-                    class=${classMap({
-                      [kitItemId]: true,
-                      ["kit-item"]: true,
-                    })}
-                    draggable="true"
-                    @dragstart=${async (evt: DragEvent) => {
-                      if (!evt.dataTransfer) {
-                        return;
-                      }
-                      evt.dataTransfer.setData(DATA_TYPE, kitItemName);
-                    }}
-                  >
-                    ${kitItemName}
-                  </li>`;
-                })}
-              </ul>
-            </li>`;
-          })}
-        </ul>
-      </form>
-    </div>`;
   }
 
   firstUpdated(): void {
@@ -423,6 +416,22 @@ export class Editor extends LitElement {
       this.#graphRenderer.editable = this.editable;
     }
 
-    return html`${this.#graphRenderer} ${this.#getNodeMenu()}`;
+    return html`${this.#graphRenderer}
+      <input
+        ${ref(this.#addButtonRef)}
+        name="add-node"
+        id="add-node"
+        type="checkbox"
+      />
+      <label for="add-node">Add</label>
+
+      <bb-node-selector
+        .loadInfo=${this.loadInfo}
+        .kits=${this.kits}
+        @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
+          const id = this.#createRandomID(evt.nodeType);
+          this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+        }}
+      ></bb-node-selector>`;
   }
 }

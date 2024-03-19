@@ -13,6 +13,8 @@ import {
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
+  GraphNodeMoveEvent,
+  GraphNodePositionsCalculatedEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -60,6 +62,7 @@ export class GraphRenderer extends LitElement {
   });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onWheelBound = this.#onWheel.bind(this);
 
   static styles = css`
     :host {
@@ -132,11 +135,13 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    this.#app.stage.addEventListener("pointerup", () => {
+    const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
       tilePosition = null;
-    });
+    };
+    this.#app.stage.addEventListener("pointerup", onPointerUp);
+    this.#app.stage.addEventListener("pointerupoutside", onPointerUp);
 
     this.#app.stage.on(
       "wheel",
@@ -184,6 +189,13 @@ export class GraphRenderer extends LitElement {
     graph.editable = this.editable;
 
     graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphNodeMoveEvent(id, x, y));
+      }
+    );
+
+    graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
       (id: string | null) => {
         this.dispatchEvent(new GraphNodeSelectedEvent(id));
@@ -206,6 +218,8 @@ export class GraphRenderer extends LitElement {
     );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+      this.#container.scale.set(1, 1);
+
       const graphPosition = graph.getGlobalPosition();
       const graphBounds = graph.getBounds();
       const rendererBounds = this.getBoundingClientRect();
@@ -234,6 +248,10 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+
+      this.dispatchEvent(
+        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
+      );
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
@@ -273,10 +291,16 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  #onWheel(evt: WheelEvent) {
+    evt.preventDefault();
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
     window.addEventListener("keydown", this.#onKeyDownBound);
+
+    this.addEventListener("wheel", this.#onWheelBound);
 
     this.#app.start();
     this.#app.resize();
@@ -316,6 +340,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stop();
     this.#resizeObserver.disconnect();
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("wheel", this.#onWheelBound);
   }
 
   render() {

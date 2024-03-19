@@ -76,6 +76,10 @@ export class Graph extends PIXI.Container {
         return;
       }
 
+      if (!this.editable) {
+        return;
+      }
+
       if (evt.target instanceof GraphNodePort) {
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
@@ -315,10 +319,18 @@ export class Graph extends PIXI.Container {
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
   }
 
+  getNodeLayoutPositions() {
+    return new Map(this.#layout);
+  }
+
+  clearNodeLayoutPositions() {
+    this.#layout.clear();
+  }
+
   setNodeLayoutPosition(
     node: string,
     position: PIXI.IPointData,
-    justAdded = true
+    justAdded = false
   ) {
     this.#layout.set(node, { ...this.toLocal(position), justAdded });
   }
@@ -479,15 +491,23 @@ export class Graph extends PIXI.Container {
     return this.#edgeGraphics.get(edgeToString(edge)) || null;
   }
 
-  #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
-    this.graph.setNodeLayoutPosition(
-      this.id,
-      this.graph.toGlobal({ x, y }),
-      false
-    );
+  #onChildMoved(
+    this: { graph: Graph; id: string },
+    x: number,
+    y: number,
+    hasSettled: boolean
+  ) {
+    this.graph.setNodeLayoutPosition(this.id, this.graph.toGlobal({ x, y }));
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
+
+    if (!hasSettled) {
+      return;
+    }
+
+    // Propagate the move event out to the graph renderer when the cursor is released.
+    this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
   }
 
   #drawNodeHighlight() {
@@ -590,6 +610,16 @@ export class Graph extends PIXI.Container {
         graphNode.editable = this.editable;
 
         this.#nodeById.set(id, graphNode);
+      }
+
+      if (node.descriptor.metadata?.visual) {
+        const { x, y } = node.descriptor.metadata.visual as {
+          x: number;
+          y: number;
+        };
+
+        const pos = this.toGlobal({ x, y });
+        this.setNodeLayoutPosition(id, pos);
       }
 
       const portInfo = this.#ports.get(id);

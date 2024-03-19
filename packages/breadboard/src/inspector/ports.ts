@@ -16,10 +16,10 @@ export const computePortStatus = (
 ): PortStatus => {
   if (wired) {
     if (expected) return PortStatus.Connected;
-    return wiredContainsStar ? PortStatus.Inteterminate : PortStatus.Dangling;
+    return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Dangling;
   }
   if (required) {
-    return wiredContainsStar ? PortStatus.Inteterminate : PortStatus.Missing;
+    return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Missing;
   }
   return PortStatus.Ready;
 };

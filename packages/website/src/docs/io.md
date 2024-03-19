@@ -187,3 +187,7 @@ return methodThatErrors.$error.to(base.output({ $id: "error" }));
 Node expectations are expressed with [JSON Schema](https://json-schema.org/).
 
 TODO
+
+## Input Bubbling
+
+TODO

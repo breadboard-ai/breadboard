@@ -7,7 +7,7 @@
   {
     "title": "Ad Writer (variant 2)",
     "url": "/graphs/ad-writer-2.json",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   {
     "title": "Ad Writer",
@@ -58,6 +58,15 @@
     "title": "Data Board",
     "url": "/graphs/data-board.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "Drawable",
+    "url": "/graphs/drawable.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Error board",
+    "url": "/graphs/error.json"
   },
   {
     "title": "Gemini Pro Generator",
@@ -116,6 +125,11 @@
     "title": "Mock Text Generator",
     "url": "/graphs/mock-text-generator.json",
     "version": "0.0.2"
+  },
+  {
+    "title": "OpenAI DALL-E Image Generator",
+    "url": "/graphs/openai-dall-e.json",
+    "version": "0.0.1"
   },
   {
     "title": "OpenAI GPT-3.5-turbo",

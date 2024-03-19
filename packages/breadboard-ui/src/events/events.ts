@@ -4,16 +4,162 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type InspectableEdge,
-  type NodeConfiguration,
+import type {
+  GraphDescriptor,
+  InspectableEdge,
+  NodeConfiguration,
 } from "@google-labs/breadboard";
 
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
 
-  constructor(public url: string) {
+  constructor(
+    public url: string | null = null,
+    public descriptor: GraphDescriptor | null = null
+  ) {
     super(StartEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+
+    if (!url && !descriptor) {
+      throw new Error(
+        "You must provide either a URL or descriptor; none provided"
+      );
+    }
+
+    if (url && descriptor) {
+      throw new Error(
+        "You must provide either a URL or descriptor, but not both"
+      );
+    }
+  }
+}
+
+export class FileDropEvent extends Event {
+  static eventName = "breadboardfiledrop";
+
+  constructor(
+    public readonly url: string,
+    public readonly descriptor: GraphDescriptor
+  ) {
+    super(FileDropEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class KitNodeChosenEvent extends Event {
+  static eventName = "breadboardkitnodechosen";
+
+  constructor(public nodeType: string) {
+    super(KitNodeChosenEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class BreadboardOverlayDismissedEvent extends Event {
+  static eventName = "breadboardboardoverlaydismissed";
+
+  constructor() {
+    super(BreadboardOverlayDismissedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class BoardInfoUpdateEvent extends Event {
+  static eventName = "breadboardboardinfoupdate";
+
+  constructor(
+    public readonly title: string,
+    public readonly version: string,
+    public readonly description: string
+  ) {
+    super(BoardInfoUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class BlankBoardRequestEvent extends Event {
+  static eventName = "breadboardblankboardrequest";
+
+  constructor() {
+    super(BlankBoardRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRequestEvent extends Event {
+  static eventName = "breadboardfilestoragerequest";
+
+  constructor() {
+    super(FileStorageRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageLoadRequestEvent extends Event {
+  static eventName = "breadboardfilestorageloadrequest";
+
+  constructor(
+    public readonly location: string,
+    public readonly fileName: string
+  ) {
+    super(FileStorageLoadRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRenewAccessRequestEvent extends Event {
+  static eventName = "breadboardfilestoragerenewaccesssrequest";
+
+  constructor(public readonly location: string) {
+    super(FileStorageRenewAccessRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageDisconnectEvent extends Event {
+  static eventName = "breadboardfilestoragedisconnect";
+
+  constructor(public readonly location: string) {
+    super(FileStorageDisconnectEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageRefreshEvent extends Event {
+  static eventName = "breadboardfilestoragerefresh";
+
+  constructor(public readonly location: string) {
+    super(FileStorageRefreshEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -78,6 +224,18 @@ export class NodeSelectEvent extends Event {
   }
 }
 
+export class InputRequestedEvent extends Event {
+  static eventName = "breadboardinputrequested";
+
+  constructor() {
+    super(InputRequestedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class InputEnterEvent extends Event {
   static eventName = "breadboardinputenter";
 
@@ -89,6 +247,16 @@ export class InputEnterEvent extends Event {
       bubbles: true,
       cancelable: true,
       composed: true,
+    });
+  }
+}
+
+export class InputErrorEvent extends Event {
+  static eventName = "breadboardinputerror";
+
+  constructor(public detail: string) {
+    super(InputErrorEvent.eventName, {
+      bubbles: true,
     });
   }
 }
@@ -156,6 +324,18 @@ export class NodeDeleteEvent extends Event {
   }
 }
 
+export class NodeMultiLayoutEvent extends Event {
+  static eventName = "breadboardnodemultilayout";
+
+  constructor(public layout: Map<string, { x: number; y: number }>) {
+    super(NodeMultiLayoutEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
@@ -180,6 +360,50 @@ export class EdgeChangeEvent extends Event {
     public to?: { from: string; to: string; in: string; out: string }
   ) {
     super(EdgeChangeEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class NodeMoveEvent extends Event {
+  static eventName = "breadboardnodemove";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(NodeMoveEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodePositionsCalculatedEvent extends Event {
+  static eventName = "breadboardgraphnodepositionscalculated";
+
+  constructor(public readonly layout: Map<string, { x: number; y: number }>) {
+    super(GraphNodePositionsCalculatedEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeMoveEvent extends Event {
+  static eventName = "breadboardgraphnodemove";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphNodeMoveEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

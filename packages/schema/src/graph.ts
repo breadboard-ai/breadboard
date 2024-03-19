@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -122,16 +122,20 @@ export type NodeMetadata = {
    */
   description?: string;
   /**
-   * Metadata that conveys visual informationa about the node. Can be used by
+   * Metadata that conveys visual information about the node. Can be used by
    * visual editors to store information about the node's appearance, current
    * position, etc.
    */
   visual?: NodeValue;
+  /**
+   * Logging level.
+   */
+  logLevel?: "debug" | "info";
 };
 
 /**
  * Represents references to a "kit": a collection of `NodeHandlers`.
- * The basic permise here is that people can publish kits with interesting
+ * The basic premise here is that people can publish kits with interesting
  * handlers, and then graphs can specify which ones they use.
  * The `@google-labs/core-kit` package is an example of kit.
  */
@@ -154,6 +158,7 @@ export type KitDescriptor = KitReference & {
   /**
    * Version of the kit.
    * [semver](https://semver.org/) format is encouraged.
+   * @pattern ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
    */
   version?: string;
 };
@@ -215,6 +220,55 @@ export type GraphIdentifier = string;
 export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
 
 /**
+ * Properties used for testing the foundational traversal tests
+ * These properties are for internal testing only and should not be used.
+ * @deprecated These properties are for internal testing only and should not be used.
+ */
+type TestProperties = {
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  inputs?: InputValues;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  outputs?: OutputValues | OutputValues[];
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  sequence?: NodeIdentifier[];
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  throws?: boolean;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  safe?: boolean;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  expectedLabels?: string[][];
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  explanation?: string;
+};
+
+/**
  * Represents a graph.
  */
 export type GraphDescriptor = GraphMetadata & {
@@ -231,7 +285,7 @@ export type GraphDescriptor = GraphMetadata & {
   /**
    * All the kits (collections of node handlers) that are used by the graph.
    */
-  kits?: KitReference[];
+  kits?: KitDescriptor[];
 
   /**
    * Sub-graphs that are also described by this graph representation.
@@ -242,7 +296,7 @@ export type GraphDescriptor = GraphMetadata & {
    * Arguments that are passed to the graph, useful to bind values to lambdas.
    */
   args?: InputValues;
-};
+} & TestProperties;
 
 /**
  * Values that are supplied as inputs to the `NodeHandler`.

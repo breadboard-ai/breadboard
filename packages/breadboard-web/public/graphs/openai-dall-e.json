@@ -1,0 +1,250 @@
+{
+  "title": "OpenAI DALL-E Image Generator",
+  "description": "Generate images from a text prompt using the OpenAI DALL-E API.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "responseExtractor",
+      "to": "output-2",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "dalleCaller",
+      "to": "responseExtractor",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "headerMaker",
+      "to": "dalleCaller",
+      "out": "headers",
+      "in": "headers"
+    },
+    {
+      "from": "bodyMaker",
+      "to": "dalleCaller",
+      "out": "body",
+      "in": "body"
+    },
+    {
+      "from": "openaiApiKey",
+      "to": "headerMaker",
+      "out": "OPENAI_API_KEY",
+      "in": "key"
+    },
+    {
+      "from": "input-1",
+      "to": "bodyMaker",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "response": {
+              "type": "object",
+              "behavior": [
+                "image"
+              ],
+              "title": "response"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "responseExtractor",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#responseExtractor"
+      },
+      "metadata": {
+        "title": "Extract Response",
+        "description": "Extracting the response from the API call"
+      }
+    },
+    {
+      "id": "dalleCaller",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/images/generations",
+        "method": "POST"
+      },
+      "metadata": {
+        "title": "Call OpenAI DALL·E",
+        "description": "Calling the OpenAI DALL·E API to generate images from text."
+      }
+    },
+    {
+      "id": "headerMaker",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#headerMaker"
+      },
+      "metadata": {
+        "title": "Make Headers",
+        "description": "Making the headers for the API request"
+      }
+    },
+    {
+      "id": "bodyMaker",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#bodyMaker"
+      },
+      "metadata": {
+        "title": "Make Body",
+        "description": "Making the body for the API request"
+      }
+    },
+    {
+      "id": "openaiApiKey",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "metadata": {
+        "title": "Get OPEN API Key",
+        "description": "Getting the API key for the OpenAI DALL·E API."
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "description": "The prompt to generate images from.",
+              "examples": [
+                "A painting of a breadboard"
+              ]
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "responseExtractor": {
+      "edges": [
+        {
+          "from": "responseExtractor-input",
+          "to": "responseExtractor-run",
+          "out": "*"
+        },
+        {
+          "from": "responseExtractor-run",
+          "to": "responseExtractor-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "responseExtractor-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "responseExtractor-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function responseExtractor({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
+            "name": "responseExtractor",
+            "raw": true
+          }
+        },
+        {
+          "id": "responseExtractor-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "headerMaker": {
+      "edges": [
+        {
+          "from": "headerMaker-input",
+          "to": "headerMaker-run",
+          "out": "*"
+        },
+        {
+          "from": "headerMaker-run",
+          "to": "headerMaker-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "headerMaker-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "headerMaker-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function headerMaker({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
+            "name": "headerMaker",
+            "raw": true
+          }
+        },
+        {
+          "id": "headerMaker-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "bodyMaker": {
+      "edges": [
+        {
+          "from": "bodyMaker-input",
+          "to": "bodyMaker-run",
+          "out": "*"
+        },
+        {
+          "from": "bodyMaker-run",
+          "to": "bodyMaker-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "bodyMaker-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "bodyMaker-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function bodyMaker({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
+            "name": "bodyMaker",
+            "raw": true
+          }
+        },
+        {
+          "id": "bodyMaker-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

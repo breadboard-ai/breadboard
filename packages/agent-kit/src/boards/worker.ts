@@ -45,7 +45,11 @@ Look at the topic below and do your magic`;
 const sampleContext = `the universe within us`;
 
 export default await board(({ context, instruction, stopSequences }) => {
-  context.title("Context").isArray().examples(sampleContext);
+  context
+    .title("Context")
+    .isArray()
+    .behavior("llm-content")
+    .examples(sampleContext);
   instruction
     .title("Instruction")
     .format("multiline")
@@ -54,12 +58,20 @@ export default await board(({ context, instruction, stopSequences }) => {
 
   const buildContext = contextBuilder({
     $id: "buildContext",
+    $metadata: {
+      title: "Build Context",
+      description: "Building the context for the worker",
+    },
     context,
     instruction,
   });
 
   const { context: generated, text: output } = gemini.text({
     $id: "generate",
+    $metadata: {
+      title: "Generate",
+      description: "Using Gemini to generate worker output",
+    },
     context: buildContext.context,
     stopSequences,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
@@ -67,13 +79,18 @@ export default await board(({ context, instruction, stopSequences }) => {
 
   const assembleContext = contextAssembler({
     $id: "assembleContext",
+    $metadata: {
+      title: "Assemble Context",
+      description: "Assembling the context after generation",
+    },
     generated,
     context: buildContext.context,
   });
 
   assembleContext.context
     .title("Context")
-    .isObject()
+    .isArray()
+    .behavior("llm-content")
     .description("Agent context after generation");
   output.title("Output").isString().description("Agent's output");
 

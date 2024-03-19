@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version:
+          - 20.x
+          # - 21.x left here for testing when the node test runnner might be misbahaving
         python-version: [3.11]
 
     steps:
