@@ -81,6 +81,8 @@ export type BreadboardTypeFromTypeScriptType<
       ? "boolean"
       : never;
 
+// TODO(aomarks) Expand this to the full vocabulary of JSONSchema so that
+// `escapeHatch` can be fully flexible (for now it's OK to cast to JSONSchema).
 export type JSONSchema =
   | { type: "string" | "number" | "boolean" }
   | { anyOf: JSONSchema[] };
