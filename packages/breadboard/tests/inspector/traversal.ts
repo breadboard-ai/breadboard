@@ -7,17 +7,17 @@
 // These test traversal of the inspector API.
 
 import test from "ava";
+import { BoardLoader } from "../../src/loader.js";
 import { inspectableGraph } from "../../src/inspector/graph.js";
-import { createLoader } from "../../src/loader/index.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 
 const load = async (url: string) => {
   const base = BASE_URL;
-  const loader = createLoader();
-  const result = await loader.load(new URL(url, base));
+  const loader = new BoardLoader({ base });
+  const result = await loader.load(url);
   if (!result) return undefined;
-  return inspectableGraph(result);
+  return inspectableGraph(result.graph);
 };
 
 test("inspector API can traverse simplest.json", async (t) => {
