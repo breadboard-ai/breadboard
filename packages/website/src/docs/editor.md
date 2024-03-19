@@ -6,7 +6,7 @@ tags:
   - wip
 ---
 
-The Editor API provides a way to edit a graph. It is designed to work in conjuction with the [Inspector API](../inspector) and helps ensure that the graph edits retain their structural integrity.
+The Editor API provides a way to edit a graph. It is designed to work in conjunction with the [Inspector API](../inspector) and helps ensure that the graph edits retain their structural integrity.
 
 > [!NOTE]
 > The full list of types of Editor API can be found in [/packages/breadboard/src/editor/types.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/editor/types.ts)
@@ -77,7 +77,7 @@ There are five edit operations that we can perform on the graph:
 
 - `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
 
-## Accesing the graph
+## Accessing the graph
 
 To access the resulting graph, use the `raw()` method on the `EditableGraph` instance.
 
@@ -97,4 +97,4 @@ Because the graph constantly changes, it can be tedious to keep track of the lat
 const inspectableGraph = graph.inspect();
 ```
 
-In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditabelGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
+In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditableGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
