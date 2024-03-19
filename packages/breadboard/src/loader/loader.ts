@@ -8,7 +8,7 @@ import type { GraphDescriptor, SubGraphs } from "../types.js";
 import type { GraphProvider, GraphLoader } from "./types.js";
 import { DefaultGraphProvider } from "./default.js";
 
-export const SENTINEL_BASE_URL = new URL("sentinel:///");
+export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);
