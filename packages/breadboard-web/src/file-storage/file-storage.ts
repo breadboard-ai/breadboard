@@ -243,7 +243,10 @@ export class FileStorage implements GraphProvider {
       case "fileSystem": {
         try {
           const handle = await window.showDirectoryPicker();
-          this.#locations.set(handle.name.toLowerCase(), handle);
+          this.#locations.set(
+            encodeURIComponent(handle.name.toLocaleLowerCase()),
+            handle
+          );
           await this.#storeLocations();
           await this.#refreshItems();
         } catch (err) {
