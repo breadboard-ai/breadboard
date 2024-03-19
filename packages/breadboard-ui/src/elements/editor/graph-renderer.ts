@@ -75,6 +75,44 @@ export class GraphRenderer extends LitElement {
       display: block;
       touch-action: none;
     }
+
+    #controls {
+      position: absolute;
+      left: calc(var(--bb-grid-size) * 4);
+      bottom: calc(var(--bb-grid-size) * 4);
+      background: #fff;
+      border-radius: 40px;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      border: 1px solid var(--bb-neutral-300);
+      display: flex;
+      align-items: center;
+    }
+
+    #controls button {
+      margin-left: calc(var(--bb-grid-size) * 2);
+    }
+
+    #controls button:first-of-type {
+      margin-left: 0;
+    }
+
+    #recenter {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      background: var(--bb-icon-fit) center center no-repeat;
+      background-size: 20px 20px;
+      font-size: 0;
+      cursor: pointer;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      opacity: 0.5;
+      border: none;
+    }
+
+    #recenter:hover {
+      transition-duration: 0.1s;
+      opacity: 1;
+    }
   `;
 
   constructor(
@@ -217,8 +255,23 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
-      this.#container.scale.set(1, 1);
+    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => this.zoomToFit());
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
+      graph.layout();
+    });
+
+    this.#container.addChild(graph);
+  }
+
+  zoomToFit() {
+    this.#container.scale.set(1, 1);
+
+    // Find the first graph in the container and size to it.
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
 
       const graphPosition = graph.getGlobalPosition();
       const graphBounds = graph.getBounds();
@@ -252,13 +305,9 @@ export class GraphRenderer extends LitElement {
       this.dispatchEvent(
         new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
       );
-    });
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
-      graph.layout();
-    });
-
-    this.#container.addChild(graph);
+      return;
+    }
   }
 
   removeGraph(graph: Graph) {
@@ -344,6 +393,9 @@ export class GraphRenderer extends LitElement {
   }
 
   render() {
-    return html`${this.#app.view}`;
+    return html`${this.#app.view}
+      <div id="controls">
+        <button id="recenter" @click=${() => this.zoomToFit()}>Recenter</button>
+      </div>`;
   }
 }
