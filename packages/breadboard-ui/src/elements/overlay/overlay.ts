@@ -10,6 +10,8 @@ import { BreadboardOverlayDismissedEvent } from "../../events/events.js";
 
 @customElement("bb-overlay")
 export class Overlay extends LitElement {
+  #onKeyDownBound = this.#onKeyDown.bind(this);
+
   static styles = css`
     :host {
       display: flex;
@@ -56,6 +58,24 @@ export class Overlay extends LitElement {
       }
     }
   `;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.key !== "Escape") {
+      return;
+    }
+
+    this.dispatchEvent(new BreadboardOverlayDismissedEvent());
+  }
 
   render() {
     return html`
