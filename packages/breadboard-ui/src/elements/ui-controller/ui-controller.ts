@@ -338,6 +338,7 @@ export class UI extends LitElement {
           .selectedNodeId=${this.selectedNodeId}
           .loadInfo=${this.loadInfo}
           .kits=${this.kits}
+          .graphProviders=${this.graphProviders}
           .editable=${true}
           name="Selected Node"
           slot="slot-1"
