@@ -75,6 +75,7 @@ export class FileStorage implements GraphProvider {
     string,
     {
       permission: "unknown" | "prompt" | "granted";
+      title: string;
       items: Map<string, FileSystemFileHandle>;
     }
   >();
@@ -107,7 +108,7 @@ export class FileStorage implements GraphProvider {
 
       let files = this.#items.get(name);
       if (!files) {
-        files = { permission, items: new Map() };
+        files = { permission, items: new Map(), title: handle.name };
         this.#items.set(name, files);
       }
 
@@ -210,7 +211,7 @@ export class FileStorage implements GraphProvider {
       case "fileSystem": {
         try {
           const handle = await window.showDirectoryPicker();
-          this.#locations.set(handle.name, handle);
+          this.#locations.set(handle.name.toLowerCase(), handle);
           await this.#storeLocations();
           await this.#refreshItems();
         } catch (err) {
