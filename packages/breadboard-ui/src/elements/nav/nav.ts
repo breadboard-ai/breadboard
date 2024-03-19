@@ -9,6 +9,8 @@ import { customElement, property } from "lit/decorators.js";
 import { Board, BoardStorageSupported } from "../../types/types.js";
 import {
   BlankBoardRequestEvent,
+  FileStorageBlankBoardEvent,
+  FileStorageDeleteRequestEvent,
   FileStorageDisconnectEvent,
   FileStorageLoadRequestEvent,
   FileStorageRefreshEvent,
@@ -28,7 +30,7 @@ export class Navigation extends LitElement {
     string,
     {
       permission: "prompt" | "granted";
-      items: Map<string, unknown>;
+      items: Map<string, { url: string; handle: unknown }>;
       title: string;
     }
   > | null = null;
@@ -165,8 +167,10 @@ export class Navigation extends LitElement {
       flex: 1;
     }
 
+    .blank-board,
     .refresh,
-    .disconnect {
+    .disconnect,
+    .delete-board {
       background: none;
       width: 16px;
       height: 16px;
@@ -177,20 +181,32 @@ export class Navigation extends LitElement {
       font-size: 0;
       opacity: 0.5;
       cursor: pointer;
+      margin-right: var(--bb-grid-size);
     }
 
+    .blank-board:hover,
     .refresh:hover,
-    .disconnect:hover {
+    .disconnect:hover,
+    .delete-board:hover {
       opacity: 1;
     }
 
     .disconnect {
+      margin-right: 0;
       background-image: var(--bb-icon-eject);
     }
 
     .refresh {
-      margin-right: var(--bb-grid-size);
       background-image: var(--bb-icon-refresh);
+    }
+
+    .blank-board {
+      background-image: var(--bb-icon-file-add);
+    }
+
+    .delete-board {
+      margin-right: 0;
+      background-image: var(--bb-icon-delete);
     }
 
     .renew-access {
@@ -228,8 +244,16 @@ export class Navigation extends LitElement {
 
     ul {
       list-style: none;
-      padding: calc(var(--bb-grid-size));
+      padding: calc(var(--bb-grid-size)) 0;
       margin: 0;
+    }
+
+    ul li {
+      display: flex;
+    }
+
+    .file-selector {
+      flex: 1;
     }
 
     ul li button {
@@ -238,6 +262,7 @@ export class Navigation extends LitElement {
       border: none;
       opacity: 0.5;
       cursor: pointer;
+      text-align: left;
     }
 
     ul li button[active] {
@@ -259,7 +284,12 @@ export class Navigation extends LitElement {
     }
   `;
 
-  #createEntry(type: "file" | "example", location: string, fileName: string) {
+  #createEntry(
+    type: "file" | "example",
+    location: string,
+    fileName: string,
+    url?: string
+  ) {
     switch (type) {
       case "file": {
         return html`<li>
@@ -269,8 +299,24 @@ export class Navigation extends LitElement {
                 new FileStorageLoadRequestEvent(location, fileName)
               );
             }}
+            class="file-selector"
+            ?active=${url === this.url}
           >
             ${fileName}
+          </button>
+          <button
+            @click=${() => {
+              this.dispatchEvent(
+                new FileStorageDeleteRequestEvent(
+                  location,
+                  fileName,
+                  url === this.url
+                )
+              );
+            }}
+            class="delete-board"
+          >
+            Delete
           </button>
         </li>`;
       }
@@ -318,8 +364,29 @@ export class Navigation extends LitElement {
               <span>${title}</span>
               <button
                 @click=${() => {
+                  const fileName = prompt(
+                    "What would you like to name this file?",
+                    "new-board.json"
+                  );
+                  if (!fileName) {
+                    return;
+                  }
+
+                  this.dispatchEvent(
+                    new FileStorageBlankBoardEvent(location, fileName)
+                  );
+                }}
+                ?disabled=${permission === "prompt"}
+                class="blank-board"
+                title="Create a new board"
+              >
+                Blank Board
+              </button>
+              <button
+                @click=${() => {
                   this.dispatchEvent(new FileStorageRefreshEvent(location));
                 }}
+                ?disabled=${permission === "prompt"}
                 class="refresh"
                 title="Refresh this storage"
               >
@@ -358,8 +425,8 @@ export class Navigation extends LitElement {
                   </button>
                 </div>`
               : html`<ul>
-                  ${map(items, ([fileName]) => {
-                    return this.#createEntry("file", location, fileName);
+                  ${map(items, ([fileName, { url }]) => {
+                    return this.#createEntry("file", location, fileName, url);
                   })}
                 </ul>`}
           </details>`;
@@ -381,12 +448,12 @@ export class Navigation extends LitElement {
 
     return html`<nav id="menu">
       <section id="blank-board">
-        <h1>Blank Board</h1>
+        <h1>Make a blank board</h1>
         <button
           @click=${() => {
             this.dispatchEvent(new BlankBoardRequestEvent());
           }}
-          title="Add file system storage"
+          title="Create a blank board"
         >
           +
         </button>

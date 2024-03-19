@@ -11,6 +11,7 @@ import {
   GraphProvider,
   GraphProviderCapabilities,
 } from "@google-labs/breadboard";
+import { BLANK_BOARD } from "./blank-board";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -24,6 +25,11 @@ interface FileSystemDirectoryHandle {
   entries(): FileSystemWalker;
   queryPermission(): Promise<"prompt" | "granted">;
   requestPermission(): Promise<"prompt" | "granted">;
+  removeEntry(name: string, options?: { recursive: boolean }): Promise<void>;
+  getFileHandle(
+    name: string,
+    options?: { create: boolean }
+  ): Promise<FileSystemFileHandle>;
 }
 
 interface FileSystemFileHandle {
@@ -31,11 +37,14 @@ interface FileSystemFileHandle {
   name: string;
   getFile(): Promise<File>;
   createWritable(): Promise<FileSystemWritableFileStream>;
+  remove(): Promise<void>;
 }
 
 declare global {
   interface Window {
-    showDirectoryPicker(): Promise<FileSystemDirectoryHandle>;
+    showDirectoryPicker(options?: {
+      mode: string;
+    }): Promise<FileSystemDirectoryHandle>;
   }
 }
 
@@ -77,7 +86,7 @@ export class FileStorage implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, FileSystemFileHandle>;
+      items: Map<string, { url: string; handle: FileSystemFileHandle }>;
     }
   >();
   #locations = new Map<string, FileSystemDirectoryHandle>();
@@ -106,7 +115,11 @@ export class FileStorage implements GraphProvider {
 
       let files = this.#items.get(name);
       if (!files) {
-        files = { permission, items: new Map(), title: handle.name };
+        files = {
+          permission,
+          items: new Map(),
+          title: handle.name,
+        };
         this.#items.set(name, files);
       }
 
@@ -131,7 +144,11 @@ export class FileStorage implements GraphProvider {
 
     let files = this.#items.get(location);
     if (!files) {
-      files = { permission, items: new Map(), title: handle.name };
+      files = {
+        permission,
+        items: new Map(),
+        title: handle.name,
+      };
       this.#items.set(location, files);
     }
 
@@ -141,8 +158,9 @@ export class FileStorage implements GraphProvider {
 
   async #getFiles(
     handle: FileSystemDirectoryHandle
-  ): Promise<Map<string, FileSystemFileHandle>> {
-    const entries: [string, FileSystemFileHandle][] = [];
+  ): Promise<Map<string, { url: string; handle: FileSystemFileHandle }>> {
+    const entries: [string, { url: string; handle: FileSystemFileHandle }][] =
+      [];
 
     for await (const [name, entry] of handle.entries()) {
       if (entry.kind === "directory") {
@@ -153,7 +171,16 @@ export class FileStorage implements GraphProvider {
         continue;
       }
 
-      entries.push([name, entry]);
+      entries.push([
+        name,
+        {
+          url: createFileSystemURL(
+            encodeURIComponent(handle.name.toLocaleLowerCase()),
+            encodeURIComponent(entry.name.toLocaleLowerCase())
+          ),
+          handle: entry,
+        },
+      ]);
     }
 
     return new Map(entries.sort());
@@ -175,8 +202,54 @@ export class FileStorage implements GraphProvider {
     return this.#refreshAllItems();
   }
 
+  async deleteFile(
+    location: string,
+    fileName: string
+  ): Promise<{ result: boolean; error?: string }> {
+    const fileLocation = this.#locations.get(location);
+    if (!fileLocation) {
+      return { result: false, error: "Unable to locate file" };
+    }
+
+    try {
+      await fileLocation.removeEntry(fileName);
+    } catch (err) {
+      return { result: false, error: "Unable to locate file" };
+    }
+
+    await this.#refreshAllItems();
+    return { result: true };
+  }
+
   async refresh(location: string): Promise<boolean> {
     return this.#refreshItems(location);
+  }
+
+  async createBlankBoard(
+    location: string,
+    fileName: string
+  ): Promise<{ result: boolean; error?: string }> {
+    const handle = this.#locations.get(location);
+    if (!handle) {
+      return { result: false, error: "Unable to find directory" };
+    }
+
+    for await (const [, entry] of handle.entries()) {
+      if (entry.name !== fileName) {
+        continue;
+      }
+
+      return { result: false, error: "File already exists" };
+    }
+
+    // Now create the file.
+    await handle.getFileHandle(fileName, { create: true });
+    await this.#refreshItems(location);
+
+    // Now populate it.
+    const url = new URL(createFileSystemURL(location, fileName));
+    await this.saveBoardFile(url, BLANK_BOARD);
+    return { result: true };
   }
 
   async restoreAndValidateHandles() {
@@ -213,11 +286,12 @@ export class FileStorage implements GraphProvider {
       return null;
     }
 
-    const handle = fileLocation.items.get(fileName);
-    if (!handle) {
+    const file = fileLocation.items.get(fileName);
+    if (!file) {
       return null;
     }
 
+    const { handle } = file;
     const data = await handle.getFile();
     const boardDataAsText = await data.text();
     try {
@@ -243,12 +317,13 @@ export class FileStorage implements GraphProvider {
       return null;
     }
 
-    const handle = fileLocation.items.get(fileName);
-    if (!handle) {
+    const file = fileLocation.items.get(fileName);
+    if (!file) {
       return null;
     }
 
     try {
+      const { handle } = file;
       const stream = await handle.createWritable();
       const data = structuredClone(descriptor);
       delete data["url"];
@@ -266,7 +341,9 @@ export class FileStorage implements GraphProvider {
     switch (type) {
       case "fileSystem": {
         try {
-          const handle = await window.showDirectoryPicker();
+          const handle = await window.showDirectoryPicker({
+            mode: "readwrite",
+          });
           this.#locations.set(
             encodeURIComponent(handle.name.toLocaleLowerCase()),
             handle

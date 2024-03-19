@@ -116,6 +116,22 @@ export class FileStorageRequestEvent extends Event {
   }
 }
 
+export class FileStorageDeleteRequestEvent extends Event {
+  static eventName = "breadboardfilestoragedeleterequest";
+
+  constructor(
+    public readonly location: string,
+    public readonly fileName: string,
+    public readonly isActive: boolean
+  ) {
+    super(FileStorageDeleteRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class FileStorageLoadRequestEvent extends Event {
   static eventName = "breadboardfilestorageloadrequest";
 
@@ -148,6 +164,21 @@ export class FileStorageDisconnectEvent extends Event {
 
   constructor(public readonly location: string) {
     super(FileStorageDisconnectEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class FileStorageBlankBoardEvent extends Event {
+  static eventName = "breadboardfileblankboard";
+
+  constructor(
+    public readonly location: string,
+    public readonly fileName: string
+  ) {
+    super(FileStorageBlankBoardEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
