@@ -10,6 +10,7 @@ import { Board, LoadArgs, STATUS } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
+  NodeDeleteEvent,
   RunEvent,
   ToastEvent,
   ToastType,
@@ -244,6 +245,13 @@ export class UI extends LitElement {
       .graphProviders=${this.graphProviders}
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
+      @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
+        if (evt.id !== this.selectedNodeId) {
+          return;
+        }
+
+        this.selectedNodeId = null;
+      }}
       @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
         this.#autoSwitchSidePanel = 1;
