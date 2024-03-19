@@ -5,7 +5,8 @@
  */
 
 import { inspect } from "../inspector/index.js";
-import { BoardLoader, loadWithFetch } from "../loader.js";
+import { loadWithFetch } from "../loader/default.js";
+import { createLoader } from "../loader/index.js";
 import { BoardRunner } from "../runner.js";
 import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
@@ -18,9 +19,12 @@ const getGraphDescriptor = async (
   entry: ManifestEntry
 ) => {
   if (typeof entry === "string") {
-    const loader = new BoardLoader({ base });
-    const result = await loader.load(entry);
-    return result.graph;
+    const loader = createLoader();
+    const result = await loader.load(new URL(entry, base));
+    if (result === null) {
+      throw new Error(`Unable to load graph descriptor from "${entry}"`);
+    }
+    return result;
   } else if (entry.edges && entry.nodes) {
     const url = new URL(base);
     url.searchParams.set("graph", key);

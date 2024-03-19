@@ -23,10 +23,14 @@ export type InvokeNodeInputs = InputValues & {
   graph?: GraphDescriptor;
 };
 
-export const relativeBaseURL = (context: NodeHandlerContext) => {
+// This looks like a generic utility function that could be moved to a shared
+// location.
+export const baseURLFromContext = (context: NodeHandlerContext) => {
   const invokingBoardURL = context.board?.url;
   if (invokingBoardURL) return new URL(invokingBoardURL);
+  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
   if (context.base) return context.base;
+  // This should probably return SENTINEL_BASE_URL.
   return new URL(import.meta.url);
 };
 
@@ -34,10 +38,11 @@ export const loadBoardFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
-  const { loader } = context;
-  const base = relativeBaseURL(context);
-  const outerGraph = context.outerGraph;
-  return await BoardRunner.load(path, { base, outerGraph, loader });
+  const base = baseURLFromContext(context);
+  const url = new URL(path, base);
+  const graph = await context.loader?.load(url, context.outerGraph);
+  if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
+  return BoardRunner.fromGraphDescriptor(graph);
 };
 
 type RunnableBoardWithArgs = {
