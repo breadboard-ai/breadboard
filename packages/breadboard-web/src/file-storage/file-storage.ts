@@ -276,10 +276,10 @@ export class FileStorage implements GraphProvider {
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const canLoad =
+    const canProvide =
       url.protocol === FILE_SYSTEM_PROTOCOL &&
       url.host.startsWith(FILE_SYSTEM_HOST_PREFIX);
-    return { load: canLoad, save: true };
+    return canProvide ? { load: canProvide, save: canProvide } : false;
   }
 
   async load(url: URL) {
@@ -318,52 +318,10 @@ export class FileStorage implements GraphProvider {
     url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
-    if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
-      return this.#saveNewBoardFile(descriptor);
-    }
-
-    return this.#saveExistingBoardFile(url, descriptor);
-  }
-
-  async #saveNewBoardFile(descriptor: GraphDescriptor) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        types: [
-          {
-            description: "BGL Files",
-            accept: { "application/json": [".json"] },
-          },
-        ],
-      });
-      const stream = await handle.createWritable();
-      const data = structuredClone(descriptor);
-      delete data["url"];
-
-      await stream.write(JSON.stringify(data, null, 2));
-      await stream.close();
-
-      await this.#refreshAllItems();
-      const response: { result: boolean; url?: string } = { result: true };
-      search: for (const { items } of this.#items.values()) {
-        for (const entry of items.values()) {
-          const sameFile = await entry.handle.isSameEntry(handle);
-          if (!sameFile) {
-            continue;
-          }
-
-          response.url = entry.url;
-          break search;
-        }
-      }
-
-      return response;
-    } catch (err) {
-      console.error(err);
+    if (!this.canProvide(url)) {
       return { result: false };
     }
-  }
 
-  async #saveExistingBoardFile(url: URL, descriptor: GraphDescriptor) {
     const { location, fileName } = parseFileSystemURL(url);
     const items = this.items();
     const fileLocation = items.get(location);
