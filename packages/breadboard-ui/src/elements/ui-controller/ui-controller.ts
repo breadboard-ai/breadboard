@@ -259,9 +259,11 @@ export class UI extends LitElement {
           : nothing}
       >
         <bb-activity-log
+          .loadInfo=${this.loadInfo}
           .events=${events}
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}
+          .showLogDownload=${true}
           @breadboardinputrequested=${() => {
             this.#autoSwitchSidePanel = 0;
             this.requestUpdate();

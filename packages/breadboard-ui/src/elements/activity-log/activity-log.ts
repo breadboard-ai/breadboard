@@ -8,6 +8,7 @@ import {
   ErrorObject,
   InspectableRun,
   InspectableRunEvent,
+  NodeValue,
   Schema,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -17,9 +18,13 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { LoadArgs } from "../../types/types.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
+  @property()
+  loadInfo: LoadArgs | null = null;
+
   @property({ reflect: false })
   events: InspectableRunEvent[] | null = null;
 
@@ -31,6 +36,9 @@ export class ActivityLog extends LitElement {
 
   @property({ reflect: true })
   showExtendedInfo = false;
+
+  @property({ reflect: true })
+  showLogDownload = false;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -89,6 +97,11 @@ export class ActivityLog extends LitElement {
         var(--padding-x);
       background: white;
       z-index: 2;
+      display: flex;
+    }
+
+    :host > h1 > span {
+      flex: 1;
     }
 
     :host > h1::after {
@@ -99,6 +112,19 @@ export class ActivityLog extends LitElement {
       bottom: var(--bb-grid-size);
       left: var(--padding-x);
       background: #f6f6f6;
+    }
+
+    :host > h1 > a {
+      font-size: var(--bb-label-small);
+      color: var(--bb-neutral-500);
+      text-decoration: none;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    :host > h1 > a:hover,
+    :host > h1 > a:active {
+      color: var(--bb-neutral-700);
     }
 
     .activity-entry {
@@ -556,13 +582,87 @@ export class ActivityLog extends LitElement {
     >`;
   }
 
+  #getRunLog(evt: Event) {
+    if (!(evt.target instanceof HTMLAnchorElement)) {
+      return;
+    }
+
+    if (!this.events) {
+      return;
+    }
+
+    if (evt.target.href) {
+      URL.revokeObjectURL(evt.target.href);
+    }
+
+    const secrets: NodeValue[] = [];
+    const inputs: InspectableRunEvent[] = [];
+    const outputs: InspectableRunEvent[] = [];
+    const errors: InspectableRunEvent[] = [];
+
+    const processEvents = (events: InspectableRunEvent[]) => {
+      for (const event of events) {
+        if (event.type === "error") {
+          errors.push(event);
+        }
+
+        if (event.type === "node") {
+          switch (event.node.type) {
+            case "secrets": {
+              if (event.outputs !== null) {
+                secrets.push(...Object.values(event.outputs));
+              }
+              break;
+            }
+
+            case "input": {
+              inputs.push(event);
+              break;
+            }
+
+            case "output": {
+              outputs.push(event);
+              break;
+            }
+          }
+
+          for (const run of event.runs) {
+            processEvents(run.events);
+          }
+        }
+      }
+    };
+
+    processEvents(this.events);
+
+    let data = JSON.stringify(
+      { board: this.loadInfo, inputs, outputs, errors },
+      null,
+      2
+    );
+
+    // Attempt to find any secrets and then replace them in the JSON output.
+    for (const secret of secrets) {
+      const re = new RegExp(`\\b${secret}\\b`, "gim");
+      data = data.replaceAll(re, "SECRET");
+    }
+
+    evt.target.download = `log-${new Date().toISOString()}.json`;
+    evt.target.href = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+  }
+
   render() {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
     }
 
     return html`
-      <h1>${this.logTitle}</h1>
+      <h1>
+        <span>${this.logTitle}</span
+        ><a @click=${(evt: Event) => this.#getRunLog(evt)}>Download</a>
+      </h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             const isNew = this.#seenItems.has(event.id);
