@@ -26,9 +26,9 @@ export type InvokeNodeInputs = InputValues & {
 // This looks like a generic utility function that could be moved to a shared
 // location.
 export const baseURLFromContext = (context: NodeHandlerContext) => {
-  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
   const invokingBoardURL = context.board?.url;
   if (invokingBoardURL) return new URL(invokingBoardURL);
+  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
   if (context.base) return context.base;
   // This should probably return SENTINEL_BASE_URL.
   return new URL(import.meta.url);

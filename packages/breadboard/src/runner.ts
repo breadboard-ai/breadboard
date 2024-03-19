@@ -25,7 +25,6 @@ import type {
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { BoardLoader } from "./loader/loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
@@ -41,7 +40,7 @@ import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 import { GraphProvider } from "./loader/types.js";
-import { SENTINEL_BASE_URL } from "./loader/index.js";
+import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -400,7 +399,7 @@ export class BoardRunner implements BreadboardRunner {
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
-    const loader = new BoardLoader(options.graphProviders ?? []);
+    const loader = createLoader(options.graphProviders ?? []);
     const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
     const url = new URL(path, baseURL);
     const graph = await loader.load(url, outerGraph);

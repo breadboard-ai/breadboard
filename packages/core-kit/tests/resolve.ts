@@ -65,9 +65,12 @@ test("resolve can be used to fully qualify a path prior to passing to a graph wi
   let output: string | undefined;
   for await (const result of run(config)) {
     if (result.type === "error") {
-      t.fail(result.data.error.toString());
+      console.error(result.data.error);
+      t.fail(JSON.stringify(result.data.error, null, 2));
     } else if (result.type == "input" && result.data.node.id === "main-input") {
-      result.reply({ inputs: { "next-path": "./invokee.json" } });
+      result.reply({
+        inputs: { "next-path": "../../tests/data/resolve/invokee.json" },
+      });
     } else if (
       result.type === "output" &&
       result.data.node.id === "main-output"

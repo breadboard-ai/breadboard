@@ -108,7 +108,12 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({ probe, kits, loader })) {
+      for await (const data of runner.run({
+        probe,
+        kits,
+        loader,
+        base: config.base,
+      })) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());
