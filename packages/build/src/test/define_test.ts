@@ -13,6 +13,7 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
+import { anyOf } from "../type.js";
 
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType NodeDefinition<{}, {}>
@@ -374,6 +375,64 @@ test("describe function generates JSON schema", async () => {
         },
       },
       required: ["out1"],
+    },
+  });
+});
+
+test("describe function generates JSON schema with anyOf", async () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: anyOf("string", "number"),
+        description: "Description of in1",
+      },
+    },
+    {
+      out1: {
+        type: anyOf("boolean", "string"),
+        description: "Description of out1",
+      },
+      out2: {
+        type: anyOf("boolean", "string"),
+        description: "Description of out2",
+      },
+    },
+    (params) => {
+      // $ExpectType string | number
+      params.in1;
+      return {
+        out1: true,
+        out2: "foo",
+      };
+    }
+  );
+  assert.deepEqual(await definition.describe(), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        in1: {
+          title: "in1",
+          description: "Description of in1",
+          anyOf: [{ type: "string" }, { type: "number" }],
+        },
+      },
+      required: ["in1"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        out1: {
+          title: "out1",
+          description: "Description of out1",
+          anyOf: [{ type: "boolean" }, { type: "string" }],
+        },
+        out2: {
+          title: "out2",
+          description: "Description of out2",
+          anyOf: [{ type: "boolean" }, { type: "string" }],
+        },
+      },
+      required: ["out1", "out2"],
     },
   });
 });

@@ -8,7 +8,18 @@
  * A subset of JSON schema types which can be converted to TypeScript types at
  * compile time.
  */
-export type BreadboardType = "string" | "number" | "boolean";
+export type BreadboardType =
+  | BasicBreadboardType
+  | AdvancedBreadboardType<unknown>;
+
+export type BasicBreadboardType = "string" | "number" | "boolean";
+
+const AdvancedType = Symbol();
+
+export interface AdvancedBreadboardType<T> {
+  readonly [AdvancedType]: T;
+  toJSONSchema(): JSONSchema;
+}
 
 /**
  * The TypeScript types that can be automatically mapped back to
@@ -26,7 +37,9 @@ export type TypeScriptTypeFromBreadboardType<BT extends BreadboardType> =
       ? number
       : BT extends "boolean"
         ? boolean
-        : never;
+        : BT extends AdvancedBreadboardType<unknown>
+          ? BT[typeof AdvancedType]
+          : never;
 
 /**
  * Convert from TypeScript type to {@link BreadboardType}.
@@ -40,3 +53,33 @@ export type BreadboardTypeFromTypeScriptType<
     : TT extends boolean
       ? "boolean"
       : never;
+
+export type JSONSchema =
+  | { type: "string" | "number" | "boolean" }
+  | { anyOf: JSONSchema[] };
+
+export function toJSONSchema(type: BreadboardType): JSONSchema {
+  return typeof type === "string" ? { type } : type.toJSONSchema();
+}
+
+export function anyOf<
+  T extends [BreadboardType, BreadboardType, ...BreadboardType[]],
+>(...members: T) {
+  return new AnyOf<T>(members);
+}
+
+export type { AnyOf };
+class AnyOf<T extends [BreadboardType, BreadboardType, ...BreadboardType[]]> {
+  #members: T;
+  readonly [AdvancedType]!: TypeScriptTypeFromBreadboardType<T[number]>;
+
+  constructor(members: T) {
+    this.#members = members;
+  }
+
+  toJSONSchema(): JSONSchema {
+    return {
+      anyOf: this.#members.map(toJSONSchema),
+    };
+  }
+}
