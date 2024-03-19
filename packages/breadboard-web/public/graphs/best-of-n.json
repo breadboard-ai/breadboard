@@ -281,7 +281,7 @@
           "type": "object",
           "properties": {
             "n": {
-              "title": "Number of parallel attemps",
+              "title": "Number of parallel attempts",
               "type": "number",
               "examples": [
                 "4"
