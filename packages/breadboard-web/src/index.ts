@@ -158,12 +158,15 @@ export class Main extends LitElement {
       background-size: 20px 20px;
       border: none;
       margin-left: calc(var(--bb-grid-size) * 3);
-      cursor: pointer;
       opacity: 0.6;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    #edit-board-info:hover {
+    #edit-board-info:not([disabled]) {
+      cursor: pointer;
+    }
+
+    #edit-board-info:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
     }
@@ -463,7 +466,12 @@ export class Main extends LitElement {
 
     this.#lastBoardId = this.#boardId;
     if (this.url) {
-      this.loadInfo = await getBoardInfo(this.url);
+      try {
+        this.loadInfo = await getBoardInfo(this.url);
+      } catch (err) {
+        this.url = null;
+        this.descriptor = null;
+      }
     } else if (this.descriptor) {
       this.loadInfo = await getBoardFromDescriptor(
         this.descriptor.url || window.location.href,
@@ -931,11 +939,12 @@ export class Main extends LitElement {
           }}
         ></button>
         <h1>
-          ${this.loadInfo?.title || "..."}
+          ${this.loadInfo?.title}
           <button
             @click=${() => {
               this.showOverlay = true;
             }}
+            ?disabled=${!this.loadInfo}
             id="edit-board-info"
             title="Edit Board Information"
           >
@@ -969,6 +978,51 @@ export class Main extends LitElement {
         ?inert=${this.showOverlay}
         @pointerdown=${(evt: Event) => {
           evt.stopImmediatePropagation();
+        }}
+        @breadboardfileblankboard=${async (
+          evt: BreadboardUI.Events.FileStorageBlankBoardEvent
+        ) => {
+          const { result, error } = await this.#boardStorage.createBlankBoard(
+            evt.location,
+            evt.fileName
+          );
+
+          if (!result) {
+            this.toast(
+              error || "Unexpected error",
+              BreadboardUI.Events.ToastType.WARNING
+            );
+            return;
+          }
+          this.requestUpdate();
+        }}
+        @breadboardfilestoragedeleterequest=${async (
+          evt: BreadboardUI.Events.FileStorageDeleteRequestEvent
+        ) => {
+          if (
+            !confirm(
+              "Are you sure you want to delete this board? This cannot be undone"
+            )
+          ) {
+            return;
+          }
+
+          if (evt.isActive) {
+            this.url = null;
+            this.descriptor = null;
+          }
+
+          const { result, error } = await this.#boardStorage.deleteFile(
+            evt.location,
+            evt.fileName
+          );
+          if (!result) {
+            this.toast(
+              error || "Unexpected error",
+              BreadboardUI.Events.ToastType.WARNING
+            );
+          }
+          this.requestUpdate();
         }}
         @breadboardblankboardrequest=${async () => {
           if (
