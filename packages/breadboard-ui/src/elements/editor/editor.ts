@@ -117,8 +117,8 @@ export class Editor extends LitElement {
 
     label[for="add-node"] {
       position: absolute;
-      bottom: 16px;
-      right: 16px;
+      bottom: calc(var(--bb-grid-size) * 4);
+      right: calc(var(--bb-grid-size) * 4);
       border-radius: 50px;
       padding: 12px 16px;
       border: 1px solid #d9d9d9;
