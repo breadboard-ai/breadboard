@@ -120,6 +120,7 @@ export class DebuggerGraphProvider implements GraphProvider {
         return [board.title, { url: board.url, handle: undefined }];
       })
     );
+    this.#blank = new URL(boards[0].url, window.location.href);
     this.#items.set("debugger", {
       permission: "granted",
       title: "Boards to Debug",

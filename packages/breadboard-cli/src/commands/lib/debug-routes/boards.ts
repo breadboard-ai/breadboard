@@ -3,9 +3,9 @@ import { loadBoards } from "../utils.js";
 import { ServerGlobals } from "../debug-server.js";
 
 export async function boardList(
-  request: http.IncomingMessage,
+  _request: http.IncomingMessage,
   response: http.ServerResponse,
-  match: URLPatternResult,
+  _match: URLPatternResult,
   globals: ServerGlobals
 ) {
   const { file, options } = globals;
@@ -13,11 +13,19 @@ export async function boardList(
   globals.boards = boards;
 
   const boardsData = JSON.stringify(
-    boards.map((board) => ({
-      url: board.url,
-      version: board.version,
-      title: board.title,
-    }))
+    boards
+      .map((board) => ({
+        url: board.url,
+        version: board.version,
+        title: board.title,
+      }))
+      .sort((aBoard, bBoard) => {
+        const a = aBoard.title.toUpperCase();
+        const b = bBoard.title.toUpperCase();
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      })
   );
 
   response.writeHead(200, {
