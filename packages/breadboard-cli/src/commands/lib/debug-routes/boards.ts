@@ -19,13 +19,7 @@ export async function boardList(
         version: board.version,
         title: board.title,
       }))
-      .sort((aBoard, bBoard) => {
-        const a = aBoard.title.toUpperCase();
-        const b = bBoard.title.toUpperCase();
-        if (a < b) return -1;
-        if (a > b) return 1;
-        return 0;
-      })
+      .sort((a, b) => a.title.localeCompare(b.title))
   );
 
   response.writeHead(200, {

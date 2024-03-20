@@ -30,6 +30,11 @@ import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 
+type MainArguments = {
+  boards: BreadboardUI.Types.Board[];
+  providers?: GraphProvider[];
+};
+
 const getBoardInfo = async (
   loader: GraphLoader,
   url: string
@@ -75,9 +80,6 @@ BreadboardUI.register();
 
 @customElement("bb-main")
 export class Main extends LitElement {
-  @property({ reflect: false })
-  config: { boards: BreadboardUI.Types.Board[] };
-
   @property({ reflect: true })
   url: string | null = null;
 
@@ -323,24 +325,12 @@ export class Main extends LitElement {
     }
   `;
 
-  constructor(config: {
-    boards: BreadboardUI.Types.Board[];
-    providers?: GraphProvider[];
-  }) {
+  constructor(config: MainArguments) {
     super();
 
     this.#providers = config.providers || [];
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
-
-    // Remove boards that are still works-in-progress from production builds.
-    // These boards will have no version.
-    if (import.meta.env.MODE === "production") {
-      config.boards = config.boards.filter((board) => board.version);
-    }
-
-    config.boards.sort((a, b) => a.title.localeCompare(b.title));
-    this.config = config;
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
@@ -923,7 +913,6 @@ export class Main extends LitElement {
           @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
             this.#delay = delayEvent.duration;
           }}
-          .boards=${this.config.boards}
         ></bb-ui-controller>`;
         break;
       }

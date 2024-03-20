@@ -30,9 +30,11 @@ export class ExamplesGraphProvider implements GraphProvider {
       this.#blank = new URL(blank.url, window.location.href);
     }
     const boardMap = new Map(
-      boards.map((board) => {
-        return [board.title, { url: board.url, handle: undefined }];
-      })
+      boards
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map((board) => {
+          return [board.title, { url: board.url, handle: undefined }];
+        })
     );
     this.#items.set("examples", {
       permission: "granted",
