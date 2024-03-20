@@ -40,9 +40,9 @@
       ],
       "files": [
         "vite.config.ts",
-        "debugger/index.html",
-        "debugger/preview.html",
-        "debugger/worker.ts"
+        "src/debugger/index.html",
+        "src/debugger/preview.html",
+        "src/debugger/provider.ts"
       ],
       "output": [
         "dist/debugger"
