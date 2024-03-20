@@ -6,34 +6,34 @@
 
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Board, BoardStorageSupported } from "../../types/types.js";
+import { Board } from "../../types/types.js";
 import {
-  BlankBoardRequestEvent,
-  FileStorageBlankBoardEvent,
-  FileStorageDeleteRequestEvent,
-  FileStorageDisconnectEvent,
-  FileStorageLoadRequestEvent,
-  FileStorageRefreshEvent,
-  FileStorageRenewAccessRequestEvent,
-  FileStorageRequestEvent,
+  GraphProviderBlankBoardEvent,
+  GraphProviderConnectRequestEvent,
+  GraphProviderDeleteRequestEvent,
+  GraphProviderDisconnectEvent,
+  GraphProviderLoadRequestEvent,
+  GraphProviderRefreshEvent,
+  GraphProviderRenewAccessRequestEvent,
   StartEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
+import { GraphProvider } from "@google-labs/breadboard";
+
+type GraphProviderStore = {
+  permission: "unknown" | "prompt" | "granted";
+  title: string;
+  items: Map<string, { url: string; handle: unknown }>;
+};
+
+type ExtendedGraphProvider = GraphProvider & {
+  items(): Map<string, GraphProviderStore>;
+};
 
 @customElement("bb-nav")
 export class Navigation extends LitElement {
   @property()
-  storageSupported: BoardStorageSupported | null = null;
-
-  @property()
-  storageItems: Map<
-    string,
-    {
-      permission: "prompt" | "granted";
-      items: Map<string, { url: string; handle: unknown }>;
-      title: string;
-    }
-  > | null = null;
+  providers: GraphProvider[] = [];
 
   @property({ reflect: true })
   visible = false;
@@ -43,6 +43,9 @@ export class Navigation extends LitElement {
 
   @property()
   url: string | null = null;
+
+  @property()
+  providerOps = 0;
 
   static styles = css`
     * {
@@ -192,7 +195,6 @@ export class Navigation extends LitElement {
     }
 
     .disconnect {
-      margin-right: 0;
       background-image: var(--bb-icon-eject);
     }
 
@@ -207,6 +209,10 @@ export class Navigation extends LitElement {
     .delete-board {
       margin-right: 0;
       background-image: var(--bb-icon-delete);
+    }
+
+    summary button:last-of-type {
+      margin-right: 0;
     }
 
     .renew-access {
@@ -285,42 +291,12 @@ export class Navigation extends LitElement {
   `;
 
   #createEntry(
-    type: "file" | "example",
+    providerName: string,
     location: string,
     fileName: string,
-    url?: string
+    url: string
   ) {
-    switch (type) {
-      case "file": {
-        return html`<li>
-          <button
-            @click=${() => {
-              this.dispatchEvent(
-                new FileStorageLoadRequestEvent(location, fileName)
-              );
-            }}
-            class="file-selector"
-            ?active=${url === this.url}
-          >
-            ${fileName}
-          </button>
-          <button
-            @click=${() => {
-              this.dispatchEvent(
-                new FileStorageDeleteRequestEvent(
-                  location,
-                  fileName,
-                  url === this.url
-                )
-              );
-            }}
-            class="delete-board"
-          >
-            Delete
-          </button>
-        </li>`;
-      }
-
+    switch (providerName) {
       case "example": {
         return html`<li>
           <button
@@ -333,106 +309,144 @@ export class Navigation extends LitElement {
           </button>
         </li>`;
       }
+      default: {
+        return html`<li>
+          <button
+            @click=${() => {
+              this.dispatchEvent(
+                new GraphProviderLoadRequestEvent(providerName, url)
+              );
+            }}
+            class="file-selector"
+            ?active=${url === this.url}
+          >
+            ${fileName}
+          </button>
+          <button
+            @click=${() => {
+              this.dispatchEvent(
+                new GraphProviderDeleteRequestEvent(
+                  providerName,
+                  url,
+                  url === this.url
+                )
+              );
+            }}
+            class="delete-board"
+          >
+            Delete
+          </button>
+        </li>`;
+      }
     }
   }
 
+  #createStoreList(
+    provider: ExtendedGraphProvider,
+    location: string,
+    { permission, items, title }: GraphProviderStore
+  ) {
+    const providerName = provider.constructor.name;
+    const createBlankBoard = html`<button
+      @click=${() => {
+        const fileName = prompt(
+          "What would you like to name this file?",
+          "new-board.json"
+        );
+        if (!fileName) {
+          return;
+        }
+
+        this.dispatchEvent(
+          new GraphProviderBlankBoardEvent(providerName, location, fileName)
+        );
+      }}
+      ?disabled=${permission === "prompt"}
+      class="blank-board"
+      title="Create a new board"
+    >
+      Blank Board
+    </button>`;
+
+    const refreshProvider = html`<button
+      @click=${() => {
+        this.dispatchEvent(
+          new GraphProviderRefreshEvent(providerName, location)
+        );
+      }}
+      ?disabled=${permission === "prompt"}
+      class="refresh"
+      title="Refresh this storage"
+    >
+      Refresh
+    </button>`;
+
+    const disconnectLocation = html`<button
+      @click=${() => {
+        if (!confirm("Are you sure you want to disconnect from this source?")) {
+          return;
+        }
+        this.dispatchEvent(
+          new GraphProviderDisconnectEvent(providerName, location)
+        );
+      }}
+      class="disconnect"
+      title="Disconnect this storage"
+    >
+      Disconnect
+    </button>`;
+
+    const extendedCapabilities = provider.extendedCapabilities();
+    return html` <details open>
+      <summary>
+        <span>${title}</span>
+        ${extendedCapabilities.create ? createBlankBoard : nothing}
+        ${extendedCapabilities.refresh ? refreshProvider : nothing}
+        ${extendedCapabilities.disconnect ? disconnectLocation : nothing}
+      </summary>
+      ${permission === "prompt"
+        ? html` <div class="renew-access">
+            <span>Access has expired for this source</span>
+            <button
+              class="request-renewed-access"
+              @click=${() => {
+                this.dispatchEvent(
+                  new GraphProviderRenewAccessRequestEvent(
+                    providerName,
+                    location
+                  )
+                );
+              }}
+            >
+              Renew
+            </button>
+          </div>`
+        : html`<ul>
+            ${map(items, ([fileName, { url }]) => {
+              return this.#createEntry(providerName, location, fileName, url);
+            })}
+          </ul>`}
+    </details>`;
+  }
+
   render() {
-    let sources: HTMLTemplateResult | symbol = nothing;
-    if (this.storageSupported) {
-      if (this.storageSupported.fileSystem) {
-        sources = html` <section id="sources">
-          <h1>Sources</h1>
-          <button
-            @click=${() => {
-              this.dispatchEvent(new FileStorageRequestEvent());
-            }}
-            title="Add file system storage"
-          >
-            +
-          </button>
-        </section>`;
+    const storageItems = html`${map(this.providers, (provider) => {
+      const extendedProvider = provider as ExtendedGraphProvider;
+      if (!("items" in extendedProvider)) {
+        return nothing;
       }
-    }
 
-    let storageItems: symbol | HTMLTemplateResult = nothing;
-    if (this.storageItems) {
-      storageItems = html`${map(
-        this.storageItems,
-        ([location, { permission, items, title }]) => {
-          return html` <details open>
-            <summary>
-              <span>${title}</span>
-              <button
-                @click=${() => {
-                  const fileName = prompt(
-                    "What would you like to name this file?",
-                    "new-board.json"
-                  );
-                  if (!fileName) {
-                    return;
-                  }
-
-                  this.dispatchEvent(
-                    new FileStorageBlankBoardEvent(location, fileName)
-                  );
-                }}
-                ?disabled=${permission === "prompt"}
-                class="blank-board"
-                title="Create a new board"
-              >
-                Blank Board
-              </button>
-              <button
-                @click=${() => {
-                  this.dispatchEvent(new FileStorageRefreshEvent(location));
-                }}
-                ?disabled=${permission === "prompt"}
-                class="refresh"
-                title="Refresh this storage"
-              >
-                Refresh
-              </button>
-              <button
-                @click=${() => {
-                  if (
-                    !confirm(
-                      "Are you sure you want to disconnect from this source?"
-                    )
-                  ) {
-                    return;
-                  }
-
-                  this.dispatchEvent(new FileStorageDisconnectEvent(location));
-                }}
-                class="disconnect"
-                title="Disconnect this storage"
-              >
-                Disconnect
-              </button>
-            </summary>
-            ${permission === "prompt"
-              ? html` <div class="renew-access">
-                  <span>Access has expired for this source</span>
-                  <button
-                    class="request-renewed-access"
-                    @click=${() => {
-                      this.dispatchEvent(
-                        new FileStorageRenewAccessRequestEvent(location)
-                      );
-                    }}
-                  >
-                    Renew
-                  </button>
-                </div>`
-              : html`<ul>
-                  ${map(items, ([fileName, { url }]) => {
-                    return this.#createEntry("file", location, fileName, url);
-                  })}
-                </ul>`}
-          </details>`;
+      return html`${map(
+        extendedProvider.items(),
+        ([location, providerStore]) => {
+          return this.#createStoreList(
+            extendedProvider,
+            location,
+            providerStore
+          );
         }
       )}`;
-    }
+    })}`;
 
     let exampleItems: symbol | HTMLTemplateResult = nothing;
     if (this.exampleBoards) {
@@ -440,24 +454,38 @@ export class Navigation extends LitElement {
         <summary>Example Boards</summary>
         <ul>
           ${map(this.exampleBoards, (board) =>
-            this.#createEntry("example", board.url, board.title)
+            this.#createEntry("example", board.url, board.title, board.url)
           )}
         </ul>
       </details>`;
     }
 
-    return html`<nav id="menu">
-      <section id="blank-board">
-        <h1>Make a blank board</h1>
+    const supportsFileSystem =
+      this.providers.find((provider) => {
+        return (
+          provider.constructor.name === "FileSystemGraphProvider" &&
+          provider.isSupported()
+        );
+      }) !== undefined;
+
+    let sources: HTMLTemplateResult | symbol = nothing;
+    if (supportsFileSystem) {
+      sources = html` <section id="sources">
+        <h1>Sources</h1>
         <button
           @click=${() => {
-            this.dispatchEvent(new BlankBoardRequestEvent());
+            this.dispatchEvent(
+              new GraphProviderConnectRequestEvent("FileSystemGraphProvider")
+            );
           }}
-          title="Create a blank board"
+          title="Add file system storage"
         >
           +
         </button>
-      </section>
+      </section>`;
+    }
+
+    return html`<nav id="menu">
       ${sources}
       <div class="items">${storageItems} ${exampleItems}</div>
     </nav>`;

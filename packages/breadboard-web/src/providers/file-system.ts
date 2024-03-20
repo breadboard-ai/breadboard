@@ -5,13 +5,14 @@
  */
 
 import * as KeyVal from "idb-keyval";
-import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
 } from "@google-labs/breadboard";
 import { BLANK_BOARD } from "./blank-board";
+import { GraphProviderStore } from "./types";
+import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
 type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -61,36 +62,16 @@ const KEY = `bb-storage-locations`;
 const FILE_SYSTEM_PROTOCOL = "file:";
 const FILE_SYSTEM_HOST_PREFIX = "fsapi";
 
-const createFileSystemURL = (location: string, fileName: string) => {
-  return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
-};
-
-const parseFileSystemURL = (url: URL) => {
-  if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
-    throw new Error("Unsupported protocol");
-  }
-  const fileName = url.pathname?.substring(1);
-  const [prefix, location] = url.host.split("~");
-  if (prefix !== "fsapi") {
-    throw new Error("Unsupported protocol");
-  }
-  if (!location || !fileName) {
-    throw new Error("Invalid path");
-  }
-
-  return { location, fileName };
-};
-
-export class FileStorage implements GraphProvider {
-  static #instance: FileStorage;
+export class FileSystemGraphProvider implements GraphProvider {
+  static #instance: FileSystemGraphProvider;
   static instance() {
     if (!this.#instance) {
-      this.#instance = new FileStorage();
+      this.#instance = new FileSystemGraphProvider();
     }
     return this.#instance;
   }
 
-  #items = new Map<
+  #items: Map<string, GraphProviderStore<FileSystemFileHandle>> = new Map<
     string,
     {
       permission: "unknown" | "prompt" | "granted";
@@ -102,14 +83,149 @@ export class FileStorage implements GraphProvider {
 
   private constructor() {}
 
+  createURL(location: string, fileName: string) {
+    return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
+  }
+
+  parseURL(url: URL) {
+    if (url.protocol !== FILE_SYSTEM_PROTOCOL) {
+      throw new Error("Unsupported protocol");
+    }
+    const fileName = url.pathname?.substring(1);
+    const [prefix, location] = url.host.split("~");
+    if (prefix !== "fsapi") {
+      throw new Error("Unsupported protocol");
+    }
+    if (!location || !fileName) {
+      throw new Error("Invalid path");
+    }
+
+    return { location, fileName };
+  }
+
+  async load(url: URL) {
+    const { location, fileName } = this.parseURL(url);
+    const items = this.items();
+
+    const fileLocation = items.get(location);
+    if (!fileLocation) {
+      return null;
+    }
+
+    const file = fileLocation.items.get(fileName);
+    if (!file) {
+      return null;
+    }
+
+    const { handle } = file;
+    const data = await handle.getFile();
+    const boardDataAsText = await data.text();
+    try {
+      const descriptor = JSON.parse(boardDataAsText) as GraphDescriptor;
+      descriptor.url = this.createURL(location, fileName);
+      return descriptor;
+    } catch (err) {
+      // Bad data.
+      console.error(err);
+    }
+    return null;
+  }
+
+  async save(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
+    if (!this.canProvide(url)) {
+      return { result: false };
+    }
+
+    const { location, fileName } = this.parseURL(url);
+    const items = this.items();
+    const fileLocation = items.get(location);
+    if (!fileLocation) {
+      return { result: false };
+    }
+
+    const file = fileLocation.items.get(fileName);
+    if (!file) {
+      return { result: false };
+    }
+
+    try {
+      const { handle } = file;
+      const stream = await handle.createWritable();
+      const data = structuredClone(descriptor);
+      delete data["url"];
+
+      await stream.write(JSON.stringify(data, null, 2));
+      await stream.close();
+      return { result: true };
+    } catch (err) {
+      console.error(err);
+      return { result: false };
+    }
+  }
+
+  async delete(url: URL): Promise<{ result: boolean; error?: string }> {
+    if (!this.canProvide(url)) {
+      return { result: false };
+    }
+
+    const { location, fileName } = this.parseURL(url);
+    const fileLocation = this.#locations.get(location);
+    if (!fileLocation) {
+      return { result: false, error: "Unable to locate file" };
+    }
+
+    try {
+      await fileLocation.removeEntry(fileName);
+    } catch (err) {
+      return { result: false, error: "Unable to locate file" };
+    }
+
+    await this.#refreshAllItems();
+    return { result: true };
+  }
+
+  async connect() {
+    try {
+      const handle = await window.showDirectoryPicker({
+        mode: "readwrite",
+      });
+      this.#locations.set(
+        encodeURIComponent(handle.name.toLocaleLowerCase()),
+        handle
+      );
+      await this.#storeLocations();
+      await this.#refreshAllItems();
+    } catch (err) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async disconnect(location: string) {
+    try {
+      this.#locations.delete(location);
+      await this.#storeLocations();
+      await this.#refreshAllItems();
+    } catch (err) {
+      return false;
+    }
+    return true;
+  }
+
+  async refresh(location: string): Promise<boolean> {
+    return this.#refreshItems(location);
+  }
+
   #storeLocations() {
     KeyVal.set(KEY, this.#locations);
   }
 
-  getSupported(): BreadboardUI.Types.BoardStorageSupported {
-    return {
-      fileSystem: "showDirectoryPicker" in window,
-    };
+  isSupported(): boolean {
+    return "showDirectoryPicker" in window;
   }
 
   items() {
@@ -183,7 +299,7 @@ export class FileStorage implements GraphProvider {
       entries.push([
         name,
         {
-          url: createFileSystemURL(
+          url: this.createURL(
             encodeURIComponent(handle.name.toLocaleLowerCase()),
             encodeURIComponent(entry.name.toLocaleLowerCase())
           ),
@@ -205,39 +321,12 @@ export class FileStorage implements GraphProvider {
     return this.#refreshAllItems();
   }
 
-  async disconnect(location: string) {
-    this.#locations.delete(location);
-    await this.#storeLocations();
-    return this.#refreshAllItems();
-  }
-
-  async deleteFile(
-    location: string,
-    fileName: string
-  ): Promise<{ result: boolean; error?: string }> {
-    const fileLocation = this.#locations.get(location);
-    if (!fileLocation) {
-      return { result: false, error: "Unable to locate file" };
+  async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+    if (!this.canProvide(url)) {
+      return { result: false };
     }
 
-    try {
-      await fileLocation.removeEntry(fileName);
-    } catch (err) {
-      return { result: false, error: "Unable to locate file" };
-    }
-
-    await this.#refreshAllItems();
-    return { result: true };
-  }
-
-  async refresh(location: string): Promise<boolean> {
-    return this.#refreshItems(location);
-  }
-
-  async createBlankBoard(
-    location: string,
-    fileName: string
-  ): Promise<{ result: boolean; error?: string }> {
+    const { location, fileName } = this.parseURL(url);
     const handle = this.#locations.get(location);
     if (!handle) {
       return { result: false, error: "Unable to find directory" };
@@ -256,12 +345,11 @@ export class FileStorage implements GraphProvider {
     await this.#refreshItems(location);
 
     // Now populate it.
-    const url = new URL(createFileSystemURL(location, fileName));
-    await this.saveBoardFile(url, BLANK_BOARD);
+    await this.save(url, BLANK_BOARD);
     return { result: true };
   }
 
-  async restoreAndValidateHandles() {
+  async restore() {
     const locations = await KeyVal.get(KEY);
     if (!locations) {
       return;
@@ -272,109 +360,28 @@ export class FileStorage implements GraphProvider {
   }
 
   createGraphURL(location: string, fileName: string) {
-    return createFileSystemURL(location, fileName);
+    return this.createURL(location, fileName);
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
     const canProvide =
       url.protocol === FILE_SYSTEM_PROTOCOL &&
       url.host.startsWith(FILE_SYSTEM_HOST_PREFIX);
-    return canProvide ? { load: canProvide, save: canProvide } : false;
-  }
-
-  async load(url: URL) {
-    const { location, fileName } = parseFileSystemURL(url);
-    return this.getBoardFile(location, fileName);
-  }
-
-  async getBoardFile(location: string, fileName: string) {
-    const items = this.items();
-
-    const fileLocation = items.get(location);
-    if (!fileLocation) {
-      return null;
-    }
-
-    const file = fileLocation.items.get(fileName);
-    if (!file) {
-      return null;
-    }
-
-    const { handle } = file;
-    const data = await handle.getFile();
-    const boardDataAsText = await data.text();
-    try {
-      const descriptor = JSON.parse(boardDataAsText) as GraphDescriptor;
-      descriptor.url = createFileSystemURL(location, fileName);
-      return descriptor;
-    } catch (err) {
-      // Bad data.
-      console.error(err);
-    }
-    return null;
-  }
-
-  async saveBoardFile(
-    url: URL,
-    descriptor: GraphDescriptor
-  ): Promise<{ result: boolean; error?: string; url?: string }> {
-    if (!this.canProvide(url)) {
-      return { result: false };
-    }
-
-    const { location, fileName } = parseFileSystemURL(url);
-    const items = this.items();
-    const fileLocation = items.get(location);
-    if (!fileLocation) {
-      return { result: false };
-    }
-
-    const file = fileLocation.items.get(fileName);
-    if (!file) {
-      return { result: false };
-    }
-
-    try {
-      const { handle } = file;
-      const stream = await handle.createWritable();
-      const data = structuredClone(descriptor);
-      delete data["url"];
-
-      await stream.write(JSON.stringify(data, null, 2));
-      await stream.close();
-      return { result: true };
-    } catch (err) {
-      console.error(err);
-      return { result: false };
-    }
-  }
-
-  async request(type: keyof BreadboardUI.Types.BoardStorageSupported) {
-    switch (type) {
-      case "fileSystem": {
-        try {
-          const handle = await window.showDirectoryPicker({
-            mode: "readwrite",
-          });
-          this.#locations.set(
-            encodeURIComponent(handle.name.toLocaleLowerCase()),
-            handle
-          );
-          await this.#storeLocations();
-          await this.#refreshAllItems();
-        } catch (err) {
-          // User cancelled the action.
+    return canProvide
+      ? {
+          load: canProvide,
+          save: canProvide,
+          delete: canProvide,
         }
+      : false;
+  }
 
-        return true;
-      }
-
-      default: {
-        console.warn("Unsupported storage");
-        break;
-      }
-    }
-
-    return false;
+  extendedCapabilities(): GraphProviderExtendedCapabilities {
+    return {
+      create: true,
+      connect: true,
+      disconnect: true,
+      refresh: true,
+    };
   }
 }

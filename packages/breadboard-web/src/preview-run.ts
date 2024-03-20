@@ -19,12 +19,12 @@ import {
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
-import { FileStorage } from "./file-storage/file-storage";
+import { FileSystemGraphProvider } from "./providers/file-system";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
 export const getBoardInfo = async (url: string) => {
-  const loader = createLoader([FileStorage.instance()]);
+  const loader = createLoader([FileSystemGraphProvider.instance()]);
   const base = new URL(window.location.href);
   const graph = await loader.load(url, { base });
   if (!graph) {

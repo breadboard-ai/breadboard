@@ -94,7 +94,3 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
-
-export interface BoardStorageSupported {
-  fileSystem: boolean;
-}

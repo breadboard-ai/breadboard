@@ -5,7 +5,11 @@
  */
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
-import { GraphProvider, GraphProviderCapabilities } from "./types.js";
+import {
+  GraphProvider,
+  GraphProviderCapabilities,
+  GraphProviderExtendedCapabilities,
+} from "./types.js";
 
 export const loadFromFile = async (path: string) => {
   if (typeof globalThis.process === "undefined")
@@ -33,12 +37,33 @@ export const loadWithFetch = async (url: string | URL) => {
 };
 
 export class DefaultGraphProvider implements GraphProvider {
+  isSupported(): boolean {
+    return true;
+  }
+
+  extendedCapabilities(): GraphProviderExtendedCapabilities {
+    return {
+      create: false,
+      connect: false,
+      disconnect: false,
+      refresh: false,
+    };
+  }
+
   canProvide(url: URL): false | GraphProviderCapabilities {
     if (url.protocol === "http:" || url.protocol === "https:") {
-      return { load: true, save: false };
+      return {
+        load: true,
+        save: false,
+        delete: false,
+      };
     }
     if (url.protocol === "file:" && url.hostname === "") {
-      return { load: true, save: false };
+      return {
+        load: true,
+        save: false,
+        delete: false,
+      };
     }
     return false;
   }
@@ -52,5 +77,40 @@ export class DefaultGraphProvider implements GraphProvider {
       return loadWithFetch(url.href);
     }
     return null;
+  }
+
+  async save(
+    _url: URL,
+    _descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Save not implemented for DefaultGraphProvider");
+  }
+
+  async delete(_url: URL): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Delete not implemented for DefaultGraphProvider");
+  }
+
+  async connect(_location?: string): Promise<boolean> {
+    throw new Error("Connect not implemented for DefaultGraphProvider");
+  }
+
+  async disconnect(_location: string): Promise<boolean> {
+    throw new Error("Disconnect not implemented for DefaultGraphProvider");
+  }
+
+  async refresh(_location: string): Promise<boolean> {
+    throw new Error("Refresh not implemented for DefaultGraphProvider");
+  }
+
+  async createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Create Blank not implemented for DefaultGraphProvider");
+  }
+
+  createURL(_location: string, _fileName: string): string {
+    throw new Error("createURL not implemented for DefaultGraphProvider");
+  }
+
+  parseURL(_url: URL): { location: string; fileName: string } {
+    throw new Error("parseURL not implemented for DefaultGraphProvider");
   }
 }

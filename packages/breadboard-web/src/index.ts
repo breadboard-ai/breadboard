@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileStorage } from "./file-storage/file-storage.js";
+import { FileSystemGraphProvider } from "./providers/file-system.js";
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -28,6 +28,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
+import { IDBGraphProvider } from "./providers/indexed-db.js";
 
 const getBoardInfo = async (
   loader: GraphLoader,
@@ -107,6 +108,9 @@ export class Main extends LitElement {
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
 
+  @state()
+  providerOps = 0;
+
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
@@ -114,9 +118,12 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
-  #boardStorage = FileStorage.instance();
+  #providers = [
+    FileSystemGraphProvider.instance(),
+    IDBGraphProvider.instance(),
+  ];
   // Single loader instance for all boards.
-  #loader = createLoader([this.#boardStorage]);
+  #loader = createLoader(this.#providers);
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
@@ -351,7 +358,7 @@ export class Main extends LitElement {
 
     Promise.all([
       loadKits([GeminiKit]),
-      this.#boardStorage.restoreAndValidateHandles(),
+      ...this.#providers.map((provider) => provider.restore()),
     ]).then(([kits]) => {
       this.kits = kits;
 
@@ -419,14 +426,18 @@ export class Main extends LitElement {
     ) {
       return;
     }
-
     const boardUrl = new URL(this.loadInfo.url);
-    const capabilities = this.#boardStorage.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
+    const provider = this.#getProviderForURL(boardUrl);
+    if (!provider) {
+      this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
       return;
     }
 
-    const { result, url } = await this.#boardStorage.saveBoardFile(
+    const capabilities = provider.canProvide(boardUrl);
+    if (!capabilities || !capabilities.save) {
+      return;
+    }
+    const { result } = await provider.save(
       boardUrl,
       this.loadInfo.graphDescriptor
     );
@@ -435,17 +446,6 @@ export class Main extends LitElement {
     }
 
     this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
-
-    if (!url) {
-      return;
-    }
-    try {
-      this.loadInfo = await getBoardInfo(this.#loader, url);
-      this.#setUrlParam("board", url);
-      this.url = url;
-    } catch (err) {
-      this.toast("Unable to load board", BreadboardUI.Events.ToastType.ERROR);
-    }
   }
 
   get status() {
@@ -580,6 +580,17 @@ export class Main extends LitElement {
       ...this.loadInfo,
       graphDescriptor,
     };
+  }
+
+  #getProviderByName(name: string) {
+    return (
+      this.#providers.find((provider) => provider.constructor.name === name) ||
+      null
+    );
+  }
+
+  #getProviderForURL(url: URL) {
+    return this.#providers.find((provider) => provider.canProvide(url));
   }
 
   render() {
@@ -928,8 +939,9 @@ export class Main extends LitElement {
     if (this.loadInfo && this.loadInfo.url) {
       try {
         const url = new URL(this.loadInfo.url);
-        const capabilities = this.#boardStorage.canProvide(url);
-        if (capabilities && capabilities.save) {
+        const provider = this.#getProviderForURL(url);
+        const capabilities = provider?.canProvide(url);
+        if (provider && capabilities && capabilities.save) {
           saveButton = html`<button
             id="save-board"
             title="Save Board BGL"
@@ -989,34 +1001,42 @@ export class Main extends LitElement {
         ${cache(content)}
       </div>
       <bb-nav
-        .storageSupported=${this.#boardStorage.getSupported()}
-        .storageItems=${this.#boardStorage.items()}
+        .providers=${this.#providers}
         .exampleBoards=${this.config.boards}
         .visible=${this.showNav}
         .url=${this.url}
+        .providerOps=${this.providerOps}
         ?inert=${this.showOverlay}
         @pointerdown=${(evt: Event) => {
           evt.stopImmediatePropagation();
         }}
-        @breadboardfileblankboard=${async (
-          evt: BreadboardUI.Events.FileStorageBlankBoardEvent
+        @graphproviderblankboard=${async (
+          evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
         ) => {
-          const { result, error } = await this.#boardStorage.createBlankBoard(
-            evt.location,
-            evt.fileName
-          );
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            this.toast(
+              "Unable to find provider",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+          const url = new URL(provider.createURL(evt.location, evt.fileName));
+          const { result, error } = await provider.createBlank(url);
 
           if (!result) {
             this.toast(
-              error || "Unable to save board",
+              error || "Unable to create blank board",
               BreadboardUI.Events.ToastType.WARNING
             );
             return;
           }
-          this.requestUpdate();
+
+          // Trigger a re-render.
+          this.providerOps++;
         }}
-        @breadboardfilestoragedeleterequest=${async (
-          evt: BreadboardUI.Events.FileStorageDeleteRequestEvent
+        @graphproviderdeleterequest=${async (
+          evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
         ) => {
           if (
             !confirm(
@@ -1026,6 +1046,7 @@ export class Main extends LitElement {
             return;
           }
 
+          // TODO: Improve handling of this case.
           if (evt.isActive) {
             this.url = null;
             this.descriptor = null;
@@ -1033,10 +1054,16 @@ export class Main extends LitElement {
             this.#setUrlParam("board", null);
           }
 
-          const { result, error } = await this.#boardStorage.deleteFile(
-            evt.location,
-            evt.fileName
-          );
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            this.toast(
+              "Unable to delete file",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+
+          const { result, error } = await provider.delete(new URL(evt.url));
           if (!result) {
             this.toast(
               error || "Unexpected error",
@@ -1044,18 +1071,8 @@ export class Main extends LitElement {
             );
           }
 
-          this.requestUpdate();
-        }}
-        @breadboardblankboardrequest=${async () => {
-          if (
-            !confirm(
-              "Are you sure you want to create a blank board? You will lose any unsaved work"
-            )
-          ) {
-            return;
-          }
-
-          await this.#createBlankBoard();
+          // Trigger a re-render.
+          this.providerOps++;
         }}
         @breadboardstart=${(evt: BreadboardUI.Events.StartEvent) => {
           if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
@@ -1070,10 +1087,15 @@ export class Main extends LitElement {
 
           this.#onStartBoard(evt);
         }}
-        @breadboardfilestoragerefresh=${async (
-          evt: BreadboardUI.Events.FileStorageRefreshEvent
+        @graphproviderrefresh=${async (
+          evt: BreadboardUI.Events.GraphProviderRefreshEvent
         ) => {
-          const refreshed = await this.#boardStorage.refresh(evt.location);
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            return;
+          }
+
+          const refreshed = await provider.refresh(evt.location);
           if (refreshed) {
             this.toast(
               "Source files refreshed",
@@ -1085,22 +1107,38 @@ export class Main extends LitElement {
               BreadboardUI.Events.ToastType.WARNING
             );
           }
-          this.requestUpdate();
+
+          // Trigger a re-render.
+          this.providerOps++;
         }}
-        @breadboardfilestoragedisconnect=${async (
-          evt: BreadboardUI.Events.FileStorageDisconnectEvent
+        @graphproviderdisconnect=${async (
+          evt: BreadboardUI.Events.GraphProviderDisconnectEvent
         ) => {
-          await this.#boardStorage.disconnect(evt.location);
-          this.requestUpdate();
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            return;
+          }
+
+          await provider.disconnect(evt.location);
+
+          // Trigger a re-render.
+          this.providerOps++;
         }}
-        @breadboardfilestoragerenewaccesssrequest=${async (
-          evt: BreadboardUI.Events.FileStorageRenewAccessRequestEvent
+        @graphproviderrenewaccesssrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
         ) => {
-          await this.#boardStorage.renewAccessRequest(evt.location);
-          this.requestUpdate();
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!(provider instanceof FileSystemGraphProvider)) {
+            return;
+          }
+
+          await provider.renewAccessRequest(evt.location);
+
+          // Trigger a re-render.
+          this.providerOps++;
         }}
-        @breadboardfilestorageloadrequest=${async (
-          evt: BreadboardUI.Events.FileStorageLoadRequestEvent
+        @graphproviderloadrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
           if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
             if (
@@ -1113,26 +1151,29 @@ export class Main extends LitElement {
           }
 
           try {
-            const url = this.#boardStorage.createGraphURL(
-              evt.location,
-              evt.fileName
-            );
-
-            this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+            this.#onStartBoard(new BreadboardUI.Events.StartEvent(evt.url));
           } catch (err) {
             this.toast(
-              `Unable to load file: ${evt.fileName}`,
+              `Unable to load file: ${evt.url}`,
               BreadboardUI.Events.ToastType.ERROR
             );
           }
         }}
-        @breadboardfilestoragerequest=${async () => {
-          const success = await this.#boardStorage.request("fileSystem");
+        @graphproviderconnectrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!(provider instanceof FileSystemGraphProvider)) {
+            return;
+          }
+
+          const success = await provider.connect();
           if (!success) {
             return;
           }
 
-          this.requestUpdate();
+          // Trigger a re-render.
+          this.providerOps++;
         }}
       ></bb-nav> `;
 
