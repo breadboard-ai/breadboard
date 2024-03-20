@@ -1016,7 +1016,6 @@ export class Main extends LitElement {
       </div>
       <bb-nav
         .providers=${this.#providers}
-        .exampleBoards=${this.config.boards}
         .visible=${this.showNav}
         .url=${this.url}
         .providerOps=${this.providerOps}

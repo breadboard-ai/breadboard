@@ -6,7 +6,6 @@
 
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Board } from "../../types/types.js";
 import {
   GraphProviderBlankBoardEvent,
   GraphProviderConnectRequestEvent,
@@ -26,9 +25,6 @@ export class Navigation extends LitElement {
 
   @property({ reflect: true })
   visible = false;
-
-  @property()
-  exampleBoards: Board[] | null = null;
 
   @property()
   url: string | null = null;
