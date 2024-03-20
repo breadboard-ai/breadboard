@@ -24,8 +24,6 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
-// This looks like a generic utility function that could be moved to a shared
-// location.
 export const baseURLFromContext = (context: GraphLoaderContext) => {
   if (context.outerGraph?.url) return new URL(context.outerGraph.url);
   const invokingBoardURL = context.board?.url;

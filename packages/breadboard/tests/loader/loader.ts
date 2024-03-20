@@ -37,6 +37,6 @@ test("relativeBasePath falls back to explicit option", (t) => {
   );
 });
 
-test("relativeBasePath falls back to import URL", (t) => {
+test("relativeBasePath falls back to SENTINEL_BASE_URL", (t) => {
   t.is(baseURLFromContext({}).href, SENTINEL_BASE_URL.href);
 });
