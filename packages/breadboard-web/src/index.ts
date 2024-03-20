@@ -1027,7 +1027,7 @@ export class Main extends LitElement {
           if (!result) {
             this.toast(
               error || "Unable to create blank board",
-              BreadboardUI.Events.ToastType.WARNING
+              BreadboardUI.Events.ToastType.ERROR
             );
             return;
           }
@@ -1067,7 +1067,7 @@ export class Main extends LitElement {
           if (!result) {
             this.toast(
               error || "Unexpected error",
-              BreadboardUI.Events.ToastType.WARNING
+              BreadboardUI.Events.ToastType.ERROR
             );
           }
 

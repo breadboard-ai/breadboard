@@ -148,6 +148,11 @@ export class IDBGraphProvider implements GraphProvider {
   }
 
   async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+    const existingBoard = await this.load(url);
+    if (existingBoard) {
+      return { result: false, error: "Unable to create: board already exists" };
+    }
+
     return this.save(url, BLANK_BOARD);
   }
 
