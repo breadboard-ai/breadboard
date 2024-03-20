@@ -43,7 +43,8 @@ export type GraphProvider = {
 };
 
 export type GraphLoaderContext = {
-  base: URL;
+  base?: URL;
+  board?: GraphDescriptor;
   outerGraph?: GraphDescriptor;
 };
 

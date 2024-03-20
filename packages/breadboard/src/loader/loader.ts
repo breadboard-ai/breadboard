@@ -24,6 +24,16 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
+// This looks like a generic utility function that could be moved to a shared
+// location.
+export const baseURLFromContext = (context: GraphLoaderContext) => {
+  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
+  const invokingBoardURL = context.board?.url;
+  if (invokingBoardURL) return new URL(invokingBoardURL);
+  if (context.base) return context.base;
+  return SENTINEL_BASE_URL;
+};
+
 export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
 
@@ -80,13 +90,13 @@ export class Loader implements GraphLoader {
     context: GraphLoaderContext
   ): Promise<GraphDescriptor | null> {
     const supergraph = context.outerGraph;
-    const isEphemeralOuterGraph =
+    // This is a special case, when we don't have URLs to resolve against.
+    // We are a hash path, and we are inside of a supergraph that doesn't
+    // have its own URL. We can only query the supergraph directly.
+    // No other URL resolution is possible.
+    const isEphemeralSupergraph =
       path.startsWith("#") && supergraph && !supergraph.url;
-    if (isEphemeralOuterGraph) {
-      // Can only query the supergraph.
-      if (!supergraph) {
-        throw new Error("Cannot load a graph by path without a supergraph");
-      }
+    if (isEphemeralSupergraph) {
       const graph = this.#getSubgraph(
         null,
         path.substring(1),
@@ -98,7 +108,9 @@ export class Loader implements GraphLoader {
       return graph;
     }
 
-    const url = new URL(path, context.base);
+    const base = baseURLFromContext(context);
+
+    const url = new URL(path, base);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
