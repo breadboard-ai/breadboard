@@ -5,7 +5,7 @@
  */
 
 import { FileStorage } from "./file-storage/file-storage.js";
-import { run, RunConfig } from "@google-labs/breadboard/harness";
+import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -603,7 +603,7 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .run=${currentRun}
           .kits=${this.kits}
-          .graphProviders=${[this.#boardStorage]}
+          .loader=${this.#loader}
           .status=${this.status}
           .boardId=${this.#boardId}
           @breadboardfiledrop=${async (
@@ -637,14 +637,15 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const runConfig: RunConfig = {
-              url: this.loadInfo.graphDescriptor.url,
-              runner,
-              diagnostics: true,
-              kits: this.kits,
-              graphProviders: [this.#boardStorage],
-            };
-            this.#runBoard(run(runConfig));
+            this.#runBoard(
+              run({
+                url: this.loadInfo.graphDescriptor.url,
+                runner,
+                diagnostics: true,
+                kits: this.kits,
+                loader: this.#loader,
+              })
+            );
           }}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
@@ -662,7 +663,7 @@ export class Main extends LitElement {
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
               kits: this.kits,
-              graphProviders: [this.#boardStorage],
+              loader: this.#loader,
             });
 
             let editResult: Promise<EditResult>;

@@ -9,7 +9,7 @@ import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
-  GraphProvider,
+  GraphLoader,
   InspectableNode,
   InspectablePort,
   Kit,
@@ -31,7 +31,7 @@ export class NodeInfo extends LitElement {
   kits: Kit[] = [];
 
   @property()
-  graphProviders: GraphProvider[] = [];
+  loader: GraphLoader | null = null;
 
   @property()
   editable = false;
@@ -52,7 +52,7 @@ export class NodeInfo extends LitElement {
       const descriptor = loadInfo.graphDescriptor;
       const breadboardGraph = inspect(descriptor, {
         kits: this.kits,
-        graphProviders: this.graphProviders,
+        loader: this.loader || undefined,
       });
       const node = breadboardGraph.nodeById(nodeId);
 
@@ -283,7 +283,7 @@ export class NodeInfo extends LitElement {
     const descriptor = this.loadInfo.graphDescriptor;
     const breadboardGraph = inspect(descriptor, {
       kits: this.kits,
-      graphProviders: this.graphProviders,
+      loader: this.loader || undefined,
     });
     const node = breadboardGraph.nodeById(id);
     if (!node) {

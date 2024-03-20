@@ -16,7 +16,7 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { GraphProvider, InspectableRun, Kit } from "@google-labs/breadboard";
+import { GraphLoader, InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
@@ -50,7 +50,7 @@ export class UI extends LitElement {
   kits: Kit[] = [];
 
   @property()
-  graphProviders: GraphProvider[] = [];
+  loader: GraphLoader | null = null;
 
   @property({ reflect: true })
   status = STATUS.RUNNING;
@@ -242,7 +242,7 @@ export class UI extends LitElement {
       .editable=${true}
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
-      .graphProviders=${this.graphProviders}
+      .loader=${this.loader}
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
@@ -346,7 +346,7 @@ export class UI extends LitElement {
           .selectedNodeId=${this.selectedNodeId}
           .loadInfo=${this.loadInfo}
           .kits=${this.kits}
-          .graphProviders=${this.graphProviders}
+          .loader=${this.loader}
           .editable=${true}
           name="Selected Node"
           slot="slot-1"

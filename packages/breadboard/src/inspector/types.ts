@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
-import { GraphProvider } from "../loader/types.js";
+import { GraphLoader } from "../loader/types.js";
 import {
   Edge,
   ErrorResponse,
@@ -176,10 +176,9 @@ export type InspectableGraphOptions = {
    */
   kits?: Kit[];
   /**
-   * Optional, a list of graph providers to use when
-   * inspecting the graph.
+   * The loader to use when loading boards.
    */
-  graphProviders?: GraphProvider[];
+  loader?: GraphLoader;
 };
 
 /**
