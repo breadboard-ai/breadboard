@@ -20,7 +20,7 @@ const getGraphDescriptor = async (
 ) => {
   if (typeof entry === "string") {
     const loader = createLoader();
-    const result = await loader.load(new URL(entry, base));
+    const result = await loader.load(entry, { base });
     if (result === null) {
       throw new Error(`Unable to load graph descriptor from "${entry}"`);
     }

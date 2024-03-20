@@ -15,7 +15,7 @@ const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 const load = async (url: string) => {
   const base = BASE_URL;
   const loader = createLoader();
-  const result = await loader.load(new URL(url, base));
+  const result = await loader.load(url, { base });
   if (!result) return undefined;
   return inspectableGraph(result);
 };

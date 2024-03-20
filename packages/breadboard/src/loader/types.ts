@@ -43,21 +43,44 @@ export type GraphProvider = {
 };
 
 /**
+ * Describes the context in which a graph is being loaded.
+ * It's a subset of the `NodeHandlerContext` type.
+ * @see [NodeHandlerContext]
+ *
+ */
+export type GraphLoaderContext = {
+  /**
+   * The base URL for the graph being loaded. This may be a URL of the graph
+   * that is loading the graph, or it may be the URL of a graph higher in
+   * the graph hierarchy, since some graphs may be ephemeral: created without
+   * a URL.
+   */
+  base?: URL;
+  /**
+   * The board that is loading this graph.
+   */
+  board?: GraphDescriptor;
+  /**
+   * The graph that contains the graph being loaded. Usually the same as
+   * `board`, but may be different in some cases.
+   * TODO: Figure out what those cases are.
+   */
+  outerGraph?: GraphDescriptor;
+};
+
+/**
  * Represents a loader for `GraphDescriptor` instances. This is the main
  * interface for loading graphs in Breadboard.
  */
 export type GraphLoader = {
   /**
-   *
-   * @param url -- the URL to load
-   * @param supergraph -- the graph within which the `url` of the graph being
-   *   loaded. When supplied, the `load` is being invoked from a node in a
-   *   subgraph of a `supergraph`. This serves as a context for loading URLs
-   *   that are just hashes, referring to other graphs within the same supergraph.
+   * Loads a `GraphDescriptor` instance from a given path. May return `null`.
+   * @param path -- the path to load
+   * @param context -- the context in which to load the graph
    * @returns -- the loaded graph, or `null` if it could not be loaded.
    */
   load: (
-    url: URL | string,
-    supergraph?: GraphDescriptor
+    path: string,
+    context: GraphLoaderContext
   ) => Promise<GraphDescriptor | null>;
 };

@@ -5,7 +5,11 @@
  */
 
 import type { GraphDescriptor, SubGraphs } from "../types.js";
-import type { GraphProvider, GraphLoader } from "./types.js";
+import type {
+  GraphProvider,
+  GraphLoader,
+  GraphLoaderContext,
+} from "./types.js";
 import { DefaultGraphProvider } from "./default.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
@@ -20,7 +24,15 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
-export class BoardLoader implements GraphLoader {
+export const baseURLFromContext = (context: GraphLoaderContext) => {
+  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
+  const invokingBoardURL = context.board?.url;
+  if (invokingBoardURL) return new URL(invokingBoardURL);
+  if (context.base) return context.base;
+  return SENTINEL_BASE_URL;
+};
+
+export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
 
   constructor(graphProviders: GraphProvider[]) {
@@ -72,24 +84,31 @@ export class BoardLoader implements GraphLoader {
   }
 
   async load(
-    url: URL | string,
-    supergraph?: GraphDescriptor
+    path: string,
+    context: GraphLoaderContext
   ): Promise<GraphDescriptor | null> {
-    if (typeof url === "string") {
-      // Can only query the supergraph.
-      if (!supergraph) {
-        throw new Error("Cannot load a graph by path without a supergraph");
-      }
+    const supergraph = context.outerGraph;
+    // This is a special case, when we don't have URLs to resolve against.
+    // We are a hash path, and we are inside of a supergraph that doesn't
+    // have its own URL. We can only query the supergraph directly.
+    // No other URL resolution is possible.
+    const isEphemeralSupergraph =
+      path.startsWith("#") && supergraph && !supergraph.url;
+    if (isEphemeralSupergraph) {
       const graph = this.#getSubgraph(
         null,
-        url.substring(1),
+        path.substring(1),
         supergraph.graphs
       );
       if (!graph) {
-        console.warn(`Unable to load graph from "${url}"`);
+        console.warn(`Unable to load graph from "${path}"`);
       }
       return graph;
     }
+
+    const base = baseURLFromContext(context);
+
+    const url = new URL(path, base);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {

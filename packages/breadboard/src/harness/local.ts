@@ -89,7 +89,7 @@ const errorResult = (error: string | ErrorObject) => {
 const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   const base = baseURL(config);
   const loader = createLoader(config.graphProviders);
-  const graph = await loader.load(new URL(config.url, base));
+  const graph = await loader.load(config.url, { base });
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }
@@ -99,7 +99,7 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
-    const loader = createLoader(config.graphProviders || []);
+    const loader = createLoader(config.graphProviders);
 
     try {
       const probe = config.diagnostics

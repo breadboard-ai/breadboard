@@ -5,19 +5,22 @@
  */
 
 import test from "ava";
-import { baseURLFromContext } from "../src/nodes/invoke.js";
-import { BoardRunner } from "@google-labs/breadboard";
+import {
+  SENTINEL_BASE_URL,
+  baseURLFromContext,
+} from "../../src/loader/loader.js";
+import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
 test("relativeBasePath is relative to invoking board", (t) => {
   t.is(
     baseURLFromContext({
-      board: { url: "http://bar" } as unknown as BoardRunner,
+      board: { url: "http://bar" } as GraphDescriptor,
     }).href,
     "http://bar/"
   );
   t.is(
     baseURLFromContext({
-      board: {} as unknown as BoardRunner,
+      board: {} as GraphDescriptor,
       base: new URL("http://baz"),
     }).href,
     "http://baz/"
@@ -27,13 +30,13 @@ test("relativeBasePath is relative to invoking board", (t) => {
 test("relativeBasePath falls back to explicit option", (t) => {
   t.deepEqual(
     baseURLFromContext({
-      board: { url: "file:///bar/foo" } as unknown as BoardRunner,
+      board: { url: "file:///bar/foo" } as GraphDescriptor,
       base: new URL("http://baz"),
     }).href,
     "file:///bar/foo"
   );
 });
 
-test("relativeBasePath falls back to import URL", (t) => {
-  t.regex(baseURLFromContext({}).href, /^file:\/\/\/.*\/invoke\..s$/);
+test("relativeBasePath falls back to SENTINEL_BASE_URL", (t) => {
+  t.is(baseURLFromContext({}).href, SENTINEL_BASE_URL.href);
 });
