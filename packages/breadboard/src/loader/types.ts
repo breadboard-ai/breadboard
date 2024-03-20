@@ -6,6 +6,12 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
+export type GraphProviderStore = {
+  permission: "unknown" | "prompt" | "granted";
+  title: string;
+  items: Map<string, { url: string; handle: unknown }>;
+};
+
 /**
  * Describes the capabilities of a `GraphProvider` instance.
  */
@@ -129,7 +135,12 @@ export type GraphProvider = {
    * previously-serialized state.
    * @returns
    */
-  restore: () => void;
+  restore: () => Promise<void>;
+
+  /**
+   *
+   */
+  items(): Map<string, GraphProviderStore>;
 };
 
 /**
