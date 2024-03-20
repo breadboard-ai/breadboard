@@ -79,6 +79,10 @@
       "type": "invoke",
       "configuration": {
         "$board": "#assembleContext"
+      },
+      "metadata": {
+        "title": "Assemble Context",
+        "description": "Assembling the context after generation"
       }
     },
     {
@@ -86,6 +90,10 @@
       "type": "text",
       "configuration": {
         "text": "unused"
+      },
+      "metadata": {
+        "title": "Generate",
+        "description": "Using Gemini to generate worker output"
       }
     },
     {
@@ -93,6 +101,10 @@
       "type": "invoke",
       "configuration": {
         "$board": "#buildContext"
+      },
+      "metadata": {
+        "title": "Build Context",
+        "description": "Building the context for the worker"
       }
     },
     {
@@ -105,6 +117,9 @@
             "context": {
               "title": "Context",
               "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "examples": [
                 "the universe within us"
               ]

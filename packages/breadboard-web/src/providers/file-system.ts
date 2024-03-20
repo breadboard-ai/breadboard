@@ -232,6 +232,10 @@ export class FileSystemGraphProvider implements GraphProvider {
     return this.#items;
   }
 
+  startingURL() {
+    return null;
+  }
+
   async #refreshAllItems() {
     this.#items.clear();
 
@@ -378,7 +382,7 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: true,
+      modify: true,
       connect: true,
       disconnect: true,
       refresh: true,

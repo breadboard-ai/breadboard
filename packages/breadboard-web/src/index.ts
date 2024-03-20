@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystemGraphProvider } from "./providers/file-system.js";
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -19,6 +18,7 @@ import {
   EditResult,
   GraphDescriptor,
   GraphLoader,
+  GraphProvider,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -28,7 +28,12 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
-import { IDBGraphProvider } from "./providers/indexed-db.js";
+import { FileSystemGraphProvider } from "./providers/file-system";
+
+type MainArguments = {
+  boards: BreadboardUI.Types.Board[];
+  providers?: GraphProvider[];
+};
 
 const getBoardInfo = async (
   loader: GraphLoader,
@@ -70,16 +75,11 @@ const enum MODE {
   PREVIEW = "preview",
 }
 
-const DEFAULT_BOARD = "idb://default/blank.json";
-
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
 @customElement("bb-main")
 export class Main extends LitElement {
-  @property({ reflect: false })
-  config: { boards: BreadboardUI.Types.Board[] };
-
   @property({ reflect: true })
   url: string | null = null;
 
@@ -121,12 +121,8 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
-  #providers = [
-    FileSystemGraphProvider.instance(),
-    IDBGraphProvider.instance(),
-  ];
-  // Single loader instance for all boards.
-  #loader = createLoader(this.#providers);
+  #providers: GraphProvider[];
+  #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
@@ -329,17 +325,12 @@ export class Main extends LitElement {
     }
   `;
 
-  constructor(config: { boards: BreadboardUI.Types.Board[] }) {
+  constructor(config: MainArguments) {
     super();
 
-    // Remove boards that are still works-in-progress from production builds.
-    // These boards will have no version.
-    if (import.meta.env.MODE === "production") {
-      config.boards = config.boards.filter((board) => board.version);
-    }
-
-    config.boards.sort((a, b) => a.title.localeCompare(b.title));
-    this.config = config;
+    this.#providers = config.providers || [];
+    // Single loader instance for all boards.
+    this.#loader = createLoader(this.#providers);
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
@@ -370,7 +361,16 @@ export class Main extends LitElement {
         return;
       }
 
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(DEFAULT_BOARD));
+      let startingURL;
+      for (const provider of this.#providers) {
+        startingURL = provider.startingURL();
+        if (startingURL) {
+          this.#onStartBoard(
+            new BreadboardUI.Events.StartEvent(startingURL.href)
+          );
+          break;
+        }
+      }
     });
   }
 
@@ -913,7 +913,6 @@ export class Main extends LitElement {
           @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
             this.#delay = delayEvent.duration;
           }}
-          .boards=${this.config.boards}
         ></bb-ui-controller>`;
         break;
       }
@@ -1013,7 +1012,6 @@ export class Main extends LitElement {
       </div>
       <bb-nav
         .providers=${this.#providers}
-        .exampleBoards=${this.config.boards}
         .visible=${this.showNav}
         .url=${this.url}
         .providerOps=${this.providerOps}

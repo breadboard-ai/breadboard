@@ -122,7 +122,7 @@ export class IDBGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: true,
+      modify: true,
       connect: false,
       disconnect: false,
       refresh: false,
@@ -221,6 +221,10 @@ export class IDBGraphProvider implements GraphProvider {
 
   items() {
     return this.#stores;
+  }
+
+  startingURL() {
+    return new URL("idb://default/blank.json");
   }
 
   async #refreshItems(store: GraphDBStore) {

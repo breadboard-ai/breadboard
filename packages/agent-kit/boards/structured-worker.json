@@ -18,7 +18,7 @@
     },
     {
       "from": "validate",
-      "to": "validationError",
+      "to": "errorOutput",
       "out": "$error",
       "in": "$error"
     },
@@ -92,7 +92,7 @@
     },
     {
       "from": "count",
-      "to": "validationError",
+      "to": "errorOutput",
       "out": "stop",
       "in": "context"
     },
@@ -147,18 +147,31 @@
       "type": "invoke",
       "configuration": {
         "$board": "#assembleContext"
+      },
+      "metadata": {
+        "title": "Assemble Context",
+        "description": "Assembling the context for the agent"
       }
     },
     {
       "id": "validate",
       "type": "validateJson",
-      "configuration": {}
+      "configuration": {},
+      "metadata": {
+        "title": "Validate JSON",
+        "logLevel": "info",
+        "description": "Checking my work"
+      }
     },
     {
       "id": "buildContext",
       "type": "invoke",
       "configuration": {
         "$board": "#buildContext"
+      },
+      "metadata": {
+        "title": "Build Context",
+        "description": "Building the context for the agent"
       }
     },
     {
@@ -166,6 +179,11 @@
       "type": "text",
       "configuration": {
         "text": "unused"
+      },
+      "metadata": {
+        "title": "Generate",
+        "logLevel": "info",
+        "description": "Generating an answer"
       }
     },
     {
@@ -188,6 +206,9 @@
             "context": {
               "title": "Context",
               "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "default": "[]",
               "examples": [
                 "the universe within us"
@@ -213,10 +234,14 @@
       "type": "invoke",
       "configuration": {
         "$board": "#count"
+      },
+      "metadata": {
+        "title": "Counter",
+        "description": "Counting the JSON healing iteration"
       }
     },
     {
-      "id": "validationError",
+      "id": "errorOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -256,6 +281,10 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Error Output",
+        "description": "Displaying error output, giving up on JSON healing"
       }
     },
     {
@@ -263,12 +292,20 @@
       "type": "promptTemplate",
       "configuration": {
         "template": "Reply as valid JSON of the following format:\n\n```json\n{{schemish}}\n```\n"
+      },
+      "metadata": {
+        "title": "Reply Structure Formatter",
+        "description": "Formatting the reply structure for the agent."
       }
     },
     {
       "id": "schemish",
       "type": "schemish",
-      "configuration": {}
+      "configuration": {},
+      "metadata": {
+        "title": "Schemish",
+        "description": "Converting JSON schema to a more compact format"
+      }
     },
     {
       "id": "initialValues",
@@ -276,6 +313,10 @@
       "configuration": {
         "count": 5,
         "error": "stub"
+      },
+      "metadata": {
+        "title": "Initial Values",
+        "description": "Populating initial values for the counter"
       }
     }
   ],

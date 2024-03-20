@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, LoadArgs, STATUS } from "../../types/types.js";
+import { LoadArgs, STATUS } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -57,9 +57,6 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
-
-  @property()
-  boards: Board[] = [];
 
   @property()
   boardId = -1;

@@ -6,7 +6,6 @@
 
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Board } from "../../types/types.js";
 import {
   GraphProviderBlankBoardEvent,
   GraphProviderConnectRequestEvent,
@@ -15,20 +14,9 @@ import {
   GraphProviderLoadRequestEvent,
   GraphProviderRefreshEvent,
   GraphProviderRenewAccessRequestEvent,
-  StartEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
-import { GraphProvider } from "@google-labs/breadboard";
-
-type GraphProviderStore = {
-  permission: "unknown" | "prompt" | "granted";
-  title: string;
-  items: Map<string, { url: string; handle: unknown }>;
-};
-
-type ExtendedGraphProvider = GraphProvider & {
-  items(): Map<string, GraphProviderStore>;
-};
+import { GraphProvider, GraphProviderStore } from "@google-labs/breadboard";
 
 @customElement("bb-nav")
 export class Navigation extends LitElement {
@@ -37,9 +25,6 @@ export class Navigation extends LitElement {
 
   @property({ reflect: true })
   visible = false;
-
-  @property()
-  exampleBoards: Board[] | null = null;
 
   @property()
   url: string | null = null;
@@ -292,57 +277,44 @@ export class Navigation extends LitElement {
 
   #createEntry(
     providerName: string,
-    location: string,
     fileName: string,
-    url: string
+    url: string,
+    canDelete: boolean
   ) {
-    switch (providerName) {
-      case "example": {
-        return html`<li>
-          <button
-            @click=${() => {
-              this.dispatchEvent(new StartEvent(location));
-            }}
-            ?active=${location === this.url}
-          >
-            ${fileName}
-          </button>
-        </li>`;
-      }
-      default: {
-        return html`<li>
-          <button
-            @click=${() => {
-              this.dispatchEvent(
-                new GraphProviderLoadRequestEvent(providerName, url)
-              );
-            }}
-            class="file-selector"
-            ?active=${url === this.url}
-          >
-            ${fileName}
-          </button>
-          <button
-            @click=${() => {
-              this.dispatchEvent(
-                new GraphProviderDeleteRequestEvent(
-                  providerName,
-                  url,
-                  url === this.url
-                )
-              );
-            }}
-            class="delete-board"
-          >
-            Delete
-          </button>
-        </li>`;
-      }
-    }
+    const deleteButton = canDelete
+      ? html`<button
+          @click=${() => {
+            this.dispatchEvent(
+              new GraphProviderDeleteRequestEvent(
+                providerName,
+                url,
+                url === this.url
+              )
+            );
+          }}
+          class="delete-board"
+        >
+          Delete
+        </button>`
+      : nothing;
+    return html`<li>
+      <button
+        @click=${() => {
+          this.dispatchEvent(
+            new GraphProviderLoadRequestEvent(providerName, url)
+          );
+        }}
+        class="file-selector"
+        ?active=${url === this.url}
+      >
+        ${fileName}
+      </button>
+      ${deleteButton}
+    </li>`;
   }
 
   #createStoreList(
-    provider: ExtendedGraphProvider,
+    provider: GraphProvider,
     location: string,
     { permission, items, title }: GraphProviderStore
   ) {
@@ -400,7 +372,7 @@ export class Navigation extends LitElement {
     return html` <details open>
       <summary>
         <span>${title}</span>
-        ${extendedCapabilities.create ? createBlankBoard : nothing}
+        ${extendedCapabilities.modify ? createBlankBoard : nothing}
         ${extendedCapabilities.refresh ? refreshProvider : nothing}
         ${extendedCapabilities.disconnect ? disconnectLocation : nothing}
       </summary>
@@ -423,7 +395,12 @@ export class Navigation extends LitElement {
           </div>`
         : html`<ul>
             ${map(items, ([fileName, { url }]) => {
-              return this.#createEntry(providerName, location, fileName, url);
+              return this.#createEntry(
+                providerName,
+                fileName,
+                url,
+                extendedCapabilities.modify
+              );
             })}
           </ul>`}
     </details>`;
@@ -431,34 +408,14 @@ export class Navigation extends LitElement {
 
   render() {
     const storageItems = html`${map(this.providers, (provider) => {
-      const extendedProvider = provider as ExtendedGraphProvider;
-      if (!("items" in extendedProvider)) {
+      if (!("items" in provider)) {
         return nothing;
       }
 
-      return html`${map(
-        extendedProvider.items(),
-        ([location, providerStore]) => {
-          return this.#createStoreList(
-            extendedProvider,
-            location,
-            providerStore
-          );
-        }
-      )}`;
+      return html`${map(provider.items(), ([location, providerStore]) => {
+        return this.#createStoreList(provider, location, providerStore);
+      })}`;
     })}`;
-
-    let exampleItems: symbol | HTMLTemplateResult = nothing;
-    if (this.exampleBoards) {
-      exampleItems = html` <details>
-        <summary>Example Boards</summary>
-        <ul>
-          ${map(this.exampleBoards, (board) =>
-            this.#createEntry("example", board.url, board.title, board.url)
-          )}
-        </ul>
-      </details>`;
-    }
 
     const supportsFileSystem =
       this.providers.find((provider) => {
@@ -487,7 +444,7 @@ export class Navigation extends LitElement {
 
     return html`<nav id="menu">
       ${sources}
-      <div class="items">${storageItems} ${exampleItems}</div>
+      <div class="items">${storageItems}</div>
     </nav>`;
   }
 }

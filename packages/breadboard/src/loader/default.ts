@@ -9,6 +9,7 @@ import {
   GraphProvider,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
+  GraphProviderStore,
 } from "./types.js";
 
 export const loadFromFile = async (path: string) => {
@@ -43,7 +44,7 @@ export class DefaultGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: false,
+      modify: false,
       connect: false,
       disconnect: false,
       refresh: false,
@@ -112,5 +113,17 @@ export class DefaultGraphProvider implements GraphProvider {
 
   parseURL(_url: URL): { location: string; fileName: string } {
     throw new Error("parseURL not implemented for DefaultGraphProvider");
+  }
+
+  async restore() {
+    throw new Error("restore is not implemented for DefaultGraphProvider");
+  }
+
+  items(): Map<string, GraphProviderStore> {
+    throw new Error("items is not implemented for DefaultGraphProvider");
+  }
+
+  startingURL(): URL | null {
+    return null;
   }
 }

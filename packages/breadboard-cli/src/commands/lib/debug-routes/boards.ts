@@ -2,10 +2,10 @@ import http from "http";
 import { loadBoards } from "../utils.js";
 import { ServerGlobals } from "../debug-server.js";
 
-export async function boards(
-  request: http.IncomingMessage,
+export async function boardList(
+  _request: http.IncomingMessage,
   response: http.ServerResponse,
-  match: URLPatternResult,
+  _match: URLPatternResult,
   globals: ServerGlobals
 ) {
   const { file, options } = globals;
@@ -13,19 +13,19 @@ export async function boards(
   globals.boards = boards;
 
   const boardsData = JSON.stringify(
-    boards.map((board) => ({
-      url: board.url,
-      version: board.version,
-      title: board.title,
-    }))
+    boards
+      .map((board) => ({
+        url: board.url,
+        version: board.version,
+        title: board.title,
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title))
   );
 
-  const responseText = `const r = ${boardsData}; export default { Boards: r };`;
-
   response.writeHead(200, {
-    "Content-Type": "application/javascript",
-    "Content-Length": responseText.length,
+    "Content-Type": "application/json",
+    "Content-Length": boardsData.length,
   });
 
-  return response.end(responseText);
+  return response.end(boardsData);
 }

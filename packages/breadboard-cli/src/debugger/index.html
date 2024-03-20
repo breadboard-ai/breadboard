@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9,13 +9,9 @@
   <body>
     <script type="module">
       import { Main } from "@google-labs/breadboard-web";
-      import Boards from "./boards.ts";
+      import { DebuggerGraphProvider } from "./provider.ts";
 
-      const localBoards = Boards.Boards;
-
-      const config = {
-        boards: [...localBoards],
-      };
+      const config = { providers: [new DebuggerGraphProvider()] };
 
       const main = new Main(config);
       document.body.appendChild(main);

@@ -16,7 +16,7 @@ import { DebugOptions } from "../commandTypes.js";
 import { __dirname } from "../debug.js";
 import { KitData, getKits } from "./kits.js";
 
-import { boards } from "./debug-routes/boards.js";
+import { boardList } from "./debug-routes/boards.js";
 import { kits } from "./debug-routes/kits.js";
 import { kit } from "./debug-routes/kit.js";
 import { debug } from "./debug-routes/debug.js";
@@ -49,7 +49,7 @@ export type ServerGlobals = {
 const routes: Routes = {
   "/": index,
   "/index.html": index,
-  "/boards.js": boards,
+  "/api/board/list": boardList,
   "/kits.json": kits,
   "/kits/:kitName(.*)": kit,
   "/~~debug": debug,

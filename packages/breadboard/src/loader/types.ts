@@ -6,6 +6,12 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
+export type GraphProviderStore = {
+  permission: "unknown" | "prompt" | "granted";
+  title: string;
+  items: Map<string, { url: string; handle: unknown }>;
+};
+
 /**
  * Describes the capabilities of a `GraphProvider` instance.
  */
@@ -26,9 +32,9 @@ export type GraphProviderCapabilities = {
 
 export type GraphProviderExtendedCapabilities = {
   /**
-   * Whether the provider can create empty graphs at the given URL.
+   * Whether the provider can create, edit, and delete graphs.
    */
-  create: boolean;
+  modify: boolean;
   /**
    * Whether the provider can be connected.
    */
@@ -123,6 +129,24 @@ export type GraphProvider = {
    * @returns -- the location and file name of the board.
    */
   parseURL: (url: URL) => { location: string; fileName: string };
+  /**
+   * Signals to the provider to restore its state. For example,
+   * this is called when initializing UI to tell the store to load some
+   * previously-serialized state.
+   * @returns
+   */
+  restore: () => Promise<void>;
+  /**
+   * Provides a map of locations and their respective stores (lists of files)
+   * that can be used to enumerate all items that the provider can provide.
+   */
+  items: () => Map<string, GraphProviderStore>;
+  /**
+   * Provides a starting URL for this store.
+   * Useful when we want to pick something to start a session with.
+   * Can be null if the store doesn't supply a starting URL.
+   */
+  startingURL: () => URL | null;
 };
 
 /**
