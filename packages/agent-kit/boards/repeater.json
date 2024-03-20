@@ -24,6 +24,12 @@
     },
     {
       "from": "invokeAgent",
+      "to": "exit",
+      "out": "exit",
+      "in": "context"
+    },
+    {
+      "from": "invokeAgent",
       "to": "counter",
       "out": "context",
       "in": "context"
@@ -69,12 +75,20 @@
       "type": "invoke",
       "configuration": {
         "$board": "#counter"
+      },
+      "metadata": {
+        "title": "Counter",
+        "description": "Counting the number of repetitions"
       }
     },
     {
       "id": "invokeAgent",
       "type": "invoke",
-      "configuration": {}
+      "configuration": {},
+      "metadata": {
+        "title": "Invoke Worker",
+        "description": "Invoking the worker"
+      }
     },
     {
       "id": "input-1",
@@ -85,6 +99,9 @@
           "properties": {
             "worker": {
               "title": "Worker",
+              "behavior": [
+                "board"
+              ],
               "description": "Worker to repeat",
               "type": "object"
             },
@@ -92,6 +109,9 @@
               "title": "Context",
               "type": "array",
               "format": "multiline",
+              "behavior": [
+                "llm-content"
+              ],
               "default": "[]",
               "description": "Initial conversation context"
             },
@@ -109,6 +129,25 @@
             "worker"
           ]
         }
+      }
+    },
+    {
+      "id": "exit",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Exit",
+        "description": "Exiting early from the repeater"
       }
     }
   ],

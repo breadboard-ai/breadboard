@@ -5,146 +5,146 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "fn-7",
-      "to": "fn-8",
+      "from": "router",
+      "to": "assembleBoardInvoke",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-7",
-      "to": "fn-8",
+      "from": "router",
+      "to": "assembleBoardInvoke",
       "out": "functionCall",
       "in": "functionCall"
     },
     {
-      "from": "fn-7",
-      "to": "fn-11",
+      "from": "router",
+      "to": "formatFunctionResponse",
       "out": "context",
       "in": "generated"
     },
     {
-      "from": "fn-7",
-      "to": "fn-11",
+      "from": "router",
+      "to": "formatFunctionResponse",
       "out": "functionCall",
       "in": "functionCall"
     },
     {
-      "from": "fn-7",
+      "from": "router",
       "to": "output-2",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-7",
+      "from": "router",
       "to": "output-2",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "text-6",
-      "to": "fn-7",
+      "from": "doWork",
+      "to": "router",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-8",
-      "to": "invoke-9",
+      "from": "assembleBoardInvoke",
+      "to": "invokeBoard",
       "out": "*",
       "in": ""
     },
     {
-      "from": "fn-11",
-      "to": "text-12",
+      "from": "formatFunctionResponse",
+      "to": "replyToFunction",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-11",
-      "to": "fn-13",
+      "from": "formatFunctionResponse",
+      "to": "assembleContext",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-5",
-      "to": "text-6",
+      "from": "formatFunctionDeclarations",
+      "to": "doWork",
       "out": "tools",
       "in": "tools"
     },
     {
-      "from": "fn-5",
-      "to": "fn-8",
+      "from": "formatFunctionDeclarations",
+      "to": "assembleBoardInvoke",
       "out": "urlMap",
       "in": "urlMap"
     },
     {
-      "from": "fn-5",
-      "to": "text-12",
+      "from": "formatFunctionDeclarations",
+      "to": "replyToFunction",
       "out": "tools",
       "in": "tools"
     },
     {
-      "from": "fn-3",
-      "to": "text-6",
+      "from": "buildContext",
+      "to": "doWork",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-3",
-      "to": "fn-11",
+      "from": "buildContext",
+      "to": "formatFunctionResponse",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "invoke-9",
-      "to": "fn-10",
+      "from": "invokeBoard",
+      "to": "extractBoardResponse",
       "out": "*",
       "in": ""
     },
     {
-      "from": "fn-10",
-      "to": "fn-11",
+      "from": "extractBoardResponse",
+      "to": "formatFunctionResponse",
       "out": "response",
       "in": "response"
     },
     {
-      "from": "text-12",
-      "to": "fn-13",
+      "from": "replyToFunction",
+      "to": "assembleContext",
       "out": "context",
       "in": "generated"
     },
     {
-      "from": "text-12",
-      "to": "output-14",
+      "from": "replyToFunction",
+      "to": "functionOutput",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "fn-13",
-      "to": "output-14",
+      "from": "assembleContext",
+      "to": "functionOutput",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "map-4",
-      "to": "fn-5",
+      "from": "turnBoardsToFunctions",
+      "to": "formatFunctionDeclarations",
       "out": "list",
       "in": "list"
     },
     {
       "from": "input-1",
-      "to": "fn-3",
+      "to": "buildContext",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "fn-3",
+      "to": "buildContext",
       "out": "instruction",
       "in": "instruction"
     },
     {
       "from": "input-1",
-      "to": "map-4",
+      "to": "turnBoardsToFunctions",
       "out": "tools",
       "in": "list"
     }
@@ -170,105 +170,115 @@
       }
     },
     {
-      "id": "fn-7",
+      "id": "router",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-7"
+        "$board": "#router"
       },
       "metadata": {
-        "title": "Router"
+        "title": "Router",
+        "description": "Routing to either function call invocation or text reply"
       }
     },
     {
-      "id": "text-6",
+      "id": "doWork",
       "type": "text",
       "configuration": {
         "text": "unused"
       },
       "metadata": {
-        "title": "Do Work"
+        "title": "Do Work",
+        "description": "Using Gemini to do the work"
       }
     },
     {
-      "id": "fn-8",
+      "id": "assembleBoardInvoke",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-8"
+        "$board": "#assembleBoardInvoke"
       },
       "metadata": {
-        "title": "Assemble Board Invoke"
+        "title": "Assemble Board Invoke",
+        "description": "Assembling the board invocation based on Gemini response"
       }
     },
     {
-      "id": "fn-11",
+      "id": "formatFunctionResponse",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-11"
+        "$board": "#formatFunctionResponse"
       },
       "metadata": {
-        "title": "Format Function Response"
+        "title": "Format Function Response",
+        "description": "Formatting the function response"
       }
     },
     {
-      "id": "fn-5",
+      "id": "formatFunctionDeclarations",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-5"
+        "$board": "#formatFunctionDeclarations"
       },
       "metadata": {
-        "title": "Format Function Declarations"
+        "title": "Format Function Declarations",
+        "description": "Formatting the function declarations"
       }
     },
     {
-      "id": "fn-3",
+      "id": "buildContext",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-3"
+        "$board": "#buildContext"
       },
       "metadata": {
-        "title": "Build Context"
+        "title": "Build Context",
+        "description": "Combining the context and instruction into a single context"
       }
     },
     {
-      "id": "invoke-9",
+      "id": "invokeBoard",
       "type": "invoke",
       "configuration": {},
       "metadata": {
-        "title": "Invoke Board"
+        "title": "Invoke Board",
+        "description": "Invoking the board"
       }
     },
     {
-      "id": "fn-10",
+      "id": "extractBoardResponse",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-10"
+        "$board": "#extractBoardResponse"
       },
       "metadata": {
-        "title": "Format Board Response"
+        "title": "Format Board Response",
+        "description": "Extracting the board response from the invocation"
       }
     },
     {
-      "id": "text-12",
+      "id": "replyToFunction",
       "type": "text",
       "configuration": {
         "text": "unused"
       },
       "metadata": {
-        "title": "Reply to Function"
+        "title": "Reply to Function",
+        "description": "Using Gemini to reply to function results"
       }
     },
     {
-      "id": "fn-13",
+      "id": "assembleContext",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-13"
+        "$board": "#assembleContext"
       },
       "metadata": {
-        "title": "Assemble Context"
+        "title": "Assemble Context",
+        "description": "Assembling the final context for the output"
       }
     },
     {
-      "id": "map-4",
+      "id": "turnBoardsToFunctions",
       "type": "map",
       "configuration": {
         "board": {
@@ -359,7 +369,8 @@
         }
       },
       "metadata": {
-        "title": "Turn Boards into Functions"
+        "title": "Turn Boards into Functions",
+        "description": "Turning provided boards into functions"
       }
     },
     {
@@ -372,6 +383,9 @@
             "context": {
               "title": "Context",
               "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "default": "What is the square root of e?"
             },
             "instruction": {
@@ -386,6 +400,9 @@
               "title": "Tools",
               "type": "array",
               "description": "The list to iterate over.",
+              "behavior": [
+                "board"
+              ],
               "examples": [
                 "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
               ],
@@ -399,7 +416,7 @@
       }
     },
     {
-      "id": "output-14",
+      "id": "functionOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -418,252 +435,253 @@
         }
       },
       "metadata": {
-        "title": "Function Call"
+        "title": "Function Call Output",
+        "description": "Outputting the function call results"
       }
     }
   ],
   "kits": [],
   "graphs": {
-    "fn-7": {
+    "router": {
       "edges": [
         {
-          "from": "fn-7-input",
-          "to": "fn-7-run",
+          "from": "router-input",
+          "to": "router-run",
           "out": "*"
         },
         {
-          "from": "fn-7-run",
-          "to": "fn-7-output",
+          "from": "router-run",
+          "to": "router-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-7-input",
+          "id": "router-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-7-run",
+          "id": "router-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_7({ context }) {\n  if (!context)\n    throw new Error(\"Context is a required input\");\n  const item = context;\n  const part = item.parts[0];\n  console.assert(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context, text: part.text };\n  }\n  return { context, functionCall: part.functionCall };\n}",
-            "name": "fn_7",
+            "code": "function router({ context }) {\n  if (!context)\n    throw new Error(\"Context is a required input\");\n  const item = context;\n  const part = item.parts[0];\n  console.assert(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context, text: part.text };\n  }\n  return { context, functionCall: part.functionCall };\n}",
+            "name": "router",
             "raw": true
           }
         },
         {
-          "id": "fn-7-output",
+          "id": "router-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-8": {
+    "assembleBoardInvoke": {
       "edges": [
         {
-          "from": "fn-8-input",
-          "to": "fn-8-run",
+          "from": "assembleBoardInvoke-input",
+          "to": "assembleBoardInvoke-run",
           "out": "*"
         },
         {
-          "from": "fn-8-run",
-          "to": "fn-8-output",
+          "from": "assembleBoardInvoke-run",
+          "to": "assembleBoardInvoke-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-8-input",
+          "id": "assembleBoardInvoke-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-8-run",
+          "id": "assembleBoardInvoke-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_8({ functionCall, urlMap }) {\n  if (!functionCall)\n    throw new Error(\"Function call is a required input\");\n  if (!urlMap)\n    throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n}",
-            "name": "fn_8",
+            "code": "function assembleBoardInvoke({ functionCall, urlMap }) {\n  if (!functionCall)\n    throw new Error(\"Function call is a required input\");\n  if (!urlMap)\n    throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n}",
+            "name": "assembleBoardInvoke",
             "raw": true
           }
         },
         {
-          "id": "fn-8-output",
+          "id": "assembleBoardInvoke-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-11": {
+    "formatFunctionResponse": {
       "edges": [
         {
-          "from": "fn-11-input",
-          "to": "fn-11-run",
+          "from": "formatFunctionResponse-input",
+          "to": "formatFunctionResponse-run",
           "out": "*"
         },
         {
-          "from": "fn-11-run",
-          "to": "fn-11-output",
+          "from": "formatFunctionResponse-run",
+          "to": "formatFunctionResponse-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-11-input",
+          "id": "formatFunctionResponse-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-11-run",
+          "id": "formatFunctionResponse-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_11({ context, generated, functionCall, response }) {\n    const call = functionCall;\n    return {\n      context: [\n        ...context,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response } }]\n        }\n      ]\n    };\n  }",
-            "name": "fn_11",
+            "code": "function formatFunctionResponse({ context, generated, functionCall, response }) {\n    const call = functionCall;\n    return {\n      context: [\n        ...context,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response } }]\n        }\n      ]\n    };\n  }",
+            "name": "formatFunctionResponse",
             "raw": true
           }
         },
         {
-          "id": "fn-11-output",
+          "id": "formatFunctionResponse-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-5": {
+    "formatFunctionDeclarations": {
       "edges": [
         {
-          "from": "fn-5-input",
-          "to": "fn-5-run",
+          "from": "formatFunctionDeclarations-input",
+          "to": "formatFunctionDeclarations-run",
           "out": "*"
         },
         {
-          "from": "fn-5-run",
-          "to": "fn-5-output",
+          "from": "formatFunctionDeclarations-run",
+          "to": "formatFunctionDeclarations-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-5-input",
+          "id": "formatFunctionDeclarations-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-5-run",
+          "id": "formatFunctionDeclarations-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_5({ list }) {\n  const tools = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools, urlMap };\n}",
-            "name": "fn_5",
+            "code": "function formatFunctionDeclarations({ list }) {\n  const tools = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools, urlMap };\n}",
+            "name": "formatFunctionDeclarations",
             "raw": true
           }
         },
         {
-          "id": "fn-5-output",
+          "id": "formatFunctionDeclarations-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-3": {
+    "buildContext": {
       "edges": [
         {
-          "from": "fn-3-input",
-          "to": "fn-3-run",
+          "from": "buildContext-input",
+          "to": "buildContext-run",
           "out": "*"
         },
         {
-          "from": "fn-3-run",
-          "to": "fn-3-output",
+          "from": "buildContext-run",
+          "to": "buildContext-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-3-input",
+          "id": "buildContext-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-3-run",
+          "id": "buildContext-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_3({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
-            "name": "fn_3",
+            "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
+            "name": "buildContext",
             "raw": true
           }
         },
         {
-          "id": "fn-3-output",
+          "id": "buildContext-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-10": {
+    "extractBoardResponse": {
       "edges": [
         {
-          "from": "fn-10-input",
-          "to": "fn-10-run",
+          "from": "extractBoardResponse-input",
+          "to": "extractBoardResponse-run",
           "out": "*"
         },
         {
-          "from": "fn-10-run",
-          "to": "fn-10-output",
+          "from": "extractBoardResponse-run",
+          "to": "extractBoardResponse-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-10-input",
+          "id": "extractBoardResponse-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-10-run",
+          "id": "extractBoardResponse-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_10(inputs) {\n  const { schema, ...response } = inputs;\n  schema;\n  return { response };\n}",
-            "name": "fn_10",
+            "code": "function extractBoardResponse(inputs) {\n  const { schema, ...response } = inputs;\n  schema;\n  return { response };\n}",
+            "name": "extractBoardResponse",
             "raw": true
           }
         },
         {
-          "id": "fn-10-output",
+          "id": "extractBoardResponse-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-13": {
+    "assembleContext": {
       "edges": [
         {
-          "from": "fn-13-input",
-          "to": "fn-13-run",
+          "from": "assembleContext-input",
+          "to": "assembleContext-run",
           "out": "*"
         },
         {
-          "from": "fn-13-run",
-          "to": "fn-13-output",
+          "from": "assembleContext-run",
+          "to": "assembleContext-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-13-input",
+          "id": "assembleContext-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-13-run",
+          "id": "assembleContext-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_13({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
-            "name": "fn_13",
+            "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
+            "name": "assembleContext",
             "raw": true
           }
         },
         {
-          "id": "fn-13-output",
+          "id": "assembleContext-output",
           "type": "output",
           "configuration": {}
         }

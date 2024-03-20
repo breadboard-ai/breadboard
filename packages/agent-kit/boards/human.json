@@ -23,44 +23,44 @@
       "in": "text"
     },
     {
-      "from": "fn-4",
+      "from": "createSchema",
       "to": "input",
       "out": "schema",
       "in": "schema"
     },
     {
-      "from": "fn-4",
+      "from": "createSchema",
       "to": "appendContext",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "fn-3",
+      "to": "maybeOutputRouter",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "fn-4",
+      "to": "createSchema",
       "out": "title",
       "in": "title"
     },
     {
       "from": "input-1",
-      "to": "fn-4",
+      "to": "createSchema",
       "out": "description",
       "in": "description"
     },
     {
-      "from": "fn-3",
-      "to": "fn-4",
+      "from": "maybeOutputRouter",
+      "to": "createSchema",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-3",
-      "to": "output-5",
+      "from": "maybeOutputRouter",
+      "to": "output",
       "out": "output",
       "in": "output"
     }
@@ -75,6 +75,9 @@
           "properties": {
             "context": {
               "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Context"
             },
             "text": {
@@ -90,6 +93,10 @@
       "type": "invoke",
       "configuration": {
         "$board": "#appendContext"
+      },
+      "metadata": {
+        "title": "Append Context",
+        "description": "Appending user input to the conversation context"
       }
     },
     {
@@ -108,17 +115,21 @@
             "text"
           ]
         }
+      },
+      "metadata": {
+        "title": "Input",
+        "description": "Asking user for input"
       }
     },
     {
-      "id": "fn-4",
+      "id": "createSchema",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-4"
+        "$board": "#createSchema"
       },
       "metadata": {
         "title": "Create Schema",
-        "description": "Create a schema for user input"
+        "description": "Creating a schema for user input"
       }
     },
     {
@@ -131,7 +142,10 @@
             "context": {
               "title": "Context",
               "description": "Incoming conversation context",
-              "type": "object",
+              "type": "array",
+              "behavior": [
+                "llm-content"
+              ],
               "examples": [
                 "[]"
               ],
@@ -155,18 +169,18 @@
       }
     },
     {
-      "id": "fn-3",
+      "id": "maybeOutputRouter",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-3"
+        "$board": "#maybeOutputRouter"
       },
       "metadata": {
         "title": "Maybe Output",
-        "description": "If the last message was from the model, output it"
+        "description": "Checking if the last message was from the model"
       }
     },
     {
-      "id": "output-5",
+      "id": "output",
       "type": "output",
       "configuration": {
         "schema": {
@@ -185,7 +199,7 @@
       },
       "metadata": {
         "title": "Output",
-        "description": "The output to display. This output will bubble up to the user."
+        "description": "Displaying the output the user."
       }
     }
   ],
@@ -226,71 +240,71 @@
         }
       ]
     },
-    "fn-4": {
+    "createSchema": {
       "edges": [
         {
-          "from": "fn-4-input",
-          "to": "fn-4-run",
+          "from": "createSchema-input",
+          "to": "createSchema-run",
           "out": "*"
         },
         {
-          "from": "fn-4-run",
-          "to": "fn-4-output",
+          "from": "createSchema-run",
+          "to": "createSchema-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-4-input",
+          "id": "createSchema-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-4-run",
+          "id": "createSchema-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_4({ title, description, context }) {\n    const schema2 = {\n      type: \"object\",\n      properties: {\n        text: {\n          title,\n          description,\n          behavior: [\"transient\"]\n        }\n      }\n    };\n    return { schema: schema2, context };\n  }",
-            "name": "fn_4",
+            "code": "function createSchema({ title, description, context }) {\n    const schema2 = {\n      type: \"object\",\n      properties: {\n        text: {\n          title,\n          description,\n          behavior: [\"transient\"]\n        }\n      }\n    };\n    return { schema: schema2, context };\n  }",
+            "name": "createSchema",
             "raw": true
           }
         },
         {
-          "id": "fn-4-output",
+          "id": "createSchema-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-3": {
+    "maybeOutputRouter": {
       "edges": [
         {
-          "from": "fn-3-input",
-          "to": "fn-3-run",
+          "from": "maybeOutputRouter-input",
+          "to": "maybeOutputRouter-run",
           "out": "*"
         },
         {
-          "from": "fn-3-run",
-          "to": "fn-3-output",
+          "from": "maybeOutputRouter-run",
+          "to": "maybeOutputRouter-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-3-input",
+          "id": "maybeOutputRouter-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-3-run",
+          "id": "maybeOutputRouter-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_3({ context }) {\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const output = lastItem.parts.map((item) => item.text).join(\"/n\");\n      return { output, context };\n    }\n  }\n  return { context };\n}",
-            "name": "fn_3",
+            "code": "function maybeOutputRouter({ context }) {\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const output = lastItem.parts.map((item) => item.text).join(\"/n\");\n      return { output, context };\n    }\n  }\n  return { context };\n}",
+            "name": "maybeOutputRouter",
             "raw": true
           }
         },
         {
-          "id": "fn-3-output",
+          "id": "maybeOutputRouter-output",
           "type": "output",
           "configuration": {}
         }
