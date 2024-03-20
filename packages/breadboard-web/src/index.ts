@@ -18,6 +18,7 @@ import {
   edit,
   EditResult,
   GraphDescriptor,
+  GraphLoader,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -29,9 +30,9 @@ import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 
 const getBoardInfo = async (
+  loader: GraphLoader,
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
-  const loader = createLoader([FileStorage.instance()]);
   const base = new URL(window.location.href);
   const graph = await loader.load(url, { base });
   if (!graph) {
@@ -114,6 +115,8 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
   #boardStorage = FileStorage.instance();
+  // Single loader instance for all boards.
+  #loader = createLoader([this.#boardStorage]);
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
@@ -362,7 +365,7 @@ export class Main extends LitElement {
   }
 
   async #createBlankBoard() {
-    const loadInfo = await getBoardInfo("/graphs/blank.json");
+    const loadInfo = await getBoardInfo(this.#loader, "/graphs/blank.json");
     if (loadInfo.graphDescriptor) {
       loadInfo.graphDescriptor.title = "New Board";
     }
@@ -437,7 +440,7 @@ export class Main extends LitElement {
       return;
     }
     try {
-      this.loadInfo = await getBoardInfo(url);
+      this.loadInfo = await getBoardInfo(this.#loader, url);
       this.#setUrlParam("board", url);
       this.url = url;
     } catch (err) {
@@ -482,7 +485,7 @@ export class Main extends LitElement {
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
-        this.loadInfo = await getBoardInfo(this.url);
+        this.loadInfo = await getBoardInfo(this.#loader, this.url);
       } catch (err) {
         this.url = null;
         this.descriptor = null;
