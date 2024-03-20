@@ -42,9 +42,29 @@ export type GraphProvider = {
   load: (url: URL) => Promise<GraphDescriptor | null>;
 };
 
+/**
+ * Describes the context in which a graph is being loaded.
+ * It's a subset of the `NodeHandlerContext` type.
+ * @see [NodeHandlerContext]
+ *
+ */
 export type GraphLoaderContext = {
+  /**
+   * The base URL for the graph being loaded. This may be a URL of the graph
+   * that is loading the graph, or it may be the URL of a graph higher in
+   * the graph hierarchy, since some graphs may be ephemeral: created without
+   * a URL.
+   */
   base?: URL;
+  /**
+   * The board that is loading this graph.
+   */
   board?: GraphDescriptor;
+  /**
+   * The graph that contains the graph being loaded. Usually the same as
+   * `board`, but may be different in some cases.
+   * TODO: Figure out what those cases are.
+   */
   outerGraph?: GraphDescriptor;
 };
 
