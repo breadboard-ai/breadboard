@@ -27,15 +27,23 @@ import {
 import type { TypeScriptTypeFromBreadboardType } from "./type.js";
 import { shapeToJSONSchema } from "./json-schema.js";
 
+// TODO(aomarks) Move all magic "*" port logic entirely into the main `define`
+// function, and have this function take the dynamic port base schema directly.
+// That should simplify this implementation a bunch and make it easier to change
+// the API if we decide not to use "*".
 export function definePolymorphicNodeType<
   ISHAPE extends PortConfigMap,
   OSHAPE extends PortConfigMap,
 >(
   inputs: ISHAPE,
   outputs: OSHAPE,
-  invoke: PolymorphicInvokeFunction<ISHAPE, OSHAPE>
+  invoke: PolymorphicInvokeFunction<ISHAPE, OSHAPE>,
+  // TODO(aomarks) Make this required. It's hard to get the main `define` schema
+  // to enforce this correctly, though (so maybe we should just expose the
+  // separate functions directly).
+  describe?: DescribeInputsFunction<ISHAPE>
 ): PolymorphicDefinition<ISHAPE, OSHAPE> {
-  const def = new PolymorphicNodeDefinition(inputs, outputs, invoke);
+  const def = new PolymorphicNodeDefinition(inputs, outputs, invoke, describe);
   const instantiate = def.instantiate.bind(def);
   const handler: StrictNodeHandler = {
     describe: def.describe.bind(def),
@@ -43,6 +51,22 @@ export function definePolymorphicNodeType<
   };
   return Object.assign(instantiate, handler);
 }
+
+export type DescribeInputsFunction<ISHAPE extends PortConfigMap> = (
+  staticInputs: Partial<StaticInvokeParams<ISHAPE>>
+) => { inputs: ActualDynamicPortConfigMap<ISHAPE> };
+
+type ActualDynamicPortConfig<ISHAPE extends PortConfigMap> = {
+  // TODO(aomarks) Actually anything *assignable* to ISHAPE["*"]["type"] should
+  // also be allowed.
+  type: ISHAPE["*"]["type"];
+  description?: string;
+};
+
+type ActualDynamicPortConfigMap<ISHAPE extends PortConfigMap> = Record<
+  string,
+  ActualDynamicPortConfig<ISHAPE>
+>;
 
 class PolymorphicNodeDefinition<
   ISHAPE extends PortConfigMap,
@@ -52,15 +76,23 @@ class PolymorphicNodeDefinition<
   readonly #inputs: ISHAPE;
   readonly #outputs: OSHAPE;
   readonly #invoke: PolymorphicInvokeFunction<ISHAPE, OSHAPE>;
+  readonly #describe?: DescribeInputsFunction<ISHAPE>;
+  readonly #staticDescription: NodeDescriberResult;
 
   constructor(
     inputs: ISHAPE,
     outputs: OSHAPE,
-    invoke: PolymorphicInvokeFunction<ISHAPE, OSHAPE>
+    invoke: PolymorphicInvokeFunction<ISHAPE, OSHAPE>,
+    describe?: DescribeInputsFunction<ISHAPE>
   ) {
     this.#inputs = inputs;
     this.#outputs = outputs;
     this.#invoke = invoke;
+    this.#describe = describe;
+    this.#staticDescription = {
+      inputSchema: shapeToJSONSchema(omitDynamicPort(this.#inputs)),
+      outputSchema: shapeToJSONSchema(omitDynamicPort(this.#outputs)),
+    };
   }
 
   instantiate<VALUES extends Record<string, unknown>>(
@@ -73,19 +105,53 @@ class PolymorphicNodeDefinition<
     );
   }
 
-  describe(): Promise<NodeDescriberResult> {
-    // TODO(aomarks) Take the values and update the schema.
-    return Promise.resolve({
-      inputSchema: shapeToJSONSchema(omitDynamicPort(this.#inputs)),
-      outputSchema: shapeToJSONSchema(omitDynamicPort(this.#outputs)),
-    });
+  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+    if (this.#describe === undefined) {
+      // TODO(aomarks) It shouldn't actually be allowed to omit describe for a
+      // polymorphic node.
+      return this.#staticDescription;
+    }
+    // TODO(aomarks) Should we also pass the dynamic values?
+    const { staticValues } = this.#partitionInputValues(inputs ?? {});
+    const dynamicSchema = await this.#describe(staticValues);
+    const dynamicInputs = shapeToJSONSchema(dynamicSchema.inputs);
+    const { inputSchema: staticInputs, outputSchema: staticOutputs } =
+      this.#staticDescription;
+    return {
+      inputSchema: {
+        ...staticInputs,
+        properties: {
+          ...dynamicInputs.properties,
+          ...staticInputs.properties,
+        },
+        required: [
+          ...(staticInputs.required ?? []),
+          ...(dynamicInputs.required ?? []),
+        ],
+      },
+      // TODO(aomarks) Also support dynamic output schema (but only if there are
+      // dynamic outputs declared).
+      outputSchema: staticOutputs,
+    };
   }
 
   invoke(values: InputValues): Promise<OutputValues> {
-    // Split the values between static and dynamic ports. We do this for type
-    // safety, because in TypeScript it is unfortunately not possible to define
-    // an object where the values of the unknown keys are of one type, and the
-    // known keys are of an incompatible type.
+    const { staticValues, dynamicValues } = this.#partitionInputValues(values);
+    return Promise.resolve(
+      this.#invoke(staticValues, dynamicValues) as OutputValues
+    );
+  }
+
+  /**
+   * Split the values between static and dynamic ports. We do this for type
+   * safety, because in TypeScript it is unfortunately not possible to define an
+   * object where the values of the unknown keys are of one type, and the known
+   * keys are of an incompatible type.
+   */
+  #partitionInputValues(values: InputValues): {
+    staticValues: StaticInvokeParams<ISHAPE>;
+    dynamicValues: DynamicInvokeParams<ISHAPE>;
+  } {
     const staticValues: Record<string, unknown> = {};
     const dynamicValues: Record<string, unknown> = {};
     for (const [name, value] of Object.entries(values)) {
@@ -95,16 +161,14 @@ class PolymorphicNodeDefinition<
         dynamicValues[name] = value;
       }
     }
-    return Promise.resolve(
-      this.#invoke(
-        // Cast needed because Breadboard runtimes do not guarantee that the
-        // input shapes conform to schema.
-        //
-        // TODO(aomarks) Validate schema before passing to invoke function.
-        staticValues as StaticInvokeParams<ISHAPE>,
-        dynamicValues as DynamicInvokeParams<ISHAPE>
-      ) as OutputValues
-    );
+    return {
+      // Cast needed because Breadboard runtimes do not guarantee that the
+      // input shapes conform to schema.
+      //
+      // TODO(aomarks) Validate schema before passing to invoke function.
+      staticValues: staticValues as StaticInvokeParams<ISHAPE>,
+      dynamicValues: dynamicValues as DynamicInvokeParams<ISHAPE>,
+    };
   }
 }
 

@@ -83,9 +83,10 @@ export type BreadboardTypeFromTypeScriptType<
 
 // TODO(aomarks) Expand this to the full vocabulary of JSONSchema so that
 // `escapeHatch` can be fully flexible (for now it's OK to cast to JSONSchema).
-export type JSONSchema =
-  | { type: "string" | "number" | "boolean" }
-  | { anyOf: JSONSchema[] };
+export type JSONSchema = {
+  title?: string;
+  description?: string;
+} & ({ type: "string" | "number" | "boolean" } | { anyOf: JSONSchema[] });
 
 export function toJSONSchema(type: BreadboardType): JSONSchema {
   return typeof type === "string" ? { type } : type.toJSONSchema();

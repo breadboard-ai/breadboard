@@ -11,6 +11,7 @@ import {
 } from "./definition-monomorphic.js";
 import {
   definePolymorphicNodeType,
+  type DescribeInputsFunction,
   type PolymorphicDefinition,
   type PolymorphicInvokeFunction,
 } from "./definition-polymorphic.js";
@@ -70,11 +71,14 @@ export function defineNodeType<
   outputs: ForbidMultiplePrimaries<OSHAPE>,
   invoke: IsPolymorphic<ISHAPE> extends true
     ? PolymorphicInvokeFunction<ISHAPE, OSHAPE>
-    : MonomorphicInvokeFunction<ISHAPE, OSHAPE>
+    : MonomorphicInvokeFunction<ISHAPE, OSHAPE>,
+  describe?: IsPolymorphic<ISHAPE> extends true
+    ? DescribeInputsFunction<ISHAPE>
+    : never
 ): NodeDefinition<ISHAPE, OSHAPE> {
   validateOutputs(outputs);
   const def = isPolymorphic(inputs, invoke)
-    ? definePolymorphicNodeType(inputs, outputs, invoke)
+    ? definePolymorphicNodeType(inputs, outputs, invoke, describe)
     : defineMonomorphicNodeType(inputs, outputs, invoke);
   return def as NodeDefinition<ISHAPE, OSHAPE>;
 }

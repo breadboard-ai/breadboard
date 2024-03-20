@@ -359,7 +359,6 @@ test("describe function generates JSON schema", async () => {
         },
         in2: {
           title: "in2",
-          description: undefined,
           type: "number",
         },
       },
