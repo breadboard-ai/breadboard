@@ -116,6 +116,7 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
+  #boardPendingSave = false;
   #lastBoardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
@@ -436,6 +437,7 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#boardPendingSave = false;
     this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
   }
 
@@ -455,6 +457,7 @@ export class Main extends LitElement {
     this.descriptor = startEvent.descriptor;
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
+    this.#boardPendingSave = false;
 
     this.#checkForPossibleEmbed();
   }
@@ -566,7 +569,8 @@ export class Main extends LitElement {
     );
   }
 
-  #updateLoadInfo(graphDescriptor: GraphDescriptor) {
+  #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
+    this.#boardPendingSave = boardPendingSave;
     this.loadInfo = {
       ...this.loadInfo,
       graphDescriptor,
@@ -582,6 +586,20 @@ export class Main extends LitElement {
 
   #getProviderForURL(url: URL) {
     return this.#providers.find((provider) => provider.canProvide(url));
+  }
+
+  async #confirmSaveWithUserFirstIfNeeded() {
+    if (!this.#boardPendingSave) {
+      return;
+    }
+
+    if (
+      !confirm("The current board isn't saved - would you like to save first?")
+    ) {
+      return;
+    }
+
+    return this.#attemptBoardSave();
   }
 
   render() {
@@ -778,7 +796,7 @@ export class Main extends LitElement {
                 });
               })
             ).then(() => {
-              this.#updateLoadInfo(editableGraph.raw());
+              this.#updateLoadInfo(editableGraph.raw(), false);
             });
           }}
           @breadboardnodecreate=${(
@@ -981,7 +999,9 @@ export class Main extends LitElement {
           class=${classMap({ active: this.mode === MODE.PREVIEW })}
           id="toggle-preview"
           title="Toggle Board Preview"
-          @click=${() => {
+          @click=${async () => {
+            await this.#confirmSaveWithUserFirstIfNeeded();
+
             this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
           }}
         >
@@ -1131,6 +1151,8 @@ export class Main extends LitElement {
         @graphproviderloadrequest=${async (
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
+          await this.#confirmSaveWithUserFirstIfNeeded();
+
           if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
             if (
               !confirm(

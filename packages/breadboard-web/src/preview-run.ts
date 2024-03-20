@@ -182,13 +182,11 @@ export class PreviewRun extends LitElement {
   #restored = false;
   async restoreProvidersIfNeeded() {
     if (this.#restored) {
-      console.log("Already restored");
       return;
     }
 
     this.#restored = true;
     await Promise.all(this.#providers.map((provider) => provider.restore()));
-    console.log("Restored");
   }
 
   async #runBoard() {
