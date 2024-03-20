@@ -163,3 +163,134 @@ test("polymorphic inputs invoke returns value from async function", async () => 
     out1: `{"in1":"foo"}\n{"in2":"bar"}`,
   });
 });
+
+test("polymorphic describe function generates JSON schema with static ports", async () => {
+  const definition = defineNodeType(
+    {
+      in1: {
+        type: "string",
+        description: "Description of in1",
+      },
+      "*": {
+        type: "boolean",
+      },
+    },
+    {
+      out1: {
+        type: "boolean",
+        description: "Description of out1",
+      },
+    },
+    () => {
+      return {
+        out1: true,
+      };
+    }
+  );
+  assert.deepEqual(await definition.describe(), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        in1: {
+          title: "in1",
+          description: "Description of in1",
+          type: "string",
+        },
+      },
+      required: ["in1"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        out1: {
+          title: "out1",
+          description: "Description of out1",
+          type: "boolean",
+        },
+      },
+      required: ["out1"],
+    },
+  });
+});
+
+test("polymorphic describe function generates JSON schema from static input", async () => {
+  const definition = defineNodeType(
+    // Inputs
+    {
+      portList: {
+        type: "string",
+        description: "Comma-separated list of port names",
+      },
+      "*": {
+        type: "number",
+      },
+    },
+    // Outputs
+    {
+      sum: {
+        type: "number",
+        description: "Sum of all input port values",
+      },
+    },
+    // Invoke
+    ({ portList }, dynamic) => {
+      // $ExpectType string
+      portList;
+      return {
+        sum: Object.values(dynamic).reduce((prev, cur) => prev + cur, 0),
+      };
+    },
+    // Describe
+    ({ portList }) => {
+      // $ExpectType string | undefined
+      portList;
+      // TODO(aomarks) Maybe it should be possible to just return an array of
+      // port names, and it will automatically assign the base type.
+      return {
+        inputs: Object.fromEntries(
+          (portList ?? "").split(",").map((name) => [name, { type: "number" }])
+        ),
+      };
+    }
+  );
+  assert.deepEqual(await definition.describe({ portList: `num1,num2` }), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        portList: {
+          title: "portList",
+          description: "Comma-separated list of port names",
+          type: "string",
+        },
+        num1: {
+          title: "num1",
+          type: "number",
+        },
+        num2: {
+          title: "num2",
+          type: "number",
+        },
+      },
+      required: ["portList", "num1", "num2"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        sum: {
+          title: "sum",
+          description: "Sum of all input port values",
+          type: "number",
+        },
+      },
+      required: ["sum"],
+    },
+  });
+  assert.deepEqual(
+    await definition.invoke(
+      { portList: `num1,num2`, num1: 2, num2: 1 },
+      // TODO(aomarks) Not used yet
+      undefined as unknown as NodeHandlerContext
+    ),
+    { sum: 3 }
+  );
+});
