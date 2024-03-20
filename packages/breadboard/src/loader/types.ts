@@ -136,11 +136,17 @@ export type GraphProvider = {
    * @returns
    */
   restore: () => Promise<void>;
-
   /**
-   *
+   * Provides a map of locations and their respective stores (lists of files)
+   * that can be used to enumerate all items that the provider can provide.
    */
-  items(): Map<string, GraphProviderStore>;
+  items: () => Map<string, GraphProviderStore>;
+  /**
+   * Provides a starting URL for this store.
+   * Useful when we want to pick something to start a session with.
+   * Can be null if the store doesn't supply a starting URL.
+   */
+  startingURL: () => URL | null;
 };
 
 /**

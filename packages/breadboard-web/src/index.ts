@@ -70,8 +70,6 @@ const enum MODE {
   PREVIEW = "preview",
 }
 
-const DEFAULT_BOARD = "idb://default/blank.json";
-
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
@@ -373,7 +371,16 @@ export class Main extends LitElement {
         return;
       }
 
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(DEFAULT_BOARD));
+      let startingURL;
+      for (const provider of this.#providers) {
+        startingURL = provider.startingURL();
+        if (startingURL) {
+          this.#onStartBoard(
+            new BreadboardUI.Events.StartEvent(startingURL.href)
+          );
+          break;
+        }
+      }
     });
   }
 

@@ -19,11 +19,16 @@ export type BoardInfo = {
 };
 
 export class ExamplesGraphProvider implements GraphProvider {
-  // @ts-expect-error  6133
-  #boards: BoardInfo[];
+  #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
 
   constructor(boards: BoardInfo[]) {
+    const blank = boards.find((board) => {
+      return board.url.endsWith("blank.json");
+    });
+    if (blank?.url) {
+      this.#blank = new URL(blank.url, window.location.href);
+    }
     const boardMap = new Map(
       boards.map((board) => {
         return [board.title, { url: board.url, handle: undefined }];
@@ -120,4 +125,8 @@ export class ExamplesGraphProvider implements GraphProvider {
   }
 
   async restore(): Promise<void> {}
+
+  startingURL(): URL | null {
+    return this.#blank;
+  }
 }

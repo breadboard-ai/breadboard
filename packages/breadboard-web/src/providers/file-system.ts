@@ -232,6 +232,10 @@ export class FileSystemGraphProvider implements GraphProvider {
     return this.#items;
   }
 
+  startingURL() {
+    return null;
+  }
+
   async #refreshAllItems() {
     this.#items.clear();
 

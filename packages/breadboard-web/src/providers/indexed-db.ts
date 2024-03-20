@@ -223,6 +223,10 @@ export class IDBGraphProvider implements GraphProvider {
     return this.#stores;
   }
 
+  startingURL() {
+    return new URL("idb://default/blank.json");
+  }
+
   async #refreshItems(store: GraphDBStore) {
     const db = await idb.openDB<GraphDB>(store.name, store.version, {
       upgrade(db) {

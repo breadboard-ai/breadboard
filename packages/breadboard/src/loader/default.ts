@@ -122,4 +122,8 @@ export class DefaultGraphProvider implements GraphProvider {
   items(): Map<string, GraphProviderStore> {
     throw new Error("items is not implemented for DefaultGraphProvider");
   }
+
+  startingURL(): URL | null {
+    return null;
+  }
 }
