@@ -92,11 +92,11 @@ export class BoardInfoUpdateEvent extends Event {
   }
 }
 
-export class BlankBoardRequestEvent extends Event {
-  static eventName = "breadboardblankboardrequest";
+export class GraphProviderConnectRequestEvent extends Event {
+  static eventName = "graphproviderconnectrequest";
 
-  constructor() {
-    super(BlankBoardRequestEvent.eventName, {
+  constructor(public readonly providerName: string) {
+    super(GraphProviderConnectRequestEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -104,27 +104,15 @@ export class BlankBoardRequestEvent extends Event {
   }
 }
 
-export class FileStorageRequestEvent extends Event {
-  static eventName = "breadboardfilestoragerequest";
-
-  constructor() {
-    super(FileStorageRequestEvent.eventName, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
-export class FileStorageDeleteRequestEvent extends Event {
-  static eventName = "breadboardfilestoragedeleterequest";
+export class GraphProviderDeleteRequestEvent extends Event {
+  static eventName = "graphproviderdeleterequest";
 
   constructor(
-    public readonly location: string,
-    public readonly fileName: string,
+    public readonly providerName: string,
+    public readonly url: string,
     public readonly isActive: boolean
   ) {
-    super(FileStorageDeleteRequestEvent.eventName, {
+    super(GraphProviderDeleteRequestEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -132,14 +120,60 @@ export class FileStorageDeleteRequestEvent extends Event {
   }
 }
 
-export class FileStorageLoadRequestEvent extends Event {
-  static eventName = "breadboardfilestorageloadrequest";
+export class GraphProviderLoadRequestEvent extends Event {
+  static eventName = "graphproviderloadrequest";
 
   constructor(
+    public readonly providerName: string,
+    public readonly url: string
+  ) {
+    super(GraphProviderLoadRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphProviderRenewAccessRequestEvent extends Event {
+  static eventName = "graphproviderrenewaccesssrequest";
+
+  constructor(
+    public readonly providerName: string,
+    public readonly location: string
+  ) {
+    super(GraphProviderRenewAccessRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphProviderDisconnectEvent extends Event {
+  static eventName = "graphproviderdisconnect";
+
+  constructor(
+    public readonly providerName: string,
+    public readonly location: string
+  ) {
+    super(GraphProviderDisconnectEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphProviderBlankBoardEvent extends Event {
+  static eventName = "graphproviderblankboard";
+
+  constructor(
+    public readonly providerName: string,
     public readonly location: string,
     public readonly fileName: string
   ) {
-    super(FileStorageLoadRequestEvent.eventName, {
+    super(GraphProviderBlankBoardEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -147,50 +181,14 @@ export class FileStorageLoadRequestEvent extends Event {
   }
 }
 
-export class FileStorageRenewAccessRequestEvent extends Event {
-  static eventName = "breadboardfilestoragerenewaccesssrequest";
-
-  constructor(public readonly location: string) {
-    super(FileStorageRenewAccessRequestEvent.eventName, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
-export class FileStorageDisconnectEvent extends Event {
-  static eventName = "breadboardfilestoragedisconnect";
-
-  constructor(public readonly location: string) {
-    super(FileStorageDisconnectEvent.eventName, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
-export class FileStorageBlankBoardEvent extends Event {
-  static eventName = "breadboardfileblankboard";
+export class GraphProviderRefreshEvent extends Event {
+  static eventName = "graphproviderrefresh";
 
   constructor(
-    public readonly location: string,
-    public readonly fileName: string
+    public readonly providerName: string,
+    public readonly location: string
   ) {
-    super(FileStorageBlankBoardEvent.eventName, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
-export class FileStorageRefreshEvent extends Event {
-  static eventName = "breadboardfilestoragerefresh";
-
-  constructor(public readonly location: string) {
-    super(FileStorageRefreshEvent.eventName, {
+    super(GraphProviderRefreshEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

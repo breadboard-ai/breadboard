@@ -6,7 +6,7 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard";
 
-export const BLANK_BOARD = {
+export const BLANK_BOARD: GraphDescriptor = {
   title: "Blank board",
   description: "A blank board. Use it to start a new board",
   version: "0.0.1",
@@ -52,4 +52,4 @@ export const BLANK_BOARD = {
     },
   ],
   graphs: {},
-} satisfies GraphDescriptor;
+};
