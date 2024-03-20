@@ -15,21 +15,13 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
+import { loadBoardFromPath } from "../load-board.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
-};
-
-export const loadBoardFromPath = async (
-  path: string,
-  context: NodeHandlerContext
-) => {
-  const graph = await context.loader?.load(path, context);
-  if (!graph) throw new Error(`Unable to load graph from "${path}"`);
-  return BoardRunner.fromGraphDescriptor(graph);
 };
 
 type RunnableBoardWithArgs = {

@@ -13,6 +13,7 @@ import type {
   GraphDescriptor,
   LambdaNodeOutputs,
 } from "@google-labs/breadboard";
+import { loadBoardFromPath } from "../load-board.js";
 
 export type ImportNodeInputs = InputValues & {
   path?: string;
@@ -54,18 +55,13 @@ export default {
   ): Promise<LambdaNodeOutputs> => {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
-    const base = context.base || new URL(import.meta.url);
-
     const board = graph
       ? (graph as BoardRunner).runOnce // TODO: Hack! Use JSON schema or so instead.
         ? ({ ...graph } as BoardRunner)
         : await BoardRunner.fromGraphDescriptor(graph)
       : path
-      ? await BoardRunner.load(path, {
-          base,
-          outerGraph: context.outerGraph,
-        })
-      : undefined;
+        ? await loadBoardFromPath(path, context)
+        : undefined;
     if (!board) throw Error("No board provided");
     board.args = args;
 
