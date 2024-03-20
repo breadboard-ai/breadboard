@@ -10,13 +10,13 @@
     <script type="module">
       import { Main } from "@google-labs/breadboard-web";
       import Boards from "./boards.ts";
-      import { DebuggerProvider } from "./provider.ts";
+      import { DebuggerGraphProvider } from "./provider.ts";
 
       const localBoards = Boards.Boards;
 
       const config = {
         boards: [...localBoards],
-        providers: [new DebuggerProvider(localBoards)],
+        providers: [new DebuggerGraphProvider()],
       };
 
       const main = new Main(config);

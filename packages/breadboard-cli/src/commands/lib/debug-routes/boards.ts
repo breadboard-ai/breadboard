@@ -2,6 +2,32 @@ import http from "http";
 import { loadBoards } from "../utils.js";
 import { ServerGlobals } from "../debug-server.js";
 
+export async function boardList(
+  request: http.IncomingMessage,
+  response: http.ServerResponse,
+  match: URLPatternResult,
+  globals: ServerGlobals
+) {
+  const { file, options } = globals;
+  const boards = await loadBoards(file, options);
+  globals.boards = boards;
+
+  const boardsData = JSON.stringify(
+    boards.map((board) => ({
+      url: board.url,
+      version: board.version,
+      title: board.title,
+    }))
+  );
+
+  response.writeHead(200, {
+    "Content-Type": "application/json",
+    "Content-Length": boardsData.length,
+  });
+
+  return response.end(boardsData);
+}
+
 export async function boards(
   request: http.IncomingMessage,
   response: http.ServerResponse,

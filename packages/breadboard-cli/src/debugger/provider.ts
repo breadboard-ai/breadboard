@@ -18,28 +18,17 @@ export type BoardInfo = {
   version?: string;
 };
 
-export class DebuggerProvider implements GraphProvider {
+const api = {
+  loadBoards: async () => {
+    const data = await fetch("/api/board/list");
+    const boards = await data.json();
+    return boards;
+  },
+};
+
+export class DebuggerGraphProvider implements GraphProvider {
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
-
-  constructor(boards: BoardInfo[]) {
-    const blank = boards.find((board) => {
-      return board.url.endsWith("blank.json");
-    });
-    if (blank?.url) {
-      this.#blank = new URL(blank.url, window.location.href);
-    }
-    const boardMap = new Map(
-      boards.map((board) => {
-        return [board.title, { url: board.url, handle: undefined }];
-      })
-    );
-    this.#items.set("examples", {
-      permission: "granted",
-      title: "Example Boards",
-      items: boardMap,
-    });
-  }
 
   items(): Map<string, GraphProviderStore> {
     return this.#items;
@@ -65,7 +54,7 @@ export class DebuggerProvider implements GraphProvider {
 
   async load(_url: URL): Promise<GraphDescriptor | null> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be used to load graphs."
+      "The `DebuggerGraphProvider` should not be used to load graphs."
     );
   }
 
@@ -74,7 +63,7 @@ export class DebuggerProvider implements GraphProvider {
     _descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be used to save graphs."
+      "The `DebuggerGraphProvider` should not be used to save graphs."
     );
   }
 
@@ -82,7 +71,7 @@ export class DebuggerProvider implements GraphProvider {
     _url: URL
   ): Promise<{ result: boolean; error?: string | undefined }> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be used to create blank graphs."
+      "The `DebuggerGraphProvider` should not be used to create blank graphs."
     );
   }
 
@@ -90,41 +79,53 @@ export class DebuggerProvider implements GraphProvider {
     _url: URL
   ): Promise<{ result: boolean; error?: string | undefined }> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be used to delete graphs."
+      "The `DebuggerGraphProvider` should not be used to delete graphs."
     );
   }
 
   async connect(_location?: string | undefined): Promise<boolean> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be called to connect."
+      "The `DebuggerGraphProvider` should not be called to connect."
     );
   }
 
   async disconnect(_location?: string | undefined): Promise<boolean> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be called to disconnect."
+      "The `DebuggerGraphProvider` should not be called to disconnect."
     );
   }
 
   async refresh(_location: string): Promise<boolean> {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be called to refresh."
+      "The `DebuggerGraphProvider` should not be called to refresh."
     );
   }
 
   createURL(_location: string, _fileName: string): string {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be called to create URL."
+      "The `DebuggerGraphProvider` should not be called to create URL."
     );
   }
 
   parseURL(_url: URL): { location: string; fileName: string } {
     throw new Error(
-      "The `ExamplesGraphProvider` should not be called to parse URL."
+      "The `DebuggerGraphProvider` should not be called to parse URL."
     );
   }
 
-  async restore(): Promise<void> {}
+  async restore(): Promise<void> {
+    const boards = (await api.loadBoards()) as BoardInfo[];
+    const boardMap = new Map(
+      boards.map((board) => {
+        return [board.title, { url: board.url, handle: undefined }];
+      })
+    );
+    this.#items.set("debugger", {
+      permission: "granted",
+      title: "Boards to Debug",
+      items: boardMap,
+    });
+  }
 
   startingURL(): URL | null {
     return this.#blank;
