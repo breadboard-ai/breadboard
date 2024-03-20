@@ -123,6 +123,13 @@ export type GraphProvider = {
    * @returns -- the location and file name of the board.
    */
   parseURL: (url: URL) => { location: string; fileName: string };
+  /**
+   * Signals to the provider to restore its state. For example,
+   * this is called when initializing UI to tell the store to load some
+   * previously-serialized state.
+   * @returns
+   */
+  restore: () => void;
 };
 
 /**

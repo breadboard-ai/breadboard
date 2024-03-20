@@ -113,4 +113,8 @@ export class DefaultGraphProvider implements GraphProvider {
   parseURL(_url: URL): { location: string; fileName: string } {
     throw new Error("parseURL not implemented for DefaultGraphProvider");
   }
+
+  restore() {
+    throw new Error("restore is not implemented for DefaultGraphProvider");
+  }
 }

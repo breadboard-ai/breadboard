@@ -10,6 +10,8 @@
 <body>
   <script type="module">
     import { Main } from "./src/index.ts";
+    import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
+    import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
 
     const localBoards = await (await fetch("/local-boards.json")).json();
 
@@ -43,6 +45,10 @@
           version: "0.0.2",
         },
         ...localBoards,
+      ],
+      providers: [
+        IDBGraphProvider.instance(),
+        FileSystemGraphProvider.instance(),
       ],
     };
 

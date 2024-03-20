@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystemGraphProvider } from "./providers/file-system.js";
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
@@ -19,6 +18,7 @@ import {
   EditResult,
   GraphDescriptor,
   GraphLoader,
+  GraphProvider,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -28,7 +28,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
-import { IDBGraphProvider } from "./providers/indexed-db.js";
+import { FileSystemGraphProvider } from "./providers/file-system";
 
 const getBoardInfo = async (
   loader: GraphLoader,
@@ -121,12 +121,8 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
-  #providers = [
-    FileSystemGraphProvider.instance(),
-    IDBGraphProvider.instance(),
-  ];
-  // Single loader instance for all boards.
-  #loader = createLoader(this.#providers);
+  #providers: GraphProvider[];
+  #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
@@ -329,8 +325,15 @@ export class Main extends LitElement {
     }
   `;
 
-  constructor(config: { boards: BreadboardUI.Types.Board[] }) {
+  constructor(config: {
+    boards: BreadboardUI.Types.Board[];
+    providers?: GraphProvider[];
+  }) {
     super();
+
+    this.#providers = config.providers || [];
+    // Single loader instance for all boards.
+    this.#loader = createLoader(this.#providers);
 
     // Remove boards that are still works-in-progress from production builds.
     // These boards will have no version.
