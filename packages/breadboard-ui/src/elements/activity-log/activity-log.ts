@@ -660,8 +660,9 @@ export class ActivityLog extends LitElement {
 
     return html`
       <h1>
-        <span>${this.logTitle}</span
-        ><a @click=${(evt: Event) => this.#getRunLog(evt)}>Download</a>
+        <span>${this.logTitle}</span>${this.showLogDownload
+          ? html`<a @click=${(evt: Event) => this.#getRunLog(evt)}>Download</a>`
+          : nothing}
       </h1>
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {

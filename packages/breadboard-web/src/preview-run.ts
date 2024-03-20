@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
+import {
+  HarnessRunResult,
+  RunConfig,
+  run,
+} from "@google-labs/breadboard/harness";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
@@ -20,11 +24,19 @@ import {
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
 import { FileSystemGraphProvider } from "./providers/file-system";
+import { IDBGraphProvider } from "./providers/indexed-db";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
 export const getBoardInfo = async (url: string) => {
-  const loader = createLoader([FileSystemGraphProvider.instance()]);
+  const providers = [
+    IDBGraphProvider.instance(),
+    FileSystemGraphProvider.instance(),
+  ];
+
+  await Promise.all(providers.map((provider) => provider.restore()));
+
+  const loader = createLoader(providers);
   const base = new URL(window.location.href);
   const graph = await loader.load(url, { base });
   if (!graph) {
@@ -61,6 +73,12 @@ export class PreviewRun extends LitElement {
 
   #runObserver: InspectableRunObserver = createRunObserver();
   #handlers: Map<string, inputCallback[]> = new Map();
+  #providers = [
+    FileSystemGraphProvider.instance(),
+    IDBGraphProvider.instance(),
+  ];
+  // Single loader instance for all boards.
+  #loader = createLoader(this.#providers);
 
   static styles = css`
     * {
@@ -161,12 +179,31 @@ export class PreviewRun extends LitElement {
     });
   }
 
+  #restored = false;
+  async restoreProvidersIfNeeded() {
+    if (this.#restored) {
+      console.log("Already restored");
+      return;
+    }
+
+    this.#restored = true;
+    await Promise.all(this.#providers.map((provider) => provider.restore()));
+    console.log("Restored");
+  }
+
   async #runBoard() {
     if (!this.url) {
       return;
     }
 
-    const config = { url: this.url, kits: this.kits, diagnostics: true };
+    await this.restoreProvidersIfNeeded();
+
+    const config: RunConfig = {
+      url: this.url,
+      kits: this.kits,
+      diagnostics: true,
+      loader: this.#loader,
+    };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     for await (const result of run(config)) {
