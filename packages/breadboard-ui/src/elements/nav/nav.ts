@@ -372,7 +372,7 @@ export class Navigation extends LitElement {
     return html` <details open>
       <summary>
         <span>${title}</span>
-        ${extendedCapabilities.create ? createBlankBoard : nothing}
+        ${extendedCapabilities.modify ? createBlankBoard : nothing}
         ${extendedCapabilities.refresh ? refreshProvider : nothing}
         ${extendedCapabilities.disconnect ? disconnectLocation : nothing}
       </summary>
@@ -399,7 +399,7 @@ export class Navigation extends LitElement {
                 providerName,
                 fileName,
                 url,
-                extendedCapabilities.create
+                extendedCapabilities.modify
               );
             })}
           </ul>`}

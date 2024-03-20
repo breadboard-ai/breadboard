@@ -378,7 +378,7 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: true,
+      modify: true,
       connect: true,
       disconnect: true,
       refresh: true,

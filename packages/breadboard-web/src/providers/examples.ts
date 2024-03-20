@@ -51,7 +51,7 @@ export class ExamplesGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: false,
+      modify: false,
       connect: false,
       disconnect: false,
       refresh: false,

@@ -32,9 +32,9 @@ export type GraphProviderCapabilities = {
 
 export type GraphProviderExtendedCapabilities = {
   /**
-   * Whether the provider can create empty graphs at the given URL.
+   * Whether the provider can create, edit, and delete graphs.
    */
-  create: boolean;
+  modify: boolean;
   /**
    * Whether the provider can be connected.
    */

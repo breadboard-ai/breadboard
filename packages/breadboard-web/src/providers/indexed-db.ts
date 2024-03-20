@@ -122,7 +122,7 @@ export class IDBGraphProvider implements GraphProvider {
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
-      create: true,
+      modify: true,
       connect: false,
       disconnect: false,
       refresh: false,
