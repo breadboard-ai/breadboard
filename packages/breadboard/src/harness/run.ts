@@ -12,7 +12,7 @@ import { runLocally } from "./local.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { HarnessRunResult } from "./types.js";
 import { runInWorker } from "./worker.js";
-import { GraphProvider, GraphLoader } from "../loader/types.js";
+import { GraphLoader } from "../loader/types.js";
 
 export type ProxyLocation = "main" | "worker" | "http";
 
