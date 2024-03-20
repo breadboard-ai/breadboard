@@ -399,10 +399,10 @@ export class BoardRunner implements BreadboardRunner {
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
-    const loader = createLoader(options.graphProviders ?? []);
+    const loader = createLoader(options.graphProviders);
     const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
     const url = new URL(path, baseURL);
-    const graph = await loader.load(url, outerGraph);
+    const graph = await loader.load(path, { base: baseURL, outerGraph });
     if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
     if (url.hash) board.#outerGraph = outerGraph;

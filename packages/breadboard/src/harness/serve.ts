@@ -120,7 +120,7 @@ export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
   const url = await getBoardURL(config, factory);
   const base = baseURL(config);
   const loader = createLoader();
-  const graph = await loader.load(new URL(url, base));
+  const graph = await loader.load(url, { base });
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }

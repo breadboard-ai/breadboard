@@ -39,19 +39,11 @@ export const loadBoardFromPath = async (
   context: NodeHandlerContext
 ) => {
   const base = baseURLFromContext(context);
-  let url: URL | string = new URL(path, base);
-  if (path.startsWith("#")) {
-    if (!context.outerGraph?.url) {
-      // Exceptional case: the outerGraph itself doesn't have a URL.
-      // The baseURLFromContext will fail us here.
-      url = path;
-    }
-  }
-  const graph = await context.loader?.load(url, context.outerGraph);
-  if (!graph)
-    throw new Error(
-      `Unable to load graph from "${typeof url === "string" ? url : url.href}"`
-    );
+  const graph = await context.loader?.load(path, {
+    base,
+    outerGraph: context.outerGraph,
+  });
+  if (!graph) throw new Error(`Unable to load graph from "${path}"`);
   return BoardRunner.fromGraphDescriptor(graph);
 };
 

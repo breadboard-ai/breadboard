@@ -5,7 +5,11 @@
  */
 
 import type { GraphDescriptor, SubGraphs } from "../types.js";
-import type { GraphProvider, GraphLoader } from "./types.js";
+import type {
+  GraphProvider,
+  GraphLoader,
+  GraphLoaderContext,
+} from "./types.js";
 import { DefaultGraphProvider } from "./default.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
@@ -20,7 +24,7 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
   return removeHash(a).href === removeHash(b).href;
 };
 
-export class BoardLoader implements GraphLoader {
+export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
 
   constructor(graphProviders: GraphProvider[]) {
@@ -72,24 +76,29 @@ export class BoardLoader implements GraphLoader {
   }
 
   async load(
-    url: URL | string,
-    supergraph?: GraphDescriptor
+    path: string,
+    context: GraphLoaderContext
   ): Promise<GraphDescriptor | null> {
-    if (typeof url === "string") {
+    const supergraph = context.outerGraph;
+    const isEphemeralOuterGraph =
+      path.startsWith("#") && supergraph && !supergraph.url;
+    if (isEphemeralOuterGraph) {
       // Can only query the supergraph.
       if (!supergraph) {
         throw new Error("Cannot load a graph by path without a supergraph");
       }
       const graph = this.#getSubgraph(
         null,
-        url.substring(1),
+        path.substring(1),
         supergraph.graphs
       );
       if (!graph) {
-        console.warn(`Unable to load graph from "${url}"`);
+        console.warn(`Unable to load graph from "${path}"`);
       }
       return graph;
     }
+
+    const url = new URL(path, context.base);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
