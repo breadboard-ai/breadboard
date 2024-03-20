@@ -77,3 +77,4 @@ export { editGraph as edit } from "./editor/graph.js";
  * The Loader API
  */
 export type * from "./loader/types.js";
+export { createLoader } from "./loader/index.js";

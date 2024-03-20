@@ -14,6 +14,7 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   Board,
   BoardRunner,
+  createLoader,
   edit,
   EditResult,
   GraphDescriptor,
@@ -30,10 +31,14 @@ import GeminiKit from "@google-labs/gemini-kit";
 const getBoardInfo = async (
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.load(url, {
-    base: new URL(window.location.href),
-    graphProviders: [FileStorage.instance()],
-  });
+  const loader = createLoader([FileStorage.instance()]);
+  const base = new URL(window.location.href);
+  const graph = await loader.load(url, { base });
+  if (!graph) {
+    // TODO: Better error handling, maybe a toast?
+    throw new Error(`Unable to load graph: ${url}`);
+  }
+  const runner = await BoardRunner.fromGraphDescriptor(graph);
 
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
