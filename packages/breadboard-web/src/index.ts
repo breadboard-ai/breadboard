@@ -70,6 +70,8 @@ const enum MODE {
   PREVIEW = "preview",
 }
 
+const DEFAULT_BOARD = "idb://default/blank.json";
+
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
@@ -367,19 +369,8 @@ export class Main extends LitElement {
         return;
       }
 
-      this.#createBlankBoard();
+      this.#onStartBoard(new BreadboardUI.Events.StartEvent(DEFAULT_BOARD));
     });
-  }
-
-  async #createBlankBoard() {
-    const loadInfo = await getBoardInfo(this.#loader, "/graphs/blank.json");
-    if (loadInfo.graphDescriptor) {
-      loadInfo.graphDescriptor.title = "New Board";
-    }
-
-    this.#onStartBoard(
-      new BreadboardUI.Events.StartEvent(null, loadInfo.graphDescriptor)
-    );
   }
 
   connectedCallback(): void {
