@@ -5,7 +5,7 @@
  */
 
 import { FileStorage } from "./file-storage/file-storage.js";
-import { run, RunConfig } from "@google-labs/breadboard/harness";
+import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -14,9 +14,11 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   Board,
   BoardRunner,
+  createLoader,
   edit,
   EditResult,
   GraphDescriptor,
+  GraphLoader,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -28,12 +30,16 @@ import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 
 const getBoardInfo = async (
+  loader: GraphLoader,
   url: string
 ): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.load(url, {
-    base: new URL(window.location.href),
-    graphProviders: [FileStorage.instance()],
-  });
+  const base = new URL(window.location.href);
+  const graph = await loader.load(url, { base });
+  if (!graph) {
+    // TODO: Better error handling, maybe a toast?
+    throw new Error(`Unable to load graph: ${url}`);
+  }
+  const runner = await BoardRunner.fromGraphDescriptor(graph);
 
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
@@ -109,6 +115,8 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
   #boardStorage = FileStorage.instance();
+  // Single loader instance for all boards.
+  #loader = createLoader([this.#boardStorage]);
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
@@ -357,7 +365,7 @@ export class Main extends LitElement {
   }
 
   async #createBlankBoard() {
-    const loadInfo = await getBoardInfo("/graphs/blank.json");
+    const loadInfo = await getBoardInfo(this.#loader, "/graphs/blank.json");
     if (loadInfo.graphDescriptor) {
       loadInfo.graphDescriptor.title = "New Board";
     }
@@ -432,7 +440,7 @@ export class Main extends LitElement {
       return;
     }
     try {
-      this.loadInfo = await getBoardInfo(url);
+      this.loadInfo = await getBoardInfo(this.#loader, url);
       this.#setUrlParam("board", url);
       this.url = url;
     } catch (err) {
@@ -477,7 +485,7 @@ export class Main extends LitElement {
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
-        this.loadInfo = await getBoardInfo(this.url);
+        this.loadInfo = await getBoardInfo(this.#loader, this.url);
       } catch (err) {
         this.url = null;
         this.descriptor = null;
@@ -595,7 +603,7 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .run=${currentRun}
           .kits=${this.kits}
-          .graphProviders=${[this.#boardStorage]}
+          .loader=${this.#loader}
           .status=${this.status}
           .boardId=${this.#boardId}
           @breadboardfiledrop=${async (
@@ -629,14 +637,15 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const runConfig: RunConfig = {
-              url: this.loadInfo.graphDescriptor.url,
-              runner,
-              diagnostics: true,
-              kits: this.kits,
-              graphProviders: [this.#boardStorage],
-            };
-            this.#runBoard(run(runConfig));
+            this.#runBoard(
+              run({
+                url: this.loadInfo.graphDescriptor.url,
+                runner,
+                diagnostics: true,
+                kits: this.kits,
+                loader: this.#loader,
+              })
+            );
           }}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
@@ -654,7 +663,7 @@ export class Main extends LitElement {
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
               kits: this.kits,
-              graphProviders: [this.#boardStorage],
+              loader: this.#loader,
             });
 
             let editResult: Promise<EditResult>;

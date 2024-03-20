@@ -14,6 +14,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
+import { loadBoardFromPath } from "../load-board.js";
 
 export type IncludeNodeInputs = InputValues & {
   path?: string;
@@ -72,17 +73,12 @@ export default {
 
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
-    const base = context.base || new URL(import.meta.url);
 
     const runnableBoard = board
       ? await BoardRunner.fromBreadboardCapability(board)
       : graph
-      ? await BoardRunner.fromGraphDescriptor(graph)
-      : await BoardRunner.load(source, {
-          slotted: slottedWithUrls,
-          base,
-          outerGraph: context.outerGraph,
-        });
+        ? await BoardRunner.fromGraphDescriptor(graph)
+        : await loadBoardFromPath(source, context);
 
     return await runnableBoard.runOnce(args, context);
   },

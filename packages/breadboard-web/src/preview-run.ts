@@ -9,20 +9,29 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
-  Board,
   type InputValues,
   Kit,
   InspectableRunObserver,
   createRunObserver,
   InspectableRun,
+  BoardRunner,
+  createLoader,
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
+import { FileStorage } from "./file-storage/file-storage";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
 export const getBoardInfo = async (url: string) => {
-  const runner = await Board.load(url, { base: new URL(window.location.href) });
+  const loader = createLoader([FileStorage.instance()]);
+  const base = new URL(window.location.href);
+  const graph = await loader.load(url, { base });
+  if (!graph) {
+    // TODO: Better error handling, maybe a toast?
+    throw new Error(`Unable to load graph: ${url}`);
+  }
+  const runner = await BoardRunner.fromGraphDescriptor(graph);
   const { title, description, version } = runner;
   return { title, description, version };
 };

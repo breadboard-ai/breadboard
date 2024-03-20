@@ -65,10 +65,6 @@ export class BoardRunner implements BreadboardRunner {
 
   #slots: BreadboardSlotSpec = {};
   #validators: BreadboardValidator[] = [];
-  /**
-   * The parent board, if this is board is a subgraph of a larger board.
-   */
-  #outerGraph?: GraphDescriptor;
 
   /**
    *
@@ -221,9 +217,10 @@ export class BoardRunner implements BreadboardRunner {
 
           const newContext: NodeHandlerContext = {
             ...context,
-            board: this,
             descriptor,
-            outerGraph: this.#outerGraph || this,
+            board: this,
+            // TODO: Remove this, since it is now the same as `board`.
+            outerGraph: this,
             base,
             slots,
             kits: [...(context.kits || []), ...this.kits],
@@ -388,6 +385,8 @@ export class BoardRunner implements BreadboardRunner {
    * @param url - the URL or a file path to the board.
    * @param slots - optional slots to provide to the board.
    * @returns - a new `Board` instance.
+   * @deprecated Use `createLoader` directly within this package or use
+   * `loader` from the `NodeHandlerContext`.
    */
   static async load(
     path: string,
@@ -400,12 +399,9 @@ export class BoardRunner implements BreadboardRunner {
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = createLoader(options.graphProviders);
-    const baseURL = outerGraph?.url ? new URL(outerGraph.url) : base;
-    const url = new URL(path, baseURL);
-    const graph = await loader.load(path, { base: baseURL, outerGraph });
-    if (!graph) throw new Error(`Unable to load graph from "${url.href}"`);
+    const graph = await loader.load(path, { base, outerGraph });
+    if (!graph) throw new Error(`Unable to load graph from "${path}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
-    if (url.hash) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
   }

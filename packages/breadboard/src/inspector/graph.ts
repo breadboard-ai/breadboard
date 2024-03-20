@@ -96,9 +96,10 @@ class Graph implements InspectableGraphWithStore {
     if (!handler || typeof handler === "function" || !handler.describe) {
       return asWired;
     }
+    const loader = this.#options.loader || createLoader();
     const context: NodeDescriberContext = {
       outerGraph: this.#graph,
-      loader: createLoader(this.#options.graphProviders),
+      loader,
     };
     if (this.#url) {
       context.base = this.#url;

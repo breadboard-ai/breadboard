@@ -37,9 +37,7 @@ class Graph implements EditableGraph {
   constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
     this.#graph = graph;
     this.#options = options;
-    this.#inspector = inspectableGraph(this.#graph, {
-      kits: this.#options.kits,
-    });
+    this.#inspector = inspectableGraph(this.#graph, options);
   }
 
   #isValidType(type: NodeTypeIdentifier) {

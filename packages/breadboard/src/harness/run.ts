@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardRunner, GraphProvider, Kit, asyncGen } from "../index.js";
+import { BreadboardRunner, Kit, asyncGen } from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
@@ -12,6 +12,7 @@ import { runLocally } from "./local.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { HarnessRunResult } from "./types.js";
 import { runInWorker } from "./worker.js";
+import { GraphLoader } from "../loader/types.js";
 
 export type ProxyLocation = "main" | "worker" | "http";
 
@@ -53,12 +54,9 @@ export type RunConfig = {
    */
   kits: Kit[];
   /**
-   * The providers of graphs to use by the runtime. These
-   * enable the runtime to load graphs from different sources.
-   *
-   * Currently, providers are only supported in local mode.
+   * The loader to use when loading boards.
    */
-  graphProviders?: GraphProvider[];
+  loader?: GraphLoader;
   /**
    * Specifies the remote environment in which to run the harness.
    * In this situation, the harness creates a runtime client, and relies
