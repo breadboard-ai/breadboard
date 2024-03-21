@@ -202,19 +202,18 @@ async function loadBoardsFromDirectory(
   const dir = await opendir(fileUrl);
   const boards: Array<BoardMetaData> = [];
   for await (const dirent of dir) {
+    const name = dirent.name;
     if (
       dirent.isFile() &&
-      (dirent.name.endsWith(".js") ||
-        dirent.name.endsWith(".ts") ||
-        dirent.name.endsWith(".json"))
+      (name.endsWith(".js") || name.endsWith(".ts") || name.endsWith(".json"))
     ) {
       const filename = getFilename(dirent);
       try {
         const board = await loadBoard(filename, options);
         boards.push({
           ...board,
-          title: board.title ?? join("/", filename),
-          url: join("/", filename),
+          title: board.title ?? name,
+          url: `/${name}`,
           version: board.version ?? "0.0.1",
         });
       } catch (e) {
