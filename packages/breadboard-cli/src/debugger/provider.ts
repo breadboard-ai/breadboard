@@ -5,6 +5,8 @@
  */
 
 import {
+  GraphProviderChange,
+  ChangeNotificationCallback,
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
@@ -12,7 +14,7 @@ import {
   GraphProviderStore,
 } from "@google-labs/breadboard";
 
-export type BoardInfo = {
+type BoardInfo = {
   title: string;
   url: string;
   version?: string;
@@ -23,6 +25,19 @@ const api = {
     const data = await fetch("/api/board/list");
     const boards = await data.json();
     return boards;
+  },
+  listenForChanges: (callback: (data: GraphProviderChange) => void) => {
+    const evtSource = new EventSource("/~~debug");
+    evtSource.addEventListener("update", (evt) => {
+      let data: GraphProviderChange;
+      try {
+        data = JSON.parse(evt.data);
+      } catch (e) {
+        console.error("Failed to parse update event", evt.data);
+        return;
+      }
+      callback(data);
+    });
   },
 };
 
@@ -49,6 +64,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
+      watch: true,
     };
   }
 
@@ -130,5 +146,9 @@ export class DebuggerGraphProvider implements GraphProvider {
 
   startingURL(): URL | null {
     return this.#blank;
+  }
+
+  watch(callback: ChangeNotificationCallback): void {
+    api.listenForChanges(callback);
   }
 }

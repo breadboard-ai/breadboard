@@ -13,6 +13,42 @@ import { startServer } from "./lib/debug-server.js";
 
 export const __dirname = dirname(fileURLToPath(import.meta.url));
 
+type RenameCallback = (previous: string | null, filename: string) => void;
+
+/**
+ * A helper class that collates the rename event from the
+ * file watcher from two to one event.
+ * The basic idea is that it waits for the second event
+ * and if it never comes, it will just emit event.
+ */
+class RenameCollator {
+  #timeout: NodeJS.Timeout | null = null;
+  #callback: RenameCallback;
+  #counter = 0;
+  #previousFilename: string | null = null;
+
+  constructor(callback: RenameCallback) {
+    this.#callback = callback;
+  }
+
+  onChange(filename: string) {
+    if (this.#counter === 0) {
+      this.#previousFilename = filename;
+      this.#counter++;
+      this.#timeout = setTimeout(() => {
+        this.#callback(this.#previousFilename, filename);
+      }, 300);
+    } else {
+      this.#counter = 0;
+      this.#callback(this.#previousFilename, filename);
+      this.#previousFilename = null;
+      if (this.#timeout) {
+        clearTimeout(this.#timeout);
+      }
+    }
+  }
+}
+
 export const debug = async (file: string, options: DebugOptions) => {
   if (file == undefined) {
     // If the user doesn't provide a file, we should use the current working directory (which will load all files)
@@ -49,18 +85,24 @@ export const debug = async (file: string, options: DebugOptions) => {
       return process.exit(1);
     }
 
+    const collator = new RenameCollator((previous, filename) => {
+      notifyClients("rename", previous, filename);
+    });
+
     watch(file, {
       onChange: async (filename: string) => {
-        // Signal that the browser should reload - and it will refresh the boards
+        // Signal that the browser should reload - and it will refresh the
+        // boards.
         console.log(`${filename} changed. Refreshing boards...`);
 
-        notifyClients();
+        notifyClients("change", null, filename);
       },
-      onRename: async () => {
-        // Refresh the list of boards that are passed in at the start of the server.
+      onRename: async (filename) => {
+        // Refresh the list of boards that are passed in at the start of the
+        // server.
         console.log(`Refreshing boards...`);
 
-        notifyClients();
+        collator.onChange(filename);
       },
     });
   }

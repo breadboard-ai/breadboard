@@ -8,7 +8,6 @@ import path from "path";
 import { stat } from "fs/promises";
 import { loadBoards, loadBoard, resolveFilePath, watch } from "./lib/utils.js";
 import { MakeOptions } from "./commandTypes.js";
-import { Stats } from "fs";
 
 export const makeGraph = async (file: string, options: MakeOptions) => {
   if (file == undefined) {

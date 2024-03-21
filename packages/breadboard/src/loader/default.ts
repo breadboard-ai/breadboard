@@ -48,6 +48,7 @@ export class DefaultGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
+      watch: false,
     };
   }
 
@@ -125,5 +126,9 @@ export class DefaultGraphProvider implements GraphProvider {
 
   startingURL(): URL | null {
     return null;
+  }
+
+  watch(): void {
+    throw new Error("watch is not implemented for DefaultGraphProvider");
   }
 }

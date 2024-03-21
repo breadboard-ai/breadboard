@@ -21,7 +21,6 @@ import { kits } from "./debug-routes/kits.js";
 import { kit } from "./debug-routes/kit.js";
 import { debug } from "./debug-routes/debug.js";
 import { board } from "./debug-routes/board.js";
-import { index } from "./debug-routes/index.js";
 
 export type Routes = Record<
   string,
@@ -47,8 +46,6 @@ export type ServerGlobals = {
 
 // This is the main routing table for the debug server.
 const routes: Routes = {
-  "/": index,
-  "/index.html": index,
   "/api/board/list": boardList,
   "/kits.json": kits,
   "/kits/:kitName(.*)": kit,
@@ -78,9 +75,15 @@ export const startServer = async (file: string, options: DebugOptions) => {
     base,
   };
 
-  const notifyClients = () => {
+  const notifyClients = (
+    type: "change" | "rename",
+    previous: string | null,
+    filename: string
+  ) => {
     Object.values(clients).forEach((clientResponse) => {
-      clientResponse.write(`event: update\ndata:na\nid:${Date.now()}\n\n`);
+      clientResponse.write(
+        `event: update\ndata:${JSON.stringify({ type, previous, filename })}\nid:${Date.now()}\n\n`
+      );
     });
   };
 

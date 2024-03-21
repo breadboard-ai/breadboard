@@ -386,6 +386,11 @@ export class FileSystemGraphProvider implements GraphProvider {
       connect: true,
       disconnect: true,
       refresh: true,
+      watch: false,
     };
+  }
+
+  watch() {
+    throw new Error("Watch not implemented for FileSystemGraphProvider");
   }
 }

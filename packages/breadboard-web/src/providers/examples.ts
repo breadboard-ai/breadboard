@@ -62,6 +62,7 @@ export class ExamplesGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
+      watch: false,
     };
   }
 
@@ -130,5 +131,11 @@ export class ExamplesGraphProvider implements GraphProvider {
 
   startingURL(): URL | null {
     return this.#blank;
+  }
+
+  watch(): void {
+    throw new Error(
+      "The `ExamplesGraphProvider` should not be called to watch."
+    );
   }
 }

@@ -12,6 +12,16 @@ export type GraphProviderStore = {
   items: Map<string, { url: string; handle: unknown }>;
 };
 
+export type GraphProviderChange = {
+  type: "change" | "rename";
+  previous: string | null;
+  filename: string;
+};
+
+export type ChangeNotificationCallback = (
+  notification: GraphProviderChange
+) => void;
+
 /**
  * Describes the capabilities of a `GraphProvider` instance.
  */
@@ -47,6 +57,10 @@ export type GraphProviderExtendedCapabilities = {
    * Whether the provider supports refreshing.
    */
   refresh: boolean;
+  /**
+   * Whether the provider supports watching for change notifications.
+   */
+  watch: boolean;
 };
 
 /**
@@ -147,6 +161,10 @@ export type GraphProvider = {
    * Can be null if the store doesn't supply a starting URL.
    */
   startingURL: () => URL | null;
+  /**
+   * Provides a way to watch for changes in the store.
+   */
+  watch: (callback: ChangeNotificationCallback) => void;
 };
 
 /**
