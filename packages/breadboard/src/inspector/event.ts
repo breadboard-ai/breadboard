@@ -26,7 +26,6 @@ import {
 import {
   EventIdentifier,
   GraphUUID,
-  InspectableGraph,
   InspectableGraphStore,
   InspectableNode,
   InspectableRun,
@@ -101,20 +100,14 @@ class RunNodeEvent implements InspectableRunNodeEvent {
    * The path registry entry associated with this event.
    */
   #entry: PathRegistryEntry | null;
-  /**
-   * The inspectable graph instance, associated with this node.
-   */
-  #graph: InspectableGraph | null;
 
   constructor(
     entry: PathRegistryEntry | null,
     node: NodeDescriptor,
     start: number,
-    inputs: InputValues,
-    graph: InspectableGraph | null
+    inputs: InputValues
   ) {
     this.#entry = entry;
-    this.#graph = graph;
     this.type = "node";
     this.node = node;
     this.start = start;
@@ -131,7 +124,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get inspectableNode(): InspectableNode | null {
-    return this.#graph?.nodeById(this.node.id) || null;
+    return this.#entry?.parent?.graph?.nodeById(this.node.id) || null;
   }
 
   get runs(): InspectableRun[] {
@@ -159,7 +152,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 export class EventManager {
   #graphStore;
   #options;
-  #pathRegistry = new PathRegistry([]);
+  #pathRegistry = new PathRegistry();
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -193,7 +186,7 @@ export class EventManager {
     entry.graphEnd = timestamp;
   }
 
-  #getParentGraph(path: number[]) {
+  #getParentEntry(path: number[]) {
     // CAUTION: Very slow -- another whole traversal just to find a parent.
     // TODO: Fix this to work faster.
     const parentPath = structuredClone(path);
@@ -202,7 +195,7 @@ export class EventManager {
     if (!parentEntry) {
       throw new Error(`Unexpected orphan for ${JSON.stringify(path)}`);
     }
-    return parentEntry.graph;
+    return parentEntry;
   }
 
   #addNodestart(data: NodeStartResponse) {
@@ -213,9 +206,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
-    const parentGraph = this.#getParentGraph(path);
-
-    const event = new RunNodeEvent(entry, node, timestamp, inputs, parentGraph);
+    const event = new RunNodeEvent(entry, node, timestamp, inputs);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
@@ -227,14 +218,7 @@ export class EventManager {
   #addInput(data: InputResponse) {
     const { path, bubbled, inputArguments, node, timestamp } = data;
     if (bubbled) {
-      const parentGraph = this.#getParentGraph(path);
-      const event = new RunNodeEvent(
-        null,
-        node,
-        timestamp,
-        inputArguments,
-        parentGraph
-      );
+      const event = new RunNodeEvent(null, node, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
@@ -255,15 +239,7 @@ export class EventManager {
   #addOutput(data: OutputResponse) {
     const { path, bubbled, node, timestamp, outputs } = data;
     if (bubbled) {
-      // Create a new entry for the sidecar output event.
-      const parentGraph = this.#getParentGraph(path);
-      const event = new RunNodeEvent(
-        null,
-        node,
-        timestamp,
-        outputs,
-        parentGraph
-      );
+      const event = new RunNodeEvent(null, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {

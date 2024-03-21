@@ -564,6 +564,7 @@ export type InspectableRun = {
 
 export type PathRegistryEntry = {
   id: string;
+  parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;
   graphStart: number;

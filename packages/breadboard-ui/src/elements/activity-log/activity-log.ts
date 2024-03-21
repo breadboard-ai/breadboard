@@ -656,14 +656,9 @@ export class ActivityLog extends LitElement {
   }
 
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
-    const { node, inputs, inspectableNode, bubbled } = event;
-    let schema;
-    if (bubbled) {
-      schema = inputs.schema;
-    } else {
-      const nodeSchema = await inspectableNode?.describe(inputs);
-      schema = nodeSchema?.outputSchema || inputs.schema;
-    }
+    const { node, inputs, inspectableNode } = event;
+    const nodeSchema = await inspectableNode?.describe(inputs);
+    const schema = nodeSchema?.outputSchema || inputs.schema;
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.metadata?.title ?? node.id ?? node.type}
