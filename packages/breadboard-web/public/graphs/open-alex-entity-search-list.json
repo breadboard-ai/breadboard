@@ -1,0 +1,267 @@
+{
+  "title": "Open Alex Entity Search Results",
+  "description": "Query the OpenAlex API for a list entities",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "response",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "meta",
+      "in": "meta"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "results",
+      "in": "results"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "group_by",
+      "in": "group_by"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "entity",
+      "in": "entity"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "page",
+      "in": "page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "per_page",
+      "in": "per_page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "search",
+      "in": "search"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "select",
+      "in": "select"
+    },
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "response",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "URL to fetch",
+              "title": "URL"
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "db_response_time_ms": {
+                  "type": "integer"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "groups_count": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "count",
+                "db_response_time_ms",
+                "page",
+                "per_page",
+                "groups_count"
+              ]
+            },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "relevance_score": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "group_by": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "required": [
+            "url",
+            "meta",
+            "results",
+            "group_by"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#spreadResponse"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "OpenAlex Search",
+          "properties": {
+            "search": {
+              "type": "string",
+              "title": "Search term",
+              "default": "Artificial Intelligence",
+              "description": "Search term to search for, double quotes for exact match"
+            },
+            "page": {
+              "type": "integer",
+              "default": "1",
+              "title": "Page number",
+              "description": "Page number to return"
+            },
+            "per_page": {
+              "type": "integer",
+              "default": "5",
+              "title": "Results per page",
+              "description": "Number of results to return per page"
+            },
+            "entity": {
+              "description": "Entity type to search for",
+              "type": "string",
+              "default": "works",
+              "enum": [
+                "works",
+                "authors",
+                "sources",
+                "institutions",
+                "topics",
+                "publishers",
+                "funders",
+                "concepts"
+              ],
+              "title": "Entity"
+            },
+            "select": {
+              "type": "string",
+              "title": "Select",
+              "default": "id,display_name,title,relevance_score",
+              "description": "Comma-separated list of fields to return"
+            }
+          },
+          "type": "object",
+          "required": [
+            "search"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    }
+  ],
+  "graphs": {
+    "spreadResponse": {
+      "edges": [
+        {
+          "from": "spreadResponse-input",
+          "to": "spreadResponse-run",
+          "out": "*"
+        },
+        {
+          "from": "spreadResponse-run",
+          "to": "spreadResponse-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "spreadResponse-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "spreadResponse-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function spreadResponse(inputs) {const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}}",
+            "name": "spreadResponse",
+            "raw": true
+          }
+        },
+        {
+          "id": "spreadResponse-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
