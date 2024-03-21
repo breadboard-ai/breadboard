@@ -16,6 +16,7 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
+import { inspectableGraph } from "./graph.js";
 import {
   ERROR_PATH,
   PathRegistry,
@@ -26,6 +27,7 @@ import {
   EventIdentifier,
   GraphUUID,
   InspectableGraphStore,
+  InspectableNode,
   InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -121,6 +123,10 @@ class RunNodeEvent implements InspectableRunNodeEvent {
     return eventIdFromEntryId(this.#entry?.id);
   }
 
+  get inspectableNode(): InspectableNode | null {
+    return this.#entry?.parent?.graph?.nodeById(this.node.id) || null;
+  }
+
   get runs(): InspectableRun[] {
     if (!this.#entry || this.#entry.empty()) {
       return [];
@@ -146,7 +152,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 export class EventManager {
   #graphStore;
   #options;
-  #pathRegistry = new PathRegistry([]);
+  #pathRegistry = new PathRegistry();
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -160,6 +166,9 @@ export class EventManager {
     if (entry) {
       entry.graphId = graphId;
       entry.graphStart = timestamp;
+      // TODO: Instead of creating a new instance, cache and store them
+      // in the GraphStore.
+      entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
     }
   }
 
@@ -184,6 +193,7 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
+
     const event = new RunNodeEvent(entry, node, timestamp, inputs);
     event.hidden = shouldSkipEvent(
       this.#options,
@@ -217,7 +227,6 @@ export class EventManager {
   #addOutput(data: OutputResponse) {
     const { path, bubbled, node, timestamp, outputs } = data;
     if (bubbled) {
-      // Create a new entry for the sidecar output event.
       const event = new RunNodeEvent(null, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);

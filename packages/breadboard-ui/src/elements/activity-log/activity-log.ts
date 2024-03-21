@@ -8,6 +8,7 @@ import {
   ErrorObject,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunNodeEvent,
   NodeValue,
   Schema,
 } from "@google-labs/breadboard";
@@ -19,6 +20,7 @@ import { InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { LoadArgs } from "../../types/types.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -653,6 +655,23 @@ export class ActivityLog extends LitElement {
     );
   }
 
+  async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
+    const { node, inputs, inspectableNode } = event;
+    const nodeSchema = await inspectableNode?.describe(inputs);
+    const schema = nodeSchema?.outputSchema || inputs.schema;
+    return html`<section class=${classMap({ "user-required": this.#isHidden })}>
+      <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
+        ${node.metadata?.title ?? node.id ?? node.type}
+      </h1>
+      <bb-input
+        id="${node.id}"
+        .secret=${false}
+        .remember=${false}
+        .schema=${schema}
+      ></bb-input>
+    </section>`;
+  }
+
   render() {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
@@ -669,7 +688,10 @@ export class ActivityLog extends LitElement {
             const isNew = this.#seenItems.has(event.id);
             this.#seenItems.add(event.id);
 
-            let content: HTMLTemplateResult | symbol = nothing;
+            let content:
+              | HTMLTemplateResult
+              | Promise<HTMLTemplateResult>
+              | symbol = nothing;
             switch (event.type) {
               case "node": {
                 const { node, end, inputs, outputs } = event;
@@ -678,23 +700,7 @@ export class ActivityLog extends LitElement {
                 // been received.
                 if (end === null) {
                   if (node.type === "input") {
-                    content = html`<section
-                      class=${classMap({ "user-required": this.#isHidden })}
-                    >
-                      <h1
-                        ?data-message-idx=${this.showExtendedInfo
-                          ? idx
-                          : nothing}
-                      >
-                        ${node.metadata?.title ?? node.id ?? node.type}
-                      </h1>
-                      <bb-input
-                        id="${node.id}"
-                        .secret=${false}
-                        .remember=${false}
-                        .configuration=${event.inputs}
-                      ></bb-input>
-                    </section>`;
+                    content = this.#renderPendingInput(idx, event);
                     break;
                   }
 
@@ -800,7 +806,7 @@ export class ActivityLog extends LitElement {
                       id="${id}"
                       .secret=${true}
                       .remember=${true}
-                      .configuration=${configuration}
+                      .schema=${configuration.schema}
                     ></bb-input>`;
                   })}
                 </section>`;
@@ -867,7 +873,7 @@ export class ActivityLog extends LitElement {
               style="${styleMap(styles)}"
               class="${classMap(classes)}"
             >
-              <div class="content">${content}</div>
+              <div class="content">${until(content)}</div>
             </div>`;
           })
         : html`<div id="click-run">Click "Run" to get started</div>`}

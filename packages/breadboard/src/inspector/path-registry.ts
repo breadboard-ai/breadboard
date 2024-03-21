@@ -8,6 +8,7 @@ import { timestamp } from "../timestamp.js";
 import { OutputValues } from "../types.js";
 import {
   GraphUUID,
+  InspectableGraph,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -23,6 +24,7 @@ export const idFromPath = (path: number[]): string => {
 
 class Entry implements PathRegistryEntry {
   id: string = "";
+  parent: PathRegistryEntry | null;
   #events: InspectableRunEvent[] = [];
   #eventsIsDirty = false;
   #children: Entry[] = [];
@@ -37,9 +39,14 @@ class Entry implements PathRegistryEntry {
   // Wait until `graphstart` event to set the start time.
   graphStart: number = 0;
   graphEnd: number | null = null;
+  graph: InspectableGraph | null = null;
 
-  constructor(public path: number[]) {
+  constructor(
+    public path: number[],
+    parent: PathRegistryEntry | null
+  ) {
     this.id = idFromPath(path);
+    this.parent = parent;
   }
 
   empty(): boolean {
@@ -127,7 +134,7 @@ class Entry implements PathRegistryEntry {
         console.warn("Path registry is read-only. Not adding", fullPath);
         return;
       }
-      entry = this.#children[head] = new Entry(fullPath);
+      entry = this.#children[head] = new Entry(fullPath, this);
     }
     if (tail.length === 0) {
       return entry;
@@ -182,4 +189,18 @@ class Entry implements PathRegistryEntry {
   }
 }
 
-export class PathRegistry extends Entry {}
+export class PathRegistry extends Entry {
+  constructor() {
+    super([], null);
+  }
+
+  override find(path: number[]) {
+    if (path.length == 0) return this;
+    return super.find(path);
+  }
+
+  override create(path: number[]) {
+    if (path.length == 0) return this;
+    return super.create(path);
+  }
+}

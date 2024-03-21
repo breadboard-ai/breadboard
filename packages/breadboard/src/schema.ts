@@ -105,7 +105,7 @@ export class SchemaBuilder {
 
 /**
  * Combines multiple schemas into a single schema. This is lossy, since
- * the same-named properties will be overriden (last one wins). However,
+ * the same-named properties will be overridden (last one wins). However,
  * it's good enough to communicate the overall shape of the combined schema.
  * @param schemas - the schemas to combine
  * @returns - the combined schema

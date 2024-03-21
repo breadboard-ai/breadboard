@@ -44,7 +44,7 @@ test("simple graph description works as expected", async (t) => {
     outputSchema: {
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
         text: { type: "string" },
       },
     },
@@ -65,9 +65,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       type: "object",
       additionalProperties: false,
       properties: {
-        schema: {
-          type: "object",
-        },
+        schema: { type: "object", behavior: ["json-schema"] },
       },
     },
     outputSchema: {
@@ -79,6 +77,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
           title: "Prompt",
           type: "string",
         },
+        "*": { type: "string" },
       },
       required: ["text"],
     },
@@ -99,7 +98,7 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       type: "object",
       additionalProperties: false,
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
       },
     },
     outputSchema: {
@@ -125,7 +124,7 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
       additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
       },
     },
     outputSchema: {
@@ -150,7 +149,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
     inputSchema: {
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
         text: {
           type: "string",
           title: "Response",
@@ -180,7 +179,7 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
     inputSchema: {
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
         "*": { type: "string" },
       },
     },
@@ -205,7 +204,7 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
     inputSchema: {
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: { type: "object", behavior: ["json-schema"] },
         text: { type: "string" },
       },
     },

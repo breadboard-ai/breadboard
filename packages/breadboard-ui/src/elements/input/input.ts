@@ -24,7 +24,6 @@ import { customElement, property } from "lit/decorators.js";
 import { InputEnterEvent, InputErrorEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
-import { InputArgs } from "../../types/types.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 export type InputData = Record<string, unknown>;
@@ -56,7 +55,7 @@ export class Input extends LitElement {
   secret = false;
 
   @property({ reflect: false })
-  configuration: InputArgs | null = null;
+  schema: Schema | null = null;
 
   @property({ reflect: false })
   processedValues: Record<string, NodeValue> | null = null;
@@ -200,17 +199,12 @@ export class Input extends LitElement {
       return;
     }
 
-    if (
-      !this.configuration ||
-      !this.configuration.schema ||
-      !this.configuration.schema.properties
-    ) {
+    if (!this.schema || !this.schema.properties) {
       console.warn(`Unable to process form: no input Schema detected`);
       return;
     }
 
-    const { schema } = this.configuration;
-    const { properties } = schema;
+    const { properties } = this.schema;
     const form = evt.target;
 
     if (!properties) {
@@ -261,12 +255,11 @@ export class Input extends LitElement {
   }
 
   render() {
-    if (!this.configuration || !this.configuration.schema) {
+    if (!this.schema) {
       return html`Unable to render: no input Schema detected`;
     }
 
-    const { schema } = this.configuration;
-    const { properties } = schema;
+    const { properties } = this.schema;
     const values = this.#getRememberedValues();
 
     if (!properties) {
@@ -293,7 +286,9 @@ export class Input extends LitElement {
     return html`<div id="input">
       <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
         ${Object.entries(properties).map(([key, property]) => {
-          const label = html`<label for="${key}">${property.title}</label>`;
+          const label = html`<label for="${key}"
+            >${property.title || key}</label
+          >`;
           let input;
           if (isMultipartImage(property)) {
             // Webcam input.
