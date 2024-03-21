@@ -70,9 +70,12 @@
             "context": {
               "title": "Context",
               "type": "array",
-              "behavior": [
-                "llm-content"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
               "default": "[]",
               "examples": [
                 "[]"

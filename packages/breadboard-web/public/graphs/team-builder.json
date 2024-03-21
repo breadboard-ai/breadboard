@@ -127,9 +127,12 @@
                       "item": {
                         "title": "Context",
                         "type": "array",
-                        "behavior": [
-                          "llm-content"
-                        ],
+                        "items": {
+                          "type": "object",
+                          "behavior": [
+                            "llm-content"
+                          ]
+                        },
                         "default": "[]",
                         "examples": [
                           "the universe within us"
@@ -224,9 +227,12 @@
             "purpose": {
               "title": "Purpose",
               "type": "array",
-              "behavior": [
-                "llm-content"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
               "default": "[]",
               "examples": [
                 "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."

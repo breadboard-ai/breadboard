@@ -80,9 +80,12 @@
               "properties": {
                 "context": {
                   "type": "array",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "title": "Context"
                 },
                 "text": {
@@ -148,9 +151,12 @@
                   "title": "Context",
                   "description": "Incoming conversation context",
                   "type": "array",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "examples": [
                     "[]"
                   ],
@@ -426,9 +432,12 @@
                   "title": "Context",
                   "type": "array",
                   "format": "multiline",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "default": "[]",
                   "description": "Initial conversation context"
                 },
@@ -713,9 +722,12 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "default": "[]",
                   "examples": [
                     "the universe within us"
@@ -1319,9 +1331,12 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "default": "What is the square root of e?"
                 },
                 "instruction": {
@@ -1336,9 +1351,12 @@
                   "title": "Tools",
                   "type": "array",
                   "description": "The list to iterate over.",
-                  "behavior": [
-                    "board"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "board"
+                    ]
+                  },
                   "examples": [
                     "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
                   ],
@@ -1742,9 +1760,12 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
                   "examples": [
                     "the universe within us"
                   ]
