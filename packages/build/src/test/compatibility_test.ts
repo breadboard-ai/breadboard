@@ -113,6 +113,7 @@ function setupKits<
           },
           schema: {
             type: "object",
+            behavior: ["json-schema"],
           },
         },
         type: "object",
@@ -240,6 +241,7 @@ function setupKits<
           },
           schema: {
             type: "object",
+            behavior: ["json-schema"],
           },
         },
         type: "object",
