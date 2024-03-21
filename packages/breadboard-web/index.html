@@ -49,8 +49,8 @@
 
     const config = {
       providers: [
-        IDBGraphProvider.instance(),
         FileSystemGraphProvider.instance(),
+        IDBGraphProvider.instance(),
         new ExamplesGraphProvider(boards),
       ],
     };
