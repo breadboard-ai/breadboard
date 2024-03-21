@@ -84,6 +84,8 @@ export class FileSystemGraphProvider implements GraphProvider {
   >();
   #locations = new Map<string, FileSystemDirectoryHandle>();
 
+  name = "FileSystemGraphProvider";
+
   private constructor() {}
 
   createURL(location: string, fileName: string) {

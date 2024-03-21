@@ -318,7 +318,7 @@ export class Navigation extends LitElement {
     location: string,
     { permission, items, title }: GraphProviderStore
   ) {
-    const providerName = provider.constructor.name;
+    const providerName = provider.name;
     const createBlankBoard = html`<button
       @click=${() => {
         const fileName = prompt(
@@ -420,8 +420,7 @@ export class Navigation extends LitElement {
     const supportsFileSystem =
       this.providers.find((provider) => {
         return (
-          provider.constructor.name === "FileSystemGraphProvider" &&
-          provider.isSupported()
+          provider.name === "FileSystemGraphProvider" && provider.isSupported()
         );
       }) !== undefined;
 

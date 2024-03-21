@@ -587,10 +587,7 @@ export class Main extends LitElement {
   }
 
   #getProviderByName(name: string) {
-    return (
-      this.#providers.find((provider) => provider.constructor.name === name) ||
-      null
-    );
+    return this.#providers.find((provider) => provider.name === name) || null;
   }
 
   #getProviderForURL(url: URL) {
