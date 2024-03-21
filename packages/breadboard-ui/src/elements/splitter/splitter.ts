@@ -158,17 +158,10 @@ export class Splitter extends LitElement {
     this.#setAndStore();
   }
 
-  #onPointerUp(evt: PointerEvent) {
+  #onPointerUp() {
     this.#handleIdx = null;
     this.style.userSelect = "initial";
     this.classList.remove("active");
-
-    // const [handle] = evt.composedPath();
-    // if (!(handle instanceof HTMLElement)) {
-    //   return;
-    // }
-
-    console.log(evt.currentTarget, evt.target);
 
     window.removeEventListener("pointermove", this.#onPointerMoveBound);
   }
