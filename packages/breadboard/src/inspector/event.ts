@@ -186,18 +186,6 @@ export class EventManager {
     entry.graphEnd = timestamp;
   }
 
-  #getParentEntry(path: number[]) {
-    // CAUTION: Very slow -- another whole traversal just to find a parent.
-    // TODO: Fix this to work faster.
-    const parentPath = structuredClone(path);
-    parentPath.pop();
-    const parentEntry = this.#pathRegistry.find(parentPath);
-    if (!parentEntry) {
-      throw new Error(`Unexpected orphan for ${JSON.stringify(path)}`);
-    }
-    return parentEntry;
-  }
-
   #addNodestart(data: NodeStartResponse) {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
