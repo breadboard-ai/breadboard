@@ -24,8 +24,12 @@ interface FileSystemDirectoryHandle {
   kind: "directory";
   name: string;
   entries(): FileSystemWalker;
-  queryPermission(): Promise<"prompt" | "granted">;
-  requestPermission(): Promise<"prompt" | "granted">;
+  queryPermission(options?: {
+    mode: "read" | "write" | "readwrite";
+  }): Promise<"prompt" | "granted">;
+  requestPermission(options?: {
+    mode: "read" | "write" | "readwrite";
+  }): Promise<"prompt" | "granted">;
   removeEntry(name: string, options?: { recursive: boolean }): Promise<void>;
   getFileHandle(
     name: string,
@@ -58,7 +62,6 @@ declare global {
   }
 }
 
-const KEY = `bb-storage-locations`;
 const FILE_SYSTEM_PROTOCOL = "file:";
 const FILE_SYSTEM_HOST_PREFIX = "fsapi";
 
@@ -220,8 +223,13 @@ export class FileSystemGraphProvider implements GraphProvider {
     return this.#refreshItems(location);
   }
 
-  #storeLocations() {
-    KeyVal.set(KEY, this.#locations);
+  async #storeLocations() {
+    await KeyVal.clear();
+    return Promise.all(
+      [...this.#locations].map(([key, handle]) => {
+        return KeyVal.set(key, handle);
+      })
+    );
   }
 
   isSupported(): boolean {
@@ -240,7 +248,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     this.#items.clear();
 
     for (const [name, handle] of this.#locations) {
-      const permission = await handle.queryPermission();
+      const permission = await handle.queryPermission({ mode: "readwrite" });
 
       let files = this.#items.get(name);
       if (!files) {
@@ -321,7 +329,7 @@ export class FileSystemGraphProvider implements GraphProvider {
       return;
     }
 
-    await handle.requestPermission();
+    await handle.requestPermission({ mode: "readwrite" });
     return this.#refreshAllItems();
   }
 
@@ -354,12 +362,30 @@ export class FileSystemGraphProvider implements GraphProvider {
   }
 
   async restore() {
-    const locations = await KeyVal.get(KEY);
-    if (!locations) {
-      return;
+    const keys = await KeyVal.keys();
+
+    // Temporary migration.
+    for (const key of keys) {
+      if (key === "bb-storage-locations") {
+        console.log("Migrating old storage...");
+        const locations =
+          await KeyVal.get<Map<string, FileSystemDirectoryHandle>>(key);
+
+        if (!locations) {
+          break;
+        }
+
+        for (const [key, loc] of locations) {
+          this.#locations.set(key, loc);
+        }
+        await KeyVal.del("bb-storage-locations");
+        await this.#storeLocations();
+        break;
+      }
     }
 
-    this.#locations = locations;
+    const entries = await KeyVal.entries<string, FileSystemDirectoryHandle>();
+    this.#locations = new Map(entries);
     return this.#refreshAllItems();
   }
 
