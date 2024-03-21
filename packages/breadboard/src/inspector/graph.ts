@@ -93,7 +93,7 @@ class Graph implements InspectableGraphWithStore {
       inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
-    if (!handler || typeof handler === "function" || !handler.describe) {
+    if (!handler || !("describe" in handler) || !handler.describe) {
       return asWired;
     }
     const loader = this.#options.loader || createLoader();
