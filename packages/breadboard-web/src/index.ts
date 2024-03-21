@@ -279,6 +279,7 @@ export class Main extends LitElement {
     }
 
     #content {
+      max-height: calc(100svh - var(--bb-grid-size) * 12);
       display: flex;
       flex-direction: column;
     }
