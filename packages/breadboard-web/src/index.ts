@@ -1024,9 +1024,7 @@ export class Main extends LitElement {
         .url=${this.url}
         .providerOps=${this.providerOps}
         ?inert=${this.showOverlay}
-        @pointerdown=${(evt: Event) => {
-          // evt.stopImmediatePropagation();
-        }}
+        @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
         @graphproviderblankboard=${async (
           evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
         ) => {
