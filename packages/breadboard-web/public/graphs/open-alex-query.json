@@ -1,0 +1,117 @@
+{
+  "title": "Open Alex API Query",
+  "description": "Query the Open Alex API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "spreadResponse",
+      "to": "result",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "requestUri",
+      "in": "requestUri"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "result",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "spreadResponse",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#spreadResponse"
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://api.openalex.org/{requestUri}"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "type": "object",
+        "schema": {
+          "properties": {
+            "requestUri": {
+              "type": "string",
+              "title": "Request URI",
+              "default": "works/random"
+            }
+          },
+          "type": "object",
+          "required": [
+            "requestUri"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "spreadResponse": {
+      "edges": [
+        {
+          "from": "spreadResponse-input",
+          "to": "spreadResponse-run",
+          "out": "*"
+        },
+        {
+          "from": "spreadResponse-run",
+          "to": "spreadResponse-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "spreadResponse-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "spreadResponse-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function spreadResponse(inputs) {const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}}",
+            "name": "spreadResponse",
+            "raw": true
+          }
+        },
+        {
+          "id": "spreadResponse-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
