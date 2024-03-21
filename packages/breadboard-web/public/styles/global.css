@@ -188,5 +188,6 @@ body {
   width: 100vw;
   height: 100svh;
   display: flex;
+  flex-direction: column;
   background: rgb(253, 253, 253);
 }
