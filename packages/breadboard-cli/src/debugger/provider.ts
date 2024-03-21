@@ -5,6 +5,7 @@
  */
 
 import {
+  GraphProviderChange,
   ChangeNotificationCallback,
   GraphDescriptor,
   GraphProvider,
@@ -19,21 +20,16 @@ type BoardInfo = {
   version?: string;
 };
 
-type ChangeNotification = {
-  type: "change" | "rename";
-  filename: string;
-};
-
 const api = {
   loadBoards: async () => {
     const data = await fetch("/api/board/list");
     const boards = await data.json();
     return boards;
   },
-  listenForChanges: (callback: (data: ChangeNotification) => void) => {
+  listenForChanges: (callback: (data: GraphProviderChange) => void) => {
     const evtSource = new EventSource("/~~debug");
     evtSource.addEventListener("update", (evt) => {
-      let data: ChangeNotification;
+      let data: GraphProviderChange;
       try {
         data = JSON.parse(evt.data);
       } catch (e) {
@@ -68,7 +64,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
-      watch: false,
+      watch: true,
     };
   }
 
@@ -146,23 +142,13 @@ export class DebuggerGraphProvider implements GraphProvider {
       title: "Boards to Debug",
       items: boardMap,
     });
-    this.#listenForChanges();
   }
 
   startingURL(): URL | null {
     return this.#blank;
   }
 
-  watch(_location: string, _callback: ChangeNotificationCallback): void {
-    throw new Error(
-      "The `DebuggerGraphProvider` should not be called to watch."
-    );
-  }
-
-  #listenForChanges() {
-    api.listenForChanges((data) => {
-      console.log("🌻 change event", data);
-      //      window.location.reload();
-    });
+  watch(callback: ChangeNotificationCallback): void {
+    api.listenForChanges(callback);
   }
 }

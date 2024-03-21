@@ -356,6 +356,15 @@ export class Main extends LitElement {
     ]).then(([kits]) => {
       this.kits = kits;
 
+      this.#providers.map((provider) => {
+        if (provider.extendedCapabilities().watch) {
+          provider.watch((change) => {
+            console.log("🌻 change event", change);
+            window.location.reload();
+          });
+        }
+      });
+
       if (boardFromUrl) {
         this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
         return;

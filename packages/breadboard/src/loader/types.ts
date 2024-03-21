@@ -12,14 +12,14 @@ export type GraphProviderStore = {
   items: Map<string, { url: string; handle: unknown }>;
 };
 
-export type ChangeNotification = {
+export type GraphProviderChange = {
   type: "change" | "rename";
-  previous: string;
+  previous: string | null;
   filename: string;
 };
 
 export type ChangeNotificationCallback = (
-  notification: ChangeNotification
+  notification: GraphProviderChange
 ) => void;
 
 /**
@@ -164,7 +164,7 @@ export type GraphProvider = {
   /**
    * Provides a way to watch for changes in the store.
    */
-  watch: (location: string, callback: ChangeNotificationCallback) => void;
+  watch: (callback: ChangeNotificationCallback) => void;
 };
 
 /**
