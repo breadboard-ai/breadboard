@@ -131,9 +131,7 @@ class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get inspectableNode(): InspectableNode | null {
-    const graph = this.#graph;
-    if (!graph) return null;
-    return graph.nodeById(this.node.id) || null;
+    return this.#graph?.nodeById(this.node.id) || null;
   }
 
   get runs(): InspectableRun[] {
