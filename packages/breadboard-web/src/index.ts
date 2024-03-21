@@ -602,6 +602,26 @@ export class Main extends LitElement {
       return;
     }
 
+    if (!this.loadInfo || !this.loadInfo.url) {
+      return;
+    }
+
+    try {
+      const url = new URL(this.loadInfo.url, window.location.href);
+      const provider = this.#getProviderForURL(url);
+      if (!provider) {
+        return;
+      }
+
+      const capabilities = provider.canProvide(url);
+      if (!capabilities || !capabilities.save) {
+        return;
+      }
+    } catch (err) {
+      // Likely an error with the URL.
+      return;
+    }
+
     if (
       !confirm("The current board isn't saved - would you like to save first?")
     ) {
