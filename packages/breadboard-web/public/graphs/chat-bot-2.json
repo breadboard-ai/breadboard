@@ -110,9 +110,12 @@
                         "title": "Context",
                         "description": "Incoming conversation context",
                         "type": "array",
-                        "behavior": [
-                          "llm-content"
-                        ],
+                        "items": {
+                          "type": "object",
+                          "behavior": [
+                            "llm-content"
+                          ]
+                        },
                         "examples": [
                           "[]"
                         ],

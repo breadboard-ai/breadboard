@@ -38,6 +38,10 @@ export function isValue<T extends NodeValue = NodeValue>(
   );
 }
 
+const isSchema = (o: Schema | Schema[]): o is Schema => {
+  return !Array.isArray(o);
+};
+
 export class Value<T extends NodeValue = NodeValue>
   extends AbstractValue<T>
   implements PromiseLike<T | undefined>
@@ -270,8 +274,17 @@ export class Value<T extends NodeValue = NodeValue>
 
   behavior(...tags: BehaviorSchema[]): AbstractValue<T> {
     const schema = this.#schema;
-    schema.behavior ??= [];
-    schema.behavior.push(...tags);
+    let s = schema;
+    if (schema.type === "array") {
+      schema.items ??= {};
+      const itemSchema = isSchema(schema.items)
+        ? schema.items
+        : schema.items[0];
+      itemSchema.type ??= "object";
+      s = itemSchema;
+    }
+    s.behavior ??= [];
+    s.behavior.push(...tags);
     return this;
   }
 
