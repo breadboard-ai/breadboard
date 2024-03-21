@@ -5,6 +5,7 @@
  */
 
 import {
+  ChangeNotificationCallback,
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
@@ -67,6 +68,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
+      watch: false,
     };
   }
 
@@ -149,6 +151,12 @@ export class DebuggerGraphProvider implements GraphProvider {
 
   startingURL(): URL | null {
     return this.#blank;
+  }
+
+  watch(_location: string, _callback: ChangeNotificationCallback): void {
+    throw new Error(
+      "The `DebuggerGraphProvider` should not be called to watch."
+    );
   }
 
   #listenForChanges() {

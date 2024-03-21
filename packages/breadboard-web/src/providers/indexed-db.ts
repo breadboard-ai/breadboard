@@ -126,6 +126,7 @@ export class IDBGraphProvider implements GraphProvider {
       connect: false,
       disconnect: false,
       refresh: false,
+      watch: false,
     };
   }
 
@@ -225,6 +226,10 @@ export class IDBGraphProvider implements GraphProvider {
 
   startingURL() {
     return new URL("idb://default/blank.json");
+  }
+
+  watch() {
+    throw new Error("Watch not implemented for IDBGraphProvider");
   }
 
   async #refreshItems(store: GraphDBStore) {
