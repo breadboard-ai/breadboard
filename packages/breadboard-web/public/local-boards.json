@@ -127,6 +127,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Open Alex Entity Search Results",
+    "url": "/graphs/open-alex-entity-search-list.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "OpenAI DALL-E Image Generator",
     "url": "/graphs/openai-dall-e.json",
     "version": "0.0.1"
