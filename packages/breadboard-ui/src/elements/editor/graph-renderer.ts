@@ -349,7 +349,7 @@ export class GraphRenderer extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
 
-    this.addEventListener("wheel", this.#onWheelBound);
+    this.addEventListener("wheel", this.#onWheelBound, { passive: false });
 
     this.#app.start();
     this.#app.resize();
