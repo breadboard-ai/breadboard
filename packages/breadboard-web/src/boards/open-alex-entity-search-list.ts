@@ -174,7 +174,7 @@ const graph = board(() => {
 });
 
 export default await graph.serialize({
-  title: "Open Alex Query",
+  title: "Open Alex Entity Search Results",
   description: "Query the OpenAlex API for a list entities",
   version: "0.0.1",
 });
