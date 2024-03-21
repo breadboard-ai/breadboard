@@ -186,16 +186,7 @@ body {
   font-family: var(--bb-font-family);
   color: var(--bb-font-color);
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
   display: flex;
-  flex-direction: column;
   background: rgb(253, 253, 253);
-}
-
-#dgraphDiv {
-  position: fixed;
-  opacity: 0;
-  top: 0;
-  left: 0;
-  pointer-events: none;
 }

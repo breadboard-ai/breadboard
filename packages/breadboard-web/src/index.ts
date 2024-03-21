@@ -279,7 +279,6 @@ export class Main extends LitElement {
     }
 
     #content {
-      height: calc(100vh - var(--bb-grid-size) * 12);
       display: flex;
       flex-direction: column;
     }
@@ -1026,7 +1025,7 @@ export class Main extends LitElement {
         .providerOps=${this.providerOps}
         ?inert=${this.showOverlay}
         @pointerdown=${(evt: Event) => {
-          evt.stopImmediatePropagation();
+          // evt.stopImmediatePropagation();
         }}
         @graphproviderblankboard=${async (
           evt: BreadboardUI.Events.GraphProviderBlankBoardEvent

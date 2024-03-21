@@ -42,6 +42,7 @@ const DEFAULT_STORE: GraphDBStore = {
   version: 1,
   title: "Board Store",
 };
+const PREFIX = IDB_PROTOCOL + "//";
 
 export class IDBGraphProvider implements GraphProvider {
   static #instance: IDBGraphProvider;
@@ -72,10 +73,12 @@ export class IDBGraphProvider implements GraphProvider {
     if (url.protocol !== IDB_PROTOCOL) {
       throw new Error("Unsupported protocol");
     }
-    const pathName = url.pathname.substring(2);
+    const pathName = url.href.replace(new RegExp(`^${PREFIX}`, "gim"), "");
     const [location, fileName] = pathName.split("/");
     if (!location || !fileName) {
-      throw new Error("Invalid path");
+      throw new Error(
+        `Invalid path: ${url.href} ${pathName} ${location} ${fileName}`
+      );
     }
 
     return { location, fileName };
