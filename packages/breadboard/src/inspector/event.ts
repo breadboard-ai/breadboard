@@ -16,6 +16,7 @@ import {
   OutputResponse,
   OutputValues,
 } from "../types.js";
+import { inspectableGraph } from "./graph.js";
 import {
   ERROR_PATH,
   PathRegistry,
@@ -25,7 +26,9 @@ import {
 import {
   EventIdentifier,
   GraphUUID,
+  InspectableGraph,
   InspectableGraphStore,
+  InspectableNode,
   InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -98,14 +101,20 @@ class RunNodeEvent implements InspectableRunNodeEvent {
    * The path registry entry associated with this event.
    */
   #entry: PathRegistryEntry | null;
+  /**
+   * The inspectable graph instance, associated with this node.
+   */
+  #graph: InspectableGraph | null;
 
   constructor(
     entry: PathRegistryEntry | null,
     node: NodeDescriptor,
     start: number,
-    inputs: InputValues
+    inputs: InputValues,
+    graph: InspectableGraph | null
   ) {
     this.#entry = entry;
+    this.#graph = graph;
     this.type = "node";
     this.node = node;
     this.start = start;
@@ -119,6 +128,12 @@ class RunNodeEvent implements InspectableRunNodeEvent {
 
   get id(): EventIdentifier {
     return eventIdFromEntryId(this.#entry?.id);
+  }
+
+  get inspectableNode(): InspectableNode | null {
+    const graph = this.#graph;
+    if (!graph) return null;
+    return graph.nodeById(this.node.id) || null;
   }
 
   get runs(): InspectableRun[] {
@@ -160,6 +175,9 @@ export class EventManager {
     if (entry) {
       entry.graphId = graphId;
       entry.graphStart = timestamp;
+      // TODO: Instead of creating a new instance, cache and store them
+      // in the GraphStore.
+      entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
     }
   }
 
@@ -177,6 +195,18 @@ export class EventManager {
     entry.graphEnd = timestamp;
   }
 
+  #getParentGraph(path: number[]) {
+    // CAUTION: Very slow -- another whole traversal just to find a parent.
+    // TODO: Fix this to work faster.
+    const parentPath = structuredClone(path);
+    parentPath.pop();
+    const parentEntry = this.#pathRegistry.find(parentPath);
+    if (!parentEntry) {
+      throw new Error(`Unexpected orphan for ${JSON.stringify(path)}`);
+    }
+    return parentEntry.graph;
+  }
+
   #addNodestart(data: NodeStartResponse) {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
@@ -184,7 +214,10 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
-    const event = new RunNodeEvent(entry, node, timestamp, inputs);
+
+    const parentGraph = this.#getParentGraph(path);
+
+    const event = new RunNodeEvent(entry, node, timestamp, inputs, parentGraph);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
@@ -196,7 +229,14 @@ export class EventManager {
   #addInput(data: InputResponse) {
     const { path, bubbled, inputArguments, node, timestamp } = data;
     if (bubbled) {
-      const event = new RunNodeEvent(null, node, timestamp, inputArguments);
+      const parentGraph = this.#getParentGraph(path);
+      const event = new RunNodeEvent(
+        null,
+        node,
+        timestamp,
+        inputArguments,
+        parentGraph
+      );
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
@@ -218,7 +258,14 @@ export class EventManager {
     const { path, bubbled, node, timestamp, outputs } = data;
     if (bubbled) {
       // Create a new entry for the sidecar output event.
-      const event = new RunNodeEvent(null, node, timestamp, outputs);
+      const parentGraph = this.#getParentGraph(path);
+      const event = new RunNodeEvent(
+        null,
+        node,
+        timestamp,
+        outputs,
+        parentGraph
+      );
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {

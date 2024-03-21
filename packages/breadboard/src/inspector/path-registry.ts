@@ -8,6 +8,7 @@ import { timestamp } from "../timestamp.js";
 import { OutputValues } from "../types.js";
 import {
   GraphUUID,
+  InspectableGraph,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -37,6 +38,7 @@ class Entry implements PathRegistryEntry {
   // Wait until `graphstart` event to set the start time.
   graphStart: number = 0;
   graphEnd: number | null = null;
+  graph: InspectableGraph | null = null;
 
   constructor(public path: number[]) {
     this.id = idFromPath(path);
@@ -182,4 +184,14 @@ class Entry implements PathRegistryEntry {
   }
 }
 
-export class PathRegistry extends Entry {}
+export class PathRegistry extends Entry {
+  override find(path: number[]) {
+    if (path.length == 0) return this;
+    return super.find(path);
+  }
+
+  override create(path: number[]) {
+    if (path.length == 0) return this;
+    return super.create(path);
+  }
+}

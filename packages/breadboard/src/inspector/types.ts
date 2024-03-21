@@ -453,6 +453,10 @@ export type InspectableRunNodeEvent = {
    */
   node: NodeDescriptor;
   /**
+   * The `InspectableNode` instance associated with this node.
+   */
+  inspectableNode: InspectableNode | null;
+  /**
    * The timestamp of the `nodestart` event.
    */
   start: number;
@@ -582,6 +586,10 @@ export type PathRegistryEntry = {
    * Returns nested events for this entry.
    */
   events: InspectableRunEvent[];
+  /**
+   * Returns an inspectable graph for the graph, associated with this entry/
+   */
+  graph: InspectableGraph | null;
 };
 
 export type RunObserverLogLevel =
@@ -602,4 +610,9 @@ export type RunObserverOptions = {
    * Logging level.
    */
   logLevel?: RunObserverLogLevel;
+  /**
+   * The kits that are being used during this run. Used to provide
+   * the ability to inspect graphs and nodes during the run.
+   */
+  kits?: Kit[];
 };

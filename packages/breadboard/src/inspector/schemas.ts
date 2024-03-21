@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SchemaBuilder } from "../schema.js";
+import { SchemaBuilder, combineSchemas } from "../schema.js";
 import { NodeDescriberResult, Schema } from "../types.js";
 import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
 
@@ -13,8 +13,7 @@ export enum EdgeType {
   Out,
 }
 
-// TODO: Specify actual "schema" schema.
-const SCHEMA_SCHEMA = { type: "object" };
+const SCHEMA_SCHEMA: Schema = { type: "object", behavior: ["json-schema"] };
 
 const DEFAULT_SCHEMA = { type: "string" };
 
@@ -24,13 +23,16 @@ const edgesToProperties = (
   keepStar = false
 ): Record<string, Schema> => {
   if (!edges) return {};
-  return edges.reduce((acc, edge) => {
-    if (!keepStar && edge.out === "*") return acc;
-    const key = edgeType === EdgeType.In ? edge.in : edge.out;
-    if (acc[key]) return acc;
-    acc[key] = DEFAULT_SCHEMA;
-    return acc;
-  }, {} as Record<string, Schema>);
+  return edges.reduce(
+    (acc, edge) => {
+      if (!keepStar && edge.out === "*") return acc;
+      const key = edgeType === EdgeType.In ? edge.in : edge.out;
+      if (acc[key]) return acc;
+      acc[key] = DEFAULT_SCHEMA;
+      return acc;
+    },
+    {} as Record<string, Schema>
+  );
 };
 
 export const edgesToSchema = (
@@ -53,15 +55,15 @@ export const edgesToSchema = (
 export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = options.inputs?.schema as Schema | undefined;
+  const schema = (options.inputs?.schema as Schema) || {};
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
-  if (schema) return { inputSchema, outputSchema: schema };
-  return {
-    inputSchema,
-    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing, true),
-  };
+  const outputSchema = combineSchemas([
+    edgesToSchema(EdgeType.Out, options.outgoing, true),
+    schema,
+  ]);
+  return { inputSchema, outputSchema };
 };
 
 /**
