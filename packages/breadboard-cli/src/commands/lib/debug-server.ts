@@ -75,10 +75,14 @@ export const startServer = async (file: string, options: DebugOptions) => {
     base,
   };
 
-  const notifyClients = (type: "change" | "rename", filename: string) => {
+  const notifyClients = (
+    type: "change" | "rename",
+    previous: string | null,
+    filename: string
+  ) => {
     Object.values(clients).forEach((clientResponse) => {
       clientResponse.write(
-        `event: update\ndata:${JSON.stringify({ type, filename })}\nid:${Date.now()}\n\n`
+        `event: update\ndata:${JSON.stringify({ type, previous, filename })}\nid:${Date.now()}\n\n`
       );
     });
   };

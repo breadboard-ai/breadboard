@@ -152,8 +152,9 @@ export class DebuggerGraphProvider implements GraphProvider {
   }
 
   #listenForChanges() {
-    api.listenForChanges((_data) => {
-      window.location.reload();
+    api.listenForChanges((data) => {
+      console.log("🌻 change event", data);
+      //      window.location.reload();
     });
   }
 }
