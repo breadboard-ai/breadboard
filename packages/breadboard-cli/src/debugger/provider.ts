@@ -12,10 +12,15 @@ import {
   GraphProviderStore,
 } from "@google-labs/breadboard";
 
-export type BoardInfo = {
+type BoardInfo = {
   title: string;
   url: string;
   version?: string;
+};
+
+type ChangeNotification = {
+  type: "change" | "rename";
+  filename: string;
 };
 
 const api = {
@@ -23,6 +28,19 @@ const api = {
     const data = await fetch("/api/board/list");
     const boards = await data.json();
     return boards;
+  },
+  listenForChanges: (callback: (data: ChangeNotification) => void) => {
+    const evtSource = new EventSource("/~~debug");
+    evtSource.addEventListener("update", (evt) => {
+      let data: ChangeNotification;
+      try {
+        data = JSON.parse(evt.data);
+      } catch (e) {
+        console.error("Failed to parse update event", evt.data);
+        return;
+      }
+      callback(data);
+    });
   },
 };
 
@@ -126,9 +144,16 @@ export class DebuggerGraphProvider implements GraphProvider {
       title: "Boards to Debug",
       items: boardMap,
     });
+    this.#listenForChanges();
   }
 
   startingURL(): URL | null {
     return this.#blank;
+  }
+
+  #listenForChanges() {
+    api.listenForChanges((_data) => {
+      window.location.reload();
+    });
   }
 }

@@ -51,16 +51,18 @@ export const debug = async (file: string, options: DebugOptions) => {
 
     watch(file, {
       onChange: async (filename: string) => {
-        // Signal that the browser should reload - and it will refresh the boards
+        // Signal that the browser should reload - and it will refresh the
+        // boards.
         console.log(`${filename} changed. Refreshing boards...`);
 
-        notifyClients();
+        notifyClients("change", filename);
       },
-      onRename: async () => {
-        // Refresh the list of boards that are passed in at the start of the server.
+      onRename: async (filename) => {
+        // Refresh the list of boards that are passed in at the start of the
+        // server.
         console.log(`Refreshing boards...`);
 
-        notifyClients();
+        notifyClients("rename", filename);
       },
     });
   }
