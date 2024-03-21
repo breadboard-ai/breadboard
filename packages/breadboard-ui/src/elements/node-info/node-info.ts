@@ -458,7 +458,11 @@ export class NodeInfo extends LitElement {
                     case "object": {
                       const schema = configurationValue as Schema;
 
-                      if (schema && schema.properties) {
+                      // Only show the schema editor for inputs & outputs
+                      if (
+                        (schema && node.descriptor.type === "input") ||
+                        node.descriptor.type === "output"
+                      ) {
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
                           .schema=${schema}
@@ -477,13 +481,14 @@ export class NodeInfo extends LitElement {
                           name="${name}"
                         ></bb-schema-editor>`;
                       } else {
+                        // TODO: POJO editing?
                         // prettier-ignore
                         input = html`<div
-                    class="mono"
-                    contenteditable="plaintext-only"
-                    data-id="${name}"
-                    data-type="${type}"
-                  >${JSON.stringify(configurationValue, null, 2)}</div>`;
+                        class="mono"
+                        contenteditable="plaintext-only"
+                        data-id="${name}"
+                        data-type="${type}"
+                      >${JSON.stringify(configurationValue, null, 2)}</div>`;
                       }
                       break;
                     }
