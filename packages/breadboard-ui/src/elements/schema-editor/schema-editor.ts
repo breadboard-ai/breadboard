@@ -215,6 +215,9 @@ export class SchemaEditor extends LitElement {
             }}
             ?readonly=${!this.editable}
           >
+            <option ?selected=${value.type === "array"} value="array">
+              Array
+            </option>
             <option ?selected=${value.type === "string"} value="string">
               String
             </option>
