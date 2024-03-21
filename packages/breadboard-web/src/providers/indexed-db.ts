@@ -63,6 +63,8 @@ export class IDBGraphProvider implements GraphProvider {
     }
   >();
 
+  name = "IDBGraphProvider";
+
   private constructor() {}
 
   isSupported() {
