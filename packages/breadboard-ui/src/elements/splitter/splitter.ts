@@ -123,8 +123,11 @@ export class Splitter extends LitElement {
     this.style.userSelect = "none";
     this.classList.add("active");
 
-    document.addEventListener("pointermove", this.#onPointerMoveBound);
-    document.addEventListener("pointerup", this.#onPointerUpBound);
+    handle.setPointerCapture(evt.pointerId);
+    window.addEventListener("pointermove", this.#onPointerMoveBound);
+    window.addEventListener("pointerup", this.#onPointerUpBound, {
+      once: true,
+    });
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -155,11 +158,19 @@ export class Splitter extends LitElement {
     this.#setAndStore();
   }
 
-  #onPointerUp() {
+  #onPointerUp(evt: PointerEvent) {
     this.#handleIdx = null;
     this.style.userSelect = "initial";
     this.classList.remove("active");
-    document.removeEventListener("pointermove", this.#onPointerMoveBound);
+
+    // const [handle] = evt.composedPath();
+    // if (!(handle instanceof HTMLElement)) {
+    //   return;
+    // }
+
+    console.log(evt.currentTarget, evt.target);
+
+    window.removeEventListener("pointermove", this.#onPointerMoveBound);
   }
 
   #clamp(value: number, min: number, max: number) {
