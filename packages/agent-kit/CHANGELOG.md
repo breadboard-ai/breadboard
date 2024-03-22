@@ -1,5 +1,22 @@
 # @google-labs/agent-kit
 
+## 0.3.0
+
+### Minor Changes
+
+- f005b3b: Introduce `load` API for kits.
+- ad5c1be: Introduce Tool Worker node in Agent Kit.
+- ff4abd6: Teach Repeater to allow inner worker to exit early.
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- decfa29: Introduce `DebuggerGraphProvider`.
+- 6e631c4: Load agent-kit via manifest dynamically.
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+- 8d9bba9: Add better metadata for Agent Kit.
+- b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
+
 ## 0.2.0
 
 ### Minor Changes
