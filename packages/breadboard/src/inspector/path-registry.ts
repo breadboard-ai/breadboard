@@ -113,13 +113,13 @@ class Entry implements PathRegistryEntry {
     readonly: boolean,
     fullPath: number[],
     path: number[]
-  ): PathRegistryEntry | undefined {
+  ): PathRegistryEntry | null {
     // Marking events dirty, because we're about to mutate something within
     // this swath of the registry.
     this.#eventsIsDirty = true;
     const [head, ...tail] = path;
     if (head === undefined) {
-      return;
+      return null;
     }
     let entry = this.#children[head];
     if (!entry) {
@@ -132,7 +132,7 @@ class Entry implements PathRegistryEntry {
       }
       if (readonly) {
         console.warn("Path registry is read-only. Not adding", fullPath);
-        return;
+        return null;
       }
       entry = this.#children[head] = new Entry(fullPath, this);
     }
@@ -194,12 +194,12 @@ export class PathRegistry extends Entry {
     super([], null);
   }
 
-  override find(path: number[]) {
+  override find(path: number[]): PathRegistryEntry | null {
     if (path.length == 0) return this;
     return super.find(path);
   }
 
-  override create(path: number[]) {
+  override create(path: number[]): Entry {
     if (path.length == 0) return this;
     return super.create(path);
   }
