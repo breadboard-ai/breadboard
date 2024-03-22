@@ -59,11 +59,14 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get inspectableNode(): InspectableNode | null {
-    const node = this.#entry.parent?.graph?.nodeById(this.node.id) || null;
+    if (!this.#entry.parent) {
+      throw new Error(
+        "`RunNodeEvent` has no parent entry. This is a bug in Inspector API machinery."
+      );
+    }
+    const node = this.#entry.parent.graph?.nodeById(this.node.id) || null;
     if (!node) {
-      if (!this.#entry.parent) {
-        console.warn("This node event has no parent", this.node);
-      } else if (!this.#entry.parent.graph) {
+      if (!this.#entry.parent.graph) {
         console.warn(
           "This node event's parent has no graph associated with it",
           this.node
