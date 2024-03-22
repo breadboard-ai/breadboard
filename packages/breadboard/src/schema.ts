@@ -135,3 +135,28 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
   }
   return result;
 };
+
+/**
+ * Removes a property from a schema (assumes it to be type = object).
+ *
+ * @param schema -- Schema to remove the property from
+ * @param property -- the property to remove
+ * @returns -- a new Schema instance with removed property.
+ */
+export const removeProperty = (schema: Schema, property: string): Schema => {
+  const entries = Object.entries(schema.properties || {});
+  if (entries.length == 0) {
+    return schema;
+  }
+  const index = entries.findIndex(([name]) => {
+    return name === property;
+  });
+  if (index == -1) {
+    return schema;
+  }
+  entries.splice(index, 1);
+  return {
+    ...schema,
+    properties: Object.fromEntries(entries),
+  };
+};
