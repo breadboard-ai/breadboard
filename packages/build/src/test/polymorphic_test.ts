@@ -10,7 +10,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 test("polymorphic inputs", () => {
-  // $ExpectType PolymorphicDefinition<{ in1: { type: "string"; }; "*": { type: "number"; }; }, { out1: { type: "string"; }; }>
+  // $ExpectType PolymorphicDefinition<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }, { out1: { type: "string"; }; }>
   const definition = defineNodeType(
     {
       in1: {
@@ -26,9 +26,9 @@ test("polymorphic inputs", () => {
       },
     },
     (
-      // $ExpectType StaticInvokeParams<{ in1: { type: "string"; }; "*": { type: "number"; }; }>
+      // $ExpectType ConcreteValues<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>>
       params,
-      // $ExpectType DynamicInvokeParams<{ in1: { type: "string"; }; "*": { type: "number"; }; }>
+      // $ExpectType DynamicInvokeParams<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }>
       dynamic
     ) => {
       // $ExpectType string
@@ -41,8 +41,6 @@ test("polymorphic inputs", () => {
       dynamic.in1;
       // $ExpectType number | undefined
       dynamic.in2;
-      // $ExpectType never
-      dynamic["*"];
       return {
         out1: "foo",
       };

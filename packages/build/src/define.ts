@@ -11,7 +11,7 @@ import {
 } from "./definition-monomorphic.js";
 import {
   definePolymorphicNodeType,
-  type DescribeInputsFunction,
+  type PolymorphicDescribeFunction,
   type PolymorphicDefinition,
   type PolymorphicInvokeFunction,
 } from "./definition-polymorphic.js";
@@ -64,23 +64,42 @@ import type { PortConfigMap } from "./port.js";
  * `board` for execution.
  */
 export function defineNodeType<
-  ISHAPE extends PortConfigMap,
-  OSHAPE extends PortConfigMap,
+  INPUTS extends PortConfigMap,
+  OUTPUTS extends PortConfigMap,
 >(
-  inputs: ISHAPE,
-  outputs: ForbidMultiplePrimaries<OSHAPE>,
-  invoke: IsPolymorphic<ISHAPE> extends true
-    ? PolymorphicInvokeFunction<ISHAPE, OSHAPE>
-    : MonomorphicInvokeFunction<ISHAPE, OSHAPE>,
-  describe?: IsPolymorphic<ISHAPE> extends true
-    ? DescribeInputsFunction<ISHAPE>
+  inputs: INPUTS,
+  outputs: ForbidMultiplePrimaries<OUTPUTS>,
+  invoke: IsPolymorphic<INPUTS> extends true
+    ? PolymorphicInvokeFunction<
+        OmitDynamicPortConfig<INPUTS>,
+        ExtractDynamicPortConfig<INPUTS>,
+        OUTPUTS
+      >
+    : MonomorphicInvokeFunction<INPUTS, OUTPUTS>,
+  describe?: IsPolymorphic<INPUTS> extends true
+    ? PolymorphicDescribeFunction<
+        OmitDynamicPortConfig<INPUTS>,
+        ExtractDynamicPortConfig<INPUTS>
+      >
     : never
-): NodeDefinition<ISHAPE, OSHAPE> {
+): NodeDefinition<INPUTS, OUTPUTS> {
   validateOutputs(outputs);
   const def = isPolymorphic(inputs, invoke)
-    ? definePolymorphicNodeType(inputs, outputs, invoke, describe)
+    ? definePolymorphicNodeType(
+        omitDynamicPort(inputs),
+        // TODO(aomarks) Remove !
+        inputs["*"]!,
+        outputs,
+        // TODO(aomarks) Remove cast
+        invoke as PolymorphicInvokeFunction<
+          OmitDynamicPortConfig<INPUTS>,
+          ExtractDynamicPortConfig<INPUTS>,
+          OUTPUTS
+        >,
+        describe
+      )
     : defineMonomorphicNodeType(inputs, outputs, invoke);
-  return def as NodeDefinition<ISHAPE, OSHAPE>;
+  return def as NodeDefinition<INPUTS, OUTPUTS>;
 }
 
 function validateOutputs(outputs: PortConfigMap): void {
@@ -96,23 +115,47 @@ function validateOutputs(outputs: PortConfigMap): void {
 }
 
 function isPolymorphic<
-  ISHAPE extends PortConfigMap,
-  OSHAPE extends PortConfigMap,
+  INPUTS extends PortConfigMap,
+  OUTPUTS extends PortConfigMap,
 >(
-  shape: ISHAPE,
+  inputs: INPUTS,
   invoke:
-    | MonomorphicInvokeFunction<ISHAPE, OSHAPE>
-    | PolymorphicInvokeFunction<ISHAPE, OSHAPE>
-): invoke is PolymorphicInvokeFunction<ISHAPE, OSHAPE> {
-  return shape["*"] !== undefined;
+    | MonomorphicInvokeFunction<INPUTS, OUTPUTS>
+    | PolymorphicInvokeFunction<
+        OmitDynamicPortConfig<INPUTS>,
+        ExtractDynamicPortConfig<INPUTS>,
+        OUTPUTS
+      >
+): invoke is PolymorphicInvokeFunction<
+  OmitDynamicPortConfig<INPUTS>,
+  ExtractDynamicPortConfig<INPUTS>,
+  OUTPUTS
+> {
+  return inputs["*"] !== undefined;
 }
+
+function omitDynamicPort<SHAPE extends PortConfigMap>(
+  shape: SHAPE
+): OmitDynamicPortConfig<SHAPE> {
+  return Object.fromEntries(
+    Object.entries(shape).filter(([name]) => name !== "*")
+  ) as OmitDynamicPortConfig<SHAPE>;
+}
+
+type ExtractDynamicPortConfig<SHAPE extends PortConfigMap> = SHAPE["*"];
+
+type OmitDynamicPortConfig<SHAPE extends PortConfigMap> = Omit<SHAPE, "*">;
 
 type NodeDefinition<
   ISHAPE extends PortConfigMap,
   OSHAPE extends PortConfigMap,
 > =
   IsPolymorphic<ISHAPE> extends true
-    ? PolymorphicDefinition<ISHAPE, OSHAPE>
+    ? PolymorphicDefinition<
+        OmitDynamicPortConfig<ISHAPE>,
+        ExtractDynamicPortConfig<ISHAPE>,
+        OSHAPE
+      >
     : MonomorphicDefinition<ISHAPE, OSHAPE>;
 
 type IsPolymorphic<ISHAPE extends PortConfigMap> = ISHAPE["*"] extends object

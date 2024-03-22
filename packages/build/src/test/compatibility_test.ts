@@ -27,7 +27,7 @@ function setupKits<
     // TODO(aomarks) See TODO about `any` at {@link NodeFactoryFromDefinition}.
     //
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any>
+    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>
   >,
 >(definitions: DEFS) {
   const ctr = new KitBuilder({ url: "N/A" }).build(definitions);

@@ -12,8 +12,6 @@ import type { PortConfigMap, OutputPortReference, PortConfig } from "./port.js";
 import type { TypeScriptTypeFromBreadboardType } from "./type.js";
 import type { CountUnion } from "./type-util.js";
 
-export type OmitStarPort<SHAPE extends PortConfigMap> = Omit<SHAPE, "*">;
-
 export type ValueOrPort<CONFIG extends PortConfig> =
   | TypeScriptTypeFromBreadboardType<CONFIG["type"]>
   | OutputPortReference<CONFIG>;
