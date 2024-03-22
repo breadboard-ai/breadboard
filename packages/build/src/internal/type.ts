@@ -28,16 +28,38 @@ export function anyOf<
 
 /**
  * If none of the included type utilities are able to express both the required
- * JSON Schema and its corresponding TypeScript type, then `escapeHatch` can be
- * used to create a type that directly specifies both.
+ * JSON Schema and its corresponding TypeScript type you need, then `unsafeType`
+ * can be used to manually create a type that directly specifies both.
+ *
+ * This function is called `unsafeType` because there is no guarantee that the
+ * JSON Schema and TypeScript types you specify are actually equivalent, hence
+ * it must be used with care. Prefer using one of the provided types if
+ * possible, and consider filing a feature request if you think a type should be
+ * natively supported.
+ *
+ * Example:
+ *
+ * ```ts
+ * import {unsafeType} from "@breadboard-ai/build";
+ *
+ * const myCrazyType = unsafeType<{foo: string}>({
+ *   type: "object",
+ *   properties: {
+ *     foo: {
+ *       type: "string"
+ *     }
+ *   },
+ *   required: ["foo"]
+ * });
+ * ```
  *
  * @param jsonSchema The JSON schema that will always be returned when a port
  * has this type.
  * @returns A `BreadboardType` which carries both the TypeScript type provided
  * via the `T` generic parameter, and the corresponding JSON schema.
  */
-export function escapeHatch<T>(jsonSchema: JSONSchema) {
-  return new EscapeHatch<T>(jsonSchema);
+export function unsafeType<T>(jsonSchema: JSONSchema) {
+  return new UnsafeType<T>(jsonSchema);
 }
 
 const AdvancedType = Symbol();
@@ -81,7 +103,7 @@ export type BreadboardTypeFromTypeScriptType<
       : never;
 
 // TODO(aomarks) Expand this to the full vocabulary of JSONSchema so that
-// `escapeHatch` can be fully flexible (for now it's OK to cast to JSONSchema).
+// `unsafeType` can be fully flexible (for now it's OK to cast to JSONSchema).
 export type JSONSchema = {
   title?: string;
   description?: string;
@@ -107,8 +129,8 @@ class AnyOf<T extends [BreadboardType, BreadboardType, ...BreadboardType[]]> {
   }
 }
 
-export type { EscapeHatch };
-class EscapeHatch<T> {
+export type { UnsafeType };
+class UnsafeType<T> {
   #jsonSchema: JSONSchema;
   readonly [AdvancedType]!: T;
   constructor(jsonSchema: JSONSchema) {

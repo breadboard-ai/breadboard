@@ -13,7 +13,7 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
-import { anyOf, escapeHatch } from "../internal/type.js";
+import { anyOf, unsafeType } from "../internal/type.js";
 
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{}, {}>
@@ -440,11 +440,11 @@ test("describe function generates JSON schema with anyOf", async () => {
   });
 });
 
-test("describe function generates JSON schema with escapeHatch", async () => {
+test("describe function generates JSON schema with unsafeType", async () => {
   const definition = defineNodeType({
     inputs: {
       in1: {
-        type: escapeHatch<"FOO" | 123>({
+        type: unsafeType<"FOO" | 123>({
           anyOf: [{ type: "string" }, { type: "number" }],
         }),
         description: "Description of in1",
@@ -452,13 +452,13 @@ test("describe function generates JSON schema with escapeHatch", async () => {
     },
     outputs: {
       out1: {
-        type: escapeHatch<true | 456>({
+        type: unsafeType<true | 456>({
           anyOf: [{ type: "boolean" }, { type: "string" }],
         }),
         description: "Description of out1",
       },
       out2: {
-        type: escapeHatch<false | 789>({
+        type: unsafeType<false | 789>({
           anyOf: [{ type: "boolean" }, { type: "string" }],
         }),
         description: "Description of out2",

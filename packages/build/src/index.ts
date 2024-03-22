@@ -5,5 +5,5 @@
  */
 
 export { defineNodeType } from "./internal/define.js";
-export { anyOf } from "./internal/type.js";
+export { anyOf, unsafeType } from "./internal/type.js";
 export type { NodeFactoryFromDefinition } from "./internal/compatibility.js";
