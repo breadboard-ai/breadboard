@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- 866fc36: Refactor `BoardLoader` to be a `GraphLoader` implementation.
+- f005b3b: Introduce `load` API for kits.
+- 048e8ec: Introduce `InspectableRunEvent` and API around it.
+- 60bd63c: Get the Run Inspector API ready to ship
+- 04d5420: Adds describer to GraphToKitAdapter
+- 1b48826: Introduce `GraphProvider` and make it pluggable.
+- 3e8cfcf: Teach `InspectableRunNodeEvent` about `InspectableNode`.
+- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+- 2008f69: Teach breadboard to load custom URL types.
+- a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
+- c208cfc: Introduce `canChangeEdge` and `changEdge` to the Editor API.
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- a8bab08: Add support for inputs (including bubbled) to `InspectableRun.events`.
+- decfa29: Introduce `DebuggerGraphProvider`.
+- dcfdc37: Implement handling subgraphs in Run Inspector API.
+- d971aad: Add documentation for Run Inspector API.
+- dc35601: Improved run inspector API to mostly work.
+- 9cda2ff: Disallow creation of non-star to star edges.
+- 764ccda: Use behaviors to identify port editing UI.
+- 56b90a4: Improve graph unique id generation and various cleanups.
+- e648f64: Start using UUIDs for graphs.
+- ad5c1be: Introduce Tool Worker node in Agent Kit.
+- 4a4a1f6: Place unfinished sidecar events at the bottom of the event list.
+- bac9bb1: Bring loader machinery closer to cacheable load state.
+- 3c497b0: Use esbuild.build to compile the boards. This enables importing modules.
+- c0f785a: Shift more URL-resolution logic into the Loader.
+- 32cfbaf: Optimistically create edge instances during cache miss.
+- 8dc4e00: Fix a race condition in Worker transport.
+- 6438930: Make `InspectableEdge` and `InspectableNode` instances stable.
+- dd2cce6: Make graph editor work with stable `InspectableEdge`.
+- cac4f4f: Add `InspectableRunEvent.id`.
+- b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
+- ef05634: Allow node describe() and invoke() to work as long as an object provides those properties
+- Updated dependencies [f005b3b]
+- Updated dependencies [9b8e732]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [eabd97b]
+- Updated dependencies [efeb1a3]
+  - @google-labs/breadboard-schema@1.4.0
+
 ## 0.11.2
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @google-labs/breadboard-website
 
+## 2.2.0
+
+### Minor Changes
+
+- b4c3270: Adds "update" section to website
+
+### Patch Changes
+
+- d971aad: Add documentation for Run Inspector API.
+- ad5c1be: Introduce Tool Worker node in Agent Kit.
+- 6438930: Make `InspectableEdge` and `InspectableNode` instances stable.
+
 ## 2.1.0
 
 ### Minor Changes

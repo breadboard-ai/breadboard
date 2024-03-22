@@ -1,5 +1,130 @@
 # @google-labs/breadboard-web
 
+## 1.3.0
+
+### Minor Changes
+
+- c3303a6: Adds --kit to `breadboard debug`
+- f005b3b: Introduce `load` API for kits.
+- 60bd63c: Get the Run Inspector API ready to ship
+- be240b8: Simplifies the UI
+- b80a188: Add support for editing board info
+- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- 0bdff0b: Adds nesting to the Activity Log
+- 88372d9: Adds sidenav and loading from the File System
+- a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
+- c208cfc: Introduce `canChangeEdge` and `changEdge` to the Editor API.
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- 88b0f3a: add SVG version of logo and use it for favicon
+- a9e1849: Minor UI tweaks for iOS
+- 699723b: Support file drag and drop
+- decfa29: Introduce `DebuggerGraphProvider`.
+- 1f01afc: Make logLevel "debug" as default.
+- 49c25aa: Add describers for a few nodes.
+- 564f60c: Allow saving of non FS files
+- 6e631c4: Load agent-kit via manifest dynamically.
+- c0d87f4: Slide toasts out of the way when a new one arrives
+- 048e8ec: Introduce `InspectableRunEvent` and API around it.
+- 6143c58: Switch breadboard-web to not use worker by default.
+- 56b90a4: Improve graph unique id generation and various cleanups.
+- 9a689c3: Teach `bb-activity-log` to handle image URLs.
+- e648f64: Start using UUIDs for graphs.
+- dc648b1: Use object identity to trigger graph update.
+- 628be93: Consolidate colors
+- bac9bb1: Bring loader machinery closer to cacheable load state.
+- ff4abd6: Better Ad Writer
+- 10f5110: Update look of node selector
+- 3d536b6: Emit node location info on first render
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+- 14d5220: Start extruding Run Inspector API from existing machinery.
+- 6b5e96e: Acknowledge that the user has refreshed the source
+- 1bbd16a: Start loading all heavy kits dynamically.
+- 8dc4e00: Fix a race condition in Worker transport.
+- 5118c60: Use actual `changeEdge` call
+- 53df4e9: Add another take on Ad Writer.
+- b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
+- 9f343a6: Update Ad Writer 2 to generate entire campaigns.
+- Updated dependencies [642e18c]
+- Updated dependencies [f73c637]
+- Updated dependencies [99446b8]
+- Updated dependencies [866fc36]
+- Updated dependencies [126522e]
+- Updated dependencies [a8bab08]
+- Updated dependencies [699723b]
+- Updated dependencies [decfa29]
+- Updated dependencies [f005b3b]
+- Updated dependencies [49c25aa]
+- Updated dependencies [6e631c4]
+- Updated dependencies [c0d87f4]
+- Updated dependencies [b4f164d]
+- Updated dependencies [dcfdc37]
+- Updated dependencies [b3cfa74]
+- Updated dependencies [d971aad]
+- Updated dependencies [c1ec509]
+- Updated dependencies [048e8ec]
+- Updated dependencies [dc35601]
+- Updated dependencies [f473c6e]
+- Updated dependencies [9cda2ff]
+- Updated dependencies [94ec717]
+- Updated dependencies [49c2410]
+- Updated dependencies [60bd63c]
+- Updated dependencies [9c2480c]
+- Updated dependencies [be240b8]
+- Updated dependencies [764ccda]
+- Updated dependencies [b80a188]
+- Updated dependencies [04d5420]
+- Updated dependencies [56b90a4]
+- Updated dependencies [1b48826]
+- Updated dependencies [9a689c3]
+- Updated dependencies [e648f64]
+- Updated dependencies [dc648b1]
+- Updated dependencies [628be93]
+- Updated dependencies [ad5c1be]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [bac9bb1]
+- Updated dependencies [d440d59]
+- Updated dependencies [3e8cfcf]
+- Updated dependencies [6adf1f8]
+- Updated dependencies [986af39]
+- Updated dependencies [10f5110]
+- Updated dependencies [3c497b0]
+- Updated dependencies [3d536b6]
+- Updated dependencies [5bc47be]
+- Updated dependencies [eabd97b]
+- Updated dependencies [14d5220]
+- Updated dependencies [0bdff0b]
+- Updated dependencies [2008f69]
+- Updated dependencies [a94fe4c]
+- Updated dependencies [88372d9]
+- Updated dependencies [c0f785a]
+- Updated dependencies [8d9bba9]
+- Updated dependencies [a8fc3f3]
+- Updated dependencies [32cfbaf]
+- Updated dependencies [ff4abd6]
+- Updated dependencies [329a47e]
+- Updated dependencies [8dc4e00]
+- Updated dependencies [6438930]
+- Updated dependencies [5118c60]
+- Updated dependencies [dd2cce6]
+- Updated dependencies [cac4f4f]
+- Updated dependencies [b1fc53b]
+- Updated dependencies [ef05634]
+- Updated dependencies [c208cfc]
+  - @google-labs/team-kit@0.1.0
+  - @google-labs/core-kit@0.5.0
+  - @google-labs/breadboard-ui@0.3.0
+  - @google-labs/breadboard@0.12.0
+  - @google-labs/gemini-kit@0.1.4
+  - @google-labs/agent-kit@0.3.0
+  - @google-labs/json-kit@0.1.1
+  - @google-labs/node-nursery-web@1.0.4
+  - @google-labs/pinecone-kit@0.1.4
+  - @google-labs/palm-kit@0.0.6
+  - @google-labs/template-kit@0.2.1
+
 ## 1.2.2
 
 ### Patch Changes

@@ -1,5 +1,87 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 60bd63c: Get the Run Inspector API ready to ship
+- be240b8: Simplifies the UI
+- b80a188: Add support for editing board info
+- d440d59: Download logs from Activity Logs
+- 3e8cfcf: Teach `InspectableRunNodeEvent` about `InspectableNode`.
+- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- 0bdff0b: Adds nesting to the Activity Log
+- 88372d9: Adds sidenav and loading from the File System
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- a8bab08: Add support for inputs (including bubbled) to `InspectableRun.events`.
+- 699723b: Support file drag and drop
+- decfa29: Introduce `DebuggerGraphProvider`.
+- c0d87f4: Slide toasts out of the way when a new one arrives
+- b4f164d: Fix "context appears after moving node" bug.
+- dcfdc37: Implement handling subgraphs in Run Inspector API.
+- b3cfa74: begin to expose UI component configurability for use externally #965
+- d971aad: Add documentation for Run Inspector API.
+- c1ec509: Remove some unused elements
+- 048e8ec: Introduce `InspectableRunEvent` and API around it.
+- dc35601: Improved run inspector API to mostly work.
+- f473c6e: Add message for empty activity log
+- 94ec717: Move inputs into side panel
+- 49c2410: Double click to add a node to the editor
+- 9c2480c: Pick a random ID for new nodes
+- 56b90a4: Improve graph unique id generation and various cleanups.
+- 9a689c3: Teach `bb-activity-log` to handle image URLs.
+- e648f64: Start using UUIDs for graphs.
+- dc648b1: Use object identity to trigger graph update.
+- 628be93: Consolidate colors
+- bac9bb1: Bring loader machinery closer to cacheable load state.
+- 6adf1f8: Teach node info how to use GraphProviders
+- 10f5110: Update look of node selector
+- 3d536b6: Emit node location info on first render
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+- 14d5220: Start extruding Run Inspector API from existing machinery.
+- a94fe4c: Refactor node connection code
+- 329a47e: Add keyboard dismiss behaviour for overlays
+- 5118c60: Use actual `changeEdge` call
+- dd2cce6: Make graph editor work with stable `InspectableEdge`.
+- Updated dependencies [99446b8]
+- Updated dependencies [866fc36]
+- Updated dependencies [a8bab08]
+- Updated dependencies [decfa29]
+- Updated dependencies [f005b3b]
+- Updated dependencies [dcfdc37]
+- Updated dependencies [d971aad]
+- Updated dependencies [048e8ec]
+- Updated dependencies [dc35601]
+- Updated dependencies [9cda2ff]
+- Updated dependencies [60bd63c]
+- Updated dependencies [764ccda]
+- Updated dependencies [04d5420]
+- Updated dependencies [56b90a4]
+- Updated dependencies [1b48826]
+- Updated dependencies [e648f64]
+- Updated dependencies [ad5c1be]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [bac9bb1]
+- Updated dependencies [3e8cfcf]
+- Updated dependencies [986af39]
+- Updated dependencies [3c497b0]
+- Updated dependencies [eabd97b]
+- Updated dependencies [2008f69]
+- Updated dependencies [c0f785a]
+- Updated dependencies [a8fc3f3]
+- Updated dependencies [32cfbaf]
+- Updated dependencies [8dc4e00]
+- Updated dependencies [6438930]
+- Updated dependencies [dd2cce6]
+- Updated dependencies [cac4f4f]
+- Updated dependencies [b1fc53b]
+- Updated dependencies [ef05634]
+- Updated dependencies [c208cfc]
+  - @google-labs/breadboard@0.12.0
+
 ## 0.2.1
 
 ### Patch Changes
