@@ -11,11 +11,11 @@ prototyping library.
 npm i @breadboard-ai/build
 ```
 
-## Defining nodes
+## Defining new node types
 
 Use the `defineNodeType` function to define a new Breadboard node type.
 
-## Example
+### Example
 
 ```ts
 import { defineNodeType } from "@breadboard-ai/build";
@@ -31,6 +31,7 @@ export const reverseString = defineNodeType({
     backwards: {
       type: "string",
       description: "The reversed string",
+      primary: true,
     },
   },
   invoke: ({ forwards }) => {
@@ -47,8 +48,9 @@ The `inputs` and `outputs` properties specify the input and output ports of the
 node, as a map from port name to a port configuration. Port configurations have
 the following fields:
 
-- `type`: (Required) A Breadboard type expression. All values sent or received on this port
-  must conform to this type.
+- `type`: (Required) A [Breadboard Type
+  Expression](#breadboard-type-expressions) (see below). All values sent or
+  received on this port must conform to this type.
 
 - `description`: (Recommended) A brief description of the port, which will be displayed in the
   Breadboard visual editor and in other places where introspection/debugging is
@@ -60,87 +62,68 @@ the following fields:
   port is expected, with the node's `primary` port being automatically selected
   as the default. There can only be one `primary `output port for a node type.
 
-### Dynamic ports
-
-### `outputs`
-
 ### `invoke`
 
-A function
+The `invoke` function specifies the computation that the node will perform at
+runtime. It is passed an object which contains values for all of its input
+ports, and is expected to return an object with values for all of its output
+ports, or a promise thereof if async work is required.
 
-### `describe` (dynamic ports only)
+## Breadboard type expressions
+
+Breadboard type expressions are effectively a common subset of JSON schema and
+the TypeScript type system. By using a Breadboard type expression when declaring
+your ports, those types will be natively understood by both the Breadboard
+runtime (which uses JSON Schema), and when using this node type in the
+TypeScript API.
+
+### Basic types
+
+- `"string"`
+- `"number"`
+- `"boolean"`
+
+### Utility types
+
+- `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON schema
+  `anyOf` and its corresponding TypeScript type (e.g. a union of `type1` |
+  `type2`).
+
+### Unsafe type escape hatch
+
+The `unsafeType` function can be used as a last resort escape hatch when the
+above provided types are not sufficient. It allows you to directly specify JSON
+schema and a TypeScript type:
 
 ```ts
-import { defineNodeType } from "@breadboard-ai/build";
+import { unsafeType } from "@breadboard-ai/build";
 
-export const reverseString = defineNodeType({
-  inputs: {
-    forwards: {
+const myCrazyType = unsafeType<{ foo: string }>({
+  type: "object",
+  properties: {
+    foo: {
       type: "string",
-      description: "The string to reverse",
     },
   },
-  outputs: {
-    backwards: {
-      type: "string",
-      description: "The reversed string",
-    },
-  },
-  invoke: ({ forwards }) => {
-    return {
-      backwards: forwards.split("").reverse().join(""),
-    };
-  },
+  required: ["foo"],
 });
 ```
 
-## Types
+## Polymorphic node types
 
-### anyOf
+Usually, a Breadboard node type has a fixed set of input and output ports, as was
+the case for the `reverseString` example above. We call these node types
+_monomorphic_, because they have one shape.
 
-## Adding to Kits
+However, sometimes it is necessary for a node's input and output ports to change
+during the course of execution. We call these nodes _polymorphic_, because they
+have multiple shapes.
 
-## Boards (coming soon)
+### Polymorphic example
 
-## Examples
-
-### String reverser
-
-The following example is of a monomorphic node, meaning its input and output
-ports are fixed, are the same for all instances, and never change at runtime.
-
-```ts
-import { defineNodeType } from "@breadboard-ai/build";
-
-export const reverseString = defineNodeType({
-  inputs: {
-    forwards: {
-      type: "string",
-      description: "The string to reverse",
-    },
-  },
-  outputs: {
-    backwards: {
-      type: "string",
-      description: "The reversed string",
-      // (Optional) Allow the node itself to act as a shortcut for
-      // this output port when wiring up this node in a board.
-      primary: true,
-    },
-  },
-  invoke: ({ forwards }) => {
-    return {
-      backwards: forwards.split("").reverse().join(""),
-    };
-  },
-});
-```
-
-### Templater
-
-The following example is of a polymorphic node, meaning its input and/or
-output ports are allowed to change at runtime. Note the use of the special
-"\*" port to signifiy a type constraint that applies to all dynamic ports.
+The following is an example of a polymorphic node type. It performs configurable
+substitution of values into a string containing placeholders. It has one fixed
+input (`template`), multiple _dynamic_ inputs, and one fixed output.
 
 ```ts
 import { defineNodeType, anyOf } from "@breadboard-ai/build";
@@ -153,13 +136,13 @@ export const templater = defineNodeType({
     },
     "*": {
       type: anyOf("string", "number"),
-      description: "Values to fill into template's placeholders.",
+      description: "Values to fill into template's {{placeholders}}.",
     },
   },
   outputs: {
     result: {
       type: "string",
-      description: "The template with placeholders substituted.",
+      description: "The template with {{placeholders}} substituted.",
     },
   },
   describe: ({ template }) => {
@@ -167,7 +150,10 @@ export const templater = defineNodeType({
       inputs: Object.fromEntries(
         extractPlaceholders(template ?? "").map((name) => [
           name,
-          { type: anyOf("string", "number") },
+          {
+            type: anyOf("string", "number"),
+            description: `A value for the ${name} placeholder`,
+          },
         ])
       ),
     };
@@ -179,3 +165,78 @@ export const templater = defineNodeType({
   },
 });
 ```
+
+### Dynamic (`*`) `inputs` and `outputs`
+
+The special `*` port name is used to signify that this node can dynamically
+create input ports at runtime, and what types those ports will have.
+
+### `describe`
+
+The `describe` function determines which dynamic input and output ports should
+be opened for a polymorphic node at runtime.
+
+This function should return an object with either or both of `inputs` and
+`outputs`, containing all _additional_ dynamic ports that should be opened,
+given some set of input values.
+
+Note that the fixed inputs and outputs (e.g. `template` and `result` in the
+example above) need _not_ be returned by the `describe` function, since those
+are automatically generated from the static port configuration.
+
+Also note that monomorphic node definitions need not implement a `describe`
+function _at all_, since its input and output ports are completely determined
+from the static configuration.
+
+### polymorphic `invoke`
+
+The `invoke` function for polymorphic nodes is very similar to [invoke for
+monomorphic nodes](#invoke), except that an additional second parameter is
+passed to the function which contains the input values for the dynamic values.
+
+## Adding nodes to Kits
+
+Nodes created with `@breadboard-ai/build` can be directly integrated into Kits
+created with `@google-labs/breadboard`. In addition, the
+`NodeFactoryFromDefinition` type utility automatically provides a type that can
+be used
+
+```ts
+import { reverseString } from "./reverse-string.js";
+import { templater } from "./templater.js";
+
+import { KitBuilder } from "@google-labs/breadboard/kits";
+import { addKit } from "@google-labs/breadboard";
+import type { NodeFactoryFromDefinition } from "@breadboard-ai/build";
+
+const ExampleKit = new KitBuilder({
+  title: "Example Kit",
+  description: "An example kit",
+  version: "0.1.0",
+  url: "npm:@breadboard-ai/example-kit",
+}).build({ reverseString, templater });
+export default ExampleKit;
+
+export const exampleKit = addKit(ExampleKit) as {
+  reverseString: NodeFactoryFromDefinition<typeof reverseString>;
+  templater: NodeFactoryFromDefinition<typeof templater>;
+};
+```
+
+## Known issues
+
+1. Polymorphic nodes with dynamic _outputs_ are not yet supported.
+
+2. The `context` object is not yet passed to `invoke`, so certain low-level
+   operations are not yet possible.
+
+3. `describe` is only passed values for fixed ports, not dynamic ones.
+
+4. There is not yet an `object` type utility (though `unsafeType` can be used as
+   an escape hatch), along with probably a number of other basic and utility
+   types we'll need.
+
+5. There is not currently a type check for excess properties on the return type
+   of monomorphic invoke. That is, while TypeScript will enforce that all
+   configured output ports have a value, it will not yet complain if an output
+   is returned that does not match a configured output port.
