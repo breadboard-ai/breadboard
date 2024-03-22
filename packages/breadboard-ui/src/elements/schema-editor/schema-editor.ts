@@ -18,7 +18,7 @@ export class SchemaEditor extends LitElement {
   editable = false;
 
   @property()
-  schema: Schema = {};
+  schema: Schema | null = {};
 
   @property()
   schemaVersion = 0;
@@ -246,7 +246,7 @@ export class SchemaEditor extends LitElement {
   }
 
   applyPendingChanges() {
-    const schema: Schema = structuredClone(this.schema);
+    const schema: Schema = structuredClone(this.schema || {});
     schema.properties = schema.properties || {};
 
     if (this.#formRef.value) {
@@ -328,7 +328,7 @@ export class SchemaEditor extends LitElement {
       return;
     }
 
-    const schema: Schema = structuredClone(this.schema);
+    const schema: Schema = structuredClone(this.schema || {});
     schema.properties =
       typeof schema.properties === "object" ? schema.properties : {};
 
@@ -340,7 +340,7 @@ export class SchemaEditor extends LitElement {
   }
 
   #createEmptyProperty() {
-    const schema: Schema = structuredClone(this.schema);
+    const schema: Schema = structuredClone(this.schema || {});
     schema.properties =
       typeof schema.properties === "object" ? schema.properties : {};
 
@@ -357,8 +357,8 @@ export class SchemaEditor extends LitElement {
 
   render() {
     const properties = this.#convertPropertiesToForms(
-      this.schema.properties || {},
-      this.schema.required || []
+      this.schema?.properties || {},
+      this.schema?.required || []
     );
 
     return html` <div id="controls">

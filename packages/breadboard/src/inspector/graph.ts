@@ -6,7 +6,7 @@
 
 import { handlersFromKits } from "../handler.js";
 import { createLoader } from "../loader/index.js";
-import { combineSchemas } from "../schema.js";
+import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
@@ -172,7 +172,7 @@ class Graph implements InspectableGraphWithStore {
 
     return {
       inputSchema: combineSchemas(inputSchemas),
-      outputSchema: combineSchemas(outputSchemas),
+      outputSchema: removeProperty(combineSchemas(outputSchemas), "schema"),
     };
   }
 

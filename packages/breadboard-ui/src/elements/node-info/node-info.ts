@@ -14,7 +14,6 @@ import {
   InspectablePort,
   Kit,
   NodeConfiguration,
-  Schema,
   inspect,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -260,8 +259,8 @@ export class NodeInfo extends LitElement {
       }
 
       if (
-        !schemaEditor.schema.properties ||
-        Object.keys(schemaEditor.schema.properties).length === 0
+        !schemaEditor.schema?.properties ||
+        Object.keys(schemaEditor.schema?.properties).length === 0
       ) {
         continue;
       }
@@ -448,24 +447,18 @@ export class NodeInfo extends LitElement {
               ${ports.map((port) => {
                 if (!configuration || port.star) return;
                 return guard([port.name], () => {
-                  const schema = port.schema || {};
                   const name = port.name;
-                  const configurationValue = configuration[name];
+                  const value = port.value;
 
                   let input;
-                  const type = port.schema?.type || "string";
+                  const type = port.schema.type;
                   switch (type) {
                     case "object": {
-                      const schema = configurationValue as Schema;
-
                       // Only show the schema editor for inputs & outputs
-                      if (
-                        (schema && node.descriptor.type === "input") ||
-                        node.descriptor.type === "output"
-                      ) {
+                      if (port.schema.behavior?.includes("json-schema")) {
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
-                          .schema=${schema}
+                          .schema=${value}
                           .schemaVersion=${this.#schemaVersion}
                           @breadboardschemachange=${() => {
                             if (!this.#formRef.value) {
@@ -488,7 +481,7 @@ export class NodeInfo extends LitElement {
                         contenteditable="plaintext-only"
                         data-id="${name}"
                         data-type="${type}"
-                      >${JSON.stringify(configurationValue, null, 2)}</div>`;
+                      >${JSON.stringify(value, null, 2)}</div>`;
                       }
                       break;
                     }
@@ -497,7 +490,7 @@ export class NodeInfo extends LitElement {
                       input = html`<div>
                         <input
                           type="number"
-                          value="${configurationValue}"
+                          value="${value}"
                           name="${name}"
                           id=${name}
                         />
@@ -512,7 +505,7 @@ export class NodeInfo extends LitElement {
                           name="${name}"
                           id=${name}
                           value="true"
-                          ?checked=${configurationValue === "true"}
+                          ?checked=${value === "true"}
                         />
                       </div>`;
                       break;
@@ -523,10 +516,12 @@ export class NodeInfo extends LitElement {
                       input = html`<div
                         contenteditable="plaintext-only"
                         data-id="${name}"
-                      >${configurationValue}</div>`;
+                      >${value}</div>`;
                       break;
                     }
                   }
+
+                  const schema = port.schema;
 
                   return html`<div class="configuration-item">
                     <label title="${schema.description}" for="${name}"

@@ -150,7 +150,7 @@ export default await board(({ context, instruction, schema }) => {
     .title("Schema")
     .examples(sampleSchema)
     .isObject()
-    .format("multiline")
+    .behavior("json-schema")
     .optional()
     .default("{}");
 

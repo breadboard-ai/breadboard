@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EdgeType } from "./schemas.js";
+import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import { InspectableEdge, PortStatus } from "./types.js";
 import { NodeConfiguration, Schema } from "../types.js";
 
@@ -28,7 +28,8 @@ export const collectPorts = (
   type: EdgeType,
   edges: InspectableEdge[],
   schema: Schema,
-  configuration?: NodeConfiguration
+  addErrorPort: boolean,
+  values?: NodeConfiguration
 ) => {
   let wiredContainsStar = false;
   // Get the list of all ports wired to this node.
@@ -41,14 +42,14 @@ export const collectPorts = (
   });
   const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
-  if (type == EdgeType.Out) {
+  if (addErrorPort) {
     // Even if not specified in the schema, all non-built-in nodes always have
     // an optional `$error` port.
     schemaPortNames.push("$error");
   }
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
-  const configuredPortNames = Object.keys(configuration || {});
+  const configuredPortNames = Object.keys(values || {});
   const portNames = [
     ...new Set([
       ...wiredPortNames,
@@ -67,6 +68,7 @@ export const collectPorts = (
     return {
       name: port,
       configured,
+      value: values?.[port],
       star,
       get edges() {
         if (!wired) return [];
@@ -81,7 +83,7 @@ export const collectPorts = (
         required,
         wiredContainsStar
       ),
-      schema: schema.properties?.[port],
+      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
     };
   });
 };
@@ -96,13 +98,14 @@ export const collectPortsForType = (schema: Schema) => {
       configured: false,
       star: false,
       edges: [],
+      value: null,
       status: computePortStatus(
         false,
         true,
         requiredPortNames.includes(port),
         false
       ),
-      schema: schema.properties?.[port],
+      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
     };
   });
 };

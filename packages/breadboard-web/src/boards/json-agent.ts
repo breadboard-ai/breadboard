@@ -55,11 +55,11 @@ export default await board(({ instruction, schema, context }) => {
     .title("Schema")
     .examples(sampleSchema)
     .isObject()
-    .format("multiline")
+    .behavior("json-schema")
     .optional()
     .default("{}");
 
-  context.title("Context").isArray().examples("[]");
+  context.title("Context").isArray().behavior("llm-content").examples("[]");
 
   const structuredWorker = agents.structuredWorker({
     $id: "structuredWorker",

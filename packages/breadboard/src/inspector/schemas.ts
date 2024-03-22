@@ -15,7 +15,7 @@ export enum EdgeType {
 
 const SCHEMA_SCHEMA: Schema = { type: "object", behavior: ["json-schema"] };
 
-const DEFAULT_SCHEMA = { type: "string" };
+export const DEFAULT_SCHEMA = { type: "string" };
 
 const edgesToProperties = (
   edgeType: EdgeType,
@@ -55,7 +55,7 @@ export const edgesToSchema = (
 export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || {};
+  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
@@ -74,22 +74,18 @@ export const describeInput = (
 export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = options.inputs?.schema as Schema | undefined;
+  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
   const outputSchema = new SchemaBuilder()
     .setAdditionalProperties(false)
     .build();
   const inputSchemaBuilder = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .setAdditionalProperties(true);
-  if (schema)
-    return {
-      inputSchema: inputSchemaBuilder.addSchema(schema).build(),
-      outputSchema,
-    };
-  return {
-    inputSchema: inputSchemaBuilder
+  const inputSchema = combineSchemas([
+    inputSchemaBuilder
       .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
       .build(),
-    outputSchema,
-  };
+    schema,
+  ]);
+  return { inputSchema, outputSchema };
 };

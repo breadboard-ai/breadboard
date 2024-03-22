@@ -18,6 +18,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  NodeValue,
   OutputValues,
   Schema,
 } from "../types.js";
@@ -248,13 +249,22 @@ export type InspectablePort = {
    */
   configured: boolean;
   /**
+   * Returns current value for the port. This value is computed as follows:
+   * - if there is a value coming from one of the incoming edges, then
+   *   return that value;
+   * - otherwise, if there is a value specified in node's configuration,
+   *   then return that value;
+   * - otherwise, return null;
+   */
+  value: NodeValue;
+  /**
    * Returns true if this is the star port ("*").
    */
   star: boolean;
   /**
    * Port schema as defined by the node's configuration.
    */
-  schema: Schema | undefined;
+  schema: Schema;
   /**
    * Returns the edges connected to this port.
    */
