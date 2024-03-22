@@ -13,11 +13,15 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
-import { anyOf, escapeHatch } from "../type.js";
+import { anyOf, unsafeType } from "../internal/type.js";
 
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{}, {}>
-  const definition = defineNodeType({}, {}, () => ({}));
+  const definition = defineNodeType({
+    inputs: {},
+    outputs: {},
+    invoke: () => ({}),
+  });
   // $ExpectType MonomorphicNodeInstance<{}, {}>
   const instance = definition({});
   // $ExpectType InputPorts<{}>
@@ -28,21 +32,21 @@ test("expect types: 0 in, 0 out", () => {
 
 test("expect types: 1 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; }, {}>
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {},
-    (params) => {
+    outputs: {},
+    invoke: (params) => {
       // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
       params.in1;
       return {};
-    }
-  );
+    },
+  });
   // $ExpectType MonomorphicNodeInstance<{ in1: { type: "string"; }; }, {}>
   const instance = definition({
     in1: "foo",
@@ -57,19 +61,19 @@ test("expect types: 1 in, 0 out", () => {
 
 test("expect types: 0 in, 1 out", () => {
   // $ExpectType MonomorphicDefinition<{}, { out1: { type: "string"; }; }>
-  const definition = defineNodeType(
-    {},
-    {
+  const definition = defineNodeType({
+    inputs: {},
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   // $ExpectType MonomorphicNodeInstance<{}, { out1: { type: "string"; }; }>
   const instance = definition({});
   // $ExpectType InputPorts<{}>
@@ -82,18 +86,18 @@ test("expect types: 0 in, 1 out", () => {
 
 test("expect types: 1 in, 1 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; }, { out1: { type: "string"; }; }>
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    (params) => {
+    invoke: (params) => {
       // $ExpectType ConcreteValues<{ in1: { type: "string"; }; }>
       params;
       // $ExpectType string
@@ -101,8 +105,8 @@ test("expect types: 1 in, 1 out", () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   // $ExpectType MonomorphicNodeInstance<{ in1: { type: "string"; }; }, { out1: { type: "string"; }; }>
   const instance = definition({
     in1: "foo",
@@ -119,8 +123,8 @@ test("expect types: 1 in, 1 out", () => {
 
 test("expect types: 2 in, 2 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; in2: { type: "number"; }; }, { out1: { type: "boolean"; }; out2: { type: "string"; }; }>
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -128,7 +132,7 @@ test("expect types: 2 in, 2 out", () => {
         type: "number",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "boolean",
       },
@@ -136,7 +140,7 @@ test("expect types: 2 in, 2 out", () => {
         type: "string",
       },
     },
-    (params) => {
+    invoke: (params) => {
       // $ExpectType ConcreteValues<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
       params;
       // $ExpectType string
@@ -147,8 +151,8 @@ test("expect types: 2 in, 2 out", () => {
         out1: true,
         out2: "foo",
       };
-    }
-  );
+    },
+  });
   // $ExpectType MonomorphicNodeInstance<{ in1: { type: "string"; }; in2: { type: "number"; }; }, { out1: { type: "boolean"; }; out2: { type: "string"; }; }>
   const instance = definition({
     in1: "foo",
@@ -169,75 +173,75 @@ test("expect types: 2 in, 2 out", () => {
 });
 
 test("expect type error: unknown invoke param", () => {
-  defineNodeType(
-    {
+  defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    (params) => {
+    invoke: (params) => {
       // @ts-expect-error No such port
       params.in2;
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
 });
 
 test("expect type error: missing invoke return port", () => {
-  defineNodeType(
-    {
+  defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
     // @ts-expect-error out1 missing
-    () => {
+    invoke: () => {
       return {};
-    }
-  );
+    },
+  });
 });
 
 test("expect type error: incorrect invoke return port type", () => {
-  defineNodeType(
-    {
+  defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
     // @ts-expect-error out1 was number instead of string
-    () => {
+    invoke: () => {
       return {
         out1: 123,
       };
-    }
-  );
+    },
+  });
 });
 
 test.skip("expect type error: unknown return port", () => {
-  defineNodeType(
-    {
+  defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
@@ -246,18 +250,18 @@ test.skip("expect type error: unknown return port", () => {
     //
     // TODO(aomarks) Is it possible to enforce a compile-time check for excess
     // properties here, or is it not possible in this context?
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
         out2: "foo",
       };
-    }
-  );
+    },
+  });
 });
 
 test("expect type error: missing make instance param", () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -265,11 +269,11 @@ test("expect type error: missing make instance param", () => {
         type: "number",
       },
     },
-    {},
-    () => {
+    outputs: {},
+    invoke: () => {
       return {};
-    }
-  );
+    },
+  });
   // @ts-expect-error missing both
   definition();
   // @ts-expect-error missing both
@@ -281,8 +285,8 @@ test("expect type error: missing make instance param", () => {
 });
 
 test("expect type error: incorrect make instance param type", () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -290,11 +294,11 @@ test("expect type error: incorrect make instance param type", () => {
         type: "number",
       },
     },
-    {},
-    () => {
+    outputs: {},
+    invoke: () => {
       return {};
-    }
-  );
+    },
+  });
   definition({
     in1: "foo",
     // @ts-expect-error in2 should be number, not string
@@ -303,31 +307,31 @@ test("expect type error: incorrect make instance param type", () => {
 });
 
 test("expect types: definitions are NodeHandlers", () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   definition satisfies NodeHandler;
   definition.invoke satisfies NodeHandlerFunction;
   definition.describe satisfies NodeDescriberFunction;
 });
 
 test("describe function generates JSON schema", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
         description: "Description of in1",
@@ -336,18 +340,18 @@ test("describe function generates JSON schema", async () => {
         type: "number",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "boolean",
         description: "Description of out1",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: true,
       };
-    }
-  );
+    },
+  });
   assert.deepEqual(await definition.describe(), {
     inputSchema: {
       type: "object",
@@ -379,14 +383,14 @@ test("describe function generates JSON schema", async () => {
 });
 
 test("describe function generates JSON schema with anyOf", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: anyOf("string", "number"),
         description: "Description of in1",
       },
     },
-    {
+    outputs: {
       out1: {
         type: anyOf("boolean", "string"),
         description: "Description of out1",
@@ -396,15 +400,15 @@ test("describe function generates JSON schema with anyOf", async () => {
         description: "Description of out2",
       },
     },
-    (params) => {
+    invoke: (params) => {
       // $ExpectType string | number
       params.in1;
       return {
         out1: true,
         out2: "foo",
       };
-    }
-  );
+    },
+  });
   assert.deepEqual(await definition.describe(), {
     inputSchema: {
       type: "object",
@@ -436,38 +440,38 @@ test("describe function generates JSON schema with anyOf", async () => {
   });
 });
 
-test("describe function generates JSON schema with escapeHatch", async () => {
-  const definition = defineNodeType(
-    {
+test("describe function generates JSON schema with unsafeType", async () => {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
-        type: escapeHatch<"FOO" | 123>({
+        type: unsafeType<"FOO" | 123>({
           anyOf: [{ type: "string" }, { type: "number" }],
         }),
         description: "Description of in1",
       },
     },
-    {
+    outputs: {
       out1: {
-        type: escapeHatch<true | 456>({
+        type: unsafeType<true | 456>({
           anyOf: [{ type: "boolean" }, { type: "string" }],
         }),
         description: "Description of out1",
       },
       out2: {
-        type: escapeHatch<false | 789>({
+        type: unsafeType<false | 789>({
           anyOf: [{ type: "boolean" }, { type: "string" }],
         }),
         description: "Description of out2",
       },
     },
-    (params) => {
+    invoke: (params) => {
       params.in1 satisfies 123 | "FOO";
       return {
         out1: 456,
         out2: false,
       };
-    }
-  );
+    },
+  });
   assert.deepEqual(await definition.describe(), {
     inputSchema: {
       type: "object",
@@ -500,8 +504,8 @@ test("describe function generates JSON schema with escapeHatch", async () => {
 });
 
 test("invoke returns value from sync function", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       a: {
         type: "string",
       },
@@ -509,18 +513,18 @@ test("invoke returns value from sync function", async () => {
         type: "string",
       },
     },
-    {
+    outputs: {
       concat: {
         type: "string",
       },
     },
     // Synchronous
-    ({ a, b }) => {
+    invoke: ({ a, b }) => {
       return {
         concat: a + b,
       };
-    }
-  );
+    },
+  });
   const result = definition.invoke(
     { a: "foo", b: "bar" },
     // Not currently used.
@@ -531,8 +535,8 @@ test("invoke returns value from sync function", async () => {
 });
 
 test("invoke returns value from async function", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       a: {
         type: "string",
       },
@@ -540,18 +544,18 @@ test("invoke returns value from async function", async () => {
         type: "string",
       },
     },
-    {
+    outputs: {
       concat: {
         type: "string",
       },
     },
-    async ({ a, b }) => {
+    invoke: async ({ a, b }) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return {
         concat: a + b,
       };
-    }
-  );
+    },
+  });
   const result = definition.invoke(
     { a: "foo", b: "bar" },
     // Not currently used.
@@ -562,9 +566,9 @@ test("invoke returns value from async function", async () => {
 });
 
 {
-  const definitionA = defineNodeType(
-    {},
-    {
+  const definitionA = defineNodeType({
+    inputs: {},
+    outputs: {
       out1: {
         type: "string",
       },
@@ -572,16 +576,16 @@ test("invoke returns value from async function", async () => {
         type: "number",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
         out2: 123,
       };
-    }
-  );
+    },
+  });
 
-  const definitionB = defineNodeType(
-    {
+  const definitionB = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -589,11 +593,11 @@ test("invoke returns value from async function", async () => {
         type: "number",
       },
     },
-    {},
-    () => {
+    outputs: {},
+    invoke: () => {
       return {};
-    }
-  );
+    },
+  });
 
   const instanceA = definitionA({});
   const instanceB = definitionB({ in1: "foo", in2: 123 });
@@ -660,19 +664,19 @@ test("invoke returns value from async function", async () => {
 }
 
 test("type error: node with no input ports shouldn't allow inputs", () => {
-  const definition = defineNodeType(
-    {},
-    {
+  const definition = defineNodeType({
+    inputs: {},
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   definition({
     // @ts-expect-error no input ports
     in1: "foo",

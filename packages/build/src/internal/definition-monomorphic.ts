@@ -84,7 +84,7 @@ class MonomorphicNodeDefinition<
   }
 }
 
-export class MonomorphicNodeInstance<
+class MonomorphicNodeInstance<
   ISHAPE extends PortConfigMap,
   OSHAPE extends PortConfigMap,
 > {

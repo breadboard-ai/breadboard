@@ -19,8 +19,8 @@ export type NodeFactoryFromDefinition<
   // PortConfigMap> here instead of <any, any>, but for a currently unknown
   // reason that won't match some definitions.
   //
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  DEF extends MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any>,
+  DEF extends // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>,
 > =
   DEF extends MonomorphicDefinition<infer ISHAPE, infer OSHAPE>
     ? NewNodeFactory<
@@ -35,7 +35,8 @@ export type NodeFactoryFromDefinition<
           >;
         }
       >
-    : DEF extends PolymorphicDefinition<infer ISHAPE, infer OSHAPE>
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      DEF extends PolymorphicDefinition<infer ISHAPE, any, infer OSHAPE>
       ? NewNodeFactory<
           {
             [PORT in keyof Omit<ISHAPE, "*">]: TypeScriptTypeFromBreadboardType<

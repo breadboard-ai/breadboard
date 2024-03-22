@@ -18,8 +18,8 @@ import {
   defineNodeType,
   type NodeFactoryFromDefinition,
 } from "@breadboard-ai/build";
-import type { MonomorphicDefinition } from "../definition-monomorphic.js";
-import type { PolymorphicDefinition } from "../definition-polymorphic.js";
+import type { MonomorphicDefinition } from "../internal/definition-monomorphic.js";
+import type { PolymorphicDefinition } from "../internal/definition-polymorphic.js";
 
 function setupKits<
   DEFS extends Record<
@@ -27,7 +27,7 @@ function setupKits<
     // TODO(aomarks) See TODO about `any` at {@link NodeFactoryFromDefinition}.
     //
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any>
+    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>
   >,
 >(definitions: DEFS) {
   const ctr = new KitBuilder({ url: "N/A" }).build(definitions);
@@ -41,23 +41,23 @@ function setupKits<
 
 {
   // A monomorphic node definition
-  const strLen = defineNodeType(
-    {
+  const strLen = defineNodeType({
+    inputs: {
       str: {
         type: "string",
       },
     },
-    {
+    outputs: {
       len: {
         type: "number",
       },
     },
-    ({ str }) => {
+    invoke: ({ str }) => {
       return {
         len: str.length,
       };
-    }
-  );
+    },
+  });
 
   const { kit: strLenKit, runtimeKit: strLenRuntimeKit } = setupKits({
     strLen,
@@ -149,8 +149,8 @@ function setupKits<
 
 {
   // A polymorphic node definition
-  const adder = defineNodeType(
-    {
+  const adder = defineNodeType({
+    inputs: {
       base: {
         type: "number",
       },
@@ -158,17 +158,17 @@ function setupKits<
         type: "number",
       },
     },
-    {
+    outputs: {
       sum: {
         type: "number",
       },
     },
-    ({ base }, operands) => {
+    invoke: ({ base }, operands) => {
       return {
         sum: Object.values(operands).reduce((sum, num) => sum + num, base),
       };
-    }
-  );
+    },
+  });
 
   const { kit: adderKit, runtimeKit: adderRuntimeKit } = setupKits({
     adder,
