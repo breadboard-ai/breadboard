@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
