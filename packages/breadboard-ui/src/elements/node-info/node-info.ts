@@ -448,7 +448,7 @@ export class NodeInfo extends LitElement {
                 if (!configuration || port.star) return;
                 return guard([port.name], () => {
                   const name = port.name;
-                  const configurationValue = configuration[name];
+                  const value = port.value;
 
                   let input;
                   const type = port.schema.type;
@@ -456,10 +456,9 @@ export class NodeInfo extends LitElement {
                     case "object": {
                       // Only show the schema editor for inputs & outputs
                       if (port.schema.behavior?.includes("json-schema")) {
-                        const schema = configurationValue;
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
-                          .schema=${schema}
+                          .schema=${value}
                           .schemaVersion=${this.#schemaVersion}
                           @breadboardschemachange=${() => {
                             if (!this.#formRef.value) {
@@ -482,7 +481,7 @@ export class NodeInfo extends LitElement {
                         contenteditable="plaintext-only"
                         data-id="${name}"
                         data-type="${type}"
-                      >${JSON.stringify(configurationValue, null, 2)}</div>`;
+                      >${JSON.stringify(value, null, 2)}</div>`;
                       }
                       break;
                     }
@@ -491,7 +490,7 @@ export class NodeInfo extends LitElement {
                       input = html`<div>
                         <input
                           type="number"
-                          value="${configurationValue}"
+                          value="${value}"
                           name="${name}"
                           id=${name}
                         />
@@ -506,7 +505,7 @@ export class NodeInfo extends LitElement {
                           name="${name}"
                           id=${name}
                           value="true"
-                          ?checked=${configurationValue === "true"}
+                          ?checked=${value === "true"}
                         />
                       </div>`;
                       break;
@@ -517,7 +516,7 @@ export class NodeInfo extends LitElement {
                       input = html`<div
                         contenteditable="plaintext-only"
                         data-id="${name}"
-                      >${configurationValue}</div>`;
+                      >${value}</div>`;
                       break;
                     }
                   }

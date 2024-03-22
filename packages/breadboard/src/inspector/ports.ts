@@ -28,7 +28,7 @@ export const collectPorts = (
   type: EdgeType,
   edges: InspectableEdge[],
   schema: Schema,
-  configuration?: NodeConfiguration
+  values?: NodeConfiguration
 ) => {
   let wiredContainsStar = false;
   // Get the list of all ports wired to this node.
@@ -48,7 +48,7 @@ export const collectPorts = (
   }
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
-  const configuredPortNames = Object.keys(configuration || {});
+  const configuredPortNames = Object.keys(values || {});
   const portNames = [
     ...new Set([
       ...wiredPortNames,
@@ -67,6 +67,7 @@ export const collectPorts = (
     return {
       name: port,
       configured,
+      value: values?.[port],
       star,
       get edges() {
         if (!wired) return [];
@@ -96,6 +97,7 @@ export const collectPortsForType = (schema: Schema) => {
       configured: false,
       star: false,
       edges: [],
+      value: null,
       status: computePortStatus(
         false,
         true,

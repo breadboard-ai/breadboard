@@ -56,11 +56,15 @@ class Node implements InspectableNode {
     return this.descriptor.configuration || {};
   }
 
+  #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
+    return { ...inputs, ...config };
+  }
+
   async #describeInternal(
     options: NodeTypeDescriberOptions
   ): Promise<NodeDescriberResult> {
     return this.#graph.describeType(this.descriptor.type, {
-      inputs: { ...options.inputs, ...this.configuration() },
+      inputs: this.#inputsAndConfig(options.inputs, this.configuration()),
       incoming: options.incoming,
       outgoing: options.outgoing,
     });
@@ -88,7 +92,7 @@ class Node implements InspectableNode {
         EdgeType.In,
         incoming,
         described.inputSchema,
-        this.configuration()
+        this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
     const outputs: InspectablePortList = {
