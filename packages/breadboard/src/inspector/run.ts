@@ -7,7 +7,7 @@
 import { HarnessRunResult } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
-import { EventManager } from "./event.js";
+import { EventManager } from "./event-manager.js";
 import {
   GraphUUID,
   InspectableGraphStore,
