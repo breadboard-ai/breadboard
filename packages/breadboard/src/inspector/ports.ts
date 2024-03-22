@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EdgeType } from "./schemas.js";
+import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import { InspectableEdge, PortStatus } from "./types.js";
 import { NodeConfiguration, Schema } from "../types.js";
 
@@ -81,7 +81,7 @@ export const collectPorts = (
         required,
         wiredContainsStar
       ),
-      schema: schema.properties?.[port],
+      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
     };
   });
 };
@@ -102,7 +102,7 @@ export const collectPortsForType = (schema: Schema) => {
         requiredPortNames.includes(port),
         false
       ),
-      schema: schema.properties?.[port],
+      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
     };
   });
 };

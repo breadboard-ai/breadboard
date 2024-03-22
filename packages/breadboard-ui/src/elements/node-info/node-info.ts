@@ -448,12 +448,12 @@ export class NodeInfo extends LitElement {
               ${ports.map((port) => {
                 if (!configuration || port.star) return;
                 return guard([port.name], () => {
-                  const schema = port.schema || {};
+                  const schema = port.schema;
                   const name = port.name;
                   const configurationValue = configuration[name];
 
                   let input;
-                  const type = port.schema?.type || "string";
+                  const type = schema.type;
                   switch (type) {
                     case "object": {
                       const schema = configurationValue as Schema;

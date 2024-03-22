@@ -15,7 +15,7 @@ export enum EdgeType {
 
 const SCHEMA_SCHEMA: Schema = { type: "object", behavior: ["json-schema"] };
 
-const DEFAULT_SCHEMA = { type: "string" };
+export const DEFAULT_SCHEMA = { type: "string" };
 
 const edgesToProperties = (
   edgeType: EdgeType,
