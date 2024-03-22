@@ -5,5 +5,4 @@
  */
 
 export { defineNodeType } from "./define.js";
-export { board } from "./board.js";
 export type { NodeFactoryFromDefinition } from "./compatibility.js";
