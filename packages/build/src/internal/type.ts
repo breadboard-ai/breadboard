@@ -15,11 +15,10 @@ export type BreadboardType =
 export type BasicBreadboardType = "string" | "number" | "boolean";
 
 /**
- * Create a type that can have any of the given `members`. Equivalent to JSON
- * Schema's `anyOf`, and TypeScript's union operator (`|`).
+ * Create a Breadboard type that can have any of the given `members`. Equivalent
+ * to JSON Schema's `anyOf`, and TypeScript's union operator (`|`).
  *
  * @param members The types which are allowed to match.
- * @returns A `BreadboardType` which
  */
 export function anyOf<
   T extends [BreadboardType, BreadboardType, ...BreadboardType[]],

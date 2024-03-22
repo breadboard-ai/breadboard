@@ -25,30 +25,76 @@ import type { PortConfigMap } from "./port.js";
  * existing node types, instead of using this function to define a new node
  * type.
  *
- * Example usage:
+ * The following example is of a monomorphic node, meaning its input and output
+ * ports are fixed, are the same for all instances, and never change at runtime.
  *
  * ```ts
- * export const reverseString = defineNodeType(
- *   // Inputs
- *   {
+ * import {defineNodeType} from "@breadboard-ai/build";
+ *
+ * export const reverseString = defineNodeType({
+ *   inputs: {
  *     forwards: {
- *       type: "string"
+ *       type: "string",
+ *       description: "The string to reverse"
  *     }
  *   },
- *   // Outputs
- *   {
+ *   outputs: {
  *     backwards: {
  *       type: "string",
+ *       description: "The reversed string",
+ *       // (Optional) Allow the node itself to act as a shortcut for
+ *       // this output port when wiring up this node in a board.
  *       primary: true
  *     }
  *   },
- *   // Invoke function
- *   ({forwards}) => {
+ *   invoke: ({forwards}) => {
  *     return {
  *       backwards: forwards.split("").reverse().join("")
  *     }
  *   }
- * );
+ * });
+ * ```
+ *
+ * The following example is of a polymorphic node, meaning its input and/or
+ * output ports are allowed to change at runtime. Note the use of the special
+ * "*" port to signifiy a type constraint that applies to all dynamic ports.
+ *
+ * ```ts
+ * import { defineNodeType, anyOf } from "@breadboard-ai/build";
+ *
+ * export const templater = defineNodeType({
+ *   inputs: {
+ *     template: {
+ *       type: "string",
+ *       description: "A template with {{placeholders}}.",
+ *     },
+ *     "*": {
+ *       type: anyOf("string", "number"),
+ *       description: "Values to fill into template's placeholders.",
+ *     },
+ *   },
+ *   outputs: {
+ *     result: {
+ *       type: "string",
+ *       description: "The template with placeholders substituted.",
+ *     },
+ *   },
+ *   describe: ({ template }) => {
+ *     return {
+ *       inputs: Object.fromEntries(
+ *         extractPlaceholders(template ?? "").map((name) => [
+ *           name,
+ *           { type: anyOf("string", "number") },
+ *         ])
+ *       ),
+ *     };
+ *   },
+ *   invoke: ({ template }, placeholders) => {
+ *     return {
+ *       result: substituteTemplatePlaceholders(template, placeholders),
+ *     };
+ *   },
+ * });
  * ```
  *
  * @param inputs An object that maps from input port name to the
