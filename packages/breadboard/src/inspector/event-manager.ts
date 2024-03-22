@@ -106,16 +106,14 @@ export class EventManager {
   #addInput(data: InputResponse) {
     const { path, bubbled, inputArguments, node, timestamp } = data;
     const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
-      if (!entry) {
-        throw new Error(
-          `Expected an existing entry for ${JSON.stringify(path)}`
-        );
-      }
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);
@@ -127,16 +125,14 @@ export class EventManager {
   #addOutput(data: OutputResponse) {
     const { path, bubbled, node, timestamp, outputs } = data;
     const entry = this.#pathRegistry.find(path);
+    if (!entry) {
+      throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
+    }
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
-      if (!entry) {
-        throw new Error(
-          `Expected an existing entry for ${JSON.stringify(path)}`
-        );
-      }
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);

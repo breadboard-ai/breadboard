@@ -34,10 +34,10 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   /**
    * The path registry entry associated with this event.
    */
-  #entry: PathRegistryEntry | null;
+  #entry: PathRegistryEntry;
 
   constructor(
-    entry: PathRegistryEntry | null,
+    entry: PathRegistryEntry,
     node: NodeDescriptor,
     start: number,
     inputs: InputValues
@@ -55,15 +55,13 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get id(): EventIdentifier {
-    return eventIdFromEntryId(this.#entry?.id);
+    return eventIdFromEntryId(this.#entry.id);
   }
 
   get inspectableNode(): InspectableNode | null {
-    const node = this.#entry?.parent?.graph?.nodeById(this.node.id) || null;
+    const node = this.#entry.parent?.graph?.nodeById(this.node.id) || null;
     if (!node) {
-      if (!this.#entry) {
-        console.warn("This node event has no corresponding entry", this.node);
-      } else if (!this.#entry.parent) {
+      if (!this.#entry.parent) {
         console.warn("This node event has no parent", this.node);
       } else if (!this.#entry.parent.graph) {
         console.warn(
@@ -80,7 +78,7 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get runs(): InspectableRun[] {
-    if (!this.#entry || this.#entry.empty()) {
+    if (this.#entry.empty()) {
       return [];
     }
     const entry = this.#entry;
