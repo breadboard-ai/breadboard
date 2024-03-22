@@ -14,7 +14,6 @@ import {
   InspectablePort,
   Kit,
   NodeConfiguration,
-  Schema,
   inspect,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -260,8 +259,8 @@ export class NodeInfo extends LitElement {
       }
 
       if (
-        !schemaEditor.schema.properties ||
-        Object.keys(schemaEditor.schema.properties).length === 0
+        !schemaEditor.schema?.properties ||
+        Object.keys(schemaEditor.schema?.properties).length === 0
       ) {
         continue;
       }
@@ -453,13 +452,11 @@ export class NodeInfo extends LitElement {
 
                   let input;
                   const type = port.schema.type;
-                  console.log("🍊 port", port);
                   switch (type) {
                     case "object": {
-                      const schema = configurationValue as Schema;
-
                       // Only show the schema editor for inputs & outputs
                       if (port.schema.behavior?.includes("json-schema")) {
+                        const schema = configurationValue;
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
                           .schema=${schema}
