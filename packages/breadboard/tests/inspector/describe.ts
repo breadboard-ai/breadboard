@@ -44,7 +44,6 @@ test("simple graph description works as expected", async (t) => {
     outputSchema: {
       type: "object",
       properties: {
-        schema: { type: "object", behavior: ["json-schema"] },
         text: { type: "string" },
       },
     },
@@ -149,6 +148,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
     inputSchema: {
       type: "object",
       properties: {
+        "*": { type: "string" },
         schema: { type: "object", behavior: ["json-schema"] },
         text: {
           type: "string",

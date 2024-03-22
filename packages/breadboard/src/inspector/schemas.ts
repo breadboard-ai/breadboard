@@ -81,15 +81,11 @@ export const describeOutput = (
   const inputSchemaBuilder = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .setAdditionalProperties(true);
-  if (schema)
-    return {
-      inputSchema: inputSchemaBuilder.addSchema(schema).build(),
-      outputSchema,
-    };
-  return {
-    inputSchema: inputSchemaBuilder
+  const inputSchema = combineSchemas([
+    inputSchemaBuilder
       .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
       .build(),
-    outputSchema,
-  };
+    schema,
+  ]);
+  return { inputSchema, outputSchema };
 };

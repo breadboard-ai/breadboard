@@ -111,10 +111,6 @@ function setupKits<
             title: "boardLen",
             type: "number",
           },
-          schema: {
-            type: "object",
-            behavior: ["json-schema"],
-          },
         },
         type: "object",
       },
@@ -238,10 +234,6 @@ function setupKits<
           boardSum: {
             title: "boardSum",
             type: "number",
-          },
-          schema: {
-            type: "object",
-            behavior: ["json-schema"],
           },
         },
         type: "object",
