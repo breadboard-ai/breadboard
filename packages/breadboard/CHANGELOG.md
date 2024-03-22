@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.1
+
+### Patch Changes
+
+- 2fda461: Add missing build artifacts
+
 ## 0.12.0
 
 ### Minor Changes
