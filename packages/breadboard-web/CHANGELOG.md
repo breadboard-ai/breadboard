@@ -1,5 +1,12 @@
 # @google-labs/breadboard-web
 
+## 1.3.1
+
+### Patch Changes
+
+- Updated dependencies [6a0bbbf]
+  - @breadboard-ai/build@0.1.0
+
 ## 1.3.0
 
 ### Minor Changes
