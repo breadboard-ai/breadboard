@@ -17,12 +17,14 @@ import type {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
+  InspectablePortList,
   InspectableRun,
   InspectableRunNodeEvent,
   PathRegistryEntry,
 } from "./types.js";
 import { NestedRun } from "./nested-run.js";
-import { describeInput } from "./schemas.js";
+import { EdgeType, describeInput } from "./schemas.js";
+import { collectPorts } from "./ports.js";
 
 export const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
@@ -76,9 +78,41 @@ class BubbledInspectableNode implements InspectableNode {
     return this.#actual.describe(inputs);
   }
 
-  ports(inputs?: InputValues | undefined): Promise<InspectableNodePorts> {
-    console.log("🍊 bubbled ports being examined", inputs);
-    return this.#actual.ports(inputs);
+  async ports(
+    inputValues?: InputValues | undefined,
+    outputValues?: OutputValues | undefined
+  ): Promise<InspectableNodePorts> {
+    if (this.descriptor.type === "input") {
+      const described = describeInput({ inputs: inputValues });
+      const bubbledNames = Object.keys(described.outputSchema.properties || {});
+      const bubbledValues = Object.fromEntries(
+        Object.entries(outputValues || {}).filter(([name]) =>
+          bubbledNames.includes(name)
+        )
+      );
+      const inputs: InspectablePortList = {
+        fixed: described.inputSchema.additionalProperties === false,
+        ports: collectPorts(
+          EdgeType.In,
+          this.incoming(),
+          described.inputSchema,
+          false,
+          inputValues
+        ),
+      };
+      const outputs: InspectablePortList = {
+        fixed: described.outputSchema.additionalProperties === false,
+        ports: collectPorts(
+          EdgeType.Out,
+          [],
+          described.outputSchema,
+          false,
+          bubbledValues
+        ),
+      };
+      return { inputs, outputs };
+    }
+    return this.#actual.ports(inputValues, outputValues || undefined);
   }
 }
 

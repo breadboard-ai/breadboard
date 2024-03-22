@@ -6,10 +6,12 @@
 
 import {
   ErrorObject,
+  InspectablePortList,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   NodeValue,
+  OutputValues,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -673,22 +675,18 @@ export class ActivityLog extends LitElement {
 
   async #renderDoneInputOrOutput(event: InspectableRunNodeEvent) {
     const { node, inputs, outputs, inspectableNode } = event;
-    const nodeSchema = await inspectableNode?.describe(inputs);
-    let schema;
-    let result: Record<string, NodeValue>;
-    if (node.type === "output") {
-      schema = nodeSchema?.inputSchema || {};
-      result = inputs;
-    } else {
-      schema = nodeSchema?.outputSchema || {};
-      result = outputs || {};
-    }
+    const allPorts = await inspectableNode?.ports(
+      inputs,
+      outputs as OutputValues
+    );
+    const isOutput = node.type === "output";
+    const portList = isOutput ? allPorts?.inputs : allPorts?.outputs;
     return html`<dl class="node-output">
-      ${result
-        ? Object.entries(schema.properties || {}).map(([key, schema]) => {
-            const nodeValue = result[key];
-            const title = schema.title ?? key;
-
+      ${portList
+        ? portList.ports.map((port) => {
+            if (port.star) return nothing;
+            if (isOutput && port.name === "schema") return nothing;
+            const nodeValue = port.value;
             let value: HTMLTemplateResult | symbol = nothing;
             if (typeof nodeValue === "object") {
               if (this.#isImageData(nodeValue)) {
@@ -712,7 +710,7 @@ export class ActivityLog extends LitElement {
               </div>`;
             }
 
-            return html`<dd>${title}</dd>
+            return html`<dd>${port.title}</dd>
               <dt>${value}</dt>`;
           })
         : html`No data provided`}

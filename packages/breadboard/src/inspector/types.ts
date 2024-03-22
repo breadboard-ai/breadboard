@@ -85,7 +85,10 @@ export type InspectableNode = {
   /**
    * Returns the current state of node's ports
    */
-  ports(inputs?: InputValues): Promise<InspectableNodePorts>;
+  ports(
+    inputs?: InputValues,
+    outputs?: OutputValues
+  ): Promise<InspectableNodePorts>;
 };
 
 export type InspectableEdge = {
@@ -240,6 +243,11 @@ export type InspectablePort = {
    * The name of the port.
    */
   name: string;
+  /**
+   * The title of the port, if specified by schema. Otherwise, same as the
+   * name of the port
+   */
+  title: string;
   /**
    * Returns current status of this port.
    */
