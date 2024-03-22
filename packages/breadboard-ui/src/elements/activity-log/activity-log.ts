@@ -10,7 +10,6 @@ import {
   InspectableRunEvent,
   InspectableRunNodeEvent,
   NodeValue,
-  Schema,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -672,6 +671,54 @@ export class ActivityLog extends LitElement {
     </section>`;
   }
 
+  async #renderDoneInputOrOutput(event: InspectableRunNodeEvent) {
+    const { node, inputs, outputs, inspectableNode } = event;
+    const nodeSchema = await inspectableNode?.describe(inputs);
+    let schema;
+    let result: Record<string, NodeValue>;
+    if (node.type === "output") {
+      schema = nodeSchema?.inputSchema || {};
+      result = inputs;
+    } else {
+      schema = nodeSchema?.outputSchema || {};
+      result = outputs || {};
+    }
+    return html`<dl class="node-output">
+      ${result
+        ? Object.entries(schema.properties || {}).map(([key, schema]) => {
+            const nodeValue = result[key];
+            const title = schema.title ?? key;
+
+            let value: HTMLTemplateResult | symbol = nothing;
+            if (typeof nodeValue === "object") {
+              if (this.#isImageData(nodeValue)) {
+                value = html`<img
+                  src="data:image/${nodeValue.inline_data
+                    .mime_type};base64,${nodeValue.inline_data.data}"
+                />`;
+              } else if (this.#isImageURL(nodeValue)) {
+                value = html`<img src=${nodeValue.image_url} />`;
+              } else {
+                value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
+              }
+            } else {
+              // prettier-ignore
+              value = html`<div
+                class=${classMap({
+                  value: true,
+                  [node.type]: true,
+                })}
+              >${nodeValue}
+              </div>`;
+            }
+
+            return html`<dd>${title}</dd>
+              <dt>${value}</dt>`;
+          })
+        : html`No data provided`}
+    </dl>`;
+  }
+
   render() {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
@@ -694,7 +741,7 @@ export class ActivityLog extends LitElement {
               | symbol = nothing;
             switch (event.type) {
               case "node": {
-                const { node, end, inputs, outputs } = event;
+                const { node, end } = event;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
@@ -716,55 +763,10 @@ export class ActivityLog extends LitElement {
                     `;
                   }
                 } else {
-                  // This is fiddly. Output nodes don't have any outputs.
-                  let additionalData: HTMLTemplateResult | symbol = nothing;
+                  let additionalData: Promise<HTMLTemplateResult> | symbol =
+                    nothing;
                   if (node.type === "input" || node.type === "output") {
-                    const result = node.type === "output" ? inputs : outputs;
-                    additionalData = html`<dl class="node-output">
-                      ${result
-                        ? Object.entries(result).map(([key, nodeValue]) => {
-                            let title = key;
-                            if (node.configuration?.schema) {
-                              const schema = node.configuration
-                                .schema as Schema;
-                              if (schema.properties && schema.properties[key]) {
-                                title = schema.properties[key].title ?? key;
-                              }
-                            }
-
-                            let value: HTMLTemplateResult | symbol = nothing;
-                            if (typeof nodeValue === "object") {
-                              if (this.#isImageData(nodeValue)) {
-                                value = html`<img
-                                  src="data:image/${nodeValue.inline_data
-                                    .mime_type};base64,${nodeValue.inline_data
-                                    .data}"
-                                />`;
-                              } else if (this.#isImageURL(nodeValue)) {
-                                value = html`<img
-                                  src=${nodeValue.image_url}
-                                />`;
-                              } else {
-                                value = html`<bb-json-tree
-                                  .json=${nodeValue}
-                                ></bb-json-tree>`;
-                              }
-                            } else {
-                              // prettier-ignore
-                              value = html`<div
-                                class=${classMap({
-                                  value: true,
-                                  [node.type]: true,
-                                })}
-                              >${nodeValue}
-                              </div>`;
-                            }
-
-                            return html`<dd>${title}</dd>
-                              <dt>${value}</dt>`;
-                          })
-                        : html`No data provided`}
-                    </dl>`;
+                    additionalData = this.#renderDoneInputOrOutput(event);
                   }
 
                   content = html`<section>
@@ -773,7 +775,7 @@ export class ActivityLog extends LitElement {
                     >
                       ${node.metadata?.title ?? node.id ?? node.type}
                     </h1>
-                    ${additionalData} ${this.#createRunInfo(event.runs)}
+                    ${until(additionalData)} ${this.#createRunInfo(event.runs)}
                   </section>`;
                   break;
                 }

@@ -31,7 +31,6 @@ import {
   RunObserverOptions,
 } from "./types.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const shouldSkipEvent = (
   options: RunObserverOptions,
   node: NodeDescriptor,
@@ -106,12 +105,12 @@ export class EventManager {
 
   #addInput(data: InputResponse) {
     const { path, bubbled, inputArguments, node, timestamp } = data;
+    const entry = this.#pathRegistry.find(path);
     if (bubbled) {
-      const event = new RunNodeEvent(null, node, timestamp, inputArguments);
+      const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
-      const entry = this.#pathRegistry.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
@@ -127,12 +126,12 @@ export class EventManager {
 
   #addOutput(data: OutputResponse) {
     const { path, bubbled, node, timestamp, outputs } = data;
+    const entry = this.#pathRegistry.find(path);
     if (bubbled) {
-      const event = new RunNodeEvent(null, node, timestamp, outputs);
+      const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
     } else {
-      const entry = this.#pathRegistry.find(path);
       if (!entry) {
         throw new Error(
           `Expected an existing entry for ${JSON.stringify(path)}`
