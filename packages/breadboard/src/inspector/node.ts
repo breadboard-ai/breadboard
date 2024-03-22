@@ -92,12 +92,20 @@ class Node implements InspectableNode {
         EdgeType.In,
         incoming,
         described.inputSchema,
+        false,
         this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
+    const addErrorPort =
+      this.descriptor.type !== "input" && this.descriptor.type !== "output";
     const outputs: InspectablePortList = {
       fixed: described.outputSchema.additionalProperties === false,
-      ports: collectPorts(EdgeType.Out, outgoing, described.outputSchema),
+      ports: collectPorts(
+        EdgeType.Out,
+        outgoing,
+        described.outputSchema,
+        addErrorPort
+      ),
     };
     return { inputs, outputs };
   }

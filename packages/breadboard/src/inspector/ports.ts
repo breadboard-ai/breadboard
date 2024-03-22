@@ -28,6 +28,7 @@ export const collectPorts = (
   type: EdgeType,
   edges: InspectableEdge[],
   schema: Schema,
+  addErrorPort: boolean,
   values?: NodeConfiguration
 ) => {
   let wiredContainsStar = false;
@@ -41,7 +42,7 @@ export const collectPorts = (
   });
   const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
-  if (type == EdgeType.Out) {
+  if (addErrorPort) {
     // Even if not specified in the schema, all non-built-in nodes always have
     // an optional `$error` port.
     schemaPortNames.push("$error");
