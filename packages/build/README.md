@@ -199,7 +199,7 @@ passed to the function which contains the input values for the dynamic values.
 Nodes created with `@breadboard-ai/build` can be directly integrated into Kits
 created with `@google-labs/breadboard`. In addition, the
 `NodeFactoryFromDefinition` type utility automatically provides a type that can
-be used
+be used to generate the kit's signature.
 
 ```ts
 import { reverseString } from "./reverse-string.js";
