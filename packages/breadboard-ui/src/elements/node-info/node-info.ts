@@ -448,21 +448,18 @@ export class NodeInfo extends LitElement {
               ${ports.map((port) => {
                 if (!configuration || port.star) return;
                 return guard([port.name], () => {
-                  const schema = port.schema;
                   const name = port.name;
                   const configurationValue = configuration[name];
 
                   let input;
-                  const type = schema.type;
+                  const type = port.schema.type;
+                  console.log("🍊 port", port);
                   switch (type) {
                     case "object": {
                       const schema = configurationValue as Schema;
 
                       // Only show the schema editor for inputs & outputs
-                      if (
-                        (schema && node.descriptor.type === "input") ||
-                        node.descriptor.type === "output"
-                      ) {
+                      if (port.schema.behavior?.includes("json-schema")) {
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
                           .schema=${schema}
@@ -527,6 +524,8 @@ export class NodeInfo extends LitElement {
                       break;
                     }
                   }
+
+                  const schema = port.schema;
 
                   return html`<div class="configuration-item">
                     <label title="${schema.description}" for="${name}"

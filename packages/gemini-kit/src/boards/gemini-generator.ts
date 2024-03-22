@@ -136,7 +136,8 @@ const parametersSchema = {
       title: "Tools",
       description: "An array of functions to use for tool-calling",
       items: {
-        type: "string",
+        type: "object",
+        behavior: ["board"],
       },
       default: "[]",
       examples: [JSON.stringify(toolsExample, null, 2)],
@@ -147,6 +148,7 @@ const parametersSchema = {
       description: "An array of messages to use as conversation context",
       items: {
         type: "object",
+        behavior: ["llm-content"],
       },
       default: "[]",
       examples: [JSON.stringify(contextExample, null, 2)],
@@ -181,6 +183,10 @@ const textOutputSchema = {
     },
     context: {
       type: "array",
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
       title: "Context",
       description: "The conversation context",
     },
@@ -192,11 +198,18 @@ const toolCallOutputSchema = {
   properties: {
     toolCalls: {
       type: "array",
+      items: {
+        type: "object",
+      },
       title: "Tool Calls",
       description: "The generated tool calls",
     },
     context: {
       type: "array",
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
       title: "Context",
       description: "The conversation context",
     },

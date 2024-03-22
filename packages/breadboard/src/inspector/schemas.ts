@@ -55,7 +55,7 @@ export const edgesToSchema = (
 export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || {};
+  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
@@ -74,7 +74,7 @@ export const describeInput = (
 export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = options.inputs?.schema as Schema | undefined;
+  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
   const outputSchema = new SchemaBuilder()
     .setAdditionalProperties(false)
     .build();

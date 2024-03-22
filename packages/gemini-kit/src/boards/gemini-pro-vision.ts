@@ -31,25 +31,10 @@ const inputSchema = {
       title: "Content",
       description: "Add content here",
       minItems: 1,
-      items: [
-        {
-          type: "object",
-          title: "Text",
-          format: "text_part",
-          description: "A text part, which consists of plain text",
-          properties: {
-            text: {
-              type: "string",
-            },
-          },
-        },
-        {
-          type: "object",
-          title: "Image",
-          format: "image_part",
-          description: "An image part. Can be a JPEG or PNG image",
-        },
-      ],
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
     },
     useStreaming: {
       type: "boolean",
