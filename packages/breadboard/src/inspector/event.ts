@@ -9,12 +9,10 @@ import {
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
-  InputValues,
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
-  OutputValues,
 } from "../types.js";
 import { inspectableGraph } from "./graph.js";
 import {
@@ -23,24 +21,15 @@ import {
   SECRET_PATH,
   idFromPath,
 } from "./path-registry.js";
+import { RunNodeEvent, eventIdFromEntryId } from "./run-node-event.js";
 import {
-  EventIdentifier,
-  GraphUUID,
   InspectableGraphStore,
-  InspectableNode,
-  InspectableRun,
   InspectableRunErrorEvent,
   InspectableRunEvent,
-  InspectableRunNodeEvent,
   InspectableRunSecretEvent,
-  PathRegistryEntry,
   RunObserverLogLevel,
   RunObserverOptions,
 } from "./types.js";
-
-const eventIdFromEntryId = (entryId?: string): string => {
-  return `e-${entryId || "0"}`;
-};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const shouldSkipEvent = (
@@ -60,94 +49,6 @@ const shouldSkipEvent = (
     (node.metadata?.logLevel as RunObserverLogLevel) || "debug";
   return nodelogLevel !== "info";
 };
-
-/**
- * Meant to be a very lightweight wrapper around the
- * data in the `PathRegistryEntry`.
- */
-class NestedRun implements InspectableRun {
-  graphId: GraphUUID;
-  start: number;
-  end: number | null;
-  graphVersion = 0;
-  messages: HarnessRunResult[] = [];
-  events: InspectableRunEvent[];
-
-  constructor(entry: PathRegistryEntry) {
-    this.graphId = entry.graphId as GraphUUID;
-    this.start = entry.graphStart;
-    this.end = entry.graphEnd;
-    this.events = entry.events;
-  }
-
-  currentNode(): string {
-    return "";
-  }
-}
-
-class RunNodeEvent implements InspectableRunNodeEvent {
-  type: "node";
-  node: NodeDescriptor;
-  start: number;
-  end: number | null;
-  inputs: InputValues;
-  outputs: OutputValues | null;
-  result: HarnessRunResult | null;
-  bubbled: boolean;
-  hidden: boolean;
-
-  /**
-   * The path registry entry associated with this event.
-   */
-  #entry: PathRegistryEntry | null;
-
-  constructor(
-    entry: PathRegistryEntry | null,
-    node: NodeDescriptor,
-    start: number,
-    inputs: InputValues
-  ) {
-    this.#entry = entry;
-    this.type = "node";
-    this.node = node;
-    this.start = start;
-    this.end = null;
-    this.inputs = inputs;
-    this.outputs = null;
-    this.result = null;
-    this.bubbled = false;
-    this.hidden = false;
-  }
-
-  get id(): EventIdentifier {
-    return eventIdFromEntryId(this.#entry?.id);
-  }
-
-  get inspectableNode(): InspectableNode | null {
-    return this.#entry?.parent?.graph?.nodeById(this.node.id) || null;
-  }
-
-  get runs(): InspectableRun[] {
-    if (!this.#entry || this.#entry.empty()) {
-      return [];
-    }
-    const entry = this.#entry;
-    const events = entry.events;
-    // a bit of a hack: what I actually need is to find out whether this is
-    // a map or not.
-    // Maps have a peculiar structure: their children will have no events, but
-    // their children's children (the parallel runs) will have events.
-    if (events.length > 0) {
-      // This is an ordinary run.
-      return [new NestedRun(entry)];
-    } else {
-      // This is a map.
-      return entry.children.filter(Boolean).map((childEntry) => {
-        return new NestedRun(childEntry);
-      });
-    }
-  }
-}
 
 export class EventManager {
   #graphStore;
