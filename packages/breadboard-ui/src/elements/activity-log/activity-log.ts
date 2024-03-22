@@ -6,7 +6,6 @@
 
 import {
   ErrorObject,
-  InspectablePortList,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunNodeEvent,

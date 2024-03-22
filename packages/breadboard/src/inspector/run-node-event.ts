@@ -5,116 +5,20 @@
  */
 
 import type { HarnessRunResult } from "../harness/types.js";
-import type {
-  InputValues,
-  NodeConfiguration,
-  NodeDescriberResult,
-  NodeDescriptor,
-  OutputValues,
-} from "../types.js";
+import type { InputValues, NodeDescriptor, OutputValues } from "../types.js";
 import type {
   EventIdentifier,
-  InspectableEdge,
   InspectableNode,
-  InspectableNodePorts,
-  InspectablePortList,
   InspectableRun,
   InspectableRunNodeEvent,
   PathRegistryEntry,
 } from "./types.js";
 import { NestedRun } from "./nested-run.js";
-import { EdgeType, describeInput } from "./schemas.js";
-import { collectPorts } from "./ports.js";
+import { BubbledInspectableNode } from "./bubbled-node.js";
 
 export const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
 };
-
-class BubbledInspectableNode implements InspectableNode {
-  descriptor: NodeDescriptor;
-  #actual: InspectableNode;
-
-  constructor(actual: InspectableNode) {
-    const descriptor = actual.descriptor;
-    if (descriptor.type !== "input" && descriptor.type !== "output") {
-      throw new Error(
-        "BubbledInspectableNode can only be an input or an output"
-      );
-    }
-    this.#actual = actual;
-    this.descriptor = descriptor;
-  }
-
-  title(): string {
-    return this.#actual.title();
-  }
-
-  incoming(): InspectableEdge[] {
-    return this.#actual.incoming();
-  }
-
-  outgoing(): InspectableEdge[] {
-    return this.#actual.outgoing();
-  }
-
-  isEntry(): boolean {
-    return this.#actual.isEntry();
-  }
-
-  isExit(): boolean {
-    return this.#actual.isExit();
-  }
-
-  configuration(): NodeConfiguration {
-    return this.#actual.configuration();
-  }
-
-  async describe(
-    inputs?: InputValues | undefined
-  ): Promise<NodeDescriberResult> {
-    if (this.descriptor.type === "input") {
-      return describeInput({ inputs });
-    }
-    return this.#actual.describe(inputs);
-  }
-
-  async ports(
-    inputValues?: InputValues | undefined,
-    outputValues?: OutputValues | undefined
-  ): Promise<InspectableNodePorts> {
-    if (this.descriptor.type === "input") {
-      const described = describeInput({ inputs: inputValues });
-      const bubbledNames = Object.keys(described.outputSchema.properties || {});
-      const bubbledValues = Object.fromEntries(
-        Object.entries(outputValues || {}).filter(([name]) =>
-          bubbledNames.includes(name)
-        )
-      );
-      const inputs: InspectablePortList = {
-        fixed: described.inputSchema.additionalProperties === false,
-        ports: collectPorts(
-          EdgeType.In,
-          this.incoming(),
-          described.inputSchema,
-          false,
-          inputValues
-        ),
-      };
-      const outputs: InspectablePortList = {
-        fixed: described.outputSchema.additionalProperties === false,
-        ports: collectPorts(
-          EdgeType.Out,
-          [],
-          described.outputSchema,
-          false,
-          bubbledValues
-        ),
-      };
-      return { inputs, outputs };
-    }
-    return this.#actual.ports(inputValues, outputValues || undefined);
-  }
-}
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
