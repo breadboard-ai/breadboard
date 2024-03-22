@@ -11,8 +11,8 @@ import assert from "node:assert/strict";
 
 test("polymorphic inputs", () => {
   // $ExpectType PolymorphicDefinition<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }, { out1: { type: "string"; }; }>
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -20,12 +20,12 @@ test("polymorphic inputs", () => {
         type: "number",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    (
+    invoke: (
       // $ExpectType ConcreteValues<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>>
       params,
       // $ExpectType DynamicInvokeParams<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }>
@@ -44,8 +44,8 @@ test("polymorphic inputs", () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   // @ts-expect-error missing required parameter
   definition({});
   definition({ in1: "foo" });
@@ -70,9 +70,9 @@ test("polymorphic inputs", () => {
   // @ts-expect-error No such port
   instance.inputs.in3;
 
-  const definition2 = defineNodeType(
-    {},
-    {
+  const definition2 = defineNodeType({
+    inputs: {},
+    outputs: {
       strOut: {
         type: "string",
       },
@@ -80,13 +80,13 @@ test("polymorphic inputs", () => {
         type: "number",
       },
     },
-    () => {
+    invoke: () => {
       return {
         strOut: "foo",
         numOut: 123,
       };
-    }
-  );
+    },
+  });
   const instance2 = definition2({});
   definition({ in1: "foo", in2: instance2.outputs.numOut });
   // @ts-expect-error expected number, got string
@@ -96,8 +96,8 @@ test("polymorphic inputs", () => {
 });
 
 test("polymorphic inputs invoke returns value from sync function", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -105,18 +105,18 @@ test("polymorphic inputs invoke returns value from sync function", async () => {
         type: "number",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    (staticParams, dynamicParams) => {
+    invoke: (staticParams, dynamicParams) => {
       return {
         out1:
           JSON.stringify(staticParams) + "\n" + JSON.stringify(dynamicParams),
       };
-    }
-  );
+    },
+  });
   const result = definition.invoke(
     { in1: "foo", in2: "bar" },
     // Not currently used.
@@ -129,8 +129,8 @@ test("polymorphic inputs invoke returns value from sync function", async () => {
 });
 
 test("polymorphic inputs invoke returns value from async function", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
@@ -138,19 +138,19 @@ test("polymorphic inputs invoke returns value from async function", async () => 
         type: "number",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    async (staticParams, dynamicParams) => {
+    invoke: async (staticParams, dynamicParams) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return {
         out1:
           JSON.stringify(staticParams) + "\n" + JSON.stringify(dynamicParams),
       };
-    }
-  );
+    },
+  });
   const result = definition.invoke(
     { in1: "foo", in2: "bar" },
     // Not currently used.
@@ -163,8 +163,8 @@ test("polymorphic inputs invoke returns value from async function", async () => 
 });
 
 test("polymorphic describe function generates JSON schema with static ports", async () => {
-  const definition = defineNodeType(
-    {
+  const definition = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
         description: "Description of in1",
@@ -173,18 +173,18 @@ test("polymorphic describe function generates JSON schema with static ports", as
         type: "boolean",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "boolean",
         description: "Description of out1",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: true,
       };
-    }
-  );
+    },
+  });
   assert.deepEqual(await definition.describe(), {
     inputSchema: {
       type: "object",
@@ -212,9 +212,8 @@ test("polymorphic describe function generates JSON schema with static ports", as
 });
 
 test("polymorphic describe function generates JSON schema from static input", async () => {
-  const definition = defineNodeType(
-    // Inputs
-    {
+  const definition = defineNodeType({
+    inputs: {
       portList: {
         type: "string",
         description: "Comma-separated list of port names",
@@ -223,23 +222,20 @@ test("polymorphic describe function generates JSON schema from static input", as
         type: "number",
       },
     },
-    // Outputs
-    {
+    outputs: {
       sum: {
         type: "number",
         description: "Sum of all input port values",
       },
     },
-    // Invoke
-    ({ portList }, dynamic) => {
+    invoke: ({ portList }, dynamic) => {
       // $ExpectType string
       portList;
       return {
         sum: Object.values(dynamic).reduce((prev, cur) => prev + cur, 0),
       };
     },
-    // Describe
-    ({ portList }) => {
+    describe: ({ portList }) => {
       // $ExpectType string | undefined
       portList;
       // TODO(aomarks) Maybe it should be possible to just return an array of
@@ -249,8 +245,8 @@ test("polymorphic describe function generates JSON schema from static input", as
           (portList ?? "").split(",").map((name) => [name, { type: "number" }])
         ),
       };
-    }
-  );
+    },
+  });
   assert.deepEqual(await definition.describe({ portList: `num1,num2` }), {
     inputSchema: {
       type: "object",

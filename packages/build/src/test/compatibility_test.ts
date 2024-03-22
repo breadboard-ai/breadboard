@@ -41,23 +41,23 @@ function setupKits<
 
 {
   // A monomorphic node definition
-  const strLen = defineNodeType(
-    {
+  const strLen = defineNodeType({
+    inputs: {
       str: {
         type: "string",
       },
     },
-    {
+    outputs: {
       len: {
         type: "number",
       },
     },
-    ({ str }) => {
+    invoke: ({ str }) => {
       return {
         len: str.length,
       };
-    }
-  );
+    },
+  });
 
   const { kit: strLenKit, runtimeKit: strLenRuntimeKit } = setupKits({
     strLen,
@@ -149,8 +149,8 @@ function setupKits<
 
 {
   // A polymorphic node definition
-  const adder = defineNodeType(
-    {
+  const adder = defineNodeType({
+    inputs: {
       base: {
         type: "number",
       },
@@ -158,17 +158,17 @@ function setupKits<
         type: "number",
       },
     },
-    {
+    outputs: {
       sum: {
         type: "number",
       },
     },
-    ({ base }, operands) => {
+    invoke: ({ base }, operands) => {
       return {
         sum: Object.values(operands).reduce((sum, num) => sum + num, base),
       };
-    }
-  );
+    },
+  });
 
   const { kit: adderKit, runtimeKit: adderRuntimeKit } = setupKits({
     adder,

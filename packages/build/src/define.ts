@@ -66,23 +66,24 @@ import type { PortConfigMap } from "./port.js";
 export function defineNodeType<
   INPUTS extends PortConfigMap,
   OUTPUTS extends PortConfigMap,
->(
-  inputs: INPUTS,
-  outputs: ForbidMultiplePrimaries<OUTPUTS>,
+>(params: {
+  inputs: INPUTS;
+  outputs: ForbidMultiplePrimaries<OUTPUTS>;
   invoke: IsPolymorphic<INPUTS> extends true
     ? PolymorphicInvokeFunction<
         OmitDynamicPortConfig<INPUTS>,
         ExtractDynamicPortConfig<INPUTS>,
         OUTPUTS
       >
-    : MonomorphicInvokeFunction<INPUTS, OUTPUTS>,
+    : MonomorphicInvokeFunction<INPUTS, OUTPUTS>;
   describe?: IsPolymorphic<INPUTS> extends true
     ? PolymorphicDescribeFunction<
         OmitDynamicPortConfig<INPUTS>,
         ExtractDynamicPortConfig<INPUTS>
       >
-    : never
-): NodeDefinition<INPUTS, OUTPUTS> {
+    : never;
+}): NodeDefinition<INPUTS, OUTPUTS> {
+  const { inputs, outputs, invoke, describe } = params;
   validateOutputs(outputs);
   const def = isPolymorphic(inputs, invoke)
     ? definePolymorphicNodeType(
