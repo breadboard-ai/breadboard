@@ -4,5 +4,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { defineNodeType } from "./define.js";
-export type { NodeFactoryFromDefinition } from "./compatibility.js";
+export { defineNodeType } from "./internal/define.js";
+export type { NodeFactoryFromDefinition } from "./internal/compatibility.js";

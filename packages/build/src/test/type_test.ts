@@ -10,7 +10,7 @@ import {
   type BreadboardType,
   type TypeScriptTypeFromBreadboardType,
   escapeHatch,
-} from "../type.js";
+} from "../internal/type.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 

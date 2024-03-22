@@ -7,7 +7,10 @@
 import { defineNodeType } from "@breadboard-ai/build";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { OutputPortGetter, type OutputPortReference } from "../port.js";
+import {
+  OutputPortGetter,
+  type OutputPortReference,
+} from "../internal/port.js";
 
 test("monomorphic node with primary output acts like that output port", () => {
   const withPrimaryOut = defineNodeType({

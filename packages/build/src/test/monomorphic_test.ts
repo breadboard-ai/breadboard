@@ -13,7 +13,7 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
-import { anyOf, escapeHatch } from "../type.js";
+import { anyOf, escapeHatch } from "../internal/type.js";
 
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{}, {}>

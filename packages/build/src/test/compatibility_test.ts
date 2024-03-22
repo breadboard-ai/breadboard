@@ -18,8 +18,8 @@ import {
   defineNodeType,
   type NodeFactoryFromDefinition,
 } from "@breadboard-ai/build";
-import type { MonomorphicDefinition } from "../definition-monomorphic.js";
-import type { PolymorphicDefinition } from "../definition-polymorphic.js";
+import type { MonomorphicDefinition } from "../internal/definition-monomorphic.js";
+import type { PolymorphicDefinition } from "../internal/definition-polymorphic.js";
 
 function setupKits<
   DEFS extends Record<
