@@ -50,6 +50,11 @@
     "version": "0.0.6"
   },
   {
+    "title": "Build example",
+    "url": "/graphs/build-example.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Chat bot 2.0",
     "url": "/graphs/chat-bot-2.json",
     "version": "0.0.1"

@@ -44,6 +44,7 @@
         "../agent-kit:build",
         "../breadboard:build",
         "../breadboard-ui:build",
+        "../build:build",
         "../core-kit:build",
         "../gemini-kit:build",
         "../json-kit:build",
@@ -62,6 +63,7 @@
         "../agent-kit:build:tsc",
         "../breadboard:build:tsc",
         "../breadboard-ui:build:tsc",
+        "../build:build:tsc",
         "../core-kit:build:tsc",
         "../gemini-kit:build:tsc",
         "../json-kit:build:tsc",
@@ -222,6 +224,7 @@
     "vitest": "^1.3.1"
   },
   "dependencies": {
+    "@breadboard-ai/build": "^0.0.1",
     "@google-labs/agent-kit": "^0.3.0",
     "@google-labs/breadboard": "^0.12.0",
     "@google-labs/breadboard-ui": "^0.3.0",
