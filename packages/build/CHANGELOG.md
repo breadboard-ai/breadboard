@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+### Patch Changes
+
+- fe6b8de: Fix missing build artifacts
+
 ## 0.1.0
 
 ### Minor Changes

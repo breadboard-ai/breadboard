@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -40,6 +40,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
