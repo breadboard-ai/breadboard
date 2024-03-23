@@ -467,13 +467,9 @@ export type InspectableRunNodeEvent = {
    */
   id: EventIdentifier;
   /**
-   * The descriptor of a node that is associated with this event.
-   */
-  node: NodeDescriptor;
-  /**
    * The `InspectableNode` instance associated with this node.
    */
-  inspectableNode: InspectableNode | null;
+  node: InspectableNode;
   /**
    * The timestamp of the `nodestart` event.
    */

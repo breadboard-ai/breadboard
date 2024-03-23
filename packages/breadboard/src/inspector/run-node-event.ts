@@ -22,7 +22,7 @@ export const eventIdFromEntryId = (entryId?: string): string => {
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
-  node: NodeDescriptor;
+  descriptor: NodeDescriptor;
   start: number;
   end: number | null;
   inputs: InputValues;
@@ -36,15 +36,31 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
    */
   #entry: PathRegistryEntry;
 
+  /**
+   * A lazily-initialized InspectableNode instance.
+   */
+  #node: InspectableNode | null = null;
+
   constructor(
     entry: PathRegistryEntry,
-    node: NodeDescriptor,
+    descriptor: NodeDescriptor,
     start: number,
     inputs: InputValues
   ) {
+    if (!entry.parent) {
+      throw new Error(
+        `RunNodeEvent has no parent entry. This is a bug in Inspector API machinery. Node Id: ${descriptor.id}`
+      );
+    }
+    if (!entry.parent.graph) {
+      throw new Error(
+        `This node event's parent has no graph associated with it. Node Id: ${descriptor.id}`
+      );
+    }
+
     this.#entry = entry;
     this.type = "node";
-    this.node = node;
+    this.descriptor = descriptor;
     this.start = start;
     this.end = null;
     this.inputs = inputs;
@@ -58,26 +74,17 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
     return eventIdFromEntryId(this.#entry.id);
   }
 
-  get inspectableNode(): InspectableNode | null {
-    if (!this.#entry.parent) {
+  get node(): InspectableNode {
+    if (this.#node) return this.#node;
+
+    const node = this.#entry.parent?.graph?.nodeById(this.descriptor.id);
+    if (!node) {
       throw new Error(
-        "`RunNodeEvent` has no parent entry. This is a bug in Inspector API machinery."
+        `RunNodeEvent could not find inspectable node. This is a bug in Inspector API machinery. Node Id: ${this.descriptor.id}`
       );
     }
-    const node = this.#entry.parent.graph?.nodeById(this.node.id) || null;
-    if (!node) {
-      if (!this.#entry.parent.graph) {
-        console.warn(
-          "This node event's parent has no graph associated with it",
-          this.node
-        );
-      }
-      return null;
-    }
-    if (this.bubbled) {
-      return new BubbledInspectableNode(node);
-    }
-    return node;
+    this.#node = this.bubbled ? new BubbledInspectableNode(node) : node;
+    return this.#node;
   }
 
   get runs(): InspectableRun[] {

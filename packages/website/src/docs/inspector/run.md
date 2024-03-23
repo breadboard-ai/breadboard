@@ -162,7 +162,7 @@ switch (event.type) {
 When the event is an `InspectableRunNodeEvent` instance, we can inspect the various details of the node invocation:
 
 ```ts
-// Returns a `NodeDescriptor` of the node.
+// Returns an `InspectableNode` instance for this node.
 console.log("Node", event.node);
 
 // Returns the timestamp of the node invocation start time.

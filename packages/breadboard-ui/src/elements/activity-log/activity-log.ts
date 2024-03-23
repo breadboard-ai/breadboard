@@ -530,7 +530,7 @@ export class ActivityLog extends LitElement {
               const classes: Record<string, boolean> = {
                 "neural-activity": true,
                 pending: idx === run.events.length - 1 && run.end === null,
-                [event.node.type]: true,
+                [event.node.descriptor.type]: true,
               };
 
               return html`<div class=${classMap(classes)}></div>`;
@@ -542,20 +542,17 @@ export class ActivityLog extends LitElement {
             return nothing;
           }
 
+          const { type, metadata, id } = event.node.descriptor;
+
           const classes: Record<string, boolean> = {
             "activity-entry": true,
             pending: idx === run.events.length - 1 && run.end === null,
-            [event.node.type]: true,
+            [type]: true,
           };
 
           return html`<div class=${classMap(classes)}>
             <div class="content">
-              <h1>
-                ${event.node.metadata?.description ??
-                event.node.metadata?.title ??
-                event.node.id ??
-                event.node.type}
-              </h1>
+              <h1>${metadata?.description ?? metadata?.title ?? id ?? type}</h1>
               ${this.#createRunInfo(event.runs)}
             </div>
           </div>`;
@@ -576,11 +573,10 @@ export class ActivityLog extends LitElement {
       return nothing;
     }
 
+    const { type, metadata, id } = newestEvent.node.descriptor;
+
     return html`<span class="newest-task"
-      >${newestEvent.node.metadata?.description ??
-      newestEvent.node.metadata?.title ??
-      newestEvent.node.id ??
-      newestEvent.node.type}</span
+      >${metadata?.description ?? metadata?.title ?? id ?? type}</span
     >`;
   }
 
@@ -609,7 +605,7 @@ export class ActivityLog extends LitElement {
         }
 
         if (event.type === "node") {
-          switch (event.node.type) {
+          switch (event.node.descriptor.type) {
             case "secrets": {
               if (event.outputs !== null) {
                 secrets.push(...Object.values(event.outputs));
@@ -656,15 +652,16 @@ export class ActivityLog extends LitElement {
   }
 
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
-    const { node, inputs, inspectableNode } = event;
-    const nodeSchema = await inspectableNode?.describe(inputs);
+    const { inputs, node } = event;
+    const nodeSchema = await node.describe(inputs);
+    const descriptor = node.descriptor;
     const schema = nodeSchema?.outputSchema || inputs.schema;
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
-        ${node.metadata?.title ?? node.id ?? node.type}
+        ${descriptor.metadata?.title ?? descriptor.id ?? descriptor.type}
       </h1>
       <bb-input
-        id="${node.id}"
+        id="${descriptor.id}"
         .secret=${false}
         .remember=${false}
         .schema=${schema}
@@ -673,46 +670,42 @@ export class ActivityLog extends LitElement {
   }
 
   async #renderDoneInputOrOutput(event: InspectableRunNodeEvent) {
-    const { node, inputs, outputs, inspectableNode } = event;
-    const allPorts = await inspectableNode?.ports(
-      inputs,
-      outputs as OutputValues
-    );
-    const isOutput = node.type === "output";
-    const portList = isOutput ? allPorts?.inputs : allPorts?.outputs;
+    const { node, inputs, outputs } = event;
+    const allPorts = await node.ports(inputs, outputs as OutputValues);
+    const type = node.descriptor.type;
+    const isOutput = type === "output";
+    const portList = isOutput ? allPorts.inputs : allPorts.outputs;
     return html`<dl class="node-output">
-      ${portList
-        ? portList.ports.map((port) => {
-            if (port.star) return nothing;
-            if (isOutput && port.name === "schema") return nothing;
-            const nodeValue = port.value;
-            let value: HTMLTemplateResult | symbol = nothing;
-            if (typeof nodeValue === "object") {
-              if (this.#isImageData(nodeValue)) {
-                value = html`<img
-                  src="data:image/${nodeValue.inline_data
-                    .mime_type};base64,${nodeValue.inline_data.data}"
-                />`;
-              } else if (this.#isImageURL(nodeValue)) {
-                value = html`<img src=${nodeValue.image_url} />`;
-              } else {
-                value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
-              }
-            } else {
-              // prettier-ignore
-              value = html`<div
+      ${portList.ports.map((port) => {
+        if (port.star) return nothing;
+        if (isOutput && port.name === "schema") return nothing;
+        const nodeValue = port.value;
+        let value: HTMLTemplateResult | symbol = nothing;
+        if (typeof nodeValue === "object") {
+          if (this.#isImageData(nodeValue)) {
+            value = html`<img
+              src="data:image/${nodeValue.inline_data
+                .mime_type};base64,${nodeValue.inline_data.data}"
+            />`;
+          } else if (this.#isImageURL(nodeValue)) {
+            value = html`<img src=${nodeValue.image_url} />`;
+          } else {
+            value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
+          }
+        } else {
+          // prettier-ignore
+          value = html`<div
                 class=${classMap({
                   value: true,
-                  [node.type]: true,
+                  [type]: true,
                 })}
               >${nodeValue}
               </div>`;
-            }
+        }
 
-            return html`<dd>${port.title}</dd>
-              <dt>${value}</dt>`;
-          })
-        : html`No data provided`}
+        return html`<dd>${port.title}</dd>
+          <dt>${value}</dt>`;
+      })}
     </dl>`;
   }
 
@@ -739,11 +732,12 @@ export class ActivityLog extends LitElement {
             switch (event.type) {
               case "node": {
                 const { node, end } = event;
+                const { type, metadata, id } = node.descriptor;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
                 if (end === null) {
-                  if (node.type === "input") {
+                  if (type === "input") {
                     content = this.#renderPendingInput(idx, event);
                     break;
                   }
@@ -753,7 +747,7 @@ export class ActivityLog extends LitElement {
                   } else {
                     content = html`
                       <h1>
-                        ${node.metadata?.title ?? node.id ?? node.type}
+                        ${metadata?.title ?? id ?? type}
                         ${this.#getNewestSubtask(event.runs)}
                       </h1>
                       ${this.#createRunInfo(event.runs)}
@@ -762,7 +756,7 @@ export class ActivityLog extends LitElement {
                 } else {
                   let additionalData: Promise<HTMLTemplateResult> | symbol =
                     nothing;
-                  if (node.type === "input" || node.type === "output") {
+                  if (type === "input" || type === "output") {
                     additionalData = this.#renderDoneInputOrOutput(event);
                   }
 
@@ -770,7 +764,7 @@ export class ActivityLog extends LitElement {
                     <h1
                       ?data-message-idx=${this.showExtendedInfo ? idx : nothing}
                     >
-                      ${node.metadata?.title ?? node.id ?? node.type}
+                      ${metadata?.title ?? id ?? type}
                     </h1>
                     ${until(additionalData)} ${this.#createRunInfo(event.runs)}
                   </section>`;
@@ -847,17 +841,17 @@ export class ActivityLog extends LitElement {
             };
 
             if (event.type === "node") {
-              classes[event.node.type] = true;
+              classes[event.node.descriptor.type] = true;
             }
 
             const styles: Record<string, string> = {};
             if (
               event.type === "node" &&
-              event.node.metadata &&
-              event.node.metadata.visual &&
-              typeof event.node.metadata.visual === "object"
+              event.node.descriptor.metadata &&
+              event.node.descriptor.metadata.visual &&
+              typeof event.node.descriptor.metadata.visual === "object"
             ) {
-              const visual = event.node.metadata.visual as Record<
+              const visual = event.node.descriptor.metadata.visual as Record<
                 string,
                 string
               >;
