@@ -8,6 +8,10 @@ import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import { InspectableEdge, PortStatus } from "./types.js";
 import { NodeConfiguration, Schema } from "../types.js";
 
+const title = (schema: Schema, key: string) => {
+  return schema.properties?.[key]?.title || key;
+};
+
 export const computePortStatus = (
   wired: boolean,
   expected: boolean,
@@ -49,24 +53,25 @@ export const collectPorts = (
   }
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
-  const configuredPortNames = Object.keys(values || {});
+  const valuePortNames = Object.keys(values || {});
   const portNames = [
     ...new Set([
       ...wiredPortNames,
       ...schemaPortNames,
-      ...configuredPortNames,
+      ...valuePortNames,
       "*", // Always include the star port.
     ]),
   ];
   portNames.sort();
   return portNames.map((port) => {
     const star = port === "*";
-    const configured = configuredPortNames.includes(port);
+    const configured = valuePortNames.includes(port);
     const wired = wiredPortNames.includes(port);
     const expected = schemaPortNames.includes(port) || star;
     const required = requiredPortNames.includes(port);
     return {
       name: port,
+      title: title(schema, port),
       configured,
       value: values?.[port],
       star,
@@ -95,6 +100,7 @@ export const collectPortsForType = (schema: Schema) => {
   return portNames.map((port) => {
     return {
       name: port,
+      title: title(schema, port),
       configured: false,
       star: false,
       edges: [],

@@ -11,6 +11,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  OutputValues,
 } from "../types.js";
 import { collectPorts } from "./ports.js";
 import { EdgeType } from "./schemas.js";
@@ -34,6 +35,10 @@ class Node implements InspectableNode {
 
   title(): string {
     return this.descriptor.metadata?.title || this.descriptor.id;
+  }
+
+  description(): string {
+    return this.descriptor.metadata?.description || this.title();
   }
 
   incoming(): InspectableEdge[] {
@@ -78,7 +83,10 @@ class Node implements InspectableNode {
     });
   }
 
-  async ports(inputValues?: InputValues): Promise<InspectableNodePorts> {
+  async ports(
+    inputValues?: InputValues,
+    outputValues?: OutputValues
+  ): Promise<InspectableNodePorts> {
     const incoming = this.incoming();
     const outgoing = this.outgoing();
     const described = await this.#describeInternal({
@@ -104,7 +112,8 @@ class Node implements InspectableNode {
         EdgeType.Out,
         outgoing,
         described.outputSchema,
-        addErrorPort
+        addErrorPort,
+        outputValues
       ),
     };
     return { inputs, outputs };

@@ -160,3 +160,13 @@ export const removeProperty = (schema: Schema, property: string): Schema => {
     properties: Object.fromEntries(entries),
   };
 };
+
+export const filterBySchema = <T extends Record<string, unknown>>(
+  values: T,
+  schema?: Schema
+): T => {
+  const names = Object.keys(schema?.properties || {});
+  return Object.fromEntries(
+    Object.entries(values).filter(([name]) => names.includes(name))
+  ) as T;
+};
