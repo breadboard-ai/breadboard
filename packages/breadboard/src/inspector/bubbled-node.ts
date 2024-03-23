@@ -48,6 +48,10 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.title();
   }
 
+  description(): string {
+    return this.#actual.description();
+  }
+
   incoming(): InspectableEdge[] {
     return this.#actual.incoming();
   }

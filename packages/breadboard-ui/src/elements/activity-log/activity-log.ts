@@ -542,7 +542,7 @@ export class ActivityLog extends LitElement {
             return nothing;
           }
 
-          const { type, metadata, id } = event.node.descriptor;
+          const { type } = event.node.descriptor;
 
           const classes: Record<string, boolean> = {
             "activity-entry": true,
@@ -552,7 +552,7 @@ export class ActivityLog extends LitElement {
 
           return html`<div class=${classMap(classes)}>
             <div class="content">
-              <h1>${metadata?.description ?? metadata?.title ?? id ?? type}</h1>
+              <h1>${event.node.description()}</h1>
               ${this.#createRunInfo(event.runs)}
             </div>
           </div>`;
@@ -573,10 +573,8 @@ export class ActivityLog extends LitElement {
       return nothing;
     }
 
-    const { type, metadata, id } = newestEvent.node.descriptor;
-
     return html`<span class="newest-task"
-      >${metadata?.description ?? metadata?.title ?? id ?? type}</span
+      >${newestEvent.node.description()}</span
     >`;
   }
 
@@ -658,7 +656,7 @@ export class ActivityLog extends LitElement {
     const schema = nodeSchema?.outputSchema || inputs.schema;
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
-        ${descriptor.metadata?.title ?? descriptor.id ?? descriptor.type}
+        ${node.title()}
       </h1>
       <bb-input
         id="${descriptor.id}"
@@ -732,7 +730,7 @@ export class ActivityLog extends LitElement {
             switch (event.type) {
               case "node": {
                 const { node, end } = event;
-                const { type, metadata, id } = node.descriptor;
+                const { type } = node.descriptor;
                 // `end` is null if the node is still running
                 // that is, the `nodeend` for this node hasn't yet
                 // been received.
@@ -747,8 +745,7 @@ export class ActivityLog extends LitElement {
                   } else {
                     content = html`
                       <h1>
-                        ${metadata?.title ?? id ?? type}
-                        ${this.#getNewestSubtask(event.runs)}
+                        ${node.title()} ${this.#getNewestSubtask(event.runs)}
                       </h1>
                       ${this.#createRunInfo(event.runs)}
                     `;
@@ -764,7 +761,7 @@ export class ActivityLog extends LitElement {
                     <h1
                       ?data-message-idx=${this.showExtendedInfo ? idx : nothing}
                     >
-                      ${metadata?.title ?? id ?? type}
+                      ${node.title()}
                     </h1>
                     ${until(additionalData)} ${this.#createRunInfo(event.runs)}
                   </section>`;

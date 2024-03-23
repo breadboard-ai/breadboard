@@ -44,6 +44,11 @@ export type InspectableNode = {
    */
   title(): string;
   /**
+   * The description of the node as found in `NodeMetadata`. If not found,
+   * falls back to `title()`.
+   */
+  description(): string;
+  /**
    * Returns the nodes that have an edge to this node.
    */
   incoming(): InspectableEdge[];
