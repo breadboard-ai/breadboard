@@ -7,16 +7,19 @@
 import { defineNodeType } from "@breadboard-ai/build";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { OutputPortGetter, type OutputPortReference } from "../port.js";
+import {
+  OutputPortGetter,
+  type OutputPortReference,
+} from "../internal/port.js";
 
 test("monomorphic node with primary output acts like that output port", () => {
-  const withPrimaryOut = defineNodeType(
-    {
+  const withPrimaryOut = defineNodeType({
+    inputs: {
       in1: {
         type: "string",
       },
     },
-    {
+    outputs: {
       out1: {
         type: "string",
       },
@@ -28,43 +31,51 @@ test("monomorphic node with primary output acts like that output port", () => {
         type: "boolean",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
         out2: 123,
         out3: true,
       };
-    }
-  );
+    },
+  });
   const instance = withPrimaryOut({ in1: "foo" });
   instance satisfies OutputPortReference<{ type: "number" }>;
   // $ExpectType OutputPort<{ type: "number"; }>
   instance[OutputPortGetter];
 
-  defineNodeType({ in1: { type: "number" } }, {}, () => ({}))({
+  defineNodeType({
+    inputs: { in1: { type: "number" } },
+    outputs: {},
+    invoke: () => ({}),
+  })({
     in1: instance,
   });
 
-  defineNodeType({ in1: { type: "string" } }, {}, () => ({}))({
+  defineNodeType({
+    inputs: { in1: { type: "string" } },
+    outputs: {},
+    invoke: () => ({}),
+  })({
     // @ts-expect-error in1 expects string, not number
     in1: instance,
   });
 });
 
 test("type error: monomorphic node without primary output doesn't act like an output port", () => {
-  const definition = defineNodeType(
-    {},
-    {
+  const definition = defineNodeType({
+    inputs: {},
+    outputs: {
       out1: {
         type: "string",
       },
     },
-    () => {
+    invoke: () => {
       return {
         out1: "foo",
       };
-    }
-  );
+    },
+  });
   const instance = definition({});
   // @ts-expect-error no primary output, not an output
   instance satisfies OutputPortReference<{ type: "string" }>;
@@ -78,9 +89,9 @@ test("type error: monomorphic node without primary output doesn't act like an ou
 test("don't allow multiple primary output ports on monomorphic node", () => {
   assert.throws(
     () =>
-      defineNodeType(
-        {},
-        {
+      defineNodeType({
+        inputs: {},
+        outputs: {
           foo: {
             type: "string",
             // @ts-expect-error more than one primary
@@ -92,8 +103,8 @@ test("don't allow multiple primary output ports on monomorphic node", () => {
             primary: true,
           },
         },
-        () => ({ foo: "foo", bar: "bar" })
-      ),
+        invoke: () => ({ foo: "foo", bar: "bar" }),
+      }),
     /Node definition has more than one primary output port: foo, bar/
   );
 });

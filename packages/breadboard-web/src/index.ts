@@ -29,6 +29,7 @@ import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
+import BuildExampleKit from "./build-example-kit";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -351,7 +352,12 @@ export class Main extends LitElement {
     }
 
     Promise.all([
-      loadKits([GeminiKit]),
+      loadKits([
+        GeminiKit,
+        // TODO(aomarks) This is presumably not the right way to do this. How do
+        // I get something into this.#providers?
+        BuildExampleKit,
+      ]),
       ...this.#providers.map((provider) => provider.restore()),
     ]).then(([kits]) => {
       this.kits = kits;

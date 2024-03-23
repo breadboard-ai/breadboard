@@ -1,5 +1,18 @@
 # @google-labs/breadboard-schema
 
+## 1.4.0
+
+### Minor Changes
+
+- f005b3b: Introduce `load` API for kits.
+- 9b8e732: replace schema with version generated from TS source
+- efeb1a3: Add `NodeMetadata.visual` field.
+
+### Patch Changes
+
+- 4a4a1f6: Place unfinished sidecar events at the bottom of the event list.
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+
 ## 1.3.0
 
 ### Minor Changes

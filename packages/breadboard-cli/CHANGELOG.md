@@ -1,5 +1,89 @@
 # @google-labs/breadboard-cli
 
+## 0.6.0
+
+### Minor Changes
+
+- c3303a6: Adds --kit to `breadboard debug`
+- b3beb36: Support loading kits via URL (both heavy and light kits)
+- 3c497b0: Use esbuild.build to compile the boards. This enables importing modules.
+- a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
+
+### Patch Changes
+
+- decfa29: Introduce `DebuggerGraphProvider`.
+- 6e631c4: Load agent-kit via manifest dynamically.
+- c4f887b: Use simpler URLs in debugger.
+- 2e3f0dc: Mark Node-specific packages as external
+- 7ad0e2d: Updating `breadboard import` to use TypeScript and not board syntax. It changes the way boards work and can be called (no longer uses args)
+- 1bbd16a: Start loading all heavy kits dynamically.
+- b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
+- Updated dependencies [f73c637]
+- Updated dependencies [99446b8]
+- Updated dependencies [866fc36]
+- Updated dependencies [88b0f3a]
+- Updated dependencies [a8bab08]
+- Updated dependencies [a9e1849]
+- Updated dependencies [699723b]
+- Updated dependencies [decfa29]
+- Updated dependencies [c3303a6]
+- Updated dependencies [f005b3b]
+- Updated dependencies [1f01afc]
+- Updated dependencies [49c25aa]
+- Updated dependencies [564f60c]
+- Updated dependencies [6e631c4]
+- Updated dependencies [c0d87f4]
+- Updated dependencies [dcfdc37]
+- Updated dependencies [d971aad]
+- Updated dependencies [048e8ec]
+- Updated dependencies [6143c58]
+- Updated dependencies [dc35601]
+- Updated dependencies [9cda2ff]
+- Updated dependencies [60bd63c]
+- Updated dependencies [be240b8]
+- Updated dependencies [764ccda]
+- Updated dependencies [b80a188]
+- Updated dependencies [04d5420]
+- Updated dependencies [56b90a4]
+- Updated dependencies [1b48826]
+- Updated dependencies [9a689c3]
+- Updated dependencies [e648f64]
+- Updated dependencies [dc648b1]
+- Updated dependencies [628be93]
+- Updated dependencies [ad5c1be]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [bac9bb1]
+- Updated dependencies [ff4abd6]
+- Updated dependencies [3e8cfcf]
+- Updated dependencies [986af39]
+- Updated dependencies [10f5110]
+- Updated dependencies [3c497b0]
+- Updated dependencies [3d536b6]
+- Updated dependencies [eabd97b]
+- Updated dependencies [14d5220]
+- Updated dependencies [0bdff0b]
+- Updated dependencies [6b5e96e]
+- Updated dependencies [2008f69]
+- Updated dependencies [1bbd16a]
+- Updated dependencies [88372d9]
+- Updated dependencies [c0f785a]
+- Updated dependencies [a8fc3f3]
+- Updated dependencies [32cfbaf]
+- Updated dependencies [8dc4e00]
+- Updated dependencies [6438930]
+- Updated dependencies [5118c60]
+- Updated dependencies [53df4e9]
+- Updated dependencies [dd2cce6]
+- Updated dependencies [cac4f4f]
+- Updated dependencies [b1fc53b]
+- Updated dependencies [ef05634]
+- Updated dependencies [9f343a6]
+- Updated dependencies [c208cfc]
+  - @google-labs/core-kit@0.5.0
+  - @google-labs/breadboard-web@1.3.0
+  - @google-labs/breadboard@0.12.0
+  - @google-labs/template-kit@0.2.1
+
 ## 0.5.2
 
 ### Patch Changes

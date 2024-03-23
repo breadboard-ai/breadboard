@@ -1,0 +1,79 @@
+{
+  "title": "Build example",
+  "description": "An example that uses a kit created with @breadboard-ai/build",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "templater-4",
+      "to": "output-2",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "input-1",
+      "to": "reverseString-3",
+      "out": "word",
+      "in": "forwards"
+    },
+    {
+      "from": "input-1",
+      "to": "templater-4",
+      "out": "word",
+      "in": "forwards"
+    },
+    {
+      "from": "reverseString-3",
+      "to": "templater-4",
+      "out": "backwards",
+      "in": "backwards"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "templater-4",
+      "type": "templater",
+      "configuration": {
+        "template": "The word \"{{forwards}}\" is \"{{backwards}}\" in reverse."
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "word": {
+              "type": "string",
+              "title": "word"
+            }
+          },
+          "required": [
+            "word"
+          ]
+        }
+      }
+    },
+    {
+      "id": "reverseString-3",
+      "type": "reverseString",
+      "configuration": {}
+    }
+  ],
+  "graphs": {}
+}

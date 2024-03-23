@@ -1,7 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -21,6 +20,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./internal/*.js": {
+      "types": "./dist/internal/*.d.ts",
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
     }
   },
   "files": [
@@ -29,6 +40,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
@@ -92,7 +104,7 @@
     }
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.11.2"
+    "@google-labs/breadboard": "^0.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.25",

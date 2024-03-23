@@ -5,10 +5,11 @@
  */
 
 import { test } from "node:test";
-import { board, defineNodeType } from "@breadboard-ai/build";
+import { defineNodeType } from "@breadboard-ai/build";
+import { board } from "../internal/board.js";
 
-const testNode = defineNodeType(
-  {
+const testNode = defineNodeType({
+  inputs: {
     inStr: {
       type: "string",
     },
@@ -16,7 +17,7 @@ const testNode = defineNodeType(
       type: "number",
     },
   },
-  {
+  outputs: {
     outNum: {
       type: "number",
     },
@@ -24,13 +25,13 @@ const testNode = defineNodeType(
       type: "string",
     },
   },
-  () => {
+  invoke: () => {
     return {
       outNum: 123,
       outStr: "foo",
     };
-  }
-)({ inStr: "foo", inNum: 123 });
+  },
+})({ inStr: "foo", inNum: 123 });
 const { inStr, inNum } = testNode.inputs;
 const { outNum, outStr } = testNode.outputs;
 
