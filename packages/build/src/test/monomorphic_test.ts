@@ -276,7 +276,7 @@ test("expect type error: missing make instance param", () => {
     },
   });
   // @ts-expect-error missing both
-  definition();
+  assert.throws(() => definition());
   // @ts-expect-error missing both
   definition({});
   // @ts-expect-error missing in1
