@@ -17,7 +17,6 @@ import {
  * @param elementType - The type of elements in the array.
  * @returns An `AdvancedBreadboardType` representing an array of the specified element type.
  */
-
 export function array<T extends BreadboardType>(
   elementType: T
 ): AdvancedBreadboardType<ConvertBreadboardType<T>[]> {
