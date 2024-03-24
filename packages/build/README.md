@@ -88,6 +88,9 @@ TypeScript API.
 - `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
   `anyOf` and its corresponding TypeScript union (`type1 | type2`).
 
+- `object({ prop1: <type1>, prop2: <type2> })`: A function which generates a
+  JSON Schema `object` and its corresponding TypeScript `{...}` type.
+
 ### Unsafe type escape hatch
 
 The `unsafeType` function can be used as a last resort escape hatch when the
@@ -231,11 +234,7 @@ export const exampleKit = addKit(ExampleKit) as {
 
 3. `describe` is only passed values for fixed ports, not dynamic ones.
 
-4. There is not yet an `object` type utility (though `unsafeType` can be used as
-   an escape hatch), along with probably a number of other basic and utility
-   types we'll need.
-
-5. There is not currently a type check for excess properties on the return type
+4. There is not currently a type check for excess properties on the return type
    of monomorphic invoke. That is, while TypeScript will enforce that all
    configured output ports have a value, it will not yet complain if an output
    is returned that does not match a configured output port.
