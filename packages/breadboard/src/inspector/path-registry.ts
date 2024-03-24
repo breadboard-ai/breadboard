@@ -22,6 +22,10 @@ export const idFromPath = (path: number[]): string => {
   return path.join("-");
 };
 
+export const pathFromId = (id: string): number[] => {
+  return id.split("-").map((s) => parseInt(s, 10));
+};
+
 class Entry implements PathRegistryEntry {
   id: string = "";
   parent: PathRegistryEntry | null;

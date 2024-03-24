@@ -572,6 +572,11 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
+   * If present, returns a serialized representation of the run or null if
+   * serialization of this run is not supported.
+   */
+  serialize?(): unknown;
+  /**
    * @deprecated Use `events` instead.
    */
   messages: HarnessRunResult[];
@@ -635,4 +640,18 @@ export type RunObserverOptions = {
    * the ability to inspect graphs and nodes during the run.
    */
   kits?: Kit[];
+};
+
+// TODO: Figure out if this is permanent.
+export type HistoryEntry = {
+  type:
+    | "graphstart"
+    | "graphend"
+    | "input"
+    | "output"
+    | "secret"
+    | "error"
+    | "nodestart"
+    | "nodeend";
+  data: unknown;
 };

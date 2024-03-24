@@ -23,6 +23,7 @@ import {
 } from "./path-registry.js";
 import { RunNodeEvent, eventIdFromEntryId } from "./run-node-event.js";
 import {
+  HistoryEntry,
   InspectableGraphStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -53,6 +54,7 @@ export class EventManager {
   #graphStore;
   #options;
   #pathRegistry = new PathRegistry();
+  #history: HistoryEntry[] = [];
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -63,13 +65,11 @@ export class EventManager {
     const { path, graph, timestamp } = data;
     const graphId = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
-    if (entry) {
-      entry.graphId = graphId;
-      entry.graphStart = timestamp;
-      // TODO: Instead of creating a new instance, cache and store them
-      // in the GraphStore.
-      entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
-    }
+    entry.graphId = graphId;
+    entry.graphStart = timestamp;
+    // TODO: Instead of creating a new instance, cache and store them
+    // in the GraphStore.
+    entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
   }
 
   #addGraphend(data: GraphEndProbeData) {
@@ -179,27 +179,38 @@ export class EventManager {
   }
 
   add(result: HarnessRunResult) {
+    const remember = () => {
+      this.#history.push({
+        type: result.type as HistoryEntry["type"],
+        data: result.data,
+      });
+    };
     this.#pathRegistry.finalizeSidecar(SECRET_PATH);
 
     switch (result.type) {
       case "graphstart": {
         this.#addGraphstart(result.data);
+        remember();
         break;
       }
       case "graphend": {
         this.#addGraphend(result.data);
+        remember();
         break;
       }
       case "nodestart": {
         this.#addNodestart(result.data);
+        remember();
         break;
       }
       case "input": {
         this.#addInput(result.data);
+        remember();
         break;
       }
       case "output": {
         this.#addOutput(result.data);
+        remember();
         break;
       }
       case "secret": {
@@ -211,10 +222,12 @@ export class EventManager {
           start,
           end: null,
         });
+        remember();
         break;
       }
       case "nodeend": {
         this.#addNodeend(result.data);
+        remember();
         break;
       }
       case "error": {
@@ -225,6 +238,7 @@ export class EventManager {
           start,
           error,
         });
+        remember();
         break;
       }
     }
@@ -232,5 +246,9 @@ export class EventManager {
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  history() {
+    return this.#history;
   }
 }

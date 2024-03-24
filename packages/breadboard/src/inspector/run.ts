@@ -156,6 +156,14 @@ export class Run implements InspectableRun {
     this.#highlightHelper.add(result);
   }
 
+  serialize(): unknown {
+    return {
+      $schema: "tbd",
+      version: "0",
+      results: this.#events.history(),
+    };
+  }
+
   currentNode(position: number) {
     return this.#highlightHelper.currentNode(position);
   }
