@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anyOf } from "@breadboard-ai/build";
-import { unsafeType } from "@breadboard-ai/build";
-import { object } from "@breadboard-ai/build";
+import { anyOf, array, object, unsafeType } from "@breadboard-ai/build";
 
 import {
   toJSONSchema,
@@ -14,8 +12,8 @@ import {
   type ConvertBreadboardType,
 } from "../internal/type-system/type.js";
 
-import { test } from "node:test";
 import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 
 test("string", () => {
   "string" satisfies BreadboardType;
@@ -183,5 +181,46 @@ test("unsafeType", () => {
   }) satisfies BreadboardType;
   assert.deepEqual(toJSONSchema(strOrNum), {
     anyOf: [{ type: "string" }, { type: "number" }],
+  });
+});
+
+describe("array", () => {
+  test("no arguments", () => {
+    // @ts-expect-error no
+    assert.throws(() => array());
+  });
+
+  test("array of numbers", () => {
+    const arr1 = array("number");
+    // $ExpectType number[]
+    type t1 = ConvertBreadboardType<typeof arr1>;
+    assert.deepEqual(toJSONSchema(arr1), {
+      type: "array",
+      items: { type: "number" },
+    });
+  });
+
+  test("array of objects", () => {
+    const arr2 = array(object({ foo: "string" }));
+    // $ExpectType { foo: string; }[]
+    type t2 = ConvertBreadboardType<typeof arr2>;
+    assert.deepEqual(toJSONSchema(arr2), {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { foo: { type: "string" } },
+        required: ["foo"],
+      },
+    });
+  });
+
+  test("array of anyOf types", () => {
+    const arr3 = array(anyOf("string", "number"));
+    // $ExpectType (string | number)[]
+    type t3 = ConvertBreadboardType<typeof arr3>;
+    assert.deepEqual(toJSONSchema(arr3), {
+      type: "array",
+      items: { anyOf: [{ type: "string" }, { type: "number" }] },
+    });
   });
 });
