@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeDescriberResult,
   OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
 import type { StrictNodeHandler, ValueOrPort } from "./definition.js";
 import type { InputPorts, OutputPorts } from "./instance.js";
@@ -21,8 +22,9 @@ import {
   type PrimaryOutputPort,
   type PortConfig,
 } from "./port.js";
-import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import type { ConvertBreadboardType } from "./type-system/type.js";
 import { shapeToJSONSchema } from "./json-schema.js";
+import type { JSONSchema4 } from "json-schema";
 
 /**
  * Define a Breadboard node type where some or all of its input and/or output
@@ -108,7 +110,10 @@ class PolymorphicNodeDefinition<
     STATIC_INPUTS,
     DYNAMIC_INPUTS
   >;
-  readonly #staticDescription: NodeDescriberResult;
+  readonly #staticDescription: {
+    inputSchema: JSONSchema4;
+    outputSchema: JSONSchema4;
+  };
 
   constructor(
     staticInputs: STATIC_INPUTS,
@@ -156,7 +161,11 @@ class PolymorphicNodeDefinition<
     if (this.#describe === undefined) {
       // TODO(aomarks) It shouldn't actually be allowed to omit describe for a
       // polymorphic node.
-      return this.#staticDescription;
+      //
+      // Cast here and below this package uses the `JSONSchema4` type from
+      // `@types/json-schema` which isn't quite identical to Breadboard's own
+      // `Schema` (but nearly).
+      return this.#staticDescription as NodeDescriberResult;
     }
     // TODO(aomarks) Should we also pass the dynamic values?
     const { staticValues } = this.#partitionRuntimeInputValues(
@@ -168,19 +177,19 @@ class PolymorphicNodeDefinition<
       this.#staticDescription;
     return {
       inputSchema: {
-        ...staticInputs,
+        ...(staticInputs as Schema),
         properties: {
-          ...dynamicInputs.properties,
-          ...staticInputs.properties,
+          ...(dynamicInputs as Schema).properties,
+          ...(staticInputs as Schema).properties,
         },
         required: [
-          ...(staticInputs.required ?? []),
-          ...(dynamicInputs.required ?? []),
+          ...((staticInputs as Schema).required ?? []),
+          ...((dynamicInputs as Schema).required ?? []),
         ],
       },
       // TODO(aomarks) Also support dynamic output schema (but only if there are
       // dynamic outputs declared).
-      outputSchema: staticOutputs,
+      outputSchema: staticOutputs as Schema,
     };
   }
 
@@ -293,7 +302,7 @@ type DynamicInvokeParams<
   STATIC_INPUTS extends PortConfigMap,
   DYNAMIC_INPUTS extends PortConfig,
 > = Record<keyof STATIC_INPUTS, never> &
-  Record<string, TypeScriptTypeFromBreadboardType<DYNAMIC_INPUTS["type"]>>;
+  Record<string, ConvertBreadboardType<DYNAMIC_INPUTS["type"]>>;
 
 type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;
 

@@ -85,9 +85,8 @@ TypeScript API.
 
 ### Utility types
 
-- `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON schema
-  `anyOf` and its corresponding TypeScript type (e.g. a union of `type1` |
-  `type2`).
+- `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
+  `anyOf` and its corresponding TypeScript union (`type1 | type2`).
 
 ### Unsafe type escape hatch
 
