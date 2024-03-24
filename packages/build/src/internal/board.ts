@@ -51,7 +51,7 @@ export function board<
   });
 }
 
-type BoardDefinition<
+export type BoardDefinition<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
@@ -126,5 +126,5 @@ type ExtractPortConfigs<PORTS extends BoardInputPorts | BoardOutputPorts> = {
     : never;
 };
 
-type BoardInputPorts = Record<string, InputPort<PortConfig>>;
-type BoardOutputPorts = Record<string, OutputPort<PortConfig>>;
+export type BoardInputPorts = Record<string, InputPort<PortConfig>>;
+export type BoardOutputPorts = Record<string, OutputPort<PortConfig>>;
