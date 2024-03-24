@@ -7,4 +7,5 @@
 export { defineNodeType } from "./internal/define.js";
 export { anyOf } from "./internal/type-system/any-of.js";
 export { unsafeType } from "./internal/type-system/unsafe.js";
+export { object } from "./internal/type-system/object.js";
 export type { NodeFactoryFromDefinition } from "./internal/compatibility.js";
