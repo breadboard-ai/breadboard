@@ -13,6 +13,7 @@ import {
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunLoadResult,
   InspectableRunObserver,
   RunObserverOptions,
 } from "./types.js";
@@ -20,6 +21,8 @@ import {
 type GraphRecord = {
   nodes: NodeDescriptor[];
 };
+
+const SERIALIZED_RUN_SCHEMA = "tbd";
 
 class NodeHighlightHelper {
   #history: (NodeDescriptor | undefined)[] = [];
@@ -122,6 +125,32 @@ export class RunObserver implements InspectableRunObserver {
     const run = this.#runs[0];
     run.addResult(result);
     return this.#runs;
+  }
+
+  load(o: unknown): InspectableRunLoadResult {
+    const data = o as {
+      $schema: string;
+      version: string;
+      results: HarnessRunResult[];
+    };
+    if (data.$schema !== SERIALIZED_RUN_SCHEMA) {
+      return {
+        success: false,
+        error: `Specified "$schema" is not valid`,
+      };
+    }
+    try {
+      for (const result of data.results) {
+        this.observe(result);
+      }
+      return { success: true };
+    } catch (e) {
+      const error = e as Error;
+      return {
+        success: false,
+        error: `Loading run failed with the error ${error.message}`,
+      };
+    }
   }
 }
 

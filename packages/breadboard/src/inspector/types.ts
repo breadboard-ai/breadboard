@@ -424,6 +424,18 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents a result of loading a serialized `InspectableRun`
+ */
+export type InspectableRunLoadResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+    };
+
+/**
  * Represents an observer of the graph runs.
  */
 export type InspectableRunObserver = {
@@ -438,6 +450,12 @@ export type InspectableRunObserver = {
    * @returns -- the list of runs that were observed
    */
   observe(result: HarnessRunResult): InspectableRun[];
+  /**
+   * Attempts to load a JSON object as a serialized representation of runs,
+   * creating a new run if successful.
+   * @returns -- an `InspectableRunLoadResult` instance.
+   */
+  load(o: unknown): InspectableRunLoadResult;
 };
 
 /**
