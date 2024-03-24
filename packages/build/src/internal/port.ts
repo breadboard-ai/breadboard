@@ -6,8 +6,8 @@
 
 import type {
   BreadboardType,
-  TypeScriptTypeFromBreadboardType,
-} from "./type.js";
+  ConvertBreadboardType,
+} from "./type-system/type.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 
@@ -121,9 +121,7 @@ export type PortConfigMap = Record<string, PortConfig>;
  * port.
  */
 export type ConcreteValues<Ports extends PortConfigMap> = {
-  [PortName in keyof Ports]: TypeScriptTypeFromBreadboardType<
-    Ports[PortName]["type"]
-  >;
+  [PortName in keyof Ports]: ConvertBreadboardType<Ports[PortName]["type"]>;
 };
 
 /**
@@ -132,7 +130,7 @@ export type ConcreteValues<Ports extends PortConfigMap> = {
  */
 export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]:
-    | TypeScriptTypeFromBreadboardType<Ports[PortName]["type"]>
+    | ConvertBreadboardType<Ports[PortName]["type"]>
     | OutputPortReference<Ports[PortName]>;
 };
 export type PrimaryOutputPort<O extends PortConfigMap> =

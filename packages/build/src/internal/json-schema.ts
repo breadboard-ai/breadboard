@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { JSONSchema4 } from "json-schema";
 import type { PortConfigMap } from "./port.js";
-import { toJSONSchema } from "./type.js";
+import { toJSONSchema } from "./type-system/type.js";
 
-export function shapeToJSONSchema(shape: PortConfigMap) {
+export function shapeToJSONSchema(shape: PortConfigMap): JSONSchema4 {
   return {
     type: "object",
     properties: Object.fromEntries(
