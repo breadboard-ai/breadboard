@@ -185,8 +185,9 @@ test("unsafeType", () => {
 });
 
 describe("array", () => {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   test("no arguments", () => {
-    // @ts-expect-error no
+    // @ts-expect-error no arguments
     assert.throws(() => array());
   });
 
@@ -223,4 +224,5 @@ describe("array", () => {
       items: { anyOf: [{ type: "string" }, { type: "number" }] },
     });
   });
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 });
