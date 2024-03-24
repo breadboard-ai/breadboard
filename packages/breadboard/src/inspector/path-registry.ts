@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { timestamp } from "../timestamp.js";
 import { OutputValues } from "../types.js";
 import {
   GraphUUID,
@@ -76,7 +75,7 @@ class Entry implements PathRegistryEntry {
 
   finalizeSidecar(
     path: number[],
-    data?: { timestamp: number; outputs: OutputValues }
+    data?: { timestamp: number; outputs?: OutputValues }
   ) {
     const key = idFromPath(path);
     const sidecar = this.#trackedSidecars.get(key);
@@ -85,12 +84,12 @@ class Entry implements PathRegistryEntry {
       case "node": {
         if (data) {
           sidecar.end = data.timestamp;
-          sidecar.outputs = data.outputs;
+          sidecar.outputs = data.outputs || null;
         }
         break;
       }
       case "secret": {
-        sidecar.end = timestamp();
+        sidecar.end = data?.timestamp || null;
         break;
       }
     }

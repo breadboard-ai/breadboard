@@ -179,13 +179,13 @@ export class EventManager {
   }
 
   add(result: HarnessRunResult) {
-    const remember = () => {
+    const remember = (data?: unknown) => {
       this.#history.push({
         type: result.type as HistoryEntry["type"],
-        data: result.data,
+        data: data || result.data,
       });
     };
-    this.#pathRegistry.finalizeSidecar(SECRET_PATH);
+    this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
 
     switch (result.type) {
       case "graphstart": {
@@ -195,7 +195,10 @@ export class EventManager {
       }
       case "graphend": {
         this.#addGraphend(result.data);
-        remember();
+        remember({
+          timestamp: result.data.timestamp,
+          path: result.data.path,
+        });
         break;
       }
       case "nodestart": {
@@ -227,7 +230,11 @@ export class EventManager {
       }
       case "nodeend": {
         this.#addNodeend(result.data);
-        remember();
+        remember({
+          timestamp: result.data.timestamp,
+          outputs: result.data.outputs,
+          path: result.data.path,
+        });
         break;
       }
       case "error": {

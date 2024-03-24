@@ -5,7 +5,6 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event-manager.js";
 import {
@@ -108,10 +107,15 @@ export class RunObserver implements InspectableRunObserver {
 
   observe(result: HarnessRunResult): InspectableRun[] {
     if (result.type === "graphstart") {
-      const { path } = result.data;
+      const { path, timestamp } = result.data;
       if (path.length === 0) {
         // start a new run
-        const run = new Run(this.#store, result.data.graph, this.#options);
+        const run = new Run(
+          timestamp,
+          this.#store,
+          result.data.graph,
+          this.#options
+        );
         this.#runs = [run, ...this.#runs];
       }
     } else if (result.type === "graphend") {
@@ -165,13 +169,14 @@ export class Run implements InspectableRun {
   messages: HarnessRunResult[] = [];
 
   constructor(
+    timestamp: number,
     graphStore: InspectableGraphStore,
     graph: GraphDescriptor,
     options: RunObserverOptions
   ) {
     this.#events = new EventManager(graphStore, options);
     this.graphVersion = 0;
-    this.start = timestamp();
+    this.start = timestamp;
     this.graphId = graphStore.add(graph, this.graphVersion);
   }
 
