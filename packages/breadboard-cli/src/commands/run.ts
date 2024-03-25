@@ -41,7 +41,7 @@ async function runBoard(
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.
-      const newInputs = { ...board.args, ...inputs };
+      const newInputs = { ...inputs };
       const schema = nodeInputs.schema as Schema;
 
       /* 
