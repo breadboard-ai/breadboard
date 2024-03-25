@@ -456,7 +456,31 @@ export type InspectableRunObserver = {
    * @param o -- the object to load. Must be shaped as `SerializedRun`.
    * @returns -- an `InspectableRunLoadResult` instance.
    */
-  load(o: unknown): InspectableRunLoadResult;
+  load(
+    o: unknown,
+    options?: SerializedRunLoadingOptions
+  ): InspectableRunLoadResult;
+};
+
+/**
+ * Represents a function that replaces secrets.
+ * @param name -- the name of the secret
+ * @param value -- the current value of the secret
+ * @returns -- the new value of the secret
+ */
+export type SerializedRunSecretReplacer = (
+  name: string,
+  value: string
+) => string;
+
+/**
+ * Represents options to supply to the `load` method of `InspectableRunObserver`.
+ */
+export type SerializedRunLoadingOptions = {
+  /**
+   * Optional, a function replace sentinel values with actual secrets.
+   */
+  secretReplacer?: SerializedRunSecretReplacer;
 };
 
 /**
@@ -687,6 +711,12 @@ export type HistoryEntry = {
   data: unknown;
 };
 
+/**
+ * Represents an `InspectableRun` that has been serialized into a JSON object.
+ * This object can be used to store the run in a file or send it over the wire.
+ * The serialized run can be deserialized back into an `InspectableRun` object
+ * using the `InspectableRunObserver.load` method.
+ */
 export type SerializedRun = {
   $schema: "tbd";
   version: "0";

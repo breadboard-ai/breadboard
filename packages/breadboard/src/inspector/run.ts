@@ -7,6 +7,7 @@
 import { HarnessRunResult } from "../harness/types.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event-manager.js";
+import { replaceSecrets } from "./serializer.js";
 import {
   GraphUUID,
   InspectableGraphStore,
@@ -17,6 +18,7 @@ import {
   RunObserverOptions,
   RunSerializationOptions,
   SerializedRun,
+  SerializedRunLoadingOptions,
 } from "./types.js";
 
 type GraphRecord = {
@@ -131,7 +133,10 @@ export class RunObserver implements InspectableRunObserver {
     return this.#runs;
   }
 
-  load(o: unknown): InspectableRunLoadResult {
+  load(
+    o: unknown,
+    options?: SerializedRunLoadingOptions
+  ): InspectableRunLoadResult {
     const data = o as SerializedRun;
     if (data.$schema !== "tbd") {
       return {
@@ -140,7 +145,10 @@ export class RunObserver implements InspectableRunObserver {
       };
     }
     try {
-      for (const result of data.timeline) {
+      const timeline = options?.secretReplacer
+        ? replaceSecrets(data, options.secretReplacer).timeline
+        : data.timeline;
+      for (const result of timeline) {
         this.observe(result as HarnessRunResult);
       }
       return { success: true };

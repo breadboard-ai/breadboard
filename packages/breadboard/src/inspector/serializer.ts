@@ -9,6 +9,7 @@ import {
   HistoryEntry,
   RunSerializationOptions,
   SerializedRun,
+  SerializedRunSecretReplacer,
 } from "./types.js";
 import { NodeEndResponse, NodeStartResponse } from "../types.js";
 
@@ -69,8 +70,6 @@ export class RunSerializer {
     });
   }
 }
-
-type SerializedRunSecretReplacer = (name: string, value: string) => string;
 
 export const replaceSecrets = (
   data: SerializedRun,
