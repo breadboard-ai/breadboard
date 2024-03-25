@@ -498,7 +498,13 @@ export class NodeInfo extends LitElement {
                         name="${name}"
                         .items=${JSON.parse((value as string) || "[]")}
                         .type=${resolveArrayType(port.schema)}
-                        .behavior=${resolveBehaviorType(port.schema)}
+                        .behavior=${resolveBehaviorType(
+                          port.schema.items
+                            ? Array.isArray(port.schema.items)
+                              ? port.schema.items[0]
+                              : port.schema.items
+                            : port.schema
+                        )}
                       ></bb-array-editor>`;
                       break;
                     }

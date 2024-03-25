@@ -94,3 +94,27 @@ export type OutputArgs = {
     schema?: Schema;
   } & Record<string, unknown>;
 };
+
+type InlineData = {
+  inlineData: { data: string; mime_type: string };
+};
+
+type FunctionCall = {
+  functionCall: {
+    name: string;
+    args: object;
+  };
+};
+
+type FunctionResponse = {
+  functionResponse: {
+    name: string;
+    response: object;
+  };
+};
+
+type Part = InlineData | FunctionCall | FunctionResponse;
+
+export type LLMContent = {
+  parts: Part[];
+};
