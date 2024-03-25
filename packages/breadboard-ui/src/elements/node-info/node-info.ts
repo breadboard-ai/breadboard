@@ -67,8 +67,6 @@ export class NodeInfo extends LitElement {
         portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
       );
 
-      console.log(node, ports, configuration);
-
       return { node, ports, configuration };
     },
     args: () => [this.loadInfo, this.selectedNodeId],
