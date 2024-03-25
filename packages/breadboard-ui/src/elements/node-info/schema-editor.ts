@@ -11,6 +11,7 @@ import { map } from "lit/directives/map.js";
 import { SchemaChangeEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { classMap } from "lit/directives/class-map.js";
+import { resolveArrayType, resolveBehaviorType } from "../../utils/schema.js";
 
 @customElement("bb-schema-editor")
 export class SchemaEditor extends LitElement {
@@ -72,11 +73,16 @@ export class SchemaEditor extends LitElement {
       justify-content: stretch;
       border-top: 1px solid #cccccc;
       grid-template-columns: 100px auto;
-      grid-auto-rows: 20px;
+      grid-auto-rows: minmax(calc(var(--bb-grid-size) * 5), auto);
       row-gap: var(--bb-grid-size);
       column-gap: var(--bb-grid-size);
       font-size: var(--bb-text-nano);
       padding: calc(var(--bb-grid-size) * 2);
+    }
+
+    details .schema-item label {
+      line-height: calc(var(--bb-grid-size) * 5);
+      align-self: start;
     }
 
     details .schema-item input[type="checkbox"] {
@@ -125,13 +131,14 @@ export class SchemaEditor extends LitElement {
       switch (value.type) {
         case "array": {
           valueType = "array";
-          defaultValue = html`<input
-            type="text"
+          defaultValue = html`<bb-array-editor
             id="${id}-default"
             name="${id}-default"
-            value="${value.default}"
             ?readonly=${!this.editable}
-          />`;
+            .items=${JSON.parse(value.default || "[]")}
+            .type=${resolveArrayType(value)}
+            .behavior=${resolveBehaviorType(value)}
+          ></bb-array-editor>`;
           break;
         }
 
@@ -304,6 +311,14 @@ export class SchemaEditor extends LitElement {
           } else {
             required.delete(id);
           }
+
+          // Migrate any required property ID that has changed.
+          const newId = renamedProperties.get(id);
+          if (newId && required.has(id)) {
+            required.delete(id);
+            required.add(newId);
+          }
+
           schema.required = [...required];
         }
       }
