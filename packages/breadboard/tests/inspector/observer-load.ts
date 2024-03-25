@@ -74,6 +74,8 @@ const runsEqual = (
   eventsEqual(t, run1.events, run2.events);
 };
 
+const GEMINI_KEY_VALUE = "b576eea9-5ae6-4e9d-9958-e798ad8dbff7";
+
 test("run save/load: loadRawRun works as expected", async (t) => {
   const observer = createRunObserver({ logLevel: "debug" });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
@@ -96,4 +98,19 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     return;
   }
   runsEqual(t, run1, observer.runs()[0]);
+});
+
+test("run save/load: observer.save elides secrets", async (t) => {
+  const observer = createRunObserver({ logLevel: "debug" });
+  const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
+  if (!run1.serialize) {
+    t.fail("run1 should be serializable.");
+    return;
+  }
+  const run1serialized = run1.serialize();
+  const sentinel = run1serialized.secrets["GEMINI_KEY"];
+  t.truthy(sentinel);
+  const s = JSON.stringify(run1serialized);
+  t.false(s.includes(GEMINI_KEY_VALUE));
+  t.true(s.includes(sentinel));
 });

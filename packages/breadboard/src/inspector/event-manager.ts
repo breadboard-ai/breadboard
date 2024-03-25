@@ -12,6 +12,7 @@ import {
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
+  NodeValue,
   OutputResponse,
 } from "../types.js";
 import { inspectableGraph } from "./graph.js";
@@ -30,6 +31,7 @@ import {
   InspectableRunSecretEvent,
   RunObserverLogLevel,
   RunObserverOptions,
+  SerializedRun,
 } from "./types.js";
 
 const shouldSkipEvent = (
@@ -50,11 +52,125 @@ const shouldSkipEvent = (
   return nodelogLevel !== "info";
 };
 
+class RunSerializer {
+  #timeline: HistoryEntry[] = [];
+  #secrets: Record<string, { secret: string; sentinel: string }> = {};
+
+  #remember(type: HistoryEntry["type"], data?: unknown) {
+    this.#timeline.push({ type, data });
+  }
+
+  addGraphstart(data: unknown) {
+    this.#remember("graphstart", data);
+  }
+
+  addGraphend(data: unknown) {
+    this.#remember("graphend", data);
+  }
+
+  #replaceSecrets(ports: Record<string, NodeValue>): Record<string, NodeValue> {
+    if (!ports) return ports;
+    return Object.fromEntries(
+      Object.entries(ports).map(([key, value]) => {
+        let stringified = JSON.stringify(value);
+        for (const secret of Object.values(this.#secrets)) {
+          stringified = stringified.replace(secret.secret, "NOPE");
+        }
+        return [key, JSON.parse(stringified)];
+      })
+    );
+  }
+
+  addNodestart(data: NodeStartResponse) {
+    this.#remember("nodestart", data);
+  }
+
+  addNodeend(data: NodeEndResponse) {
+    const outputs = data.outputs;
+    // "node" has a "?"  only because when reading back loaded run,
+    // "node" doesn't exist here (addNodeend doesn't use it).
+    // TODO: make more elegant.
+    if (data.node?.type === "secrets") {
+      Object.entries(data.outputs).map(([key, value]) => {
+        this.#secrets[key] = {
+          secret: value as string,
+          sentinel: crypto.randomUUID(),
+        };
+      });
+    }
+    this.#remember("nodeend", {
+      timestamp: data.timestamp,
+      outputs,
+      path: data.path,
+    });
+  }
+
+  addInput(data: unknown) {
+    this.#remember("input", data);
+  }
+
+  addOutput(data: unknown) {
+    this.#remember("output", data);
+  }
+
+  addSecret(data: unknown) {
+    this.#remember("secret", data);
+  }
+
+  addError(data: unknown) {
+    this.#remember("error", data);
+  }
+
+  #serializeSecrets() {
+    return Object.fromEntries(
+      Object.entries(this.#secrets).map(([key, value]) => {
+        return [key, value.sentinel];
+      })
+    );
+  }
+
+  #serializeTimeline(): HistoryEntry[] {
+    return this.#timeline.map((entry) => {
+      if (entry.type === "nodeend") {
+        return {
+          type: "nodeend",
+          data: {
+            ...(entry.data as object),
+            outputs: this.#replaceSecrets(
+              (entry.data as NodeEndResponse).outputs
+            ),
+          },
+        };
+      } else if (entry.type === "nodestart") {
+        return {
+          type: "nodestart",
+          data: {
+            ...(entry.data as object),
+            inputs: this.#replaceSecrets(
+              (entry.data as NodeStartResponse).inputs
+            ),
+          },
+        };
+      }
+      return entry;
+    });
+  }
+
+  serialize(): SerializedRun {
+    return {
+      $schema: "tbd",
+      version: "0",
+      timeline: this.#serializeTimeline(),
+      secrets: this.#serializeSecrets(),
+    };
+  }
+}
+
 export class EventManager {
   #graphStore;
   #options;
   #pathRegistry = new PathRegistry();
-  #history: HistoryEntry[] = [];
+  #serializer = new RunSerializer();
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -179,23 +295,17 @@ export class EventManager {
   }
 
   add(result: HarnessRunResult) {
-    const remember = (data?: unknown) => {
-      this.#history.push({
-        type: result.type as HistoryEntry["type"],
-        data: data || result.data,
-      });
-    };
     this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
 
     switch (result.type) {
       case "graphstart": {
         this.#addGraphstart(result.data);
-        remember();
+        this.#serializer.addGraphstart(result.data);
         break;
       }
       case "graphend": {
         this.#addGraphend(result.data);
-        remember({
+        this.#serializer.addGraphend({
           timestamp: result.data.timestamp,
           path: result.data.path,
         });
@@ -203,17 +313,17 @@ export class EventManager {
       }
       case "nodestart": {
         this.#addNodestart(result.data);
-        remember();
+        this.#serializer.addNodestart(result.data);
         break;
       }
       case "input": {
         this.#addInput(result.data);
-        remember();
+        this.#serializer.addInput(result.data);
         break;
       }
       case "output": {
         this.#addOutput(result.data);
-        remember();
+        this.#serializer.addOutput(result.data);
         break;
       }
       case "secret": {
@@ -225,16 +335,12 @@ export class EventManager {
           start,
           end: null,
         });
-        remember();
+        this.#serializer.addSecret(result.data);
         break;
       }
       case "nodeend": {
         this.#addNodeend(result.data);
-        remember({
-          timestamp: result.data.timestamp,
-          outputs: result.data.outputs,
-          path: result.data.path,
-        });
+        this.#serializer.addNodeend(result.data);
         break;
       }
       case "error": {
@@ -245,7 +351,7 @@ export class EventManager {
           start,
           error,
         });
-        remember();
+        this.#serializer.addError(result.data);
         break;
       }
     }
@@ -255,7 +361,7 @@ export class EventManager {
     return this.#pathRegistry.events;
   }
 
-  history() {
-    return this.#history;
+  serializer() {
+    return this.#serializer;
   }
 }

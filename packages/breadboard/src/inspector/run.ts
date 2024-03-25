@@ -15,13 +15,12 @@ import {
   InspectableRunLoadResult,
   InspectableRunObserver,
   RunObserverOptions,
+  SerializedRun,
 } from "./types.js";
 
 type GraphRecord = {
   nodes: NodeDescriptor[];
 };
-
-const SERIALIZED_RUN_SCHEMA = "tbd";
 
 class NodeHighlightHelper {
   #history: (NodeDescriptor | undefined)[] = [];
@@ -132,20 +131,16 @@ export class RunObserver implements InspectableRunObserver {
   }
 
   load(o: unknown): InspectableRunLoadResult {
-    const data = o as {
-      $schema: string;
-      version: string;
-      results: HarnessRunResult[];
-    };
-    if (data.$schema !== SERIALIZED_RUN_SCHEMA) {
+    const data = o as SerializedRun;
+    if (data.$schema !== "tbd") {
       return {
         success: false,
         error: `Specified "$schema" is not valid`,
       };
     }
     try {
-      for (const result of data.results) {
-        this.observe(result);
+      for (const result of data.timeline) {
+        this.observe(result as HarnessRunResult);
       }
       return { success: true };
     } catch (e) {
@@ -190,12 +185,8 @@ export class Run implements InspectableRun {
     this.#highlightHelper.add(result);
   }
 
-  serialize(): unknown {
-    return {
-      $schema: "tbd",
-      version: "0",
-      results: this.#events.history(),
-    };
+  serialize(): SerializedRun {
+    return this.#events.serializer().serialize();
   }
 
   currentNode(position: number) {

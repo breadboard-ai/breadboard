@@ -593,7 +593,7 @@ export type InspectableRun = {
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
-  serialize?(): unknown;
+  serialize?(): SerializedRun;
   /**
    * @deprecated Use `events` instead.
    */
@@ -672,4 +672,11 @@ export type HistoryEntry = {
     | "nodestart"
     | "nodeend";
   data: unknown;
+};
+
+export type SerializedRun = {
+  $schema: "tbd";
+  version: "0";
+  secrets: Record<string, string>;
+  timeline: HistoryEntry[];
 };
