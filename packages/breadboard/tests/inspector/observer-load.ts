@@ -14,6 +14,7 @@ import {
 } from "../../src/inspector/types.js";
 import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
+import { replaceSecrets } from "../../src/inspector/serializer.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",
@@ -75,6 +76,7 @@ const runsEqual = (
 };
 
 const GEMINI_KEY_VALUE = "b576eea9-5ae6-4e9d-9958-e798ad8dbff7";
+const GEMINI_SENTINEL = "103e9083-13fd-46b4-a9ee-683a09e31a26";
 
 test("run save/load: loadRawRun works as expected", async (t) => {
   const observer = createRunObserver({ logLevel: "debug" });
@@ -100,18 +102,49 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
   runsEqual(t, run1, observer.runs()[0]);
 });
 
-test("run save/load: observer.save elides secrets", async (t) => {
+test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   const observer = createRunObserver({ logLevel: "debug" });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run1.serialize) {
     t.fail("run1 should be serializable.");
     return;
   }
-  const run1serialized = run1.serialize();
-  const sentinel = run1serialized.secrets["GEMINI_KEY"];
-  t.truthy(sentinel);
-  const s = JSON.stringify(run1serialized);
-  t.false(s.includes(GEMINI_KEY_VALUE));
-  const sentinelCount = (s.match(new RegExp(sentinel, "g")) || []).length;
-  t.is(sentinelCount, 21);
+
+  {
+    const run1withoutSecrets = run1.serialize();
+    const sentinel = run1withoutSecrets.secrets?.["GEMINI_KEY"];
+    t.not(sentinel, GEMINI_KEY_VALUE);
+    const s = JSON.stringify(run1withoutSecrets);
+    t.false(s.includes(GEMINI_KEY_VALUE));
+    const sentinelCount = (s.match(new RegExp(sentinel!, "g")) || []).length;
+    t.is(sentinelCount, 21);
+  }
+
+  {
+    const run1withSecrets = run1.serialize({ keepSecrets: true });
+
+    // replace secrets with sentinel values.
+    const elidedSecrets = replaceSecrets(run1withSecrets, (secret, value) => {
+      t.is(secret, "GEMINI_KEY");
+      t.is(value, GEMINI_KEY_VALUE);
+      return GEMINI_SENTINEL;
+    });
+    const sentinel = elidedSecrets.secrets?.["GEMINI_KEY"];
+    t.is(sentinel, GEMINI_SENTINEL);
+    const s = JSON.stringify(elidedSecrets);
+    t.false(s.includes(GEMINI_KEY_VALUE));
+    const sentinelCount = (s.match(new RegExp(sentinel!, "g")) || []).length;
+    t.is(sentinelCount, 21);
+
+    // now, let's replace it back.
+    const withSecrets = replaceSecrets(elidedSecrets, (secret) => {
+      t.is(secret, "GEMINI_KEY");
+      return GEMINI_KEY_VALUE;
+    });
+    const s2 = JSON.stringify(withSecrets);
+    t.false(s2.includes(GEMINI_SENTINEL));
+    const secretCount = (s2.match(new RegExp(GEMINI_KEY_VALUE, "g")) || [])
+      .length;
+    t.is(secretCount, 21);
+  }
 });

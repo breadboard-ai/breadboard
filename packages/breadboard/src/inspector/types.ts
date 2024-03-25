@@ -453,6 +453,7 @@ export type InspectableRunObserver = {
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.
+   * @param o -- the object to load. Must be shaped as `SerializedRun`.
    * @returns -- an `InspectableRunLoadResult` instance.
    */
   load(o: unknown): InspectableRunLoadResult;
@@ -593,7 +594,7 @@ export type InspectableRun = {
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
-  serialize?(): SerializedRun;
+  serialize?(options?: RunSerializationOptions): SerializedRun;
   /**
    * @deprecated Use `events` instead.
    */
@@ -602,6 +603,18 @@ export type InspectableRun = {
    * @deprecated Use `events` instead.
    */
   currentNode(position: number): string;
+};
+
+/**
+ * Represents options to supply to the `serialize` method of `InspectableRun`.
+ */
+export type RunSerializationOptions = {
+  /**
+   * Optional, whether or not to elide secrets. When set to true, secrets
+   * are kept as is. When set to false or not present, secrets are elided and
+   * replaced with sentinel values.
+   */
+  keepSecrets?: boolean;
 };
 
 export type PathRegistryEntry = {
@@ -677,6 +690,6 @@ export type HistoryEntry = {
 export type SerializedRun = {
   $schema: "tbd";
   version: "0";
-  secrets: Record<string, string>;
+  secrets?: Record<string, string>;
   timeline: HistoryEntry[];
 };

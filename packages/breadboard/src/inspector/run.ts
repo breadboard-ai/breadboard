@@ -15,6 +15,7 @@ import {
   InspectableRunLoadResult,
   InspectableRunObserver,
   RunObserverOptions,
+  RunSerializationOptions,
   SerializedRun,
 } from "./types.js";
 
@@ -185,8 +186,8 @@ export class Run implements InspectableRun {
     this.#highlightHelper.add(result);
   }
 
-  serialize(): SerializedRun {
-    return this.#events.serializer().serialize();
+  serialize(options?: RunSerializationOptions): SerializedRun {
+    return this.#events.serializer().serialize(options || {});
   }
 
   currentNode(position: number) {
