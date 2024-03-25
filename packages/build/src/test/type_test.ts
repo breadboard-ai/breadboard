@@ -203,20 +203,20 @@ describe("array", () => {
   });
 
   test("array of numbers", () => {
-    const arr1 = array("number");
+    const arr = array("number");
     // $ExpectType number[]
-    type t1 = ConvertBreadboardType<typeof arr1>;
-    assert.deepEqual(toJSONSchema(arr1), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: { type: "number" },
     });
   });
 
   test("array of objects", () => {
-    const arr2 = array(object({ foo: "string" }));
+    const arr = array(object({ foo: "string" }));
     // $ExpectType { foo: string; }[]
-    type t2 = ConvertBreadboardType<typeof arr2>;
-    assert.deepEqual(toJSONSchema(arr2), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: {
         type: "object",
@@ -227,10 +227,10 @@ describe("array", () => {
   });
 
   test("array of anyOf types", () => {
-    const arr3 = array(anyOf("string", "number"));
+    const arr = array(anyOf("string", "number"));
     // $ExpectType (string | number)[]
-    type t3 = ConvertBreadboardType<typeof arr3>;
-    assert.deepEqual(toJSONSchema(arr3), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: { anyOf: [{ type: "string" }, { type: "number" }] },
     });
