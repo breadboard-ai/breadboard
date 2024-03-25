@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeDescriberResult,
   OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
 import {
   InputPort,
@@ -56,8 +57,11 @@ class MonomorphicNodeDefinition<
     this.#outputs = outputs;
     this.#invoke = invoke;
     this.#description = Promise.resolve({
-      inputSchema: shapeToJSONSchema(this.#inputs),
-      outputSchema: shapeToJSONSchema(this.#outputs),
+      // Cast because this package uses the `JSONSchema4` type from
+      // `@types/json-schema` which isn't quite identical to
+      // `NodeDescriberResult` (but nearly).
+      inputSchema: shapeToJSONSchema(this.#inputs) as Schema,
+      outputSchema: shapeToJSONSchema(this.#outputs) as Schema,
     });
   }
 

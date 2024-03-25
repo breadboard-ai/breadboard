@@ -7,7 +7,7 @@
 import type { NewNodeFactory } from "@google-labs/breadboard";
 import type { MonomorphicDefinition } from "./definition-monomorphic.js";
 import type { PolymorphicDefinition } from "./definition-polymorphic.js";
-import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import type { ConvertBreadboardType } from "./type-system/type.js";
 
 /**
  * `KitSignature` takes a {@link NodeDefinition} type (as returned by
@@ -25,26 +25,22 @@ export type NodeFactoryFromDefinition<
   DEF extends MonomorphicDefinition<infer ISHAPE, infer OSHAPE>
     ? NewNodeFactory<
         {
-          [PORT in keyof ISHAPE]: TypeScriptTypeFromBreadboardType<
-            ISHAPE[PORT]["type"]
-          >;
+          [PORT in keyof ISHAPE]: ConvertBreadboardType<ISHAPE[PORT]["type"]>;
         },
         {
-          [PORT in keyof OSHAPE]: TypeScriptTypeFromBreadboardType<
-            OSHAPE[PORT]["type"]
-          >;
+          [PORT in keyof OSHAPE]: ConvertBreadboardType<OSHAPE[PORT]["type"]>;
         }
       >
     : // eslint-disable-next-line @typescript-eslint/no-explicit-any
       DEF extends PolymorphicDefinition<infer ISHAPE, any, infer OSHAPE>
       ? NewNodeFactory<
           {
-            [PORT in keyof Omit<ISHAPE, "*">]: TypeScriptTypeFromBreadboardType<
+            [PORT in keyof Omit<ISHAPE, "*">]: ConvertBreadboardType<
               ISHAPE[PORT]["type"]
             >;
           } & Record<string, unknown>,
           {
-            [PORT in keyof Omit<OSHAPE, "*">]: TypeScriptTypeFromBreadboardType<
+            [PORT in keyof Omit<OSHAPE, "*">]: ConvertBreadboardType<
               OSHAPE[PORT]["type"]
             >;
           } & Record<string, unknown>

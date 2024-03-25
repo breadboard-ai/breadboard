@@ -9,11 +9,11 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import type { PortConfigMap, OutputPortReference, PortConfig } from "./port.js";
-import type { TypeScriptTypeFromBreadboardType } from "./type.js";
+import type { ConvertBreadboardType } from "./type-system/type.js";
 import type { CountUnion } from "./type-util.js";
 
 export type ValueOrPort<CONFIG extends PortConfig> =
-  | TypeScriptTypeFromBreadboardType<CONFIG["type"]>
+  | ConvertBreadboardType<CONFIG["type"]>
   | OutputPortReference<CONFIG>;
 
 /**
