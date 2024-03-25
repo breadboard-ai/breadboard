@@ -22,6 +22,7 @@ import {
   idFromPath,
 } from "./path-registry.js";
 import { RunNodeEvent, eventIdFromEntryId } from "./run-node-event.js";
+import { RunSerializer } from "./serializer.js";
 import {
   InspectableGraphStore,
   InspectableRunErrorEvent,
@@ -53,6 +54,7 @@ export class EventManager {
   #graphStore;
   #options;
   #pathRegistry = new PathRegistry();
+  #serializer = new RunSerializer();
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -63,13 +65,11 @@ export class EventManager {
     const { path, graph, timestamp } = data;
     const graphId = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
-    if (entry) {
-      entry.graphId = graphId;
-      entry.graphStart = timestamp;
-      // TODO: Instead of creating a new instance, cache and store them
-      // in the GraphStore.
-      entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
-    }
+    entry.graphId = graphId;
+    entry.graphStart = timestamp;
+    // TODO: Instead of creating a new instance, cache and store them
+    // in the GraphStore.
+    entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
   }
 
   #addGraphend(data: GraphEndProbeData) {
@@ -179,27 +179,35 @@ export class EventManager {
   }
 
   add(result: HarnessRunResult) {
-    this.#pathRegistry.finalizeSidecar(SECRET_PATH);
+    this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
 
     switch (result.type) {
       case "graphstart": {
         this.#addGraphstart(result.data);
+        this.#serializer.addGraphstart(result.data);
         break;
       }
       case "graphend": {
         this.#addGraphend(result.data);
+        this.#serializer.addGraphend({
+          timestamp: result.data.timestamp,
+          path: result.data.path,
+        });
         break;
       }
       case "nodestart": {
         this.#addNodestart(result.data);
+        this.#serializer.addNodestart(result.data);
         break;
       }
       case "input": {
         this.#addInput(result.data);
+        this.#serializer.addInput(result.data);
         break;
       }
       case "output": {
         this.#addOutput(result.data);
+        this.#serializer.addOutput(result.data);
         break;
       }
       case "secret": {
@@ -211,10 +219,12 @@ export class EventManager {
           start,
           end: null,
         });
+        this.#serializer.addSecret(result.data);
         break;
       }
       case "nodeend": {
         this.#addNodeend(result.data);
+        this.#serializer.addNodeend(result.data);
         break;
       }
       case "error": {
@@ -225,6 +235,7 @@ export class EventManager {
           start,
           error,
         });
+        this.#serializer.addError(result.data);
         break;
       }
     }
@@ -232,5 +243,9 @@ export class EventManager {
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  serializer() {
+    return this.#serializer;
   }
 }

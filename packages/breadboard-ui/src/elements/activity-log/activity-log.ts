@@ -9,7 +9,6 @@ import {
   InspectableRun,
   InspectableRunEvent,
   InspectableRunNodeEvent,
-  NodeValue,
   OutputValues,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
@@ -28,6 +27,9 @@ export class ActivityLog extends LitElement {
   loadInfo: LoadArgs | null = null;
 
   @property({ reflect: false })
+  run: InspectableRun | null = null;
+
+  @property({ reflect: false })
   events: InspectableRunEvent[] | null = null;
 
   @property({ reflect: true })
@@ -38,9 +40,6 @@ export class ActivityLog extends LitElement {
 
   @property({ reflect: true })
   showExtendedInfo = false;
-
-  @property({ reflect: true })
-  showLogDownload = false;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -583,7 +582,7 @@ export class ActivityLog extends LitElement {
       return;
     }
 
-    if (!this.events) {
+    if (!this.run || !this.run.serialize) {
       return;
     }
 
@@ -591,59 +590,9 @@ export class ActivityLog extends LitElement {
       URL.revokeObjectURL(evt.target.href);
     }
 
-    const secrets: NodeValue[] = [];
-    const inputs: InspectableRunEvent[] = [];
-    const outputs: InspectableRunEvent[] = [];
-    const errors: InspectableRunEvent[] = [];
+    const data = JSON.stringify(this.run.serialize(), null, 2);
 
-    const processEvents = (events: InspectableRunEvent[]) => {
-      for (const event of events) {
-        if (event.type === "error") {
-          errors.push(event);
-        }
-
-        if (event.type === "node") {
-          switch (event.node.descriptor.type) {
-            case "secrets": {
-              if (event.outputs !== null) {
-                secrets.push(...Object.values(event.outputs));
-              }
-              break;
-            }
-
-            case "input": {
-              inputs.push(event);
-              break;
-            }
-
-            case "output": {
-              outputs.push(event);
-              break;
-            }
-          }
-
-          for (const run of event.runs) {
-            processEvents(run.events);
-          }
-        }
-      }
-    };
-
-    processEvents(this.events);
-
-    let data = JSON.stringify(
-      { board: this.loadInfo, inputs, outputs, errors },
-      null,
-      2
-    );
-
-    // Attempt to find any secrets and then replace them in the JSON output.
-    for (const secret of secrets) {
-      const re = new RegExp(`\\b${secret}\\b`, "gim");
-      data = data.replaceAll(re, "SECRET");
-    }
-
-    evt.target.download = `log-${new Date().toISOString()}.json`;
+    evt.target.download = `run-${new Date().toISOString()}.json`;
     evt.target.href = URL.createObjectURL(
       new Blob([data], { type: "application/json" })
     );
@@ -711,10 +660,11 @@ export class ActivityLog extends LitElement {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
     }
+    const showLogDownload = this.run && this.run.serialize;
 
     return html`
       <h1>
-        <span>${this.logTitle}</span>${this.showLogDownload
+        <span>${this.logTitle}</span>${showLogDownload
           ? html`<a @click=${(evt: Event) => this.#getRunLog(evt)}>Download</a>`
           : nothing}
       </h1>

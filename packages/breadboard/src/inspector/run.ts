@@ -5,16 +5,20 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { timestamp } from "../timestamp.js";
 import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event-manager.js";
+import { replaceSecrets } from "./serializer.js";
 import {
   GraphUUID,
   InspectableGraphStore,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunLoadResult,
   InspectableRunObserver,
   RunObserverOptions,
+  RunSerializationOptions,
+  SerializedRun,
+  SerializedRunLoadingOptions,
 } from "./types.js";
 
 type GraphRecord = {
@@ -105,10 +109,15 @@ export class RunObserver implements InspectableRunObserver {
 
   observe(result: HarnessRunResult): InspectableRun[] {
     if (result.type === "graphstart") {
-      const { path } = result.data;
+      const { path, timestamp } = result.data;
       if (path.length === 0) {
         // start a new run
-        const run = new Run(this.#store, result.data.graph, this.#options);
+        const run = new Run(
+          timestamp,
+          this.#store,
+          result.data.graph,
+          this.#options
+        );
         this.#runs = [run, ...this.#runs];
       }
     } else if (result.type === "graphend") {
@@ -123,6 +132,34 @@ export class RunObserver implements InspectableRunObserver {
     run.addResult(result);
     return this.#runs;
   }
+
+  load(
+    o: unknown,
+    options?: SerializedRunLoadingOptions
+  ): InspectableRunLoadResult {
+    const data = o as SerializedRun;
+    if (data.$schema !== "tbd") {
+      return {
+        success: false,
+        error: `Specified "$schema" is not valid`,
+      };
+    }
+    try {
+      const timeline = options?.secretReplacer
+        ? replaceSecrets(data, options.secretReplacer).timeline
+        : data.timeline;
+      for (const result of timeline) {
+        this.observe(result as HarnessRunResult);
+      }
+      return { success: true };
+    } catch (e) {
+      const error = e as Error;
+      return {
+        success: false,
+        error: `Loading run failed with the error ${error.message}`,
+      };
+    }
+  }
 }
 
 export class Run implements InspectableRun {
@@ -136,13 +173,14 @@ export class Run implements InspectableRun {
   messages: HarnessRunResult[] = [];
 
   constructor(
+    timestamp: number,
     graphStore: InspectableGraphStore,
     graph: GraphDescriptor,
     options: RunObserverOptions
   ) {
     this.#events = new EventManager(graphStore, options);
     this.graphVersion = 0;
-    this.start = timestamp();
+    this.start = timestamp;
     this.graphId = graphStore.add(graph, this.graphVersion);
   }
 
@@ -154,6 +192,10 @@ export class Run implements InspectableRun {
     this.messages.push(result);
     this.#events.add(result);
     this.#highlightHelper.add(result);
+  }
+
+  serialize(options?: RunSerializationOptions): SerializedRun {
+    return this.#events.serializer().serialize(options || {});
   }
 
   currentNode(position: number) {

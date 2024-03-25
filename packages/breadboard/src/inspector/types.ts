@@ -424,6 +424,18 @@ export type InspectableVersionedGraph = {
 };
 
 /**
+ * Represents a result of loading a serialized `InspectableRun`
+ */
+export type InspectableRunLoadResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+    };
+
+/**
  * Represents an observer of the graph runs.
  */
 export type InspectableRunObserver = {
@@ -438,6 +450,37 @@ export type InspectableRunObserver = {
    * @returns -- the list of runs that were observed
    */
   observe(result: HarnessRunResult): InspectableRun[];
+  /**
+   * Attempts to load a JSON object as a serialized representation of runs,
+   * creating a new run if successful.
+   * @param o -- the object to load. Must be shaped as `SerializedRun`.
+   * @returns -- an `InspectableRunLoadResult` instance.
+   */
+  load(
+    o: unknown,
+    options?: SerializedRunLoadingOptions
+  ): InspectableRunLoadResult;
+};
+
+/**
+ * Represents a function that replaces secrets.
+ * @param name -- the name of the secret
+ * @param value -- the current value of the secret
+ * @returns -- the new value of the secret
+ */
+export type SerializedRunSecretReplacer = (
+  name: string,
+  value: string
+) => string;
+
+/**
+ * Represents options to supply to the `load` method of `InspectableRunObserver`.
+ */
+export type SerializedRunLoadingOptions = {
+  /**
+   * Optional, a function replace sentinel values with actual secrets.
+   */
+  secretReplacer?: SerializedRunSecretReplacer;
 };
 
 /**
@@ -572,6 +615,11 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
+   * If present, returns a serialized representation of the run or null if
+   * serialization of this run is not supported.
+   */
+  serialize?(options?: RunSerializationOptions): SerializedRun;
+  /**
    * @deprecated Use `events` instead.
    */
   messages: HarnessRunResult[];
@@ -579,6 +627,18 @@ export type InspectableRun = {
    * @deprecated Use `events` instead.
    */
   currentNode(position: number): string;
+};
+
+/**
+ * Represents options to supply to the `serialize` method of `InspectableRun`.
+ */
+export type RunSerializationOptions = {
+  /**
+   * Optional, whether or not to elide secrets. When set to true, secrets
+   * are kept as is. When set to false or not present, secrets are elided and
+   * replaced with sentinel values.
+   */
+  keepSecrets?: boolean;
 };
 
 export type PathRegistryEntry = {
@@ -635,4 +695,31 @@ export type RunObserverOptions = {
    * the ability to inspect graphs and nodes during the run.
    */
   kits?: Kit[];
+};
+
+// TODO: Figure out if this is permanent.
+export type HistoryEntry = {
+  type:
+    | "graphstart"
+    | "graphend"
+    | "input"
+    | "output"
+    | "secret"
+    | "error"
+    | "nodestart"
+    | "nodeend";
+  data: unknown;
+};
+
+/**
+ * Represents an `InspectableRun` that has been serialized into a JSON object.
+ * This object can be used to store the run in a file or send it over the wire.
+ * The serialized run can be deserialized back into an `InspectableRun` object
+ * using the `InspectableRunObserver.load` method.
+ */
+export type SerializedRun = {
+  $schema: "tbd";
+  version: "0";
+  secrets?: Record<string, string>;
+  timeline: HistoryEntry[];
 };
