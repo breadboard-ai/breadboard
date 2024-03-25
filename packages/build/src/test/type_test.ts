@@ -181,6 +181,30 @@ describe("object", () => {
     });
   });
 
+  test("object with unknown property", () => {
+    const obj = object({ foo: "unknown" });
+    // $ExpectType { foo: unknown; }
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {
+        foo: {},
+      },
+      required: ["foo"],
+    });
+  });
+
+  test("object no known properties", () => {
+    const obj = object({});
+    // $ExpectType {}
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {},
+      required: [],
+    });
+  })
+
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
 
