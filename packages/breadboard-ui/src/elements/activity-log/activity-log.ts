@@ -592,58 +592,6 @@ export class ActivityLog extends LitElement {
 
     const data = JSON.stringify(this.run.serialize(), null, 2);
 
-    // const secrets: NodeValue[] = [];
-    // const inputs: InspectableRunEvent[] = [];
-    // const outputs: InspectableRunEvent[] = [];
-    // const errors: InspectableRunEvent[] = [];
-
-    // const processEvents = (events: InspectableRunEvent[]) => {
-    //   for (const event of events) {
-    //     if (event.type === "error") {
-    //       errors.push(event);
-    //     }
-
-    //     if (event.type === "node") {
-    //       switch (event.node.descriptor.type) {
-    //         case "secrets": {
-    //           if (event.outputs !== null) {
-    //             secrets.push(...Object.values(event.outputs));
-    //           }
-    //           break;
-    //         }
-
-    //         case "input": {
-    //           inputs.push(event);
-    //           break;
-    //         }
-
-    //         case "output": {
-    //           outputs.push(event);
-    //           break;
-    //         }
-    //       }
-
-    //       for (const run of event.runs) {
-    //         processEvents(run.events);
-    //       }
-    //     }
-    //   }
-    // };
-
-    // processEvents(this.events);
-
-    // let data = JSON.stringify(
-    //   { board: this.loadInfo, inputs, outputs, errors },
-    //   null,
-    //   2
-    // );
-
-    // Attempt to find any secrets and then replace them in the JSON output.
-    // for (const secret of secrets) {
-    //   const re = new RegExp(`\\b${secret}\\b`, "gim");
-    //   data = data.replaceAll(re, "SECRET");
-    // }
-
     evt.target.download = `run-${new Date().toISOString()}.json`;
     evt.target.href = URL.createObjectURL(
       new Blob([data], { type: "application/json" })
