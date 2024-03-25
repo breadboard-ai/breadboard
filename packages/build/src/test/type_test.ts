@@ -235,5 +235,15 @@ describe("array", () => {
       items: { anyOf: [{ type: "string" }, { type: "number" }] },
     });
   });
+
+  test("array of unknown", () => {
+    const arr = array("unknown");
+    // $ExpectType unknown[]
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
+      items: {},
+      type: "array",
+    });
+  });
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
