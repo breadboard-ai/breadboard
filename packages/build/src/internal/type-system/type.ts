@@ -15,16 +15,9 @@ export type BreadboardType =
   | AdvancedBreadboardType<unknown>;
 
 /**
- * Convert a {@link BreadboardType} to JSON Schema.
- */
-export function toJSONSchema(type: BreadboardType): JSONSchema4 {
-  return typeof type === "string" ? { type } : type.jsonSchema;
-}
-
-/**
  * The basic types that can be referenced directly.
  */
-export type BasicBreadboardType = "string" | "number" | "boolean";
+export type BasicBreadboardType = "string" | "number" | "boolean" | "unknown";
 
 /**
  * A type that's more complicated than a {@link BasicBreadboardType}.
@@ -53,6 +46,34 @@ export type ConvertBreadboardType<BT extends BreadboardType> =
       ? number
       : BT extends "boolean"
         ? boolean
-        : BT extends AdvancedBreadboardType<infer TT>
-          ? TT
-          : never;
+        : BT extends "unknown"
+          ? unknown
+          : BT extends AdvancedBreadboardType<infer TT>
+            ? TT
+            : never;
+
+/**
+ * Convert a {@link BreadboardType} to JSON Schema.
+ */
+export function toJSONSchema(type: BreadboardType): JSONSchema4 {
+  if (typeof type === "object" && "jsonSchema" in type) {
+    return type.jsonSchema;
+  }
+  switch (type) {
+    case "string":
+    case "number":
+    case "boolean": {
+      return { type };
+    }
+    case "unknown": {
+      // {} is our equivalent to TypeScript's `unknown` in JSON Schema, since it
+      // enforces no type constraints at all.
+      return {};
+    }
+    default: {
+      throw new Error(
+        `Unknown BreadboardType: <${typeof type}> ${type satisfies never}`
+      );
+    }
+  }
+}

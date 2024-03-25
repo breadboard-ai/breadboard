@@ -48,6 +48,17 @@ test("boolean", () => {
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
 
+test("unknown", () => {
+  "unknown" satisfies BreadboardType;
+  // @ts-expect-error not a valid basic type
+  "xunknown" satisfies BreadboardType;
+  assert.deepEqual(toJSONSchema("unknown"), {});
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // $ExpectType unknown
+  type t = ConvertBreadboardType<"unknown">;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
 test("anyOf", () => {
   /* eslint-disable @typescript-eslint/no-unused-vars */
 
@@ -58,7 +69,7 @@ test("anyOf", () => {
   // @ts-expect-error not a valid type
   assert.throws(() => anyOf(undefined));
   // @ts-expect-error not a valid type
-  anyOf("xnumber", "xstring");
+  assert.throws(() => anyOf("xnumber", "xstring"));
 
   const with2 = anyOf("number", "boolean") satisfies BreadboardType;
   // $ExpectType number | boolean
