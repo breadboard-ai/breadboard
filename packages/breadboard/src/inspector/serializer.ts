@@ -47,7 +47,8 @@ export class RunSerializer {
     // "node" doesn't exist here (addNodeend doesn't use it).
     // TODO: make more elegant.
     if (data.node?.type === "secrets") {
-      Object.entries(data.outputs).map(([key, value]) => {
+      Object.entries(data.outputs).forEach(([key, value]) => {
+        if (this.#secrets[key]) return;
         this.#secrets[key] = {
           secret: value as string,
           sentinel: crypto.randomUUID(),
