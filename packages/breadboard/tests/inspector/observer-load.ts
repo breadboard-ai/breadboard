@@ -91,7 +91,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     return;
   }
   const run1serialized = run1.serialize();
-  console.log("SIZE:", JSON.stringify(run1serialized).length / 1000);
+  // console.log("SIZE:", JSON.stringify(run1serialized).length / 1000);
   const run1LoadResult = observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
@@ -112,5 +112,6 @@ test("run save/load: observer.save elides secrets", async (t) => {
   t.truthy(sentinel);
   const s = JSON.stringify(run1serialized);
   t.false(s.includes(GEMINI_KEY_VALUE));
-  t.true(s.includes(sentinel));
+  const sentinelCount = (s.match(new RegExp(sentinel, "g")) || []).length;
+  t.is(sentinelCount, 21);
 });

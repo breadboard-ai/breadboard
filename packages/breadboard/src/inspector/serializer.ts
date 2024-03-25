@@ -30,7 +30,7 @@ export class RunSerializer {
       Object.entries(ports).map(([key, value]) => {
         let stringified = JSON.stringify(value);
         for (const secret of Object.values(this.#secrets)) {
-          stringified = stringified.replace(secret.secret, "NOPE");
+          stringified = stringified.replace(secret.secret, secret.sentinel);
         }
         return [key, JSON.parse(stringified)];
       })
