@@ -248,3 +248,79 @@ This event is always going to be the last event in the run and contain the error
 console.log("Error", event.error);
 console.log("Occurred on", event.start);
 ```
+
+## Serializing and loading runs
+
+Runs can be serialized into a common format. This can be used to save runs into
+some persistent storage and later loaded back for inspection.
+
+To save a run, use the `serialize` method on an `InspectableRun` instance. This method is only present for the top-level runs, so make sure to check for its existence:
+
+```ts
+// creates a JSON object that is ready for stringifying.
+if (run.serialize) {
+  // Returns a `SerializedRun` instance that is a JSON object ready for
+  // stringifying.
+  const serializedRun = run.serialize();
+  console.log("Success!");
+} else {
+  console.log("Unable to serialize this run.");
+}
+```
+
+By default, the serialization will elide all secrets from the serialized representation, replacing them with the sentinel values. This is a good practice, since we usually don't want our keys to leave Breadboard.
+
+If you prefer to keep the secrets in the serialized representation, pass it the
+`keepSecrets` options:
+
+```ts
+const serializedRun = run.serialize({ keepSecrets: true });
+```
+
+To move in the other direction, a serialized run can be loaded back into
+the `InspectableRunObserver` with the `load` method:
+
+```ts
+// Returns an `InspectableRunLoadResult` instance.
+const result = observer.load(serializedRun);
+if (result.success) {
+  console.log("Run loaded");
+  // The observer.runs().length will increment by one, with the newly
+  // loaded run as first item.
+  console.log(`The observer now has ${observer.runs().length} runs.`);
+} else {
+  console.log("Load error occurred", result.error);
+}
+```
+
+If we need to re-populate the elided secrets back into our run when loading, there is a `secretReplacer` option available for the `load` method.
+
+Give it a function of the following shape:
+
+```ts
+/**
+ * Represents a function that replaces secrets.
+ * @param name -- the name of the secret
+ * @param value -- the current value of the secret
+ * @returns -- the new value of the secret
+ */
+export type SerializedRunSecretReplacer = (
+  name: string,
+  value: string
+) => string;
+```
+
+This function will be called once for every new secret encountered and give us an opportunity to replace it:
+
+```ts
+// Returns an `InspectableRunLoadResult` instance.
+const result = observer.load(serializedRun, {
+  secretReplacer: (name) => {
+    if (name === "GEMINI_KEY") return GEMINI_KEY_VALUE;
+  },
+});
+```
+
+The serialization format is still under development, so try
+to avoid reading it directly. The structures are guaranteed
+to shift as we make it better.
