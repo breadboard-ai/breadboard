@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { BehaviorSchema } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { assertIsLLMContent } from "../../utils/schema.js";
 
 enum TYPE {
   STRING = "string",
@@ -19,8 +21,11 @@ export class ArrayEditor extends LitElement {
   #formRef: Ref<HTMLFormElement> = createRef();
   #items: Array<string | object> | null = null;
 
-  @property()
+  @property({ reflect: true })
   type = TYPE.STRING;
+
+  @property({ reflect: true })
+  behavior: BehaviorSchema | null = null;
 
   static styles = css`
     :host {
@@ -130,7 +135,12 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    this.#items.push(this.type === TYPE.STRING ? "" : {});
+    const newItem: Record<string, unknown> = {};
+    if (this.behavior === "llm-content") {
+      newItem.parts = [];
+    }
+
+    this.#items.push(this.type === TYPE.STRING ? "" : newItem);
     this.#updateItems();
     this.#notify();
     this.requestUpdate();
@@ -206,7 +216,6 @@ export class ArrayEditor extends LitElement {
         continue;
       }
 
-      // Invalid JSON - provide feedback.
       const field = form.querySelector(`#${id}`) as HTMLObjectElement;
       if (!field) {
         console.warn(`Unable to find field ${id}`);
@@ -216,9 +225,20 @@ export class ArrayEditor extends LitElement {
       try {
         field.setCustomValidity("");
         const formValue = (value as string).trim();
-        this.#items[idx++] = JSON.parse(formValue);
+        const formValueObject = JSON.parse(formValue);
+        if (this.behavior === "llm-content") {
+          assertIsLLMContent(formValueObject);
+        }
+
+        this.#items[idx++] = formValueObject;
       } catch (err) {
-        field.setCustomValidity("Invalid JSON");
+        if (err instanceof SyntaxError) {
+          field.setCustomValidity("Invalid JSON");
+        } else {
+          const llmError = err as Error;
+          field.setCustomValidity(`Invalid LLM Content: ${llmError.message}`);
+        }
+
         field.reportValidity();
       }
     }
