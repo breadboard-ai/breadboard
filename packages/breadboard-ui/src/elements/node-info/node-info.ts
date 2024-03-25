@@ -17,9 +17,11 @@ import {
   inspect,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { SchemaEditor } from "../schema-editor/schema-editor.js";
+import { SchemaEditor } from "./schema-editor.js";
 import { NodeUpdateEvent } from "../../events/events.js";
 import { guard } from "lit/directives/guard.js";
+import { resolveArrayType, resolveBehaviorType } from "../../utils/schema.js";
+import { ArrayEditor } from "./array-editor.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -166,15 +168,23 @@ export class NodeInfo extends LitElement {
     }
 
     #node-properties input[type="number"],
-    #node-properties div[contenteditable] {
+    #node-properties textarea {
       border-radius: var(--bb-grid-size);
       background: rgb(255, 255, 255);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       border: 1px solid rgb(209, 209, 209);
     }
 
-    #node-properties div[contenteditable].mono {
+    #node-properties textarea {
       font-family: var(--bb-font-family-mono);
+      font-size: var(--bb-body-x-small);
+      line-height: var(--bb-body-line-height-x-small);
+      resize: none;
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      field-sizing: content;
+      max-height: 300px;
     }
 
     #node-properties .configuration-item {
@@ -229,22 +239,12 @@ export class NodeInfo extends LitElement {
 
     const toConvert = new Set<string>();
     const data = new FormData(evt.target);
-    for (const field of evt.target.querySelectorAll("div[contenteditable]")) {
-      if (
-        !(
-          field instanceof HTMLDivElement &&
-          field.dataset.id &&
-          field.textContent
-        )
-      ) {
-        continue;
-      }
-
+    for (const field of evt.target.querySelectorAll("textarea")) {
       if (field.dataset.type && field.dataset.type === "object") {
-        toConvert.add(field.dataset.id);
+        toConvert.add(field.id);
       }
 
-      data.set(field.dataset.id, field.textContent);
+      data.set(field.id, field.value);
     }
 
     for (const schemaEditor of evt.target.querySelectorAll(
@@ -266,6 +266,14 @@ export class NodeInfo extends LitElement {
       }
 
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
+    }
+
+    for (const arrayEditor of evt.target.querySelectorAll("bb-array-editor")) {
+      if (!(arrayEditor instanceof ArrayEditor && arrayEditor.id)) {
+        continue;
+      }
+
+      data.set(arrayEditor.id, JSON.stringify(arrayEditor.items));
     }
 
     const id = data.get("$id") as string;
@@ -474,15 +482,24 @@ export class NodeInfo extends LitElement {
                           name="${name}"
                         ></bb-schema-editor>`;
                       } else {
-                        // TODO: POJO editing?
-                        // prettier-ignore
-                        input = html`<div
-                        class="mono"
-                        contenteditable="plaintext-only"
-                        data-id="${name}"
-                        data-type="${type}"
-                      >${JSON.stringify(value, null, 2)}</div>`;
+                        input = html`<textarea
+                          id="${name}"
+                          name="${name}"
+                          data-type="${type}"
+                          .value=${JSON.stringify(value, null, 2)}
+                        ></textarea>`;
                       }
+                      break;
+                    }
+
+                    case "array": {
+                      input = html`<bb-array-editor
+                        id="${name}"
+                        name="${name}"
+                        .items=${JSON.parse((value as string) || "[]")}
+                        .type=${resolveArrayType(port.schema)}
+                        .behavior=${resolveBehaviorType(port.schema)}
+                      ></bb-array-editor>`;
                       break;
                     }
 
@@ -512,11 +529,12 @@ export class NodeInfo extends LitElement {
                     }
 
                     default: {
-                      // prettier-ignore
-                      input = html`<div
-                        contenteditable="plaintext-only"
-                        data-id="${name}"
-                      >${value}</div>`;
+                      input = html`<textarea
+                        id="${name}"
+                        name="${name}"
+                        data-type="${type}"
+                        .value=${value || ""}
+                      ></textarea>`;
                       break;
                     }
                   }

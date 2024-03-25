@@ -112,6 +112,7 @@ export class Navigation extends LitElement {
       overflow-y: scroll;
       overflow-x: hidden;
       scrollbar-gutter: stable;
+      flex: 1;
     }
 
     details {
