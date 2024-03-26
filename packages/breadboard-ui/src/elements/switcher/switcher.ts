@@ -16,6 +16,9 @@ export class Switcher extends LitElement {
   })
   selected = 0;
 
+  @property({ reflect: true, attribute: true })
+  disabled = false;
+
   @property({ reflect: true, type: Number })
   slots = 2;
 
@@ -46,8 +49,8 @@ export class Switcher extends LitElement {
       white-space: nowrap;
     }
 
-    #buttons button:hover,
-    #buttons button[active] {
+    #buttons button:not([disabled]):hover,
+    #buttons button:not([disabled])[active] {
       opacity: 1;
     }
 
@@ -84,6 +87,7 @@ export class Switcher extends LitElement {
         }
 
         return html`<button
+          ?disabled=${this.disabled}
           ?active=${this.selected === idx}
           @click=${() => (this.selected = idx)}
         >
