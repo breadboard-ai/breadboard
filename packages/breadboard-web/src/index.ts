@@ -310,9 +310,14 @@ export class Main extends LitElement {
       grid-column: 1 / 3;
       margin: 0;
       border: none;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    bb-overlay iframe {
       width: 80vw;
       height: 80vh;
-      display: block;
       border-radius: 8px;
     }
 
