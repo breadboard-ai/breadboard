@@ -18,14 +18,10 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { LoadArgs } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
-  @property()
-  loadInfo: LoadArgs | null = null;
-
   @property({ reflect: false })
   run: InspectableRun | null = null;
 
