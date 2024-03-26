@@ -170,10 +170,15 @@ class Graph implements InspectableGraphWithStore {
       )
     ).map((result) => result.inputSchema);
 
-    return {
-      inputSchema: combineSchemas(inputSchemas),
-      outputSchema: removeProperty(combineSchemas(outputSchemas), "schema"),
-    };
+    const inputSchema = combineSchemas(inputSchemas);
+    const outputSchema = removeProperty(
+      combineSchemas(outputSchemas),
+      "schema"
+    );
+
+    console.groupEnd();
+
+    return { inputSchema, outputSchema };
   }
 
   get nodeStore() {

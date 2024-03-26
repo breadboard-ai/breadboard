@@ -106,6 +106,7 @@ function setupKits<
         type: "object",
       },
       outputSchema: {
+        additionalProperties: false,
         properties: {
           boardLen: {
             title: "boardLen",
@@ -230,6 +231,7 @@ function setupKits<
         type: "object",
       },
       outputSchema: {
+        additionalProperties: false,
         properties: {
           boardSum: {
             title: "boardSum",
