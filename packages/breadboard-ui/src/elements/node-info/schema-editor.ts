@@ -239,6 +239,15 @@ export class SchemaEditor extends LitElement {
           <label for="${id}-default">Default</label>
           ${defaultValue}
 
+          <label for="${id}-examples">Examples</label>
+          <bb-array-editor
+            id="${id}-examples"
+            name="${id}-examples"
+            ?readonly=${!this.editable}
+            .items=${value.examples || []}
+            .type=${"string"}
+          ></bb-array-editor>
+
           <label for="${id}-required">Required</label>
           <input
             name="${id}-required"
@@ -275,6 +284,9 @@ export class SchemaEditor extends LitElement {
         const inDefault = form.querySelector(
           `#${id}-default`
         ) as HTMLInputElement | null;
+        const inExamples = form.querySelector(
+          `#${id}-examples`
+        ) as HTMLInputElement | null;
         const inRequired = form.querySelector(
           `#${id}-required`
         ) as HTMLInputElement | null;
@@ -288,6 +300,7 @@ export class SchemaEditor extends LitElement {
           inDefault?.type === "checkbox"
             ? inDefault.checked.toString()
             : inDefault?.value ?? property.default;
+        property.examples = JSON.parse(inExamples?.value || "[]") as string[];
 
         // Going from boolean -> anything else with no default means removing
         // the value entirely.

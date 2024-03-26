@@ -27,6 +27,8 @@ export class ArrayEditor extends LitElement {
   @property({ reflect: true })
   behavior: BehaviorSchema | null = null;
 
+  #focusMostRecentItemOnNextRender = false;
+
   static styles = css`
     :host {
       display: block;
@@ -140,6 +142,7 @@ export class ArrayEditor extends LitElement {
       newItem.parts = [];
     }
 
+    this.#focusMostRecentItemOnNextRender = true;
     this.#items.push(this.type === TYPE.STRING ? "" : newItem);
     this.#updateItems();
     this.#notify();
@@ -242,6 +245,20 @@ export class ArrayEditor extends LitElement {
         field.reportValidity();
       }
     }
+  }
+
+  protected updated(): void {
+    if (!this.#focusMostRecentItemOnNextRender || !this.#formRef.value) {
+      return;
+    }
+
+    this.#focusMostRecentItemOnNextRender = false;
+
+    const inputs = this.#formRef.value.querySelectorAll("textarea");
+    if (inputs.length === 0) {
+      return;
+    }
+    inputs[inputs.length - 1].focus();
   }
 
   render() {
