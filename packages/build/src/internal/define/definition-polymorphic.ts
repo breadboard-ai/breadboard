@@ -268,7 +268,8 @@ class PolymorphicNodeInstance<
     this.inputs = Object.fromEntries([
       ...Object.entries(staticInputs).map(([name, config]) => [
         name,
-        new InputPort(config, name, this, values[name]),
+        // TODO(aomarks) Can we remove this `!`?
+        new InputPort(config, name, this, values[name]!),
       ]),
       ...Object.entries(values)
         .filter(([name]) => staticInputs[name] === undefined)

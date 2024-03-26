@@ -54,7 +54,7 @@ test("unknown", () => {
   "xunknown" satisfies BreadboardType;
   assert.deepEqual(toJSONSchema("unknown"), {});
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  // $ExpectType unknown
+  // $ExpectType JsonSerializable
   type t = ConvertBreadboardType<"unknown">;
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
