@@ -41,6 +41,7 @@ const outputSchema = {
       type: "string",
       title: "Guide",
       description: "The tour guide for the specified location",
+      format: "markdown",
     },
   },
 } satisfies Schema;
