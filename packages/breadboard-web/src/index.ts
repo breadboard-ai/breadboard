@@ -97,10 +97,10 @@ export class Main extends LitElement {
   showNav = false;
 
   @state()
-  showPreview = false;
+  showPreviewOverlay = false;
 
   @state()
-  showOverlay = false;
+  showBoardEditOverlay = false;
 
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
@@ -669,7 +669,7 @@ export class Main extends LitElement {
       }
     }
 
-    tmpl = html`<div id="header-bar" ?inert=${this.showOverlay}>
+    tmpl = html`<div id="header-bar" ?inert=${this.showBoardEditOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -687,7 +687,7 @@ export class Main extends LitElement {
           ${this.loadInfo?.title}
           <button
             @click=${() => {
-              this.showOverlay = true;
+              this.showBoardEditOverlay = true;
             }}
             ?disabled=${this.loadInfo === null}
             id="edit-board-info"
@@ -705,18 +705,22 @@ export class Main extends LitElement {
           >Export</a
         >
         <button
-          class=${classMap({ active: this.showPreview })}
+          class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
           title="Toggle Board Preview"
           ?disabled=${this.loadInfo === null}
           @click=${() => {
-            this.showPreview = !this.showPreview;
+            this.showPreviewOverlay = !this.showPreviewOverlay;
           }}
         >
           Preview
         </button>
       </div>
-      <div id="content" ?inert=${this.showOverlay} class="${this.showPreview}">
+      <div
+        id="content"
+        ?inert=${this.showBoardEditOverlay}
+        class="${this.showPreviewOverlay}"
+      >
         ${cache(
           html`<bb-ui-controller
             ${ref(this.#uiRef)}
@@ -1021,7 +1025,7 @@ export class Main extends LitElement {
         .visible=${this.showNav}
         .url=${this.url}
         .providerOps=${this.providerOps}
-        ?inert=${this.showOverlay}
+        ?inert=${this.showBoardEditOverlay}
         @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
         @graphproviderblankboard=${async (
           evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
@@ -1195,13 +1199,13 @@ export class Main extends LitElement {
     }
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showOverlay && this.loadInfo) {
+    if (this.showBoardEditOverlay && this.loadInfo) {
       boardOverlay = html`<bb-board-edit-overlay
         .boardTitle=${this.loadInfo.title}
         .boardVersion=${this.loadInfo.version}
         .boardDescription=${this.loadInfo.description}
         @breadboardboardoverlaydismissed=${() => {
-          this.showOverlay = false;
+          this.showBoardEditOverlay = false;
         }}
         @breadboardboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
@@ -1225,18 +1229,18 @@ export class Main extends LitElement {
             BreadboardUI.Events.ToastType.INFORMATION
           );
 
-          this.showOverlay = false;
+          this.showBoardEditOverlay = false;
           this.requestUpdate();
         }}
       ></bb-board-edit-overlay>`;
     }
 
     let previewOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showPreview) {
+    if (this.showPreviewOverlay) {
       previewOverlay = html`<bb-overlay
         class="board-preview"
         @breadboardboardoverlaydismissed=${() => {
-          this.showPreview = false;
+          this.showPreviewOverlay = false;
         }}
         ><iframe src="/preview.html?board=${this.url}"></iframe
       ></bb-overlay>`;
