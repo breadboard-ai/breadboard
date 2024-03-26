@@ -63,7 +63,7 @@ test("polymorphic inputs", () => {
   const instance = definition({ in1: "foo", in2: 123 });
   // @ts-expect-error Wildcard port isn't real
   instance.inputs["*"];
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.in1;
   // @ts-expect-error dynamic ports not exposed
   instance.inputs.in2;

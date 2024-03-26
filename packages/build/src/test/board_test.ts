@@ -42,24 +42,24 @@ test("expect type: 0 in, 0 out", () => {
   definition({});
   // $ExpectType BoardInstance<{}, {}>
   const instance = definition({});
-  // $ExpectType InputPorts<ExtractPortConfigs<{}>>
+  // $ExpectType {}
   instance.inputs;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{}>>
+  // $ExpectType {}
   instance.outputs;
 });
 
 test("expect type: 1 in, 1 out", () => {
-  // $ExpectType BoardDefinition<{ inStr: InputPort<{ type: "string"; }>; }, { outNum: OutputPort<{ type: "number"; }>; }>
+  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
   const definition = board({ inStr }, { outNum });
-  // NodeInstance<BoardPortConfig<{ inStr: InputPort<{ type: "string"; }>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
+  // NodeInstance<BoardPortConfig<{ inStr: InputPort<string>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
   const instance = definition({ inStr: "inStr" });
-  // $ExpectType InputPorts<ExtractPortConfigs<{ inStr: InputPort<{ type: "string"; }>; }>>
+  // $ExpectType { inStr: InputPort<string>; }
   instance.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.inStr;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{ outNum: OutputPort<{ type: "number"; }>; }>>
+  // $ExpectType { outNum: OutputPort<number>; }
   instance.outputs;
-  // $ExpectType OutputPort<{ type: "number"; }>
+  // $ExpectType OutputPort<number>
   instance.outputs.outNum;
 });
 
@@ -67,15 +67,15 @@ test("expect type: nested boards", () => {
   const defA = board({ inNum }, { outStr });
   const defB = board({ inStr }, { outNum });
   const instanceA = defA({ inNum: 123 });
-  // $ExpectType BoardInstance<{ inStr: InputPort<{ type: "string"; }>; }, { outNum: OutputPort<{ type: "number"; }>; }>
+  // $ExpectType BoardInstance<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
   const instanceB = defB({ inStr: instanceA.outputs.outStr });
-  // $ExpectType InputPorts<ExtractPortConfigs<{ inStr: InputPort<{ type: "string"; }>; }>>
+  // $ExpectType { inStr: InputPort<string>; }
   instanceB.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instanceB.inputs.inStr;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{ outNum: OutputPort<{ type: "number"; }>; }>>
+  // $ExpectType { outNum: OutputPort<number>; }
   instanceB.outputs;
-  // $ExpectType OutputPort<{ type: "number"; }>
+  // $ExpectType OutputPort<number>
   instanceB.outputs.outNum;
 });
 

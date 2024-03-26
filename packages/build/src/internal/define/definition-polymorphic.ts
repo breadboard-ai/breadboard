@@ -11,7 +11,10 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 import type { StrictNodeHandler } from "../common/compatibility.js";
-import type { ValueOrOutputPort } from "../common/port.js";
+import type {
+  ExtractPortTypesFromConfigs,
+  ValueOrOutputPort,
+} from "../common/port.js";
 import type { OutputPorts } from "../common/port.js";
 import type { InputPorts } from "../common/port.js";
 import {
@@ -27,6 +30,7 @@ import {
 import type { ConvertBreadboardType } from "../type-system/type.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
 import type { JSONSchema4 } from "json-schema";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 
 /**
  * Define a Breadboard node type where some or all of its input and/or output
@@ -251,7 +255,8 @@ class PolymorphicNodeInstance<
   DYNAMIC_INPUTS extends PortConfig,
   STATIC_OUTPUTS extends PortConfigMap,
   VALUES extends Record<string, unknown>,
-> {
+> implements GenericBreadboardNodeInstance
+{
   readonly type: string;
   readonly inputs: InputPorts<STATIC_INPUTS>;
   readonly outputs: OutputPorts<STATIC_OUTPUTS>;
@@ -269,39 +274,34 @@ class PolymorphicNodeInstance<
       ...Object.entries(staticInputs).map(([name, config]) => [
         name,
         // TODO(aomarks) Can we remove this `!`?
-        new InputPort(config, name, this, values[name]!),
+        new InputPort(config.type, name, this, values[name]!),
       ]),
       ...Object.entries(values)
         .filter(([name]) => staticInputs[name] === undefined)
         .map(([name, value]) => [
           name,
-          new InputPort(
-            dynamicInputs,
-            name,
-            this,
-            // Cast needed because filter() isn't smart enough to narrow the
-            // array type.
-            value as ValueOrOutputPort<DYNAMIC_INPUTS>
-          ),
+          new InputPort(dynamicInputs.type, name, this, value),
         ]),
     ]) as InputPorts<STATIC_INPUTS>;
     this.outputs = Object.fromEntries(
       Object.entries(staticOutputs).map(([portName, portConfig]) => [
         portName,
-        new OutputPort(portConfig, portName, this),
+        new OutputPort(portConfig.type, portName, this),
       ])
     ) as OutputPorts<STATIC_OUTPUTS>;
   }
 }
 
 type PolymorphicInstantiateValues<
-  STATIC_INPUTS extends PortConfigMap,
-  DYNAMIC_INPUTS extends PortConfig,
+  STATIC_INPUT_CONFIGS extends PortConfigMap,
+  DYNAMIC_INPUT_CONFIG extends PortConfig,
   VALUES extends Record<string, unknown>,
-> = ValuesOrOutputPorts<STATIC_INPUTS> & {
-  [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof STATIC_INPUTS
-    ? ValueOrOutputPort<STATIC_INPUTS[PORT_NAME]>
-    : ValueOrOutputPort<DYNAMIC_INPUTS>;
+> = ValuesOrOutputPorts<ExtractPortTypesFromConfigs<STATIC_INPUT_CONFIGS>> & {
+  [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof STATIC_INPUT_CONFIGS
+    ? ValueOrOutputPort<
+        ConvertBreadboardType<STATIC_INPUT_CONFIGS[PORT_NAME]["type"]>
+      >
+    : ValueOrOutputPort<ConvertBreadboardType<DYNAMIC_INPUT_CONFIG["type"]>>;
 };
 
 export type PolymorphicInvokeFunction<
