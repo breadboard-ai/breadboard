@@ -70,7 +70,6 @@ export const describeInput = (
     ),
     schema,
   ]);
-  console.log("🍊 outputSchema", outputSchema);
   return { inputSchema, outputSchema };
 };
 
