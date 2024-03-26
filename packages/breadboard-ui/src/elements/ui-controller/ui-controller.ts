@@ -273,7 +273,6 @@ export class UI extends LitElement {
           : nothing}
       >
         <bb-activity-log
-          .loadInfo=${this.loadInfo}
           .run=${this.run}
           .events=${events}
           .eventPosition=${eventPosition}
