@@ -249,6 +249,20 @@ console.log("Error", event.error);
 console.log("Occurred on", event.start);
 ```
 
+## Querying run for events by id
+
+Every event has a unique identifier that can be used to find it within a run:
+
+```ts
+// Returns a string identifier that is unique for the event within a run.
+const id = event.id;
+
+// Returns an `InspectableRunEvent` instance that corresponds to the id.
+const foundEvent = run.getEventById(id);
+
+console.assert(event === foundEvent, "Will return the same event.");
+```
+
 ## Serializing and loading runs
 
 Runs can be serialized into a common format. This can be used to save runs into

@@ -16,12 +16,7 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import {
-  GraphLoader,
-  InspectableRun,
-  InspectableRunEvent,
-  Kit,
-} from "@google-labs/breadboard";
+import { GraphLoader, InspectableRun, Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
@@ -294,48 +289,7 @@ export class UI extends LitElement {
             evt.stopImmediatePropagation();
 
             const id = top.dataset.messageId;
-            const path: string[] = id.split("-");
-            // The path will be something like e-2-3-1 so we need to shift the
-            // 'e' entry from the front.
-            let accumulatedPath = path.shift();
-
-            let eventsToSearch = events;
-            let event: InspectableRunEvent | null = null;
-            do {
-              const entryId = path.shift();
-              if (!entryId) {
-                break;
-              }
-
-              const entry = parseInt(entryId, 10);
-              if (Number.isNaN(entry)) {
-                break;
-              }
-
-              accumulatedPath += `-${entryId}`;
-
-              const eventFromId =
-                eventsToSearch.find((evt) => evt.id === accumulatedPath) ||
-                null;
-              if (!eventFromId || eventFromId.type !== "node") {
-                break;
-              }
-
-              // If this is the last item in the path, then we've found the
-              // event. Otherwise we're going to have go looking in its run
-              // events list. In the case where those are missing, we set the
-              // event to null and leave the lookup.
-              if (path.length === 0) {
-                event = eventFromId;
-              } else {
-                if (eventFromId.runs.length > 0) {
-                  eventsToSearch = eventFromId.runs[0].events;
-                } else {
-                  event = null;
-                  break;
-                }
-              }
-            } while (path.length);
+            const event = this.run?.getEventById(id);
 
             if (!event) {
               // TODO: Offer the user more information.

@@ -9,6 +9,7 @@ import { GraphDescriptor, NodeDescriptor } from "../types.js";
 import { EventManager } from "./event-manager.js";
 import { replaceSecrets } from "./serializer.js";
 import {
+  EventIdentifier,
   GraphUUID,
   InspectableGraphStore,
   InspectableRun,
@@ -196,6 +197,10 @@ export class Run implements InspectableRun {
 
   serialize(options?: RunSerializationOptions): SerializedRun {
     return this.#events.serializer().serialize(options || {});
+  }
+
+  getEventById(id: EventIdentifier): InspectableRunEvent | null {
+    return this.#events.getEventById(id);
   }
 
   currentNode(position: number) {

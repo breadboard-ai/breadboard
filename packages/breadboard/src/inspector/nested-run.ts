@@ -31,6 +31,10 @@ export class NestedRun implements InspectableRun {
     this.events = entry.events;
   }
 
+  getEventById(): InspectableRunEvent | null {
+    return null;
+  }
+
   currentNode(): string {
     return "";
   }
