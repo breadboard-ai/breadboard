@@ -390,16 +390,7 @@ export class Main extends LitElement {
         return;
       }
 
-      let startingURL;
-      for (const provider of this.#providers) {
-        startingURL = provider.startingURL();
-        if (startingURL) {
-          this.#onStartBoard(
-            new BreadboardUI.Events.StartEvent(startingURL.href)
-          );
-          break;
-        }
-      }
+      this.#startFromProviderDefault();
     });
   }
 
@@ -414,6 +405,19 @@ export class Main extends LitElement {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  #startFromProviderDefault() {
+    let startingURL;
+    for (const provider of this.#providers) {
+      startingURL = provider.startingURL();
+      if (startingURL) {
+        this.#onStartBoard(
+          new BreadboardUI.Events.StartEvent(startingURL.href)
+        );
+        break;
+      }
+    }
   }
 
   #checkForPossibleEmbed() {
@@ -1102,14 +1106,6 @@ export class Main extends LitElement {
             return;
           }
 
-          // TODO: Improve handling of this case.
-          if (evt.isActive) {
-            this.url = null;
-            this.descriptor = null;
-            this.loadInfo = null;
-            this.#setUrlParam("board", null);
-          }
-
           const provider = this.#getProviderByName(evt.providerName);
           if (!provider) {
             this.toast(
@@ -1125,6 +1121,10 @@ export class Main extends LitElement {
               error || "Unexpected error",
               BreadboardUI.Events.ToastType.ERROR
             );
+          }
+
+          if (evt.isActive) {
+            this.#startFromProviderDefault();
           }
 
           // Trigger a re-render.
