@@ -6,12 +6,7 @@
 
 import { test } from "node:test";
 import { defineNodeType, anyOf } from "@breadboard-ai/build";
-import {
-  board,
-  type BoardDefinition,
-  type BoardInputPorts,
-  type BoardOutputPorts,
-} from "../internal/board/board.js";
+import { board } from "../internal/board/board.js";
 import { serialize } from "../internal/board/serialize.js";
 import assert from "node:assert/strict";
 import type { GraphDescriptor } from "@google-labs/breadboard";
@@ -104,57 +99,68 @@ test("serialize", () => {
     backwards: backwards.outputs.backwards,
   });
   const myBoard = board({}, { result: prompt.outputs.result });
-  assert.deepEqual(
-    serialize(
-      // TODO(aomarks) Should not need this cast
-      myBoard as object as BoardDefinition<BoardInputPorts, BoardOutputPorts>
-    ),
-    {
-      nodes: [
-        {
-          id: "input-0",
-          type: "input",
-          configuration: {
-            // TODO(aomarks) Schema
-          },
+  assert.deepEqual(serialize(myBoard), {
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          // TODO(aomarks) Schema
         },
-        {
-          id: "output-0",
-          type: "output",
-          configuration: {
-            // TODO(aomarks) Schema
-          },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          // TODO(aomarks) Schema
         },
-        {
-          id: "templater-0",
-          type: "templater",
-          configuration: {
-            template: "The word {{forwards}} is {{backwards}} in reverse.",
-            forwards: "potato",
-          },
+      },
+      {
+        id: "reverseString-0",
+        type: "reverseString",
+        configuration: {
+          forwards: "potato",
         },
-        {
-          id: "reverseString-0",
-          type: "reverseString",
-          configuration: {
-            forwards: "potato",
-          },
+      },
+      {
+        id: "templater-0",
+        type: "templater",
+        configuration: {
+          template: "The word {{forwards}} is {{backwards}} in reverse.",
+          forwards: "potato",
         },
-      ],
-      edges: [
-        {
-          from: "reverseString-0",
-          out: "backwards",
-          to: "templater-0",
-          in: "backwards",
-        },
-        {
-          from: "templater-0",
-          out: "result",
-          to: "output-0",
-          in: "result",
-        },
-      ],
-    } satisfies GraphDescriptor
+      },
+    ],
+    edges: [
+      {
+        from: "reverseString-0",
+        out: "backwards",
+        to: "templater-0",
+        in: "backwards",
+      },
+      {
+        from: "templater-0",
+        out: "result",
+        to: "output-0",
+        in: "result",
+      },
+    ],
+  } satisfies GraphDescriptor);
+});
+
+test("unreachable output", () => {
+  const backwards = reverseString({ forwards: "potato" });
+  const prompt = templater({
+    template: "The word {{forwards}} is {{backwards}} in reverse.",
+    forwards: "potato",
+    backwards: backwards.outputs.backwards,
+  });
+  const myBoard = board(
+    { unrelated: reverseString({ forwards: "foo" }).inputs.forwards },
+    { result: prompt.outputs.result }
+  );
+  assert.throws(
+    () => serialize(myBoard),
+    /Board input "unrelated" is not reachable from any of its outputs/
   );
 });
