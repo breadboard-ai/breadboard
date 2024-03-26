@@ -311,11 +311,11 @@ export class FileSystemGraphProvider implements GraphProvider {
       }
 
       entries.push([
-        name,
+        name.toLocaleLowerCase(),
         {
           url: this.createURL(
             encodeURIComponent(handle.name.toLocaleLowerCase()),
-            encodeURIComponent(entry.name.toLocaleLowerCase())
+            encodeURIComponent(name.toLocaleLowerCase())
           ),
           handle: entry,
         },
