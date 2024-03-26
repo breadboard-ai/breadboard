@@ -463,7 +463,7 @@ export class NodeInfo extends LitElement {
                   switch (type) {
                     case "object": {
                       // Only show the schema editor for inputs & outputs
-                      if (port.schema.behavior?.includes("json-schema")) {
+                      if (port.schema.behavior?.includes("ports-spec")) {
                         input = html`<bb-schema-editor
                           .editable=${this.editable}
                           .schema=${value}

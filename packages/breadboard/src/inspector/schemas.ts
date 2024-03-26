@@ -13,7 +13,10 @@ export enum EdgeType {
   Out,
 }
 
-const SCHEMA_SCHEMA: Schema = { type: "object", behavior: ["json-schema"] };
+const SCHEMA_SCHEMA: Schema = {
+  type: "object",
+  behavior: ["json-schema", "ports-spec"],
+};
 
 export const DEFAULT_SCHEMA = { type: "string" };
 
@@ -60,7 +63,11 @@ export const describeInput = (
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
   const outputSchema = combineSchemas([
-    edgesToSchema(EdgeType.Out, options.outgoing, true),
+    edgesToSchema(
+      EdgeType.Out,
+      options.outgoing?.filter((edge) => edge.out !== "*"),
+      true
+    ),
     schema,
   ]);
   return { inputSchema, outputSchema };
