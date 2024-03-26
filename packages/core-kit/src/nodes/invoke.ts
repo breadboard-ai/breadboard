@@ -114,12 +114,14 @@ const describe = async (
       inputBuilder.addProperties(inputSchema?.properties);
       inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
       outputBuilder.addProperties(outputSchema?.properties);
+    } else {
+      outputBuilder.setAdditionalProperties(true);
+      inputBuilder.setAdditionalProperties(true);
     }
   }
-  return {
-    inputSchema: inputBuilder.build(),
-    outputSchema: outputBuilder.build(),
-  };
+  const inputSchema = inputBuilder.build();
+  const outputSchema = outputBuilder.build();
+  return { inputSchema, outputSchema };
 };
 
 export default {

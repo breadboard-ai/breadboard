@@ -62,14 +62,21 @@ export const describeInput = (
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
+  let hasStarEdge = false;
+  const outgoing = options.outgoing?.filter((edge) => {
+    const isStarEdge = edge.out === "*";
+    if (isStarEdge) {
+      hasStarEdge = true;
+    }
+    return !isStarEdge;
+  });
   const outputSchema = combineSchemas([
-    edgesToSchema(
-      EdgeType.Out,
-      options.outgoing?.filter((edge) => edge.out !== "*"),
-      true
-    ),
+    edgesToSchema(EdgeType.Out, outgoing, true),
     schema,
   ]);
+  if (hasStarEdge) {
+    outputSchema.additionalProperties = true;
+  }
   return { inputSchema, outputSchema };
 };
 
@@ -85,14 +92,19 @@ export const describeOutput = (
   const outputSchema = new SchemaBuilder()
     .setAdditionalProperties(false)
     .build();
-  const inputSchemaBuilder = new SchemaBuilder()
-    .addProperty("schema", SCHEMA_SCHEMA)
-    .setAdditionalProperties(true);
+  const inputSchemaBuilder = new SchemaBuilder().addProperty(
+    "schema",
+    SCHEMA_SCHEMA
+  );
   const inputSchema = combineSchemas([
     inputSchemaBuilder
       .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
       .build(),
     schema,
   ]);
+  // If the output has star edge incoming, make sure to communicate that
+  // this output can have many actual ports: set additionalProperties to true.
+  const hasStarEdge = !!options.incoming?.find((edge) => edge.out === "*");
+  if (hasStarEdge) inputSchema.additionalProperties = true;
   return { inputSchema, outputSchema };
 };
