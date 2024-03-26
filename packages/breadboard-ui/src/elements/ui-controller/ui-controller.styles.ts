@@ -235,4 +235,33 @@ export const styles = css`
   #details.active {
     display: block;
   }
+
+  .failed-to-load {
+    background: var(--bb-neutral-100);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .failed-to-load h1 {
+    margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    font-size: var(--bb-title-large);
+    font-weight: 500;
+    color: var(--bb-neutral-800);
+  }
+
+  .failed-to-load p {
+    margin: 0;
+    font-size: var(--bb-label-medium);
+    font-weight: 400;
+    color: var(--bb-neutral-500);
+  }
+
+  .failed-to-load h1,
+  .failed-to-load p {
+    width: 80vw;
+    max-width: 320px;
+    text-align: center;
+  }
 `;

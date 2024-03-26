@@ -43,7 +43,6 @@ const getBoardInfo = async (
   const base = new URL(window.location.href);
   const graph = await loader.load(url, { base });
   if (!graph) {
-    // TODO: Better error handling, maybe a toast?
     throw new Error(`Unable to load graph: ${url}`);
   }
   const runner = await BoardRunner.fromGraphDescriptor(graph);
@@ -125,6 +124,7 @@ export class Main extends LitElement {
   #providers: GraphProvider[];
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #failedGraphLoad = false;
 
   static styles = css`
     * {
@@ -249,6 +249,20 @@ export class Main extends LitElement {
 
     #new-board:active {
       color: rgb(90, 64, 119);
+    }
+
+    #save-board[disabled],
+    #get-log[disabled],
+    #get-board[disabled],
+    #toggle-preview[disabled],
+    #save-board[disabled]:hover,
+    #get-log[disabled]:hover,
+    #get-board[disabled]:hover,
+    #toggle-preview[disabled]:hover {
+      opacity: 0.5;
+      background-color: rgba(0, 0, 0, 0);
+      pointer-events: none;
+      cursor: auto;
     }
 
     bb-board-list {
@@ -491,6 +505,7 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#failedGraphLoad = false;
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
@@ -498,6 +513,7 @@ export class Main extends LitElement {
       } catch (err) {
         this.url = null;
         this.descriptor = null;
+        this.#failedGraphLoad = true;
       }
     } else if (this.descriptor) {
       this.loadInfo = await getBoardFromDescriptor(
@@ -651,13 +667,13 @@ export class Main extends LitElement {
       case MODE.BUILD: {
         content = html` <bb-ui-controller
           ${ref(this.#uiRef)}
-          .url=${this.url}
           .loadInfo=${this.loadInfo}
           .run=${currentRun}
           .kits=${this.kits}
           .loader=${this.#loader}
           .status=${this.status}
           .boardId=${this.#boardId}
+          .failedToLoad=${this.#failedGraphLoad}
           @breadboardfiledrop=${async (
             evt: BreadboardUI.Events.FileDropEvent
           ) => {
@@ -678,10 +694,6 @@ export class Main extends LitElement {
               !this.loadInfo?.graphDescriptor ||
               !this.loadInfo.graphDescriptor.url
             ) {
-              console.log(
-                "No graph descriptor url or something",
-                this.loadInfo
-              );
               return;
             }
 
@@ -1015,7 +1027,7 @@ export class Main extends LitElement {
             @click=${() => {
               this.showOverlay = true;
             }}
-            ?disabled=${!this.loadInfo}
+            ?disabled=${this.loadInfo === null}
             id="edit-board-info"
             title="Edit Board Information"
           >
@@ -1023,13 +1035,18 @@ export class Main extends LitElement {
           </button>
         </h1>
         ${saveButton}
-        <a id="get-board" title="Export Board BGL" @click=${this.#getBoardJson}
+        <a
+          id="get-board"
+          title="Export Board BGL"
+          ?disabled=${this.loadInfo === null}
+          @click=${this.#getBoardJson}
           >Export</a
         >
         <button
           class=${classMap({ active: this.mode === MODE.PREVIEW })}
           id="toggle-preview"
           title="Toggle Board Preview"
+          ?disabled=${this.loadInfo === null}
           @click=${async () => {
             await this.#confirmSaveWithUserFirstIfNeeded();
 
