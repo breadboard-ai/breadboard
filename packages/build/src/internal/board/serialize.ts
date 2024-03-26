@@ -22,9 +22,13 @@ import { isOutputPortReference, OutputPortGetter } from "../common/port.js";
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
  * can be executed.
  */
-export function serialize(
-  board: BoardDefinition<BoardInputPorts, BoardOutputPorts>
-): GraphDescriptor {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function serialize(board_: BoardDefinition<any, any>): GraphDescriptor {
+  // TODO(aomarks) Fix this weirdness. Something about the type system for
+  // boards doesn't allow some supposedly legitimate paramterizations of
+  // BoardDefinition to be passed to BoardDefinition<BoardInputPorts,
+  // BoardInputPorts>, even though that should be the fully generic form.
+  const board = board_ as BoardDefinition<BoardInputPorts, BoardOutputPorts>;
   const nodes = new Map<object, NodeDescriptor>();
   // Note this is a slightly stricter type than Edge from GraphDescriptor, since
   // ports can't be undefined, and that simplifies this implementation.
@@ -33,7 +37,12 @@ export function serialize(
 
   const output = addNode({ type: "output", inputs: {}, outputs: {} });
   for (const [name, port] of Object.entries(board.outputs)) {
-    addEdge(addNode(port.node), port.name, output, name);
+    addEdge(
+      addNode(port[OutputPortGetter].node),
+      port[OutputPortGetter].name,
+      output,
+      name
+    );
   }
 
   // TODO(aomarks) We might actually want each input/output to be its own
