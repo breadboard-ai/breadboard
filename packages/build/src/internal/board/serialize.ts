@@ -30,18 +30,31 @@ export function serialize(
   const edges: Edge[] = [];
   const typeCounts = new Map<string, number>();
 
+  const output = addNode({ type: "output", inputs: {}, outputs: {} });
+  for (const [name, port] of Object.entries(board.outputs)) {
+    addEdge(addNode(port.node), port.name, output, name);
+  }
+
   // TODO(aomarks) We might actually want each input/output to be its own
   // input/output node, but then we should add the ability to create input
   // "sets" or something, for when you actually *do* need to gate until all
   // inputs/outputs are fulfilled.
   const input = addNode({ type: "input", inputs: {}, outputs: {} });
+  const errors = [];
   for (const [name, port] of Object.entries(board.inputs)) {
-    addEdge(input, name, addNode(port.node), port.name);
+    if (nodes.has(port.node)) {
+      addEdge(input, name, addNode(port.node), port.name);
+    } else {
+      errors.push(
+        `Board input "${name}" is not reachable from any of its outputs.`
+      );
+    }
   }
 
-  const output = addNode({ type: "output", inputs: {}, outputs: {} });
-  for (const [name, port] of Object.entries(board.outputs)) {
-    addEdge(addNode(port.node), port.name, output, name);
+  if (errors.length > 0) {
+    // TODO(aomarks) Refactor this to a Result<> return, because these errors are
+    // expected as part of the normal course of operation.
+    throw new Error(`Error serializing board:\n\n${errors.join("\n\n")}`);
   }
 
   return {

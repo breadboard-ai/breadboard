@@ -158,3 +158,20 @@ test("serialize", () => {
     } satisfies GraphDescriptor
   );
 });
+
+test("unreachable output", () => {
+  const backwards = reverseString({ forwards: "potato" });
+  const prompt = templater({
+    template: "The word {{forwards}} is {{backwards}} in reverse.",
+    forwards: "potato",
+    backwards: backwards.outputs.backwards,
+  });
+  const myBoard = board(
+    { unrelated: reverseString({ forwards: "foo" }).inputs.forwards },
+    { result: prompt.outputs.result }
+  );
+  assert.throws(
+    () => serialize(myBoard),
+    /Board input "unrelated" is not reachable from any of its outputs/
+  );
+});
