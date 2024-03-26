@@ -579,6 +579,9 @@ export type InspectableRunSecretEvent = {
   end: number | null;
 };
 
+/**
+ * A unique identifier for an `InspectableRunEvent` instance.
+ */
 export type EventIdentifier = string;
 
 /**
@@ -619,6 +622,11 @@ export type InspectableRun = {
    * serialization of this run is not supported.
    */
   serialize?(options?: RunSerializationOptions): SerializedRun;
+  /**
+   * Given an `EventIdentifier`, returns an `InspectableRunEvent` instance or
+   * null if not found.
+   */
+  getEventById(id: EventIdentifier): InspectableRunEvent | null;
   /**
    * @deprecated Use `events` instead.
    */

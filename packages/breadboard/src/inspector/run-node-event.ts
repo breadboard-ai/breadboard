@@ -20,6 +20,10 @@ export const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
 };
 
+export const entryIdFromEventId = (eventId?: string): string | null => {
+  return eventId?.startsWith("e-") ? eventId.substring(2) : null;
+};
+
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
   descriptor: NodeDescriptor;

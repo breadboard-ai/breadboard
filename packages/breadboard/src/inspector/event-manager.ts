@@ -20,10 +20,16 @@ import {
   PathRegistry,
   SECRET_PATH,
   idFromPath,
+  pathFromId,
 } from "./path-registry.js";
-import { RunNodeEvent, eventIdFromEntryId } from "./run-node-event.js";
+import {
+  RunNodeEvent,
+  entryIdFromEventId,
+  eventIdFromEntryId,
+} from "./run-node-event.js";
 import { RunSerializer } from "./serializer.js";
 import {
+  EventIdentifier,
   InspectableGraphStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
@@ -247,5 +253,13 @@ export class EventManager {
 
   serializer() {
     return this.#serializer;
+  }
+
+  getEventById(id: EventIdentifier): InspectableRunEvent | null {
+    const entryId = entryIdFromEventId(id);
+    if (!entryId) return null;
+    const path = pathFromId(entryId);
+    const entry = this.#pathRegistry.find(path);
+    return entry?.event || null;
   }
 }
