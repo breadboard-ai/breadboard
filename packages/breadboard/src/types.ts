@@ -81,6 +81,11 @@ export type BehaviorSchema =
    */
   | "json-schema"
   /**
+   * Indicates that the input or output port represents a JSON schema that
+   * describes an input or output port.
+   */
+  | "ports-spec"
+  /**
    * Indicates that the input or output port represents an image. The image can
    * be a URL or a base64 encoded image.
    */
