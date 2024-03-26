@@ -6,7 +6,7 @@
 
 import {
   InputPort,
-  OutputPort,
+  type OutputPortReference,
   type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
@@ -39,12 +39,9 @@ import type { JsonSerializable } from "../type-system/type.js";
  * board.
  */
 export function board<
-  INPUT_PORTS extends BoardInputPorts,
-  OUTPUT_PORTS extends BoardOutputPorts,
->(
-  inputs: INPUT_PORTS,
-  outputs: OUTPUT_PORTS
-): BoardDefinition<INPUT_PORTS, OUTPUT_PORTS> {
+  IPORTS extends BoardInputPorts,
+  OPORTS extends BoardOutputPorts,
+>(inputs: IPORTS, outputs: OPORTS): BoardDefinition<IPORTS, OPORTS> {
   const def = new BoardDefinitionImpl(inputs, outputs);
   return Object.assign(def.instantiate.bind(def), {
     inputs,
@@ -52,29 +49,27 @@ export function board<
   });
 }
 
+export type BoardInputPorts = Record<string, InputPort<JsonSerializable>>;
+
+export type BoardOutputPorts = Record<
+  string,
+  OutputPortReference<JsonSerializable>
+>;
+
 export type BoardDefinition<
-  INPUT_PORTS extends BoardInputPorts,
-  OUTPUT_PORTS extends BoardOutputPorts,
-> = BoardInstantiateFunction<INPUT_PORTS, OUTPUT_PORTS> & {
-  readonly inputs: INPUT_PORTS;
-  readonly outputs: OUTPUT_PORTS;
+  IPORTS extends BoardInputPorts,
+  OPORTS extends BoardOutputPorts,
+> = BoardInstantiateFunction<IPORTS, OPORTS> & {
+  readonly inputs: IPORTS;
+  readonly outputs: OPORTS;
 };
 
 type BoardInstantiateFunction<
-  INPUT_PORTS extends BoardInputPorts,
-  OUTPUT_PORTS extends BoardOutputPorts,
-> = <VALUES extends Record<string, unknown>>(
-  values: BoardInputValues<INPUT_PORTS, VALUES>
-) => BoardInstance<INPUT_PORTS, OUTPUT_PORTS>;
-
-type BoardInputValues<
-  INPUT_PORTS extends BoardInputPorts,
-  INPUT_VALUES extends Record<string, unknown>,
-> = ValuesOrOutputPorts<ExtractPortTypes<INPUT_PORTS>> & {
-  [NAME in keyof INPUT_VALUES]: NAME extends keyof INPUT_PORTS
-    ? ValuesOrOutputPorts<ExtractPortTypes<INPUT_PORTS>>[NAME]
-    : never;
-};
+  IPORTS extends BoardInputPorts,
+  OPORTS extends BoardOutputPorts,
+> = (
+  values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
+) => BoardInstance<IPORTS, OPORTS>;
 
 class BoardDefinitionImpl<
   IPORTS extends BoardInputPorts,
@@ -88,26 +83,26 @@ class BoardDefinitionImpl<
     this.#outputs = outputs;
   }
 
-  instantiate<VALUES extends Record<string, unknown>>(
-    values: BoardInputValues<IPORTS, VALUES>
+  instantiate(
+    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
   ): BoardInstance<IPORTS, OPORTS> {
     return new BoardInstance(this.#inputs, this.#outputs, values);
   }
 }
 
 class BoardInstance<
-  INPUT_PORTS extends BoardInputPorts,
-  OUTPUT_PORTS extends BoardOutputPorts,
+  IPORTS extends BoardInputPorts,
+  OPORTS extends BoardOutputPorts,
 > {
-  readonly inputs: INPUT_PORTS;
-  readonly outputs: OUTPUT_PORTS;
+  readonly inputs: IPORTS;
+  readonly outputs: OPORTS;
   // TODO(aomarks) This should get used somewhere.
-  readonly #values: ValuesOrOutputPorts<ExtractPortTypes<INPUT_PORTS>>;
+  readonly #values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>;
 
   constructor(
-    inputs: INPUT_PORTS,
-    outputs: OUTPUT_PORTS,
-    values: ValuesOrOutputPorts<ExtractPortTypes<INPUT_PORTS>>
+    inputs: IPORTS,
+    outputs: OPORTS,
+    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
   ) {
     this.inputs = inputs;
     this.outputs = outputs;
@@ -118,10 +113,7 @@ class BoardInstance<
 type ExtractPortTypes<PORTS extends BoardInputPorts | BoardOutputPorts> = {
   [PORT_NAME in keyof PORTS]: PORTS[PORT_NAME] extends
     | InputPort<infer TYPE>
-    | OutputPort<infer TYPE>
+    | OutputPortReference<infer TYPE>
     ? TYPE
     : never;
 };
-
-export type BoardInputPorts = Record<string, InputPort<JsonSerializable>>;
-export type BoardOutputPorts = Record<string, OutputPort<JsonSerializable>>;
