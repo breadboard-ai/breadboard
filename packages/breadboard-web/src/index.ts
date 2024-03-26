@@ -109,7 +109,6 @@ export class Main extends LitElement {
   providerOps = 0;
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
-  #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #lastBoardId = 0;
