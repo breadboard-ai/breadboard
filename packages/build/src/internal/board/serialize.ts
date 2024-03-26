@@ -16,8 +16,8 @@ import type {
   BoardInputPorts,
   BoardOutputPorts,
 } from "./board.js";
-import type { GenericBreadboardNodeInstance } from "./node.js";
-import { isOutputPortReference, OutputPortGetter } from "./port.js";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
+import { isOutputPortReference, OutputPortGetter } from "../common/port.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it

@@ -5,14 +5,14 @@
  */
 
 import type { JSONSchema4 } from "json-schema";
-import type { PortConfigMap } from "./port.js";
-import { toJSONSchema } from "./type-system/type.js";
+import type { PortConfigMap } from "../common/port.js";
+import { toJSONSchema } from "../type-system/type.js";
 
-export function shapeToJSONSchema(shape: PortConfigMap): JSONSchema4 {
+export function portConfigMapToJSONSchema(config: PortConfigMap): JSONSchema4 {
   return {
     type: "object",
     properties: Object.fromEntries(
-      [...Object.entries(shape)].map(([name, { description, type }]) => {
+      [...Object.entries(config)].map(([name, { description, type }]) => {
         const schema = toJSONSchema(type);
         schema.title = name;
         if (description !== undefined) {
@@ -21,6 +21,6 @@ export function shapeToJSONSchema(shape: PortConfigMap): JSONSchema4 {
         return [name, schema];
       })
     ),
-    required: [...Object.keys(shape)],
+    required: [...Object.keys(config)],
   };
 }

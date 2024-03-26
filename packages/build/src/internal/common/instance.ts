@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PortConfig, InputPort, OutputPortReference } from "./port.js";
+import type { InputPort, OutputPortReference, PortConfig } from "./port.js";
 
 export interface BreadboardNodeInstance<
   INPUT_PORTS extends Record<string, InputPort<PortConfig>>,

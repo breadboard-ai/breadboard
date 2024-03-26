@@ -10,8 +10,10 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
-import type { StrictNodeHandler, ValueOrOutputPort } from "./definition.js";
-import type { InputPorts, OutputPorts } from "./instance.js";
+import type { StrictNodeHandler } from "../common/compatibility.js";
+import type { ValueOrOutputPort } from "../common/port.js";
+import type { OutputPorts } from "../common/port.js";
+import type { InputPorts } from "../common/port.js";
 import {
   InputPort,
   OutputPort,
@@ -21,9 +23,9 @@ import {
   type ConcreteValues,
   type PrimaryOutputPort,
   type PortConfig,
-} from "./port.js";
-import type { ConvertBreadboardType } from "./type-system/type.js";
-import { shapeToJSONSchema } from "./json-schema.js";
+} from "../common/port.js";
+import type { ConvertBreadboardType } from "../type-system/type.js";
+import { portConfigMapToJSONSchema } from "./json-schema.js";
 import type { JSONSchema4 } from "json-schema";
 
 /**
@@ -137,8 +139,8 @@ class PolymorphicNodeDefinition<
     this.#invoke = invoke;
     this.#describe = describe;
     this.#staticDescription = {
-      inputSchema: shapeToJSONSchema(this.#staticInputs),
-      outputSchema: shapeToJSONSchema(this.#staticOutputs),
+      inputSchema: portConfigMapToJSONSchema(this.#staticInputs),
+      outputSchema: portConfigMapToJSONSchema(this.#staticOutputs),
     };
     this.#dynamicInputs = dynamicInputs;
   }
@@ -181,7 +183,7 @@ class PolymorphicNodeDefinition<
       runtimeInputValues ?? {}
     );
     const dynamicSchema = await this.#describe(staticValues);
-    const dynamicInputs = shapeToJSONSchema(dynamicSchema.inputs);
+    const dynamicInputs = portConfigMapToJSONSchema(dynamicSchema.inputs);
     const { inputSchema: staticInputs, outputSchema: staticOutputs } =
       this.#staticDescription;
     return {
@@ -320,7 +322,7 @@ type DynamicInvokeParams<
 
 type InvokeReturn<Ports extends PortConfigMap> = ConcreteValues<Ports>;
 
-export type PolymorphicInstantiateFunction<
+type PolymorphicInstantiateFunction<
   STATIC_INPUTS extends PortConfigMap,
   DYNAMIC_INPUTS extends PortConfig,
   STATIC_OUTPUTS extends PortConfigMap,

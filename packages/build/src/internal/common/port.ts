@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ValueOrOutputPort } from "./definition.js";
-import type { GenericBreadboardNodeInstance } from "./node.js";
+import type { GenericBreadboardNodeInstance } from "./instance.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
-} from "./type-system/type.js";
+} from "../type-system/type.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 
@@ -17,7 +16,7 @@ export type PortConfig = StaticPortConfig | DynamicPortConfig;
  * Configuration parameters for a static Breadboard node port. A port is static
  * if it always exists for all instances of a node type.
  */
-export interface StaticPortConfig {
+interface StaticPortConfig {
   /**
    * The {@link BreadboardType} that values sent or received on this port will
    * be required to conform to.
@@ -61,7 +60,7 @@ export interface StaticPortConfig {
  * A port is dynamic if its existence, name, type, or other metadata can be
  * different across different instances of a node type.
  */
-export interface DynamicPortConfig {
+interface DynamicPortConfig {
   /**
    * The {@link BreadboardType} that values sent or received on these ports will
    * be required to conform to.
@@ -158,12 +157,26 @@ export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
     | ConvertBreadboardType<Ports[PortName]["type"]>
     | OutputPortReference<Ports[PortName]>;
 };
+
 export type PrimaryOutputPort<O extends PortConfigMap> =
   GetPrimaryPortType<O> extends never
     ? undefined
     : OutputPort<{ type: GetPrimaryPortType<O> }>;
-export type GetPrimaryPortType<Ports extends PortConfigMap> = {
+
+type GetPrimaryPortType<Ports extends PortConfigMap> = {
   [Name in keyof Ports]: Ports[Name] extends { primary: true }
     ? Ports[Name]
     : never;
 }[keyof Ports]["type"];
+
+export type InputPorts<I extends PortConfigMap> = {
+  [PortName in keyof Omit<I, "*">]: InputPort<I[PortName]>;
+};
+
+export type OutputPorts<O extends PortConfigMap> = {
+  [PortName in keyof Omit<O, "*">]: OutputPort<O[PortName]>;
+};
+
+export type ValueOrOutputPort<CONFIG extends PortConfig> =
+  | ConvertBreadboardType<CONFIG["type"]>
+  | OutputPortReference<CONFIG>;

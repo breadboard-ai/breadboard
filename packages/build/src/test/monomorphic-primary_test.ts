@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import {
   OutputPortGetter,
   type OutputPortReference,
-} from "../internal/port.js";
+} from "../internal/common/port.js";
 
 test("monomorphic node with primary output acts like that output port", () => {
   const withPrimaryOut = defineNodeType({
