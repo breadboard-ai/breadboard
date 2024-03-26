@@ -42,6 +42,7 @@ test("simple graph description works as expected", async (t) => {
       },
     },
     outputSchema: {
+      additionalProperties: false,
       type: "object",
       properties: {
         text: { type: "string" },
@@ -68,6 +69,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       },
     } satisfies Schema,
     outputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
         text: {
@@ -78,7 +80,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
         },
       },
       required: ["text"],
-    },
+    } satisfies Schema,
   });
 });
 
@@ -100,9 +102,10 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       },
     } satisfies Schema,
     outputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {},
-    },
+    } satisfies Schema,
   });
 });
 
@@ -143,6 +146,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
         "*": { type: "string" },
@@ -174,6 +178,7 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
         schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
@@ -199,6 +204,7 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: false,
       type: "object",
       properties: {
         schema: { type: "object", behavior: ["json-schema", "ports-spec"] },

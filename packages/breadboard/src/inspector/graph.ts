@@ -14,7 +14,6 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
-  Schema,
 } from "../types.js";
 import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
@@ -163,13 +162,6 @@ class Graph implements InspectableGraphWithStore {
       )
     ).map((result) => result.outputSchema);
 
-    // The star out port will get filtered out for "input"
-    // so let's add it back here.
-    inputSchemas.push({
-      type: "object",
-      properties: { "*": { type: "object" } },
-    } as Schema);
-
     const outputSchemas = (
       await Promise.all(
         this.nodesByType("output")
@@ -178,10 +170,15 @@ class Graph implements InspectableGraphWithStore {
       )
     ).map((result) => result.inputSchema);
 
-    return {
-      inputSchema: combineSchemas(inputSchemas),
-      outputSchema: removeProperty(combineSchemas(outputSchemas), "schema"),
-    };
+    const inputSchema = combineSchemas(inputSchemas);
+    const outputSchema = removeProperty(
+      combineSchemas(outputSchemas),
+      "schema"
+    );
+
+    console.groupEnd();
+
+    return { inputSchema, outputSchema };
   }
 
   get nodeStore() {

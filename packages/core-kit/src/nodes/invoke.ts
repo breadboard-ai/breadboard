@@ -112,8 +112,10 @@ const describe = async (
       const inspectableGraph = inspect(board);
       const { inputSchema, outputSchema } = await inspectableGraph.describe();
       inputBuilder.addProperties(inputSchema?.properties);
+      inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
       inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
       outputBuilder.addProperties(outputSchema?.properties);
+      outputBuilder.setAdditionalProperties(outputSchema.additionalProperties);
     } else {
       outputBuilder.setAdditionalProperties(true);
       inputBuilder.setAdditionalProperties(true);

@@ -56,9 +56,9 @@ export class SchemaBuilder {
     return this;
   }
 
-  setAdditionalProperties(additionalProperties?: boolean) {
+  setAdditionalProperties(additionalProperties?: Schema | boolean) {
     if (additionalProperties !== undefined) {
-      this.additionalProperties = additionalProperties;
+      this.additionalProperties = !!additionalProperties;
     }
     return this;
   }
