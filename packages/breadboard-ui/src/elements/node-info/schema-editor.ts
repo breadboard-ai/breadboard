@@ -194,6 +194,15 @@ export class SchemaEditor extends LitElement {
         }
       }
 
+      const enumerations = html` <label for="${id}-enum">User choices</label>
+        <bb-array-editor
+          id="${id}-enum"
+          name="${id}-enum"
+          ?readonly=${!this.editable}
+          .items=${value.enum || []}
+          .type=${"string"}
+        ></bb-array-editor>`;
+
       return html`<details open class=${classMap({ [valueType]: true })}>
         <summary>
           <span>${value.title ?? id}</span>
@@ -250,6 +259,8 @@ export class SchemaEditor extends LitElement {
             </option>
           </select>
 
+          ${value.type === "string" ? enumerations : nothing}
+
           <label for="${id}-default">Default</label>
           ${defaultValue}
 
@@ -259,15 +270,6 @@ export class SchemaEditor extends LitElement {
             name="${id}-examples"
             ?readonly=${!this.editable}
             .items=${value.examples || []}
-            .type=${"string"}
-          ></bb-array-editor>
-
-          <label for="${id}-enum">User choices</label>
-          <bb-array-editor
-            id="${id}-enum"
-            name="${id}-enum"
-            ?readonly=${!this.editable}
-            .items=${value.enum || []}
             .type=${"string"}
           ></bb-array-editor>
 
