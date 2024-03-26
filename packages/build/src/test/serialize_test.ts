@@ -104,15 +104,20 @@ test("serialize", () => {
       {
         id: "input-0",
         type: "input",
-        configuration: {
-          // TODO(aomarks) Schema
-        },
+        configuration: {},
       },
       {
         id: "output-0",
         type: "output",
         configuration: {
-          // TODO(aomarks) Schema
+          schema: {
+            type: "object",
+            properties: {
+              result: {
+                type: "string",
+              },
+            },
+          },
         },
       },
       {
