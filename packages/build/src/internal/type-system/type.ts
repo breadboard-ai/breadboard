@@ -12,19 +12,28 @@ import type { JSONSchema4 } from "json-schema";
  */
 export type BreadboardType =
   | BasicBreadboardType
-  | AdvancedBreadboardType<unknown>;
+  | AdvancedBreadboardType<JsonSerializable>;
 
 /**
- * The basic types that can be referenced directly.
+ * The basic Breadboard types that can be written directly.
  */
 export type BasicBreadboardType = "string" | "number" | "boolean" | "unknown";
 
 /**
- * A type that's more complicated than a {@link BasicBreadboardType}.
- *
- * By implementing this interface, you are providing a function that will
- * convert you to a JSON Schema at runtime, and also to a TypeScript type at
- * compile time via {@link ConvertBreadboardType}.
+ * All Breadboard values must be JSON serializable, and this is the set of
+ * JSON serializable types.
+ */
+export type JsonSerializable =
+  | string
+  | number
+  | boolean
+  | null
+  | Array<JsonSerializable>
+  | { [K: string]: JsonSerializable };
+
+/**
+ * A type that's more complicated than a {@link BasicBreadboardType}. Directly
+ * owns a TypeScript type for compile time, and a JSON schema for run time.
  */
 export interface AdvancedBreadboardType<
   // We only need to hold onto this type parameter so that we can infer it
@@ -47,7 +56,7 @@ export type ConvertBreadboardType<BT extends BreadboardType> =
       : BT extends "boolean"
         ? boolean
         : BT extends "unknown"
-          ? unknown
+          ? JsonSerializable
           : BT extends AdvancedBreadboardType<infer TT>
             ? TT
             : never;

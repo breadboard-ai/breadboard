@@ -119,7 +119,8 @@ class MonomorphicNodeInstance<
     this.inputs = Object.fromEntries(
       Object.entries(inputs).map(([name, config]) => [
         name,
-        new InputPort(config, name, this, values[name]),
+        // TODO(aomarks) Can we remove this `!`?
+        new InputPort(config, name, this, values[name]!),
       ])
     ) as InputPorts<ISHAPE>;
     this.outputs = Object.fromEntries(
