@@ -126,17 +126,17 @@ test("serialize", () => {
           },
         },
         {
-          id: "templater-0",
-          type: "templater",
+          id: "reverseString-0",
+          type: "reverseString",
           configuration: {
-            template: "The word {{forwards}} is {{backwards}} in reverse.",
             forwards: "potato",
           },
         },
         {
-          id: "reverseString-0",
-          type: "reverseString",
+          id: "templater-0",
+          type: "templater",
           configuration: {
+            template: "The word {{forwards}} is {{backwards}} in reverse.",
             forwards: "potato",
           },
         },
