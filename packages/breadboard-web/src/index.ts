@@ -70,11 +70,6 @@ const getBoardFromDescriptor = async (
   return { title, description, version, diagram, url, graphDescriptor, nodes };
 };
 
-const enum MODE {
-  BUILD = "build",
-  PREVIEW = "preview",
-}
-
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
@@ -96,13 +91,13 @@ export class Main extends LitElement {
   runs: InspectableRun[] | null = null;
 
   @state()
-  mode = MODE.BUILD;
-
-  @state()
   embed = false;
 
   @state()
   showNav = false;
+
+  @state()
+  showPreview = false;
 
   @state()
   showOverlay = false;
@@ -114,7 +109,6 @@ export class Main extends LitElement {
   providerOps = 0;
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
-  #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #lastBoardId = 0;
@@ -320,6 +314,12 @@ export class Main extends LitElement {
       display: block;
     }
 
+    bb-overlay iframe {
+      width: 80vw;
+      height: 80vh;
+      border-radius: 8px;
+    }
+
     #embed {
       grid-column: 1/3;
       grid-row: 1/3;
@@ -349,21 +349,8 @@ export class Main extends LitElement {
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
-    const modeFromUrl = currentUrl.searchParams.get("mode");
     const embedFromUrl = currentUrl.searchParams.get("embed");
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
-
-    if (modeFromUrl) {
-      switch (modeFromUrl) {
-        case "preview":
-          this.mode = MODE.PREVIEW;
-          break;
-
-        default:
-          this.mode = MODE.BUILD;
-          break;
-      }
-    }
 
     Promise.all([
       loadKits([
@@ -495,11 +482,7 @@ export class Main extends LitElement {
     this.#checkForPossibleEmbed();
   }
 
-  protected async updated(changedProperties: Map<PropertyKey, unknown>) {
-    if (changedProperties.has("mode")) {
-      this.#setUrlParam("mode", this.mode);
-    }
-
+  protected async updated() {
     if (!this.url && !this.descriptor) {
       return;
     }
@@ -665,332 +648,7 @@ export class Main extends LitElement {
     })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
-    let content: HTMLTemplateResult | symbol = nothing;
     const currentRun = this.#runObserver?.runs()[0];
-    switch (this.mode) {
-      case MODE.BUILD: {
-        content = html` <bb-ui-controller
-          ${ref(this.#uiRef)}
-          .loadInfo=${this.loadInfo}
-          .run=${currentRun}
-          .kits=${this.kits}
-          .loader=${this.#loader}
-          .status=${this.status}
-          .boardId=${this.#boardId}
-          .failedToLoad=${this.#failedGraphLoad}
-          @breadboardfiledrop=${async (
-            evt: BreadboardUI.Events.FileDropEvent
-          ) => {
-            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
-              this.toast(
-                "Unable to update; board is already running",
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
-
-            this.#onStartBoard(
-              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
-            );
-          }}
-          @breadboardrunboard=${async () => {
-            if (
-              !this.loadInfo?.graphDescriptor ||
-              !this.loadInfo.graphDescriptor.url
-            ) {
-              return;
-            }
-
-            const runner = await BoardRunner.fromGraphDescriptor(
-              this.loadInfo.graphDescriptor
-            );
-
-            this.#runBoard(
-              run({
-                url: this.loadInfo.graphDescriptor.url,
-                runner,
-                diagnostics: true,
-                kits: this.kits,
-                loader: this.#loader,
-              })
-            );
-          }}
-          @breadboardedgechange=${(
-            evt: BreadboardUI.Events.EdgeChangeEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-              loader: this.#loader,
-            });
-
-            let editResult: Promise<EditResult>;
-            switch (evt.changeType) {
-              case "add": {
-                editResult = editableGraph.addEdge(evt.from);
-                break;
-              }
-
-              case "remove": {
-                editResult = editableGraph.removeEdge(evt.from);
-                break;
-              }
-
-              case "move": {
-                if (!evt.to) {
-                  throw new Error("Unable to move edge - no `to` provided");
-                }
-
-                editResult = editableGraph.changeEdge(evt.from, evt.to);
-                break;
-              }
-            }
-
-            editResult.then((result) => {
-              if (!result.success) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn(
-                "Unable to update node metadata; no graph descriptor"
-              );
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-
-            const { id, x, y } = evt;
-            const existingNode = loadInfo.graphDescriptor.nodes.find(
-              (node) => node.id === id
-            );
-            const metadata = existingNode?.metadata || {};
-            let visual = metadata?.visual || {};
-            if (typeof visual !== "object") {
-              visual = {};
-            }
-
-            editableGraph
-              .changeMetadata(id, {
-                ...metadata,
-                visual: { ...visual, x, y },
-              })
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-                }
-
-                this.#updateLoadInfo(editableGraph.raw());
-              });
-          }}
-          @breadboardnodemultilayout=${(
-            evt: BreadboardUI.Events.NodeMultiLayoutEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn(
-                "Unable to update node metadata; no graph descriptor"
-              );
-              return;
-            }
-
-            const graphDescriptor = loadInfo.graphDescriptor;
-            const editableGraph = edit(graphDescriptor, {
-              kits: this.kits,
-            });
-
-            Promise.all(
-              [...evt.layout.entries()].map(([id, { x, y }]) => {
-                const existingNode = graphDescriptor.nodes.find(
-                  (node) => node.id === id
-                );
-
-                const metadata = existingNode?.metadata || {};
-                let visual = metadata?.visual || {};
-                if (typeof visual !== "object") {
-                  visual = {};
-                }
-
-                return editableGraph.changeMetadata(id, {
-                  ...metadata,
-                  visual: { ...visual, x, y },
-                });
-              })
-            ).then(() => {
-              this.#updateLoadInfo(editableGraph.raw(), false);
-            });
-          }}
-          @breadboardnodecreate=${(
-            evt: BreadboardUI.Events.NodeCreateEvent
-          ) => {
-            const { id, nodeType } = evt;
-            const newNode = {
-              id,
-              type: nodeType,
-            };
-
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-            editableGraph.addNode(newNode).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to create node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardnodeupdate=${(
-            evt: BreadboardUI.Events.NodeUpdateEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-
-            editableGraph
-              .changeConfiguration(evt.id, evt.configuration)
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(
-                    "Unable to update configuration",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                }
-
-                this.#updateLoadInfo(editableGraph.raw());
-              });
-          }}
-          @breadboardnodedelete=${(
-            evt: BreadboardUI.Events.NodeDeleteEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-            editableGraph.removeNode(evt.id).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to remove node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardmessagetraversal=${() => {
-            if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
-              return;
-            }
-
-            this.status = BreadboardUI.Types.STATUS.PAUSED;
-            this.toast(
-              "Board paused",
-              "information" as BreadboardUI.Events.ToastType
-            );
-          }}
-          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            if (!this.#uiRef.value) {
-              return;
-            }
-
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
-            this.#delay = delayEvent.duration;
-          }}
-        ></bb-ui-controller>`;
-        break;
-      }
-
-      case MODE.PREVIEW: {
-        // TODO: Do this with Service Workers.
-        content = html`<button
-            id="reload"
-            @click=${() => {
-              if (!this.#previewRef.value) {
-                return;
-              }
-
-              this.#previewRef.value.src = `/preview.html?board=${this.url}`;
-            }}
-          >
-            Reload
-          </button>
-          <iframe
-            ${ref(this.#previewRef)}
-            src="/preview.html?board=${this.url}"
-          ></iframe>`;
-        break;
-      }
-
-      default: {
-        return html`Unknown mode`;
-      }
-    }
-
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.loadInfo && this.loadInfo.url) {
       try {
@@ -1047,21 +705,316 @@ export class Main extends LitElement {
           >Export</a
         >
         <button
-          class=${classMap({ active: this.mode === MODE.PREVIEW })}
+          class=${classMap({ active: this.showPreview })}
           id="toggle-preview"
           title="Toggle Board Preview"
           ?disabled=${this.loadInfo === null}
-          @click=${async () => {
-            await this.#confirmSaveWithUserFirstIfNeeded();
-
-            this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
+          @click=${() => {
+            this.showPreview = !this.showPreview;
           }}
         >
           Preview
         </button>
       </div>
-      <div id="content" ?inert=${this.showOverlay} class="${this.mode}">
-        ${cache(content)}
+      <div id="content" ?inert=${this.showOverlay} class="${this.showPreview}">
+        ${cache(
+          html`<bb-ui-controller
+            ${ref(this.#uiRef)}
+            .loadInfo=${this.loadInfo}
+            .run=${currentRun}
+            .kits=${this.kits}
+            .loader=${this.#loader}
+            .status=${this.status}
+            .boardId=${this.#boardId}
+            .failedToLoad=${this.#failedGraphLoad}
+            @breadboardfiledrop=${async (
+              evt: BreadboardUI.Events.FileDropEvent
+            ) => {
+              if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
+                this.toast(
+                  "Unable to update; board is already running",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                return;
+              }
+
+              this.#onStartBoard(
+                new BreadboardUI.Events.StartEvent(null, evt.descriptor)
+              );
+            }}
+            @breadboardrunboard=${async () => {
+              if (
+                !this.loadInfo?.graphDescriptor ||
+                !this.loadInfo.graphDescriptor.url
+              ) {
+                return;
+              }
+
+              const runner = await BoardRunner.fromGraphDescriptor(
+                this.loadInfo.graphDescriptor
+              );
+
+              this.#runBoard(
+                run({
+                  url: this.loadInfo.graphDescriptor.url,
+                  runner,
+                  diagnostics: true,
+                  kits: this.kits,
+                  loader: this.#loader,
+                })
+              );
+            }}
+            @breadboardedgechange=${(
+              evt: BreadboardUI.Events.EdgeChangeEvent
+            ) => {
+              if (!this.loadInfo) {
+                console.warn("Unable to create node; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn("Unable to create node; no graph descriptor");
+                return;
+              }
+
+              const editableGraph = edit(loadInfo.graphDescriptor, {
+                kits: this.kits,
+                loader: this.#loader,
+              });
+
+              let editResult: Promise<EditResult>;
+              switch (evt.changeType) {
+                case "add": {
+                  editResult = editableGraph.addEdge(evt.from);
+                  break;
+                }
+
+                case "remove": {
+                  editResult = editableGraph.removeEdge(evt.from);
+                  break;
+                }
+
+                case "move": {
+                  if (!evt.to) {
+                    throw new Error("Unable to move edge - no `to` provided");
+                  }
+
+                  editResult = editableGraph.changeEdge(evt.from, evt.to);
+                  break;
+                }
+              }
+
+              editResult.then((result) => {
+                if (!result.success) {
+                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+                }
+
+                this.#updateLoadInfo(editableGraph.raw());
+              });
+            }}
+            @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
+              if (!this.loadInfo) {
+                console.warn("Unable to update node metadata; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn(
+                  "Unable to update node metadata; no graph descriptor"
+                );
+                return;
+              }
+
+              const editableGraph = edit(loadInfo.graphDescriptor, {
+                kits: this.kits,
+              });
+
+              const { id, x, y } = evt;
+              const existingNode = loadInfo.graphDescriptor.nodes.find(
+                (node) => node.id === id
+              );
+              const metadata = existingNode?.metadata || {};
+              let visual = metadata?.visual || {};
+              if (typeof visual !== "object") {
+                visual = {};
+              }
+
+              editableGraph
+                .changeMetadata(id, {
+                  ...metadata,
+                  visual: { ...visual, x, y },
+                })
+                .then((result) => {
+                  if (!result.success) {
+                    this.toast(
+                      result.error,
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                  }
+
+                  this.#updateLoadInfo(editableGraph.raw());
+                });
+            }}
+            @breadboardnodemultilayout=${(
+              evt: BreadboardUI.Events.NodeMultiLayoutEvent
+            ) => {
+              if (!this.loadInfo) {
+                console.warn("Unable to update node metadata; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn(
+                  "Unable to update node metadata; no graph descriptor"
+                );
+                return;
+              }
+
+              const graphDescriptor = loadInfo.graphDescriptor;
+              const editableGraph = edit(graphDescriptor, {
+                kits: this.kits,
+              });
+
+              Promise.all(
+                [...evt.layout.entries()].map(([id, { x, y }]) => {
+                  const existingNode = graphDescriptor.nodes.find(
+                    (node) => node.id === id
+                  );
+
+                  const metadata = existingNode?.metadata || {};
+                  let visual = metadata?.visual || {};
+                  if (typeof visual !== "object") {
+                    visual = {};
+                  }
+
+                  return editableGraph.changeMetadata(id, {
+                    ...metadata,
+                    visual: { ...visual, x, y },
+                  });
+                })
+              ).then(() => {
+                this.#updateLoadInfo(editableGraph.raw(), false);
+              });
+            }}
+            @breadboardnodecreate=${(
+              evt: BreadboardUI.Events.NodeCreateEvent
+            ) => {
+              const { id, nodeType } = evt;
+              const newNode = {
+                id,
+                type: nodeType,
+              };
+
+              if (!this.loadInfo) {
+                console.warn("Unable to create node; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn("Unable to create node; no graph descriptor");
+                return;
+              }
+
+              const editableGraph = edit(loadInfo.graphDescriptor, {
+                kits: this.kits,
+              });
+              editableGraph.addNode(newNode).then((result) => {
+                if (!result.success) {
+                  this.toast(
+                    `Unable to create node: ${result.error}`,
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }
+
+                this.#updateLoadInfo(editableGraph.raw());
+              });
+            }}
+            @breadboardnodeupdate=${(
+              evt: BreadboardUI.Events.NodeUpdateEvent
+            ) => {
+              if (!this.loadInfo) {
+                console.warn("Unable to create node; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn("Unable to create node; no graph descriptor");
+                return;
+              }
+
+              const editableGraph = edit(loadInfo.graphDescriptor, {
+                kits: this.kits,
+              });
+
+              editableGraph
+                .changeConfiguration(evt.id, evt.configuration)
+                .then((result) => {
+                  if (!result.success) {
+                    this.toast(
+                      "Unable to update configuration",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                  }
+
+                  this.#updateLoadInfo(editableGraph.raw());
+                });
+            }}
+            @breadboardnodedelete=${(
+              evt: BreadboardUI.Events.NodeDeleteEvent
+            ) => {
+              if (!this.loadInfo) {
+                console.warn("Unable to create node; no active graph");
+                return;
+              }
+
+              const loadInfo = this.loadInfo;
+              if (!loadInfo.graphDescriptor) {
+                console.warn("Unable to create node; no graph descriptor");
+                return;
+              }
+
+              const editableGraph = edit(loadInfo.graphDescriptor, {
+                kits: this.kits,
+              });
+              editableGraph.removeNode(evt.id).then((result) => {
+                if (!result.success) {
+                  this.toast(
+                    `Unable to remove node: ${result.error}`,
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }
+
+                this.#updateLoadInfo(editableGraph.raw());
+              });
+            }}
+            @breadboardmessagetraversal=${() => {
+              if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
+                return;
+              }
+
+              this.status = BreadboardUI.Types.STATUS.PAUSED;
+              this.toast(
+                "Board paused",
+                "information" as BreadboardUI.Events.ToastType
+              );
+            }}
+            @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+              if (!this.#uiRef.value) {
+                return;
+              }
+
+              this.toast(toastEvent.message, toastEvent.toastType);
+            }}
+            @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
+              this.#delay = delayEvent.duration;
+            }}
+          ></bb-ui-controller>`
+        )}
       </div>
       <bb-nav
         .providers=${this.#providers}
@@ -1241,9 +1194,9 @@ export class Main extends LitElement {
       ></iframe>`;
     }
 
-    let overlay: HTMLTemplateResult | symbol = nothing;
+    let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showOverlay && this.loadInfo) {
-      overlay = html`<bb-board-edit-overlay
+      boardOverlay = html`<bb-board-edit-overlay
         .boardTitle=${this.loadInfo.title}
         .boardVersion=${this.loadInfo.version}
         .boardDescription=${this.loadInfo.description}
@@ -1278,6 +1231,17 @@ export class Main extends LitElement {
       ></bb-board-edit-overlay>`;
     }
 
-    return html`${tmpl} ${overlay} ${toasts} `;
+    let previewOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showPreview) {
+      previewOverlay = html`<bb-overlay
+        class="board-preview"
+        @breadboardboardoverlaydismissed=${() => {
+          this.showPreview = false;
+        }}
+        ><iframe src="/preview.html?board=${this.url}"></iframe
+      ></bb-overlay>`;
+    }
+
+    return html`${tmpl} ${boardOverlay} ${previewOverlay} ${toasts} `;
   }
 }
