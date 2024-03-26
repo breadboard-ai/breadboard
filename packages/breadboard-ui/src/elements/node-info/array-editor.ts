@@ -167,7 +167,7 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    const idx = parseInt(idxAsStr, 16);
+    const idx = parseInt(idxAsStr, 10);
     if (Number.isNaN(idx)) {
       return;
     }

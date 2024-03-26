@@ -331,7 +331,7 @@ export class ActivityLog extends LitElement {
       opacity: 0;
     }
 
-    section h1[data-message-idx] {
+    h1[data-message-id] {
       cursor: pointer;
     }
 
@@ -551,7 +551,9 @@ export class ActivityLog extends LitElement {
 
           return html`<div class=${classMap(classes)}>
             <div class="content">
-              <h1>${event.node.description()}</h1>
+              <h1 data-message-id=${this.showExtendedInfo ? event.id : nothing}>
+                ${event.node.description()}
+              </h1>
               ${this.#createRunInfo(event.runs)}
             </div>
           </div>`;
@@ -709,7 +711,9 @@ export class ActivityLog extends LitElement {
 
                   content = html`<section>
                     <h1
-                      ?data-message-idx=${this.showExtendedInfo ? idx : nothing}
+                      data-message-id=${this.showExtendedInfo
+                        ? event.id
+                        : nothing}
                     >
                       ${node.title()}
                     </h1>
