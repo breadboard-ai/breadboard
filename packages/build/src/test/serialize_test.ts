@@ -101,8 +101,7 @@ test("serialize", () => {
   const prompt = templater({
     template: "The word {{forwards}} is {{backwards}} in reverse.",
     forwards: "potato",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    backwards: backwards.outputs.backwards as any,
+    backwards: backwards.outputs.backwards,
   });
   const myBoard = board({}, { result: prompt.outputs.result });
   assert.deepEqual(

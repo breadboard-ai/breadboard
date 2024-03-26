@@ -43,8 +43,8 @@ test("polymorphic node with primary output acts like that output port", () => {
     },
   });
   const instance = withPrimaryOut({ in1: "foo", in2: 123 });
-  instance satisfies OutputPortReference<{ type: "number" }>;
-  // $ExpectType OutputPort<{ type: "number"; }>
+  instance satisfies OutputPortReference<number>;
+  // $ExpectType OutputPort<number>
   instance[OutputPortGetter];
 
   defineNodeType({

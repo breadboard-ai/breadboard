@@ -54,7 +54,7 @@ test("expect types: 1 in, 0 out", () => {
   });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; }>
   instance.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.in1;
   // $ExpectType OutputPorts<{}>
   instance.outputs;
@@ -81,7 +81,7 @@ test("expect types: 0 in, 1 out", () => {
   instance.inputs;
   // $ExpectType OutputPorts<{ out1: { type: "string"; }; }>
   instance.outputs;
-  // $ExpectType OutputPort<{ type: "string"; }>
+  // $ExpectType OutputPort<string>
   instance.outputs.out1;
 });
 
@@ -114,11 +114,11 @@ test("expect types: 1 in, 1 out", () => {
   });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; }>
   instance.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.in1;
   // $ExpectType OutputPorts<{ out1: { type: "string"; }; }>
   instance.outputs;
-  // $ExpectType OutputPort<{ type: "string"; }>
+  // $ExpectType OutputPort<string>
   instance.outputs.out1;
 });
 
@@ -161,15 +161,15 @@ test("expect types: 2 in, 2 out", () => {
   });
   // $ExpectType InputPorts<{ in1: { type: "string"; }; in2: { type: "number"; }; }>
   instance.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.in1;
-  // $ExpectType InputPort<{ type: "number"; }>
+  // $ExpectType InputPort<number>
   instance.inputs.in2;
   // $ExpectType OutputPorts<{ out1: { type: "boolean"; }; out2: { type: "string"; }; }>
   instance.outputs;
-  // $ExpectType OutputPort<{ type: "boolean"; }>
+  // $ExpectType OutputPort<boolean>
   instance.outputs.out1;
-  // $ExpectType OutputPort<{ type: "string"; }>
+  // $ExpectType OutputPort<string>
   instance.outputs.out2;
 });
 

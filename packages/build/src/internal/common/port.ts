@@ -8,6 +8,7 @@ import type { GenericBreadboardNodeInstance } from "./instance.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
+  JsonSerializable,
 } from "../type-system/type.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
@@ -60,19 +61,7 @@ interface StaticPortConfig {
  * A port is dynamic if its existence, name, type, or other metadata can be
  * different across different instances of a node type.
  */
-interface DynamicPortConfig {
-  /**
-   * The {@link BreadboardType} that values sent or received on these ports will
-   * be required to conform to.
-   */
-  type: BreadboardType;
-
-  /**
-   * An optional brief description for each port. Useful when introspecting and
-   * debugging.
-   */
-  description?: string;
-
+interface DynamicPortConfig extends StaticPortConfig {
   /**
    * The `primary` property should never be set on a dynamic port config,
    * because it is not possible for a dynamic port to be primary.
@@ -85,20 +74,20 @@ export const OutputPortGetter = Symbol();
 /**
  * A Breadboard node port which receives values.
  */
-export class InputPort<I extends PortConfig> {
-  readonly __InputPortBrand__!: never;
-  readonly type: I["type"];
+export class InputPort<T extends JsonSerializable> {
+  readonly type: BreadboardType;
   readonly name: string;
   readonly node: GenericBreadboardNodeInstance;
-  readonly value?: ValueOrOutputPort<I>;
+  readonly value?: ValueOrOutputPort<T>;
+  readonly #fakeForTypeDiscrimination!: T;
 
   constructor(
-    config: I,
+    type: BreadboardType,
     name: string,
     node: GenericBreadboardNodeInstance,
-    value: ValueOrOutputPort<I>
+    value: ValueOrOutputPort<T>
   ) {
-    this.type = config.type;
+    this.type = type;
     this.name = name;
     this.node = node;
     this.value = value;
@@ -108,28 +97,33 @@ export class InputPort<I extends PortConfig> {
 /**
  * A Breadboard node port which sends values.
  */
-export class OutputPort<O extends PortConfig>
-  implements OutputPortReference<O>
+export class OutputPort<T extends JsonSerializable>
+  implements OutputPortReference<T>
 {
   readonly [OutputPortGetter] = this;
-  readonly type: O["type"];
+  readonly type: BreadboardType;
   readonly name: string;
   readonly node: GenericBreadboardNodeInstance;
+  readonly #fakeForTypeDiscrimination!: T;
 
-  constructor(config: O, name: string, node: GenericBreadboardNodeInstance) {
-    this.type = config.type;
+  constructor(
+    type: BreadboardType,
+    name: string,
+    node: GenericBreadboardNodeInstance
+  ) {
+    this.type = type;
     this.name = name;
     this.node = node;
   }
 }
 
-export interface OutputPortReference<O extends PortConfig> {
-  readonly [OutputPortGetter]: OutputPort<O>;
+export interface OutputPortReference<T extends JsonSerializable> {
+  readonly [OutputPortGetter]: OutputPort<T>;
 }
 
 export function isOutputPortReference(
   value: unknown
-): value is OutputPortReference<PortConfig> {
+): value is OutputPortReference<JsonSerializable> {
   return (
     typeof value === "object" && value !== null && OutputPortGetter in value
   );
@@ -148,20 +142,20 @@ export type ConcreteValues<Ports extends PortConfigMap> = {
   [PortName in keyof Ports]: ConvertBreadboardType<Ports[PortName]["type"]>;
 };
 
-/**
- * Convert a {@link PortConfigMap} to an object with either concrete values for
- * each port, or an output port for each port.
- */
-export type ValuesOrOutputPorts<Ports extends PortConfigMap> = {
-  [PortName in keyof Ports]:
-    | ConvertBreadboardType<Ports[PortName]["type"]>
-    | OutputPortReference<Ports[PortName]>;
+export type PortTypes = Record<string, JsonSerializable>;
+
+export type ExtractPortTypesFromConfigs<CONFIGS extends PortConfigMap> = {
+  [NAME in keyof CONFIGS]: ConvertBreadboardType<CONFIGS[NAME]["type"]>;
+};
+
+export type ValuesOrOutputPorts<TYPES extends PortTypes> = {
+  [NAME in keyof TYPES]: ValueOrOutputPort<TYPES[NAME]>;
 };
 
 export type PrimaryOutputPort<O extends PortConfigMap> =
   GetPrimaryPortType<O> extends never
     ? undefined
-    : OutputPort<{ type: GetPrimaryPortType<O> }>;
+    : OutputPort<ConvertBreadboardType<GetPrimaryPortType<O>>>;
 
 type GetPrimaryPortType<Ports extends PortConfigMap> = {
   [Name in keyof Ports]: Ports[Name] extends { primary: true }
@@ -170,13 +164,13 @@ type GetPrimaryPortType<Ports extends PortConfigMap> = {
 }[keyof Ports]["type"];
 
 export type InputPorts<I extends PortConfigMap> = {
-  [PortName in keyof Omit<I, "*">]: InputPort<I[PortName]>;
+  [PortName in keyof I]: InputPort<ConvertBreadboardType<I[PortName]["type"]>>;
 };
 
 export type OutputPorts<O extends PortConfigMap> = {
-  [PortName in keyof Omit<O, "*">]: OutputPort<O[PortName]>;
+  [PortName in keyof O]: OutputPort<ConvertBreadboardType<O[PortName]["type"]>>;
 };
 
-export type ValueOrOutputPort<CONFIG extends PortConfig> =
-  | ConvertBreadboardType<CONFIG["type"]>
-  | OutputPortReference<CONFIG>;
+export type ValueOrOutputPort<T extends JsonSerializable> =
+  | T
+  | OutputPortReference<T>;

@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputPort, OutputPortReference, PortConfig } from "./port.js";
+import type { JsonSerializable } from "../type-system/type.js";
+import type { InputPort, OutputPortReference } from "./port.js";
 
 export interface BreadboardNodeInstance<
-  INPUT_PORTS extends Record<string, InputPort<PortConfig>>,
-  OUTPUT_PORTS extends Record<string, OutputPortReference<PortConfig>>,
+  INPUT_PORTS extends Record<string, InputPort<JsonSerializable>>,
+  OUTPUT_PORTS extends Record<string, OutputPortReference<JsonSerializable>>,
 > {
   type: string;
   inputs: INPUT_PORTS;
@@ -16,6 +17,6 @@ export interface BreadboardNodeInstance<
 }
 
 export type GenericBreadboardNodeInstance = BreadboardNodeInstance<
-  Record<string, InputPort<PortConfig>>,
-  Record<string, OutputPortReference<PortConfig>>
+  Record<string, InputPort<JsonSerializable>>,
+  Record<string, OutputPortReference<JsonSerializable>>
 >;

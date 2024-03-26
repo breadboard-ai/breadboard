@@ -19,10 +19,14 @@ import {
   type ConcreteValues,
   type PrimaryOutputPort,
 } from "../common/port.js";
-import type { OutputPorts } from "../common/port.js";
+import type {
+  ExtractPortTypesFromConfigs,
+  OutputPorts,
+} from "../common/port.js";
 import type { InputPorts } from "../common/port.js";
 import type { StrictNodeHandler } from "../common/compatibility.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 
 export function defineMonomorphicNodeType<
   ISHAPE extends PortConfigMap,
@@ -99,20 +103,24 @@ class MonomorphicNodeDefinition<
 }
 
 class MonomorphicNodeInstance<
-  ISHAPE extends PortConfigMap,
-  OSHAPE extends PortConfigMap,
-> {
-  readonly inputs: InputPorts<ISHAPE>;
-  readonly outputs: OutputPorts<OSHAPE>;
+  INPUT_CONFIGS extends PortConfigMap,
+  OUTPUT_CONFIGS extends PortConfigMap,
+> implements GenericBreadboardNodeInstance
+{
+  readonly inputs: InputPorts<INPUT_CONFIGS>;
+  readonly outputs: OutputPorts<OUTPUT_CONFIGS>;
   readonly type: string;
-  readonly #values: ValuesOrOutputPorts<ISHAPE>;
-  readonly [OutputPortGetter]!: PrimaryOutputPort<OSHAPE>;
+  // TODO(aomarks) This should get used somehow.
+  readonly #values: ValuesOrOutputPorts<
+    ExtractPortTypesFromConfigs<INPUT_CONFIGS>
+  >;
+  readonly [OutputPortGetter]!: PrimaryOutputPort<OUTPUT_CONFIGS>;
 
   constructor(
     name: string,
-    inputs: ISHAPE,
-    outputs: OSHAPE,
-    values: ValuesOrOutputPorts<ISHAPE>
+    inputs: INPUT_CONFIGS,
+    outputs: OUTPUT_CONFIGS,
+    values: ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>>
   ) {
     this.type = name;
     this.#values = values;
@@ -120,15 +128,15 @@ class MonomorphicNodeInstance<
       Object.entries(inputs).map(([name, config]) => [
         name,
         // TODO(aomarks) Can we remove this `!`?
-        new InputPort(config, name, this, values[name]!),
+        new InputPort(config.type, name, this, values[name]!),
       ])
-    ) as InputPorts<ISHAPE>;
+    ) as InputPorts<INPUT_CONFIGS>;
     this.outputs = Object.fromEntries(
       Object.entries(outputs).map(([name, config]) => [
         name,
-        new OutputPort(config, name, this),
+        new OutputPort(config.type, name, this),
       ])
-    ) as OutputPorts<OSHAPE>;
+    ) as OutputPorts<OUTPUT_CONFIGS>;
     const primaryOutputPortNames = Object.keys(
       Object.entries(outputs).filter(([, config]) => config.primary)
     );
@@ -136,7 +144,7 @@ class MonomorphicNodeInstance<
       this[OutputPortGetter] = this.outputs[
         primaryOutputPortNames[0]!
         // TODO(aomarks) It might be possible to avoid this cast.
-      ] as unknown as PrimaryOutputPort<OSHAPE>;
+      ] as unknown as PrimaryOutputPort<OUTPUT_CONFIGS>;
     } else if (primaryOutputPortNames.length > 0) {
       throw new Error(
         `Node was configured with >1 primary output nodes: ${primaryOutputPortNames.join(" ")}`
@@ -165,10 +173,10 @@ type MonomorphicInstantiateFunction<
 ) => MonomorphicNodeInstance<ISHAPE, OSHAPE>;
 
 type MonomorphicInputValues<
-  ISHAPE extends PortConfigMap,
+  INPUT_CONFIGS extends PortConfigMap,
   VALUES extends Record<string, unknown>,
-> = ValuesOrOutputPorts<ISHAPE> & {
-  [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof ISHAPE
-    ? ValuesOrOutputPorts<ISHAPE>[PORT_NAME]
+> = ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>> & {
+  [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof INPUT_CONFIGS
+    ? ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>>[PORT_NAME]
     : never;
 };
