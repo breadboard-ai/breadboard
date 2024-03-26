@@ -12,7 +12,7 @@ import type { PortConfigMap, OutputPortReference, PortConfig } from "./port.js";
 import type { ConvertBreadboardType } from "./type-system/type.js";
 import type { CountUnion } from "./type-util.js";
 
-export type ValueOrPort<CONFIG extends PortConfig> =
+export type ValueOrOutputPort<CONFIG extends PortConfig> =
   | ConvertBreadboardType<CONFIG["type"]>
   | OutputPortReference<CONFIG>;
 

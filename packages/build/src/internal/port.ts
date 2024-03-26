@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { ValueOrOutputPort } from "./definition.js";
+import type { GenericBreadboardNodeInstance } from "./node.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
@@ -87,9 +89,20 @@ export const OutputPortGetter = Symbol();
 export class InputPort<I extends PortConfig> {
   readonly __InputPortBrand__!: never;
   readonly type: I["type"];
+  readonly name: string;
+  readonly node: GenericBreadboardNodeInstance;
+  readonly value?: ValueOrOutputPort<I>;
 
-  constructor(config: I) {
+  constructor(
+    config: I,
+    name: string,
+    node: GenericBreadboardNodeInstance,
+    value: ValueOrOutputPort<I>
+  ) {
     this.type = config.type;
+    this.name = name;
+    this.node = node;
+    this.value = value;
   }
 }
 
@@ -101,14 +114,26 @@ export class OutputPort<O extends PortConfig>
 {
   readonly [OutputPortGetter] = this;
   readonly type: O["type"];
+  readonly name: string;
+  readonly node: GenericBreadboardNodeInstance;
 
-  constructor(config: O) {
+  constructor(config: O, name: string, node: GenericBreadboardNodeInstance) {
     this.type = config.type;
+    this.name = name;
+    this.node = node;
   }
 }
 
 export interface OutputPortReference<O extends PortConfig> {
   readonly [OutputPortGetter]: OutputPort<O>;
+}
+
+export function isOutputPortReference(
+  value: unknown
+): value is OutputPortReference<PortConfig> {
+  return (
+    typeof value === "object" && value !== null && OutputPortGetter in value
+  );
 }
 
 /**

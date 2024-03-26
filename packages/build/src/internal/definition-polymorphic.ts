@@ -10,7 +10,7 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
-import type { StrictNodeHandler, ValueOrPort } from "./definition.js";
+import type { StrictNodeHandler, ValueOrOutputPort } from "./definition.js";
 import type { InputPorts, OutputPorts } from "./instance.js";
 import {
   InputPort,
@@ -46,6 +46,7 @@ export function definePolymorphicNodeType<
   DYNAMIC_INPUTS extends PortConfig,
   STATIC_OUTPUTS extends PortConfigMap,
 >(
+  name: string,
   staticInputs: STATIC_INPUTS,
   dynamicInputs: DYNAMIC_INPUTS,
   staticOutputs: STATIC_OUTPUTS,
@@ -60,6 +61,7 @@ export function definePolymorphicNodeType<
   describe?: PolymorphicDescribeFunction<STATIC_INPUTS, DYNAMIC_INPUTS>
 ): PolymorphicDefinition<STATIC_INPUTS, DYNAMIC_INPUTS, STATIC_OUTPUTS> {
   const definition = new PolymorphicNodeDefinition(
+    name,
     staticInputs,
     dynamicInputs,
     staticOutputs,
@@ -99,6 +101,7 @@ class PolymorphicNodeDefinition<
   STATIC_OUTPUTS extends PortConfigMap,
 > implements StrictNodeHandler
 {
+  readonly #name: string;
   readonly #staticInputs: STATIC_INPUTS;
   readonly #staticOutputs: STATIC_OUTPUTS;
   readonly #invoke: PolymorphicInvokeFunction<
@@ -114,10 +117,12 @@ class PolymorphicNodeDefinition<
     inputSchema: JSONSchema4;
     outputSchema: JSONSchema4;
   };
+  readonly #dynamicInputs: DYNAMIC_INPUTS;
 
   constructor(
+    name: string,
     staticInputs: STATIC_INPUTS,
-    _dynamicInputs: DYNAMIC_INPUTS,
+    dynamicInputs: DYNAMIC_INPUTS,
     staticOutputs: STATIC_OUTPUTS,
     invoke: PolymorphicInvokeFunction<
       STATIC_INPUTS,
@@ -126,6 +131,7 @@ class PolymorphicNodeDefinition<
     >,
     describe?: PolymorphicDescribeFunction<STATIC_INPUTS, DYNAMIC_INPUTS>
   ) {
+    this.#name = name;
     this.#staticInputs = staticInputs;
     this.#staticOutputs = staticOutputs;
     this.#invoke = invoke;
@@ -134,6 +140,7 @@ class PolymorphicNodeDefinition<
       inputSchema: shapeToJSONSchema(this.#staticInputs),
       outputSchema: shapeToJSONSchema(this.#staticOutputs),
     };
+    this.#dynamicInputs = dynamicInputs;
   }
 
   instantiate<INSTANTIATE_VALUES extends Record<string, unknown>>(
@@ -149,8 +156,10 @@ class PolymorphicNodeDefinition<
     INSTANTIATE_VALUES
   > {
     return new PolymorphicNodeInstance(
+      this.#name,
       this.#staticInputs,
       this.#staticOutputs,
+      this.#dynamicInputs,
       instantiateValues
     );
   }
@@ -241,39 +250,44 @@ class PolymorphicNodeInstance<
   STATIC_OUTPUTS extends PortConfigMap,
   VALUES extends Record<string, unknown>,
 > {
+  readonly type: string;
   readonly inputs: InputPorts<STATIC_INPUTS>;
   readonly outputs: OutputPorts<STATIC_OUTPUTS>;
-  // TODO(aomarks) This will be used during serialization.
-  readonly #_inputValues: PolymorphicInstantiateValues<
-    STATIC_INPUTS,
-    DYNAMIC_INPUTS,
-    VALUES
-  >;
   readonly [OutputPortGetter]!: PrimaryOutputPort<STATIC_OUTPUTS>;
-  readonly #_temp!: DYNAMIC_INPUTS;
 
   constructor(
-    inputShape: STATIC_INPUTS,
-    outputShape: STATIC_OUTPUTS,
-    inputValues: PolymorphicInstantiateValues<
-      STATIC_INPUTS,
-      DYNAMIC_INPUTS,
-      VALUES
-    >
+    type: string,
+    staticInputs: STATIC_INPUTS,
+    staticOutputs: STATIC_OUTPUTS,
+    dynamicInputs: DYNAMIC_INPUTS,
+    values: PolymorphicInstantiateValues<STATIC_INPUTS, DYNAMIC_INPUTS, VALUES>
   ) {
-    this.inputs = Object.fromEntries(
-      Object.entries(inputShape).map(([portName, portConfig]) => [
-        portName,
-        new InputPort(portConfig),
-      ])
-    ) as InputPorts<STATIC_INPUTS>;
+    this.type = type;
+    this.inputs = Object.fromEntries([
+      ...Object.entries(staticInputs).map(([name, config]) => [
+        name,
+        new InputPort(config, name, this, values[name]),
+      ]),
+      ...Object.entries(values)
+        .filter(([name]) => staticInputs[name] === undefined)
+        .map(([name, value]) => [
+          name,
+          new InputPort(
+            dynamicInputs,
+            name,
+            this,
+            // Cast needed because filter() isn't smart enough to narrow the
+            // array type.
+            value as ValueOrOutputPort<DYNAMIC_INPUTS>
+          ),
+        ]),
+    ]) as InputPorts<STATIC_INPUTS>;
     this.outputs = Object.fromEntries(
-      Object.entries(outputShape).map(([portName, portConfig]) => [
+      Object.entries(staticOutputs).map(([portName, portConfig]) => [
         portName,
-        new OutputPort(portConfig),
+        new OutputPort(portConfig, portName, this),
       ])
     ) as OutputPorts<STATIC_OUTPUTS>;
-    this.#_inputValues = inputValues;
   }
 }
 
@@ -283,8 +297,8 @@ type PolymorphicInstantiateValues<
   VALUES extends Record<string, unknown>,
 > = ValuesOrOutputPorts<STATIC_INPUTS> & {
   [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof STATIC_INPUTS
-    ? ValueOrPort<STATIC_INPUTS[PORT_NAME]>
-    : ValueOrPort<DYNAMIC_INPUTS>;
+    ? ValueOrOutputPort<STATIC_INPUTS[PORT_NAME]>
+    : ValueOrOutputPort<DYNAMIC_INPUTS>;
 };
 
 export type PolymorphicInvokeFunction<

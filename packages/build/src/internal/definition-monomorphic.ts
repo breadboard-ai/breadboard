@@ -27,11 +27,12 @@ export function defineMonomorphicNodeType<
   ISHAPE extends PortConfigMap,
   OSHAPE extends PortConfigMap,
 >(
+  name: string,
   inputs: ISHAPE,
   outputs: OSHAPE,
   invoke: MonomorphicInvokeFunction<ISHAPE, OSHAPE>
 ): MonomorphicDefinition<ISHAPE, OSHAPE> {
-  const def = new MonomorphicNodeDefinition(inputs, outputs, invoke);
+  const def = new MonomorphicNodeDefinition(name, inputs, outputs, invoke);
   return Object.assign(def.instantiate.bind(def), {
     describe: def.describe.bind(def),
     invoke: def.invoke.bind(def),
@@ -43,16 +44,19 @@ class MonomorphicNodeDefinition<
   OSHAPE extends PortConfigMap,
 > implements StrictNodeHandler
 {
+  readonly #name: string;
   readonly #inputs: ISHAPE;
   readonly #outputs: OSHAPE;
   readonly #invoke: MonomorphicInvokeFunction<ISHAPE, OSHAPE>;
   readonly #description: Promise<NodeDescriberResult>;
 
   constructor(
+    name: string,
     inputs: ISHAPE,
     outputs: OSHAPE,
     invoke: MonomorphicInvokeFunction<ISHAPE, OSHAPE>
   ) {
+    this.#name = name;
     this.#inputs = inputs;
     this.#outputs = outputs;
     this.#invoke = invoke;
@@ -68,7 +72,12 @@ class MonomorphicNodeDefinition<
   instantiate<VALUES extends Record<string, unknown>>(
     values: MonomorphicInputValues<ISHAPE, VALUES>
   ): MonomorphicNodeInstance<ISHAPE, OSHAPE> {
-    return new MonomorphicNodeInstance(this.#inputs, this.#outputs, values);
+    return new MonomorphicNodeInstance(
+      this.#name,
+      this.#inputs,
+      this.#outputs,
+      values
+    );
   }
 
   describe(): Promise<NodeDescriberResult> {
@@ -94,25 +103,28 @@ class MonomorphicNodeInstance<
 > {
   readonly inputs: InputPorts<ISHAPE>;
   readonly outputs: OutputPorts<OSHAPE>;
+  readonly type: string;
   readonly #values: ValuesOrOutputPorts<ISHAPE>;
   readonly [OutputPortGetter]!: PrimaryOutputPort<OSHAPE>;
 
   constructor(
+    name: string,
     inputs: ISHAPE,
     outputs: OSHAPE,
     values: ValuesOrOutputPorts<ISHAPE>
   ) {
+    this.type = name;
     this.#values = values;
     this.inputs = Object.fromEntries(
       Object.entries(inputs).map(([name, config]) => [
         name,
-        new InputPort(config),
+        new InputPort(config, name, this, values[name]),
       ])
     ) as InputPorts<ISHAPE>;
     this.outputs = Object.fromEntries(
       Object.entries(outputs).map(([name, config]) => [
         name,
-        new OutputPort(config),
+        new OutputPort(config, name, this),
       ])
     ) as OutputPorts<OSHAPE>;
     const primaryOutputPortNames = Object.keys(

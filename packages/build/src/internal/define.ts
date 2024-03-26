@@ -113,6 +113,7 @@ export function defineNodeType<
   INPUTS extends PortConfigMap,
   OUTPUTS extends PortConfigMap,
 >(params: {
+  name?: string;
   inputs: INPUTS;
   outputs: ForbidMultiplePrimaries<OUTPUTS>;
   invoke: IsPolymorphic<INPUTS> extends true
@@ -129,10 +130,11 @@ export function defineNodeType<
       >
     : never;
 }): NodeDefinition<INPUTS, OUTPUTS> {
-  const { inputs, outputs, invoke, describe } = params;
+  const { name, inputs, outputs, invoke, describe } = params;
   validateOutputs(outputs);
   const def = isPolymorphic(inputs, invoke)
     ? definePolymorphicNodeType(
+        name ?? "TODO_UNNAMED_POLY",
         omitDynamicPort(inputs),
         // TODO(aomarks) Remove !
         inputs["*"]!,
@@ -145,7 +147,12 @@ export function defineNodeType<
         >,
         describe
       )
-    : defineMonomorphicNodeType(inputs, outputs, invoke);
+    : defineMonomorphicNodeType(
+        name ?? "TODO_UNNAMED_MONO",
+        inputs,
+        outputs,
+        invoke
+      );
   return def as NodeDefinition<INPUTS, OUTPUTS>;
 }
 
