@@ -18,10 +18,11 @@ import {
   type ValuesOrOutputPorts,
   type ConcreteValues,
   type PrimaryOutputPort,
-} from "./port.js";
-import type { InputPorts, OutputPorts } from "./instance.js";
-import type { StrictNodeHandler } from "./definition.js";
-import { shapeToJSONSchema } from "./json-schema.js";
+} from "../common/port.js";
+import type { OutputPorts } from "../common/port.js";
+import type { InputPorts } from "../common/port.js";
+import type { StrictNodeHandler } from "../common/compatibility.js";
+import { portConfigMapToJSONSchema } from "./json-schema.js";
 
 export function defineMonomorphicNodeType<
   ISHAPE extends PortConfigMap,
@@ -64,8 +65,8 @@ class MonomorphicNodeDefinition<
       // Cast because this package uses the `JSONSchema4` type from
       // `@types/json-schema` which isn't quite identical to
       // `NodeDescriberResult` (but nearly).
-      inputSchema: shapeToJSONSchema(this.#inputs) as Schema,
-      outputSchema: shapeToJSONSchema(this.#outputs) as Schema,
+      inputSchema: portConfigMapToJSONSchema(this.#inputs) as Schema,
+      outputSchema: portConfigMapToJSONSchema(this.#outputs) as Schema,
     });
   }
 

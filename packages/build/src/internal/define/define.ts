@@ -15,8 +15,8 @@ import {
   type PolymorphicDefinition,
   type PolymorphicInvokeFunction,
 } from "./definition-polymorphic.js";
-import type { ForbidMultiplePrimaries } from "./definition.js";
-import type { PortConfigMap } from "./port.js";
+import type { PortConfigMap } from "../common/port.js";
+import type { CountUnion } from "../common/type-util.js";
 
 /**
  * Define a new Breadboard node type.
@@ -214,4 +214,21 @@ type NodeDefinition<
 
 type IsPolymorphic<ISHAPE extends PortConfigMap> = ISHAPE["*"] extends object
   ? true
-  : false;
+  : false; // To get errors in the right place, we're going to test if there are multiple
+// primaries. If there are not, just return the type, everything is fine. If
+// there are, return a version of the type which disallows primary. That way,
+// the squiggly will appear on all the primaries.
+
+type ForbidMultiplePrimaries<M extends PortConfigMap> =
+  HasMultiplePrimaries<M> extends true
+    ? {
+        [K in keyof M]: Omit<M[K], "primary"> & { primary: false };
+      }
+    : M;
+
+type HasMultiplePrimaries<M extends PortConfigMap> =
+  CountUnion<PrimaryPortNames<M>> extends 0 | 1 ? false : true;
+
+type PrimaryPortNames<M extends PortConfigMap> = {
+  [K in keyof M]: M[K]["primary"] extends true ? K : never;
+}[keyof M];

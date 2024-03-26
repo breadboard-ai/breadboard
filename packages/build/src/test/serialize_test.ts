@@ -11,8 +11,8 @@ import {
   type BoardDefinition,
   type BoardInputPorts,
   type BoardOutputPorts,
-} from "../internal/board.js";
-import { serialize } from "../internal/serialize.js";
+} from "../internal/board/board.js";
+import { serialize } from "../internal/board/serialize.js";
 import assert from "node:assert/strict";
 import type { GraphDescriptor } from "@google-labs/breadboard";
 

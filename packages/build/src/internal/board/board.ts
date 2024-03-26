@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputPorts, OutputPorts } from "./instance.js";
 import {
   InputPort,
   OutputPort,
+  type InputPorts,
+  type OutputPorts,
   type PortConfig,
   type PortConfigMap,
   type ValuesOrOutputPorts,
-} from "./port.js";
+} from "../common/port.js";
 
 // TODO(aomarks) Support primary ports in boards.
 // TODO(aomarks) Support adding descriptions to board ports.

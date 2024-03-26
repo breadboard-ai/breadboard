@@ -6,7 +6,7 @@
 
 import { test } from "node:test";
 import { defineNodeType } from "@breadboard-ai/build";
-import { board } from "../internal/board.js";
+import { board } from "../internal/board/board.js";
 
 const testNode = defineNodeType({
   inputs: {
