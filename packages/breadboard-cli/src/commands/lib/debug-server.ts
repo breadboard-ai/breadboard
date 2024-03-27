@@ -53,6 +53,15 @@ const routes: Routes = {
   "/*.(json|ts)": board, // after kits.json
 };
 
+const removeBoardFromCache = (
+  boards: BoardMetaData[],
+  filename: string | null
+) => {
+  if (!filename) return;
+  const toRemove = boards.findIndex((board) => board.url?.endsWith(filename));
+  boards.splice(toRemove, 1);
+};
+
 export const startServer = async (file: string, options: DebugOptions) => {
   const distDir = join(__dirname, "..", "..", "debugger");
   const fileStat = await stat(file);
@@ -80,6 +89,8 @@ export const startServer = async (file: string, options: DebugOptions) => {
     previous: string | null,
     filename: string
   ) => {
+    removeBoardFromCache(globals.boards, previous);
+    removeBoardFromCache(globals.boards, filename);
     Object.values(clients).forEach((clientResponse) => {
       clientResponse.write(
         `event: update\ndata:${JSON.stringify({ type, previous, filename })}\nid:${Date.now()}\n\n`

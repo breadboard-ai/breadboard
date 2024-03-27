@@ -366,8 +366,13 @@ export class Main extends LitElement {
       this.#providers.map((provider) => {
         if (provider.extendedCapabilities().watch) {
           provider.watch((change) => {
-            console.log("🌻 change event", change);
-            window.location.reload();
+            const currentUrl = new URL(window.location.href);
+            const boardFromUrl = currentUrl.searchParams.get("board");
+            if (boardFromUrl?.endsWith(change.filename)) {
+              this.#onStartBoard(
+                new BreadboardUI.Events.StartEvent(change.filename)
+              );
+            }
           });
         }
       });

@@ -1,7 +1,7 @@
 {
   "title": "Repeater",
   "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -109,9 +109,12 @@
               "title": "Context",
               "type": "array",
               "format": "multiline",
-              "behavior": [
-                "llm-content"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
               "default": "[]",
               "description": "Initial conversation context"
             },
