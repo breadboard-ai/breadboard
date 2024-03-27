@@ -113,8 +113,13 @@ export const fetchDescriber: NodeDescriberFunction = async () => {
           description: "The response from the fetch request",
           type: ["string", "object"],
         },
+        status: {
+          title: "status",
+          description: "The HTTP status code of the response",
+          type: "number",
+        },
       },
-      required: ["response"],
+      required: ["response", "status"],
     },
   };
 };
@@ -139,10 +144,12 @@ export default {
     if (method !== "GET") {
       init.body = JSON.stringify(body);
     }
-    const data = await fetch(url, init);
+    const data: Response = await fetch(url, init);
+    const status = data.status;
     if (!data.ok)
       return {
         $error: await data.json(),
+        status,
       };
     if (stream) {
       if (!data.body) {
@@ -157,7 +164,7 @@ export default {
       };
     } else {
       const response = raw ? await data.text() : await data.json();
-      return { response };
+      return { response, status };
     }
   },
 } satisfies NodeHandler;
