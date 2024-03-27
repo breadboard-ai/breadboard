@@ -201,6 +201,7 @@ import {
   NewInputValues as InputValues,
   NewOutputValues as OutputValues,
   NewNodeFactory as NodeFactory,
+  Schema,
 } from "@google-labs/breadboard";
 
 export type CoreKitType = {
