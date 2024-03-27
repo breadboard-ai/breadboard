@@ -1,0 +1,86 @@
+{
+  "title": "Nager Date Next Public Holidays Worldwide API",
+  "description": "Get the next public holidays worldwide for the Nager Date API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "output",
+      "out": "response",
+      "in": "dates"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "dates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "localName": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "countryCode": {
+                    "type": "string"
+                  },
+                  "fixed": {
+                    "type": "boolean"
+                  },
+                  "global": {
+                    "type": "boolean"
+                  },
+                  "counties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "launchYear": {
+                    "type": "number"
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "date",
+                  "localName",
+                  "name",
+                  "countryCode",
+                  "fixed",
+                  "global",
+                  "launchYear",
+                  "types"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET",
+        "url": "https://date.nager.at/api/v3/NextPublicHolidaysWorldwide"
+      }
+    }
+  ],
+  "graphs": {}
+}

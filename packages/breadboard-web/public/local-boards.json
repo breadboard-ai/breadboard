@@ -132,6 +132,36 @@
     "version": "0.0.2"
   },
   {
+    "title": "Nager Date Available Countries API",
+    "url": "/graphs/nager.date/available-countries.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Nager Date Country Info API",
+    "url": "/graphs/nager.date/country-info.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Is Today a Public Holiday",
+    "url": "/graphs/nager.date/is-today-public-holiday.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Nager Date Long Weekend API",
+    "url": "/graphs/nager.date/long-weekend.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Nager Date Next Public Holidays Worldwide API",
+    "url": "/graphs/nager.date/next-holiday-worldwide.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Nager Date Public Holidays API",
+    "url": "/graphs/nager.date/public-holidays.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Open Alex Entity Search Results",
     "url": "/graphs/open-alex-entity-search-list.json",
     "version": "0.0.1"

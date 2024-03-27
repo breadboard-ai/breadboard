@@ -1,0 +1,272 @@
+{
+  "title": "Is Today a Public Holiday",
+  "description": "Get the public holidays for today for the Nager Date API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "statusCodeToResult",
+      "to": "output",
+      "out": "isPublicHoliday",
+      "in": "isPublicHoliday"
+    },
+    {
+      "from": "fetch",
+      "to": "statusCodeToResult",
+      "out": "status",
+      "in": "status"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "countryCode",
+      "in": "countryCode"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "offset",
+      "in": "offset"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "isPublicHoliday": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "isPublicHoliday"
+          ]
+        }
+      }
+    },
+    {
+      "id": "statusCodeToResult",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#statusCodeToResult"
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "raw": true,
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "countryCode": {
+              "title": "countryCode",
+              "type": "string",
+              "description": "The data for countryCode",
+              "enum": [
+                "AD",
+                "AL",
+                "AM",
+                "AR",
+                "AT",
+                "AU",
+                "AX",
+                "BA",
+                "BB",
+                "BE",
+                "BG",
+                "BJ",
+                "BO",
+                "BR",
+                "BS",
+                "BW",
+                "BY",
+                "BZ",
+                "CA",
+                "CH",
+                "CL",
+                "CN",
+                "CO",
+                "CR",
+                "CU",
+                "CY",
+                "CZ",
+                "DE",
+                "DK",
+                "DO",
+                "EC",
+                "EE",
+                "EG",
+                "ES",
+                "FI",
+                "FO",
+                "FR",
+                "GA",
+                "GB",
+                "GD",
+                "GE",
+                "GG",
+                "GI",
+                "GL",
+                "GM",
+                "GR",
+                "GT",
+                "GY",
+                "HK",
+                "HN",
+                "HR",
+                "HT",
+                "HU",
+                "ID",
+                "IE",
+                "IL",
+                "IM",
+                "IN",
+                "IS",
+                "IT",
+                "JE",
+                "JM",
+                "JP",
+                "KE",
+                "KG",
+                "KH",
+                "KR",
+                "KW",
+                "KZ",
+                "LA",
+                "LI",
+                "LK",
+                "LS",
+                "LT",
+                "LU",
+                "LV",
+                "MA",
+                "MC",
+                "MD",
+                "ME",
+                "MG",
+                "MK",
+                "MN",
+                "MS",
+                "MT",
+                "MX",
+                "MY",
+                "MZ",
+                "NA",
+                "NE",
+                "NG",
+                "NI",
+                "NL",
+                "NO",
+                "NZ",
+                "PA",
+                "PE",
+                "PG",
+                "PH",
+                "PK",
+                "PL",
+                "PR",
+                "PT",
+                "PY",
+                "RO",
+                "RS",
+                "RU",
+                "RW",
+                "SE",
+                "SG",
+                "SI",
+                "SJ",
+                "SK",
+                "SM",
+                "SR",
+                "SV",
+                "TN",
+                "TR",
+                "UA",
+                "US",
+                "UY",
+                "VA",
+                "VE",
+                "VN",
+                "ZA",
+                "ZW"
+              ],
+              "default": "US"
+            },
+            "offset": {
+              "title": "offset",
+              "type": "number",
+              "description": "utc timezone offset",
+              "maximum": 12,
+              "minimum": -12,
+              "default": "0"
+            }
+          },
+          "required": [
+            "year",
+            "countryCode"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "statusCodeToResult": {
+      "edges": [
+        {
+          "from": "statusCodeToResult-input",
+          "to": "statusCodeToResult-run",
+          "out": "*"
+        },
+        {
+          "from": "statusCodeToResult-run",
+          "to": "statusCodeToResult-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "statusCodeToResult-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "statusCodeToResult-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function statusCodeToResult({status}) {if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)}",
+            "name": "statusCodeToResult",
+            "raw": true
+          }
+        },
+        {
+          "id": "statusCodeToResult-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
