@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GenericBreadboardNodeInstance } from "./instance.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
+import type { GenericBreadboardNodeInstance } from "./instance.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 

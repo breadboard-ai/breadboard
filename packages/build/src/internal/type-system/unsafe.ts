@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AdvancedBreadboardType } from "./type.js";
 import type { JSONSchema4 } from "json-schema";
+import type { AdvancedBreadboardType } from "./type.js";
 
 /**
  * If none of the included type utilities are able to express both the required

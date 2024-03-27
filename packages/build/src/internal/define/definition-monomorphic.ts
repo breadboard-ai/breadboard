@@ -10,23 +10,23 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
+import type { StrictNodeHandler } from "../common/compatibility.js";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
+import type {
+  ExtractPortTypesFromConfigs,
+  InputPorts,
+  OutputPorts,
+} from "../common/port.js";
 import {
   InputPort,
   OutputPort,
   OutputPortGetter,
-  type PortConfigMap,
-  type ValuesOrOutputPorts,
   type ConcreteValues,
+  type PortConfigMap,
   type PrimaryOutputPort,
+  type ValuesOrOutputPorts,
 } from "../common/port.js";
-import type {
-  ExtractPortTypesFromConfigs,
-  OutputPorts,
-} from "../common/port.js";
-import type { InputPorts } from "../common/port.js";
-import type { StrictNodeHandler } from "../common/compatibility.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
-import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 
 export function defineMonomorphicNodeType<
   ISHAPE extends PortConfigMap,

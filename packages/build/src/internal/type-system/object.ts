@@ -6,8 +6,8 @@
 
 import {
   toJSONSchema,
-  type BreadboardType,
   type AdvancedBreadboardType,
+  type BreadboardType,
   type ConvertBreadboardType,
 } from "./type.js";
 

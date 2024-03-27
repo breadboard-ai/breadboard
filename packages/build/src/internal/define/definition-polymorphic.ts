@@ -10,27 +10,27 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
+import type { JSONSchema4 } from "json-schema";
 import type { StrictNodeHandler } from "../common/compatibility.js";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 import type {
   ExtractPortTypesFromConfigs,
+  InputPorts,
+  OutputPorts,
   ValueOrOutputPort,
 } from "../common/port.js";
-import type { OutputPorts } from "../common/port.js";
-import type { InputPorts } from "../common/port.js";
 import {
   InputPort,
   OutputPort,
   OutputPortGetter,
-  type PortConfigMap,
-  type ValuesOrOutputPorts,
   type ConcreteValues,
-  type PrimaryOutputPort,
   type PortConfig,
+  type PortConfigMap,
+  type PrimaryOutputPort,
+  type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type { ConvertBreadboardType } from "../type-system/type.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
-import type { JSONSchema4 } from "json-schema";
-import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 
 /**
  * Define a Breadboard node type where some or all of its input and/or output

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { test } from "node:test";
 import { defineNodeType } from "@breadboard-ai/build";
+import { test } from "node:test";
 import { board } from "../internal/board/board.js";
 
 const testNode = defineNodeType({

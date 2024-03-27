@@ -10,13 +10,13 @@ import type {
   NodeDescriptor,
   NodeValue,
 } from "@google-labs/breadboard";
+import type { JSONSchema4 } from "json-schema";
 import { OutputPortGetter } from "../common/port.js";
 import {
   toJSONSchema,
   type BreadboardType,
   type JsonSerializable,
 } from "../type-system/type.js";
-import type { JSONSchema4 } from "json-schema";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it

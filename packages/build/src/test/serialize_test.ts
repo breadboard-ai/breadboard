@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { anyOf, defineNodeType } from "@breadboard-ai/build";
+import type { GraphDescriptor } from "@google-labs/breadboard";
+import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defineNodeType, anyOf } from "@breadboard-ai/build";
 import { board } from "../internal/board/board.js";
 import { serialize } from "../internal/board/serialize.js";
-import assert from "node:assert/strict";
-import type { GraphDescriptor } from "@google-labs/breadboard";
 
 const reverseString = defineNodeType({
   name: "reverseString",

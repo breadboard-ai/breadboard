@@ -5,8 +5,8 @@
  */
 
 export { defineNodeType } from "./internal/define/define.js";
-export { anyOf } from "./internal/type-system/any-of.js";
-export { unsafeType } from "./internal/type-system/unsafe.js";
-export { object } from "./internal/type-system/object.js";
-export { array } from "./internal/type-system/array.js";
 export type { NodeFactoryFromDefinition } from "./internal/define/node-factory.js";
+export { anyOf } from "./internal/type-system/any-of.js";
+export { array } from "./internal/type-system/array.js";
+export { object } from "./internal/type-system/object.js";
+export { unsafeType } from "./internal/type-system/unsafe.js";

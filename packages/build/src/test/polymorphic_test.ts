@@ -6,8 +6,8 @@
 
 import { defineNodeType } from "@breadboard-ai/build";
 import type { NodeHandlerContext } from "@google-labs/breadboard";
-import { test } from "node:test";
 import assert from "node:assert/strict";
+import { test } from "node:test";
 
 test("polymorphic inputs", () => {
   // $ExpectType PolymorphicDefinition<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }, { out1: { type: "string"; }; }>

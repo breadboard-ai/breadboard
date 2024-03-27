@@ -5,9 +5,9 @@
  */
 
 import type { NewNodeFactory } from "@google-labs/breadboard";
+import type { ConvertBreadboardType } from "../type-system/type.js";
 import type { MonomorphicDefinition } from "./definition-monomorphic.js";
 import type { PolymorphicDefinition } from "./definition-polymorphic.js";
-import type { ConvertBreadboardType } from "../type-system/type.js";
 
 /**
  * `NodeFactoryFromDefinition` takes a {@link NodeDefinition} type (as returned
