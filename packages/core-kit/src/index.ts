@@ -289,8 +289,8 @@ export type CoreKitType = {
       response: string;
       status: number;
       statusText: string;
-      contentType: string;
-      responseHeaders: object;
+      contentType?: string;
+      responseHeaders?: object;
     }
   >;
   runJavascript: NodeFactory<
