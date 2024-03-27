@@ -365,10 +365,14 @@ export class Main extends LitElement {
 
       this.#providers.map((provider) => {
         if (provider.extendedCapabilities().watch) {
-          provider.watch((_change) => {
-            this.#onStartBoard(
-              new BreadboardUI.Events.StartEvent(boardFromUrl)
-            );
+          provider.watch((change) => {
+            const currentUrl = new URL(window.location.href);
+            const boardFromUrl = currentUrl.searchParams.get("board");
+            if (boardFromUrl?.endsWith(change.filename)) {
+              this.#onStartBoard(
+                new BreadboardUI.Events.StartEvent(change.filename)
+              );
+            }
           });
         }
       });
