@@ -19,6 +19,7 @@ import { InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
+import { markdown } from "../../directives/markdown.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -383,6 +384,37 @@ export class ActivityLog extends LitElement {
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
     }
 
+    dt .value.markdown {
+      white-space: normal;
+      line-height: 1.5;
+    }
+
+    dt .value.output * {
+      margin: var(--bb-grid-size) 0;
+    }
+
+    dt .value.output h1 {
+      font-size: var(--bb-title-large);
+      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    }
+
+    dt .value.output h2 {
+      font-size: var(--bb-title-medium);
+      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    }
+
+    dt .value.output h3,
+    dt .value.output h4,
+    dt .value.output h5 {
+      font-size: var(--bb-title-small);
+      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    }
+
+    dt .value.output p {
+      font-size: var(--bb-body-medium);
+      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    }
+
     dt .value.input {
       border: 1px solid var(--bb-neutral-300);
       white-space: pre-line;
@@ -639,14 +671,24 @@ export class ActivityLog extends LitElement {
             value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
           }
         } else {
+          let renderableValue: HTMLTemplateResult | symbol = nothing;
+          if (
+            port.schema.format === "markdown" &&
+            typeof nodeValue === "string"
+          ) {
+            renderableValue = html`${markdown(nodeValue)}`;
+          } else {
+            renderableValue = html`${nodeValue}`;
+          }
+
           // prettier-ignore
           value = html`<div
-                class=${classMap({
-                  value: true,
-                  [type]: true,
-                })}
-              >${nodeValue}
-              </div>`;
+            class=${classMap({
+              markdown: port.schema.format === 'markdown',
+              value: true,
+              [type]: true,
+            })}
+          >${renderableValue}</div>`;
         }
 
         return html`<dd>${port.title}</dd>
