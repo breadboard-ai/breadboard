@@ -5,7 +5,7 @@
   "edges": [
     {
       "from": "fetch",
-      "to": "output-38",
+      "to": "output",
       "out": "response",
       "in": "dates"
     },
@@ -28,7 +28,7 @@
       "in": "countryCode"
     },
     {
-      "from": "fn-37",
+      "from": "getCurrentYear",
       "to": "query",
       "out": "year",
       "in": "year"
@@ -36,7 +36,7 @@
   ],
   "nodes": [
     {
-      "id": "output-38",
+      "id": "output",
       "type": "output",
       "configuration": {
         "schema": {
@@ -224,44 +224,44 @@
       }
     },
     {
-      "id": "fn-37",
+      "id": "getCurrentYear",
       "type": "invoke",
       "configuration": {
-        "$board": "#fn-37"
+        "$board": "#getCurrentYear"
       }
     }
   ],
   "graphs": {
-    "fn-37": {
+    "getCurrentYear": {
       "edges": [
         {
-          "from": "fn-37-input",
-          "to": "fn-37-run",
+          "from": "getCurrentYear-input",
+          "to": "getCurrentYear-run",
           "out": "*"
         },
         {
-          "from": "fn-37-run",
-          "to": "fn-37-output",
+          "from": "getCurrentYear-run",
+          "to": "getCurrentYear-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-37-input",
+          "id": "getCurrentYear-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-37-run",
+          "id": "getCurrentYear-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_37() {return{year:new Date().getFullYear()}}",
-            "name": "fn_37",
+            "code": "function getCurrentYear() {return{year:new Date().getFullYear()}}",
+            "name": "getCurrentYear",
             "raw": true
           }
         },
         {
-          "id": "fn-37-output",
+          "id": "getCurrentYear-output",
           "type": "output",
           "configuration": {}
         }

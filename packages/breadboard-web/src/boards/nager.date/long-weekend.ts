@@ -11,7 +11,7 @@ const getCurrentYear = code((): { year: number } => {
 
 const input = base.input({
   $id: "query",
-  year: getCurrentYear().year,
+  year: getCurrentYear({ $id: "getCurrentYear" }).year,
   schema: {
     type: "object",
     properties: {
@@ -47,6 +47,7 @@ const fetchUrl = core.fetch({
 });
 
 const output = base.output({
+  $id: "output",
   dates: fetchUrl.response,
 });
 
