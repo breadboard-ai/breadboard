@@ -365,7 +365,7 @@ export class Main extends LitElement {
 
       this.#providers.map((provider) => {
         if (provider.extendedCapabilities().watch) {
-          provider.watch((change) => {
+          provider.watch((_change) => {
             this.#onStartBoard(
               new BreadboardUI.Events.StartEvent(boardFromUrl)
             );

@@ -89,7 +89,7 @@
                   "title": "Context"
                 },
                 "text": {
-                  "title": "Text2",
+                  "title": "Text",
                   "type": "string"
                 }
               }
@@ -115,7 +115,7 @@
               "type": "object",
               "properties": {
                 "text": {
-                  "title": "Text2",
+                  "title": "Text",
                   "type": "string"
                 }
               },
