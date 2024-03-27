@@ -1,0 +1,271 @@
+{
+  "title": "Nager Date Long Weekend API",
+  "description": "API for long weekends",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "output",
+      "out": "response",
+      "in": "dates"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "year",
+      "in": "year"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "countryCode",
+      "in": "countryCode"
+    },
+    {
+      "from": "getCurrentYear",
+      "to": "query",
+      "out": "year",
+      "in": "year"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "dates": {
+              "title": "response",
+              "description": "The response from the fetch request",
+              "type": [
+                "string",
+                "object"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "year": {
+              "title": "year",
+              "type": "number",
+              "description": "The data for year",
+              "default": "2024"
+            },
+            "countryCode": {
+              "title": "countryCode",
+              "type": "string",
+              "description": "The data for countryCode",
+              "enum": [
+                "AD",
+                "AL",
+                "AM",
+                "AR",
+                "AT",
+                "AU",
+                "AX",
+                "BA",
+                "BB",
+                "BE",
+                "BG",
+                "BJ",
+                "BO",
+                "BR",
+                "BS",
+                "BW",
+                "BY",
+                "BZ",
+                "CA",
+                "CH",
+                "CL",
+                "CN",
+                "CO",
+                "CR",
+                "CU",
+                "CY",
+                "CZ",
+                "DE",
+                "DK",
+                "DO",
+                "EC",
+                "EE",
+                "EG",
+                "ES",
+                "FI",
+                "FO",
+                "FR",
+                "GA",
+                "GB",
+                "GD",
+                "GE",
+                "GG",
+                "GI",
+                "GL",
+                "GM",
+                "GR",
+                "GT",
+                "GY",
+                "HK",
+                "HN",
+                "HR",
+                "HT",
+                "HU",
+                "ID",
+                "IE",
+                "IL",
+                "IM",
+                "IN",
+                "IS",
+                "IT",
+                "JE",
+                "JM",
+                "JP",
+                "KE",
+                "KG",
+                "KH",
+                "KR",
+                "KW",
+                "KZ",
+                "LA",
+                "LI",
+                "LK",
+                "LS",
+                "LT",
+                "LU",
+                "LV",
+                "MA",
+                "MC",
+                "MD",
+                "ME",
+                "MG",
+                "MK",
+                "MN",
+                "MS",
+                "MT",
+                "MX",
+                "MY",
+                "MZ",
+                "NA",
+                "NE",
+                "NG",
+                "NI",
+                "NL",
+                "NO",
+                "NZ",
+                "PA",
+                "PE",
+                "PG",
+                "PH",
+                "PK",
+                "PL",
+                "PR",
+                "PT",
+                "PY",
+                "RO",
+                "RS",
+                "RU",
+                "RW",
+                "SE",
+                "SG",
+                "SI",
+                "SJ",
+                "SK",
+                "SM",
+                "SR",
+                "SV",
+                "TN",
+                "TR",
+                "UA",
+                "US",
+                "UY",
+                "VA",
+                "VE",
+                "VN",
+                "ZA",
+                "ZW"
+              ],
+              "default": "US"
+            }
+          },
+          "required": [
+            "year",
+            "countryCode"
+          ]
+        }
+      }
+    },
+    {
+      "id": "getCurrentYear",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#getCurrentYear"
+      }
+    }
+  ],
+  "graphs": {
+    "getCurrentYear": {
+      "edges": [
+        {
+          "from": "getCurrentYear-input",
+          "to": "getCurrentYear-run",
+          "out": "*"
+        },
+        {
+          "from": "getCurrentYear-run",
+          "to": "getCurrentYear-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "getCurrentYear-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "getCurrentYear-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function getCurrentYear() {return{year:new Date().getFullYear()}}",
+            "name": "getCurrentYear",
+            "raw": true
+          }
+        },
+        {
+          "id": "getCurrentYear-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
