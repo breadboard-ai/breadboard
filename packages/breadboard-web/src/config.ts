@@ -14,16 +14,7 @@ import {
 import GeminiKit from "@google-labs/gemini-kit";
 import { loadKits } from "./utils/kit-loader";
 
-const PROXY_NODES = [
-  "palm-generateText",
-  "palm-embedText",
-  "secrets",
-  "fetch",
-  // TODO: These are only meaningful when proxying to main thread,
-  //       not anywhere else. Need to figure out what to do here.
-  // "credentials",
-  // "driveList",
-];
+const PROXY_NODES = ["secrets", "fetch"];
 
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
@@ -45,16 +36,12 @@ const kitConstructors = [GeminiKit];
 export const addNodeProxyServerConfig = (config: RunConfig) => {
   // try to find node proxy server in local storage:
   const proxyServerURL = globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY);
-  const proxy: HarnessProxyConfig[] = [];
-  if (proxyServerURL) {
-    console.log("🚀 Using proxy server:", proxyServerURL);
-    proxy.push({
-      location: "http",
-      url: proxyServerURL,
-      nodes: PROXY_NODES,
-    });
-  }
-  config.proxy = proxy;
+  if (!proxyServerURL) return config;
+
+  console.log("🚀 Using proxy server:", proxyServerURL);
+  config.proxy = [
+    { location: "http", url: proxyServerURL, nodes: PROXY_NODES },
+  ];
   return config;
 };
 
