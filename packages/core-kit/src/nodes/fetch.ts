@@ -143,6 +143,8 @@ export default {
     // GET can not have a body.
     if (method !== "GET") {
       init.body = JSON.stringify(body);
+    } else if (body) {
+      throw new Error("GET requests can not have a body");
     }
     const data: Response = await fetch(url, init);
     const status = data.status;
