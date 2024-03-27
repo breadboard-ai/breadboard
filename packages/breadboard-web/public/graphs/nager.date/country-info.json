@@ -1,11 +1,11 @@
 {
-  "title": "Nager Date Long Weekend API",
-  "description": "API for long weekends",
+  "title": "Nager Date Country Info API",
+  "description": "Get the country info for the Nager Date API",
   "version": "0.0.1",
   "edges": [
     {
       "from": "fetch",
-      "to": "output-38",
+      "to": "output-36",
       "out": "response",
       "in": "dates"
     },
@@ -18,25 +18,13 @@
     {
       "from": "query",
       "to": "urlTemplate",
-      "out": "year",
-      "in": "year"
-    },
-    {
-      "from": "query",
-      "to": "urlTemplate",
       "out": "countryCode",
       "in": "countryCode"
-    },
-    {
-      "from": "fn-37",
-      "to": "query",
-      "out": "year",
-      "in": "year"
     }
   ],
   "nodes": [
     {
-      "id": "output-38",
+      "id": "output-36",
       "type": "output",
       "configuration": {
         "schema": {
@@ -65,7 +53,7 @@
       "id": "urlTemplate",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}"
+        "template": "https://date.nager.at/api/v3/CountryInfo/{countryCode}"
       }
     },
     {
@@ -75,12 +63,6 @@
         "schema": {
           "type": "object",
           "properties": {
-            "year": {
-              "title": "year",
-              "type": "number",
-              "description": "The data for year",
-              "default": "2024"
-            },
             "countryCode": {
               "title": "countryCode",
               "type": "string",
@@ -205,55 +187,11 @@
             }
           },
           "required": [
-            "year",
             "countryCode"
           ]
         }
       }
-    },
-    {
-      "id": "fn-37",
-      "type": "invoke",
-      "configuration": {
-        "$board": "#fn-37"
-      }
     }
   ],
-  "graphs": {
-    "fn-37": {
-      "edges": [
-        {
-          "from": "fn-37-input",
-          "to": "fn-37-run",
-          "out": "*"
-        },
-        {
-          "from": "fn-37-run",
-          "to": "fn-37-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "fn-37-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "fn-37-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function fn_37() {return{year:new Date().getFullYear()}}",
-            "name": "fn_37",
-            "raw": true
-          }
-        },
-        {
-          "id": "fn-37-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }
