@@ -5,14 +5,14 @@
   "edges": [
     {
       "from": "fetch",
-      "to": "output-35",
+      "to": "output",
       "out": "response",
       "in": "dates"
     }
   ],
   "nodes": [
     {
-      "id": "output-35",
+      "id": "output",
       "type": "output",
       "configuration": {
         "schema": {

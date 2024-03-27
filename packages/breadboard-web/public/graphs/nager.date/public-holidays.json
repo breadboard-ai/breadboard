@@ -5,7 +5,7 @@
   "edges": [
     {
       "from": "fetch",
-      "to": "output-39",
+      "to": "output",
       "out": "response",
       "in": "dates"
     },
@@ -30,7 +30,7 @@
   ],
   "nodes": [
     {
-      "id": "output-39",
+      "id": "output",
       "type": "output",
       "configuration": {
         "schema": {

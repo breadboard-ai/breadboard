@@ -8,6 +8,7 @@ const fetchUrl = core.fetch({
 });
 
 const output = base.output({
+  $id: "output",
   dates: fetchUrl.response,
 });
 
