@@ -1,7 +1,7 @@
 {
   "title": "Tool Worker",
   "description": "A worker that can use tools to accomplish tasks.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -383,9 +383,12 @@
             "context": {
               "title": "Context",
               "type": "array",
-              "behavior": [
-                "llm-content"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
               "default": "What is the square root of e?"
             },
             "instruction": {
@@ -400,9 +403,12 @@
               "title": "Tools",
               "type": "array",
               "description": "The list to iterate over.",
-              "behavior": [
-                "board"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "board"
+                ]
+              },
               "examples": [
                 "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
               ],

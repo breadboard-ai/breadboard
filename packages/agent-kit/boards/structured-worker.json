@@ -1,7 +1,7 @@
 {
   "title": "Structured Worker",
   "description": "A worker who outputs structure data (JSON) provided a schema.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -200,15 +200,20 @@
               "examples": [
                 "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"poems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"inspiration\": {\n            \"type\": \"string\",\n            \"description\": \"The inspiration behind the poem\"\n          },\n          \"poem\": {\n            \"type\": \"string\",\n            \"description\": \"The poem itself\"\n          }\n        }\n      }\n    }\n  }\n}"
               ],
-              "format": "multiline",
+              "behavior": [
+                "json-schema"
+              ],
               "default": "{}"
             },
             "context": {
               "title": "Context",
               "type": "array",
-              "behavior": [
-                "llm-content"
-              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
               "default": "[]",
               "examples": [
                 "the universe within us"
