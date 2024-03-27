@@ -45,7 +45,6 @@ const kitConstructors = [GeminiKit];
 export const addNodeProxyServerConfig = (config: RunConfig) => {
   // try to find node proxy server in local storage:
   const proxyServerURL = globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY);
-  console.log("HERE", proxyServerURL);
   const proxy: HarnessProxyConfig[] = [];
   if (proxyServerURL) {
     console.log("🚀 Using proxy server:", proxyServerURL);
