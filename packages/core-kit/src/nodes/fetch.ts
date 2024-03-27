@@ -118,8 +118,26 @@ export const fetchDescriber: NodeDescriberFunction = async () => {
           description: "The HTTP status code of the response",
           type: "number",
         },
+        statusText: {
+          title: "statusText",
+          description: "The status text of the response",
+          type: "string",
+        },
+        contentType: {
+          title: "contentType",
+          description: "The content type of the response",
+          type: "string",
+        },
+        responseHeaders: {
+          title: "responseHeaders",
+          description: "The headers of the response",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+        },
       },
-      required: ["response", "status"],
+      required: ["response"],
     },
   };
 };
@@ -148,10 +166,19 @@ export default {
     }
     const data: Response = await fetch(url, init);
     const status = data.status;
+    const responseHeaders: { [key: string]: string } = {};
+    data.headers.forEach((value, name) => {
+      responseHeaders[name] = value;
+    });
+    const contentType = data.headers.get("content-type");
+    const statusText = data.statusText;
     if (!data.ok)
       return {
         $error: await data.json(),
         status,
+        statusText,
+        contentType,
+        responseHeaders,
       };
     if (stream) {
       if (!data.body) {
@@ -165,8 +192,13 @@ export default {
         ),
       };
     } else {
-      const response = raw ? await data.text() : await data.json();
-      return { response, status };
+      let response;
+      if (raw || !contentType || !contentType.includes("application/json")) {
+        response = await data.text();
+      } else {
+        response = await data.json();
+      }
+      return { response, status, statusText, contentType, responseHeaders };
     }
   },
 } satisfies NodeHandler;
