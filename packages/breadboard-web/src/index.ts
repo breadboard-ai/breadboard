@@ -30,6 +30,7 @@ import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
+import { addNodeProxyServerConfig } from "./config";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -760,13 +761,15 @@ export class Main extends LitElement {
               );
 
               this.#runBoard(
-                run({
-                  url: this.loadInfo.graphDescriptor.url,
-                  runner,
-                  diagnostics: true,
-                  kits: this.kits,
-                  loader: this.#loader,
-                })
+                run(
+                  addNodeProxyServerConfig({
+                    url: this.loadInfo.graphDescriptor.url,
+                    runner,
+                    diagnostics: true,
+                    kits: this.kits,
+                    loader: this.#loader,
+                  })
+                )
               );
             }}
             @breadboardedgechange=${(
