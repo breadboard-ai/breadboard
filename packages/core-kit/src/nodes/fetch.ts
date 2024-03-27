@@ -143,7 +143,7 @@ export const fetchDescriber: NodeDescriberFunction = async () => {
           type: "object",
         },
       },
-      required: ["response", "status"],
+      required: ["response"],
     },
   };
 };
