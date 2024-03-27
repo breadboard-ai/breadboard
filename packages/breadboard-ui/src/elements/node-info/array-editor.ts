@@ -27,7 +27,7 @@ export class ArrayEditor extends LitElement {
   @property({ reflect: true })
   behavior: BehaviorSchema | null = null;
 
-  #focusMostRecentItemOnNextRender = false;
+  #appendNewItemOnNextRender = false;
 
   static styles = css`
     :host {
@@ -137,14 +137,11 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    const newItem: Record<string, unknown> = {};
-    if (this.behavior === "llm-content") {
-      newItem.parts = [];
+    this.#appendNewItemOnNextRender = true;
+    if (!this.#updateItems()) {
+      return;
     }
 
-    this.#focusMostRecentItemOnNextRender = true;
-    this.#items.push(this.type === TYPE.STRING ? "" : newItem);
-    this.#updateItems();
     this.#notify();
     this.requestUpdate();
   }
@@ -207,33 +204,34 @@ export class ArrayEditor extends LitElement {
 
     const form = evt.target;
     const data = new FormData(form);
-    let idx = 0;
-
-    if (!this.#items) {
-      this.#items = [];
-    }
-
+    const items: Array<string | object> = [];
     for (const [id, value] of data) {
-      if (this.type === TYPE.STRING) {
-        this.#items[idx++] = value;
-        continue;
-      }
-
       const field = form.querySelector(`#${id}`) as HTMLObjectElement;
       if (!field) {
         console.warn(`Unable to find field ${id}`);
         continue;
       }
 
+      field.setCustomValidity("");
+      const formValue = (value as string).trim();
+      if (formValue === "" && this.type === TYPE.STRING) {
+        field.setCustomValidity("Field must not be empty");
+        field.reportValidity();
+        continue;
+      }
+
+      if (this.type === TYPE.STRING) {
+        items.push(value);
+        continue;
+      }
+
       try {
-        field.setCustomValidity("");
-        const formValue = (value as string).trim();
         const formValueObject = JSON.parse(formValue);
         if (this.behavior === "llm-content") {
           assertIsLLMContent(formValueObject);
         }
 
-        this.#items[idx++] = formValueObject;
+        items.push(formValueObject);
       } catch (err) {
         if (err instanceof SyntaxError) {
           field.setCustomValidity("Invalid JSON");
@@ -245,14 +243,34 @@ export class ArrayEditor extends LitElement {
         field.reportValidity();
       }
     }
-  }
 
-  protected updated(): void {
-    if (!this.#focusMostRecentItemOnNextRender || !this.#formRef.value) {
+    const isValid = form.checkValidity();
+    if (!isValid) {
       return;
     }
 
-    this.#focusMostRecentItemOnNextRender = false;
+    this.#items = items;
+  }
+
+  protected willUpdate(): void {
+    if (!this.#appendNewItemOnNextRender || !this.#items) {
+      return;
+    }
+
+    const newItem: Record<string, unknown> = {};
+    if (this.behavior === "llm-content") {
+      newItem.parts = [];
+    }
+
+    this.#items.push(this.type === TYPE.STRING ? "" : newItem);
+  }
+
+  protected updated(): void {
+    if (!this.#appendNewItemOnNextRender || !this.#formRef.value) {
+      return;
+    }
+
+    this.#appendNewItemOnNextRender = false;
 
     const inputs = this.#formRef.value.querySelectorAll("textarea");
     if (inputs.length === 0) {
