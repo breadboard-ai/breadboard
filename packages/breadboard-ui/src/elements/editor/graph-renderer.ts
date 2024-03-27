@@ -96,11 +96,12 @@ export class GraphRenderer extends LitElement {
       margin-left: 0;
     }
 
-    #recenter {
+    #reset-layout,
+    #zoom-to-fit {
       width: 20px;
       height: 20px;
       cursor: pointer;
-      background: var(--bb-icon-fit) center center no-repeat;
+      background: center center no-repeat;
       background-size: 20px 20px;
       font-size: 0;
       cursor: pointer;
@@ -109,7 +110,16 @@ export class GraphRenderer extends LitElement {
       border: none;
     }
 
-    #recenter:hover {
+    #reset-layout {
+      background-image: var(--bb-icon-reset-nodes);
+    }
+
+    #zoom-to-fit {
+      background-image: var(--bb-icon-fit);
+    }
+
+    #reset-layout:hover,
+    #zoom-to-fit:hover {
       transition-duration: 0.1s;
       opacity: 1;
     }
@@ -310,6 +320,21 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  resetGraphLayout() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.clearNodeLayoutPositions();
+      graph.layout();
+
+      this.dispatchEvent(
+        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
+      );
+    }
+  }
+
   removeGraph(graph: Graph) {
     graph.removeFromParent();
     graph.destroy();
@@ -395,7 +420,26 @@ export class GraphRenderer extends LitElement {
   render() {
     return html`${this.#app.view}
       <div id="controls">
-        <button id="recenter" @click=${() => this.zoomToFit()}>Recenter</button>
+        <button
+          title="Zoom to fit"
+          id="zoom-to-fit"
+          @click=${() => this.zoomToFit()}
+        >
+          Zoom to fit
+        </button>
+        <button
+          title="Reset Layout"
+          id="reset-layout"
+          @click=${() => {
+            if (!confirm("Are you sure you want to reset node positions?")) {
+              return;
+            }
+
+            this.resetGraphLayout();
+          }}
+        >
+          Reset Layout
+        </button>
       </div>`;
   }
 }
