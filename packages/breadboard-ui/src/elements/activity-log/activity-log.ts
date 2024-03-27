@@ -378,6 +378,7 @@ export class ActivityLog extends LitElement {
     }
 
     dt .value {
+      white-space: pre-line;
       border-radius: var(--bb-grid-size);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
     }
