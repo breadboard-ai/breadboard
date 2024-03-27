@@ -152,6 +152,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Nager Date Next Public Holidays Worldwide API",
+    "url": "/graphs/nager.date/next-holiday-worldwide.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Nager Date Public Holidays API",
     "url": "/graphs/nager.date/public-holidays.json",
     "version": "0.0.1"
