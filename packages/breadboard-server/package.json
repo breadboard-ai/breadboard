@@ -126,7 +126,7 @@
     "@google-labs/core-kit": "^0.5.0"
   },
   "dependencies": {
-    "@google-cloud/firestore": "^7.4.0",
+    "@google-cloud/firestore": "^7.5.0",
     "@google-labs/breadboard": "^0.12.0"
   }
 }
