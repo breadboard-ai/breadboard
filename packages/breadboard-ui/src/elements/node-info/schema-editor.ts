@@ -194,12 +194,30 @@ export class SchemaEditor extends LitElement {
         }
       }
 
-      const enumerations = html` <label for="${id}-enum">User choices</label>
+      const enumerations = html`<label for="${id}-enum">User choices</label>
         <bb-array-editor
           id="${id}-enum"
           name="${id}-enum"
           ?readonly=${!this.editable}
           .items=${value.enum || []}
+          .type=${"string"}
+        ></bb-array-editor>`;
+
+      const format = html`<label for="${id}-format">Format</label>
+        <input
+          name="${id}-format"
+          id="${id}-format"
+          type="text"
+          value="${value.format || ""}"
+          ?readonly=${!this.editable}
+        />`;
+
+      const examples = html`<label for="${id}-examples">Examples</label>
+        <bb-array-editor
+          id="${id}-examples"
+          name="${id}-examples"
+          ?readonly=${!this.editable}
+          .items=${value.examples || []}
           .type=${"string"}
         ></bb-array-editor>`;
 
@@ -245,6 +263,9 @@ export class SchemaEditor extends LitElement {
             }}
             ?readonly=${!this.editable}
           >
+            <option ?selected=${value.type === "object"} value="object">
+              Object
+            </option>
             <option ?selected=${value.type === "array"} value="array">
               Array
             </option>
@@ -259,19 +280,12 @@ export class SchemaEditor extends LitElement {
             </option>
           </select>
 
+          ${value.type === "object" ? format : nothing}
           ${value.type === "string" ? enumerations : nothing}
+          ${value.type === "string" ? examples : nothing}
 
           <label for="${id}-default">Default</label>
           ${defaultValue}
-
-          <label for="${id}-examples">Examples</label>
-          <bb-array-editor
-            id="${id}-examples"
-            name="${id}-examples"
-            ?readonly=${!this.editable}
-            .items=${value.examples || []}
-            .type=${"string"}
-          ></bb-array-editor>
 
           <label for="${id}-required">Required</label>
           <input
@@ -312,6 +326,9 @@ export class SchemaEditor extends LitElement {
         const inExamples = form.querySelector(
           `#${id}-examples`
         ) as HTMLInputElement | null;
+        const inFormat = form.querySelector(
+          `#${id}-format`
+        ) as HTMLInputElement | null;
         const inEnum = form.querySelector(
           `#${id}-enum`
         ) as HTMLInputElement | null;
@@ -330,6 +347,7 @@ export class SchemaEditor extends LitElement {
             : inDefault?.value ?? property.default;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
+        property.format = inFormat?.value;
         property.enum =
           userChoices && userChoices.length ? userChoices : undefined;
 
