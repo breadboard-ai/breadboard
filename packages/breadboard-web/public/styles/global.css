@@ -71,7 +71,9 @@ html {
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);
   --bb-icon-reset: url(/third_party/icons/reset.svg);
+  --bb-icon-reset-alt: url(/third_party/icons/reset-alt.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
+  --bb-icon-reset-nodes: url(/third_party/icons/reset-nodes.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);

@@ -342,10 +342,9 @@ export class Graph extends PIXI.Container {
 
     const g = new Dagre.graphlib.Graph();
     const opts: Partial<Dagre.GraphLabel> = {
-      marginx: 0,
-      marginy: 0,
+      ranksep: 60,
       rankdir: "LR",
-      align: "UL",
+      align: "DR",
     };
     if (this.layoutRect) {
       opts.width = Math.floor(this.layoutRect.width);
@@ -386,8 +385,8 @@ export class Graph extends PIXI.Container {
           continue;
         }
 
-        const { x, y } = g.node(id);
-        this.#layout.set(id, { x, y });
+        const { x, y, width, height } = g.node(id);
+        this.#layout.set(id, { x: x - width / 2, y: y - height / 2 });
       }
     }
 

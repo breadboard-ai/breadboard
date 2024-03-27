@@ -127,6 +127,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "@types/markdown-it": "^13.0.7",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
@@ -144,6 +145,7 @@
     "@lit/task": "^1.0.0",
     "jsonschema": "^1.4.1",
     "lit": "^3.1.1",
+    "markdown-it": "^14.1.0",
     "pixi.js": "^7.4.0"
   }
 }
