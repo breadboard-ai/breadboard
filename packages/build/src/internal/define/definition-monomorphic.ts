@@ -176,6 +176,10 @@ type MonomorphicInputValues<
   INPUT_CONFIGS extends PortConfigMap,
   VALUES extends Record<string, unknown>,
 > = ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>> & {
+  // This is a trick for making type errors for excess properties more useful.
+  // We take a broad type for VALUES, but then override any of its properties
+  // that we don't recognize with never. This way, the red squiggly will appear
+  // under the exact excess property, instead of over the whole object.
   [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof INPUT_CONFIGS
     ? ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>>[PORT_NAME]
     : never;
