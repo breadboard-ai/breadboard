@@ -29,6 +29,7 @@ const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 
 const HARNESS_SWITCH_KEY = "bb-harness";
+const PROXY_SERVER_URL_KEY = "bb-node-proxy-server";
 
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const WORKER_HARNESS_VALUE = "worker";
@@ -41,17 +42,39 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
 
 const kitConstructors = [GeminiKit];
 
+export const addNodeProxyServerConfig = (config: RunConfig) => {
+  // try to find node proxy server in local storage:
+  const proxyServerURL = globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY);
+  const proxy: HarnessProxyConfig[] = [];
+  if (proxyServerURL) {
+    console.log("🚀 Using proxy server:", proxyServerURL);
+    proxy.push({
+      location: "http",
+      url: proxyServerURL,
+      nodes: PROXY_NODES,
+    });
+  }
+  config.proxy = proxy;
+  return config;
+};
+
 export const createRunConfig = async (url: string): Promise<RunConfig> => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
   const proxy: HarnessProxyConfig[] = [];
   if (harness === PROXY_SERVER_HARNESS_VALUE) {
-    proxy.push({
-      location: "http",
-      url: PROXY_SERVER_URL,
-      nodes: PROXY_NODES,
-    });
+    // try to find node proxy server in local storage:
+    const proxyServerURL =
+      globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY) ?? PROXY_SERVER_URL;
+    if (proxyServerURL) {
+      console.log("🚀 Using proxy server:", proxyServerURL);
+      proxy.push({
+        location: "http",
+        url: proxyServerURL,
+        nodes: PROXY_NODES,
+      });
+    }
   } else if (harness === WORKER_HARNESS_VALUE) {
     proxy.push({ location: "main", nodes: PROXY_NODES });
   }

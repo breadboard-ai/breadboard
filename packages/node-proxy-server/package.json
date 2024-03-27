@@ -13,14 +13,21 @@
   "scripts": {
     "prepack": "npm run build",
     "serve": "wireit",
+    "build": "wireit",
     "dev": "npm run serve --watch",
     "lint": "wireit",
     "deploy": "wireit"
   },
   "wireit": {
-    "serve": {
+    "build": {
       "dependencies": [
-        "./functions:serve"
+        "./functions:build"
+      ]
+    },
+    "serve": {
+      "command": "(cd functions && npm run serve)",
+      "dependencies": [
+        "build"
       ]
     },
     "deploy": {
