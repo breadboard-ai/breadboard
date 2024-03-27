@@ -5,10 +5,11 @@
  */
 
 import { Task } from "@lit/task";
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
+  BehaviorSchema,
   GraphLoader,
   InspectableNode,
   InspectablePort,
@@ -20,7 +21,11 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SchemaEditor } from "./schema-editor.js";
 import { NodeUpdateEvent } from "../../events/events.js";
 import { guard } from "lit/directives/guard.js";
-import { resolveArrayType, resolveBehaviorType } from "../../utils/schema.js";
+import {
+  assertIsLLMContent,
+  resolveArrayType,
+  resolveBehaviorType,
+} from "../../utils/schema.js";
 import { ArrayEditor } from "./array-editor.js";
 
 @customElement("bb-node-info")
@@ -164,7 +169,9 @@ export class NodeInfo extends LitElement {
       grid-column: 1/3;
       font-family: var(--bb-font-family);
       font-size: var(--bb-text-small);
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
+        var(--bb-grid-size) 0;
+      display: block;
     }
 
     #node-properties input[type="number"],
@@ -230,6 +237,26 @@ export class NodeInfo extends LitElement {
     }
   `;
 
+  #assertIsValidBehavior(
+    behavior: string | undefined
+  ): behavior is BehaviorSchema {
+    switch (behavior) {
+      case "board":
+      case "bubble":
+      case "error":
+      case "image":
+      case "stream":
+      case "json-schema":
+      case "llm-content":
+      case "ports-spec":
+      case "transient":
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
   async #onFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
@@ -237,11 +264,16 @@ export class NodeInfo extends LitElement {
       return;
     }
 
-    const toConvert = new Set<string>();
+    const toConvert = new Map<string, BehaviorSchema>();
     const data = new FormData(evt.target);
     for (const field of evt.target.querySelectorAll("textarea")) {
       if (field.dataset.type && field.dataset.type === "object") {
-        toConvert.add(field.id);
+        toConvert.set(
+          field.id,
+          this.#assertIsValidBehavior(field.dataset.behavior)
+            ? field.dataset.behavior
+            : "json-schema"
+        );
       }
 
       data.set(field.id, field.value);
@@ -312,7 +344,17 @@ export class NodeInfo extends LitElement {
       }
 
       if (name === "schema" || toConvert.has(name)) {
-        configuration[name] = JSON.parse(value);
+        try {
+          // Always attempt a JSON parse of the value.
+          const schemaValue = JSON.parse(value);
+          if (toConvert.get(name) === "llm-content") {
+            assertIsLLMContent(schemaValue);
+          }
+          configuration[name] = schemaValue;
+        } catch (err) {
+          // Prevent form submission on error.
+          return;
+        }
         continue;
       }
 
@@ -460,6 +502,7 @@ export class NodeInfo extends LitElement {
 
                   let input;
                   const type = port.schema.type;
+                  const behavior = port.schema.behavior;
                   switch (type) {
                     case "object": {
                       // Only show the schema editor for inputs & outputs
@@ -486,17 +529,57 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                           data-type="${type}"
-                          .value=${JSON.stringify(value, null, 2)}
+                          data-behavior=${behavior ? behavior : nothing}
+                          @input=${(evt: Event) => {
+                            const field = evt.target;
+                            if (!(field instanceof HTMLTextAreaElement)) {
+                              return;
+                            }
+
+                            field.setCustomValidity("");
+                          }}
+                          @blur=${(evt: Event) => {
+                            const field = evt.target;
+                            if (!(field instanceof HTMLTextAreaElement)) {
+                              return;
+                            }
+
+                            field.setCustomValidity("");
+                            try {
+                              JSON.parse(field.value);
+                              if (field.dataset.behavior === "llm-content") {
+                                assertIsLLMContent(field.value);
+                              }
+                            } catch (err) {
+                              if (err instanceof SyntaxError) {
+                                field.setCustomValidity("Invalid JSON");
+                              } else {
+                                const llmError = err as Error;
+                                field.setCustomValidity(
+                                  `Invalid LLM Content: ${llmError.message}`
+                                );
+                              }
+                            }
+
+                            field.reportValidity();
+                          }}
+                          .value=${value ? JSON.stringify(value, null, 2) : ""}
                         ></textarea>`;
                       }
                       break;
                     }
 
                     case "array": {
+                      let renderableValue = value;
+                      if (typeof value !== "string") {
+                        renderableValue = JSON.stringify(value);
+                      }
                       input = html`<bb-array-editor
                         id="${name}"
                         name="${name}"
-                        .items=${JSON.parse((value as string) || "[]")}
+                        .items=${JSON.parse(
+                          (renderableValue as string) || "[]"
+                        )}
                         .type=${resolveArrayType(port.schema)}
                         .behavior=${resolveBehaviorType(
                           port.schema.items
