@@ -137,9 +137,9 @@ class MonomorphicNodeInstance<
         new OutputPort(config.type, name, this),
       ])
     ) as OutputPorts<OUTPUT_CONFIGS>;
-    const primaryOutputPortNames = Object.keys(
-      Object.entries(outputs).filter(([, config]) => config.primary)
-    );
+    const primaryOutputPortNames = Object.entries(outputs)
+      .filter(([, config]) => config.primary)
+      .map(([name]) => name);
     if (primaryOutputPortNames.length === 1) {
       this[OutputPortGetter] = this.outputs[
         primaryOutputPortNames[0]!

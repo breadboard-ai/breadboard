@@ -40,7 +40,7 @@ export interface AdvancedBreadboardType<
   // later.
   //
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  T,
+  T extends JsonSerializable,
 > {
   readonly jsonSchema: JSONSchema4;
 }

@@ -5,7 +5,7 @@
  */
 
 import type { JSONSchema4 } from "json-schema";
-import type { AdvancedBreadboardType } from "./type.js";
+import type { AdvancedBreadboardType, JsonSerializable } from "./type.js";
 
 /**
  * If none of the included type utilities are able to express both the required
@@ -39,7 +39,7 @@ import type { AdvancedBreadboardType } from "./type.js";
  * @returns A `BreadboardType` which carries both the TypeScript type provided
  * via the `T` generic parameter, and the corresponding JSON schema.
  */
-export function unsafeType<T>(
+export function unsafeType<T extends JsonSerializable>(
   jsonSchema: JSONSchema4
 ): AdvancedBreadboardType<T> {
   return { jsonSchema };
