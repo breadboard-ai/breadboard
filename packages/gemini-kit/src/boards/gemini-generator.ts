@@ -128,7 +128,7 @@ const parametersSchema = {
       type: "string",
       title: "Model",
       description: "The model to use for generation",
-      enum: ["gemini-pro", "gemini-ultra"],
+      enum: ["gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"],
       examples: ["gemini-pro"],
     },
     tools: {
