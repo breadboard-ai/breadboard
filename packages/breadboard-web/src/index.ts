@@ -366,8 +366,9 @@ export class Main extends LitElement {
       this.#providers.map((provider) => {
         if (provider.extendedCapabilities().watch) {
           provider.watch((change) => {
-            console.log("🌻 change event", change);
-            window.location.reload();
+            this.#onStartBoard(
+              new BreadboardUI.Events.StartEvent(boardFromUrl)
+            );
           });
         }
       });
