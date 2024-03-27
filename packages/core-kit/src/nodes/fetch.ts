@@ -5,6 +5,7 @@
  */
 
 import {
+  Schema,
   StreamCapability,
   type InputValues,
   type NodeDescriberFunction,
@@ -136,11 +137,35 @@ export const fetchDescriber: NodeDescriberFunction = async () => {
             type: "string",
           },
         },
+        responseSchema: {
+          title: "responseSchema",
+          description: "The JSON schema of the response",
+          type: "object",
+        },
       },
       required: ["response"],
     },
   };
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateJsonSchemaFromObject(obj: any): Schema {
+  if (Array.isArray(obj)) {
+    // Handle arrays
+    const items = obj.length > 0 ? generateJsonSchemaFromObject(obj[0]) : {};
+    return { type: "array", items };
+  } else if (typeof obj === "object" && obj !== null) {
+    // Handle objects
+    const properties: { [key: string]: Schema } = {};
+    for (const key of Object.keys(obj)) {
+      properties[key] = generateJsonSchemaFromObject(obj[key]);
+    }
+    return { type: "object", properties };
+  } else {
+    // Handle primitives (string, number, boolean, null)
+    return { type: typeof obj };
+  }
+}
 
 export default {
   describe: fetchDescriber,
@@ -195,10 +220,25 @@ export default {
       let response;
       if (raw || !contentType || !contentType.includes("application/json")) {
         response = await data.text();
+        return {
+          response,
+          status,
+          statusText,
+          contentType,
+          responseHeaders,
+        };
       } else {
         response = await data.json();
+        const responseSchema = generateJsonSchemaFromObject(response);
+        return {
+          response,
+          status,
+          statusText,
+          contentType,
+          responseHeaders,
+          responseSchema,
+        };
       }
-      return { response, status, statusText, contentType, responseHeaders };
     }
   },
 } satisfies NodeHandler;
