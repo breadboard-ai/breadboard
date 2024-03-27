@@ -183,7 +183,7 @@ describe("object", () => {
 
   test("object with unknown property", () => {
     const obj = object({ foo: "unknown" });
-    // $ExpectType { foo: unknown; }
+    // $ExpectType { foo: JsonSerializable; }
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
@@ -203,7 +203,7 @@ describe("object", () => {
       properties: {},
       required: [],
     });
-  })
+  });
 
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
@@ -274,7 +274,7 @@ describe("array", () => {
 
   test("array of unknown", () => {
     const arr = array("unknown");
-    // $ExpectType unknown[]
+    // $ExpectType JsonSerializable[]
     type arrayType = ConvertBreadboardType<typeof arr>;
     assert.deepEqual(toJSONSchema(arr), {
       items: {},
