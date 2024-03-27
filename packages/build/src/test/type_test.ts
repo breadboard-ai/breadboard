@@ -88,86 +88,122 @@ test("anyOf", () => {
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
 
-test("object", () => {
+describe("object", () => {
   /* eslint-disable @typescript-eslint/no-unused-vars */
 
-  // @ts-expect-error no arguments
-  assert.throws(() => object());
-
-  const obj1 = object({});
-  // $ExpectType {}
-  type t1 = ConvertBreadboardType<typeof obj1>;
-  assert.deepEqual(toJSONSchema(obj1), {
-    type: "object",
-    properties: {},
-    required: [],
+  test("no arguments", () => {
+    // @ts-expect-error no arguments
+    assert.throws(() => object());
   });
 
-  const obj2 = object({ foo: "string", bar: "number" });
-  // $ExpectType { foo: string; bar: number; }
-  type t2 = ConvertBreadboardType<typeof obj2>;
-  assert.deepEqual(toJSONSchema(obj2), {
-    type: "object",
-    properties: {
-      foo: {
-        type: "string",
-      },
-      bar: {
-        type: "number",
-      },
-    },
-    required: ["foo", "bar"],
+  test("empty object", () => {
+    const obj1 = object({});
+    // $ExpectType {}
+    type t1 = ConvertBreadboardType<typeof obj1>;
+    assert.deepEqual(toJSONSchema(obj1), {
+      type: "object",
+      properties: {},
+      required: [],
+    });
   });
 
-  const obj3 = object({ foo: object({ bar: "string" }) });
-  // $ExpectType { foo: { bar: string; }; }
-  type t3 = ConvertBreadboardType<typeof obj3>;
-  assert.deepEqual(toJSONSchema(obj3), {
-    type: "object",
-    properties: {
-      foo: {
-        type: "object",
-        properties: {
-          bar: {
-            type: "string",
-          },
+  test("object with string and number properties", () => {
+    const obj2 = object({ foo: "string", bar: "number" });
+    // $ExpectType { foo: string; bar: number; }
+    type t2 = ConvertBreadboardType<typeof obj2>;
+    assert.deepEqual(toJSONSchema(obj2), {
+      type: "object",
+      properties: {
+        foo: {
+          type: "string",
         },
-        required: ["bar"],
+        bar: {
+          type: "number",
+        },
       },
-    },
-    required: ["foo"],
+      required: ["foo", "bar"],
+    });
   });
 
-  const obj4 = object({ foo: anyOf("string", "number") });
-  // $ExpectType { foo: string | number; }
-  type t4 = ConvertBreadboardType<typeof obj4>;
-  assert.deepEqual(toJSONSchema(obj4), {
-    type: "object",
-    properties: {
-      foo: { anyOf: [{ type: "string" }, { type: "number" }] },
-    },
-    required: ["foo"],
-  });
-
-  const obj5 = object({ foo: anyOf("string", object({ bar: "string" })) });
-  // $ExpectType { foo: string | { bar: string; }; }
-  type t5 = ConvertBreadboardType<typeof obj5>;
-  assert.deepEqual(toJSONSchema(obj5), {
-    type: "object",
-    properties: {
-      foo: {
-        anyOf: [
-          { type: "string" },
-          {
-            type: "object",
-            properties: { bar: { type: "string" } },
-            required: ["bar"],
+  test("object with nested object", () => {
+    const obj3 = object({ foo: object({ bar: "string" }) });
+    // $ExpectType { foo: { bar: string; }; }
+    type t3 = ConvertBreadboardType<typeof obj3>;
+    assert.deepEqual(toJSONSchema(obj3), {
+      type: "object",
+      properties: {
+        foo: {
+          type: "object",
+          properties: {
+            bar: {
+              type: "string",
+            },
           },
-        ],
+          required: ["bar"],
+        },
       },
-    },
-    required: ["foo"],
+      required: ["foo"],
+    });
   });
+
+  test("object with anyOf type", () => {
+    const obj4 = object({ foo: anyOf("string", "number") });
+    // $ExpectType { foo: string | number; }
+    type t4 = ConvertBreadboardType<typeof obj4>;
+    assert.deepEqual(toJSONSchema(obj4), {
+      type: "object",
+      properties: {
+        foo: { anyOf: [{ type: "string" }, { type: "number" }] },
+      },
+      required: ["foo"],
+    });
+  });
+
+  test("object with anyOf type including object", () => {
+    const obj5 = object({ foo: anyOf("string", object({ bar: "string" })) });
+    // $ExpectType { foo: string | { bar: string; }; }
+    type t5 = ConvertBreadboardType<typeof obj5>;
+    assert.deepEqual(toJSONSchema(obj5), {
+      type: "object",
+      properties: {
+        foo: {
+          anyOf: [
+            { type: "string" },
+            {
+              type: "object",
+              properties: { bar: { type: "string" } },
+              required: ["bar"],
+            },
+          ],
+        },
+      },
+      required: ["foo"],
+    });
+  });
+
+  test("object with unknown property", () => {
+    const obj = object({ foo: "unknown" });
+    // $ExpectType { foo: unknown; }
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {
+        foo: {},
+      },
+      required: ["foo"],
+    });
+  });
+
+  test("object no known properties", () => {
+    const obj = object({});
+    // $ExpectType {}
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {},
+      required: [],
+    });
+  })
 
   /* eslint-enable @typescript-eslint/no-unused-vars */
 });
@@ -203,20 +239,20 @@ describe("array", () => {
   });
 
   test("array of numbers", () => {
-    const arr1 = array("number");
+    const arr = array("number");
     // $ExpectType number[]
-    type t1 = ConvertBreadboardType<typeof arr1>;
-    assert.deepEqual(toJSONSchema(arr1), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: { type: "number" },
     });
   });
 
   test("array of objects", () => {
-    const arr2 = array(object({ foo: "string" }));
+    const arr = array(object({ foo: "string" }));
     // $ExpectType { foo: string; }[]
-    type t2 = ConvertBreadboardType<typeof arr2>;
-    assert.deepEqual(toJSONSchema(arr2), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: {
         type: "object",
@@ -227,12 +263,22 @@ describe("array", () => {
   });
 
   test("array of anyOf types", () => {
-    const arr3 = array(anyOf("string", "number"));
+    const arr = array(anyOf("string", "number"));
     // $ExpectType (string | number)[]
-    type t3 = ConvertBreadboardType<typeof arr3>;
-    assert.deepEqual(toJSONSchema(arr3), {
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
       type: "array",
       items: { anyOf: [{ type: "string" }, { type: "number" }] },
+    });
+  });
+
+  test("array of unknown", () => {
+    const arr = array("unknown");
+    // $ExpectType unknown[]
+    type arrayType = ConvertBreadboardType<typeof arr>;
+    assert.deepEqual(toJSONSchema(arr), {
+      items: {},
+      type: "array",
     });
   });
   /* eslint-enable @typescript-eslint/no-unused-vars */
