@@ -1,0 +1,43 @@
+{
+  "title": "Nager Date Available Countries API",
+  "description": "Get the available countries for the Nager Date API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "output",
+      "out": "response",
+      "in": "dates"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "dates": {
+              "title": "response",
+              "description": "The response from the fetch request",
+              "type": [
+                "string",
+                "object"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET",
+        "url": "https://date.nager.at/api/v3/AvailableCountries"
+      }
+    }
+  ],
+  "graphs": {}
+}
