@@ -385,8 +385,6 @@ export class NodeInfo extends LitElement {
       delete configuration[name];
     }
 
-    console.log(configuration);
-
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
   }
 
