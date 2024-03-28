@@ -154,7 +154,6 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    this.#notify();
     this.requestUpdate();
   }
 
@@ -183,7 +182,6 @@ export class ArrayEditor extends LitElement {
 
     this.#items.splice(idx, 1);
     this.#notify();
-    this.requestUpdate();
   }
 
   #unsetAll() {
