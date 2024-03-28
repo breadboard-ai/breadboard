@@ -327,7 +327,6 @@ export class NodeInfo extends LitElement {
       loader: this.loader || undefined,
     });
     const node = breadboardGraph.nodeById(id);
-    console.log(node);
     if (!node) {
       return;
     }
