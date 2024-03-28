@@ -257,7 +257,7 @@ export class NodeInfo extends LitElement {
     }
   }
 
-  async #onFormSubmit(evt: SubmitEvent) {
+  #onFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
     if (!(evt.target instanceof HTMLFormElement) || !this.selectedNodeId) {
@@ -307,7 +307,7 @@ export class NodeInfo extends LitElement {
       }
 
       toConvert.set(arrayEditor.id, "json-schema");
-      data.set(arrayEditor.id, JSON.stringify(arrayEditor.items));
+      data.set(arrayEditor.id, arrayEditor.value);
     }
 
     const id = data.get("$id") as string;
