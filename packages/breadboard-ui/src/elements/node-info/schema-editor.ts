@@ -226,6 +226,7 @@ export class SchemaEditor extends LitElement {
           <span>${value.title ?? id}</span>
           <button
             class="delete-schema-item"
+            type="button"
             @click=${() => this.#deleteProperty(id)}
             ?disabled=${!this.editable}
           >
