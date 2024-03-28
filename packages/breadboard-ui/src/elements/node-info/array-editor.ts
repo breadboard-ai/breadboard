@@ -5,7 +5,7 @@
  */
 
 import { BehaviorSchema } from "@google-labs/breadboard";
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -99,6 +99,18 @@ export class ArrayEditor extends LitElement {
     #add-new-item:hover {
       opacity: 1;
     }
+
+    #unset-all-items,
+    #create {
+      font-size: var(--bb-label-small);
+      background: var(--bb-continue-color);
+      color: #246db5;
+      border-radius: 20px;
+      border: none;
+      height: calc(var(--bb-grid-size) * 4);
+      padding: 0 calc(var(--bb-grid-size) * 2);
+      margin: 0 0 0 var(--bb-grid-size);
+    }
   `;
 
   set items(items: Array<string | object> | null) {
@@ -134,7 +146,7 @@ export class ArrayEditor extends LitElement {
 
   #addItem() {
     if (!this.#items) {
-      return;
+      this.#items = [];
     }
 
     this.#appendNewItemOnNextRender = true;
@@ -142,7 +154,6 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    this.#notify();
     this.requestUpdate();
   }
 
@@ -171,12 +182,21 @@ export class ArrayEditor extends LitElement {
 
     this.#items.splice(idx, 1);
     this.#notify();
+  }
+
+  #unsetAll() {
+    if (!confirm("Are you sure you want to unset all items in this array?")) {
+      return;
+    }
+
+    this.#items = null;
+    this.#notify();
     this.requestUpdate();
   }
 
   #updateItems() {
     if (!this.#formRef.value) {
-      return false;
+      return true;
     }
 
     // This will update values synchronously.
@@ -281,7 +301,15 @@ export class ArrayEditor extends LitElement {
 
   render() {
     if (!this.items) {
-      return nothing;
+      return html`(Not set)
+        <button
+          id="create"
+          @click=${() => {
+            this.#addItem();
+          }}
+        >
+          Create array
+        </button>`;
     }
 
     return html`<form
@@ -335,7 +363,15 @@ export class ArrayEditor extends LitElement {
             type="button"
             @click=${this.#addItem}
           >
-            +
+            Add new item
+          </button>
+          <button
+            id="unset-all-items"
+            title="Unset all items"
+            type="button"
+            @click=${this.#unsetAll}
+          >
+            Unset all items
           </button>
         </li>
       </ul>
