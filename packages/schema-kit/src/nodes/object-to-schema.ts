@@ -1,7 +1,10 @@
 import { NodeValue, Schema } from "@google-labs/breadboard";
 
 export function objectToSchema(obj: NodeValue): Schema {
-  if (Array.isArray(obj)) {
+  if (obj === undefined) {
+    // Handle undefined
+    return { type: "undefined" };
+  } else if (Array.isArray(obj)) {
     // Handle arrays
     const items = obj.length > 0 ? objectToSchema(obj[0]) : {};
     return { type: "array", items };
