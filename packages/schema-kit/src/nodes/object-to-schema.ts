@@ -1,6 +1,6 @@
 import { NodeValue, Schema } from "@google-labs/breadboard";
 
-export function objectToSchema(obj: NodeValue): Schema {
+export function objectToSchema(obj: unknown): Schema {
   if (obj === undefined) {
     // Handle undefined
     return {};
