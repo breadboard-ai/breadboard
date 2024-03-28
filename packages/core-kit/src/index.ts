@@ -201,6 +201,7 @@ import {
   NewInputValues as InputValues,
   NewOutputValues as OutputValues,
   NewNodeFactory as NodeFactory,
+  Schema,
 } from "@google-labs/breadboard";
 
 export type CoreKitType = {
@@ -283,7 +284,17 @@ export type CoreKitType = {
     { list: NodeValue[] }
   >;
   reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
-  fetch: NodeFactory<{ url: string }, { response: string; status: number }>;
+  fetch: NodeFactory<
+    { url: string },
+    {
+      response: string;
+      status: number;
+      statusText: string;
+      contentType?: string;
+      responseHeaders?: object;
+      responseSchema?: Schema;
+    }
+  >;
   runJavascript: NodeFactory<
     {
       code: string;

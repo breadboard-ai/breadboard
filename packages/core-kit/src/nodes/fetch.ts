@@ -5,6 +5,7 @@
  */
 
 import {
+  Schema,
   StreamCapability,
   type InputValues,
   type NodeDescriberFunction,
@@ -118,11 +119,53 @@ export const fetchDescriber: NodeDescriberFunction = async () => {
           description: "The HTTP status code of the response",
           type: "number",
         },
+        statusText: {
+          title: "statusText",
+          description: "The status text of the response",
+          type: "string",
+        },
+        contentType: {
+          title: "contentType",
+          description: "The content type of the response",
+          type: "string",
+        },
+        responseHeaders: {
+          title: "responseHeaders",
+          description: "The headers of the response",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+        },
+        responseSchema: {
+          title: "responseSchema",
+          description: "The JSON schema of the response",
+          type: "object",
+        },
       },
-      required: ["response", "status"],
+      required: ["response"],
     },
   };
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateJsonSchemaFromObject(obj: any): Schema {
+  if (Array.isArray(obj)) {
+    // Handle arrays
+    const items = obj.length > 0 ? generateJsonSchemaFromObject(obj[0]) : {};
+    return { type: "array", items };
+  } else if (typeof obj === "object" && obj !== null) {
+    // Handle objects
+    const properties: { [key: string]: Schema } = {};
+    for (const key of Object.keys(obj)) {
+      properties[key] = generateJsonSchemaFromObject(obj[key]);
+    }
+    return { type: "object", properties };
+  } else {
+    // Handle primitives (string, number, boolean, null)
+    return { type: typeof obj };
+  }
+}
 
 export default {
   describe: fetchDescriber,
@@ -143,13 +186,24 @@ export default {
     // GET can not have a body.
     if (method !== "GET") {
       init.body = JSON.stringify(body);
+    } else if (body) {
+      throw new Error("GET requests can not have a body");
     }
     const data: Response = await fetch(url, init);
     const status = data.status;
+    const responseHeaders: { [key: string]: string } = {};
+    data.headers.forEach((value, name) => {
+      responseHeaders[name] = value;
+    });
+    const contentType = data.headers.get("content-type");
+    const statusText = data.statusText;
     if (!data.ok)
       return {
         $error: await data.json(),
         status,
+        statusText,
+        contentType,
+        responseHeaders,
       };
     if (stream) {
       if (!data.body) {
@@ -163,8 +217,28 @@ export default {
         ),
       };
     } else {
-      const response = raw ? await data.text() : await data.json();
-      return { response, status };
+      let response;
+      if (raw || !contentType || !contentType.includes("application/json")) {
+        response = await data.text();
+        return {
+          response,
+          status,
+          statusText,
+          contentType,
+          responseHeaders,
+        };
+      } else {
+        response = await data.json();
+        const responseSchema = generateJsonSchemaFromObject(response);
+        return {
+          response,
+          status,
+          statusText,
+          contentType,
+          responseHeaders,
+          responseSchema,
+        };
+      }
     }
   },
 } satisfies NodeHandler;
