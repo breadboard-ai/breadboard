@@ -1,1 +1,1 @@
-export { objectToSchema } from "./object-to-schema.js";
+export * from "./object-to-schema.js";
