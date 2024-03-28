@@ -5,8 +5,8 @@
  */
 
 import { defineNodeType } from "@breadboard-ai/build";
-import { test } from "node:test";
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import {
   OutputPortGetter,
   type OutputPortReference,

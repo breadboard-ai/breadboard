@@ -5,6 +5,10 @@
  */
 
 import {
+  defineNodeType,
+  type NodeFactoryFromDefinition,
+} from "@breadboard-ai/build";
+import {
   addKit,
   asRuntimeKit,
   board,
@@ -12,12 +16,8 @@ import {
   inspect,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
-import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  defineNodeType,
-  type NodeFactoryFromDefinition,
-} from "@breadboard-ai/build";
+import { test } from "node:test";
 import type { MonomorphicDefinition } from "../internal/define/definition-monomorphic.js";
 import type { PolymorphicDefinition } from "../internal/define/definition-polymorphic.js";
 

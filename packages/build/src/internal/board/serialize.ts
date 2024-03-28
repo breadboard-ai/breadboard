@@ -10,13 +10,14 @@ import type {
   NodeDescriptor,
   NodeValue,
 } from "@google-labs/breadboard";
+import type { JSONSchema4 } from "json-schema";
 import { OutputPortGetter } from "../common/port.js";
 import {
   toJSONSchema,
   type BreadboardType,
   type JsonSerializable,
 } from "../type-system/type.js";
-import type { JSONSchema4 } from "json-schema";
+import type { GenericSpecialInput } from "./input.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -24,46 +25,68 @@ import type { JSONSchema4 } from "json-schema";
  */
 export function serialize(board: SerializableBoard): GraphDescriptor {
   const nodes = new Map<object, NodeDescriptor>();
-  // Note this is a slightly stricter type than Edge from GraphDescriptor, since
-  // ports can't be undefined, and that simplifies this implementation.
-  const edges: { from: string; out: string; to: string; in: string }[] = [];
+  const edges: Array<{ from: string; out: string; to: string; in: string }> =
+    [];
+  const errors: string[] = [];
   const typeCounts = new Map<string, number>();
 
-  const outputSchema: JSONSchema4 = {
-    type: "object",
-    properties: {},
-  };
-  const outputId = addNode({
-    type: "output",
-    inputs: { schema: { value: outputSchema } },
-  });
-  // Sort outputs so that our output JSON schema is sorted so that BGL
-  // serialization is deterministic.
-  const sortedOutputs = Object.entries(board.outputs).sort(([nameA], [nameB]) =>
-    nameA.localeCompare(nameB)
+  // Prepare our main input and output nodes. They represent the overall
+  // signature of the board.
+  const mainInputNodeId = nextIdForType("input");
+  const mainOutputNodeId = nextIdForType("output");
+  const mainInputSchema: Record<string, JSONSchema4> = {};
+  const mainOutputSchema: Record<string, JSONSchema4> = {};
+
+  // Analyze inputs and remember some things about them that we'll need when we
+  // traverse the outputs.
+  const inputNames = new Map<
+    GenericSpecialInput | SerializableInputPort,
+    string
+  >();
+  const unconnectedInputs = new Set<
+    GenericSpecialInput | SerializableInputPort
+  >();
+  const sortedBoardInputs = Object.entries(board.inputs).sort(
+    // Sort so that mainInputSchema will also be sorted.
+    ([nameA], [nameB]) => nameA.localeCompare(nameB)
   );
-  for (const [name, port] of sortedOutputs) {
-    outputSchema.properties![name] = toJSONSchema(port[OutputPortGetter].type);
+  for (const [mainInputName, input] of sortedBoardInputs) {
+    if (inputNames.has(input)) {
+      errors.push(
+        `The same input was used as both ` +
+          `${inputNames.get(input)!} and ${mainInputName}.`
+      );
+    }
+    inputNames.set(input, mainInputName);
+    unconnectedInputs.add(input);
+    const schema = toJSONSchema(input.type);
+    if (isSpecialInput(input) && input.default !== undefined) {
+      schema.default = input.default;
+    }
+    mainInputSchema[mainInputName] = schema;
+  }
+
+  // Recursively traverse the graph starting from outputs.
+  const sortedBoardOutputs = Object.entries(board.outputs).sort(
+    // Sort so that mainOutputSchema will also be sorted.
+    ([nameA], [nameB]) => nameA.localeCompare(nameB)
+  );
+  for (const [mainOutputName, output] of sortedBoardOutputs) {
+    const actualOutput = output[OutputPortGetter];
+    mainOutputSchema[mainOutputName] = toJSONSchema(actualOutput.type);
     addEdge(
-      addNode(port[OutputPortGetter].node),
-      port[OutputPortGetter].name,
-      outputId,
-      name
+      visitNodeAndReturnItsId(actualOutput.node),
+      actualOutput.name,
+      mainOutputNodeId,
+      mainOutputName
     );
   }
 
-  // TODO(aomarks) We might actually want each input/output to be its own
-  // input/output node, but then we should add the ability to create input
-  // "sets" or something, for when you actually *do* need to gate until all
-  // inputs/outputs are fulfilled.
-  const input = addNode({ type: "input", inputs: {} });
-  const errors = [];
-  for (const [name, port] of Object.entries(board.inputs)) {
-    if (nodes.has(port.node)) {
-      addEdge(input, name, addNode(port.node), port.name);
-    } else {
+  if (unconnectedInputs.size > 0) {
+    for (const input of unconnectedInputs.values()) {
       errors.push(
-        `Board input "${name}" is not reachable from any of its outputs.`
+        `Board input "${inputNames.get(input)}" ` +
+          `is not reachable from any of its outputs.`
       );
     }
   }
@@ -71,12 +94,41 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   if (errors.length > 0) {
     // TODO(aomarks) Refactor this to a Result<> return, because these errors are
     // expected as part of the normal course of operation.
-    throw new Error(`Error serializing board:\n\n${errors.join("\n\n")}`);
+    throw new Error(
+      `Error serializing board:\n\n${errors.sort().join("\n\n")}`
+    );
   }
 
+  const mainInputNode: NodeDescriptor = {
+    id: mainInputNodeId,
+    type: "input",
+    configuration: {
+      schema: {
+        type: "object",
+        properties: mainInputSchema,
+        required: Object.keys(mainInputSchema),
+        // TODO(aomarks) Disallow extra properties
+      },
+    },
+  };
+  const mainOutputNode: NodeDescriptor = {
+    id: mainOutputNodeId,
+    type: "output",
+    configuration: {
+      schema: {
+        type: "object",
+        properties: mainOutputSchema,
+        required: Object.keys(mainOutputSchema),
+      },
+    },
+  };
+
+  // Sort the nodes and edges for deterministic BGL output.
+  const sortedNodes = [...nodes.values()].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
   return {
-    // Sort the nodes and edges for deterministic BGL output.
-    nodes: [...nodes.values()].sort((a, b) => a.id.localeCompare(b.id)),
+    nodes: [mainInputNode, mainOutputNode, ...sortedNodes],
     edges: edges.sort((a, b) => {
       if (a.from != b.from) {
         return a.from.localeCompare(b.from);
@@ -94,42 +146,68 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     }),
   };
 
-  function addNode(node: SerializableNode): string {
+  function visitNodeAndReturnItsId(node: SerializableNode): string {
     const descriptor = nodes.get(node);
     if (descriptor !== undefined) {
       return descriptor.id;
     }
 
     const { type } = node;
-    const id = nextIdForType(type);
+    const thisNodeId = nextIdForType(type);
     const configuration: Record<string, NodeValue> = {};
 
-    // Note we add this node -> descriptor mapping here because we have to do it
-    // before the next call to addNode to prevent infinite recursion in case we
-    // end up here again.
-    nodes.set(node, { id, type, configuration });
+    // Note it's important we add the node to the nodes map before we next
+    // recurse, or else we can get stuck in a loop.
+    nodes.set(node, { id: thisNodeId, type, configuration });
 
-    const configEntries: Array<[string, NodeValue]> = [];
-    for (const [name, input] of Object.entries(node.inputs)) {
-      if (
-        typeof input.value === "object" &&
-        input.value !== null &&
-        OutputPortGetter in input.value
-      ) {
-        const port = input.value[OutputPortGetter];
-        addEdge(addNode(port.node), port.name, id, name);
+    const configurationEntries: Array<[string, NodeValue]> = [];
+    for (const [portName, inputPort] of Object.entries(node.inputs)) {
+      unconnectedInputs.delete(inputPort);
+      if (isSpecialInput(inputPort.value)) {
+        unconnectedInputs.delete(inputPort.value);
+        const mainInputPortName = inputNames.get(inputPort.value);
+        if (mainInputPortName !== undefined) {
+          addEdge(mainInputNodeId, mainInputPortName, thisNodeId, portName);
+        } else {
+          // TODO(aomarks) Does it actually make sense in some cases to wire up
+          // an input, but not make it part of the board's interface? In that
+          // case it would seem to mean that it's *only* possible for that value
+          // to be provided externally (e.g. by asking the user at runtime), not
+          // through a value wired into the board.
+          errors.push(
+            `${thisNodeId}:${portName} was wired to an input, ` +
+              `but that input was not provided to the board inputs.`
+          );
+        }
+      } else if (isOutputPortReference(inputPort.value)) {
+        const wiredOutputPort = inputPort.value[OutputPortGetter];
+        addEdge(
+          visitNodeAndReturnItsId(wiredOutputPort.node),
+          wiredOutputPort.name,
+          thisNodeId,
+          portName
+        );
+      } else if (inputPort.value === undefined) {
+        // TODO(aomarks) Why is this possible in the type system? An inport port
+        // value can never actually be undefined, right?
+        throw new Error(
+          `Internal error: value was undefined for a ${inputPort.node.type}:${inputPort.name} port.`
+        );
       } else {
-        configEntries.push([name, input.value as NodeValue]);
+        configurationEntries.push([
+          portName,
+          inputPort.value satisfies JsonSerializable as NodeValue,
+        ]);
       }
     }
 
     // Sort the configuration object for deterministic BGL output.
-    configEntries.sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
-    for (const [key, val] of Object.values(configEntries)) {
+    configurationEntries.sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
+    for (const [key, val] of Object.values(configurationEntries)) {
       configuration[key] = val;
     }
 
-    return id;
+    return thisNodeId;
   }
 
   function addEdge(from: string, fromPort: string, to: string, toPort: string) {
@@ -143,25 +221,48 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   }
 }
 
+function isSpecialInput(value: unknown): value is GenericSpecialInput {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__SpecialInputBrand" in value
+  );
+}
+
+function isOutputPortReference(
+  value: unknown
+): value is SerializableOutputPortReference {
+  return (
+    typeof value === "object" && value !== null && OutputPortGetter in value
+  );
+}
+
 interface SerializableBoard {
-  inputs: Record<string, SerializablePort>;
+  inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
   outputs: Record<string, SerializableOutputPortReference>;
 }
 
-interface SerializablePort {
+interface SerializableNode {
+  type: string;
+  inputs: Record<string, SerializableInputPort>;
+}
+
+interface SerializableInputPort {
+  name: string;
+  type: BreadboardType;
+  node: SerializableNode;
+  value?:
+    | JsonSerializable
+    | SerializableOutputPortReference
+    | GenericSpecialInput;
+}
+
+interface SerializableOutputPort {
   name: string;
   type: BreadboardType;
   node: SerializableNode;
 }
 
 interface SerializableOutputPortReference {
-  [OutputPortGetter]: SerializablePort;
-}
-
-interface SerializableNode {
-  type: string;
-  inputs: Record<
-    string,
-    { value?: JsonSerializable | SerializableOutputPortReference }
-  >;
+  [OutputPortGetter]: SerializableOutputPort;
 }

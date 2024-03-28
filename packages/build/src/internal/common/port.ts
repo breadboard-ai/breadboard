@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GenericBreadboardNodeInstance } from "./instance.js";
+import type { Input, InputWithDefault } from "../board/input.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
+import type { GenericBreadboardNodeInstance } from "./instance.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 
@@ -173,4 +174,11 @@ export type OutputPorts<O extends PortConfigMap> = {
 
 export type ValueOrOutputPort<T extends JsonSerializable> =
   | T
-  | OutputPortReference<T>;
+  | OutputPortReference<T>
+  | Input<T>
+  | InputWithDefault<T>;
+
+// export type InputValue<T extends JsonSerializable> =
+//   | { raw: T }
+//   | { port: OutputPortReference<T> }
+//   | { input: InputWithoutDefault<T> | InputWithDefault<T> };

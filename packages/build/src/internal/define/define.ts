@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { PortConfigMap } from "../common/port.js";
+import type { CountUnion } from "../common/type-util.js";
 import {
   defineMonomorphicNodeType,
   type MonomorphicDefinition,
@@ -11,12 +13,10 @@ import {
 } from "./definition-monomorphic.js";
 import {
   definePolymorphicNodeType,
-  type PolymorphicDescribeFunction,
   type PolymorphicDefinition,
+  type PolymorphicDescribeFunction,
   type PolymorphicInvokeFunction,
 } from "./definition-polymorphic.js";
-import type { PortConfigMap } from "../common/port.js";
-import type { CountUnion } from "../common/type-util.js";
 
 /**
  * Define a new Breadboard node type.

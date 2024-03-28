@@ -10,6 +10,7 @@ import {
   type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
+import type { GenericSpecialInput } from "./input.js";
 
 // TODO(aomarks) Support primary ports in boards.
 // TODO(aomarks) Support adding descriptions to board ports.
@@ -39,6 +40,9 @@ import type { JsonSerializable } from "../type-system/type.js";
  * board.
  */
 export function board<
+  // TODO(aomarks) Does it actually make any sense to pass an input port
+  // directly here? The only way to not have already initialized it to something
+  // was to have used an input(), so only inputs should be allowed, right?
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 >(inputs: IPORTS, outputs: OPORTS): BoardDefinition<IPORTS, OPORTS> {
@@ -49,7 +53,10 @@ export function board<
   });
 }
 
-export type BoardInputPorts = Record<string, InputPort<JsonSerializable>>;
+export type BoardInputPorts = Record<
+  string,
+  InputPort<JsonSerializable> | GenericSpecialInput
+>;
 
 export type BoardOutputPorts = Record<
   string,
@@ -63,6 +70,10 @@ export type BoardDefinition<
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
 };
+
+// TODO(aomarks) Fix this definition so that it doesn't need <any, any>.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GenericBoardDefinition = BoardDefinition<any, any>;
 
 type BoardInstantiateFunction<
   IPORTS extends BoardInputPorts,

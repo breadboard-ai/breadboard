@@ -5,7 +5,6 @@
  */
 
 import { defineNodeType } from "@breadboard-ai/build";
-import { test } from "node:test";
 import type {
   NodeDescriberFunction,
   NodeHandler,
@@ -13,6 +12,7 @@ import type {
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import { anyOf } from "../internal/type-system/any-of.js";
 import { unsafeType } from "../internal/type-system/unsafe.js";
 

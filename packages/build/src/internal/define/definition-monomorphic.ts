@@ -10,23 +10,23 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
+import type { StrictNodeHandler } from "../common/compatibility.js";
+import type { GenericBreadboardNodeInstance } from "../common/instance.js";
+import type {
+  ExtractPortTypesFromConfigs,
+  InputPorts,
+  OutputPorts,
+} from "../common/port.js";
 import {
   InputPort,
   OutputPort,
   OutputPortGetter,
-  type PortConfigMap,
-  type ValuesOrOutputPorts,
   type ConcreteValues,
+  type PortConfigMap,
   type PrimaryOutputPort,
+  type ValuesOrOutputPorts,
 } from "../common/port.js";
-import type {
-  ExtractPortTypesFromConfigs,
-  OutputPorts,
-} from "../common/port.js";
-import type { InputPorts } from "../common/port.js";
-import type { StrictNodeHandler } from "../common/compatibility.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
-import type { GenericBreadboardNodeInstance } from "../common/instance.js";
 
 export function defineMonomorphicNodeType<
   ISHAPE extends PortConfigMap,
@@ -137,9 +137,9 @@ class MonomorphicNodeInstance<
         new OutputPort(config.type, name, this),
       ])
     ) as OutputPorts<OUTPUT_CONFIGS>;
-    const primaryOutputPortNames = Object.keys(
-      Object.entries(outputs).filter(([, config]) => config.primary)
-    );
+    const primaryOutputPortNames = Object.entries(outputs)
+      .filter(([, config]) => config.primary)
+      .map(([name]) => name);
     if (primaryOutputPortNames.length === 1) {
       this[OutputPortGetter] = this.outputs[
         primaryOutputPortNames[0]!
@@ -176,6 +176,10 @@ type MonomorphicInputValues<
   INPUT_CONFIGS extends PortConfigMap,
   VALUES extends Record<string, unknown>,
 > = ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>> & {
+  // This is a trick for making type errors for excess properties more useful.
+  // We take a broad type for VALUES, but then override any of its properties
+  // that we don't recognize with never. This way, the red squiggly will appear
+  // under the exact excess property, instead of over the whole object.
   [PORT_NAME in keyof VALUES]: PORT_NAME extends keyof INPUT_CONFIGS
     ? ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>>[PORT_NAME]
     : never;

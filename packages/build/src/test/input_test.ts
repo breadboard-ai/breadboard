@@ -5,9 +5,9 @@
  */
 
 import assert from "node:assert/strict";
-import { input } from "../internal/board/input.js";
 import { test } from "node:test";
 import { anyOf, array, object } from "../index.js";
+import { input } from "../internal/board/input.js";
 import type { BreadboardType } from "../internal/type-system/type.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */

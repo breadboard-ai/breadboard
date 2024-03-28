@@ -64,6 +64,7 @@ export function input(
     type = "string";
   }
   return {
+    __SpecialInputBrand: true,
     type,
     description: params?.description,
     default: params?.default,
@@ -74,14 +75,20 @@ export function input(
     | InputWithDefault<JsonSerializable>;
 }
 
-interface Input<T extends JsonSerializable> {
-  readonly __type: T & never;
+export type GenericSpecialInput =
+  | Input<JsonSerializable>
+  | InputWithDefault<JsonSerializable>;
+
+export interface Input<T extends JsonSerializable> {
+  readonly __SpecialInputBrand: true;
+  readonly __type: T;
   readonly type: BreadboardType;
   readonly description?: string;
   readonly default: undefined;
 }
 
-interface InputWithDefault<T extends JsonSerializable> {
+export interface InputWithDefault<T extends JsonSerializable> {
+  readonly __SpecialInputBrand: true;
   readonly type: BreadboardType;
   readonly description?: string;
   readonly default: T;
