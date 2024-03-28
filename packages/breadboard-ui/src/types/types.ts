@@ -118,3 +118,34 @@ type Part = InlineData | FunctionCall | FunctionResponse;
 export type LLMContent = {
   parts: Part[];
 };
+
+export enum SETTINGS_TYPE {
+  SECRETS = "Secrets",
+  GENERAL = "General",
+}
+
+export interface SettingEntry {
+  key: string;
+  value: {
+    id?: string;
+    name: string;
+    description?: string;
+    value: string | number | boolean;
+  };
+}
+
+export interface SettingsList {
+  [SETTINGS_TYPE.GENERAL]: SettingEntry;
+  [SETTINGS_TYPE.SECRETS]: SettingEntry;
+}
+
+export type Settings = {
+  [K in keyof SettingsList]: {
+    configuration: {
+      extensible: boolean;
+      description: string;
+      nameEditable: boolean;
+    };
+    items: Map<SettingEntry["value"]["name"], SettingEntry["value"]>;
+  };
+};
