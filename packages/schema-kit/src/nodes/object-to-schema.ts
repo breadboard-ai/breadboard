@@ -4,6 +4,9 @@ export function objectToSchema(obj: NodeValue): Schema {
   if (obj === undefined) {
     // Handle undefined
     return {};
+  } else if (obj === null) {
+    // Handle null
+    return { type: "null" };
   } else if (Array.isArray(obj)) {
     // Handle arrays
     const items = obj.length > 0 ? objectToSchema(obj[0]) : {};
@@ -17,7 +20,7 @@ export function objectToSchema(obj: NodeValue): Schema {
     }
     return { type: "object", properties };
   } else {
-    // Handle primitives (string, number, boolean, null)
+    // Handle primitives
     return { type: typeof obj };
   }
 }
