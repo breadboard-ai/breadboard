@@ -148,3 +148,15 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
     t.is(secretCount, 21);
   }
 });
+
+test("run load/save: serialization produces consistent size", async (t) => {
+  const observer = createRunObserver({ logLevel: "debug" });
+  const run = await loadRawRun(observer, "ad-writer-2.1.raw.json");
+  if (!run.serialize) {
+    t.fail("run1 should be serializable.");
+    return;
+  }
+  const serializedRun = run.serialize();
+  const s = JSON.stringify(serializedRun);
+  t.is(s.length, 1297986);
+});
