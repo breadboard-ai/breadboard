@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Playing with graph structures",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -171,14 +171,14 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@google-labs/breadboard": "^0.12.0",
-    "@google-labs/core-kit": "^0.5.0",
-    "@google-labs/graph-integrity": "^0.0.6",
-    "@google-labs/json-kit": "^0.1.1",
-    "@google-labs/node-nursery": "^0.0.7",
-    "@google-labs/palm-kit": "^0.0.6",
-    "@google-labs/pinecone-kit": "^0.1.4",
-    "@google-labs/template-kit": "^0.2.1",
+    "@google-labs/breadboard": "^0.13.0",
+    "@google-labs/core-kit": "^0.5.1",
+    "@google-labs/graph-integrity": "^0.0.7",
+    "@google-labs/json-kit": "^0.1.2",
+    "@google-labs/node-nursery": "^0.0.8",
+    "@google-labs/palm-kit": "^0.0.7",
+    "@google-labs/pinecone-kit": "^0.1.5",
+    "@google-labs/template-kit": "^0.2.2",
     "dotenv": "^16.4.5"
   },
   "engines": {

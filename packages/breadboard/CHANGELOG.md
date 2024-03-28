@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.0
+
+### Minor Changes
+
+- 51a38c0: Teach `InspectableRunNodeEvent` to use `InspectableNode` by default.
+- 9326bd7: Introduce ability to save/load runs.
+
+### Patch Changes
+
+- faf1e12: Teach invoke to be more accepting of uncertainty.
+- d49b80e: Introduce `InspectableRun.getEventById` method.
+- fbad949: Various schema-related bug fixes.
+
 ## 0.12.1
 
 ### Patch Changes

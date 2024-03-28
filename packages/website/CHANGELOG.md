@@ -1,5 +1,11 @@
 # @google-labs/breadboard-website
 
+## 2.2.1
+
+### Patch Changes
+
+- d49b80e: Introduce `InspectableRun.getEventById` method.
+
 ## 2.2.0
 
 ### Minor Changes

@@ -1,5 +1,23 @@
 # @google-labs/graph-playground
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+  - @google-labs/graph-integrity@0.0.7
+  - @google-labs/json-kit@0.1.2
+  - @google-labs/node-nursery@0.0.8
+  - @google-labs/palm-kit@0.0.7
+  - @google-labs/pinecone-kit@0.1.5
+  - @google-labs/template-kit@0.2.2
+
 ## 0.0.8
 
 ### Patch Changes
