@@ -9,6 +9,7 @@ import type {
   InspectableEdge,
   NodeConfiguration,
 } from "@google-labs/breadboard";
+import type { Settings } from "../types/types.js";
 
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
@@ -85,6 +86,18 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly description: string
   ) {
     super(BoardInfoUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class SettingsUpdateEvent extends Event {
+  static eventName = "breadboardboardsettingsupdate";
+
+  constructor(public readonly settings: Settings) {
+    super(SettingsUpdateEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

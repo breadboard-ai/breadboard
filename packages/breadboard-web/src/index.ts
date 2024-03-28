@@ -31,10 +31,12 @@ import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
 import { addNodeProxyServerConfig } from "./config";
+import { SettingsStore } from "./data/settings-store";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
+  settings?: SettingsStore;
 };
 
 const getBoardInfo = async (
@@ -104,6 +106,9 @@ export class Main extends LitElement {
   showBoardEditOverlay = false;
 
   @state()
+  showSettingsOverlay = false;
+
+  @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
 
   @state()
@@ -117,6 +122,7 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
   #providers: GraphProvider[];
+  #settings: SettingsStore | null;
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #failedGraphLoad = false;
@@ -133,7 +139,7 @@ export class Main extends LitElement {
     }
 
     bb-toast {
-      z-index: 100;
+      z-index: 2000;
     }
 
     :host > header {
@@ -199,7 +205,8 @@ export class Main extends LitElement {
     #save-board,
     #get-log,
     #get-board,
-    #toggle-preview {
+    #toggle-preview,
+    #toggle-settings {
       color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
@@ -218,7 +225,8 @@ export class Main extends LitElement {
     #save-board:hover,
     #get-log:hover,
     #get-board:hover,
-    #toggle-preview:hover {
+    #toggle-preview:hover,
+    #toggle-settings:hover {
       background-color: rgba(0, 0, 0, 0.1);
     }
 
@@ -228,12 +236,24 @@ export class Main extends LitElement {
     }
 
     #toggle-preview {
-      margin-right: 0;
       background: 12px center var(--bb-icon-preview);
       background-repeat: no-repeat;
     }
 
     #toggle-preview.active {
+      background-color: var(--bb-output-800);
+    }
+
+    #toggle-settings {
+      padding: 8px;
+      font-size: 0;
+      margin-right: 0;
+      background: 4px center var(--bb-icon-settings);
+      background-repeat: no-repeat;
+      width: 32px;
+    }
+
+    #toggle-settings.active {
       background-color: var(--bb-output-800);
     }
 
@@ -345,6 +365,7 @@ export class Main extends LitElement {
     super();
 
     this.#providers = config.providers || [];
+    this.#settings = config.settings || null;
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
 
@@ -361,6 +382,7 @@ export class Main extends LitElement {
         BuildExampleKit,
       ]),
       ...this.#providers.map((provider) => provider.restore()),
+      this.#settings?.restore(),
     ]).then(([kits]) => {
       this.kits = kits;
 
@@ -675,7 +697,11 @@ export class Main extends LitElement {
       }
     }
 
-    tmpl = html`<div id="header-bar" ?inert=${this.showBoardEditOverlay}>
+    const showingOverlay =
+      this.showBoardEditOverlay ||
+      this.showPreviewOverlay ||
+      this.showSettingsOverlay;
+    tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -721,12 +747,18 @@ export class Main extends LitElement {
         >
           Preview
         </button>
+        <button
+          class=${classMap({ active: this.showSettingsOverlay })}
+          id="toggle-settings"
+          title="Toggle Settings"
+          @click=${() => {
+            this.showSettingsOverlay = !this.showSettingsOverlay;
+          }}
+        >
+          Settings
+        </button>
       </div>
-      <div
-        id="content"
-        ?inert=${this.showBoardEditOverlay}
-        class="${this.showPreviewOverlay}"
-      >
+      <div id="content" ?inert=${showingOverlay}>
         ${cache(
           html`<bb-ui-controller
             ${ref(this.#uiRef)}
@@ -1033,7 +1065,7 @@ export class Main extends LitElement {
         .visible=${this.showNav}
         .url=${this.url}
         .providerOps=${this.providerOps}
-        ?inert=${this.showBoardEditOverlay}
+        ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
         @graphproviderblankboard=${async (
           evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
@@ -1254,6 +1286,40 @@ export class Main extends LitElement {
       ></bb-overlay>`;
     }
 
-    return html`${tmpl} ${boardOverlay} ${previewOverlay} ${toasts} `;
+    let settingsOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showSettingsOverlay) {
+      settingsOverlay = html`<bb-settings-edit-overlay
+        class="settings"
+        .settings=${this.#settings?.values || null}
+        @breadboardboardsettingsupdate=${async (
+          evt: BreadboardUI.Events.SettingsUpdateEvent
+        ) => {
+          if (!this.#settings) {
+            return;
+          }
+
+          try {
+            await this.#settings.save(evt.settings);
+            this.toast(
+              "Saved settings",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+          } catch (err) {
+            this.toast(
+              "Unable to save settings",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+
+          this.requestUpdate();
+        }}
+        @breadboardboardoverlaydismissed=${() => {
+          this.showSettingsOverlay = false;
+        }}
+      ></bb-settings-edit-overlay>`;
+    }
+
+    return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
+    ${toasts} `;
   }
 }
