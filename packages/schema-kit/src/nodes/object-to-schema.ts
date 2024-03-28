@@ -1,4 +1,4 @@
-import { Schema } from "@google-labs/breadboard";
+import { Lambda, Schema, code } from "@google-labs/breadboard";
 
 export function objectToSchema(obj: unknown): Schema {
   if (obj === undefined) {
@@ -41,3 +41,10 @@ export function objectToSchema(obj: unknown): Schema {
     return { type: typeof obj };
   }
 }
+
+export const objectToSchemaCode: Lambda<
+  {
+    object: unknown;
+  },
+  { objectSchema: Schema }
+> = code(({ object }) => ({ objectSchema: objectToSchema(object) }));

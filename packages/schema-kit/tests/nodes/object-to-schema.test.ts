@@ -2,6 +2,7 @@ import { Schema } from "@google-labs/breadboard";
 import assert from "node:assert";
 import { describe, test } from "node:test";
 import { objectToSchema } from "../../src/index.js";
+import { objectToSchemaCode } from "../../src/nodes/object-to-schema.js";
 
 describe("objectToSchema", () => {
   test("should convert an array to a schema", () => {
@@ -132,6 +133,23 @@ describe("objectToSchema", () => {
 
     const obj = new Person("John", 30);
     const actual: Schema = objectToSchema(obj);
+    const expected: Schema = {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        age: { type: "number" },
+      },
+    };
+    assert.deepStrictEqual(actual, expected);
+  });
+  test("code node excutes as expected", async () => {
+    const input = { name: "John", age: 30 };
+    const result = (await objectToSchemaCode().invoke({
+      object: input,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    })) as any;
+    assert(result.objectSchema);
+    const actual = result.objectSchema;
     const expected: Schema = {
       type: "object",
       properties: {
