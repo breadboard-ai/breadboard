@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1
+
+### Patch Changes
+
+- faf1e12: Teach invoke to be more accepting of uncertainty.
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+
 ## 0.5.0
 
 ### Minor Changes

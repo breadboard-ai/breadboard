@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 05e74c9: Add a Settings Panel
+- c364a94: Add Markdown support for outputs
+- 9326bd7: Introduce ability to save/load runs.
+
+### Patch Changes
+
+- 5f22f15: Improved node placement in graph
+- dfcd6d8: Fixes missing Activity Log event info
+- e327653: Allow unsetting of arrays
+- 8363d27: Add node location reset button
+- b8443c0: Various node info improvements
+- d49b80e: Introduce `InspectableRun.getEventById` method.
+- dbe2d07: Teach Node Info about arrays
+- d18b070: Fix minor bugs
+- 60f1754: Inform a user when a board load fails
+- fbad949: Various schema-related bug fixes.
+- 04f5663: Remove loadInfo from Activity Log
+- 8a99a77: Teach Node Editor about enumerations
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+
 ## 0.3.0
 
 ### Minor Changes

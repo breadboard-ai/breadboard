@@ -1,5 +1,21 @@
 # @google-labs/gemini-kit
 
+## 0.1.5
+
+### Patch Changes
+
+- 646680a: Add gemini-pro-1.5 to the list of models.
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+  - @google-labs/json-kit@0.1.2
+  - @google-labs/node-nursery-web@1.0.5
+  - @google-labs/template-kit@0.2.2
+
 ## 0.1.4
 
 ### Patch Changes

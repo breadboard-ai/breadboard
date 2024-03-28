@@ -1,5 +1,30 @@
 # @google-labs/breadboard-cli
 
+## 0.7.0
+
+### Minor Changes
+
+- 6d3c77c: Implement soft-reload
+
+### Patch Changes
+
+- edcf822: Avoid hard-coding `localhost` into a kit URL.
+- Updated dependencies [05e74c9]
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [8363d27]
+- Updated dependencies [644c1ee]
+- Updated dependencies [66128fa]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [5cd01a2]
+- Updated dependencies [60f1754]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard-web@1.4.0
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+  - @google-labs/template-kit@0.2.2
+
 ## 0.6.0
 
 ### Minor Changes
