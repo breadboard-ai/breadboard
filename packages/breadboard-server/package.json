@@ -120,7 +120,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
     "jsonschema": "^1.4.1",
-    "ava": "^5.2.0",
+    "ava": "^6.1.2",
     "typedoc": "^0.25.12",
     "typescript": "^5.3.3",
     "@google-labs/core-kit": "^0.5.1"
