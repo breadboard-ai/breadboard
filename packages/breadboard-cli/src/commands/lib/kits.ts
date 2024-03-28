@@ -61,6 +61,10 @@ export const compile = async (file: string) => {
   return output[0].code;
 };
 
+const isURLish = (s: string) => {
+  return URL.canParse(s) || s.startsWith("/");
+};
+
 export const getKits = async (
   defaultKits: string[],
   specifiedKits: string[] = []
@@ -69,7 +73,7 @@ export const getKits = async (
   const kits = [];
 
   for (const kit of kitNames) {
-    if (URL.canParse(kit)) {
+    if (isURLish(kit)) {
       kits.push({
         file: await createUniqueName(kit),
         url: kit,
