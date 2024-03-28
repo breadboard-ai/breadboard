@@ -347,6 +347,10 @@ export class NodeInfo extends LitElement {
 
       if (toConvert.has(name)) {
         try {
+          if (value === "") {
+            continue;
+          }
+
           // Always attempt a JSON parse of the value.
           const objectValue = JSON.parse(value);
           if (toConvert.get(name) === "llm-content") {
@@ -361,8 +365,7 @@ export class NodeInfo extends LitElement {
 
           configuration[name] = objectValue;
         } catch (err) {
-          // Prevent form submission on error.
-          return;
+          continue;
         }
         continue;
       }
