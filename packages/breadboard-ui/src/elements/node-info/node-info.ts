@@ -557,6 +557,10 @@ export class NodeInfo extends LitElement {
                             }
 
                             field.setCustomValidity("");
+                            if (field.value === "") {
+                              return;
+                            }
+
                             try {
                               JSON.parse(field.value);
                               if (field.dataset.behavior === "llm-content") {
