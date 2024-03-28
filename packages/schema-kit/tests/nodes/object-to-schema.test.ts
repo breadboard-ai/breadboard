@@ -59,4 +59,23 @@ describe("objectToSchema", () => {
     const schema = objectToSchema(obj);
     assert.deepStrictEqual(schema, { type: "object", properties: {} });
   });
+
+  test("should convert an instance of a class to a schema", () => {
+    class Person {
+      constructor(
+        public name: string,
+        public age: number
+      ) {}
+    }
+
+    const obj = new Person("John", 30);
+    const schema = objectToSchema(obj);
+    assert.deepStrictEqual(schema, {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        age: { type: "number" },
+      },
+    });
+  });
 });
