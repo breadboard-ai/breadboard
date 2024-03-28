@@ -1,8 +1,10 @@
 import { Schema } from "@google-labs/breadboard";
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import { objectToSchema } from "../../src/index.js";
-import { objectToSchemaCode } from "../../src/nodes/object-to-schema.js";
+import {
+  objectToSchema,
+  objectToSchemaCode,
+} from "../../src/nodes/object-to-schema.js";
 
 describe("objectToSchema", () => {
   test("should convert an array to a schema", () => {
