@@ -76,11 +76,16 @@ export class EventManager {
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
+    this.#serializer.addGraphstart(data);
   }
 
   #addGraphend(data: GraphEndProbeData) {
     const { path, timestamp } = data;
     const entry = this.#pathRegistry.find(path);
+    this.#serializer.addGraphend({
+      timestamp: data.timestamp,
+      path: data.path,
+    });
     if (!entry) {
       if (path.length > 0) {
         throw new Error(
@@ -107,6 +112,7 @@ export class EventManager {
       entry.path.length === 1
     );
     entry.event = event;
+    this.#serializer.addNodestart(data);
   }
 
   #addInput(data: InputResponse) {
@@ -115,6 +121,7 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
+    this.#serializer.addInput(data);
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
@@ -134,6 +141,7 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
+    this.#serializer.addOutput(data);
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
@@ -159,6 +167,7 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
+    this.#serializer.addNodeend(data);
     const existing = entry.event;
     if (!existing) {
       // This is an event that was skipped because the log levels didn't
@@ -186,6 +195,7 @@ export class EventManager {
       end: null,
     };
     this.#pathRegistry.addSidecar(SECRET_PATH, event);
+    this.#serializer.addSecret(data);
   }
 
   #addError(data: ErrorResponse) {
@@ -196,55 +206,29 @@ export class EventManager {
       start,
       error,
     });
+    this.#serializer.addError(data);
   }
 
   add(result: HarnessRunResult) {
     this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
 
     switch (result.type) {
-      case "graphstart": {
-        this.#addGraphstart(result.data);
-        this.#serializer.addGraphstart(result.data);
-        break;
-      }
-      case "graphend": {
-        this.#addGraphend(result.data);
-        this.#serializer.addGraphend({
-          timestamp: result.data.timestamp,
-          path: result.data.path,
-        });
-        break;
-      }
-      case "nodestart": {
-        this.#addNodestart(result.data);
-        this.#serializer.addNodestart(result.data);
-        break;
-      }
-      case "input": {
-        this.#addInput(result.data);
-        this.#serializer.addInput(result.data);
-        break;
-      }
-      case "output": {
-        this.#addOutput(result.data);
-        this.#serializer.addOutput(result.data);
-        break;
-      }
-      case "secret": {
-        this.#addSecret(result.data);
-        this.#serializer.addSecret(result.data);
-        break;
-      }
-      case "nodeend": {
-        this.#addNodeend(result.data);
-        this.#serializer.addNodeend(result.data);
-        break;
-      }
-      case "error": {
-        this.#addError(result.data);
-        this.#serializer.addError(result.data);
-        break;
-      }
+      case "graphstart":
+        return this.#addGraphstart(result.data);
+      case "graphend":
+        return this.#addGraphend(result.data);
+      case "nodestart":
+        return this.#addNodestart(result.data);
+      case "input":
+        return this.#addInput(result.data);
+      case "output":
+        return this.#addOutput(result.data);
+      case "secret":
+        return this.#addSecret(result.data);
+      case "nodeend":
+        return this.#addNodeend(result.data);
+      case "error":
+        return this.#addError(result.data);
     }
   }
 
