@@ -1,4 +1,4 @@
-import { NodeValue, Schema } from "@google-labs/breadboard";
+import { Schema } from "@google-labs/breadboard";
 
 export function objectToSchema(obj: unknown): Schema {
   if (obj === undefined) {
