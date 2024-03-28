@@ -135,7 +135,7 @@ export class SchemaEditor extends LitElement {
             id="${id}-default"
             name="${id}-default"
             ?readonly=${!this.editable}
-            .items=${JSON.parse(value.default || "[]")}
+            .items=${JSON.parse(value.default || "null")}
             .type=${resolveArrayType(value)}
             .behavior=${resolveBehaviorType(value)}
           ></bb-array-editor>`;
