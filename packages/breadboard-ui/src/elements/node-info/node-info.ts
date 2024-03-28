@@ -297,6 +297,7 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
+      toConvert.set(schemaEditor.id, "ports-spec");
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
     }
 
@@ -305,6 +306,7 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
+      toConvert.set(arrayEditor.id, "json-schema");
       data.set(arrayEditor.id, JSON.stringify(arrayEditor.items));
     }
 
@@ -343,14 +345,21 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
-      if (name === "schema" || toConvert.has(name)) {
+      if (toConvert.has(name)) {
         try {
           // Always attempt a JSON parse of the value.
-          const schemaValue = JSON.parse(value);
+          const objectValue = JSON.parse(value);
           if (toConvert.get(name) === "llm-content") {
-            assertIsLLMContent(schemaValue);
+            assertIsLLMContent(objectValue);
           }
-          configuration[name] = schemaValue;
+
+          // Set nulls & undefineds for deletion.
+          if (objectValue === null || objectValue === undefined) {
+            data.delete(name);
+            continue;
+          }
+
+          configuration[name] = objectValue;
         } catch (err) {
           // Prevent form submission on error.
           return;
@@ -578,7 +587,7 @@ export class NodeInfo extends LitElement {
                         id="${name}"
                         name="${name}"
                         .items=${JSON.parse(
-                          (renderableValue as string) || "[]"
+                          (renderableValue as string) || "null"
                         )}
                         .type=${resolveArrayType(port.schema)}
                         .behavior=${resolveBehaviorType(
