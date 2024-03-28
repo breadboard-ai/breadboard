@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import {
+  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
@@ -31,7 +32,6 @@ import { RunSerializer } from "./serializer.js";
 import {
   EventIdentifier,
   InspectableGraphStore,
-  InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunSecretEvent,
   RunObserverLogLevel,
@@ -176,12 +176,26 @@ export class EventManager {
     this.#pathRegistry.finalizeSidecar(path, data);
   }
 
-  #addSecret(event: InspectableRunSecretEvent) {
+  #addSecret(data: SecretResult["data"]) {
+    const { timestamp: start, keys } = data;
+    const event: InspectableRunSecretEvent = {
+      id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
+      type: "secret",
+      keys,
+      start,
+      end: null,
+    };
     this.#pathRegistry.addSidecar(SECRET_PATH, event);
   }
 
-  #addError(error: InspectableRunErrorEvent) {
-    this.#pathRegistry.addError(error);
+  #addError(data: ErrorResponse) {
+    const { timestamp: start, error } = data;
+    this.#pathRegistry.addError({
+      id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
+      type: "error",
+      start,
+      error,
+    });
   }
 
   add(result: HarnessRunResult) {
@@ -217,14 +231,7 @@ export class EventManager {
         break;
       }
       case "secret": {
-        const { timestamp: start, keys } = result.data;
-        this.#addSecret({
-          id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
-          type: "secret",
-          keys,
-          start,
-          end: null,
-        });
+        this.#addSecret(result.data);
         this.#serializer.addSecret(result.data);
         break;
       }
@@ -234,13 +241,7 @@ export class EventManager {
         break;
       }
       case "error": {
-        const { timestamp: start, error } = result.data;
-        this.#addError({
-          id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
-          type: "error",
-          start,
-          error,
-        });
+        this.#addError(result.data);
         this.#serializer.addError(result.data);
         break;
       }
