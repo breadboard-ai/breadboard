@@ -9,14 +9,31 @@ export function objectToSchema(obj: unknown): Schema {
     return { type: "null" };
   } else if (Array.isArray(obj)) {
     // Handle arrays
-    const items = obj.length > 0 ? objectToSchema(obj[0]) : {};
-    return { type: "array", items };
+    const items: Schema[] = obj.map(objectToSchema);
+
+    // Determine if all items in the array are of the same type
+    const allItemsSameType = items.every(
+      (item, _, [first]) => JSON.stringify(item) === JSON.stringify(first)
+    );
+
+    if (items.length > 0) {
+      // If all items are of the same type, use the first item's schema for all.
+      // Otherwise, set a generic items schema indicating a non-uniform array.
+      if (allItemsSameType) {
+        return { type: "array", items: items[0] };
+      } else {
+        return { type: "array" };
+      }
+    }
+    // Return a schema for an empty array if there are no items.
+    return { type: "array" };
   } else if (typeof obj === "object" && obj !== null) {
     // Handle objects
     const properties: { [key: string]: Schema } = {};
     for (const key of Object.keys(obj)) {
-      // @ts-expect-error obj[key] is a NodeValue, not a Schema
-      properties[key] = objectToSchema(obj[key]);
+      properties[key] = objectToSchema(
+        (obj as { [key: string]: unknown })[key]
+      );
     }
     return { type: "object", properties };
   } else {
