@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OutputValues } from "../types.js";
+import { OutputValues } from "../../types.js";
 import {
   GraphUUID,
   InspectableGraph,
@@ -12,7 +12,7 @@ import {
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
-} from "./types.js";
+} from "../types.js";
 
 export const SECRET_PATH = [-2];
 export const ERROR_PATH = [-3];

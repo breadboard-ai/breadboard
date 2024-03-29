@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "../harness/types.js";
-import type { InputValues, NodeDescriptor, OutputValues } from "../types.js";
+import type { HarnessRunResult } from "../../harness/types.js";
+import type { InputValues, NodeDescriptor, OutputValues } from "../../types.js";
 import type {
   EventIdentifier,
   InspectableNode,
   InspectableRun,
   InspectableRunNodeEvent,
   PathRegistryEntry,
-} from "./types.js";
+} from "../types.js";
 import { NestedRun } from "./nested-run.js";
-import { BubbledInspectableNode } from "./bubbled-node.js";
+import { BubbledInspectableNode } from "../bubbled-node.js";
 
 export const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;

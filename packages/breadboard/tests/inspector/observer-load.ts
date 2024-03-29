@@ -14,7 +14,7 @@ import {
 } from "../../src/inspector/types.js";
 import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
-import { replaceSecrets } from "../../src/inspector/serializer.js";
+import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",

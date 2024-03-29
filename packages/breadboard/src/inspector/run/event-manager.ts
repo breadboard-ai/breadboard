@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, SecretResult } from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../../harness/types.js";
 import {
   ErrorResponse,
   GraphEndProbeData,
@@ -14,8 +14,8 @@ import {
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
-} from "../types.js";
-import { inspectableGraph } from "./graph.js";
+} from "../../types.js";
+import { inspectableGraph } from "../graph.js";
 import {
   ERROR_PATH,
   PathRegistry,
@@ -36,7 +36,7 @@ import {
   InspectableRunSecretEvent,
   RunObserverLogLevel,
   RunObserverOptions,
-} from "./types.js";
+} from "../types.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,

@@ -10,8 +10,8 @@ import {
   RunSerializationOptions,
   SerializedRun,
   SerializedRunSecretReplacer,
-} from "./types.js";
-import { NodeEndResponse, NodeStartResponse } from "../types.js";
+} from "../types.js";
+import { NodeEndResponse, NodeStartResponse } from "../../types.js";
 
 export class RunSerializer {
   #timeline: HistoryEntry[] = [];
