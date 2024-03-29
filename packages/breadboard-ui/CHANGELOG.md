@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+### Patch Changes
+
+- 2318521: Allow empty strings to unset objects
+
 ## 0.4.0
 
 ### Minor Changes

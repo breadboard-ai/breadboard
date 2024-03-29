@@ -1,5 +1,11 @@
 # @google-labs/breadboard-cli
 
+## 0.7.1
+
+### Patch Changes
+
+- bdf14e1: Don't crash on TS errors in hot reload.
+
 ## 0.7.0
 
 ### Minor Changes
