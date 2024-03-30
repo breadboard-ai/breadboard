@@ -6,56 +6,64 @@
 
 import { NodeValue } from "@google-labs/breadboard-schema/graph.js";
 import {
-  HistoryEntry,
+  GraphUUID,
+  TimelineEntry,
   RunSerializationOptions,
   SerializedRun,
   SerializedRunSecretReplacer,
 } from "../types.js";
-import { NodeEndResponse, NodeStartResponse } from "../../types.js";
+import {
+  GraphStartProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+} from "../../types.js";
 
 export class RunSerializer {
-  #timeline: HistoryEntry[] = [];
-  #secrets: Record<string, { secret: string; sentinel: string }> = {};
+  #timeline: TimelineEntry[] = [];
+  #graphs: Map<GraphUUID, boolean> = new Map();
 
-  #remember(type: HistoryEntry["type"], data?: unknown) {
-    this.#timeline.push({ type, data });
+  #remember(entry: TimelineEntry) {
+    this.#timeline.push(entry);
   }
 
-  addGraphstart(data: unknown) {
-    this.#remember("graphstart", data);
+  addGraphstart(data: GraphStartProbeData, graphId: GraphUUID) {
+    this.#remember({ type: "graphstart", data, graphId });
   }
 
   addGraphend(data: unknown) {
-    this.#remember("graphend", data);
+    this.#remember({ type: "graphend", data });
   }
 
   addNodestart(data: NodeStartResponse) {
-    this.#remember("nodestart", data);
+    this.#remember({ type: "nodestart", data });
   }
 
   addNodeend(data: NodeEndResponse) {
-    this.#remember("nodeend", {
-      timestamp: data.timestamp,
-      outputs: data.outputs,
-      path: data.path,
-      node: { type: data.node.type },
+    this.#remember({
+      type: "nodeend",
+      data: {
+        timestamp: data.timestamp,
+        outputs: data.outputs,
+        path: data.path,
+        node: { type: data.node.type },
+      },
     });
   }
 
   addInput(data: unknown) {
-    this.#remember("input", data);
+    this.#remember({ type: "input", data });
   }
 
   addOutput(data: unknown) {
-    this.#remember("output", data);
+    this.#remember({ type: "output", data });
   }
 
   addSecret(data: unknown) {
-    this.#remember("secret", data);
+    this.#remember({ type: "secret", data });
   }
 
   addError(data: unknown) {
-    this.#remember("error", data);
+    this.#remember({ type: "error", data });
   }
 
   serialize(options: RunSerializationOptions): SerializedRun {
@@ -121,7 +129,7 @@ export const replaceSecrets = (
           ...(entry.data as object),
           outputs: processPorts((entry.data as NodeEndResponse).outputs),
         },
-      } as HistoryEntry;
+      } as TimelineEntry;
     } else if (entry.type === "nodestart") {
       return {
         type: "nodestart",
@@ -129,7 +137,7 @@ export const replaceSecrets = (
           ...(entry.data as object),
           inputs: processPorts((entry.data as NodeStartResponse).inputs),
         },
-      } as HistoryEntry;
+      } as TimelineEntry;
     }
     return entry;
   });

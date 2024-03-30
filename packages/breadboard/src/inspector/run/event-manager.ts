@@ -76,7 +76,7 @@ export class EventManager {
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
-    this.#serializer.addGraphstart(data);
+    this.#serializer.addGraphstart(data, graphId);
   }
 
   #addGraphend(data: GraphEndProbeData) {

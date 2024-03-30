@@ -10,6 +10,7 @@ import {
   Edge,
   ErrorResponse,
   GraphDescriptor,
+  GraphStartProbeData,
   InputValues,
   Kit,
   KitDescriptor,
@@ -706,18 +707,23 @@ export type RunObserverOptions = {
 };
 
 // TODO: Figure out if this is permanent.
-export type HistoryEntry = {
-  type:
-    | "graphstart"
-    | "graphend"
-    | "input"
-    | "output"
-    | "secret"
-    | "error"
-    | "nodestart"
-    | "nodeend";
-  data: unknown;
-};
+export type TimelineEntry =
+  | {
+      type:
+        | "graphend"
+        | "input"
+        | "output"
+        | "secret"
+        | "error"
+        | "nodestart"
+        | "nodeend";
+      data: unknown;
+    }
+  | {
+      type: "graphstart";
+      data: GraphStartProbeData;
+      graphId: GraphUUID;
+    };
 
 /**
  * Represents an `InspectableRun` that has been serialized into a JSON object.
@@ -729,5 +735,5 @@ export type SerializedRun = {
   $schema: "tbd";
   version: "0";
   secrets?: Record<string, string>;
-  timeline: HistoryEntry[];
+  timeline: TimelineEntry[];
 };
