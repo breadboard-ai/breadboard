@@ -140,7 +140,7 @@
     "node": ">=19.0.0"
   },
   "dependencies": {
-    "@dagrejs/dagre": "^1.0.4",
+    "@dagrejs/dagre": "^1.1.1",
     "@google-labs/breadboard": "^0.13.0",
     "@lit/task": "^1.0.0",
     "jsonschema": "^1.4.1",
