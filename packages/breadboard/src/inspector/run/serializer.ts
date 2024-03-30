@@ -26,8 +26,18 @@ export class RunSerializer {
     this.#timeline.push(entry);
   }
 
-  addGraphstart(data: GraphStartProbeData, graphId: GraphUUID) {
-    this.#remember({ type: "graphstart", data, graphId });
+  addGraphstart(
+    data: GraphStartProbeData,
+    graphId: GraphUUID,
+    newGraph: boolean
+  ) {
+    const { timestamp, graph, path } = data;
+    const type = "graphstart";
+    if (newGraph) {
+      this.#remember({ type, data: { timestamp, graph, path, graphId } });
+    } else {
+      this.#remember({ type, data: { timestamp, graph: null, path, graphId } });
+    }
   }
 
   addGraphend(data: unknown) {

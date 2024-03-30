@@ -158,7 +158,7 @@ test("run load/save: serialization produces consistent size", async (t) => {
   }
   const serializedRun = run.serialize();
   const s = JSON.stringify(serializedRun);
-  t.is(s.length, 1302168);
+  t.is(s.length, 1228754);
   t.true(observer.load(serializedRun).success);
   runsEqual(t, run, observer.runs()[0]);
 });

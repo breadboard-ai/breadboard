@@ -162,7 +162,7 @@ export class Run implements InspectableRun {
     this.#events = new EventManager(graphStore, options);
     this.graphVersion = 0;
     this.start = timestamp;
-    this.graphId = graphStore.add(graph, this.graphVersion);
+    this.graphId = graphStore.add(graph, this.graphVersion).id;
   }
 
   get events(): InspectableRunEvent[] {

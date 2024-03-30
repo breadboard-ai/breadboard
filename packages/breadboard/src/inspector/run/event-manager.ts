@@ -69,14 +69,17 @@ export class EventManager {
 
   #addGraphstart(data: GraphStartProbeData) {
     const { path, graph, timestamp } = data;
-    const graphId = this.#graphStore.add(graph, 0);
+    const { id: graphId, added } = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
     entry.graphId = graphId;
     entry.graphStart = timestamp;
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
-    this.#serializer.addGraphstart(data, graphId);
+    // Always count the starting graph (the path.length === 0) as new,
+    // because the Run adds it.
+    const newGraph = added || path.length === 0;
+    this.#serializer.addGraphstart(data, graphId, newGraph);
   }
 
   #addGraphend(data: GraphEndProbeData) {

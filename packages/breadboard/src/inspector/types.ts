@@ -10,7 +10,6 @@ import {
   Edge,
   ErrorResponse,
   GraphDescriptor,
-  GraphStartProbeData,
   InputValues,
   Kit,
   KitDescriptor,
@@ -484,6 +483,19 @@ export type SerializedRunLoadingOptions = {
   secretReplacer?: SerializedRunSecretReplacer;
 };
 
+export type StoreAdditionResult = {
+  /**
+   * The UUID of the graph
+   */
+  id: GraphUUID;
+  /**
+   * True, if the graph did not exist in the store before and was added as
+   * a result of this operation.
+   * False, if the graph already existed.
+   */
+  added: boolean;
+};
+
 /**
  * Represents a store of all graphs that the system has seen so far.
  */
@@ -499,10 +511,10 @@ export type InspectableGraphStore = {
    */
   has(id: GraphUUID): boolean;
   /**
-   * Adds a graph to the store and returns the UUID. If the graph is already
-   * in the store, returns the UUID of the existing graph.
+   * Adds a graph to the store and returns a `StoreAdditionResult`.
+   * @see StoreAdditionResult
    */
-  add(graph: GraphDescriptor, version: number): GraphUUID;
+  add(graph: GraphDescriptor, version: number): StoreAdditionResult;
 };
 
 /**
@@ -721,8 +733,12 @@ export type TimelineEntry =
     }
   | {
       type: "graphstart";
-      data: GraphStartProbeData;
-      graphId: GraphUUID;
+      data: {
+        timestamp: number;
+        path: number[];
+        graphId: GraphUUID;
+        graph: GraphDescriptor | null;
+      };
     };
 
 /**

@@ -40,9 +40,9 @@ export class GraphStore implements InspectableGraphStore {
 
   add(graph: GraphDescriptor, version: number) {
     const id = this.#getOrSetGraphId(graph, version);
-    if (this.#entries.has(id)) return id;
+    if (this.#entries.has(id)) return { id, added: false };
     this.#entries.set(id, graph);
-    return id;
+    return { id, added: true };
   }
 
   get(id: GraphUUID) {
