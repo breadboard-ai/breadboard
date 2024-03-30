@@ -688,7 +688,7 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
   /**
-   * Returns an inspectable graph for the graph, associated with this entry/
+   * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
 };

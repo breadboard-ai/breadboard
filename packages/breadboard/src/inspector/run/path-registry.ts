@@ -25,6 +25,27 @@ export const pathFromId = (id: string): number[] => {
   return id.split("-").map((s) => parseInt(s, 10));
 };
 
+export const createSimpleEntry = (
+  path: number[],
+  event: InspectableRunEvent
+) => {
+  const id = idFromPath(path);
+  const entry: PathRegistryEntry = {
+    id,
+    parent: null,
+    children: [],
+    graphId: null,
+    graphStart: 0,
+    graphEnd: 0,
+    event,
+    sidecars: [],
+    empty: () => true,
+    events: [],
+    graph: null,
+  };
+  return entry;
+};
+
 class Entry implements PathRegistryEntry {
   id: string = "";
   parent: PathRegistryEntry | null;

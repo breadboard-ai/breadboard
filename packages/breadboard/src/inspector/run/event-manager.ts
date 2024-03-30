@@ -20,6 +20,7 @@ import {
   ERROR_PATH,
   PathRegistry,
   SECRET_PATH,
+  createSimpleEntry,
   idFromPath,
   pathFromId,
 } from "./path-registry.js";
@@ -32,10 +33,13 @@ import { RunSerializer } from "./serializer.js";
 import {
   EventIdentifier,
   InspectableGraphStore,
+  InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunSecretEvent,
+  PathRegistryEntry,
   RunObserverLogLevel,
   RunObserverOptions,
+  TimelineEntry,
 } from "../types.js";
 
 const shouldSkipEvent = (
@@ -56,15 +60,22 @@ const shouldSkipEvent = (
   return nodelogLevel !== "info";
 };
 
+type SequenceEntry = [type: TimelineEntry["type"], entry: PathRegistryEntry];
+
 export class EventManager {
   #graphStore;
   #options;
   #pathRegistry = new PathRegistry();
   #serializer = new RunSerializer();
+  #sequence: SequenceEntry[] = [];
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
     this.#options = options;
+  }
+
+  #addToSequence(type: TimelineEntry["type"], entry: PathRegistryEntry) {
+    this.#sequence.push([type, entry]);
   }
 
   #addGraphstart(data: GraphStartProbeData) {
@@ -80,6 +91,7 @@ export class EventManager {
     // because the Run adds it.
     const newGraph = added || path.length === 0;
     this.#serializer.addGraphstart(data, graphId, newGraph);
+    this.#addToSequence("graphstart", entry);
   }
 
   #addGraphend(data: GraphEndProbeData) {
@@ -98,6 +110,7 @@ export class EventManager {
       return;
     }
     entry.graphEnd = timestamp;
+    this.#addToSequence("graphend", entry);
   }
 
   #addNodestart(data: NodeStartResponse) {
@@ -116,6 +129,7 @@ export class EventManager {
     );
     entry.event = event;
     this.#serializer.addNodestart(data);
+    this.#addToSequence("nodestart", entry);
   }
 
   #addInput(data: InputResponse) {
@@ -125,6 +139,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     this.#serializer.addInput(data);
+
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
@@ -136,6 +151,7 @@ export class EventManager {
         return;
       }
     }
+    this.#addToSequence("input", entry);
   }
 
   #addOutput(data: OutputResponse) {
@@ -162,6 +178,7 @@ export class EventManager {
       }
       existing.inputs = data.outputs;
     }
+    this.#addToSequence("output", entry);
   }
 
   #addNodeend(data: NodeEndResponse) {
@@ -186,12 +203,14 @@ export class EventManager {
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
     this.#pathRegistry.finalizeSidecar(path, data);
+    this.#addToSequence("nodeend", entry);
   }
 
   #addSecret(data: SecretResult["data"]) {
     const { timestamp: start, keys } = data;
+    const id = idFromPath(SECRET_PATH);
     const event: InspectableRunSecretEvent = {
-      id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
+      id: eventIdFromEntryId(id),
       type: "secret",
       keys,
       start,
@@ -199,17 +218,21 @@ export class EventManager {
     };
     this.#pathRegistry.addSidecar(SECRET_PATH, event);
     this.#serializer.addSecret(data);
+    this.#addToSequence("secret", createSimpleEntry(SECRET_PATH, event));
   }
 
   #addError(data: ErrorResponse) {
     const { timestamp: start, error } = data;
-    this.#pathRegistry.addError({
-      id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
+    const id = idFromPath(ERROR_PATH);
+    const event: InspectableRunErrorEvent = {
+      id: eventIdFromEntryId(id),
       type: "error",
       start,
       error,
-    });
+    };
+    this.#pathRegistry.addError(event);
     this.#serializer.addError(data);
+    this.#addToSequence("error", createSimpleEntry(ERROR_PATH, event));
   }
 
   add(result: HarnessRunResult) {
