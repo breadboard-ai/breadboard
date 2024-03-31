@@ -29,7 +29,7 @@ import {
   entryIdFromEventId,
   eventIdFromEntryId,
 } from "./run-node-event.js";
-import { RunSerializer } from "./serializer.js";
+import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
   InspectableGraphStore,
@@ -59,8 +59,6 @@ const shouldSkipEvent = (
     (node.metadata?.logLevel as RunObserverLogLevel) || "debug";
   return nodelogLevel !== "info";
 };
-
-type SequenceEntry = [type: TimelineEntry["type"], entry: PathRegistryEntry];
 
 export class EventManager {
   #graphStore;

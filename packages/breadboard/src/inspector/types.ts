@@ -663,6 +663,7 @@ export type RunSerializationOptions = {
 };
 
 export type PathRegistryEntry = {
+  // TODO: should this just be "path"?
   id: string;
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
