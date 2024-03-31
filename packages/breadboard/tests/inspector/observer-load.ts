@@ -159,7 +159,7 @@ test("run load/save: serialization produces consistent size", async (t) => {
   }
   const serializedRun = run.serialize();
   const s = JSON.stringify(serializedRun);
-  t.is(s.length, 1176222);
+  t.is(s.length, 1173224);
   t.true(
     observer.load(serializedRun, { secretReplacer: () => GEMINI_KEY_VALUE })
       .success

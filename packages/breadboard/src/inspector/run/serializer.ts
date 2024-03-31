@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  NodeDescriptor,
   NodeValue,
 } from "@google-labs/breadboard-schema/graph.js";
 import {
@@ -54,6 +55,10 @@ export class RunSerializer {
       throw new Error(`Unknown graph for "${entry.id}" when serializing.`);
     }
     return graph;
+  }
+
+  #simpleDescriptor(event: InspectableRunNodeEvent) {
+    return { id: event.node.descriptor.id } as NodeDescriptor;
   }
 
   serializeGraphstart(entry: PathRegistryEntry): TimelineEntry {
@@ -112,7 +117,7 @@ export class RunSerializer {
       data: {
         path: pathFromId(entry.id),
         timestamp: event.start, // TODO: make sure these match in the runner.
-        node: event.node.descriptor,
+        node: this.#simpleDescriptor(event),
         inputArguments: event.inputs,
         bubbled: event.bubbled,
       } satisfies InputResponse,
@@ -129,7 +134,7 @@ export class RunSerializer {
       data: {
         path: pathFromId(entry.id),
         timestamp: event.start,
-        node: event.node.descriptor,
+        node: this.#simpleDescriptor(event),
         outputs: event.inputs,
         bubbled: event.bubbled,
       } satisfies OutputResponse,
