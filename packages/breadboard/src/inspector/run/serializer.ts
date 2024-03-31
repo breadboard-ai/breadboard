@@ -136,7 +136,6 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty nodeend event while serializing run");
     }
-    // console.log("💖 nodeend!", entry.id, pathFromId(entry.id));
     return {
       type: "nodeend",
       data: {
