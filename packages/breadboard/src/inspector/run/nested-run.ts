@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "../harness/types.js";
+import type { HarnessRunResult } from "../../harness/types.js";
 import type {
   GraphUUID,
   InspectableRun,
   InspectableRunEvent,
   PathRegistryEntry,
-} from "./types.js";
+} from "../types.js";
 
 /**
  * Meant to be a very lightweight wrapper around the

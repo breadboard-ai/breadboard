@@ -481,6 +481,23 @@ export type SerializedRunLoadingOptions = {
    * Optional, a function replace sentinel values with actual secrets.
    */
   secretReplacer?: SerializedRunSecretReplacer;
+  /**
+   * Optional, kits that are used with this run.
+   */
+  kits?: Kit[];
+};
+
+export type StoreAdditionResult = {
+  /**
+   * The UUID of the graph
+   */
+  id: GraphUUID;
+  /**
+   * True, if the graph did not exist in the store before and was added as
+   * a result of this operation.
+   * False, if the graph already existed.
+   */
+  added: boolean;
 };
 
 /**
@@ -498,10 +515,10 @@ export type InspectableGraphStore = {
    */
   has(id: GraphUUID): boolean;
   /**
-   * Adds a graph to the store and returns the UUID. If the graph is already
-   * in the store, returns the UUID of the existing graph.
+   * Adds a graph to the store and returns a `StoreAdditionResult`.
+   * @see StoreAdditionResult
    */
-  add(graph: GraphDescriptor, version: number): GraphUUID;
+  add(graph: GraphDescriptor, version: number): StoreAdditionResult;
 };
 
 /**
@@ -650,7 +667,7 @@ export type RunSerializationOptions = {
 };
 
 export type PathRegistryEntry = {
-  id: string;
+  path: number[];
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;
@@ -675,7 +692,7 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
   /**
-   * Returns an inspectable graph for the graph, associated with this entry/
+   * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
 };
@@ -705,19 +722,35 @@ export type RunObserverOptions = {
   kits?: Kit[];
 };
 
+export type GraphstartTimelineEntry = [
+  type: "graphstart",
+  data: {
+    timestamp: number;
+    path: number[];
+    index: number;
+    graph: GraphDescriptor | null;
+  },
+];
+
+export type NodestartTimelineEntry = [
+  type: "nodestart",
+  data: {
+    id: NodeIdentifier;
+    graph: number;
+    inputs: InputValues;
+    path: number[];
+    timestamp: number;
+  },
+];
+
 // TODO: Figure out if this is permanent.
-export type HistoryEntry = {
-  type:
-    | "graphstart"
-    | "graphend"
-    | "input"
-    | "output"
-    | "secret"
-    | "error"
-    | "nodestart"
-    | "nodeend";
-  data: unknown;
-};
+export type TimelineEntry =
+  | [
+      type: "graphend" | "input" | "output" | "secret" | "error" | "nodeend",
+      data: unknown,
+    ]
+  | GraphstartTimelineEntry
+  | NodestartTimelineEntry;
 
 /**
  * Represents an `InspectableRun` that has been serialized into a JSON object.
@@ -729,5 +762,5 @@ export type SerializedRun = {
   $schema: "tbd";
   version: "0";
   secrets?: Record<string, string>;
-  timeline: HistoryEntry[];
+  timeline: TimelineEntry[];
 };

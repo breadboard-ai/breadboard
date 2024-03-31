@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
+import { HarnessRunResult, SecretResult } from "../../harness/types.js";
 import {
+  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
@@ -13,12 +14,13 @@ import {
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
-} from "../types.js";
-import { inspectableGraph } from "./graph.js";
+} from "../../types.js";
+import { inspectableGraph } from "../graph.js";
 import {
   ERROR_PATH,
   PathRegistry,
   SECRET_PATH,
+  createSimpleEntry,
   idFromPath,
   pathFromId,
 } from "./path-registry.js";
@@ -27,16 +29,19 @@ import {
   entryIdFromEventId,
   eventIdFromEntryId,
 } from "./run-node-event.js";
-import { RunSerializer } from "./serializer.js";
+import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
   InspectableGraphStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunSecretEvent,
+  PathRegistryEntry,
   RunObserverLogLevel,
   RunObserverOptions,
-} from "./types.js";
+  RunSerializationOptions,
+  TimelineEntry,
+} from "../types.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -61,21 +66,27 @@ export class EventManager {
   #options;
   #pathRegistry = new PathRegistry();
   #serializer = new RunSerializer();
+  #sequence: SequenceEntry[] = [];
 
   constructor(store: InspectableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
     this.#options = options;
   }
 
+  #addToSequence(type: TimelineEntry[0], entry: PathRegistryEntry) {
+    this.#sequence.push([type, entry]);
+  }
+
   #addGraphstart(data: GraphStartProbeData) {
     const { path, graph, timestamp } = data;
-    const graphId = this.#graphStore.add(graph, 0);
+    const { id: graphId } = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
     entry.graphId = graphId;
     entry.graphStart = timestamp;
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
+    this.#addToSequence("graphstart", entry);
   }
 
   #addGraphend(data: GraphEndProbeData) {
@@ -90,6 +101,7 @@ export class EventManager {
       return;
     }
     entry.graphEnd = timestamp;
+    this.#addToSequence("graphend", entry);
   }
 
   #addNodestart(data: NodeStartResponse) {
@@ -100,13 +112,14 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
-    const event = new RunNodeEvent(entry, node, timestamp, inputs);
+    const event = new RunNodeEvent(entry, node.id, timestamp, inputs);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
       entry.path.length === 1
     );
     entry.event = event;
+    this.#addToSequence("nodestart", entry);
   }
 
   #addInput(data: InputResponse) {
@@ -115,16 +128,19 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
+
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
+      const event = new RunNodeEvent(entry, node.id, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
+      this.#addToSequence("input", createSimpleEntry(path, event));
     } else {
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);
         return;
       }
+      this.#addToSequence("input", entry);
     }
   }
 
@@ -135,9 +151,10 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node, timestamp, outputs);
+      const event = new RunNodeEvent(entry, node.id, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
+      this.#addToSequence("output", createSimpleEntry(path, event));
     } else {
       const existing = entry.event;
       if (!existing) {
@@ -150,6 +167,7 @@ export class EventManager {
         );
       }
       existing.inputs = data.outputs;
+      this.#addToSequence("output", entry);
     }
   }
 
@@ -174,81 +192,65 @@ export class EventManager {
     existing.end = data.timestamp;
     existing.outputs = data.outputs;
     this.#pathRegistry.finalizeSidecar(path, data);
+    this.#addToSequence("nodeend", entry);
   }
 
-  #addSecret(event: InspectableRunSecretEvent) {
+  #addSecret(data: SecretResult["data"]) {
+    const { timestamp: start, keys } = data;
+    const id = idFromPath(SECRET_PATH);
+    const event: InspectableRunSecretEvent = {
+      id: eventIdFromEntryId(id),
+      type: "secret",
+      keys,
+      start,
+      end: null,
+    };
     this.#pathRegistry.addSidecar(SECRET_PATH, event);
+    this.#addToSequence("secret", createSimpleEntry(SECRET_PATH, event));
   }
 
-  #addError(error: InspectableRunErrorEvent) {
-    this.#pathRegistry.addError(error);
+  #addError(data: ErrorResponse) {
+    const { timestamp: start, error } = data;
+    const id = idFromPath(ERROR_PATH);
+    const event: InspectableRunErrorEvent = {
+      id: eventIdFromEntryId(id),
+      type: "error",
+      start,
+      error,
+    };
+    this.#pathRegistry.addError(event);
+    this.#addToSequence("error", createSimpleEntry(ERROR_PATH, event));
   }
 
   add(result: HarnessRunResult) {
     this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
 
     switch (result.type) {
-      case "graphstart": {
-        this.#addGraphstart(result.data);
-        this.#serializer.addGraphstart(result.data);
-        break;
-      }
-      case "graphend": {
-        this.#addGraphend(result.data);
-        this.#serializer.addGraphend({
-          timestamp: result.data.timestamp,
-          path: result.data.path,
-        });
-        break;
-      }
-      case "nodestart": {
-        this.#addNodestart(result.data);
-        this.#serializer.addNodestart(result.data);
-        break;
-      }
-      case "input": {
-        this.#addInput(result.data);
-        this.#serializer.addInput(result.data);
-        break;
-      }
-      case "output": {
-        this.#addOutput(result.data);
-        this.#serializer.addOutput(result.data);
-        break;
-      }
-      case "secret": {
-        const { timestamp: start, keys } = result.data;
-        this.#addSecret({
-          id: eventIdFromEntryId(idFromPath(SECRET_PATH)),
-          type: "secret",
-          keys,
-          start,
-          end: null,
-        });
-        this.#serializer.addSecret(result.data);
-        break;
-      }
-      case "nodeend": {
-        this.#addNodeend(result.data);
-        this.#serializer.addNodeend(result.data);
-        break;
-      }
-      case "error": {
-        const { timestamp: start, error } = result.data;
-        this.#addError({
-          id: eventIdFromEntryId(idFromPath(ERROR_PATH)),
-          type: "error",
-          start,
-          error,
-        });
-        this.#serializer.addError(result.data);
-        break;
-      }
+      case "graphstart":
+        return this.#addGraphstart(result.data);
+      case "graphend":
+        return this.#addGraphend(result.data);
+      case "nodestart":
+        return this.#addNodestart(result.data);
+      case "input":
+        return this.#addInput(result.data);
+      case "output":
+        return this.#addOutput(result.data);
+      case "secret":
+        return this.#addSecret(result.data);
+      case "nodeend":
+        return this.#addNodeend(result.data);
+      case "error":
+        return this.#addError(result.data);
     }
   }
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  serialize(options: RunSerializationOptions) {
+    return this.#serializer.serialize(this.#sequence, options);
   }
 
   serializer() {

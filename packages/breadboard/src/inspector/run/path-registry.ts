@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OutputValues } from "../types.js";
+import { OutputValues } from "../../types.js";
 import {
   GraphUUID,
   InspectableGraph,
@@ -12,7 +12,7 @@ import {
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
-} from "./types.js";
+} from "../types.js";
 
 export const SECRET_PATH = [-2];
 export const ERROR_PATH = [-3];
@@ -22,7 +22,27 @@ export const idFromPath = (path: number[]): string => {
 };
 
 export const pathFromId = (id: string): number[] => {
-  return id.split("-").map((s) => parseInt(s, 10));
+  return id.length ? id.split("-").map((s) => parseInt(s, 10)) : [];
+};
+
+export const createSimpleEntry = (
+  path: number[],
+  event: InspectableRunEvent
+) => {
+  const entry: PathRegistryEntry = {
+    path,
+    parent: null,
+    children: [],
+    graphId: null,
+    graphStart: 0,
+    graphEnd: 0,
+    event,
+    sidecars: [],
+    empty: () => true,
+    events: [],
+    graph: null,
+  };
+  return entry;
 };
 
 class Entry implements PathRegistryEntry {

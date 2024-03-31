@@ -14,7 +14,7 @@ import {
 } from "../../src/inspector/types.js";
 import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
-import { replaceSecrets } from "../../src/inspector/serializer.js";
+import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",
@@ -45,6 +45,7 @@ const propsEqual = (
 };
 
 const EVENT_PROPS = ["type", "start", "end", "bubbled", "hidden"];
+const NODE_PROPS = ["inputs", "outputs"];
 const RUN_PROPS = ["graphId", "graphVersion", "start", "end"];
 
 const eventsEqual = (
@@ -58,6 +59,7 @@ const eventsEqual = (
     t.truthy(event2);
     propsEqual(t, event1, event2, EVENT_PROPS);
     if (event1.type === "node" && event2.type === "node") {
+      propsEqual(t, event1, event2, NODE_PROPS);
       event1.runs.forEach((run1, index) => {
         const run2 = event2.runs[index];
         runsEqual(t, run1, run2);
@@ -92,8 +94,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     t.fail("run1 should be serializable.");
     return;
   }
-  const run1serialized = run1.serialize();
-  // console.log("SIZE:", JSON.stringify(run1serialized).length / 1000);
+  const run1serialized = run1.serialize({ keepSecrets: true });
   const run1LoadResult = observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
@@ -147,4 +148,21 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
       .length;
     t.is(secretCount, 21);
   }
+});
+
+test("run load/save: serialization produces consistent size", async (t) => {
+  const observer = createRunObserver({ logLevel: "debug" });
+  const run = await loadRawRun(observer, "ad-writer-2.1.raw.json");
+  if (!run.serialize) {
+    t.fail("run1 should be serializable.");
+    return;
+  }
+  const serializedRun = run.serialize();
+  const s = JSON.stringify(serializedRun);
+  t.is(s.length, 1167372);
+  t.true(
+    observer.load(serializedRun, { secretReplacer: () => GEMINI_KEY_VALUE })
+      .success
+  );
+  runsEqual(t, run, observer.runs()[0]);
 });

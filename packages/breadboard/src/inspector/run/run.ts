@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../harness/types.js";
-import { GraphDescriptor, NodeDescriptor } from "../types.js";
+import { HarnessRunResult } from "../../harness/types.js";
+import { GraphDescriptor, NodeDescriptor } from "../../types.js";
 import { EventManager } from "./event-manager.js";
-import { replaceSecrets } from "./serializer.js";
+import { RunLoader } from "./loader.js";
 import {
   EventIdentifier,
   GraphUUID,
@@ -20,7 +20,7 @@ import {
   RunSerializationOptions,
   SerializedRun,
   SerializedRunLoadingOptions,
-} from "./types.js";
+} from "../types.js";
 
 type GraphRecord = {
   nodes: NodeDescriptor[];
@@ -138,28 +138,8 @@ export class RunObserver implements InspectableRunObserver {
     o: unknown,
     options?: SerializedRunLoadingOptions
   ): InspectableRunLoadResult {
-    const data = o as SerializedRun;
-    if (data.$schema !== "tbd") {
-      return {
-        success: false,
-        error: `Specified "$schema" is not valid`,
-      };
-    }
-    try {
-      const timeline = options?.secretReplacer
-        ? replaceSecrets(data, options.secretReplacer).timeline
-        : data.timeline;
-      for (const result of timeline) {
-        this.observe(result as HarnessRunResult);
-      }
-      return { success: true };
-    } catch (e) {
-      const error = e as Error;
-      return {
-        success: false,
-        error: `Loading run failed with the error ${error.message}`,
-      };
-    }
+    const loader = new RunLoader(o, options || {});
+    return loader.load(this);
   }
 }
 
@@ -182,7 +162,7 @@ export class Run implements InspectableRun {
     this.#events = new EventManager(graphStore, options);
     this.graphVersion = 0;
     this.start = timestamp;
-    this.graphId = graphStore.add(graph, this.graphVersion);
+    this.graphId = graphStore.add(graph, this.graphVersion).id;
   }
 
   get events(): InspectableRunEvent[] {
@@ -196,7 +176,7 @@ export class Run implements InspectableRun {
   }
 
   serialize(options?: RunSerializationOptions): SerializedRun {
-    return this.#events.serializer().serialize(options || {});
+    return this.#events.serialize(options || {});
   }
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {
