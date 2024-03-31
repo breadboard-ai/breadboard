@@ -36,25 +36,29 @@ export type SequenceEntry = [
 ];
 
 export class RunSerializer {
-  serializeGraphstart(
-    entry: PathRegistryEntry,
-    seenGraphs: Set<GraphUUID>
-  ): TimelineEntry {
+  #seenGraphs = new Map<GraphUUID, number>();
+  #graphIndex = 0;
+
+  serializeGraphstart(entry: PathRegistryEntry): TimelineEntry {
     const { graphId } = entry;
     if (graphId === null) {
       throw new Error("Encountered an empty graphId during graphstart.");
     }
     let graph: GraphDescriptor | null = null;
-    if (!seenGraphs.has(graphId)) {
+    let index: number;
+    if (!this.#seenGraphs.has(graphId)) {
       graph = entry.graph?.raw() || null;
-      seenGraphs.add(graphId);
+      index = this.#graphIndex++;
+      this.#seenGraphs.set(graphId, index);
+    } else {
+      index = this.#seenGraphs.get(graphId) || 0;
     }
     return {
       type: "graphstart",
       data: {
         timestamp: entry.graphStart,
         path: pathFromId(entry.id),
-        graphId,
+        index,
         graph,
       },
     };
@@ -165,12 +169,11 @@ export class RunSerializer {
     sequence: Iterable<SequenceEntry>,
     options: RunSerializationOptions
   ) {
-    const seenGraphs = new Set<GraphUUID>();
     const timeline: TimelineEntry[] = [];
     for (const [type, entry] of sequence) {
       switch (type) {
         case "graphstart": {
-          timeline.push(this.serializeGraphstart(entry, seenGraphs));
+          timeline.push(this.serializeGraphstart(entry));
           break;
         }
         case "graphend": {

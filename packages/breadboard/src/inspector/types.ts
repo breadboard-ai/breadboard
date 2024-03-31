@@ -728,7 +728,7 @@ export type GraphstartTimelineEntry = {
   data: {
     timestamp: number;
     path: number[];
-    graphId: GraphUUID;
+    index: number;
     graph: GraphDescriptor | null;
   };
 };

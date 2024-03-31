@@ -7,7 +7,6 @@
 import { HarnessRunResult } from "../../harness/types.js";
 import { replaceSecrets } from "./serializer.js";
 import {
-  GraphUUID,
   GraphstartTimelineEntry,
   InspectableGraph,
   InspectableRunLoadResult,
@@ -19,7 +18,7 @@ import { inspectableGraph } from "../graph.js";
 
 export class RunLoader {
   #run: SerializedRun;
-  #graphs = new Map<GraphUUID, InspectableGraph>();
+  #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
 
   constructor(o: unknown, options: SerializedRunLoadingOptions) {
@@ -28,12 +27,12 @@ export class RunLoader {
   }
 
   loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
-    const { graphId, timestamp, path } = result.data;
+    const { index, timestamp, path } = result.data;
     let graph = result.data.graph;
     if (graph !== null) {
-      this.#graphs.set(graphId, inspectableGraph(graph, this.#options ?? {}));
+      this.#graphs.set(index, inspectableGraph(graph, this.#options ?? {}));
     } else {
-      graph = this.#graphs.get(graphId)?.raw() || null;
+      graph = this.#graphs.get(index)?.raw() || null;
     }
     return {
       type: "graphstart",
