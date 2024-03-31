@@ -14,6 +14,7 @@ import {
   NodestartTimelineEntry,
   SerializedRun,
   SerializedRunLoadingOptions,
+  TimelineEntry,
 } from "../types.js";
 import { inspectableGraph } from "../graph.js";
 
@@ -27,9 +28,15 @@ export class RunLoader {
     this.#options = options;
   }
 
+  #asHarnessRunResult(entry: TimelineEntry): HarnessRunResult {
+    const [type, data] = entry;
+    return { type, data } as HarnessRunResult;
+  }
+
   loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
-    const { index, timestamp, path } = result.data;
-    let graph = result.data.graph;
+    const [, data] = result;
+    const { index, timestamp, path } = data;
+    let { graph } = data;
     if (graph !== null) {
       this.#graphs.set(index, inspectableGraph(graph, this.#options ?? {}));
     } else {
@@ -42,13 +49,8 @@ export class RunLoader {
   }
 
   loadNodestart(result: NodestartTimelineEntry): HarnessRunResult {
-    const {
-      graph: graphIndex,
-      id: node,
-      timestamp,
-      inputs,
-      path,
-    } = result.data;
+    const [, data] = result;
+    const { graph: graphIndex, id: node, timestamp, inputs, path } = data;
     const graph = this.#graphs.get(graphIndex);
     if (!graph) {
       throw new Error(
@@ -79,7 +81,8 @@ export class RunLoader {
         ? replaceSecrets(run, secretReplacer).timeline
         : run.timeline;
       for (const result of timeline) {
-        switch (result.type) {
+        const [type] = result;
+        switch (type) {
           case "graphstart":
             observer.observe(this.loadGraphStart(result));
             continue;
@@ -87,7 +90,7 @@ export class RunLoader {
             observer.observe(this.loadNodestart(result));
             continue;
           default:
-            observer.observe(result as HarnessRunResult);
+            observer.observe(this.#asHarnessRunResult(result));
         }
       }
       return { success: true };

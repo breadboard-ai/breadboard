@@ -73,7 +73,7 @@ export class EventManager {
     this.#options = options;
   }
 
-  #addToSequence(type: TimelineEntry["type"], entry: PathRegistryEntry) {
+  #addToSequence(type: TimelineEntry[0], entry: PathRegistryEntry) {
     this.#sequence.push([type, entry]);
   }
 

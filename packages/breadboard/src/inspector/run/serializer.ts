@@ -30,10 +30,7 @@ import {
 import { idFromPath } from "./path-registry.js";
 import { SecretResult } from "../../harness/types.js";
 
-export type SequenceEntry = [
-  type: TimelineEntry["type"],
-  entry: PathRegistryEntry,
-];
+export type SequenceEntry = [type: TimelineEntry[0], entry: PathRegistryEntry];
 
 export class RunSerializer {
   #seenGraphs = new Map<GraphUUID, number>();
@@ -79,25 +76,25 @@ export class RunSerializer {
     } else {
       index = this.#seenGraphs.get(graphId) || 0;
     }
-    return {
-      type: "graphstart",
-      data: {
+    return [
+      "graphstart",
+      {
         timestamp: entry.graphStart,
         path: entry.path,
         index,
         graph,
       },
-    };
+    ];
   }
 
   serializeGraphend(entry: PathRegistryEntry): TimelineEntry {
-    return {
-      type: "graphend",
-      data: {
+    return [
+      "graphend",
+      {
         path: entry.path,
         timestamp: entry.graphEnd as number,
       } satisfies GraphEndProbeData,
-    };
+    ];
   }
 
   serializeNodestart(entry: PathRegistryEntry): TimelineEntry {
@@ -105,10 +102,10 @@ export class RunSerializer {
     const { inputs, start: timestamp } = event;
     const node = event.node.descriptor.id;
     const graph = this.#graphIndexFromEntry(entry);
-    return {
-      type: "nodestart",
-      data: { id: node, graph, inputs, path: entry.path, timestamp },
-    };
+    return [
+      "nodestart",
+      { id: node, graph, inputs, path: entry.path, timestamp },
+    ];
   }
 
   serializeInput(entry: PathRegistryEntry): TimelineEntry {
@@ -116,16 +113,16 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty input event while serializing run");
     }
-    return {
-      type: "input",
-      data: {
+    return [
+      "input",
+      {
         path: entry.path,
         timestamp: event.start, // TODO: make sure these match in the runner.
         node: this.#simpleDescriptor(event),
         inputArguments: event.inputs,
         bubbled: event.bubbled,
       } satisfies InputResponse,
-    };
+    ];
   }
 
   serializeOutput(entry: PathRegistryEntry): TimelineEntry {
@@ -133,16 +130,16 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty output event while serializing run");
     }
-    return {
-      type: "output",
-      data: {
+    return [
+      "output",
+      {
         path: entry.path,
         timestamp: event.start,
         node: this.#simpleDescriptor(event),
         outputs: event.inputs,
         bubbled: event.bubbled,
       } satisfies OutputResponse,
-    };
+    ];
   }
 
   serializeSecret(entry: PathRegistryEntry): TimelineEntry {
@@ -150,13 +147,13 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty secret event while serializing run");
     }
-    return {
-      type: "secret",
-      data: {
+    return [
+      "secret",
+      {
         keys: event.keys,
         timestamp: event.start,
       } satisfies SecretResult["data"],
-    };
+    ];
   }
 
   serializeNodeend(entry: PathRegistryEntry): TimelineEntry {
@@ -164,15 +161,15 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty nodeend event while serializing run");
     }
-    return {
-      type: "nodeend",
-      data: {
+    return [
+      "nodeend",
+      {
         path: entry.path,
         timestamp: event.end as number,
         outputs: event.outputs,
         node: { type: event.node.descriptor.type },
       },
-    };
+    ];
   }
 
   serializeError(entry: PathRegistryEntry): TimelineEntry {
@@ -180,13 +177,13 @@ export class RunSerializer {
     if (!event) {
       throw new Error("Unexpected empty error event while serializing run");
     }
-    return {
-      type: "error",
-      data: {
+    return [
+      "error",
+      {
         error: event.error,
         timestamp: event.start,
       } satisfies ErrorResponse,
-    };
+    ];
   }
 
   serialize(
@@ -271,9 +268,10 @@ export const replaceSecrets = (
     );
   };
 
-  const timeline = data.timeline.map((entry) => {
-    if (entry.type === "nodeend") {
-      const data = entry.data as NodeEndResponse;
+  const timeline: TimelineEntry[] = data.timeline.map((entry) => {
+    const [type, d] = entry;
+    if (type === "nodeend") {
+      const data = d as NodeEndResponse;
       // "node" has a "?"  only because when reading back loaded run,
       // "node" doesn't exist here (addNodeend doesn't use it).
       // TODO: make more elegant.
@@ -286,23 +284,23 @@ export const replaceSecrets = (
         });
       }
 
-      return {
-        type: "nodeend",
-        data: {
-          ...(entry.data as object),
-          outputs: processPorts((entry.data as NodeEndResponse).outputs),
+      return [
+        "nodeend",
+        {
+          ...(d as object),
+          outputs: processPorts(data.outputs),
         },
-      } as TimelineEntry;
-    } else if (entry.type === "nodestart") {
-      return {
-        type: "nodestart",
-        data: {
-          ...(entry.data as object),
-          inputs: processPorts(entry.data.inputs),
+      ];
+    } else if (type === "nodestart") {
+      return [
+        "nodestart",
+        {
+          ...(d as object),
+          inputs: processPorts(d.inputs),
         },
-      } as TimelineEntry;
+      ] as TimelineEntry;
     }
-    return entry;
+    return entry as TimelineEntry;
   });
 
   const secrets = serializeSecrets();

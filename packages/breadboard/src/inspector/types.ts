@@ -722,33 +722,33 @@ export type RunObserverOptions = {
   kits?: Kit[];
 };
 
-export type GraphstartTimelineEntry = {
-  type: "graphstart";
+export type GraphstartTimelineEntry = [
+  type: "graphstart",
   data: {
     timestamp: number;
     path: number[];
     index: number;
     graph: GraphDescriptor | null;
-  };
-};
+  },
+];
 
-export type NodestartTimelineEntry = {
-  type: "nodestart";
+export type NodestartTimelineEntry = [
+  type: "nodestart",
   data: {
     id: NodeIdentifier;
     graph: number;
     inputs: InputValues;
     path: number[];
     timestamp: number;
-  };
-};
+  },
+];
 
 // TODO: Figure out if this is permanent.
 export type TimelineEntry =
-  | {
-      type: "graphend" | "input" | "output" | "secret" | "error" | "nodeend";
-      data: unknown;
-    }
+  | [
+      type: "graphend" | "input" | "output" | "secret" | "error" | "nodeend",
+      data: unknown,
+    ]
   | GraphstartTimelineEntry
   | NodestartTimelineEntry;
 
