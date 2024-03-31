@@ -79,27 +79,19 @@ export class EventManager {
 
   #addGraphstart(data: GraphStartProbeData) {
     const { path, graph, timestamp } = data;
-    const { id: graphId, added } = this.#graphStore.add(graph, 0);
+    const { id: graphId } = this.#graphStore.add(graph, 0);
     const entry = this.#pathRegistry.create(path);
     entry.graphId = graphId;
     entry.graphStart = timestamp;
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
-    // Always count the starting graph (the path.length === 0) as new,
-    // because the Run adds it.
-    const newGraph = added || path.length === 0;
-    this.#serializer.addGraphstart(data, graphId, newGraph);
     this.#addToSequence("graphstart", entry);
   }
 
   #addGraphend(data: GraphEndProbeData) {
     const { path, timestamp } = data;
     const entry = this.#pathRegistry.find(path);
-    this.#serializer.addGraphend({
-      timestamp: data.timestamp,
-      path: data.path,
-    });
     if (!entry) {
       if (path.length > 0) {
         throw new Error(
@@ -127,7 +119,6 @@ export class EventManager {
       entry.path.length === 1
     );
     entry.event = event;
-    this.#serializer.addNodestart(data);
     this.#addToSequence("nodestart", entry);
   }
 
@@ -137,7 +128,6 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
-    this.#serializer.addInput(data);
 
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
@@ -160,7 +150,6 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
-    this.#serializer.addOutput(data);
     if (bubbled) {
       const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
@@ -187,7 +176,6 @@ export class EventManager {
     if (!entry) {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
-    this.#serializer.addNodeend(data);
     const existing = entry.event;
     if (!existing) {
       // This is an event that was skipped because the log levels didn't
@@ -217,7 +205,6 @@ export class EventManager {
       end: null,
     };
     this.#pathRegistry.addSidecar(SECRET_PATH, event);
-    this.#serializer.addSecret(data);
     this.#addToSequence("secret", createSimpleEntry(SECRET_PATH, event));
   }
 
@@ -231,7 +218,6 @@ export class EventManager {
       error,
     };
     this.#pathRegistry.addError(event);
-    this.#serializer.addError(data);
     this.#addToSequence("error", createSimpleEntry(ERROR_PATH, event));
   }
 

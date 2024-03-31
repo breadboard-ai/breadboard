@@ -22,7 +22,6 @@ import {
 import {
   ErrorResponse,
   GraphEndProbeData,
-  GraphStartProbeData,
   InputResponse,
   NodeEndResponse,
   NodeStartResponse,
@@ -37,63 +36,6 @@ export type SequenceEntry = [
 ];
 
 export class RunSerializer {
-  #timeline: TimelineEntry[] = [];
-  #graphs: Map<GraphUUID, boolean> = new Map();
-
-  #remember(entry: TimelineEntry) {
-    this.#timeline.push(entry);
-  }
-
-  addGraphstart(
-    data: GraphStartProbeData,
-    graphId: GraphUUID,
-    newGraph: boolean
-  ) {
-    const { timestamp, graph, path } = data;
-    const type = "graphstart";
-    if (newGraph) {
-      this.#remember({ type, data: { timestamp, graph, path, graphId } });
-    } else {
-      this.#remember({ type, data: { timestamp, graph: null, path, graphId } });
-    }
-  }
-
-  addGraphend(data: unknown) {
-    this.#remember({ type: "graphend", data });
-  }
-
-  addNodestart(data: NodeStartResponse) {
-    this.#remember({ type: "nodestart", data });
-  }
-
-  addNodeend(data: NodeEndResponse) {
-    this.#remember({
-      type: "nodeend",
-      data: {
-        timestamp: data.timestamp,
-        outputs: data.outputs,
-        path: data.path,
-        node: { type: data.node.type },
-      },
-    });
-  }
-
-  addInput(data: unknown) {
-    this.#remember({ type: "input", data });
-  }
-
-  addOutput(data: unknown) {
-    this.#remember({ type: "output", data });
-  }
-
-  addSecret(data: unknown) {
-    this.#remember({ type: "secret", data });
-  }
-
-  addError(data: unknown) {
-    this.#remember({ type: "error", data });
-  }
-
   serializeGraphstart(
     entry: PathRegistryEntry,
     seenGraphs: Set<GraphUUID>
@@ -266,18 +208,6 @@ export class RunSerializer {
       $schema: "tbd",
       version: "0",
       timeline,
-    };
-    if (options.keepSecrets) return serialized;
-    return replaceSecrets(serialized, () => {
-      return crypto.randomUUID();
-    });
-  }
-
-  oldSerialize(options: RunSerializationOptions): SerializedRun {
-    const serialized: SerializedRun = {
-      $schema: "tbd",
-      version: "0",
-      timeline: this.#timeline,
     };
     if (options.keepSecrets) return serialized;
     return replaceSecrets(serialized, () => {
