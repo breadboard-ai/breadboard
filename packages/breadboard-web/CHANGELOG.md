@@ -1,5 +1,47 @@
 # @google-labs/breadboard-web
 
+## 1.4.0
+
+### Minor Changes
+
+- 05e74c9: Add a Settings Panel
+
+### Patch Changes
+
+- 8363d27: Add node location reset button
+- 644c1ee: Redirect users when active board is deleted
+- 66128fa: Update node proxy server machinery
+- 5cd01a2: Put preview in its own overlay
+- 60f1754: Inform a user when a board load fails
+- Updated dependencies [5f22f15]
+- Updated dependencies [dfcd6d8]
+- Updated dependencies [05e74c9]
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [e327653]
+- Updated dependencies [8363d27]
+- Updated dependencies [b8443c0]
+- Updated dependencies [646680a]
+- Updated dependencies [d49b80e]
+- Updated dependencies [dbe2d07]
+- Updated dependencies [c364a94]
+- Updated dependencies [9326bd7]
+- Updated dependencies [d18b070]
+- Updated dependencies [60f1754]
+- Updated dependencies [fbad949]
+- Updated dependencies [04f5663]
+- Updated dependencies [8a99a77]
+  - @google-labs/breadboard-ui@0.4.0
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+  - @google-labs/gemini-kit@0.1.5
+  - @breadboard-ai/build@0.1.2
+  - @google-labs/json-kit@0.1.2
+  - @google-labs/node-nursery-web@1.0.5
+  - @google-labs/palm-kit@0.0.7
+  - @google-labs/pinecone-kit@0.1.5
+  - @google-labs/template-kit@0.2.2
+
 ## 1.3.1
 
 ### Patch Changes

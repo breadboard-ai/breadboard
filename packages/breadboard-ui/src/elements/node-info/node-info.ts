@@ -257,7 +257,7 @@ export class NodeInfo extends LitElement {
     }
   }
 
-  async #onFormSubmit(evt: SubmitEvent) {
+  #onFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
     if (!(evt.target instanceof HTMLFormElement) || !this.selectedNodeId) {
@@ -297,6 +297,7 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
+      toConvert.set(schemaEditor.id, "ports-spec");
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
     }
 
@@ -305,7 +306,8 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
-      data.set(arrayEditor.id, JSON.stringify(arrayEditor.items));
+      toConvert.set(arrayEditor.id, "json-schema");
+      data.set(arrayEditor.id, arrayEditor.value);
     }
 
     const id = data.get("$id") as string;
@@ -343,17 +345,27 @@ export class NodeInfo extends LitElement {
         continue;
       }
 
-      if (name === "schema" || toConvert.has(name)) {
+      if (toConvert.has(name)) {
         try {
-          // Always attempt a JSON parse of the value.
-          const schemaValue = JSON.parse(value);
-          if (toConvert.get(name) === "llm-content") {
-            assertIsLLMContent(schemaValue);
+          if (value === "") {
+            continue;
           }
-          configuration[name] = schemaValue;
+
+          // Always attempt a JSON parse of the value.
+          const objectValue = JSON.parse(value);
+          if (toConvert.get(name) === "llm-content") {
+            assertIsLLMContent(objectValue);
+          }
+
+          // Set nulls & undefineds for deletion.
+          if (objectValue === null || objectValue === undefined) {
+            data.delete(name);
+            continue;
+          }
+
+          configuration[name] = objectValue;
         } catch (err) {
-          // Prevent form submission on error.
-          return;
+          continue;
         }
         continue;
       }
@@ -545,6 +557,10 @@ export class NodeInfo extends LitElement {
                             }
 
                             field.setCustomValidity("");
+                            if (field.value === "") {
+                              return;
+                            }
+
                             try {
                               JSON.parse(field.value);
                               if (field.dataset.behavior === "llm-content") {
@@ -578,7 +594,7 @@ export class NodeInfo extends LitElement {
                         id="${name}"
                         name="${name}"
                         .items=${JSON.parse(
-                          (renderableValue as string) || "[]"
+                          (renderableValue as string) || "null"
                         )}
                         .type=${resolveArrayType(port.schema)}
                         .behavior=${resolveBehaviorType(

@@ -2,4 +2,4 @@
 "@google-labs/breadboard-ui": patch
 ---
 
-Remove loadInfo from Activity Log
+Make Markdown text selectable.

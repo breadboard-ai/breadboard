@@ -58,7 +58,9 @@ const removeBoardFromCache = (
   filename: string | null
 ) => {
   if (!filename) return;
-  const toRemove = boards.findIndex((board) => board.url?.endsWith(filename));
+  const toRemove = boards
+    .filter(Boolean)
+    .findIndex((board) => board.url?.endsWith(filename));
   boards.splice(toRemove, 1);
 };
 
