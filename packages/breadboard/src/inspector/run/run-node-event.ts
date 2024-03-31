@@ -5,7 +5,7 @@
  */
 
 import type { HarnessRunResult } from "../../harness/types.js";
-import type { InputValues, NodeDescriptor, OutputValues } from "../../types.js";
+import type { InputValues, NodeIdentifier, OutputValues } from "../../types.js";
 import type {
   EventIdentifier,
   InspectableNode,
@@ -26,7 +26,6 @@ export const entryIdFromEventId = (eventId?: string): string | null => {
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
-  descriptor: NodeDescriptor;
   start: number;
   end: number | null;
   inputs: InputValues;
@@ -35,6 +34,10 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   bubbled: boolean;
   hidden: boolean;
 
+  /**
+   * The id that will be used to create a `NodeDescriptor`.`
+   */
+  #id: NodeIdentifier;
   /**
    * The path registry entry associated with this event.
    */
@@ -47,24 +50,24 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
 
   constructor(
     entry: PathRegistryEntry,
-    descriptor: NodeDescriptor,
+    id: NodeIdentifier,
     start: number,
     inputs: InputValues
   ) {
     if (!entry.parent) {
       throw new Error(
-        `RunNodeEvent has no parent entry. This is a bug in Inspector API machinery. Node Id: ${descriptor.id}`
+        `RunNodeEvent has no parent entry. This is a bug in Inspector API machinery. Node Id: ${id}`
       );
     }
     if (!entry.parent.graph) {
       throw new Error(
-        `This node event's parent has no graph associated with it. Node Id: ${descriptor.id}`
+        `This node event's parent has no graph associated with it. Node Id: ${id}`
       );
     }
 
     this.#entry = entry;
     this.type = "node";
-    this.descriptor = descriptor;
+    this.#id = id;
     this.start = start;
     this.end = null;
     this.inputs = inputs;
@@ -81,10 +84,10 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   get node(): InspectableNode {
     if (this.#node) return this.#node;
 
-    const node = this.#entry.parent?.graph?.nodeById(this.descriptor.id);
+    const node = this.#entry.parent?.graph?.nodeById(this.#id);
     if (!node) {
       throw new Error(
-        `RunNodeEvent could not find inspectable node. This is a bug in Inspector API machinery. Node Id: ${this.descriptor.id}`
+        `RunNodeEvent could not find inspectable node. This is a bug in Inspector API machinery. Node Id: ${this.#id}`
       );
     }
     this.#node = this.bubbled ? new BubbledInspectableNode(node) : node;

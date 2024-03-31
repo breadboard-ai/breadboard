@@ -112,7 +112,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
-    const event = new RunNodeEvent(entry, node, timestamp, inputs);
+    const event = new RunNodeEvent(entry, node.id, timestamp, inputs);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
@@ -130,7 +130,7 @@ export class EventManager {
     }
 
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
+      const event = new RunNodeEvent(entry, node.id, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
       this.#addToSequence("input", createSimpleEntry(path, event));
@@ -151,7 +151,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node, timestamp, outputs);
+      const event = new RunNodeEvent(entry, node.id, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
       this.#addToSequence("output", createSimpleEntry(path, event));
