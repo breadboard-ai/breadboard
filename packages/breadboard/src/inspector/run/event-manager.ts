@@ -154,6 +154,7 @@ export class EventManager {
       const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
+      this.#addToSequence("output", createSimpleEntry(path, event));
     } else {
       const existing = entry.event;
       if (!existing) {
@@ -166,8 +167,8 @@ export class EventManager {
         );
       }
       existing.inputs = data.outputs;
+      this.#addToSequence("output", entry);
     }
-    this.#addToSequence("output", entry);
   }
 
   #addNodeend(data: NodeEndResponse) {
