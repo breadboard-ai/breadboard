@@ -24,7 +24,6 @@ import {
   GraphEndProbeData,
   InputResponse,
   NodeEndResponse,
-  NodeStartResponse,
   OutputResponse,
 } from "../../types.js";
 import { pathFromId } from "./path-registry.js";
@@ -38,6 +37,24 @@ export type SequenceEntry = [
 export class RunSerializer {
   #seenGraphs = new Map<GraphUUID, number>();
   #graphIndex = 0;
+
+  #graphIndexFromEntry(entry: PathRegistryEntry) {
+    const graphEntry = entry.parent;
+    if (!graphEntry) {
+      throw new Error(
+        `Unknown graph entry for "${entry.id}" when serializing.`
+      );
+    }
+    const graphId = graphEntry.graphId;
+    if (!graphId) {
+      throw new Error(`Unknown graphId for "${entry.id}" when serializing.`);
+    }
+    const graph = this.#seenGraphs.get(graphId);
+    if (graph === undefined) {
+      throw new Error(`Unknown graph for "${entry.id}" when serializing.`);
+    }
+    return graph;
+  }
 
   serializeGraphstart(entry: PathRegistryEntry): TimelineEntry {
     const { graphId } = entry;
@@ -76,14 +93,12 @@ export class RunSerializer {
 
   serializeNodestart(entry: PathRegistryEntry): TimelineEntry {
     const event = entry.event as InspectableRunNodeEvent;
+    const { inputs, start: timestamp } = event;
+    const node = event.node.descriptor.id;
+    const graph = this.#graphIndexFromEntry(entry);
     return {
       type: "nodestart",
-      data: {
-        node: event.node.descriptor,
-        inputs: event.inputs,
-        path: pathFromId(entry.id),
-        timestamp: event.start,
-      } satisfies NodeStartResponse,
+      data: { id: node, graph, inputs, path: pathFromId(entry.id), timestamp },
     };
   }
 
@@ -274,7 +289,7 @@ export const replaceSecrets = (
         type: "nodestart",
         data: {
           ...(entry.data as object),
-          inputs: processPorts((entry.data as NodeStartResponse).inputs),
+          inputs: processPorts(entry.data.inputs),
         },
       } as TimelineEntry;
     }

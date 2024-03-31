@@ -11,6 +11,7 @@ import {
   InspectableGraph,
   InspectableRunLoadResult,
   InspectableRunObserver,
+  NodestartTimelineEntry,
   SerializedRun,
   SerializedRunLoadingOptions,
 } from "../types.js";
@@ -40,6 +41,30 @@ export class RunLoader {
     } as HarnessRunResult;
   }
 
+  loadNodestart(result: NodestartTimelineEntry): HarnessRunResult {
+    const {
+      graph: graphIndex,
+      id: node,
+      timestamp,
+      inputs,
+      path,
+    } = result.data;
+    const graph = this.#graphs.get(graphIndex);
+    if (!graph) {
+      throw new Error(
+        `Unknown graph index ${graphIndex} while loading nodestart`
+      );
+    }
+    const descriptor = graph.nodeById(node);
+    if (!descriptor) {
+      throw new Error(`Unknown node id ${node} while loading nodestart`);
+    }
+    return {
+      type: "nodestart",
+      data: { timestamp, path, inputs, node: descriptor.descriptor },
+    } as HarnessRunResult;
+  }
+
   load(observer: InspectableRunObserver): InspectableRunLoadResult {
     const run = this.#run;
     if (run.$schema !== "tbd") {
@@ -57,6 +82,9 @@ export class RunLoader {
         switch (result.type) {
           case "graphstart":
             observer.observe(this.loadGraphStart(result));
+            continue;
+          case "nodestart":
+            observer.observe(this.loadNodestart(result));
             continue;
           default:
             observer.observe(result as HarnessRunResult);

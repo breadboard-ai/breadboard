@@ -733,20 +733,25 @@ export type GraphstartTimelineEntry = {
   };
 };
 
+export type NodestartTimelineEntry = {
+  type: "nodestart";
+  data: {
+    id: NodeIdentifier;
+    graph: number;
+    inputs: InputValues;
+    path: number[];
+    timestamp: number;
+  };
+};
+
 // TODO: Figure out if this is permanent.
 export type TimelineEntry =
   | {
-      type:
-        | "graphend"
-        | "input"
-        | "output"
-        | "secret"
-        | "error"
-        | "nodestart"
-        | "nodeend";
+      type: "graphend" | "input" | "output" | "secret" | "error" | "nodeend";
       data: unknown;
     }
-  | GraphstartTimelineEntry;
+  | GraphstartTimelineEntry
+  | NodestartTimelineEntry;
 
 /**
  * Represents an `InspectableRun` that has been serialized into a JSON object.

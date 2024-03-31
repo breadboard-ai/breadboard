@@ -45,6 +45,7 @@ const propsEqual = (
 };
 
 const EVENT_PROPS = ["type", "start", "end", "bubbled", "hidden"];
+const NODE_PROPS = ["inputs", "outputs"];
 const RUN_PROPS = ["graphId", "graphVersion", "start", "end"];
 
 const eventsEqual = (
@@ -58,6 +59,7 @@ const eventsEqual = (
     t.truthy(event2);
     propsEqual(t, event1, event2, EVENT_PROPS);
     if (event1.type === "node" && event2.type === "node") {
+      propsEqual(t, event1, event2, NODE_PROPS);
       event1.runs.forEach((run1, index) => {
         const run2 = event2.runs[index];
         runsEqual(t, run1, run2);
@@ -92,7 +94,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     t.fail("run1 should be serializable.");
     return;
   }
-  const run1serialized = run1.serialize();
+  const run1serialized = run1.serialize({ keepSecrets: true });
   const run1LoadResult = observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
@@ -157,7 +159,10 @@ test("run load/save: serialization produces consistent size", async (t) => {
   }
   const serializedRun = run.serialize();
   const s = JSON.stringify(serializedRun);
-  t.is(s.length, 1227105);
-  t.true(observer.load(serializedRun).success);
+  t.is(s.length, 1176222);
+  t.true(
+    observer.load(serializedRun, { secretReplacer: () => GEMINI_KEY_VALUE })
+      .success
+  );
   runsEqual(t, run, observer.runs()[0]);
 });
