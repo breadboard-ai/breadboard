@@ -481,6 +481,10 @@ export type SerializedRunLoadingOptions = {
    * Optional, a function replace sentinel values with actual secrets.
    */
   secretReplacer?: SerializedRunSecretReplacer;
+  /**
+   * Optional, kits that are used with this run.
+   */
+  kits?: Kit[];
 };
 
 export type StoreAdditionResult = {
@@ -719,6 +723,16 @@ export type RunObserverOptions = {
   kits?: Kit[];
 };
 
+export type GraphstartTimelineEntry = {
+  type: "graphstart";
+  data: {
+    timestamp: number;
+    path: number[];
+    graphId: GraphUUID;
+    graph: GraphDescriptor | null;
+  };
+};
+
 // TODO: Figure out if this is permanent.
 export type TimelineEntry =
   | {
@@ -732,15 +746,7 @@ export type TimelineEntry =
         | "nodeend";
       data: unknown;
     }
-  | {
-      type: "graphstart";
-      data: {
-        timestamp: number;
-        path: number[];
-        graphId: GraphUUID;
-        graph: GraphDescriptor | null;
-      };
-    };
+  | GraphstartTimelineEntry;
 
 /**
  * Represents an `InspectableRun` that has been serialized into a JSON object.

@@ -138,8 +138,8 @@ export class RunObserver implements InspectableRunObserver {
     o: unknown,
     options?: SerializedRunLoadingOptions
   ): InspectableRunLoadResult {
-    const loader = new RunLoader(this);
-    return loader.load(o, options);
+    const loader = new RunLoader(o, options || {});
+    return loader.load(this);
   }
 }
 

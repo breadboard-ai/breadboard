@@ -8,52 +8,60 @@ import { HarnessRunResult } from "../../harness/types.js";
 import { replaceSecrets } from "./serializer.js";
 import {
   GraphUUID,
+  GraphstartTimelineEntry,
+  InspectableGraph,
   InspectableRunLoadResult,
   InspectableRunObserver,
   SerializedRun,
   SerializedRunLoadingOptions,
 } from "../types.js";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { inspectableGraph } from "../graph.js";
 
 export class RunLoader {
-  #observer: InspectableRunObserver;
+  #run: SerializedRun;
+  #graphs = new Map<GraphUUID, InspectableGraph>();
+  #options: SerializedRunLoadingOptions;
 
-  constructor(observer: InspectableRunObserver) {
-    this.#observer = observer;
+  constructor(o: unknown, options: SerializedRunLoadingOptions) {
+    this.#run = o as SerializedRun;
+    this.#options = options;
   }
 
-  load(
-    o: unknown,
-    options?: SerializedRunLoadingOptions
-  ): InspectableRunLoadResult {
-    const data = o as SerializedRun;
-    const graphs = new Map<GraphUUID, GraphDescriptor>();
-    if (data.$schema !== "tbd") {
+  loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
+    const { graphId, timestamp, path } = result.data;
+    let graph = result.data.graph;
+    if (graph !== null) {
+      this.#graphs.set(graphId, inspectableGraph(graph, this.#options ?? {}));
+    } else {
+      graph = this.#graphs.get(graphId)?.raw() || null;
+    }
+    return {
+      type: "graphstart",
+      data: { timestamp, path, graph },
+    } as HarnessRunResult;
+  }
+
+  load(observer: InspectableRunObserver): InspectableRunLoadResult {
+    const run = this.#run;
+    if (run.$schema !== "tbd") {
       return {
         success: false,
         error: `Specified "$schema" is not valid`,
       };
     }
     try {
-      const timeline = options?.secretReplacer
-        ? replaceSecrets(data, options.secretReplacer).timeline
-        : data.timeline;
+      const secretReplacer = this.#options?.secretReplacer;
+      const timeline = secretReplacer
+        ? replaceSecrets(run, secretReplacer).timeline
+        : run.timeline;
       for (const result of timeline) {
-        if (result.type === "graphstart") {
-          const { graphId, timestamp, path } = result.data;
-          let graph = result.data.graph;
-          if (graph !== null) {
-            graphs.set(graphId, graph);
-          } else {
-            graph = graphs.get(graphId) || null;
-          }
-          this.#observer.observe({
-            type: "graphstart",
-            data: { timestamp, path, graph },
-          } as HarnessRunResult);
-          continue;
+        switch (result.type) {
+          case "graphstart":
+            observer.observe(this.loadGraphStart(result));
+            continue;
+          default:
+            observer.observe(result as HarnessRunResult);
         }
-        this.#observer.observe(result as HarnessRunResult);
       }
       return { success: true };
     } catch (e) {
