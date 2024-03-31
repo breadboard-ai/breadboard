@@ -27,7 +27,7 @@ import {
   NodeEndResponse,
   OutputResponse,
 } from "../../types.js";
-import { pathFromId } from "./path-registry.js";
+import { idFromPath } from "./path-registry.js";
 import { SecretResult } from "../../harness/types.js";
 
 export type SequenceEntry = [
@@ -43,16 +43,20 @@ export class RunSerializer {
     const graphEntry = entry.parent;
     if (!graphEntry) {
       throw new Error(
-        `Unknown graph entry for "${entry.id}" when serializing.`
+        `Unknown graph entry for "${idFromPath(entry.path)}" when serializing.`
       );
     }
     const graphId = graphEntry.graphId;
     if (!graphId) {
-      throw new Error(`Unknown graphId for "${entry.id}" when serializing.`);
+      throw new Error(
+        `Unknown graphId for "${idFromPath(entry.path)}" when serializing.`
+      );
     }
     const graph = this.#seenGraphs.get(graphId);
     if (graph === undefined) {
-      throw new Error(`Unknown graph for "${entry.id}" when serializing.`);
+      throw new Error(
+        `Unknown graph for "${idFromPath(entry.path)}" when serializing.`
+      );
     }
     return graph;
   }
@@ -79,7 +83,7 @@ export class RunSerializer {
       type: "graphstart",
       data: {
         timestamp: entry.graphStart,
-        path: pathFromId(entry.id),
+        path: entry.path,
         index,
         graph,
       },
@@ -90,7 +94,7 @@ export class RunSerializer {
     return {
       type: "graphend",
       data: {
-        path: pathFromId(entry.id),
+        path: entry.path,
         timestamp: entry.graphEnd as number,
       } satisfies GraphEndProbeData,
     };
@@ -103,7 +107,7 @@ export class RunSerializer {
     const graph = this.#graphIndexFromEntry(entry);
     return {
       type: "nodestart",
-      data: { id: node, graph, inputs, path: pathFromId(entry.id), timestamp },
+      data: { id: node, graph, inputs, path: entry.path, timestamp },
     };
   }
 
@@ -115,7 +119,7 @@ export class RunSerializer {
     return {
       type: "input",
       data: {
-        path: pathFromId(entry.id),
+        path: entry.path,
         timestamp: event.start, // TODO: make sure these match in the runner.
         node: this.#simpleDescriptor(event),
         inputArguments: event.inputs,
@@ -132,7 +136,7 @@ export class RunSerializer {
     return {
       type: "output",
       data: {
-        path: pathFromId(entry.id),
+        path: entry.path,
         timestamp: event.start,
         node: this.#simpleDescriptor(event),
         outputs: event.inputs,
@@ -163,7 +167,7 @@ export class RunSerializer {
     return {
       type: "nodeend",
       data: {
-        path: pathFromId(entry.id),
+        path: entry.path,
         timestamp: event.end as number,
         outputs: event.outputs,
         node: { type: event.node.descriptor.type },

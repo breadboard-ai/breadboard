@@ -667,8 +667,7 @@ export type RunSerializationOptions = {
 };
 
 export type PathRegistryEntry = {
-  // TODO: should this just be "path"?
-  id: string;
+  path: number[];
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;

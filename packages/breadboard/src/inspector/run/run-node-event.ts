@@ -15,6 +15,7 @@ import type {
 } from "../types.js";
 import { NestedRun } from "./nested-run.js";
 import { BubbledInspectableNode } from "../bubbled-node.js";
+import { idFromPath } from "./path-registry.js";
 
 export const eventIdFromEntryId = (entryId?: string): string => {
   return `e-${entryId || "0"}`;
@@ -78,7 +79,7 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
   }
 
   get id(): EventIdentifier {
-    return eventIdFromEntryId(this.#entry.id);
+    return eventIdFromEntryId(idFromPath(this.#entry.path));
   }
 
   get node(): InspectableNode {

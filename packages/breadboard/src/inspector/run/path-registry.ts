@@ -29,9 +29,8 @@ export const createSimpleEntry = (
   path: number[],
   event: InspectableRunEvent
 ) => {
-  const id = idFromPath(path);
   const entry: PathRegistryEntry = {
-    id,
+    path,
     parent: null,
     children: [],
     graphId: null,
