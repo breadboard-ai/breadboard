@@ -176,7 +176,7 @@ export class Run implements InspectableRun {
   }
 
   serialize(options?: RunSerializationOptions): SerializedRun {
-    return this.#events.serializer().oldSerialize(options || {});
+    return this.#events.serialize(options || {});
   }
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {

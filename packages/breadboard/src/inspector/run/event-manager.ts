@@ -39,6 +39,7 @@ import {
   PathRegistryEntry,
   RunObserverLogLevel,
   RunObserverOptions,
+  RunSerializationOptions,
   TimelineEntry,
 } from "../types.js";
 
@@ -142,14 +143,15 @@ export class EventManager {
       const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
+      this.#addToSequence("input", createSimpleEntry(path, event));
     } else {
       const existing = entry.event;
       if (!existing) {
         console.error("Expected an existing event for", path);
         return;
       }
+      this.#addToSequence("input", entry);
     }
-    this.#addToSequence("input", entry);
   }
 
   #addOutput(data: OutputResponse) {
@@ -258,6 +260,10 @@ export class EventManager {
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  serialize(options: RunSerializationOptions) {
+    return this.#serializer.serialize(this.#sequence, options);
   }
 
   serializer() {

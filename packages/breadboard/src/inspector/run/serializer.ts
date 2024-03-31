@@ -16,8 +16,11 @@ import {
   SerializedRunSecretReplacer,
   PathRegistryEntry,
   InspectableRunNodeEvent,
+  InspectableRunSecretEvent,
+  InspectableRunErrorEvent,
 } from "../types.js";
 import {
+  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
@@ -26,6 +29,7 @@ import {
   OutputResponse,
 } from "../../types.js";
 import { pathFromId } from "./path-registry.js";
+import { SecretResult } from "../../harness/types.js";
 
 export type SequenceEntry = [
   type: TimelineEntry["type"],
@@ -171,7 +175,55 @@ export class RunSerializer {
     };
   }
 
-  serialize(sequence: Iterable<SequenceEntry>) {
+  serializeSecret(entry: PathRegistryEntry): TimelineEntry {
+    const event = entry.event as InspectableRunSecretEvent;
+    if (!event) {
+      throw new Error("Unexpected empty secret event while serializing run");
+    }
+    return {
+      type: "secret",
+      data: {
+        keys: event.keys,
+        timestamp: event.start,
+      } satisfies SecretResult["data"],
+    };
+  }
+
+  serializeNodeend(entry: PathRegistryEntry): TimelineEntry {
+    const event = entry.event as InspectableRunNodeEvent;
+    if (!event) {
+      throw new Error("Unexpected empty nodeend event while serializing run");
+    }
+    // console.log("💖 nodeend!", entry.id, pathFromId(entry.id));
+    return {
+      type: "nodeend",
+      data: {
+        path: pathFromId(entry.id),
+        timestamp: event.end as number,
+        outputs: event.outputs,
+        node: { type: event.node.descriptor.type },
+      },
+    };
+  }
+
+  serializeError(entry: PathRegistryEntry): TimelineEntry {
+    const event = entry.event as InspectableRunErrorEvent;
+    if (!event) {
+      throw new Error("Unexpected empty error event while serializing run");
+    }
+    return {
+      type: "error",
+      data: {
+        error: event.error,
+        timestamp: event.start,
+      } satisfies ErrorResponse,
+    };
+  }
+
+  serialize(
+    sequence: Iterable<SequenceEntry>,
+    options: RunSerializationOptions
+  ) {
     const seenGraphs = new Set<GraphUUID>();
     const timeline: TimelineEntry[] = [];
     for (const [type, entry] of sequence) {
@@ -197,16 +249,28 @@ export class RunSerializer {
           break;
         }
         case "secret": {
+          timeline.push(this.serializeSecret(entry));
           break;
         }
         case "nodeend": {
+          timeline.push(this.serializeNodeend(entry));
           break;
         }
         case "error": {
+          timeline.push(this.serializeError(entry));
           break;
         }
       }
     }
+    const serialized: SerializedRun = {
+      $schema: "tbd",
+      version: "0",
+      timeline,
+    };
+    if (options.keepSecrets) return serialized;
+    return replaceSecrets(serialized, () => {
+      return crypto.randomUUID();
+    });
   }
 
   oldSerialize(options: RunSerializationOptions): SerializedRun {

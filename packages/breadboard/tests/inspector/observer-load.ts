@@ -93,7 +93,6 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     return;
   }
   const run1serialized = run1.serialize();
-  // console.log("SIZE:", JSON.stringify(run1serialized).length / 1000);
   const run1LoadResult = observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
@@ -158,7 +157,7 @@ test("run load/save: serialization produces consistent size", async (t) => {
   }
   const serializedRun = run.serialize();
   const s = JSON.stringify(serializedRun);
-  t.is(s.length, 1228754);
+  t.is(s.length, 1230945);
   t.true(observer.load(serializedRun).success);
   runsEqual(t, run, observer.runs()[0]);
 });

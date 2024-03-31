@@ -22,7 +22,7 @@ export const idFromPath = (path: number[]): string => {
 };
 
 export const pathFromId = (id: string): number[] => {
-  return id.split("-").map((s) => parseInt(s, 10));
+  return id.length ? id.split("-").map((s) => parseInt(s, 10)) : [];
 };
 
 export const createSimpleEntry = (
