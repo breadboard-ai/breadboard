@@ -387,6 +387,7 @@ export class ActivityLog extends LitElement {
     dt .value.markdown {
       white-space: normal;
       line-height: 1.5;
+      user-select: text;
     }
 
     dt .value.output * {
