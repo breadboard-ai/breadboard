@@ -1,5 +1,16 @@
 # @google-labs/gemini-kit
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/core-kit@0.5.2
+  - @google-labs/json-kit@0.1.3
+  - @google-labs/node-nursery-web@1.0.6
+  - @google-labs/template-kit@0.2.3
+
 ## 0.1.5
 
 ### Patch Changes

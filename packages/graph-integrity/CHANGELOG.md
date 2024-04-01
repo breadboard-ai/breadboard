@@ -1,5 +1,12 @@
 # @google-labs/graph-integrity
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+
 ## 0.0.7
 
 ### Patch Changes

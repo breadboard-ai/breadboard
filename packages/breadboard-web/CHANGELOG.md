@@ -1,5 +1,29 @@
 # @google-labs/breadboard-web
 
+## 1.5.0
+
+### Minor Changes
+
+- da2e263: Add support for boards created with new @breadboard-ai/build package
+
+### Patch Changes
+
+- Updated dependencies [7949ec9]
+- Updated dependencies [08c5eaa]
+- Updated dependencies [949bce7]
+- Updated dependencies [e8d0737]
+- Updated dependencies [da2e263]
+  - @breadboard-ai/build@0.2.0
+  - @google-labs/breadboard-ui@0.4.2
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/core-kit@0.5.2
+  - @google-labs/gemini-kit@0.1.6
+  - @google-labs/json-kit@0.1.3
+  - @google-labs/node-nursery-web@1.0.6
+  - @google-labs/palm-kit@0.0.8
+  - @google-labs/pinecone-kit@0.1.6
+  - @google-labs/template-kit@0.2.3
+
 ## 1.4.0
 
 ### Minor Changes
