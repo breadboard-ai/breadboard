@@ -74,6 +74,7 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
 
     const url = `/graphs/${relativePath.replace(".ts", ".json")}`;
     if ("inputs" in module.default && "outputs" in module.default) {
+      // TODO(aomarks) Not a great way to detect build boards.
       const board = module.default as SerializableBoard;
       const manifest: ManifestItem = {
         title: module.default.title ?? "Untitled (build API)",
