@@ -14,6 +14,7 @@ import {
 
 test("polymorphic node with primary output acts like that output port", () => {
   const withPrimaryOut = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -48,6 +49,7 @@ test("polymorphic node with primary output acts like that output port", () => {
   instance[OutputPortGetter];
 
   defineNodeType({
+    name: "example",
     inputs: { in1: { type: "number" } },
     outputs: {},
     invoke: () => ({}),
@@ -56,6 +58,7 @@ test("polymorphic node with primary output acts like that output port", () => {
   });
 
   defineNodeType({
+    name: "example",
     inputs: { in1: { type: "string" } },
     outputs: {},
     invoke: () => ({}),
@@ -67,6 +70,7 @@ test("polymorphic node with primary output acts like that output port", () => {
 
 test("type error: polymorphic node without primary output doesn't act like an output port", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       "*": {
         type: "number",
@@ -97,6 +101,7 @@ test("don't allow multiple primary output ports on polymorphic node", () => {
   assert.throws(
     () =>
       defineNodeType({
+        name: "example",
         inputs: {
           "*": {
             type: "number",

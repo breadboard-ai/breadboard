@@ -19,6 +19,7 @@ import { unsafeType } from "../internal/type-system/unsafe.js";
 test("expect types: 0 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{}, {}>
   const definition = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {},
     invoke: () => ({}),
@@ -34,6 +35,7 @@ test("expect types: 0 in, 0 out", () => {
 test("expect types: 1 in, 0 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; }, {}>
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -63,6 +65,7 @@ test("expect types: 1 in, 0 out", () => {
 test("expect types: 0 in, 1 out", () => {
   // $ExpectType MonomorphicDefinition<{}, { out1: { type: "string"; }; }>
   const definition = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {
       out1: {
@@ -88,6 +91,7 @@ test("expect types: 0 in, 1 out", () => {
 test("expect types: 1 in, 1 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; }, { out1: { type: "string"; }; }>
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -125,6 +129,7 @@ test("expect types: 1 in, 1 out", () => {
 test("expect types: 2 in, 2 out", () => {
   // $ExpectType MonomorphicDefinition<{ in1: { type: "string"; }; in2: { type: "number"; }; }, { out1: { type: "boolean"; }; out2: { type: "string"; }; }>
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -175,6 +180,7 @@ test("expect types: 2 in, 2 out", () => {
 
 test("expect type error: unknown invoke param", () => {
   defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -197,6 +203,7 @@ test("expect type error: unknown invoke param", () => {
 
 test("expect type error: missing invoke return port", () => {
   defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -216,6 +223,7 @@ test("expect type error: missing invoke return port", () => {
 
 test("expect type error: incorrect invoke return port type", () => {
   defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -237,6 +245,7 @@ test("expect type error: incorrect invoke return port type", () => {
 
 test.skip("expect type error: unknown return port", () => {
   defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -262,6 +271,7 @@ test.skip("expect type error: unknown return port", () => {
 
 test("expect type error: missing make instance param", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -287,6 +297,7 @@ test("expect type error: missing make instance param", () => {
 
 test("expect type error: incorrect make instance param type", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -309,6 +320,7 @@ test("expect type error: incorrect make instance param type", () => {
 
 test("expect types: definitions are NodeHandlers", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -332,6 +344,7 @@ test("expect types: definitions are NodeHandlers", () => {
 
 test("describe function generates JSON schema", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -385,6 +398,7 @@ test("describe function generates JSON schema", async () => {
 
 test("describe function generates JSON schema with anyOf", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: anyOf("string", "number"),
@@ -443,6 +457,7 @@ test("describe function generates JSON schema with anyOf", async () => {
 
 test("describe function generates JSON schema with unsafeType", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: unsafeType<"FOO" | 123>({
@@ -506,6 +521,7 @@ test("describe function generates JSON schema with unsafeType", async () => {
 
 test("invoke returns value from sync function", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       a: {
         type: "string",
@@ -537,6 +553,7 @@ test("invoke returns value from sync function", async () => {
 
 test("invoke returns value from async function", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       a: {
         type: "string",
@@ -568,6 +585,7 @@ test("invoke returns value from async function", async () => {
 
 {
   const definitionA = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {
       out1: {
@@ -586,6 +604,7 @@ test("invoke returns value from async function", async () => {
   });
 
   const definitionB = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -666,6 +685,7 @@ test("invoke returns value from async function", async () => {
 
 test("type error: node with no input ports shouldn't allow inputs", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {
       out1: {
