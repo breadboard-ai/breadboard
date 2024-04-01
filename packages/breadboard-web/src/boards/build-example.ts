@@ -5,14 +5,12 @@
  */
 
 import { board, input } from "@breadboard-ai/build";
-import { reverseString, templater } from "../build-example-kit.js";
+import { reverseString, prompt } from "../build-example-kit.js";
 
 const word = input({ description: "The word to reverse" });
-const result = templater({
-  template: `The word "{{forwards}}" is "{{backwards}}" in reverse.`,
-  forwards: word,
-  backwards: reverseString({ forwards: word }),
-});
+const reversed = reverseString({ forwards: word });
+const result = prompt`The word "${word}" is "${reversed}" in reverse`;
+
 export default board({
   title: "Example of @breadboard-ai/build",
   description: "A simple example of using the @breadboard-ai/build API",

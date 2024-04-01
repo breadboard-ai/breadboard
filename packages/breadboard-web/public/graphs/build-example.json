@@ -44,7 +44,7 @@
       "id": "templater-0",
       "type": "templater",
       "configuration": {
-        "template": "The word \"{{forwards}}\" is \"{{backwards}}\" in reverse."
+        "template": "The word \"{{p0}}\" is \"{{p1}}\" in reverse"
       }
     }
   ],
@@ -59,13 +59,13 @@
       "from": "input-0",
       "out": "word",
       "to": "templater-0",
-      "in": "forwards"
+      "in": "p0"
     },
     {
       "from": "reverseString-0",
       "out": "backwards",
       "to": "templater-0",
-      "in": "backwards"
+      "in": "p1"
     },
     {
       "from": "templater-0",
