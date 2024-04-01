@@ -237,7 +237,7 @@ function isOutputPortReference(
   );
 }
 
-interface SerializableBoard {
+export interface SerializableBoard {
   inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
   outputs: Record<string, SerializableOutputPortReference>;
 }
