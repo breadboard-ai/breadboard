@@ -12,7 +12,8 @@ import {
 import { addKit } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
-const reverseString = defineNodeType({
+export const reverseString = defineNodeType({
+  name: "reverseString",
   inputs: {
     forwards: {
       type: "string",
@@ -34,6 +35,7 @@ const reverseString = defineNodeType({
 });
 
 export const templater = defineNodeType({
+  name: "templater",
   inputs: {
     template: {
       type: "string",
@@ -48,6 +50,7 @@ export const templater = defineNodeType({
     result: {
       type: "string",
       description: "The template with {{placeholders}} substituted.",
+      primary: true,
     },
   },
   describe: ({ template }) => {

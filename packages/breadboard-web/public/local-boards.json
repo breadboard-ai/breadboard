@@ -50,9 +50,9 @@
     "version": "0.0.6"
   },
   {
-    "title": "Build example",
+    "title": "Example of @breadboard-ai/build",
     "url": "/graphs/build-example.json",
-    "version": "0.0.1"
+    "version": "1.0.0"
   },
   {
     "title": "Chat bot 2.0",
