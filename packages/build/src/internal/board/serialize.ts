@@ -60,8 +60,13 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     inputNames.set(input, mainInputName);
     unconnectedInputs.add(input);
     const schema = toJSONSchema(input.type);
-    if (isSpecialInput(input) && input.default !== undefined) {
-      schema.default = input.default;
+    if (isSpecialInput(input)) {
+      if (input.default !== undefined) {
+        schema.default = input.default;
+      }
+      if (input.description !== undefined) {
+        schema.description = input.description;
+      }
     }
     mainInputSchema[mainInputName] = schema;
   }
@@ -237,7 +242,7 @@ function isOutputPortReference(
   );
 }
 
-interface SerializableBoard {
+export interface SerializableBoard {
   inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
   outputs: Record<string, SerializableOutputPortReference>;
 }

@@ -32,6 +32,7 @@ import {
  * import {defineNodeType} from "@breadboard-ai/build";
  *
  * export const reverseString = defineNodeType({
+ *   name: "reverseString",
  *   inputs: {
  *     forwards: {
  *       type: "string",
@@ -63,6 +64,7 @@ import {
  * import { defineNodeType, anyOf } from "@breadboard-ai/build";
  *
  * export const templater = defineNodeType({
+ *   name: "templater",
  *   inputs: {
  *     template: {
  *       type: "string",
@@ -113,7 +115,7 @@ export function defineNodeType<
   INPUTS extends PortConfigMap,
   OUTPUTS extends PortConfigMap,
 >(params: {
-  name?: string;
+  name: string;
   inputs: INPUTS;
   outputs: ForbidMultiplePrimaries<OUTPUTS>;
   invoke: IsPolymorphic<INPUTS> extends true

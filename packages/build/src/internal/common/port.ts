@@ -70,7 +70,9 @@ interface DynamicPortConfig extends StaticPortConfig {
   primary?: never;
 }
 
-export const OutputPortGetter = Symbol();
+// TODO(aomarks) Just make this a normal property, no need to export (it was
+// originally a symbol to try and make a package-private API).
+export const OutputPortGetter = "__output";
 
 /**
  * A Breadboard node port which receives values.

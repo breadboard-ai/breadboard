@@ -11,7 +11,9 @@ import type {
 } from "../type-system/type.js";
 
 // Neither type nor default
-export function input(): Input<string>;
+export function input(
+  params?: InputParamsWithNeitherTypeNorDefault
+): Input<string>;
 
 // Type and default
 export function input<T extends BreadboardType>(
@@ -95,6 +97,7 @@ export interface InputWithDefault<T extends JsonSerializable> {
 }
 
 type GenericInputParams =
+  | InputParamsWithNeitherTypeNorDefault
   | InputParamsWithOnlyType<BreadboardType>
   | InputParamsWithOnlyDefault<"string" | "number" | "boolean">
   | InputParamsWithTypeAndDefault<BreadboardType>;
@@ -117,6 +120,12 @@ interface InputParamsWithTypeAndDefault<T extends BreadboardType> {
   type: T;
   description?: string;
   default: ConvertBreadboardType<T>;
+}
+
+interface InputParamsWithNeitherTypeNorDefault {
+  type?: undefined;
+  description: string;
+  default?: undefined;
 }
 
 type BroadenBasicType<T extends string | number | boolean> = T extends string

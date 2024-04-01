@@ -1,5 +1,14 @@
 # @google-labs/node-nursery
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/core-kit@0.5.2
+  - @google-labs/template-kit@0.2.3
+
 ## 0.0.8
 
 ### Patch Changes

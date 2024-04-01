@@ -21,6 +21,7 @@ Use the `defineNodeType` function to define a new Breadboard node type.
 import { defineNodeType } from "@breadboard-ai/build";
 
 export const reverseString = defineNodeType({
+  name: "example",
   inputs: {
     forwards: {
       type: "string",
@@ -69,48 +70,6 @@ runtime. It is passed an object which contains values for all of its input
 ports, and is expected to return an object with values for all of its output
 ports, or a promise thereof if async work is required.
 
-## Breadboard type expressions
-
-Breadboard type expressions are effectively a common subset of JSON schema and
-the TypeScript type system. By using a Breadboard type expression when declaring
-your ports, those types will be natively understood by both the Breadboard
-runtime (which uses JSON Schema), and when using this node type in the
-TypeScript API.
-
-### Basic types
-
-- `"string"`
-- `"number"`
-- `"boolean"`
-
-### Utility types
-
-- `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
-  `anyOf` and its corresponding TypeScript union (`type1 | type2`).
-
-- `object({ prop1: <type1>, prop2: <type2> })`: A function which generates a
-  JSON Schema `object` and its corresponding TypeScript `{...}` type.
-
-### Unsafe type escape hatch
-
-The `unsafeType` function can be used as a last resort escape hatch when the
-above provided types are not sufficient. It allows you to directly specify JSON
-schema and a TypeScript type:
-
-```ts
-import { unsafeType } from "@breadboard-ai/build";
-
-const myCrazyType = unsafeType<{ foo: string }>({
-  type: "object",
-  properties: {
-    foo: {
-      type: "string",
-    },
-  },
-  required: ["foo"],
-});
-```
-
 ## Polymorphic node types
 
 Usually, a Breadboard node type has a fixed set of input and output ports, as was
@@ -131,6 +90,7 @@ input (`template`), multiple _dynamic_ inputs, and one fixed output.
 import { defineNodeType, anyOf } from "@breadboard-ai/build";
 
 export const templater = defineNodeType({
+  name: "example",
   inputs: {
     template: {
       type: "string",
@@ -225,6 +185,125 @@ export const exampleKit = addKit(ExampleKit) as {
 };
 ```
 
+## Building boards
+
+In Breadboard, nodes defined by `defineNodeType`, (and coming soon, other nested
+boards) can be composed into an executable program called a _board_. Boards are
+created using the `board` function.
+
+### Example
+
+```ts
+import { board, input } from "@breadboard-ai/build";
+import { reverseString, prompt } from "../build-example-kit.js";
+
+const word = input({ description: "The word to reverse" });
+const reversed = reverseString({ forwards: word });
+const result = prompt`The word "${word}" is "${reversed}" in reverse`;
+
+export default board({
+  title: "Example of @breadboard-ai/build",
+  description: "A simple example of using the @breadboard-ai/build API",
+  version: "1.0.0",
+  inputs: { word },
+  outputs: { result },
+});
+```
+
+### Inputs
+
+The special `input` function is how you declare a value that the user of your
+board will provide. You can use an `input` anywhere a value of that type is
+accepted.
+
+Inputs are typed as `string` by default. To set a different type, use the `type`
+property. See [Breadboard type expressions](#breadboard-type-expressions) for
+information about what kinds of types can be configured here.
+
+```ts
+import { input, array } from "@breadboard-ai/build";
+
+const operands = input({
+  description: "The numbers to sum",
+  type: array("number"),
+});
+```
+
+Note that when you use an `input` anywhere in your board, you need to also
+provide that `input` to the `board` function. If you use an `input` without
+providing it to `board`, an error will be raised during serialization. (This is
+required so that TypeScript understands the input/output signature of the board,
+which allows it to qprovide compile-time type-safety for when boards are nested
+into other boards (coming soon).)
+
+### Outputs
+
+Board outputs are configured by directly passing the output ports that you wish
+to expose (or nodes that have a [primary](#inputs-and-outputs) output port) to
+the `outputs` property.
+
+### Metadata
+
+The optional `title`, `description`, and `version` fields are currently only
+used by systems such as the Breadboard Visual Editor, for the purposes of
+finding and indexing boards.
+
+### Serialization
+
+Use the `serialize` function to convert a `board` result to BGL (Breadboard
+Graph Language, a portable JSON format), which allows it to be executed by the
+Breadboard runner:
+
+```ts
+import { board, serialize } from "@breadboard-ai/build";
+
+const myBoard = board(...);
+const bgl = serialize(myBoard);
+console.log(JSON.stringify(bgl, null, 2));
+```
+
+## Breadboard type expressions
+
+Breadboard type expressions are effectively a common subset of JSON schema and
+the TypeScript type system. By using a Breadboard type expression when declaring
+your ports, those types will be natively understood by both the Breadboard
+runtime (which uses JSON Schema), and when using this node type in the
+TypeScript API.
+
+### Basic types
+
+- `"string"`
+- `"number"`
+- `"boolean"`
+
+### Utility types
+
+- `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
+  `anyOf` and its corresponding TypeScript union (`type1 | type2`).
+
+- `object({ prop1: <type1>, prop2: <type2> })`: A function which generates a
+  JSON Schema `object` and its corresponding TypeScript `{...}` type.
+
+### Unsafe type escape hatch
+
+The `unsafeType` function can be used as a last resort escape hatch when the
+above provided types are not sufficient. It allows you to directly specify JSON
+schema and a TypeScript type:
+
+```ts
+import { unsafeType } from "@breadboard-ai/build";
+
+const myCrazyType = unsafeType<{ foo: string }>({
+  type: "object",
+  properties: {
+    foo: {
+      type: "string",
+    },
+  },
+  required: ["foo"],
+});
+```
+
 ## Known issues
 
 1. Polymorphic nodes with dynamic _outputs_ are not yet supported.
@@ -238,3 +317,10 @@ export const exampleKit = addKit(ExampleKit) as {
    of monomorphic invoke. That is, while TypeScript will enforce that all
    configured output ports have a value, it will not yet complain if an output
    is returned that does not match a configured output port.
+
+5. There is no way to specify a description for a board's output (probably an
+   `output` function, similar to `input`, is the solution there).
+
+6. You cannot yet embed boards into other boards (this will work by
+   instantiating a board object just like a regular node, but during
+   serialization an `invoke` node will be created in its place.)

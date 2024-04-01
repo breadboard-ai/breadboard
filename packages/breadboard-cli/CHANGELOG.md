@@ -1,5 +1,24 @@
 # @google-labs/breadboard-cli
 
+## 0.8.0
+
+### Minor Changes
+
+- 261db21: Add CLI support for @breadboard-ai/build boards
+
+### Patch Changes
+
+- Updated dependencies [7949ec9]
+- Updated dependencies [949bce7]
+- Updated dependencies [e8d0737]
+- Updated dependencies [da2e263]
+- Updated dependencies [da2e263]
+  - @breadboard-ai/build@0.2.0
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/breadboard-web@1.5.0
+  - @google-labs/core-kit@0.5.2
+  - @google-labs/template-kit@0.2.3
+
 ## 0.7.1
 
 ### Patch Changes

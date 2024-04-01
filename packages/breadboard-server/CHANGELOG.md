@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+
 ## 0.1.9
 
 ### Patch Changes

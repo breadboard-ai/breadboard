@@ -12,6 +12,7 @@ import { test } from "node:test";
 test("polymorphic inputs", () => {
   // $ExpectType PolymorphicDefinition<OmitDynamicPortConfig<{ in1: { type: "string"; }; "*": { type: "number"; }; }>, { type: "number"; }, { out1: { type: "string"; }; }>
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -71,6 +72,7 @@ test("polymorphic inputs", () => {
   instance.inputs.in3;
 
   const definition2 = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {
       strOut: {
@@ -97,6 +99,7 @@ test("polymorphic inputs", () => {
 
 test("polymorphic inputs invoke returns value from sync function", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -130,6 +133,7 @@ test("polymorphic inputs invoke returns value from sync function", async () => {
 
 test("polymorphic inputs invoke returns value from async function", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -164,6 +168,7 @@ test("polymorphic inputs invoke returns value from async function", async () => 
 
 test("polymorphic describe function generates JSON schema with static ports", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -213,6 +218,7 @@ test("polymorphic describe function generates JSON schema with static ports", as
 
 test("polymorphic describe function generates JSON schema from static input", async () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {
       portList: {
         type: "string",

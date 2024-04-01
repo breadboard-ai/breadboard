@@ -7,12 +7,14 @@
 import {
   defineNodeType,
   anyOf,
+  type Value,
   type NodeFactoryFromDefinition,
 } from "@breadboard-ai/build";
 import { addKit } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
-const reverseString = defineNodeType({
+export const reverseString = defineNodeType({
+  name: "reverseString",
   inputs: {
     forwards: {
       type: "string",
@@ -34,6 +36,7 @@ const reverseString = defineNodeType({
 });
 
 export const templater = defineNodeType({
+  name: "templater",
   inputs: {
     template: {
       type: "string",
@@ -48,6 +51,7 @@ export const templater = defineNodeType({
     result: {
       type: "string",
       description: "The template with {{placeholders}} substituted.",
+      primary: true,
     },
   },
   describe: ({ template }) => {
@@ -87,6 +91,32 @@ function substituteTemplatePlaceholders(
     (acc, [key, value]) => acc.replace(`{{${key}}}`, String(value)),
     template
   );
+}
+
+/**
+ * An example of a sugar function which wraps instantiation of a node (in this
+ * case, a template), in a more convenient syntax (in this case, a tagged
+ * template literal function).
+ */
+export function prompt(
+  strings: TemplateStringsArray,
+  ...values: Value<string>[]
+) {
+  let template = "";
+  const placeholders: Record<string, Value<string>> = {};
+  for (let i = 0; i < strings.length; i++) {
+    if (i > 0) {
+      template += "}}";
+    }
+    template += strings[i];
+    if (i < strings.length - 1) {
+      template += `{{`;
+      const name = `p${i}`;
+      template += name;
+      placeholders[name] = values[i]!;
+    }
+  }
+  return templater({ template, ...placeholders });
 }
 
 const BuildExampleKit = new KitBuilder({

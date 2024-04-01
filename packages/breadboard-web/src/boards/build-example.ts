@@ -4,23 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board } from "@google-labs/breadboard";
-import { buildExampleKit } from "../build-example-kit.js";
+import { board, input } from "@breadboard-ai/build";
+import { reverseString, prompt } from "../build-example-kit.js";
 
-export default await board(({ word }) => {
-  const { backwards } = buildExampleKit.reverseString({
-    forwards: word.isString(),
-  });
+const word = input({ description: "The word to reverse" });
+const reversed = reverseString({ forwards: word });
+const result = prompt`The word "${word}" is "${reversed}" in reverse`;
 
-  const { result } = buildExampleKit.templater({
-    template: `The word "{{forwards}}" is "{{backwards}}" in reverse.`,
-    forwards: word.isString(),
-    backwards: backwards.isString(),
-  });
-
-  return { result };
-}).serialize({
-  title: "Build example",
-  description: "An example that uses a kit created with @breadboard-ai/build",
-  version: "0.0.1",
+export default board({
+  title: "Example of @breadboard-ai/build",
+  description: "A simple example of using the @breadboard-ai/build API",
+  version: "1.0.0",
+  inputs: { word },
+  outputs: { result },
 });

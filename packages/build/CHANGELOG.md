@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 7949ec9: Make "name" required when defining nodes, so that they can always be serialized
+- da2e263: Add new board function for creating boards, and serialize for making BGL from them
+
+### Patch Changes
+
+- 949bce7: Add a Value type which can represent a value or a stand-in for a value (output port, input object, etc.)
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+
 ## 0.1.2
 
 ### Patch Changes
