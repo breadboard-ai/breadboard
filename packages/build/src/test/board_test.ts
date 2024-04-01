@@ -37,7 +37,7 @@ const { outNum, outStr } = testNode.outputs;
 
 test("expect type: 0 in, 0 out", () => {
   // $ExpectType BoardDefinition<{}, {}>
-  const definition = board({}, {});
+  const definition = board({ inputs: {}, outputs: {} });
   // $ExpectType BoardInstance<{}, {}>
   definition({});
   // $ExpectType BoardInstance<{}, {}>
@@ -50,7 +50,7 @@ test("expect type: 0 in, 0 out", () => {
 
 test("expect type: 1 in, 1 out", () => {
   // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
-  const definition = board({ inStr }, { outNum });
+  const definition = board({ inputs: { inStr }, outputs: { outNum } });
   // NodeInstance<BoardPortConfig<{ inStr: InputPort<string>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
   const instance = definition({ inStr: "inStr" });
   // $ExpectType { inStr: InputPort<string>; }
@@ -64,8 +64,8 @@ test("expect type: 1 in, 1 out", () => {
 });
 
 test("expect type: nested boards", () => {
-  const defA = board({ inNum }, { outStr });
-  const defB = board({ inStr }, { outNum });
+  const defA = board({ inputs: { inNum }, outputs: { outStr } });
+  const defB = board({ inputs: { inStr }, outputs: { outNum } });
   const instanceA = defA({ inNum: 123 });
   // $ExpectType BoardInstance<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
   const instanceB = defB({ inStr: instanceA.outputs.outStr });
@@ -80,7 +80,7 @@ test("expect type: nested boards", () => {
 });
 
 test("expect type error: missing instantiate param", () => {
-  const definition = board({ inStr, inNum }, { outNum });
+  const definition = board({ inputs: { inStr, inNum }, outputs: { outNum } });
   // @ts-expect-error missing both
   definition();
   // @ts-expect-error missing both
@@ -92,7 +92,7 @@ test("expect type error: missing instantiate param", () => {
 });
 
 test("expect type error: incorrect make instance param type", () => {
-  const definition = board({ inStr, inNum }, {});
+  const definition = board({ inputs: { inStr, inNum }, outputs: {} });
   definition({
     inStr: "foo",
     // @ts-expect-error inNum should be number, not string
@@ -100,9 +100,20 @@ test("expect type error: incorrect make instance param type", () => {
   });
 });
 
+test("allow setting title, description, version", () => {
+  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  board({
+    title: "My Title",
+    description: "My Description",
+    version: "1.0.0",
+    inputs: { inStr },
+    outputs: { outNum },
+  });
+});
+
 {
-  const boardA = board({}, { outNum, outStr });
-  const boardB = board({ inStr, inNum }, {});
+  const boardA = board({ inputs: {}, outputs: { outNum, outStr } });
+  const boardB = board({ inputs: { inStr, inNum }, outputs: {} });
   const instanceA = boardA({});
   const instanceB = boardB({ inStr: "foo", inNum: 123 });
 

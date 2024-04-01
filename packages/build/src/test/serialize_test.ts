@@ -6,13 +6,13 @@
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
+import type { GraphDescriptor } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { board, type GenericBoardDefinition } from "../internal/board/board.js";
-import { serialize } from "../internal/board/serialize.js";
-import type { GraphDescriptor } from "@google-labs/breadboard";
 import { anyOf, array, defineNodeType, object } from "../index.js";
+import { board, type GenericBoardDefinition } from "../internal/board/board.js";
 import { input } from "../internal/board/input.js";
+import { serialize } from "../internal/board/serialize.js";
 
 function checkSerialization(
   board: GenericBoardDefinition,
@@ -39,45 +39,51 @@ test("0 inputs, 1 output", () => {
     },
     invoke: () => ({ myNodeOut: "aaa" }),
   })({});
-  checkSerialization(board({}, { boardOut: myNode.outputs.myNodeOut }), {
-    nodes: [
-      {
-        id: "input-0",
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {},
-            required: [],
-          },
-        },
-      },
-      {
-        id: "output-0",
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {
-              boardOut: { type: "string" },
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
             },
-            required: ["boardOut"],
           },
         },
-      },
-      {
-        id: "myNode-0",
-        type: "myNode",
-        configuration: {},
-      },
-    ],
-    edges: [
-      { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-    ],
-  });
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
 });
 
-test("node with primary output can itself act as that output", () => {
+test("monomorphic node with primary output can itself act as that output", () => {
   const myNode = defineNodeType({
     name: "myNode",
     inputs: {},
@@ -86,47 +92,115 @@ test("node with primary output can itself act as that output", () => {
     },
     invoke: () => ({ myNodeOutPrimary: "aaa" }),
   })({});
-  checkSerialization(board({}, { boardOut: myNode }), {
-    nodes: [
-      {
-        id: "input-0",
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {},
-            required: [],
-          },
-        },
-      },
-      {
-        id: "output-0",
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {
-              boardOut: { type: "string" },
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { boardOut: myNode },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
             },
-            required: ["boardOut"],
           },
         },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        {
+          from: "myNode-0",
+          out: "myNodeOutPrimary",
+          to: "output-0",
+          in: "boardOut",
+        },
+      ],
+    }
+  );
+});
+
+test("polymorphic node with primary output can itself act as that output", () => {
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {
+      "*": {
+        type: "number",
       },
-      {
-        id: "myNode-0",
-        type: "myNode",
-        configuration: {},
-      },
-    ],
-    edges: [
-      {
-        from: "myNode-0",
-        out: "myNodeOutPrimary",
-        to: "output-0",
-        in: "boardOut",
-      },
-    ],
-  });
+    },
+    outputs: {
+      myNodeOutPrimary: { type: "string", primary: true },
+    },
+    invoke: () => ({ myNodeOutPrimary: "aaa" }),
+  })({});
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { boardOut: myNode },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        {
+          from: "myNode-0",
+          out: "myNodeOutPrimary",
+          to: "output-0",
+          in: "boardOut",
+        },
+      ],
+    }
+  );
 });
 
 test("raw value input is serialized to configuration", () => {
@@ -142,43 +216,46 @@ test("raw value input is serialized to configuration", () => {
   })({
     myNodeIn: "bbb",
   });
-  checkSerialization(board({}, { boardOut: myNode.outputs.myNodeOut }), {
-    nodes: [
-      {
-        id: "input-0",
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {},
-            required: [],
+  checkSerialization(
+    board({ inputs: {}, outputs: { boardOut: myNode.outputs.myNodeOut } }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
           },
         },
-      },
-      {
-        id: "output-0",
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: { boardOut: { type: "string" } },
-            required: ["boardOut"],
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { boardOut: { type: "string" } },
+              required: ["boardOut"],
+            },
           },
         },
-      },
-      {
-        id: "myNode-0",
-        type: "myNode",
-        configuration: {
-          myNodeIn: "bbb",
-          //        ^^^^^ here it is
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {
+            myNodeIn: "bbb",
+            //        ^^^^^ here it is
+          },
         },
-      },
-    ],
-    edges: [
-      { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-    ],
-  });
+      ],
+      edges: [
+        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
 });
 
 test("input", () => {
@@ -196,7 +273,10 @@ test("input", () => {
     myNodeIn: myInput,
   });
   checkSerialization(
-    board({ myInput }, { boardOut: myNode.outputs.myNodeOut }),
+    board({
+      inputs: { myInput },
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
     {
       nodes: [
         {
@@ -254,7 +334,10 @@ test("input with default", () => {
     myNodeIn: myInput,
   });
   checkSerialization(
-    board({ myInput }, { boardOut: myNode.outputs.myNodeOut }),
+    board({
+      inputs: { myInput },
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
     {
       nodes: [
         {
@@ -268,6 +351,70 @@ test("input with default", () => {
                   type: "string",
                   default: "ccc",
                   //       ^^^^^ here it is!
+                },
+              },
+              required: ["myInput"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
+        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
+});
+
+test("input with description", () => {
+  const myInput = input({ description: "This is my description" });
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {
+      myNodeIn: { type: "string" },
+    },
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({
+    myNodeIn: myInput,
+  });
+  checkSerialization(
+    board({
+      inputs: { myInput },
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                myInput: {
+                  type: "string",
+                  description: "This is my description",
                 },
               },
               required: ["myInput"],
@@ -321,7 +468,10 @@ test("fancy types", () => {
     myNodeIn2: ["aaa", { foo: 123 }],
   });
   checkSerialization(
-    board({ boardInput1: myInput1 }, { boardOut: myNode.outputs.myNodeOut }),
+    board({
+      inputs: { boardInput1: myInput1 },
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
     {
       nodes: [
         {
@@ -441,10 +591,10 @@ test("long chain", () => {
   });
 
   checkSerialization(
-    board(
-      { boardNumInput: numInput },
-      { boardStringArrayOut: boolToStringArray }
-    ),
+    board({
+      inputs: { boardNumInput: numInput },
+      outputs: { boardStringArrayOut: boolToStringArray },
+    }),
     {
       nodes: [
         {
@@ -516,6 +666,70 @@ test("long chain", () => {
   );
 });
 
+test("polymorphic inputs", () => {
+  const bInput = input({ type: "number" });
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {
+      "*": {
+        type: "number",
+      },
+    },
+    outputs: {
+      out: { type: "number" },
+    },
+    invoke: (_, values) => ({ out: Object.values(values)[0] ?? 0 }),
+  })({ a: 1, b: bInput, c: 3 });
+  checkSerialization(
+    board({
+      inputs: { bInput },
+      outputs: { boardOut: myNode.outputs.out },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                bInput: { type: "number" },
+              },
+              required: ["bInput"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "number" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {
+            a: 1,
+            c: 3,
+          },
+        },
+      ],
+      edges: [
+        { from: "input-0", out: "bInput", to: "myNode-0", in: "b" },
+        { from: "myNode-0", out: "out", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
+});
+
 test("error: input not passed to board", () => {
   const myInput = input();
   const myNode = defineNodeType({
@@ -531,7 +745,15 @@ test("error: input not passed to board", () => {
     myNodeIn: myInput,
   });
   assert.throws(
-    () => serialize(board({}, { boardOut: myNode.outputs.myNodeOut })),
+    () =>
+      serialize(
+        board({
+          inputs: {},
+          outputs: {
+            boardOut: myNode.outputs.myNodeOut,
+          },
+        })
+      ),
     /myNode-0:myNodeIn was wired to an input, but that input was not provided to the board inputs./
   );
 });
@@ -553,10 +775,10 @@ test("error: same input used twice", () => {
   assert.throws(
     () =>
       serialize(
-        board(
-          { boardInput1: myInput, boardInput2: myInput },
-          { boardOut: myNode.outputs.myNodeOut }
-        )
+        board({
+          inputs: { boardInput1: myInput, boardInput2: myInput },
+          outputs: { boardOut: myNode.outputs.myNodeOut },
+        })
       ),
     /The same input was used as both boardInput1 and boardInput2/
   );
@@ -580,10 +802,10 @@ test("error: input not reachable from output", () => {
   assert.throws(
     () =>
       serialize(
-        board(
-          { boardInput1: myInput, boardInput2: myOrphanInput },
-          { boardOut: myNode.outputs.myNodeOut }
-        )
+        board({
+          inputs: { boardInput1: myInput, boardInput2: myOrphanInput },
+          outputs: { boardOut: myNode.outputs.myNodeOut },
+        })
       ),
     /Board input "boardInput2" is not reachable from any of its outputs./
   );

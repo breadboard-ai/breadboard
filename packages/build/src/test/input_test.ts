@@ -23,6 +23,9 @@ function assertType<T extends { type: BreadboardType }>(
 test("defaults to string", () => {
   // $ExpectType Input<string>
   assertType(input(), "string");
+
+  // $ExpectType Input<string>
+  assertType(input({ description: "Hello" }), "string");
 });
 
 test("only type", () => {

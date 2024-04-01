@@ -45,12 +45,32 @@ export function board<
   // was to have used an input(), so only inputs should be allowed, right?
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
->(inputs: IPORTS, outputs: OPORTS): BoardDefinition<IPORTS, OPORTS> {
+>({
+  inputs,
+  outputs,
+  title,
+  description,
+  version,
+}: BoardParameters<IPORTS, OPORTS>): BoardDefinition<IPORTS, OPORTS> {
   const def = new BoardDefinitionImpl(inputs, outputs);
   return Object.assign(def.instantiate.bind(def), {
     inputs,
     outputs,
+    title,
+    description,
+    version,
   });
+}
+
+export interface BoardParameters<
+  IPORTS extends BoardInputPorts,
+  OPORTS extends BoardOutputPorts,
+> {
+  inputs: IPORTS;
+  outputs: OPORTS;
+  title?: string;
+  description?: string;
+  version?: string;
 }
 
 export type BoardInputPorts = Record<
