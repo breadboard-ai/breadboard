@@ -14,6 +14,7 @@ import {
 
 test("monomorphic node with primary output acts like that output port", () => {
   const withPrimaryOut = defineNodeType({
+    name: "example",
     inputs: {
       in1: {
         type: "string",
@@ -45,6 +46,7 @@ test("monomorphic node with primary output acts like that output port", () => {
   instance[OutputPortGetter];
 
   defineNodeType({
+    name: "example",
     inputs: { in1: { type: "number" } },
     outputs: {},
     invoke: () => ({}),
@@ -53,6 +55,7 @@ test("monomorphic node with primary output acts like that output port", () => {
   });
 
   defineNodeType({
+    name: "example",
     inputs: { in1: { type: "string" } },
     outputs: {},
     invoke: () => ({}),
@@ -64,6 +67,7 @@ test("monomorphic node with primary output acts like that output port", () => {
 
 test("type error: monomorphic node without primary output doesn't act like an output port", () => {
   const definition = defineNodeType({
+    name: "example",
     inputs: {},
     outputs: {
       out1: {
@@ -90,6 +94,7 @@ test("don't allow multiple primary output ports on monomorphic node", () => {
   assert.throws(
     () =>
       defineNodeType({
+        name: "example",
         inputs: {},
         outputs: {
           foo: {

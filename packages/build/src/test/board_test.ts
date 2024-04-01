@@ -9,6 +9,7 @@ import { test } from "node:test";
 import { board } from "../internal/board/board.js";
 
 const testNode = defineNodeType({
+  name: "example",
   inputs: {
     inStr: {
       type: "string",

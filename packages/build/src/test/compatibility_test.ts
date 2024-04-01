@@ -42,6 +42,7 @@ function setupKits<
 {
   // A monomorphic node definition
   const strLen = defineNodeType({
+    name: "example",
     inputs: {
       str: {
         type: "string",
@@ -151,6 +152,7 @@ function setupKits<
 {
   // A polymorphic node definition
   const adder = defineNodeType({
+    name: "example",
     inputs: {
       base: {
         type: "number",

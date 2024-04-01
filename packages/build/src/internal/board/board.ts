@@ -21,12 +21,10 @@ import type { GenericSpecialInput } from "./input.js";
  * Example usage:
  *
  * ```ts
- * export const recipeMaker = board(
- *   // Inputs
- *   {recipeName},
- *   // Outputs
- *   {recipe: llmRecipeResult}
- * );
+ * export const recipeMaker = board({
+ *   inputs: {recipeName},
+ *   outputs: {recipe: llmRecipeResult}
+ * });
  * ```
  *
  * @param inputs The input ports that should be exposed from nodes in the board
