@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0
+
+### Minor Changes
+
+- e8d0737: Make run serialization more compact.
+
 ## 0.13.0
 
 ### Minor Changes

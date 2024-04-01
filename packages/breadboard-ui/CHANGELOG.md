@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2
+
+### Patch Changes
+
+- 08c5eaa: Make Markdown text selectable.
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+
 ## 0.4.1
 
 ### Patch Changes
