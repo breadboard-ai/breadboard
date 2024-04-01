@@ -289,6 +289,20 @@ class PolymorphicNodeInstance<
         new OutputPort(portConfig.type, portName, this),
       ])
     ) as OutputPorts<STATIC_OUTPUTS>;
+    // TODO(aomarks) Share with monomorphic (function or base class).
+    const primaryOutputPortNames = Object.entries(staticOutputs)
+      .filter(([, config]) => config.primary)
+      .map(([name]) => name);
+    if (primaryOutputPortNames.length === 1) {
+      this[OutputPortGetter] = this.outputs[
+        primaryOutputPortNames[0]!
+        // TODO(aomarks) It might be possible to avoid this cast.
+      ] as unknown as PrimaryOutputPort<STATIC_OUTPUTS>;
+    } else if (primaryOutputPortNames.length > 0) {
+      throw new Error(
+        `Node was configured with >1 primary output nodes: ${primaryOutputPortNames.join(" ")}`
+      );
+    }
   }
 }
 
