@@ -357,6 +357,67 @@ test("input with default", () => {
   );
 });
 
+test("input with description", () => {
+  const myInput = input({ description: "This is my description" });
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {
+      myNodeIn: { type: "string" },
+    },
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({
+    myNodeIn: myInput,
+  });
+  checkSerialization(
+    board({ myInput }, { boardOut: myNode.outputs.myNodeOut }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                myInput: {
+                  type: "string",
+                  description: "This is my description",
+                },
+              },
+              required: ["myInput"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
+        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
+});
+
 test("fancy types", () => {
   const fancyType1 = anyOf("number", object({ foo: "boolean" }));
   const fancyType2 = array(anyOf("string", object({ foo: "number" })));
