@@ -107,7 +107,13 @@ const describe = async (
   });
   const outputBuilder = new SchemaBuilder();
   if (context?.base) {
-    const { board } = await getRunnableBoard(context, inputs || {});
+    let board: GraphDescriptor | undefined;
+    try {
+      board = (await getRunnableBoard(context, inputs || {})).board;
+    } catch {
+      // eat any exceptions.
+      // This is a describer, so it must always return some valid value.
+    }
     if (board) {
       const inspectableGraph = inspect(board);
       const { inputSchema, outputSchema } = await inspectableGraph.describe();
