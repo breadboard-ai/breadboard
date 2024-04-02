@@ -14,6 +14,7 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
+  Schema,
 } from "../types.js";
 import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
@@ -168,7 +169,13 @@ class Graph implements InspectableGraphWithStore {
           .filter((n) => n.isExit())
           .map((output) => output.describe())
       )
-    ).map((result) => result.inputSchema);
+    )
+      .map((result) =>
+        result.inputSchema.behavior?.includes("bubble")
+          ? null
+          : result.inputSchema
+      )
+      .filter(Boolean) as Schema[];
 
     const inputSchema = combineSchemas(inputSchemas);
     const outputSchema = removeProperty(
