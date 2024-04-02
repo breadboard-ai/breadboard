@@ -130,49 +130,15 @@
               },
               {
                 "id": "makeAgentArgs",
-                "type": "invoke",
+                "type": "runJavascript",
                 "configuration": {
-                  "$board": "#makeAgentArgs"
+                  "code": "function makeAgentArgs({item}) {const{prompt,schema}=item;return{text:prompt,schema}}",
+                  "name": "makeAgentArgs",
+                  "raw": true
                 }
               }
             ],
-            "graphs": {
-              "makeAgentArgs": {
-                "edges": [
-                  {
-                    "from": "makeAgentArgs-input",
-                    "to": "makeAgentArgs-run",
-                    "out": "*"
-                  },
-                  {
-                    "from": "makeAgentArgs-run",
-                    "to": "makeAgentArgs-output",
-                    "out": "*"
-                  }
-                ],
-                "nodes": [
-                  {
-                    "id": "makeAgentArgs-input",
-                    "type": "input",
-                    "configuration": {}
-                  },
-                  {
-                    "id": "makeAgentArgs-run",
-                    "type": "runJavascript",
-                    "configuration": {
-                      "code": "function makeAgentArgs({item}) {const{prompt,schema}=item;return{text:prompt,schema}}",
-                      "name": "makeAgentArgs",
-                      "raw": true
-                    }
-                  },
-                  {
-                    "id": "makeAgentArgs-output",
-                    "type": "output",
-                    "configuration": {}
-                  }
-                ]
-              }
-            }
+            "graphs": {}
           }
         }
       },

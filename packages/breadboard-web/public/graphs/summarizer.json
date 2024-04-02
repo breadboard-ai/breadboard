@@ -52,9 +52,11 @@
     },
     {
       "id": "extractSummary",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#extractSummary"
+        "code": "function extractSummary({json}) {return{summary:json.summary}}",
+        "name": "extractSummary",
+        "raw": true
       }
     },
     {
@@ -247,41 +249,5 @@
       }
     }
   ],
-  "graphs": {
-    "extractSummary": {
-      "edges": [
-        {
-          "from": "extractSummary-input",
-          "to": "extractSummary-run",
-          "out": "*"
-        },
-        {
-          "from": "extractSummary-run",
-          "to": "extractSummary-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "extractSummary-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "extractSummary-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function extractSummary({json}) {return{summary:json.summary}}",
-            "name": "extractSummary",
-            "raw": true
-          }
-        },
-        {
-          "id": "extractSummary-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

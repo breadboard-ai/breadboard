@@ -215,9 +215,11 @@
               },
               {
                 "id": "fn-4",
-                "type": "invoke",
+                "type": "runJavascript",
                 "configuration": {
-                  "$board": "#fn-4"
+                  "code": "function fn_4({chunk}) {return{chunk:chunk.candidates[0].content.parts[0].text}}",
+                  "name": "fn_4",
+                  "raw": true
                 }
               },
               {
@@ -239,43 +241,7 @@
                 }
               }
             ],
-            "graphs": {
-              "fn-4": {
-                "edges": [
-                  {
-                    "from": "fn-4-input",
-                    "to": "fn-4-run",
-                    "out": "*"
-                  },
-                  {
-                    "from": "fn-4-run",
-                    "to": "fn-4-output",
-                    "out": "*"
-                  }
-                ],
-                "nodes": [
-                  {
-                    "id": "fn-4-input",
-                    "type": "input",
-                    "configuration": {}
-                  },
-                  {
-                    "id": "fn-4-run",
-                    "type": "runJavascript",
-                    "configuration": {
-                      "code": "function fn_4({chunk}) {return{chunk:chunk.candidates[0].content.parts[0].text}}",
-                      "name": "fn_4",
-                      "raw": true
-                    }
-                  },
-                  {
-                    "id": "fn-4-output",
-                    "type": "output",
-                    "configuration": {}
-                  }
-                ]
-              }
-            }
+            "graphs": {}
           }
         }
       }

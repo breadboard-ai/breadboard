@@ -178,7 +178,7 @@ export class BuilderNode<
   ) {
     const fromScope = (from as BuilderNode).#scope;
 
-    // If this is a reguar wire, call super method to add it
+    // If this is a regular wire, call super method to add it
     if (fromScope === this.#scope) {
       super.addIncomingEdge(from, out, in_, constant, schema);
       return;
@@ -241,7 +241,7 @@ export class BuilderNode<
         } else if (handler && typeof handler !== "function" && handler.graph) {
           // TODO: This isn't quite right, but good enough for now. Instead what
           // this should be in invoking a graph from a lexical scope in a dynamic
-          // scope. This requires moving state management into the dyanmic scope.
+          // scope. This requires moving state management into the dynamic scope.
           const graphs = handler.graph.getPinnedNodes();
           if (graphs.length !== 1)
             throw new Error("Expected exactly one graph");
@@ -354,55 +354,23 @@ export class BuilderNode<
       });
     } else {
       const match = traditionalFunctionRegex.exec(code);
-      if (match === null) throw new Error("Unexpected seralization: " + code);
+      if (match === null) throw new Error("Unexpected serialization: " + code);
       else name = match[1] || name;
     }
 
-    const schemas = await this.describe(scope);
-
-    const invokeGraph: GraphDescriptor = {
-      edges: [
-        { from: `${this.id}-input`, to: `${this.id}-run`, out: "*" },
-        { from: `${this.id}-run`, to: `${this.id}-output`, out: "*" },
-      ],
-      nodes: [
-        {
-          id: `${this.id}-input`,
-          type: "input",
-          configuration: schemas?.inputSchema
-            ? { schema: schemas.inputSchema }
-            : {},
-        },
-        {
-          id: `${this.id}-run`,
-          type: "runJavascript",
-          configuration: {
-            code,
-            name,
-            raw: true,
-          },
-        },
-        {
-          id: `${this.id}-output`,
-          type: "output",
-          configuration: schemas?.outputSchema
-            ? { schema: schemas.outputSchema }
-            : {},
-        },
-      ],
-    };
-
     const node = {
       id: this.id,
-      type: "invoke",
+      type: "runJavascript",
       configuration: {
         ...(this.configuration as OriginalInputValues),
-        $board: "#" + this.id,
+        code,
+        name,
+        raw: true,
       },
       metadata: this.metadata,
     };
 
-    return [node, invokeGraph];
+    return [node];
   }
 
   /**
@@ -486,7 +454,7 @@ export class BuilderNode<
    *
    * if (thing instanceof BuilderNode) { const node = thing.unProxy(); }
    *
-   * @returns A BuilderNoder that is not a proxy, but the original BuilderNode.
+   * @returns A BuilderNode that is not a proxy, but the original BuilderNode.
    */
   unProxy() {
     return this;

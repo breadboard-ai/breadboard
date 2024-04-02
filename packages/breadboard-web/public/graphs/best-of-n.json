@@ -135,9 +135,11 @@
     },
     {
       "id": "filterErrors",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#filterErrors"
+        "code": "function filterErrors({list}) {const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}}",
+        "name": "filterErrors",
+        "raw": true
       }
     },
     {
@@ -268,9 +270,11 @@
     },
     {
       "id": "createList",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#createList"
+        "code": "function createList({n:n2}) {return{list:[...Array(n2).keys()]}}",
+        "name": "createList",
+        "raw": true
       }
     },
     {
@@ -317,76 +321,5 @@
       }
     }
   ],
-  "graphs": {
-    "filterErrors": {
-      "edges": [
-        {
-          "from": "filterErrors-input",
-          "to": "filterErrors-run",
-          "out": "*"
-        },
-        {
-          "from": "filterErrors-run",
-          "to": "filterErrors-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "filterErrors-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "filterErrors-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function filterErrors({list}) {const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}}",
-            "name": "filterErrors",
-            "raw": true
-          }
-        },
-        {
-          "id": "filterErrors-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "createList": {
-      "edges": [
-        {
-          "from": "createList-input",
-          "to": "createList-run",
-          "out": "*"
-        },
-        {
-          "from": "createList-run",
-          "to": "createList-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "createList-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "createList-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function createList({n:n2}) {return{list:[...Array(n2).keys()]}}",
-            "name": "createList",
-            "raw": true
-          }
-        },
-        {
-          "id": "createList-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

@@ -158,9 +158,11 @@
     },
     {
       "id": "spreadResponse",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#spreadResponse"
+        "code": "function spreadResponse(inputs) {const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}}",
+        "name": "spreadResponse",
+        "raw": true
       }
     },
     {
@@ -227,41 +229,5 @@
       }
     }
   ],
-  "graphs": {
-    "spreadResponse": {
-      "edges": [
-        {
-          "from": "spreadResponse-input",
-          "to": "spreadResponse-run",
-          "out": "*"
-        },
-        {
-          "from": "spreadResponse-run",
-          "to": "spreadResponse-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "spreadResponse-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "spreadResponse-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function spreadResponse(inputs) {const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}}",
-            "name": "spreadResponse",
-            "raw": true
-          }
-        },
-        {
-          "id": "spreadResponse-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }
