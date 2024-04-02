@@ -308,7 +308,7 @@
               "id": "maybeOutputRouter-run",
               "type": "runJavascript",
               "configuration": {
-                "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
+                "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const output=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;return{output,context}}}return{context}}",
                 "name": "maybeOutputRouter",
                 "raw": true
               }

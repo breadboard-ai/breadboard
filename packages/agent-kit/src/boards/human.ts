@@ -66,9 +66,10 @@ const maybeOutput = code(({ context }) => {
   if (Array.isArray(context) && context.length > 0) {
     const lastItem = context[context.length - 1];
     if (lastItem.role === "model") {
-      const output = lastItem.parts
-        .map((item: { text: string }) => item.text)
-        .join("/n");
+      const parts = lastItem.parts;
+      const output = Array.isArray(parts)
+        ? parts.map((item: { text: string }) => item.text).join("/n")
+        : (parts as { text: string }).text;
       return { output, context };
     }
   }
