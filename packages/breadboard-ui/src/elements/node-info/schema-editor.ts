@@ -397,6 +397,10 @@ export class SchemaEditor extends LitElement {
       }
     }
 
+    if (schema.properties) {
+      schema.type = "object";
+    }
+
     this.schema = schema;
     return true;
   }
