@@ -225,47 +225,13 @@
     },
     {
       "id": "getCurrentYear",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#getCurrentYear"
+        "code": "function getCurrentYear() {return{year:new Date().getFullYear()}}",
+        "name": "getCurrentYear",
+        "raw": true
       }
     }
   ],
-  "graphs": {
-    "getCurrentYear": {
-      "edges": [
-        {
-          "from": "getCurrentYear-input",
-          "to": "getCurrentYear-run",
-          "out": "*"
-        },
-        {
-          "from": "getCurrentYear-run",
-          "to": "getCurrentYear-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "getCurrentYear-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "getCurrentYear-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function getCurrentYear() {return{year:new Date().getFullYear()}}",
-            "name": "getCurrentYear",
-            "raw": true
-          }
-        },
-        {
-          "id": "getCurrentYear-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

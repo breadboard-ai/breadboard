@@ -61,9 +61,11 @@
     },
     {
       "id": "responseExtractor",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#responseExtractor"
+        "code": "function responseExtractor({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
+        "name": "responseExtractor",
+        "raw": true
       },
       "metadata": {
         "title": "Extract Response",
@@ -84,9 +86,11 @@
     },
     {
       "id": "headerMaker",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#headerMaker"
+        "code": "function headerMaker({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
+        "name": "headerMaker",
+        "raw": true
       },
       "metadata": {
         "title": "Make Headers",
@@ -95,9 +99,11 @@
     },
     {
       "id": "bodyMaker",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#bodyMaker"
+        "code": "function bodyMaker({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
+        "name": "bodyMaker",
+        "raw": true
       },
       "metadata": {
         "title": "Make Body",
@@ -140,111 +146,5 @@
       }
     }
   ],
-  "graphs": {
-    "responseExtractor": {
-      "edges": [
-        {
-          "from": "responseExtractor-input",
-          "to": "responseExtractor-run",
-          "out": "*"
-        },
-        {
-          "from": "responseExtractor-run",
-          "to": "responseExtractor-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "responseExtractor-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "responseExtractor-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function responseExtractor({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
-            "name": "responseExtractor",
-            "raw": true
-          }
-        },
-        {
-          "id": "responseExtractor-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "headerMaker": {
-      "edges": [
-        {
-          "from": "headerMaker-input",
-          "to": "headerMaker-run",
-          "out": "*"
-        },
-        {
-          "from": "headerMaker-run",
-          "to": "headerMaker-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "headerMaker-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "headerMaker-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function headerMaker({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
-            "name": "headerMaker",
-            "raw": true
-          }
-        },
-        {
-          "id": "headerMaker-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "bodyMaker": {
-      "edges": [
-        {
-          "from": "bodyMaker-input",
-          "to": "bodyMaker-run",
-          "out": "*"
-        },
-        {
-          "from": "bodyMaker-run",
-          "to": "bodyMaker-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "bodyMaker-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "bodyMaker-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function bodyMaker({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
-            "name": "bodyMaker",
-            "raw": true
-          }
-        },
-        {
-          "id": "bodyMaker-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

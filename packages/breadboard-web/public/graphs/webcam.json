@@ -51,9 +51,11 @@
     },
     {
       "id": "combinePictureAndPrompt",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#combinePictureAndPrompt"
+        "code": "function combinePictureAndPrompt({picture,prompt}) {return{parts:[picture,{text:prompt}]}}",
+        "name": "combinePictureAndPrompt",
+        "raw": true
       }
     },
     {
@@ -84,41 +86,5 @@
       }
     }
   ],
-  "graphs": {
-    "combinePictureAndPrompt": {
-      "edges": [
-        {
-          "from": "combinePictureAndPrompt-input",
-          "to": "combinePictureAndPrompt-run",
-          "out": "*"
-        },
-        {
-          "from": "combinePictureAndPrompt-run",
-          "to": "combinePictureAndPrompt-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "combinePictureAndPrompt-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "combinePictureAndPrompt-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function combinePictureAndPrompt({picture,prompt}) {return{parts:[picture,{text:prompt}]}}",
-            "name": "combinePictureAndPrompt",
-            "raw": true
-          }
-        },
-        {
-          "id": "combinePictureAndPrompt-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

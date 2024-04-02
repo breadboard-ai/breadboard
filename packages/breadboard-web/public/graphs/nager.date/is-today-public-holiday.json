@@ -54,9 +54,11 @@
     },
     {
       "id": "statusCodeToResult",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#statusCodeToResult"
+        "code": "function statusCodeToResult({status}) {if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)}",
+        "name": "statusCodeToResult",
+        "raw": true
       }
     },
     {
@@ -232,41 +234,5 @@
       }
     }
   ],
-  "graphs": {
-    "statusCodeToResult": {
-      "edges": [
-        {
-          "from": "statusCodeToResult-input",
-          "to": "statusCodeToResult-run",
-          "out": "*"
-        },
-        {
-          "from": "statusCodeToResult-run",
-          "to": "statusCodeToResult-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "statusCodeToResult-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "statusCodeToResult-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function statusCodeToResult({status}) {if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)}",
-            "name": "statusCodeToResult",
-            "raw": true
-          }
-        },
-        {
-          "id": "statusCodeToResult-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

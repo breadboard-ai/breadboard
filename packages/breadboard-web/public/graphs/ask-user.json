@@ -86,9 +86,11 @@
     },
     {
       "id": "appendContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#appendContext"
+        "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+        "name": "appendContext",
+        "raw": true
       }
     },
     {
@@ -111,9 +113,11 @@
     },
     {
       "id": "createSchema",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#createSchema"
+        "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
+        "name": "createSchema",
+        "raw": true
       }
     },
     {
@@ -151,9 +155,11 @@
     },
     {
       "id": "maybeOutputRouter",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#maybeOutputRouter"
+        "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
+        "name": "maybeOutputRouter",
+        "raw": true
       }
     },
     {
@@ -176,111 +182,5 @@
       }
     }
   ],
-  "graphs": {
-    "appendContext": {
-      "edges": [
-        {
-          "from": "appendContext-input",
-          "to": "appendContext-run",
-          "out": "*"
-        },
-        {
-          "from": "appendContext-run",
-          "to": "appendContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "appendContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "appendContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
-            "name": "appendContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "appendContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "createSchema": {
-      "edges": [
-        {
-          "from": "createSchema-input",
-          "to": "createSchema-run",
-          "out": "*"
-        },
-        {
-          "from": "createSchema-run",
-          "to": "createSchema-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "createSchema-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "createSchema-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
-            "name": "createSchema",
-            "raw": true
-          }
-        },
-        {
-          "id": "createSchema-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "maybeOutputRouter": {
-      "edges": [
-        {
-          "from": "maybeOutputRouter-input",
-          "to": "maybeOutputRouter-run",
-          "out": "*"
-        },
-        {
-          "from": "maybeOutputRouter-run",
-          "to": "maybeOutputRouter-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "maybeOutputRouter-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "maybeOutputRouter-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
-            "name": "maybeOutputRouter",
-            "raw": true
-          }
-        },
-        {
-          "id": "maybeOutputRouter-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }
