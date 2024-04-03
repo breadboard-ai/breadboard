@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.15.0
+
+### Minor Changes
+
+- 938015d: Use `runJavascript` directly in `code` block.
+
+### Patch Changes
+
+- 76da09d: Early support for voting (yes/no) in Human node.
+
 ## 0.14.0
 
 ### Minor Changes

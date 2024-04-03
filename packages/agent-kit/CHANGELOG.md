@@ -1,5 +1,15 @@
 # @google-labs/agent-kit
 
+## 0.4.0
+
+### Minor Changes
+
+- 76da09d: Early support for voting (yes/no) in Human node.
+
+### Patch Changes
+
+- 8be93c8: Make Human more flexible in what kind of Context it accepts.
+
 ## 0.3.0
 
 ### Minor Changes
