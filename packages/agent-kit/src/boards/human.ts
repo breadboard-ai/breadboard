@@ -51,7 +51,7 @@ export type HumanType = NewNodeFactory<
   },
   {
     context: NewNodeValue;
-    rejected: NewNodeValue;
+    again: NewNodeValue;
     text: NewNodeValue;
   }
 >;
@@ -154,7 +154,7 @@ const actionRecognizer = code(({ text, context, action }) => {
     if (text === "No") {
       // Remove last item. We already know it comes from the model.
       (context as Context[]).pop();
-      return { text, rejected: context };
+      return { text, again: context };
     }
     // Clip out the `votingRequest`.
     const c = structuredClone(context) as ContextItem[];
@@ -290,7 +290,7 @@ export default await board(({ context, title, description }) => {
       title: "Rejection",
       description: "Rejecting latest agent work per user action",
     },
-    rejected: recognizeAction.rejected,
+    again: recognizeAction.again,
   });
 
   const appendContext = contextAppender({

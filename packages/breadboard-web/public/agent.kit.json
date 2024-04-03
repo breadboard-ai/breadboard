@@ -30,8 +30,8 @@
         {
           "from": "fn-4",
           "to": "output-5",
-          "out": "rejected",
-          "in": "rejected"
+          "out": "again",
+          "in": "again"
         },
         {
           "from": "fn-4",
@@ -171,7 +171,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_4({text,context,action}) {const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,rejected:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}}",
+            "code": "function fn_4({text,context,action}) {const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}}",
             "name": "fn_4",
             "raw": true
           },
@@ -213,9 +213,9 @@
             "schema": {
               "type": "object",
               "properties": {
-                "rejected": {
+                "again": {
                   "type": "string",
-                  "title": "rejected"
+                  "title": "again"
                 }
               }
             }

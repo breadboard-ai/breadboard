@@ -4,26 +4,26 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "human-5",
-      "to": "fn-4",
-      "out": "rejected",
+      "from": "human-4",
+      "to": "structuredWorker-3",
+      "out": "again",
       "in": "context"
     },
     {
-      "from": "human-5",
+      "from": "human-4",
       "to": "output-2",
       "out": "context",
       "in": "text"
     },
     {
-      "from": "fn-4",
-      "to": "human-5",
+      "from": "structuredWorker-3",
+      "to": "human-4",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "passthrough-3",
-      "to": "fn-4",
+      "from": "input-1",
+      "to": "structuredWorker-3",
       "out": "context",
       "in": "context"
     }
@@ -51,7 +51,7 @@
       }
     },
     {
-      "id": "human-5",
+      "id": "human-4",
       "type": "human",
       "configuration": {},
       "metadata": {
@@ -59,25 +59,71 @@
       }
     },
     {
-      "id": "fn-4",
-      "type": "runJavascript",
+      "id": "structuredWorker-3",
+      "type": "structuredWorker",
       "configuration": {
-        "code": "function fn_4() {const voteRequestContent={adCampaign:{headlines:[\"Breadboard: AI Playground\",\"Exp. AI Patterns\",\"Rapid Prototyping\",\"AI Power, Gemini\",\"Integrate AI Seamlessly\",\"Create Graphs, Prompts\",\"Accessible AI\",\"Breadboard: Dev's AI Kit\",\"Supercharge Dev, Breadboard\",\"Accelerate Innovation\",\"Revolutionize Dev, AI\",\"Breadboard: AI, Ingenuity\",\"Elevate Projects, Breadboard\",\"Unlock AI Power, Breadboard\"],descriptions:[\"Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.\",\"Stunning graphs with prompts. Accessible AI for devs.\",\"Accelerate innovation with Breadboard. Experiment with AI risk-free.\",\"Elevate projects with Breadboard AI. Integrate AI seamlessly.\"]},voteRequest:\"Does this ad campaign seem ok to you?\"};return{context:[{parts:[{text:JSON.stringify(voteRequestContent)}],role:\"model\"}]}}",
-        "name": "fn_4",
-        "raw": true
+        "instruction": "Write an ad campaign (up to 15 headlines and and 4 descriptions) and that transforms the search engine marketing overview into a compelling, engaging ad.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "adCampaign": {
+              "type": "object",
+              "description": "the ad campaign",
+              "properties": {
+                "headlines": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "an ad headline (30 character limit, up to 15 headlines)"
+                  }
+                },
+                "descriptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "the  description (90 character limit, up to 4 descriptions)"
+                  }
+                }
+              }
+            },
+            "voteRequest": {
+              "type": "string",
+              "description": "A request to the user to evaluate the ad campaign and decide if it's good."
+            }
+          }
+        }
       },
       "metadata": {
-        "title": "Ad Writer "
+        "title": "Ad Writer"
       }
     },
     {
-      "id": "passthrough-3",
-      "type": "passthrough",
+      "id": "input-1",
+      "type": "input",
       "configuration": {
-        "context": []
-      },
-      "metadata": {
-        "title": "Start"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Ad specs",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[]",
+              "examples": [
+                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n- Breadboard for Developers\n- Play and experiment with AI Patterns\n- Prototype quickly\n- Use with Gemini APIs \n- Integrate AI Into Your Project\n- Create graphs with prompts\n- Accessible AI for Developers"
+              ],
+              "format": "multiline"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
       }
     }
   ],
