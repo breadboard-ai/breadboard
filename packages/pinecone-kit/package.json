@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A collection of Breadboard nodes for working with Pinecone",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -120,10 +120,10 @@
     "ava": "^5.2.0",
     "typescript": "^5.3.3",
     "@google-labs/tsconfig": "^0.0.1",
-    "@google-labs/template-kit": "^0.2.3"
+    "@google-labs/template-kit": "^0.2.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.14.0",
-    "@google-labs/core-kit": "^0.5.2"
+    "@google-labs/breadboard": "^0.15.0",
+    "@google-labs/core-kit": "^0.5.3"
   }
 }
