@@ -110,10 +110,6 @@ class MonomorphicNodeInstance<
   readonly inputs: InputPorts<INPUT_CONFIGS>;
   readonly outputs: OutputPorts<OUTPUT_CONFIGS>;
   readonly type: string;
-  // TODO(aomarks) This should get used somehow.
-  readonly #values: ValuesOrOutputPorts<
-    ExtractPortTypesFromConfigs<INPUT_CONFIGS>
-  >;
   readonly [OutputPortGetter]!: PrimaryOutputPort<OUTPUT_CONFIGS>;
 
   constructor(
@@ -123,7 +119,6 @@ class MonomorphicNodeInstance<
     values: ValuesOrOutputPorts<ExtractPortTypesFromConfigs<INPUT_CONFIGS>>
   ) {
     this.type = name;
-    this.#values = values;
     this.inputs = Object.fromEntries(
       Object.entries(inputs).map(([name, config]) => [
         name,

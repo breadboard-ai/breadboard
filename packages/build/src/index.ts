@@ -5,11 +5,13 @@
  */
 
 import type { Input, InputWithDefault } from "./internal/board/input.js";
+import type { Placeholder } from "./internal/board/placeholder.js";
 import type { OutputPortReference } from "./internal/common/port.js";
 import type { JsonSerializable } from "./internal/type-system/type.js";
 
 export { board } from "./internal/board/board.js";
 export { input } from "./internal/board/input.js";
+export { placeholder } from "./internal/board/placeholder.js";
 export {
   serialize,
   // TODO(aomarks) Not quite sure about exporting and/or the name of
@@ -38,4 +40,5 @@ export type Value<T extends JsonSerializable> =
   | T
   | OutputPortReference<T>
   | Input<T>
-  | InputWithDefault<T>;
+  | InputWithDefault<T>
+  | Placeholder<T>;

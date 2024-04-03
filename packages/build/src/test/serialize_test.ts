@@ -13,6 +13,7 @@ import { anyOf, array, defineNodeType, object } from "../index.js";
 import { board, type GenericBoardDefinition } from "../internal/board/board.js";
 import { input } from "../internal/board/input.js";
 import { serialize } from "../internal/board/serialize.js";
+import { placeholder } from "../internal/board/placeholder.js";
 
 function checkSerialization(
   board: GenericBoardDefinition,
@@ -727,6 +728,98 @@ test("polymorphic inputs", () => {
         { from: "myNode-0", out: "out", to: "output-0", in: "boardOut" },
       ],
     }
+  );
+});
+
+test("placeholder", () => {
+  const def = defineNodeType({
+    name: "myNode",
+    inputs: {
+      foo: { type: "string" },
+    },
+    outputs: {
+      bar: { type: "string" },
+    },
+    invoke: () => ({ bar: "abc" }),
+  });
+
+  const node1Bar = placeholder();
+  const nodeA = def({ foo: node1Bar });
+  const nodeB = def({ foo: nodeA.outputs.bar });
+  node1Bar.resolve(nodeB.outputs.bar);
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        outA: nodeA.outputs.bar,
+        outB: nodeB.outputs.bar,
+      },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: { type: "object", properties: {}, required: [] },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                outA: { type: "string" },
+                outB: { type: "string" },
+              },
+              required: ["outA", "outB"],
+            },
+          },
+        },
+        { id: "myNode-0", type: "myNode", configuration: {} },
+        { id: "myNode-1", type: "myNode", configuration: {} },
+      ],
+      edges: [
+        { from: "myNode-0", out: "bar", to: "myNode-1", in: "foo" },
+        { from: "myNode-0", out: "bar", to: "output-0", in: "outA" },
+        { from: "myNode-1", out: "bar", to: "myNode-0", in: "foo" },
+        { from: "myNode-1", out: "bar", to: "output-0", in: "outB" },
+      ],
+    }
+  );
+});
+
+test("error: placeholder not resolved", () => {
+  const def = defineNodeType({
+    name: "myNode",
+    inputs: {
+      foo: { type: "string" },
+    },
+    outputs: {
+      bar: { type: "string" },
+    },
+    invoke: () => ({ bar: "abc" }),
+  });
+
+  const node1Bar = placeholder();
+  const nodeA = def({ foo: node1Bar });
+  const nodeB = def({ foo: nodeA.outputs.bar });
+
+  assert.throws(
+    () =>
+      serialize(
+        board({
+          inputs: {},
+          outputs: {
+            outA: nodeA.outputs.bar,
+            outB: nodeB.outputs.bar,
+          },
+        })
+      ),
+    /Placeholder was never resolved/
   );
 });
 
