@@ -13,6 +13,35 @@ import {
   NewNodeValue,
 } from "@google-labs/breadboard";
 
+// 🌻 TODO: Remove this before landing.
+const voteRequestContent = {
+  adCampaign: {
+    headlines: [
+      "Breadboard: AI Playground",
+      "Exp. AI Patterns",
+      "Rapid Prototyping",
+      "AI Power, Gemini",
+      "Integrate AI Seamlessly",
+      "Create Graphs, Prompts",
+      "Accessible AI",
+      "Breadboard: Dev's AI Kit",
+      "Supercharge Dev, Breadboard",
+      "Accelerate Innovation",
+      "Revolutionize Dev, AI",
+      "Breadboard: AI, Ingenuity",
+      "Elevate Projects, Breadboard",
+      "Unlock AI Power, Breadboard",
+    ],
+    descriptions: [
+      "Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.",
+      "Stunning graphs with prompts. Accessible AI for devs.",
+      "Accelerate innovation with Breadboard. Experiment with AI risk-free.",
+      "Elevate projects with Breadboard AI. Integrate AI seamlessly.",
+    ],
+  },
+  voteRequest: "Does this ad campaign seem ok to you?",
+};
+
 export type HumanType = NewNodeFactory<
   {
     context: NewNodeValue;
@@ -27,11 +56,24 @@ export type HumanType = NewNodeFactory<
 
 type SchemaInputs = {
   title: string;
-  action: string;
+  action: Action;
   description: string;
   context: unknown;
 };
 type SchemaOutputs = { schema: unknown };
+
+/**
+ * The action information to be presented to the user.
+ */
+type Action =
+  | undefined
+  | {
+      action: "none";
+    }
+  | {
+      action: "vote";
+      title: string;
+    };
 
 /**
  * Creates custom input schema.
@@ -41,6 +83,7 @@ const schema = code<SchemaInputs, SchemaOutputs>(
     const text: Schema = {
       title,
       description,
+      type: "string",
       behavior: ["transient"],
     };
     const schema: Schema = {
@@ -48,7 +91,8 @@ const schema = code<SchemaInputs, SchemaOutputs>(
       properties: { text },
     } satisfies Schema;
 
-    if (action == "Vote") {
+    if (action?.action == "vote") {
+      text.title = action.title;
       text.enum = ["Yes", "No"];
     }
 
@@ -73,6 +117,7 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
 const maybeOutput = code(({ context }) => {
   type Part = { text: string };
   type WithFeedback = Record<string, unknown> & { voteRequest?: string };
+  const action: Action = { action: "none" };
   if (Array.isArray(context) && context.length > 0) {
     const lastItem = context[context.length - 1];
     if (lastItem.role === "model") {
@@ -85,16 +130,20 @@ const maybeOutput = code(({ context }) => {
         const data = JSON.parse(output) as WithFeedback;
         if (data.voteRequest) {
           const feedback = data;
-          const action = "Vote";
+          const action: Action = { action: "vote", title: data.voteRequest };
           return { feedback, action, context };
         }
       } catch {
         // it's okay to fail here.
       }
-      return { output, action: "None", context };
+      return { output, action, context };
     }
   }
-  return { context, action: "None" };
+  return { context, action };
+});
+
+const actionRecognizer = code(({ text, context, action }) => {
+  return { text, context, action };
 });
 
 export default await board(({ context, title, description }) => {
@@ -104,7 +153,18 @@ export default await board(({ context, title, description }) => {
     .isArray()
     .behavior("llm-content")
     .optional()
-    .examples(JSON.stringify([]))
+    .examples(
+      JSON.stringify([
+        {
+          parts: [
+            {
+              text: JSON.stringify(voteRequestContent),
+            },
+          ],
+          role: "model",
+        },
+      ])
+    )
     .default("[]");
   title
     .title("Title")
@@ -187,14 +247,24 @@ export default await board(({ context, title, description }) => {
 
   createSchema.schema.to(input);
 
+  const recognizeAction = actionRecognizer({
+    $metadata: {
+      title: "Action Recognizer",
+      description: "Recognizing the action that user has taken",
+    },
+    context: createSchema.context,
+    text: input.text,
+    action: maybeOutputRouter.action,
+  });
+
   const appendContext = contextAppender({
     $id: "appendContext",
     $metadata: {
       title: "Append Context",
       description: "Appending user input to the conversation context",
     },
-    context: createSchema.context.isArray(),
-    text: input.text.isString(),
+    context: recognizeAction.context.isArray(),
+    text: recognizeAction.text.isString(),
   });
 
   return {

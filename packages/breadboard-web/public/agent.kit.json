@@ -147,7 +147,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "function createSchema({title,action,description,context}) {const text={title,description,behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action==\"Vote\"){text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}}",
+            "code": "function createSchema({title,action,description,context}) {const text={title,description,behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}}",
             "name": "createSchema",
             "raw": true
           },
@@ -199,7 +199,7 @@
           "id": "maybeOutputRouter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=data;const action=\"Vote\";return{feedback,action,context}}}catch{}return{output,action:\"None\",context}}}return{context,action:\"None\"}}",
+            "code": "function maybeOutputRouter({context}) {const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=data;const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}}",
             "name": "maybeOutputRouter",
             "raw": true
           },
