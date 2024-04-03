@@ -65,6 +65,18 @@
         },
         {
           "from": "maybeOutputRouter",
+          "to": "createSchema",
+          "out": "action",
+          "in": "action"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "output-3",
+          "out": "feedback",
+          "in": "feedback"
+        },
+        {
+          "from": "maybeOutputRouter",
           "to": "output",
           "out": "output",
           "in": "output"
@@ -135,7 +147,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
+            "code": "function createSchema({title,action,description,context}) {const text={title,description,behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action==\"Vote\"){text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}}",
             "name": "createSchema",
             "raw": true
           },
@@ -187,13 +199,36 @@
           "id": "maybeOutputRouter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const output=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;return{output,context}}}return{context}}",
+            "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=data;const action=\"Vote\";return{feedback,action,context}}}catch{}return{output,action:\"None\",context}}}return{context,action:\"None\"}}",
             "name": "maybeOutputRouter",
             "raw": true
           },
           "metadata": {
             "title": "Maybe Output",
             "description": "Checking if the last message was from the model"
+          }
+        },
+        {
+          "id": "output-3",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "behavior": [
+                "bubble"
+              ],
+              "properties": {
+                "feedback": {
+                  "type": "string",
+                  "title": "Feedback",
+                  "description": "The feedback to display"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Feedback",
+            "description": "Displaying the output to user with feedback"
           }
         },
         {

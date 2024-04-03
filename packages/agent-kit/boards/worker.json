@@ -76,9 +76,11 @@
     },
     {
       "id": "assembleContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#assembleContext"
+        "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
+        "name": "assembleContext",
+        "raw": true
       },
       "metadata": {
         "title": "Assemble Context",
@@ -98,9 +100,11 @@
     },
     {
       "id": "buildContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#buildContext"
+        "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
+        "name": "buildContext",
+        "raw": true
       },
       "metadata": {
         "title": "Build Context",
@@ -154,76 +158,5 @@
     }
   ],
   "kits": [],
-  "graphs": {
-    "assembleContext": {
-      "edges": [
-        {
-          "from": "assembleContext-input",
-          "to": "assembleContext-run",
-          "out": "*"
-        },
-        {
-          "from": "assembleContext-run",
-          "to": "assembleContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "assembleContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "assembleContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
-            "name": "assembleContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "assembleContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "buildContext": {
-      "edges": [
-        {
-          "from": "buildContext-input",
-          "to": "buildContext-run",
-          "out": "*"
-        },
-        {
-          "from": "buildContext-run",
-          "to": "buildContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "buildContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "buildContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
-            "name": "buildContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "buildContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

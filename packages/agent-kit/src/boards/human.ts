@@ -25,24 +25,32 @@ export type HumanType = NewNodeFactory<
   }
 >;
 
-type SchemaInputs = { title: string; description: string; context: unknown };
+type SchemaInputs = {
+  title: string;
+  action: string;
+  description: string;
+  context: unknown;
+};
 type SchemaOutputs = { schema: unknown };
 
 /**
  * Creates custom input schema.
  */
 const schema = code<SchemaInputs, SchemaOutputs>(
-  ({ title, description, context }) => {
-    const schema = {
+  ({ title, action, description, context }) => {
+    const text: Schema = {
+      title,
+      description,
+      behavior: ["transient"],
+    };
+    const schema: Schema = {
       type: "object",
-      properties: {
-        text: {
-          title,
-          description,
-          behavior: ["transient"],
-        },
-      },
+      properties: { text },
     } satisfies Schema;
+
+    if (action == "Vote") {
+      text.enum = ["Yes", "No"];
+    }
 
     return { schema, context };
   }
@@ -63,17 +71,30 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
 );
 
 const maybeOutput = code(({ context }) => {
+  type Part = { text: string };
+  type WithFeedback = Record<string, unknown> & { voteRequest?: string };
   if (Array.isArray(context) && context.length > 0) {
     const lastItem = context[context.length - 1];
     if (lastItem.role === "model") {
       const parts = lastItem.parts;
-      const output = Array.isArray(parts)
-        ? parts.map((item: { text: string }) => item.text).join("/n")
-        : (parts as { text: string }).text;
-      return { output, context };
+      const text = Array.isArray(parts)
+        ? (parts as Part[]).map((item) => item.text).join("/n")
+        : (parts as Part).text;
+      const output = text;
+      try {
+        const data = JSON.parse(output) as WithFeedback;
+        if (data.voteRequest) {
+          const feedback = data;
+          const action = "Vote";
+          return { feedback, action, context };
+        }
+      } catch {
+        // it's okay to fail here.
+      }
+      return { output, action: "None", context };
     }
   }
-  return { context };
+  return { context, action: "None" };
 });
 
 export default await board(({ context, title, description }) => {
@@ -114,6 +135,26 @@ export default await board(({ context, title, description }) => {
     title: title.isString(),
     description: description.isString(),
     context: maybeOutputRouter.context,
+    action: maybeOutputRouter.action,
+  });
+
+  base.output({
+    $metadata: {
+      title: "Feedback",
+      description: "Displaying the output to user with feedback",
+    },
+    feedback: maybeOutputRouter.feedback,
+    schema: {
+      type: "object",
+      behavior: ["bubble"],
+      properties: {
+        feedback: {
+          type: "string",
+          title: "Feedback",
+          description: "The feedback to display",
+        },
+      },
+    } satisfies Schema,
   });
 
   base.output({
