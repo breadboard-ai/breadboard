@@ -12,6 +12,7 @@ import {
   NewNodeFactory,
   NewNodeValue,
 } from "@google-labs/breadboard";
+import { Context } from "vm";
 
 // 🌻 TODO: Remove this before landing.
 const voteRequestContent = {
@@ -116,9 +117,11 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   }
 );
 
+type Part = { text: string };
+type WithFeedback = Record<string, unknown> & { voteRequest?: string };
+type ContextItem = { parts: Part | Part[] };
+
 const maybeOutput = code(({ context }) => {
-  type Part = { text: string };
-  type WithFeedback = Record<string, unknown> & { voteRequest?: string };
   const action: Action = { action: "none" };
   if (Array.isArray(context) && context.length > 0) {
     const lastItem = context[context.length - 1];
@@ -146,15 +149,27 @@ const maybeOutput = code(({ context }) => {
 
 const actionRecognizer = code(({ text, context, action }) => {
   const a = action as Action;
+
   if (a?.action === "vote") {
     if (text === "No") {
       // Remove last item. We already know it comes from the model.
-      const c = context as unknown[];
-      c.pop();
+      (context as Context[]).pop();
       return { text, rejected: context };
     }
+    // Clip out the `votingRequest`.
+    const c = structuredClone(context) as ContextItem[];
+    const lastItem = c[c.length - 1];
+    const parts = lastItem.parts;
+    const t = Array.isArray(parts)
+      ? (parts as Part[]).map((item) => item.text).join("/n")
+      : (parts as Part).text;
+    const output = t;
+    const data = JSON.parse(output) as WithFeedback;
+    delete data["voteRequest"];
+    lastItem.parts = [{ text: JSON.stringify(data) }];
+
     // Don't pass text, it's superfluous with the voting action.
-    return { text: "", context };
+    return { text: "", context: c };
   }
   return { text, context };
 });
