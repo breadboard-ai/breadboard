@@ -49,49 +49,6 @@ const adExample = `Write an ad for Breadboard. The ad must incorporate the follo
 - Create graphs with prompts
 - Accessible AI for Developers`;
 
-// const dummyAgent = code(() => {
-//   const voteRequestContent = {
-//     adCampaign: {
-//       headlines: [
-//         "Breadboard: AI Playground",
-//         "Exp. AI Patterns",
-//         "Rapid Prototyping",
-//         "AI Power, Gemini",
-//         "Integrate AI Seamlessly",
-//         "Create Graphs, Prompts",
-//         "Accessible AI",
-//         "Breadboard: Dev's AI Kit",
-//         "Supercharge Dev, Breadboard",
-//         "Accelerate Innovation",
-//         "Revolutionize Dev, AI",
-//         "Breadboard: AI, Ingenuity",
-//         "Elevate Projects, Breadboard",
-//         "Unlock AI Power, Breadboard",
-//       ],
-//       descriptions: [
-//         "Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.",
-//         "Stunning graphs with prompts. Accessible AI for devs.",
-//         "Accelerate innovation with Breadboard. Experiment with AI risk-free.",
-//         "Elevate projects with Breadboard AI. Integrate AI seamlessly.",
-//       ],
-//     },
-//     voteRequest: "Does this ad campaign seem ok to you?",
-//   };
-
-//   return {
-//     context: [
-//       {
-//         parts: [
-//           {
-//             text: JSON.stringify(voteRequestContent),
-//           },
-//         ],
-//         role: "model",
-//       },
-//     ],
-//   };
-// });
-
 export default await board(({ context }) => {
   context.title("Ad specs").format("multiline").examples(adExample);
 
