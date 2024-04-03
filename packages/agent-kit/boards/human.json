@@ -12,13 +12,31 @@
     },
     {
       "from": "input",
-      "to": "appendContext",
+      "to": "fn-4",
       "out": "text",
       "in": "text"
     },
     {
       "from": "input",
       "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "fn-4",
+      "to": "output-5",
+      "out": "rejected",
+      "in": "rejected"
+    },
+    {
+      "from": "fn-4",
+      "to": "appendContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "fn-4",
+      "to": "appendContext",
       "out": "text",
       "in": "text"
     },
@@ -30,9 +48,39 @@
     },
     {
       "from": "createSchema",
-      "to": "appendContext",
+      "to": "fn-4",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "maybeOutputRouter",
+      "to": "createSchema",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "maybeOutputRouter",
+      "to": "createSchema",
+      "out": "action",
+      "in": "action"
+    },
+    {
+      "from": "maybeOutputRouter",
+      "to": "output-3",
+      "out": "feedback",
+      "in": "feedback"
+    },
+    {
+      "from": "maybeOutputRouter",
+      "to": "output",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "maybeOutputRouter",
+      "to": "fn-4",
+      "out": "action",
+      "in": "action"
     },
     {
       "from": "input-1",
@@ -51,18 +99,6 @@
       "to": "createSchema",
       "out": "description",
       "in": "description"
-    },
-    {
-      "from": "maybeOutputRouter",
-      "to": "createSchema",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "maybeOutputRouter",
-      "to": "output",
-      "out": "output",
-      "in": "output"
     }
   ],
   "nodes": [
@@ -93,9 +129,11 @@
     },
     {
       "id": "appendContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#appendContext"
+        "code": "function appendContext({ context, text }) {\n    if (!text)\n      return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  }",
+        "name": "appendContext",
+        "raw": true
       },
       "metadata": {
         "title": "Append Context",
@@ -125,14 +163,61 @@
       }
     },
     {
-      "id": "createSchema",
-      "type": "invoke",
+      "id": "fn-4",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#createSchema"
+        "code": "function fn_4({ text, context, action }) {\n  const a = action;\n  if (a?.action === \"vote\") {\n    if (text === \"No\") {\n      const c = context;\n      c.pop();\n      return { text, rejected: context };\n    }\n    return { text: \"\", context };\n  }\n  return { text, context };\n}",
+        "name": "fn_4",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Action Recognizer",
+        "description": "Recognizing the action that user has taken"
+      }
+    },
+    {
+      "id": "createSchema",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "function createSchema({ title, action, description, context }) {\n    const text = {\n      title,\n      description,\n      type: \"string\",\n      behavior: [\"transient\"]\n    };\n    const schema2 = {\n      type: \"object\",\n      properties: { text }\n    };\n    if (action?.action == \"vote\") {\n      text.title = action.title;\n      text.enum = [\"Yes\", \"No\"];\n    }\n    return { schema: schema2, context };\n  }",
+        "name": "createSchema",
+        "raw": true
       },
       "metadata": {
         "title": "Create Schema",
         "description": "Creating a schema for user input"
+      }
+    },
+    {
+      "id": "maybeOutputRouter",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "function maybeOutputRouter({ context }) {\n  const action = { action: \"none\" };\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const parts = lastItem.parts;\n      const text = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n      const output = text;\n      try {\n        const data = JSON.parse(output);\n        if (data.voteRequest) {\n          const feedback = data;\n          const action2 = { action: \"vote\", title: data.voteRequest };\n          return { feedback, action: action2, context };\n        }\n      } catch {\n      }\n      return { output, action, context };\n    }\n  }\n  return { context, action };\n}",
+        "name": "maybeOutputRouter",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Maybe Output",
+        "description": "Checking if the last message was from the model"
+      }
+    },
+    {
+      "id": "output-5",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "rejected": {
+              "type": "string",
+              "title": "rejected"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Rejection",
+        "description": "Rejecting latest agent work per user action"
       }
     },
     {
@@ -153,7 +238,7 @@
                 ]
               },
               "examples": [
-                "[]"
+                "[{\"parts\":[{\"text\":\"{\\\"adCampaign\\\":{\\\"headlines\\\":[\\\"Breadboard: AI Playground\\\",\\\"Exp. AI Patterns\\\",\\\"Rapid Prototyping\\\",\\\"AI Power, Gemini\\\",\\\"Integrate AI Seamlessly\\\",\\\"Create Graphs, Prompts\\\",\\\"Accessible AI\\\",\\\"Breadboard: Dev's AI Kit\\\",\\\"Supercharge Dev, Breadboard\\\",\\\"Accelerate Innovation\\\",\\\"Revolutionize Dev, AI\\\",\\\"Breadboard: AI, Ingenuity\\\",\\\"Elevate Projects, Breadboard\\\",\\\"Unlock AI Power, Breadboard\\\"],\\\"descriptions\\\":[\\\"Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.\\\",\\\"Stunning graphs with prompts. Accessible AI for devs.\\\",\\\"Accelerate innovation with Breadboard. Experiment with AI risk-free.\\\",\\\"Elevate projects with Breadboard AI. Integrate AI seamlessly.\\\"]},\\\"voteRequest\\\":\\\"Does this ad campaign seem ok to you?\\\"}\"}],\"role\":\"model\"}]"
               ],
               "default": "[]"
             },
@@ -175,14 +260,26 @@
       }
     },
     {
-      "id": "maybeOutputRouter",
-      "type": "invoke",
+      "id": "output-3",
+      "type": "output",
       "configuration": {
-        "$board": "#maybeOutputRouter"
+        "schema": {
+          "type": "object",
+          "behavior": [
+            "bubble"
+          ],
+          "properties": {
+            "feedback": {
+              "type": "string",
+              "title": "Feedback",
+              "description": "The feedback to display"
+            }
+          }
+        }
       },
       "metadata": {
-        "title": "Maybe Output",
-        "description": "Checking if the last message was from the model"
+        "title": "Feedback",
+        "description": "Displaying the output to user with feedback"
       }
     },
     {
@@ -210,111 +307,5 @@
     }
   ],
   "kits": [],
-  "graphs": {
-    "appendContext": {
-      "edges": [
-        {
-          "from": "appendContext-input",
-          "to": "appendContext-run",
-          "out": "*"
-        },
-        {
-          "from": "appendContext-run",
-          "to": "appendContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "appendContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "appendContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function appendContext({ context, text }) {\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  }",
-            "name": "appendContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "appendContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "createSchema": {
-      "edges": [
-        {
-          "from": "createSchema-input",
-          "to": "createSchema-run",
-          "out": "*"
-        },
-        {
-          "from": "createSchema-run",
-          "to": "createSchema-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "createSchema-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "createSchema-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function createSchema({ title, description, context }) {\n    const schema2 = {\n      type: \"object\",\n      properties: {\n        text: {\n          title,\n          description,\n          behavior: [\"transient\"]\n        }\n      }\n    };\n    return { schema: schema2, context };\n  }",
-            "name": "createSchema",
-            "raw": true
-          }
-        },
-        {
-          "id": "createSchema-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "maybeOutputRouter": {
-      "edges": [
-        {
-          "from": "maybeOutputRouter-input",
-          "to": "maybeOutputRouter-run",
-          "out": "*"
-        },
-        {
-          "from": "maybeOutputRouter-run",
-          "to": "maybeOutputRouter-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "maybeOutputRouter-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "maybeOutputRouter-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function maybeOutputRouter({ context }) {\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const output = lastItem.parts.map((item) => item.text).join(\"/n\");\n      return { output, context };\n    }\n  }\n  return { context };\n}",
-            "name": "maybeOutputRouter",
-            "raw": true
-          }
-        },
-        {
-          "id": "maybeOutputRouter-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

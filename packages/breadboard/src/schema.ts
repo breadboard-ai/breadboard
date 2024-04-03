@@ -127,6 +127,10 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
         result.additionalProperties = schema.additionalProperties;
       }
     }
+    if (schema.behavior) {
+      result.behavior ??= [];
+      result.behavior.push(...schema.behavior);
+    }
   });
   result.type = "object";
   if (result.required) {
@@ -169,4 +173,21 @@ export const filterBySchema = <T extends Record<string, unknown>>(
   return Object.fromEntries(
     Object.entries(values).filter(([name]) => names.includes(name))
   ) as T;
+};
+
+export const filterProperties = (
+  schema: Schema,
+  filterFunction: (property: Schema) => boolean
+): Schema => {
+  const entries = Object.entries(schema.properties || {});
+  if (entries.length == 0) {
+    return schema;
+  }
+  const result = structuredClone(schema);
+  result.properties = Object.fromEntries(
+    entries.filter(([, schema]) => {
+      return filterFunction(schema);
+    })
+  );
+  return result;
 };

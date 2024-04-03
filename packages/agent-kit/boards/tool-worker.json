@@ -171,9 +171,11 @@
     },
     {
       "id": "router",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#router"
+        "code": "function router({ context }) {\n  if (!context)\n    throw new Error(\"Context is a required input\");\n  const item = context;\n  const part = item.parts[0];\n  console.assert(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context, text: part.text };\n  }\n  return { context, functionCall: part.functionCall };\n}",
+        "name": "router",
+        "raw": true
       },
       "metadata": {
         "title": "Router",
@@ -193,9 +195,11 @@
     },
     {
       "id": "assembleBoardInvoke",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#assembleBoardInvoke"
+        "code": "function assembleBoardInvoke({ functionCall, urlMap }) {\n  if (!functionCall)\n    throw new Error(\"Function call is a required input\");\n  if (!urlMap)\n    throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n}",
+        "name": "assembleBoardInvoke",
+        "raw": true
       },
       "metadata": {
         "title": "Assemble Board Invoke",
@@ -204,9 +208,11 @@
     },
     {
       "id": "formatFunctionResponse",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#formatFunctionResponse"
+        "code": "function formatFunctionResponse({ context, generated, functionCall, response }) {\n    const call = functionCall;\n    return {\n      context: [\n        ...context,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response } }]\n        }\n      ]\n    };\n  }",
+        "name": "formatFunctionResponse",
+        "raw": true
       },
       "metadata": {
         "title": "Format Function Response",
@@ -215,9 +221,11 @@
     },
     {
       "id": "formatFunctionDeclarations",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#formatFunctionDeclarations"
+        "code": "function formatFunctionDeclarations({ list }) {\n  const tools = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools, urlMap };\n}",
+        "name": "formatFunctionDeclarations",
+        "raw": true
       },
       "metadata": {
         "title": "Format Function Declarations",
@@ -226,9 +234,11 @@
     },
     {
       "id": "buildContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#buildContext"
+        "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
+        "name": "buildContext",
+        "raw": true
       },
       "metadata": {
         "title": "Build Context",
@@ -246,9 +256,11 @@
     },
     {
       "id": "extractBoardResponse",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#extractBoardResponse"
+        "code": "function extractBoardResponse(inputs) {\n  const { schema, ...response } = inputs;\n  schema;\n  return { response };\n}",
+        "name": "extractBoardResponse",
+        "raw": true
       },
       "metadata": {
         "title": "Format Board Response",
@@ -268,9 +280,11 @@
     },
     {
       "id": "assembleContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#assembleContext"
+        "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
+        "name": "assembleContext",
+        "raw": true
       },
       "metadata": {
         "title": "Assemble Context",
@@ -447,251 +461,5 @@
     }
   ],
   "kits": [],
-  "graphs": {
-    "router": {
-      "edges": [
-        {
-          "from": "router-input",
-          "to": "router-run",
-          "out": "*"
-        },
-        {
-          "from": "router-run",
-          "to": "router-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "router-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "router-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function router({ context }) {\n  if (!context)\n    throw new Error(\"Context is a required input\");\n  const item = context;\n  const part = item.parts[0];\n  console.assert(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context, text: part.text };\n  }\n  return { context, functionCall: part.functionCall };\n}",
-            "name": "router",
-            "raw": true
-          }
-        },
-        {
-          "id": "router-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "assembleBoardInvoke": {
-      "edges": [
-        {
-          "from": "assembleBoardInvoke-input",
-          "to": "assembleBoardInvoke-run",
-          "out": "*"
-        },
-        {
-          "from": "assembleBoardInvoke-run",
-          "to": "assembleBoardInvoke-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "assembleBoardInvoke-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "assembleBoardInvoke-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function assembleBoardInvoke({ functionCall, urlMap }) {\n  if (!functionCall)\n    throw new Error(\"Function call is a required input\");\n  if (!urlMap)\n    throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n}",
-            "name": "assembleBoardInvoke",
-            "raw": true
-          }
-        },
-        {
-          "id": "assembleBoardInvoke-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "formatFunctionResponse": {
-      "edges": [
-        {
-          "from": "formatFunctionResponse-input",
-          "to": "formatFunctionResponse-run",
-          "out": "*"
-        },
-        {
-          "from": "formatFunctionResponse-run",
-          "to": "formatFunctionResponse-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "formatFunctionResponse-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "formatFunctionResponse-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function formatFunctionResponse({ context, generated, functionCall, response }) {\n    const call = functionCall;\n    return {\n      context: [\n        ...context,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response } }]\n        }\n      ]\n    };\n  }",
-            "name": "formatFunctionResponse",
-            "raw": true
-          }
-        },
-        {
-          "id": "formatFunctionResponse-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "formatFunctionDeclarations": {
-      "edges": [
-        {
-          "from": "formatFunctionDeclarations-input",
-          "to": "formatFunctionDeclarations-run",
-          "out": "*"
-        },
-        {
-          "from": "formatFunctionDeclarations-run",
-          "to": "formatFunctionDeclarations-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "formatFunctionDeclarations-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "formatFunctionDeclarations-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function formatFunctionDeclarations({ list }) {\n  const tools = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools, urlMap };\n}",
-            "name": "formatFunctionDeclarations",
-            "raw": true
-          }
-        },
-        {
-          "id": "formatFunctionDeclarations-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "buildContext": {
-      "edges": [
-        {
-          "from": "buildContext-input",
-          "to": "buildContext-run",
-          "out": "*"
-        },
-        {
-          "from": "buildContext-run",
-          "to": "buildContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "buildContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "buildContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
-            "name": "buildContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "buildContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "extractBoardResponse": {
-      "edges": [
-        {
-          "from": "extractBoardResponse-input",
-          "to": "extractBoardResponse-run",
-          "out": "*"
-        },
-        {
-          "from": "extractBoardResponse-run",
-          "to": "extractBoardResponse-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "extractBoardResponse-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "extractBoardResponse-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function extractBoardResponse(inputs) {\n  const { schema, ...response } = inputs;\n  schema;\n  return { response };\n}",
-            "name": "extractBoardResponse",
-            "raw": true
-          }
-        },
-        {
-          "id": "extractBoardResponse-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "assembleContext": {
-      "edges": [
-        {
-          "from": "assembleContext-input",
-          "to": "assembleContext-run",
-          "out": "*"
-        },
-        {
-          "from": "assembleContext-run",
-          "to": "assembleContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "assembleContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "assembleContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
-            "name": "assembleContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "assembleContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

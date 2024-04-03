@@ -62,7 +62,8 @@ class Node implements InspectableNode {
   }
 
   #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
-    return { ...inputs, ...config };
+    // Config first, then inputs on top. Inputs override config.
+    return { ...config, ...inputs };
   }
 
   async #describeInternal(
