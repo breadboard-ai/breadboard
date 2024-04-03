@@ -20,6 +20,8 @@ const SCHEMA_SCHEMA: Schema = {
 
 export const DEFAULT_SCHEMA = { type: "string" };
 
+const blankSchema = () => ({ type: "object" });
+
 const edgesToProperties = (
   edgeType: EdgeType,
   edges?: InspectableEdge[],
@@ -58,7 +60,7 @@ export const edgesToSchema = (
 export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
+  const schema = (options.inputs?.schema as Schema) || blankSchema();
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
@@ -88,7 +90,7 @@ export const describeInput = (
 export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
+  const schema = (options.inputs?.schema as Schema) || blankSchema();
   const outputSchema = new SchemaBuilder()
     .setAdditionalProperties(false)
     .build();
