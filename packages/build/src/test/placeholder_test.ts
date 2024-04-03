@@ -79,6 +79,18 @@ test("error: resolve with another placeholder", () => {
   placeholder().resolve(placeholder());
 });
 
+test("error: resolve with wrong type", () => {
+  const node = defineNodeType({
+    name: "node",
+    inputs: {},
+    outputs: { a: { type: "string" } },
+    invoke: () => ({ a: "a" }),
+  })({});
+  const p = placeholder({ type: "number" });
+  // @ts-expect-error
+  p.resolve(node.outputs.a);
+});
+
 test("error: resolve multiple times", () => {
   const node = defineNodeType({
     name: "node",
