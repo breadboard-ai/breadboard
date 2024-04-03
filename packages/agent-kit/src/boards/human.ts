@@ -50,6 +50,7 @@ export type HumanType = NewNodeFactory<
   },
   {
     context: NewNodeValue;
+    rejected: NewNodeValue;
     text: NewNodeValue;
   }
 >;
@@ -108,6 +109,7 @@ type AppenderOutputs = { context: unknown[] };
  */
 export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   ({ context, text }) => {
+    if (!text) return { context };
     return {
       context: [...(context || []), { role: "user", parts: [{ text }] }],
     };
@@ -143,7 +145,18 @@ const maybeOutput = code(({ context }) => {
 });
 
 const actionRecognizer = code(({ text, context, action }) => {
-  return { text, context, action };
+  const a = action as Action;
+  if (a?.action === "vote") {
+    if (text === "No") {
+      // Remove last item. We already know it comes from the model.
+      const c = context as unknown[];
+      c.pop();
+      return { text, rejected: context };
+    }
+    // Don't pass text, it's superfluous with the voting action.
+    return { text: "", context };
+  }
+  return { text, context };
 });
 
 export default await board(({ context, title, description }) => {
@@ -255,6 +268,14 @@ export default await board(({ context, title, description }) => {
     context: createSchema.context,
     text: input.text,
     action: maybeOutputRouter.action,
+  });
+
+  base.output({
+    $metadata: {
+      title: "Rejection",
+      description: "Rejecting latest agent work per user action",
+    },
+    rejected: recognizeAction.rejected,
   });
 
   const appendContext = contextAppender({
