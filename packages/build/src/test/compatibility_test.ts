@@ -176,7 +176,7 @@ function setupKits<
   const { kit: adderKit, runtimeKit: adderRuntimeKit } = setupKits({
     adder,
   });
-  // $ExpectType { adder: NodeFactory<{ base: number; } & Record<string, unknown>, { sum: number; } & Record<string, unknown>>; }
+  // $ExpectType { adder: NodeFactory<{ base: number; }, { sum: number; }>; }
   adderKit;
   // $ExpectType Lambda<InputValues, Required<{ boardSum: number; }>>
   const adderBoard = await board(({ num1, num2, num3 }) => {
