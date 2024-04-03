@@ -35,7 +35,7 @@ const adCampaignSchema = {
     voteRequest: {
       type: "string",
       description:
-        "A request to the user to evaluate the ad campaign and decide if it's good.",
+        "A request to the user to evaluate the ad campaign and decide if it's good (yes or no).",
     },
   },
 } satisfies Schema;

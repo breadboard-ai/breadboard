@@ -88,7 +88,7 @@
             },
             "voteRequest": {
               "type": "string",
-              "description": "A request to the user to evaluate the ad campaign and decide if it's good."
+              "description": "A request to the user to evaluate the ad campaign and decide if it's good (yes or no)."
             }
           }
         }
