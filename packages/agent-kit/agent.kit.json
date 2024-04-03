@@ -197,7 +197,7 @@
           "id": "maybeOutputRouter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function maybeOutputRouter({context}) {const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=data;const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}}",
+            "code": "function maybeOutputRouter({context}) {const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=structuredClone(data);delete feedback[\"voteRequest\"];const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}}",
             "name": "maybeOutputRouter",
             "raw": true
           },

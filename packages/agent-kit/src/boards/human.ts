@@ -134,7 +134,8 @@ const maybeOutput = code(({ context }) => {
       try {
         const data = JSON.parse(output) as WithFeedback;
         if (data.voteRequest) {
-          const feedback = data;
+          const feedback = structuredClone(data);
+          delete feedback["voteRequest"];
           const action: Action = { action: "vote", title: data.voteRequest };
           return { feedback, action, context };
         }
