@@ -136,7 +136,7 @@
           "id": "appendContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function appendContext({context,text}) {if(!text)return{context};return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+            "code": "const appendContext = ({context,text})=>{if(!text)return{context};return{context:[...context||[],{role:\"user\",parts:[{text}]}]}};",
             "name": "appendContext",
             "raw": true
           },
@@ -171,7 +171,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_4({text,context,action}) {const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}}",
+            "code": "const fn_4 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
             "name": "fn_4",
             "raw": true
           },
@@ -184,7 +184,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "function createSchema({title,action,description,context}) {const text={title,description,type:\"string\",behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}}",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"string\",behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}};",
             "name": "createSchema",
             "raw": true
           },
@@ -197,7 +197,7 @@
           "id": "maybeOutputRouter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function maybeOutputRouter({context}) {const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=structuredClone(data);delete feedback[\"voteRequest\"];const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}}",
+            "code": "const maybeOutputRouter = ({context})=>{const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=structuredClone(data);delete feedback[\"voteRequest\"];const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}};",
             "name": "maybeOutputRouter",
             "raw": true
           },
@@ -388,7 +388,7 @@
           "id": "counter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function counter({context,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}}",
+            "code": "const counter = ({context,count})=>{const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}};",
             "name": "counter",
             "raw": true
           },
@@ -619,7 +619,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,json:json2}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,{role:\"model\",parts:{text:JSON.stringify(json2)}}]}}",
+            "code": "const assembleContext = ({context,json:json2})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,{role:\"model\",parts:{text:JSON.stringify(json2)}}]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -642,7 +642,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,format,instruction}) {if(!Array.isArray(context)){const text=typeof context===\"string\"?context:JSON.stringify(context);context=[{role:\"user\",parts:[{text}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction},{text:format});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction},{text:format}]}]}}",
+            "code": "const buildContext = ({context,format,instruction})=>{if(!Array.isArray(context)){const text=typeof context===\"string\"?context:JSON.stringify(context);context=[{role:\"user\",parts:[{text}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction},{text:format});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction},{text:format}]}]}};",
             "name": "buildContext",
             "raw": true
           },
@@ -715,7 +715,7 @@
           "id": "count",
           "type": "runJavascript",
           "configuration": {
-            "code": "function count({context,error,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:error}}",
+            "code": "const count = ({context,error,count})=>{const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:error}};",
             "name": "count",
             "raw": true
           },
@@ -980,7 +980,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "function router({context}) {if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.assert(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}}",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.assert(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
             "name": "router",
             "raw": true
           },
@@ -1004,7 +1004,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleBoardInvoke({functionCall,urlMap}) {if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}}",
+            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1017,7 +1017,7 @@
           "id": "formatFunctionResponse",
           "type": "runJavascript",
           "configuration": {
-            "code": "function formatFunctionResponse({context,generated,functionCall,response}) {const call=functionCall;return{context:[...context,generated,{role:\"function\",parts:[{functionResponse:{name:call.name,response}}]}]}}",
+            "code": "const formatFunctionResponse = ({context,generated,functionCall,response})=>{const call=functionCall;return{context:[...context,generated,{role:\"function\",parts:[{functionResponse:{name:call.name,response}}]}]}};",
             "name": "formatFunctionResponse",
             "raw": true
           },
@@ -1030,7 +1030,7 @@
           "id": "formatFunctionDeclarations",
           "type": "runJavascript",
           "configuration": {
-            "code": "function formatFunctionDeclarations({list}) {const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}}",
+            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}};",
             "name": "formatFunctionDeclarations",
             "raw": true
           },
@@ -1043,7 +1043,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,instruction}) {if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}}",
+            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
             "name": "buildContext",
             "raw": true
           },
@@ -1065,7 +1065,7 @@
           "id": "extractBoardResponse",
           "type": "runJavascript",
           "configuration": {
-            "code": "function extractBoardResponse(inputs) {const{schema,...response}=inputs;schema;return{response}}",
+            "code": "const extractBoardResponse = inputs=>{const{schema,...response}=inputs;schema;return{response}};",
             "name": "extractBoardResponse",
             "raw": true
           },
@@ -1089,7 +1089,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,generated}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}}",
+            "code": "const assembleContext = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -1348,7 +1348,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,generated}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}}",
+            "code": "const assembleContext = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -1372,7 +1372,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,instruction}) {if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}}",
+            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
             "name": "buildContext",
             "raw": true
           },

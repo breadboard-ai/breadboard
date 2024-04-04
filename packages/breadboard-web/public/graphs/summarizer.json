@@ -54,7 +54,7 @@
       "id": "extractSummary",
       "type": "runJavascript",
       "configuration": {
-        "code": "function extractSummary({json}) {return{summary:json.summary}}",
+        "code": "const extractSummary = ({json})=>{return{summary:json.summary}};",
         "name": "extractSummary",
         "raw": true
       }

@@ -217,7 +217,7 @@
                 "id": "fn-4",
                 "type": "runJavascript",
                 "configuration": {
-                  "code": "function fn_4({chunk}) {return{chunk:chunk.candidates[0].content.parts[0].text}}",
+                  "code": "const fn_4 = ({chunk})=>{return{chunk:chunk.candidates[0].content.parts[0].text}};",
                   "name": "fn_4",
                   "raw": true
                 }

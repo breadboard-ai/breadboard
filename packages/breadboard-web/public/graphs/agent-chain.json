@@ -132,7 +132,7 @@
                 "id": "makeAgentArgs",
                 "type": "runJavascript",
                 "configuration": {
-                  "code": "function makeAgentArgs({item}) {const{prompt,schema}=item;return{text:prompt,schema}}",
+                  "code": "const makeAgentArgs = ({item})=>{const{prompt,schema}=item;return{text:prompt,schema}};",
                   "name": "makeAgentArgs",
                   "raw": true
                 }
