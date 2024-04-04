@@ -5,14 +5,6 @@
   "graphs": {},
   "nodes": [
     {
-      "id": "assistant",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
-        "context": ""
-      }
-    },
-    {
       "id": "input",
       "type": "input",
       "configuration": {
@@ -59,6 +51,14 @@
       "configuration": {}
     },
     {
+      "id": "assistant",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+        "context": ""
+      }
+    },
+    {
       "id": "append-1",
       "type": "append",
       "configuration": {
@@ -67,18 +67,6 @@
     }
   ],
   "edges": [
-    {
-      "from": "input",
-      "to": "assistant",
-      "out": "text",
-      "in": "question"
-    },
-    {
-      "from": "append-1",
-      "to": "assistant",
-      "out": "accumulator",
-      "in": "context"
-    },
     {
       "from": "output",
       "to": "input",
@@ -105,6 +93,18 @@
     },
     {
       "from": "input",
+      "to": "assistant",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "append-1",
+      "to": "assistant",
+      "out": "accumulator",
+      "in": "context"
+    },
+    {
+      "from": "input",
       "to": "append-1",
       "out": "text",
       "in": "user"
@@ -124,10 +124,16 @@
   ],
   "kits": [
     {
+      "url": "npm:@google-labs/template-kit"
+    },
+    {
       "url": "npm:@google-labs/core-kit"
     },
     {
-      "url": "npm:@google-labs/template-kit"
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
     }
   ]
 }

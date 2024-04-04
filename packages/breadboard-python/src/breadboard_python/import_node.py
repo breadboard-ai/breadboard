@@ -45,6 +45,7 @@ def require(package_name):
       title = f"Auto-imported {handler_name}"
       description = f"This board is auto-imported from {package_name}"
       version = "0.?"
+      _is_node = True
       # Need to convert SchemaOutput into something that has context.
       output = AttrDict(converted_output_schema)
       output_schema1 = converted_output_schema

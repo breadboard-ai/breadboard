@@ -1,4 +1,4 @@
-from main import Board
+from .main import Board
 import dis
 import sys
 from contextlib import contextmanager
@@ -58,6 +58,7 @@ def breadboard_node(func):
     title = "func.get_name()"
     type = "runPython"
     description = "func.get_docstring()"
+    _is_node = True
     _source_code = code
     _python_version = '.'.join(str(x) for x in sys.version_info[:3])
     def describe(self, input, output):
@@ -99,5 +100,5 @@ class TestBoard(Board):
 
 
 #print(get_function_calls(master_function))
-a = TestBoard()
-print(json.dumps(a, indent=2))
+#a = TestBoard()
+#print(json.dumps(a, indent=2))

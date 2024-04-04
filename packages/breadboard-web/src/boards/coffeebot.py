@@ -22,6 +22,7 @@ class BoardCallerOutput(SchemaObject):
   context: str
 
 class BoardCaller(Board[BoardCallerInput, BoardCallerOutput]):
+  type = "board-caller"
   def describe(self, input, output):
     self.caller = Core.invoke(path="board-caller.json", text=input.text, context=input.context, tools=input.tools)
     output(input)
@@ -38,6 +39,7 @@ class FunctionCallOutput(SchemaObject):
   context: str
 
 class HandleFunctionCall(Board[FunctionCallInput, FunctionCallOutput]):
+  type = "function-call"
   def describe(self, input, output):
     self.boardCaller = BoardCaller(input)
     output(input)
@@ -52,6 +54,7 @@ class ChatBotOutput(SchemaObject):
   pass
 
 class ChatBot(Board[ChatBotInput, ChatBotOutput]):
+  type = "chat-bot"
   def describe(self, input, output):
     self.prompt = Templates.promptTemplate(
       id="assistant",
@@ -91,10 +94,12 @@ class ToolCallOutput(SchemaObject):
 class ToolCallBot(Board[ToolCallInput, ToolCallOutput]):
   title = "ToolCallBot"
   description = "A template for a chatbot with tool-calling capabilities."
+  type = "tool-call"
   version = "0.0.1"
 
   def describe(self, input, output):
-    self.handle_function_calls = HandleFunctionCall(input.tools)
+    a = input.tools
+    self.handle_function_calls = HandleFunctionCall(tools=input.tools)
     # self.handle_function_calls should be passed in as a board.
     self.chatLoop = ChatBot(prompt=input.prompt, post_process=self.handle_function_calls)
     output(self.chatLoop)
@@ -103,7 +108,6 @@ class ToolCallBot(Board[ToolCallInput, ToolCallOutput]):
 
 class InputSchema(SchemaObject):
   backend_url: str = Field(description="Which backend url to send orders to")
-  text: str = Field("What you want to say?")
 
 class OutputSchema(SchemaObject):
   text: str = Field(title="Assistant", description="Assistant: Assistant's response in the conversation with the user", required=True)
@@ -111,7 +115,7 @@ class OutputSchema(SchemaObject):
 class CoffeeBot(Board[InputSchema, OutputSchema]):
   title = "CoffeBeBot (Python)"
   description = 'A recreation of Coffeebot, which is a chatbot that takes in coffee orders and then sends them to a backend.'
-  version = "0.0.3"
+  version = "0.0.2"
 
   type = "coffeebot"
 
@@ -119,15 +123,9 @@ class CoffeeBot(Board[InputSchema, OutputSchema]):
     tools: List[str] = [
       "trivial-tool.json"
     ]
-    prompt = """H9"""
-    #self.tool_calling_loop = ToolCallBot(tools=tools, prompt=prompt, text=input.backend_url)
-
-    self.handle_function_calls = HandleFunctionCall(tools=tools, text=input.text)
-    self.chatLoop = ChatBot(prompt=prompt, post_process=self.handle_function_calls)
-
-
-    output(self.chatLoop)
-    input(output)
+    prompt = """HI."""
+    self.tool_calling_loop = ToolCallBot(tools=tools, prompt=prompt)
+    output(self.tool_calling_loop)
 
 if __name__ == "__main__":
   import sys

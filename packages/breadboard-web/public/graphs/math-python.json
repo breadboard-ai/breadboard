@@ -5,7 +5,7 @@
   "graphs": {},
   "nodes": [
     {
-      "id": "input",
+      "id": "input-1",
       "type": "input",
       "configuration": {
         "schema": {
@@ -33,7 +33,7 @@
       }
     },
     {
-      "id": "output",
+      "id": "output-1",
       "type": "output",
       "configuration": {
         "schema": {
@@ -71,7 +71,7 @@
   "edges": [
     {
       "from": "runJavascript-1",
-      "to": "output",
+      "to": "output-1",
       "out": "result",
       "in": "result"
     },
@@ -82,7 +82,7 @@
       "in": "code"
     },
     {
-      "from": "input",
+      "from": "input-1",
       "to": "generator",
       "out": "generator",
       "in": "path"
@@ -94,7 +94,7 @@
       "in": "text"
     },
     {
-      "from": "input",
+      "from": "input-1",
       "to": "math-function",
       "out": "question",
       "in": "question"
@@ -103,12 +103,6 @@
   "kits": [
     {
       "url": "npm:@google-labs/core-kit"
-    },
-    {
-      "url": "npm:annotation=NoneType required=True"
-    },
-    {
-      "url": "npm:annotation=NoneType required=True"
     },
     {
       "url": "npm:@google-labs/template-kit"

@@ -1,0 +1,35 @@
+{
+  "title": "Trivial tool",
+  "description": "Does nothing, but it shoudl be called to test integration.",
+  "version": "0.0.2",
+  "graphs": {},
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "kits": []
+}

@@ -23,7 +23,7 @@ class TrivialTool(Board[InputSchema, OutputSchema]):
   type = "trivial_tool"
 
   def describe(self, input, output):
-    pass
+    output(input)
 
 if __name__ == "__main__":
   import sys

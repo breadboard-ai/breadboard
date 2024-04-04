@@ -24,7 +24,10 @@
             },
             "post_process": {
               "title": "Post Process",
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "prompt": {
               "title": "Prompt",
@@ -117,28 +120,26 @@
       "configuration": {
         "tools": [
           {
-            "title": "Trivial tool",
-            "description": "Does nothing, for testing purposes",
-            "version": "0.0.1",
+            "title": "func.get_name()",
+            "description": "func.get_docstring()",
+            "version": "",
             "graphs": {},
             "nodes": [
               {
-                "id": "output-2",
-                "type": "output",
-                "configuration": {}
-              },
-              {
-                "id": "input-2",
-                "type": "input",
-                "configuration": {}
+                "id": "some-leaf-1",
+                "type": "runPython",
+                "configuration": {
+                  "code": "gAWVVQMAAAAAAACMF2Nsb3VkcGlja2xlLmNsb3VkcGlja2xllIwOX21ha2VfZnVuY3Rpb26Uk5QoaACMDV9idWlsdGluX3R5cGWUk5SMCENvZGVUeXBllIWUUpQoSwFLAEsASwJLBEsDQ2qXAAkAdAEAAAAAAAAAAAAAagEAAAAAAAAAAHwAZAGsAqYCAACrAgAAAAAAAAAAfQF8AWoCAAAAAAAAAABTACMAdAAAAAAAAAAAAAAAagMAAAAAAAAAACQAcgQBAFkAZANTAHcAeANZAHcBlChOSwGMB3RpbWVvdXSUhZRN9wF0lCiMCHJlcXVlc3RzlIwDZ2V0lIwLc3RhdHVzX2NvZGWUjA9Db25uZWN0aW9uRXJyb3KUdJSMC2JhY2tlbmRfdXJslIwIcmVzcG9uc2WUhpSMZy91c3IvbG9jYWwvZ29vZ2xlL2hvbWUva2V2eGlhby9icmVhZGJvYXJkL3BhY2thZ2VzL2JyZWFkYm9hcmQtcHl0aG9uL3NyYy9icmVhZGJvYXJkX3B5dGhvbi9jb2ZmZWVib3QucHmUjAtwaW5nX3NlcnZlcpRoFUt1Q0mAAPAEBAMP3Q8XjHyYS7AR0A8z0Q8z1A8zgEjYCxPUCx/QBB/43QkR1Akh8AABAw/wAAEDD/AAAQMP2AsOiDOIM/ADAQMP+Pj4lEMMghwfAJ8PMgOxATIDlCkpdJRSlH2UKIwLX19wYWNrYWdlX1+UjACUjAhfX25hbWVfX5SMCF9fbWFpbl9flIwIX19maWxlX1+UaBR1Tk5OdJRSlGgAjBJfZnVuY3Rpb25fc2V0c3RhdGWUk5RoIX2UfZQoaB1oFYwMX19xdWFsbmFtZV9flGgVjA9fX2Fubm90YXRpb25zX1+UfZQoaBGMCGJ1aWx0aW5zlIwDc3RylJOUjAZyZXR1cm6UaCmMA2ludJSTlHWMDl9fa3dkZWZhdWx0c19flE6MDF9fZGVmYXVsdHNfX5ROjApfX21vZHVsZV9flGgejAdfX2RvY19flE6MC19fY2xvc3VyZV9flE6MF19jbG91ZHBpY2tsZV9zdWJtb2R1bGVzlF2UjAtfX2dsb2JhbHNfX5R9lGgMaACMCXN1YmltcG9ydJSTlGgMhZRSlHN1hpSGUjAu",
+                  "python_version": "3.11.7"
+                }
               }
             ],
             "edges": [
               {
-                "from": "input-2",
-                "to": "output-2",
-                "out": "*",
-                "in": ""
+                "from": "input-1",
+                "to": "some-leaf-1",
+                "out": "backend_url",
+                "in": "backend_url"
               }
             ],
             "kits": []
@@ -185,7 +186,9 @@
               "type": "string"
             }
           },
-          "required": ["text"],
+          "required": [
+            "text"
+          ],
           "type": "object"
         }
       }
@@ -218,7 +221,9 @@
               "type": "string"
             }
           },
-          "required": ["text"],
+          "required": [
+            "text"
+          ],
           "type": "object"
         }
       }
@@ -292,7 +297,7 @@
       "in": "tools"
     },
     {
-      "from": "input-board_caller-1-1",
+      "from": "caller-1",
       "to": "output-board_caller-1-1",
       "out": "*",
       "in": ""

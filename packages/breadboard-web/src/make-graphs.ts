@@ -137,6 +137,7 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
 //     return manifestEntry;
 //   } catch (e) {
 //     console.error(`Error loading ${filePath}: ${e}`);
+//     throw e;
 //   }
 // }
 
