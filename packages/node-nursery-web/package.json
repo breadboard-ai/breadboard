@@ -111,6 +111,6 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.15.0",
-    "firebase": "^10.8.1"
+    "firebase": "^10.10.0"
   }
 }
