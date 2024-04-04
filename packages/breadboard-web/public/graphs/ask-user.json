@@ -88,7 +88,7 @@
       "id": "appendContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+        "code": "const appendContext = ({context,text})=>{return{context:[...context||[],{role:\"user\",parts:[{text}]}]}};",
         "name": "appendContext",
         "raw": true
       }
@@ -115,7 +115,7 @@
       "id": "createSchema",
       "type": "runJavascript",
       "configuration": {
-        "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
+        "code": "const createSchema = ({title,description,context})=>{const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}};",
         "name": "createSchema",
         "raw": true
       }
@@ -157,7 +157,7 @@
       "id": "maybeOutputRouter",
       "type": "runJavascript",
       "configuration": {
-        "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
+        "code": "const maybeOutputRouter = ({context})=>{if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}};",
         "name": "maybeOutputRouter",
         "raw": true
       }

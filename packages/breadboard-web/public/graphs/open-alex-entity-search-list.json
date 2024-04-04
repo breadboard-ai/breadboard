@@ -160,7 +160,7 @@
       "id": "spreadResponse",
       "type": "runJavascript",
       "configuration": {
-        "code": "function spreadResponse(inputs) {const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}}",
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
         "name": "spreadResponse",
         "raw": true
       }

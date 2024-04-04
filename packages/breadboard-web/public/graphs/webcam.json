@@ -53,7 +53,7 @@
       "id": "combinePictureAndPrompt",
       "type": "runJavascript",
       "configuration": {
-        "code": "function combinePictureAndPrompt({picture,prompt}) {return{parts:[picture,{text:prompt}]}}",
+        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{return{parts:[picture,{text:prompt}]}};",
         "name": "combinePictureAndPrompt",
         "raw": true
       }

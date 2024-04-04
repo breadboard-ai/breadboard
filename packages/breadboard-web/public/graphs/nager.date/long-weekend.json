@@ -227,7 +227,7 @@
       "id": "getCurrentYear",
       "type": "runJavascript",
       "configuration": {
-        "code": "function getCurrentYear() {return{year:new Date().getFullYear()}}",
+        "code": "const getCurrentYear = ()=>{return{year:new Date().getFullYear()}};",
         "name": "getCurrentYear",
         "raw": true
       }

@@ -56,7 +56,7 @@
       "id": "statusCodeToResult",
       "type": "runJavascript",
       "configuration": {
-        "code": "function statusCodeToResult({status}) {if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)}",
+        "code": "const statusCodeToResult = ({status})=>{if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)};",
         "name": "statusCodeToResult",
         "raw": true
       }
