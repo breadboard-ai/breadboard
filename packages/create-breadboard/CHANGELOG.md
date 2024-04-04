@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated dependencies [76da09d]
+- Updated dependencies [938015d]
+  - @google-labs/breadboard@0.15.0
+  - @google-labs/breadboard-hello-world@1.2.9
+
 ## 1.0.6
 
 ### Patch Changes
