@@ -511,7 +511,7 @@ export class Main extends LitElement {
     }
 
     const ui = this.#uiRef.value;
-    ui.loadInfo = { graphDescriptor: this.loadedDescriptor };
+    ui.graph = this.loadedDescriptor;
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -720,7 +720,7 @@ export class Main extends LitElement {
         ${cache(
           html`<bb-ui-controller
             ${ref(this.#uiRef)}
-            .loadInfo=${{ graphDescriptor: this.loadedDescriptor }}
+            .graph=${this.loadedDescriptor}
             .run=${currentRun}
             .kits=${this.kits}
             .loader=${this.#loader}

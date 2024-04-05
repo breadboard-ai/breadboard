@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs, STATUS } from "../../types/types.js";
+import { STATUS } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -17,6 +17,7 @@ import {
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
+  GraphDescriptor,
   GraphLoader,
   InspectableRun,
   InspectableRunEvent,
@@ -40,7 +41,7 @@ type UIConfig = {
  * @class UI
  * @extends {LitElement}
  *
- * @property {LoadArgs | null} loadInfo
+ * @property {GraphDescriptor | null} loadInfo
  * @property {Kit[]} kits - an array of kits to use by a board
  * @property {string | null} url
  * @property {STATUS}
@@ -50,7 +51,7 @@ type UIConfig = {
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -249,7 +250,7 @@ export class UI extends LitElement {
      */
     const editor = html`<bb-editor
       .editable=${true}
-      .loadInfo=${this.loadInfo}
+      .loadInfo=${{ graphDescriptor: this.graph }}
       .kits=${this.kits}
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
@@ -356,7 +357,7 @@ export class UI extends LitElement {
         ></bb-activity-log>
         <bb-node-info
           .selectedNodeId=${this.selectedNodeId}
-          .loadInfo=${this.loadInfo}
+          .loadInfo=${{ graphDescriptor: this.graph }}
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
@@ -383,7 +384,7 @@ export class UI extends LitElement {
     >
       <section id="diagram" slot="slot-0">
         <div id="breadcrumbs"></div>
-        ${this.loadInfo === null && this.failedToLoad
+        ${this.graph === null && this.failedToLoad
           ? html`<div class="failed-to-load">
               <h1>Unable to load board</h1>
               <p>Please try again, or load a different board</p>
