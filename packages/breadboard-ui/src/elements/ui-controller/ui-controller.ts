@@ -119,6 +119,7 @@ export class UI extends LitElement {
   }
 
   async load(loadInfo: LoadArgs) {
+    console.log("🍊 loadInfo", loadInfo);
     this.loadInfo = loadInfo;
   }
 
