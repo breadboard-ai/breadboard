@@ -118,11 +118,6 @@ export class UI extends LitElement {
     this.#messagePosition = 0;
   }
 
-  async load(loadInfo: LoadArgs) {
-    console.log("🍊 loadInfo", loadInfo);
-    this.loadInfo = loadInfo;
-  }
-
   /**
    * Handler method for registering input.
    *

@@ -49,8 +49,9 @@ export class Main extends LitElement {
   @property({ reflect: false })
   descriptor: GraphDescriptor | null = null;
 
-  @property({ reflect: false })
-  loadInfo: GraphDescriptor | null = null;
+  // TODO: Figure out why we need both `descriptor` and `loadedDescriptor`.
+  @state()
+  loadedDescriptor: GraphDescriptor | null = null;
 
   @state()
   kits: Kit[] = [];
@@ -424,10 +425,10 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
-    if (!this.loadInfo || !this.loadInfo.url) {
+    if (!this.loadedDescriptor || !this.loadedDescriptor.url) {
       return;
     }
-    const boardUrl = new URL(this.loadInfo.url);
+    const boardUrl = new URL(this.loadedDescriptor.url);
     const provider = this.#getProviderForURL(boardUrl);
     if (!provider) {
       this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
@@ -438,7 +439,7 @@ export class Main extends LitElement {
     if (!capabilities || !capabilities.save) {
       return;
     }
-    const { result } = await provider.save(boardUrl, this.loadInfo);
+    const { result } = await provider.save(boardUrl, this.loadedDescriptor);
     if (!result) {
       return;
     }
@@ -487,16 +488,16 @@ export class Main extends LitElement {
         if (!graph) {
           throw new Error(`Unable to load graph: ${this.url}`);
         }
-        this.loadInfo = graph;
+        this.loadedDescriptor = graph;
       } catch (err) {
         this.url = null;
         this.descriptor = null;
         this.#failedGraphLoad = true;
       }
     } else if (this.descriptor) {
-      this.loadInfo = this.descriptor;
-      if (!this.loadInfo.url) {
-        this.loadInfo.url == window.location.href;
+      this.loadedDescriptor = this.descriptor;
+      if (!this.loadedDescriptor.url) {
+        this.loadedDescriptor.url == window.location.href;
       }
     } else {
       return;
@@ -505,12 +506,12 @@ export class Main extends LitElement {
 
   // TODO: Allow this to run boards directly.
   async #runBoard(runner: ReturnType<typeof run>) {
-    if (!(this.#uiRef.value && this.loadInfo)) {
+    if (!(this.#uiRef.value && this.loadedDescriptor)) {
       return;
     }
 
     const ui = this.#uiRef.value;
-    ui.load({ graphDescriptor: this.loadInfo });
+    ui.loadInfo = { graphDescriptor: this.loadedDescriptor };
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -555,7 +556,7 @@ export class Main extends LitElement {
   }
 
   #getBoardJson(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement) || !this.loadInfo) {
+    if (!(evt.target instanceof HTMLAnchorElement) || !this.loadedDescriptor) {
       return;
     }
 
@@ -564,7 +565,7 @@ export class Main extends LitElement {
     }
 
     // Remove the URL from the descriptor as its not part of BGL's schema.
-    const board = structuredClone(this.loadInfo);
+    const board = structuredClone(this.loadedDescriptor);
     delete board["url"];
 
     const data = JSON.stringify(board, null, 2);
@@ -576,7 +577,7 @@ export class Main extends LitElement {
 
   #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
     this.#boardPendingSave = boardPendingSave;
-    this.loadInfo = graphDescriptor;
+    this.loadedDescriptor = graphDescriptor;
   }
 
   #getProviderByName(name: string) {
@@ -592,12 +593,12 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.loadInfo || !this.loadInfo.url) {
+    if (!this.loadedDescriptor || !this.loadedDescriptor.url) {
       return;
     }
 
     try {
-      const url = new URL(this.loadInfo.url, window.location.href);
+      const url = new URL(this.loadedDescriptor.url, window.location.href);
       const provider = this.#getProviderForURL(url);
       if (!provider) {
         return;
@@ -634,9 +635,9 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const currentRun = this.#runObserver?.runs()[0];
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.loadInfo && this.loadInfo.url) {
+    if (this.loadedDescriptor && this.loadedDescriptor.url) {
       try {
-        const url = new URL(this.loadInfo.url);
+        const url = new URL(this.loadedDescriptor.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {
@@ -653,7 +654,7 @@ export class Main extends LitElement {
       }
     }
 
-    const title = this.loadInfo?.title;
+    const title = this.loadedDescriptor?.title;
     const showingOverlay =
       this.showBoardEditOverlay ||
       this.showPreviewOverlay ||
@@ -678,7 +679,7 @@ export class Main extends LitElement {
             @click=${() => {
               this.showBoardEditOverlay = true;
             }}
-            ?disabled=${this.loadInfo === null}
+            ?disabled=${this.loadedDescriptor === null}
             id="edit-board-info"
             title="Edit Board Information"
           >
@@ -689,7 +690,7 @@ export class Main extends LitElement {
         <a
           id="get-board"
           title="Export Board BGL"
-          ?disabled=${this.loadInfo === null}
+          ?disabled=${this.loadedDescriptor === null}
           @click=${this.#getBoardJson}
           >Export</a
         >
@@ -697,7 +698,7 @@ export class Main extends LitElement {
           class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
           title="Toggle Board Preview"
-          ?disabled=${this.loadInfo === null}
+          ?disabled=${this.loadedDescriptor === null}
           @click=${() => {
             this.showPreviewOverlay = !this.showPreviewOverlay;
           }}
@@ -719,7 +720,7 @@ export class Main extends LitElement {
         ${cache(
           html`<bb-ui-controller
             ${ref(this.#uiRef)}
-            .loadInfo=${{ graphDescriptor: this.loadInfo }}
+            .loadInfo=${{ graphDescriptor: this.loadedDescriptor }}
             .run=${currentRun}
             .kits=${this.kits}
             .loader=${this.#loader}
@@ -742,18 +743,18 @@ export class Main extends LitElement {
               );
             }}
             @breadboardrunboard=${async () => {
-              if (!this.loadInfo?.url) {
+              if (!this.loadedDescriptor?.url) {
                 return;
               }
 
               const runner = await BoardRunner.fromGraphDescriptor(
-                this.loadInfo
+                this.loadedDescriptor
               );
 
               this.#runBoard(
                 run(
                   addNodeProxyServerConfig({
-                    url: this.loadInfo.url,
+                    url: this.loadedDescriptor.url,
                     runner,
                     diagnostics: true,
                     kits: this.kits,
@@ -765,12 +766,12 @@ export class Main extends LitElement {
             @breadboardedgechange=${(
               evt: BreadboardUI.Events.EdgeChangeEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
@@ -812,12 +813,12 @@ export class Main extends LitElement {
               });
             }}
             @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
@@ -858,12 +859,12 @@ export class Main extends LitElement {
             @breadboardnodemultilayout=${(
               evt: BreadboardUI.Events.NodeMultiLayoutEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
@@ -906,12 +907,12 @@ export class Main extends LitElement {
                 type: nodeType,
               };
 
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
@@ -934,12 +935,12 @@ export class Main extends LitElement {
             @breadboardnodeupdate=${(
               evt: BreadboardUI.Events.NodeUpdateEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
@@ -965,12 +966,12 @@ export class Main extends LitElement {
             @breadboardnodedelete=${(
               evt: BreadboardUI.Events.NodeDeleteEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.loadedDescriptor) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
+              const loadInfo = this.loadedDescriptor;
               if (!loadInfo) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
@@ -1193,25 +1194,25 @@ export class Main extends LitElement {
     }
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showBoardEditOverlay && this.loadInfo) {
+    if (this.showBoardEditOverlay && this.loadedDescriptor) {
       boardOverlay = html`<bb-board-edit-overlay
         .boardTitle=${title}
-        .boardVersion=${this.loadInfo?.version}
-        .boardDescription=${this.loadInfo?.description}
+        .boardVersion=${this.loadedDescriptor?.version}
+        .boardDescription=${this.loadedDescriptor?.description}
         @breadboardboardoverlaydismissed=${() => {
           this.showBoardEditOverlay = false;
         }}
         @breadboardboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
-          if (!this.loadInfo) {
+          if (!this.loadedDescriptor) {
             return;
           }
 
-          if (this.loadInfo) {
-            this.loadInfo.title = evt.title;
-            this.loadInfo.version = evt.version;
-            this.loadInfo.description = evt.description;
+          if (this.loadedDescriptor) {
+            this.loadedDescriptor.title = evt.title;
+            this.loadedDescriptor.version = evt.version;
+            this.loadedDescriptor.description = evt.description;
           }
 
           this.toast(
