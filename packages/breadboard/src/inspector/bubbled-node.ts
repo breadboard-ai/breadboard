@@ -20,6 +20,7 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled
@@ -70,6 +71,10 @@ export class BubbledInspectableNode implements InspectableNode {
 
   configuration(): NodeConfiguration {
     return this.#actual.configuration();
+  }
+
+  metadata(): NodeMetadata {
+    return this.#actual.metadata();
   }
 
   async describe(
