@@ -16,7 +16,13 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { GraphLoader, InspectableRun, Kit } from "@google-labs/breadboard";
+import {
+  GraphLoader,
+  InspectableRun,
+  InspectableRunEvent,
+  Kit,
+  NodeIdentifier,
+} from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
@@ -181,8 +187,7 @@ export class UI extends LitElement {
     message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
-      const messages = this.run?.messages || [];
-      this.#messagePosition = messages.length - 1;
+      this.#messagePosition = (this.run?.events?.length || 0) - 1;
     }
     this.requestUpdate();
 
@@ -229,11 +234,19 @@ export class UI extends LitElement {
   }
 
   render() {
-    const messages = this.run?.messages || [];
-    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
+    const lastNode = (events: InspectableRunEvent[]): NodeIdentifier | null => {
+      for (let index = events.length - 1; index >= 0; index--) {
+        const event = events[index];
+        if (event.type == "node" && !event.bubbled) {
+          return event.node.descriptor.id;
+        }
+      }
+      return null;
+    };
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
+    const nodeId = lastNode(events);
 
     /**
      * Create all the elements we need.
@@ -318,7 +331,7 @@ export class UI extends LitElement {
           }}
           @breadboardinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < messages.length - 1) {
+            if (this.#messagePosition < events.length - 1) {
               // The user has attempted to provide input for a stale
               // request.
               // TODO: Enable resuming from this point.

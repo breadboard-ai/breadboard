@@ -644,14 +644,6 @@ export type InspectableRun = {
    * null if not found.
    */
   getEventById(id: EventIdentifier): InspectableRunEvent | null;
-  /**
-   * @deprecated Use `events` instead.
-   */
-  messages: HarnessRunResult[];
-  /**
-   * @deprecated Use `events` instead.
-   */
-  currentNode(position: number): string;
 };
 
 /**

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "../../harness/types.js";
 import type {
   GraphUUID,
   InspectableRun,
@@ -21,7 +20,6 @@ export class NestedRun implements InspectableRun {
   start: number;
   end: number | null;
   graphVersion = 0;
-  messages: HarnessRunResult[] = [];
   events: InspectableRunEvent[];
 
   constructor(entry: PathRegistryEntry) {
@@ -33,9 +31,5 @@ export class NestedRun implements InspectableRun {
 
   getEventById(): InspectableRunEvent | null {
     return null;
-  }
-
-  currentNode(): string {
-    return "";
   }
 }
