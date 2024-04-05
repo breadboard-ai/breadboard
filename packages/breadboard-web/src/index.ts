@@ -50,11 +50,10 @@ const getBoardInfo = async (
   }
   const runner = await BoardRunner.fromGraphDescriptor(graph);
 
-  const { version } = runner;
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
 
-  return { version, url, graphDescriptor, nodes };
+  return { url, graphDescriptor, nodes };
 };
 
 const getBoardFromDescriptor = async (
@@ -63,12 +62,11 @@ const getBoardFromDescriptor = async (
 ): Promise<BreadboardUI.Types.LoadArgs> => {
   const runner = await Board.fromGraphDescriptor(descriptor);
 
-  const { version } = runner;
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
   graphDescriptor.url = url;
 
-  return { version, url, graphDescriptor, nodes };
+  return { url, graphDescriptor, nodes };
 };
 
 // TODO: Remove once all elements are Lit-based.
@@ -1241,7 +1239,7 @@ export class Main extends LitElement {
     if (this.showBoardEditOverlay && this.loadInfo) {
       boardOverlay = html`<bb-board-edit-overlay
         .boardTitle=${title}
-        .boardVersion=${this.loadInfo.version}
+        .boardVersion=${this.loadInfo.graphDescriptor?.version}
         .boardDescription=${this.loadInfo.graphDescriptor?.description}
         @breadboardboardoverlaydismissed=${() => {
           this.showBoardEditOverlay = false;
@@ -1252,8 +1250,6 @@ export class Main extends LitElement {
           if (!this.loadInfo) {
             return;
           }
-
-          this.loadInfo.version = evt.version;
 
           if (this.loadInfo.graphDescriptor) {
             this.loadInfo.graphDescriptor.title = evt.title;

@@ -67,7 +67,6 @@ export enum STATUS {
 }
 
 export type LoadArgs = {
-  version?: string;
   graphDescriptor?: GraphDescriptor;
   url?: string;
   nodes?: NodeDescriptor[];
