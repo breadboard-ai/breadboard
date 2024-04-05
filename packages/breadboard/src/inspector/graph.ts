@@ -31,6 +31,7 @@ import {
   InspectableGraphWithStore,
   InspectableKit,
   InspectableNode,
+  InspectableSubgraphs,
   NodeTypeDescriberOptions,
 } from "./types.js";
 
@@ -58,6 +59,7 @@ class Graph implements InspectableGraphWithStore {
   #graph: GraphDescriptor;
   #nodes: InspectableNodeCache;
   #edges: InspectableEdgeCache;
+  #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
@@ -194,5 +196,19 @@ class Graph implements InspectableGraphWithStore {
 
   get edgeStore() {
     return this.#edges;
+  }
+
+  #populateSubgraphs(): InspectableSubgraphs {
+    const subgraphs = this.#graph.graphs;
+    if (!subgraphs) return {};
+    return Object.fromEntries(
+      Object.entries(subgraphs).map(([id, descriptor]) => {
+        return [id, new Graph(descriptor, this.#options)];
+      })
+    );
+  }
+
+  graphs(): InspectableSubgraphs {
+    return (this.#graphs ??= this.#populateSubgraphs());
   }
 }
