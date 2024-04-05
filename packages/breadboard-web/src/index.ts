@@ -38,26 +38,6 @@ type MainArguments = {
   settings?: SettingsStore;
 };
 
-const getBoardInfo = async (
-  loader: GraphLoader,
-  url: string
-): Promise<GraphDescriptor> => {
-  const base = new URL(window.location.href);
-  const graph = await loader.load(url, { base });
-  if (!graph) {
-    throw new Error(`Unable to load graph: ${url}`);
-  }
-  return graph;
-};
-
-const getBoardFromDescriptor = async (
-  url: string,
-  descriptor: GraphDescriptor
-): Promise<GraphDescriptor> => {
-  descriptor.url = url;
-  return descriptor;
-};
-
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
@@ -502,17 +482,22 @@ export class Main extends LitElement {
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
-        this.loadInfo = await getBoardInfo(this.#loader, this.url);
+        const base = new URL(window.location.href);
+        const graph = await this.#loader.load(this.url, { base });
+        if (!graph) {
+          throw new Error(`Unable to load graph: ${this.url}`);
+        }
+        this.loadInfo = graph;
       } catch (err) {
         this.url = null;
         this.descriptor = null;
         this.#failedGraphLoad = true;
       }
     } else if (this.descriptor) {
-      this.loadInfo = await getBoardFromDescriptor(
-        this.descriptor.url || window.location.href,
-        this.descriptor
-      );
+      this.loadInfo = this.descriptor;
+      if (!this.loadInfo.url) {
+        this.loadInfo.url == window.location.href;
+      }
     } else {
       return;
     }
