@@ -292,7 +292,6 @@ export type CoreKitType = {
       statusText: string;
       contentType?: string;
       responseHeaders?: object;
-      responseSchema?: Schema;
     }
   >;
   runJavascript: NodeFactory<
