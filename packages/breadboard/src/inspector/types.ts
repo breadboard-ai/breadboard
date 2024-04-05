@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {
@@ -87,6 +88,11 @@ export type InspectableNode = {
    * TODO: Use a friendlier to inspection return type.
    */
   configuration(): NodeConfiguration;
+  /**
+   * Returns metadata for the node.
+   * TODO: Use a friendlier to inspection return type.
+   */
+  metadata(): NodeMetadata;
   /**
    * Returns the current state of node's ports
    */

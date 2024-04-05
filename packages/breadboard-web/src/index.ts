@@ -768,13 +768,7 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn("Unable to create node; no graph descriptor");
-                return;
-              }
-
-              const editableGraph = edit(descriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
                 loader: this.#loader,
               });
@@ -815,24 +809,16 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn(
-                  "Unable to update node metadata; no graph descriptor"
-                );
-                return;
-              }
-
-              const editableGraph = edit(descriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
               });
 
+              const inspectableGraph = editableGraph.inspect();
+
               const { id, x, y } = evt;
-              const existingNode = descriptor.nodes.find(
-                (node) => node.id === id
-              );
-              const metadata = existingNode?.metadata || {};
-              let visual = metadata?.visual || {};
+              const existingNode = inspectableGraph.nodeById(id);
+              const metadata = existingNode?.metadata() || {};
+              let visual = metadata.visual || {};
               if (typeof visual !== "object") {
                 visual = {};
               }
@@ -861,26 +847,17 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn(
-                  "Unable to update node metadata; no graph descriptor"
-                );
-                return;
-              }
-
-              const graphDescriptor = descriptor;
-              const editableGraph = edit(graphDescriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
               });
 
+              const inspectableGraph = editableGraph.inspect();
+
               Promise.all(
                 [...evt.layout.entries()].map(([id, { x, y }]) => {
-                  const existingNode = graphDescriptor.nodes.find(
-                    (node) => node.id === id
-                  );
+                  const existingNode = inspectableGraph.nodeById(id);
 
-                  const metadata = existingNode?.metadata || {};
+                  const metadata = existingNode?.metadata() || {};
                   let visual = metadata?.visual || {};
                   if (typeof visual !== "object") {
                     visual = {};
@@ -909,13 +886,7 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn("Unable to create node; no graph descriptor");
-                return;
-              }
-
-              const editableGraph = edit(descriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
               });
               editableGraph.addNode(newNode).then((result) => {
@@ -937,13 +908,7 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn("Unable to create node; no graph descriptor");
-                return;
-              }
-
-              const editableGraph = edit(descriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
               });
 
@@ -968,13 +933,7 @@ export class Main extends LitElement {
                 return;
               }
 
-              const descriptor = this.graph;
-              if (!descriptor) {
-                console.warn("Unable to create node; no graph descriptor");
-                return;
-              }
-
-              const editableGraph = edit(descriptor, {
+              const editableGraph = edit(this.graph, {
                 kits: this.kits,
               });
               editableGraph.removeNode(evt.id).then((result) => {
