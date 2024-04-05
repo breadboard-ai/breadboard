@@ -46,7 +46,6 @@ type UIConfig = {
  * @property {string | null} url
  * @property {STATUS}
  * @property {Board[]}
- * @property {"mermaid" | "editor"} - the type of visualizer to use
  **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -250,7 +249,7 @@ export class UI extends LitElement {
      */
     const editor = html`<bb-editor
       .editable=${true}
-      .loadInfo=${{ graphDescriptor: this.graph }}
+      .graph=${this.graph}
       .kits=${this.kits}
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
