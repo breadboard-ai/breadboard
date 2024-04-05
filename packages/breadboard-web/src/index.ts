@@ -11,7 +11,6 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
-  Board,
   BoardRunner,
   createLoader,
   edit,
@@ -48,24 +47,15 @@ const getBoardInfo = async (
   if (!graph) {
     throw new Error(`Unable to load graph: ${url}`);
   }
-  const runner = await BoardRunner.fromGraphDescriptor(graph);
-
-  const graphDescriptor: GraphDescriptor = runner;
-
-  return graphDescriptor;
+  return graph;
 };
 
 const getBoardFromDescriptor = async (
   url: string,
   descriptor: GraphDescriptor
 ): Promise<GraphDescriptor> => {
-  // TODO: Probably don't need to create a runner here.
-  const runner = await Board.fromGraphDescriptor(descriptor);
-
-  const graphDescriptor: GraphDescriptor = runner;
-  graphDescriptor.url = url;
-
-  return graphDescriptor;
+  descriptor.url = url;
+  return descriptor;
 };
 
 // TODO: Remove once all elements are Lit-based.
