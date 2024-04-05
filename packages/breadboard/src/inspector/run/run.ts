@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphDescriptor, NodeDescriptor } from "../../types.js";
+import { GraphDescriptor } from "../../types.js";
 import { EventManager } from "./event-manager.js";
 import { RunLoader } from "./loader.js";
 import {
@@ -21,78 +21,6 @@ import {
   SerializedRun,
   SerializedRunLoadingOptions,
 } from "../types.js";
-
-type GraphRecord = {
-  nodes: NodeDescriptor[];
-};
-
-class NodeHighlightHelper {
-  #history: (NodeDescriptor | undefined)[] = [];
-  #graphStack: GraphRecord[] = [];
-  #currentNode?: NodeDescriptor;
-
-  #pushGraph() {
-    this.#graphStack.push({ nodes: [] });
-  }
-
-  #popGraph() {
-    this.#graphStack.pop();
-  }
-
-  #updateCurrentNode() {
-    const graph = this.#graphStack[0];
-    if (!graph) return;
-    const descriptor = graph.nodes[graph.nodes.length - 1];
-    if (!descriptor) return;
-    this.#currentNode = descriptor;
-  }
-
-  #pushNode(descriptor: NodeDescriptor) {
-    // For now, we only track current node at the top-level graph.
-    // TODO: Support nested graphs.
-    if (this.#graphStack.length > 1) return;
-
-    const graph = this.#graphStack[0];
-    if (!graph) return;
-
-    graph.nodes.push(descriptor);
-    this.#updateCurrentNode();
-  }
-
-  #popNode() {
-    const graph = this.#graphStack[this.#graphStack.length - 1];
-    if (!graph) return;
-
-    graph.nodes.pop();
-    this.#updateCurrentNode();
-  }
-
-  add(message: HarnessRunResult) {
-    if (message.type === "graphstart") {
-      this.#pushGraph();
-    } else if (message.type === "graphend") {
-      this.#popGraph();
-    } else if (message.type === "nodestart") {
-      this.#pushNode(message.data.node);
-    } else if (message.type === "nodeend") {
-      this.#popNode();
-    }
-    this.#history.push(this.#currentNode);
-  }
-
-  clear() {
-    this.#graphStack.length = 0;
-    this.#history.length = 0;
-  }
-
-  currentNode(position: number) {
-    const entry = this.#history[position];
-    if (!entry) {
-      return "";
-    }
-    return entry.id;
-  }
-}
 
 export class RunObserver implements InspectableRunObserver {
   #store: InspectableGraphStore;
@@ -145,7 +73,6 @@ export class RunObserver implements InspectableRunObserver {
 
 export class Run implements InspectableRun {
   #events: EventManager;
-  #highlightHelper = new NodeHighlightHelper();
 
   graphId: GraphUUID;
   start: number;
@@ -170,9 +97,7 @@ export class Run implements InspectableRun {
   }
 
   addResult(result: HarnessRunResult) {
-    this.messages.push(result);
     this.#events.add(result);
-    this.#highlightHelper.add(result);
   }
 
   serialize(options?: RunSerializationOptions): SerializedRun {
@@ -181,9 +106,5 @@ export class Run implements InspectableRun {
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {
     return this.#events.getEventById(id);
-  }
-
-  currentNode(position: number) {
-    return this.#highlightHelper.currentNode(position);
   }
 }
