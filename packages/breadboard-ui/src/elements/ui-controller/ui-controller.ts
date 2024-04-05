@@ -356,7 +356,7 @@ export class UI extends LitElement {
         ></bb-activity-log>
         <bb-node-info
           .selectedNodeId=${this.selectedNodeId}
-          .loadInfo=${{ graphDescriptor: this.graph }}
+          .graph=${this.graph}
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
