@@ -51,11 +51,10 @@ const getBoardInfo = async (
   const runner = await BoardRunner.fromGraphDescriptor(graph);
 
   const { description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
 
-  return { description, version, diagram, url, graphDescriptor, nodes };
+  return { description, version, url, graphDescriptor, nodes };
 };
 
 const getBoardFromDescriptor = async (
@@ -65,12 +64,11 @@ const getBoardFromDescriptor = async (
   const runner = await Board.fromGraphDescriptor(descriptor);
 
   const { description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
   graphDescriptor.url = url;
 
-  return { description, version, diagram, url, graphDescriptor, nodes };
+  return { description, version, url, graphDescriptor, nodes };
 };
 
 // TODO: Remove once all elements are Lit-based.
