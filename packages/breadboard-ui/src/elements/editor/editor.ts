@@ -420,7 +420,7 @@ export class Editor extends LitElement {
       <label for="add-node">Add</label>
 
       <bb-node-selector
-        .loadInfo=${this.graph}
+        .graph=${this.graph}
         .kits=${this.kits}
         @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
           const id = this.#createRandomID(evt.nodeType);

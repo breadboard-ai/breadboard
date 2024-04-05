@@ -1,7 +1,6 @@
-import { Kit, inspect } from "@google-labs/breadboard";
+import { GraphDescriptor, Kit, inspect } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs } from "../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -12,7 +11,7 @@ const DATA_TYPE = "text/plain";
 @customElement("bb-node-selector")
 export class NodeSelector extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -222,11 +221,11 @@ export class NodeSelector extends LitElement {
   }
 
   render() {
-    if (!this.kits || !this.loadInfo || !this.loadInfo.graphDescriptor) {
+    if (!this.kits || !this.graph) {
       return nothing;
     }
 
-    const graph = inspect(this.loadInfo.graphDescriptor, {
+    const graph = inspect(this.graph, {
       kits: this.kits,
     });
 

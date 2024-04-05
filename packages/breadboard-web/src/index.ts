@@ -577,7 +577,9 @@ export class Main extends LitElement {
 
   #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
     this.#boardPendingSave = boardPendingSave;
-    this.loadedDescriptor = graphDescriptor;
+    // TODO: There's probably a better way to this.
+    // Maybe this change of identity needs to happen within the Editing API?
+    this.loadedDescriptor = { ...graphDescriptor };
   }
 
   #getProviderByName(name: string) {
