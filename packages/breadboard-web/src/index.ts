@@ -52,7 +52,7 @@ const getBoardInfo = async (
 
   const graphDescriptor: GraphDescriptor = runner;
 
-  return { url, graphDescriptor };
+  return { graphDescriptor };
 };
 
 const getBoardFromDescriptor = async (
@@ -64,7 +64,7 @@ const getBoardFromDescriptor = async (
   const graphDescriptor: GraphDescriptor = runner;
   graphDescriptor.url = url;
 
-  return { url, graphDescriptor };
+  return { graphDescriptor };
 };
 
 // TODO: Remove once all elements are Lit-based.
@@ -456,11 +456,11 @@ export class Main extends LitElement {
     if (
       !this.loadInfo ||
       !this.loadInfo.graphDescriptor ||
-      !this.loadInfo.url
+      !this.loadInfo.graphDescriptor.url
     ) {
       return;
     }
-    const boardUrl = new URL(this.loadInfo.url);
+    const boardUrl = new URL(this.loadInfo.graphDescriptor.url);
     const provider = this.#getProviderForURL(boardUrl);
     if (!provider) {
       this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
@@ -630,12 +630,15 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.loadInfo || !this.loadInfo.url) {
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor?.url) {
       return;
     }
 
     try {
-      const url = new URL(this.loadInfo.url, window.location.href);
+      const url = new URL(
+        this.loadInfo.graphDescriptor.url,
+        window.location.href
+      );
       const provider = this.#getProviderForURL(url);
       if (!provider) {
         return;
@@ -672,9 +675,9 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const currentRun = this.#runObserver?.runs()[0];
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.loadInfo && this.loadInfo.url) {
+    if (this.loadInfo && this.loadInfo.graphDescriptor?.url) {
       try {
-        const url = new URL(this.loadInfo.url);
+        const url = new URL(this.loadInfo.graphDescriptor.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {

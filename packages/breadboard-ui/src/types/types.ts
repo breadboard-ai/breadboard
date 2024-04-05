@@ -67,7 +67,6 @@ export enum STATUS {
 
 export type LoadArgs = {
   graphDescriptor?: GraphDescriptor;
-  url?: string;
 };
 
 export type StartArgs = {
