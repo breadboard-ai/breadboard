@@ -50,10 +50,9 @@ const getBoardInfo = async (
   }
   const runner = await BoardRunner.fromGraphDescriptor(graph);
 
-  const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
 
-  return { url, graphDescriptor, nodes };
+  return { url, graphDescriptor };
 };
 
 const getBoardFromDescriptor = async (
@@ -62,11 +61,10 @@ const getBoardFromDescriptor = async (
 ): Promise<BreadboardUI.Types.LoadArgs> => {
   const runner = await Board.fromGraphDescriptor(descriptor);
 
-  const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
   graphDescriptor.url = url;
 
-  return { url, graphDescriptor, nodes };
+  return { url, graphDescriptor };
 };
 
 // TODO: Remove once all elements are Lit-based.

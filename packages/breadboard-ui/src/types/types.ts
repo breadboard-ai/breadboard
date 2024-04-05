@@ -7,7 +7,6 @@
 import {
   GraphDescriptor,
   GraphStartProbeData,
-  NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
   Schema,
@@ -69,7 +68,6 @@ export enum STATUS {
 export type LoadArgs = {
   graphDescriptor?: GraphDescriptor;
   url?: string;
-  nodes?: NodeDescriptor[];
 };
 
 export type StartArgs = {
