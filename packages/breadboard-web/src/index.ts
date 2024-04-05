@@ -50,12 +50,12 @@ const getBoardInfo = async (
   }
   const runner = await BoardRunner.fromGraphDescriptor(graph);
 
-  const { title, description, version } = runner;
+  const { description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
 
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
+  return { description, version, diagram, url, graphDescriptor, nodes };
 };
 
 const getBoardFromDescriptor = async (
@@ -64,13 +64,13 @@ const getBoardFromDescriptor = async (
 ): Promise<BreadboardUI.Types.LoadArgs> => {
   const runner = await Board.fromGraphDescriptor(descriptor);
 
-  const { title, description, version } = runner;
+  const { description, version } = runner;
   const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
   graphDescriptor.url = url;
 
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
+  return { description, version, diagram, url, graphDescriptor, nodes };
 };
 
 // TODO: Remove once all elements are Lit-based.
@@ -697,6 +697,7 @@ export class Main extends LitElement {
       }
     }
 
+    const title = this.loadInfo?.graphDescriptor?.title;
     const showingOverlay =
       this.showBoardEditOverlay ||
       this.showPreviewOverlay ||
@@ -716,7 +717,7 @@ export class Main extends LitElement {
           }}
         ></button>
         <h1>
-          ${this.loadInfo?.title}
+          ${title}
           <button
             @click=${() => {
               this.showBoardEditOverlay = true;
@@ -1241,7 +1242,7 @@ export class Main extends LitElement {
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showBoardEditOverlay && this.loadInfo) {
       boardOverlay = html`<bb-board-edit-overlay
-        .boardTitle=${this.loadInfo.title}
+        .boardTitle=${title}
         .boardVersion=${this.loadInfo.version}
         .boardDescription=${this.loadInfo.description}
         @breadboardboardoverlaydismissed=${() => {
@@ -1254,7 +1255,6 @@ export class Main extends LitElement {
             return;
           }
 
-          this.loadInfo.title = evt.title;
           this.loadInfo.version = evt.version;
           this.loadInfo.description = evt.description;
 

@@ -67,7 +67,6 @@ export enum STATUS {
 }
 
 export type LoadArgs = {
-  title?: string;
   description?: string;
   version?: string;
   diagram?: string;
