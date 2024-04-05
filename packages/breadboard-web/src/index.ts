@@ -575,7 +575,10 @@ export class Main extends LitElement {
     );
   }
 
-  #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
+  #updateLoadedDescriptor(
+    graphDescriptor: GraphDescriptor,
+    boardPendingSave = true
+  ) {
     this.#boardPendingSave = boardPendingSave;
     // TODO: There's probably a better way to this.
     // Maybe this change of identity needs to happen within the Editing API?
@@ -773,13 +776,13 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
                 loader: this.#loader,
               });
@@ -811,7 +814,7 @@ export class Main extends LitElement {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateLoadedDescriptor(editableGraph.raw());
               });
             }}
             @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
@@ -820,20 +823,20 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
                 );
                 return;
               }
 
-              const editableGraph = edit(loadInfo, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
 
               const { id, x, y } = evt;
-              const existingNode = loadInfo.nodes.find(
+              const existingNode = descriptor.nodes.find(
                 (node) => node.id === id
               );
               const metadata = existingNode?.metadata || {};
@@ -855,7 +858,7 @@ export class Main extends LitElement {
                     );
                   }
 
-                  this.#updateLoadInfo(editableGraph.raw());
+                  this.#updateLoadedDescriptor(editableGraph.raw());
                 });
             }}
             @breadboardnodemultilayout=${(
@@ -866,15 +869,15 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
                 );
                 return;
               }
 
-              const graphDescriptor = loadInfo;
+              const graphDescriptor = descriptor;
               const editableGraph = edit(graphDescriptor, {
                 kits: this.kits,
               });
@@ -897,7 +900,7 @@ export class Main extends LitElement {
                   });
                 })
               ).then(() => {
-                this.#updateLoadInfo(editableGraph.raw(), false);
+                this.#updateLoadedDescriptor(editableGraph.raw(), false);
               });
             }}
             @breadboardnodecreate=${(
@@ -914,13 +917,13 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
               editableGraph.addNode(newNode).then((result) => {
@@ -931,7 +934,7 @@ export class Main extends LitElement {
                   );
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateLoadedDescriptor(editableGraph.raw());
               });
             }}
             @breadboardnodeupdate=${(
@@ -942,13 +945,13 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
 
@@ -962,7 +965,7 @@ export class Main extends LitElement {
                     );
                   }
 
-                  this.#updateLoadInfo(editableGraph.raw());
+                  this.#updateLoadedDescriptor(editableGraph.raw());
                 });
             }}
             @breadboardnodedelete=${(
@@ -973,13 +976,13 @@ export class Main extends LitElement {
                 return;
               }
 
-              const loadInfo = this.loadedDescriptor;
-              if (!loadInfo) {
+              const descriptor = this.loadedDescriptor;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
               editableGraph.removeNode(evt.id).then((result) => {
@@ -990,7 +993,7 @@ export class Main extends LitElement {
                   );
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateLoadedDescriptor(editableGraph.raw());
               });
             }}
             @breadboardmessagetraversal=${() => {

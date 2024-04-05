@@ -41,7 +41,7 @@ type UIConfig = {
  * @class UI
  * @extends {LitElement}
  *
- * @property {GraphDescriptor | null} loadInfo
+ * @property {GraphDescriptor | null} graph
  * @property {Kit[]} kits - an array of kits to use by a board
  * @property {string | null} url
  * @property {STATUS}

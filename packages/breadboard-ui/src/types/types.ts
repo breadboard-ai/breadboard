@@ -5,7 +5,6 @@
  */
 
 import {
-  GraphDescriptor,
   GraphStartProbeData,
   NodeEndResponse,
   NodeStartResponse,
@@ -64,10 +63,6 @@ export enum STATUS {
   PAUSED = "paused",
   STOPPED = "stopped",
 }
-
-export type LoadArgs = {
-  graphDescriptor?: GraphDescriptor;
-};
 
 export type StartArgs = {
   boards: Board[];
