@@ -283,7 +283,16 @@ export type CoreKitType = {
     { list: NodeValue[] }
   >;
   reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
-  fetch: NodeFactory<{ url: string }, { response: string; status: number }>;
+  fetch: NodeFactory<
+    { url: string },
+    {
+      response: string;
+      status: number;
+      statusText: string;
+      contentType?: string;
+      responseHeaders?: object;
+    }
+  >;
   runJavascript: NodeFactory<
     {
       code: string;
