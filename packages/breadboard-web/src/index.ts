@@ -11,7 +11,6 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
-  Board,
   BoardRunner,
   createLoader,
   edit,
@@ -39,40 +38,6 @@ type MainArguments = {
   settings?: SettingsStore;
 };
 
-const getBoardInfo = async (
-  loader: GraphLoader,
-  url: string
-): Promise<BreadboardUI.Types.LoadArgs> => {
-  const base = new URL(window.location.href);
-  const graph = await loader.load(url, { base });
-  if (!graph) {
-    throw new Error(`Unable to load graph: ${url}`);
-  }
-  const runner = await BoardRunner.fromGraphDescriptor(graph);
-
-  const { title, description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
-  const nodes = runner.nodes;
-  const graphDescriptor: GraphDescriptor = runner;
-
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
-};
-
-const getBoardFromDescriptor = async (
-  url: string,
-  descriptor: GraphDescriptor
-): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.fromGraphDescriptor(descriptor);
-
-  const { title, description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
-  const nodes = runner.nodes;
-  const graphDescriptor: GraphDescriptor = runner;
-  graphDescriptor.url = url;
-
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
-};
-
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
@@ -81,11 +46,8 @@ export class Main extends LitElement {
   @property({ reflect: true })
   url: string | null = null;
 
-  @property({ reflect: false })
-  descriptor: GraphDescriptor | null = null;
-
-  @property({ reflect: false })
-  loadInfo: BreadboardUI.Types.LoadArgs | null = null;
+  @state()
+  graph: GraphDescriptor | null = null;
 
   @state()
   kits: Kit[] = [];
@@ -459,14 +421,10 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
-    if (
-      !this.loadInfo ||
-      !this.loadInfo.graphDescriptor ||
-      !this.loadInfo.url
-    ) {
+    if (!this.graph || !this.graph.url) {
       return;
     }
-    const boardUrl = new URL(this.loadInfo.url);
+    const boardUrl = new URL(this.graph.url);
     const provider = this.#getProviderForURL(boardUrl);
     if (!provider) {
       this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
@@ -477,10 +435,7 @@ export class Main extends LitElement {
     if (!capabilities || !capabilities.save) {
       return;
     }
-    const { result } = await provider.save(
-      boardUrl,
-      this.loadInfo.graphDescriptor
-    );
+    const { result } = await provider.save(boardUrl, this.graph);
     if (!result) {
       return;
     }
@@ -502,7 +457,9 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setUrlParam("board", startEvent.url);
     this.url = startEvent.url;
-    this.descriptor = startEvent.descriptor;
+    if (startEvent.descriptor) {
+      this.graph = startEvent.descriptor;
+    }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
     this.#boardPendingSave = false;
@@ -511,7 +468,7 @@ export class Main extends LitElement {
   }
 
   protected async updated() {
-    if (!this.url && !this.descriptor) {
+    if (!this.url && !this.graph) {
       return;
     }
 
@@ -524,17 +481,21 @@ export class Main extends LitElement {
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
-        this.loadInfo = await getBoardInfo(this.#loader, this.url);
+        const base = new URL(window.location.href);
+        const graph = await this.#loader.load(this.url, { base });
+        if (!graph) {
+          throw new Error(`Unable to load graph: ${this.url}`);
+        }
+        this.graph = graph;
       } catch (err) {
         this.url = null;
-        this.descriptor = null;
+        this.graph = null;
         this.#failedGraphLoad = true;
       }
-    } else if (this.descriptor) {
-      this.loadInfo = await getBoardFromDescriptor(
-        this.descriptor.url || window.location.href,
-        this.descriptor
-      );
+    } else if (this.graph) {
+      if (!this.graph.url) {
+        this.graph.url = window.location.href;
+      }
     } else {
       return;
     }
@@ -542,12 +503,12 @@ export class Main extends LitElement {
 
   // TODO: Allow this to run boards directly.
   async #runBoard(runner: ReturnType<typeof run>) {
-    if (!(this.#uiRef.value && this.loadInfo)) {
+    if (!(this.#uiRef.value && this.graph)) {
       return;
     }
 
     const ui = this.#uiRef.value;
-    ui.load(this.loadInfo);
+    ui.graph = this.graph;
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -592,11 +553,7 @@ export class Main extends LitElement {
   }
 
   #getBoardJson(evt: Event) {
-    if (
-      !(evt.target instanceof HTMLAnchorElement) ||
-      !this.loadInfo ||
-      !this.loadInfo.graphDescriptor
-    ) {
+    if (!(evt.target instanceof HTMLAnchorElement) || !this.graph) {
       return;
     }
 
@@ -605,7 +562,7 @@ export class Main extends LitElement {
     }
 
     // Remove the URL from the descriptor as its not part of BGL's schema.
-    const board = structuredClone(this.loadInfo.graphDescriptor);
+    const board = structuredClone(this.graph);
     delete board["url"];
 
     const data = JSON.stringify(board, null, 2);
@@ -615,12 +572,11 @@ export class Main extends LitElement {
     );
   }
 
-  #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
+  #updateGraph(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
     this.#boardPendingSave = boardPendingSave;
-    this.loadInfo = {
-      ...this.loadInfo,
-      graphDescriptor,
-    };
+    // TODO: There's probably a better way to this.
+    // Maybe this change of identity needs to happen within the Editing API?
+    this.graph = { ...graphDescriptor };
   }
 
   #getProviderByName(name: string) {
@@ -636,12 +592,12 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.loadInfo || !this.loadInfo.url) {
+    if (!this.graph || !this.graph.url) {
       return;
     }
 
     try {
-      const url = new URL(this.loadInfo.url, window.location.href);
+      const url = new URL(this.graph.url, window.location.href);
       const provider = this.#getProviderForURL(url);
       if (!provider) {
         return;
@@ -678,9 +634,9 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const currentRun = this.#runObserver?.runs()[0];
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.loadInfo && this.loadInfo.url) {
+    if (this.graph && this.graph.url) {
       try {
-        const url = new URL(this.loadInfo.url);
+        const url = new URL(this.graph.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {
@@ -697,6 +653,7 @@ export class Main extends LitElement {
       }
     }
 
+    const title = this.graph?.title;
     const showingOverlay =
       this.showBoardEditOverlay ||
       this.showPreviewOverlay ||
@@ -716,12 +673,12 @@ export class Main extends LitElement {
           }}
         ></button>
         <h1>
-          ${this.loadInfo?.title}
+          ${title}
           <button
             @click=${() => {
               this.showBoardEditOverlay = true;
             }}
-            ?disabled=${this.loadInfo === null}
+            ?disabled=${this.graph === null}
             id="edit-board-info"
             title="Edit Board Information"
           >
@@ -732,7 +689,7 @@ export class Main extends LitElement {
         <a
           id="get-board"
           title="Export Board BGL"
-          ?disabled=${this.loadInfo === null}
+          ?disabled=${this.graph === null}
           @click=${this.#getBoardJson}
           >Export</a
         >
@@ -740,7 +697,7 @@ export class Main extends LitElement {
           class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
           title="Toggle Board Preview"
-          ?disabled=${this.loadInfo === null}
+          ?disabled=${this.graph === null}
           @click=${() => {
             this.showPreviewOverlay = !this.showPreviewOverlay;
           }}
@@ -762,7 +719,7 @@ export class Main extends LitElement {
         ${cache(
           html`<bb-ui-controller
             ${ref(this.#uiRef)}
-            .loadInfo=${this.loadInfo}
+            .graph=${this.graph}
             .run=${currentRun}
             .kits=${this.kits}
             .loader=${this.#loader}
@@ -785,21 +742,16 @@ export class Main extends LitElement {
               );
             }}
             @breadboardrunboard=${async () => {
-              if (
-                !this.loadInfo?.graphDescriptor ||
-                !this.loadInfo.graphDescriptor.url
-              ) {
+              if (!this.graph?.url) {
                 return;
               }
 
-              const runner = await BoardRunner.fromGraphDescriptor(
-                this.loadInfo.graphDescriptor
-              );
+              const runner = await BoardRunner.fromGraphDescriptor(this.graph);
 
               this.#runBoard(
                 run(
                   addNodeProxyServerConfig({
-                    url: this.loadInfo.graphDescriptor.url,
+                    url: this.graph.url,
                     runner,
                     diagnostics: true,
                     kits: this.kits,
@@ -811,18 +763,18 @@ export class Main extends LitElement {
             @breadboardedgechange=${(
               evt: BreadboardUI.Events.EdgeChangeEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo.graphDescriptor, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
                 loader: this.#loader,
               });
@@ -854,29 +806,29 @@ export class Main extends LitElement {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
                 );
                 return;
               }
 
-              const editableGraph = edit(loadInfo.graphDescriptor, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
 
               const { id, x, y } = evt;
-              const existingNode = loadInfo.graphDescriptor.nodes.find(
+              const existingNode = descriptor.nodes.find(
                 (node) => node.id === id
               );
               const metadata = existingNode?.metadata || {};
@@ -898,26 +850,26 @@ export class Main extends LitElement {
                     );
                   }
 
-                  this.#updateLoadInfo(editableGraph.raw());
+                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodemultilayout=${(
               evt: BreadboardUI.Events.NodeMultiLayoutEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn(
                   "Unable to update node metadata; no graph descriptor"
                 );
                 return;
               }
 
-              const graphDescriptor = loadInfo.graphDescriptor;
+              const graphDescriptor = descriptor;
               const editableGraph = edit(graphDescriptor, {
                 kits: this.kits,
               });
@@ -940,7 +892,7 @@ export class Main extends LitElement {
                   });
                 })
               ).then(() => {
-                this.#updateLoadInfo(editableGraph.raw(), false);
+                this.#updateGraph(editableGraph.raw(), false);
               });
             }}
             @breadboardnodecreate=${(
@@ -952,18 +904,18 @@ export class Main extends LitElement {
                 type: nodeType,
               };
 
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo.graphDescriptor, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
               editableGraph.addNode(newNode).then((result) => {
@@ -974,24 +926,24 @@ export class Main extends LitElement {
                   );
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodeupdate=${(
               evt: BreadboardUI.Events.NodeUpdateEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo.graphDescriptor, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
 
@@ -1005,24 +957,24 @@ export class Main extends LitElement {
                     );
                   }
 
-                  this.#updateLoadInfo(editableGraph.raw());
+                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodedelete=${(
               evt: BreadboardUI.Events.NodeDeleteEvent
             ) => {
-              if (!this.loadInfo) {
+              if (!this.graph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const loadInfo = this.loadInfo;
-              if (!loadInfo.graphDescriptor) {
+              const descriptor = this.graph;
+              if (!descriptor) {
                 console.warn("Unable to create node; no graph descriptor");
                 return;
               }
 
-              const editableGraph = edit(loadInfo.graphDescriptor, {
+              const editableGraph = edit(descriptor, {
                 kits: this.kits,
               });
               editableGraph.removeNode(evt.id).then((result) => {
@@ -1033,7 +985,7 @@ export class Main extends LitElement {
                   );
                 }
 
-                this.#updateLoadInfo(editableGraph.raw());
+                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardmessagetraversal=${() => {
@@ -1239,29 +1191,25 @@ export class Main extends LitElement {
     }
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showBoardEditOverlay && this.loadInfo) {
+    if (this.showBoardEditOverlay && this.graph) {
       boardOverlay = html`<bb-board-edit-overlay
-        .boardTitle=${this.loadInfo.title}
-        .boardVersion=${this.loadInfo.version}
-        .boardDescription=${this.loadInfo.description}
+        .boardTitle=${title}
+        .boardVersion=${this.graph?.version}
+        .boardDescription=${this.graph?.description}
         @breadboardboardoverlaydismissed=${() => {
           this.showBoardEditOverlay = false;
         }}
         @breadboardboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
-          if (!this.loadInfo) {
+          if (!this.graph) {
             return;
           }
 
-          this.loadInfo.title = evt.title;
-          this.loadInfo.version = evt.version;
-          this.loadInfo.description = evt.description;
-
-          if (this.loadInfo.graphDescriptor) {
-            this.loadInfo.graphDescriptor.title = evt.title;
-            this.loadInfo.graphDescriptor.version = evt.version;
-            this.loadInfo.graphDescriptor.description = evt.description;
+          if (this.graph) {
+            this.graph.title = evt.title;
+            this.graph.version = evt.version;
+            this.graph.description = evt.description;
           }
 
           this.toast(

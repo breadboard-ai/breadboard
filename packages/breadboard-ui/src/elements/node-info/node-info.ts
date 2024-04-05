@@ -7,9 +7,9 @@
 import { Task } from "@lit/task";
 import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs } from "../../types/types.js";
 import {
   BehaviorSchema,
+  GraphDescriptor,
   GraphLoader,
   InspectableNode,
   InspectablePort,
@@ -31,7 +31,7 @@ import { ArrayEditor } from "./array-editor.js";
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -46,16 +46,16 @@ export class NodeInfo extends LitElement {
   private selectedNodeId: string | null = null;
 
   #formTask = new Task(this, {
-    task: async ([loadInfo, nodeId]) => {
-      if (typeof loadInfo !== "object" || typeof nodeId !== "string") {
+    task: async ([graph, nodeId]) => {
+      if (typeof graph !== "object" || typeof nodeId !== "string") {
         throw new Error("Unsupported information");
       }
 
-      if (!loadInfo || !loadInfo.graphDescriptor) {
+      if (!graph) {
         throw new Error("Unable to load node");
       }
 
-      const descriptor = loadInfo.graphDescriptor;
+      const descriptor = graph;
       const breadboardGraph = inspect(descriptor, {
         kits: this.kits,
         loader: this.loader || undefined,
@@ -74,7 +74,7 @@ export class NodeInfo extends LitElement {
 
       return { node, ports, configuration };
     },
-    args: () => [this.loadInfo, this.selectedNodeId],
+    args: () => [this.graph, this.selectedNodeId],
   });
 
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -317,11 +317,11 @@ export class NodeInfo extends LitElement {
       return;
     }
 
-    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+    if (!this.graph) {
       return;
     }
 
-    const descriptor = this.loadInfo.graphDescriptor;
+    const descriptor = this.graph;
     const breadboardGraph = inspect(descriptor, {
       kits: this.kits,
       loader: this.loader || undefined,
@@ -410,7 +410,7 @@ export class NodeInfo extends LitElement {
 
   protected shouldUpdate(
     changedProperties:
-      | PropertyValueMap<{ loadInfo: LoadArgs | null }>
+      | PropertyValueMap<{ graph: GraphDescriptor | null }>
       | Map<PropertyKey, unknown>
   ): boolean {
     const lastSchemaVersion = this.#lastSchemaVersion;
@@ -421,9 +421,9 @@ export class NodeInfo extends LitElement {
     // Changes to the load info don't necessarily qualify for a re-render. In
     // particular we don't want to overwrite the existing form, so we check here
     // before we go ahead and render.
-    if (changedProperties.has("loadInfo")) {
+    if (changedProperties.has("graph")) {
       // We have gone from no info to some - render.
-      if (changedProperties.get("loadInfo") === null) {
+      if (changedProperties.get("graph") === null) {
         return true;
       }
 
@@ -449,11 +449,7 @@ export class NodeInfo extends LitElement {
   }
 
   render() {
-    if (
-      !this.loadInfo ||
-      !this.loadInfo.graphDescriptor ||
-      !this.selectedNodeId
-    ) {
+    if (!this.graph || !this.selectedNodeId) {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
 
