@@ -382,3 +382,32 @@ test("editor API does not allow connecting a specific output port to a star port
   const result = await graph.canAddEdge(edgeSpec);
   t.false(result.success);
 });
+
+test("editor API correctly works with no subgraphs", (t) => {
+  const graph = testEditGraph();
+
+  const raw = graph.raw();
+  t.falsy(raw.graphs);
+});
+
+test("editor API correctly allows adding, removing, replacing subgraphs", (t) => {
+  const graph = testEditGraph();
+  const subgraph = testEditGraph();
+
+  t.true(graph.addGraph("foo", subgraph).success);
+
+  t.truthy(graph.raw().graphs);
+
+  t.false(graph.addGraph("foo", subgraph).success);
+
+  t.true(graph.removeGraph("foo").success);
+  t.false(graph.removeGraph("foo").success);
+
+  t.falsy(graph.raw().graphs);
+
+  t.false(graph.replaceGraph("foo", subgraph).success);
+  t.true(graph.addGraph("foo", subgraph).success);
+  t.true(graph.replaceGraph("foo", subgraph).success);
+
+  t.truthy(graph.raw().graphs);
+});

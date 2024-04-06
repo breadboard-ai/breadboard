@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "../inspector/types.js";
+import {
+  GraphIdentifier,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
+import {
+  InspectableGraph,
+  InspectableGraphOptions,
+} from "../inspector/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -26,6 +32,11 @@ export type EditableGraph = {
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  getGraph(id: GraphIdentifier): EditableGraph | null;
+  addGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  replaceGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  removeGraph(id: GraphIdentifier): EditResult;
 
   /**
    * Returns whether the edge can be changed from `from` to `to`.
