@@ -15,4 +15,4 @@ export const editGraph = (
   return new Graph(graph, options);
 };
 
-export { editBlank } from "./blank.js";
+export { blank } from "./blank.js";

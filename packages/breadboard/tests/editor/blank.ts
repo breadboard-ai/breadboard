@@ -5,13 +5,15 @@
  */
 
 import test from "ava";
-import { editBlank } from "../../src/index.js";
+import { blank, inspect } from "../../src/index.js";
 
 test("importBlank creates a nice blank board", async (t) => {
-  const blank = await editBlank();
-  t.truthy(blank);
+  const b = blank();
+  t.truthy(b);
 
-  const inspectable = blank.inspect();
+  // Let's inspect it!
+
+  const inspectable = inspect(b);
 
   const input = inspectable.nodeById("input");
   t.truthy(input);

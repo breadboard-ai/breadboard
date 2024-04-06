@@ -5,16 +5,6 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { Graph } from "./graph.js";
-import { EditableGraph, EditableGraphOptions } from "./types.js";
-
-const BLANK_GRAPH: GraphDescriptor = {
-  title: "Blank board",
-  description: "A blank board. Use it as a starting point for your creations.",
-  version: "0.0.1",
-  nodes: [],
-  edges: [],
-};
 
 const CONFIGURATION = {
   schema: {
@@ -28,21 +18,20 @@ const CONFIGURATION = {
   },
 };
 
-const config = () => structuredClone(CONFIGURATION);
+const BLANK_GRAPH: GraphDescriptor = {
+  title: "Blank board",
+  description: "A blank board. Use it as a starting point for your creations.",
+  version: "0.0.1",
+  nodes: [
+    { type: "input", id: "input", configuration: CONFIGURATION },
+    { type: "output", id: "output", configuration: CONFIGURATION },
+  ],
+  edges: [{ from: "input", out: "text", to: "output", in: "text" }],
+};
 
 /**
- * Creates an `EditableGraph` instance of a blank graph.
+ * Creates a `GraphDescriptor` of a blank graph.
  */
-export const editBlank = async (
-  options: EditableGraphOptions = {}
-): Promise<EditableGraph> => {
-  const graph = new Graph(structuredClone(BLANK_GRAPH), options);
-  await graph.addNode({ id: "input", type: "input", configuration: config() });
-  await graph.addNode({
-    id: "output",
-    type: "output",
-    configuration: config(),
-  });
-  await graph.addEdge({ from: "input", out: "text", to: "output", in: "text" });
-  return graph;
+export const blank = (): GraphDescriptor => {
+  return structuredClone(BLANK_GRAPH);
 };
