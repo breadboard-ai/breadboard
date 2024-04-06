@@ -77,9 +77,25 @@ There are five edit operations that we can perform on the graph:
 
 - `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
 
+## Starting a new graph
+
+If we want to start a brand-new graph, we can use the handy `blank` method, provided by the Editor API:
+
+```ts
+import { blank } from "google-labs/breadboard";
+
+// Returns a new `GraphDescriptor` instance
+// of a pre-built blank graph.
+const myNewGraph = blank();
+```
+
+The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
+
+![Blank graph diagram](/breadboard/static/images/editor-blank.png)
+
 ## Editing subgraphs
 
-Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace, and retrieve the `EditableGraph` instances for subgraphs:
+Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace subgraphs and manages the `EditableGraph` instances for subgraphs.
 
 ```ts
 // Returns an `EditableGraph` instance or `null` if not found.
@@ -90,16 +106,29 @@ if (subgraph) {
 }
 
 // Attempts to add a new subgraph and returns `EditResult`.
-// Will fail if a subgraph with this id already exists.
-graph.addGraph("bar", someEditableGraph);
+// Returns null if a subgraph with this id already exists,
+// and an `EditableGraph` instance otherwise.
+const newSubgraph = graph.addGraph("bar", blank());
+if (!newSubgraph) {
+  console.log("A graph with id 'bar' already exists.");
+}
 
 // Attempts to remove the subgraph and returns `EditResult`.
 // Will fail if a subgraph with this id does not exist.
-graph.removeGraph("bar");
+const result = graph.removeGraph("bar");
+if (result.success) {
+  console.log("Yay, removed subgraph 'bar'.");
+} else {
+  console.log("The subgraph 'bar' does not exist".)
+}
 
 // Attempts to replace a subgraph and returns `EditResult`.
-// Will fail if a subgraph with this id does not exist.
-graph.replaceGraph("foo", someEditableGraph);
+// Returns null if a subgraph with this id does not exist,
+// and an `EditableGraph` instance of the new subgraph otherwise.
+const replaced = graph.replaceGraph("foo", blank());
+if (!replaced) {
+  console.log("A graph with id 'foo' does not exist.")
+}
 ```
 
 ## Accessing the graph
@@ -125,19 +154,3 @@ const inspectableGraph = graph.inspect();
 ```
 
 In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditableGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
-
-## Starting a new graph
-
-If we want to start a brand-new graph, we can use the handy `blank` method, provided by the Editor API:
-
-```ts
-import { blank } from "google-labs/breadboard";
-
-// Returns a new `GraphDescriptor` instance
-// of a pre-built blank graph.
-const myNewGraph = blank();
-```
-
-The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
-
-![Blank graph diagram](/breadboard/static/images/editor-blank.png)
