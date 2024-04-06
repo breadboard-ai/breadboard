@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
@@ -22,14 +16,7 @@ import {
   EditableNodeSpec,
 } from "./types.js";
 
-export const editGraph = (
-  graph: GraphDescriptor,
-  options: EditableGraphOptions = {}
-): EditableGraph => {
-  return new Graph(graph, options);
-};
-
-class Graph implements EditableGraph {
+export class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #validTypes?: Set<string>;

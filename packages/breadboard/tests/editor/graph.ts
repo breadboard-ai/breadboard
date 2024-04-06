@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { editGraph } from "../../src/editor/graph.js";
+import { editGraph } from "../../src/editor/index.js";
 import { NodeHandler } from "../../src/types.js";
 
 const testEditGraph = () => {
