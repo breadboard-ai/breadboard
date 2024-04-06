@@ -9,8 +9,8 @@ import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
+  blank,
 } from "@google-labs/breadboard";
-import { BLANK_BOARD } from "./blank-board";
 import { GraphProviderStore } from "./types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
@@ -359,7 +359,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     await this.#refreshItems(location);
 
     // Now populate it.
-    await this.save(url, BLANK_BOARD);
+    await this.save(url, blank());
     return { result: true };
   }
 

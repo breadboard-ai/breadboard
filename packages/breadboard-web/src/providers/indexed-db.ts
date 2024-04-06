@@ -8,10 +8,10 @@ import * as idb from "idb";
 import {
   GraphProvider,
   GraphProviderCapabilities,
+  blank,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphDescriptor } from "../../../schema/dist/graph";
-import { BLANK_BOARD } from "./blank-board";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
 interface GraphDBStore {
@@ -159,7 +159,7 @@ export class IDBGraphProvider implements GraphProvider {
       return { result: false, error: "Unable to create: board already exists" };
     }
 
-    return this.save(url, BLANK_BOARD);
+    return this.save(url, blank());
   }
 
   async save(
@@ -248,8 +248,9 @@ export class IDBGraphProvider implements GraphProvider {
 
     let graphs = await db.getAll("graphs");
     if (graphs.length === 0 && store.name === DEFAULT_STORE.name) {
-      BLANK_BOARD.url = this.createURL(DEFAULT_STORE.name, "blank.json");
-      await db.put("graphs", BLANK_BOARD);
+      const blankBoard = blank();
+      blankBoard.url = this.createURL(DEFAULT_STORE.name, "blank.json");
+      await db.put("graphs", blankBoard);
       graphs = await db.getAll("graphs");
     }
 
