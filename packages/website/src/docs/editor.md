@@ -77,6 +77,31 @@ There are five edit operations that we can perform on the graph:
 
 - `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
 
+## Editing subgraphs
+
+Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace, and retrieve the `EditableGraph` instances for subgraphs:
+
+```ts
+// Returns an `EditableGraph` instance or `null` if not found.
+const subgraph = graph.getGraph("foo");
+if (subgraph) {
+  // Edit the subgraph
+  // ...
+}
+
+// Attempts to add a new subgraph and returns `EditResult`.
+// Will fail if a subgraph with this id already exists.
+graph.addGraph("bar", someEditableGraph);
+
+// Attempts to remove the subgraph and returns `EditResult`.
+// Will fail if a subgraph with this id does not exist.
+graph.removeGraph("bar");
+
+// Attempts to replace a subgraph and returns `EditResult`.
+// Will fail if a subgraph with this id does not exist.
+graph.replaceGraph("foo", someEditableGraph);
+```
+
 ## Accessing the graph
 
 To access the resulting graph, use the `raw()` method on the `EditableGraph` instance.
@@ -86,6 +111,8 @@ const graph = edit(bgl, { kits });
 await graph.addNode({ id: "foo", type: "bar" });
 const newBgl = graph.raw();
 ```
+
+The `raw()` method will correctly serialize all of graph's subgraph and reflect their edits.
 
 ## Inspecting the graph
 
