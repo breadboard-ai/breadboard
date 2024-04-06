@@ -293,17 +293,15 @@ export class Graph implements EditableGraph {
     return this.#graphs[id] || null;
   }
 
-  addGraph(id: GraphIdentifier, graph: EditableGraph): EditResult {
+  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null {
     if (this.#graphs[id]) {
-      return {
-        success: false,
-        error: `Subgraph with id "${id}" already exists`,
-      };
+      return null;
     }
 
-    this.#graphs[id] = graph;
+    const editable = new Graph(graph, this.#options);
+    this.#graphs[id] = editable;
 
-    return { success: true };
+    return editable;
   }
 
   removeGraph(id: GraphIdentifier): EditResult {
@@ -317,16 +315,18 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  replaceGraph(id: GraphIdentifier, graph: EditableGraph): EditResult {
+  replaceGraph(
+    id: GraphIdentifier,
+    graph: GraphDescriptor
+  ): EditableGraph | null {
     if (!this.#graphs[id]) {
-      return {
-        success: false,
-        error: `Subgraph with id "${id}" does not exist`,
-      };
+      return null;
     }
 
-    this.#graphs[id] = graph;
-    return { success: true };
+    const editable = new Graph(graph, this.#options);
+    this.#graphs[id] = editable;
+
+    return editable;
   }
 
   raw() {

@@ -39,19 +39,24 @@ export type EditableGraph = {
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
   /**
-   * If does not exist already, adds a subgraph with the specified id. Fails if
-   * the subgraph with this id already exists.
+   * If does not exist already, adds a subgraph with the specified id.
+   * Fails (returns null) if the subgraph with this id already exists.
    * @param id - id of the new subgraph
    * @param graph - the subgraph to add
+   * @returns - the `EditableGraph` instance of the subgraph
    */
-  addGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null;
   /**
-   * Replaces the subgraph with the specified id. Fails if the subgraph with
-   * this id does not already exist.
+   * Replaces the subgraph with the specified id. Fails (returns null)
+   * if the subgraph with this id does not already exist.
    * @param id - id of the subgraph being replaced
    * @param graph - the subgraph with which to replace the existing subgraph
+   * @returns - the `EditableGraph` instance of the newly replaced subgraph.
    */
-  replaceGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  replaceGraph(
+    id: GraphIdentifier,
+    graph: GraphDescriptor
+  ): EditableGraph | null;
   /**
    * Removes the subgraph with the specified id. Fails if the subgraph does not
    * exist.
