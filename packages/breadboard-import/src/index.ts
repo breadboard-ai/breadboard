@@ -3,7 +3,7 @@ import { loadOpenAPI } from "./loader.js";
 import { isOpenAPI } from "./gates.js";
 import { generateAPISpecs } from "./generateAPISpecs.js";
 
-import {
+import type {
   APISpec,
   AtLeastV3ReferenceObject,
   ExcludedParameter,
@@ -11,6 +11,9 @@ import {
   AtLeastV3MediaObjectMap,
   AtLeastV3SecuritySchemeObject,
 } from "./types.js";
+
+export type * from "./types.js";
+
 export class OpenAPIBoardBuilder {
   #url: string;
   #board: Board | undefined;

@@ -27,6 +27,7 @@
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
         "./packages/breadboard-server:build",
+        "./packages/breadboard-import:build",
         "./packages/breadboard-ui:build",
         "./packages/breadboard-extension:build",
         "./packages/breadboard-web:build",
@@ -58,6 +59,7 @@
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
         "./packages/breadboard-server:test",
+        "./packages/breadboard-import:test",
         "./packages/breadboard-ui:test",
         "./packages/build:test",
         "./packages/cloud-function:test",
@@ -80,6 +82,7 @@
       "dependencies": [
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
+        "./packages/breadboard-import:lint",
         "./packages/breadboard-server:lint",
         "./packages/breadboard-extension:lint",
         "./packages/breadboard-ui:lint",
