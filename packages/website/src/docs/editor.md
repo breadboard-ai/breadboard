@@ -125,3 +125,19 @@ const inspectableGraph = graph.inspect();
 ```
 
 In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditableGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
+
+## Starting a new graph
+
+If we want to start a brand-new graph, we can use the handy `blank` method, provided by the Editor API:
+
+```ts
+import { blank } from "google-labs/breadboard";
+
+// Returns a new `GraphDescriptor` instance
+// of a pre-built blank graph.
+const myNewGraph = blank();
+```
+
+The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
+
+![Blank graph diagram](/breadboard/static/images/editor-blank.png)
