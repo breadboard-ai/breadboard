@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphIdentifier,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {
@@ -121,6 +124,8 @@ export type InspectableEdge = {
   in: string;
 };
 
+export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;
+
 export type InspectableGraph = {
   /**
    * Returns the underlying `GraphDescriptor` object.
@@ -179,6 +184,10 @@ export type InspectableGraph = {
    * output of the `NodeDescriberFunction`.
    */
   describe(): Promise<NodeDescriberResult>;
+  /**
+   * Returns the subgraphs that are embedded in this graph.
+   */
+  graphs(): InspectableSubgraphs;
 };
 
 /**
