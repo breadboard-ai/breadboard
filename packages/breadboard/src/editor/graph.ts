@@ -180,10 +180,13 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async addEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
+  async addEdge(
+    spec: EditableEdgeSpec,
+    strict: boolean = false
+  ): Promise<EdgeEditResult> {
     const can = await this.canAddEdge(spec);
     if (!can.success) {
-      if (!can.alternative) return can;
+      if (!can.alternative || strict) return can;
       spec = can.alternative;
     }
     spec = fixUpStarEdge(spec);

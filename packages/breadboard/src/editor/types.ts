@@ -28,7 +28,7 @@ export type EditableGraph = {
   removeNode(id: NodeIdentifier): Promise<EditResult>;
 
   canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
-  addEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
+  addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
