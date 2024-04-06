@@ -9,6 +9,7 @@ import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
   GraphDescriptor,
+  GraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -33,9 +34,16 @@ class Graph implements EditableGraph {
   #inspector: InspectableGraphWithStore;
   #validTypes?: Set<string>;
   #graph: GraphDescriptor;
+  #graphs: Record<GraphIdentifier, EditableGraph>;
 
   constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
     this.#graph = graph;
+    this.#graphs = Object.fromEntries(
+      Object.entries(graph.graphs || {}).map(([id, graph]) => [
+        id,
+        new Graph(graph, options),
+      ])
+    );
     this.#options = options;
     this.#inspector = inspectableGraph(this.#graph, options);
   }
@@ -294,8 +302,56 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
+  getGraph(id: GraphIdentifier) {
+    return this.#graphs[id] || null;
+  }
+
+  addGraph(id: GraphIdentifier, graph: EditableGraph): EditResult {
+    if (this.#graphs[id]) {
+      return {
+        success: false,
+        error: `Subgraph with id "${id}" already exists`,
+      };
+    }
+
+    this.#graphs[id] = graph;
+
+    return { success: true };
+  }
+
+  removeGraph(id: GraphIdentifier): EditResult {
+    if (!this.#graphs[id]) {
+      return {
+        success: false,
+        error: `Subgraph with id "${id}" does not exist`,
+      };
+    }
+    delete this.#graphs[id];
+    return { success: true };
+  }
+
+  replaceGraph(id: GraphIdentifier, graph: EditableGraph): EditResult {
+    if (!this.#graphs[id]) {
+      return {
+        success: false,
+        error: `Subgraph with id "${id}" does not exist`,
+      };
+    }
+
+    this.#graphs[id] = graph;
+    return { success: true };
+  }
+
   raw() {
-    return this.#graph;
+    const entries = Object.entries(this.#graphs);
+    if (entries.length === 0) {
+      if ("graphs" in this.#graph) delete this.#graph["graphs"];
+      return this.#graph;
+    }
+    const graphs = Object.fromEntries(
+      entries.map(([id, graph]) => [id, graph.raw()])
+    );
+    return { ...this.#graph, graphs };
   }
 
   inspect() {

@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "../inspector/types.js";
+import {
+  GraphIdentifier,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
+import {
+  InspectableGraph,
+  InspectableGraphOptions,
+} from "../inspector/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -26,6 +32,32 @@ export type EditableGraph = {
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  /**
+   * Retrieves a subgraph of this graph.
+   * @param id -- id of the subgraph
+   */
+  getGraph(id: GraphIdentifier): EditableGraph | null;
+  /**
+   * If does not exist already, adds a subgraph with the specified id. Fails if
+   * the subgraph with this id already exists.
+   * @param id - id of the new subgraph
+   * @param graph - the subgraph to add
+   */
+  addGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  /**
+   * Replaces the subgraph with the specified id. Fails if the subgraph with
+   * this id does not already exist.
+   * @param id - id of the subgraph being replaced
+   * @param graph - the subgraph with which to replace the existing subgraph
+   */
+  replaceGraph(id: GraphIdentifier, graph: EditableGraph): EditResult;
+  /**
+   * Removes the subgraph with the specified id. Fails if the subgraph does not
+   * exist.
+   * @param id - id of the subgraph to remove
+   */
+  removeGraph(id: GraphIdentifier): EditResult;
 
   /**
    * Returns whether the edge can be changed from `from` to `to`.
