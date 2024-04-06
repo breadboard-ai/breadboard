@@ -127,7 +127,7 @@ if (result.success) {
 // and an `EditableGraph` instance of the new subgraph otherwise.
 const replaced = graph.replaceGraph("foo", blank());
 if (!replaced) {
-  console.log("A graph with id 'foo' already exists.")
+  console.log("A graph with id 'foo' does not exist.")
 }
 ```
 
