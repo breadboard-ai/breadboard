@@ -139,3 +139,5 @@ const myNewGraph = blank();
 ```
 
 The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
+
+![Blank graph diagram](/breadboard/static/images/editor-blank.png)
