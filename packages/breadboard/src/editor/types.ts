@@ -21,6 +21,11 @@ import {
 } from "../types.js";
 
 export type EditableGraph = {
+  /**
+   * Returns the current version of the graph.
+   */
+  version(): number;
+
   canAddNode(spec: EditableNodeSpec): Promise<EditResult>;
   addNode(spec: EditableNodeSpec): Promise<EditResult>;
 
@@ -100,7 +105,12 @@ export type EditableGraph = {
   inspect(): InspectableGraph;
 };
 
-export type EditableGraphOptions = InspectableGraphOptions;
+export type EditableGraphOptions = InspectableGraphOptions & {
+  /**
+   * The initial version of the graph
+   */
+  version?: number;
+};
 
 export type EditableNodeSpec = NodeDescriptor;
 

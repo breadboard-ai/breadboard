@@ -18,6 +18,7 @@ import {
 } from "./types.js";
 
 export class Graph implements EditableGraph {
+  #version = 0;
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #validTypes?: Set<string>;
@@ -33,6 +34,7 @@ export class Graph implements EditableGraph {
       ])
     );
     this.#options = options;
+    this.#version = options.version || 0;
     this.#inspector = inspectableGraph(this.#graph, options);
   }
 
@@ -61,6 +63,10 @@ export class Graph implements EditableGraph {
     return (
       a.from === b.from && a.to === b.to && a.out === b.out && a.in === b.in
     );
+  }
+
+  version() {
+    return this.#version;
   }
 
   async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
