@@ -440,6 +440,7 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
         in: "out",
       })
     );
+    t.is(graph.version(), 1);
   }
   {
     const graph = testEditGraph();
@@ -453,5 +454,6 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
         in: "out",
       })
     );
+    t.is(graph.version(), 0);
   }
 });

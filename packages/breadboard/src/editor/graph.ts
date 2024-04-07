@@ -65,6 +65,12 @@ export class Graph implements EditableGraph {
     );
   }
 
+  #updateGraphIdentity() {
+    this.#version++;
+    this.#graph = { ...this.#graph };
+    this.#inspector.updateGraphIdentity(this.#graph);
+  }
+
   version() {
     return this.#version;
   }
@@ -95,6 +101,7 @@ export class Graph implements EditableGraph {
 
     this.#graph.nodes.push(spec);
     this.#inspector.nodeStore.add(spec);
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -124,6 +131,7 @@ export class Graph implements EditableGraph {
     // Remove the node from the graph.
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
     this.#inspector.nodeStore.remove(id);
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -198,6 +206,7 @@ export class Graph implements EditableGraph {
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -219,6 +228,7 @@ export class Graph implements EditableGraph {
     const index = this.#findEdgeIndex(spec);
     const edge = edges.splice(index, 1)[0];
     this.#inspector.edgeStore.remove(edge);
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -253,6 +263,7 @@ export class Graph implements EditableGraph {
     edge.out = to.out;
     edge.to = to.to;
     edge.in = to.in;
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -277,6 +288,7 @@ export class Graph implements EditableGraph {
     if (node) {
       node.descriptor.configuration = configuration;
     }
+    this.#updateGraphIdentity();
     return { success: true };
   }
 
@@ -301,6 +313,7 @@ export class Graph implements EditableGraph {
     if (node) {
       node.descriptor.metadata = metadata;
     }
+    this.#updateGraphIdentity();
     return { success: true };
   }
 

@@ -366,6 +366,7 @@ export type InspectableNodeType = {
  * `InspectableGraph`.
  */
 export type GraphStoreMutator = {
+  updateGraphIdentity(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };
