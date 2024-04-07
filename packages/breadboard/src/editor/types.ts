@@ -88,8 +88,9 @@ export type EditableGraph = {
    */
   canChangeEdge(
     from: EditableEdgeSpec,
-    to: EditableEdgeSpec
-  ): Promise<EditResult>;
+    to: EditableEdgeSpec,
+    strict?: boolean
+  ): Promise<EdgeEditResult>;
   /**
    * Changes the edge from `from` to `to`, if it can be changed.
    * This operation does not change the identity of the edge, but rather

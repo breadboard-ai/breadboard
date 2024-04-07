@@ -278,7 +278,7 @@ export class Graph implements EditableGraph {
   async canChangeEdge(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec
-  ): Promise<EditResult> {
+  ): Promise<EdgeEditResult> {
     if (this.#edgesEqual(from, to)) {
       return { success: true };
     }
@@ -291,10 +291,14 @@ export class Graph implements EditableGraph {
 
   async changeEdge(
     from: EditableEdgeSpec,
-    to: EditableEdgeSpec
+    to: EditableEdgeSpec,
+    strict: boolean = false
   ): Promise<EditResult> {
     const can = await this.canChangeEdge(from, to);
-    if (!can.success) return can;
+    if (!can.success) {
+      if (!can.alternative || strict) return can;
+      to = can.alternative;
+    }
     if (this.#edgesEqual(from, to)) {
       return { success: true };
     }
