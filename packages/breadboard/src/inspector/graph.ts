@@ -198,7 +198,7 @@ class Graph implements InspectableGraphWithStore {
     return this.#edges;
   }
 
-  updateGraphIdentity(graph: GraphDescriptor): void {
+  updateGraph(graph: GraphDescriptor): void {
     this.#graph = graph;
   }
 

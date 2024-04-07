@@ -398,6 +398,8 @@ test("editor API correctly allows adding, removing, replacing subgraphs", (t) =>
 
   t.truthy(graph.raw().graphs);
 
+  t.is(graph.version(), 1);
+
   t.assert(graph.addGraph("foo", subgraph) === null);
 
   t.true(graph.removeGraph("foo").success);
@@ -405,9 +407,19 @@ test("editor API correctly allows adding, removing, replacing subgraphs", (t) =>
 
   t.falsy(graph.raw().graphs);
 
+  t.is(graph.version(), 2);
+
   t.assert(graph.replaceGraph("foo", subgraph) === null);
+
+  t.is(graph.version(), 2);
+
   t.assert(graph.addGraph("foo", subgraph) !== null);
+
+  t.is(graph.version(), 3);
+
   t.assert(graph.replaceGraph("foo", subgraph) !== null);
+
+  t.is(graph.version(), 4);
 
   t.truthy(graph.raw().graphs);
 });

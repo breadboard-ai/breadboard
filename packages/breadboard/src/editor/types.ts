@@ -26,6 +26,13 @@ export type EditableGraph = {
    */
   version(): number;
 
+  /**
+   * Returns parent graph, if any.
+   * This value will be non-null only for graphs (subgraphs) that are embedded
+   * within a graph.
+   */
+  parent(): EditableGraph | null;
+
   canAddNode(spec: EditableNodeSpec): Promise<EditResult>;
   addNode(spec: EditableNodeSpec): Promise<EditResult>;
 
