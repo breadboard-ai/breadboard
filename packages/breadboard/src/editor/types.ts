@@ -23,6 +23,7 @@ import {
 export type EditableGraph = {
   /**
    * Returns the current version of the graph.
+   * @throws when used on an embedded subgraph.
    */
   version(): number;
 
@@ -48,6 +49,7 @@ export type EditableGraph = {
   /**
    * Retrieves a subgraph of this graph.
    * @param id -- id of the subgraph
+   * @throws when used on an embedded subgraph.
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
   /**
@@ -56,6 +58,7 @@ export type EditableGraph = {
    * @param id - id of the new subgraph
    * @param graph - the subgraph to add
    * @returns - the `EditableGraph` instance of the subgraph
+   * @throws when used on an embedded subgraph.
    */
   addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null;
   /**
@@ -64,6 +67,7 @@ export type EditableGraph = {
    * @param id - id of the subgraph being replaced
    * @param graph - the subgraph with which to replace the existing subgraph
    * @returns - the `EditableGraph` instance of the newly replaced subgraph.
+   * @throws when used on an embedded subgraph.
    */
   replaceGraph(
     id: GraphIdentifier,
@@ -73,6 +77,7 @@ export type EditableGraph = {
    * Removes the subgraph with the specified id. Fails if the subgraph does not
    * exist.
    * @param id - id of the subgraph to remove
+   * @throws when used on an embedded subgraph.
    */
   removeGraph(id: GraphIdentifier): EditResult;
 
