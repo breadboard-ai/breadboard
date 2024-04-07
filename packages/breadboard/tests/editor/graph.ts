@@ -411,3 +411,47 @@ test("editor API correctly allows adding, removing, replacing subgraphs", (t) =>
 
   t.truthy(graph.raw().graphs);
 });
+
+test("editor API allows using 'star` ports as drop zones", async (t) => {
+  const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
+  {
+    const graph = testEditGraph();
+    const result = await graph.canAddEdge(edgeSpec);
+    if (result.success) {
+      t.fail();
+    } else {
+      t.deepEqual(result.alternative, {
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      });
+    }
+  }
+  {
+    const graph = testEditGraph();
+    const result = await graph.addEdge(edgeSpec);
+    t.true(result.success);
+    t.true(
+      graph.inspect().hasEdge({
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      })
+    );
+  }
+  {
+    const graph = testEditGraph();
+    const result = await graph.addEdge(edgeSpec, true);
+    t.false(result.success);
+    t.false(
+      graph.inspect().hasEdge({
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      })
+    );
+  }
+});
