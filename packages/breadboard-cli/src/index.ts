@@ -137,4 +137,4 @@ program
 program.parse();
 
 // Allow developers to integrate with the CLI
-export { debug, mermaid, makeGraph, run };
+export { debug, mermaid, makeGraph, run, importGraph };
