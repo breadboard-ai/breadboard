@@ -9,8 +9,8 @@
       "path": "packages/breadboard-cli",
     },
     {
-      "name": "breadboard-library",
-      "path": "packages/breadboard-library",
+      "name": "breadboard-import",
+      "path": "packages/breadboard-import",
     },
     {
       "name": "breadboard-extension",
