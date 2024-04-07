@@ -77,6 +77,106 @@ There are five edit operations that we can perform on the graph:
 
 - `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
 
+### Editing `star` edges and alternatives
+
+Connecting a `star` port and a named port results in an invalid graph topology and is disallowed by the Editor API. So, when we try to do something like this:
+
+```ts
+const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
+const result = await graph.canAddEdge(edgeSpec);
+```
+
+We will get a result signifying a failure:
+
+```ts
+// Reports `false`
+console.log(result.success);
+```
+
+However, the Editor API will helpfully tweak the edge a little bit and provide an `alternative` property in the result:
+
+```ts
+// Reports `{ from: "node-1", out: "text", to: "node-2", in: "text" }`.
+// Note that it replaced the `*` with `text`.
+console.log(result.alternative);
+```
+
+This alternative will be guaranteed to be a valid edge and will be a direct conversion to an edge between two named ports: the Editor API will use the non-`star` end of the edge as the port name for the `star` end. For instance, in example above, it replaced
+the `*` input port with the `text` input port.
+
+When such alternative can't be created (like when an edge like this already exist, or the node doesn't allow a port by this name), the result will have no `alternative` property.
+
+By default, the `addEdge` method will use this alternative to add an edge, assuming that the user wanted to make a connection between to named ports:
+
+```ts
+const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
+// Will add alternative edge:
+// { from: "node-1", out: "text", to: "node-2", in: "text" }
+const result = await graph.addEdge(edgeSpec);
+```
+
+In cases when we don't want the Editor API to make this assumption, we need to supply the optional boolean argument in the `addEdge` method. When `true` the `addEdge` will be more strict about making assumptions and as a result, will fail to add such an edge:
+
+```ts
+const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
+// Will not add an alternative edge.
+const result = await graph.addEdge(edgeSpec, false);
+```
+
+## Starting a new graph
+
+If we want to start a brand-new graph, we can use the handy `blank` method, provided by the Editor API:
+
+```ts
+import { blank } from "google-labs/breadboard";
+
+// Returns a new `GraphDescriptor` instance
+// of a pre-built blank graph.
+const myNewGraph = blank();
+```
+
+The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
+
+![Blank graph diagram](/breadboard/static/images/editor-blank.png)
+
+## Editing subgraphs
+
+Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace subgraphs and manages the `EditableGraph` instances for subgraphs.
+
+```ts
+// Returns an `EditableGraph` instance or `null` if not found.
+const subgraph = graph.getGraph("foo");
+if (subgraph) {
+  // Edit the subgraph
+  // ...
+}
+
+// Attempts to add a new subgraph and returns `EditResult`.
+// Returns null if a subgraph with this id already exists,
+// and an `EditableGraph` instance otherwise.
+const newSubgraph = graph.addGraph("bar", blank());
+if (!newSubgraph) {
+  console.log("A graph with id 'bar' already exists.");
+}
+
+// Attempts to remove the subgraph and returns `EditResult`.
+// Will fail if a subgraph with this id does not exist.
+const result = graph.removeGraph("bar");
+if (result.success) {
+  console.log("Yay, removed subgraph 'bar'.");
+} else {
+  console.log("The subgraph 'bar' does not exist".)
+}
+
+// Attempts to replace a subgraph and returns `EditResult`.
+// Returns null if a subgraph with this id does not exist,
+// and an `EditableGraph` instance of the new subgraph otherwise.
+const replaced = graph.replaceGraph("foo", blank());
+if (!replaced) {
+  console.log("A graph with id 'foo' does not exist.")
+}
+```
+
 ## Accessing the graph
 
 To access the resulting graph, use the `raw()` method on the `EditableGraph` instance.
@@ -86,6 +186,8 @@ const graph = edit(bgl, { kits });
 await graph.addNode({ id: "foo", type: "bar" });
 const newBgl = graph.raw();
 ```
+
+The `raw()` method will correctly serialize all of graph's subgraph and reflect their edits.
 
 ## Inspecting the graph
 

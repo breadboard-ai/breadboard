@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraph, InspectableGraphOptions } from "../inspector/types.js";
+import {
+  GraphIdentifier,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
+import {
+  InspectableGraph,
+  InspectableGraphOptions,
+} from "../inspector/types.js";
 import {
   Edge,
   GraphDescriptor,
@@ -21,11 +27,42 @@ export type EditableGraph = {
   canRemoveNode(id: NodeIdentifier): Promise<EditResult>;
   removeNode(id: NodeIdentifier): Promise<EditResult>;
 
-  canAddEdge(spec: EditableEdgeSpec): Promise<EditResult>;
-  addEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+  canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
+  addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  /**
+   * Retrieves a subgraph of this graph.
+   * @param id -- id of the subgraph
+   */
+  getGraph(id: GraphIdentifier): EditableGraph | null;
+  /**
+   * If does not exist already, adds a subgraph with the specified id.
+   * Fails (returns null) if the subgraph with this id already exists.
+   * @param id - id of the new subgraph
+   * @param graph - the subgraph to add
+   * @returns - the `EditableGraph` instance of the subgraph
+   */
+  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null;
+  /**
+   * Replaces the subgraph with the specified id. Fails (returns null)
+   * if the subgraph with this id does not already exist.
+   * @param id - id of the subgraph being replaced
+   * @param graph - the subgraph with which to replace the existing subgraph
+   * @returns - the `EditableGraph` instance of the newly replaced subgraph.
+   */
+  replaceGraph(
+    id: GraphIdentifier,
+    graph: GraphDescriptor
+  ): EditableGraph | null;
+  /**
+   * Removes the subgraph with the specified id. Fails if the subgraph does not
+   * exist.
+   * @param id - id of the subgraph to remove
+   */
+  removeGraph(id: GraphIdentifier): EditResult;
 
   /**
    * Returns whether the edge can be changed from `from` to `to`.
@@ -74,6 +111,16 @@ export type EditResult =
     }
   | {
       success: true;
+    };
+
+export type EdgeEditResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+      alternative?: EditableEdgeSpec;
     };
 
 export type EditableEdgeSpec = Edge;

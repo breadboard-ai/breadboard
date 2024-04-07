@@ -71,7 +71,7 @@ export { PortStatus } from "./inspector/types.js";
  * The Editor API.
  */
 export type * from "./editor/types.js";
-export { editGraph as edit } from "./editor/graph.js";
+export { editGraph as edit, blank } from "./editor/index.js";
 
 /**
  * The Loader API

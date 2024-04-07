@@ -5,6 +5,7 @@
  */
 
 import type { Input, InputWithDefault } from "../board/input.js";
+import type { Placeholder } from "../board/placeholder.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
@@ -178,9 +179,5 @@ export type ValueOrOutputPort<T extends JsonSerializable> =
   | T
   | OutputPortReference<T>
   | Input<T>
-  | InputWithDefault<T>;
-
-// export type InputValue<T extends JsonSerializable> =
-//   | { raw: T }
-//   | { port: OutputPortReference<T> }
-//   | { input: InputWithoutDefault<T> | InputWithDefault<T> };
+  | InputWithDefault<T>
+  | Placeholder<T>;

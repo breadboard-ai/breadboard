@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs, STATUS } from "../../types/types.js";
+import { STATUS } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -16,7 +16,14 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { GraphLoader, InspectableRun, Kit } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  GraphLoader,
+  InspectableRun,
+  InspectableRunEvent,
+  Kit,
+  NodeIdentifier,
+} from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
@@ -34,17 +41,16 @@ type UIConfig = {
  * @class UI
  * @extends {LitElement}
  *
- * @property {LoadArgs | null} loadInfo
+ * @property {GraphDescriptor | null} graph
  * @property {Kit[]} kits - an array of kits to use by a board
  * @property {string | null} url
  * @property {STATUS}
  * @property {Board[]}
- * @property {"mermaid" | "editor"} - the type of visualizer to use
  **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -112,10 +118,6 @@ export class UI extends LitElement {
     this.#messagePosition = 0;
   }
 
-  async load(loadInfo: LoadArgs) {
-    this.loadInfo = loadInfo;
-  }
-
   /**
    * Handler method for registering input.
    *
@@ -181,8 +183,7 @@ export class UI extends LitElement {
     message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
-      const messages = this.run?.messages || [];
-      this.#messagePosition = messages.length - 1;
+      this.#messagePosition = (this.run?.events?.length || 0) - 1;
     }
     this.requestUpdate();
 
@@ -229,18 +230,26 @@ export class UI extends LitElement {
   }
 
   render() {
-    const messages = this.run?.messages || [];
-    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
+    const lastNode = (events: InspectableRunEvent[]): NodeIdentifier | null => {
+      for (let index = events.length - 1; index >= 0; index--) {
+        const event = events[index];
+        if (event.type == "node" && !event.bubbled) {
+          return event.node.descriptor.id;
+        }
+      }
+      return null;
+    };
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
+    const nodeId = lastNode(events);
 
     /**
      * Create all the elements we need.
      */
     const editor = html`<bb-editor
       .editable=${true}
-      .loadInfo=${this.loadInfo}
+      .graph=${this.graph}
       .kits=${this.kits}
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
@@ -318,7 +327,7 @@ export class UI extends LitElement {
           }}
           @breadboardinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < messages.length - 1) {
+            if (this.#messagePosition < events.length - 1) {
               // The user has attempted to provide input for a stale
               // request.
               // TODO: Enable resuming from this point.
@@ -347,7 +356,7 @@ export class UI extends LitElement {
         ></bb-activity-log>
         <bb-node-info
           .selectedNodeId=${this.selectedNodeId}
-          .loadInfo=${this.loadInfo}
+          .graph=${this.graph}
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
@@ -374,7 +383,7 @@ export class UI extends LitElement {
     >
       <section id="diagram" slot="slot-0">
         <div id="breadcrumbs"></div>
-        ${this.loadInfo === null && this.failedToLoad
+        ${this.graph === null && this.failedToLoad
           ? html`<div class="failed-to-load">
               <h1>Unable to load board</h1>
               <p>Please try again, or load a different board</p>

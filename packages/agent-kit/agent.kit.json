@@ -17,13 +17,31 @@
         },
         {
           "from": "input",
-          "to": "appendContext",
+          "to": "fn-4",
           "out": "text",
           "in": "text"
         },
         {
           "from": "input",
           "to": "output-2",
+          "out": "text",
+          "in": "text"
+        },
+        {
+          "from": "fn-4",
+          "to": "output-5",
+          "out": "again",
+          "in": "again"
+        },
+        {
+          "from": "fn-4",
+          "to": "appendContext",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-4",
+          "to": "appendContext",
           "out": "text",
           "in": "text"
         },
@@ -35,9 +53,39 @@
         },
         {
           "from": "createSchema",
-          "to": "appendContext",
+          "to": "fn-4",
           "out": "context",
           "in": "context"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "createSchema",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "createSchema",
+          "out": "action",
+          "in": "action"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "output-3",
+          "out": "feedback",
+          "in": "feedback"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "output",
+          "out": "output",
+          "in": "output"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "fn-4",
+          "out": "action",
+          "in": "action"
         },
         {
           "from": "input-1",
@@ -56,18 +104,6 @@
           "to": "createSchema",
           "out": "description",
           "in": "description"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "createSchema",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "output",
-          "out": "output",
-          "in": "output"
         }
       ],
       "nodes": [
@@ -100,7 +136,7 @@
           "id": "appendContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+            "code": "const appendContext = ({context,text})=>{if(!text)return{context};return{context:[...context||[],{role:\"user\",parts:[{text}]}]}};",
             "name": "appendContext",
             "raw": true
           },
@@ -132,16 +168,61 @@
           }
         },
         {
+          "id": "fn-4",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_4 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
+            "name": "fn_4",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Action Recognizer",
+            "description": "Recognizing the action that user has taken"
+          }
+        },
+        {
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"string\",behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}};",
             "name": "createSchema",
             "raw": true
           },
           "metadata": {
             "title": "Create Schema",
             "description": "Creating a schema for user input"
+          }
+        },
+        {
+          "id": "maybeOutputRouter",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const maybeOutputRouter = ({context})=>{const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const text=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=text;try{const data=JSON.parse(output);if(data.voteRequest){const feedback=structuredClone(data);delete feedback[\"voteRequest\"];const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}catch{}return{output,action,context}}}return{context,action}};",
+            "name": "maybeOutputRouter",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Maybe Output",
+            "description": "Checking if the last message was from the model"
+          }
+        },
+        {
+          "id": "output-5",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "again": {
+                  "type": "string",
+                  "title": "again"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Rejection",
+            "description": "Rejecting latest agent work per user action"
           }
         },
         {
@@ -162,7 +243,7 @@
                     ]
                   },
                   "examples": [
-                    "[]"
+                    "[{\"parts\":[{\"text\":\"{\\\"adCampaign\\\":{\\\"headlines\\\":[\\\"Breadboard: AI Playground\\\",\\\"Exp. AI Patterns\\\",\\\"Rapid Prototyping\\\",\\\"AI Power, Gemini\\\",\\\"Integrate AI Seamlessly\\\",\\\"Create Graphs, Prompts\\\",\\\"Accessible AI\\\",\\\"Breadboard: Dev's AI Kit\\\",\\\"Supercharge Dev, Breadboard\\\",\\\"Accelerate Innovation\\\",\\\"Revolutionize Dev, AI\\\",\\\"Breadboard: AI, Ingenuity\\\",\\\"Elevate Projects, Breadboard\\\",\\\"Unlock AI Power, Breadboard\\\"],\\\"descriptions\\\":[\\\"Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.\\\",\\\"Stunning graphs with prompts. Accessible AI for devs.\\\",\\\"Accelerate innovation with Breadboard. Experiment with AI risk-free.\\\",\\\"Elevate projects with Breadboard AI. Integrate AI seamlessly.\\\"]},\\\"voteRequest\\\":\\\"Does this ad campaign seem ok to you?\\\"}\"}],\"role\":\"model\"}]"
                   ],
                   "default": "[]"
                 },
@@ -184,16 +265,26 @@
           }
         },
         {
-          "id": "maybeOutputRouter",
-          "type": "runJavascript",
+          "id": "output-3",
+          "type": "output",
           "configuration": {
-            "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const parts=lastItem.parts;const output=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;return{output,context}}}return{context}}",
-            "name": "maybeOutputRouter",
-            "raw": true
+            "schema": {
+              "type": "object",
+              "behavior": [
+                "bubble"
+              ],
+              "properties": {
+                "feedback": {
+                  "type": "string",
+                  "title": "Feedback",
+                  "description": "The feedback to display"
+                }
+              }
+            }
           },
           "metadata": {
-            "title": "Maybe Output",
-            "description": "Checking if the last message was from the model"
+            "title": "Feedback",
+            "description": "Displaying the output to user with feedback"
           }
         },
         {
@@ -297,7 +388,7 @@
           "id": "counter",
           "type": "runJavascript",
           "configuration": {
-            "code": "function counter({context,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}}",
+            "code": "const counter = ({context,count})=>{const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}};",
             "name": "counter",
             "raw": true
           },
@@ -528,7 +619,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,json:json2}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,{role:\"model\",parts:{text:JSON.stringify(json2)}}]}}",
+            "code": "const assembleContext = ({context,json:json2})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,{role:\"model\",parts:{text:JSON.stringify(json2)}}]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -551,7 +642,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,format,instruction}) {if(!Array.isArray(context)){const text=typeof context===\"string\"?context:JSON.stringify(context);context=[{role:\"user\",parts:[{text}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction},{text:format});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction},{text:format}]}]}}",
+            "code": "const buildContext = ({context,format,instruction})=>{if(!Array.isArray(context)){const text=typeof context===\"string\"?context:JSON.stringify(context);context=[{role:\"user\",parts:[{text}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction},{text:format});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction},{text:format}]}]}};",
             "name": "buildContext",
             "raw": true
           },
@@ -624,7 +715,7 @@
           "id": "count",
           "type": "runJavascript",
           "configuration": {
-            "code": "function count({context,error,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:error}}",
+            "code": "const count = ({context,error,count})=>{const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:error}};",
             "name": "count",
             "raw": true
           },
@@ -889,7 +980,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "function router({context}) {if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.assert(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}}",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.assert(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
             "name": "router",
             "raw": true
           },
@@ -913,7 +1004,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleBoardInvoke({functionCall,urlMap}) {if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}}",
+            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -926,7 +1017,7 @@
           "id": "formatFunctionResponse",
           "type": "runJavascript",
           "configuration": {
-            "code": "function formatFunctionResponse({context,generated,functionCall,response}) {const call=functionCall;return{context:[...context,generated,{role:\"function\",parts:[{functionResponse:{name:call.name,response}}]}]}}",
+            "code": "const formatFunctionResponse = ({context,generated,functionCall,response})=>{const call=functionCall;return{context:[...context,generated,{role:\"function\",parts:[{functionResponse:{name:call.name,response}}]}]}};",
             "name": "formatFunctionResponse",
             "raw": true
           },
@@ -939,7 +1030,7 @@
           "id": "formatFunctionDeclarations",
           "type": "runJavascript",
           "configuration": {
-            "code": "function formatFunctionDeclarations({list}) {const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}}",
+            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}};",
             "name": "formatFunctionDeclarations",
             "raw": true
           },
@@ -952,7 +1043,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,instruction}) {if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}}",
+            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
             "name": "buildContext",
             "raw": true
           },
@@ -974,7 +1065,7 @@
           "id": "extractBoardResponse",
           "type": "runJavascript",
           "configuration": {
-            "code": "function extractBoardResponse(inputs) {const{schema,...response}=inputs;schema;return{response}}",
+            "code": "const extractBoardResponse = inputs=>{const{schema,...response}=inputs;schema;return{response}};",
             "name": "extractBoardResponse",
             "raw": true
           },
@@ -998,7 +1089,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,generated}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}}",
+            "code": "const assembleContext = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -1257,7 +1348,7 @@
           "id": "assembleContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function assembleContext({context,generated}) {if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}}",
+            "code": "const assembleContext = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
             "name": "assembleContext",
             "raw": true
           },
@@ -1281,7 +1372,7 @@
           "id": "buildContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({context,instruction}) {if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}}",
+            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
             "name": "buildContext",
             "raw": true
           },

@@ -6,7 +6,6 @@
 
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs } from "../../types/types.js";
 import {
   inspect,
   GraphDescriptor,
@@ -44,7 +43,7 @@ type EditedNode = {
 @customElement("bb-editor")
 export class Editor extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
 
   @property()
   boardId: number = -1;
@@ -148,7 +147,7 @@ export class Editor extends LitElement {
   async #processGraph(descriptor: GraphDescriptor) {
     this.#graphVersion++;
 
-    if (this.loadInfo && this.#lastBoardId !== this.boardId) {
+    if (this.graph && this.#lastBoardId !== this.boardId) {
       this.#graph.clearNodeLayoutPositions();
     }
 
@@ -254,21 +253,16 @@ export class Editor extends LitElement {
   protected updated(
     changedProperties:
       | PropertyValueMap<{
-          loadInfo: LoadArgs;
+          graph: GraphDescriptor;
           kits: Kit[];
         }>
       | Map<PropertyKey, unknown>
   ): void {
     const shouldProcessGraph =
-      changedProperties.has("loadInfo") || changedProperties.has("kits");
+      changedProperties.has("graph") || changedProperties.has("kits");
 
-    if (
-      shouldProcessGraph &&
-      this.loadInfo &&
-      this.loadInfo.graphDescriptor &&
-      this.kits.length > 0
-    ) {
-      this.#processGraph(this.loadInfo.graphDescriptor);
+    if (shouldProcessGraph && this.graph && this.kits.length > 0) {
+      this.#processGraph(this.graph);
     }
   }
 
@@ -426,7 +420,7 @@ export class Editor extends LitElement {
       <label for="add-node">Add</label>
 
       <bb-node-selector
-        .loadInfo=${this.loadInfo}
+        .graph=${this.graph}
         .kits=${this.kits}
         @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
           const id = this.#createRandomID(evt.nodeType);

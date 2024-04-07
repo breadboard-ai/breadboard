@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { editGraph } from "../../src/editor/graph.js";
+import { editGraph } from "../../src/editor/index.js";
 import { NodeHandler } from "../../src/types.js";
 
 const testEditGraph = () => {
@@ -381,4 +381,77 @@ test("editor API does not allow connecting a specific output port to a star port
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
   const result = await graph.canAddEdge(edgeSpec);
   t.false(result.success);
+});
+
+test("editor API correctly works with no subgraphs", (t) => {
+  const graph = testEditGraph();
+
+  const raw = graph.raw();
+  t.falsy(raw.graphs);
+});
+
+test("editor API correctly allows adding, removing, replacing subgraphs", (t) => {
+  const graph = testEditGraph();
+  const subgraph = testEditGraph().raw();
+
+  t.assert(graph.addGraph("foo", subgraph) !== null);
+
+  t.truthy(graph.raw().graphs);
+
+  t.assert(graph.addGraph("foo", subgraph) === null);
+
+  t.true(graph.removeGraph("foo").success);
+  t.false(graph.removeGraph("foo").success);
+
+  t.falsy(graph.raw().graphs);
+
+  t.assert(graph.replaceGraph("foo", subgraph) === null);
+  t.assert(graph.addGraph("foo", subgraph) !== null);
+  t.assert(graph.replaceGraph("foo", subgraph) !== null);
+
+  t.truthy(graph.raw().graphs);
+});
+
+test("editor API allows using 'star` ports as drop zones", async (t) => {
+  const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
+  {
+    const graph = testEditGraph();
+    const result = await graph.canAddEdge(edgeSpec);
+    if (result.success) {
+      t.fail();
+    } else {
+      t.deepEqual(result.alternative, {
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      });
+    }
+  }
+  {
+    const graph = testEditGraph();
+    const result = await graph.addEdge(edgeSpec);
+    t.true(result.success);
+    t.true(
+      graph.inspect().hasEdge({
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      })
+    );
+  }
+  {
+    const graph = testEditGraph();
+    const result = await graph.addEdge(edgeSpec, true);
+    t.false(result.success);
+    t.false(
+      graph.inspect().hasEdge({
+        from: "node0",
+        out: "out",
+        to: "node2",
+        in: "out",
+      })
+    );
+  }
 });

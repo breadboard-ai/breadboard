@@ -60,6 +60,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Human Feedback Test Bench",
+    "url": "/graphs/choices.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Data Board",
     "url": "/graphs/data-board.json",
     "version": "0.0.3"

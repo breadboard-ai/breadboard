@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   InputValues,
   NodeConfiguration,
@@ -61,8 +62,13 @@ class Node implements InspectableNode {
     return this.descriptor.configuration || {};
   }
 
+  metadata(): NodeMetadata {
+    return this.descriptor.metadata || {};
+  }
+
   #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
-    return { ...inputs, ...config };
+    // Config first, then inputs on top. Inputs override config.
+    return { ...config, ...inputs };
   }
 
   async #describeInternal(

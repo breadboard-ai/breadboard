@@ -1,5 +1,28 @@
 # @google-labs/breadboard-web
 
+## 1.5.1
+
+### Patch Changes
+
+- 76da09d: Early support for voting (yes/no) in Human node.
+- Updated dependencies [0a899e1]
+- Updated dependencies [76da09d]
+- Updated dependencies [8be93c8]
+- Updated dependencies [938015d]
+- Updated dependencies [182a546]
+- Updated dependencies [4de92a3]
+  - @google-labs/breadboard-ui@0.4.3
+  - @google-labs/agent-kit@0.4.0
+  - @google-labs/breadboard@0.15.0
+  - @google-labs/core-kit@0.5.3
+  - @breadboard-ai/build@0.3.0
+  - @google-labs/gemini-kit@0.1.7
+  - @google-labs/json-kit@0.1.4
+  - @google-labs/node-nursery-web@1.0.7
+  - @google-labs/palm-kit@0.0.9
+  - @google-labs/pinecone-kit@0.1.7
+  - @google-labs/template-kit@0.2.4
+
 ## 1.5.0
 
 ### Minor Changes

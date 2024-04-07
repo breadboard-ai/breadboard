@@ -1,19 +1,15 @@
-/**
- * @license
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
   GraphDescriptor,
+  GraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
 import {
+  EdgeEditResult,
   EditResult,
   EditableEdgeSpec,
   EditableGraph,
@@ -21,21 +17,21 @@ import {
   EditableNodeSpec,
 } from "./types.js";
 
-export const editGraph = (
-  graph: GraphDescriptor,
-  options: EditableGraphOptions = {}
-): EditableGraph => {
-  return new Graph(graph, options);
-};
-
-class Graph implements EditableGraph {
+export class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #validTypes?: Set<string>;
   #graph: GraphDescriptor;
+  #graphs: Record<GraphIdentifier, EditableGraph>;
 
   constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
     this.#graph = graph;
+    this.#graphs = Object.fromEntries(
+      Object.entries(graph.graphs || {}).map(([id, graph]) => [
+        id,
+        new Graph(graph, options),
+      ])
+    );
     this.#options = options;
     this.#inspector = inspectableGraph(this.#graph, options);
   }
@@ -125,19 +121,7 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canAddEdge(spec: EditableEdgeSpec): Promise<EditResult> {
-    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
-      return {
-        success: false,
-        error: `The "*" output port cannot be connected to a specific input port`,
-      };
-    }
-    if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
-      return {
-        success: false,
-        error: `A specific input port cannot be connected to a "*" output port`,
-      };
-    }
+  async canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
     const inspector = this.#inspector;
     if (inspector.hasEdge(spec)) {
       return {
@@ -159,32 +143,52 @@ class Graph implements EditableGraph {
         error: `Node with id "${spec.to}" does not exist, but is required as the "to" part of the edge`,
       };
     }
+
+    let error: string | null = null;
+    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
+      spec = { ...spec, out: spec.in };
+      error = `The "*" output port cannot be connected to a specific input port`;
+    } else if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
+      spec = { ...spec, in: spec.out };
+      error = `A specific input port cannot be connected to a "*" output port`;
+    }
     const fromPorts = (await from.ports()).outputs;
     if (fromPorts.fixed) {
       const found = fromPorts.ports.find((port) => port.name === spec.out);
       if (!found) {
+        error ??= `Node with id "${spec.from}" does not have an output port named "${spec.out}"`;
         return {
           success: false,
-          error: `Node with id "${spec.from}" does not have an output port named "${spec.out}"`,
+          error,
         };
       }
     }
     const toPorts = (await to.ports()).inputs;
     if (toPorts.fixed) {
       const found = toPorts.ports.find((port) => port.name === spec.in);
+      error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
       if (!found) {
         return {
           success: false,
-          error: `Node with id "${spec.to}" does not have an input port named "${spec.in}"`,
+          error,
         };
       }
+    }
+    if (error) {
+      return { success: false, error, alternative: spec };
     }
     return { success: true };
   }
 
-  async addEdge(spec: EditableEdgeSpec): Promise<EditResult> {
+  async addEdge(
+    spec: EditableEdgeSpec,
+    strict: boolean = false
+  ): Promise<EdgeEditResult> {
     const can = await this.canAddEdge(spec);
-    if (!can.success) return can;
+    if (!can.success) {
+      if (!can.alternative || strict) return can;
+      spec = can.alternative;
+    }
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
@@ -294,8 +298,56 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
+  getGraph(id: GraphIdentifier) {
+    return this.#graphs[id] || null;
+  }
+
+  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null {
+    if (this.#graphs[id]) {
+      return null;
+    }
+
+    const editable = new Graph(graph, this.#options);
+    this.#graphs[id] = editable;
+
+    return editable;
+  }
+
+  removeGraph(id: GraphIdentifier): EditResult {
+    if (!this.#graphs[id]) {
+      return {
+        success: false,
+        error: `Subgraph with id "${id}" does not exist`,
+      };
+    }
+    delete this.#graphs[id];
+    return { success: true };
+  }
+
+  replaceGraph(
+    id: GraphIdentifier,
+    graph: GraphDescriptor
+  ): EditableGraph | null {
+    if (!this.#graphs[id]) {
+      return null;
+    }
+
+    const editable = new Graph(graph, this.#options);
+    this.#graphs[id] = editable;
+
+    return editable;
+  }
+
   raw() {
-    return this.#graph;
+    const entries = Object.entries(this.#graphs);
+    if (entries.length === 0) {
+      if ("graphs" in this.#graph) delete this.#graph["graphs"];
+      return this.#graph;
+    }
+    const graphs = Object.fromEntries(
+      entries.map(([id, graph]) => [id, graph.raw()])
+    );
+    return { ...this.#graph, graphs };
   }
 
   inspect() {

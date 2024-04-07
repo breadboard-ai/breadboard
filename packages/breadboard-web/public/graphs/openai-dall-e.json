@@ -63,7 +63,7 @@
       "id": "responseExtractor",
       "type": "runJavascript",
       "configuration": {
-        "code": "function responseExtractor({response}) {const{data}=response;return{response:{image_url:data[0].url}}}",
+        "code": "const responseExtractor = ({response})=>{const{data}=response;return{response:{image_url:data[0].url}}};",
         "name": "responseExtractor",
         "raw": true
       },
@@ -88,7 +88,7 @@
       "id": "headerMaker",
       "type": "runJavascript",
       "configuration": {
-        "code": "function headerMaker({key}) {return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}}",
+        "code": "const headerMaker = ({key})=>{return{headers:{\"Content-Type\":\"application/json\",Authorization:`Bearer ${key}`}}};",
         "name": "headerMaker",
         "raw": true
       },
@@ -101,7 +101,7 @@
       "id": "bodyMaker",
       "type": "runJavascript",
       "configuration": {
-        "code": "function bodyMaker({prompt}) {return{body:{model:\"dall-e-3\",prompt}}}",
+        "code": "const bodyMaker = ({prompt})=>{return{body:{model:\"dall-e-3\",prompt}}};",
         "name": "bodyMaker",
         "raw": true
       },

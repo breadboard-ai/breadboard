@@ -178,7 +178,7 @@
                 "id": "fn-3",
                 "type": "runJavascript",
                 "configuration": {
-                  "code": "function fn_3({context}) {const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);const{adCampaign}=json;const warning=[`You are a brilliant copy editor who is famous brevity, making ads in the ad campaign fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`];for(const headline of adCampaign.headlines){if(headline.length>30){warning.push(`The headline \"${headline}\" is ${headline.length} characters long, but needs to be 30 characters. Shorten it.`)}}for(const description of adCampaign.descriptions){if(description.length>90){warning.push(`The description \"${description}\" is ${description.length} characters long, but needs to be 90 characters. Shorten it.`)}}if(warning.length>1){return{warning:warning.join(\"\\n\\n\")}}return{context}}",
+                  "code": "const fn_3 = ({context})=>{const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);const{adCampaign}=json;const warning=[`You are a brilliant copy editor who is famous brevity, making ads in the ad campaign fit into the character limits while retaining their meaning and impact. Given the ad, follow instructions below:`];for(const headline of adCampaign.headlines){if(headline.length>30){warning.push(`The headline \"${headline}\" is ${headline.length} characters long, but needs to be 30 characters. Shorten it.`)}}for(const description of adCampaign.descriptions){if(description.length>90){warning.push(`The description \"${description}\" is ${description.length} characters long, but needs to be 90 characters. Shorten it.`)}}if(warning.length>1){return{warning:warning.join(\"\\n\\n\")}}return{context}};",
                   "name": "fn_3",
                   "raw": true
                 },
@@ -246,7 +246,7 @@
       "id": "fn-9",
       "type": "runJavascript",
       "configuration": {
-        "code": "function fn_9({context}) {const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);return{json}}",
+        "code": "const fn_9 = ({context})=>{const list=context||[];const last=list[list.length-1];const json=JSON.parse(last.parts.text);return{json}};",
         "name": "fn_9",
         "raw": true
       },
@@ -323,7 +323,7 @@
       "id": "fn-5",
       "type": "runJavascript",
       "configuration": {
-        "code": "function fn_5({json}) {const{prompt}=json;return{prompt}}",
+        "code": "const fn_5 = ({json})=>{const{prompt}=json;return{prompt}};",
         "name": "fn_5",
         "raw": true
       },

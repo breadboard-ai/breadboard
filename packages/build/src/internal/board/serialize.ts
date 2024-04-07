@@ -18,6 +18,7 @@ import {
   type JsonSerializable,
 } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
+import { isPlaceholder, type Placeholder } from "./placeholder.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -168,9 +169,18 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     const configurationEntries: Array<[string, NodeValue]> = [];
     for (const [portName, inputPort] of Object.entries(node.inputs)) {
       unconnectedInputs.delete(inputPort);
-      if (isSpecialInput(inputPort.value)) {
-        unconnectedInputs.delete(inputPort.value);
-        const mainInputPortName = inputNames.get(inputPort.value);
+      let value = inputPort.value;
+
+      if (isPlaceholder(value)) {
+        value = value.value;
+        if (value === undefined) {
+          throw new Error("Placeholder was never resolved");
+        }
+      }
+
+      if (isSpecialInput(value)) {
+        unconnectedInputs.delete(value);
+        const mainInputPortName = inputNames.get(value);
         if (mainInputPortName !== undefined) {
           addEdge(mainInputNodeId, mainInputPortName, thisNodeId, portName);
         } else {
@@ -184,15 +194,15 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
               `but that input was not provided to the board inputs.`
           );
         }
-      } else if (isOutputPortReference(inputPort.value)) {
-        const wiredOutputPort = inputPort.value[OutputPortGetter];
+      } else if (isOutputPortReference(value)) {
+        const wiredOutputPort = value[OutputPortGetter];
         addEdge(
           visitNodeAndReturnItsId(wiredOutputPort.node),
           wiredOutputPort.name,
           thisNodeId,
           portName
         );
-      } else if (inputPort.value === undefined) {
+      } else if (value === undefined) {
         // TODO(aomarks) Why is this possible in the type system? An inport port
         // value can never actually be undefined, right?
         throw new Error(
@@ -201,7 +211,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       } else {
         configurationEntries.push([
           portName,
-          inputPort.value satisfies JsonSerializable as NodeValue,
+          value satisfies JsonSerializable as NodeValue,
         ]);
       }
     }
@@ -259,7 +269,8 @@ interface SerializableInputPort {
   value?:
     | JsonSerializable
     | SerializableOutputPortReference
-    | GenericSpecialInput;
+    | GenericSpecialInput
+    | Placeholder<JsonSerializable>;
 }
 
 interface SerializableOutputPort {

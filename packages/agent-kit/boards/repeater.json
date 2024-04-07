@@ -72,9 +72,11 @@
     },
     {
       "id": "counter",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#counter"
+        "code": "function counter({ context, count }) {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n}",
+        "name": "counter",
+        "raw": true
       },
       "metadata": {
         "title": "Counter",
@@ -155,41 +157,5 @@
     }
   ],
   "kits": [],
-  "graphs": {
-    "counter": {
-      "edges": [
-        {
-          "from": "counter-input",
-          "to": "counter-run",
-          "out": "*"
-        },
-        {
-          "from": "counter-run",
-          "to": "counter-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "counter-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "counter-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function counter({ context, count }) {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n}",
-            "name": "counter",
-            "raw": true
-          }
-        },
-        {
-          "id": "counter-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    }
-  }
+  "graphs": {}
 }

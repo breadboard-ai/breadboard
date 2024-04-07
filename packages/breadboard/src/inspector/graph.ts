@@ -14,6 +14,7 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
+  Schema,
 } from "../types.js";
 import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
@@ -30,6 +31,7 @@ import {
   InspectableGraphWithStore,
   InspectableKit,
   InspectableNode,
+  InspectableSubgraphs,
   NodeTypeDescriberOptions,
 } from "./types.js";
 
@@ -57,6 +59,7 @@ class Graph implements InspectableGraphWithStore {
   #graph: GraphDescriptor;
   #nodes: InspectableNodeCache;
   #edges: InspectableEdgeCache;
+  #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
@@ -168,7 +171,13 @@ class Graph implements InspectableGraphWithStore {
           .filter((n) => n.isExit())
           .map((output) => output.describe())
       )
-    ).map((result) => result.inputSchema);
+    )
+      .map((result) =>
+        result.inputSchema.behavior?.includes("bubble")
+          ? null
+          : result.inputSchema
+      )
+      .filter(Boolean) as Schema[];
 
     const inputSchema = combineSchemas(inputSchemas);
     const outputSchema = removeProperty(
@@ -187,5 +196,19 @@ class Graph implements InspectableGraphWithStore {
 
   get edgeStore() {
     return this.#edges;
+  }
+
+  #populateSubgraphs(): InspectableSubgraphs {
+    const subgraphs = this.#graph.graphs;
+    if (!subgraphs) return {};
+    return Object.fromEntries(
+      Object.entries(subgraphs).map(([id, descriptor]) => {
+        return [id, new Graph(descriptor, this.#options)];
+      })
+    );
+  }
+
+  graphs(): InspectableSubgraphs {
+    return (this.#graphs ??= this.#populateSubgraphs());
   }
 }

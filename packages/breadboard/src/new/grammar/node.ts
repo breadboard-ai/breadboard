@@ -36,6 +36,23 @@ import { BuilderScope } from "./scope.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./board.js";
 
+const serializeFunction = (name: string, handlerFn: Function) => {
+  let code = handlerFn.toString();
+
+  const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
+  const traditionalFunctionRegex =
+    /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
+
+  if (arrowFunctionRegex.test(code)) {
+    code = `const ${name} = ${code};`;
+  } else {
+    const match = traditionalFunctionRegex.exec(code);
+    if (match === null) throw new Error("Unexpected serialization: " + code);
+    else name = match[1] || name;
+  }
+  return [code, name];
+};
+
 export class BuilderNode<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues,
@@ -329,48 +346,30 @@ export class BuilderNode<
       if (graphs.length !== 1) throw new Error("Expected exactly one graph");
 
       return [node, await scope.serialize({}, graphs[0])];
-    }
-
-    // Else, serialize the handler itself and return a runJavascript node.
-    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
-    if (!handlerFn)
-      throw new Error(`Handler for ${this.type} in ${this.id} not found`);
-
-    let code = handlerFn.toString();
-    let name = this.id.replace(/-/g, "_");
-
-    const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
-    const traditionalFunctionRegex =
-      /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
-
-    if (arrowFunctionRegex.test(code)) {
-      // It's an arrow function, convert to traditional
-      code = code.replace(arrowFunctionRegex, (_, params) => {
-        const async = code.trim().startsWith("async") ? "async " : "";
-        const paramsWithParens = params.startsWith("(")
-          ? params
-          : `(${params})`;
-        return `${async}function ${name}${paramsWithParens} `;
-      });
     } else {
-      const match = traditionalFunctionRegex.exec(code);
-      if (match === null) throw new Error("Unexpected serialization: " + code);
-      else name = match[1] || name;
+      // Else, serialize the handler itself and return a runJavascript node.
+      const handlerFn =
+        typeof handler === "function" ? handler : handler?.invoke;
+      if (!handlerFn)
+        throw new Error(`Handler for ${this.type} in ${this.id} not found`);
+
+      const jsFriendlyId = this.id.replace(/-/g, "_");
+      const [code, name] = serializeFunction(jsFriendlyId, handlerFn);
+
+      const node = {
+        id: this.id,
+        type: "runJavascript",
+        configuration: {
+          ...(this.configuration as OriginalInputValues),
+          code,
+          name,
+          raw: true,
+        },
+        metadata: this.metadata,
+      };
+
+      return [node];
     }
-
-    const node = {
-      id: this.id,
-      type: "runJavascript",
-      configuration: {
-        ...(this.configuration as OriginalInputValues),
-        code,
-        name,
-        raw: true,
-      },
-      metadata: this.metadata,
-    };
-
-    return [node];
   }
 
   /**

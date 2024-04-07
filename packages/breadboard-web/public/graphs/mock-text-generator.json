@@ -49,7 +49,7 @@
       "id": "fn-3",
       "type": "runJavascript",
       "configuration": {
-        "code": "function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
+        "code": "const fn_3 = ({text,useStreaming})=>{text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}};",
         "name": "fn_3",
         "raw": true
       }

@@ -137,7 +137,7 @@
       "id": "filterErrors",
       "type": "runJavascript",
       "configuration": {
-        "code": "function filterErrors({list}) {const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}}",
+        "code": "const filterErrors = ({list})=>{const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}};",
         "name": "filterErrors",
         "raw": true
       }
@@ -272,7 +272,7 @@
       "id": "createList",
       "type": "runJavascript",
       "configuration": {
-        "code": "function createList({n:n2}) {return{list:[...Array(n2).keys()]}}",
+        "code": "const createList = ({n:n2})=>{return{list:[...Array(n2).keys()]}};",
         "name": "createList",
         "raw": true
       }

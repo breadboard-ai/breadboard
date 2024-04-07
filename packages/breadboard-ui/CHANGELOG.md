@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.3
+
+### Patch Changes
+
+- 0a899e1: Make sure to add `type=object` to JSON Schema if it contains properties.
+- Updated dependencies [76da09d]
+- Updated dependencies [938015d]
+  - @google-labs/breadboard@0.15.0
+
 ## 0.4.2
 
 ### Patch Changes

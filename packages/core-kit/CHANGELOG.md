@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.3
+
+### Patch Changes
+
+- 182a546: Do not throw in `invoke` describer when board couldn't be loaded.
+- Updated dependencies [76da09d]
+- Updated dependencies [938015d]
+  - @google-labs/breadboard@0.15.0
+
 ## 0.5.2
 
 ### Patch Changes
