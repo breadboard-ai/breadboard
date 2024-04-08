@@ -1,5 +1,41 @@
 # @google-labs/breadboard-web
 
+## 1.6.0
+
+### Minor Changes
+
+- 324633d: Deprecated localStorage for secrets; uses IDB/Settings Panel instead
+
+### Patch Changes
+
+- 0068682: Replace `LoadArgs` with just `GraphDescriptor`.
+- 0e7f106: Add `metadata` to `InspectableNode`.
+- Updated dependencies [303e49b]
+- Updated dependencies [0068682]
+- Updated dependencies [ad9c233]
+- Updated dependencies [62c2b41]
+- Updated dependencies [65d869b]
+- Updated dependencies [417cdf5]
+- Updated dependencies [cf0ee4f]
+- Updated dependencies [43cbed7]
+- Updated dependencies [ff6433c]
+- Updated dependencies [5382365]
+- Updated dependencies [0e7f106]
+- Updated dependencies [9ea6ba0]
+- Updated dependencies [ffd2a6c]
+- Updated dependencies [9d19852]
+- Updated dependencies [324633d]
+  - @google-labs/breadboard-ui@0.5.0
+  - @google-labs/breadboard@0.16.0
+  - @google-labs/core-kit@0.6.0
+  - @breadboard-ai/build@0.3.1
+  - @google-labs/gemini-kit@0.1.8
+  - @google-labs/json-kit@0.1.5
+  - @google-labs/node-nursery-web@1.0.8
+  - @google-labs/palm-kit@0.0.10
+  - @google-labs/pinecone-kit@0.1.8
+  - @google-labs/template-kit@0.2.5
+
 ## 1.5.1
 
 ### Patch Changes
