@@ -197,7 +197,8 @@
     "@rollup/rollup-linux-x64-gnu": "^4.13.1"
   },
   "dependencies": {
-    "litegraph.js": "^0.7.18"
+    "litegraph.js": "^0.7.18",
+    "prettier": "^3.2.5"
   },
   "repository": {
     "type": "git",
