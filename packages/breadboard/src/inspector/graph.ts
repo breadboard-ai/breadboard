@@ -18,7 +18,7 @@ import {
 } from "../types.js";
 import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
-import { InspectableNodeCache } from "./node.js";
+import { NodeCache } from "./node.js";
 import {
   EdgeType,
   describeInput,
@@ -57,7 +57,7 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-  #nodes: InspectableNodeCache;
+  #nodes: NodeCache;
   #edges: InspectableEdgeCache;
   #graphs: InspectableSubgraphs | null = null;
 
@@ -66,7 +66,7 @@ class Graph implements InspectableGraphWithStore {
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
     this.#edges = new InspectableEdgeCache(this);
-    this.#nodes = new InspectableNodeCache(this);
+    this.#nodes = new NodeCache(this);
   }
 
   raw() {

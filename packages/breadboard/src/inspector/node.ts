@@ -126,7 +126,7 @@ class Node implements InspectableNode {
   }
 }
 
-export class InspectableNodeCache {
+export class NodeCache {
   #graph: InspectableGraph;
   #map?: Map<NodeIdentifier, InspectableNode>;
   #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
