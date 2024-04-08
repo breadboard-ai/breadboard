@@ -1,6 +1,6 @@
 import yaml from "yaml";
 import { readFile } from "fs/promises";
-import { AtLeastV3Document } from "./types.js";
+import type { AtLeastV3Document } from "./types.js";
 
 export async function loadOpenAPI(url: string): Promise<AtLeastV3Document> {
   let openAPIData = "";

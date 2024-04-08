@@ -3,7 +3,7 @@ import {
   parseParametersFromRequest,
   parseParametersFromPathOrQueryString,
 } from "./parseParameters.js";
-import {
+import type {
   APISpec,
   AtLeastV3Document,
   AtLeastV3Operation,

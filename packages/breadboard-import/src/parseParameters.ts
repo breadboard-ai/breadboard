@@ -1,5 +1,5 @@
-import { OpenAPI, OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import {
+import { OpenAPI } from "openapi-types";
+import type {
   AtLeastV3ReferenceObject,
   AtLeastV3RequestBodyObject,
   ExcludedParameter,

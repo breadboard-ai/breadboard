@@ -1,4 +1,4 @@
-import { AtLeastV3Document, AtLeastV3ReferenceObject } from "./types.js";
+import type { AtLeastV3Document, AtLeastV3ReferenceObject } from "./types.js";
 
 export function isReferenceObject(
   obj: object

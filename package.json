@@ -26,6 +26,7 @@
         "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
+        "./packages/breadboard-import:build",
         "./packages/breadboard-server:build",
         "./packages/breadboard-ui:build",
         "./packages/breadboard-extension:build",
@@ -57,6 +58,7 @@
       "dependencies": [
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
+        "./packages/breadboard-import:test",
         "./packages/breadboard-server:test",
         "./packages/breadboard-ui:test",
         "./packages/build:test",
@@ -80,6 +82,7 @@
       "dependencies": [
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
+        "./packages/breadboard-import:lint",
         "./packages/breadboard-server:lint",
         "./packages/breadboard-extension:lint",
         "./packages/breadboard-ui:lint",
