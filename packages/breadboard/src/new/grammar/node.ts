@@ -134,9 +134,10 @@ export class BuilderNode<
       // This turns something returned by board() into a BoardCapability, which
       // is going to be either a Promise for a BoardCapability (assigned to
       // constants below) or an AbstractValue to one.
-      if (isLambda(value))
-        value = value.getBoardCapabilityAsValue() as unknown as typeof value;
-
+      if (isLambda(value)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value = value.getBoardCapabilityAsValue() as any;
+      }
       if (isValue(value)) {
         nodes.push(value.as(key).asNodeInput());
       } else if (value instanceof AbstractNode || isBuilderNodeProxy(value)) {
