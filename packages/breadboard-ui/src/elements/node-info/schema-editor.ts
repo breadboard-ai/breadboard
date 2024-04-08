@@ -216,6 +216,9 @@ export class SchemaEditor extends LitElement {
               ?readonly=${!this.editable}
             >
               <option value="none">No format</option>
+              <option value="markdown" ?selected=${value.format === "markdown"}>
+                Markdown
+              </option>
               <option
                 value="multiline"
                 ?selected=${value.format === "multiline"}
