@@ -42,7 +42,12 @@ const isGraphDescriptor = (
   );
 };
 
-export const getBoard = async (board: unknown, context: NodeHandlerContext) => {
+export const getRunner = async (
+  board: unknown,
+  context: NodeHandlerContext
+) => {
+  if (!board) return undefined;
+
   if (typeof board === "string") {
     return await loadBoardFromPath(board, context);
   } else if (isBreadboardCapability(board)) {

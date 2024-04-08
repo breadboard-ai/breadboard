@@ -15,7 +15,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { getBoard, loadBoardFromPath } from "../utils.js";
+import { getRunner, loadBoardFromPath } from "../utils.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -35,7 +35,7 @@ const getRunnableBoard = async (
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, ...args } = inputs;
   if ($board) {
-    const board = await getBoard($board, context);
+    const board = await getRunner($board, context);
     return { board, args };
   } else {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
