@@ -5,14 +5,13 @@
  */
 
 import {
-  Board,
-  BreadboardCapability,
   InputValues,
   NodeHandlerContext,
   NodeValue,
   OutputValues,
   SchemaBuilder,
 } from "@google-labs/breadboard";
+import { getRunner } from "../utils.js";
 
 export type ReduceInputs = {
   /**
@@ -52,16 +51,14 @@ export type ReduceFunctionInputs = {
 
 const invoke = async (
   inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<OutputValues> => {
   const { list, board, accumulator } = inputs;
   if (!Array.isArray(list)) {
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
-  if (!board) return { accumulator };
-  const runnableBoard = await Board.fromBreadboardCapability(
-    board as BreadboardCapability
-  );
+  const runnableBoard = await getRunner(board, context);
+  if (!runnableBoard) return { accumulator };
   let result = accumulator;
   let index = 0;
   for (const item of list) {
@@ -88,6 +85,7 @@ const describe = async () => {
     .addProperty("board", {
       title: "Board",
       type: "object",
+      behavior: ["board"],
       description: "The board to run for each element of the list.",
     })
     .addProperty("accumulator", {

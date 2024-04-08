@@ -9,7 +9,6 @@ import {
   InputValues,
   NodeValue,
   OutputValues,
-  BreadboardCapability,
   NodeHandlerContext,
   SchemaBuilder,
 } from "@google-labs/breadboard";
@@ -24,7 +23,7 @@ export type MapInputs = InputValues & {
   /**
    * The board to run for each element of the list.
    */
-  board?: string | GraphDescriptor | BreadboardCapability;
+  board?: unknown;
 };
 
 export type MapOutputs = OutputValues & {
@@ -95,6 +94,7 @@ const describe = async () => {
     .addProperty("board", {
       title: "Board",
       type: "object",
+      behavior: ["board"],
       description: "The board to run for each element of the list.",
     })
     .build();
