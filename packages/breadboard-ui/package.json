@@ -130,7 +130,7 @@
     "@types/markdown-it": "^13.0.7",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "rollup": "^4.14.1",
     "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^3.16.0",

@@ -3,7 +3,6 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.0.1",
   "description": "The OpenAPI import library for Breadboard",
   "main": "./dist/src/index.js",
@@ -17,7 +16,7 @@
     "lint": "wireit"
   },
   "repository": {
-    "directory": "packages/blank",
+    "directory": "packages/breadboard-import",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
@@ -48,8 +47,8 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.11.30",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "ava": "^5.2.0",
     "typescript": "^5.3.3"
   },
