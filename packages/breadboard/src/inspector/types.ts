@@ -521,7 +521,7 @@ export type StoreAdditionResult = {
 /**
  * Represents a store of all graphs that the system has seen so far.
  */
-export type InspectableGraphStore = {
+export type GraphDescriptorStore = {
   /**
    * Retrieves a graph with the given id.
    * @param id -- the id of the graph to retrieve
