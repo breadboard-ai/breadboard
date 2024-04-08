@@ -126,69 +126,70 @@ export class SchemaEditor extends LitElement {
     required: string[]
   ) {
     return html`${map(Object.entries(properties), ([id, value]) => {
+      const defaultLabel = html` <label for="${id}-default">Default</label>`;
       let defaultValue: HTMLTemplateResult | symbol = nothing;
       let valueType = "string";
       switch (value.type) {
         case "array": {
           valueType = "array";
-          defaultValue = html`<bb-array-editor
-            id="${id}-default"
-            name="${id}-default"
-            ?readonly=${!this.editable}
-            .items=${JSON.parse(value.default || "null")}
-            .type=${resolveArrayType(value)}
-            .behavior=${resolveBehaviorType(value)}
-          ></bb-array-editor>`;
+          defaultValue = html`${defaultLabel}<bb-array-editor
+              id="${id}-default"
+              name="${id}-default"
+              ?readonly=${!this.editable}
+              .items=${JSON.parse(value.default || "null")}
+              .type=${resolveArrayType(value)}
+              .behavior=${resolveBehaviorType(value)}
+            ></bb-array-editor>`;
           break;
         }
 
         case "boolean": {
           valueType = "boolean";
-          defaultValue = html`<input
-            type="checkbox"
-            id="${id}-default"
-            name="${id}-default"
-            ?checked="${value.default === "true"}"
-            ?readonly=${!this.editable}
-          />`;
+          defaultValue = html`${defaultLabel}<input
+              type="checkbox"
+              id="${id}-default"
+              name="${id}-default"
+              ?checked="${value.default === "true"}"
+              ?readonly=${!this.editable}
+            />`;
           break;
         }
 
         case "number": {
           valueType = "number";
-          defaultValue = html`<input
-            type="number"
-            id="${id}-default"
-            name="${id}-default"
-            value="${value.default}"
-            ?readonly=${!this.editable}
-          />`;
-          break;
-        }
-
-        case "string":
-        default: {
-          if (value.enum) {
-            defaultValue = html`<select
-              type="text"
-              id="${id}-default"
-              name="${id}-default"
-              ?readonly=${!this.editable}
-            >
-              ${map(value.enum, (option) => {
-                return html`<option ?selected=${option === value.default}>
-                  ${option}
-                </option>`;
-              })}
-            </select>`;
-          } else {
-            defaultValue = html`<input
-              type="text"
+          defaultValue = html`${defaultLabel}<input
+              type="number"
               id="${id}-default"
               name="${id}-default"
               value="${value.default}"
               ?readonly=${!this.editable}
             />`;
+          break;
+        }
+
+        case "string":
+        case "object": {
+          if (value.enum) {
+            defaultValue = html`${defaultLabel}<select
+                type="text"
+                id="${id}-default"
+                name="${id}-default"
+                ?readonly=${!this.editable}
+              >
+                ${map(value.enum, (option) => {
+                  return html`<option ?selected=${option === value.default}>
+                    ${option}
+                  </option>`;
+                })}
+              </select>`;
+          } else {
+            defaultValue = html`${defaultLabel}<input
+                type="text"
+                id="${id}-default"
+                name="${id}-default"
+                value="${value.default || ""}"
+                ?readonly=${!this.editable}
+              />`;
           }
           break;
         }
@@ -203,14 +204,46 @@ export class SchemaEditor extends LitElement {
           .type=${"string"}
         ></bb-array-editor>`;
 
-      const format = html`<label for="${id}-format">Format</label>
-        <input
-          name="${id}-format"
-          id="${id}-format"
-          type="text"
-          value="${value.format || ""}"
-          ?readonly=${!this.editable}
-        />`;
+      let format: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "string":
+        case "array": {
+          format = html`<label for="${id}-format">Format</label>
+            <select
+              name="${id}-format"
+              id="${id}-format"
+              type="text"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No format</option>
+              <option
+                value="multiline"
+                ?selected=${value.format === "multiline"}
+              >
+                Multiline
+              </option>
+            </select>`;
+          break;
+        }
+
+        case "image/png": {
+          format = html`<label for="${id}-format">Format</label>
+            <select
+              name="${id}-format"
+              id="${id}-format"
+              type="text"
+              ?readonly=${!this.editable}
+            >
+              <option value="webcam" ?selected=${value.format === "webcam"}>
+                Webcam
+              </option>
+              <option value="drawable" ?selected=${value.format === "drawable"}>
+                Drawable Canvas
+              </option>
+            </select>`;
+          break;
+        }
+      }
 
       const examples = html`<label for="${id}-examples">Examples</label>
         <bb-array-editor
@@ -279,14 +312,13 @@ export class SchemaEditor extends LitElement {
             <option ?selected=${value.type === "boolean"} value="boolean">
               Boolean
             </option>
+            <option ?selected=${value.type === "image/png"} value="image/png">
+              Image
+            </option>
           </select>
 
-          ${value.type === "object" ? format : nothing}
-          ${value.type === "string" ? enumerations : nothing}
-          ${value.type === "string" ? examples : nothing}
-
-          <label for="${id}-default">Default</label>
-          ${defaultValue}
+          ${format} ${value.type === "string" ? enumerations : nothing}
+          ${value.type === "string" ? examples : nothing} ${defaultValue}
 
           <label for="${id}-required">Required</label>
           <input
@@ -338,28 +370,44 @@ export class SchemaEditor extends LitElement {
         ) as HTMLInputElement | null;
 
         const oldType = property.type;
-        const oldDefault = property.default;
 
         property.title = inTitle?.value || property.title;
         property.type = inType?.value || property.type;
-        property.default =
-          inDefault?.type === "checkbox"
-            ? inDefault.checked.toString()
-            : inDefault?.value ?? property.default;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
-        property.format = inFormat?.value;
+
+        if (inFormat && inFormat.value !== "none") {
+          property.format = inFormat.value;
+        } else {
+          delete property.format;
+        }
+
+        if (inDefault) {
+          if (inDefault.type === "checkbox") {
+            property.default = inDefault.checked.toString();
+          } else {
+            property.default = inDefault.value ?? property.default;
+          }
+        }
+
+        if (
+          !property.default ||
+          (oldType === "array" && property.default === "null")
+        ) {
+          delete property.default;
+        }
+
         property.enum =
           userChoices && userChoices.length ? userChoices : undefined;
 
+        if (!property.enum) {
+          delete property.enum;
+        }
+
         // Going from boolean -> anything else with no default means removing
         // the value entirely.
-        if (
-          oldType === "boolean" &&
-          (oldDefault === "false" || oldDefault === "") &&
-          property.type !== oldType
-        ) {
-          property["default"] = "";
+        if (oldType === "boolean" && property.type !== oldType) {
+          delete property.default;
         }
 
         if (inID && inID.value && inID.value !== id) {
