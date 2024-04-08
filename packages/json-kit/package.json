@@ -42,7 +42,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "c8 node --test --test-reporter=spec --loader ts-node/esm tests/**/*.ts",
+      "command": "find tests -name '*.ts' | xargs c8 node --test --test-reporter=spec --loader ts-node/esm",
       "env": {
         "FORCE_COLOR": "1"
       }
