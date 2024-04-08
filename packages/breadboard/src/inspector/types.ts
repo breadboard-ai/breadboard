@@ -385,6 +385,28 @@ export type EdgeStoreMutator = {
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
 
+export type InspectableEdgeCache = {
+  get(edge: Edge): InspectableEdge | undefined;
+  getOrCreate(edge: Edge): InspectableEdge;
+  add(edge: Edge): void;
+  remove(edge: Edge): void;
+  hasByValue(edge: Edge): boolean;
+  edges(): InspectableEdge[];
+};
+
+export type InspectableNodeCache = {
+  byType(type: NodeTypeIdentifier): InspectableNode[];
+  get(id: string): InspectableNode | undefined;
+  add(node: NodeDescriptor): void;
+  remove(id: NodeIdentifier): void;
+  nodes(): InspectableNode[];
+};
+
+export type InspectableGraphCache = {
+  nodes: InspectableNodeCache;
+  edges: InspectableEdgeCache;
+};
+
 /**
  * Represents a store of graph versions.
  */
