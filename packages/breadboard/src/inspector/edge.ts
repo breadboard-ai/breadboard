@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge as EdgeDescriptor } from "../types.js";
-import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
+import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
+import {
+  InspectableEdge,
+  InspectableNode,
+  InspectableNodeCache,
+} from "./types.js";
 
 /**
  * This helper is necessary because both "*" and "" are valid representations
@@ -22,16 +26,16 @@ export const fixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
 };
 
 class Edge implements InspectableEdge {
-  #graph: InspectableGraph;
+  #nodes: InspectableNodeCache;
   #edge: EdgeDescriptor;
 
-  constructor(graph: InspectableGraph, edge: EdgeDescriptor) {
-    this.#graph = graph;
+  constructor(nodes: InspectableNodeCache, edge: EdgeDescriptor) {
+    this.#nodes = nodes;
     this.#edge = edge;
   }
 
   get from() {
-    const from = this.#graph.nodeById(this.#edge.from);
+    const from = this.#nodes.get(this.#edge.from);
     console.assert(from, "From node not found when getting from.");
     return from as InspectableNode;
   }
@@ -41,7 +45,7 @@ class Edge implements InspectableEdge {
   }
 
   get to() {
-    const to = this.#graph.nodeById(this.#edge.to);
+    const to = this.#nodes.get(this.#edge.to);
     console.assert(to, "To node not found when getting to.");
     return to as InspectableNode;
   }
@@ -52,25 +56,24 @@ class Edge implements InspectableEdge {
   }
 }
 
-export class InspectableEdgeCache {
-  #graph: InspectableGraph;
-  #map?: Map<EdgeDescriptor, InspectableEdge>;
+export class EdgeCache {
+  #nodes: InspectableNodeCache;
+  #map: Map<EdgeDescriptor, InspectableEdge> = new Map();
 
-  constructor(graph: InspectableGraph) {
-    this.#graph = graph;
+  constructor(nodes: InspectableNodeCache) {
+    this.#nodes = nodes;
   }
 
-  #ensureEdgeMap() {
+  populate(graph: GraphDescriptor) {
     // Initialize the edge map from the graph. This is only done once, and all
     // following updates are performed incrementally.
-    const graph = this.#graph;
-    return (this.#map ??= new Map(
-      graph.raw().edges.map((edge) => [edge, new Edge(graph, edge)])
+    return (this.#map = new Map(
+      graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge)])
     ));
   }
 
   get(edge: EdgeDescriptor): InspectableEdge | undefined {
-    return this.#ensureEdgeMap().get(edge);
+    return this.#map.get(edge);
   }
 
   getOrCreate(edge: EdgeDescriptor): InspectableEdge {
@@ -78,42 +81,32 @@ export class InspectableEdgeCache {
     if (result) {
       return result;
     }
-    result = new Edge(this.#graph, edge);
-    console.assert(this.#map, "Edge map not initialized when adding.");
+    result = new Edge(this.#nodes, edge);
     this.add(edge);
     return result;
   }
 
   add(edge: EdgeDescriptor) {
-    if (!this.#map) {
-      // If the map is not yet initialized, we can exit early. since we presume
-      // that this.#graph is the source of truth and next time this.#map is
-      // accessed, it will be initialized.
-      return;
-    }
     console.assert(!this.#map.has(edge), "Edge already exists when adding.");
-    this.#map.set(edge, new Edge(this.#graph, edge));
+    this.#map.set(edge, new Edge(this.#nodes, edge));
   }
 
   remove(edge: EdgeDescriptor) {
-    if (!this.#map) {
-      // Same as above ...
-      return;
-    }
     console.assert(this.#map.has(edge), "Edge not found when removing.");
     this.#map.delete(edge);
   }
 
   has(edge: EdgeDescriptor): boolean {
-    return this.#ensureEdgeMap().has(edge);
+    return this.#map.has(edge);
   }
 
   hasByValue(edge: EdgeDescriptor): boolean {
     edge = fixUpStarEdge(edge);
-    return !!this.#graph.raw().edges.find((e) => {
+    const edges = this.edges();
+    return !!edges.find((e) => {
       return (
-        e.from === edge.from &&
-        e.to === edge.to &&
+        e.from.descriptor.id === edge.from &&
+        e.to.descriptor.id === edge.to &&
         e.out === edge.out &&
         e.in === edge.in
       );
@@ -121,6 +114,6 @@ export class InspectableEdgeCache {
   }
 
   edges(): InspectableEdge[] {
-    return Array.from(this.#ensureEdgeMap().values());
+    return Array.from(this.#map.values());
   }
 }

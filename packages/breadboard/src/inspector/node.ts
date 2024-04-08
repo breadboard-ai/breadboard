@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphDescriptor,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import {
   InputValues,
   NodeConfiguration,
@@ -126,13 +129,17 @@ class Node implements InspectableNode {
   }
 }
 
-export class InspectableNodeCache {
+export class NodeCache {
   #graph: InspectableGraph;
   #map?: Map<NodeIdentifier, InspectableNode>;
   #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
 
   constructor(graph: InspectableGraph) {
     this.#graph = graph;
+  }
+
+  populate(graph: GraphDescriptor) {
+    graph.nodes.forEach((node) => this.#addNodeInternal(node));
   }
 
   #addNodeInternal(node: NodeDescriptor) {
@@ -152,7 +159,7 @@ export class InspectableNodeCache {
 
   #ensureNodeMap() {
     if (this.#map) return this.#map;
-    this.#graph.raw().nodes.forEach((node) => this.#addNodeInternal(node));
+    this.populate(this.#graph.raw());
     this.#map ??= new Map();
     return this.#map!;
   }

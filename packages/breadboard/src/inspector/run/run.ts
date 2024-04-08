@@ -11,7 +11,7 @@ import { RunLoader } from "./loader.js";
 import {
   EventIdentifier,
   GraphUUID,
-  InspectableGraphStore,
+  GraphDescriptorStore,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunLoadResult,
@@ -23,11 +23,11 @@ import {
 } from "../types.js";
 
 export class RunObserver implements InspectableRunObserver {
-  #store: InspectableGraphStore;
+  #store: GraphDescriptorStore;
   #options: RunObserverOptions;
   #runs: Run[] = [];
 
-  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
+  constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
     this.#store = store;
     this.#options = options;
   }
@@ -82,7 +82,7 @@ export class Run implements InspectableRun {
 
   constructor(
     timestamp: number,
-    graphStore: InspectableGraphStore,
+    graphStore: GraphDescriptorStore,
     graph: GraphDescriptor,
     options: RunObserverOptions
   ) {

@@ -32,7 +32,7 @@ import {
 import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
-  InspectableGraphStore,
+  GraphDescriptorStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunSecretEvent,
@@ -68,7 +68,7 @@ export class EventManager {
   #serializer = new RunSerializer();
   #sequence: SequenceEntry[] = [];
 
-  constructor(store: InspectableGraphStore, options: RunObserverOptions) {
+  constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
     this.#graphStore = store;
     this.#options = options;
   }

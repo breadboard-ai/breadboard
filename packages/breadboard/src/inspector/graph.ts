@@ -16,9 +16,9 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "../types.js";
-import { InspectableEdgeCache } from "./edge.js";
+import { EdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
-import { InspectableNodeCache } from "./node.js";
+import { NodeCache } from "./node.js";
 import {
   EdgeType,
   describeInput,
@@ -27,6 +27,7 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
+  MutableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
@@ -57,16 +58,17 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-  #nodes: InspectableNodeCache;
-  #edges: InspectableEdgeCache;
+  #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    this.#edges = new InspectableEdgeCache(this);
-    this.#nodes = new InspectableNodeCache(this);
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
   }
 
   raw() {
@@ -74,7 +76,7 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.#nodes.byType(type);
+    return this.#cache.nodes.byType(type);
   }
 
   async describeType(
@@ -121,19 +123,19 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
-    return this.#nodes.get(id);
+    return this.#cache.nodes.get(id);
   }
 
   nodes(): InspectableNode[] {
-    return this.#nodes.nodes();
+    return this.#cache.nodes.nodes();
   }
 
   edges(): InspectableEdge[] {
-    return this.#edges.edges();
+    return this.#cache.edges.edges();
   }
 
   hasEdge(edge: Edge): boolean {
-    return this.#edges.hasByValue(edge);
+    return this.#cache.edges.hasByValue(edge);
   }
 
   kits(): InspectableKit[] {
@@ -143,17 +145,17 @@ class Graph implements InspectableGraphWithStore {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
   entries(): InspectableNode[] {
-    return this.#nodes.nodes().filter((node) => node.isEntry());
+    return this.#cache.nodes.nodes().filter((node) => node.isEntry());
   }
 
   async describe(): Promise<NodeDescriberResult> {
@@ -191,11 +193,11 @@ class Graph implements InspectableGraphWithStore {
   }
 
   get nodeStore() {
-    return this.#nodes;
+    return this.#cache.nodes;
   }
 
   get edgeStore() {
-    return this.#edges;
+    return this.#cache.edges;
   }
 
   updateGraph(graph: GraphDescriptor): void {
