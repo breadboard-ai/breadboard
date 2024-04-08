@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test from "ava";
-
+import test from "node:test";
 import {
   tryParseJson,
   validateJson,
   stripCodeBlock,
 } from "../src/nodes/validate-json.js";
+import { deepStrictEqual } from "node:assert";
 
 test("tryParseJson correctly parses JSON", (t) => {
   const json = `{"foo": "bar"}`;
   const result = tryParseJson(json);
-  t.deepEqual(result, { foo: "bar" });
+  deepStrictEqual(result, { foo: "bar" });
 });
 
 test("tryParseJson correctly returns an error for unparsable JSON", (t) => {
   const json = `{"foo": bar}`;
   const result = tryParseJson(json);
-  t.deepEqual(result, {
+  deepStrictEqual(result, {
     $error: {
       kind: "error",
       error: {
@@ -39,7 +39,7 @@ test("validateJson correctly validates JSON", (t) => {
     properties: { foo: { type: "string" } },
   };
   const result = validateJson(parsed, schema);
-  t.deepEqual(result, { json: { foo: "bar" } });
+  deepStrictEqual(result, { json: { foo: "bar" } });
 });
 
 test("validateJson correctly returns an error for invalid JSON", (t) => {
@@ -49,7 +49,7 @@ test("validateJson correctly returns an error for invalid JSON", (t) => {
     properties: { foo: { type: "number" } },
   };
   const result = validateJson(parsed, schema);
-  t.deepEqual(result, {
+  deepStrictEqual(result, {
     $error: {
       kind: "error",
       error: {
@@ -61,27 +61,27 @@ test("validateJson correctly returns an error for invalid JSON", (t) => {
 });
 
 test("stripCodeBlock correctly strips Markdown only if present", (t) => {
-  t.is(stripCodeBlock('```json\n"json"\n```'), '"json"');
-  t.is(stripCodeBlock('```\n"json"\n```'), '"json"');
-  t.is(stripCodeBlock('"json"'), '"json"');
+  deepStrictEqual(stripCodeBlock('```json\n"json"\n```'), '"json"');
+  deepStrictEqual(stripCodeBlock('```\n"json"\n```'), '"json"');
+  deepStrictEqual(stripCodeBlock('"json"'), '"json"');
 });
 
 test("tryParseJson correctly parses JSON with Markdown code block", (t) => {
   const json = '```json\n{"foo": "bar"}\n```';
   const result = tryParseJson(json);
-  t.deepEqual(result, { foo: "bar" });
+  deepStrictEqual(result, { foo: "bar" });
 });
 
 test("tryParseJson correctly strips stuff outside of the Markdown code block", (t) => {
   {
     const json = 'bar```json\n{"foo": "bar"}\n```\nfooo';
     const result = tryParseJson(json);
-    t.deepEqual(result, { foo: "bar" });
+    deepStrictEqual(result, { foo: "bar" });
   }
   {
     const json =
       'sure, here is the JSON you requested:\n\n```json\n{"foo": "bar"}\n```\n\nAdditionally, here is an alternative version of this JSON:\n\n```json\n{"bar": "baz"}\n```\n\nI hope this helps!';
     const result = tryParseJson(json);
-    t.deepEqual(result, { bar: "baz" });
+    deepStrictEqual(result, { bar: "baz" });
   }
 });

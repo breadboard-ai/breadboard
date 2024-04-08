@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test from "ava";
-
+import { deepStrictEqual } from "node:assert";
+import test from "node:test";
 import { convert } from "../src/nodes/schemish.js";
 
 test("converts a simple schema", (t) => {
@@ -16,7 +16,7 @@ test("converts a simple schema", (t) => {
     },
   };
   const result = convert(schema);
-  t.deepEqual(result, { name: "string, The name of the person." });
+  deepStrictEqual(result, { name: "string, The name of the person." });
 });
 
 test("converts a schema with strings and numbers", (t) => {
@@ -28,7 +28,7 @@ test("converts a schema with strings and numbers", (t) => {
     },
   };
   const result = convert(schema);
-  t.deepEqual(result, {
+  deepStrictEqual(result, {
     name: "string, The name of the person.",
     age: "number, The age of the person.",
   });
@@ -50,7 +50,7 @@ test("converts a schema with nested objects", (t) => {
     },
   };
   const result = convert(schema);
-  t.deepEqual(result, {
+  deepStrictEqual(result, {
     name: "string, The name of the person.",
     age: "number, The age of the person.",
     address: {
@@ -73,7 +73,7 @@ test("converts a schema with arrays", (t) => {
     },
   };
   const result = convert(schema);
-  t.deepEqual(result, {
+  deepStrictEqual(result, {
     name: "string, The name of the person.",
     age: "number, The age of the person.",
     favoriteNumbers: ["number, A favorite number."],
@@ -87,11 +87,14 @@ test("converts a schema with enums", (t) => {
     enum: ["drink", "food"],
   };
   const result = convert(schema);
-  t.deepEqual(result, `string, The type of order. (one of: "drink", "food")`);
+  deepStrictEqual(
+    result,
+    `string, The type of order. (one of: "drink", "food")`
+  );
 });
 
 test("can handle an empty schema", (t) => {
   const schema = {};
   const result = convert(schema);
-  t.deepEqual(result, "Any JSON object");
+  deepStrictEqual(result, "Any JSON object");
 });
