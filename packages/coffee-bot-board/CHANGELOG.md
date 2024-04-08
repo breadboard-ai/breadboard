@@ -1,5 +1,27 @@
 # @google-labs/coffee-bot-board
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [ad9c233]
+- Updated dependencies [65d869b]
+- Updated dependencies [417cdf5]
+- Updated dependencies [cf0ee4f]
+- Updated dependencies [43cbed7]
+- Updated dependencies [ff6433c]
+- Updated dependencies [5382365]
+- Updated dependencies [0e7f106]
+- Updated dependencies [9ea6ba0]
+- Updated dependencies [ffd2a6c]
+- Updated dependencies [9d19852]
+  - @google-labs/breadboard@0.16.0
+  - @google-labs/core-kit@0.6.0
+  - @google-labs/json-kit@0.1.5
+  - @google-labs/node-nursery@0.0.11
+  - @google-labs/palm-kit@0.0.10
+  - @google-labs/template-kit@0.2.5
+
 ## 0.0.10
 
 ### Patch Changes

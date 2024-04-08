@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.16.0
+
+### Minor Changes
+
+- ad9c233: Allow adding edges between `star` and named ports.
+- 65d869b: Teach Editor API about versions and change events.
+- cf0ee4f: Add `blank` method to Editor API.
+- 5382365: Add `InspectableGraph.graphs` API.
+- ffd2a6c: Implement subgraph editing in Editor API.
+
+### Patch Changes
+
+- 417cdf5: Switch to use `GraphDescriptors` in subgraph editing.
+- 43cbed7: Remove `messages` and `currentNode` from `InspectableRun`.
+- ff6433c: Prepare InspectableGraph instances to have a mutable backing store.
+- 0e7f106: Add `metadata` to `InspectableNode`.
+- 9ea6ba0: A quick-and-dirty fix to the TS type system errors.
+
 ## 0.15.0
 
 ### Minor Changes

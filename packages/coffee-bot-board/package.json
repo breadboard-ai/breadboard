@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "A Breadboard implementation of a helpful bot that helps with ordering coffee",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -142,12 +142,12 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@google-labs/breadboard": "^0.15.0",
-    "@google-labs/core-kit": "^0.5.3",
-    "@google-labs/json-kit": "^0.1.4",
-    "@google-labs/node-nursery": "^0.0.10",
-    "@google-labs/palm-kit": "^0.0.9",
-    "@google-labs/template-kit": "^0.2.4",
+    "@google-labs/breadboard": "^0.16.0",
+    "@google-labs/core-kit": "^0.6.0",
+    "@google-labs/json-kit": "^0.1.5",
+    "@google-labs/node-nursery": "^0.0.11",
+    "@google-labs/palm-kit": "^0.0.10",
+    "@google-labs/template-kit": "^0.2.5",
     "dotenv": "^16.4.5"
   }
 }
