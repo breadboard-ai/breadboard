@@ -21,7 +21,7 @@ test("reduce with no board just outputs accumulator", async (t) => {
     list: [1, 2, 3],
     accumulator: 0,
   };
-  const outputs = await reduce.invoke(inputs);
+  const outputs = await reduce.invoke(inputs, {});
   t.deepEqual(outputs, { accumulator: 0 });
 });
 
@@ -45,7 +45,7 @@ test("reduce with board", async (t) => {
     },
     accumulator: 0,
   };
-  const outputs = await reduce.invoke(inputs);
+  const outputs = await reduce.invoke(inputs, {});
   t.deepEqual(outputs, {
     accumulator: 6,
   });
