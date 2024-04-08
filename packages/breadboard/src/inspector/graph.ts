@@ -198,6 +198,10 @@ class Graph implements InspectableGraphWithStore {
     return this.#edges;
   }
 
+  updateGraph(graph: GraphDescriptor): void {
+    this.#graph = graph;
+  }
+
   #populateSubgraphs(): InspectableSubgraphs {
     const subgraphs = this.#graph.graphs;
     if (!subgraphs) return {};

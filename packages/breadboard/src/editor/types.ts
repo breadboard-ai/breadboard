@@ -20,7 +20,47 @@ import {
   NodeIdentifier,
 } from "../types.js";
 
+/**
+ * This event is dispatched whenever the graph changes due to edits.
+ */
+export class GraphChangeEvent extends Event {
+  static eventName = "graphchange";
+
+  constructor(
+    public graph: GraphDescriptor,
+    public version: number
+  ) {
+    super(GraphChangeEvent.eventName, {
+      bubbles: false,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+type EditableGraphEventMap = {
+  graphchange: GraphChangeEvent;
+};
+
 export type EditableGraph = {
+  addEventListener<Key extends keyof EditableGraphEventMap>(
+    eventName: Key,
+    listener: ((evt: EditableGraphEventMap[Key]) => void) | null
+  ): void;
+  /**
+   * Returns the current version of the graph. This number increments with
+   * every edit.
+   * @throws when used on an embedded subgraph.
+   */
+  version(): number;
+
+  /**
+   * Returns parent graph, if any.
+   * This value will be non-null only for graphs (subgraphs) that are embedded
+   * within a graph.
+   */
+  parent(): EditableGraph | null;
+
   canAddNode(spec: EditableNodeSpec): Promise<EditResult>;
   addNode(spec: EditableNodeSpec): Promise<EditResult>;
 
@@ -36,6 +76,7 @@ export type EditableGraph = {
   /**
    * Retrieves a subgraph of this graph.
    * @param id -- id of the subgraph
+   * @throws when used on an embedded subgraph.
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
   /**
@@ -44,6 +85,7 @@ export type EditableGraph = {
    * @param id - id of the new subgraph
    * @param graph - the subgraph to add
    * @returns - the `EditableGraph` instance of the subgraph
+   * @throws when used on an embedded subgraph.
    */
   addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null;
   /**
@@ -52,6 +94,7 @@ export type EditableGraph = {
    * @param id - id of the subgraph being replaced
    * @param graph - the subgraph with which to replace the existing subgraph
    * @returns - the `EditableGraph` instance of the newly replaced subgraph.
+   * @throws when used on an embedded subgraph.
    */
   replaceGraph(
     id: GraphIdentifier,
@@ -61,6 +104,7 @@ export type EditableGraph = {
    * Removes the subgraph with the specified id. Fails if the subgraph does not
    * exist.
    * @param id - id of the subgraph to remove
+   * @throws when used on an embedded subgraph.
    */
   removeGraph(id: GraphIdentifier): EditResult;
 
@@ -71,8 +115,9 @@ export type EditableGraph = {
    */
   canChangeEdge(
     from: EditableEdgeSpec,
-    to: EditableEdgeSpec
-  ): Promise<EditResult>;
+    to: EditableEdgeSpec,
+    strict?: boolean
+  ): Promise<EdgeEditResult>;
   /**
    * Changes the edge from `from` to `to`, if it can be changed.
    * This operation does not change the identity of the edge, but rather
@@ -100,7 +145,12 @@ export type EditableGraph = {
   inspect(): InspectableGraph;
 };
 
-export type EditableGraphOptions = InspectableGraphOptions;
+export type EditableGraphOptions = InspectableGraphOptions & {
+  /**
+   * The initial version of the graph
+   */
+  version?: number;
+};
 
 export type EditableNodeSpec = NodeDescriptor;
 

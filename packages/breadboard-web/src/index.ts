@@ -14,6 +14,7 @@ import {
   BoardRunner,
   createLoader,
   edit,
+  EditableGraph,
   EditResult,
   GraphDescriptor,
   GraphLoader,
@@ -83,6 +84,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
+  #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
   #loader: GraphLoader;
@@ -459,6 +461,8 @@ export class Main extends LitElement {
     this.url = startEvent.url;
     if (startEvent.descriptor) {
       this.graph = startEvent.descriptor;
+      // TODO: Figure out how to avoid needing to null this out.
+      this.#editor = null;
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
@@ -487,9 +491,14 @@ export class Main extends LitElement {
           throw new Error(`Unable to load graph: ${this.url}`);
         }
         this.graph = graph;
+        // TODO: Figure out how to avoid needing to null this out.
+        this.#editor = null;
       } catch (err) {
         this.url = null;
         this.graph = null;
+        // TODO: Figure out how to avoid needing to null this out.
+
+        this.#editor = null;
         this.#failedGraphLoad = true;
       }
     } else if (this.graph) {
@@ -499,6 +508,18 @@ export class Main extends LitElement {
     } else {
       return;
     }
+  }
+
+  #getEditor() {
+    if (!this.graph) return null;
+    if (this.#editor) return this.#editor;
+
+    this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
+    this.#editor.addEventListener("graphchange", (evt) => {
+      this.graph = evt.graph;
+      this.#boardPendingSave = true;
+    });
+    return this.#editor;
   }
 
   // TODO: Allow this to run boards directly.
@@ -570,13 +591,6 @@ export class Main extends LitElement {
     evt.target.href = URL.createObjectURL(
       new Blob([data], { type: "application/json" })
     );
-  }
-
-  #updateGraph(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
-    this.#boardPendingSave = boardPendingSave;
-    // TODO: There's probably a better way to this.
-    // Maybe this change of identity needs to happen within the Editing API?
-    this.graph = { ...graphDescriptor };
   }
 
   #getProviderByName(name: string) {
@@ -763,15 +777,11 @@ export class Main extends LitElement {
             @breadboardedgechange=${(
               evt: BreadboardUI.Events.EdgeChangeEvent
             ) => {
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
-
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-                loader: this.#loader,
-              });
 
               let editResult: Promise<EditResult>;
               switch (evt.changeType) {
@@ -799,19 +809,14 @@ export class Main extends LitElement {
                 if (!result.success) {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
-
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-              });
 
               const inspectableGraph = editableGraph.inspect();
 
@@ -835,21 +840,16 @@ export class Main extends LitElement {
                       BreadboardUI.Events.ToastType.ERROR
                     );
                   }
-
-                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodemultilayout=${(
               evt: BreadboardUI.Events.NodeMultiLayoutEvent
             ) => {
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to update node metadata; no active graph");
                 return;
               }
-
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-              });
 
               const inspectableGraph = editableGraph.inspect();
 
@@ -868,9 +868,7 @@ export class Main extends LitElement {
                     visual: { ...visual, x, y },
                   });
                 })
-              ).then(() => {
-                this.#updateGraph(editableGraph.raw(), false);
-              });
+              );
             }}
             @breadboardnodecreate=${(
               evt: BreadboardUI.Events.NodeCreateEvent
@@ -881,14 +879,12 @@ export class Main extends LitElement {
                 type: nodeType,
               };
 
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-              });
               editableGraph.addNode(newNode).then((result) => {
                 if (!result.success) {
                   this.toast(
@@ -896,21 +892,16 @@ export class Main extends LitElement {
                     BreadboardUI.Events.ToastType.ERROR
                   );
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodeupdate=${(
               evt: BreadboardUI.Events.NodeUpdateEvent
             ) => {
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
-
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-              });
 
               editableGraph
                 .changeConfiguration(evt.id, evt.configuration)
@@ -921,21 +912,17 @@ export class Main extends LitElement {
                       BreadboardUI.Events.ToastType.ERROR
                     );
                   }
-
-                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodedelete=${(
               evt: BreadboardUI.Events.NodeDeleteEvent
             ) => {
-              if (!this.graph) {
+              const editableGraph = this.#getEditor();
+              if (!editableGraph) {
                 console.warn("Unable to create node; no active graph");
                 return;
               }
 
-              const editableGraph = edit(this.graph, {
-                kits: this.kits,
-              });
               editableGraph.removeNode(evt.id).then((result) => {
                 if (!result.success) {
                   this.toast(
@@ -943,8 +930,6 @@ export class Main extends LitElement {
                     BreadboardUI.Events.ToastType.ERROR
                   );
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardmessagetraversal=${() => {

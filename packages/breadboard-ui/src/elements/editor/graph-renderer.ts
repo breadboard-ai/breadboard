@@ -312,9 +312,12 @@ export class GraphRenderer extends LitElement {
       };
       this.#scaleContainerAroundPoint(delta, pivot);
 
-      this.dispatchEvent(
-        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
-      );
+      // TODO: This triggers metadata change. Not sure
+      // if that's intentional.
+      // Comment out for now, so that we don't dirty the graph here.
+      // this.dispatchEvent(
+      //   new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
+      // );
 
       return;
     }

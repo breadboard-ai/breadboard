@@ -366,6 +366,9 @@ export type InspectableNodeType = {
  * `InspectableGraph`.
  */
 export type GraphStoreMutator = {
+  // TODO: This is probably wrong. A new version of the graph should likely
+  // create a new instance of an `InspectableGraph`.
+  updateGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };
