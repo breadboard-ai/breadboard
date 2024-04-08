@@ -16,7 +16,7 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "../types.js";
-import { InspectableEdgeCache } from "./edge.js";
+import { EdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
 import { NodeCache } from "./node.js";
 import {
@@ -58,14 +58,14 @@ class Graph implements InspectableGraphWithStore {
 
   #graph: GraphDescriptor;
   #nodes: NodeCache;
-  #edges: InspectableEdgeCache;
+  #edges: EdgeCache;
   #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    this.#edges = new InspectableEdgeCache(this);
+    this.#edges = new EdgeCache(this);
     this.#nodes = new NodeCache(this);
   }
 

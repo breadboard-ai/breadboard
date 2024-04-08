@@ -52,7 +52,7 @@ class Edge implements InspectableEdge {
   }
 }
 
-export class InspectableEdgeCache {
+export class EdgeCache {
   #graph: InspectableGraph;
   #map?: Map<EdgeDescriptor, InspectableEdge>;
 
