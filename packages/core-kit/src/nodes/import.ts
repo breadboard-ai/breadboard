@@ -13,7 +13,7 @@ import type {
   GraphDescriptor,
   LambdaNodeOutputs,
 } from "@google-labs/breadboard";
-import { loadBoardFromPath } from "../load-board.js";
+import { loadBoardFromPath } from "../utils.js";
 
 export type ImportNodeInputs = InputValues & {
   path?: string;

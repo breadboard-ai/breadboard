@@ -14,7 +14,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { loadBoardFromPath } from "../load-board.js";
+import { loadBoardFromPath } from "../utils.js";
 
 export type IncludeNodeInputs = InputValues & {
   path?: string;
