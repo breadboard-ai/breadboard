@@ -15,6 +15,7 @@ import {
   EditableGraph,
   EditableGraphOptions,
   EditableNodeSpec,
+  GraphChangeEvent,
 } from "./types.js";
 
 export class Graph implements EditableGraph {
@@ -25,6 +26,7 @@ export class Graph implements EditableGraph {
   #graph: GraphDescriptor;
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
+  #eventTarget: EventTarget = new EventTarget();
 
   constructor(
     graph: GraphDescriptor,
@@ -105,6 +107,13 @@ export class Graph implements EditableGraph {
       this.#version++;
     }
     this.#inspector.updateGraph(this.#graph);
+    this.#eventTarget.dispatchEvent(
+      new GraphChangeEvent(this.#graph, this.#version)
+    );
+  }
+
+  addEventListener(eventName: string, listener: EventListener): void {
+    this.#eventTarget.addEventListener(eventName, listener);
   }
 
   version() {

@@ -20,7 +20,33 @@ import {
   NodeIdentifier,
 } from "../types.js";
 
+/**
+ * This event is dispatched whenever the graph changes due to edits.
+ */
+export class GraphChangeEvent extends Event {
+  static eventName = "graphchange";
+
+  constructor(
+    public graph: GraphDescriptor,
+    public version: number
+  ) {
+    super(GraphChangeEvent.eventName, {
+      bubbles: false,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+type EditableGraphEventMap = {
+  graphchange: GraphChangeEvent;
+};
+
 export type EditableGraph = {
+  addEventListener<Key extends keyof EditableGraphEventMap>(
+    eventName: Key,
+    listener: ((evt: EditableGraphEventMap[Key]) => void) | null
+  ): void;
   /**
    * Returns the current version of the graph.
    * @throws when used on an embedded subgraph.

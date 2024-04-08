@@ -511,9 +511,14 @@ export class Main extends LitElement {
   }
 
   #getEditor() {
-    this.#editor ??= this.graph
-      ? edit(this.graph, { kits: this.kits, loader: this.#loader })
-      : null;
+    if (!this.graph) return null;
+    if (this.#editor) return this.#editor;
+
+    this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
+    this.#editor.addEventListener("graphchange", (evt) => {
+      this.graph = evt.graph;
+      this.#boardPendingSave = true;
+    });
     return this.#editor;
   }
 
@@ -586,13 +591,6 @@ export class Main extends LitElement {
     evt.target.href = URL.createObjectURL(
       new Blob([data], { type: "application/json" })
     );
-  }
-
-  #updateGraph(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
-    this.#boardPendingSave = boardPendingSave;
-    // TODO: There's probably a better way to this.
-    // Maybe this change of identity needs to happen within the Editing API?
-    this.graph = { ...graphDescriptor };
   }
 
   #getProviderByName(name: string) {
@@ -811,8 +809,6 @@ export class Main extends LitElement {
                 if (!result.success) {
                   this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
@@ -844,8 +840,6 @@ export class Main extends LitElement {
                       BreadboardUI.Events.ToastType.ERROR
                     );
                   }
-
-                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodemultilayout=${(
@@ -874,9 +868,7 @@ export class Main extends LitElement {
                     visual: { ...visual, x, y },
                   });
                 })
-              ).then(() => {
-                this.#updateGraph(editableGraph.raw(), false);
-              });
+              );
             }}
             @breadboardnodecreate=${(
               evt: BreadboardUI.Events.NodeCreateEvent
@@ -900,8 +892,6 @@ export class Main extends LitElement {
                     BreadboardUI.Events.ToastType.ERROR
                   );
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardnodeupdate=${(
@@ -922,8 +912,6 @@ export class Main extends LitElement {
                       BreadboardUI.Events.ToastType.ERROR
                     );
                   }
-
-                  this.#updateGraph(editableGraph.raw());
                 });
             }}
             @breadboardnodedelete=${(
@@ -942,8 +930,6 @@ export class Main extends LitElement {
                     BreadboardUI.Events.ToastType.ERROR
                   );
                 }
-
-                this.#updateGraph(editableGraph.raw());
               });
             }}
             @breadboardmessagetraversal=${() => {
