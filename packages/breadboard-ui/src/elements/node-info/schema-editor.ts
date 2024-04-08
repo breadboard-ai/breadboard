@@ -206,6 +206,7 @@ export class SchemaEditor extends LitElement {
 
       let format: HTMLTemplateResult | symbol = nothing;
       switch (value.type) {
+        case "string":
         case "array": {
           format = html`<label for="${id}-format">Format</label>
             <select
@@ -408,8 +409,6 @@ export class SchemaEditor extends LitElement {
         if (oldType === "boolean" && property.type !== oldType) {
           delete property.default;
         }
-
-        console.log(property);
 
         if (inID && inID.value && inID.value !== id) {
           renamedProperties.set(id, inID.value);
