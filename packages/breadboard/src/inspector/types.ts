@@ -402,6 +402,10 @@ export type InspectableNodeCache = {
   nodes(): InspectableNode[];
 };
 
+/**
+ * A backing store for `InspectableGraph` instances, representing a stable
+ * instance of a graph whose properties mutate.
+ */
 export type MutableGraph = {
   nodes: InspectableNodeCache;
   edges: InspectableEdgeCache;
