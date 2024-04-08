@@ -4,66 +4,127 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test from "ava";
-
+import { deepEqual } from "node:assert";
+import test, { describe } from "node:test";
 import { jsonataDescriber } from "../src/nodes/jsonata.js";
-
-test("`jsonataDescriber` correctly reacts to `raw = false`", async (t) => {
-  const result = await jsonataDescriber();
-  t.like(result, {
-    inputSchema: {
-      type: "object",
-      properties: { expression: { title: "expression" } },
-      required: ["expression"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: { result: { title: "result" } },
-      required: ["result"],
-    },
-  });
-});
-
-test("`jsonataDescriber` correctly reacts to `raw = true`", async (t) => {
-  const result = await jsonataDescriber({
-    expression: "foo",
-    json: { foo: { bar: "baz" } },
-    raw: true,
-  });
-  t.like(result, {
-    inputSchema: {
-      type: "object",
-      properties: {
-        expression: { title: "expression" },
-        json: { title: "json" },
-        raw: { title: "raw" },
+describe("jsonata", () => {
+  test("`jsonataDescriber` correctly reacts to `raw = false`", async () => {
+    const result = await jsonataDescriber();
+    const expected = {
+      inputSchema: {
+        type: "object",
+        properties: {
+          expression: {
+            title: "expression",
+            description: "The Jsonata expression to evaluate",
+            type: "string",
+          },
+          raw: {
+            title: "raw",
+            description:
+              "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
+            type: "boolean",
+          },
+          json: {
+            title: "json",
+            description: "The JSON object to evaluate",
+            type: ["object", "string"],
+          },
+        },
+        additionalProperties: false,
+        required: ["expression"],
       },
-      required: ["expression"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: { bar: { title: "bar" } },
-    },
-  });
-});
-
-test("`jsonataDescriber` correctly reacts to invalid input", async (t) => {
-  const result = await jsonataDescriber({
-    raw: true,
-  });
-  t.like(result, {
-    inputSchema: {
-      type: "object",
-      properties: {
-        expression: { title: "expression" },
-        json: { title: "json" },
-        raw: { title: "raw" },
+      outputSchema: {
+        type: "object",
+        properties: {
+          result: {
+            title: "result",
+            description: "The result of the Jsonata expression",
+            type: "string",
+          },
+        },
+        required: ["result"],
       },
-      required: ["expression"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {},
-    },
+    };
+    deepEqual(result, expected);
+  });
+
+  test("`jsonataDescriber` correctly reacts to `raw = true`", async () => {
+    const result = await jsonataDescriber({
+      expression: "foo",
+      json: { foo: { bar: "baz" } },
+      raw: true,
+    });
+    const expected = {
+      inputSchema: {
+        type: "object",
+        properties: {
+          expression: {
+            title: "expression",
+            description: "The Jsonata expression to evaluate",
+            type: "string",
+          },
+          raw: {
+            title: "raw",
+            description:
+              "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
+            type: "boolean",
+          },
+          json: {
+            title: "json",
+            description: "The JSON object to evaluate",
+            type: ["object", "string"],
+          },
+        },
+        additionalProperties: false,
+        required: ["expression"],
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          bar: {
+            type: "string",
+            title: "bar",
+          },
+        },
+      },
+    };
+    deepEqual(result, expected);
+  });
+
+  test("`jsonataDescriber` correctly reacts to invalid input", async () => {
+    const result = await jsonataDescriber({
+      raw: true,
+    });
+    const expected = {
+      inputSchema: {
+        type: "object",
+        properties: {
+          expression: {
+            title: "expression",
+            description: "The Jsonata expression to evaluate",
+            type: "string",
+          },
+          raw: {
+            title: "raw",
+            description:
+              "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
+            type: "boolean",
+          },
+          json: {
+            title: "json",
+            description: "The JSON object to evaluate",
+            type: ["object", "string"],
+          },
+        },
+        additionalProperties: false,
+        required: ["expression"],
+      },
+      outputSchema: {
+        type: "object",
+        properties: {},
+      },
+    };
+    deepEqual(result, expected);
   });
 });
