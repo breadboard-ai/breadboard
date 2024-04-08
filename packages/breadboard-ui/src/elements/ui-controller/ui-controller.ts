@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { STATUS } from "../../types/types.js";
+import { STATUS, Settings } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -29,10 +29,6 @@ import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
-
-type UIConfig = {
-  showNarrowTimeline: boolean;
-};
 
 /**
  * Breadboard UI controller element.
@@ -70,10 +66,8 @@ export class UI extends LitElement {
   @property()
   boardId = -1;
 
-  @state()
-  config: UIConfig = {
-    showNarrowTimeline: false,
-  };
+  @property()
+  settings: Settings | null = null;
 
   @state()
   selectedNodeId: string | null = null;
@@ -281,6 +275,7 @@ export class UI extends LitElement {
           .events=${events}
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}
+          .settings=${this.settings}
           @breadboardinputrequested=${() => {
             this.#autoSwitchSidePanel = 0;
             this.requestUpdate();
