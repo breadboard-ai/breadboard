@@ -27,6 +27,7 @@ import {
   resolveBehaviorType,
 } from "../../utils/schema.js";
 import { ArrayEditor } from "./array-editor.js";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -66,13 +67,14 @@ export class NodeInfo extends LitElement {
         throw new Error("Unable to load node");
       }
 
+      const metadata = node.metadata();
       const configuration = node.configuration();
       const { inputs } = await node.ports();
       const ports = structuredClone(inputs.ports).sort((portA, portB) =>
         portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
       );
 
-      return { node, ports, configuration };
+      return { node, ports, configuration, metadata };
     },
     args: () => [this.graph, this.selectedNodeId],
   });
@@ -459,10 +461,13 @@ export class NodeInfo extends LitElement {
         node,
         ports,
         configuration,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        metadata,
       }: {
         node: InspectableNode;
         ports: InspectablePort[];
         configuration: NodeConfiguration;
+        metadata: NodeMetadata;
       }) => html`
         <h1>
           Configuration (${node.title()})
