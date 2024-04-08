@@ -65,7 +65,10 @@ class Graph implements InspectableGraphWithStore {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    this.#cache = { edges: new EdgeCache(this), nodes: new NodeCache(this) };
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
   }
 
   raw() {
