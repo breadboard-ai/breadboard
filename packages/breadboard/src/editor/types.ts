@@ -48,7 +48,8 @@ export type EditableGraph = {
     listener: ((evt: EditableGraphEventMap[Key]) => void) | null
   ): void;
   /**
-   * Returns the current version of the graph.
+   * Returns the current version of the graph. This number increments with
+   * every edit.
    * @throws when used on an embedded subgraph.
    */
   version(): number;

@@ -123,6 +123,8 @@ const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
 const result = await graph.addEdge(edgeSpec, false);
 ```
 
+The same optional argument also works for the `changeEdge` method.
+
 ## Starting a new graph
 
 If we want to start a brand-new graph, we can use the handy `blank` method, provided by the Editor API:
@@ -138,6 +140,31 @@ const myNewGraph = blank();
 The newly-created graph will have a pre-filled title and description, a version of `0.0.1` and two connected nodes: the `input` node connected to the `output` node with one wire. The wire will go from `text` port to `text` port of the respective nodes.
 
 ![Blank graph diagram](/breadboard/static/images/editor-blank.png)
+
+## Graph versioning
+
+To help us keep track of the edits, the `EditableGraph` has a `version()` method, which returns the current version of the graph:
+
+```ts
+// Returns a number.
+const current = graph.version();
+```
+
+By default, a new `EditableGraph` instance starts with version `0` and increments it for each change.
+
+To supply a different starting version, use the `version` option when creating a new `EditableGraph` instance:
+
+```ts
+import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
+
+// Let's start with version 1000.
+const version = 1000;
+const graph = edit(bgl, {
+  kits: [asRuntime(Core), asRunTime(JSONKit)],
+  version,
+});
+```
 
 ## Editing subgraphs
 
@@ -177,13 +204,31 @@ if (!replaced) {
 }
 ```
 
+To find out if a particular `EditableGraph` instance is an embedded subgraph, use the `parent()` method:
+
+```ts
+// If subgraph, returns `EditableGraph` instance of the parent graph.
+const parentGraph = subgraph.parent();
+if (parentGraph) {
+  console.log("A subgraph!");
+} else {
+  console.log("Not a subgraph");
+}
+```
+
+Because they are part of a larger graph, subgraphs do not have their own versions and attempting to call the `version()` method on a subgraph will throw an error.
+
+Subgraphs may not contain other subgraphs, so in the same fashion as `version()`, the `getGraph`, `addGraph`, `replaceGraph`, and `removeGraph` will throw
+when called on a subgraph.
+
 ## Accessing the graph
 
-To access the resulting graph, use the `raw()` method on the `EditableGraph` instance.
+To access the underlying `GraphDescriptor` instance, use the `raw()` method on the `EditableGraph` instance.
 
 ```ts
 const graph = edit(bgl, { kits });
 await graph.addNode({ id: "foo", type: "bar" });
+// Returns the `GraphDescriptor` instance.
 const newBgl = graph.raw();
 ```
 
@@ -200,3 +245,9 @@ const inspectableGraph = graph.inspect();
 ```
 
 In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditableGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
+
+## Listening to changes
+
+The `EditableGraph` instance also the `addEventListener` method, which works pretty much like any [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) -- we can subscribe to listen to events that are dispatched by this instance. Currently the following events are supported:
+
+- `graphchange` -- dispatched on every change of a graph or any of the subgraphs. The event object provides two useful properties: `graph` and `version`. The `graph` property contains the updated `GraphDescriptor` instance and the `version` has the version of this instance.
