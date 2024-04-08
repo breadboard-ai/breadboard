@@ -667,6 +667,7 @@ export class Main extends LitElement {
       }
     }
 
+    const settings = this.#settings ? this.#settings.values : null;
     const title = this.graph?.title;
     const showingOverlay =
       this.showBoardEditOverlay ||
@@ -740,6 +741,7 @@ export class Main extends LitElement {
             .status=${this.status}
             .boardId=${this.#boardId}
             .failedToLoad=${this.#failedGraphLoad}
+            .settings=${settings}
             @breadboardfiledrop=${async (
               evt: BreadboardUI.Events.FileDropEvent
             ) => {
@@ -952,6 +954,38 @@ export class Main extends LitElement {
             }}
             @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
               this.#delay = delayEvent.duration;
+            }}
+            @breadboardinputenter=${async (
+              event: BreadboardUI.Events.InputEnterEvent
+            ) => {
+              if (!this.#settings) {
+                return;
+              }
+
+              const isSecret = "secret" in event.data;
+              const shouldSaveSecrets =
+                this.#settings
+                  .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                  .items.get("Save Secrets")?.value || false;
+              if (!shouldSaveSecrets || !isSecret) {
+                return;
+              }
+
+              const name = event.id;
+              const value = event.data.secret as string;
+              const settingsItems = this.#settings.getSection(
+                BreadboardUI.Types.SETTINGS_TYPE.SECRETS
+              ).items;
+              if (settingsItems.has(event.id)) {
+                const settingsItem = settingsItems.get(event.id);
+                if (settingsItem) {
+                  settingsItem.value = value;
+                }
+              } else {
+                settingsItems.set(name, { name, value });
+              }
+
+              await this.#settings.save(this.#settings.values);
             }}
           ></bb-ui-controller>`
         )}

@@ -10,7 +10,6 @@ import {
   getMultipartValue,
   isMultipart,
 } from "./input-multipart/input-multipart.js";
-import { ShortTermMemory } from "../../utils/short-term-memory.js";
 import {
   isBoolean,
   isDrawable,
@@ -49,9 +48,6 @@ const parseValue = (type: Schema["type"], input: HTMLInputElement) => {
 @customElement("bb-input")
 export class Input extends LitElement {
   @property({ reflect: false })
-  remember = false;
-
-  @property({ reflect: false })
   secret = false;
 
   @property({ reflect: false })
@@ -60,7 +56,9 @@ export class Input extends LitElement {
   @property({ reflect: false })
   processedValues: Record<string, NodeValue> | null = null;
 
-  #memory = new ShortTermMemory();
+  @property({ reflect: false })
+  values: InputData | null = null;
+
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
@@ -154,31 +152,6 @@ export class Input extends LitElement {
     }
   `;
 
-  #getLocalStorageKey() {
-    return `bb-remember-${this.id}`;
-  }
-
-  #getRememberedValues(): InputData {
-    if (!this.remember) return {};
-    const key = this.#getLocalStorageKey();
-    const data = localStorage.getItem(key);
-    if (data) {
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        console.warn(`Unable to parse remembered values for ${key}`);
-      }
-    }
-    return {};
-  }
-
-  #rememberValues(data: InputData) {
-    if (!this.remember) return;
-    const key = this.#getLocalStorageKey();
-    const json = JSON.stringify(data);
-    localStorage.setItem(key, json);
-  }
-
   async processInput() {
     if (!this.#formRef.value) {
       return;
@@ -246,11 +219,6 @@ export class Input extends LitElement {
       }
     }
 
-    this.#rememberValues(data);
-    if (this.remember) {
-      this.#memory.rememberSaving(properties);
-    }
-
     this.dispatchEvent(new InputEnterEvent(this.id, data));
   }
 
@@ -260,8 +228,6 @@ export class Input extends LitElement {
     }
 
     const { properties } = this.schema;
-    const values = this.#getRememberedValues();
-
     if (!properties) {
       return html`Unable to render: no input Schema detected`;
     }
@@ -269,13 +235,13 @@ export class Input extends LitElement {
     // Special case for when we have – say – a secret stored. Here we neither
     // render the form, nor the retrieved value, but instead we just dispatch
     // the event with the value in and stop rendering.
-    if (this.remember && this.#memory.didSave(properties)) {
-      this.dispatchEvent(new InputEnterEvent(this.id, values));
+    if (this.values) {
+      this.dispatchEvent(new InputEnterEvent(this.id, this.values));
       return;
     }
 
     try {
-      return this.#renderForm(properties, values);
+      return this.#renderForm(properties, this.values || {});
     } catch (e) {
       const event = new InputErrorEvent(`${e}`);
       this.dispatchEvent(event);
