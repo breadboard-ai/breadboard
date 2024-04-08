@@ -38,6 +38,7 @@ test("editGraph correctly edits node metadata", async (t) => {
   const newMetadata = { title: "bar" };
   const changeResult = await graph.changeMetadata("node0", newMetadata);
   t.is(changeResult.success, true);
+  t.is(graph.version(), 1);
 
   const changedMetadata = graph.inspect().nodeById("node0")
     ?.descriptor?.metadata;
@@ -47,4 +48,5 @@ test("editGraph correctly edits node metadata", async (t) => {
     title: "baz",
   });
   t.is(invalidResult.success, false);
+  t.is(graph.version(), 1);
 });

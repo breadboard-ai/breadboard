@@ -366,6 +366,9 @@ export type InspectableNodeType = {
  * `InspectableGraph`.
  */
 export type GraphStoreMutator = {
+  // TODO: This is probably wrong. A new version of the graph should likely
+  // create a new instance of an `InspectableGraph`.
+  updateGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };
@@ -381,6 +384,32 @@ export type EdgeStoreMutator = {
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
+
+export type InspectableEdgeCache = {
+  get(edge: Edge): InspectableEdge | undefined;
+  getOrCreate(edge: Edge): InspectableEdge;
+  add(edge: Edge): void;
+  remove(edge: Edge): void;
+  hasByValue(edge: Edge): boolean;
+  edges(): InspectableEdge[];
+};
+
+export type InspectableNodeCache = {
+  byType(type: NodeTypeIdentifier): InspectableNode[];
+  get(id: string): InspectableNode | undefined;
+  add(node: NodeDescriptor): void;
+  remove(id: NodeIdentifier): void;
+  nodes(): InspectableNode[];
+};
+
+/**
+ * A backing store for `InspectableGraph` instances, representing a stable
+ * instance of a graph whose properties mutate.
+ */
+export type MutableGraph = {
+  nodes: InspectableNodeCache;
+  edges: InspectableEdgeCache;
+};
 
 /**
  * Represents a store of graph versions.
@@ -518,7 +547,7 @@ export type StoreAdditionResult = {
 /**
  * Represents a store of all graphs that the system has seen so far.
  */
-export type InspectableGraphStore = {
+export type GraphDescriptorStore = {
   /**
    * Retrieves a graph with the given id.
    * @param id -- the id of the graph to retrieve
