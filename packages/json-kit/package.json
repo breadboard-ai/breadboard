@@ -42,15 +42,10 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "ava",
+      "command": "find tests -name '*.ts' | xargs c8 node --test --test-reporter=spec --loader ts-node/esm",
       "env": {
         "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": []
+      }
     },
     "lint": {
       "command": "eslint . --ext .ts",
@@ -73,19 +68,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -94,12 +76,12 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "ava": "^5.2.0",
+    "c8": "^9.1.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
