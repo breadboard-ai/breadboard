@@ -402,7 +402,7 @@ export type InspectableNodeCache = {
   nodes(): InspectableNode[];
 };
 
-export type InspectableGraphCache = {
+export type MutableGraph = {
   nodes: InspectableNodeCache;
   edges: InspectableEdgeCache;
 };

@@ -27,7 +27,7 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableGraphCache,
+  MutableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
@@ -58,7 +58,7 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-  #cache: InspectableGraphCache;
+  #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
