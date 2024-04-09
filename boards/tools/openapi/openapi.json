@@ -51,7 +51,7 @@
       "id": "convertBoardListToObject",
       "type": "runJavascript",
       "configuration": {
-        "code": "const convertBoardListToObject = ({ list }) => {\n  const operations = list\n    .map((item) => {\n      item.board.title = item.item.operationId;\n      item.board.description = item.item.description;\n      item.board.url = item.item.url;\n      item.board.version = \"0.0.3\"\n\n      return {\n        [item.item.operationId]: item,\n      };\n    })\n    .reduce((acc, curr) => {\n      return { ...acc, ...curr };\n    }, {});\n  return { ...operations };\n};",
+        "code": "const convertBoardListToObject = ({ list }) => {\n  const operations = list\n    .map((item) => {\n      item.board.title = item.item.operationId;\n      item.board.description = item.item.description;\n      item.board.url = item.item.url;\n      item.board.version = \"0.0.3\";\n\n      item.board.board.title = item.item.operationId;\n      item.board.board.description = item.item.description;\n      item.board.board.url = item.item.url;\n      item.board.board.version = \"0.0.3\"\n\n      return {\n        [item.item.operationId]: item,\n      };\n    })\n    .reduce((acc, curr) => {\n      return { ...acc, ...curr };\n    }, {});\n  return { ...operations };\n};",
         "name": "convertBoardListToObject",
         "raw": true
       }

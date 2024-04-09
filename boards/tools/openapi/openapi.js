@@ -455,7 +455,12 @@ const convertBoardListToObject = code(({ list }) => {
       item.board.title = item.item.operationId;
       item.board.description = item.item.description;
       item.board.url = item.item.url;
-      item.board.version = "0.0.3"
+      item.board.version = "0.0.3";
+
+      item.board.board.title = item.item.operationId;
+      item.board.board.description = item.item.description;
+      item.board.board.url = item.item.url;
+      item.board.board.version = "0.0.3"
 
       return {
         [item.item.operationId]: item,
