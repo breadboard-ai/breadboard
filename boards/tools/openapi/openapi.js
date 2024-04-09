@@ -452,7 +452,7 @@ const createSpecBoard = board((apiSpec) => {
 const convertBoardListToObject = code(({ list }) => {
   const operations = list
     .map((item) => {
-      item.board.title = item.operationId;
+      item.board.title = item.item.operationId;
       item.board.description = item.item.description;
       item.board.url = item.item.url;
       item.board.version = "0.0.3"
