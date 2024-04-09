@@ -976,7 +976,6 @@ export class Main extends LitElement {
               const settingsItem = settingsItems.get(event.id);
               if (settingsItem) {
                 if (settingsItem.value === value) {
-                  console.log("Secret is the same - exiting");
                   return;
                 }
 
@@ -987,13 +986,7 @@ export class Main extends LitElement {
             }
 
             await this.#settings.save(this.#settings.values);
-
-            // Update the UI's copy of the settings.
-            if (!this.#uiRef.value) {
-              return;
-            }
-
-            this.#uiRef.value.settings = this.#settings.values;
+            this.requestUpdate();
           }}
         ></bb-ui-controller>
       </div>
