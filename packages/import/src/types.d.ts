@@ -1,5 +1,4 @@
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { type BreadboardSlotSpec } from "@google-labs/breadboard";
 
 // We only support OpenAPI v3 and v3.1, the types here just make it cleaner in the other parsing logic.
 
