@@ -80,7 +80,6 @@ const describe = async (
       const { inputSchema } = await inspectableGraph.describe();
       inputBuilder.addProperties(inputSchema?.properties);
       inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
-      inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
     } else {
       inputBuilder.setAdditionalProperties(true);
     }

@@ -35,13 +35,13 @@
     },
     {
       "from": "parameters",
-      "to": "lambda-5",
+      "to": "curry-4",
       "out": "location",
       "in": "location"
     },
     {
       "from": "parameters",
-      "to": "lambda-5",
+      "to": "curry-4",
       "out": "generator",
       "in": "generator"
     },
@@ -76,7 +76,7 @@
       "in": "guides"
     },
     {
-      "from": "lambda-5",
+      "from": "curry-4",
       "to": "createGuides",
       "out": "board",
       "in": "board"
@@ -171,10 +171,10 @@
       "configuration": {}
     },
     {
-      "id": "lambda-5",
-      "type": "lambda",
+      "id": "curry-4",
+      "type": "curry",
       "configuration": {
-        "board": {
+        "$board": {
           "kind": "board",
           "board": {
             "kits": [],
@@ -300,6 +300,9 @@
             "graphs": {}
           }
         }
+      },
+      "metadata": {
+        "title": "Curry Params into Guide"
       }
     }
   ],
