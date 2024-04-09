@@ -462,6 +462,8 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setUrlParam("board", startEvent.url);
     this.url = startEvent.url;
+    this.subGraphId = null;
+
     if (startEvent.descriptor) {
       this.graph = startEvent.descriptor;
       // TODO: Figure out how to avoid needing to null this out.
