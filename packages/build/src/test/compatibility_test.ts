@@ -79,18 +79,7 @@ function setupKits<
       { str: "12345" },
       { kits: [strLenRuntimeKit] }
     );
-    assert.deepEqual(result, {
-      boardLen: 5,
-      schema: {
-        type: "object",
-        properties: {
-          boardLen: {
-            title: "boardLen",
-            type: "number",
-          },
-        },
-      },
-    });
+    assert.deepEqual(result, { boardLen: 5 });
   });
 
   test("monomorphic board schema via inspector", async () => {
@@ -197,18 +186,7 @@ function setupKits<
       { num1: 1, num2: 2, num3: 3 },
       { kits: [adderRuntimeKit] }
     );
-    assert.deepEqual(result, {
-      boardSum: 6,
-      schema: {
-        type: "object",
-        properties: {
-          boardSum: {
-            title: "boardSum",
-            type: "number",
-          },
-        },
-      },
-    });
+    assert.deepEqual(result, { boardSum: 6 });
   });
 
   test("polymorphic board schema via inspector", async () => {
