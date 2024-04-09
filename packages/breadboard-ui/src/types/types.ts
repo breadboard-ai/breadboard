@@ -137,7 +137,3 @@ export type Settings = {
     items: Map<SettingEntry["value"]["name"], SettingEntry["value"]>;
   };
 };
-
-export type SettingsStore = {
-  values: Settings;
-};
