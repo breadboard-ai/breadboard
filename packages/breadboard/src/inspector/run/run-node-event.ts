@@ -8,6 +8,7 @@ import type { HarnessRunResult } from "../../harness/types.js";
 import type { InputValues, NodeIdentifier, OutputValues } from "../../types.js";
 import type {
   EventIdentifier,
+  InspectableGraph,
   InspectableNode,
   InspectableRun,
   InspectableRunNodeEvent,
@@ -82,10 +83,14 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
     return eventIdFromEntryId(idFromPath(this.#entry.path));
   }
 
+  get graph(): InspectableGraph {
+    return this.#entry.parent?.graph as InspectableGraph;
+  }
+
   get node(): InspectableNode {
     if (this.#node) return this.#node;
 
-    const node = this.#entry.parent?.graph?.nodeById(this.#id);
+    const node = this.graph.nodeById(this.#id);
     if (!node) {
       throw new Error(
         `RunNodeEvent could not find inspectable node. This is a bug in Inspector API machinery. Node Id: ${this.#id}`

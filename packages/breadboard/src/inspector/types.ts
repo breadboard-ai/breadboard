@@ -576,6 +576,10 @@ export type InspectableRunNodeEvent = {
    */
   id: EventIdentifier;
   /**
+   * The graph that contains this node.
+   */
+  graph: InspectableGraph;
+  /**
    * The `InspectableNode` instance associated with this node.
    */
   node: InspectableNode;
