@@ -20,7 +20,7 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { SETTINGS_TYPE, SettingsStore } from "../../types/types.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -40,7 +40,7 @@ export class ActivityLog extends LitElement {
   showExtendedInfo = false;
 
   @property()
-  settings: Settings | null = null;
+  settings: SettingsStore | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -793,8 +793,9 @@ export class ActivityLog extends LitElement {
                     let values = null;
                     if (this.settings) {
                       const savedSecret =
-                        this.settings[SETTINGS_TYPE.SECRETS].items.get(id) ||
-                        null;
+                        this.settings.values[SETTINGS_TYPE.SECRETS].items.get(
+                          id
+                        ) || null;
 
                       if (savedSecret) {
                         values = { secret: savedSecret.value };
