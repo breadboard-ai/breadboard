@@ -453,7 +453,11 @@ const convertBoardListToObject = code(({ list }) => {
   const operations = list
     .map((item) => {
       return {
-        [item.item.operationId]: item,
+        [item.item.operationId]: item.board.serialize({
+          title: item.item.operationId,
+          description: item.item.description,
+          version: "0.0.13",
+        }),
       };
     })
     .reduce((acc, curr) => {
