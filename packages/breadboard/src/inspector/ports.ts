@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
-import { InspectableEdge, PortStatus } from "./types.js";
+import { InspectableEdge, InspectablePort, PortStatus } from "./types.js";
 import { NodeConfiguration, Schema } from "../types.js";
 
 const title = (schema: Schema, key: string) => {
@@ -63,34 +63,38 @@ export const collectPorts = (
     ]),
   ];
   portNames.sort();
-  return portNames.map((port) => {
-    const star = port === "*";
-    const configured = valuePortNames.includes(port);
-    const wired = wiredPortNames.includes(port);
-    const expected = schemaPortNames.includes(port) || star;
-    const required = requiredPortNames.includes(port);
-    return {
-      name: port,
-      title: title(schema, port),
-      configured,
-      value: values?.[port],
-      star,
-      get edges() {
-        if (!wired) return [];
-        return edges.filter((edge) => {
-          if (edge.out === "*" && star) return true;
-          return type === EdgeType.In ? edge.in === port : edge.out === port;
-        });
-      },
-      status: computePortStatus(
-        wired || configured,
-        !fixed || expected || schemaContainsStar,
-        required,
-        wiredContainsStar
-      ),
-      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
-    };
-  });
+  return portNames
+    .map((port) => {
+      const star = port === "*";
+      const configured = valuePortNames.includes(port);
+      const wired = wiredPortNames.includes(port);
+      const expected = schemaPortNames.includes(port) || star;
+      const required = requiredPortNames.includes(port);
+      const portSchema = schema.properties?.[port] || DEFAULT_SCHEMA;
+      if (portSchema.behavior?.includes("deprecated") && !wired) return null;
+      return {
+        name: port,
+        title: title(schema, port),
+        configured,
+        value: values?.[port],
+        star,
+        get edges() {
+          if (!wired) return [];
+          return edges.filter((edge) => {
+            if (edge.out === "*" && star) return true;
+            return type === EdgeType.In ? edge.in === port : edge.out === port;
+          });
+        },
+        status: computePortStatus(
+          wired || configured,
+          !fixed || expected || schemaContainsStar,
+          required,
+          wiredContainsStar
+        ),
+        schema: portSchema,
+      };
+    })
+    .filter(Boolean) as InspectablePort[];
 };
 
 export const collectPortsForType = (schema: Schema) => {
