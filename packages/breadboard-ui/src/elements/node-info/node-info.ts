@@ -6,7 +6,7 @@
 
 import { Task } from "@lit/task";
 import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import {
   BehaviorSchema,
   GraphDescriptor,
@@ -43,11 +43,14 @@ export class NodeInfo extends LitElement {
   @property()
   editable = false;
 
-  @state()
-  private selectedNodeId: string | null = null;
+  @property()
+  selectedNodeId: string | null = null;
+
+  @property()
+  subGraphId: string | null = null;
 
   #formTask = new Task(this, {
-    task: async ([graph, nodeId]) => {
+    task: async ([graph, subGraphId, nodeId]) => {
       if (typeof graph !== "object" || typeof nodeId !== "string") {
         throw new Error("Unsupported information");
       }
@@ -57,10 +60,20 @@ export class NodeInfo extends LitElement {
       }
 
       const descriptor = graph;
-      const breadboardGraph = inspect(descriptor, {
+      let breadboardGraph = inspect(descriptor, {
         kits: this.kits,
         loader: this.loader || undefined,
       });
+
+      if (subGraphId && typeof subGraphId === "string") {
+        const subgraphs = breadboardGraph.graphs();
+        if (subgraphs[subGraphId]) {
+          breadboardGraph = subgraphs[subGraphId];
+        } else {
+          console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
+        }
+      }
+
       const node = breadboardGraph.nodeById(nodeId);
 
       if (!node) {
@@ -76,7 +89,7 @@ export class NodeInfo extends LitElement {
 
       return { node, ports, configuration, metadata };
     },
-    args: () => [this.graph, this.selectedNodeId],
+    args: () => [this.graph, this.subGraphId, this.selectedNodeId],
   });
 
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -324,12 +337,24 @@ export class NodeInfo extends LitElement {
     }
 
     const descriptor = this.graph;
-    const breadboardGraph = inspect(descriptor, {
+    let breadboardGraph = inspect(descriptor, {
       kits: this.kits,
       loader: this.loader || undefined,
     });
+
+    if (this.subGraphId) {
+      const subgraphs = breadboardGraph.graphs();
+      if (subgraphs[this.subGraphId]) {
+        breadboardGraph = subgraphs[this.subGraphId];
+      } else {
+        console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
+        return;
+      }
+    }
+
     const node = breadboardGraph.nodeById(id);
     if (!node) {
+      console.log("Unable to find node");
       return;
     }
 
@@ -390,7 +415,7 @@ export class NodeInfo extends LitElement {
       delete configuration[name];
     }
 
-    this.dispatchEvent(new NodeUpdateEvent(id, configuration));
+    this.dispatchEvent(new NodeUpdateEvent(id, this.subGraphId, configuration));
   }
 
   async #setDefaultConfiguration(node: InspectableNode) {
@@ -407,7 +432,9 @@ export class NodeInfo extends LitElement {
     // Because we're going to change the configuration without typing anything,
     // we can do a rendering update safely.
     this.#forceRender = true;
-    this.dispatchEvent(new NodeUpdateEvent(node.descriptor.id, configuration));
+    this.dispatchEvent(
+      new NodeUpdateEvent(node.descriptor.id, this.subGraphId, configuration)
+    );
   }
 
   protected shouldUpdate(
@@ -627,8 +654,7 @@ export class NodeInfo extends LitElement {
                           type="checkbox"
                           name="${name}"
                           id=${name}
-                          value="true"
-                          ?checked=${value === "true"}
+                          .checked=${value}
                         />
                       </div>`;
                       break;
