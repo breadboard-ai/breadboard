@@ -452,12 +452,13 @@ const createSpecBoard = board((apiSpec) => {
 const convertBoardListToObject = code(({ list }) => {
   const operations = list
     .map((item) => {
+      item.board.title = item.operationId;
+      item.board.description = item.item.description;
+      item.board.url = item.item.url;
+      item.board.version = "0.0.3"
+
       return {
-        [item.item.operationId]: item.board.serialize({
-          title: item.item.operationId,
-          description: item.item.description,
-          version: "0.0.13",
-        }),
+        [item.item.operationId]: item,
       };
     })
     .reduce((acc, curr) => {

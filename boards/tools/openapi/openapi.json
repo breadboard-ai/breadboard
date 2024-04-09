@@ -51,7 +51,7 @@
       "id": "convertBoardListToObject",
       "type": "runJavascript",
       "configuration": {
-        "code": "const convertBoardListToObject = ({ list }) => {\n  const operations = list\n    .map((item) => {\n      return {\n        [item.item.operationId]: item.board.serialize({\n          title: item.item.operationId,\n          description: item.item.description,\n          version: \"0.0.13\",\n        }),\n      };\n    })\n    .reduce((acc, curr) => {\n      return { ...acc, ...curr };\n    }, {});\n  return { ...operations };\n};",
+        "code": "const convertBoardListToObject = ({ list }) => {\n  const operations = list\n    .map((item) => {\n      item.board.title = item.operationId;\n      item.board.description = item.item.description;\n      item.board.url = item.item.url;\n      item.board.version = \"0.0.3\"\n\n      return {\n        [item.item.operationId]: item,\n      };\n    })\n    .reduce((acc, curr) => {\n      return { ...acc, ...curr };\n    }, {});\n  return { ...operations };\n};",
         "name": "convertBoardListToObject",
         "raw": true
       }
