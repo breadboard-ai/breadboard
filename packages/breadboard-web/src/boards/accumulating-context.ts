@@ -61,7 +61,7 @@ prompt.in({ context: conversationMemory.accumulator });
 
 const generator = core.invoke({
   $id: "generator",
-  path: parameters.generator.memoize(),
+  $board: parameters.generator.memoize(),
   text: prompt.prompt,
 });
 

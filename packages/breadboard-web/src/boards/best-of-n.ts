@@ -46,7 +46,7 @@ export default await board(({ agent, context, text, n }) => {
       const invokeAgent = core.invoke({
         $id: "invokeAgent",
         context,
-        path: agent.isString(),
+        $board: agent.isString(),
       });
       return { item: invokeAgent.json };
     }).in({ agent, context: text }),

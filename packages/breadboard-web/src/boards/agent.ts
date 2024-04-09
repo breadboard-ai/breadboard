@@ -41,7 +41,7 @@ export default await board(({ generator, context, stopSequences }) => {
     context,
     stopSequences,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
-    path: generator.isString(),
+    $board: generator.isString(),
   });
 
   const { result } = json.jsonata({

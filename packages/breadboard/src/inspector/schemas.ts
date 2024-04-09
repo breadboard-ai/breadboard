@@ -18,7 +18,7 @@ const SCHEMA_SCHEMA: Schema = {
   behavior: ["json-schema", "ports-spec"],
 };
 
-export const DEFAULT_SCHEMA = { type: "string" };
+export const DEFAULT_SCHEMA: Schema = { type: "string" };
 
 const blankSchema = () => ({ type: "object" });
 

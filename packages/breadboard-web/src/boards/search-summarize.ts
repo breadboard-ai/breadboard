@@ -80,7 +80,7 @@ export default await board(() => {
     .to(
       core.invoke({
         $id: "generator",
-        path: parameters.generator as V<string>,
+        $board: parameters.generator as V<string>,
       })
     )
     .text.to(base.output({ schema: outputSchema }));

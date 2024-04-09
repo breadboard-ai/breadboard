@@ -19,7 +19,7 @@
       "from": "fn-3",
       "to": "invoke",
       "out": "path",
-      "in": "path"
+      "in": "$board"
     },
     {
       "from": "input",

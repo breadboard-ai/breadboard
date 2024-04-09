@@ -62,7 +62,7 @@
       "id": "bestOfN",
       "type": "invoke",
       "configuration": {
-        "path": "best-of-n.json",
+        "$board": "best-of-n.json",
         "agent": "ad-writer.json",
         "context": []
       }
