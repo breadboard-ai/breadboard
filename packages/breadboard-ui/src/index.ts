@@ -20,3 +20,4 @@ export const register = () => {
 export * as Types from "./types/types.js";
 export * as Events from "./events/events.js";
 export * as Elements from "./elements/elements.js";
+export * as Constants from "./constants/constants.js";

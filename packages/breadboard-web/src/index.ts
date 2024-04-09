@@ -11,6 +11,7 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
+  blank,
   BoardRunner,
   createLoader,
   edit,
@@ -48,6 +49,9 @@ export class Main extends LitElement {
 
   @state()
   graph: GraphDescriptor | null = null;
+
+  @property()
+  subGraphId: string | null = null;
 
   @state()
   kits: Kit[] = [];
@@ -733,6 +737,7 @@ export class Main extends LitElement {
         <bb-ui-controller
           ${ref(this.#uiRef)}
           .graph=${this.graph}
+          .subGraphId=${this.subGraphId}
           .run=${currentRun}
           .kits=${this.kits}
           .loader=${this.#loader}
@@ -740,6 +745,61 @@ export class Main extends LitElement {
           .boardId=${this.#boardId}
           .failedToLoad=${this.#failedGraphLoad}
           .settings=${settings}
+          @breadboardsubgraphcreate=${async (
+            evt: BreadboardUI.Events.SubGraphCreateEvent
+          ) => {
+            const editableGraph = this.#getEditor();
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const editResult = editableGraph.addGraph(evt.subGraphId, blank());
+            if (!editResult) {
+              this.toast(
+                "Unable to create sub board",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            this.subGraphId = evt.subGraphId;
+            this.requestUpdate();
+          }}
+          @breadboardsubgraphdelete=${async (
+            evt: BreadboardUI.Events.SubGraphDeleteEvent
+          ) => {
+            const editableGraph = this.#getEditor();
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const editResult = editableGraph.removeGraph(evt.subGraphId);
+            if (!editResult.success) {
+              this.toast(
+                "Unable to create sub board",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            if (evt.subGraphId === this.subGraphId) {
+              this.subGraphId = null;
+            }
+            this.requestUpdate();
+          }}
+          @breadboardsubgraphchosen=${(
+            evt: BreadboardUI.Events.SubGraphChosenEvent
+          ) => {
+            this.subGraphId =
+              evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
+                ? evt.subGraphId
+                : null;
+            this.requestUpdate();
+          }}
           @breadboardfiledrop=${async (
             evt: BreadboardUI.Events.FileDropEvent
           ) => {
@@ -777,7 +837,11 @@ export class Main extends LitElement {
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to create node; no active graph");
               return;
@@ -812,7 +876,11 @@ export class Main extends LitElement {
             });
           }}
           @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to update node metadata; no active graph");
               return;
@@ -842,7 +910,11 @@ export class Main extends LitElement {
           @breadboardnodemultilayout=${(
             evt: BreadboardUI.Events.NodeMultiLayoutEvent
           ) => {
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to update node metadata; no active graph");
               return;
@@ -852,6 +924,7 @@ export class Main extends LitElement {
 
             Promise.all(
               [...evt.layout.entries()].map(([id, { x, y }]) => {
+                if (!editableGraph) return;
                 const existingNode = inspectableGraph.nodeById(id);
 
                 const metadata = existingNode?.metadata() || {};
@@ -876,7 +949,11 @@ export class Main extends LitElement {
               type: nodeType,
             };
 
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to create node; no active graph");
               return;
@@ -894,7 +971,11 @@ export class Main extends LitElement {
           @breadboardnodeupdate=${(
             evt: BreadboardUI.Events.NodeUpdateEvent
           ) => {
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to create node; no active graph");
               return;
@@ -914,7 +995,11 @@ export class Main extends LitElement {
           @breadboardnodedelete=${(
             evt: BreadboardUI.Events.NodeDeleteEvent
           ) => {
-            const editableGraph = this.#getEditor();
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
             if (!editableGraph) {
               console.warn("Unable to create node; no active graph");
               return;
