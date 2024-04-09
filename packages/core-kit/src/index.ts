@@ -251,27 +251,13 @@ export type CoreKitType = {
    * and the output are the invoked board's outputs.
    */
   invoke: NodeFactory<
-    | {
-        /**
-         * The URL to the board to be invoked.
-         */
-        path: string;
-        [key: string]: NodeValue;
-      }
-    | {
-        /**
-         * A string of the serailized graph to be invoked.
-         */
-        graph: string;
-        [key: string]: NodeValue;
-      }
-    | {
-        /**
-         * A board to be invoked.
-         */
-        board: NodeValue;
-        [key: string]: NodeValue;
-      },
+    {
+      /**
+       * A board to be invoked.
+       */
+      $board: NodeValue;
+      [key: string]: NodeValue;
+    },
     { [key: string]: unknown }
   >;
   resolve: NodeFactory<{ [k: string]: string }, { [k: string]: string }>;

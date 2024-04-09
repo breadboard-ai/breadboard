@@ -25,7 +25,7 @@
       "from": "math-question",
       "to": "generator",
       "out": "generator",
-      "in": "path"
+      "in": "$board"
     },
     {
       "from": "math-function",

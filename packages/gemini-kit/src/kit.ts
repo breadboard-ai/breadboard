@@ -25,7 +25,7 @@ kit.graphs = {
   vision: geminiProVision,
 };
 
-core.invoke({ $id: "text", path: "#text" });
-core.invoke({ $id: "vision", path: "#vision" });
+core.invoke({ $id: "text", $board: "#text" });
+core.invoke({ $id: "vision", $board: "#vision" });
 
 export default kit;

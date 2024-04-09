@@ -63,7 +63,7 @@ Solution:`,
   });
   const generator = core.invoke({
     $id: "generator",
-    path: input.generator as V<string>,
+    $board: input.generator as V<string>,
     text: template.prompt,
   });
   return core

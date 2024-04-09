@@ -41,6 +41,12 @@ export type {
 
 export type BehaviorSchema =
   /**
+   * This port is deprecated and is only there because there might be graphs
+   * that still use it. Don't show it in the UI unless there are existing
+   * incoming wires.
+   */
+  | "deprecated"
+  /**
    * Indicates that this particular input port value should not be cached by
    * the input bubbling machinery.
    * Use this when you'd like to continually ask the user for the same input,

@@ -49,7 +49,7 @@
       "from": "parameters",
       "to": "generate",
       "out": "generator",
-      "in": "path"
+      "in": "$board"
     },
     {
       "from": "parameters",
@@ -192,7 +192,7 @@
       "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n        \"path\": $lookup(urlMap, toolCalls[0].name)\n      },\n      toolCalls[0].args,\n      { \"generator\": generator }\n    ])",
+        "expression": "$merge([{\n        \"$board\": $lookup(urlMap, toolCalls[0].name)\n      },\n      toolCalls[0].args,\n      { \"generator\": generator }\n    ])",
         "raw": true
       }
     }
@@ -285,7 +285,7 @@
                     "id": "boardToFunction",
                     "type": "invoke",
                     "configuration": {
-                      "path": "board-as-function.json"
+                      "$board": "board-as-function.json"
                     }
                   },
                   {

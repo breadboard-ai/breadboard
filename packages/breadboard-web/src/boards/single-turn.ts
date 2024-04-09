@@ -6,7 +6,7 @@ export default await board(({ context }) => {
 
   const user = core.invoke({
     $id: "askUser",
-    path: "ask-user.json",
+    $board: "ask-user.json",
     title: "User",
     description: "Type here to chat with the assistant",
     context,
@@ -14,7 +14,7 @@ export default await board(({ context }) => {
 
   const assistant = core.invoke({
     $id: "assistant",
-    path: "agent.json",
+    $board: "agent.json",
     context: user.context,
   });
 

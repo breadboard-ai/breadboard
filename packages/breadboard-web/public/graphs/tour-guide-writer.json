@@ -31,7 +31,7 @@
       "from": "parameters",
       "to": "travelItineraryGenerator",
       "out": "generator",
-      "in": "path"
+      "in": "$board"
     },
     {
       "from": "parameters",
@@ -195,7 +195,7 @@
                 "from": "input-1",
                 "to": "guideGenerator",
                 "out": "generator",
-                "in": "path"
+                "in": "$board"
               },
               {
                 "from": "guideTemplate",
@@ -252,9 +252,12 @@
                         ]
                       },
                       "generator": {
-                        "title": "path",
-                        "description": "The path to the board to invoke.",
-                        "type": "string"
+                        "title": "board",
+                        "behavior": [
+                          "board"
+                        ],
+                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
+                        "type": "object"
                       }
                     },
                     "required": [

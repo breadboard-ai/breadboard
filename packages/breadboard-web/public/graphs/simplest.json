@@ -40,7 +40,7 @@
       "id": "gemini",
       "type": "invoke",
       "configuration": {
-        "path": "gemini-generator.json"
+        "$board": "gemini-generator.json"
       }
     },
     {

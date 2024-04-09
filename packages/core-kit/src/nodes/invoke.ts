@@ -62,6 +62,7 @@ const describe = async (
   const inputBuilder = new SchemaBuilder().addProperties({
     path: {
       title: "path",
+      behavior: ["deprecated"],
       description: "The path to the board to invoke.",
       type: "string",
     },

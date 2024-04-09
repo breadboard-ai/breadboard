@@ -214,7 +214,7 @@
                 "from": "input-1",
                 "to": "invokeAgent",
                 "out": "agent",
-                "in": "path"
+                "in": "$board"
               }
             ],
             "nodes": [
@@ -250,8 +250,11 @@
                         "title": "context"
                       },
                       "agent": {
-                        "title": "path",
-                        "description": "The path to the board to invoke.",
+                        "title": "board",
+                        "behavior": [
+                          "board"
+                        ],
+                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "type": "string"
                       }
                     },

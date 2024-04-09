@@ -91,7 +91,7 @@ export default await board(() => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",
-          path: "board-as-function.json",
+          $board: "board-as-function.json",
           boardURL: item,
         });
         return {
@@ -122,14 +122,14 @@ export default await board(() => {
     $id: "generate",
     useStreaming: false,
     ...parameters,
-    path: parameters.generator as V<string>,
+    $board: parameters.generator as V<string>,
     tools: formatFunctionDeclarations,
   });
 
   const getBoardArgs = json.jsonata({
     $id: "getBoardArgs",
     expression: `$merge([{
-        "path": $lookup(urlMap, toolCalls[0].name)
+        "$board": $lookup(urlMap, toolCalls[0].name)
       },
       toolCalls[0].args,
       { "generator": generator }

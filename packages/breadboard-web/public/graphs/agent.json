@@ -37,7 +37,7 @@
       "from": "input-1",
       "to": "generate",
       "out": "generator",
-      "in": "path"
+      "in": "$board"
     },
     {
       "from": "input-1",
@@ -104,7 +104,10 @@
             },
             "generator": {
               "title": "Generator",
-              "description": "The path to the board to invoke.",
+              "behavior": [
+                "board"
+              ],
+              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
               "type": "string",
               "default": "gemini-generator.json"
             }

@@ -101,7 +101,7 @@ const graph = board(() => {
   const travelItineraryGenerator = core.invoke({
     $id: "travelItineraryGenerator",
     stopSequences: ["\n[Place]"],
-    path: parameters.generator as V<string>,
+    $board: parameters.generator as V<string>,
     useStreaming: false,
   });
 
@@ -147,7 +147,7 @@ const graph = board(() => {
     const guideGenerator = core.invoke({
       $id: "guideGenerator",
       stopSequences: ["\n[City]"],
-      path: generator as V<string>,
+      $board: generator as V<string>,
       useStreaming: false,
     });
 

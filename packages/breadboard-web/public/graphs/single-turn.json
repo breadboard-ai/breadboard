@@ -42,14 +42,14 @@
       "id": "assistant",
       "type": "invoke",
       "configuration": {
-        "path": "agent.json"
+        "$board": "agent.json"
       }
     },
     {
       "id": "askUser",
       "type": "invoke",
       "configuration": {
-        "path": "ask-user.json",
+        "$board": "ask-user.json",
         "title": "User",
         "description": "Type here to chat with the assistant"
       }
