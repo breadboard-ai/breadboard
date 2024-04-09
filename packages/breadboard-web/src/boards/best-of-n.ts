@@ -40,16 +40,23 @@ export default await board(({ agent, context, text, n }) => {
     return { list: [...Array(n).keys()] };
   })({ $id: "createList", n });
 
-  const generateN = core.map({
-    $id: "generateN",
-    board: board(({ context, agent }) => {
+  const curryContext = core.curry({
+    $metadata: { title: "Curry Agent and Context" },
+    $board: board(({ context, agent }) => {
       const invokeAgent = core.invoke({
         $id: "invokeAgent",
         context,
         $board: agent.isString(),
       });
       return { item: invokeAgent.json };
-    }).in({ agent, context: text }),
+    }),
+    agent,
+    context: text,
+  });
+
+  const generateN = core.map({
+    $id: "generateN",
+    board: curryContext,
     list: createList.list,
   });
 

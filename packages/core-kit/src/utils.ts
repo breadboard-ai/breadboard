@@ -7,17 +7,18 @@
 import {
   BoardRunner,
   BreadboardCapability,
+  BreadboardRunner,
   GraphDescriptor,
   NodeHandlerContext,
 } from "@google-labs/breadboard";
 
-export const loadBoardFromPath = async (
+export const loadGraphFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
   const graph = await context.loader?.load(path, context);
   if (!graph) throw new Error(`Unable to load graph from "${path}"`);
-  return BoardRunner.fromGraphDescriptor(graph);
+  return graph;
 };
 
 const isBreadboardCapability = (
@@ -42,18 +43,33 @@ const isGraphDescriptor = (
   );
 };
 
+export const getGraphDescriptor = async (
+  board: unknown,
+  context: NodeHandlerContext
+): Promise<GraphDescriptor | undefined> => {
+  if (!board) return undefined;
+
+  if (typeof board === "string") {
+    const graph = await context.loader?.load(board, context);
+    if (!graph) throw new Error(`Unable to load graph from "${board}"`);
+    return graph;
+  } else if (isBreadboardCapability(board)) {
+    return board.board;
+  } else if (isGraphDescriptor(board)) {
+    return board;
+  }
+  return undefined;
+};
+
 export const getRunner = async (
   board: unknown,
   context: NodeHandlerContext
 ) => {
-  if (!board) return undefined;
-
-  if (typeof board === "string") {
-    return await loadBoardFromPath(board, context);
-  } else if (isBreadboardCapability(board)) {
-    return await BoardRunner.fromBreadboardCapability(board);
-  } else if (isGraphDescriptor(board)) {
-    return await BoardRunner.fromGraphDescriptor(board);
+  const graph = await getGraphDescriptor(board, context);
+  if (!graph) return undefined;
+  const maybeRunnable = graph as BreadboardRunner | Record<string, unknown>;
+  if (maybeRunnable.runOnce) {
+    return maybeRunnable as BoardRunner;
   }
-  return undefined;
+  return await BoardRunner.fromGraphDescriptor(graph);
 };

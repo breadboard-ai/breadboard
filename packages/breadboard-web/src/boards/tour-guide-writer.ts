@@ -153,11 +153,18 @@ const graph = board(() => {
 
     guideTemplate.prompt.as("text").to(guideGenerator);
     return guideGenerator.text.as("guide").to(base.output({}));
-  }).in({ location: parameters.location, generator: parameters.generator });
+  });
+
+  const guideWithParameters = core.curry({
+    $metadata: { title: "Curry Params into Guide" },
+    $board: createGuide,
+    location: parameters.location,
+    generator: parameters.generator,
+  });
 
   const createGuides = core.map({
     $id: "createGuides",
-    board: createGuide,
+    board: guideWithParameters.board,
     list: splitItinerary.list,
   });
 

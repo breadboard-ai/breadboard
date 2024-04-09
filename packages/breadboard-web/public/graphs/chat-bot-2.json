@@ -10,14 +10,14 @@
       "in": ""
     },
     {
-      "from": "lambda-4",
+      "from": "curry-3",
       "to": "repeater-5",
       "out": "board",
       "in": "worker"
     },
     {
       "from": "input-1",
-      "to": "lambda-4",
+      "to": "curry-3",
       "out": "instruction",
       "in": "instruction"
     }
@@ -37,10 +37,10 @@
       }
     },
     {
-      "id": "lambda-4",
-      "type": "lambda",
+      "id": "curry-3",
+      "type": "curry",
       "configuration": {
-        "board": {
+        "$board": {
           "kind": "board",
           "board": {
             "kits": [],
@@ -141,6 +141,9 @@
             "graphs": {}
           }
         }
+      },
+      "metadata": {
+        "title": "Curry Instruction"
       }
     },
     {

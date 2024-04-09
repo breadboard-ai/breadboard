@@ -160,10 +160,10 @@ export const Core = builder.build({
    * If the `accumulator` property is "string-ey" (that is, it's a `string`,
    * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
    * be appended as strings, formatted as
-   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
    *
    * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   * as array items, formatted as `{{property_name}}: {{property_value}}`.
    *
    * Otherwise, the `accumulator` property will be treated as an object and
    * the properties will be added as properties on this object.
@@ -183,6 +183,7 @@ export const Core = builder.build({
   fetch,
   runJavascript,
   secrets,
+  curry,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -202,6 +203,7 @@ import {
   NewOutputValues as OutputValues,
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
+import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
 
 export type CoreKitType = {
   passthrough: NodeFactory<InputValues, OutputValues>;
@@ -219,10 +221,10 @@ export type CoreKitType = {
    * If the `accumulator` property is "string-ey" (that is, it's a `string`,
    * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
    * be appended as strings, formatted as
-   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
    *
    * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   * as array items, formatted as `{{property_name}}: {{property_value}}`.
    *
    * Otherwise, the `accumulator` property will be treated as an object and
    * the properties will be added as properties on this object.
@@ -269,6 +271,12 @@ export type CoreKitType = {
     { list: NodeValue[] }
   >;
   reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
+  /**
+   * Combines a board with some arguments to create a new board (aka currying).
+   * The arguments in that board will run as part of board invocation as if
+   * they were supplied as inputs.
+   */
+  curry: NodeFactory<CurryInputs, CurryOutputs>;
   fetch: NodeFactory<
     { url: string },
     {

@@ -64,7 +64,7 @@
       "in": "instruction"
     },
     {
-      "from": "lambda-4",
+      "from": "curry-3",
       "to": "generateN",
       "out": "board",
       "in": "board"
@@ -83,13 +83,13 @@
     },
     {
       "from": "input-1",
-      "to": "lambda-4",
+      "to": "curry-3",
       "out": "agent",
       "in": "agent"
     },
     {
       "from": "input-1",
-      "to": "lambda-4",
+      "to": "curry-3",
       "out": "text",
       "in": "context"
     },
@@ -190,10 +190,10 @@
       }
     },
     {
-      "id": "lambda-4",
-      "type": "lambda",
+      "id": "curry-3",
+      "type": "curry",
       "configuration": {
-        "board": {
+        "$board": {
           "kind": "board",
           "board": {
             "kits": [],
@@ -269,6 +269,9 @@
             "graphs": {}
           }
         }
+      },
+      "metadata": {
+        "title": "Curry Agent and Context"
       }
     },
     {

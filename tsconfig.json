@@ -6,7 +6,7 @@
     { "path": "packages/breadboard" },
     { "path": "packages/breadboard-cli" },
     { "path": "packages/breadboard-extension" },
-    { "path": "packages/breadboard-import" },
+    { "path": "packages/import" },
     { "path": "packages/breadboard-server" },
     { "path": "packages/breadboard-web" },
     { "path": "packages/breadboard-ui" },
