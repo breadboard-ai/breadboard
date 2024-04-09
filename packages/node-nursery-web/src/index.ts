@@ -5,8 +5,6 @@
  */
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
-import credentials from "./nodes/credentials.js";
-import driveList from "./nodes/drive-list.js";
 import transformStream from "./nodes/transform-stream.js";
 import listToStream from "./nodes/list-to-stream.js";
 
@@ -16,8 +14,6 @@ const NodeNurseryWeb = new KitBuilder({
     "A kit that holds nodes that run in a Web-based environment, and are still WIP",
   url: "npm:@google-labs/node-nursery-web",
 }).build({
-  credentials,
-  driveList,
   transformStream,
   listToStream,
 });
