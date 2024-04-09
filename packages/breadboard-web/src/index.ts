@@ -924,6 +924,7 @@ export class Main extends LitElement {
 
             Promise.all(
               [...evt.layout.entries()].map(([id, { x, y }]) => {
+                if (!editableGraph) return;
                 const existingNode = inspectableGraph.nodeById(id);
 
                 const metadata = existingNode?.metadata() || {};
