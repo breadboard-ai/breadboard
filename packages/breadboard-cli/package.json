@@ -55,6 +55,7 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
+        "../breadboard-import:build",
         "../breadboard-web:build:tsc",
         "../breadboard-web:generate:graphs",
         "../template-kit:build:tsc",
