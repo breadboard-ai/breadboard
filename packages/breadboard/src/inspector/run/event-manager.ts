@@ -35,6 +35,7 @@ import {
   GraphDescriptorStore,
   InspectableRunErrorEvent,
   InspectableRunEvent,
+  InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   PathRegistryEntry,
   RunObserverLogLevel,
@@ -67,6 +68,7 @@ export class EventManager {
   #pathRegistry = new PathRegistry();
   #serializer = new RunSerializer();
   #sequence: SequenceEntry[] = [];
+  #currentNodeEvent: RunNodeEvent | null = null;
 
   constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
     this.#graphStore = store;
@@ -120,6 +122,7 @@ export class EventManager {
     );
     entry.event = event;
     this.#addToSequence("nodestart", entry);
+    this.#currentNodeEvent = event;
   }
 
   #addInput(data: InputResponse) {
@@ -247,6 +250,10 @@ export class EventManager {
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  currentEvent(): InspectableRunNodeEvent | null {
+    return this.#currentNodeEvent;
   }
 
   serialize(options: RunSerializationOptions) {

@@ -20,6 +20,7 @@ import {
   RunSerializationOptions,
   SerializedRun,
   SerializedRunLoadingOptions,
+  InspectableRunNodeEvent,
 } from "../types.js";
 
 export class RunObserver implements InspectableRunObserver {
@@ -94,6 +95,10 @@ export class Run implements InspectableRun {
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
+  }
+
+  currentNodeEvent(): InspectableRunNodeEvent | null {
+    return this.#events.currentEvent();
   }
 
   addResult(result: HarnessRunResult) {

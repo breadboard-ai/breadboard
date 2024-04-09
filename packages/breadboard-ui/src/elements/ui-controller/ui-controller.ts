@@ -21,7 +21,6 @@ import {
   GraphDescriptor,
   GraphLoader,
   InspectableRun,
-  InspectableRunEvent,
   Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
@@ -234,19 +233,25 @@ export class UI extends LitElement {
   }
 
   render() {
-    const lastNode = (events: InspectableRunEvent[]): NodeIdentifier | null => {
-      for (let index = events.length - 1; index >= 0; index--) {
-        const event = events[index];
-        if (event.type == "node" && !event.bubbled) {
-          return event.node.descriptor.id;
-        }
-      }
-      return null;
+    const currentNode = (): NodeIdentifier | null => {
+      if (!this.run) return null;
+
+      const currentNodeEvent = this.run.currentNodeEvent();
+      if (!currentNodeEvent) return null;
+
+      // TODO: Make this less of a dirty hack.
+      const visibleGraphURL = `${this.graph?.url}${
+        this.subGraphId ? `#${this.subGraphId}` : ""
+      }`;
+      const eventGraphURL = currentNodeEvent.graph.raw().url;
+      if (visibleGraphURL !== eventGraphURL) return null;
+
+      return currentNodeEvent.node.descriptor.id;
     };
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
-    const nodeId = lastNode(events);
+    const nodeId = currentNode();
 
     /**
      * Create all the elements we need.

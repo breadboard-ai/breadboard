@@ -576,6 +576,10 @@ export type InspectableRunNodeEvent = {
    */
   id: EventIdentifier;
   /**
+   * The graph that contains this node.
+   */
+  graph: InspectableGraph;
+  /**
    * The `InspectableNode` instance associated with this node.
    */
   node: InspectableNode;
@@ -678,6 +682,14 @@ export type InspectableRun = {
    * The nested graph events aren't included.
    */
   events: InspectableRunEvent[];
+  /**
+   * Returns the current `InspectableRunNodeEvent` if any.
+   * This is useful for tracking the latest node that is being run.
+   *
+   * Note: this will return node events for nested runs as well as the
+   * top-level run.
+   */
+  currentNodeEvent(): InspectableRunNodeEvent | null;
   /**
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
