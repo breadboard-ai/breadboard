@@ -667,7 +667,7 @@ export class Main extends LitElement {
       }
     }
 
-    const settings = this.#settings ? this.#settings.values : null;
+    const settings = this.#settings;
     const title = this.graph?.title;
     const showingOverlay =
       this.showBoardEditOverlay ||
