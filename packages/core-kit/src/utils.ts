@@ -7,6 +7,7 @@
 import {
   BoardRunner,
   BreadboardCapability,
+  BreadboardRunner,
   GraphDescriptor,
   NodeHandlerContext,
 } from "@google-labs/breadboard";
@@ -66,5 +67,9 @@ export const getRunner = async (
 ) => {
   const graph = await getGraphDescriptor(board, context);
   if (!graph) return undefined;
+  const maybeRunnable = graph as BreadboardRunner | Record<string, unknown>;
+  if (maybeRunnable.runOnce) {
+    return maybeRunnable as BoardRunner;
+  }
   return await BoardRunner.fromGraphDescriptor(graph);
 };
