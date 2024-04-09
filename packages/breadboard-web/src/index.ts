@@ -23,7 +23,6 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
