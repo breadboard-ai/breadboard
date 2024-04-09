@@ -24,8 +24,8 @@ const environment = (): Environment =>
   typeof globalThis.process !== "undefined"
     ? "node"
     : typeof globalThis.window !== "undefined"
-    ? "browser"
-    : "worker";
+      ? "browser"
+      : "worker";
 
 const runInNode = async ({
   code,
@@ -146,9 +146,9 @@ export function convertToNamedFunction({
   }
   // If it's not a recognizable function format
   else {
-    // Do not throw, since it could be a function format that this helped
+    // Do not throw, since it could be a function format that this helper
     // does not yet handle.
-    console.warn(`Unrecognized function format: ${funcStr}`);
+    // Could also be a named function already.
     return funcStr;
   }
 }
