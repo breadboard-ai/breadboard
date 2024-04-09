@@ -271,6 +271,11 @@ export type CoreKitType = {
     { list: NodeValue[] }
   >;
   reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
+  /**
+   * Combines a board with some arguments to create a new board (aka currying).
+   * The arguments in that board will run as part of board invocation as if
+   * they were supplied as inputs.
+   */
   curry: NodeFactory<CurryInputs, CurryOutputs>;
   fetch: NodeFactory<
     { url: string },
