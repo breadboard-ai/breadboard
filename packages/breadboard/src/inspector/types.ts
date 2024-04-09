@@ -683,6 +683,14 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
+   * Returns the current `InspectableRunNodeEvent` if any.
+   * This is useful for tracking the latest node that is being run.
+   *
+   * Note: this will return node events for nested runs as well as the
+   * top-level run.
+   */
+  currentNodeEvent(): InspectableRunNodeEvent | null;
+  /**
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */

@@ -8,6 +8,7 @@ import type {
   GraphUUID,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunNodeEvent,
   PathRegistryEntry,
 } from "../types.js";
 
@@ -27,6 +28,10 @@ export class NestedRun implements InspectableRun {
     this.start = entry.graphStart;
     this.end = entry.graphEnd;
     this.events = entry.events;
+  }
+
+  currentNodeEvent(): InspectableRunNodeEvent | null {
+    return null;
   }
 
   getEventById(): InspectableRunEvent | null {
