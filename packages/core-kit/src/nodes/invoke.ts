@@ -15,7 +15,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { loadBoardFromPath } from "../load-board.js";
+import { getRunner, loadBoardFromPath } from "../utils.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -35,17 +35,7 @@ const getRunnableBoard = async (
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, ...args } = inputs;
   if ($board) {
-    let board;
-
-    if (isBreadboardCapability($board)) {
-      board = await BoardRunner.fromBreadboardCapability($board);
-    } else if (isGraphDescriptor($board)) {
-      board = await BoardRunner.fromGraphDescriptor($board);
-    } else if (typeof $board === "string") {
-      board = await loadBoardFromPath($board, context);
-    } else {
-      board = undefined;
-    }
+    const board = await getRunner($board, context);
     return { board, args };
   } else {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
@@ -61,28 +51,6 @@ const getRunnableBoard = async (
     }
     return { board: runnableBoard, args };
   }
-};
-
-const isBreadboardCapability = (
-  candidate: unknown
-): candidate is BreadboardCapability => {
-  const board = candidate as BreadboardCapability;
-  return (
-    board &&
-    typeof board === "object" &&
-    board.kind === "board" &&
-    board.board &&
-    isGraphDescriptor(board.board)
-  );
-};
-
-const isGraphDescriptor = (
-  candidate: unknown
-): candidate is GraphDescriptor => {
-  const graph = candidate as GraphDescriptor;
-  return (
-    graph && typeof graph === "object" && graph.nodes && graph.edges && true
-  );
 };
 
 const describe = async (

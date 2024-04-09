@@ -65,6 +65,42 @@ export class KitNodeChosenEvent extends Event {
   }
 }
 
+export class SubGraphChosenEvent extends Event {
+  static eventName = "breadboardsubgraphchosen";
+
+  constructor(public subGraphId: string) {
+    super(SubGraphChosenEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class SubGraphDeleteEvent extends Event {
+  static eventName = "breadboardsubgraphdelete";
+
+  constructor(public subGraphId: string) {
+    super(SubGraphDeleteEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class SubGraphCreateEvent extends Event {
+  static eventName = "breadboardsubgraphcreate";
+
+  constructor(public subGraphId: string) {
+    super(SubGraphCreateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class BreadboardOverlayDismissedEvent extends Event {
   static eventName = "breadboardboardoverlaydismissed";
 
@@ -254,18 +290,6 @@ export class DelayEvent extends Event {
   }
 }
 
-export class NodeSelectEvent extends Event {
-  static eventName = "breadboardnodeselect";
-
-  constructor(public id: string) {
-    super(NodeSelectEvent.eventName, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
 export class InputRequestedEvent extends Event {
   static eventName = "breadboardinputrequested";
 
@@ -343,8 +367,9 @@ export class NodeCreateEvent extends Event {
   static eventName = "breadboardnodecreate";
 
   constructor(
-    public id: string,
-    public nodeType: string
+    public readonly id: string,
+    public readonly nodeType: string,
+    public readonly subGraphId: string | null = null
   ) {
     super(NodeCreateEvent.eventName, {
       bubbles: true,
@@ -357,7 +382,10 @@ export class NodeCreateEvent extends Event {
 export class NodeDeleteEvent extends Event {
   static eventName = "breadboardnodedelete";
 
-  constructor(public id: string) {
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null
+  ) {
     super(NodeDeleteEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -369,7 +397,10 @@ export class NodeDeleteEvent extends Event {
 export class NodeMultiLayoutEvent extends Event {
   static eventName = "breadboardnodemultilayout";
 
-  constructor(public layout: Map<string, { x: number; y: number }>) {
+  constructor(
+    public readonly layout: Map<string, { x: number; y: number }>,
+    public readonly subGraphId: string | null = null
+  ) {
     super(NodeMultiLayoutEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -382,8 +413,9 @@ export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
   constructor(
-    public id: string,
-    public configuration: NodeConfiguration
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly configuration: NodeConfiguration
   ) {
     super(NodeUpdateEvent.eventName, {
       bubbles: true,
@@ -397,9 +429,10 @@ export class EdgeChangeEvent extends Event {
   static eventName = "breadboardedgechange";
 
   constructor(
-    public changeType: "add" | "remove" | "move",
-    public from: { from: string; to: string; in: string; out: string },
-    public to?: { from: string; to: string; in: string; out: string }
+    public readonly changeType: "add" | "remove" | "move",
+    public readonly from: { from: string; to: string; in: string; out: string },
+    public readonly to?: { from: string; to: string; in: string; out: string },
+    public readonly subGraphId: string | null = null
   ) {
     super(EdgeChangeEvent.eventName, {
       bubbles: true,
@@ -415,7 +448,8 @@ export class NodeMoveEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly x: number,
-    public readonly y: number
+    public readonly y: number,
+    public readonly subGraphId: string | null = null
   ) {
     super(NodeMoveEvent.eventName, {
       bubbles: true,

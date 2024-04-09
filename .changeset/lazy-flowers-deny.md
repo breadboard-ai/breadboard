@@ -3,4 +3,4 @@
 "@google-labs/breadboard-ui": minor
 ---
 
-Deprecated localStorage for secrets; uses IDB/Settings Panel instead
+Teach Visual Editor about embedded boards

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- 324633d: Deprecated localStorage for secrets; uses IDB/Settings Panel instead
+
+### Patch Changes
+
+- 303e49b: Add support for markdown rendering
+- 0068682: Replace `LoadArgs` with just `GraphDescriptor`.
+- 62c2b41: Add support for Image inputs & set format correctly
+- Updated dependencies [ad9c233]
+- Updated dependencies [65d869b]
+- Updated dependencies [417cdf5]
+- Updated dependencies [cf0ee4f]
+- Updated dependencies [43cbed7]
+- Updated dependencies [ff6433c]
+- Updated dependencies [5382365]
+- Updated dependencies [0e7f106]
+- Updated dependencies [9ea6ba0]
+- Updated dependencies [ffd2a6c]
+  - @google-labs/breadboard@0.16.0
+
 ## 0.4.3
 
 ### Patch Changes

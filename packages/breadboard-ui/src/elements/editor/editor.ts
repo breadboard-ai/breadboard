@@ -46,6 +46,9 @@ export class Editor extends LitElement {
   graph: GraphDescriptor | null = null;
 
   @property()
+  subGraphId: string | null = "mySubgraph";
+
+  @property()
   boardId: number = -1;
 
   @property()
@@ -72,6 +75,7 @@ export class Editor extends LitElement {
   // inspecting ports when the graph is updated.
   #graphVersion = 0;
   #lastBoardId: number = -1;
+  #lastSubGraphId: string | null = null;
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
@@ -144,19 +148,43 @@ export class Editor extends LitElement {
     }
   `;
 
-  async #processGraph(descriptor: GraphDescriptor) {
-    this.#graphVersion++;
-
-    if (this.graph && this.#lastBoardId !== this.boardId) {
-      this.#graph.clearNodeLayoutPositions();
+  async #processGraph() {
+    if (!this.graph) {
+      return;
     }
 
-    this.#lastBoardId = this.boardId;
+    this.#graphVersion++;
 
-    const breadboardGraph = inspect(descriptor, {
+    if (
+      this.graph &&
+      (this.#lastBoardId !== this.boardId ||
+        this.#lastSubGraphId !== this.subGraphId)
+    ) {
+      this.#graph.clearNodeLayoutPositions();
+      this.#graphRenderer.zoomToFit();
+
+      if (this.#lastSubGraphId !== this.subGraphId) {
+        // TODO: Need to figure out how to encode the subgraph/node id combo.
+        this.#graph.highlightedNodeId = null;
+      }
+    }
+    this.#lastBoardId = this.boardId;
+    this.#lastSubGraphId = this.subGraphId;
+
+    let breadboardGraph = inspect(this.graph, {
       kits: this.kits,
       loader: this.loader || undefined,
     });
+
+    if (this.subGraphId) {
+      const subgraphs = breadboardGraph.graphs();
+      if (subgraphs[this.subGraphId]) {
+        breadboardGraph = subgraphs[this.subGraphId];
+      } else {
+        console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
+      }
+    }
+
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
@@ -253,16 +281,19 @@ export class Editor extends LitElement {
   protected updated(
     changedProperties:
       | PropertyValueMap<{
-          graph: GraphDescriptor;
+          graph: GraphDescriptor | null;
+          subGraphId: string | null;
           kits: Kit[];
         }>
       | Map<PropertyKey, unknown>
   ): void {
     const shouldProcessGraph =
-      changedProperties.has("graph") || changedProperties.has("kits");
+      changedProperties.has("graph") ||
+      changedProperties.has("kits") ||
+      changedProperties.has("subGraphId");
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
-      this.#processGraph(this.graph);
+      this.#processGraph();
     }
   }
 
@@ -284,30 +315,40 @@ export class Editor extends LitElement {
 
   #onGraphNodeMove(evt: Event) {
     const { id, x, y } = evt as GraphNodeMoveEvent;
-    this.dispatchEvent(new NodeMoveEvent(id, x, y));
+    this.dispatchEvent(new NodeMoveEvent(id, x, y, this.subGraphId));
   }
 
   #onGraphEdgeAttach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeAttachEvent;
     this.dispatchEvent(
-      new EdgeChangeEvent("add", {
-        from: edge.from.descriptor.id,
-        to: edge.to.descriptor.id,
-        out: edge.out,
-        in: edge.in,
-      })
+      new EdgeChangeEvent(
+        "add",
+        {
+          from: edge.from.descriptor.id,
+          to: edge.to.descriptor.id,
+          out: edge.out,
+          in: edge.in,
+        },
+        undefined,
+        this.subGraphId
+      )
     );
   }
 
   #onGraphEdgeDetach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeDetachEvent;
     this.dispatchEvent(
-      new EdgeChangeEvent("remove", {
-        from: edge.from.descriptor.id,
-        to: edge.to.descriptor.id,
-        out: edge.out,
-        in: edge.in,
-      })
+      new EdgeChangeEvent(
+        "remove",
+        {
+          from: edge.from.descriptor.id,
+          to: edge.to.descriptor.id,
+          out: edge.out,
+          in: edge.in,
+        },
+        undefined,
+        this.subGraphId
+      )
     );
   }
 
@@ -327,19 +368,20 @@ export class Editor extends LitElement {
           to: toEdge.to.descriptor.id,
           out: toEdge.out,
           in: toEdge.in,
-        }
+        },
+        this.subGraphId
       )
     );
   }
 
   #onGraphNodeDelete(evt: Event) {
     const { id } = evt as GraphNodeDeleteEvent;
-    this.dispatchEvent(new NodeDeleteEvent(id));
+    this.dispatchEvent(new NodeDeleteEvent(id, this.subGraphId));
   }
 
   #onGraphNodePositionsCalculated(evt: Event) {
     const { layout } = evt as GraphNodePositionsCalculatedEvent;
-    this.dispatchEvent(new NodeMultiLayoutEvent(layout));
+    this.dispatchEvent(new NodeMultiLayoutEvent(layout, this.subGraphId));
   }
 
   #onDragOver(evt: DragEvent) {
@@ -380,7 +422,7 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
-    this.dispatchEvent(new NodeCreateEvent(id, data));
+    this.dispatchEvent(new NodeCreateEvent(id, data, this.subGraphId));
   }
 
   #createRandomID(type: string) {

@@ -5,16 +5,14 @@
  */
 
 import {
-  Capability,
   GraphDescriptor,
   InputValues,
   NodeValue,
   OutputValues,
-  Board,
-  BreadboardCapability,
   NodeHandlerContext,
   SchemaBuilder,
 } from "@google-labs/breadboard";
+import { getRunner } from "../utils.js";
 
 export type MapInputs = InputValues & {
   /**
@@ -25,7 +23,7 @@ export type MapInputs = InputValues & {
   /**
    * The board to run for each element of the list.
    */
-  board?: Capability;
+  board?: unknown;
 };
 
 export type MapOutputs = OutputValues & {
@@ -44,7 +42,7 @@ export type RunnableBoard = GraphDescriptor & {
 
 const invoke = async (
   inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<OutputValues> => {
   let { list } = inputs as MapInputs;
   const { board } = inputs as MapInputs;
@@ -61,10 +59,8 @@ const invoke = async (
     console.log("list", JSON.parse(list));
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
-  if (!board) return { list };
-  const runnableBoard = await Board.fromBreadboardCapability(
-    board as BreadboardCapability
-  );
+  const runnableBoard = await getRunner(board, context);
+  if (!runnableBoard) return { list };
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
@@ -98,6 +94,7 @@ const describe = async () => {
     .addProperty("board", {
       title: "Board",
       type: "object",
+      behavior: ["board"],
       description: "The board to run for each element of the list.",
     })
     .build();

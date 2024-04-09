@@ -53,7 +53,44 @@ export const styles = css`
     flex-direction: row;
     align-items: center;
     padding: calc(var(--bb-grid-size) * 1.5);
-    font-size: var(--bb-text-medium);
+    font-size: var(--bb-label-large);
+  }
+
+  #breadcrumbs {
+    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
+  }
+
+  #breadcrumbs > * {
+    margin: 0;
+    margin-right: calc(var(--bb-grid-size) * 2);
+    padding: 0;
+    font-size: var(--bb-label-medium);
+    font-weight: 500;
+    background: none;
+    border: none;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #breadcrumbs span {
+    width: 12px;
+    height: 12px;
+    background: var(--bb-icon-next) center center no-repeat;
+    background-size: 12px 12px;
+    font-size: 0;
+  }
+
+  #breadcrumbs button {
+    padding: 0;
+    color: var(--bb-output-700);
+  }
+
+  #breadcrumbs button[disabled] {
+    font-weight: 700;
+    color: var(--bb-neutral-700);
   }
 
   #controls {

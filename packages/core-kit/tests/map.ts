@@ -16,7 +16,7 @@ test("map with no board just outputs list", async (t) => {
   const inputs = {
     list: [1, 2, 3],
   } as MapInputs;
-  const outputs = await map.invoke(inputs, undefined);
+  const outputs = await map.invoke(inputs, {});
   t.deepEqual(outputs, { list: [1, 2, 3] });
 });
 
@@ -35,7 +35,7 @@ test("map with board", async (t) => {
       },
     },
   } as MapInputs;
-  const outputs = await map.invoke(inputs);
+  const outputs = await map.invoke(inputs, {});
   t.deepEqual(outputs, {
     list: [
       { index: 0, item: 1, list: [1, 2, 3] },

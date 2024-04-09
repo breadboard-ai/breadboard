@@ -64,7 +64,12 @@ export class RunResult implements BreadboardRunResult {
   }
 
   get outputs(): OutputValues {
-    return this.#state.inputs;
+    // Remove "schema" input for the "output" node, because it always be
+    // the schema for the output, rather than an actual value passed over the
+    // wire.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { schema, ...outputs } = this.#state.inputs;
+    return outputs;
   }
 
   get state(): TraversalResult {

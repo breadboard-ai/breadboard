@@ -114,11 +114,6 @@
     "version": "0.0.1"
   },
   {
-    "title": "List Google Drive files",
-    "url": "/graphs/list-files.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Math, chain style graph",
     "url": "/graphs/math-chain.json"
   },
