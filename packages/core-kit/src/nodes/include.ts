@@ -14,7 +14,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { loadBoardFromPath } from "../utils.js";
+import { loadGraphFromPath } from "../utils.js";
 
 export type IncludeNodeInputs = InputValues & {
   path?: string;
@@ -78,7 +78,9 @@ export default {
       ? await BoardRunner.fromBreadboardCapability(board)
       : graph
         ? await BoardRunner.fromGraphDescriptor(graph)
-        : await loadBoardFromPath(source, context);
+        : await BoardRunner.fromGraphDescriptor(
+            await loadGraphFromPath(source, context)
+          );
 
     return await runnableBoard.runOnce(args, context);
   },

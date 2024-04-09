@@ -15,7 +15,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { getRunner, loadBoardFromPath } from "../utils.js";
+import { getRunner, loadGraphFromPath } from "../utils.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -47,7 +47,9 @@ const getRunnableBoard = async (
     } else if (graph) {
       runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
     } else if (path) {
-      runnableBoard = await loadBoardFromPath(path, context);
+      runnableBoard = await BoardRunner.fromGraphDescriptor(
+        await loadGraphFromPath(path, context)
+      );
     }
     return { board: runnableBoard, args };
   }
