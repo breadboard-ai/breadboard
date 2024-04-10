@@ -30,6 +30,7 @@ import {
 import { ArrayEditor } from "./array-editor.js";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { BoardSelector } from "./board-selector.js";
+import { isBoard } from "../../utils/board.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -604,21 +605,12 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-schema-editor>`;
-                      } else if (port.schema.behavior?.includes("board")) {
-                        // TODO: Make this nice and tidy one day.
-                        let selectorValue = value;
-                        if (typeof value === "object") {
-                          const maybeCapability = value as {
-                            kind: "board";
-                            path: string;
-                          };
-                          if (
-                            maybeCapability.kind === "board" &&
-                            maybeCapability.path
-                          ) {
-                            selectorValue = maybeCapability.path;
-                          }
-                        }
+                      } else if (isBoard(port, value)) {
+                        const selectorValue = value
+                          ? typeof value === "string"
+                            ? value
+                            : value.path
+                          : "";
                         input = html`<bb-board-selector
                           .subGraphIds=${this.graph && this.graph.graphs
                             ? Object.keys(this.graph.graphs)
