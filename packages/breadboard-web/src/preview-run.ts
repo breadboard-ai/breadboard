@@ -25,6 +25,7 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
+import { SettingsStore } from "./data/settings-store.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -79,6 +80,7 @@ export class PreviewRun extends LitElement {
   ];
   // Single loader instance for all boards.
   #loader = createLoader(this.#providers);
+  #settings = SettingsStore.instance();
 
   static styles = css`
     * {
@@ -181,13 +183,15 @@ export class PreviewRun extends LitElement {
   }
 
   #restored = false;
-  async restoreProvidersIfNeeded() {
+  async restoreProvidersAndSettingsIfNeeded() {
     if (this.#restored) {
       return;
     }
 
     this.#restored = true;
-    await Promise.all(this.#providers.map((provider) => provider.restore()));
+    const jobs = this.#providers.map((provider) => provider.restore());
+    jobs.push(this.#settings.restore());
+    await Promise.all(jobs);
   }
 
   async #runBoard() {
@@ -195,7 +199,7 @@ export class PreviewRun extends LitElement {
       return;
     }
 
-    await this.restoreProvidersIfNeeded();
+    await this.restoreProvidersAndSettingsIfNeeded();
 
     const config: RunConfig = {
       url: this.url,
@@ -319,9 +323,10 @@ export class PreviewRun extends LitElement {
       </header>
       <bb-activity-log
         logTitle="Activity"
+        .settings=${this.#settings.values}
         .events=${events}
         .eventPosition=${eventPosition}
-        @breadboardinputenter=${(event: InputEnterEvent) => {
+        @breadboardinputenter=${async (event: InputEnterEvent) => {
           const data = event.data;
           const handlers = this.#handlers.get(event.id) || [];
           if (handlers.length === 0) {
@@ -329,6 +334,33 @@ export class PreviewRun extends LitElement {
               `Received event for input(id="${event.id}") but no handlers were found`
             );
           }
+
+          if (this.#settings) {
+            const isSecret = "secret" in event.data;
+            const shouldSaveSecrets =
+              this.#settings
+                .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                .items.get("Save Secrets")?.value || false;
+
+            if (isSecret && shouldSaveSecrets) {
+              const name = event.id;
+              const value = event.data.secret as string;
+              const settingsItems = this.#settings.getSection(
+                BreadboardUI.Types.SETTINGS_TYPE.SECRETS
+              ).items;
+              if (settingsItems.has(event.id)) {
+                const settingsItem = settingsItems.get(event.id);
+                if (settingsItem && settingsItem.value !== value) {
+                  settingsItem.value = value;
+                }
+              } else {
+                settingsItems.set(name, { name, value });
+              }
+
+              await this.#settings.save(this.#settings.values);
+            }
+          }
+
           for (const handler of handlers) {
             handler.call(null, data);
           }
