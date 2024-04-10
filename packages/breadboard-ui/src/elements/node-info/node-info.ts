@@ -386,7 +386,7 @@ export class NodeInfo extends LitElement {
 
           // Set nulls & undefineds for deletion.
           if (objectValue === null || objectValue === undefined) {
-            data.delete(name);
+            delete configuration[name];
             continue;
           }
 

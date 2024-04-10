@@ -251,7 +251,11 @@ export class ArrayEditor extends LitElement {
           assertIsLLMContent(formValueObject);
         }
 
-        items.push(formValueObject);
+        if (typeof formValueObject === "string") {
+          items.push(formValue);
+        } else {
+          items.push(formValueObject);
+        }
       } catch (err) {
         if (err instanceof SyntaxError) {
           field.setCustomValidity("Invalid JSON");
