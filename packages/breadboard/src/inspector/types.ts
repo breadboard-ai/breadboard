@@ -105,13 +105,47 @@ export type InspectableNode = {
   ): Promise<InspectableNodePorts>;
 };
 
+/**
+ * The type of the edge.
+ */
+export enum InspectableEdgeType {
+  /**
+   * Just an ordinary edge. Most of the edges in graphs are ordinary.
+   */
+  Ordinary = "ordinary",
+  /**
+   * Constant edge has an effect of "memoizing" the value that passes
+   * through it, make it always available. So when the incoming node is among
+   * opportunities to visit again, the constant edge will report that it already
+   * has the value.
+   * Each new value that comes from the outgoing wire will overwrite the one
+   * that is memoized.
+   * Constant edges are primarily useful when building graphs with cycles.
+   * For example, if you want to invoke some fetch multiple times, with the same
+   * secret value, use the constant edge to connect the secret to the fetch.
+   */
+  Constant = "constant",
+  /**
+   * Control edge does not pass any data across. It is purely a control flow
+   * wire, primarily useful when building graphs with cycles.
+   */
+  Control = "control",
+  /**
+   * Star edge is the opposite of control edge: it passes all data from outgoing
+   * node to incoming node. Use it when you do not need to discern what
+   * ports are being passed and their names match for the incoming/outgoing
+   * nodes.
+   */
+  Star = "star",
+}
+
 export type InspectableEdge = {
   /**
    * The outgoing node of the edge.
    */
   from: InspectableNode;
   /**
-   * The name of the port of the outgoing edge.
+   * The name of the port of the outgoing node.
    */
   out: string;
   /**
@@ -119,9 +153,13 @@ export type InspectableEdge = {
    */
   to: InspectableNode;
   /**
-   * The name of the port of the incoming edge.
+   * The name of the port of the incoming node.
    */
   in: string;
+  /**
+   * The type of the edge.
+   */
+  type: InspectableEdgeType;
 };
 
 export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;

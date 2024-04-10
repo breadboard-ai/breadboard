@@ -7,6 +7,7 @@
 import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
 import {
   InspectableEdge,
+  InspectableEdgeType,
   InspectableNode,
   InspectableNodeCache,
 } from "./types.js";
@@ -53,6 +54,13 @@ class Edge implements InspectableEdge {
   get in() {
     const edgein = this.#edge.out === "*" ? "*" : this.#edge.in;
     return edgein as string;
+  }
+
+  get type() {
+    if (this.#edge.out === "*") return InspectableEdgeType.Star;
+    if (this.#edge.out === "") return InspectableEdgeType.Control;
+    if (this.#edge.constant) return InspectableEdgeType.Constant;
+    return InspectableEdgeType.Ordinary;
   }
 }
 
