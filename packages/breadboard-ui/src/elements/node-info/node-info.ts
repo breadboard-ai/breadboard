@@ -11,6 +11,7 @@ import {
   BehaviorSchema,
   GraphDescriptor,
   GraphLoader,
+  GraphProvider,
   InspectableNode,
   InspectablePort,
   Kit,
@@ -28,6 +29,7 @@ import {
 } from "../../utils/schema.js";
 import { ArrayEditor } from "./array-editor.js";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { BoardSelector } from "./board-selector.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -48,6 +50,12 @@ export class NodeInfo extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
 
   #formTask = new Task(this, {
     task: async ([graph, subGraphId, nodeId]) => {
@@ -250,6 +258,12 @@ export class NodeInfo extends LitElement {
       display: grid;
       column-gap: calc(var(--bb-grid-size) * 2);
     }
+
+    .port-description {
+      font-size: var(--bb-label-small);
+      line-height: 1.5;
+      margin: 0 0 var(--bb-grid-size) 0;
+    }
   `;
 
   #assertIsValidBehavior(
@@ -325,6 +339,16 @@ export class NodeInfo extends LitElement {
       data.set(arrayEditor.id, arrayEditor.value);
     }
 
+    for (const boardSelector of evt.target.querySelectorAll<BoardSelector>(
+      "bb-board-selector"
+    )) {
+      if (!boardSelector.id) {
+        continue;
+      }
+
+      data.set(boardSelector.id, boardSelector.value || "");
+    }
+
     const id = data.get("$id") as string;
     const nodeType = data.get("$type") as string;
     if (!(id && nodeType)) {
@@ -398,6 +422,9 @@ export class NodeInfo extends LitElement {
       }
 
       configuration[name] = value;
+      if (value === "") {
+        delete configuration[name];
+      }
     }
 
     // Check for any removed items.
@@ -543,6 +570,12 @@ export class NodeInfo extends LitElement {
                   let input;
                   const type = port.schema.type;
                   const behavior = port.schema.behavior;
+                  const defaultValue = port.schema.default;
+                  const description = port.schema.description
+                    ? html`<p class="port-description">
+                        ${port.schema.description}
+                      </p>`
+                    : nothing;
                   switch (type) {
                     case "object": {
                       // Only show the schema editor for inputs & outputs
@@ -564,10 +597,32 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-schema-editor>`;
+                      } else if (port.schema.behavior?.includes("board")) {
+                        input = html`<bb-board-selector
+                          .subGraphIds=${this.graph && this.graph.graphs
+                            ? Object.keys(this.graph.graphs)
+                            : []}
+                          .providers=${this.providers}
+                          .providerOps=${this.providerOps}
+                          .value=${value || ""}
+                          @input=${(evt: Event) => {
+                            evt.preventDefault();
+                            if (!this.#formRef.value) {
+                              return;
+                            }
+
+                            this.#formRef.value.dispatchEvent(
+                              new SubmitEvent("submit")
+                            );
+                          }}
+                          id="${name}"
+                          name="${name}"
+                        ></bb-board-selector>`;
                       } else {
                         input = html`<textarea
                           id="${name}"
                           name="${name}"
+                          placeholder="${defaultValue}"
                           data-type="${type}"
                           data-behavior=${behavior ? behavior : nothing}
                           @input=${(evt: Event) => {
@@ -661,12 +716,15 @@ export class NodeInfo extends LitElement {
                     }
 
                     default: {
-                      input = html`<textarea
-                        id="${name}"
-                        name="${name}"
-                        data-type="${type}"
-                        .value=${value || ""}
-                      ></textarea>`;
+                      input = html` <div>
+                        <textarea
+                          id="${name}"
+                          name="${name}"
+                          placeholder="${defaultValue}"
+                          data-type="${type}"
+                          .value=${value || ""}
+                        ></textarea>
+                      </div>`;
                       break;
                     }
                   }
@@ -680,7 +738,7 @@ export class NodeInfo extends LitElement {
                         ? schema.type.join(", ")
                         : schema.type || "No type"}):
                     </label>
-                    ${input}
+                    ${description} ${input}
                   </div>`;
                 });
               })}

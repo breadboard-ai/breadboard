@@ -23,14 +23,14 @@ export class Navigation extends LitElement {
   @property()
   providers: GraphProvider[] = [];
 
+  @property()
+  providerOps = 0;
+
   @property({ reflect: true })
   visible = false;
 
   @property()
   url: string | null = null;
-
-  @property()
-  providerOps = 0;
 
   static styles = css`
     * {

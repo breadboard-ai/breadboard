@@ -20,6 +20,7 @@ import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
   GraphDescriptor,
   GraphLoader,
+  GraphProvider,
   InspectableRun,
   Kit,
   NodeIdentifier,
@@ -73,6 +74,12 @@ export class UI extends LitElement {
 
   @property()
   settings: Settings | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
 
   @state()
   selectedNodeId: string | null = null;
@@ -221,6 +228,7 @@ export class UI extends LitElement {
       }
 
       this.#handlers.clear();
+      this.selectedNodeId = null;
     }
 
     if (changedProperties.has("subGraphId")) {
@@ -372,6 +380,8 @@ export class UI extends LitElement {
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
+          .providers=${this.providers}
+          .providerOps=${this.providerOps}
           name="Selected Node"
           slot="slot-1"
         ></bb-node-info>
