@@ -96,6 +96,18 @@ export class SchemaEditor extends LitElement {
       font-size: var(--bb-text-nano);
     }
 
+    details .schema-item textarea {
+      font-family: var(--bb-font-family);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
+      resize: none;
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      field-sizing: content;
+      max-height: 300px;
+    }
+
     #controls {
       display: flex;
       justify-content: flex-end;
@@ -323,6 +335,14 @@ export class SchemaEditor extends LitElement {
           ${format} ${value.type === "string" ? enumerations : nothing}
           ${value.type === "string" ? examples : nothing} ${defaultValue}
 
+          <label for="${id}-description">Description</label>
+          <textarea
+            name="${id}-description"
+            id="${id}-description"
+            .value="${value.description || ""}"
+            ?readonly=${!this.editable}
+          ></textarea>
+
           <label for="${id}-required">Required</label>
           <input
             name="${id}-required"
@@ -368,6 +388,9 @@ export class SchemaEditor extends LitElement {
         const inEnum = form.querySelector(
           `#${id}-enum`
         ) as HTMLInputElement | null;
+        const inDescription = form.querySelector(
+          `#${id}-description`
+        ) as HTMLTextAreaElement | null;
         const inRequired = form.querySelector(
           `#${id}-required`
         ) as HTMLInputElement | null;
@@ -376,6 +399,7 @@ export class SchemaEditor extends LitElement {
 
         property.title = inTitle?.value || property.title;
         property.type = inType?.value || property.type;
+        property.description = inDescription?.value || property.description;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
@@ -405,6 +429,10 @@ export class SchemaEditor extends LitElement {
 
         if (!property.enum) {
           delete property.enum;
+        }
+
+        if (!property.description) {
+          delete property.description;
         }
 
         // Going from boolean -> anything else with no default means removing
