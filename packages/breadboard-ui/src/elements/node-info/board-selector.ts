@@ -9,6 +9,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { SubGraphChosenEvent } from "../../events/events.js";
 
 @customElement("bb-board-selector")
 export class BoardSelector extends LitElement {
@@ -37,8 +38,27 @@ export class BoardSelector extends LitElement {
       display: block;
     }
 
+    #board-selector {
+      display: grid;
+      grid-template-columns: 1fr auto;
+    }
+
+    #quick-switch {
+      height: 32px;
+      width: 24px;
+      margin-left: 12px;
+      opacity: 0.5;
+      border: none;
+      background: var(--bb-icon-quick-jump) center center no-repeat;
+      font-size: 0;
+      cursor: pointer;
+    }
+
+    #quick-switch:hover {
+      opacity: 1;
+    }
+
     select {
-      width: 100%;
       display: block;
       font-family: var(--bb-font-family-mono);
       font-size: var(--bb-body-x-small);
@@ -47,6 +67,7 @@ export class BoardSelector extends LitElement {
       background: rgb(255, 255, 255);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       border: 1px solid rgb(209, 209, 209);
+      width: 100%;
     }
 
     input {
@@ -116,59 +137,77 @@ export class BoardSelector extends LitElement {
   }
 
   render() {
+    const showQuickSwitch = this.#board && this.#board.startsWith("#");
     return html`<section>
-      <select
-        ${ref(this.#selectorRef)}
-        @input=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLSelectElement)) {
-            return;
-          }
+      <div id="board-selector">
+        <select
+          ${ref(this.#selectorRef)}
+          @input=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLSelectElement)) {
+              return;
+            }
 
-          if (evt.target.value === "--custom--") {
-            evt.stopImmediatePropagation();
-            this.value = "";
-            this.usingCustomURL = true;
-            return;
-          }
+            if (evt.target.value === "--custom--") {
+              evt.stopImmediatePropagation();
+              this.value = "";
+              this.usingCustomURL = true;
+              return;
+            }
 
-          this.value = evt.target.value;
-          this.usingCustomURL = false;
-        }}
-      >
-        <option value="">-- No Board</option>
-        <option ?selected=${this.usingCustomURL} value="--custom--">
-          -- Custom URL
-        </option>
-        ${this.subGraphIds.length
-          ? html`<optgroup label="Sub Boards">
-              ${map(this.subGraphIds, (subGraphId) => {
-                const href = `#${subGraphId}`;
-                return html`<option
-                  ?selected=${href === this.#board}
-                  value=${href}
-                >
-                  ${subGraphId}
-                </option>`;
-              })}
-            </optgroup>`
+            this.value = evt.target.value;
+            this.usingCustomURL = false;
+          }}
+        >
+          <option value="">-- No Board</option>
+          <option ?selected=${this.usingCustomURL} value="--custom--">
+            -- Custom URL
+          </option>
+          ${this.subGraphIds.length
+            ? html`<optgroup label="Sub Boards">
+                ${map(this.subGraphIds, (subGraphId) => {
+                  const href = `#${subGraphId}`;
+                  return html`<option
+                    ?selected=${href === this.#board}
+                    value=${href}
+                  >
+                    ${subGraphId}
+                  </option>`;
+                })}
+              </optgroup>`
+            : nothing}
+          ${map(this.providers, (provider) => {
+            return html`${map(provider.items(), ([, store]) => {
+              return html`<optgroup label="${store.title}">
+                ${map(store.items, ([name, { url }]) => {
+                  // TODO: Figure out whether URLs should be expanded here.
+                  const expandedUrl = new URL(url, window.location.href);
+                  return html`<option
+                    ?selected=${expandedUrl.href === this.#board}
+                    value=${expandedUrl.href}
+                  >
+                    ${name}
+                  </option>`;
+                })}
+              </optgroup>`;
+            })}`;
+          })}
+        </select>
+        ${showQuickSwitch
+          ? html`<button
+              id="quick-switch"
+              @click=${() => {
+                if (!this.#board) {
+                  return;
+                }
+
+                const subGraphId = this.#board.replace(/^#/, "");
+                this.dispatchEvent(new SubGraphChosenEvent(subGraphId));
+              }}
+            >
+              Go
+            </button>`
           : nothing}
-        ${map(this.providers, (provider) => {
-          return html`${map(provider.items(), ([, store]) => {
-            return html`<optgroup label="${store.title}">
-              ${map(store.items, ([name, { url }]) => {
-                // TODO: Figure out whether URLs should be expanded here.
-                const expandedUrl = new URL(url, window.location.href);
-                return html`<option
-                  ?selected=${expandedUrl.href === this.#board}
-                  value=${expandedUrl.href}
-                >
-                  ${name}
-                </option>`;
-              })}
-            </optgroup>`;
-          })}`;
-        })}
-      </select>
+      </div>
       ${this.usingCustomURL
         ? html`<input
             ${ref(this.#inputRef)}
