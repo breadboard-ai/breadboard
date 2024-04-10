@@ -720,9 +720,8 @@ export class NodeInfo extends LitElement {
                         <textarea
                           id="${name}"
                           name="${name}"
-                          placeholder="${defaultValue}"
                           data-type="${type}"
-                          .value=${value || ""}
+                          .value=${value ?? defaultValue ?? ""}
                         ></textarea>
                       </div>`;
                       break;
