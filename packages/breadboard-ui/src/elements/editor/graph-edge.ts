@@ -29,7 +29,13 @@ export class GraphEdge extends PIXI.Graphics {
     // Since the `edge` is a stable instance, make a copy of the edge to avoid
     // modifying the original.
     this.#edge = edge
-      ? { from: edge.from, to: edge.to, in: edge.in, out: edge.out }
+      ? {
+          from: edge.from,
+          to: edge.to,
+          in: edge.in,
+          out: edge.out,
+          type: edge.type,
+        }
       : null;
     this.#isDirty = true;
   }
