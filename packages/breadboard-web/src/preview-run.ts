@@ -345,19 +345,24 @@ export class PreviewRun extends LitElement {
             if (isSecret && shouldSaveSecrets) {
               const name = event.id;
               const value = event.data.secret as string;
-              const settingsItems = this.#settings.getSection(
+              const secrets = this.#settings.getSection(
                 BreadboardUI.Types.SETTINGS_TYPE.SECRETS
               ).items;
-              if (settingsItems.has(event.id)) {
-                const settingsItem = settingsItems.get(event.id);
+              let shouldSave = false;
+              if (secrets.has(event.id)) {
+                const settingsItem = secrets.get(event.id);
                 if (settingsItem && settingsItem.value !== value) {
                   settingsItem.value = value;
+                  shouldSave = true;
                 }
               } else {
-                settingsItems.set(name, { name, value });
+                secrets.set(name, { name, value });
+                shouldSave = true;
               }
 
-              await this.#settings.save(this.#settings.values);
+              if (shouldSave) {
+                await this.#settings.save(this.#settings.values);
+              }
             }
           }
 

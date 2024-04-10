@@ -1055,22 +1055,24 @@ export class Main extends LitElement {
 
             const name = event.id;
             const value = event.data.secret as string;
-            const settingsItems = this.#settings.getSection(
+            const secrets = this.#settings.getSection(
               BreadboardUI.Types.SETTINGS_TYPE.SECRETS
             ).items;
-            if (settingsItems.has(event.id)) {
-              const settingsItem = settingsItems.get(event.id);
-              if (settingsItem) {
-                if (settingsItem.value === value) {
-                  return;
-                }
-
-                settingsItem.value = value;
+            let shouldSave = false;
+            if (secrets.has(event.id)) {
+              const secret = secrets.get(event.id);
+              if (secret && secret.value !== value) {
+                secret.value = value;
+                shouldSave = true;
               }
             } else {
-              settingsItems.set(name, { name, value });
+              secrets.set(name, { name, value });
+              shouldSave = true;
             }
 
+            if (!shouldSave) {
+              return;
+            }
             await this.#settings.save(this.#settings.values);
             this.requestUpdate();
           }}
