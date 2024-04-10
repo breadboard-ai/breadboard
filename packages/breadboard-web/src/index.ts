@@ -747,6 +747,8 @@ export class Main extends LitElement {
           .boardId=${this.#boardId}
           .failedToLoad=${this.#failedGraphLoad}
           .settings=${settings}
+          .providers=${this.#providers}
+          .providerOps=${this.providerOps}
           @breadboardsubgraphcreate=${async (
             evt: BreadboardUI.Events.SubGraphCreateEvent
           ) => {
@@ -1079,9 +1081,9 @@ export class Main extends LitElement {
         ></bb-ui-controller>
       </div>
       <bb-nav
-        .providers=${this.#providers}
         .visible=${this.showNav}
         .url=${this.url}
+        .providers=${this.#providers}
         .providerOps=${this.providerOps}
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
