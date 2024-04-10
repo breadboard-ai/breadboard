@@ -118,6 +118,15 @@ const contextExample = [
 const parametersSchema = {
   type: "object",
   properties: {
+    systemInstruction: {
+      type: "string",
+      title: "System Instruction",
+      description:
+        "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
+      examples: [
+        "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
+      ],
+    },
     text: {
       type: "string",
       title: "Text",
@@ -273,6 +282,11 @@ export default await board(() => {
           ]);
       text ? {
           "contents": $context,
+          "system_instruction": systemInstruction ? {
+            "parts": [{
+              "text": systemInstruction
+            }]
+          },
           "generationConfig": stopSequences ? {
             "stopSequences": stopSequences
           },
