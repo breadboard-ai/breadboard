@@ -47,6 +47,7 @@ import {
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
   resolveBoardCapabilities,
+  resolveBoardCapabilitiesInInputs,
 } from "./capability.js";
 
 /**
@@ -205,7 +206,7 @@ export class BoardRunner implements BreadboardRunner {
             path()
           );
           outputsPromise = result.outputsPromise
-            ? resolveBoardCapabilities(result.outputsPromise, context)
+            ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
             : undefined;
         } else if (descriptor.type === "output") {
           if (
@@ -241,7 +242,7 @@ export class BoardRunner implements BreadboardRunner {
 
           outputsPromise = callHandler(
             handler,
-            inputs,
+            resolveBoardCapabilitiesInInputs(inputs, context, this.url),
             newContext
           ) as Promise<OutputValues>;
         }
@@ -431,6 +432,7 @@ export class BoardRunner implements BreadboardRunner {
       );
     }
 
+    // TODO: Deduplicate, replace with `getGraphDescriptor`.
     if (isGraphDescriptorCapability(capability)) {
       // If all we got is a GraphDescriptor, build a runnable board from it.
       // TODO: Use JSON schema to validate rather than this hack.

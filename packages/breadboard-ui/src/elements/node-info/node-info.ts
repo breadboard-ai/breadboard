@@ -347,6 +347,7 @@ export class NodeInfo extends LitElement {
       }
 
       data.set(boardSelector.id, boardSelector.value || "");
+      toConvert.set(boardSelector.id, "board");
     }
 
     const id = data.get("$id") as string;
@@ -397,26 +398,32 @@ export class NodeInfo extends LitElement {
       }
 
       if (toConvert.has(name)) {
-        try {
-          if (value === "") {
-            continue;
-          }
-
-          // Always attempt a JSON parse of the value.
-          const objectValue = JSON.parse(value);
-          if (toConvert.get(name) === "llm-content") {
-            assertIsLLMContent(objectValue);
-          }
-
-          // Set nulls & undefineds for deletion.
-          if (objectValue === null || objectValue === undefined) {
-            delete configuration[name];
-            continue;
-          }
-
-          configuration[name] = objectValue;
-        } catch (err) {
+        if (value === "") {
           continue;
+        }
+        const behavior = toConvert.get(name);
+        if (behavior === "board") {
+          const capability = { kind: "board", path: value };
+          configuration[name] = capability;
+          continue;
+        } else {
+          try {
+            // Always attempt a JSON parse of the value.
+            const objectValue = JSON.parse(value);
+            if (behavior === "llm-content") {
+              assertIsLLMContent(objectValue);
+            }
+
+            // Set nulls & undefineds for deletion.
+            if (objectValue === null || objectValue === undefined) {
+              delete configuration[name];
+              continue;
+            }
+
+            configuration[name] = objectValue;
+          } catch (err) {
+            continue;
+          }
         }
         continue;
       }
@@ -597,17 +604,28 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-schema-editor>`;
-                      } else if (
-                        port.schema.behavior?.includes("board") &&
-                        typeof value !== "object"
-                      ) {
+                      } else if (port.schema.behavior?.includes("board")) {
+                        // TODO: Make this nice and tidy one day.
+                        let selectorValue = value;
+                        if (typeof value === "object") {
+                          const maybeCapability = value as {
+                            kind: "board";
+                            path: string;
+                          };
+                          if (
+                            maybeCapability.kind === "board" &&
+                            maybeCapability.path
+                          ) {
+                            selectorValue = maybeCapability.path;
+                          }
+                        }
                         input = html`<bb-board-selector
                           .subGraphIds=${this.graph && this.graph.graphs
                             ? Object.keys(this.graph.graphs)
                             : []}
                           .providers=${this.providers}
                           .providerOps=${this.providerOps}
-                          .value=${value || ""}
+                          .value=${selectorValue || ""}
                           @input=${(evt: Event) => {
                             evt.preventDefault();
                             if (!this.#formRef.value) {

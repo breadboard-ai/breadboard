@@ -13,9 +13,9 @@ import {
   OutputValues,
   Schema,
   SchemaBuilder,
+  getGraphDescriptor,
   inspect,
 } from "@google-labs/breadboard";
-import { getGraphDescriptor } from "../utils.js";
 
 export type CurryInputs = {
   $board: unknown;
