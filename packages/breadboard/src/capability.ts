@@ -80,9 +80,18 @@ export const graphDescriptorFromCapability = async (
     }
     return graph;
   } else if (isUnresolvedPathBoardCapability(capability)) {
-    throw new Error(
-      `Integrity error: somehow, the unresolved path "board" Capability snuck through the processing of inputs`
-    );
+    if (!context.loader) {
+      throw new Error(
+        `The "board" Capability is a URL, but no loader was supplied.`
+      );
+    }
+    const graph = await context.loader.load(capability.path, context);
+    if (!graph) {
+      throw new Error(
+        `Unable to load "board" Capability with the path of ${capability.path}.`
+      );
+    }
+    return graph;
   }
   throw new Error(
     `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`

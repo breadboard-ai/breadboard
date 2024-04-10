@@ -79,23 +79,27 @@ const describe = async (
   const outputBuilder = new SchemaBuilder();
   if (context?.base) {
     let board: GraphDescriptor | undefined;
-    try {
-      board = (await getRunnableBoard(context, inputs || {})).board;
-    } catch {
-      // eat any exceptions.
-      // This is a describer, so it must always return some valid value.
-    }
-    if (board) {
-      const inspectableGraph = inspect(board);
-      const { inputSchema, outputSchema } = await inspectableGraph.describe();
-      inputBuilder.addProperties(inputSchema?.properties);
-      inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
-      inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
-      outputBuilder.addProperties(outputSchema?.properties);
-      outputBuilder.setAdditionalProperties(outputSchema.additionalProperties);
-    } else {
-      outputBuilder.setAdditionalProperties(true);
-      inputBuilder.setAdditionalProperties(true);
+    outputBuilder.setAdditionalProperties(true);
+    inputBuilder.setAdditionalProperties(true);
+    if (inputs) {
+      try {
+        board = (await getRunnableBoard(context, inputs)).board;
+      } catch {
+        // eat any exceptions.
+        // This is a describer, so it must always return some valid value.
+      }
+      if (board) {
+        const inspectableGraph = inspect(board);
+        const { inputSchema, outputSchema } = await inspectableGraph.describe();
+        inputBuilder.addProperties(inputSchema?.properties);
+        inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
+        inputSchema?.required &&
+          inputBuilder.addRequired(inputSchema?.required);
+        outputBuilder.addProperties(outputSchema?.properties);
+        outputBuilder.setAdditionalProperties(
+          outputSchema.additionalProperties
+        );
+      }
     }
   }
   const inputSchema = inputBuilder.build();
