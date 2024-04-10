@@ -118,6 +118,16 @@ const contextExample = [
 const parametersSchema = {
   type: "object",
   properties: {
+    systemInstruction: {
+      type: "string",
+      title: "System Instruction",
+      description:
+        "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
+      examples: [
+        "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
+      ],
+      default: "",
+    },
     text: {
       type: "string",
       title: "Text",
@@ -129,7 +139,7 @@ const parametersSchema = {
       title: "Model",
       description: "The model to use for generation",
       enum: ["gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"],
-      examples: ["gemini-pro"],
+      examples: ["gemini-1.5-pro-latest"],
     },
     tools: {
       type: "array",
@@ -273,6 +283,11 @@ export default await board(() => {
           ]);
       text ? {
           "contents": $context,
+          "system_instruction": systemInstruction ? {
+            "parts": [{
+              "text": systemInstruction
+            }]
+          },
           "generationConfig": stopSequences ? {
             "stopSequences": stopSequences
           },
