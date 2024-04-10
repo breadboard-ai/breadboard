@@ -126,6 +126,7 @@ const parametersSchema = {
       examples: [
         "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
       ],
+      default: "",
     },
     text: {
       type: "string",
@@ -138,7 +139,7 @@ const parametersSchema = {
       title: "Model",
       description: "The model to use for generation",
       enum: ["gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"],
-      examples: ["gemini-pro"],
+      examples: ["gemini-1.5-pro-latest"],
     },
     tools: {
       type: "array",
