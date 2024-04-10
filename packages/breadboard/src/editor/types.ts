@@ -28,7 +28,8 @@ export class GraphChangeEvent extends Event {
 
   constructor(
     public graph: GraphDescriptor,
-    public version: number
+    public version: number,
+    public visualOnly: boolean
   ) {
     super(GraphChangeEvent.eventName, {
       bubbles: false,

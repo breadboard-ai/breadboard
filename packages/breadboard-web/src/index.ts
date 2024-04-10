@@ -522,7 +522,7 @@ export class Main extends LitElement {
     this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
     this.#editor.addEventListener("graphchange", (evt) => {
       this.graph = evt.graph;
-      this.#boardPendingSave = true;
+      this.#boardPendingSave = !evt.visualOnly;
     });
     return this.#editor;
   }
