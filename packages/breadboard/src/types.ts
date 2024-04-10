@@ -602,10 +602,41 @@ export interface Breadboard extends BreadboardRunner {
   addEdgeAcrossBoards(edge: Edge, from: Breadboard, to: Breadboard): void;
 }
 
-export type BreadboardCapability = Capability & {
+export type GraphDescriptorBoardCapability = {
   kind: "board";
   board: GraphDescriptor;
+  /**
+   * Unresolved path to the board. Use this field to specify the path at
+   * compose-time that needs to be resolved at run-time.
+   * The path will be resolved as the inputs are received by the board,
+   * relative to the invoking board.
+   */
 };
+
+export type ResolvedURLBoardCapability = {
+  kind: "board";
+  /**
+   * Resolved path to the board. This field is populated at run-time as a
+   * result of resolving the `path` field.
+   */
+  url: string;
+};
+
+export type UnresolvedPathBoardCapability = {
+  kind: "board";
+  /**
+   * Unresolved path to the board. Use this field to specify the path at
+   * compose-time that needs to be resolved at run-time.
+   * The path will be resolved as the inputs are received by the board,
+   * relative to the invoking board.
+   */
+  path: string;
+};
+
+export type BreadboardCapability =
+  | GraphDescriptorBoardCapability
+  | ResolvedURLBoardCapability
+  | UnresolvedPathBoardCapability;
 
 export interface NodeHandlerContext {
   readonly board?: BreadboardRunner;
@@ -718,7 +749,7 @@ export type LambdaNodeInputs = InputValues & {
    *
    * Note that (for now) each board can only be represented by one node.
    */
-  board: BreadboardCapability;
+  board: GraphDescriptorBoardCapability;
 
   /**
    * All other inputs will be bound to the board.

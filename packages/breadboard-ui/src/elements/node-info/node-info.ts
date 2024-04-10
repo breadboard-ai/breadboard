@@ -30,6 +30,7 @@ import {
 import { ArrayEditor } from "./array-editor.js";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { BoardSelector } from "./board-selector.js";
+import { isBoard } from "../../utils/board.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -347,6 +348,7 @@ export class NodeInfo extends LitElement {
       }
 
       data.set(boardSelector.id, boardSelector.value || "");
+      toConvert.set(boardSelector.id, "board");
     }
 
     const id = data.get("$id") as string;
@@ -397,26 +399,32 @@ export class NodeInfo extends LitElement {
       }
 
       if (toConvert.has(name)) {
-        try {
-          if (value === "") {
-            continue;
-          }
-
-          // Always attempt a JSON parse of the value.
-          const objectValue = JSON.parse(value);
-          if (toConvert.get(name) === "llm-content") {
-            assertIsLLMContent(objectValue);
-          }
-
-          // Set nulls & undefineds for deletion.
-          if (objectValue === null || objectValue === undefined) {
-            delete configuration[name];
-            continue;
-          }
-
-          configuration[name] = objectValue;
-        } catch (err) {
+        if (value === "") {
           continue;
+        }
+        const behavior = toConvert.get(name);
+        if (behavior === "board") {
+          const capability = { kind: "board", path: value };
+          configuration[name] = capability;
+          continue;
+        } else {
+          try {
+            // Always attempt a JSON parse of the value.
+            const objectValue = JSON.parse(value);
+            if (behavior === "llm-content") {
+              assertIsLLMContent(objectValue);
+            }
+
+            // Set nulls & undefineds for deletion.
+            if (objectValue === null || objectValue === undefined) {
+              delete configuration[name];
+              continue;
+            }
+
+            configuration[name] = objectValue;
+          } catch (err) {
+            continue;
+          }
         }
         continue;
       }
@@ -597,17 +605,19 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-schema-editor>`;
-                      } else if (
-                        port.schema.behavior?.includes("board") &&
-                        typeof value !== "object"
-                      ) {
+                      } else if (isBoard(port, value)) {
+                        const selectorValue = value
+                          ? typeof value === "string"
+                            ? value
+                            : value.path
+                          : "";
                         input = html`<bb-board-selector
                           .subGraphIds=${this.graph && this.graph.graphs
                             ? Object.keys(this.graph.graphs)
                             : []}
                           .providers=${this.providers}
                           .providerOps=${this.providerOps}
-                          .value=${value || ""}
+                          .value=${selectorValue || ""}
                           @input=${(evt: Event) => {
                             evt.preventDefault();
                             if (!this.#formRef.value) {

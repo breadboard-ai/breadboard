@@ -13,9 +13,9 @@ import {
   OutputValues,
   Schema,
   SchemaBuilder,
+  getGraphDescriptor,
   inspect,
 } from "@google-labs/breadboard";
-import { getGraphDescriptor } from "../utils.js";
 
 export type CurryInputs = {
   $board: unknown;
@@ -44,12 +44,6 @@ const describe = async (
   context?: NodeDescriberContext
 ): Promise<NodeDescriberResult> => {
   const inputBuilder = new SchemaBuilder().addProperties({
-    path: {
-      title: "path",
-      behavior: ["deprecated"],
-      description: "The path to the board to invoke.",
-      type: "string",
-    },
     $board: {
       title: "board",
       behavior: ["board"],
@@ -68,20 +62,21 @@ const describe = async (
     });
   if (context?.base) {
     let board: GraphDescriptor | undefined;
-    try {
-      const { $board } = inputs || {};
-      board = await getGraphDescriptor($board, context);
-    } catch {
-      // eat any exceptions.
-      // This is a describer, so it must always return some valid value.
-    }
-    if (board) {
-      const inspectableGraph = inspect(board);
-      const { inputSchema } = await inspectableGraph.describe();
-      inputBuilder.addProperties(inputSchema?.properties);
-      inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
-    } else {
-      inputBuilder.setAdditionalProperties(true);
+    inputBuilder.setAdditionalProperties(true);
+    if (inputs) {
+      const { $board } = inputs;
+      try {
+        board = await getGraphDescriptor($board, context);
+      } catch {
+        // eat any exceptions.
+        // This is a describer, so it must always return some valid value.
+      }
+      if (board) {
+        const inspectableGraph = inspect(board);
+        const { inputSchema } = await inspectableGraph.describe();
+        inputBuilder.addProperties(inputSchema?.properties);
+        inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
+      }
     }
   }
   const inputSchema = inputBuilder.build();

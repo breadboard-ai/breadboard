@@ -6,10 +6,9 @@
 
 import {
   BoardRunner,
-  BreadboardCapability,
   BreadboardRunner,
-  GraphDescriptor,
   NodeHandlerContext,
+  getGraphDescriptor,
 } from "@google-labs/breadboard";
 
 export const loadGraphFromPath = async (
@@ -19,46 +18,6 @@ export const loadGraphFromPath = async (
   const graph = await context.loader?.load(path, context);
   if (!graph) throw new Error(`Unable to load graph from "${path}"`);
   return graph;
-};
-
-const isBreadboardCapability = (
-  candidate: unknown
-): candidate is BreadboardCapability => {
-  const board = candidate as BreadboardCapability;
-  return (
-    board &&
-    typeof board === "object" &&
-    board.kind === "board" &&
-    board.board &&
-    isGraphDescriptor(board.board)
-  );
-};
-
-const isGraphDescriptor = (
-  candidate: unknown
-): candidate is GraphDescriptor => {
-  const graph = candidate as GraphDescriptor;
-  return (
-    graph && typeof graph === "object" && graph.nodes && graph.edges && true
-  );
-};
-
-export const getGraphDescriptor = async (
-  board: unknown,
-  context: NodeHandlerContext
-): Promise<GraphDescriptor | undefined> => {
-  if (!board) return undefined;
-
-  if (typeof board === "string") {
-    const graph = await context.loader?.load(board, context);
-    if (!graph) throw new Error(`Unable to load graph from "${board}"`);
-    return graph;
-  } else if (isBreadboardCapability(board)) {
-    return board.board;
-  } else if (isGraphDescriptor(board)) {
-    return board;
-  }
-  return undefined;
 };
 
 export const getRunner = async (
