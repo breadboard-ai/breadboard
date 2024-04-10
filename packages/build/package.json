@@ -108,7 +108,7 @@
     "@types/json-schema": "^7.0.15"
   },
   "devDependencies": {
-    "@types/node": "^20.11.30",
+    "@types/node": "^20.12.7",
     "eslint": "^8.57.0",
     "typescript": "^5.3.3",
     "wireit": "^0.14.4"
