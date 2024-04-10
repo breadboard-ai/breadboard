@@ -597,7 +597,10 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-schema-editor>`;
-                      } else if (port.schema.behavior?.includes("board")) {
+                      } else if (
+                        port.schema.behavior?.includes("board") &&
+                        typeof value !== "object"
+                      ) {
                         input = html`<bb-board-selector
                           .subGraphIds=${this.graph && this.graph.graphs
                             ? Object.keys(this.graph.graphs)
