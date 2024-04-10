@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { baseURLFromContext } from "./loader/loader.js";
 import {
   BreadboardCapability,
   GraphDescriptorBoardCapability,
+  NodeHandlerContext,
+  OutputValues,
   ResolvedURLBoardCapability,
   UnresolvedPathBoardCapability,
 } from "./types.js";
@@ -37,9 +40,43 @@ export const isResolvedURLBoardCapability = (
 };
 
 export const isUnresolvedPathBoardCapability = (
-  capability: UnresolvedPathBoardCapability
+  capability: BreadboardCapability
 ): capability is UnresolvedPathBoardCapability => {
   const maybe = capability as UnresolvedPathBoardCapability;
   const path = maybe.path;
   return !!path;
+};
+
+const resolvePath = (
+  capability: UnresolvedPathBoardCapability,
+  base: URL
+): ResolvedURLBoardCapability => {
+  const path = capability.path;
+  const url = new URL(path, base).href;
+  return { kind: "board", url: url };
+};
+
+/**
+ * Resolves any BreadboardCapability instances that are
+ * `UnresolvedPathBoardCapability` to `ResolvedURLBoardCapability`.
+ * This must happen at run-time, at the earliest moment when
+ * the inputs are received by the BoardRunner.
+ * @param outputsPromise
+ * @returns
+ */
+export const resolveBoardCapabilities = async (
+  outputsPromise: Promise<OutputValues>,
+  context: NodeHandlerContext
+): Promise<OutputValues> => {
+  const outputs = await outputsPromise;
+  for (const name in outputs) {
+    const property = outputs[name];
+    if (
+      isBreadboardCapability(property) &&
+      isUnresolvedPathBoardCapability(property)
+    ) {
+      outputs[name] = resolvePath(property, baseURLFromContext(context));
+    }
+  }
+  return Promise.resolve(outputs);
 };

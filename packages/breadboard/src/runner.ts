@@ -46,6 +46,7 @@ import {
   isGraphDescriptorCapability,
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
+  resolveBoardCapabilities,
 } from "./capability.js";
 
 /**
@@ -203,7 +204,9 @@ export class BoardRunner implements BreadboardRunner {
             result,
             path()
           );
-          outputsPromise = result.outputsPromise;
+          outputsPromise = result.outputsPromise
+            ? resolveBoardCapabilities(result.outputsPromise, context)
+            : undefined;
         } else if (descriptor.type === "output") {
           if (
             !(await bubbleUpOutputsIfNeeded(
