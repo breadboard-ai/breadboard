@@ -1,3 +1,4 @@
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
@@ -83,11 +84,11 @@ export class Graph implements EditableGraph {
     );
   }
 
-  #updateGraph() {
+  #updateGraph(visualOnly: boolean) {
     if (this.#parent) {
       this.#graph = { ...this.#graph };
       // Update parent version.
-      this.#parent.#updateGraph();
+      this.#parent.#updateGraph(visualOnly);
     } else {
       if (!this.#graphs) {
         throw new Error(
@@ -108,7 +109,7 @@ export class Graph implements EditableGraph {
     }
     this.#inspector.updateGraph(this.#graph);
     this.#eventTarget.dispatchEvent(
-      new GraphChangeEvent(this.#graph, this.#version)
+      new GraphChangeEvent(this.#graph, this.#version, visualOnly)
     );
   }
 
@@ -153,7 +154,7 @@ export class Graph implements EditableGraph {
 
     this.#graph.nodes.push(spec);
     this.#inspector.nodeStore.add(spec);
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -183,7 +184,7 @@ export class Graph implements EditableGraph {
     // Remove the node from the graph.
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
     this.#inspector.nodeStore.remove(id);
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -258,7 +259,7 @@ export class Graph implements EditableGraph {
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -280,7 +281,7 @@ export class Graph implements EditableGraph {
     const index = this.#findEdgeIndex(spec);
     const edge = edges.splice(index, 1)[0];
     this.#inspector.edgeStore.remove(edge);
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -319,7 +320,7 @@ export class Graph implements EditableGraph {
     edge.out = to.out;
     edge.to = to.to;
     edge.in = to.in;
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -344,7 +345,7 @@ export class Graph implements EditableGraph {
     if (node) {
       node.descriptor.configuration = configuration;
     }
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -359,17 +360,30 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
+  #isVisualOnly(incoming: NodeMetadata, existing: NodeMetadata): boolean {
+    return (
+      existing.title === incoming.title &&
+      existing.description === incoming.description &&
+      existing.logLevel === incoming.logLevel
+    );
+  }
+
   async changeMetadata(
     id: NodeIdentifier,
-    metadata: NodeConfiguration
+    metadata: NodeMetadata
   ): Promise<EditResult> {
     const can = await this.canChangeMetadata(id);
     if (!can.success) return can;
     const node = this.#inspector.nodeById(id);
-    if (node) {
-      node.descriptor.metadata = metadata;
+    if (!node) {
+      return { success: false, error: `Unknown node with id "${id}"` };
     }
-    this.#updateGraph();
+    const visualOnly = this.#isVisualOnly(
+      metadata,
+      node.descriptor.metadata || {}
+    );
+    node.descriptor.metadata = metadata;
+    this.#updateGraph(visualOnly);
     return { success: true };
   }
 
@@ -391,7 +405,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph();
+    this.#updateGraph(false);
 
     return editable;
   }
@@ -408,7 +422,7 @@ export class Graph implements EditableGraph {
       };
     }
     delete this.#graphs[id];
-    this.#updateGraph();
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -428,7 +442,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph();
+    this.#updateGraph(false);
 
     return editable;
   }
