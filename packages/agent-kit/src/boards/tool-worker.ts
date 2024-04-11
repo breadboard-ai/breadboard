@@ -53,7 +53,108 @@ const sampleInstruction = `You are a hip, fun-loving mathematician who loves to 
 
 const sampleTools = JSON.stringify([
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json",
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json",
+  {
+    title: "The Calculator Board",
+    description:
+      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+    version: "0.0.2",
+    edges: [
+      {
+        from: "compute",
+        to: "answer",
+        out: "*",
+        in: "",
+      },
+      {
+        from: "generator",
+        to: "compute",
+        out: "text",
+        in: "code",
+      },
+      {
+        from: "math-question",
+        to: "math-function",
+        out: "question",
+        in: "question",
+      },
+      {
+        from: "math-question",
+        to: "generator",
+        out: "generator",
+        in: "path",
+      },
+      {
+        from: "math-function",
+        to: "generator",
+        out: "prompt",
+        in: "text",
+      },
+    ],
+    nodes: [
+      {
+        id: "answer",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              result: {
+                type: "string",
+                title: "Answer",
+                description: "The answer to the math problem",
+              },
+            },
+            required: ["text"],
+          },
+        },
+      },
+      {
+        id: "compute",
+        type: "runJavascript",
+        configuration: {
+          name: "compute",
+        },
+      },
+      {
+        id: "generator",
+        type: "invoke",
+        configuration: {},
+      },
+      {
+        id: "math-question",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              question: {
+                type: "string",
+                title: "Math problem",
+                description: "Ask a math question",
+                examples: ["What is the square root of pi?"],
+              },
+              generator: {
+                type: "string",
+                title: "Generator",
+                description: "The URL of the generator to call",
+                default: "text-generator.json",
+              },
+            },
+            required: ["text"],
+          },
+        },
+      },
+      {
+        id: "math-function",
+        type: "promptTemplate",
+        configuration: {
+          template:
+            "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem.\n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:",
+        },
+      },
+    ],
+    graphs: {},
+  },
 ]);
 
 type FunctionSignatureItem = {
@@ -71,10 +172,11 @@ const formatResults = code(({ list }) => {
   return { tools, urlMap };
 });
 
-const boardToFunction = board(({ item }) => {
+const boardToFunction = await board(({ item }) => {
   const url = item.isString();
-  const getBoard = core.fetch({
-    url,
+
+  const importBoard = core.curry({
+    $board: url,
   });
 
   // TODO: Convert to `code`.
@@ -103,14 +205,18 @@ const boardToFunction = board(({ item }) => {
         "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
         }
     )`,
-    json: getBoard.response,
+    json: importBoard.board,
     raw: true,
   });
 
   return { function: getFunctionSignature.function, boardURL: url };
+}).serialize({
+  title: "Board to functions",
+  description:
+    "Use this board to convert specified boards into function-calling signatures",
 });
 
-export default await board(({ context, instruction, tools }) => {
+const toolWorker = await board(({ context, instruction, tools }) => {
   context
     .title("Context")
     .isArray()
@@ -146,7 +252,7 @@ export default await board(({ context, instruction, tools }) => {
       title: "Turn Boards into Functions",
       description: "Turning provided boards into functions",
     },
-    board: boardToFunction,
+    board: "#boardToFunction",
     list: tools.isArray(),
   });
 
@@ -254,3 +360,9 @@ export default await board(({ context, instruction, tools }) => {
   description: "A worker that can use tools to accomplish tasks.",
   version: "0.0.1",
 });
+
+toolWorker.graphs = {
+  boardToFunction: boardToFunction,
+};
+
+export default toolWorker;

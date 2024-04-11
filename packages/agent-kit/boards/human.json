@@ -25,8 +25,8 @@
     {
       "from": "fn-4",
       "to": "output-5",
-      "out": "rejected",
-      "in": "rejected"
+      "out": "again",
+      "in": "again"
     },
     {
       "from": "fn-4",
@@ -131,7 +131,7 @@
       "id": "appendContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "function appendContext({ context, text }) {\n    if (!text)\n      return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  }",
+        "code": "const appendContext = ({ context, text }) => {\n    if (!text)\n      return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  };",
         "name": "appendContext",
         "raw": true
       },
@@ -166,7 +166,7 @@
       "id": "fn-4",
       "type": "runJavascript",
       "configuration": {
-        "code": "function fn_4({ text, context, action }) {\n  const a = action;\n  if (a?.action === \"vote\") {\n    if (text === \"No\") {\n      const c = context;\n      c.pop();\n      return { text, rejected: context };\n    }\n    return { text: \"\", context };\n  }\n  return { text, context };\n}",
+        "code": "const fn_4 = ({ text, context, action }) => {\n  const a = action;\n  if (a?.action === \"vote\") {\n    if (text === \"No\") {\n      context.pop();\n      return { text, again: context };\n    }\n    const c = structuredClone(context);\n    const lastItem = c[c.length - 1];\n    const parts = lastItem.parts;\n    const t = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n    const output = t;\n    const data = JSON.parse(output);\n    delete data[\"voteRequest\"];\n    lastItem.parts = [{ text: JSON.stringify(data) }];\n    return { text: \"\", context: c };\n  }\n  return { text, context };\n};",
         "name": "fn_4",
         "raw": true
       },
@@ -179,7 +179,7 @@
       "id": "createSchema",
       "type": "runJavascript",
       "configuration": {
-        "code": "function createSchema({ title, action, description, context }) {\n    const text = {\n      title,\n      description,\n      type: \"string\",\n      behavior: [\"transient\"]\n    };\n    const schema2 = {\n      type: \"object\",\n      properties: { text }\n    };\n    if (action?.action == \"vote\") {\n      text.title = action.title;\n      text.enum = [\"Yes\", \"No\"];\n    }\n    return { schema: schema2, context };\n  }",
+        "code": "const createSchema = ({ title: title2, action, description, context }) => {\n    const text = {\n      title: title2,\n      description,\n      type: \"string\",\n      behavior: [\"transient\"]\n    };\n    const schema2 = {\n      type: \"object\",\n      properties: { text }\n    };\n    if (action?.action == \"vote\") {\n      text.title = action.title;\n      text.enum = [\"Yes\", \"No\"];\n    }\n    return { schema: schema2, context };\n  };",
         "name": "createSchema",
         "raw": true
       },
@@ -192,7 +192,7 @@
       "id": "maybeOutputRouter",
       "type": "runJavascript",
       "configuration": {
-        "code": "function maybeOutputRouter({ context }) {\n  const action = { action: \"none\" };\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const parts = lastItem.parts;\n      const text = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n      const output = text;\n      try {\n        const data = JSON.parse(output);\n        if (data.voteRequest) {\n          const feedback = data;\n          const action2 = { action: \"vote\", title: data.voteRequest };\n          return { feedback, action: action2, context };\n        }\n      } catch {\n      }\n      return { output, action, context };\n    }\n  }\n  return { context, action };\n}",
+        "code": "const maybeOutputRouter = ({ context }) => {\n  const action = { action: \"none\" };\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const parts = lastItem.parts;\n      const text = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n      const output = text;\n      try {\n        const data = JSON.parse(output);\n        if (data.voteRequest) {\n          const feedback = structuredClone(data);\n          delete feedback[\"voteRequest\"];\n          const action2 = { action: \"vote\", title: data.voteRequest };\n          return { feedback, action: action2, context };\n        }\n      } catch {\n      }\n      return { output, action, context };\n    }\n  }\n  return { context, action };\n};",
         "name": "maybeOutputRouter",
         "raw": true
       },
@@ -208,9 +208,9 @@
         "schema": {
           "type": "object",
           "properties": {
-            "rejected": {
+            "again": {
               "type": "string",
-              "title": "rejected"
+              "title": "again"
             }
           }
         }

@@ -1102,92 +1102,7 @@
           "id": "turnBoardsToFunctions",
           "type": "map",
           "configuration": {
-            "board": {
-              "kind": "board",
-              "board": {
-                "kits": [],
-                "edges": [
-                  {
-                    "from": "getFunctionSignature",
-                    "to": "output-2",
-                    "out": "function",
-                    "in": "function"
-                  },
-                  {
-                    "from": "input-1",
-                    "to": "fetch-3",
-                    "out": "item",
-                    "in": "url"
-                  },
-                  {
-                    "from": "input-1",
-                    "to": "output-2",
-                    "out": "item",
-                    "in": "boardURL"
-                  },
-                  {
-                    "from": "fetch-3",
-                    "to": "getFunctionSignature",
-                    "out": "response",
-                    "in": "json"
-                  }
-                ],
-                "nodes": [
-                  {
-                    "id": "output-2",
-                    "type": "output",
-                    "configuration": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "function": {
-                            "type": "object",
-                            "title": "function"
-                          },
-                          "boardURL": {
-                            "type": "string",
-                            "title": "boardURL"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "id": "getFunctionSignature",
-                    "type": "jsonata",
-                    "configuration": {
-                      "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
-                      "raw": true
-                    }
-                  },
-                  {
-                    "id": "input-1",
-                    "type": "input",
-                    "configuration": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "item": {
-                            "title": "url",
-                            "description": "The URL to fetch",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "item"
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    "id": "fetch-3",
-                    "type": "fetch",
-                    "configuration": {}
-                  }
-                ],
-                "graphs": {}
-              }
-            }
+            "board": "#boardToFunction"
           },
           "metadata": {
             "title": "Turn Boards into Functions",
@@ -1231,7 +1146,7 @@
                     ]
                   },
                   "examples": [
-                    "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
+                    "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
                   ],
                   "default": "[]"
                 }
@@ -1267,7 +1182,95 @@
           }
         }
       ],
-      "graphs": {}
+      "graphs": {
+        "boardToFunction": {
+          "title": "Board to functions",
+          "description": "Use this board to convert specified boards into function-calling signatures",
+          "edges": [
+            {
+              "from": "getFunctionSignature",
+              "to": "output-2",
+              "out": "function",
+              "in": "function"
+            },
+            {
+              "from": "input-1",
+              "to": "curry-3",
+              "out": "item",
+              "in": "$board"
+            },
+            {
+              "from": "input-1",
+              "to": "output-2",
+              "out": "item",
+              "in": "boardURL"
+            },
+            {
+              "from": "curry-3",
+              "to": "getFunctionSignature",
+              "out": "board",
+              "in": "json"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "output-2",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "function": {
+                      "type": "object",
+                      "title": "function"
+                    },
+                    "boardURL": {
+                      "type": "string",
+                      "title": "boardURL"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "getFunctionSignature",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "raw": true
+              }
+            },
+            {
+              "id": "input-1",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "title": "board",
+                      "behavior": [
+                        "board"
+                      ],
+                      "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "item"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "curry-3",
+              "type": "curry",
+              "configuration": {}
+            }
+          ],
+          "graphs": {}
+        }
+      }
     },
     "worker": {
       "title": "Worker",

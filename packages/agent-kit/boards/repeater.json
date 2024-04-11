@@ -74,7 +74,7 @@
       "id": "counter",
       "type": "runJavascript",
       "configuration": {
-        "code": "function counter({ context, count }) {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n}",
+        "code": "const counter = ({ context, count }) => {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n};",
         "name": "counter",
         "raw": true
       },
