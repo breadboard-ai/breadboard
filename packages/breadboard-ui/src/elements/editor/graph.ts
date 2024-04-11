@@ -694,6 +694,7 @@ export class Graph extends PIXI.Container {
           continue;
         }
         edgeGraphic = new GraphEdge(fromNode, toNode);
+        edgeGraphic.type = edge.type;
 
         this.#edgeGraphics.set(edgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);

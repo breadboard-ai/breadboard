@@ -16,7 +16,6 @@ function getGlobalColor(name: string, defaultValue = "#333333") {
   return parseInt(value || defaultValue, 16);
 }
 
-const edgeColor = getGlobalColor("--bb-neutral-300");
 const borderColor = getGlobalColor("--bb-neutral-300");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 
@@ -60,7 +59,6 @@ export class GraphNode extends PIXI.Graphics {
   #editable = false;
   #selected = false;
 
-  public edgeColor = edgeColor;
   public portConnectedColor = 0xaced8f;
 
   constructor(id: string, type: string, title: string) {
