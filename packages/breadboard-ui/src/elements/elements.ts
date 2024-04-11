@@ -8,6 +8,7 @@ export { ActivityLog } from "./activity-log/activity-log.js";
 export { ArrayEditor } from "./node-info/array-editor.js";
 export { BoardEditOverlay } from "./overlay/board-edit.js";
 export { BoardSelector } from "./node-info/board-selector.js";
+export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
