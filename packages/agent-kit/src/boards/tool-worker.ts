@@ -71,7 +71,7 @@ const formatResults = code(({ list }) => {
   return { tools, urlMap };
 });
 
-const boardToFunction = board(({ item }) => {
+const boardToFunction = await board(({ item }) => {
   const url = item.isString();
   const getBoard = core.fetch({
     url,
@@ -108,9 +108,13 @@ const boardToFunction = board(({ item }) => {
   });
 
   return { function: getFunctionSignature.function, boardURL: url };
+}).serialize({
+  title: "Board to functions",
+  description:
+    "Use this board to convert specified boards into function-calling signatures",
 });
 
-export default await board(({ context, instruction, tools }) => {
+const toolWorker = await board(({ context, instruction, tools }) => {
   context
     .title("Context")
     .isArray()
@@ -146,7 +150,7 @@ export default await board(({ context, instruction, tools }) => {
       title: "Turn Boards into Functions",
       description: "Turning provided boards into functions",
     },
-    board: boardToFunction,
+    board: "#boardToFunction",
     list: tools.isArray(),
   });
 
@@ -254,3 +258,9 @@ export default await board(({ context, instruction, tools }) => {
   description: "A worker that can use tools to accomplish tasks.",
   version: "0.0.1",
 });
+
+toolWorker.graphs = {
+  boardToFunction: boardToFunction,
+};
+
+export default toolWorker;
