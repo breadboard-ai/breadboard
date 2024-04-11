@@ -26,6 +26,20 @@ export const fixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
   return edge;
 };
 
+/**
+ * This is inverse of the helper above, necessary when working with
+ * instances of `InspectableEdge` directly, since they will show "*" on both
+ * sides of the edge.
+ * @param edge -- the edge to un-fix up
+ * @returns
+ */
+export const unfixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
+  if (edge.out === "*") {
+    return { ...edge, in: "*" };
+  }
+  return edge;
+};
+
 class Edge implements InspectableEdge {
   #nodes: InspectableNodeCache;
   #edge: EdgeDescriptor;
@@ -109,7 +123,7 @@ export class EdgeCache {
   }
 
   hasByValue(edge: EdgeDescriptor): boolean {
-    edge = fixUpStarEdge(edge);
+    edge = unfixUpStarEdge(edge);
     const edges = this.edges();
     return !!edges.find((e) => {
       return (
