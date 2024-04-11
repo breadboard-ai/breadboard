@@ -12,9 +12,9 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 
-export type PropmtTemplateOutputs = {
-  text: string;
-  prompt: string; // Deprecated
+export type PromptTemplateOutputs = {
+  text: string; // Deprecated
+  prompt: string;
 };
 
 export type PromptTemplateInputs = {
