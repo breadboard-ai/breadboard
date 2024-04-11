@@ -290,7 +290,7 @@ export class GraphEdge extends PIXI.Graphics {
 
     // Now draw the lines.
     this.moveTo(outLocation.x, outLocation.y);
-    if (midA.x !== midB.x) {
+    if (Math.abs(midA.x - midB.x) > 0.5) {
       this.bezierCurveTo(cpA1.x, cpA1.y, cpA2.x, cpA2.y, midA.x, midA.y);
       this.lineTo(midB.x, midB.y);
       this.bezierCurveTo(
