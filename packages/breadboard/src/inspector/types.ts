@@ -324,7 +324,7 @@ export type InspectablePort = {
    */
   value: NodeValue;
   /**
-   * Returns true if this is the star port ("*").
+   * Returns true if this is the star or control port ("*" or "").
    */
   star: boolean;
   /**
