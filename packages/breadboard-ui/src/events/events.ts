@@ -430,8 +430,20 @@ export class EdgeChangeEvent extends Event {
 
   constructor(
     public readonly changeType: "add" | "remove" | "move",
-    public readonly from: { from: string; to: string; in: string; out: string },
-    public readonly to?: { from: string; to: string; in: string; out: string },
+    public readonly from: {
+      from: string;
+      to: string;
+      in: string;
+      out: string;
+      constant?: boolean;
+    },
+    public readonly to?: {
+      from: string;
+      to: string;
+      in: string;
+      out: string;
+      constant?: boolean;
+    },
     public readonly subGraphId: string | null = null
   ) {
     super(EdgeChangeEvent.eventName, {
@@ -490,7 +502,7 @@ export class GraphNodeMoveEvent extends Event {
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "breadboardgraphnodeselected";
 
-  constructor(public id: string | null) {
+  constructor(public readonly id: string | null) {
     super(GraphNodeSelectedEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -502,7 +514,7 @@ export class GraphNodeSelectedEvent extends Event {
 export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "breadboardgraphedgeattach";
 
-  constructor(public edge: InspectableEdge) {
+  constructor(public readonly edge: InspectableEdge) {
     super(GraphNodeEdgeAttachEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -514,7 +526,7 @@ export class GraphNodeEdgeAttachEvent extends Event {
 export class GraphNodeEdgeDetachEvent extends Event {
   static eventName = "breadboardgraphedgedetach";
 
-  constructor(public edge: InspectableEdge) {
+  constructor(public readonly edge: InspectableEdge) {
     super(GraphNodeEdgeDetachEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -527,8 +539,9 @@ export class GraphNodeEdgeChangeEvent extends Event {
   static eventName = "breadboardgraphedgechange";
 
   constructor(
-    public fromEdge: InspectableEdge,
-    public toEdge: InspectableEdge
+    public readonly fromEdge: InspectableEdge,
+    public readonly toEdge: InspectableEdge,
+    public readonly constant = false
   ) {
     super(GraphNodeEdgeChangeEvent.eventName, {
       bubbles: true,
@@ -541,7 +554,7 @@ export class GraphNodeEdgeChangeEvent extends Event {
 export class GraphNodeDeleteEvent extends Event {
   static eventName = "breadboardgraphnodedelete";
 
-  constructor(public id: string) {
+  constructor(public readonly id: string) {
     super(GraphNodeDeleteEvent.eventName, {
       bubbles: true,
       cancelable: true,

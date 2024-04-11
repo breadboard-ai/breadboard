@@ -6,6 +6,7 @@
 
 import {
   InspectableEdge,
+  InspectableEdgeType,
   InspectableNode,
   InspectableNodePorts,
   PortStatus,
@@ -284,6 +285,11 @@ export class Graph extends PIXI.Container {
       const existingEdge = this.#edgeGraphics.get(edgeKey);
       if (existingEdge) {
         return;
+      }
+
+      if (evt.metaKey) {
+        // TODO: Export InspectableEdgeType as non-type?
+        targetEdgeDescriptor.type = "constant" as InspectableEdgeType.Constant;
       }
 
       if (targetEdge.temporary) {
