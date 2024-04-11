@@ -11,7 +11,11 @@ import type {
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
-import type { GenericBreadboardNodeInstance } from "./instance.js";
+import type {
+  SerializableInputPort,
+  SerializableNode,
+  SerializableOutputPort,
+} from "./serializable.js";
 
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 
@@ -78,17 +82,19 @@ export const OutputPortGetter = "__output";
 /**
  * A Breadboard node port which receives values.
  */
-export class InputPort<T extends JsonSerializable> {
+export class InputPort<T extends JsonSerializable>
+  implements SerializableInputPort
+{
   readonly type: BreadboardType;
   readonly name: string;
-  readonly node: GenericBreadboardNodeInstance;
+  readonly node: SerializableNode;
   readonly value?: ValueOrOutputPort<T>;
   readonly #fakeForTypeDiscrimination!: T;
 
   constructor(
     type: BreadboardType,
     name: string,
-    node: GenericBreadboardNodeInstance,
+    node: SerializableNode,
     value: ValueOrOutputPort<T>
   ) {
     this.type = type;
@@ -102,19 +108,15 @@ export class InputPort<T extends JsonSerializable> {
  * A Breadboard node port which sends values.
  */
 export class OutputPort<T extends JsonSerializable>
-  implements OutputPortReference<T>
+  implements OutputPortReference<T>, SerializableOutputPort
 {
   readonly [OutputPortGetter] = this;
   readonly type: BreadboardType;
   readonly name: string;
-  readonly node: GenericBreadboardNodeInstance;
+  readonly node: SerializableNode;
   readonly #fakeForTypeDiscrimination!: T;
 
-  constructor(
-    type: BreadboardType,
-    name: string,
-    node: GenericBreadboardNodeInstance
-  ) {
+  constructor(type: BreadboardType, name: string, node: SerializableNode) {
     this.type = type;
     this.name = name;
     this.node = node;

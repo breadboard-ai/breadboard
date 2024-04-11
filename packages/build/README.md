@@ -87,7 +87,7 @@ substitution of values into a string containing placeholders. It has one fixed
 input (`template`), multiple _dynamic_ inputs, and one fixed output.
 
 ```ts
-import { defineNodeType, anyOf } from "@breadboard-ai/build";
+import { defineNodeType } from "@breadboard-ai/build";
 
 export const templater = defineNodeType({
   name: "example",
@@ -97,7 +97,7 @@ export const templater = defineNodeType({
       description: "A template with {{placeholders}}.",
     },
     "*": {
-      type: anyOf("string", "number"),
+      type: "string",
       description: "Values to fill into template's {{placeholders}}.",
     },
   },
@@ -107,24 +107,12 @@ export const templater = defineNodeType({
       description: "The template with {{placeholders}} substituted.",
     },
   },
-  describe: ({ template }) => {
-    return {
-      inputs: Object.fromEntries(
-        extractPlaceholders(template ?? "").map((name) => [
-          name,
-          {
-            type: anyOf("string", "number"),
-            description: `A value for the ${name} placeholder`,
-          },
-        ])
-      ),
-    };
-  },
-  invoke: ({ template }, placeholders) => {
-    return {
-      result: substituteTemplatePlaceholders(template, placeholders),
-    };
-  },
+  describe: ({ template }) => ({
+    inputs: extractPlaceholders(template ?? ""),
+  }),
+  invoke: ({ template }, placeholders) => ({
+    result: substituteTemplatePlaceholders(template, placeholders),
+  }),
 });
 ```
 
@@ -328,21 +316,12 @@ const myCrazyType = unsafeType<{ foo: string }>({
 
 ## Known issues
 
-1. Polymorphic nodes with dynamic _outputs_ are not yet supported.
-
-2. The `context` object is not yet passed to `invoke`, so certain low-level
+1. The `context` object is not yet passed to `invoke`, so certain low-level
    operations are not yet possible.
 
-3. `describe` is only passed values for fixed ports, not dynamic ones.
-
-4. There is not currently a type check for excess properties on the return type
-   of monomorphic invoke. That is, while TypeScript will enforce that all
-   configured output ports have a value, it will not yet complain if an output
-   is returned that does not match a configured output port.
-
-5. There is no way to specify a description for a board's output (probably an
+2. There is no way to specify a description for a board's output (probably an
    `output` function, similar to `input`, is the solution there).
 
-6. You cannot yet embed boards into other boards (this will work by
+3. You cannot yet embed boards into other boards (this will work by
    instantiating a board object just like a regular node, but during
    serialization an `invoke` node will be created in its place.)

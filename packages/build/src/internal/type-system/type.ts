@@ -17,7 +17,12 @@ export type BreadboardType =
 /**
  * The basic Breadboard types that can be written directly.
  */
-export type BasicBreadboardType = "string" | "number" | "boolean" | "unknown";
+export type BasicBreadboardType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "unknown";
 
 /**
  * All Breadboard values must be JSON serializable, and this is the set of
@@ -55,11 +60,13 @@ export type ConvertBreadboardType<BT extends BreadboardType> =
       ? number
       : BT extends "boolean"
         ? boolean
-        : BT extends "unknown"
-          ? JsonSerializable
-          : BT extends AdvancedBreadboardType<infer TT>
-            ? TT
-            : never;
+        : BT extends "null"
+          ? null
+          : BT extends "unknown"
+            ? JsonSerializable
+            : BT extends AdvancedBreadboardType<infer TT>
+              ? TT
+              : never;
 
 /**
  * Convert a {@link BreadboardType} to JSON Schema.
@@ -71,7 +78,8 @@ export function toJSONSchema(type: BreadboardType): JSONSchema4 {
   switch (type) {
     case "string":
     case "number":
-    case "boolean": {
+    case "boolean":
+    case "null": {
       return { type };
     }
     case "unknown": {

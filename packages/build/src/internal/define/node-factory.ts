@@ -5,9 +5,9 @@
  */
 
 import type { NewNodeFactory } from "@google-labs/breadboard";
-import type { ConvertBreadboardType } from "../type-system/type.js";
-import type { MonomorphicDefinition } from "./definition-monomorphic.js";
-import type { PolymorphicDefinition } from "./definition-polymorphic.js";
+import type { Definition } from "./definition.js";
+import type { JsonSerializable } from "../type-system/type.js";
+import type { Expand } from "../common/type-util.js";
 
 /**
  * `NodeFactoryFromDefinition` takes a {@link NodeDefinition} type (as returned
@@ -15,34 +15,17 @@ import type { PolymorphicDefinition } from "./definition-polymorphic.js";
  * for use with {@link KitBuilder}.
  */
 export type NodeFactoryFromDefinition<
-  // TODO(aomarks) We should use PolymorphicDefinition<PortConfigMap,
-  // PortConfigMap> here instead of <any, any>, but for a currently unknown
-  // reason that won't match some definitions.
-  //
-  DEF extends // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  D extends Definition<any, any, any, any, any, any, any>,
 > =
-  DEF extends MonomorphicDefinition<infer ISHAPE, infer OSHAPE>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  D extends Definition<infer SI, infer SO, infer DI, infer DO, any, any, any>
     ? NewNodeFactory<
-        {
-          [PORT in keyof ISHAPE]: ConvertBreadboardType<ISHAPE[PORT]["type"]>;
-        },
-        {
-          [PORT in keyof OSHAPE]: ConvertBreadboardType<OSHAPE[PORT]["type"]>;
-        }
-      >
-    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      DEF extends PolymorphicDefinition<infer ISHAPE, any, infer OSHAPE>
-      ? NewNodeFactory<
-          {
-            [PORT in keyof Omit<ISHAPE, "*">]: ConvertBreadboardType<
-              ISHAPE[PORT]["type"]
-            >;
-          } & Record<string, unknown>,
-          {
-            [PORT in keyof Omit<OSHAPE, "*">]: ConvertBreadboardType<
-              OSHAPE[PORT]["type"]
-            >;
-          } & Record<string, unknown>
+        Expand<
+          SI & (DI extends JsonSerializable ? { [K: string]: DI } : object)
+        >,
+        Expand<
+          SO & (DO extends JsonSerializable ? { [K: string]: DO } : object)
         >
-      : never;
+      >
+    : never;

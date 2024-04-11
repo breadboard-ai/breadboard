@@ -12,12 +12,12 @@ import type { JsonSerializable } from "./internal/type-system/type.js";
 export { board } from "./internal/board/board.js";
 export { input } from "./internal/board/input.js";
 export { placeholder } from "./internal/board/placeholder.js";
-export {
-  serialize,
+export { serialize } from "./internal/board/serialize.js";
+export type {
   // TODO(aomarks) Not quite sure about exporting and/or the name of
   // SerializableBoard.
-  type SerializableBoard,
-} from "./internal/board/serialize.js";
+  SerializableBoard,
+} from "./internal/common/serializable.js";
 export { defineNodeType } from "./internal/define/define.js";
 export type { NodeFactoryFromDefinition } from "./internal/define/node-factory.js";
 export { anyOf } from "./internal/type-system/any-of.js";

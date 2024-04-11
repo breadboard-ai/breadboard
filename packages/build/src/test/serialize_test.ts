@@ -491,7 +491,6 @@ test("fancy types", () => {
                       required: ["foo"],
                     },
                   ],
-                  title: "myNodeIn1",
                 },
               },
               required: ["boardInput1"],
@@ -516,7 +515,6 @@ test("fancy types", () => {
                     },
                   },
                   required: ["foo"],
-                  title: "myNodeOut",
                 },
               },
               required: ["boardOut"],
@@ -619,7 +617,6 @@ test("long chain", () => {
                 boardStringArrayOut: {
                   type: "array",
                   items: { type: "string" },
-                  title: "out",
                 },
               },
               required: ["boardStringArrayOut"],
