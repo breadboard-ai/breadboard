@@ -13,7 +13,8 @@ export class GraphEdge extends PIXI.Graphics {
   #edge: InspectableEdge | null = null;
   #edgeColor = 0xaaaaaa;
   #overrideColor: number | null = null;
-  #loopBackPadding = 10;
+  #loopBackPadding = 30;
+  #loopBackCurveRadius = 10;
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
 
@@ -138,16 +139,55 @@ export class GraphEdge extends PIXI.Graphics {
       !this.#overrideInLocation &&
       !this.#overrideOutLocation
     ) {
-      this.lineTo(outLocation.x + padding, outLocation.y);
       this.lineTo(
-        outLocation.x + padding,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
+        outLocation.y
+      );
+      this.quadraticCurveTo(
+        outLocation.x + this.#loopBackPadding,
+        outLocation.y,
+        outLocation.x + this.#loopBackPadding,
+        outLocation.y + this.#loopBackCurveRadius
       );
       this.lineTo(
-        inLocation.x - padding,
+        outLocation.x + this.#loopBackPadding,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#loopBackCurveRadius
+      );
+      this.quadraticCurveTo(
+        outLocation.x + this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
         this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
-      this.lineTo(inLocation.x - padding, inLocation.y);
+
+      this.lineTo(
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+      );
+      this.quadraticCurveTo(
+        inLocation.x - this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        inLocation.x - this.#loopBackPadding,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#loopBackCurveRadius
+      );
+
+      this.lineTo(
+        inLocation.x - this.#loopBackPadding,
+        inLocation.y + this.#loopBackCurveRadius
+      );
+      this.quadraticCurveTo(
+        inLocation.x - this.#loopBackPadding,
+        inLocation.y,
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        inLocation.y
+      );
+
       this.lineTo(inLocation.x, inLocation.y);
       return;
     }
