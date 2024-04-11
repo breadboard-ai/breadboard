@@ -12,9 +12,7 @@ const slice = code<{ list: number[], limit: number }>(({ list, limit }) => {
     return { output: list.slice(0, limit) }
 })
 
-const boardSchema = "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
-
-export const firebaseBoardTopStoryIds = await board(() => {
+export default await board(() => {
     const input = base.input({
         $id: "limit",
         schema: {
@@ -35,9 +33,5 @@ export const firebaseBoardTopStoryIds = await board(() => {
     return { output }
 }).serialize({
     title: "Hacker News Firebase API Story IDs",
-    description: "Board which returns the top story IDs from Hacker News",
+    description: "Board which returns the top story ID from Hacker News",
     version: "0.0.1",})
-
-firebaseBoardTopStoryIds.$schema = boardSchema
-
-export default firebaseBoardTopStoryIds

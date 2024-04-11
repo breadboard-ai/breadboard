@@ -1,6 +1,6 @@
 {
   "title": "Hacker News Firebase API Story IDs",
-  "description": "Board which returns the top story IDs from Hacker News",
+  "description": "Board which returns the top story ID from Hacker News",
   "version": "0.0.1",
   "edges": [
     {
@@ -85,6 +85,5 @@
       }
     }
   ],
-  "graphs": {},
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json"
+  "graphs": {}
 }

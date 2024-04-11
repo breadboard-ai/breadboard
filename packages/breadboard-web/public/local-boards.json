@@ -25,6 +25,11 @@
     "version": "0.0.3"
   },
   {
+    "title": "Angolia search ",
+    "url": "/graphs/algolia_search.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Algolia Firebase API Story by ID",
     "url": "/graphs/algolia_story_from_id.json",
     "version": "0.0.1"

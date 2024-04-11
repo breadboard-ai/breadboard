@@ -1,7 +1,7 @@
-import { board, base, code} from "@google-labs/breadboard";
+import { board, base , code} from "@google-labs/breadboard";
 
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
+import  { core } from "@google-labs/core-kit";
+import  { templates } from "@google-labs/template-kit";
 
 const storyInputSchema = {
     type: "number",
@@ -18,26 +18,25 @@ const spread = code<{ object: object }>((inputs) => {
     return { ...object };
 });
 
-const boardSchema = "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
-
-export const firebaseBoardStoryFromId = await board(() => {
+export default await board(() => {
     const input = base.input({
-        $id: "storyid",
+        $id: "storyID",
         schema: {
-            title: "Hacker News Story id",
+            title: "Hacker News Story ID",
             properties: {
-                storyid: storyInputSchema
+                storyID: storyInputSchema,
             },
-            type: "number"
-        }
+        },
+        type: "number",
     })
-
+    
     const urlTemplate = templates.urlTemplate({
         $id: "urlTemplate",
-        template: "https://hacker-news.firebaseio.com/v0/item/{storyid}.json",
+        template: "https://hn.algolia.com/api/v1/items/{storyID}",
+        storyID: input.storyID
     });
-
-    input.to(urlTemplate);
+    // BUG?
+    //input.to(urlTemplate);
 
     const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url});
 
@@ -47,17 +46,25 @@ export const firebaseBoardStoryFromId = await board(() => {
 
     response.to(output)
 
-    console.log(urlTemplate.url)
-
     return {output}
 
 }).serialize({
     title: "Hacker News Firebase API Story by ID",
-    description: "Board which returns story json",
-    version: "0.0.1",})
-
-firebaseBoardStoryFromId.$schema = boardSchema
-
+    description: "Board which returns story contents",
+    version: "0.0.1"
+})
 
 
-export default firebaseBoardStoryFromId
+// const kits = [asRuntimeKit(Core), asRuntimeKit(TemplateKit)]
+
+// const runner = await BoardRunner.fromGraphDescriptor(firebaseBoardStoryFromId);
+// for await (const stop of runner.run({ kits: kits })) {
+//     if (stop.type === "input") {
+//         stop.inputs = {
+//             storyID: "39788322",
+//         };
+//     } else if (stop.type === "output") {
+//         console.log(stop.outputs)
+//     }
+// }
+

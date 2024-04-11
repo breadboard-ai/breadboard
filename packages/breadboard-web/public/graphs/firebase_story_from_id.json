@@ -1,6 +1,6 @@
 {
   "title": "Hacker News Firebase API Story by ID",
-  "description": "Board which returns story json",
+  "description": "Board which returns story contents",
   "version": "0.0.1",
   "edges": [
     {
@@ -28,10 +28,10 @@
       "in": "url"
     },
     {
-      "from": "storyid",
+      "from": "storyID",
       "to": "urlTemplate",
-      "out": "*",
-      "in": ""
+      "out": "storyID",
+      "in": "storyID"
     }
   ],
   "nodes": [
@@ -75,28 +75,27 @@
       "id": "urlTemplate",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://hacker-news.firebaseio.com/v0/item/{storyid}.json"
+        "template": "https://hn.algolia.com/api/v1/items/{storyID}"
       }
     },
     {
-      "id": "storyid",
+      "id": "storyID",
       "type": "input",
       "configuration": {
         "schema": {
-          "title": "Hacker News Story id",
+          "title": "Hacker News Story ID",
           "properties": {
-            "storyid": {
+            "storyID": {
               "type": "number",
               "title": "Story ID",
               "default": "39788322",
               "description": "HackerNews Story ID to extract"
             }
-          },
-          "type": "number"
-        }
+          }
+        },
+        "type": "number"
       }
     }
   ],
-  "graphs": {},
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json"
+  "graphs": {}
 }

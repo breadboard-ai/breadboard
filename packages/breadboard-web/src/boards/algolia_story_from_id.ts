@@ -1,7 +1,7 @@
-import { board, base, asRuntimeKit, BoardRunner, code} from "@google-labs/breadboard";
+import { board, base, code} from "@google-labs/breadboard";
 
-import Core, { core } from "@google-labs/core-kit";
-import TemplateKit, { templates } from "@google-labs/template-kit";
+import  { core } from "@google-labs/core-kit";
+import  { templates } from "@google-labs/template-kit";
 
 const storyInputSchema = {
     type: "string",
@@ -28,13 +28,13 @@ const firebaseBoardStoryFromId = await board(() => {
             properties: {
                 storyID: storyInputSchema
             },
-            required: ["storyID"],
         }
     })
 
     const urlTemplate = templates.urlTemplate({
         $id: "urlTemplate",
         template: "https://hn.algolia.com/api/v1/items/{storyID}",
+        storyID: input.storyID
     });
 
     input.to(urlTemplate);
@@ -57,18 +57,5 @@ const firebaseBoardStoryFromId = await board(() => {
 })
 
 firebaseBoardStoryFromId.$schema = boardSchema
-
-const kits = [asRuntimeKit(Core), asRuntimeKit(TemplateKit)]
-
-const runner = await BoardRunner.fromGraphDescriptor(firebaseBoardStoryFromId);
-for await (const stop of runner.run({ kits: kits })) {
-    if (stop.type === "input") {
-        stop.inputs = {
-            storyID: "39788322",
-        };
-    } else if (stop.type === "output") {
-        console.log(stop.outputs)
-    }
-}
 
 export default firebaseBoardStoryFromId
