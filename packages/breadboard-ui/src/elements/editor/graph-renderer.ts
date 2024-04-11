@@ -43,11 +43,19 @@ export class GraphRenderer extends LitElement {
   #padding = 50;
   #container = new PIXI.Container();
   #background: PIXI.TilingSprite | null = null;
+  #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
     this.#app.resize();
 
     if (entries.length < 1) {
       return;
+    }
+
+    const { contentRect } = entries[0];
+    const delta = new PIXI.Point(0, 0);
+    if (this.#lastContentRect) {
+      delta.x = (contentRect.width - this.#lastContentRect.width) * 0.5;
+      delta.y = (contentRect.height - this.#lastContentRect.height) * 0.5;
     }
 
     for (const child of this.#container.children) {
@@ -57,8 +65,14 @@ export class GraphRenderer extends LitElement {
 
       // Inform the graph about the content rect so that it can attempt to fit
       // the graph inside of it.
-      child.layoutRect = entries[0].contentRect;
+      child.layoutRect = contentRect;
+
+      // Reposition it to retain its center.
+      child.position.x += delta.x;
+      child.position.y += delta.y;
     }
+
+    this.#lastContentRect = contentRect;
   });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
