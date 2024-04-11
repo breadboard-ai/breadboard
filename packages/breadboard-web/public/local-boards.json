@@ -25,6 +25,11 @@
     "version": "0.0.3"
   },
   {
+    "title": "Algolia Firebase API Story by ID",
+    "url": "/graphs/algolia_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Ask User",
     "url": "/graphs/ask-user.json",
     "version": "0.0.1"
@@ -77,6 +82,16 @@
   {
     "title": "Error board",
     "url": "/graphs/error.json"
+  },
+  {
+    "title": "Hacker News Firebase API Story by ID",
+    "url": "/graphs/firebase_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Firebase API Story IDs",
+    "url": "/graphs/firebase_top_story_ids.json",
+    "version": "0.0.1"
   },
   {
     "title": "Gemini Pro Generator",

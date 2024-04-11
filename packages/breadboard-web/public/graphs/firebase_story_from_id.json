@@ -1,0 +1,102 @@
+{
+  "title": "Hacker News Firebase API Story by ID",
+  "description": "Board which returns story json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "storyid",
+      "to": "urlTemplate",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hacker-news.firebaseio.com/v0/item/{storyid}.json"
+      }
+    },
+    {
+      "id": "storyid",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story id",
+          "properties": {
+            "storyid": {
+              "type": "number",
+              "title": "Story ID",
+              "default": "39788322",
+              "description": "HackerNews Story ID to extract"
+            }
+          },
+          "type": "number"
+        }
+      }
+    }
+  ],
+  "graphs": {},
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json"
+}
