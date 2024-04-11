@@ -4,19 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdge, InspectableEdgeType } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
+
+const documentStyles = getComputedStyle(document.documentElement);
+
+function getGlobalColor(name: string, defaultValue = "#333333") {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  return parseInt(value || defaultValue, 16);
+}
+
+const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
+const edgeColorConstant = getGlobalColor("--bb-output-200");
+const edgeColorControl = getGlobalColor("--bb-boards-200");
+const edgeColorStar = getGlobalColor("--bb-inputs-200");
 
 export class GraphEdge extends PIXI.Graphics {
   #isDirty = true;
   #edge: InspectableEdge | null = null;
-  #edgeColor = 0xaaaaaa;
   #overrideColor: number | null = null;
   #loopBackPadding = 30;
   #loopBackCurveRadius = 10;
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
+  #type: InspectableEdgeType | null = null;
 
   constructor(
     public fromNode: GraphNode,
@@ -76,6 +88,15 @@ export class GraphEdge extends PIXI.Graphics {
     return this.#overrideOutLocation;
   }
 
+  set type(type: InspectableEdgeType | null) {
+    this.#type = type;
+    this.#isDirty = true;
+  }
+
+  get type() {
+    return this.#type;
+  }
+
   render(renderer: PIXI.Renderer) {
     super.render(renderer);
 
@@ -121,9 +142,26 @@ export class GraphEdge extends PIXI.Graphics {
     inLocation.x += this.toNode.position.x;
     inLocation.y += this.toNode.position.y;
 
+    let edgeColor = edgeColorOrdinary;
+    switch (this.#type) {
+      case "control": {
+        edgeColor = edgeColorControl;
+        break;
+      }
+
+      case "constant": {
+        edgeColor = edgeColorConstant;
+        break;
+      }
+
+      case "star": {
+        edgeColor = edgeColorStar;
+        break;
+      }
+    }
+
     const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
-    const color =
-      this.#overrideColor ?? this.fromNode.edgeColor ?? this.#edgeColor;
+    const color = this.#overrideColor ?? edgeColor;
 
     this.lineStyle(2, color);
     this.moveTo(outLocation.x, outLocation.y);
