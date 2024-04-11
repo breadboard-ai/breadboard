@@ -226,6 +226,7 @@
   "dependencies": {
     "@breadboard-ai/build": "^0.3.1",
     "@codemirror/autocomplete": "^6.15.0",
+    "@codemirror/commands": "^6.3.3",
     "@codemirror/lang-javascript": "^6.2.2",
     "@google-labs/agent-kit": "^0.4.0",
     "@google-labs/breadboard": "^0.16.0",
