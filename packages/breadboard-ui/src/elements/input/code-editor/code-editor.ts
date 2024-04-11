@@ -8,8 +8,10 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { EditorView, minimalSetup } from "codemirror";
+import { keymap } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { closeBrackets } from "@codemirror/autocomplete";
+import { indentWithTab } from "@codemirror/commands";
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
@@ -66,7 +68,12 @@ export class CodeEditor extends LitElement {
 
   protected firstUpdated(): void {
     this.#editor = new EditorView({
-      extensions: [minimalSetup, javascript(), closeBrackets()],
+      extensions: [
+        minimalSetup,
+        javascript(),
+        closeBrackets(),
+        keymap.of([indentWithTab]),
+      ],
       parent: this.#content.value,
     });
 
