@@ -31,6 +31,7 @@ import { ArrayEditor } from "./array-editor.js";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { BoardSelector } from "./board-selector.js";
 import { isBoard } from "../../utils/board.js";
+import { CodeEditor } from "../input/code-editor/code-editor.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -351,6 +352,16 @@ export class NodeInfo extends LitElement {
       toConvert.set(boardSelector.id, "board");
     }
 
+    for (const codeEditor of evt.target.querySelectorAll<CodeEditor>(
+      "bb-code-editor"
+    )) {
+      if (!codeEditor.id) {
+        continue;
+      }
+
+      data.set(codeEditor.id, codeEditor.value || "");
+    }
+
     const id = data.get("$id") as string;
     const nodeType = data.get("$type") as string;
     if (!(id && nodeType)) {
@@ -575,6 +586,8 @@ export class NodeInfo extends LitElement {
                   const name = port.name;
                   const value = port.value;
 
+                  console.log(port);
+
                   let input;
                   const type = port.schema.type;
                   const behavior = port.schema.behavior;
@@ -729,6 +742,18 @@ export class NodeInfo extends LitElement {
                     }
 
                     default: {
+                      // TODO: Better hint here?
+                      if (name === "code") {
+                        input = html` <div>
+                          <bb-code-editor
+                            id="${name}"
+                            name="${name}"
+                            .value=${value ?? defaultValue ?? ""}
+                          ></bb-code-editor>
+                        </div>`;
+                        break;
+                      }
+
                       input = html` <div>
                         <textarea
                           id="${name}"
@@ -737,6 +762,7 @@ export class NodeInfo extends LitElement {
                           .value=${value ?? defaultValue ?? ""}
                         ></textarea>
                       </div>`;
+
                       break;
                     }
                   }
