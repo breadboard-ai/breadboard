@@ -285,6 +285,8 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   render(renderer: PIXI.Renderer): void {
+    super.render(renderer);
+
     if (this.#isDirty) {
       this.#isDirty = false;
       this.clear();
@@ -292,8 +294,6 @@ export class GraphNode extends PIXI.Graphics {
 
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN);
     }
-
-    super.render(renderer);
   }
 
   set inPorts(ports: InspectablePort[]) {

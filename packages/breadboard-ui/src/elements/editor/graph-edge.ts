@@ -114,13 +114,13 @@ export class GraphEdge extends PIXI.Graphics {
   }
 
   render(renderer: PIXI.Renderer) {
+    super.render(renderer);
+
     if (this.#isDirty) {
       this.clear();
       this.#draw();
       this.#isDirty = false;
     }
-
-    super.render(renderer);
   }
 
   forceRedraw() {
