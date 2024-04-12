@@ -898,6 +898,36 @@ export class Main extends LitElement {
               }
             });
           }}
+          @breadboardnodemetadataupdate=${(
+            evt: BreadboardUI.Events.NodeMetadataUpdateEvent
+          ) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const inspectableGraph = editableGraph.inspect();
+            const { id, metadata } = evt;
+            const existingNode = inspectableGraph.nodeById(id);
+            const existingMetadata = existingNode?.metadata() || {};
+            const newMetadata = {
+              ...existingMetadata,
+              ...metadata,
+            };
+
+            editableGraph.changeMetadata(id, newMetadata).then((result) => {
+              if (!result.success) {
+                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+              }
+
+              this.requestUpdate();
+            });
+          }}
           @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
             let editableGraph = this.#getEditor();
             if (editableGraph && evt.subGraphId) {
