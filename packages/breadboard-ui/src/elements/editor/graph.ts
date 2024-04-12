@@ -19,7 +19,7 @@ import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 
 function edgeToString(edge: InspectableEdge): string {
-  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}:(${edge.type})`;
+  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
