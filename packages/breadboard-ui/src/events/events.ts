@@ -113,13 +113,31 @@ export class BreadboardOverlayDismissedEvent extends Event {
   }
 }
 
+export class BoardInfoUpdateRequestEvent extends Event {
+  static eventName = "breadboardboardinforequestupdate";
+
+  constructor(
+    public readonly title: string | undefined,
+    public readonly version: string | undefined,
+    public readonly description: string | undefined,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(BoardInfoUpdateRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "breadboardboardinfoupdate";
 
   constructor(
     public readonly title: string,
     public readonly version: string,
-    public readonly description: string
+    public readonly description: string,
+    public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, {
       bubbles: true,

@@ -82,11 +82,12 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   render(renderer: PIXI.Renderer): void {
+    super.render(renderer);
+
     if (this.#isDirty) {
       this.#isDirty = false;
       this.#draw();
     }
-    super.render(renderer);
   }
 
   #draw() {
