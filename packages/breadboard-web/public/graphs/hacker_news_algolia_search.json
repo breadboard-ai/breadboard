@@ -1,6 +1,6 @@
 {
-  "title": "Angolia search ",
-  "description": "Board which returns api results based on a query",
+  "title": "Hacker News Angolia search ",
+  "description": "Board which returns API results based on a query using the Hacker News Angolia API",
   "version": "0.0.1",
   "edges": [
     {

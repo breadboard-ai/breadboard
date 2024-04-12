@@ -25,16 +25,6 @@
     "version": "0.0.3"
   },
   {
-    "title": "Angolia search ",
-    "url": "/graphs/algolia_search.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Algolia Firebase API Story by ID",
-    "url": "/graphs/algolia_story_from_id.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Ask User",
     "url": "/graphs/ask-user.json",
     "version": "0.0.1"
@@ -58,6 +48,14 @@
     "title": "Board Caller",
     "url": "/graphs/board-caller.json",
     "version": "0.0.6"
+  },
+  {
+    "title": "Board Not Required Bug",
+    "url": "/graphs/bug_default_bug.json"
+  },
+  {
+    "title": "Board Defaults Not Used. urlTemplate Error",
+    "url": "/graphs/bug_wire_all_bug.json"
   },
   {
     "title": "Example of @breadboard-ai/build",
@@ -89,16 +87,6 @@
     "url": "/graphs/error.json"
   },
   {
-    "title": "Hacker News Firebase API Story by ID",
-    "url": "/graphs/firebase_story_from_id.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Hacker News Firebase API Story IDs",
-    "url": "/graphs/firebase_top_story_ids.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Gemini Pro Generator",
     "url": "/graphs/gemini-generator.json",
     "version": "0.0.2"
@@ -111,6 +99,26 @@
   {
     "title": "Gemini Simple",
     "url": "/graphs/gemini-simple.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Angolia search ",
+    "url": "/graphs/hacker_news_algolia_search.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Algolia API Story by ID",
+    "url": "/graphs/hacker_news_algolia_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Firebase API Story by ID",
+    "url": "/graphs/hacker_news_firebase_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Firebase API Story IDs",
+    "url": "/graphs/hacker_news_firebase_top_story_ids.json",
     "version": "0.0.1"
   },
   {

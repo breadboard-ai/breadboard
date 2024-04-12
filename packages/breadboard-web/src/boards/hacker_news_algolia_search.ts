@@ -128,8 +128,6 @@ export default await board(() => {
 
     });
 
-    //input.to(urlTemplate)
-
     const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url });
     const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
 
@@ -141,7 +139,7 @@ export default await board(() => {
     }
 
 }).serialize({
-    title: "Angolia search ",
-    description: "Board which returns api results based on a query",
+    title: "Hacker News Angolia search ",
+    description: "Board which returns API results based on a query using the Hacker News Angolia API",
     version: "0.0.1",
 })

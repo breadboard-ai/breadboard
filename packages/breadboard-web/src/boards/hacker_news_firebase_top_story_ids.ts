@@ -5,7 +5,7 @@ const limitInputSchema = {
     type: "number",
     title: "Story Limit",
     default: "1",
-    description: "The Number of HackerNews Story ID's to return"
+    description: "The Number of Hacker News Story ID's to return"
 }
 
 const slice = code<{ list: number[], limit: number }>(({ list, limit }) => {
@@ -33,5 +33,5 @@ export default await board(() => {
     return { output }
 }).serialize({
     title: "Hacker News Firebase API Story IDs",
-    description: "Board which returns the top story ID from Hacker News",
+    description: "Board which returns the top story ID using the Hacker News Firebase API",
     version: "0.0.1",})

@@ -7,7 +7,7 @@ const storyInputSchema = {
     type: "string",
     title: "Story ID",
     default: "39788322",
-    description: "HackerNews Story ID to extract",
+    description: "Hacker News Story ID to extract",
 };
 
 const spread = code<{ object: object }>((inputs) => {
@@ -18,9 +18,7 @@ const spread = code<{ object: object }>((inputs) => {
     return { ...object };
 });
 
-const boardSchema = "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
-
-const firebaseBoardStoryFromId = await board(() => {
+export default await board(() => {
     const input = base.input({
         $id: "storyID",
         schema: {
@@ -36,9 +34,7 @@ const firebaseBoardStoryFromId = await board(() => {
         template: "https://hn.algolia.com/api/v1/items/{storyID}",
         storyID: input.storyID
     });
-
-    input.to(urlTemplate);
-
+    
     const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url});
 
     const output = base.output({ $id: "main" });
@@ -50,12 +46,7 @@ const firebaseBoardStoryFromId = await board(() => {
     return {output}
 
 }).serialize({
-    title: "Algolia Firebase API Story by ID",
-    description: "Board which returns story contents",
+    title: "Hacker News Algolia API Story by ID",
+    description: "Board which returns story contents using the Hacker News Algolia API",
     version: "0.0.1",
-    url: "https://github.com/ExaDev/breadboard-examples/tree/hackerNews-toolworker/src/examples/hackerNews/algolia"
 })
-
-firebaseBoardStoryFromId.$schema = boardSchema
-
-export default firebaseBoardStoryFromId

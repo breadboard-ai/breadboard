@@ -1,0 +1,62 @@
+{
+  "title": "Board Not Required Bug",
+  "description": "Board which demonstrates a bug where breadboard web wont continue without a non required variable",
+  "edges": [
+    {
+      "from": "urlTemplate",
+      "to": "output-2",
+      "out": "url",
+      "in": "output"
+    },
+    {
+      "from": "input",
+      "to": "urlTemplate",
+      "out": "myNumber",
+      "in": "myNumber"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "title": "url",
+              "description": "The resulting URL that was produced by filling in the placeholders in the template",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/items/{myNumber}"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "My Inputs",
+          "properties": {
+            "myNumber": {
+              "type": "number",
+              "title": "my Number",
+              "default": "1",
+              "description": "myNumber"
+            }
+          }
+        },
+        "type": "number"
+      }
+    }
+  ],
+  "graphs": {}
+}
