@@ -169,8 +169,6 @@ const generateAPISpecs = code(({ json }) => {
             }
           }
 
-          debugger;
-
           const headers = {
             operationId,
             url: baseUrl.replace(/\/$/, "") + key,
@@ -395,7 +393,6 @@ const createSpecBoard = board((apiSpec) => {
       }
 
       // Many APIs will require an authentication token but they don't define it in the Open API spec.
-      debugger;
       if (secrets != undefined && secrets[1].scheme == "bearer") {
         const envKey = `${item.info.title
           .replace(/[^a-zA-Z0-9]+/g, "_")
