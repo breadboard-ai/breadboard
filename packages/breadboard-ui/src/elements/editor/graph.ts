@@ -19,7 +19,7 @@ import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 
 function edgeToString(edge: InspectableEdge): string {
-  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
+  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}:(${edge.type})`;
 }
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
@@ -727,6 +727,7 @@ export class Graph extends PIXI.Container {
 
     // If there's a mismatch of sizes it likely means an edge has been removed
     // so find that edge and dispose of it.
+    console.log(this.#edgeGraphics.size, this.#edges);
     if (this.#edgeGraphics.size === this.#edges.length) {
       return;
     }
