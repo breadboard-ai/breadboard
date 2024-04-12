@@ -131,7 +131,7 @@
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "rollup": "^4.14.1",
+    "rollup": "^4.14.2",
     "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.3.3"
