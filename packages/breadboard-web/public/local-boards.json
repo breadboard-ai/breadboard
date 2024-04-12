@@ -50,14 +50,6 @@
     "version": "0.0.6"
   },
   {
-    "title": "Board Not Required Bug",
-    "url": "/graphs/bug_default_bug.json"
-  },
-  {
-    "title": "Board Defaults Not Used. urlTemplate Error",
-    "url": "/graphs/bug_wire_all_bug.json"
-  },
-  {
     "title": "Example of @breadboard-ai/build",
     "url": "/graphs/build-example.json",
     "version": "1.0.0"
