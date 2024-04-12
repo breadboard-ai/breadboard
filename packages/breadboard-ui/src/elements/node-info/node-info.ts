@@ -127,9 +127,9 @@ export class NodeInfo extends LitElement {
       --padding-y: calc(var(--bb-grid-size) * 2);
     }
 
-    :host > section > h1 {
-      position: sticky;
-      top: 0;
+    :host > details > summary {
+      position: relative;
+      user-select: none;
       font-size: var(--bb-font-medium);
       font-weight: normal;
       margin: 0 0 var(--bb-grid-size) 0;
@@ -138,10 +138,25 @@ export class NodeInfo extends LitElement {
       background: white;
       z-index: 2;
       display: grid;
-      grid-template-columns: auto auto;
+      grid-template-columns: auto 1fr auto;
+      cursor: pointer;
     }
 
-    :host > section > h1::after {
+    :host > details > summary::before {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 20px;
+      background: red;
+      margin-right: calc(var(--bb-grid-size) * 2);
+      background: var(--bb-icon-expand) center center no-repeat;
+    }
+
+    :host > details[open] > summary::before {
+      background: var(--bb-icon-collapse) center center no-repeat;
+    }
+
+    :host > details > summary::after {
       content: "";
       width: calc(100% - var(--padding-x) * 2);
       height: 1px;
@@ -178,6 +193,7 @@ export class NodeInfo extends LitElement {
 
     .node-properties {
       width: 100%;
+      margin-bottom: calc(var(--bb-grid-size) * 8);
     }
 
     .node-properties form {
@@ -600,8 +616,8 @@ export class NodeInfo extends LitElement {
         configuration: NodeConfiguration;
         metadata: NodeMetadata;
       }) => html`
-        <section>
-          <h1>Metadata</h1>
+        <details>
+          <summary>Metadata</summary>
           <div class="node-properties">
             <form
               ${ref(this.#metadataFormRef)}
@@ -667,10 +683,10 @@ export class NodeInfo extends LitElement {
               </div>
             </form>
           </div>
-        </section>
+        </details>
 
-        <section>
-          <h1>
+        <details open>
+          <summary>
             Configuration (${node.title()})
             <button
               ?disabled=${!this.editable}
@@ -681,7 +697,7 @@ export class NodeInfo extends LitElement {
             >
               Reset
             </button>
-          </h1>
+          </summary>
 
           <div class="node-properties">
             <form
@@ -913,7 +929,7 @@ export class NodeInfo extends LitElement {
               </div>
             </form>
           </div>
-        </section>
+        </details>
       `,
       error: (err) => {
         console.warn(err);
