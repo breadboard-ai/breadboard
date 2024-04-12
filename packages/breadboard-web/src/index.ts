@@ -69,7 +69,12 @@ export class Main extends LitElement {
   showPreviewOverlay = false;
 
   @state()
-  showBoardEditOverlay = false;
+  boardEditOverlayInfo: {
+    title?: string;
+    version?: string;
+    description?: string;
+    subGraphId?: string | null;
+  } | null = null;
 
   @state()
   showSettingsOverlay = false;
@@ -137,7 +142,7 @@ export class Main extends LitElement {
       font-size: 0;
       width: 20px;
       height: 20px;
-      background: var(--bb-icon-edit) center center no-repeat;
+      background: var(--bb-icon-edit-white) center center no-repeat;
       background-size: 20px 20px;
       border: none;
       margin-left: calc(var(--bb-grid-size) * 3);
@@ -675,7 +680,7 @@ export class Main extends LitElement {
     const settings = this.#settings ? this.#settings.values : null;
     const title = this.graph?.title;
     const showingOverlay =
-      this.showBoardEditOverlay ||
+      this.boardEditOverlayInfo !== null ||
       this.showPreviewOverlay ||
       this.showSettingsOverlay;
     tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
@@ -696,7 +701,11 @@ export class Main extends LitElement {
           ${title}
           <button
             @click=${() => {
-              this.showBoardEditOverlay = true;
+              this.boardEditOverlayInfo = {
+                title: this.graph?.title,
+                version: this.graph?.version,
+                description: this.graph?.description,
+              };
             }}
             ?disabled=${this.graph === null}
             id="edit-board-info"
@@ -749,6 +758,16 @@ export class Main extends LitElement {
           .settings=${settings}
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
+          @breadboardboardinforequestupdate=${(
+            evt: BreadboardUI.Events.BoardInfoUpdateRequestEvent
+          ) => {
+            this.boardEditOverlayInfo = {
+              title: evt.title,
+              version: evt.version,
+              description: evt.description,
+              subGraphId: evt.subGraphId,
+            };
+          }}
           @breadboardsubgraphcreate=${async (
             evt: BreadboardUI.Events.SubGraphCreateEvent
           ) => {
@@ -1259,25 +1278,51 @@ export class Main extends LitElement {
     }
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showBoardEditOverlay && this.graph) {
+    if (this.boardEditOverlayInfo) {
       boardOverlay = html`<bb-board-edit-overlay
-        .boardTitle=${title}
-        .boardVersion=${this.graph?.version}
-        .boardDescription=${this.graph?.description}
+        .boardTitle=${this.boardEditOverlayInfo.title}
+        .boardVersion=${this.boardEditOverlayInfo.version}
+        .boardDescription=${this.boardEditOverlayInfo.description}
+        .subGraphId=${this.boardEditOverlayInfo.subGraphId}
         @breadboardboardoverlaydismissed=${() => {
-          this.showBoardEditOverlay = false;
+          this.boardEditOverlayInfo = null;
         }}
         @breadboardboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
-          if (!this.graph) {
-            return;
-          }
+          if (evt.subGraphId) {
+            const editableGraph = this.#getEditor();
+            if (!editableGraph) {
+              console.warn(
+                "Unable to update board information; no active graph"
+              );
+              return;
+            }
 
-          if (this.graph) {
+            const subGraph = editableGraph.getGraph(evt.subGraphId);
+            if (!subGraph) {
+              console.warn(
+                "Unable to update board information; no active graph"
+              );
+              return;
+            }
+
+            const subGraphDescriptor = subGraph.raw();
+            subGraphDescriptor.title = evt.title;
+            subGraphDescriptor.version = evt.version;
+            subGraphDescriptor.description = evt.description;
+
+            editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
+          } else if (this.graph) {
             this.graph.title = evt.title;
             this.graph.version = evt.version;
             this.graph.description = evt.description;
+          } else {
+            this.toast(
+              "Unable to update sub board information - board not found",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+            return;
           }
 
           this.toast(
@@ -1285,7 +1330,7 @@ export class Main extends LitElement {
             BreadboardUI.Events.ToastType.INFORMATION
           );
 
-          this.showBoardEditOverlay = false;
+          this.boardEditOverlayInfo = null;
           this.requestUpdate();
         }}
       ></bb-board-edit-overlay>`;

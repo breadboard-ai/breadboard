@@ -410,14 +410,14 @@ export class Graph extends PIXI.Container {
   }
 
   render(renderer: PIXI.Renderer) {
+    super.render(renderer);
+
     if (this.#isDirty) {
       this.#isDirty = false;
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
     }
-
-    super.render(renderer);
   }
 
   set editable(editable: boolean) {
