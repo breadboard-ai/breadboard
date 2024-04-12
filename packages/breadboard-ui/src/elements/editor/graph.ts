@@ -727,7 +727,6 @@ export class Graph extends PIXI.Container {
 
     // If there's a mismatch of sizes it likely means an edge has been removed
     // so find that edge and dispose of it.
-    console.log(this.#edgeGraphics.size, this.#edges);
     if (this.#edgeGraphics.size === this.#edges.length) {
       return;
     }
