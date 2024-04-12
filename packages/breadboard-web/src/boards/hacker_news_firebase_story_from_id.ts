@@ -37,9 +37,7 @@ export default await board(() => {
     });
 
     const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url});
-
     const output = base.output({ $id: "main" });
-
     const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
 
     response.to(output)
