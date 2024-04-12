@@ -169,6 +169,8 @@ const generateAPISpecs = code(({ json }) => {
             }
           }
 
+          debugger;
+
           const headers = {
             operationId,
             url: baseUrl.replace(/\/$/, "") + key,
@@ -459,7 +461,7 @@ const convertBoardListToObject = code(({ list }) => {
 
       item.board.board.title = item.item.operationId;
       item.board.board.description = item.item.description;
-      item.board.board.version = "0.0.3"
+      item.board.board.version = "0.0.3";
 
       return {
         [item.item.operationId]: item,
