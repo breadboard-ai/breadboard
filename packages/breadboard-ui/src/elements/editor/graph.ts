@@ -282,6 +282,8 @@ export class Graph extends PIXI.Container {
         return;
       }
 
+      targetEdge.overrideColor = null;
+
       const existingEdge = this.#edgeGraphics.get(edgeKey);
       if (existingEdge) {
         return;
@@ -410,14 +412,14 @@ export class Graph extends PIXI.Container {
   }
 
   render(renderer: PIXI.Renderer) {
-    super.render(renderer);
-
     if (this.#isDirty) {
       this.#isDirty = false;
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
     }
+
+    super.render(renderer);
   }
 
   set editable(editable: boolean) {
@@ -617,6 +619,10 @@ export class Graph extends PIXI.Container {
         this.#nodeById.set(id, graphNode);
       }
 
+      if (graphNode.nodeTitle !== node.title()) {
+        graphNode.nodeTitle = node.title();
+      }
+
       if (node.descriptor.metadata?.visual) {
         const { x, y } = node.descriptor.metadata.visual as {
           x: number;
@@ -721,6 +727,7 @@ export class Graph extends PIXI.Container {
 
     // If there's a mismatch of sizes it likely means an edge has been removed
     // so find that edge and dispose of it.
+    console.log(this.#edgeGraphics.size, this.#edges);
     if (this.#edgeGraphics.size === this.#edges.length) {
       return;
     }

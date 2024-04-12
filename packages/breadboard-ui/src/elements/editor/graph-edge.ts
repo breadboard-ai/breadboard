@@ -58,6 +58,10 @@ export class GraphEdge extends PIXI.Graphics {
   }
 
   set overrideColor(overrideColor: number | null) {
+    if (overrideColor === this.#overrideColor) {
+      return;
+    }
+
     this.#overrideColor = overrideColor;
     this.#isDirty = true;
   }
@@ -69,6 +73,10 @@ export class GraphEdge extends PIXI.Graphics {
   set overrideInLocation(
     overrideInLocation: PIXI.ObservablePoint<unknown> | null
   ) {
+    if (overrideInLocation === this.#overrideInLocation) {
+      return;
+    }
+
     this.#overrideInLocation = overrideInLocation;
     this.#isDirty = true;
   }
@@ -80,6 +88,10 @@ export class GraphEdge extends PIXI.Graphics {
   set overrideOutLocation(
     overrideOutLocation: PIXI.ObservablePoint<unknown> | null
   ) {
+    if (overrideOutLocation === this.#overrideOutLocation) {
+      return;
+    }
+
     this.#overrideOutLocation = overrideOutLocation;
     this.#isDirty = true;
   }
@@ -89,6 +101,10 @@ export class GraphEdge extends PIXI.Graphics {
   }
 
   set type(type: InspectableEdgeType | null) {
+    if (type === this.#type) {
+      return;
+    }
+
     this.#type = type;
     this.#isDirty = true;
   }

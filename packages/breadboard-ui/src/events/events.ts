@@ -8,6 +8,7 @@ import type {
   GraphDescriptor,
   InspectableEdge,
   NodeConfiguration,
+  NodeDescriptor,
 } from "@google-labs/breadboard";
 import type { Settings } from "../types/types.js";
 
@@ -436,6 +437,22 @@ export class NodeUpdateEvent extends Event {
     public readonly configuration: NodeConfiguration
   ) {
     super(NodeUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class NodeMetadataUpdateEvent extends Event {
+  static eventName = "breadboardnodemetadataupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly metadata: NodeDescriptor["metadata"]
+  ) {
+    super(NodeMetadataUpdateEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

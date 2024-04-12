@@ -30,22 +30,6 @@ export class GraphNodePort extends PIXI.Graphics {
     this.cursor = "pointer";
   }
 
-  set connectedColor(color: number) {
-    this.#colors.connected = color;
-  }
-
-  get connectedColor() {
-    return this.#colors.connected;
-  }
-
-  set connectedBorderColor(color: number) {
-    this.#borderColors.connected = color;
-  }
-
-  get connectedBorderColor() {
-    return this.#borderColors.connected;
-  }
-
   set editable(editable: boolean) {
     this.#editable = editable;
   }
@@ -55,6 +39,10 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   set radius(radius: number) {
+    if (radius === this.#radius) {
+      return;
+    }
+
     this.#radius = radius;
     this.#isDirty = true;
   }
@@ -64,6 +52,10 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   set overrideStatus(overrideStatus: PortStatus | null) {
+    if (overrideStatus === this.#overrideStatus) {
+      return;
+    }
+
     this.#overrideStatus = overrideStatus;
     this.#isDirty = true;
   }
@@ -73,6 +65,10 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   set status(status: PortStatus) {
+    if (status === this.#status) {
+      return;
+    }
+
     this.#status = status;
     this.#isDirty = true;
   }
@@ -86,6 +82,7 @@ export class GraphNodePort extends PIXI.Graphics {
 
     if (this.#isDirty) {
       this.#isDirty = false;
+      this.clear();
       this.#draw();
     }
   }

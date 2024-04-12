@@ -20,7 +20,10 @@ import {
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SchemaEditor } from "./schema-editor.js";
-import { NodeUpdateEvent } from "../../events/events.js";
+import {
+  NodeMetadataUpdateEvent,
+  NodeUpdateEvent,
+} from "../../events/events.js";
 import { guard } from "lit/directives/guard.js";
 import {
   assertIsLLMContent,
@@ -102,7 +105,8 @@ export class NodeInfo extends LitElement {
     args: () => [this.graph, this.subGraphId, this.selectedNodeId],
   });
 
-  #formRef: Ref<HTMLFormElement> = createRef();
+  #metadataFormRef: Ref<HTMLFormElement> = createRef();
+  #configurationFormRef: Ref<HTMLFormElement> = createRef();
   #schemaVersion = 0;
   #lastSchemaVersion = 0;
   #forceRender = false;
@@ -123,9 +127,9 @@ export class NodeInfo extends LitElement {
       --padding-y: calc(var(--bb-grid-size) * 2);
     }
 
-    :host > h1 {
-      position: sticky;
-      top: 0;
+    :host > details > summary {
+      position: relative;
+      user-select: none;
       font-size: var(--bb-font-medium);
       font-weight: normal;
       margin: 0 0 var(--bb-grid-size) 0;
@@ -134,10 +138,25 @@ export class NodeInfo extends LitElement {
       background: white;
       z-index: 2;
       display: grid;
-      grid-template-columns: auto auto;
+      grid-template-columns: auto 1fr auto;
+      cursor: pointer;
     }
 
-    :host > h1::after {
+    :host > details > summary::before {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 20px;
+      background: red;
+      margin-right: calc(var(--bb-grid-size) * 2);
+      background: var(--bb-icon-expand) center center no-repeat;
+    }
+
+    :host > details[open] > summary::before {
+      background: var(--bb-icon-collapse) center center no-repeat;
+    }
+
+    :host > details > summary::after {
       content: "";
       width: calc(100% - var(--padding-x) * 2);
       height: 1px;
@@ -172,11 +191,12 @@ export class NodeInfo extends LitElement {
       font-size: var(--bb-body-small);
     }
 
-    #node-properties {
+    .node-properties {
       width: 100%;
+      margin-bottom: calc(var(--bb-grid-size) * 8);
     }
 
-    #node-properties form {
+    .node-properties form {
       font-size: var(--bb-text-small);
       overflow: auto;
       margin: 0;
@@ -184,13 +204,13 @@ export class NodeInfo extends LitElement {
       padding: var(--padding-y) var(--padding-x);
     }
 
-    #node-properties #fields {
+    .node-properties .fields {
       overflow: auto;
       scrollbar-gutter: stable;
       width: 100%;
     }
 
-    #node-properties label {
+    .node-properties label {
       grid-column: 1/3;
       font-family: var(--bb-font-family);
       font-size: var(--bb-text-small);
@@ -199,18 +219,28 @@ export class NodeInfo extends LitElement {
       display: block;
     }
 
-    #node-properties input[type="number"],
-    #node-properties textarea {
+    .node-properties input[type="text"],
+    .node-properties input[type="number"],
+    .node-properties textarea,
+    .node-properties select {
+      display: block;
       border-radius: var(--bb-grid-size);
       background: rgb(255, 255, 255);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       border: 1px solid rgb(209, 209, 209);
     }
 
-    #node-properties textarea {
+    .node-properties input[type="text"] {
+      width: 100%;
       font-family: var(--bb-font-family-mono);
-      font-size: var(--bb-body-x-small);
-      line-height: var(--bb-body-line-height-x-small);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
+    }
+
+    .node-properties textarea {
+      font-family: var(--bb-font-family-mono);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
       resize: none;
       display: block;
       box-sizing: border-box;
@@ -219,21 +249,21 @@ export class NodeInfo extends LitElement {
       max-height: 300px;
     }
 
-    #node-properties .configuration-item {
+    .node-properties .configuration-item {
       margin-bottom: calc(var(--bb-grid-size) * 2);
       width: 100%;
     }
 
-    #node-properties .configuration-item > label {
+    .node-properties .configuration-item > label {
       font-weight: bold;
     }
 
-    #node-properties .configuration-item > div {
+    .node-properties .configuration-item > div {
       margin-top: calc(var(--bb-grid-size) * 2);
     }
 
-    #node-properties #reset-to-defaults,
-    #node-properties input[type="submit"] {
+    .node-properties #reset-to-defaults,
+    .node-properties input[type="submit"] {
       background: rgb(209, 203, 255);
       border-radius: calc(var(--bb-grid-size) * 3);
       font-size: var(--bb-text-small);
@@ -243,12 +273,12 @@ export class NodeInfo extends LitElement {
       padding: 0 var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
     }
 
-    #node-properties #reset-to-defaults {
+    .node-properties #reset-to-defaults {
       background: #eee;
       margin-right: calc(var(--bb-grid-size) * 2);
     }
 
-    #node-properties .cancel {
+    .node-properties .cancel {
       width: 24px;
       height: 24px;
       font-size: 0;
@@ -288,7 +318,51 @@ export class NodeInfo extends LitElement {
     }
   }
 
-  #onFormSubmit(evt: SubmitEvent) {
+  #onMetadataFormSubmit(evt: SubmitEvent) {
+    evt.preventDefault();
+
+    if (!(evt.target instanceof HTMLFormElement) || !this.selectedNodeId) {
+      return;
+    }
+
+    const getAsStringOrUndefined = (
+      formData: FormData,
+      key: string
+    ): string | undefined => {
+      if (!formData.has(key)) {
+        return undefined;
+      }
+
+      const value = formData.get(key) as string;
+      if (value === "") {
+        return undefined;
+      }
+
+      return value;
+    };
+
+    const data = new FormData(evt.target);
+    const id = getAsStringOrUndefined(data, "$id");
+    const title = getAsStringOrUndefined(data, "metadata-title");
+    const description = getAsStringOrUndefined(data, "metadata-description");
+    const logLevel = getAsStringOrUndefined(data, "metadata-log-level") as
+      | "debug"
+      | "info";
+
+    if (!id) {
+      console.warn("No $id provided for node - unable to update metadata");
+      return;
+    }
+
+    const metadataEvt = new NodeMetadataUpdateEvent(id, this.subGraphId, {
+      title,
+      description,
+      logLevel,
+    });
+    this.dispatchEvent(metadataEvt);
+  }
+
+  #onConfigurationFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
     if (!(evt.target instanceof HTMLFormElement) || !this.selectedNodeId) {
@@ -542,247 +616,320 @@ export class NodeInfo extends LitElement {
         configuration: NodeConfiguration;
         metadata: NodeMetadata;
       }) => html`
-        <h1>
-          Configuration (${node.title()})
-          <button
-            ?disabled=${!this.editable}
-            @click=${() => this.#setDefaultConfiguration(node)}
-            type="button"
-            title="Reset to defaults"
-            id="reset-to-defaults"
-          >
-            Reset
-          </button>
-        </h1>
+        <details>
+          <summary>Metadata</summary>
+          <div class="node-properties">
+            <form
+              ${ref(this.#metadataFormRef)}
+              @submit=${this.#onMetadataFormSubmit}
+              @input=${() => {
+                if (!this.#metadataFormRef.value) {
+                  return;
+                }
 
-        <div id="node-properties">
-          <form
-            ${ref(this.#formRef)}
-            @submit=${this.#onFormSubmit}
-            @input=${() => {
-              if (!this.#formRef.value) {
-                return;
-              }
-
-              this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
-            }}
-          >
-            <div id="fields">
+                this.#metadataFormRef.value.dispatchEvent(
+                  new SubmitEvent("submit")
+                );
+              }}
+            >
               <input
                 id="$id"
                 name="$id"
                 type="hidden"
                 value="${node.descriptor.id}"
               />
-              <input
-                id="$type"
-                name="$type"
-                type="hidden"
-                value="${node.descriptor.type}"
-              />
-              ${ports.map((port) => {
-                if (!configuration || port.star) return;
-                return guard([port.name], () => {
-                  const name = port.name;
-                  const value = port.value;
+              <div class="fields">
+                <div class="configuration-item">
+                  <label for="metadata-title">Title</label>
+                  <input
+                    type="text"
+                    id="metdata-title"
+                    name="metadata-title"
+                    .value=${metadata.title || ""}
+                  />
+                </div>
 
-                  console.log(port);
+                <div class="configuration-item">
+                  <label for="metadata-description">Description</label>
+                  <textarea
+                    type="text"
+                    id="metdata-description"
+                    name="metadata-description"
+                    .value=${metadata.description || ""}
+                  ></textarea>
+                </div>
 
-                  let input;
-                  const type = port.schema.type;
-                  const behavior = port.schema.behavior;
-                  const defaultValue = port.schema.default;
-                  const description = port.schema.description
-                    ? html`<p class="port-description">
-                        ${port.schema.description}
-                      </p>`
-                    : nothing;
-                  switch (type) {
-                    case "object": {
-                      // Only show the schema editor for inputs & outputs
-                      if (port.schema.behavior?.includes("ports-spec")) {
-                        input = html`<bb-schema-editor
-                          .editable=${this.editable}
-                          .schema=${value}
-                          .schemaVersion=${this.#schemaVersion}
-                          @breadboardschemachange=${() => {
-                            if (!this.#formRef.value) {
-                              return;
-                            }
+                <div class="configuration-item">
+                  <label for="metadata-log-level">Log Level</label>
+                  <select
+                    type="text"
+                    id="metdata-log-level"
+                    name="metadata-log-level"
+                  >
+                    <option
+                      value="debug"
+                      ?selected=${metadata.logLevel === "debug"}
+                    >
+                      Debug
+                    </option>
+                    <option
+                      value="info"
+                      ?selected=${metadata.logLevel === "info"}
+                    >
+                      Information
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+        </details>
 
-                            this.#schemaVersion++;
-                            this.#formRef.value.dispatchEvent(
-                              new SubmitEvent("submit")
-                            );
-                          }}
-                          id="${name}"
-                          name="${name}"
-                        ></bb-schema-editor>`;
-                      } else if (isBoard(port, value)) {
-                        const selectorValue = value
-                          ? typeof value === "string"
-                            ? value
-                            : value.path
-                          : "";
-                        input = html`<bb-board-selector
-                          .subGraphIds=${this.graph && this.graph.graphs
-                            ? Object.keys(this.graph.graphs)
-                            : []}
-                          .providers=${this.providers}
-                          .providerOps=${this.providerOps}
-                          .value=${selectorValue || ""}
-                          @input=${(evt: Event) => {
-                            evt.preventDefault();
-                            if (!this.#formRef.value) {
-                              return;
-                            }
+        <details open>
+          <summary>
+            Configuration (${node.title()})
+            <button
+              ?disabled=${!this.editable}
+              @click=${() => this.#setDefaultConfiguration(node)}
+              type="button"
+              title="Reset to defaults"
+              id="reset-to-defaults"
+            >
+              Reset
+            </button>
+          </summary>
 
-                            this.#formRef.value.dispatchEvent(
-                              new SubmitEvent("submit")
-                            );
-                          }}
-                          id="${name}"
-                          name="${name}"
-                        ></bb-board-selector>`;
-                      } else {
-                        input = html`<textarea
-                          id="${name}"
-                          name="${name}"
-                          placeholder="${defaultValue}"
-                          data-type="${type}"
-                          data-behavior=${behavior ? behavior : nothing}
-                          @input=${(evt: Event) => {
-                            const field = evt.target;
-                            if (!(field instanceof HTMLTextAreaElement)) {
-                              return;
-                            }
+          <div class="node-properties">
+            <form
+              ${ref(this.#configurationFormRef)}
+              @submit=${this.#onConfigurationFormSubmit}
+              @input=${() => {
+                if (!this.#configurationFormRef.value) {
+                  return;
+                }
 
-                            field.setCustomValidity("");
-                          }}
-                          @blur=${(evt: Event) => {
-                            const field = evt.target;
-                            if (!(field instanceof HTMLTextAreaElement)) {
-                              return;
-                            }
+                this.#configurationFormRef.value.dispatchEvent(
+                  new SubmitEvent("submit")
+                );
+              }}
+            >
+              <div class="fields">
+                <input
+                  id="$id"
+                  name="$id"
+                  type="hidden"
+                  value="${node.descriptor.id}"
+                />
+                <input
+                  id="$type"
+                  name="$type"
+                  type="hidden"
+                  value="${node.descriptor.type}"
+                />
+                ${ports.map((port) => {
+                  if (!configuration || port.star) return;
+                  return guard([port.name], () => {
+                    const name = port.name;
+                    const value = port.value;
 
-                            field.setCustomValidity("");
-                            if (field.value === "") {
-                              return;
-                            }
-
-                            try {
-                              JSON.parse(field.value);
-                              if (field.dataset.behavior === "llm-content") {
-                                assertIsLLMContent(field.value);
+                    let input;
+                    const type = port.schema.type;
+                    const behavior = port.schema.behavior;
+                    const defaultValue = port.schema.default;
+                    const description = port.schema.description
+                      ? html`<p class="port-description">
+                          ${port.schema.description}
+                        </p>`
+                      : nothing;
+                    switch (type) {
+                      case "object": {
+                        // Only show the schema editor for inputs & outputs
+                        if (port.schema.behavior?.includes("ports-spec")) {
+                          input = html`<bb-schema-editor
+                            .editable=${this.editable}
+                            .schema=${value}
+                            .schemaVersion=${this.#schemaVersion}
+                            @breadboardschemachange=${() => {
+                              if (!this.#configurationFormRef.value) {
+                                return;
                               }
-                            } catch (err) {
-                              if (err instanceof SyntaxError) {
-                                field.setCustomValidity("Invalid JSON");
-                              } else {
-                                const llmError = err as Error;
-                                field.setCustomValidity(
-                                  `Invalid LLM Content: ${llmError.message}`
-                                );
-                              }
-                            }
 
-                            field.reportValidity();
-                          }}
-                          .value=${value ? JSON.stringify(value, null, 2) : ""}
-                        ></textarea>`;
-                      }
-                      break;
-                    }
-
-                    case "array": {
-                      let renderableValue = value;
-                      if (typeof value !== "string") {
-                        renderableValue = JSON.stringify(value);
-                      }
-                      input = html`<bb-array-editor
-                        id="${name}"
-                        name="${name}"
-                        .items=${JSON.parse(
-                          (renderableValue as string) || "null"
-                        )}
-                        .type=${resolveArrayType(port.schema)}
-                        .behavior=${resolveBehaviorType(
-                          port.schema.items
-                            ? Array.isArray(port.schema.items)
-                              ? port.schema.items[0]
-                              : port.schema.items
-                            : port.schema
-                        )}
-                      ></bb-array-editor>`;
-                      break;
-                    }
-
-                    case "number": {
-                      input = html`<div>
-                        <input
-                          type="number"
-                          value="${value}"
-                          name="${name}"
-                          id=${name}
-                        />
-                      </div>`;
-                      break;
-                    }
-
-                    case "boolean": {
-                      input = html`<div>
-                        <input
-                          type="checkbox"
-                          name="${name}"
-                          id=${name}
-                          .checked=${value}
-                        />
-                      </div>`;
-                      break;
-                    }
-
-                    default: {
-                      // TODO: Better hint here?
-                      if (name === "code") {
-                        input = html` <div>
-                          <bb-code-editor
+                              this.#schemaVersion++;
+                              this.#configurationFormRef.value.dispatchEvent(
+                                new SubmitEvent("submit")
+                              );
+                            }}
                             id="${name}"
                             name="${name}"
-                            .value=${value ?? defaultValue ?? ""}
-                          ></bb-code-editor>
+                          ></bb-schema-editor>`;
+                        } else if (isBoard(port, value)) {
+                          const selectorValue = value
+                            ? typeof value === "string"
+                              ? value
+                              : value.path
+                            : "";
+                          input = html`<bb-board-selector
+                            .subGraphIds=${this.graph && this.graph.graphs
+                              ? Object.keys(this.graph.graphs)
+                              : []}
+                            .providers=${this.providers}
+                            .providerOps=${this.providerOps}
+                            .value=${selectorValue || ""}
+                            @input=${(evt: Event) => {
+                              evt.preventDefault();
+                              if (!this.#configurationFormRef.value) {
+                                return;
+                              }
+
+                              this.#configurationFormRef.value.dispatchEvent(
+                                new SubmitEvent("submit")
+                              );
+                            }}
+                            id="${name}"
+                            name="${name}"
+                          ></bb-board-selector>`;
+                        } else {
+                          input = html`<textarea
+                            id="${name}"
+                            name="${name}"
+                            placeholder="${defaultValue}"
+                            data-type="${type}"
+                            data-behavior=${behavior ? behavior : nothing}
+                            @input=${(evt: Event) => {
+                              const field = evt.target;
+                              if (!(field instanceof HTMLTextAreaElement)) {
+                                return;
+                              }
+
+                              field.setCustomValidity("");
+                            }}
+                            @blur=${(evt: Event) => {
+                              const field = evt.target;
+                              if (!(field instanceof HTMLTextAreaElement)) {
+                                return;
+                              }
+
+                              field.setCustomValidity("");
+                              if (field.value === "") {
+                                return;
+                              }
+
+                              try {
+                                JSON.parse(field.value);
+                                if (field.dataset.behavior === "llm-content") {
+                                  assertIsLLMContent(field.value);
+                                }
+                              } catch (err) {
+                                if (err instanceof SyntaxError) {
+                                  field.setCustomValidity("Invalid JSON");
+                                } else {
+                                  const llmError = err as Error;
+                                  field.setCustomValidity(
+                                    `Invalid LLM Content: ${llmError.message}`
+                                  );
+                                }
+                              }
+
+                              field.reportValidity();
+                            }}
+                            .value=${value
+                              ? JSON.stringify(value, null, 2)
+                              : ""}
+                          ></textarea>`;
+                        }
+                        break;
+                      }
+
+                      case "array": {
+                        let renderableValue = value;
+                        if (typeof value !== "string") {
+                          renderableValue = JSON.stringify(value);
+                        }
+                        input = html`<bb-array-editor
+                          id="${name}"
+                          name="${name}"
+                          .items=${JSON.parse(
+                            (renderableValue as string) || "null"
+                          )}
+                          .type=${resolveArrayType(port.schema)}
+                          .behavior=${resolveBehaviorType(
+                            port.schema.items
+                              ? Array.isArray(port.schema.items)
+                                ? port.schema.items[0]
+                                : port.schema.items
+                              : port.schema
+                          )}
+                        ></bb-array-editor>`;
+                        break;
+                      }
+
+                      case "number": {
+                        input = html`<div>
+                          <input
+                            type="number"
+                            value="${value}"
+                            name="${name}"
+                            id=${name}
+                          />
                         </div>`;
                         break;
                       }
 
-                      input = html` <div>
-                        <textarea
-                          id="${name}"
-                          name="${name}"
-                          data-type="${type}"
-                          .value=${value ?? defaultValue ?? ""}
-                        ></textarea>
-                      </div>`;
+                      case "boolean": {
+                        input = html`<div>
+                          <input
+                            type="checkbox"
+                            name="${name}"
+                            id=${name}
+                            .checked=${value}
+                          />
+                        </div>`;
+                        break;
+                      }
 
-                      break;
+                      default: {
+                        // TODO: Better hint here?
+                        if (name === "code") {
+                          input = html` <div>
+                            <bb-code-editor
+                              id="${name}"
+                              name="${name}"
+                              .value=${value ?? defaultValue ?? ""}
+                            ></bb-code-editor>
+                          </div>`;
+                          break;
+                        }
+
+                        input = html` <div>
+                          <textarea
+                            id="${name}"
+                            name="${name}"
+                            data-type="${type}"
+                            .value=${value ?? defaultValue ?? ""}
+                          ></textarea>
+                        </div>`;
+
+                        break;
+                      }
                     }
-                  }
 
-                  const schema = port.schema;
+                    const schema = port.schema;
 
-                  return html`<div class="configuration-item">
-                    <label title="${schema.description}" for="${name}"
-                      >${name}
-                      (${Array.isArray(schema.type)
-                        ? schema.type.join(", ")
-                        : schema.type || "No type"}):
-                    </label>
-                    ${description} ${input}
-                  </div>`;
-                });
-              })}
-            </div>
-          </form>
-        </div>
+                    return html`<div class="configuration-item">
+                      <label title="${schema.description}" for="${name}"
+                        >${name}
+                        (${Array.isArray(schema.type)
+                          ? schema.type.join(", ")
+                          : schema.type || "No type"}):
+                      </label>
+                      ${description} ${input}
+                    </div>`;
+                  });
+                })}
+              </div>
+            </form>
+          </div>
+        </details>
       `,
       error: (err) => {
         console.warn(err);
