@@ -19,29 +19,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "../types.js";
-
-/**
- * This event is dispatched whenever the graph changes due to edits.
- */
-export class GraphChangeEvent extends Event {
-  static eventName = "graphchange";
-
-  constructor(
-    public graph: GraphDescriptor,
-    public version: number,
-    public visualOnly: boolean
-  ) {
-    super(GraphChangeEvent.eventName, {
-      bubbles: false,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
-
-type EditableGraphEventMap = {
-  graphchange: GraphChangeEvent;
-};
+import { EditableGraphEventMap } from "./events.js";
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

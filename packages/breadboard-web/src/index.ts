@@ -896,6 +896,7 @@ export class Main extends LitElement {
               if (!result.success) {
                 this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
               }
+              this.requestUpdate();
             });
           }}
           @breadboardnodemetadataupdate=${(

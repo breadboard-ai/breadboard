@@ -16,8 +16,8 @@ import {
   EditableGraph,
   EditableGraphOptions,
   EditableNodeSpec,
-  GraphChangeEvent,
 } from "./types.js";
+import { GraphChangeEvent } from "./events.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -69,18 +69,17 @@ export class Graph implements EditableGraph {
 
   #findEdgeIndex(spec: EditableEdgeSpec) {
     return this.#graph.edges.findIndex((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
+      return this.#edgesEqual(spec, edge);
     });
   }
 
   #edgesEqual(a: EditableEdgeSpec, b: EditableEdgeSpec) {
     return (
-      a.from === b.from && a.to === b.to && a.out === b.out && a.in === b.in
+      a.from === b.from &&
+      a.to === b.to &&
+      a.out === b.out &&
+      a.in === b.in &&
+      b.constant === b.constant
     );
   }
 
@@ -305,16 +304,26 @@ export class Graph implements EditableGraph {
     strict: boolean = false
   ): Promise<EditResult> {
     const can = await this.canChangeEdge(from, to);
+    console.log("🌻 canChange", can);
+    let alternativeChosen = false;
     if (!can.success) {
       if (!can.alternative || strict) return can;
       to = can.alternative;
+      alternativeChosen = true;
     }
     if (this.#edgesEqual(from, to)) {
+      if (alternativeChosen) {
+        return {
+          success: false,
+          error: `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`,
+        };
+      }
       return { success: true };
     }
     const spec = fixUpStarEdge(from);
     const edges = this.#graph.edges;
     const index = this.#findEdgeIndex(spec);
+    console.log("🌻 index", index);
     const edge = edges[index];
     edge.from = to.from;
     edge.out = to.out;
