@@ -25,6 +25,22 @@ export class GraphChangeEvent extends Event {
   }
 }
 
+export class GraphChangeRejectedEvent extends Event {
+  static eventName = "graphchangerejected";
+
+  constructor(
+    public graph: GraphDescriptor,
+    public error: string
+  ) {
+    super(GraphChangeRejectedEvent.eventName, {
+      bubbles: false,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export type EditableGraphEventMap = {
   graphchange: GraphChangeEvent;
+  graphchangerejected: GraphChangeRejectedEvent;
 };
