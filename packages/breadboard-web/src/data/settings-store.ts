@@ -6,7 +6,6 @@
 
 import * as idb from "idb";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { SETTINGS_TYPE } from "../../../breadboard-ui/dist/src/types/types";
 
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
@@ -54,11 +53,11 @@ export class SettingsStore {
     return structuredClone(this.#settings);
   }
 
-  getSection(section: SETTINGS_TYPE) {
+  getSection(section: BreadboardUI.Types.SETTINGS_TYPE) {
     return this.#settings[section];
   }
 
-  getItem(section: SETTINGS_TYPE, name: string) {
+  getItem(section: BreadboardUI.Types.SETTINGS_TYPE, name: string) {
     return this.#settings[section].items.get(name);
   }
 
