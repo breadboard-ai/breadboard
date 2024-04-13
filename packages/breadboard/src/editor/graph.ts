@@ -1,5 +1,5 @@
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { fixUpStarEdge } from "../inspector/edge.js";
+import { fixUpStarEdge, fixupConstantEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
@@ -298,6 +298,7 @@ export class Graph implements EditableGraph {
       }
     }
     spec = fixUpStarEdge(spec);
+    spec = fixupConstantEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
     this.#updateGraph(false);
@@ -378,6 +379,9 @@ export class Graph implements EditableGraph {
     edge.out = to.out;
     edge.to = to.to;
     edge.in = to.in;
+    if (to.constant === true) {
+      edge.constant = to.constant;
+    }
     this.#updateGraph(false);
     return { success: true };
   }
