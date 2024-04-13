@@ -16,8 +16,9 @@ import {
   EditableGraph,
   EditableGraphOptions,
   EditableNodeSpec,
+  RejectionReason,
 } from "./types.js";
-import { ChangeEvent } from "./events.js";
+import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -112,6 +113,23 @@ export class Graph implements EditableGraph {
     );
   }
 
+  #dispatchNoChange(error?: string) {
+    console.log("🌻 dispatchNoChange", error);
+    if (this.#parent) {
+      this.#parent.#dispatchNoChange(error);
+    }
+    this.#graph = { ...this.#graph };
+    const reason: RejectionReason = error
+      ? {
+          type: "error",
+          error,
+        }
+      : {
+          type: "nochange",
+        };
+    this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.#graph, reason));
+  }
+
   addEventListener(eventName: string, listener: EventListener): void {
     this.#eventTarget.addEventListener(eventName, listener);
   }
@@ -149,7 +167,10 @@ export class Graph implements EditableGraph {
 
   async addNode(spec: EditableNodeSpec): Promise<EditResult> {
     const can = await this.canAddNode(spec);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
 
     this.#graph.nodes.push(spec);
     this.#inspector.nodeStore.add(spec);
@@ -170,7 +191,10 @@ export class Graph implements EditableGraph {
 
   async removeNode(id: NodeIdentifier): Promise<EditResult> {
     const can = await this.canRemoveNode(id);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
 
     // Remove any edges that are connected to the removed node.
     this.#graph.edges = this.#graph.edges.filter((edge) => {
@@ -192,7 +216,7 @@ export class Graph implements EditableGraph {
     if (inspector.hasEdge(spec)) {
       return {
         success: false,
-        error: `Edge from "${spec.from}" to "${spec.to}" already exists`,
+        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" already exists`,
       };
     }
     const from = inspector.nodeById(spec.from);
@@ -232,8 +256,8 @@ export class Graph implements EditableGraph {
     const toPorts = (await to.ports()).inputs;
     if (toPorts.fixed) {
       const found = toPorts.ports.find((port) => port.name === spec.in);
-      error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
       if (!found) {
+        error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
         return {
           success: false,
           error,
@@ -252,8 +276,18 @@ export class Graph implements EditableGraph {
   ): Promise<EdgeEditResult> {
     const can = await this.canAddEdge(spec);
     if (!can.success) {
-      if (!can.alternative || strict) return can;
-      spec = can.alternative;
+      if (!can.alternative || strict) {
+        this.#dispatchNoChange(can.error);
+        return can;
+      }
+      if (can.alternative) {
+        const canAlternative = await this.canAddEdge(can.alternative);
+        if (!canAlternative.success) {
+          this.#dispatchNoChange(canAlternative.error);
+          return canAlternative;
+        }
+        spec = can.alternative;
+      }
     }
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
@@ -274,7 +308,10 @@ export class Graph implements EditableGraph {
 
   async removeEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canRemoveEdge(spec);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
     spec = fixUpStarEdge(spec);
     const edges = this.#graph.edges;
     const index = this.#findEdgeIndex(spec);
@@ -304,26 +341,30 @@ export class Graph implements EditableGraph {
     strict: boolean = false
   ): Promise<EditResult> {
     const can = await this.canChangeEdge(from, to);
-    console.log("🌻 canChange", can);
     let alternativeChosen = false;
     if (!can.success) {
-      if (!can.alternative || strict) return can;
+      if (!can.alternative || strict) {
+        this.#dispatchNoChange(can.error);
+        return can;
+      }
       to = can.alternative;
       alternativeChosen = true;
     }
     if (this.#edgesEqual(from, to)) {
       if (alternativeChosen) {
+        const error = `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`;
+        this.#dispatchNoChange(error);
         return {
           success: false,
-          error: `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`,
+          error,
         };
       }
+      this.#dispatchNoChange();
       return { success: true };
     }
     const spec = fixUpStarEdge(from);
     const edges = this.#graph.edges;
     const index = this.#findEdgeIndex(spec);
-    console.log("🌻 index", index);
     const edge = edges[index];
     edge.from = to.from;
     edge.out = to.out;
@@ -349,7 +390,10 @@ export class Graph implements EditableGraph {
     configuration: NodeConfiguration
   ): Promise<EditResult> {
     const can = await this.canChangeConfiguration(id);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
     const node = this.#inspector.nodeById(id);
     if (node) {
       node.descriptor.configuration = configuration;
@@ -385,7 +429,9 @@ export class Graph implements EditableGraph {
     if (!can.success) return can;
     const node = this.#inspector.nodeById(id);
     if (!node) {
-      return { success: false, error: `Unknown node with id "${id}"` };
+      const error = `Unknown node with id "${id}"`;
+      this.#dispatchNoChange(error);
+      return { success: false, error };
     }
     const visualOnly = this.#isVisualOnly(
       metadata,
@@ -425,9 +471,11 @@ export class Graph implements EditableGraph {
     }
 
     if (!this.#graphs[id]) {
+      const error = `Subgraph with id "${id}" does not exist`;
+      this.#dispatchNoChange(error);
       return {
         success: false,
-        error: `Subgraph with id "${id}" does not exist`,
+        error,
       };
     }
     delete this.#graphs[id];

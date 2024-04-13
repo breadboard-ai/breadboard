@@ -35,14 +35,16 @@ export type NoChangeRejection = {
   type: "nochange";
 };
 
+export type RejectionReason = ErrorRejection | NoChangeRejection;
+
 export type GraphChangeRejectEvent = Event & {
   graph: GraphDescriptor;
-  reason: ErrorRejection | NoChangeRejection;
+  reason: RejectionReason;
 };
 
 export type EditableGraphEventMap = {
   graphchange: GraphChangeEvent;
-  graphchangerejected: GraphChangeRejectEvent;
+  graphchangereject: GraphChangeRejectEvent;
 };
 
 export type EditableGraph = {

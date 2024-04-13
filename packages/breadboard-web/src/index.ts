@@ -529,6 +529,10 @@ export class Main extends LitElement {
       this.graph = evt.graph;
       this.#boardPendingSave = !evt.visualOnly;
     });
+    this.#editor.addEventListener("graphchangereject", (evt) => {
+      console.log("🌻 graphchangereject", evt);
+      this.graph = evt.graph;
+    });
     return this.#editor;
   }
 

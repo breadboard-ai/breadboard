@@ -5,12 +5,17 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { ErrorRejection, NoChangeRejection } from "./types.js";
+import {
+  ErrorRejection,
+  GraphChangeEvent,
+  GraphChangeRejectEvent,
+  NoChangeRejection,
+} from "./types.js";
 
 /**
  * This event is dispatched whenever the graph changes due to edits.
  */
-export class ChangeEvent extends Event {
+export class ChangeEvent extends Event implements GraphChangeEvent {
   static eventName = "graphchange";
 
   constructor(
@@ -32,7 +37,7 @@ export class ChangeEvent extends Event {
  * - error: the change would create an invalid graph. For instance, adding an edge to a non-existent node.
  * - nochange: the change is unnecessary, because it results in no actual change to the graph. For example, adding an edge that already exists.
  */
-export class ChangeRejectEvent extends Event {
+export class ChangeRejectEvent extends Event implements GraphChangeRejectEvent {
   static eventName = "graphchangereject";
 
   constructor(
