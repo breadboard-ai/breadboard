@@ -114,7 +114,6 @@ export class Graph implements EditableGraph {
   }
 
   #dispatchNoChange(error?: string) {
-    console.log("🌻 dispatchNoChange", error);
     if (this.#parent) {
       this.#parent.#dispatchNoChange(error);
     }
