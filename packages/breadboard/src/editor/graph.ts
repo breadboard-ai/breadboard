@@ -235,12 +235,20 @@ export class Graph implements EditableGraph {
     }
 
     let error: string | null = null;
-    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
-      spec = { ...spec, out: spec.in };
-      error = `The "*" output port cannot be connected to a specific input port`;
-    } else if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
-      spec = { ...spec, in: spec.out };
-      error = `A specific input port cannot be connected to a "*" output port`;
+    if (spec.out === "*" && spec.in !== "*") {
+      if (spec.in !== "") {
+        spec = { ...spec, out: spec.in };
+      }
+      error = `A "*" output port cannot be connected to a named or control input port`;
+    } else if (spec.out === "" && spec.in !== "") {
+      error = `A control input port cannot be connected to a named or "*" output part`;
+    } else if (spec.in === "*" && spec.out !== "*") {
+      if (spec.out !== "") {
+        spec = { ...spec, in: spec.out };
+      }
+      error = `A named input port cannot be connected to a "*" output port`;
+    } else if (spec.in === "" && spec.out !== "") {
+      error = `A named input port cannot be connected to a control output port`;
     }
     const fromPorts = (await from.ports()).outputs;
     if (fromPorts.fixed) {
