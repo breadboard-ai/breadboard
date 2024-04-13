@@ -150,7 +150,7 @@ export class Graph implements EditableGraph {
     if (duplicate) {
       return {
         success: false,
-        error: `Node with id "${spec.id}" already exists`,
+        error: `Unable to add node: a node with id "${spec.id}" already exists`,
       };
     }
 
@@ -158,7 +158,7 @@ export class Graph implements EditableGraph {
     if (!validType) {
       return {
         success: false,
-        error: `Node type "${spec.type}" is not a known type`,
+        error: `Unable to add node: node type "${spec.type}" is not a known type`,
       };
     }
 
@@ -183,7 +183,7 @@ export class Graph implements EditableGraph {
     if (!exists) {
       return {
         success: false,
-        error: `Node with id "${id}" does not exist`,
+        error: `Unable to remove node: node with id "${id}" does not exist`,
       };
     }
     return { success: true };
@@ -391,7 +391,7 @@ export class Graph implements EditableGraph {
     if (!node) {
       return {
         success: false,
-        error: `Node with id "${id}" does not exist`,
+        error: `Unable to update configuration: node with id "${id}" does not exist`,
       };
     }
     return { success: true };
