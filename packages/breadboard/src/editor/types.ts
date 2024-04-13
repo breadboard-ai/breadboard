@@ -19,7 +19,31 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "../types.js";
-import { EditableGraphEventMap } from "./events.js";
+
+export type GraphChangeEvent = Event & {
+  graph: GraphDescriptor;
+  version: number;
+  visualOnly: boolean;
+};
+
+export type ErrorRejection = {
+  type: "error";
+  error: string;
+};
+
+export type NoChangeRejection = {
+  type: "nochange";
+};
+
+export type GraphChangeRejectEvent = Event & {
+  graph: GraphDescriptor;
+  reason: ErrorRejection | NoChangeRejection;
+};
+
+export type EditableGraphEventMap = {
+  graphchange: GraphChangeEvent;
+  graphchangerejected: GraphChangeRejectEvent;
+};
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

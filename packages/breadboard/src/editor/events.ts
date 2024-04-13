@@ -5,11 +5,12 @@
  */
 
 import { GraphDescriptor } from "../types.js";
+import { ErrorRejection, NoChangeRejection } from "./types.js";
 
 /**
  * This event is dispatched whenever the graph changes due to edits.
  */
-export class GraphChangeEvent extends Event {
+export class ChangeEvent extends Event {
   static eventName = "graphchange";
 
   constructor(
@@ -17,7 +18,7 @@ export class GraphChangeEvent extends Event {
     public version: number,
     public visualOnly: boolean
   ) {
-    super(GraphChangeEvent.eventName, {
+    super(ChangeEvent.eventName, {
       bubbles: false,
       cancelable: true,
       composed: true,
@@ -25,22 +26,23 @@ export class GraphChangeEvent extends Event {
   }
 }
 
-export class GraphChangeRejectedEvent extends Event {
-  static eventName = "graphchangerejected";
+/**
+ * This event is dispatched whenever a proposed change to the graph is
+ * rejected. The rejection may happen for two reasons
+ * - error: the change would create an invalid graph. For instance, adding an edge to a non-existent node.
+ * - nochange: the change is unnecessary, because it results in no actual change to the graph. For example, adding an edge that already exists.
+ */
+export class ChangeRejectEvent extends Event {
+  static eventName = "graphchangereject";
 
   constructor(
     public graph: GraphDescriptor,
-    public error: string
+    public reason: ErrorRejection | NoChangeRejection
   ) {
-    super(GraphChangeRejectedEvent.eventName, {
+    super(ChangeRejectEvent.eventName, {
       bubbles: false,
       cancelable: true,
       composed: true,
     });
   }
 }
-
-export type EditableGraphEventMap = {
-  graphchange: GraphChangeEvent;
-  graphchangerejected: GraphChangeRejectedEvent;
-};

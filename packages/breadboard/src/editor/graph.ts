@@ -17,7 +17,7 @@ import {
   EditableGraphOptions,
   EditableNodeSpec,
 } from "./types.js";
-import { GraphChangeEvent } from "./events.js";
+import { ChangeEvent } from "./events.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -108,7 +108,7 @@ export class Graph implements EditableGraph {
     }
     this.#inspector.updateGraph(this.#graph);
     this.#eventTarget.dispatchEvent(
-      new GraphChangeEvent(this.#graph, this.#version, visualOnly)
+      new ChangeEvent(this.#graph, this.#version, visualOnly)
     );
   }
 
