@@ -1,5 +1,5 @@
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { fixUpStarEdge } from "../inspector/edge.js";
+import { fixUpStarEdge, fixupConstantEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
@@ -16,8 +16,9 @@ import {
   EditableGraph,
   EditableGraphOptions,
   EditableNodeSpec,
-  GraphChangeEvent,
+  RejectionReason,
 } from "./types.js";
+import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -69,18 +70,17 @@ export class Graph implements EditableGraph {
 
   #findEdgeIndex(spec: EditableEdgeSpec) {
     return this.#graph.edges.findIndex((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
+      return this.#edgesEqual(spec, edge);
     });
   }
 
   #edgesEqual(a: EditableEdgeSpec, b: EditableEdgeSpec) {
     return (
-      a.from === b.from && a.to === b.to && a.out === b.out && a.in === b.in
+      a.from === b.from &&
+      a.to === b.to &&
+      a.out === b.out &&
+      a.in === b.in &&
+      b.constant === b.constant
     );
   }
 
@@ -109,8 +109,25 @@ export class Graph implements EditableGraph {
     }
     this.#inspector.updateGraph(this.#graph);
     this.#eventTarget.dispatchEvent(
-      new GraphChangeEvent(this.#graph, this.#version, visualOnly)
+      new ChangeEvent(this.#graph, this.#version, visualOnly)
     );
+  }
+
+  #dispatchNoChange(error?: string) {
+    console.log("🌻 dispatchNoChange", error);
+    if (this.#parent) {
+      this.#parent.#dispatchNoChange(error);
+    }
+    this.#graph = { ...this.#graph };
+    const reason: RejectionReason = error
+      ? {
+          type: "error",
+          error,
+        }
+      : {
+          type: "nochange",
+        };
+    this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.#graph, reason));
   }
 
   addEventListener(eventName: string, listener: EventListener): void {
@@ -133,7 +150,7 @@ export class Graph implements EditableGraph {
     if (duplicate) {
       return {
         success: false,
-        error: `Node with id "${spec.id}" already exists`,
+        error: `Unable to add node: a node with id "${spec.id}" already exists`,
       };
     }
 
@@ -141,7 +158,7 @@ export class Graph implements EditableGraph {
     if (!validType) {
       return {
         success: false,
-        error: `Node type "${spec.type}" is not a known type`,
+        error: `Unable to add node: node type "${spec.type}" is not a known type`,
       };
     }
 
@@ -150,7 +167,10 @@ export class Graph implements EditableGraph {
 
   async addNode(spec: EditableNodeSpec): Promise<EditResult> {
     const can = await this.canAddNode(spec);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
 
     this.#graph.nodes.push(spec);
     this.#inspector.nodeStore.add(spec);
@@ -163,7 +183,7 @@ export class Graph implements EditableGraph {
     if (!exists) {
       return {
         success: false,
-        error: `Node with id "${id}" does not exist`,
+        error: `Unable to remove node: node with id "${id}" does not exist`,
       };
     }
     return { success: true };
@@ -171,7 +191,10 @@ export class Graph implements EditableGraph {
 
   async removeNode(id: NodeIdentifier): Promise<EditResult> {
     const can = await this.canRemoveNode(id);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
 
     // Remove any edges that are connected to the removed node.
     this.#graph.edges = this.#graph.edges.filter((edge) => {
@@ -193,7 +216,7 @@ export class Graph implements EditableGraph {
     if (inspector.hasEdge(spec)) {
       return {
         success: false,
-        error: `Edge from "${spec.from}" to "${spec.to}" already exists`,
+        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" already exists`,
       };
     }
     const from = inspector.nodeById(spec.from);
@@ -212,12 +235,20 @@ export class Graph implements EditableGraph {
     }
 
     let error: string | null = null;
-    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
-      spec = { ...spec, out: spec.in };
-      error = `The "*" output port cannot be connected to a specific input port`;
-    } else if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
-      spec = { ...spec, in: spec.out };
-      error = `A specific input port cannot be connected to a "*" output port`;
+    if (spec.out === "*" && spec.in !== "*") {
+      if (spec.in !== "") {
+        spec = { ...spec, out: spec.in };
+      }
+      error = `A "*" output port cannot be connected to a named or control input port`;
+    } else if (spec.out === "" && spec.in !== "") {
+      error = `A control input port cannot be connected to a named or "*" output part`;
+    } else if (spec.in === "*" && spec.out !== "*") {
+      if (spec.out !== "") {
+        spec = { ...spec, in: spec.out };
+      }
+      error = `A named input port cannot be connected to a "*" output port`;
+    } else if (spec.in === "" && spec.out !== "") {
+      error = `A named input port cannot be connected to a control output port`;
     }
     const fromPorts = (await from.ports()).outputs;
     if (fromPorts.fixed) {
@@ -233,8 +264,8 @@ export class Graph implements EditableGraph {
     const toPorts = (await to.ports()).inputs;
     if (toPorts.fixed) {
       const found = toPorts.ports.find((port) => port.name === spec.in);
-      error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
       if (!found) {
+        error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
         return {
           success: false,
           error,
@@ -253,10 +284,21 @@ export class Graph implements EditableGraph {
   ): Promise<EdgeEditResult> {
     const can = await this.canAddEdge(spec);
     if (!can.success) {
-      if (!can.alternative || strict) return can;
-      spec = can.alternative;
+      if (!can.alternative || strict) {
+        this.#dispatchNoChange(can.error);
+        return can;
+      }
+      if (can.alternative) {
+        const canAlternative = await this.canAddEdge(can.alternative);
+        if (!canAlternative.success) {
+          this.#dispatchNoChange(canAlternative.error);
+          return canAlternative;
+        }
+        spec = can.alternative;
+      }
     }
     spec = fixUpStarEdge(spec);
+    spec = fixupConstantEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
     this.#updateGraph(false);
@@ -275,7 +317,10 @@ export class Graph implements EditableGraph {
 
   async removeEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canRemoveEdge(spec);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
     spec = fixUpStarEdge(spec);
     const edges = this.#graph.edges;
     const index = this.#findEdgeIndex(spec);
@@ -305,11 +350,25 @@ export class Graph implements EditableGraph {
     strict: boolean = false
   ): Promise<EditResult> {
     const can = await this.canChangeEdge(from, to);
+    let alternativeChosen = false;
     if (!can.success) {
-      if (!can.alternative || strict) return can;
+      if (!can.alternative || strict) {
+        this.#dispatchNoChange(can.error);
+        return can;
+      }
       to = can.alternative;
+      alternativeChosen = true;
     }
     if (this.#edgesEqual(from, to)) {
+      if (alternativeChosen) {
+        const error = `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`;
+        this.#dispatchNoChange(error);
+        return {
+          success: false,
+          error,
+        };
+      }
+      this.#dispatchNoChange();
       return { success: true };
     }
     const spec = fixUpStarEdge(from);
@@ -320,6 +379,9 @@ export class Graph implements EditableGraph {
     edge.out = to.out;
     edge.to = to.to;
     edge.in = to.in;
+    if (to.constant === true) {
+      edge.constant = to.constant;
+    }
     this.#updateGraph(false);
     return { success: true };
   }
@@ -329,7 +391,7 @@ export class Graph implements EditableGraph {
     if (!node) {
       return {
         success: false,
-        error: `Node with id "${id}" does not exist`,
+        error: `Unable to update configuration: node with id "${id}" does not exist`,
       };
     }
     return { success: true };
@@ -340,7 +402,10 @@ export class Graph implements EditableGraph {
     configuration: NodeConfiguration
   ): Promise<EditResult> {
     const can = await this.canChangeConfiguration(id);
-    if (!can.success) return can;
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
     const node = this.#inspector.nodeById(id);
     if (node) {
       node.descriptor.configuration = configuration;
@@ -376,7 +441,9 @@ export class Graph implements EditableGraph {
     if (!can.success) return can;
     const node = this.#inspector.nodeById(id);
     if (!node) {
-      return { success: false, error: `Unknown node with id "${id}"` };
+      const error = `Unknown node with id "${id}"`;
+      this.#dispatchNoChange(error);
+      return { success: false, error };
     }
     const visualOnly = this.#isVisualOnly(
       metadata,
@@ -416,9 +483,11 @@ export class Graph implements EditableGraph {
     }
 
     if (!this.#graphs[id]) {
+      const error = `Subgraph with id "${id}" does not exist`;
+      this.#dispatchNoChange(error);
       return {
         success: false,
-        error: `Subgraph with id "${id}" does not exist`,
+        error,
       };
     }
     delete this.#graphs[id];

@@ -20,27 +20,31 @@ import {
   NodeIdentifier,
 } from "../types.js";
 
-/**
- * This event is dispatched whenever the graph changes due to edits.
- */
-export class GraphChangeEvent extends Event {
-  static eventName = "graphchange";
+export type GraphChangeEvent = Event & {
+  graph: GraphDescriptor;
+  version: number;
+  visualOnly: boolean;
+};
 
-  constructor(
-    public graph: GraphDescriptor,
-    public version: number,
-    public visualOnly: boolean
-  ) {
-    super(GraphChangeEvent.eventName, {
-      bubbles: false,
-      cancelable: true,
-      composed: true,
-    });
-  }
-}
+export type ErrorRejection = {
+  type: "error";
+  error: string;
+};
 
-type EditableGraphEventMap = {
+export type NoChangeRejection = {
+  type: "nochange";
+};
+
+export type RejectionReason = ErrorRejection | NoChangeRejection;
+
+export type GraphChangeRejectEvent = Event & {
+  graph: GraphDescriptor;
+  reason: RejectionReason;
+};
+
+export type EditableGraphEventMap = {
   graphchange: GraphChangeEvent;
+  graphchangereject: GraphChangeRejectEvent;
 };
 
 export type EditableGraph = {

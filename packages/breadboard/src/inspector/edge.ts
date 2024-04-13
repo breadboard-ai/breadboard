@@ -40,6 +40,14 @@ export const unfixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
   return edge;
 };
 
+export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
+  const { constant, ...rest } = edge;
+  if (constant === false) {
+    return rest;
+  }
+  return edge;
+};
+
 class Edge implements InspectableEdge {
   #nodes: InspectableNodeCache;
   #edge: EdgeDescriptor;

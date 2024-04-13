@@ -16,7 +16,6 @@ import {
   createLoader,
   edit,
   EditableGraph,
-  EditResult,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -529,6 +528,13 @@ export class Main extends LitElement {
       this.graph = evt.graph;
       this.#boardPendingSave = !evt.visualOnly;
     });
+    this.#editor.addEventListener("graphchangereject", (evt) => {
+      this.graph = evt.graph;
+      const { reason } = evt;
+      if (reason.type === "error") {
+        this.toast(reason.error, BreadboardUI.Events.ToastType.ERROR);
+      }
+    });
     return this.#editor;
   }
 
@@ -870,15 +876,14 @@ export class Main extends LitElement {
               return;
             }
 
-            let editResult: Promise<EditResult>;
             switch (evt.changeType) {
               case "add": {
-                editResult = editableGraph.addEdge(evt.from);
+                editableGraph.addEdge(evt.from);
                 break;
               }
 
               case "remove": {
-                editResult = editableGraph.removeEdge(evt.from);
+                editableGraph.removeEdge(evt.from);
                 break;
               }
 
@@ -887,16 +892,10 @@ export class Main extends LitElement {
                   throw new Error("Unable to move edge - no `to` provided");
                 }
 
-                editResult = editableGraph.changeEdge(evt.from, evt.to);
+                editableGraph.changeEdge(evt.from, evt.to);
                 break;
               }
             }
-
-            editResult.then((result) => {
-              if (!result.success) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-            });
           }}
           @breadboardnodemetadataupdate=${(
             evt: BreadboardUI.Events.NodeMetadataUpdateEvent
@@ -920,13 +919,7 @@ export class Main extends LitElement {
               ...metadata,
             };
 
-            editableGraph.changeMetadata(id, newMetadata).then((result) => {
-              if (!result.success) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-
-              this.requestUpdate();
-            });
+            editableGraph.changeMetadata(id, newMetadata);
           }}
           @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
             let editableGraph = this.#getEditor();
@@ -949,16 +942,10 @@ export class Main extends LitElement {
               visual = {};
             }
 
-            editableGraph
-              .changeMetadata(id, {
-                ...metadata,
-                visual: { ...visual, x, y },
-              })
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-                }
-              });
+            editableGraph.changeMetadata(id, {
+              ...metadata,
+              visual: { ...visual, x, y },
+            });
           }}
           @breadboardnodemultilayout=${(
             evt: BreadboardUI.Events.NodeMultiLayoutEvent
@@ -1012,14 +999,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.addNode(newNode).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to create node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-            });
+            editableGraph.addNode(newNode);
           }}
           @breadboardnodeupdate=${(
             evt: BreadboardUI.Events.NodeUpdateEvent
@@ -1034,16 +1014,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph
-              .changeConfiguration(evt.id, evt.configuration)
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(
-                    "Unable to update configuration",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                }
-              });
+            editableGraph.changeConfiguration(evt.id, evt.configuration);
           }}
           @breadboardnodedelete=${(
             evt: BreadboardUI.Events.NodeDeleteEvent
@@ -1058,14 +1029,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.removeNode(evt.id).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to remove node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-            });
+            editableGraph.removeNode(evt.id);
           }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
