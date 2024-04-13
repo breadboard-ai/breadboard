@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// This is currently a duplicate of types in "@google-labs/breadboard-ui"
+// and is definitely not the final shape of things.
 // TODO: Move all these to "@breadboard-ai/settings" or something like that.
 
 export type SettingValue = {
