@@ -4,12 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BehaviorSchema } from "@google-labs/breadboard";
+import {
+  BehaviorSchema,
+  GraphDescriptor,
+  GraphProvider,
+} from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { assertIsLLMContent } from "../../utils/schema.js";
+import { BoardSelector } from "./board-selector.js";
 
 enum TYPE {
   STRING = "string",
@@ -21,15 +26,26 @@ type ArrayEditorType = string | number | object;
 
 @customElement("bb-array-editor")
 export class ArrayEditor extends LitElement {
-  #formRef: Ref<HTMLFormElement> = createRef();
-  #items: ArrayEditorType[] | null = null;
-
   @property({ reflect: true })
   type = TYPE.STRING;
 
   @property({ reflect: true })
   behavior: BehaviorSchema | null = null;
 
+  @property()
+  subGraphId: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
+
+  @property()
+  graph: GraphDescriptor | null = null;
+
+  #formRef: Ref<HTMLFormElement> = createRef();
+  #items: ArrayEditorType[] | null = null;
   #appendNewItemOnNextRender = false;
 
   static styles = css`
@@ -121,7 +137,6 @@ export class ArrayEditor extends LitElement {
 
     if (items && items.length > 0) {
       const type = typeof items[0];
-      console.log(type);
       switch (type) {
         case "string":
           this.type = TYPE.STRING;
@@ -190,6 +205,7 @@ export class ArrayEditor extends LitElement {
 
     this.#items.splice(idx, 1);
     this.#notify();
+    this.requestUpdate();
   }
 
   #unsetAll() {
@@ -233,7 +249,25 @@ export class ArrayEditor extends LitElement {
     const form = evt.target;
     const data = new FormData(form);
     const items: ArrayEditorType[] = [];
+
+    for (const board of form.querySelectorAll<BoardSelector>(
+      "bb-board-selector"
+    )) {
+      if (board.value === null || board.value === "") {
+        continue;
+      }
+
+      data.set(board.id, board.value);
+    }
+
     for (const [id, value] of data) {
+      // Boards go through to the board selector, which will do its own
+      // validation, so we don't need to do anything here besides appending.
+      if (this.behavior === "board") {
+        items.push(value);
+        continue;
+      }
+
       const field = form.querySelector(`#${id}`) as HTMLObjectElement;
       if (!field) {
         console.warn(`Unable to find field ${id}`);
@@ -311,7 +345,11 @@ export class ArrayEditor extends LitElement {
     }
 
     this.#items.push(
-      this.type === TYPE.STRING || this.type === TYPE.NUMBER ? "" : newItem
+      this.type === TYPE.STRING ||
+        this.type === TYPE.NUMBER ||
+        this.behavior === "board"
+        ? ""
+        : newItem
     );
   }
 
@@ -352,27 +390,51 @@ export class ArrayEditor extends LitElement {
           ? map(this.items, (item, idx) => {
               const value =
                 typeof item === "string" ? item : JSON.stringify(item, null, 2);
+
+              const selector =
+                this.behavior === "board"
+                  ? html`<bb-board-selector
+                      name="item-${idx}"
+                      id="item-${idx}"
+                      .subGraphIds=${this.graph && this.graph.graphs
+                        ? Object.keys(this.graph.graphs)
+                        : []}
+                      .providers=${this.providers}
+                      .providerOps=${this.providerOps}
+                      .value=${value || ""}
+                      @input=${(evt: Event) => {
+                        evt.preventDefault();
+                        if (!this.#updateItems()) {
+                          return;
+                        }
+
+                        this.#notify();
+                      }}
+                    ></bb-board-selector>`
+                  : html`<textarea
+                      name="item-${idx}"
+                      id="item-${idx}"
+                      .value=${value}
+                      @input=${(evt: InputEvent) => {
+                        if (!(evt.target instanceof HTMLTextAreaElement)) {
+                          return;
+                        }
+
+                        const target =
+                          evt.target as unknown as HTMLObjectElement;
+                        target.setCustomValidity("");
+                      }}
+                      @blur=${() => {
+                        if (!this.#updateItems()) {
+                          return;
+                        }
+
+                        this.#notify();
+                      }}
+                    ></textarea>`;
+
               return html`<li>
-                <textarea
-                  name="item-${idx}"
-                  id="item-${idx}"
-                  .value=${value}
-                  @input=${(evt: InputEvent) => {
-                    if (!(evt.target instanceof HTMLTextAreaElement)) {
-                      return;
-                    }
-
-                    const target = evt.target as unknown as HTMLObjectElement;
-                    target.setCustomValidity("");
-                  }}
-                  @blur=${() => {
-                    if (!this.#updateItems()) {
-                      return;
-                    }
-
-                    this.#notify();
-                  }}
-                ></textarea>
+                ${selector}
                 <button
                   class="delete"
                   id="del-${idx}"
