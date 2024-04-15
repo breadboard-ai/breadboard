@@ -714,7 +714,8 @@ export class Main extends LitElement {
     const title = this.graph?.title;
     let subGraphTitle: string | undefined | null = null;
     if (this.graph && this.graph.graphs && this.subGraphId) {
-      subGraphTitle = this.graph.graphs[this.subGraphId].title;
+      subGraphTitle =
+        this.graph.graphs[this.subGraphId].title || "Untitled Subgraph";
     }
 
     const settings = this.#settings ? this.#settings.values : null;
@@ -753,10 +754,15 @@ export class Main extends LitElement {
               : nothing}
             <button
               @click=${() => {
+                let graph = this.graph;
+                if (graph && graph.graphs && this.subGraphId) {
+                  graph = graph.graphs[this.subGraphId];
+                }
+
                 this.boardEditOverlayInfo = {
-                  title: this.graph?.title,
-                  version: this.graph?.version,
-                  description: this.graph?.description,
+                  title: graph?.title,
+                  version: graph?.version,
+                  description: graph?.description,
                   subGraphId: this.subGraphId,
                 };
               }}
