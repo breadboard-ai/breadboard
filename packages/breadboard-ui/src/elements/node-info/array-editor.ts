@@ -262,8 +262,7 @@ export class ArrayEditor extends LitElement {
 
     for (const [id, value] of data) {
       // Boards go through to the board selector, which will do its own
-      // validation, so we don't need to do anything here besides pushing the
-      // values through.
+      // validation, so we don't need to do anything here besides appending.
       if (this.behavior === "board") {
         items.push(value);
         continue;
