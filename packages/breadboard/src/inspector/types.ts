@@ -729,6 +729,15 @@ export type InspectableRun = {
    */
   currentNodeEvent(): InspectableRunNodeEvent | null;
   /**
+   * Returns the current run stack as a list of `InspectableRunNodeEvent`
+   * instances.
+   * The first item in the list represents the node in the top-level
+   * graph that is currently being run.
+   * The last item is the actual node that is being run, which may be in a
+   * graph that is nested within the top-level graph.
+   */
+  stack(): InspectableRunNodeEvent[];
+  /**
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
