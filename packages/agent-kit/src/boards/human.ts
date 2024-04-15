@@ -14,7 +14,6 @@ import {
 } from "@google-labs/breadboard";
 import { Context } from "vm";
 
-// 🌻 TODO: Remove this before landing.
 const voteRequestContent = {
   adCampaign: {
     headlines: [

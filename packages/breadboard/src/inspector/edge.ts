@@ -7,6 +7,7 @@
 import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
 import {
   InspectableEdge,
+  InspectableEdgeType,
   InspectableNode,
   InspectableNodeCache,
 } from "./types.js";
@@ -21,6 +22,28 @@ import {
 export const fixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
   if (edge.out === "*") {
     return { ...edge, in: "" };
+  }
+  return edge;
+};
+
+/**
+ * This is inverse of the helper above, necessary when working with
+ * instances of `InspectableEdge` directly, since they will show "*" on both
+ * sides of the edge.
+ * @param edge -- the edge to un-fix up
+ * @returns
+ */
+export const unfixUpStarEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
+  if (edge.out === "*") {
+    return { ...edge, in: "*" };
+  }
+  return edge;
+};
+
+export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
+  const { constant, ...rest } = edge;
+  if (constant === false) {
+    return rest;
   }
   return edge;
 };
@@ -53,6 +76,13 @@ class Edge implements InspectableEdge {
   get in() {
     const edgein = this.#edge.out === "*" ? "*" : this.#edge.in;
     return edgein as string;
+  }
+
+  get type() {
+    if (this.#edge.out === "*") return InspectableEdgeType.Star;
+    if (this.#edge.out === "") return InspectableEdgeType.Control;
+    if (this.#edge.constant) return InspectableEdgeType.Constant;
+    return InspectableEdgeType.Ordinary;
   }
 }
 
@@ -101,7 +131,7 @@ export class EdgeCache {
   }
 
   hasByValue(edge: EdgeDescriptor): boolean {
-    edge = fixUpStarEdge(edge);
+    edge = unfixUpStarEdge(edge);
     const edges = this.edges();
     return !!edges.find((e) => {
       return (

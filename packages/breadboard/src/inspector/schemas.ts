@@ -6,7 +6,11 @@
 
 import { SchemaBuilder, combineSchemas } from "../schema.js";
 import { NodeDescriberResult, Schema } from "../types.js";
-import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
+import {
+  InspectableEdge,
+  InspectableEdgeType,
+  NodeTypeDescriberOptions,
+} from "./types.js";
 
 export enum EdgeType {
   In,
@@ -22,6 +26,13 @@ export const DEFAULT_SCHEMA: Schema = { type: "string" };
 
 const blankSchema = () => ({ type: "object" });
 
+const isStarOrControl = (edge: InspectableEdge) => {
+  const type = edge.type;
+  return (
+    type === InspectableEdgeType.Star || type === InspectableEdgeType.Control
+  );
+};
+
 const edgesToProperties = (
   edgeType: EdgeType,
   edges?: InspectableEdge[],
@@ -30,7 +41,7 @@ const edgesToProperties = (
   if (!edges) return {};
   return edges.reduce(
     (acc, edge) => {
-      if (!keepStar && edge.out === "*") return acc;
+      if (!keepStar && isStarOrControl(edge)) return acc;
       const key = edgeType === EdgeType.In ? edge.in : edge.out;
       if (acc[key]) return acc;
       acc[key] = DEFAULT_SCHEMA;
@@ -66,7 +77,7 @@ export const describeInput = (
     .build();
   let hasStarEdge = false;
   const outgoing = options.outgoing?.filter((edge) => {
-    const isStarEdge = edge.out === "*";
+    const isStarEdge = isStarOrControl(edge);
     if (isStarEdge) {
       hasStarEdge = true;
     }

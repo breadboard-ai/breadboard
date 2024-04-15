@@ -72,6 +72,7 @@ test("collectPorts correctly recognizes dangling ports", async (t) => {
   t.deepEqual(
     inputs?.map((p) => ({ name: p.name, status: p.status })),
     [
+      { name: "", status: "ready" },
       { name: "*", status: "ready" },
       { name: "foo", status: "dangling" },
       { name: "schema", status: "ready" },
@@ -91,6 +92,7 @@ test("collectPorts adds an $error port", async (t) => {
   t.deepEqual(
     outputs?.map((p) => ({ name: p.name, status: p.status })),
     [
+      { name: "", status: "ready" },
       { name: "$error", status: "ready" },
       { name: "*", status: "ready" },
     ]

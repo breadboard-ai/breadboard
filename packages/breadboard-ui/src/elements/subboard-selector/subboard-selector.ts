@@ -15,6 +15,7 @@ import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
+  BoardInfoUpdateRequestEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
@@ -51,43 +52,67 @@ export class SubBoardSelector extends LitElement {
       padding: var(--padding-y) var(--padding-x);
     }
 
-    ul.subgraphs {
-      padding-top: 0;
-    }
-
-    li {
-      height: calc(var(--bb-grid-size) * 6);
+    ul.subboards {
+      padding-right: var(--bb-grid-size);
     }
 
     li.subboard {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      margin: var(--bb-grid-size) 0;
+    }
+
+    .subboard-headline {
+      display: block;
+      margin-bottom: var(--bb-grid-size);
+      font-size: var(--bb-body-medium);
+      line-height: var(--bb-body-line-height-medium);
+    }
+
+    .subboard-description {
+      display: block;
+      color: var(--bb-neutral-700);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
     }
 
     button {
       margin: 0;
-      margin-right: calc(var(--bb-grid-size) * 2);
       padding: 0;
       font-size: var(--bb-label-large);
       font-weight: 500;
       background: none;
-      border: none;
-      height: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
+
+      border: 1px solid var(--bb-neutral-100);
+      padding: var(--padding-y);
+      border-radius: var(--bb-grid-size);
       color: var(--bb-output-700);
       cursor: pointer;
+      text-align: left;
+      width: 100%;
     }
 
     button[disabled] {
-      font-weight: 700;
-      color: var(--bb-neutral-700);
+      border: 1px solid var(--bb-output-400);
+      color: var(--bb-output-700);
+      background: var(--bb-output-50);
       cursor: auto;
     }
 
+    li.subboard button {
+      margin-right: calc(var(--bb-grid-size) * 2);
+    }
+
+    li.subboard .edit-board,
+    li.subboard .delete-board {
+      border: none;
+      align-self: center;
+      justify-self: center;
+      margin: 0 0 0 calc(var(--bb-grid-size) * 2);
+    }
+
     .add-board,
+    .edit-board,
     .delete-board {
       background: none;
       width: 16px;
@@ -102,12 +127,17 @@ export class SubBoardSelector extends LitElement {
     }
 
     .add-board:hover,
+    .edit-board:hover,
     .delete-board:hover {
       opacity: 1;
     }
 
     .add-board {
       background-image: var(--bb-icon-add-circle);
+    }
+
+    .edit-board {
+      background-image: var(--bb-icon-edit);
     }
 
     .delete-board {
@@ -145,7 +175,6 @@ export class SubBoardSelector extends LitElement {
     });
 
     const graphs = breadboardGraph.graphs();
-    const subGraphNames = Object.keys(graphs);
     return html` <ul>
       <li>
         <button
@@ -154,10 +183,14 @@ export class SubBoardSelector extends LitElement {
           }}
           ?disabled=${this.subGraphId === null}
         >
-          ${MAIN_BOARD_ID}
+          <span class="subboard-headline"> ${MAIN_BOARD_ID} </span>
+          <span class="subboard-description"
+            >${this.graph.description || "No description"}</span
+          >
         </button>
-        <ul class="subgraphs">
-          ${map(subGraphNames, (name) => {
+        <ul class="subboards">
+          ${map(Object.entries(graphs), ([name, graph]) => {
+            const descriptor = graph.raw();
             return html`<li class="subboard">
               <button
                 @click=${() => {
@@ -165,7 +198,27 @@ export class SubBoardSelector extends LitElement {
                 }}
                 ?disabled=${this.subGraphId === name}
               >
-                ${name}
+                <span class="subboard-headline"
+                  >${descriptor.title} (${name})</span
+                >
+                <span class="subboard-description"
+                  >${descriptor.description || "No description"}</span
+                >
+              </button>
+              <button
+                @click=${() => {
+                  this.dispatchEvent(
+                    new BoardInfoUpdateRequestEvent(
+                      descriptor.title,
+                      descriptor.version,
+                      descriptor.description,
+                      name
+                    )
+                  );
+                }}
+                class="edit-board"
+              >
+                Edit
               </button>
               <button
                 @click=${() => {
@@ -186,7 +239,7 @@ export class SubBoardSelector extends LitElement {
           <li>
             <button
               class="add-board"
-              @click=${() => this.#proposeNewSubGraph(subGraphNames)}
+              @click=${() => this.#proposeNewSubGraph(Object.keys(graphs))}
             >
               Add new
             </button>

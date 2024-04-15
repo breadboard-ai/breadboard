@@ -4,18 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdge, InspectableEdgeType } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
+
+const documentStyles = getComputedStyle(document.documentElement);
+
+function getGlobalColor(name: string, defaultValue = "#333333") {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  return parseInt(value || defaultValue, 16);
+}
+
+const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
+const edgeColorConstant = getGlobalColor("--bb-output-200");
+const edgeColorControl = getGlobalColor("--bb-boards-200");
+const edgeColorStar = getGlobalColor("--bb-inputs-200");
 
 export class GraphEdge extends PIXI.Graphics {
   #isDirty = true;
   #edge: InspectableEdge | null = null;
-  #edgeColor = 0xaaaaaa;
   #overrideColor: number | null = null;
-  #loopBackPadding = 10;
+  #loopBackPadding = 30;
+  #loopBackCurveRadius = 10;
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
+  #type: InspectableEdgeType | null = null;
 
   constructor(
     public fromNode: GraphNode,
@@ -29,7 +42,13 @@ export class GraphEdge extends PIXI.Graphics {
     // Since the `edge` is a stable instance, make a copy of the edge to avoid
     // modifying the original.
     this.#edge = edge
-      ? { from: edge.from, to: edge.to, in: edge.in, out: edge.out }
+      ? {
+          from: edge.from,
+          to: edge.to,
+          in: edge.in,
+          out: edge.out,
+          type: edge.type,
+        }
       : null;
     this.#isDirty = true;
   }
@@ -39,6 +58,10 @@ export class GraphEdge extends PIXI.Graphics {
   }
 
   set overrideColor(overrideColor: number | null) {
+    if (overrideColor === this.#overrideColor) {
+      return;
+    }
+
     this.#overrideColor = overrideColor;
     this.#isDirty = true;
   }
@@ -50,6 +73,10 @@ export class GraphEdge extends PIXI.Graphics {
   set overrideInLocation(
     overrideInLocation: PIXI.ObservablePoint<unknown> | null
   ) {
+    if (overrideInLocation === this.#overrideInLocation) {
+      return;
+    }
+
     this.#overrideInLocation = overrideInLocation;
     this.#isDirty = true;
   }
@@ -61,12 +88,29 @@ export class GraphEdge extends PIXI.Graphics {
   set overrideOutLocation(
     overrideOutLocation: PIXI.ObservablePoint<unknown> | null
   ) {
+    if (overrideOutLocation === this.#overrideOutLocation) {
+      return;
+    }
+
     this.#overrideOutLocation = overrideOutLocation;
     this.#isDirty = true;
   }
 
   get overrideOutLocation() {
     return this.#overrideOutLocation;
+  }
+
+  set type(type: InspectableEdgeType | null) {
+    if (type === this.#type) {
+      return;
+    }
+
+    this.#type = type;
+    this.#isDirty = true;
+  }
+
+  get type() {
+    return this.#type;
   }
 
   render(renderer: PIXI.Renderer) {
@@ -114,9 +158,26 @@ export class GraphEdge extends PIXI.Graphics {
     inLocation.x += this.toNode.position.x;
     inLocation.y += this.toNode.position.y;
 
+    let edgeColor = edgeColorOrdinary;
+    switch (this.#type) {
+      case "control": {
+        edgeColor = edgeColorControl;
+        break;
+      }
+
+      case "constant": {
+        edgeColor = edgeColorConstant;
+        break;
+      }
+
+      case "star": {
+        edgeColor = edgeColorStar;
+        break;
+      }
+    }
+
     const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
-    const color =
-      this.#overrideColor ?? this.fromNode.edgeColor ?? this.#edgeColor;
+    const color = this.#overrideColor ?? edgeColor;
 
     this.lineStyle(2, color);
     this.moveTo(outLocation.x, outLocation.y);
@@ -132,16 +193,55 @@ export class GraphEdge extends PIXI.Graphics {
       !this.#overrideInLocation &&
       !this.#overrideOutLocation
     ) {
-      this.lineTo(outLocation.x + padding, outLocation.y);
       this.lineTo(
-        outLocation.x + padding,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
+        outLocation.y
+      );
+      this.quadraticCurveTo(
+        outLocation.x + this.#loopBackPadding,
+        outLocation.y,
+        outLocation.x + this.#loopBackPadding,
+        outLocation.y + this.#loopBackCurveRadius
       );
       this.lineTo(
-        inLocation.x - padding,
+        outLocation.x + this.#loopBackPadding,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#loopBackCurveRadius
+      );
+      this.quadraticCurveTo(
+        outLocation.x + this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
         this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
-      this.lineTo(inLocation.x - padding, inLocation.y);
+
+      this.lineTo(
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+      );
+      this.quadraticCurveTo(
+        inLocation.x - this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        inLocation.x - this.#loopBackPadding,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#loopBackCurveRadius
+      );
+
+      this.lineTo(
+        inLocation.x - this.#loopBackPadding,
+        inLocation.y + this.#loopBackCurveRadius
+      );
+      this.quadraticCurveTo(
+        inLocation.x - this.#loopBackPadding,
+        inLocation.y,
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        inLocation.y
+      );
+
       this.lineTo(inLocation.x, inLocation.y);
       return;
     }
@@ -206,7 +306,7 @@ export class GraphEdge extends PIXI.Graphics {
 
     // Now draw the lines.
     this.moveTo(outLocation.x, outLocation.y);
-    if (midA.x !== midB.x) {
+    if (Math.abs(midA.x - midB.x) > 0.5) {
       this.bezierCurveTo(cpA1.x, cpA1.y, cpA2.x, cpA2.y, midA.x, midA.y);
       this.lineTo(midB.x, midB.y);
       this.bezierCurveTo(

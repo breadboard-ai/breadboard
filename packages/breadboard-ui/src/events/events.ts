@@ -8,6 +8,7 @@ import type {
   GraphDescriptor,
   InspectableEdge,
   NodeConfiguration,
+  NodeDescriptor,
 } from "@google-labs/breadboard";
 import type { Settings } from "../types/types.js";
 
@@ -113,13 +114,31 @@ export class BreadboardOverlayDismissedEvent extends Event {
   }
 }
 
+export class BoardInfoUpdateRequestEvent extends Event {
+  static eventName = "breadboardboardinforequestupdate";
+
+  constructor(
+    public readonly title: string | undefined,
+    public readonly version: string | undefined,
+    public readonly description: string | undefined,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(BoardInfoUpdateRequestEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "breadboardboardinfoupdate";
 
   constructor(
     public readonly title: string,
     public readonly version: string,
-    public readonly description: string
+    public readonly description: string,
+    public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, {
       bubbles: true,
@@ -425,13 +444,41 @@ export class NodeUpdateEvent extends Event {
   }
 }
 
+export class NodeMetadataUpdateEvent extends Event {
+  static eventName = "breadboardnodemetadataupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly metadata: NodeDescriptor["metadata"]
+  ) {
+    super(NodeMetadataUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class EdgeChangeEvent extends Event {
   static eventName = "breadboardedgechange";
 
   constructor(
     public readonly changeType: "add" | "remove" | "move",
-    public readonly from: { from: string; to: string; in: string; out: string },
-    public readonly to?: { from: string; to: string; in: string; out: string },
+    public readonly from: {
+      from: string;
+      to: string;
+      in: string;
+      out: string;
+      constant?: boolean;
+    },
+    public readonly to?: {
+      from: string;
+      to: string;
+      in: string;
+      out: string;
+      constant?: boolean;
+    },
     public readonly subGraphId: string | null = null
   ) {
     super(EdgeChangeEvent.eventName, {
@@ -490,7 +537,7 @@ export class GraphNodeMoveEvent extends Event {
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "breadboardgraphnodeselected";
 
-  constructor(public id: string | null) {
+  constructor(public readonly id: string | null) {
     super(GraphNodeSelectedEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -502,7 +549,7 @@ export class GraphNodeSelectedEvent extends Event {
 export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "breadboardgraphedgeattach";
 
-  constructor(public edge: InspectableEdge) {
+  constructor(public readonly edge: InspectableEdge) {
     super(GraphNodeEdgeAttachEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -514,7 +561,7 @@ export class GraphNodeEdgeAttachEvent extends Event {
 export class GraphNodeEdgeDetachEvent extends Event {
   static eventName = "breadboardgraphedgedetach";
 
-  constructor(public edge: InspectableEdge) {
+  constructor(public readonly edge: InspectableEdge) {
     super(GraphNodeEdgeDetachEvent.eventName, {
       bubbles: true,
       cancelable: true,
@@ -527,8 +574,9 @@ export class GraphNodeEdgeChangeEvent extends Event {
   static eventName = "breadboardgraphedgechange";
 
   constructor(
-    public fromEdge: InspectableEdge,
-    public toEdge: InspectableEdge
+    public readonly fromEdge: InspectableEdge,
+    public readonly toEdge: InspectableEdge,
+    public readonly constant = false
   ) {
     super(GraphNodeEdgeChangeEvent.eventName, {
       bubbles: true,
@@ -541,7 +589,7 @@ export class GraphNodeEdgeChangeEvent extends Event {
 export class GraphNodeDeleteEvent extends Event {
   static eventName = "breadboardgraphnodedelete";
 
-  constructor(public id: string) {
+  constructor(public readonly id: string) {
     super(GraphNodeDeleteEvent.eventName, {
       bubbles: true,
       cancelable: true,

@@ -6,6 +6,7 @@
 
 import {
   InspectableEdge,
+  InspectableEdgeType,
   InspectableNode,
   InspectableNodePorts,
   PortStatus,
@@ -281,9 +282,16 @@ export class Graph extends PIXI.Container {
         return;
       }
 
+      targetEdge.overrideColor = null;
+
       const existingEdge = this.#edgeGraphics.get(edgeKey);
       if (existingEdge) {
         return;
+      }
+
+      if (evt.metaKey) {
+        // TODO: Export InspectableEdgeType as non-type?
+        targetEdgeDescriptor.type = "constant" as InspectableEdgeType.Constant;
       }
 
       if (targetEdge.temporary) {
@@ -611,6 +619,10 @@ export class Graph extends PIXI.Container {
         this.#nodeById.set(id, graphNode);
       }
 
+      if (graphNode.nodeTitle !== node.title()) {
+        graphNode.nodeTitle = node.title();
+      }
+
       if (node.descriptor.metadata?.visual) {
         const { x, y } = node.descriptor.metadata.visual as {
           x: number;
@@ -694,6 +706,7 @@ export class Graph extends PIXI.Container {
           continue;
         }
         edgeGraphic = new GraphEdge(fromNode, toNode);
+        edgeGraphic.type = edge.type;
 
         this.#edgeGraphics.set(edgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);

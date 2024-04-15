@@ -10,6 +10,7 @@ import { StreamCapability } from "../../src/stream.js";
 import {
   BreadboardCapability,
   GraphDescriptor,
+  GraphDescriptorBoardCapability,
   InputValues,
   NodeDescriberResult,
   NodeHandlerContext,
@@ -72,11 +73,11 @@ export const TestKit = new KitBuilder({
                 $board as BreadboardCapability
               )
             : typeof $board === "string"
-            ? await Board.load($board, {
-                base,
-                outerGraph: context.outerGraph,
-              })
-            : undefined;
+              ? await Board.load($board, {
+                  base,
+                  outerGraph: context.outerGraph,
+                })
+              : undefined;
 
         if (!board) throw new Error("Must provide valid $board to invoke");
 
@@ -87,11 +88,11 @@ export const TestKit = new KitBuilder({
         const runnableBoard = board
           ? await Board.fromBreadboardCapability(board)
           : path
-          ? await Board.load(path, {
-              base,
-              outerGraph: context.outerGraph,
-            })
-          : undefined;
+            ? await Board.load(path, {
+                base,
+                outerGraph: context.outerGraph,
+              })
+            : undefined;
 
         if (!runnableBoard)
           throw new Error("Must provide valid board to invoke");
@@ -107,12 +108,12 @@ export const TestKit = new KitBuilder({
         inputs?.$board &&
         (inputs?.$board as BreadboardCapability).kind === "board"
       ) {
-        graph = (inputs?.$board as BreadboardCapability).board;
+        graph = (inputs?.$board as GraphDescriptorBoardCapability).board;
       } else if (
         inputs?.board &&
         (inputs.board as BreadboardCapability).kind === "board"
       ) {
-        graph = (inputs.board as BreadboardCapability).board;
+        graph = (inputs.board as GraphDescriptorBoardCapability).board;
       } else if (inputs?.graph) {
         graph = inputs.graph as GraphDescriptor;
       }
@@ -168,7 +169,7 @@ export const TestKit = new KitBuilder({
             },
           ])
         ),
-        additonalProperties: Object.entries(inputs ?? {}).length === 0,
+        additionalProperties: Object.entries(inputs ?? {}).length === 0,
       });
 
       return {

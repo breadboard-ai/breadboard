@@ -15,7 +15,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { getRunner, loadBoardFromPath } from "../utils.js";
+import { getRunner, loadGraphFromPath } from "../utils.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -47,7 +47,9 @@ const getRunnableBoard = async (
     } else if (graph) {
       runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
     } else if (path) {
-      runnableBoard = await loadBoardFromPath(path, context);
+      runnableBoard = await BoardRunner.fromGraphDescriptor(
+        await loadGraphFromPath(path, context)
+      );
     }
     return { board: runnableBoard, args };
   }
@@ -77,23 +79,27 @@ const describe = async (
   const outputBuilder = new SchemaBuilder();
   if (context?.base) {
     let board: GraphDescriptor | undefined;
-    try {
-      board = (await getRunnableBoard(context, inputs || {})).board;
-    } catch {
-      // eat any exceptions.
-      // This is a describer, so it must always return some valid value.
-    }
-    if (board) {
-      const inspectableGraph = inspect(board);
-      const { inputSchema, outputSchema } = await inspectableGraph.describe();
-      inputBuilder.addProperties(inputSchema?.properties);
-      inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
-      inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
-      outputBuilder.addProperties(outputSchema?.properties);
-      outputBuilder.setAdditionalProperties(outputSchema.additionalProperties);
-    } else {
-      outputBuilder.setAdditionalProperties(true);
-      inputBuilder.setAdditionalProperties(true);
+    outputBuilder.setAdditionalProperties(true);
+    inputBuilder.setAdditionalProperties(true);
+    if (inputs) {
+      try {
+        board = (await getRunnableBoard(context, inputs)).board;
+      } catch {
+        // eat any exceptions.
+        // This is a describer, so it must always return some valid value.
+      }
+      if (board) {
+        const inspectableGraph = inspect(board);
+        const { inputSchema, outputSchema } = await inspectableGraph.describe();
+        inputBuilder.addProperties(inputSchema?.properties);
+        inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
+        inputSchema?.required &&
+          inputBuilder.addRequired(inputSchema?.required);
+        outputBuilder.addProperties(outputSchema?.properties);
+        outputBuilder.setAdditionalProperties(
+          outputSchema.additionalProperties
+        );
+      }
     }
   }
   const inputSchema = inputBuilder.build();

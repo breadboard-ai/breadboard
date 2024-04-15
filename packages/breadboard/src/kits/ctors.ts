@@ -9,6 +9,7 @@ import {
   BreadboardCapability,
   ConfigOrLambda,
   GraphDescriptor,
+  GraphDescriptorBoardCapability,
   InputValues,
   Kit,
   KitConstructor,
@@ -58,7 +59,7 @@ export const asComposeTimeKit = (
 };
 
 /**
- * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * Syntactic sugar for node factories that accept lambdas. This allows passing
  * either
  *  - A JS function that is a lambda function defining the board
  *  - A board capability, i.e. the result of calling lambda()
@@ -85,7 +86,7 @@ const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
     typeof config === "function" ||
     config instanceof Node ||
     ((config as BreadboardCapability).kind === "board" &&
-      (config as BreadboardCapability).board);
+      (config as GraphDescriptorBoardCapability).board);
 
   const result = (
     gotBoard

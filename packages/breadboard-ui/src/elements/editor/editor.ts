@@ -328,6 +328,7 @@ export class Editor extends LitElement {
           to: edge.to.descriptor.id,
           out: edge.out,
           in: edge.in,
+          constant: edge.type === "constant",
         },
         undefined,
         this.subGraphId
@@ -362,12 +363,14 @@ export class Editor extends LitElement {
           to: fromEdge.to.descriptor.id,
           out: fromEdge.out,
           in: fromEdge.in,
+          constant: fromEdge.type === "constant",
         },
         {
           from: toEdge.from.descriptor.id,
           to: toEdge.to.descriptor.id,
           out: toEdge.out,
           in: toEdge.in,
+          constant: toEdge.type === "constant",
         },
         this.subGraphId
       )

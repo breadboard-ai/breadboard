@@ -60,12 +60,13 @@ export const collectPorts = (
       ...schemaPortNames,
       ...valuePortNames,
       "*", // Always include the star port.
+      "", // Always include the control port.
     ]),
   ];
   portNames.sort();
   return portNames
     .map((port) => {
-      const star = port === "*";
+      const star = port === "*" || port === "";
       const configured = valuePortNames.includes(port);
       const wired = wiredPortNames.includes(port);
       const expected = schemaPortNames.includes(port) || star;

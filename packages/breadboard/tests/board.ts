@@ -6,7 +6,10 @@
 
 import test from "ava";
 import { Board } from "../src/board.js";
-import type { BreadboardCapability, GraphDescriptor } from "../src/types.js";
+import type {
+  GraphDescriptor,
+  GraphDescriptorBoardCapability,
+} from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 
@@ -189,19 +192,19 @@ test("nested lambdas reusing kits", async (t) => {
   // kit1 wasn't used in the first lambda, so shouldn't be on the lambda board
   const lambda1 = board.nodes.find((n) => n.type === "lambda");
   const board2 = (
-    lambda1?.configuration?.board as BreadboardCapability | undefined
+    lambda1?.configuration?.board as GraphDescriptorBoardCapability | undefined
   )?.board;
   t.deepEqual(board2?.kits, [kits[1]]);
 
   // both kits were used in the second lambda
   const lambda2 = board2?.nodes.find((n) => n.type === "lambda");
   const board3 = (
-    lambda2?.configuration?.board as BreadboardCapability | undefined
+    lambda2?.configuration?.board as GraphDescriptorBoardCapability | undefined
   )?.board;
   t.deepEqual(board3?.kits, kits);
 });
 
-test("corectly invoke a lambda", async (t) => {
+test("correctly invoke a lambda", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
 

@@ -23,6 +23,9 @@ export class BoardEditOverlay extends LitElement {
   @property()
   boardDescription: string | null = null;
 
+  @property()
+  subGraphId: string | null = null;
+
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
@@ -166,13 +169,18 @@ export class BoardEditOverlay extends LitElement {
             new BoardInfoUpdateEvent(
               data.get("title") as string,
               data.get("version") as string,
-              data.get("description") as string
+              data.get("description") as string,
+              this.subGraphId
             )
           );
         }}
       >
         <header>
-          <h1>Board Information</h1>
+          <h1>
+            ${this.subGraphId
+              ? html`Sub Board Information - ${this.subGraphId}`
+              : html`Board Information`}
+          </h1>
           <button
             @click=${() => {
               this.dispatchEvent(new BreadboardOverlayDismissedEvent());
@@ -184,7 +192,12 @@ export class BoardEditOverlay extends LitElement {
           </button>
         </header>
         <label>Title</label>
-        <input name="title" type="text" required value=${this.boardTitle} />
+        <input
+          name="title"
+          type="text"
+          required
+          .value=${this.boardTitle || ""}
+        />
 
         <label>Version</label>
         <input
@@ -192,11 +205,14 @@ export class BoardEditOverlay extends LitElement {
           pattern="\\d+\\.\\d+\\.\\d+"
           type="text"
           required
-          value=${this.boardVersion}
+          .value=${this.boardVersion || ""}
         />
 
         <label>Description</label>
-        <textarea name="description" .value=${this.boardDescription}></textarea>
+        <textarea
+          name="description"
+          .value=${this.boardDescription || ""}
+        ></textarea>
 
         <div id="controls">
           <button

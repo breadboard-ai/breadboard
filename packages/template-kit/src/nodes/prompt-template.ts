@@ -12,9 +12,9 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 
-export type PropmtTemplateOutputs = {
-  text: string;
-  prompt: string; // Deprecated
+export type PromptTemplateOutputs = {
+  text: string; // Deprecated
+  prompt: string;
 };
 
 export type PromptTemplateInputs = {
@@ -78,6 +78,7 @@ export const computeInputSchema = (inputs: InputValues): Schema => {
     title: "template",
     description: "The template with placeholders to fill in.",
     type: "string",
+    format: "multiline",
   };
   return {
     type: "object",
@@ -102,6 +103,7 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
         },
         text: {
           title: "text",
+          behavior: ["deprecated"],
           description:
             "The resulting prompt that was produced by filling in the placeholders in the template.",
           type: "string",
