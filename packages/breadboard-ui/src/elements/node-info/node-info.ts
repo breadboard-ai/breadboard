@@ -362,16 +362,10 @@ export class NodeInfo extends LitElement {
     this.dispatchEvent(metadataEvt);
   }
 
-  #onConfigurationFormSubmit(evt: SubmitEvent) {
-    evt.preventDefault();
-
-    if (!(evt.target instanceof HTMLFormElement) || !this.selectedNodeId) {
-      return;
-    }
-
+  #onConfigurationFormSubmit(form: HTMLFormElement) {
     const toConvert = new Map<string, BehaviorSchema>();
-    const data = new FormData(evt.target);
-    for (const field of evt.target.querySelectorAll("textarea")) {
+    const data = new FormData(form);
+    for (const field of form.querySelectorAll("textarea")) {
       if (field.dataset.type && field.dataset.type === "object") {
         toConvert.set(
           field.id,
@@ -384,9 +378,7 @@ export class NodeInfo extends LitElement {
       data.set(field.id, field.value);
     }
 
-    for (const schemaEditor of evt.target.querySelectorAll(
-      "bb-schema-editor"
-    )) {
+    for (const schemaEditor of form.querySelectorAll("bb-schema-editor")) {
       if (!(schemaEditor instanceof SchemaEditor && schemaEditor.id)) {
         continue;
       }
@@ -406,7 +398,7 @@ export class NodeInfo extends LitElement {
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
     }
 
-    for (const arrayEditor of evt.target.querySelectorAll("bb-array-editor")) {
+    for (const arrayEditor of form.querySelectorAll("bb-array-editor")) {
       if (!(arrayEditor instanceof ArrayEditor && arrayEditor.id)) {
         continue;
       }
@@ -415,7 +407,7 @@ export class NodeInfo extends LitElement {
       data.set(arrayEditor.id, arrayEditor.value);
     }
 
-    for (const boardSelector of evt.target.querySelectorAll<BoardSelector>(
+    for (const boardSelector of form.querySelectorAll<BoardSelector>(
       "bb-board-selector"
     )) {
       if (!boardSelector.id) {
@@ -426,7 +418,7 @@ export class NodeInfo extends LitElement {
       toConvert.set(boardSelector.id, "board");
     }
 
-    for (const codeEditor of evt.target.querySelectorAll<CodeEditor>(
+    for (const codeEditor of form.querySelectorAll<CodeEditor>(
       "bb-code-editor"
     )) {
       if (!codeEditor.id) {
@@ -702,14 +694,14 @@ export class NodeInfo extends LitElement {
           <div class="node-properties">
             <form
               ${ref(this.#configurationFormRef)}
-              @submit=${this.#onConfigurationFormSubmit}
+              @submit=${(evt: Event) => evt.preventDefault()}
               @input=${() => {
                 if (!this.#configurationFormRef.value) {
                   return;
                 }
 
-                this.#configurationFormRef.value.dispatchEvent(
-                  new SubmitEvent("submit")
+                this.#onConfigurationFormSubmit(
+                  this.#configurationFormRef.value
                 );
               }}
             >

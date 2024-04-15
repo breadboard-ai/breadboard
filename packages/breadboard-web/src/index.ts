@@ -141,12 +141,13 @@ export class Main extends LitElement {
       font-size: 0;
       width: 20px;
       height: 20px;
-      background: var(--bb-icon-edit-white) center center no-repeat;
-      background-size: 20px 20px;
-      border: none;
-      margin-left: calc(var(--bb-grid-size) * 3);
+      background: var(--bb-icon-edit) center center no-repeat;
+      background-size: 16px 16px;
+      border: 2px solid transparent;
+      margin-left: calc(var(--bb-grid-size) * 2);
       opacity: 0.6;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      border-radius: 50%;
     }
 
     #edit-board-info:not([disabled]) {
@@ -156,21 +157,12 @@ export class Main extends LitElement {
     #edit-board-info:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
+      background-color: var(--bb-neutral-300);
+      border: 2px solid var(--bb-neutral-300);
     }
 
     #new-board {
       font-size: var(--bb-text-nano);
-    }
-
-    #header-bar {
-      background: var(--bb-output-600);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-50);
-      border-bottom: 1px solid var(--bb-neutral-300);
-      z-index: 1;
-      height: calc(var(--bb-grid-size) * 12);
-      padding: calc(var(--bb-grid-size) * 2);
     }
 
     #save-board,
@@ -185,7 +177,7 @@ export class Main extends LitElement {
       cursor: pointer;
       background: 12px center var(--bb-icon-download);
       background-repeat: no-repeat;
-      height: 100%;
+      height: calc(100% - var(--bb-grid-size) * 4);
       display: flex;
       align-items: center;
       text-decoration: none;
@@ -255,28 +247,64 @@ export class Main extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #header-bar a#back {
-      font-size: 0;
-      display: block;
-      width: 16px;
-      height: 16px;
-      background: var(--bb-icon-arrow-back) center center no-repeat;
-      margin: 0 calc(var(--bb-grid-size) * 3);
+    #header-bar {
+      background: var(--bb-output-600);
+      display: flex;
+      align-items: center;
+      color: var(--bb-neutral-50);
+      z-index: 1;
+      height: calc(var(--bb-grid-size) * 12);
+      padding: 0 calc(var(--bb-grid-size) * 2);
     }
 
-    #header-bar h1 {
-      font-size: var(--bb-text-default);
-      font-weight: normal;
+    #header-bar #tab-container {
       flex: 1;
+      display: flex;
+      align-items: flex-end;
+      margin: 0;
+      height: 100%;
+    }
+
+    #tab-container h1 {
+      font-size: var(--bb-label-medium);
+      font-weight: normal;
+      background: var(--bb-neutral-100);
+      color: var(--bb-neutral-800);
+      margin: 0;
+      height: calc(100% - var(--bb-grid-size) * 2);
+      border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
+        0 0;
+      padding: 0 calc(var(--bb-grid-size) * 4);
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+
+    #tab-container #back-to-main-board {
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--bb-neutral-800);
+    }
+
+    #tab-container #back-to-main-board:disabled {
+      cursor: auto;
+      color: var(--bb-neutral-800);
+    }
+
+    #tab-container .subgraph-name {
       display: flex;
       align-items: center;
     }
 
-    #title {
-      font: var(--bb-text-baseline) var(--bb-font-family-header);
-      color: rgb(90, 64, 119);
-      margin: 0;
-      display: inline;
+    #tab-container .subgraph-name::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-next) center center no-repeat;
+      background-size: 12px 12px;
     }
 
     #content {
@@ -683,8 +711,13 @@ export class Main extends LitElement {
       }
     }
 
-    const settings = this.#settings ? this.#settings.values : null;
     const title = this.graph?.title;
+    let subGraphTitle: string | undefined | null = null;
+    if (this.graph && this.graph.graphs && this.subGraphId) {
+      subGraphTitle = this.graph.graphs[this.subGraphId].title;
+    }
+
+    const settings = this.#settings ? this.#settings.values : null;
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
       this.showPreviewOverlay ||
@@ -703,23 +736,38 @@ export class Main extends LitElement {
             );
           }}
         ></button>
-        <h1>
-          ${title}
-          <button
-            @click=${() => {
-              this.boardEditOverlayInfo = {
-                title: this.graph?.title,
-                version: this.graph?.version,
-                description: this.graph?.description,
-              };
-            }}
-            ?disabled=${this.graph === null}
-            id="edit-board-info"
-            title="Edit Board Information"
-          >
-            Edit
-          </button>
-        </h1>
+        <div id="tab-container">
+          <h1>
+            <span
+              ><button
+                id="back-to-main-board"
+                @click=${() => {
+                  this.subGraphId = null;
+                }}
+                ?disabled=${this.subGraphId === null}
+              >
+                ${title}
+              </button></span
+            >${subGraphTitle
+              ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+              : nothing}
+            <button
+              @click=${() => {
+                this.boardEditOverlayInfo = {
+                  title: this.graph?.title,
+                  version: this.graph?.version,
+                  description: this.graph?.description,
+                  subGraphId: this.subGraphId,
+                };
+              }}
+              ?disabled=${this.graph === null}
+              id="edit-board-info"
+              title="Edit Board Information"
+            >
+              Edit
+            </button>
+          </h1>
+        </div>
         ${saveButton}
         <a
           id="get-board"
@@ -784,7 +832,11 @@ export class Main extends LitElement {
               return;
             }
 
-            const editResult = editableGraph.addGraph(evt.subGraphId, blank());
+            const id = globalThis.crypto.randomUUID();
+            const board = blank();
+            board.title = evt.subGraphTitle;
+
+            const editResult = editableGraph.addGraph(id, board);
             if (!editResult) {
               this.toast(
                 "Unable to create sub board",
@@ -793,7 +845,7 @@ export class Main extends LitElement {
               return;
             }
 
-            this.subGraphId = evt.subGraphId;
+            this.subGraphId = id;
             this.requestUpdate();
           }}
           @breadboardsubgraphdelete=${async (

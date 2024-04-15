@@ -240,11 +240,11 @@ export class ArrayEditor extends LitElement {
   }
 
   #onSubmit(evt: SubmitEvent) {
+    evt.preventDefault();
+
     if (!(evt.target instanceof HTMLFormElement)) {
       return;
     }
-
-    evt.preventDefault();
 
     const form = evt.target;
     const data = new FormData(form);
@@ -372,7 +372,9 @@ export class ArrayEditor extends LitElement {
       return html`(Not set)
         <button
           id="create"
-          @click=${() => {
+          @click=${(evt: Event) => {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
             this.#addItem();
           }}
         >
@@ -441,6 +443,7 @@ export class ArrayEditor extends LitElement {
                   data-idx=${idx}
                   @click=${this.#removeItem}
                   title="Delete this item"
+                  type="button"
                 >
                   Delete this item
                 </button>
