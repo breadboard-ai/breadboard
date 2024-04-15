@@ -323,7 +323,6 @@ export class GraphNode extends PIXI.Graphics {
 
     for (const [inPortName, portItem] of this.#inPorts) {
       if (!ports.find((inPort) => inPort.name === inPortName)) {
-        console.log("Removing in port", inPortName);
         portItem?.label.removeFromParent();
         portItem?.label?.destroy();
 
@@ -362,7 +361,6 @@ export class GraphNode extends PIXI.Graphics {
 
     for (const [outPortName, portItem] of this.#outPorts) {
       if (!ports.find((outPort) => outPort.name === outPortName)) {
-        console.log("Removing out port", outPortName);
         portItem?.label.removeFromParent();
         portItem?.label.destroy();
 

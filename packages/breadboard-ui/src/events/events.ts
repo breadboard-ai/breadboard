@@ -93,7 +93,7 @@ export class SubGraphDeleteEvent extends Event {
 export class SubGraphCreateEvent extends Event {
   static eventName = "breadboardsubgraphcreate";
 
-  constructor(public subGraphId: string) {
+  constructor(public subGraphTitle: string) {
     super(SubGraphCreateEvent.eventName, {
       bubbles: true,
       cancelable: true,

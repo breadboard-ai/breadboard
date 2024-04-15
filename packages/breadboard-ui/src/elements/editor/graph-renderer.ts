@@ -89,54 +89,6 @@ export class GraphRenderer extends LitElement {
       display: block;
       touch-action: none;
     }
-
-    #controls {
-      position: absolute;
-      left: calc(var(--bb-grid-size) * 4);
-      bottom: calc(var(--bb-grid-size) * 4);
-      background: #fff;
-      border-radius: 40px;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
-      border: 1px solid var(--bb-neutral-300);
-      display: flex;
-      align-items: center;
-    }
-
-    #controls button {
-      margin-left: calc(var(--bb-grid-size) * 2);
-    }
-
-    #controls button:first-of-type {
-      margin-left: 0;
-    }
-
-    #reset-layout,
-    #zoom-to-fit {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      background: center center no-repeat;
-      background-size: 20px 20px;
-      font-size: 0;
-      cursor: pointer;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.5;
-      border: none;
-    }
-
-    #reset-layout {
-      background-image: var(--bb-icon-reset-nodes);
-    }
-
-    #zoom-to-fit {
-      background-image: var(--bb-icon-fit);
-    }
-
-    #reset-layout:hover,
-    #zoom-to-fit:hover {
-      transition-duration: 0.1s;
-      opacity: 1;
-    }
   `;
 
   constructor(
@@ -432,28 +384,6 @@ export class GraphRenderer extends LitElement {
   }
 
   render() {
-    return html`${this.#app.view}
-      <div id="controls">
-        <button
-          title="Zoom to fit"
-          id="zoom-to-fit"
-          @click=${() => this.zoomToFit()}
-        >
-          Zoom to fit
-        </button>
-        <button
-          title="Reset Layout"
-          id="reset-layout"
-          @click=${() => {
-            if (!confirm("Are you sure you want to reset node positions?")) {
-              return;
-            }
-
-            this.resetGraphLayout();
-          }}
-        >
-          Reset Layout
-        </button>
-      </div>`;
+    return html`${this.#app.view}`;
   }
 }

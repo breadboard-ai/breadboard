@@ -12,7 +12,6 @@ import {
   InputEnterEvent,
   NodeDeleteEvent,
   RunEvent,
-  SubGraphChosenEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -28,7 +27,6 @@ import {
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
-import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -284,7 +282,7 @@ export class UI extends LitElement {
 
     const sidePanel = html`
       <bb-switcher
-        slots="3"
+        slots="2"
         .disabled=${this.failedToLoad}
         .selected=${this.#autoSwitchSidePanel !== null
           ? this.#autoSwitchSidePanel
@@ -381,14 +379,6 @@ export class UI extends LitElement {
           name="Selected Node"
           slot="slot-1"
         ></bb-node-info>
-        <bb-subboard-selector
-          .graph=${this.graph}
-          .subGraphId=${this.subGraphId}
-          .kits=${this.kits}
-          .loader=${this.loader}
-          name="Sub Boards"
-          slot="slot-2"
-        ></bb-subboard-selector>
       </bb-switcher>
 
       <div
@@ -413,21 +403,6 @@ export class UI extends LitElement {
       split="[0.75, 0.25]"
     >
       <section id="diagram" slot="slot-0">
-        <div id="breadcrumbs">
-          ${map(breadcrumbs, (breadcrumb, idx) => {
-            const isLast = idx === breadcrumbs.length - 1;
-            const divider = isLast ? nothing : html`<span>&gt;</span>`;
-            return html`<button
-                @click=${() => {
-                  this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-                }}
-                ?disabled=${isLast}
-              >
-                ${breadcrumb}
-              </button>
-              ${divider}`;
-          })}
-        </div>
         ${this.graph === null && this.failedToLoad
           ? html`<div class="failed-to-load">
               <h1>Unable to load board</h1>
@@ -437,6 +412,8 @@ export class UI extends LitElement {
       </section>
 
       <section id="controls-activity" slot="slot-1">
+        ${sidePanel}
+
         <div id="controls">
           <button
             id="run"
@@ -449,8 +426,6 @@ export class UI extends LitElement {
             Run
           </button>
         </div>
-
-        ${sidePanel}
       </section>
     </bb-splitter>`;
   }
