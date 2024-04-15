@@ -266,7 +266,7 @@ export class SchemaEditor extends LitElement {
           name="${id}-examples"
           ?readonly=${!this.editable}
           .items=${value.examples || []}
-          .type=${"string"}
+          .type=${value.type}
         ></bb-array-editor>`;
 
       return html`<details open class=${classMap({ [valueType]: true })}>
@@ -333,7 +333,10 @@ export class SchemaEditor extends LitElement {
           </select>
 
           ${format} ${value.type === "string" ? enumerations : nothing}
-          ${value.type === "string" ? examples : nothing} ${defaultValue}
+          ${value.type === "string" || value.type === "number"
+            ? examples
+            : nothing}
+          ${defaultValue}
 
           <label for="${id}-description">Description</label>
           <textarea
@@ -401,6 +404,9 @@ export class SchemaEditor extends LitElement {
         property.type = inType?.value || property.type;
         property.description = inDescription?.value || property.description;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
+
+        console.log(property.examples, inExamples?.value);
+
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
         if (inFormat && inFormat.value !== "none") {
@@ -433,6 +439,10 @@ export class SchemaEditor extends LitElement {
 
         if (!property.description) {
           delete property.description;
+        }
+
+        if (!property.examples) {
+          delete property.examples;
         }
 
         // Going from boolean -> anything else with no default means removing
