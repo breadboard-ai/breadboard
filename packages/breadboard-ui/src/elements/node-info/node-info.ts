@@ -769,6 +769,7 @@ export class NodeInfo extends LitElement {
                               : value.path
                             : "";
                           input = html`<bb-board-selector
+                            .graph=${this.graph}
                             .subGraphIds=${this.graph && this.graph.graphs
                               ? Object.keys(this.graph.graphs)
                               : []}
@@ -859,6 +860,11 @@ export class NodeInfo extends LitElement {
                                 : port.schema.items
                               : port.schema
                           )}
+                          .subGraphIds=${this.graph && this.graph.graphs
+                            ? Object.keys(this.graph.graphs)
+                            : []}
+                          .providers=${this.providers}
+                          .providerOps=${this.providerOps}
                         ></bb-array-editor>`;
                         break;
                       }
