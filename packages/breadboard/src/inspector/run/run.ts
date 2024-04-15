@@ -101,6 +101,21 @@ export class Run implements InspectableRun {
     return this.#events.currentEvent();
   }
 
+  stack(): InspectableRunNodeEvent[] {
+    // TODO: Implement full stack. For now, just return the top-level item.
+    const getLastNodeEVent = () => {
+      const events = this.#events.events;
+      for (let i = events.length - 1; i >= 0; i--) {
+        const maybeNodeEvent = events[i];
+        if (maybeNodeEvent.type === "node" && !maybeNodeEvent.bubbled)
+          return maybeNodeEvent;
+      }
+      return null;
+    };
+    const lastNodeEvent = getLastNodeEVent();
+    return lastNodeEvent ? [lastNodeEvent] : [];
+  }
+
   addResult(result: HarnessRunResult) {
     this.#events.add(result);
   }

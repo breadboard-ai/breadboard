@@ -244,15 +244,11 @@ export class UI extends LitElement {
     const currentNode = (): NodeIdentifier | null => {
       if (!this.run) return null;
 
-      const currentNodeEvent = this.run.currentNodeEvent();
+      const currentNodeEvent = this.run.stack()[0];
+
       if (!currentNodeEvent) return null;
 
-      // TODO: Make this less of a dirty hack.
-      const visibleGraphURL = `${this.graph?.url}${
-        this.subGraphId ? `#${this.subGraphId}` : ""
-      }`;
-      const eventGraphURL = currentNodeEvent.graph.raw().url;
-      if (visibleGraphURL !== eventGraphURL) return null;
+      if (this.subGraphId) return null;
 
       return currentNodeEvent.node.descriptor.id;
     };

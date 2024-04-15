@@ -34,6 +34,11 @@ export class NestedRun implements InspectableRun {
     return null;
   }
 
+  stack(): InspectableRunNodeEvent[] {
+    // TODO: Implement stack support for nested runs.
+    return [];
+  }
+
   getEventById(): InspectableRunEvent | null {
     return null;
   }
