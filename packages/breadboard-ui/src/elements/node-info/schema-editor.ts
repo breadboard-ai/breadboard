@@ -405,8 +405,6 @@ export class SchemaEditor extends LitElement {
         property.description = inDescription?.value || property.description;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
 
-        console.log(property.examples, inExamples?.value);
-
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
         if (inFormat && inFormat.value !== "none") {
@@ -542,6 +540,13 @@ export class SchemaEditor extends LitElement {
           Add a new item
         </button>
       </div>
-      <form ${ref(this.#formRef)}>${properties}</form>`;
+      <form
+        @submit=${(evt: Event) => {
+          evt.preventDefault();
+        }}
+        ${ref(this.#formRef)}
+      >
+        ${properties}
+      </form>`;
   }
 }

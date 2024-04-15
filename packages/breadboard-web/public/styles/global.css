@@ -40,6 +40,7 @@ html {
   --bb-easing-duration-out: 0.3s;
 
   --bb-icon-access-request: url(/third_party/icons/access-request.svg);
+  --bb-icon-add: url(/third_party/icons/add.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);

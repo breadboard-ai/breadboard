@@ -24,8 +24,11 @@ export const styles = css`
     height: 100%;
     overflow: auto;
     position: relative;
+  }
+
+  #controls-activity {
     display: grid;
-    grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+    grid-template-rows: auto calc(var(--bb-grid-size) * 14);
   }
 
   #diagram {
@@ -34,63 +37,24 @@ export const styles = css`
 
   #run {
     background: var(--bb-selected-color);
-    color: #FFF;
+    color: #fff;
     border-radius: 20px;
     border: none;
-    height: 100%;
-    padding: 0 calc(var(--bb-grid-size) * 4);
+    font-size: var(--bb-label-large);
+    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 8);
   }
 
   #run[disabled] {
     opacity: 0.4;
   }
 
-  #controls,
-  #breadcrumbs {
-    background: var(--bb-output-50);
-    border-bottom: 1px solid var(--bb-output-100);
+  #controls {
+    border-top: 1px solid var(--bb-neutral-300);
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: calc(var(--bb-grid-size) * 1.5);
+    padding: calc(var(--bb-grid-size) * 3);
     font-size: var(--bb-label-large);
-  }
-
-  #breadcrumbs {
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
-  }
-
-  #breadcrumbs > * {
-    margin: 0;
-    margin-right: calc(var(--bb-grid-size) * 2);
-    padding: 0;
-    font-size: var(--bb-label-medium);
-    font-weight: 500;
-    background: none;
-    border: none;
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #breadcrumbs span {
-    width: 12px;
-    height: 12px;
-    background: var(--bb-icon-next) center center no-repeat;
-    background-size: 12px 12px;
-    font-size: 0;
-  }
-
-  #breadcrumbs button {
-    padding: 0;
-    color: var(--bb-output-700);
-  }
-
-  #breadcrumbs button[disabled] {
-    font-weight: 700;
-    color: var(--bb-neutral-700);
   }
 
   #controls {
@@ -125,101 +89,6 @@ export const styles = css`
     border: 1px solid rgb(248 193 122);
     color: rgb(192 116 19);
     background: rgb(255, 242, 204);
-  }
-
-  #inputs,
-  #outputs,
-  #timeline,
-  #history {
-    border: 1px solid rgb(227, 227, 227);
-    overflow: auto;
-    background: rgb(255, 255, 255);
-  }
-
-  #timeline,
-  #inputs,
-  #outputs,
-  #history {
-    display: flex;
-    flex-direction: column;
-  }
-
-  #timeline h1 {
-    font-size: var(--bb-text-small);
-    font-weight: bold;
-    margin: 0;
-  }
-
-  #inputs header,
-  #outputs h1,
-  #history h1 {
-    font-size: var(--bb-text-small);
-    font-weight: bold;
-    margin: 0;
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-    border-bottom: 1px solid rgb(227, 227, 227);
-    position: sticky;
-    top: 0;
-    background: rgb(255, 255, 255);
-    z-index: 1;
-    min-height: calc(var(--bb-grid-size) * 10);
-    display: flex;
-    align-items: center;
-  }
-
-  #inputs header {
-    display: flex;
-    align-items: center;
-  }
-
-  #timeline header {
-    display: flex;
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-    border-bottom: 1px solid rgb(227, 227, 227);
-  }
-
-  #timeline label[for="narrow"],
-  #narrow {
-    font-size: var(--bb-text-small);
-    margin: 0 var(--bb-grid-size) * 2);
-    align-self: center;
-  }
-
-  #timeline header h1,
-  #inputs header h1 {
-    font-size: var(--bb-text-small);
-    font-weight: bold;
-    margin: 0;
-    flex: 1;
-    align-self: center;
-  }
-
-  #inputs #input-options {
-    display: flex;
-  }
-
-  #inputs #input-options input {
-    margin: 0 var(--bb-grid-size);
-  }
-
-  #inputs-list,
-  #outputs-list,
-  #history-list {
-    scrollbar-gutter: stable;
-    overflow-y: auto;
-    font-size: var(--bb-text-small);
-  }
-
-  #inputs-list {
-    position: absolute;
-    bottom: 20px;
-    width: calc(100% - 20px);
-    max-width: min(80vw, 520px);
-  }
-
-  #inputs-list,
-  #outputs-list {
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
   }
 
   #value {
@@ -261,10 +130,12 @@ export const styles = css`
     max-height: 50vh;
     top: var(--top, 0);
     left: var(--left, 0);
-    border: 1px solid #D9D9D9;
+    border: 1px solid #d9d9d9;
     border-radius: calc(var(--bb-grid-size) * 2);
     overflow-y: scroll;
-    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0px 1px 2px rgba(0, 0, 0, 0.3),
+      0px 1px 3px 1px rgba(0, 0, 0, 0.15);
     margin-bottom: 40px;
     margin-right: 40px;
   }

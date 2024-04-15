@@ -13,6 +13,7 @@ import {
   NodeConfiguration,
   InspectableNodePorts,
   GraphLoader,
+  SubGraphs,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -28,10 +29,15 @@ import {
   NodeDeleteEvent,
   NodeMoveEvent,
   NodeMultiLayoutEvent,
+  SubGraphChosenEvent,
+  SubGraphCreateEvent,
+  SubGraphDeleteEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { map } from "lit/directives/map.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -128,6 +134,22 @@ export class Editor extends LitElement {
       background: #ffffff;
       cursor: pointer;
       opacity: 0.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    label[for="add-node"]:hover {
+      opacity: 1;
+    }
+
+    label[for="add-node"]::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      background: var(--bb-icon-add) center center no-repeat;
+      background-size: 16px 16px;
+      margin-right: calc(var(--bb-grid-size) * 2);
     }
 
     #add-node:checked ~ bb-node-selector {
@@ -145,6 +167,99 @@ export class Editor extends LitElement {
       height: 100%;
       outline: none;
       overflow: hidden;
+    }
+
+    #controls {
+      position: absolute;
+      left: calc(var(--bb-grid-size) * 4);
+      bottom: calc(var(--bb-grid-size) * 4);
+      background: #fff;
+      border-radius: 40px;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      border: 1px solid var(--bb-neutral-300);
+      display: flex;
+      align-items: center;
+    }
+
+    #controls button {
+      margin-left: calc(var(--bb-grid-size) * 2);
+    }
+
+    #controls button:first-of-type {
+      margin-left: 0;
+    }
+
+    #reset-layout,
+    #zoom-to-fit {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      background: center center no-repeat;
+      background-size: 20px 20px;
+      font-size: 0;
+      cursor: pointer;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      opacity: 0.5;
+      border: none;
+    }
+
+    #reset-layout {
+      background-image: var(--bb-icon-reset-nodes);
+    }
+
+    #zoom-to-fit {
+      background-image: var(--bb-icon-fit);
+    }
+
+    #reset-layout:hover,
+    #zoom-to-fit:hover {
+      transition-duration: 0.1s;
+      opacity: 1;
+    }
+
+    .divider {
+      width: 1px;
+      height: calc(var(--bb-grid-size) * 7);
+      background: var(--bb-neutral-300);
+      margin: 0px calc(var(--bb-grid-size) * 3);
+    }
+
+    #subgraph-selector {
+      color: var(--bb-output-500);
+      border: none;
+      font-size: var(--bb-label-large);
+    }
+
+    #add-sub-board,
+    #delete-sub-board {
+      background: none;
+      width: 16px;
+      height: 16px;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 16px 16px;
+      border: none;
+      font-size: 0;
+      opacity: 0.5;
+      cursor: pointer;
+    }
+
+    #add-sub-board {
+      background-image: var(--bb-icon-add-circle);
+    }
+
+    #delete-sub-board {
+      background-image: var(--bb-icon-delete);
+    }
+
+    #add-sub-board:hover,
+    #delete-sub-board:hover {
+      opacity: 1;
+    }
+
+    #delete-sub-board[disabled] {
+      opacity: 0.3;
+      cursor: auto;
     }
   `;
 
@@ -441,6 +556,17 @@ export class Editor extends LitElement {
     this.#left = bounds.left;
   }
 
+  #proposeNewSubGraph() {
+    const newSubGraphName = prompt(
+      "What would you like to call this sub board?"
+    );
+    if (!newSubGraphName) {
+      return;
+    }
+
+    this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
+  }
+
   firstUpdated(): void {
     this.#onResizeBound();
     this.#graphRenderer.addGraph(this.#graph);
@@ -455,6 +581,8 @@ export class Editor extends LitElement {
       this.#graphRenderer.editable = this.editable;
     }
 
+    const subGraphs: SubGraphs | null =
+      this.graph && this.graph.graphs ? this.graph.graphs : null;
     return html`${this.#graphRenderer}
       <input
         ${ref(this.#addButtonRef)}
@@ -462,7 +590,82 @@ export class Editor extends LitElement {
         id="add-node"
         type="checkbox"
       />
-      <label for="add-node">Add</label>
+      <label for="add-node">Add node</label>
+
+      <div id="controls">
+        <button
+          title="Zoom to fit"
+          id="zoom-to-fit"
+          @click=${() => this.#graphRenderer.zoomToFit()}
+        >
+          Zoom to fit
+        </button>
+        <button
+          title="Reset Layout"
+          id="reset-layout"
+          @click=${() => {
+            if (!confirm("Are you sure you want to reset node positions?")) {
+              return;
+            }
+
+            this.#graphRenderer.resetGraphLayout();
+          }}
+        >
+          Reset Layout
+        </button>
+
+        <div class="divider"></div>
+        <select
+          id="subgraph-selector"
+          @input=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLSelectElement)) {
+              return;
+            }
+
+            this.dispatchEvent(new SubGraphChosenEvent(evt.target.value));
+          }}
+        >
+          <option
+            ?selected=${this.subGraphId === null}
+            value="${MAIN_BOARD_ID}"
+          >
+            Main board
+          </option>
+          ${map(Object.entries(subGraphs || []), ([subGraphId, subGraph]) => {
+            return html`<option
+              value="${subGraphId}"
+              ?selected=${subGraphId === this.subGraphId}
+            >
+              ${subGraph.title || subGraphId}
+            </option>`;
+          })}
+        </select>
+        <button
+          id="add-sub-board"
+          title="Add new sub board"
+          @click=${() => this.#proposeNewSubGraph()}
+        >
+          Add sub board
+        </button>
+        <button
+          id="delete-sub-board"
+          title="Delete this sub board"
+          ?disabled=${this.subGraphId === null}
+          @click=${() => {
+            if (!this.subGraphId) {
+              return;
+            }
+
+            if (!confirm("Are you sure you wish to delete this sub board?")) {
+              return;
+            }
+
+            this.dispatchEvent(new SubGraphDeleteEvent(this.subGraphId));
+          }}
+        >
+          Delete sub board
+        </button>
+      </div>
 
       <bb-node-selector
         .graph=${this.graph}
