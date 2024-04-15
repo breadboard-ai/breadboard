@@ -14,12 +14,15 @@ import { assertIsLLMContent } from "../../utils/schema.js";
 enum TYPE {
   STRING = "string",
   OBJECT = "object",
+  NUMBER = "number",
 }
+
+type ArrayEditorType = string | number | object;
 
 @customElement("bb-array-editor")
 export class ArrayEditor extends LitElement {
   #formRef: Ref<HTMLFormElement> = createRef();
-  #items: Array<string | object> | null = null;
+  #items: ArrayEditorType[] | null = null;
 
   @property({ reflect: true })
   type = TYPE.STRING;
@@ -113,14 +116,19 @@ export class ArrayEditor extends LitElement {
     }
   `;
 
-  set items(items: Array<string | object> | null) {
+  set items(items: ArrayEditorType[] | null) {
     this.#items = items;
 
     if (items && items.length > 0) {
       const type = typeof items[0];
+      console.log(type);
       switch (type) {
         case "string":
           this.type = TYPE.STRING;
+          break;
+
+        case "number":
+          this.type = TYPE.NUMBER;
           break;
 
         case "object":
@@ -224,7 +232,7 @@ export class ArrayEditor extends LitElement {
 
     const form = evt.target;
     const data = new FormData(form);
-    const items: Array<string | object> = [];
+    const items: ArrayEditorType[] = [];
     for (const [id, value] of data) {
       const field = form.querySelector(`#${id}`) as HTMLObjectElement;
       if (!field) {
@@ -234,14 +242,30 @@ export class ArrayEditor extends LitElement {
 
       field.setCustomValidity("");
       const formValue = (value as string).trim();
-      if (formValue === "" && this.type === TYPE.STRING) {
+      if (
+        formValue === "" &&
+        (this.type === TYPE.STRING || this.type === TYPE.NUMBER)
+      ) {
         field.setCustomValidity("Field must not be empty");
         field.reportValidity();
         continue;
       }
 
-      if (this.type === TYPE.STRING) {
-        items.push(value);
+      if (
+        this.type === TYPE.NUMBER &&
+        Number.isNaN(Number.parseFloat(formValue))
+      ) {
+        field.setCustomValidity("Field must be a number");
+        field.reportValidity();
+        continue;
+      }
+
+      if (this.type === TYPE.STRING || this.type === TYPE.NUMBER) {
+        if (this.type === TYPE.NUMBER) {
+          items.push(Number.parseFloat(value as string));
+        } else {
+          items.push(value);
+        }
         continue;
       }
 
@@ -286,7 +310,9 @@ export class ArrayEditor extends LitElement {
       newItem.parts = [];
     }
 
-    this.#items.push(this.type === TYPE.STRING ? "" : newItem);
+    this.#items.push(
+      this.type === TYPE.STRING || this.type === TYPE.NUMBER ? "" : newItem
+    );
   }
 
   protected updated(): void {
@@ -330,7 +356,6 @@ export class ArrayEditor extends LitElement {
                 <textarea
                   name="item-${idx}"
                   id="item-${idx}"
-                  type="text"
                   .value=${value}
                   @input=${(evt: InputEvent) => {
                     if (!(evt.target instanceof HTMLTextAreaElement)) {
