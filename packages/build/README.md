@@ -53,9 +53,9 @@ the following fields:
   Expression](#breadboard-type-expressions) (see below). All values sent or
   received on this port must conform to this type.
 
-- `description`: (Recommended) A brief description of the port, which will be displayed in the
-  Breadboard visual editor and in other places where introspection/debugging is
-  performed.
+- `description`: (Recommended) A brief description of the port, which will be
+  displayed in the Breadboard visual editor and in other places where
+  introspection/debugging is performed.
 
 - `primary`: (Optional) Enables a syntactic sugar feature for an output port to
   make wiring nodes more concise. When a node has a `primary` output port, then
@@ -87,7 +87,7 @@ substitution of values into a string containing placeholders. It has one fixed
 input (`template`), multiple _dynamic_ inputs, and one fixed output.
 
 ```ts
-import { defineNodeType, anyOf } from "@breadboard-ai/build";
+import { defineNodeType } from "@breadboard-ai/build";
 
 export const templater = defineNodeType({
   name: "example",
@@ -97,7 +97,7 @@ export const templater = defineNodeType({
       description: "A template with {{placeholders}}.",
     },
     "*": {
-      type: anyOf("string", "number"),
+      type: "string",
       description: "Values to fill into template's {{placeholders}}.",
     },
   },
@@ -107,24 +107,12 @@ export const templater = defineNodeType({
       description: "The template with {{placeholders}} substituted.",
     },
   },
-  describe: ({ template }) => {
-    return {
-      inputs: Object.fromEntries(
-        extractPlaceholders(template ?? "").map((name) => [
-          name,
-          {
-            type: anyOf("string", "number"),
-            description: `A value for the ${name} placeholder`,
-          },
-        ])
-      ),
-    };
-  },
-  invoke: ({ template }, placeholders) => {
-    return {
-      result: substituteTemplatePlaceholders(template, placeholders),
-    };
-  },
+  describe: ({ template }) => ({
+    inputs: extractPlaceholders(template ?? ""),
+  }),
+  invoke: ({ template }, placeholders) => ({
+    result: substituteTemplatePlaceholders(template, placeholders),
+  }),
 });
 ```
 
@@ -133,28 +121,85 @@ export const templater = defineNodeType({
 The special `*` port name is used to signify that this node can dynamically
 create input ports at runtime, and what types those ports will have.
 
-### `describe`
-
-The `describe` function determines which dynamic input and output ports should
-be opened for a polymorphic node at runtime.
-
-This function should return an object with either or both of `inputs` and
-`outputs`, containing all _additional_ dynamic ports that should be opened,
-given some set of input values.
-
-Note that the fixed inputs and outputs (e.g. `template` and `result` in the
-example above) need _not_ be returned by the `describe` function, since those
-are automatically generated from the static port configuration.
-
-Also note that monomorphic node definitions need not implement a `describe`
-function _at all_, since its input and output ports are completely determined
-from the static configuration.
-
 ### polymorphic `invoke`
 
 The `invoke` function for polymorphic nodes is very similar to [invoke for
 monomorphic nodes](#invoke), except that an additional second parameter is
 passed to the function which contains the input values for the dynamic values.
+
+### `reflective`
+
+Setting `reflective: true` on the `*` output configuration tells Breadboard that
+all dynamically created input ports will have a corresponding output port.
+
+### `describe`
+
+The `describe` function allows you to tell Breadboard which input and output
+ports are valid and open at runtime based on some particular set of input
+values.
+
+A `describe` function will be passed a set of values (in the same way as
+`invoke`), and should return an object containing either or both of `inputs` and
+`outputs`, each an array of strings, the names for the input and/or output ports
+that should be dynamically opened.
+
+For example, in `templater` above, the `describe` function parses the static
+`template` input and opens a port for each of the template's placeholders.
+
+In most situations a `describe` function is not required, because Breadboard can
+use the port configuration and instantiation values to determine the ports
+automatically. See the following table to check whether you should provide a
+`describe` function, and if so whether it should return `inputs`, `outputs`, or
+both. (Note that _Dynamic_ means there is a special `*` port configuration, and
+_Static_ means there is not.)
+
+| Inputs  | Outputs    | Describe Inputs | Describe Outputs |
+| ------- | ---------- | --------------- | ---------------- |
+| Static  | Static     | N/A             | N/A              |
+| Dynamic | Static     | Optional        | N/A              |
+| Static  | Dynamic    | N/A             | **Required**     |
+| Dynamic | Dynamic    | Optional        | **Required**     |
+| Dynamic | Reflective | Optional        | N/A              |
+
+### `assertOutput`
+
+When a node has dynamic outputs, but is not `reflective`, it is not possible at
+compile time for Breadboard to know what the valid output ports of a node are.
+In this case, use the `assertOutput` method to get an output port with a given
+name. Note that there is no guarantee this port will exist at runtime, so a
+runtime error could occur.
+
+(Note that the following example is highly contrived. It is better to find a
+way to use fully static or reflective nodes whenever possible to avoid the use
+of `assertOutput`).
+
+```ts
+import { defineNodeType, array } from "@breadboard-ai/build";
+
+const weirdStringLength = defineNodeType({
+  name: "weirdStringLength",
+  inputs: {
+    strings: { type: array("string") },
+  },
+  outputs: {
+    "*": { type: "number" },
+  },
+  describe: ({ strings }) => ({
+    outputs: strings,
+  }),
+  invoke: ({ strings }) =>
+    Object.fromEntries(strings.map((name) => [name, name.length])),
+});
+
+const lengths = weirdStringLength({ strings: ["foo", "bar"] });
+
+// All 3 of these variables will have type OutputPort<number> and can be wired
+// up to other nodes and boards as normal, but only `foo` and `bar` will
+// *actually* be valid at runtime.
+const foo = lengths.assertOutput("foo");
+const bar = lengths.assertOutput("bar");
+const baz = lengths.assertOutput("baz"); // Oops!
+```
 
 ## Adding nodes to Kits
 
@@ -328,21 +373,12 @@ const myCrazyType = unsafeType<{ foo: string }>({
 
 ## Known issues
 
-1. Polymorphic nodes with dynamic _outputs_ are not yet supported.
-
-2. The `context` object is not yet passed to `invoke`, so certain low-level
+1. The `context` object is not yet passed to `invoke`, so certain low-level
    operations are not yet possible.
 
-3. `describe` is only passed values for fixed ports, not dynamic ones.
-
-4. There is not currently a type check for excess properties on the return type
-   of monomorphic invoke. That is, while TypeScript will enforce that all
-   configured output ports have a value, it will not yet complain if an output
-   is returned that does not match a configured output port.
-
-5. There is no way to specify a description for a board's output (probably an
+2. There is no way to specify a description for a board's output (probably an
    `output` function, similar to `input`, is the solution there).
 
-6. You cannot yet embed boards into other boards (this will work by
+3. You cannot yet embed boards into other boards (this will work by
    instantiating a board object just like a regular node, but during
    serialization an `invoke` node will be created in its place.)

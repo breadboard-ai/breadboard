@@ -9,6 +9,7 @@ import {
   type OutputPortReference,
   type ValuesOrOutputPorts,
 } from "../common/port.js";
+import type { SerializableBoard } from "../common/serializable.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
 
@@ -122,7 +123,8 @@ class BoardDefinitionImpl<
 class BoardInstance<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
-> {
+> implements SerializableBoard
+{
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
   // TODO(aomarks) This should get used somewhere.

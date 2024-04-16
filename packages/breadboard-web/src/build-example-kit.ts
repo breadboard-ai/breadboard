@@ -6,7 +6,6 @@
 
 import {
   defineNodeType,
-  anyOf,
   type Value,
   type NodeFactoryFromDefinition,
 } from "@breadboard-ai/build";
@@ -43,7 +42,7 @@ export const templater = defineNodeType({
       description: "A template with {{placeholders}}.",
     },
     "*": {
-      type: anyOf("string", "number"),
+      type: "string",
       description: "Values to fill into template's {{placeholders}}.",
     },
   },
@@ -54,24 +53,12 @@ export const templater = defineNodeType({
       primary: true,
     },
   },
-  describe: ({ template }) => {
-    return {
-      inputs: Object.fromEntries(
-        extractPlaceholders(template ?? "").map((name) => [
-          name,
-          {
-            type: anyOf("string", "number"),
-            description: `A value for the ${name} placeholder`,
-          },
-        ])
-      ),
-    };
-  },
-  invoke: ({ template }, placeholders) => {
-    return {
-      result: substituteTemplatePlaceholders(template, placeholders),
-    };
-  },
+  describe: ({ template }) => ({
+    inputs: extractPlaceholders(template ?? ""),
+  }),
+  invoke: ({ template }, placeholders) => ({
+    result: substituteTemplatePlaceholders(template, placeholders),
+  }),
 });
 
 function extractPlaceholders(template: string): string[] {

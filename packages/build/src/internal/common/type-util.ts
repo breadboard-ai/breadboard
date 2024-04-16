@@ -33,3 +33,12 @@ type PermuteUnion<U, T = U> = [U] extends [never]
   : T extends unknown
     ? [T, ...PermuteUnion<Exclude<U, T>>]
     : never;
+
+/**
+ * A hack that encourages TypeScript to expand a type when choosing how to
+ * display it. Useful for utility types that we don't want to expose directly to
+ * users.
+ *
+ * https://github.com/microsoft/TypeScript/issues/47980#issuecomment-1049304607
+ */
+export type Expand<T> = T extends unknown ? { [K in keyof T]: T[K] } : never;

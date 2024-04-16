@@ -12,13 +12,15 @@ import type {
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
 import { OutputPortGetter } from "../common/port.js";
-import {
-  toJSONSchema,
-  type BreadboardType,
-  type JsonSerializable,
-} from "../type-system/type.js";
+import type {
+  SerializableBoard,
+  SerializableInputPort,
+  SerializableNode,
+  SerializableOutputPortReference,
+} from "../common/serializable.js";
+import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
-import { isPlaceholder, type Placeholder } from "./placeholder.js";
+import { isPlaceholder } from "./placeholder.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -250,35 +252,4 @@ function isOutputPortReference(
   return (
     typeof value === "object" && value !== null && OutputPortGetter in value
   );
-}
-
-export interface SerializableBoard {
-  inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
-  outputs: Record<string, SerializableOutputPortReference>;
-}
-
-interface SerializableNode {
-  type: string;
-  inputs: Record<string, SerializableInputPort>;
-}
-
-interface SerializableInputPort {
-  name: string;
-  type: BreadboardType;
-  node: SerializableNode;
-  value?:
-    | JsonSerializable
-    | SerializableOutputPortReference
-    | GenericSpecialInput
-    | Placeholder<JsonSerializable>;
-}
-
-interface SerializableOutputPort {
-  name: string;
-  type: BreadboardType;
-  node: SerializableNode;
-}
-
-interface SerializableOutputPortReference {
-  [OutputPortGetter]: SerializableOutputPort;
 }

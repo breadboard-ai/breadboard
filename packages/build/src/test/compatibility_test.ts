@@ -18,8 +18,7 @@ import {
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { MonomorphicDefinition } from "../internal/define/definition-monomorphic.js";
-import type { PolymorphicDefinition } from "../internal/define/definition-polymorphic.js";
+import type { Definition } from "../internal/define/definition.js";
 
 function setupKits<
   DEFS extends Record<
@@ -27,7 +26,7 @@ function setupKits<
     // TODO(aomarks) See TODO about `any` at {@link NodeFactoryFromDefinition}.
     //
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>
+    Definition<any, any, any, any, any, any, any>
   >,
 >(definitions: DEFS) {
   const ctr = new KitBuilder({ url: "N/A" }).build(definitions);
@@ -165,15 +164,15 @@ function setupKits<
   const { kit: adderKit, runtimeKit: adderRuntimeKit } = setupKits({
     adder,
   });
-  // $ExpectType { adder: NodeFactory<{ base: number; }, { sum: number; }>; }
+  // $ExpectType { adder: NodeFactory<{ [x: string]: number; base: number; }, { sum: number; }>; }
   adderKit;
   // $ExpectType Lambda<InputValues, Required<{ boardSum: number; }>>
   const adderBoard = await board(({ num1, num2, num3 }) => {
     const { sum } = adderKit.adder({
       base: 0,
-      num1,
-      num2,
-      num3,
+      num1: num1!.isNumber(),
+      num2: num2!.isNumber(),
+      num3: num3!.isNumber(),
     });
     // TODO(aomarks) Can we provide a type to sum automatically?
     return { boardSum: sum.isNumber() };
@@ -196,15 +195,15 @@ function setupKits<
         properties: {
           num1: {
             title: "num1",
-            type: "string",
+            type: "number",
           },
           num2: {
             title: "num2",
-            type: "string",
+            type: "number",
           },
           num3: {
             title: "num3",
-            type: "string",
+            type: "number",
           },
         },
         required: ["num1", "num2", "num3"],
