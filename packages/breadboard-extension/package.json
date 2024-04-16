@@ -198,6 +198,6 @@
     "esbuild": "^0.20.1",
     "mermaid": "^10.9.0",
     "rimraf": "^5.0.5",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   }
 }

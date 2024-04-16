@@ -90,7 +90,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.2.0",
     "rollup": "^4.14.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   },
   "private": true,
   "version": ""
