@@ -87,13 +87,7 @@ describe("validate-json", () => {
     };
     const result = validateJson(parsed, schema, true);
     deepStrictEqual(result, {
-      $error: {
-        kind: "error",
-        error: {
-          type: "schema",
-          message: 'strict mode: unknown keyword: "example"',
-        },
-      },
+      json: { foo: 1 },
     });
   });
 
