@@ -747,8 +747,8 @@ export class NodeInfo extends LitElement {
                               }
 
                               this.#schemaVersion++;
-                              this.#configurationFormRef.value.dispatchEvent(
-                                new SubmitEvent("submit")
+                              this.#onConfigurationFormSubmit(
+                                this.#configurationFormRef.value
                               );
                             }}
                             id="${name}"
@@ -774,8 +774,8 @@ export class NodeInfo extends LitElement {
                                 return;
                               }
 
-                              this.#configurationFormRef.value.dispatchEvent(
-                                new SubmitEvent("submit")
+                              this.#onConfigurationFormSubmit(
+                                this.#configurationFormRef.value
                               );
                             }}
                             id="${name}"
