@@ -116,7 +116,7 @@
     "@typescript-eslint/parser": "^7.0.0",
     "@types/node": "^20.12.7",
     "ava": "^5.2.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.5",
     "@google-labs/tsconfig": "^0.0.1",
     "@google-labs/breadboard-cli": "^0.8.2"
   },

@@ -110,7 +110,7 @@
   "devDependencies": {
     "@types/node": "^20.12.7",
     "eslint": "^8.57.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.5",
     "wireit": "^0.14.4"
   }
 }
