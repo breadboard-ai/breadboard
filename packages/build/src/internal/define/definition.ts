@@ -42,7 +42,8 @@ export interface Definition<
     InstanceOutputs<SI, SO, DO, R, A>,
     R extends true ? undefined : DO,
     PI,
-    PO
+    PO,
+    R
   >;
 }
 
@@ -64,6 +65,7 @@ export class DefinitionImpl<
   readonly #reflective: boolean;
   readonly #primaryInput: string | undefined;
   readonly #primaryOutput: string | undefined;
+  // TODO(aomarks) Support promises
   readonly #invoke: (
     staticParams: Record<string, JsonSerializable>,
     dynamicParams: Record<string, JsonSerializable>
@@ -115,7 +117,8 @@ export class DefinitionImpl<
     InstanceOutputs<SI, SO, DO, R, A>,
     R extends true ? undefined : DO,
     PI,
-    PO
+    PO,
+    R
   > {
     if (!args) {
       throw new Error("args is required");

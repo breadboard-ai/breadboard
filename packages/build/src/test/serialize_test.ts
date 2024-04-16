@@ -728,6 +728,66 @@ test("polymorphic inputs", () => {
   );
 });
 
+test("polymorphic outputs", () => {
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {},
+    outputs: {
+      "*": { type: "number" },
+    },
+    describe: () => ({ outputs: ["asserted"] }),
+    invoke: (_, values) => ({
+      out: Object.values(values)[0] ?? 0,
+    }),
+  })({});
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut1: myNode.assertOutput("asserted1"),
+        boardOut2: myNode.assertOutput("asserted2"),
+        boardOut3: myNode.assertOutput("asserted1"),
+      },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut1: { type: "number" },
+                boardOut2: { type: "number" },
+                boardOut3: { type: "number" },
+              },
+              required: ["boardOut1", "boardOut2", "boardOut3"],
+            },
+          },
+        },
+        { id: "myNode-0", type: "myNode", configuration: {} },
+      ],
+      edges: [
+        { from: "myNode-0", out: "asserted1", to: "output-0", in: "boardOut1" },
+        { from: "myNode-0", out: "asserted1", to: "output-0", in: "boardOut3" },
+        { from: "myNode-0", out: "asserted2", to: "output-0", in: "boardOut2" },
+      ],
+    }
+  );
+});
+
 test("placeholder", () => {
   const def = defineNodeType({
     name: "myNode",

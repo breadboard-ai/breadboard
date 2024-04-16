@@ -32,31 +32,55 @@ test("mono/mono", async () => {
   });
 
   const values = { si1: "foo", si2: 123 };
-  // $ExpectType Instance<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, undefined>
+  // $ExpectType Instance<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, undefined, false>
   const i = d(values);
 
-  // $ExpectType { si1: InputPort<string>; si2: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<string>
-  i.inputs.si1;
-  // $ExpectType InputPort<number>
-  i.inputs.si2;
-  // @ts-expect-error
-  i.inputs.di1;
+  assert.ok(
+    // $ExpectType { si1: InputPort<string>; si2: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<string>
+    i.inputs.si1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.si2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di1,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; so2: OutputPort<null>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // $ExpectType OutputPort<null>
-  i.outputs.so2;
-  // @ts-expect-error
-  i.outputs.do1;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; so2: OutputPort<null>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.ok(
+    // $ExpectType OutputPort<null>
+    i.outputs.so2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.do1,
+    undefined
+  );
 
-  // $ExpectType undefined
-  i.primaryInput;
-  // $ExpectType undefined
-  i.primaryOutput;
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryInput,
+    undefined
+  );
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryOutput,
+    undefined
+  );
 
   const expectedSchema = {
     inputSchema: {
@@ -121,31 +145,55 @@ test("poly/mono", async () => {
 
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, undefined, undefined, undefined>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, undefined, undefined, undefined, false>
   const i = d(values);
 
-  // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<string>
-  i.inputs.si1;
-  // $ExpectType InputPort<number>
-  i.inputs.di1;
-  // $ExpectType InputPort<number>
-  i.inputs.di2;
-  // @ts-expect-error
-  i.inputs.di3;
+  assert.ok(
+    // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<string>
+    i.inputs.si1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di3,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // @ts-expect-error
-  i.outputs.do1;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.do1,
+    undefined
+  );
 
-  // $ExpectType undefined
-  i.primaryInput;
-  // $ExpectType undefined
-  i.primaryOutput;
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryInput,
+    undefined
+  );
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryOutput,
+    undefined
+  );
 
   assert.deepEqual(await d.describe(), {
     inputSchema: {
@@ -228,21 +276,32 @@ test("mono/poly", async () => {
   });
 
   const values = { si1: "si1" };
-  // $ExpectType Instance<{ si1: string; }, { so1: boolean; }, number, undefined, undefined>
+  // $ExpectType Instance<{ si1: string; }, { so1: boolean; }, number, undefined, undefined, false>
   const i = d(values);
 
-  // $ExpectType { si1: InputPort<string>; }
-  i.inputs;
-  // $ExpectType InputPort<string>
-  i.inputs.si1;
-  // @ts-expect-error
-  i.inputs.di1;
+  assert.ok(
+    // $ExpectType { si1: InputPort<string>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<string>
+    i.inputs.si1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di1,
+    undefined
+  );
 
-  // $ExpectType { [x: string]: OutputPort<number> | undefined; so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // $ExpectType OutputPort<number> | undefined
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  // @ts-expect-error
   i.outputs.do1;
 
   // $ExpectType undefined
@@ -307,31 +366,62 @@ test("poly/poly", async () => {
   });
 
   const values = { si1: "si1", di1: 1, di2: 2 };
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, number, undefined, undefined>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, number, undefined, undefined, false>
   const i = d(values);
 
-  // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<string>
-  i.inputs.si1;
-  // $ExpectType InputPort<number>
-  i.inputs.di1;
-  // $ExpectType InputPort<number>
-  i.inputs.di2;
-  // @ts-expect-error
-  i.inputs.di3;
+  assert.ok(
+    // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
+    i.inputs
+  );
 
-  // $ExpectType { [x: string]: OutputPort<number> | undefined; so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // $ExpectType OutputPort<number> | undefined
-  i.outputs.do1;
+  assert.ok(
+    // $ExpectType InputPort<string>
+    i.inputs.si1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di1
+  );
 
-  // $ExpectType undefined
-  i.primaryInput;
-  // $ExpectType undefined
-  i.primaryOutput;
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di3,
+    undefined
+  );
+
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.do1,
+    undefined
+  );
+
+  assert.ok(
+    // $ExpectType OutputPort<number>
+    i.assertOutput("do1")
+  );
+
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryInput,
+    undefined
+  );
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryOutput,
+    undefined
+  );
 
   assert.deepEqual(await d.describe(), {
     inputSchema: {
@@ -418,35 +508,63 @@ test("reflective", async () => {
 
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; di1: string; di2: string; }, undefined, undefined, undefined>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; di1: string; di2: string; }, undefined, undefined, undefined, true>
   const i = d(values);
 
-  // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<string>
-  i.inputs.si1;
-  // $ExpectType InputPort<number>
-  i.inputs.di1;
-  // $ExpectType InputPort<number>
-  i.inputs.di2;
-  // @ts-expect-error
-  i.inputs.di3;
+  assert.ok(
+    // $ExpectType { si1: InputPort<string>; di1: InputPort<number>; di2: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<string>
+    i.inputs.si1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di1
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.di2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di3,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; di1: OutputPort<string>; di2: OutputPort<string>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // $ExpectType OutputPort<string>
-  i.outputs.di1;
-  // $ExpectType OutputPort<string>
-  i.outputs.di2;
-  // @ts-expect-error
-  i.outputs.di3;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; di1: OutputPort<string>; di2: OutputPort<string>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.ok(
+    // $ExpectType OutputPort<string>
+    i.outputs.di1
+  );
+  assert.ok(
+    // $ExpectType OutputPort<string>
+    i.outputs.di2
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.di3,
+    undefined
+  );
 
-  // $ExpectType undefined
-  i.primaryInput;
-  // $ExpectType undefined
-  i.primaryOutput;
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryInput,
+    undefined
+  );
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryOutput,
+    undefined
+  );
 
   assert.deepEqual(await d.describe(), {
     inputSchema: {
@@ -505,7 +623,7 @@ test("primary input", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", undefined>
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", undefined, false>
   const i = d({ si1: 123 });
 
   // $ExpectType { si1: InputPort<number>; }
@@ -546,7 +664,7 @@ test("primary output", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, undefined, "so1">
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, undefined, "so1", false>
   const i = d({ si1: 123 });
 
   // $ExpectType { si1: InputPort<number>; }
@@ -587,7 +705,7 @@ test("primary input + output", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", "so1">
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", "so1", false>
   const i = d({ si1: 123 });
 
   // $ExpectType { si1: InputPort<number>; }
@@ -1127,4 +1245,65 @@ test("error: reflective poly/poly should not return outputs", () => {
     describe: () => ({ inputs: [], outputs: [] }),
     invoke: () => ({ so1: "so1" }),
   });
+});
+
+test("error: assertOutput with entirely static outputs", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      so1: { type: "string" },
+    },
+    invoke: () => ({ so1: "so1" }),
+  });
+  const i = d({});
+  assert.throws(
+    () =>
+      // @ts-expect-error
+      i.assertOutput("do1"),
+    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" has entirely static outputs. Use "<node>.outputs.do1" instead./
+  );
+});
+
+test("error: assertOutput on reflective node", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "number" },
+    },
+    outputs: {
+      so1: { type: "string" },
+      "*": { type: "number", reflective: true },
+    },
+    invoke: () => ({ so1: "so1" }),
+  });
+  const i = d({});
+  assert.throws(
+    () =>
+      // @ts-expect-error
+      i.assertOutput("do1"),
+    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" is reflective. Use "<node>.outputs.do1" instead./
+  );
+});
+
+test("error: assertOutput on existing static output", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      so1: { type: "string" },
+      "*": { type: "number" },
+    },
+    describe: () => ({ outputs: ["foo"] }),
+    invoke: () => ({ so1: "so1" }),
+  });
+  const i = d({});
+  assert.throws(
+    () =>
+      i.assertOutput(
+        // @ts-expect-error
+        "so1"
+      ),
+    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" already has a static port called "so1". Use "<node>.outputs.so1" instead./
+  );
 });

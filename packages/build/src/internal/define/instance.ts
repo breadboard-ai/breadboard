@@ -13,7 +13,6 @@ import {
   type OutputPortReference,
 } from "../common/port.js";
 import type { SerializableNode } from "../common/serializable.js";
-import type { Expand } from "../common/type-util.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type {
   DynamicInputPortConfig,
@@ -28,15 +27,12 @@ export class Instance<
   /* Dynamic Output */ DO extends JsonSerializable | undefined,
   /* Primary Input  */ PI extends keyof I | undefined,
   /* Primary Output */ PO extends keyof O | undefined,
+  /* Reflective     */ R extends boolean,
 > implements SerializableNode
 {
   readonly type: string;
   readonly inputs: { [K in keyof I]: InputPort<I[K]> };
-  readonly outputs: Expand<
-    { [K in keyof O]: OutputPort<O[K]> } & (DO extends JsonSerializable
-      ? { [K: string]: OutputPort<DO> | undefined }
-      : {})
-  >;
+  readonly outputs: { [K in keyof O]: OutputPort<O[K]> };
   readonly primaryInput: PI extends keyof I ? InputPort<I[PI]> : undefined;
   readonly primaryOutput: PO extends keyof O ? OutputPort<O[PO]> : undefined;
   // TODO(aomarks) Clean up output port getter
@@ -81,8 +77,47 @@ export class Instance<
     }
   }
 
+  #assertedOutputs = new Map<string, OutputPort<JsonSerializable>>();
+
+  assertOutput: DO extends JsonSerializable
+    ? R extends false
+      ? <N extends string>(
+          name: N extends keyof O ? never : N
+        ) => OutputPort<DO>
+      : never
+    : never = ((name) => {
+    if (this.#dynamicOutputType === undefined) {
+      throw new Error(
+        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+          `Type "${this.type}" has entirely static outputs. ` +
+          `Use "<node>.outputs.${name}" instead.`
+      );
+    }
+    if (this.#reflective) {
+      throw new Error(
+        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+          `Type "${this.type}" is reflective. ` +
+          `Use "<node>.outputs.${name}" instead.`
+      );
+    }
+    if (this.outputs[name] !== undefined) {
+      throw new Error(
+        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+          `Type "${this.type}" already has a static port called "${name}". ` +
+          `Use "<node>.outputs.${name}" instead.`
+      );
+    }
+    let port = this.#assertedOutputs.get(name);
+    if (port !== undefined) {
+      return port;
+    }
+    port = new OutputPort(this.#dynamicOutputType, name, this);
+    this.#assertedOutputs.set(name, port);
+    return port;
+  }) as (typeof this)["assertOutput"];
+
   #processInputs(
-    inputs: { [K: string]: StaticInputPortConfig },
+    staticInputs: { [K: string]: StaticInputPortConfig },
     args: {
       [K: string]: JsonSerializable | OutputPortReference<JsonSerializable>;
     }
@@ -91,7 +126,7 @@ export class Instance<
     let primary: InputPort<JsonSerializable> | undefined = undefined;
 
     // Static inputs
-    for (const [name, config] of Object.entries(inputs)) {
+    for (const [name, config] of Object.entries(staticInputs)) {
       const arg = args[name];
       if (arg === undefined) {
         throw new Error(`Argument ${name} is required`);
@@ -108,7 +143,7 @@ export class Instance<
 
     // Dynamic inputs
     for (const [name, arg] of Object.entries(args)) {
-      if (inputs[name] !== undefined) {
+      if (staticInputs[name] !== undefined) {
         // Static input, already handled.
         continue;
       }
@@ -123,16 +158,18 @@ export class Instance<
   }
 
   #processOutputs(
-    inputs: { [K: string]: StaticInputPortConfig },
-    outputs: { [K: string]: StaticOutputPortConfig },
+    staticInputs: { [K: string]: StaticInputPortConfig },
+    staticOutputs: { [K: string]: StaticOutputPortConfig },
     args: {
       [K: string]: JsonSerializable | OutputPortReference<JsonSerializable>;
     }
   ) {
-    const ports: { [K: string]: OutputPort<JsonSerializable> } = {};
+    const ports: { [K: string]: OutputPort<JsonSerializable> } & {
+      assert?: (name: string) => OutputPort<JsonSerializable>;
+    } = {};
     let primary: OutputPort<JsonSerializable> | undefined = undefined;
 
-    for (const [name, config] of Object.entries(outputs)) {
+    for (const [name, config] of Object.entries(staticOutputs)) {
       const port = new OutputPort(config.type, name, this);
       ports[name] = port;
       if (config.primary) {
@@ -143,17 +180,41 @@ export class Instance<
       }
     }
 
-    if (this.#reflective && this.#dynamicOutputType !== undefined) {
-      for (const name of Object.keys(args)) {
-        if (inputs[name] !== undefined) {
-          // Static input, doesn't reflect.
-          continue;
+    if (this.#dynamicOutputType !== undefined) {
+      const type = this.#dynamicOutputType;
+      if (this.#reflective) {
+        // For reflective nodes, we know immediately at instantiation time what
+        // all the output ports are, because it's determined entirely by the
+        // inputs, which are exhaustively initialized at instantiation.
+        for (const name of Object.keys(args)) {
+          if (staticInputs[name] !== undefined) {
+            // Static input, doesn't reflect.
+            continue;
+          }
+          const port = new OutputPort(type, name, this);
+          ports[name] = port;
         }
-        const port = new OutputPort(this.#dynamicOutputType, name, this);
-        ports[name] = port;
+      } else {
+        // For other (non-reflective) nodes that have dynamic outputs, we can't
+        // know at initialization time what ports exist, since that's up to the
+        // describe function.
+        //
+        // However, we do need some way to let the user create references to
+        // these ports. One approach would be to make ports a Proxy object, and
+        // create the OutputPort any time there is a property access. But, we
+        // want to make it clear to see when a port is being asserted, since the
+        // type system has absolutely no idea if this is a valid port or not.
+        ports.assert = (name: string): OutputPort<JsonSerializable> => {
+          let port = ports[name];
+          if (port !== undefined) {
+            return port;
+          }
+          port = new OutputPort(type, name, this);
+          ports[name] = port;
+          return port;
+        };
       }
     }
-
     return { ports, primary };
   }
 }
