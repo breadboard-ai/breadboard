@@ -119,7 +119,7 @@ const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   const { json, schema, strictSchema } = inputs as ValidateJsonInputs;
   if (!json) throw new Error("The `json` input is required.");
 
-  if (!schema && strictSchema) {
+  if (!schema && strictSchema == true) {
     throw new Error(
       "The `schema` input is required when `strictSchema` is true."
     );
