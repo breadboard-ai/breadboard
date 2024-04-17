@@ -133,7 +133,7 @@ export class Instance<
       }
       const port = new InputPort(config.type, name, this, arg);
       ports[name] = port;
-      if (primary) {
+      if (config.primary) {
         if (this.primaryInput !== undefined) {
           throw new Error("More than one primary input");
         }
