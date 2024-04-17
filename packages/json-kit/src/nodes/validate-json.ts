@@ -23,9 +23,13 @@ export type ValidateJsonInputs = InputValues & {
    * Optional schema to validate against.
    */
   schema?: NodeValue;
+  /**
+   * Optional boolean to enforce or turn off strict validation of the supplied schema.
+   */
+  strictSchema?: boolean;
 };
 
-export type ValidationErrorType = "parsing" | "validation";
+export type ValidationErrorType = "parsing" | "schema" | "validation";
 
 export type InvalidJsonOutputs = OutputValues & {
   /**
@@ -74,12 +78,27 @@ export const tryParseJson = (json: string): InvalidJsonOutputs | NodeValue => {
 
 export const validateJson = (
   parsed: NodeValue,
-  schema: Schema
+  schema: Schema,
+  strictSchema: boolean | undefined = undefined
 ): ValidateJsonOutputs => {
   const result = { json: parsed };
   if (!schema) return result;
-  const validator = new Ajv.default();
-  const validate = validator.compile(schema);
+  const validator = new Ajv.default({ strict: strictSchema });
+  let validate: Ajv.ValidateFunction;
+  try {
+    validate = validator.compile(schema);
+  } catch (e) {
+    return {
+      $error: {
+        kind: "error",
+        error: {
+          type: "schema",
+          message: (e as Error).message,
+        },
+      },
+    };
+  }
+
   const valid = validate(parsed);
   if (!valid) {
     return {
@@ -92,12 +111,19 @@ export const validateJson = (
       },
     };
   }
+
   return result;
 };
 
 const invoke = async (inputs: InputValues): Promise<OutputValues> => {
-  const { json, schema } = inputs as ValidateJsonInputs;
+  const { json, schema, strictSchema } = inputs as ValidateJsonInputs;
   if (!json) throw new Error("The `json` input is required.");
+
+  if (!schema && strictSchema == true) {
+    throw new Error(
+      "The `schema` input is required when `strictSchema` is true."
+    );
+  }
 
   // First, let's try to parse JSON.
   const parsed = tryParseJson(json);
@@ -115,7 +141,7 @@ const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   }
 
   // Now, let's try to validate JSON.
-  return validateJson(parsed, parsedSchema as Schema);
+  return validateJson(parsed, parsedSchema as Schema, strictSchema);
 };
 
 const describe: NodeDescriberFunction = async () => {
@@ -129,6 +155,12 @@ const describe: NodeDescriberFunction = async () => {
       title: "schema",
       description: "Optional schema to validate against.",
       type: "object",
+    })
+    .addProperty("strictSchema", {
+      title: "strictSchema",
+      description:
+        "Optional boolean to enforce or turn off strict validation of the supplied schema.",
+      type: "boolean",
     })
     .addRequired(["json"])
     .build();
