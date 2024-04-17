@@ -1,5 +1,11 @@
 # @google-labs/agent-kit
 
+## 0.5.0
+
+### Minor Changes
+
+- 407b726: Switch Tool Worker to use proper board loading (using `curry`).
+
 ## 0.4.0
 
 ### Minor Changes

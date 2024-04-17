@@ -1,5 +1,36 @@
 # @google-labs/breadboard-hello-world
 
+## 1.2.11
+
+### Patch Changes
+
+- Updated dependencies [b244fba]
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [55ed307]
+- Updated dependencies [7e91ef0]
+- Updated dependencies [407b726]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [be0a78e]
+- Updated dependencies [914353c]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+  - @google-labs/template-kit@0.2.6
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/core-kit@0.7.0
+  - @google-labs/gemini-kit@0.2.0
+  - @google-labs/breadboard-cli@0.9.0
+  - @google-labs/agent-kit@0.5.0
+  - @google-labs/json-kit@0.2.0
+  - @google-labs/palm-kit@0.0.11
+
 ## 1.2.10
 
 ### Patch Changes

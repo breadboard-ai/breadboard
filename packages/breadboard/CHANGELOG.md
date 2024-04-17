@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.17.0
+
+### Minor Changes
+
+- ae79e4a: Implement `InspectableRun.currentNodeEvent`.
+- 72c5c6b: Split run-time and build-time URL resolutions for loading graphs.
+- c5ba396: Introduce `InspectableRun.stack` method.
+- 51159c4: Introduce `InspectableEdge.type`.
+- 6f9ba52: Add support for control edges.
+
+### Patch Changes
+
+- c3cb25f: Make star edge fix up work in reverse, too.
+- dd810dd: Introduce `GraphChangeEvent.visualOnly` to indicate that only visual metadata was updated.
+- 7bafa40: Introduce `graphchangereject` event in Editor API.
+- 2932f4b: Remove `schema` from `output` ports.
+
 ## 0.16.0
 
 ### Minor Changes
