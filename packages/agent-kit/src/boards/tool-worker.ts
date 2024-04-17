@@ -49,7 +49,9 @@ export type ToolWorkerType = NewNodeFactory<
 
 const sampleContext = "What is the square root of e?";
 
-const sampleInstruction = `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.`;
+const sampleInstruction = `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.
+
+In situations where the tool use is not necessary, just carry the conversation with the user.`;
 
 const sampleTools = JSON.stringify([
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json",
@@ -351,8 +353,17 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     text: replyToFunction.text,
   });
 
+  const assembleNonFunctionCallContext = contextAssembler({
+    $metadata: {
+      title: "Assemble Non-function call Context",
+      description: "Assembling the final context for the output",
+    },
+    generated: router.context,
+    context: buildContext.context,
+  });
+
   return {
-    context: router.context,
+    context: assembleNonFunctionCallContext.context,
     text: router.text,
   };
 }).serialize({
