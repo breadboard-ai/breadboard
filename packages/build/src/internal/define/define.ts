@@ -243,7 +243,9 @@ type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
   (
     staticParams: Expand<StaticInvokeParams<I>>,
     dynamicParams: Expand<DynamicInvokeParams<I>>
-  ) => { [K: string]: JsonSerializable }
+  ) =>
+    | { [K: string]: JsonSerializable }
+    | Promise<{ [K: string]: JsonSerializable }>
 >;
 
 type StrictInvokeFn<
@@ -253,7 +255,13 @@ type StrictInvokeFn<
 > = (
   staticInputs: Expand<StaticInvokeParams<I>>,
   dynamicInputs: Expand<DynamicInvokeParams<I>>
-) => {
+) => StrictInvokeFnReturn<I, O, F> | Promise<StrictInvokeFnReturn<I, O, F>>;
+
+type StrictInvokeFnReturn<
+  I extends Record<string, InputPortConfig>,
+  O extends Record<string, OutputPortConfig>,
+  F extends LooseInvokeFn<I>,
+> = {
   [K in keyof Omit<O, "*">]: Convert<O[K]>;
 } & {
   [K in keyof ReturnType<

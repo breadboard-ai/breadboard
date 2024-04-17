@@ -12,6 +12,8 @@ import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
 
 test("mono/mono", async () => {
+  const values = { si1: "foo", si2: 123 };
+
   // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
@@ -28,10 +30,13 @@ test("mono/mono", async () => {
       staticInputs,
       // $ExpectType {}
       dynamicInputs
-    ) => ({ so1: true, so2: null }),
+    ) => {
+      assert.deepEqual(staticInputs, values);
+      assert.deepEqual(dynamicInputs, {});
+      return { so1: true, so2: null };
+    },
   });
 
-  const values = { si1: "foo", si2: 123 };
   // $ExpectType Instance<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, undefined, false>
   const i = d(values);
 
@@ -82,6 +87,11 @@ test("mono/mono", async () => {
     undefined
   );
 
+  assert.deepEqual(await d.invoke(values, null as never), {
+    so1: true,
+    so2: null,
+  });
+
   const expectedSchema = {
     inputSchema: {
       type: "object",
@@ -117,6 +127,8 @@ test("mono/mono", async () => {
 });
 
 test("poly/mono", async () => {
+  const values = { si1: "si1", di1: 1, di2: 2 };
+
   // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
@@ -140,10 +152,12 @@ test("poly/mono", async () => {
       staticInputs,
       // $ExpectType { [x: string]: number; }
       dynamicInputs
-    ) => ({ so1: true }),
+    ) => {
+      assert.deepEqual(staticInputs, { si1: "si1" });
+      assert.deepEqual(dynamicInputs, { di1: 1, di2: 2 });
+      return { so1: true };
+    },
   });
-
-  const values = { si1: "si1", di1: 1, di2: 2 };
 
   // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, undefined, undefined, undefined, false>
   const i = d(values);
@@ -194,6 +208,10 @@ test("poly/mono", async () => {
     i.primaryOutput,
     undefined
   );
+
+  assert.deepEqual(await d.invoke(values, null as never), {
+    so1: true,
+  });
 
   assert.deepEqual(await d.describe(), {
     inputSchema: {
@@ -251,6 +269,8 @@ test("poly/mono", async () => {
 });
 
 test("mono/poly", async () => {
+  const values = { si1: "si1" };
+
   // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
@@ -272,10 +292,13 @@ test("mono/poly", async () => {
       staticInputs,
       // $ExpectType {}
       dynamicInputs
-    ) => ({ so1: true, do1: 123 }),
+    ) => {
+      assert.deepEqual(staticInputs, values);
+      assert.deepEqual(dynamicInputs, {});
+      return { so1: true, do1: 123 };
+    },
   });
 
-  const values = { si1: "si1" };
   // $ExpectType Instance<{ si1: string; }, { so1: boolean; }, number, undefined, undefined, false>
   const i = d(values);
 
@@ -309,6 +332,11 @@ test("mono/poly", async () => {
   // $ExpectType undefined
   i.primaryOutput;
 
+  assert.deepEqual(await d.invoke(values, null as never), {
+    so1: true,
+    do1: 123,
+  });
+
   const expectedSchema = {
     inputSchema: {
       type: "object",
@@ -340,6 +368,8 @@ test("mono/poly", async () => {
 });
 
 test("poly/poly", async () => {
+  const values = { si1: "si1", di1: 1, di2: 2 };
+
   // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
@@ -362,10 +392,13 @@ test("poly/poly", async () => {
       staticInputs,
       // $ExpectType { [x: string]: number; }
       dynamicInputs
-    ) => ({ so1: true, do1: 123 }),
+    ) => {
+      assert.deepEqual(staticInputs, { si1: "si1" });
+      assert.deepEqual(dynamicInputs, { di1: 1, di2: 2 });
+      return { so1: true, do1: 123 };
+    },
   });
 
-  const values = { si1: "si1", di1: 1, di2: 2 };
   // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, number, undefined, undefined, false>
   const i = d(values);
 
@@ -422,6 +455,11 @@ test("poly/poly", async () => {
     i.primaryOutput,
     undefined
   );
+
+  assert.deepEqual(await d.invoke(values, null as never), {
+    so1: true,
+    do1: 123,
+  });
 
   assert.deepEqual(await d.describe(), {
     inputSchema: {
@@ -486,7 +524,29 @@ test("poly/poly", async () => {
   });
 });
 
+test("async invoke function", async () => {
+  const values = { si1: 123 };
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: { type: "number" },
+    },
+    outputs: {
+      so1: { type: "string" },
+    },
+    invoke: async (staticInputs, dynamicInputs) => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      assert.deepEqual(staticInputs, { si1: 123 });
+      assert.deepEqual(dynamicInputs, {});
+      return { so1: "foo" };
+    },
+  });
+  assert.deepEqual(await d.invoke(values, null as never), { so1: "foo" });
+});
+
 test("reflective", async () => {
+  const values = { si1: "si1", di1: 1, di2: 2 };
+
   // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, true, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
@@ -503,10 +563,12 @@ test("reflective", async () => {
       staticInputs,
       // $ExpectType { [x: string]: number; }
       dynamicInputs
-    ) => ({ so1: true }),
+    ) => {
+      assert.deepEqual(staticInputs, { si1: "si1" });
+      assert.deepEqual(dynamicInputs, { di1: 1, di2: 2 });
+      return { so1: true };
+    },
   });
-
-  const values = { si1: "si1", di1: 1, di2: 2 };
 
   // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; di1: string; di2: string; }, undefined, undefined, undefined, true>
   const i = d(values);
@@ -566,6 +628,10 @@ test("reflective", async () => {
     undefined
   );
 
+  assert.deepEqual(await d.invoke(values, null as never), {
+    so1: true,
+  });
+
   assert.deepEqual(await d.describe(), {
     inputSchema: {
       type: "object",
@@ -606,6 +672,8 @@ test("reflective", async () => {
 });
 
 test("primary input", () => {
+  const values = { si1: 123 };
+
   // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, false, "si1", undefined>
   const d = defineNodeType({
     name: "foo",
@@ -624,26 +692,45 @@ test("primary input", () => {
   });
 
   // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", undefined, false>
-  const i = d({ si1: 123 });
+  const i = d(values);
 
-  // $ExpectType { si1: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<number>
-  i.inputs.si1;
-  // @ts-expect-error
-  i.inputs.di1;
+  assert.ok(
+    // $ExpectType { si1: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.si1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di1,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // @ts-expect-error
-  i.outputs.di1;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.di1,
+    undefined
+  );
 
-  // $ExpectType InputPort<number>
-  i.primaryInput;
-  // $ExpectType undefined
-  i.primaryOutput;
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.primaryInput
+  );
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryOutput,
+    undefined
+  );
 });
 
 test("primary output", () => {
@@ -667,24 +754,43 @@ test("primary output", () => {
   // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, undefined, "so1", false>
   const i = d({ si1: 123 });
 
-  // $ExpectType { si1: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<number>
-  i.inputs.si1;
-  // @ts-expect-error
-  i.inputs.di1;
+  assert.ok(
+    // $ExpectType { si1: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.si1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di1,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // @ts-expect-error
-  i.outputs.di1;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.di1,
+    undefined
+  );
 
-  // $ExpectType undefined
-  i.primaryInput;
-  // $ExpectType OutputPort<boolean>
-  i.primaryOutput;
+  assert.equal(
+    // $ExpectType undefined
+    i.primaryInput,
+    undefined
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.primaryOutput
+  );
 });
 
 test("primary input + output", () => {
@@ -708,24 +814,54 @@ test("primary input + output", () => {
   // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", "so1", false>
   const i = d({ si1: 123 });
 
-  // $ExpectType { si1: InputPort<number>; }
-  i.inputs;
-  // $ExpectType InputPort<number>
-  i.inputs.si1;
-  // @ts-expect-error
-  i.inputs.di1;
+  assert.ok(
+    // $ExpectType { si1: InputPort<number>; }
+    i.inputs
+  );
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.inputs.si1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.di1,
+    undefined
+  );
 
-  // $ExpectType { so1: OutputPort<boolean>; }
-  i.outputs;
-  // $ExpectType OutputPort<boolean>
-  i.outputs.so1;
-  // @ts-expect-error
-  i.outputs.di1;
+  assert.ok(
+    // $ExpectType { so1: OutputPort<boolean>; }
+    i.outputs
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.outputs.so1
+  );
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.di1,
+    undefined
+  );
 
-  // $ExpectType InputPort<number>
-  i.primaryInput;
-  // $ExpectType OutputPort<boolean>
-  i.primaryOutput;
+  assert.ok(
+    // $ExpectType InputPort<number>
+    i.primaryInput
+  );
+  assert.ok(
+    // $ExpectType OutputPort<boolean>
+    i.primaryOutput
+  );
+});
+
+test("sync invoke", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      so1: { type: "string" },
+    },
+    invoke: () => ({ so1: "foo" }),
+  });
+  assert.deepEqual(await d.invoke({}, null as never), { so1: "foo" });
 });
 
 test("error: missing name", () => {
