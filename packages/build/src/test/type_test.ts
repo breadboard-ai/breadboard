@@ -98,7 +98,7 @@ describe("object", () => {
 
   test("empty object", () => {
     const obj1 = object({});
-    // $ExpectType {}
+    // $ExpectType object & JsonSerializable
     type t1 = ConvertBreadboardType<typeof obj1>;
     assert.deepEqual(toJSONSchema(obj1), {
       type: "object",
@@ -194,7 +194,7 @@ describe("object", () => {
 
   test("object no known properties", () => {
     const obj = object({});
-    // $ExpectType {}
+    // $ExpectType object & JsonSerializable
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",

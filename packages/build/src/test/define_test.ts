@@ -10,6 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
+import { object } from "../internal/type-system/object.js";
 
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
@@ -1528,4 +1529,28 @@ test("error: assertOutput on existing static output", () => {
       ),
     /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" already has a static port called "so1". Use "<node>.outputs.so1" instead./
   );
+});
+
+test("error: object types must be plain objects at initialization", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: object({}) },
+    },
+    outputs: {},
+    invoke: () => ({}),
+  });
+  const i = d({
+    ok1: {},
+    ok2: { foo: 123 },
+
+    // @ts-expect-error
+    bad1: 123,
+    // @ts-expect-error
+    bad1: "foo",
+    // @ts-expect-error
+    bad1: globalThis,
+    // @ts-expect-error
+    bad1: Object,
+  });
 });
