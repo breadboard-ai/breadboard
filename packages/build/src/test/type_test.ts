@@ -102,8 +102,6 @@ describe("object", () => {
     type t1 = ConvertBreadboardType<typeof obj1>;
     assert.deepEqual(toJSONSchema(obj1), {
       type: "object",
-      properties: {},
-      required: [],
     });
   });
 
@@ -200,8 +198,6 @@ describe("object", () => {
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
-      properties: {},
-      required: [],
     });
   });
 

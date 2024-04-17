@@ -21,6 +21,13 @@ export function object<T extends Record<string, BreadboardType>>(
 ): AdvancedBreadboardType<{
   [P in keyof T]: ConvertBreadboardType<T[P]>;
 }> {
+  if (Object.keys(properties).length === 0) {
+    return {
+      jsonSchema: {
+        type: "object",
+      },
+    };
+  }
   return {
     jsonSchema: {
       type: "object",
