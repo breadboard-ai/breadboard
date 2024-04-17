@@ -1,8 +1,5 @@
 {
   "name": "@breadboard-ai/import",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "version": "0.1.0",
   "description": "The OpenAPI import library for Breadboard",
   "main": "./dist/src/index.js",
@@ -16,7 +13,7 @@
     "lint": "wireit"
   },
   "repository": {
-    "directory": "packages/breadboard-import",
+    "directory": "packages/import",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
