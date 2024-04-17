@@ -342,14 +342,18 @@ TypeScript API.
 - `"string"`
 - `"number"`
 - `"boolean"`
+- `"null"`
 
 ### Utility types
 
+- `array(<type>)`: A function which generates a JSON Schema `array` and its
+  corresponding TypeScript `Array<...>` type.
+
+- `object({ prop1: <type1>, prop2: <type2>, ... })`: A function which generates a
+  JSON Schema `object` and its corresponding TypeScript `{...}` type.
+
 - `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
   `anyOf` and its corresponding TypeScript union (`type1 | type2`).
-
-- `object({ prop1: <type1>, prop2: <type2> })`: A function which generates a
-  JSON Schema `object` and its corresponding TypeScript `{...}` type.
 
 ### Unsafe type escape hatch
 
