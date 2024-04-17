@@ -524,6 +524,26 @@ test("poly/poly", async () => {
   });
 });
 
+test("async invoke function", async () => {
+  const values = { si1: 123 };
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: { type: "number" },
+    },
+    outputs: {
+      so1: { type: "string" },
+    },
+    invoke: async (staticInputs, dynamicInputs) => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      assert.deepEqual(staticInputs, { si1: 123 });
+      assert.deepEqual(dynamicInputs, {});
+      return { so1: "foo" };
+    },
+  });
+  assert.deepEqual(await d.invoke(values, null as never), { so1: "foo" });
+});
+
 test("reflective", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
