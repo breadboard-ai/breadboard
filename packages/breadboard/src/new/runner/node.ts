@@ -35,7 +35,7 @@ const nodeIdVendor = new IdVendor();
 // methods that should be base as "TODO:BASE" below, including complications.
 export class BaseNode<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >
   extends AbstractNode<I, O>
   implements Serializeable
@@ -103,7 +103,7 @@ export class BaseNode<
 
   #getHandlerDescribe(scope: ScopeInterface) {
     const handler = this.#handler ?? scope.getHandler(this.type);
-    return handler && typeof handler !== "function"
+    return handler && "describe" in handler && handler.describe
       ? handler.describe
       : undefined;
   }
@@ -122,7 +122,12 @@ export class BaseNode<
 
     let result;
 
-    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
+    const handlerFn =
+      handler && "invoke" in handler && handler.invoke
+        ? handler.invoke
+        : typeof handler === "function"
+          ? handler
+          : undefined;
 
     if (handlerFn) {
       result = (await handlerFn(inputs, this)) as O;

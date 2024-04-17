@@ -98,7 +98,7 @@ function setupKits<
         additionalProperties: false,
         properties: {
           boardLen: {
-            title: "boardLen",
+            title: "len",
             type: "number",
           },
         },
@@ -213,7 +213,7 @@ function setupKits<
         additionalProperties: false,
         properties: {
           boardSum: {
-            title: "boardSum",
+            title: "sum",
             type: "number",
           },
         },
