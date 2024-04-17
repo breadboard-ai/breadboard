@@ -140,8 +140,10 @@ values.
 
 A `describe` function will be passed a set of values (in the same way as
 `invoke`), and should return an object containing either or both of `inputs` and
-`outputs`, each an array of strings, the names for the input and/or output ports
-that should be dynamically opened.
+`outputs`, which can either be an array of strings or an object. When an array
+of strings, the strings are the names of the ports to open. When an object, the
+keys are the names of the ports to open, and the values are an object matching
+`{description: string}`.
 
 For example, in `templater` above, the `describe` function parses the static
 `template` input and opens a port for each of the template's placeholders.

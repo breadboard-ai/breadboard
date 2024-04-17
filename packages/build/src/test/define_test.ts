@@ -864,6 +864,58 @@ test("sync invoke", async () => {
   assert.deepEqual(await d.invoke({}, null as never), { so1: "foo" });
 });
 
+test("dynamic port descriptions", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "string" },
+    },
+    outputs: {
+      "*": { type: "string" },
+    },
+    describe: (_, inputs) => ({
+      inputs: Object.fromEntries(
+        Object.keys(inputs).map((name) => [
+          name,
+          { description: `input "${name}"` },
+        ])
+      ),
+      outputs: Object.fromEntries(
+        Object.keys(inputs).map((name) => [
+          name,
+          { description: `output "${name}"` },
+        ])
+      ),
+    }),
+    invoke: () => ({}),
+  });
+
+  assert.deepEqual(await d.describe({ foo: "foo" }), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+          description: 'input "foo"',
+        },
+      },
+      required: ["foo"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+          description: 'output "foo"',
+        },
+      },
+      required: ["foo"],
+    },
+  });
+});
+
 test("error: missing name", () => {
   assert.throws(
     () =>
