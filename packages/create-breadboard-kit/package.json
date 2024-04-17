@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A starter kit for your breadboard kits",
   "main": "dist/src/index.js",
   "bin": {
@@ -86,7 +86,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.16.0",
+    "@google-labs/breadboard": "^0.17.0",
     "base-create": "^3.0.8"
   }
 }

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- de524a4: Change the describe function to return only the names of ports instead of full JSON schema, and be stricter about when it is required/optional/forbidden based on the port configurations.
+
+### Patch Changes
+
+- de524a4: Improved type-safety and type descriptions relating to node definitions.
+- de524a4: Add support for reflective nodes, where the inputs provided at instantiation automatically reflect to outputs.
+- de524a4: Add `assertOutput` method, for getting an output port in cases where it is not possible at compile-time to know what output ports will exist.
+- de524a4: Add support for polymorphic nodes with dynamic output ports.
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.3.1
 
 ### Patch Changes

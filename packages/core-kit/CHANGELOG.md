@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- 0831735: Introduce `curry` node.
+- d60f38b: Deprecate `path` on `core.invoke`.
+
+### Patch Changes
+
+- 5602f1e: Remove the warning when encountering unknown function format.
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.6.0
 
 ### Minor Changes

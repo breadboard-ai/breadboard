@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- 3a31595: Add support for metadata editing
+- 634712b: Teach Visual Editor about embedded boards
+- 5a7bc86: Teach Node Info to use Board Selector
+- 68c2ac4: Consolidate UI components somewhat
+
+### Patch Changes
+
+- 72b3319: Fix issue with string values in array-editor
+- 41afcac: Centralize graph position on renderer resize
+- f6f5202: Educate Array Editor about boards
+- 152f17d: Teach GraphEdge about InspectableEdgeType
+- 276152e: Add "quick jump" for embedded subgraphs
+- a5543eb: Add tab support for code editor
+- 1b6fb74: Pass the entire SettingsStore to the bb-ui-controller.
+- d439ae5: Inform Array Editor about numbers
+- 6498389: Educate sub board selector how to change sub board info
+- 229ad22: Add support for constant wires
+- 231dd0e: Adjust threshold for curves on edges
+- 12c1a72: Teach node info about code
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.5.0
 
 ### Minor Changes

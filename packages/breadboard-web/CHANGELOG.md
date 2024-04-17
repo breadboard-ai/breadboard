@@ -1,5 +1,73 @@
 # @google-labs/breadboard-web
 
+## 1.7.0
+
+### Minor Changes
+
+- 3a31595: Add support for metadata editing
+- 634712b: Teach Visual Editor about embedded boards
+- 5a7bc86: Teach Node Info to use Board Selector
+- 68c2ac4: Consolidate UI components somewhat
+
+### Patch Changes
+
+- 276152e: Add "quick jump" for embedded subgraphs
+- 8046c47: Be a little more economical with settings saves
+- a5543eb: Add tab support for code editor
+- 7bafa40: Introduce `graphchangereject` event in Editor API.
+- 6498389: Educate sub board selector how to change sub board info
+- 9a8bd0e: Teach Preview to use & save secrets from settings
+- 12c1a72: Teach node info about code
+- Updated dependencies [b244fba]
+- Updated dependencies [de524a4]
+- Updated dependencies [72b3319]
+- Updated dependencies [41afcac]
+- Updated dependencies [f6f5202]
+- Updated dependencies [c3cb25f]
+- Updated dependencies [de524a4]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [152f17d]
+- Updated dependencies [de524a4]
+- Updated dependencies [276152e]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [de524a4]
+- Updated dependencies [3a31595]
+- Updated dependencies [634712b]
+- Updated dependencies [a5543eb]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [1b6fb74]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [d439ae5]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [55ed307]
+- Updated dependencies [cffceb9]
+- Updated dependencies [407b726]
+- Updated dependencies [5a7bc86]
+- Updated dependencies [68c2ac4]
+- Updated dependencies [6498389]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [229ad22]
+- Updated dependencies [914353c]
+- Updated dependencies [231dd0e]
+- Updated dependencies [12c1a72]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+- Updated dependencies [de524a4]
+  - @google-labs/template-kit@0.2.6
+  - @breadboard-ai/build@0.4.0
+  - @google-labs/breadboard-ui@0.6.0
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/core-kit@0.7.0
+  - @google-labs/gemini-kit@0.2.0
+  - @google-labs/node-nursery-web@1.1.0
+  - @google-labs/agent-kit@0.5.0
+  - @google-labs/json-kit@0.2.0
+  - @google-labs/palm-kit@0.0.11
+  - @google-labs/pinecone-kit@0.1.9
+
 ## 1.6.0
 
 ### Minor Changes

@@ -1,5 +1,50 @@
 # @google-labs/breadboard-cli
 
+## 0.9.0
+
+### Minor Changes
+
+- 7e91ef0: CLI now uses OpenAPI import package
+
+### Patch Changes
+
+- be0a78e: Make settings work in debugger.
+- Updated dependencies [b244fba]
+- Updated dependencies [de524a4]
+- Updated dependencies [c3cb25f]
+- Updated dependencies [de524a4]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [de524a4]
+- Updated dependencies [276152e]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [8046c47]
+- Updated dependencies [de524a4]
+- Updated dependencies [3a31595]
+- Updated dependencies [634712b]
+- Updated dependencies [a5543eb]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [7e91ef0]
+- Updated dependencies [5a7bc86]
+- Updated dependencies [68c2ac4]
+- Updated dependencies [6498389]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [9a8bd0e]
+- Updated dependencies [12c1a72]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+- Updated dependencies [de524a4]
+  - @google-labs/template-kit@0.2.6
+  - @breadboard-ai/build@0.4.0
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/breadboard-web@1.7.0
+  - @google-labs/core-kit@0.7.0
+  - @breadboard-ai/import@0.1.0
+
 ## 0.8.2
 
 ### Patch Changes
