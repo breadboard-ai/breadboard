@@ -812,6 +812,12 @@
       "version": "0.0.1",
       "edges": [
         {
+          "from": "fn-3",
+          "to": "output-2",
+          "out": "context",
+          "in": "context"
+        },
+        {
           "from": "router",
           "to": "assembleBoardInvoke",
           "out": "context",
@@ -837,15 +843,33 @@
         },
         {
           "from": "router",
-          "to": "output-2",
+          "to": "fn-3",
           "out": "context",
-          "in": "context"
+          "in": "generated"
         },
         {
           "from": "router",
           "to": "output-2",
           "out": "text",
           "in": "text"
+        },
+        {
+          "from": "buildContext",
+          "to": "doWork",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "buildContext",
+          "to": "formatFunctionResponse",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "buildContext",
+          "to": "fn-3",
+          "out": "context",
+          "in": "context"
         },
         {
           "from": "doWork",
@@ -872,6 +896,24 @@
           "in": "context"
         },
         {
+          "from": "input-1",
+          "to": "buildContext",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "input-1",
+          "to": "buildContext",
+          "out": "instruction",
+          "in": "instruction"
+        },
+        {
+          "from": "input-1",
+          "to": "turnBoardsToFunctions",
+          "out": "tools",
+          "in": "list"
+        },
+        {
           "from": "formatFunctionDeclarations",
           "to": "doWork",
           "out": "tools",
@@ -888,18 +930,6 @@
           "to": "replyToFunction",
           "out": "tools",
           "in": "tools"
-        },
-        {
-          "from": "buildContext",
-          "to": "doWork",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "buildContext",
-          "to": "formatFunctionResponse",
-          "out": "context",
-          "in": "context"
         },
         {
           "from": "invokeBoard",
@@ -936,24 +966,6 @@
           "to": "formatFunctionDeclarations",
           "out": "list",
           "in": "list"
-        },
-        {
-          "from": "input-1",
-          "to": "buildContext",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "input-1",
-          "to": "buildContext",
-          "out": "instruction",
-          "in": "instruction"
-        },
-        {
-          "from": "input-1",
-          "to": "turnBoardsToFunctions",
-          "out": "tools",
-          "in": "list"
         }
       ],
       "nodes": [
@@ -977,6 +989,19 @@
           }
         },
         {
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Assemble Non-function call Context",
+            "description": "Assembling the final context for the output"
+          }
+        },
+        {
           "id": "router",
           "type": "runJavascript",
           "configuration": {
@@ -987,6 +1012,19 @@
           "metadata": {
             "title": "Router",
             "description": "Routing to either function call invocation or text reply"
+          }
+        },
+        {
+          "id": "buildContext",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
+            "name": "buildContext",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Build Context",
+            "description": "Combining the context and instruction into a single context"
           }
         },
         {
@@ -1027,6 +1065,54 @@
           }
         },
         {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "title": "Context",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "default": "What is the square root of e?"
+                },
+                "instruction": {
+                  "title": "Instruction",
+                  "format": "multiline",
+                  "examples": [
+                    "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
+                  ],
+                  "type": "string"
+                },
+                "tools": {
+                  "title": "Tools",
+                  "type": "array",
+                  "description": "The list to iterate over.",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "board"
+                    ]
+                  },
+                  "examples": [
+                    "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
+                  ],
+                  "default": "[]"
+                }
+              },
+              "required": [
+                "instruction"
+              ]
+            }
+          }
+        },
+        {
           "id": "formatFunctionDeclarations",
           "type": "runJavascript",
           "configuration": {
@@ -1037,19 +1123,6 @@
           "metadata": {
             "title": "Format Function Declarations",
             "description": "Formatting the function declarations"
-          }
-        },
-        {
-          "id": "buildContext",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
-            "name": "buildContext",
-            "raw": true
-          },
-          "metadata": {
-            "title": "Build Context",
-            "description": "Combining the context and instruction into a single context"
           }
         },
         {
@@ -1107,54 +1180,6 @@
           "metadata": {
             "title": "Turn Boards into Functions",
             "description": "Turning provided boards into functions"
-          }
-        },
-        {
-          "id": "input-1",
-          "type": "input",
-          "configuration": {
-            "schema": {
-              "type": "object",
-              "properties": {
-                "context": {
-                  "title": "Context",
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
-                  },
-                  "default": "What is the square root of e?"
-                },
-                "instruction": {
-                  "title": "Instruction",
-                  "format": "multiline",
-                  "examples": [
-                    "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math."
-                  ],
-                  "type": "string"
-                },
-                "tools": {
-                  "title": "Tools",
-                  "type": "array",
-                  "description": "The list to iterate over.",
-                  "items": {
-                    "type": "object",
-                    "behavior": [
-                      "board"
-                    ]
-                  },
-                  "examples": [
-                    "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
-                  ],
-                  "default": "[]"
-                }
-              },
-              "required": [
-                "instruction"
-              ]
-            }
           }
         },
         {
