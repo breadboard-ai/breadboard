@@ -17,6 +17,7 @@ import type {
   SerializableOutputPort,
 } from "./serializable.js";
 
+// TODO(aomarks) Combine with PortConfig from define.ts
 export type PortConfig = StaticPortConfig | DynamicPortConfig;
 
 /**
@@ -58,6 +59,8 @@ interface StaticPortConfig {
    * concise.
    */
   primary?: boolean;
+
+  multiline?: true;
 }
 
 /**
