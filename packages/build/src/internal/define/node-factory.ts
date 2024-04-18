@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NewNodeFactory } from "@google-labs/breadboard";
+import type { NewNodeFactory, NewNodeValue } from "@google-labs/breadboard";
 import type { Definition } from "./definition.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { Expand } from "../common/type-util.js";
+
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * `NodeFactoryFromDefinition` takes a {@link NodeDefinition} type (as returned
@@ -15,17 +18,17 @@ import type { Expand } from "../common/type-util.js";
  * for use with {@link KitBuilder}.
  */
 export type NodeFactoryFromDefinition<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   D extends Definition<any, any, any, any, any, any, any>,
 > =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   D extends Definition<infer SI, infer SO, infer DI, infer DO, any, any, any>
     ? NewNodeFactory<
         Expand<
-          SI & (DI extends JsonSerializable ? { [K: string]: DI } : object)
+          SI &
+            (DI extends JsonSerializable ? { [K: string]: NewNodeValue } : {})
         >,
         Expand<
-          SO & (DO extends JsonSerializable ? { [K: string]: DO } : object)
+          SO &
+            (DO extends JsonSerializable ? { [K: string]: NewNodeValue } : {})
         >
       >
     : never;
