@@ -140,6 +140,7 @@ export function defineNodeType<
   Expand<GetStaticTypes<O>>,
   GetDynamicTypes<I>,
   GetDynamicTypes<O>,
+  GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
   GetReflective<O>,
   GetPrimary<I>,
   GetPrimary<O>
@@ -161,6 +162,7 @@ export function defineNodeType<
     Expand<GetStaticTypes<O>>,
     GetDynamicTypes<I>,
     GetDynamicTypes<O>,
+    GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
     GetReflective<O>,
     GetPrimary<I>,
     GetPrimary<O>
@@ -209,7 +211,7 @@ function primary(configs: PortConfigs): keyof typeof configs | undefined {
 type StrictInputs<I extends Record<string, InputPortConfig>> = {
   [K in keyof I]: K extends "*"
     ? StrictMatch<I[K], DynamicInputPortConfig>
-    : StrictMatch<I[K], StaticInputPortConfig>;
+    : StrictMatch<I[K], StaticInputPortConfig & { default?: Convert<I[K]> }>;
 } & ForbidMultiplePrimaries<I>;
 
 type StrictOutputs<O extends Record<string, OutputPortConfig>> = {
@@ -286,6 +288,14 @@ type DynamicInvokeParams<I extends Record<string, InputPortConfig>> =
 type GetStaticTypes<C extends Record<string, PortConfig>> = {
   [K in Exclude<keyof C, "*">]: K extends "*" ? never : Convert<C[K]>;
 };
+
+type GetOptionalInputs<I extends Record<string, InputPortConfig>> = {
+  [K in keyof I]: I[K] extends StaticInputPortConfig
+    ? I[K]["default"] extends JsonSerializable
+      ? K
+      : never
+    : never;
+}[keyof I];
 
 type GetDynamicTypes<C extends Record<string, PortConfig>> =
   C["*"] extends PortConfig ? Convert<C["*"]> : undefined;

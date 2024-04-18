@@ -61,6 +61,8 @@ interface StaticPortConfig {
   primary?: boolean;
 
   multiline?: true;
+
+  default?: JsonSerializable;
 }
 
 /**
@@ -82,6 +84,8 @@ interface DynamicPortConfig extends StaticPortConfig {
 // originally a symbol to try and make a package-private API).
 export const OutputPortGetter = "__output";
 
+export const DefaultValue = Symbol();
+
 /**
  * A Breadboard node port which receives values.
  */
@@ -91,14 +95,14 @@ export class InputPort<T extends JsonSerializable>
   readonly type: BreadboardType;
   readonly name: string;
   readonly node: SerializableNode;
-  readonly value?: ValueOrOutputPort<T>;
+  readonly value?: ValueOrOutputPort<T> | typeof DefaultValue;
   readonly #fakeForTypeDiscrimination!: T;
 
   constructor(
     type: BreadboardType,
     name: string,
     node: SerializableNode,
-    value: ValueOrOutputPort<T>
+    value: ValueOrOutputPort<T> | typeof DefaultValue
   ) {
     this.type = type;
     this.name = name;

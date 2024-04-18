@@ -259,6 +259,116 @@ test("raw value input is serialized to configuration", () => {
   );
 });
 
+test("default value input is omitted from configuration", () => {
+  const d = defineNodeType({
+    name: "myNode",
+    inputs: {
+      required: { type: "string" },
+      optional: { type: "string", default: "foo" },
+    },
+    outputs: {
+      out: { type: "string" },
+    },
+    invoke: () => ({ out: "foo" }),
+  });
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut: d({
+          required: "foo",
+        }).outputs.out,
+      },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {
+            required: "foo",
+          },
+        },
+      ],
+      edges: [{ from: "myNode-0", out: "out", to: "output-0", in: "boardOut" }],
+    }
+  );
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut: d({
+          required: "foo",
+          optional: "bar",
+        }).outputs.out,
+      },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {
+            optional: "bar",
+            required: "foo",
+          },
+        },
+      ],
+      edges: [{ from: "myNode-0", out: "out", to: "output-0", in: "boardOut" }],
+    }
+  );
+});
+
 test("input", () => {
   const myInput = input();
   const myNode = defineNodeType({

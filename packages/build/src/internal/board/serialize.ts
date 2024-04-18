@@ -11,7 +11,7 @@ import type {
   NodeValue,
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
-import { OutputPortGetter } from "../common/port.js";
+import { DefaultValue, OutputPortGetter } from "../common/port.js";
 import type {
   SerializableBoard,
   SerializableInputPort,
@@ -210,6 +210,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         throw new Error(
           `Internal error: value was undefined for a ${inputPort.node.type}:${inputPort.name} port.`
         );
+      } else if (value === DefaultValue) {
+        // Omit the value.
       } else {
         configurationEntries.push([
           portName,

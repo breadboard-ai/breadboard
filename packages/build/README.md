@@ -57,6 +57,8 @@ the following fields:
   displayed in the Breadboard visual editor and in other places where
   introspection/debugging is performed.
 
+- `default`: An optional default value for this input.
+
 - `primary`: (Optional) Enables a syntactic sugar feature for an output port to
   make wiring nodes more concise. When a node has a `primary` output port, then
   it becomes possible to use the node itself in API positions where an output
