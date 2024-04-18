@@ -357,6 +357,9 @@ TypeScript API.
 - `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
   `anyOf` and its corresponding TypeScript union (`type1 | type2`).
 
+- `enumeration(<type1>, <type2>, ...)`: A function which generates a JSON Schema
+  `enum` and its corresponding TypeScript union (`type1 | type2`).
+
 ### Unsafe type escape hatch
 
 The `unsafeType` function can be used as a last resort escape hatch when the
