@@ -33,7 +33,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc",
+      "command": "tsc --pretty",
       "dependencies": [
         "typescript-files-and-deps"
       ],
