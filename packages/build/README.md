@@ -351,8 +351,10 @@ TypeScript API.
 - `array(<type>)`: A function which generates a JSON Schema `array` and its
   corresponding TypeScript `Array<...>` type.
 
-- `object({ prop1: <type1>, prop2: <type2>, ... })`: A function which generates a
-  JSON Schema `object` and its corresponding TypeScript `{...}` type.
+- `object({ prop1: <type1>, prop2: <type2>, ... }, [<additional>])`: A function
+  which generates a JSON Schema `object` and its corresponding TypeScript
+  `{...}` type. If the optional second argument is set, then the object will
+  also allow additional properties of the given type.
 
 - `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
   `anyOf` and its corresponding TypeScript union (`type1 | type2`).

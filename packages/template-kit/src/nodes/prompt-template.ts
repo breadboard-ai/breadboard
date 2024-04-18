@@ -66,7 +66,7 @@ export default defineNodeType({
       description: "The template with placeholders to fill in.",
     },
     "*": {
-      type: anyOf("string", object({})),
+      type: anyOf("string", object({}, "unknown")),
     },
   },
   outputs: {
