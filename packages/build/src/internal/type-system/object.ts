@@ -9,6 +9,7 @@ import {
   type AdvancedBreadboardType,
   type BreadboardType,
   type ConvertBreadboardType,
+  type JsonSerializable,
 } from "./type.js";
 
 /**
@@ -18,9 +19,18 @@ import {
  */
 export function object<T extends Record<string, BreadboardType>>(
   properties: T
-): AdvancedBreadboardType<{
-  [P in keyof T]: ConvertBreadboardType<T[P]>;
-}> {
+): AdvancedBreadboardType<
+  keyof T extends never
+    ? object & JsonSerializable
+    : { [P in keyof T]: ConvertBreadboardType<T[P]> }
+> {
+  if (Object.keys(properties).length === 0) {
+    return {
+      jsonSchema: {
+        type: "object",
+      },
+    };
+  }
   return {
     jsonSchema: {
       type: "object",

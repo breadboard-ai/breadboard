@@ -311,6 +311,10 @@ type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
 type LooseDescribeFn = Function;
 
+export type DynamicInputPorts =
+  | string[]
+  | { [K: string]: { description: string } };
+
 type StrictDescribeFn<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
@@ -323,7 +327,7 @@ type StrictDescribeFn<
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
           ) => {
-            inputs: string[];
+            inputs: DynamicInputPorts;
             outputs?: never;
           };
         }
@@ -333,8 +337,8 @@ type StrictDescribeFn<
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
           ) => {
-            inputs?: string[];
-            outputs: string[];
+            inputs?: DynamicInputPorts;
+            outputs: DynamicInputPorts;
           };
         }
     : {
@@ -343,7 +347,7 @@ type StrictDescribeFn<
           staticInputs: Expand<StaticInvokeParams<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>
         ) => {
-          inputs: string[];
+          inputs: DynamicInputPorts;
           outputs?: never;
         };
       }
@@ -355,7 +359,7 @@ type StrictDescribeFn<
           dynamicInputs: Expand<DynamicInvokeParams<I>>
         ) => {
           inputs?: never;
-          outputs: string[];
+          outputs: DynamicInputPorts;
         };
       }
     : {

@@ -73,7 +73,10 @@ export type ConvertBreadboardType<BT extends BreadboardType> =
  */
 export function toJSONSchema(type: BreadboardType): JSONSchema4 {
   if (typeof type === "object" && "jsonSchema" in type) {
-    return type.jsonSchema;
+    // Make a copy because it's not uncommon for callers to mutate this object,
+    // (e.g. adding a description to a port schema), and 2 ports might share an
+    // advanced breadboard type instance (e.g. dynamic ports).
+    return structuredClone(type.jsonSchema);
   }
   switch (type) {
     case "string":

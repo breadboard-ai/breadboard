@@ -75,14 +75,14 @@ test("anyOf", () => {
   // $ExpectType number | boolean
   type t2 = ConvertBreadboardType<typeof with2>;
   assert.deepEqual(toJSONSchema(with2), {
-    anyOf: [{ type: "number" }, { type: "boolean" }],
+    type: ["number", "boolean"],
   });
 
   const with3 = anyOf("number", "boolean", "string") satisfies BreadboardType;
   // $ExpectType string | number | boolean
   type t3 = ConvertBreadboardType<typeof with3>;
   assert.deepEqual(toJSONSchema(with3), {
-    anyOf: [{ type: "number" }, { type: "boolean" }, { type: "string" }],
+    type: ["number", "boolean", "string"],
   });
 
   /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -98,12 +98,10 @@ describe("object", () => {
 
   test("empty object", () => {
     const obj1 = object({});
-    // $ExpectType {}
+    // $ExpectType object & JsonSerializable
     type t1 = ConvertBreadboardType<typeof obj1>;
     assert.deepEqual(toJSONSchema(obj1), {
       type: "object",
-      properties: {},
-      required: [],
     });
   });
 
@@ -153,7 +151,7 @@ describe("object", () => {
     assert.deepEqual(toJSONSchema(obj4), {
       type: "object",
       properties: {
-        foo: { anyOf: [{ type: "string" }, { type: "number" }] },
+        foo: { type: ["string", "number"] },
       },
       required: ["foo"],
     });
@@ -196,12 +194,10 @@ describe("object", () => {
 
   test("object no known properties", () => {
     const obj = object({});
-    // $ExpectType {}
+    // $ExpectType object & JsonSerializable
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
-      properties: {},
-      required: [],
     });
   });
 
@@ -268,7 +264,7 @@ describe("array", () => {
     type arrayType = ConvertBreadboardType<typeof arr>;
     assert.deepEqual(toJSONSchema(arr), {
       type: "array",
-      items: { anyOf: [{ type: "string" }, { type: "number" }] },
+      items: { type: ["string", "number"] },
     });
   });
 

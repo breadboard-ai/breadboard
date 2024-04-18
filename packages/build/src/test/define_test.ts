@@ -10,6 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
+import { object } from "../internal/type-system/object.js";
 
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
@@ -852,16 +853,102 @@ test("primary input + output", () => {
   );
 });
 
-test("sync invoke", async () => {
+test("multiline", async () => {
   const d = defineNodeType({
     name: "foo",
-    inputs: {},
-    outputs: {
-      so1: { type: "string" },
+    inputs: {
+      si1: {
+        type: "string",
+        multiline: true,
+      },
     },
-    invoke: () => ({ so1: "foo" }),
+    outputs: {
+      so1: {
+        type: "string",
+        multiline: true,
+      },
+    },
+    invoke: () => {
+      return { so1: "foo" };
+    },
   });
-  assert.deepEqual(await d.invoke({}, null as never), { so1: "foo" });
+
+  assert.deepEqual(await d.describe(), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        si1: {
+          title: "si1",
+          type: "string",
+          format: "multiline",
+        },
+      },
+      required: ["si1"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        so1: {
+          title: "so1",
+          type: "string",
+          format: "multiline",
+        },
+      },
+      required: ["so1"],
+    },
+  });
+});
+
+test("dynamic port descriptions", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "string" },
+    },
+    outputs: {
+      "*": { type: "string" },
+    },
+    describe: (_, inputs) => ({
+      inputs: Object.fromEntries(
+        Object.keys(inputs).map((name) => [
+          name,
+          { description: `input "${name}"` },
+        ])
+      ),
+      outputs: Object.fromEntries(
+        Object.keys(inputs).map((name) => [
+          name,
+          { description: `output "${name}"` },
+        ])
+      ),
+    }),
+    invoke: () => ({}),
+  });
+
+  assert.deepEqual(await d.describe({ foo: "foo" }), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+          description: 'input "foo"',
+        },
+      },
+      required: ["foo"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+          description: 'output "foo"',
+        },
+      },
+      required: ["foo"],
+    },
+  });
 });
 
 test("error: missing name", () => {
@@ -1442,4 +1529,28 @@ test("error: assertOutput on existing static output", () => {
       ),
     /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" already has a static port called "so1". Use "<node>.outputs.so1" instead./
   );
+});
+
+test("error: object types must be plain objects at initialization", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: object({}) },
+    },
+    outputs: {},
+    invoke: () => ({}),
+  });
+  const i = d({
+    ok1: {},
+    ok2: { foo: 123 },
+
+    // @ts-expect-error
+    bad1: 123,
+    // @ts-expect-error
+    bad1: "foo",
+    // @ts-expect-error
+    bad1: globalThis,
+    // @ts-expect-error
+    bad1: Object,
+  });
 });

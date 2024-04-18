@@ -5,7 +5,11 @@
  */
 
 import { OutputValues, NodeHandlers } from "./types.js";
-import { Kit, InputValues as OriginalInputValues } from "../../types.js";
+import {
+  Kit,
+  NodeHandlerFunction,
+  InputValues as OriginalInputValues,
+} from "../../types.js";
 
 // TODO: This is wraps classic handlers that expected resolved inputs into
 // something that accepts promises. We should either change all handlers to
@@ -15,9 +19,13 @@ export function handlersFromKit(kit: Kit): NodeHandlers {
   return Object.fromEntries(
     Object.entries(kit.handlers).map(([name, handler]) => {
       const handlerFunction =
-        handler instanceof Function ? handler : handler.invoke;
+        "invoke" in handler && handler.invoke
+          ? handler.invoke
+          : (handler as NodeHandlerFunction);
       const describeFunction =
-        handler instanceof Function ? undefined : handler.describe;
+        "describe" in handler && handler.describe
+          ? handler.describe
+          : undefined;
       const describe = describeFunction ? { describe: describeFunction } : {};
 
       return [

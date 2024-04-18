@@ -25,6 +25,7 @@ import type {
 } from "./config.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
+import type { DynamicInputPorts } from "./define.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -74,8 +75,8 @@ export class DefinitionImpl<
     staticParams: Record<string, JsonSerializable>,
     dynamicParams: Record<string, JsonSerializable>
   ) => {
-    inputs?: string[];
-    outputs?: string[];
+    inputs?: DynamicInputPorts;
+    outputs?: DynamicInputPorts;
   };
 
   constructor(
@@ -94,8 +95,8 @@ export class DefinitionImpl<
       staticParams: Record<string, JsonSerializable>,
       dynamicParams: Record<string, JsonSerializable>
     ) => {
-      inputs?: string[];
-      outputs?: string[];
+      inputs?: DynamicInputPorts;
+      outputs?: DynamicInputPorts;
     }
   ) {
     this.#name = name;
@@ -169,7 +170,9 @@ export class DefinitionImpl<
   }
 
   async describe(values?: InputValues): Promise<NodeDescriberResult> {
-    let user: { inputs?: string[]; outputs?: string[] } | undefined = undefined;
+    let user:
+      | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
+      | undefined = undefined;
     if (this.#describe !== undefined) {
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
@@ -190,7 +193,12 @@ export class DefinitionImpl<
       // The definition author has provided the inputs.
       const d = this.#dynamicInputs;
       inputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(user.inputs.map((name) => [name, d])),
+        ...Object.fromEntries(
+          parseDynamicPorts(user.inputs).map(([name, config]) => [
+            name,
+            { ...d, ...config },
+          ])
+        ),
         ...this.#staticInputs,
       });
     } else if (values !== undefined) {
@@ -225,7 +233,12 @@ export class DefinitionImpl<
       // The definition author has provided the outputs.
       const d = this.#dynamicOutputs;
       outputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(user.outputs.map((name) => [name, d])),
+        ...Object.fromEntries(
+          parseDynamicPorts(user.outputs).map(([name, config]) => [
+            name,
+            { ...d, ...config },
+          ])
+        ),
         ...this.#staticOutputs,
       });
     } else {
@@ -237,6 +250,14 @@ export class DefinitionImpl<
       outputSchema: outputSchema as Schema,
     };
   }
+}
+
+function parseDynamicPorts(
+  ports: DynamicInputPorts
+): Array<[string, { description?: string }]> {
+  return Array.isArray(ports)
+    ? ports.map((name) => [name, {}])
+    : Object.entries(ports);
 }
 
 type LooseInstantiateArgs = object;
