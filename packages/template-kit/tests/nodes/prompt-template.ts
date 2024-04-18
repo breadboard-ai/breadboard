@@ -6,8 +6,7 @@
 
 import test from "ava";
 
-import {
-  computeInputSchema,
+import promptTemplate, {
   parametersFromTemplate,
   stringify,
   substitute,
@@ -93,9 +92,9 @@ test("substitute replaces parameters with stringified values", (t) => {
   );
 });
 
-test("`generateInputSchema` correctly generates schema for a template with no parameters", (t) => {
+test("`generateInputSchema` correctly generates schema for a template with no parameters", async (t) => {
   const inputs = { template: "foo" };
-  const result = computeInputSchema(inputs);
+  const result = (await promptTemplate.describe(inputs)).inputSchema;
   t.deepEqual(result, {
     type: "object",
     properties: {
@@ -110,9 +109,9 @@ test("`generateInputSchema` correctly generates schema for a template with no pa
   });
 });
 
-test("`generateInputSchema` correctly generates schema for a template with parameters", (t) => {
+test("`generateInputSchema` correctly generates schema for a template with parameters", async (t) => {
   const inputs = { template: "{{foo}} {{bar}}" };
-  const result = computeInputSchema(inputs);
+  const result = (await promptTemplate.describe(inputs)).inputSchema;
   t.deepEqual(result, {
     type: "object",
     properties: {
@@ -133,6 +132,6 @@ test("`generateInputSchema` correctly generates schema for a template with param
         format: "multiline",
       },
     },
-    required: ["template", "foo", "bar"],
+    required: ["bar", "foo", "template"],
   });
 });

@@ -36,19 +36,25 @@
       }
     },
     {
-      "id": "reverseString-0",
-      "type": "reverseString",
-      "configuration": {}
-    },
-    {
-      "id": "templater-0",
-      "type": "templater",
+      "id": "promptTemplate-0",
+      "type": "promptTemplate",
       "configuration": {
         "template": "The word \"{{p0}}\" is \"{{p1}}\" in reverse"
       }
+    },
+    {
+      "id": "reverseString-0",
+      "type": "reverseString",
+      "configuration": {}
     }
   ],
   "edges": [
+    {
+      "from": "input-0",
+      "out": "word",
+      "to": "promptTemplate-0",
+      "in": "p0"
+    },
     {
       "from": "input-0",
       "out": "word",
@@ -56,22 +62,16 @@
       "in": "forwards"
     },
     {
-      "from": "input-0",
-      "out": "word",
-      "to": "templater-0",
-      "in": "p0"
+      "from": "promptTemplate-0",
+      "out": "prompt",
+      "to": "output-0",
+      "in": "result"
     },
     {
       "from": "reverseString-0",
       "out": "backwards",
-      "to": "templater-0",
+      "to": "promptTemplate-0",
       "in": "p1"
-    },
-    {
-      "from": "templater-0",
-      "out": "result",
-      "to": "output-0",
-      "in": "result"
     }
   ]
 }

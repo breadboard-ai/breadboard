@@ -4,22 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandler,
-  NodeHandlerFunction,
-  Schema,
-} from "@google-labs/breadboard";
-
-export type PromptTemplateOutputs = {
-  text: string; // Deprecated
-  prompt: string;
-};
-
-export type PromptTemplateInputs = {
-  template: string;
-};
+import { anyOf, defineNodeType, object } from "@breadboard-ai/build";
+import type { InputValues } from "@google-labs/breadboard";
 
 export const stringify = (value: unknown): string => {
   if (typeof value === "string") return value;
@@ -43,10 +29,10 @@ export const parametersFromTemplate = (template: string): string[] => {
   return unique;
 };
 
-export const promptTemplateHandler: NodeHandlerFunction = async (
-  inputs: InputValues
+const promptTemplateHandler = (
+  template: string,
+  inputs: { [K: string]: string | object }
 ) => {
-  const template = inputs.template as string;
   const parameters = parametersFromTemplate(template);
   if (!parameters.length) return { prompt: template, text: template };
 
@@ -61,59 +47,46 @@ export const promptTemplateHandler: NodeHandlerFunction = async (
   return { prompt, text: prompt };
 };
 
-export const computeInputSchema = (inputs: InputValues): Schema => {
-  const parameters = parametersFromTemplate((inputs.template ?? "") as string);
-  const properties: Schema["properties"] = parameters.reduce(
-    (acc, parameter) => {
-      const schema = {
-        title: parameter,
-        description: `The value to substitute for the parameter "${parameter}"`,
-        type: ["string", "object"],
-      };
-      return { ...acc, [parameter]: schema };
+/**
+ * Use this node to populate simple handlebar-style templates. A required
+ * input is `template`, which is a string that conains the template prompt
+ * template. The template can contain zero or more placeholders that will be
+ * replaced with values from inputs. Specify placeholders as `{{inputName}}`
+ * in the template. The placeholders in the template must match the inputs
+ * wired into this node. The node will replace all placeholders with values
+ * from the input property bag and pass the result along as the `prompt`
+ * output property.
+ */
+export default defineNodeType({
+  name: "promptTemplate",
+  inputs: {
+    template: {
+      type: "string",
+      multiline: true,
+      description: "The template with placeholders to fill in.",
     },
-    {}
-  );
-  properties["template"] = {
-    title: "template",
-    description: "The template with placeholders to fill in.",
-    type: "string",
-    format: "multiline",
-  };
-  return {
-    type: "object",
-    properties,
-    required: ["template", ...parameters],
-  };
-};
-
-export const promptTemplateDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues
-) => {
-  return {
-    inputSchema: computeInputSchema(inputs || {}),
-    outputSchema: {
-      type: "object",
-      properties: {
-        prompt: {
-          title: "prompt",
-          description:
-            "The resulting prompt that was produced by filling in the placeholders in the template.",
-          type: "string",
-        },
-        text: {
-          title: "text",
-          behavior: ["deprecated"],
-          description:
-            "The resulting prompt that was produced by filling in the placeholders in the template.",
-          type: "string",
-        },
-      },
+    "*": {
+      type: anyOf("string", object({})),
     },
-  };
-};
-
-export default {
-  describe: promptTemplateDescriber,
-  invoke: promptTemplateHandler,
-} satisfies NodeHandler;
+  },
+  outputs: {
+    prompt: {
+      type: "string",
+      description:
+        "The resulting prompt that was produced by filling in the placeholders in the template.",
+      primary: true,
+    },
+  },
+  describe: ({ template }) => ({
+    inputs: Object.fromEntries(
+      parametersFromTemplate(template).map((parameter) => [
+        parameter,
+        {
+          description: `The value to substitute for the parameter "${parameter}"`,
+        },
+      ])
+    ),
+  }),
+  invoke: ({ template }, parameters) =>
+    promptTemplateHandler(template, parameters),
+});

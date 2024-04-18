@@ -4,39 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandler,
-  NodeHandlerFunction,
-  Schema,
-} from "@google-labs/breadboard";
-
+import { defineNodeType } from "@breadboard-ai/build";
 import { parseTemplate } from "url-template";
-
-/**
- * A simple node for making valid URLs out of templates.
- */
-
-export type UrlTemplateOutputs = {
-  url: string;
-};
-
-export type UrlTemplateInputs = {
-  /**
-   * The URL template to use
-   * @example https://example.com/{path}
-   */
-  template: string;
-};
-
-export const urlTemplateHandler: NodeHandlerFunction = async (
-  inputs: InputValues
-) => {
-  const { template, ...values } = inputs as UrlTemplateInputs;
-  const url = parseTemplate(template).expand(values);
-  return { url };
-};
 
 const operators = [
   { prefix: "+", description: "reserved expansion" },
@@ -48,7 +17,7 @@ const operators = [
   { prefix: "&", description: "form-style query continuation" },
 ] as const;
 
-export type UrlTemplateParameters = {
+type UrlTemplateParameters = {
   name: string;
   operator?: (typeof operators)[number];
 }[];
@@ -71,57 +40,45 @@ export const getUrlTemplateParameters = (
     });
 };
 
-export const computeInputSchema = (template?: string): Schema => {
-  const parameters = getUrlTemplateParameters(template);
-  const properties = parameters.reduce(
-    (acc, { name, operator }) => {
-      const description = operator?.description
-        ? `Value for ${operator.description} placeholder "${name}"`
-        : `Value for placeholder "${name}"`;
-      acc[name] = {
-        title: name,
-        description,
-        type: "string",
-      };
-      return acc;
+/**
+ * Use this node to safely construct URLs. This node relies on the
+ * [URI template specification](https://tools.ietf.org/html/rfc6570) to
+ * construct URLs, so the syntax is using single curly braces instead of
+ * double curly braces.
+ */
+export default defineNodeType({
+  name: "urlTemplate",
+  inputs: {
+    template: {
+      type: "string",
+      multiline: true,
+      description: "The URL template to use",
     },
-    {
-      template: {
-        title: "template",
-        description: "The URL template to use",
-        type: "string",
-      },
-    } as Record<string, Schema>
-  );
-  return {
-    type: "object",
-    properties,
-    required: ["template", ...parameters.map(({ name }) => name)],
-  };
-};
-
-export const urlTemplateDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues
-) => {
-  const { template } = (inputs || {}) as UrlTemplateInputs;
-  return {
-    inputSchema: computeInputSchema(template),
-    outputSchema: {
-      type: "object",
-      properties: {
-        url: {
-          title: "url",
-          description:
-            "The resulting URL that was produced by filling in the placeholders in the template",
-          type: "string",
+    "*": {
+      type: "string",
+    },
+  },
+  outputs: {
+    url: {
+      type: "string",
+      description:
+        "The resulting URL that was produced by filling in the placeholders in the template",
+      primary: true,
+    },
+  },
+  describe: ({ template }) => ({
+    inputs: Object.fromEntries(
+      getUrlTemplateParameters(template).map(({ name, operator }) => [
+        name,
+        {
+          description: operator?.description
+            ? `Value for ${operator.description} placeholder "${name}"`
+            : `Value for placeholder "${name}"`,
         },
-      },
-      required: ["url"],
-    },
-  };
-};
-
-export default {
-  describe: urlTemplateDescriber,
-  invoke: urlTemplateHandler,
-} satisfies NodeHandler;
+      ])
+    ),
+  }),
+  invoke: ({ template }, values) => ({
+    url: parseTemplate(template).expand(values),
+  }),
+});
