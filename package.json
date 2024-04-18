@@ -182,7 +182,7 @@
     "eslint": "^8.57.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.5",
-    "rollup": "^4.14.2",
+    "rollup": "^4.14.3",
     "syncpack": "^12.3.0",
     "typescript": "^5.4.5",
     "wireit": "^0.14.4"
