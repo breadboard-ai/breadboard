@@ -5,11 +5,12 @@
  */
 
 import {
-  StreamCapability,
-  type InputValues,
-  type NodeDescriberFunction,
-  type NodeHandler,
-} from "@google-labs/breadboard";
+  anyOf,
+  defineNodeType,
+  enumeration,
+  object,
+} from "@breadboard-ai/build";
+import { StreamCapability } from "@google-labs/breadboard";
 
 const serverSentEventTransform = () =>
   new TransformStream({
@@ -34,125 +35,68 @@ const serverSentEventTransform = () =>
     },
   });
 
-export type FetchOutputs = {
-  response: string | object;
-};
-
-export type FetchInputs = {
-  /**
-   * The URL to fetch
-   */
-  url: string;
-  /*
-   * The HTTP method to use
-   */
-  method?: "GET" | "POST" | "PUT" | "DELETE";
-  /**
-   * Headers to send with the request
-   */
-  headers?: Record<string, string>;
-  /**
-   * The body of the request
-   */
-  body?: string;
-  /**
-   * Whether or not to return raw text (as opposed to parsing JSON). Has no
-   * effect when `stream` is true.
-   */
-  raw?: boolean;
-  /**
-   * Whether or not to return a stream. Currently, fetch presumes that the
-   * streaming response is sent as [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
-   */
-  stream?: boolean;
-};
-
-export const fetchDescriber: NodeDescriberFunction = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        url: {
-          title: "url",
-          description: "The URL to fetch",
-          type: "string",
-        },
-        method: {
-          title: "method",
-          description: "The HTTP method to use",
-          type: "string",
-          enum: ["GET", "POST", "PUT", "DELETE"],
-        },
-        headers: {
-          title: "headers",
-          description: "Headers to send with the request",
-          type: "object",
-          additionalProperties: {
-            type: "string",
-          },
-        },
-        body: {
-          title: "body",
-          description: "The body of the request",
-          type: ["string", "object"],
-        },
-        raw: {
-          title: "raw",
-          description:
-            "Whether or not to return raw text (as opposed to parsing JSON)",
-          type: "boolean",
-        },
-      },
-      required: ["url"],
+export default defineNodeType({
+  name: "fetch",
+  inputs: {
+    url: {
+      description: "The URL to fetch",
+      type: "string",
     },
-    outputSchema: {
-      type: "object",
-      properties: {
-        response: {
-          title: "response",
-          description: "The response from the fetch request",
-          type: ["string", "object"],
-        },
-        status: {
-          title: "status",
-          description: "The HTTP status code of the response",
-          type: "number",
-        },
-        statusText: {
-          title: "statusText",
-          description: "The status text of the response",
-          type: "string",
-        },
-        contentType: {
-          title: "contentType",
-          description: "The content type of the response",
-          type: "string",
-        },
-        responseHeaders: {
-          title: "responseHeaders",
-          description: "The headers of the response",
-          type: "object",
-          additionalProperties: {
-            type: "string",
-          },
-        },
-      },
-      required: ["response"],
+    method: {
+      description: "The HTTP method to use",
+      type: enumeration("GET", "POST", "PUT", "DELETE"),
+      default: "GET",
     },
-  };
-};
-
-export default {
-  describe: fetchDescriber,
-  invoke: async (inputs: InputValues) => {
-    const {
-      url,
-      method = "GET",
-      body,
-      headers = {},
-      raw,
-      stream,
-    } = inputs as FetchInputs;
+    headers: {
+      description: "Headers to send with the request",
+      type: object({}, "string"),
+      default: {},
+    },
+    body: {
+      description: "The body of the request",
+      type: anyOf("string", object({}, "unknown"), "null"),
+      default: null,
+    },
+    raw: {
+      description:
+        "Whether or not to return raw text (as opposed to parsing JSON)",
+      type: "boolean",
+      default: false,
+    },
+    stream: {
+      description: "Whether or not to return a stream",
+      type: "boolean",
+      default: false,
+    },
+  },
+  outputs: {
+    response: {
+      description: "The response from the fetch request",
+      type: anyOf(
+        "string",
+        // TODO(aomarks) Is this right? Technically it could be any JSON, right?
+        // So number, null, array, are also possible.
+        object({}, "unknown")
+      ),
+    },
+    status: {
+      description: "The HTTP status code of the response",
+      type: "number",
+    },
+    statusText: {
+      description: "The status text of the response",
+      type: "string",
+    },
+    contentType: {
+      description: "The content type of the response",
+      type: anyOf("string", "null"),
+    },
+    responseHeaders: {
+      description: "The headers of the response",
+      type: object({}, "string"),
+    },
+  },
+  invoke: async ({ url, method, body, headers, raw, stream }) => {
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
       method,
@@ -164,7 +108,7 @@ export default {
     } else if (body) {
       throw new Error("GET requests can not have a body");
     }
-    const data: Response = await fetch(url, init);
+    const data = await fetch(url, init);
     const status = data.status;
     const responseHeaders: { [key: string]: string } = {};
     data.headers.forEach((value, name) => {
@@ -174,12 +118,14 @@ export default {
     const statusText = data.statusText;
     if (!data.ok)
       return {
+        // TODO(aomarks) Figure out how to model errors better.
         $error: await data.json(),
         status,
         statusText,
         contentType,
         responseHeaders,
-      };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
     if (stream) {
       if (!data.body) {
         throw new Error("Response is not streamable.");
@@ -190,7 +136,12 @@ export default {
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(serverSentEventTransform())
         ),
-      };
+        // TODO(aomarks) Figure out how to model streaming responses better.
+        // For now we just cast the problem away and assume the runtime knows
+        // what to do.
+        //
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
     } else {
       let response;
       if (raw || !contentType || !contentType.includes("application/json")) {
@@ -201,4 +152,4 @@ export default {
       return { response, status, statusText, contentType, responseHeaders };
     }
   },
-} satisfies NodeHandler;
+});
