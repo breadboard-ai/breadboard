@@ -56,7 +56,7 @@
   },
   "wireit": {
     "build": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },

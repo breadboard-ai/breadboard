@@ -49,7 +49,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc -b && chmod +x dist/src/index.js",
+      "command": "tsc -b --pretty && chmod +x dist/src/index.js",
       "env": {
         "FORCE_COLOR": "1"
       },

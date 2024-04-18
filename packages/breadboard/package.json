@@ -32,7 +32,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "dependencies": [
         "../schema:build"
       ],
