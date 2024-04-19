@@ -14,6 +14,7 @@ export type OutputPortConfig = StaticOutputPortConfig | DynamicOutputPortConfig;
 
 interface BaseConfig {
   type: BreadboardType;
+  title?: string;
   description?: string;
   multiline?: true;
 }
