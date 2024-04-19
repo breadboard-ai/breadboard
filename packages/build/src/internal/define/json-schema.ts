@@ -25,7 +25,7 @@ export function portConfigMapToJSONSchema(
       sortedEntries.map(([name, config]) => {
         const { description, type, multiline } = config;
         const schema: JSONSchema4 = {
-          title: name,
+          title: config.title ?? name,
         };
         if (description) {
           schema.description = description;

@@ -1027,6 +1027,53 @@ test("defaults", async () => {
   assert.deepEqual(await d.describe({ si1: "bar", si2: 123 }), expectedSchema);
 });
 
+test("override title", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: { type: "string", title: "custom1" },
+      si2: { type: "number" },
+    },
+    outputs: {
+      so1: { type: "boolean" },
+      so2: { type: "null", title: "custom2" },
+    },
+    invoke: () => ({
+      so1: true,
+      so2: null,
+    }),
+  });
+  assert.deepEqual(await d.describe(), {
+    inputSchema: {
+      properties: {
+        si1: {
+          title: "custom1",
+          type: "string",
+        },
+        si2: {
+          title: "si2",
+          type: "number",
+        },
+      },
+      required: ["si1", "si2"],
+      type: "object",
+    },
+    outputSchema: {
+      properties: {
+        so1: {
+          title: "so1",
+          type: "boolean",
+        },
+        so2: {
+          title: "custom2",
+          type: "null",
+        },
+      },
+      type: "object",
+    },
+  });
+});
+
 test("error: missing name", () => {
   assert.throws(
     () =>

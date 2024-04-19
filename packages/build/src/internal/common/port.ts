@@ -32,6 +32,11 @@ interface StaticPortConfig {
   type: BreadboardType;
 
   /**
+   * An optional title for the port. Defaults to the name of the port.
+   */
+  title?: string;
+
+  /**
    * An optional brief description of this port. Useful when introspecting and
    * debugging.
    */
