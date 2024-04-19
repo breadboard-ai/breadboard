@@ -877,8 +877,7 @@
             "name": "fine_tuning_job_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "ft-AF1WoRqd3aJAHsqc9NY7iL8F"
+              "type": "string"
             },
             "description": "The ID of the fine-tuning job.\n"
           }
@@ -921,8 +920,7 @@
             "name": "fine_tuning_job_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "ft-AF1WoRqd3aJAHsqc9NY7iL8F"
+              "type": "string"
             },
             "description": "The ID of the fine-tuning job to get events for.\n"
           },
@@ -984,8 +982,7 @@
             "name": "fine_tuning_job_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "ft-AF1WoRqd3aJAHsqc9NY7iL8F"
+              "type": "string"
             },
             "description": "The ID of the fine-tuning job to cancel.\n"
           }
@@ -1028,8 +1025,7 @@
             "name": "fine_tuning_job_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "ft-AF1WoRqd3aJAHsqc9NY7iL8F"
+              "type": "string"
             },
             "description": "The ID of the fine-tuning job to get checkpoints for.\n"
           },
@@ -1121,9 +1117,7 @@
             "name": "model",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "gpt-3.5-turbo"
-            },
+              "type": "string"            },
             "description": "The ID of the model to use for this request"
           }
         ],
@@ -1163,8 +1157,7 @@
             "name": "model",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "ft:gpt-3.5-turbo:acemeco:suffix:abc123"
+              "type": "string"
             },
             "description": "The model to delete"
           }
@@ -2645,8 +2638,7 @@
             "name": "assistant_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "file-abc123"
+              "type": "string"
             },
             "description": "The ID of the assistant for which to create a File.\n"
           }
@@ -2893,8 +2885,7 @@
             "name": "thread_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "thread_abc123"
+              "type": "string"
             },
             "description": "The ID of the thread to which the message and File belong."
           },
@@ -2903,8 +2894,7 @@
             "name": "message_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "msg_abc123"
+              "type": "string"
             },
             "description": "The ID of the message the file belongs to."
           },
@@ -2913,8 +2903,7 @@
             "name": "file_id",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "file-abc123"
+              "type": "string"
             },
             "description": "The ID of the file being retrieved."
           }
@@ -3041,15 +3030,13 @@
             "oneOf": [
               {
                 "type": "string",
-                "default": "",
-                "example": "This is a test."
+                "default": ""
               },
               {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "default": "",
-                  "example": "This is a test."
+                  "default": ""
                 }
               },
               {
@@ -3057,8 +3044,7 @@
                 "minItems": 1,
                 "items": {
                   "type": "integer"
-                },
-                "example": "[1212, 318, 257, 1332, 13]"
+                }
               },
               {
                 "type": "array",
@@ -3069,8 +3055,7 @@
                   "items": {
                     "type": "integer"
                   }
-                },
-                "example": "[[1212, 318, 257, 1332, 13]]"
+                }
               }
             ]
           },
@@ -3118,7 +3103,6 @@
             "type": "integer",
             "minimum": 0,
             "default": 16,
-            "example": 16,
             "nullable": true,
             "description": "The maximum number of [tokens](/tokenizer) that can be generated in the completion.\n\nThe token count of your prompt plus `max_tokens` cannot exceed the model's context length. [Example Python code](https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.\n"
           },
@@ -3127,7 +3111,6 @@
             "minimum": 1,
             "maximum": 128,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n"
           },
@@ -3154,7 +3137,6 @@
               {
                 "type": "string",
                 "default": "<|endoftext|>",
-                "example": "\n",
                 "nullable": true
               },
               {
@@ -3162,8 +3144,7 @@
                 "minItems": 1,
                 "maxItems": 4,
                 "items": {
-                  "type": "string",
-                  "example": "[\"\\n\"]"
+                  "type": "string"
                 }
               }
             ]
@@ -3178,15 +3159,13 @@
             "description": "The suffix that comes after a completion of inserted text.\n\nThis parameter is only supported for `gpt-3.5-turbo-instruct`.\n",
             "default": null,
             "nullable": true,
-            "type": "string",
-            "example": "test."
+            "type": "string"
           },
           "temperature": {
             "type": "number",
             "minimum": 0,
             "maximum": 2,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n"
           },
@@ -3195,13 +3174,11 @@
             "minimum": 0,
             "maximum": 1,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           }
         },
@@ -3293,8 +3270,7 @@
         "required": ["id", "object", "created", "model", "choices"],
         "x-oaiMeta": {
           "name": "The completion object",
-          "legacy": true,
-          "example": "{\n  \"id\": \"cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7\",\n  \"object\": \"text_completion\",\n  \"created\": 1589478378,\n  \"model\": \"gpt-4-turbo\",\n  \"choices\": [\n    {\n      \"text\": \"\\n\\nThis is indeed a test\",\n      \"index\": 0,\n      \"logprobs\": null,\n      \"finish_reason\": \"length\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 5,\n    \"completion_tokens\": 7,\n    \"total_tokens\": 12\n  }\n}\n"
+          "legacy": true
         }
       },
       "ChatCompletionRequestMessageContentPart": {
@@ -3771,7 +3747,6 @@
           },
           "model": {
             "description": "ID of the model to use. See the [model endpoint compatibility](/docs/models/model-endpoint-compatibility) table for details on which models work with the Chat API.",
-            "example": "gpt-4-turbo",
             "anyOf": [
               {
                 "type": "string"
@@ -3844,7 +3819,6 @@
             "minimum": 1,
             "maximum": 128,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep `n` as `1` to minimize costs."
           },
@@ -3863,7 +3837,6 @@
               "type": {
                 "type": "string",
                 "enum": ["text", "json_object"],
-                "example": "json_object",
                 "default": "text",
                 "description": "Must be one of `text` or `json_object`."
               }
@@ -3908,7 +3881,6 @@
             "minimum": 0,
             "maximum": 2,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n"
           },
@@ -3917,7 +3889,6 @@
             "minimum": 0,
             "maximum": 1,
             "default": 1,
-            "example": 1,
             "nullable": true,
             "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
           },
@@ -3933,7 +3904,6 @@
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           },
           "function_call": {
@@ -4040,8 +4010,7 @@
         "required": ["choices", "created", "id", "model", "object"],
         "x-oaiMeta": {
           "name": "The chat completion object",
-          "group": "chat",
-          "example": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0125\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"logprobs\": null,\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+          "group": "chat"
         }
       },
       "CreateChatCompletionFunctionResponse": {
@@ -4098,8 +4067,7 @@
         "required": ["choices", "created", "id", "model", "object"],
         "x-oaiMeta": {
           "name": "The chat completion object",
-          "group": "chat",
-          "example": "{\n  \"id\": \"chatcmpl-abc123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1699896916,\n  \"model\": \"gpt-3.5-turbo-0125\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": null,\n        \"tool_calls\": [\n          {\n            \"id\": \"call_abc123\",\n            \"type\": \"function\",\n            \"function\": {\n              \"name\": \"get_current_weather\",\n              \"arguments\": \"{\\n\\\"location\\\": \\\"Boston, MA\\\"\\n}\"\n            }\n          }\n        ]\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"tool_calls\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 82,\n    \"completion_tokens\": 17,\n    \"total_tokens\": 99\n  }\n}\n"
+          "group": "chat"
         }
       },
       "ChatCompletionTokenLogprob": {
@@ -4243,8 +4211,7 @@
         "required": ["choices", "created", "id", "model", "object"],
         "x-oaiMeta": {
           "name": "The chat completion chunk object",
-          "group": "chat",
-          "example": "{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0125\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0125\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\n....\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0125\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}]}\n"
+          "group": "chat"
         }
       },
       "CreateChatCompletionImageResponse": {
@@ -4252,8 +4219,7 @@
         "description": "Represents a streamed chunk of a chat completion response returned by model, based on the provided input.",
         "x-oaiMeta": {
           "name": "The chat completion chunk object",
-          "group": "chat",
-          "example": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0125\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nThis image shows a wooden boardwalk extending through a lush green marshland.\",\n    },\n    \"logprobs\": null,\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+          "group": "chat"
         }
       },
       "CreateImageRequest": {
@@ -4276,7 +4242,7 @@
             ],
             "x-oaiTypeLabel": "string",
             "default": "dall-e-2",
-            "example": "dall-e-3",
+            
             "nullable": true,
             "description": "The model to use for image generation."
           },
@@ -4285,7 +4251,7 @@
             "minimum": 1,
             "maximum": 10,
             "default": 1,
-            "example": 1,
+            
             "nullable": true,
             "description": "The number of images to generate. Must be between 1 and 10. For `dall-e-3`, only `n=1` is supported."
           },
@@ -4293,14 +4259,14 @@
             "type": "string",
             "enum": ["standard", "hd"],
             "default": "standard",
-            "example": "standard",
+            
             "description": "The quality of the image that will be generated. `hd` creates images with finer details and greater consistency across the image. This param is only supported for `dall-e-3`."
           },
           "response_format": {
             "type": "string",
             "enum": ["url", "b64_json"],
             "default": "url",
-            "example": "url",
+            
             "nullable": true,
             "description": "The format in which the generated images are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated."
           },
@@ -4314,7 +4280,7 @@
               "1024x1792"
             ],
             "default": "1024x1024",
-            "example": "1024x1024",
+            
             "nullable": true,
             "description": "The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024` for `dall-e-2`. Must be one of `1024x1024`, `1792x1024`, or `1024x1792` for `dall-e-3` models."
           },
@@ -4322,13 +4288,13 @@
             "type": "string",
             "enum": ["vivid", "natural"],
             "default": "vivid",
-            "example": "vivid",
+            
             "nullable": true,
             "description": "The style of the generated images. Must be one of `vivid` or `natural`. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images. This param is only supported for `dall-e-3`."
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
+            
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           }
         },
@@ -4366,8 +4332,7 @@
           }
         },
         "x-oaiMeta": {
-          "name": "The image object",
-          "example": "{\n  \"url\": \"...\",\n  \"revised_prompt\": \"...\"\n}\n"
+          "name": "The image object"
         }
       },
       "CreateImageEditRequest": {
@@ -4400,7 +4365,7 @@
             ],
             "x-oaiTypeLabel": "string",
             "default": "dall-e-2",
-            "example": "dall-e-2",
+            
             "nullable": true,
             "description": "The model to use for image generation. Only `dall-e-2` is supported at this time."
           },
@@ -4409,7 +4374,7 @@
             "minimum": 1,
             "maximum": 10,
             "default": 1,
-            "example": 1,
+            
             "nullable": true,
             "description": "The number of images to generate. Must be between 1 and 10."
           },
@@ -4417,7 +4382,7 @@
             "type": "string",
             "enum": ["256x256", "512x512", "1024x1024"],
             "default": "1024x1024",
-            "example": "1024x1024",
+            
             "nullable": true,
             "description": "The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`."
           },
@@ -4425,13 +4390,13 @@
             "type": "string",
             "enum": ["url", "b64_json"],
             "default": "url",
-            "example": "url",
+            
             "nullable": true,
             "description": "The format in which the generated images are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated."
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
+            
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           }
         },
@@ -4457,7 +4422,7 @@
             ],
             "x-oaiTypeLabel": "string",
             "default": "dall-e-2",
-            "example": "dall-e-2",
+            
             "nullable": true,
             "description": "The model to use for image generation. Only `dall-e-2` is supported at this time."
           },
@@ -4466,7 +4431,7 @@
             "minimum": 1,
             "maximum": 10,
             "default": 1,
-            "example": 1,
+            
             "nullable": true,
             "description": "The number of images to generate. Must be between 1 and 10. For `dall-e-3`, only `n=1` is supported."
           },
@@ -4474,7 +4439,7 @@
             "type": "string",
             "enum": ["url", "b64_json"],
             "default": "url",
-            "example": "url",
+            
             "nullable": true,
             "description": "The format in which the generated images are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated."
           },
@@ -4482,13 +4447,13 @@
             "type": "string",
             "enum": ["256x256", "512x512", "1024x1024"],
             "default": "1024x1024",
-            "example": "1024x1024",
+            
             "nullable": true,
             "description": "The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`."
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
+            
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           }
         },
@@ -4519,7 +4484,7 @@
             "description": "Two content moderations models are available: `text-moderation-stable` and `text-moderation-latest`.\n\nThe default is `text-moderation-latest` which will be automatically upgraded over time. This ensures you are always using our most accurate model. If you use `text-moderation-stable`, we will provide advanced notice before updating the model. Accuracy of `text-moderation-stable` may be slightly lower than for `text-moderation-latest`.\n",
             "nullable": false,
             "default": "text-moderation-latest",
-            "example": "text-moderation-stable",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -4687,11 +4652,7 @@
             }
           }
         },
-        "required": ["id", "model", "results"],
-        "x-oaiMeta": {
-          "name": "The moderation object",
-          "example": "{\n  \"id\": \"modr-XXXXX\",\n  \"model\": \"text-moderation-005\",\n  \"results\": [\n    {\n      \"flagged\": true,\n      \"categories\": {\n        \"sexual\": false,\n        \"hate\": false,\n        \"harassment\": false,\n        \"self-harm\": false,\n        \"sexual/minors\": false,\n        \"hate/threatening\": false,\n        \"violence/graphic\": false,\n        \"self-harm/intent\": false,\n        \"self-harm/instructions\": false,\n        \"harassment/threatening\": true,\n        \"violence\": true,\n      },\n      \"category_scores\": {\n        \"sexual\": 1.2282071e-06,\n        \"hate\": 0.010696256,\n        \"harassment\": 0.29842457,\n        \"self-harm\": 1.5236925e-08,\n        \"sexual/minors\": 5.7246268e-08,\n        \"hate/threatening\": 0.0060676364,\n        \"violence/graphic\": 4.435014e-06,\n        \"self-harm/intent\": 8.098441e-10,\n        \"self-harm/instructions\": 2.8498655e-11,\n        \"harassment/threatening\": 0.63055265,\n        \"violence\": 0.99011886,\n      }\n    }\n  ]\n}\n"
-        }
+        "required": ["id", "model", "results"]
       },
       "ListFilesResponse": {
         "type": "object",
@@ -4747,7 +4708,7 @@
         "properties": {
           "model": {
             "description": "The name of the model to fine-tune. You can select one of the\n[supported models](/docs/guides/fine-tuning/what-models-can-be-fine-tuned).\n",
-            "example": "gpt-3.5-turbo",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -4939,7 +4900,7 @@
         "properties": {
           "input": {
             "description": "Input text to embed, encoded as a string or array of tokens. To embed multiple inputs in a single request, pass an array of strings or array of token arrays. The input must not exceed the max input tokens for the model (8192 tokens for `text-embedding-ada-002`), cannot be an empty string, and any array must be 2048 dimensions or less. [Example Python code](https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.\n",
-            "example": "The quick brown fox jumped over the lazy dog",
+            
             "oneOf": [
               {
                 "type": "string",
@@ -4968,8 +4929,7 @@
                 "maxItems": 2048,
                 "items": {
                   "type": "integer"
-                },
-                "example": "[1212, 318, 257, 1332, 13]"
+                }
               },
               {
                 "type": "array",
@@ -4983,15 +4943,13 @@
                   "items": {
                     "type": "integer"
                   }
-                },
-                "example": "[[1212, 318, 257, 1332, 13]]"
+                }
               }
-            ],
-            "x-oaiExpandable": true
+            ]
           },
           "model": {
             "description": "ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.\n",
-            "example": "text-embedding-3-small",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -5009,7 +4967,7 @@
           },
           "encoding_format": {
             "description": "The format to return the embeddings in. Can be either `float` or [`base64`](https://pypi.org/project/pybase64/).",
-            "example": "float",
+            
             "default": "float",
             "type": "string",
             "enum": ["float", "base64"]
@@ -5021,7 +4979,7 @@
           },
           "user": {
             "type": "string",
-            "example": "user-1234",
+            
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).\n"
           }
         },
@@ -5076,7 +5034,7 @@
           },
           "model": {
             "description": "ID of the model to use. Only `whisper-1` (which is powered by our open source Whisper V2 model) is currently available.\n",
-            "example": "whisper-1",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -5131,8 +5089,7 @@
         "required": ["text"],
         "x-oaiMeta": {
           "name": "The transcription object",
-          "group": "audio",
-          "example": "{\n  \"text\": \"Imagine the wildest idea that you've ever had, and you're curious about how it might scale to something that's a 100, a 1,000 times bigger. This is a place where you can get to do that.\"\n}\n"
+          "group": "audio"
         }
       },
       "TranscriptionSegment": {
@@ -5255,8 +5212,7 @@
         "required": ["language", "duration", "text"],
         "x-oaiMeta": {
           "name": "The transcription object",
-          "group": "audio",
-          "example": "{\n  \"task\": \"transcribe\",\n  \"language\": \"english\",\n  \"duration\": 8.470000267028809,\n  \"text\": \"The beach was a popular spot on a hot summer day. People were swimming in the ocean, building sandcastles, and playing beach volleyball.\",\n  \"segments\": [\n    {\n      \"id\": 0,\n      \"seek\": 0,\n      \"start\": 0.0,\n      \"end\": 3.319999933242798,\n      \"text\": \" The beach was a popular spot on a hot summer day.\",\n      \"tokens\": [\n        50364, 440, 7534, 390, 257, 3743, 4008, 322, 257, 2368, 4266, 786, 13, 50530\n      ],\n      \"temperature\": 0.0,\n      \"avg_logprob\": -0.2860786020755768,\n      \"compression_ratio\": 1.2363636493682861,\n      \"no_speech_prob\": 0.00985979475080967\n    },\n    ...\n  ]\n}\n"
+          "group": "audio"
         }
       },
       "CreateTranslationRequest": {
@@ -5271,7 +5227,7 @@
           },
           "model": {
             "description": "ID of the model to use. Only `whisper-1` (which is powered by our open source Whisper V2 model) is currently available.\n",
-            "example": "whisper-1",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -5399,11 +5355,7 @@
             "description": "The organization that owns the model."
           }
         },
-        "required": ["id", "object", "created", "owned_by"],
-        "x-oaiMeta": {
-          "name": "The model object",
-          "example": "{\n  \"id\": \"VAR_model_id\",\n  \"object\": \"model\",\n  \"created\": 1686935002,\n  \"owned_by\": \"openai\"\n}\n"
-        }
+        "required": ["id", "object", "created", "owned_by"]
       },
       "OpenAIFile": {
         "title": "OpenAIFile",
@@ -5460,11 +5412,7 @@
           "filename",
           "purpose",
           "status"
-        ],
-        "x-oaiMeta": {
-          "name": "The file object",
-          "example": "{\n  \"id\": \"file-abc123\",\n  \"object\": \"file\",\n  \"bytes\": 120000,\n  \"created_at\": 1677610602,\n  \"filename\": \"salesOverview.pdf\",\n  \"purpose\": \"assistants\",\n}\n"
-        }
+        ]
       },
       "Embedding": {
         "type": "object",
@@ -5487,11 +5435,7 @@
             "enum": ["embedding"]
           }
         },
-        "required": ["index", "object", "embedding"],
-        "x-oaiMeta": {
-          "name": "The embedding object",
-          "example": "{\n  \"object\": \"embedding\",\n  \"embedding\": [\n    0.0023064255,\n    -0.009327292,\n    .... (1536 floats total for ada-002)\n    -0.0028842222,\n  ],\n  \"index\": 0\n}\n"
-        }
+        "required": ["index", "object", "embedding"]
       },
       "FineTuningJob": {
         "type": "object",
@@ -5641,11 +5585,7 @@
           "training_file",
           "validation_file",
           "seed"
-        ],
-        "x-oaiMeta": {
-          "name": "The fine-tuning job object",
-          "example": "{\n  \"object\": \"fine_tuning.job\",\n  \"id\": \"ftjob-abc123\",\n  \"model\": \"davinci-002\",\n  \"created_at\": 1692661014,\n  \"finished_at\": 1692661190,\n  \"fine_tuned_model\": \"ft:davinci-002:my-org:custom_suffix:7q8mpxmy\",\n  \"organization_id\": \"org-123\",\n  \"result_files\": [\n      \"file-abc123\"\n  ],\n  \"status\": \"succeeded\",\n  \"validation_file\": null,\n  \"training_file\": \"file-abc123\",\n  \"hyperparameters\": {\n      \"n_epochs\": 4,\n      \"batch_size\": 1,\n      \"learning_rate_multiplier\": 1.0\n  },\n  \"trained_tokens\": 5768,\n  \"integrations\": [],\n  \"seed\": 0\n}\n"
-        }
+        ]
       },
       "FineTuningIntegration": {
         "type": "object",
@@ -5711,11 +5651,7 @@
             "enum": ["fine_tuning.job.event"]
           }
         },
-        "required": ["id", "object", "created_at", "level", "message"],
-        "x-oaiMeta": {
-          "name": "The fine-tuning job event object",
-          "example": "{\n  \"object\": \"fine_tuning.job.event\",\n  \"id\": \"ftevent-abc123\"\n  \"created_at\": 1677610602,\n  \"level\": \"info\",\n  \"message\": \"Created fine-tuning job\"\n}\n"
-        }
+        "required": ["id", "object", "created_at", "level", "message"]
       },
       "FineTuningJobCheckpoint": {
         "type": "object",
@@ -5783,11 +5719,7 @@
           "metrics",
           "object",
           "step_number"
-        ],
-        "x-oaiMeta": {
-          "name": "The fine-tuning job checkpoint object",
-          "example": "{\n  \"object\": \"fine_tuning.job.checkpoint\",\n  \"id\": \"ftckpt_qtZ5Gyk4BLq1SfLFWp3RtO3P\",\n  \"created_at\": 1712211699,\n  \"fine_tuned_model_checkpoint\": \"ft:gpt-3.5-turbo-0125:my-org:custom_suffix:9ABel2dg:ckpt-step-88\",\n  \"fine_tuning_job_id\": \"ftjob-fpbNQ3H1GrMehXRf8cO97xTN\",\n  \"metrics\": {\n    \"step\": 88,\n    \"train_loss\": 0.478,\n    \"train_mean_token_accuracy\": 0.924,\n    \"valid_loss\": 10.112,\n    \"valid_mean_token_accuracy\": 0.145,\n    \"full_valid_loss\": 0.567,\n    \"full_valid_mean_token_accuracy\": 0.944\n  },\n  \"step_number\": 88\n}\n"
-        }
+        ]
       },
       "CompletionUsage": {
         "type": "object",
@@ -5935,12 +5867,7 @@
           "tools",
           "file_ids",
           "metadata"
-        ],
-        "x-oaiMeta": {
-          "name": "The assistant object",
-          "beta": true,
-          "example": "{\n  \"id\": \"asst_abc123\",\n  \"object\": \"assistant\",\n  \"created_at\": 1698984975,\n  \"name\": \"Math Tutor\",\n  \"description\": null,\n  \"model\": \"gpt-4-turbo\",\n  \"instructions\": \"You are a personal math tutor. When asked a question, write and run Python code to answer the question.\",\n  \"tools\": [\n    {\n      \"type\": \"code_interpreter\"\n    }\n  ],\n  \"file_ids\": [],\n  \"metadata\": {}\n}\n"
-        }
+        ]
       },
       "CreateAssistantRequest": {
         "type": "object",
@@ -5948,7 +5875,7 @@
         "properties": {
           "model": {
             "description": "ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.\n",
-            "example": "gpt-4-turbo",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -6144,12 +6071,7 @@
             "example": false
           }
         },
-        "required": ["object", "data", "first_id", "last_id", "has_more"],
-        "x-oaiMeta": {
-          "name": "List assistants response object",
-          "group": "chat",
-          "example": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"asst_abc123\",\n      \"object\": \"assistant\",\n      \"created_at\": 1698982736,\n      \"name\": \"Coding Tutor\",\n      \"description\": null,\n      \"model\": \"gpt-4-turbo\",\n      \"instructions\": \"You are a helpful assistant designed to make me better at coding!\",\n      \"tools\": [],\n      \"file_ids\": [],\n      \"metadata\": {}\n    },\n    {\n      \"id\": \"asst_abc456\",\n      \"object\": \"assistant\",\n      \"created_at\": 1698982718,\n      \"name\": \"My Assistant\",\n      \"description\": null,\n      \"model\": \"gpt-4-turbo\",\n      \"instructions\": \"You are a helpful assistant designed to make me better at coding!\",\n      \"tools\": [],\n      \"file_ids\": [],\n      \"metadata\": {}\n    },\n    {\n      \"id\": \"asst_abc789\",\n      \"object\": \"assistant\",\n      \"created_at\": 1698982643,\n      \"name\": null,\n      \"description\": null,\n      \"model\": \"gpt-4-turbo\",\n      \"instructions\": null,\n      \"tools\": [],\n      \"file_ids\": [],\n      \"metadata\": {}\n    }\n  ],\n  \"first_id\": \"asst_abc123\",\n  \"last_id\": \"asst_abc789\",\n  \"has_more\": false\n}\n"
-        }
+        "required": ["object", "data", "first_id", "last_id", "has_more"]
       },
       "AssistantToolsCode": {
         "type": "object",
@@ -6374,12 +6296,7 @@
           "file_ids",
           "metadata",
           "usage"
-        ],
-        "x-oaiMeta": {
-          "name": "The run object",
-          "beta": true,
-          "example": "{\n  \"id\": \"run_abc123\",\n  \"object\": \"thread.run\",\n  \"created_at\": 1698107661,\n  \"assistant_id\": \"asst_abc123\",\n  \"thread_id\": \"thread_abc123\",\n  \"status\": \"completed\",\n  \"started_at\": 1699073476,\n  \"expires_at\": null,\n  \"cancelled_at\": null,\n  \"failed_at\": null,\n  \"completed_at\": 1699073498,\n  \"last_error\": null,\n  \"model\": \"gpt-4-turbo\",\n  \"instructions\": null,\n  \"tools\": [{\"type\": \"retrieval\"}, {\"type\": \"code_interpreter\"}],\n  \"file_ids\": [],\n  \"metadata\": {},\n  \"usage\": {\n    \"prompt_tokens\": 123,\n    \"completion_tokens\": 456,\n    \"total_tokens\": 579\n  },\n  \"temperature\": 1\n}\n"
-        }
+        ]
       },
       "CreateRunRequest": {
         "type": "object",
@@ -6391,7 +6308,7 @@
           },
           "model": {
             "description": "The ID of the [Model](/docs/api-reference/models) to be used to execute this run. If a value is provided here, it will override the model associated with the assistant. If not, the model associated with the assistant will be used.",
-            "example": "gpt-4-turbo",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -6472,7 +6389,7 @@
             "minimum": 0,
             "maximum": 2,
             "default": 1,
-            "example": 1,
+            
             "nullable": true,
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n"
           },
@@ -6598,7 +6515,7 @@
           },
           "model": {
             "description": "The ID of the [Model](/docs/api-reference/models) to be used to execute this run. If a value is provided here, it will override the model associated with the assistant. If not, the model associated with the assistant will be used.",
-            "example": "gpt-4-turbo",
+            
             "anyOf": [
               {
                 "type": "string"
@@ -6665,7 +6582,7 @@
             "minimum": 0,
             "maximum": 2,
             "default": 1,
-            "example": 1,
+            
             "nullable": true,
             "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n"
           },
@@ -6702,12 +6619,7 @@
             "nullable": true
           }
         },
-        "required": ["id", "object", "created_at", "metadata"],
-        "x-oaiMeta": {
-          "name": "The thread object",
-          "beta": true,
-          "example": "{\n  \"id\": \"thread_abc123\",\n  \"object\": \"thread\",\n  \"created_at\": 1698107661,\n  \"metadata\": {}\n}\n"
-        }
+        "required": ["id", "object", "created_at", "metadata"]
       },
       "CreateThreadRequest": {
         "type": "object",
@@ -6900,12 +6812,7 @@
           "run_id",
           "file_ids",
           "metadata"
-        ],
-        "x-oaiMeta": {
-          "name": "The message object",
-          "beta": true,
-          "example": "{\n  \"id\": \"msg_abc123\",\n  \"object\": \"thread.message\",\n  \"created_at\": 1698983503,\n  \"thread_id\": \"thread_abc123\",\n  \"role\": \"assistant\",\n  \"content\": [\n    {\n      \"type\": \"text\",\n      \"text\": {\n        \"value\": \"Hi! How can I help you today?\",\n        \"annotations\": []\n      }\n    }\n  ],\n  \"file_ids\": [],\n  \"assistant_id\": \"asst_abc123\",\n  \"run_id\": \"run_abc123\",\n  \"metadata\": {}\n}\n"
-        }
+        ]
       },
       "MessageDeltaObject": {
         "type": "object",
@@ -6957,12 +6864,7 @@
             }
           }
         },
-        "required": ["id", "object", "delta"],
-        "x-oaiMeta": {
-          "name": "The message delta object",
-          "beta": true,
-          "example": "{\n  \"id\": \"msg_123\",\n  \"object\": \"thread.message.delta\",\n  \"delta\": {\n    \"content\": [\n      {\n        \"index\": 0,\n        \"type\": \"text\",\n        \"text\": { \"value\": \"Hello\", \"annotations\": [] }\n      }\n    ]\n  }\n}\n"
-        }
+        "required": ["id", "object", "delta"]
       },
       "CreateMessageRequest": {
         "type": "object",
@@ -7462,12 +7364,7 @@
           "completed_at",
           "metadata",
           "usage"
-        ],
-        "x-oaiMeta": {
-          "name": "The run step object",
-          "beta": true,
-          "example": "{\n  \"id\": \"step_abc123\",\n  \"object\": \"thread.run.step\",\n  \"created_at\": 1699063291,\n  \"run_id\": \"run_abc123\",\n  \"assistant_id\": \"asst_abc123\",\n  \"thread_id\": \"thread_abc123\",\n  \"type\": \"message_creation\",\n  \"status\": \"completed\",\n  \"cancelled_at\": null,\n  \"completed_at\": 1699063291,\n  \"expired_at\": null,\n  \"failed_at\": null,\n  \"last_error\": null,\n  \"step_details\": {\n    \"type\": \"message_creation\",\n    \"message_creation\": {\n      \"message_id\": \"msg_abc123\"\n    }\n  },\n  \"usage\": {\n    \"prompt_tokens\": 123,\n    \"completion_tokens\": 456,\n    \"total_tokens\": 579\n  }\n}\n"
-        }
+        ]
       },
       "RunStepDeltaObject": {
         "type": "object",
@@ -7503,12 +7400,7 @@
             }
           }
         },
-        "required": ["id", "object", "delta"],
-        "x-oaiMeta": {
-          "name": "The run step delta object",
-          "beta": true,
-          "example": "{\n  \"id\": \"step_123\",\n  \"object\": \"thread.run.step.delta\",\n  \"delta\": {\n    \"step_details\": {\n      \"type\": \"tool_calls\",\n      \"tool_calls\": [\n        {\n          \"index\": 0,\n          \"id\": \"call_123\",\n          \"type\": \"code_interpreter\",\n          \"code_interpreter\": { \"input\": \"\", \"outputs\": [] }\n        }\n      ]\n    }\n  }\n}\n"
-        }
+        "required": ["id", "object", "delta"]
       },
       "ListRunStepsResponse": {
         "properties": {
@@ -7964,12 +7856,7 @@
             "type": "string"
           }
         },
-        "required": ["id", "object", "created_at", "assistant_id"],
-        "x-oaiMeta": {
-          "name": "The assistant file object",
-          "beta": true,
-          "example": "{\n  \"id\": \"file-abc123\",\n  \"object\": \"assistant.file\",\n  \"created_at\": 1699055364,\n  \"assistant_id\": \"asst_abc123\"\n}\n"
-        }
+        "required": ["id", "object", "created_at", "assistant_id"]
       },
       "CreateAssistantFileRequest": {
         "type": "object",
@@ -8056,12 +7943,7 @@
             "type": "string"
           }
         },
-        "required": ["id", "object", "created_at", "message_id"],
-        "x-oaiMeta": {
-          "name": "The message file object",
-          "beta": true,
-          "example": "{\n  \"id\": \"file-abc123\",\n  \"object\": \"thread.message.file\",\n  \"created_at\": 1698107661,\n  \"message_id\": \"message_QLoItBbqwyAJEzlTy4y9kOMM\",\n  \"file_id\": \"file-abc123\"\n}\n"
-        }
+        "required": ["id", "object", "created_at", "message_id"]
       },
       "ListMessageFilesResponse": {
         "properties": {
