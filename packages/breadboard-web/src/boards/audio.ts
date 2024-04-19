@@ -33,7 +33,7 @@ export default await board(({ audio, prompt }) => {
     text: "unused",
     context,
   });
-  return { text: describeAudio.text };
+  return { text: describeAudio.text.format("markdown") };
 }).serialize({
   title: "Audio",
   description: "An example of using Gemini Kit's vision(?) node with audio",
