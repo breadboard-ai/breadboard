@@ -127,7 +127,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/markdown-it": "^14.0.0",
+    "@types/markdown-it": "^14.0.1",
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.7.0",
