@@ -509,7 +509,7 @@ export class ActivityLog extends LitElement {
     return "image_url" in nodeValue;
   }
 
-  #isImageData(
+  #isImageOrAudioData(
     nodeValue: unknown
   ): nodeValue is { inline_data: { data: string; mime_type: string } } {
     if (typeof nodeValue !== "object" || !nodeValue) {
@@ -666,11 +666,23 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (this.#isImageData(nodeValue)) {
-            value = html`<img
-              src="data:image/${nodeValue.inline_data
-                .mime_type};base64,${nodeValue.inline_data.data}"
-            />`;
+          if (this.#isImageOrAudioData(nodeValue)) {
+            if (!nodeValue.inline_data.data.length) {
+              value = html`No data provided`;
+            } else {
+              if (nodeValue.inline_data.mime_type.startsWith("image")) {
+                value = html`<img
+                  src="data:image/${nodeValue.inline_data
+                    .mime_type};base64,${nodeValue.inline_data.data}"
+                />`;
+              } else {
+                value = html`<audio
+                  controls
+                  src="data:${nodeValue.inline_data
+                    .mime_type};base64,${nodeValue.inline_data.data}"
+                />`;
+              }
+            }
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {

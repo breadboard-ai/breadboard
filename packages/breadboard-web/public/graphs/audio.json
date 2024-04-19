@@ -1,0 +1,94 @@
+{
+  "title": "Audio",
+  "description": "An example of using Gemini Kit's vision(?) node with audio",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "describeAudio",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "combineAudioAndPrompt",
+      "to": "describeAudio",
+      "out": "parts",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "combineAudioAndPrompt",
+      "out": "audio",
+      "in": "audio"
+    },
+    {
+      "from": "input-1",
+      "to": "combineAudioAndPrompt",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "describeAudio",
+      "type": "text",
+      "configuration": {
+        "model": "gemini-1.5-pro-latest",
+        "text": "unused"
+      }
+    },
+    {
+      "id": "combineAudioAndPrompt",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const combineAudioAndPrompt = ({audio,prompt})=>{return{parts:[audio,{text:prompt}]}};",
+        "name": "combineAudioAndPrompt",
+        "raw": true
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "audio": {
+              "type": "audio/webm",
+              "title": "Audio",
+              "format": "microphone"
+            },
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "examples": [
+                "Describe what you hear in the audio. Please respond in markdown"
+              ]
+            }
+          },
+          "required": [
+            "audio",
+            "prompt"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
