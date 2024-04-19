@@ -99,7 +99,11 @@ export type BehaviorSchema =
    * Indicates that the input or output port represents an image. The image can
    * be a URL or a base64 encoded image.
    */
-  | "image";
+  | "image"
+  /**
+   * Indicates that the input or output represents some sort of code
+   */
+  | "code";
 
 export type Schema = {
   title?: string;

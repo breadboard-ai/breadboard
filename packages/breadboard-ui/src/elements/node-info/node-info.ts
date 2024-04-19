@@ -890,8 +890,7 @@ export class NodeInfo extends LitElement {
                       }
 
                       default: {
-                        // TODO: Better hint here?
-                        if (name === "code") {
+                        if (port.schema.behavior?.includes("code")) {
                           input = html` <div>
                             <bb-code-editor
                               id="${name}"
