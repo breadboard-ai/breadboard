@@ -30,6 +30,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Audio",
+    "url": "/graphs/audio.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Best of N",
     "url": "/graphs/best-of-n.json",
     "version": "0.0.2"

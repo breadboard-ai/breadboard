@@ -235,6 +235,11 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
+  isAudio(mimeType = "audio/webm"): AbstractValue<unknown> {
+    this.#schema.type = mimeType;
+    return this;
+  }
+
   isObject(): AbstractValue<{ [key: string]: NodeValue }> {
     this.#schema.type = "object";
     return this as unknown as AbstractValue<{

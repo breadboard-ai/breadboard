@@ -241,6 +241,24 @@ export class SchemaEditor extends LitElement {
           break;
         }
 
+        case "audio/webm": {
+          format = html`<label for="${id}-format">Format</label>
+            <select
+              name="${id}-format"
+              id="${id}-format"
+              type="text"
+              ?readonly=${!this.editable}
+            >
+              <option
+                value="microphone"
+                ?selected=${value.format === "microphone"}
+              >
+                Microphone
+              </option>
+            </select>`;
+          break;
+        }
+
         case "image/png": {
           format = html`<label for="${id}-format">Format</label>
             <select
@@ -329,6 +347,9 @@ export class SchemaEditor extends LitElement {
             </option>
             <option ?selected=${value.type === "image/png"} value="image/png">
               Image
+            </option>
+            <option ?selected=${value.type === "audio/ogg"} value="audio/ogg">
+              Audio
             </option>
           </select>
 

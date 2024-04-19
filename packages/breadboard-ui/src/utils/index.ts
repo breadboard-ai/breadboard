@@ -18,6 +18,10 @@ export function isBoolean(schema: Schema) {
   return schema.type == "boolean";
 }
 
+export function isAudio(schema: Schema) {
+  return typeof schema.type === "string" && schema.type.startsWith("audio");
+}
+
 export function isMultipartImage(schema: Schema) {
   return typeof schema.type === "string" && schema.type.startsWith("image");
 }

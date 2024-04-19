@@ -11,6 +11,7 @@ import {
   isMultipart,
 } from "./input-multipart/input-multipart.js";
 import {
+  isAudio,
   isBoolean,
   isDrawable,
   isMultipartImage,
@@ -24,6 +25,7 @@ import { InputEnterEvent, InputErrorEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { AudioInput } from "./audio/audio.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -211,7 +213,8 @@ export class Input extends LitElement {
 
           const isImage =
             element instanceof WebcamInput || element instanceof DrawableInput;
-          if (isImage) {
+          const isAudio = element instanceof AudioInput;
+          if (isImage || isAudio) {
             const value = element.value;
             data[key] = value;
           }
@@ -256,7 +259,9 @@ export class Input extends LitElement {
             >${property.title || key}</label
           >`;
           let input;
-          if (isMultipartImage(property)) {
+          if (isAudio(property)) {
+            input = html`<bb-audio-capture id="${key}"></bb-audio-capture>`;
+          } else if (isMultipartImage(property)) {
             // Webcam input.
             if (isWebcam(property)) {
               input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
