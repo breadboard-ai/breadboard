@@ -114,6 +114,7 @@ function setupKits<
     const descriptor = descriptors[0]!;
     assert.deepEqual(await descriptor.describe(), {
       inputSchema: {
+        type: "object",
         properties: {
           str: {
             title: "str",
@@ -121,17 +122,15 @@ function setupKits<
           },
         },
         required: ["str"],
-        type: "object",
       },
       outputSchema: {
+        type: "object",
         properties: {
           len: {
             title: "len",
             type: "number",
           },
         },
-        required: ["len"],
-        type: "object",
       },
     });
   });
@@ -229,6 +228,7 @@ function setupKits<
     const descriptor = descriptors[0]!;
     assert.deepEqual(await descriptor.describe(), {
       inputSchema: {
+        type: "object",
         properties: {
           base: {
             title: "base",
@@ -237,17 +237,15 @@ function setupKits<
           // TODO(aomarks) Shouldn't num1, num2, num3 show up here?
         },
         required: ["base"],
-        type: "object",
       },
       outputSchema: {
+        type: "object",
         properties: {
           sum: {
             title: "sum",
             type: "number",
           },
         },
-        required: ["sum"],
-        type: "object",
       },
     });
   });
