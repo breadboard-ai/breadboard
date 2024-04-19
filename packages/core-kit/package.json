@@ -20,6 +20,7 @@
       "dependencies": [
         "../breadboard:build",
         "../template-kit:build",
+        "../build:build",
         "build:tsc"
       ]
     },
@@ -30,7 +31,8 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../template-kit:build:tsc"
+        "../template-kit:build:tsc",
+        "../build:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -99,15 +101,16 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/template-kit": "^0.2.6",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.7.0",
-    "@types/node": "^20.12.7",
     "ava": "^5.2.0",
-    "typescript": "^5.4.5",
-    "@google-labs/tsconfig": "^0.0.1",
-    "@google-labs/template-kit": "^0.2.6"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@breadboard-ai/build": "^0.4.0",
     "@google-labs/breadboard": "^0.17.0"
   }
 }
