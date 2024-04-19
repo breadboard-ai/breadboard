@@ -39,7 +39,8 @@
             "text": {
               "type": "string",
               "title": "Text",
-              "description": "The generated text"
+              "description": "The generated text",
+              "format": "markdown"
             }
           }
         }
