@@ -9,7 +9,8 @@ import type { PortConfigMap } from "../common/port.js";
 import { toJSONSchema } from "../type-system/type.js";
 
 export function portConfigMapToJSONSchema(
-  config: PortConfigMap
+  config: PortConfigMap,
+  omitRequired = false
 ): JSONSchema4 & {
   properties: { [k: string]: JSONSchema4 };
 } {
@@ -45,11 +46,13 @@ export function portConfigMapToJSONSchema(
       })
     ),
   };
-  const required = sortedEntries
-    .filter(([, config]) => config.default === undefined)
-    .map(([name]) => name);
-  if (required.length > 0) {
-    schema.required = required;
+  if (!omitRequired) {
+    const required = sortedEntries
+      .filter(([, config]) => config.default === undefined)
+      .map(([name]) => name);
+    if (required.length > 0) {
+      schema.required = required;
+    }
   }
   return schema;
 }

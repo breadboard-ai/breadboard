@@ -122,7 +122,6 @@ test("mono/mono", async () => {
           type: "null",
         },
       },
-      required: ["so1", "so2"],
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -235,7 +234,6 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
-      required: ["so1"],
     },
   });
 
@@ -266,7 +264,6 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
-      required: ["so1"],
     },
   });
 });
@@ -363,7 +360,6 @@ test("mono/poly", async () => {
           type: "number",
         },
       },
-      required: ["do1", "so1"],
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -487,7 +483,6 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
-      required: ["do1", "so1"],
     },
   });
 
@@ -522,7 +517,6 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
-      required: ["do1", "so1"],
     },
   });
 });
@@ -648,7 +642,6 @@ test("reflective", async () => {
       properties: {
         so1: { type: "boolean", title: "so1" },
       },
-      required: ["so1"],
     },
   });
 
@@ -669,7 +662,6 @@ test("reflective", async () => {
         di2: { type: "string", title: "di2" },
         so1: { type: "boolean", title: "so1" },
       },
-      required: ["di1", "di2", "so1"],
     },
   });
 });
@@ -896,7 +888,6 @@ test("multiline", async () => {
           format: "multiline",
         },
       },
-      required: ["so1"],
     },
   });
 });
@@ -948,7 +939,6 @@ test("dynamic port descriptions", async () => {
           description: 'output "foo"',
         },
       },
-      required: ["foo"],
     },
   });
 });
@@ -1031,7 +1021,6 @@ test("defaults", async () => {
           items: { type: "number" },
         },
       },
-      required: ["a", "b"],
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);

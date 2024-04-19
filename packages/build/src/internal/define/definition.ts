@@ -228,31 +228,46 @@ export class DefinitionImpl<
     };
     if (this.#dynamicOutputs === undefined) {
       // All outputs are static.
-      outputSchema = portConfigMapToJSONSchema(this.#staticOutputs);
+      outputSchema = portConfigMapToJSONSchema(
+        this.#staticOutputs,
+        // TODO(aomarks) The Breadboard visual editor interprets JSON schema
+        // "required" on an output as "the user must wire this to something"
+        // (shows up as a red port). That might be not quite right, it seems
+        // like "required" here should describe the expectations of the node
+        // implementation's return object, not the way the user choses to use
+        // the output.
+        true
+      );
     } else if (this.#reflective) {
       // We're reflective, so our outputs are determined by our dynamic inputs.
       const dynamicInputNames = Object.keys(inputSchema.properties).filter(
         (name) => this.#staticInputs[name] === undefined
       );
       const d = this.#dynamicOutputs;
-      outputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(dynamicInputNames.map((name) => [name, d])),
-        ...this.#staticOutputs,
-      });
+      outputSchema = portConfigMapToJSONSchema(
+        {
+          ...Object.fromEntries(dynamicInputNames.map((name) => [name, d])),
+          ...this.#staticOutputs,
+        },
+        true
+      );
     } else if (user?.outputs !== undefined) {
       // The definition author has provided the outputs.
       const d = this.#dynamicOutputs;
-      outputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(
-          parseDynamicPorts(user.outputs).map(([name, config]) => [
-            name,
-            { ...d, ...config },
-          ])
-        ),
-        ...this.#staticOutputs,
-      });
+      outputSchema = portConfigMapToJSONSchema(
+        {
+          ...Object.fromEntries(
+            parseDynamicPorts(user.outputs).map(([name, config]) => [
+              name,
+              { ...d, ...config },
+            ])
+          ),
+          ...this.#staticOutputs,
+        },
+        true
+      );
     } else {
-      outputSchema = portConfigMapToJSONSchema(this.#staticOutputs);
+      outputSchema = portConfigMapToJSONSchema(this.#staticOutputs, true);
     }
 
     return {
