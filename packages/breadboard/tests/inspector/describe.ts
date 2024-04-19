@@ -65,7 +65,10 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       type: "object",
       additionalProperties: false,
       properties: {
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
       },
     } satisfies Schema,
     outputSchema: {
@@ -98,7 +101,10 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       type: "object",
       additionalProperties: false,
       properties: {
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
       },
     } satisfies Schema,
     outputSchema: {
@@ -123,7 +129,10 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
       additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
       },
     } satisfies Schema,
     outputSchema: {
@@ -150,7 +159,10 @@ test("inspector API can describe the output in simplest.json", async (t) => {
       type: "object",
       properties: {
         "*": { type: "string" },
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         text: {
           type: "string",
           title: "Response",
@@ -181,7 +193,10 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
       additionalProperties: true,
       type: "object",
       properties: {
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         "*": { type: "string" },
       },
     } satisfies Schema,
@@ -207,7 +222,10 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
       additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object", behavior: ["json-schema", "ports-spec"] },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         text: { type: "string" },
       },
     } satisfies Schema,
