@@ -13,34 +13,43 @@ export function portConfigMapToJSONSchema(
 ): JSONSchema4 & {
   properties: { [k: string]: JSONSchema4 };
 } {
-  return {
+  const sortedEntries = Object.entries(config).sort(([nameA], [nameB]) =>
+    nameA.localeCompare(nameB)
+  );
+  const schema: JSONSchema4 & {
+    properties: { [k: string]: JSONSchema4 };
+  } = {
     type: "object",
     properties: Object.fromEntries(
-      Object.entries(config)
-        .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
-        .map(([name, config]) => {
-          const { description, type, multiline } = config;
-          const schema: JSONSchema4 = {
-            title: name,
-          };
-          if (description) {
-            schema.description = description;
-          }
-          if (config.default !== undefined) {
-            schema.default = config.default;
-          }
-          Object.assign(schema, toJSONSchema(type));
-          if (multiline === true) {
-            // TODO(aomarks) This is not a valid use of the JSON Schema format
-            // keyword according to
-            // https://opis.io/json-schema/2.x/formats.html. We should probably put
-            // Breadboard specific stuff somewhere else (e.g. in a breadboard
-            // property).
-            schema.format = "multiline";
-          }
-          return [name, schema];
-        })
+      sortedEntries.map(([name, config]) => {
+        const { description, type, multiline } = config;
+        const schema: JSONSchema4 = {
+          title: name,
+        };
+        if (description) {
+          schema.description = description;
+        }
+        if (config.default !== undefined) {
+          schema.default = config.default;
+        }
+        Object.assign(schema, toJSONSchema(type));
+        if (multiline === true) {
+          // TODO(aomarks) This is not a valid use of the JSON Schema format
+          // keyword according to
+          // https://opis.io/json-schema/2.x/formats.html. We should probably put
+          // Breadboard specific stuff somewhere else (e.g. in a breadboard
+          // property).
+          schema.format = "multiline";
+        }
+        return [name, schema];
+      })
     ),
-    required: Object.keys(config).sort(),
   };
+  const required = sortedEntries
+    .filter(([, config]) => config.default === undefined)
+    .map(([name]) => name);
+  if (required.length > 0) {
+    schema.required = required;
+  }
+  return schema;
 }

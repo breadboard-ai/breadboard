@@ -1017,7 +1017,6 @@ test("defaults", async () => {
           default: [12, 34],
         },
       },
-      required: ["a", "b"],
     },
     outputSchema: {
       type: "object",
