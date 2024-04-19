@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 import {
+  DefaultValue,
   InputPort,
   OutputPort,
   OutputPortGetter,
@@ -128,10 +129,10 @@ export class Instance<
     // Static inputs
     for (const [name, config] of Object.entries(staticInputs)) {
       const arg = args[name];
-      if (arg === undefined) {
+      if (arg === undefined && config.default === undefined) {
         throw new Error(`Argument ${name} is required`);
       }
-      const port = new InputPort(config.type, name, this, arg);
+      const port = new InputPort(config.type, name, this, arg ?? DefaultValue);
       ports[name] = port;
       if (config.primary) {
         if (this.primaryInput !== undefined) {

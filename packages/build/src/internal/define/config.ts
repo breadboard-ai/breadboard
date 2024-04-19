@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BreadboardType } from "../type-system/type.js";
+import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 
 export type PortConfig = InputPortConfig | OutputPortConfig;
 export type PortConfigs = Record<string, PortConfig>;
@@ -20,6 +20,7 @@ interface BaseConfig {
 
 export interface StaticInputPortConfig extends BaseConfig {
   primary?: true;
+  default?: JsonSerializable;
 }
 
 export interface DynamicInputPortConfig extends BaseConfig {}

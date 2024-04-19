@@ -11,11 +11,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
 import { object } from "../internal/type-system/object.js";
+import { anyOf } from "../internal/type-system/any-of.js";
+import { array } from "../internal/type-system/array.js";
 
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
 
-  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, false, undefined, undefined>
+  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, never, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -130,7 +132,7 @@ test("mono/mono", async () => {
 test("poly/mono", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, false, undefined, undefined>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, never, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -272,7 +274,7 @@ test("poly/mono", async () => {
 test("mono/poly", async () => {
   const values = { si1: "si1" };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, false, undefined, undefined>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, never, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -371,7 +373,7 @@ test("mono/poly", async () => {
 test("poly/poly", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, false, undefined, undefined>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, never, false, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -548,7 +550,7 @@ test("async invoke function", async () => {
 test("reflective", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, true, undefined, undefined>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, never, true, undefined, undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -675,7 +677,7 @@ test("reflective", async () => {
 test("primary input", () => {
   const values = { si1: 123 };
 
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, false, "si1", undefined>
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", undefined>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -735,7 +737,7 @@ test("primary input", () => {
 });
 
 test("primary output", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, false, undefined, "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, undefined, "so1">
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -795,7 +797,7 @@ test("primary output", () => {
 });
 
 test("primary input + output", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, false, "si1", "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", "so1">
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -949,6 +951,92 @@ test("dynamic port descriptions", async () => {
       required: ["foo"],
     },
   });
+});
+
+test("defaults", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      a: {
+        type: "string",
+        default: "foo",
+      },
+      b: {
+        type: array("number"),
+        default: [12, 34],
+      },
+    },
+    outputs: {
+      a: {
+        type: "string",
+      },
+      b: {
+        type: array("number"),
+      },
+    },
+    invoke: (staticInputs) => staticInputs,
+  });
+
+  d({});
+  d({ a: "bar" });
+  d({ b: [56, 78] });
+  d({ a: "bar", b: [56, 78] });
+
+  assert.deepEqual(await d.invoke({}, null as never), {
+    a: "foo",
+    b: [12, 34],
+  });
+
+  assert.deepEqual(
+    await d.invoke(
+      {
+        a: "bar",
+        b: [56, 78],
+      },
+      null as never
+    ),
+    {
+      a: "bar",
+      b: [56, 78],
+    }
+  );
+
+  const expectedSchema = {
+    inputSchema: {
+      type: "object",
+      properties: {
+        a: {
+          title: "a",
+          type: "string",
+          default: "foo",
+        },
+        b: {
+          title: "b",
+          type: "array",
+          items: { type: "number" },
+          default: [12, 34],
+        },
+      },
+      required: ["a", "b"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        a: {
+          title: "a",
+          type: "string",
+        },
+        b: {
+          title: "b",
+          type: "array",
+          items: { type: "number" },
+        },
+      },
+      required: ["a", "b"],
+    },
+  };
+  assert.deepEqual(await d.describe(), expectedSchema);
+  assert.deepEqual(await d.describe({ si1: "bar", si2: 123 }), expectedSchema);
 });
 
 test("error: missing name", () => {
@@ -1552,5 +1640,47 @@ test("error: object types must be plain objects at initialization", () => {
     bad1: globalThis,
     // @ts-expect-error
     bad1: Object,
+  });
+});
+
+test("error: default on dynamic input/output or static output", () => {
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": {
+        type: "string",
+        // @ts-expect-error
+        default: "foo",
+      },
+    },
+    outputs: {
+      so1: {
+        type: "string",
+        // @ts-expect-error
+        default: "foo",
+      },
+      "*": {
+        type: "string",
+        // @ts-expect-error
+        default: "foo",
+      },
+    },
+    describe: () => ({ outputs: [] }),
+    invoke: () => ({ so1: "foo" }),
+  });
+});
+
+test("error: default does not match type", () => {
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: {
+        type: "string",
+        // @ts-expect-error
+        default: 123,
+      },
+    },
+    outputs: {},
+    invoke: () => ({}),
   });
 });

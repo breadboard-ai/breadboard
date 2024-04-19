@@ -18,13 +18,23 @@ import type { Expand } from "../common/type-util.js";
  * for use with {@link KitBuilder}.
  */
 export type NodeFactoryFromDefinition<
-  D extends Definition<any, any, any, any, any, any, any>,
+  D extends Definition<any, any, any, any, any, any, any, any>,
 > =
-  D extends Definition<infer SI, infer SO, infer DI, infer DO, any, any, any>
+  D extends Definition<
+    infer SI,
+    infer SO,
+    infer DI,
+    infer DO,
+    infer OI,
+    any,
+    any,
+    any
+  >
     ? NewNodeFactory<
         Expand<
-          SI &
-            (DI extends JsonSerializable ? { [K: string]: NewNodeValue } : {})
+          Omit<SI, OI> & { [K in OI]?: SI[K] } & (DI extends JsonSerializable
+              ? { [K: string]: NewNodeValue }
+              : {})
         >,
         Expand<
           SO &

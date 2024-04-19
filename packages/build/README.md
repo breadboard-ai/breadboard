@@ -57,6 +57,8 @@ the following fields:
   displayed in the Breadboard visual editor and in other places where
   introspection/debugging is performed.
 
+- `default`: An optional default value for this input.
+
 - `primary`: (Optional) Enables a syntactic sugar feature for an output port to
   make wiring nodes more concise. When a node has a `primary` output port, then
   it becomes possible to use the node itself in API positions where an output
@@ -345,17 +347,23 @@ TypeScript API.
 - `"number"`
 - `"boolean"`
 - `"null"`
+- `"unknown"`
 
 ### Utility types
 
 - `array(<type>)`: A function which generates a JSON Schema `array` and its
   corresponding TypeScript `Array<...>` type.
 
-- `object({ prop1: <type1>, prop2: <type2>, ... })`: A function which generates a
-  JSON Schema `object` and its corresponding TypeScript `{...}` type.
+- `object({ prop1: <type1>, prop2: <type2>, ... }, [<additional>])`: A function
+  which generates a JSON Schema `object` and its corresponding TypeScript
+  `{...}` type. If the optional second argument is set, then the object will
+  also allow additional properties of the given type.
 
 - `anyOf(<type1>, <type2>, ...)`: A function which generates a JSON Schema
   `anyOf` and its corresponding TypeScript union (`type1 | type2`).
+
+- `enumeration(<type1>, <type2>, ...)`: A function which generates a JSON Schema
+  `enum` and its corresponding TypeScript union (`type1 | type2`).
 
 ### Unsafe type escape hatch
 

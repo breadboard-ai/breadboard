@@ -102,6 +102,7 @@ describe("object", () => {
     type t1 = ConvertBreadboardType<typeof obj1>;
     assert.deepEqual(toJSONSchema(obj1), {
       type: "object",
+      additionalProperties: false,
     });
   });
 
@@ -120,6 +121,7 @@ describe("object", () => {
         },
       },
       required: ["foo", "bar"],
+      additionalProperties: false,
     });
   });
 
@@ -138,9 +140,11 @@ describe("object", () => {
             },
           },
           required: ["bar"],
+          additionalProperties: false,
         },
       },
       required: ["foo"],
+      additionalProperties: false,
     });
   });
 
@@ -154,6 +158,7 @@ describe("object", () => {
         foo: { type: ["string", "number"] },
       },
       required: ["foo"],
+      additionalProperties: false,
     });
   });
 
@@ -171,11 +176,13 @@ describe("object", () => {
               type: "object",
               properties: { bar: { type: "string" } },
               required: ["bar"],
+              additionalProperties: false,
             },
           ],
         },
       },
       required: ["foo"],
+      additionalProperties: false,
     });
   });
 
@@ -189,12 +196,49 @@ describe("object", () => {
         foo: {},
       },
       required: ["foo"],
+      additionalProperties: false,
     });
   });
 
   test("object no known properties", () => {
     const obj = object({});
     // $ExpectType object & JsonSerializable
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      additionalProperties: false,
+    });
+  });
+
+  test("empty object with additional string properties", () => {
+    const obj = object({}, "string");
+    // $ExpectType { [x: string]: string; }
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      additionalProperties: { type: "string" },
+    });
+  });
+
+  test("non-empty object with additional string|number properties", () => {
+    const obj = object({ foo: "string" }, anyOf("string", "number"));
+    // $ExpectType { [x: string]: string | number; foo: string; }
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {
+        foo: {
+          type: "string",
+        },
+      },
+      required: ["foo"],
+      additionalProperties: { type: ["string", "number"] },
+    });
+  });
+
+  test("empty object with additional unknown properties", () => {
+    const obj = object({}, "unknown");
+    // $ExpectType { [x: string]: JsonSerializable; }
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
@@ -254,6 +298,7 @@ describe("array", () => {
         type: "object",
         properties: { foo: { type: "string" } },
         required: ["foo"],
+        additionalProperties: false,
       },
     });
   });

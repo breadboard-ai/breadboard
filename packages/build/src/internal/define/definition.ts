@@ -22,6 +22,7 @@ import type {
   DynamicOutputPortConfig,
   PortConfig,
   PortConfigs,
+  StaticInputPortConfig,
 } from "./config.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
@@ -32,12 +33,13 @@ export interface Definition<
   /* Static Outputs  */ SO extends { [K: string]: JsonSerializable },
   /* Dynamic Inputs  */ DI extends JsonSerializable | undefined,
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
+  /* Optional Inputs */ OI extends keyof SI,
   /* Reflective?     */ R extends boolean,
   /* Primary Input   */ PI extends keyof SI | undefined,
   /* Primary Output  */ PO extends keyof SO | undefined,
 > extends StrictNodeHandler {
   <A extends LooseInstantiateArgs>(
-    args: A & StrictInstantiateArgs<SI, DI, A>
+    args: A & StrictInstantiateArgs<SI, OI, DI, A>
   ): Instance<
     InstanceInputs<SI, DI, A>,
     InstanceOutputs<SI, SO, DO, R, A>,
@@ -53,13 +55,14 @@ export class DefinitionImpl<
   /* Static Outputs  */ SO extends { [K: string]: JsonSerializable },
   /* Dynamic Inputs  */ DI extends JsonSerializable | undefined,
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
+  /* Optional Inputs */ OI extends keyof SI,
   /* Reflective?     */ R extends boolean,
   /* Primary Input   */ PI extends keyof SI | undefined,
   /* Primary Output  */ PO extends keyof SO | undefined,
 > implements StrictNodeHandler
 {
   readonly #name: string;
-  readonly #staticInputs: PortConfigs;
+  readonly #staticInputs: Record<string, StaticInputPortConfig>;
   readonly #staticOutputs: PortConfigs;
   readonly #dynamicInputs: DynamicInputPortConfig | undefined;
   readonly #dynamicOutputs: PortConfig | undefined;
@@ -112,7 +115,7 @@ export class DefinitionImpl<
   }
 
   instantiate<A extends LooseInstantiateArgs>(
-    args: A & StrictInstantiateArgs<SI, DI, A>
+    args: A & StrictInstantiateArgs<SI, OI, DI, A>
   ): Instance<
     InstanceInputs<SI, DI, A>,
     InstanceOutputs<SI, SO, DO, R, A>,
@@ -139,22 +142,29 @@ export class DefinitionImpl<
 
   invoke(values: InputValues): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
-      this.#partitionRuntimeInputValues(values);
+      this.#applyDefaultsAndPartitionRuntimeInputValues(values);
     return Promise.resolve(this.#invoke(staticValues, dynamicValues));
   }
 
   /**
-   * Split the values between static and dynamic ports. We do this for type
-   * safety, because in TypeScript it is unfortunately not possible to define an
-   * object where the values of the unknown keys are of one type, and the known
-   * keys are of an incompatible type.
+   * Apply defaults, and split the values between static and dynamic ports.
+   *
+   * We split inputs values for type safety, because in TypeScript it is
+   * unfortunately not possible to define an object where the values of the
+   * unknown keys are of one type, and the known keys are of an incompatible
+   * type.
    */
-  #partitionRuntimeInputValues(values: InputValues): {
+  #applyDefaultsAndPartitionRuntimeInputValues(values: InputValues): {
     staticValues: Record<string, JsonSerializable>;
     dynamicValues: Record<string, JsonSerializable>;
   } {
     const staticValues: Record<string, JsonSerializable> = {};
     const dynamicValues: Record<string, JsonSerializable> = {};
+    for (const [name, config] of Object.entries(this.#staticInputs)) {
+      if (config.default !== undefined) {
+        staticValues[name] = config.default;
+      }
+    }
     for (const [name, value] of Object.entries(values)) {
       if (this.#staticInputs[name] !== undefined) {
         staticValues[name] = value as JsonSerializable;
@@ -176,7 +186,7 @@ export class DefinitionImpl<
     if (this.#describe !== undefined) {
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
-          this.#partitionRuntimeInputValues(values);
+          this.#applyDefaultsAndPartitionRuntimeInputValues(values);
         user = this.#describe(staticValues, dynamicValues);
       } else {
         user = this.#describe({}, {});
@@ -264,18 +274,14 @@ type LooseInstantiateArgs = object;
 
 type StrictInstantiateArgs<
   SI extends { [K: string]: JsonSerializable },
+  OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
-> = {
-  [K in keyof SI]:
-    | SI[K]
-    | OutputPortReference<SI[K]>
-    | Input<SI[K]>
-    | InputWithDefault<SI[K]>
-    | Placeholder<SI[K]>;
+> = { [K in keyof Omit<SI, OI>]: InstantiateArg<SI[K]> } & {
+  [K in OI]?: InstantiateArg<SI[K]> | undefined;
 } & {
   [K in keyof Omit<A, keyof SI>]: DI extends JsonSerializable
-    ? DI | OutputPortReference<DI> | Input<DI> | InputWithDefault<DI>
+    ? InstantiateArg<DI>
     : never;
 };
 
@@ -294,3 +300,10 @@ type InstanceOutputs<
 > = R extends true
   ? Expand<SO & { [K in Exclude<keyof A, keyof SI>]: DO }>
   : SO;
+
+type InstantiateArg<T extends JsonSerializable> =
+  | T
+  | OutputPortReference<T>
+  | Input<T>
+  | InputWithDefault<T>
+  | Placeholder<T>;

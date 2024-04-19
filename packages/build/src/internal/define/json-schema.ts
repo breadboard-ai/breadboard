@@ -18,12 +18,16 @@ export function portConfigMapToJSONSchema(
     properties: Object.fromEntries(
       Object.entries(config)
         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
-        .map(([name, { description, type, multiline }]) => {
+        .map(([name, config]) => {
+          const { description, type, multiline } = config;
           const schema: JSONSchema4 = {
             title: name,
           };
           if (description) {
             schema.description = description;
+          }
+          if (config.default !== undefined) {
+            schema.default = config.default;
           }
           Object.assign(schema, toJSONSchema(type));
           if (multiline === true) {
