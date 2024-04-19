@@ -233,6 +233,7 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
       properties: {
         code: {
           title: "code",
+          behavior: ["config"],
           description: "The JavaScript code to run",
           type: "string",
         },
@@ -245,6 +246,7 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
         },
         raw: {
           title: "raw",
+          behavior: ["config"],
           description:
             "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
           type: "boolean",

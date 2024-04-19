@@ -124,6 +124,9 @@
                       "instruction": {
                         "title": "Instruction",
                         "format": "multiline",
+                        "behavior": [
+                          "config"
+                        ],
                         "examples": [
                           "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
                         ],

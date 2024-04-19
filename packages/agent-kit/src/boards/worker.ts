@@ -53,8 +53,14 @@ export default await board(({ context, instruction, stopSequences }) => {
   instruction
     .title("Instruction")
     .format("multiline")
+    .behavior("config")
     .examples(sampleInstruction);
-  stopSequences.title("Stop Sequences").isArray().optional().default("[]");
+  stopSequences
+    .title("Stop Sequences")
+    .isArray()
+    .optional()
+    .default("[]")
+    .behavior("config");
 
   const buildContext = contextBuilder({
     $id: "buildContext",

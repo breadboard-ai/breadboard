@@ -144,13 +144,14 @@ export default await board(({ context, instruction, schema }) => {
     .examples(sampleContext);
   instruction
     .title("Instruction")
+    .behavior("config")
     .format("multiline")
     .examples(sampleInstruction);
   schema
     .title("Schema")
     .examples(sampleSchema)
     .isObject()
-    .behavior("json-schema")
+    .behavior("json-schema", "config")
     .optional()
     .default("{}");
 

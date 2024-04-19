@@ -86,11 +86,13 @@ export const jsonataDescriber: NodeDescriberFunction = async (
       .addProperties({
         expression: {
           title: "expression",
+          behavior: ["config"],
           description: "The Jsonata expression to evaluate",
           type: "string",
         },
         raw: {
           title: "raw",
+          behavior: ["config"],
           description:
             "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
           type: "boolean",
