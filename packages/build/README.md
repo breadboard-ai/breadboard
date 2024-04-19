@@ -347,6 +347,7 @@ TypeScript API.
 - `"number"`
 - `"boolean"`
 - `"null"`
+- `"unknown"`
 
 ### Utility types
 
