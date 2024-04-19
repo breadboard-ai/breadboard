@@ -12,7 +12,7 @@
     {
       "from": "combineAudioAndPrompt",
       "to": "describeAudio",
-      "out": "parts",
+      "out": "context",
       "in": "context"
     },
     {
@@ -57,7 +57,7 @@
       "id": "combineAudioAndPrompt",
       "type": "runJavascript",
       "configuration": {
-        "code": "const combineAudioAndPrompt = ({audio,prompt})=>{return{parts:[audio,{text:prompt}]}};",
+        "code": "const combineAudioAndPrompt = ({audio,prompt})=>{return{context:{parts:[audio,{text:prompt}]}}};",
         "name": "combineAudioAndPrompt",
         "raw": true
       }
