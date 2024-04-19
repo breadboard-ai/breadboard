@@ -147,6 +147,7 @@ export class ActivityLog extends LitElement {
 
     .activity-entry.error {
       color: #cc0000;
+      user-select: text;
     }
 
     .activity-entry h1 {

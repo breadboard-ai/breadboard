@@ -138,6 +138,7 @@ export const styles = css`
       0px 1px 3px 1px rgba(0, 0, 0, 0.15);
     margin-bottom: 40px;
     margin-right: 40px;
+    max-width: 400px;
   }
 
   #details.active {
