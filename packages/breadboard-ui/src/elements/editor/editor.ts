@@ -38,6 +38,7 @@ import { Graph } from "./graph.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -303,7 +304,10 @@ export class Editor extends LitElement {
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
-      ports.set(node.descriptor.id, await node.ports());
+      ports.set(
+        node.descriptor.id,
+        filterPortsByMode(await node.ports(), EditorMode.HARD)
+      );
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
         return;

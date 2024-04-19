@@ -35,6 +35,7 @@ import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { BoardSelector } from "./board-selector.js";
 import { isBoard } from "../../utils/board.js";
 import { CodeEditor } from "../input/code-editor/code-editor.js";
+import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -95,7 +96,10 @@ export class NodeInfo extends LitElement {
 
       const metadata = node.metadata();
       const configuration = node.configuration();
-      const { inputs } = await node.ports();
+      const { inputs } = filterConfigByMode(
+        await node.ports(),
+        EditorMode.HARD
+      );
       const ports = structuredClone(inputs.ports).sort((portA, portB) =>
         portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
       );
