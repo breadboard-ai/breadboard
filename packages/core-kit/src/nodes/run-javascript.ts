@@ -234,6 +234,7 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
         code: {
           title: "code",
           behavior: ["config", "code"],
+          format: "javascript",
           description: "The JavaScript code to run",
           type: "string",
         },
