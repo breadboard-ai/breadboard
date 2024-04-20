@@ -32,7 +32,7 @@ const validateIsOpenAPI = code(({ json }) => {
 /*
   Generate a list of API operations from the given Open API spec that will be used to create the board of boards.
 */
-const generateAPISpecs = code(({ json }) => {
+const generateAPISpecs = code(({ json, context, builderPath }) => {
   const { paths, info } = json;
   const baseUrl = json.servers[0].url;
 
@@ -179,6 +179,8 @@ const generateAPISpecs = code(({ json }) => {
             requestBody,
             secrets,
             info,
+            context,
+            builderPath,
           };
 
           return headers;
@@ -245,39 +247,6 @@ const createSpecBoard = board((apiSpec) => {
       };
     });
 
-    if (
-      "requestBody" in item &&
-      item.requestBody != undefined &&
-      "application/json" in item.requestBody
-    ) {
-      // Only support JSON Schema for now.  If you need XML, talk to Paul.
-      nodes.push({
-        id: "input-requestBody",
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {
-              requestBody: {
-                type: "object",
-                title: "requestBody",
-                description:
-                  item.requestBody["application/json"].description ||
-                  "The request body for the API call (JSON)",
-              },
-            },
-          },
-        },
-      });
-
-      edges.push({
-        from: "input-requestBody",
-        out: "requestBody",
-        to: "output",
-        in: "requestBody",
-      });
-    }
-
     if ("secrets" in item && item.secrets != undefined) {
       const apiKeyName = `${item.info.title
         .replace(/[^a-zA-Z0-9]+/g, "_")
@@ -325,18 +294,64 @@ const createSpecBoard = board((apiSpec) => {
 
   const APIEndpoint = board((input) => {
     const { item, graph } = input;
+
     const toAPIInputs = code((item) => {
+      debugger;
+      console.log("API Inputs", item);
       return { api_inputs: item };
     });
 
-    const api_inputs = core
-      .invoke({ $id: "APIInput", ...input, graph: graph })
-      .to(toAPIInputs({ $id: "toAPIInputs" }));
+    const getBuilderPath = code(({ item }) => {
+      return {
+        path: item.builderPath,
+        $board: item.builderPath,
+        context: item.context,
+        text: item.context,
+        theSchema: item.requestBody["application/json"].schema,
+      };
+    });
+
+    const createRequestBody = code(({ text, input }) => {
+      debugger;
+      return { requestBody: text, input };
+    });
+
+    const generateRequestBodyFromSchema = core.invoke({
+      $id: "generateRequestBodyFromSchema",
+    });
+
+    getBuilderPath({ $id: "getBuilderPath", item }).to(
+      generateRequestBodyFromSchema
+    );
+
+    const requestBody = generateRequestBodyFromSchema.text.to(
+      createRequestBody({
+        $id: "createRequestBody",
+        input,
+      })
+    );
+
+    const mergedInputs = core
+      .invoke({
+        $id: "mergeInputs",
+        item,
+        graph,
+      })
+      .to(toAPIInputs);
+
+    const api_inputs = toAPIInputs({
+      $id: "toAPIInputs",
+      item,
+      ...mergedInputs,
+      requestBody: requestBody.requestBody,
+    });
 
     const output = base.output({});
 
     const createFetchParameters = code(({ item, api_inputs }) => {
       const { method, parameters, secrets, requestBody } = item;
+      debugger;
+      console.log("API Inputs", item);
 
       let { url } = item;
 
@@ -441,7 +456,9 @@ const createSpecBoard = board((apiSpec) => {
 
   apiSpec.item.to(output);
   graphInputs.to(output);
+  apiSpec.item.to(APIEndpoint);
   graphInputs.to(APIEndpoint);
+  apiSpec.builderPath.to(APIEndpoint);
 
   return apiSpec.item.to(APIEndpoint).as("board").to(output);
 });
@@ -466,11 +483,23 @@ const convertBoardListToObject = code(({ list }) => {
   return { ...operations };
 });
 
-export default await board(({ url }) => {
+export default await board(({ url, context, builderPath }) => {
   url
     .title("Open API URL")
     .description(
       "The URL of the Open API spec that you want to convert to a board."
+    )
+    .isString();
+  context
+    .title("Context")
+    .description(
+      "The query that will be used to generate any required data for the POST request"
+    )
+    .isString();
+  builderPath
+    .title("Path to the request builder")
+    .description(
+      "The path to the request builder that will be used to create the request body."
     )
     .isString();
 
@@ -479,10 +508,24 @@ export default await board(({ url }) => {
     .fetch({ $id: "fetch_open_api_schema", url })
     .response.as("json");
 
+  const curriedSpecBoard = core.curry({
+    $id: "curry",
+    $board: createSpecBoard,
+    context,
+    builderPath,
+  });
+
   // Get the Open API spec from the given URL.
   return fetchOpenAPISpec
-    .to(validateIsOpenAPI({ $id: "isOpenAPI" }))
-    .to(generateAPISpecs({ $id: "generateAPISpecs" }))
-    .to(core.map({ $id: "createFetchBoards", board: createSpecBoard }))
+    .to(validateIsOpenAPI({ $id: "validateIsOpenAPI" }))
+    .as("json")
+    .to(generateAPISpecs({ $id: "generateAPISpecs", context, builderPath }))
+    .as("list")
+    .to(
+      core.map({
+        $id: "createFetchBoards",
+        board: curriedSpecBoard,
+      })
+    )
     .to(convertBoardListToObject({ $id: "convertBoardListToObject" }));
 }).serialize(metaData);
