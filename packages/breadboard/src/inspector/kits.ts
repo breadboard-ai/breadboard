@@ -16,6 +16,7 @@ import {
   InspectableKit,
   InspectableNodePorts,
   InspectableNodeType,
+  InspectableNodeTypeMetadata,
   NodeTypeDescriberOptions,
 } from "./types.js";
 
@@ -27,8 +28,15 @@ const createBuiltInKit = (): InspectableKit => {
       url: "",
     },
     nodeTypes: [
-      new BuiltInNodeType("input", describeInput),
-      new BuiltInNodeType("output", describeOutput),
+      new BuiltInNodeType("input", describeInput, {
+        title: "Input",
+        description: "The input node. Use it to request inputs for your board.",
+      }),
+      new BuiltInNodeType("output", describeOutput, {
+        title: "Output",
+        description:
+          "The output node. Use it to provide outputs from your board.",
+      }),
     ],
   };
 };
@@ -51,18 +59,28 @@ export const collectKits = (kits: Kit[]): InspectableKit[] => {
 };
 
 const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
-  return Object.entries(handlers).map(
-    ([type, handler]) => new NodeType(type, handler)
-  );
+  return Object.entries(handlers)
+    .sort()
+    .map(([type, handler]) => new NodeType(type, handler, {}));
 };
 
 class NodeType implements InspectableNodeType {
   #type: string;
   #handler: NodeHandler;
+  #metadata: InspectableNodeTypeMetadata;
 
-  constructor(type: string, handler: NodeHandler) {
+  constructor(
+    type: string,
+    handler: NodeHandler,
+    metadata: InspectableNodeTypeMetadata
+  ) {
     this.#type = type;
     this.#handler = handler;
+    this.#metadata = metadata;
+  }
+
+  metadata(): InspectableNodeTypeMetadata {
+    return this.#metadata;
   }
 
   type() {
@@ -95,14 +113,19 @@ class NodeType implements InspectableNodeType {
 class BuiltInNodeType extends NodeType {
   constructor(
     type: string,
-    describer: (options: NodeTypeDescriberOptions) => NodeDescriberResult
+    describer: (options: NodeTypeDescriberOptions) => NodeDescriberResult,
+    metadata: InspectableNodeTypeMetadata
   ) {
-    super(type, {
-      invoke: async () => {},
-      describe: async () => {
-        return describer({});
+    super(
+      type,
+      {
+        invoke: async () => {},
+        describe: async () => {
+          return describer({});
+        },
       },
-    });
+      metadata
+    );
   }
 }
 

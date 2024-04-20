@@ -387,7 +387,29 @@ export type InspectableKit = {
   nodeTypes: InspectableNodeType[];
 };
 
+/**
+ * Represents metadata for a node type.
+ */
+export type InspectableNodeTypeMetadata = {
+  /**
+   * Title of the node type.
+   */
+  title?: string;
+  /**
+   * Description of the node type.
+   */
+  description?: string;
+  /**
+   * Whether or not the node is deprecated.
+   */
+  deprecated?: boolean;
+};
+
 export type InspectableNodeType = {
+  /**
+   * Returns the metadata, associated with this node type.
+   */
+  metadata(): InspectableNodeTypeMetadata;
   /**
    * Returns the type of the node.
    */
