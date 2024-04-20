@@ -9,6 +9,7 @@ import {
   NodeHandlers,
   NodeHandler,
   NodeDescriberResult,
+  NodeHandlerMetadata,
 } from "../types.js";
 import { collectPortsForType } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
@@ -16,7 +17,6 @@ import {
   InspectableKit,
   InspectableNodePorts,
   InspectableNodeType,
-  InspectableNodeTypeMetadata,
   NodeTypeDescriberOptions,
 } from "./types.js";
 
@@ -61,26 +61,20 @@ export const collectKits = (kits: Kit[]): InspectableKit[] => {
 const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
   return Object.entries(handlers)
     .sort()
-    .map(([type, handler]) => new NodeType(type, handler, {}));
+    .map(([type, handler]) => new NodeType(type, handler));
 };
 
 class NodeType implements InspectableNodeType {
   #type: string;
   #handler: NodeHandler;
-  #metadata: InspectableNodeTypeMetadata;
 
-  constructor(
-    type: string,
-    handler: NodeHandler,
-    metadata: InspectableNodeTypeMetadata
-  ) {
+  constructor(type: string, handler: NodeHandler) {
     this.#type = type;
     this.#handler = handler;
-    this.#metadata = metadata;
   }
 
-  metadata(): InspectableNodeTypeMetadata {
-    return this.#metadata;
+  metadata(): NodeHandlerMetadata {
+    return "metadata" in this.#handler ? this.#handler.metadata || {} : {};
   }
 
   type() {
@@ -114,18 +108,15 @@ class BuiltInNodeType extends NodeType {
   constructor(
     type: string,
     describer: (options: NodeTypeDescriberOptions) => NodeDescriberResult,
-    metadata: InspectableNodeTypeMetadata
+    metadata: NodeHandlerMetadata
   ) {
-    super(
-      type,
-      {
-        invoke: async () => {},
-        describe: async () => {
-          return describer({});
-        },
+    super(type, {
+      invoke: async () => {},
+      describe: async () => {
+        return describer({});
       },
-      metadata
-    );
+      metadata,
+    });
   }
 }
 
