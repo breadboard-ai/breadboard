@@ -299,11 +299,9 @@ export class Input extends LitElement {
             input = html`${multipart}`;
           } else {
             // Text inputs: multi line and single line.
+            const examples = property.examples?.[0];
             const value =
-              (values[key] as string) ??
-              property.examples ??
-              property.default ??
-              "";
+              (values[key] as string) ?? examples ?? property.default ?? "";
             if (isMultiline(property)) {
               // Multi line input.
               input = html`<div class="multiline">
