@@ -1,0 +1,99 @@
+{
+  "title": "Extract Text From Image",
+  "description": "Extracts text from an image",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "image/png",
+              "title": "Image to extract text from ",
+              "examples": [],
+              "format": "drawable"
+            }
+          },
+          "required": [
+            "image"
+          ]
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -263,
+          "y": -207
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 429,
+          "y": -124
+        }
+      }
+    },
+    {
+      "id": "vision-ade24414",
+      "type": "vision",
+      "metadata": {
+        "visual": {
+          "x": 199,
+          "y": -151
+        }
+      }
+    },
+    {
+      "id": "runJavascript-1e2e5cba",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": -86,
+          "y": -147
+        }
+      },
+      "configuration": {
+        "name": "run",
+        "raw": "on",
+        "code": "const run = ({ image }) => {\n  console.log(image)\n  return { parts: [\n     { text: \"Extract the text from this image\" },\n     { \n        \"inlineData\": {\n          \"mimeType\": image.inline_data.mime_type,\n          \"data\": image.inline_data.data\n        }\n    }\n  ]}\n}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "vision-ade24414",
+      "to": "output",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-1e2e5cba",
+      "out": "image",
+      "in": "image"
+    },
+    {
+      "from": "runJavascript-1e2e5cba",
+      "to": "vision-ade24414",
+      "out": "parts",
+      "in": "parts"
+    }
+  ]
+}
