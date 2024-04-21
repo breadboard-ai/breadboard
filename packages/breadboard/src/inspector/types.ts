@@ -693,6 +693,11 @@ export type InspectableRunSecretEvent = {
 export type EventIdentifier = string;
 
 /**
+ * Values that were submitted as inputs during a run.
+ */
+export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
+
+/**
  * Represent all events that can be inspected during a run.
  */
 export type InspectableRunEvent =
@@ -752,6 +757,11 @@ export type InspectableRun = {
    * null if not found.
    */
   getEventById(id: EventIdentifier): InspectableRunEvent | null;
+  /**
+   * Creates a map of all inputs that were submitted during the run or `null`
+   * if no inputs were submitted.
+   */
+  inputs(): InspectableRunInputs | null;
 };
 
 /**

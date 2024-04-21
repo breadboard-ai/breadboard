@@ -8,6 +8,7 @@ import {
   ErrorObject,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunInputs,
   InspectableRunNodeEvent,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -26,6 +27,9 @@ import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 export class ActivityLog extends LitElement {
   @property({ reflect: false })
   run: InspectableRun | null = null;
+
+  @property({ reflect: false })
+  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: false })
   events: InspectableRunEvent[] | null = null;
@@ -641,6 +645,11 @@ export class ActivityLog extends LitElement {
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
     const schema = nodeSchema?.outputSchema || inputs.schema;
+
+    // TODO: Implement support for multiple iterations over the
+    // same input over a run. Currently, we will only grab the
+    // first value.
+    const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
@@ -648,8 +657,10 @@ export class ActivityLog extends LitElement {
       <bb-input
         id="${descriptor.id}"
         .secret=${false}
+        .autosubmit=${false}
         .remember=${false}
         .schema=${schema}
+        .values=${values}
       ></bb-input>
     </section>`;
   }
@@ -820,6 +831,7 @@ export class ActivityLog extends LitElement {
                       .values=${values}
                       .secret=${true}
                       .remember=${true}
+                      .autosubmit=${true}
                       .schema=${configuration.schema}
                     ></bb-input>`;
                   })}

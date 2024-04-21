@@ -690,7 +690,9 @@ export class Main extends LitElement {
     })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
-    const currentRun = this.#runObserver?.runs()[0];
+    const runs = this.#runObserver?.runs();
+    const currentRun = runs?.[0];
+    const inputsFromLastRun = runs?.[1]?.inputs() || null;
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
       try {
@@ -810,6 +812,7 @@ export class Main extends LitElement {
           .graph=${this.graph}
           .subGraphId=${this.subGraphId}
           .run=${currentRun}
+          .inputsFromLastRun=${inputsFromLastRun}
           .kits=${this.kits}
           .loader=${this.#loader}
           .status=${this.status}

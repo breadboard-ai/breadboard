@@ -21,6 +21,7 @@ import {
   GraphLoader,
   GraphProvider,
   InspectableRun,
+  InspectableRunInputs,
   Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
@@ -63,6 +64,9 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
+
+  @property()
+  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;
@@ -290,6 +294,7 @@ export class UI extends LitElement {
       >
         <bb-activity-log
           .run=${this.run}
+          .inputsFromLastRun=${this.inputsFromLastRun}
           .events=${events}
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}

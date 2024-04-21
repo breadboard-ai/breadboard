@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeValue, type Schema } from "@google-labs/breadboard";
+import { type Schema } from "@google-labs/breadboard";
 import {
   createMultipartInput,
   getMultipartValue,
@@ -52,11 +52,16 @@ export class Input extends LitElement {
   @property({ reflect: false })
   secret = false;
 
-  @property({ reflect: false })
-  schema: Schema | null = null;
+  /**
+   * If true and `values` are provided, will automatically dispatch
+   * the `InputEvent` (currently used in secrets). Otherwise, will
+   * use `values` as initial input data.
+   */
+  @property()
+  autosubmit = false;
 
   @property({ reflect: false })
-  processedValues: Record<string, NodeValue> | null = null;
+  schema: Schema | null = null;
 
   @property({ reflect: false })
   values: InputData | null = null;
@@ -238,7 +243,7 @@ export class Input extends LitElement {
     // Special case for when we have – say – a secret stored. Here we neither
     // render the form, nor the retrieved value, but instead we just dispatch
     // the event with the value in and stop rendering.
-    if (this.values) {
+    if (this.values && this.autosubmit) {
       this.dispatchEvent(new InputEnterEvent(this.id, this.values));
       return;
     }
