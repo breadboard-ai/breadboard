@@ -8,7 +8,14 @@ import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
 import { createLoader } from "../loader/index.js";
 import { BoardRunner } from "../runner.js";
-import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  Kit,
+  KitManifest,
+  NodeHandlerContext,
+  NodeHandlerObject,
+} from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
 
 type ManifestEntry = string | GraphDescriptor;
@@ -34,23 +41,42 @@ const getGraphDescriptor = async (
   }
 };
 
+class GraphDescriptorNodeHandler implements NodeHandlerObject {
+  #base: URL;
+  #type: string;
+  #maybeGraph: string | GraphDescriptor;
+  #graph: GraphDescriptor | null = null;
+
+  constructor(base: URL, type: string, maybeGraph: string | GraphDescriptor) {
+    this.#base = base;
+    this.#type = type;
+    this.#maybeGraph = maybeGraph;
+  }
+
+  async #ensureGraph(): Promise<GraphDescriptor> {
+    return (this.#graph ??= await getGraphDescriptor(
+      this.#base,
+      this.#type,
+      this.#maybeGraph
+    ));
+  }
+
+  async describe() {
+    const graph = await this.#ensureGraph();
+    return await inspect(graph).describe();
+  }
+
+  async invoke(inputs: InputValues, context: NodeHandlerContext) {
+    const graph = await this.#ensureGraph();
+    const board = await BoardRunner.fromGraphDescriptor(graph);
+    return await board.runOnce(inputs, context);
+  }
+}
+
 const createHandlersFromManifest = (base: URL, nodes: KitManifest["nodes"]) => {
   return Object.fromEntries(
     Object.entries(nodes).map(([key, value]) => {
-      return [
-        key,
-        {
-          describe: async () => {
-            const graph = await getGraphDescriptor(base, key, value);
-            return await inspect(graph).describe();
-          },
-          invoke: async (inputs, context) => {
-            const graph = await getGraphDescriptor(base, key, value);
-            const board = await BoardRunner.fromGraphDescriptor(graph);
-            return await board.runOnce(inputs, context);
-          },
-        } as NodeHandler,
-      ];
+      return [key, new GraphDescriptorNodeHandler(base, key, value)];
     })
   );
 };

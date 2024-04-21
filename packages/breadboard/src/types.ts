@@ -257,13 +257,13 @@ export type NodeHandlerMetadata = {
   deprecated?: boolean;
 };
 
-export type NodeHandler =
-  | {
-      invoke: NodeHandlerFunction;
-      describe?: NodeDescriberFunction;
-      metadata?: NodeHandlerMetadata;
-    }
-  | NodeHandlerFunction;
+export type NodeHandlerObject = {
+  invoke: NodeHandlerFunction;
+  describe?: NodeDescriberFunction;
+  metadata?: NodeHandlerMetadata;
+};
+
+export type NodeHandler = NodeHandlerObject | NodeHandlerFunction;
 
 /**
  * All known node handlers.
