@@ -21,11 +21,15 @@ import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { InputsFromRun, valuesFromLastRun } from "../../utils/last-run.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
   @property({ reflect: false })
   run: InspectableRun | null = null;
+
+  @property({ reflect: false })
+  inputsFromLastRun: InputsFromRun | null = null;
 
   @property({ reflect: false })
   events: InspectableRunEvent[] | null = null;
@@ -640,7 +644,11 @@ export class ActivityLog extends LitElement {
     const { inputs, node } = event;
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
-    const schema = nodeSchema?.outputSchema || inputs.schema;
+    const schema = valuesFromLastRun(
+      descriptor.id,
+      nodeSchema?.outputSchema || inputs.schema,
+      this.inputsFromLastRun
+    );
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}

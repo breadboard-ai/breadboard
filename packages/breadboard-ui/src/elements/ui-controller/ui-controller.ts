@@ -28,6 +28,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { InputsFromRun } from "../../utils/last-run.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -63,6 +64,9 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
+
+  @property()
+  inputsFromLastRun: InputsFromRun | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;
@@ -290,6 +294,7 @@ export class UI extends LitElement {
       >
         <bb-activity-log
           .run=${this.run}
+          .inputsFromLastRun=${this.inputsFromLastRun}
           .events=${events}
           .eventPosition=${eventPosition}
           .showExtendedInfo=${true}
