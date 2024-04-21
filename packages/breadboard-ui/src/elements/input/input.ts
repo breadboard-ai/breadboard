@@ -56,9 +56,6 @@ export class Input extends LitElement {
   schema: Schema | null = null;
 
   @property({ reflect: false })
-  processedValues: Record<string, NodeValue> | null = null;
-
-  @property({ reflect: false })
   values: InputData | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
