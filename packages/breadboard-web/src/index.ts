@@ -31,7 +31,6 @@ import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
 import { addNodeProxyServerConfig } from "./config";
 import { SettingsStore } from "./data/settings-store";
-import { inputsFromRun } from "../../breadboard-ui/dist/src/utils/last-run";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -693,7 +692,7 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const runs = this.#runObserver?.runs();
     const currentRun = runs?.[0];
-    const inputsFromLastRun = inputsFromRun(runs?.[1]);
+    const inputsFromLastRun = runs?.[1]?.inputs() || null;
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
       try {

@@ -21,6 +21,7 @@ import {
   GraphLoader,
   GraphProvider,
   InspectableRun,
+  InspectableRunInputs,
   Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
@@ -28,7 +29,6 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { InputsFromRun } from "../../utils/last-run.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -66,7 +66,7 @@ export class UI extends LitElement {
   run: InspectableRun | null = null;
 
   @property()
-  inputsFromLastRun: InputsFromRun | null = null;
+  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;

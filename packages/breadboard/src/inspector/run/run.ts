@@ -21,8 +21,18 @@ import {
   SerializedRun,
   SerializedRunLoadingOptions,
   InspectableRunNodeEvent,
+  InspectableRunInputs,
 } from "../types.js";
 
+const isInput = (
+  event: InspectableRunEvent
+): event is InspectableRunNodeEvent => {
+  return (
+    event.type === "node" &&
+    event.node.descriptor.type === "input" &&
+    event.end !== null
+  );
+};
 export class RunObserver implements InspectableRunObserver {
   #store: GraphDescriptorStore;
   #options: RunObserverOptions;
@@ -126,5 +136,21 @@ export class Run implements InspectableRun {
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {
     return this.#events.getEventById(id);
+  }
+
+  inputs(): InspectableRunInputs | null {
+    const result: InspectableRunInputs = new Map();
+    this.#events.events.forEach((event) => {
+      if (!isInput(event)) return;
+      const id = event.node.descriptor.id;
+      let inputList = result.get(id);
+      if (!inputList) {
+        inputList = [];
+        result.set(id, inputList);
+      }
+      inputList.push(event.outputs || {});
+    });
+
+    return result.size > 0 ? result : null;
   }
 }

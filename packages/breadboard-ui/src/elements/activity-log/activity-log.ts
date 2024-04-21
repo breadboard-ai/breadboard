@@ -8,6 +8,7 @@ import {
   ErrorObject,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunInputs,
   InspectableRunNodeEvent,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -21,7 +22,6 @@ import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
-import { InputsFromRun } from "../../utils/last-run.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -29,7 +29,7 @@ export class ActivityLog extends LitElement {
   run: InspectableRun | null = null;
 
   @property({ reflect: false })
-  inputsFromLastRun: InputsFromRun | null = null;
+  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: false })
   events: InspectableRunEvent[] | null = null;
