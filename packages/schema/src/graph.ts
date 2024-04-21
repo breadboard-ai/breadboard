@@ -169,11 +169,11 @@ export type KitDescriptor = KitReference & {
 export type KitManifest = KitDescriptor & {
   /**
    * A map of nodes. Each key in this object is the node that is provided by
-   * the kit. Each value is the URL (string) pointing to the graph or the
-   * `GraphDescriptor` containing the graph. This graph will be run (runOnce)
-   * when the `invoke` of the node's `NodeHandler` is called.
+   * the kit. Each value the `GraphDescriptor` containing the graph. This
+   * graph will be run (runOnce) when the `invoke` of the node's `NodeHandler`
+   * is called.
    */
-  nodes: Record<NodeIdentifier, string | GraphDescriptor>;
+  nodes: Record<NodeIdentifier, GraphDescriptor>;
 };
 
 /**

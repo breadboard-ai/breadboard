@@ -6,7 +6,6 @@
 
 import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
-import { createLoader } from "../loader/index.js";
 import { BoardRunner } from "../runner.js";
 import {
   GraphDescriptor,
@@ -14,28 +13,16 @@ import {
   Kit,
   KitManifest,
   NodeHandlerContext,
+  NodeHandlerMetadata,
   NodeHandlerObject,
 } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
 
-type ManifestEntry = string | GraphDescriptor;
-
-const getGraphDescriptor = async (
-  base: URL,
-  key: string,
-  entry: ManifestEntry
-) => {
-  if (typeof entry === "string") {
-    const loader = createLoader();
-    const result = await loader.load(entry, { base });
-    if (result === null) {
-      throw new Error(`Unable to load graph descriptor from "${entry}"`);
-    }
-    return result;
-  } else if (entry.edges && entry.nodes) {
+const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
+  if (graph.edges && graph.nodes) {
     const url = new URL(base);
     url.searchParams.set("graph", key);
-    return { ...entry, url: url.href };
+    return { ...graph, url: url.href };
   } else {
     throw new Error("Invalid graph descriptor");
   }
@@ -44,31 +31,25 @@ const getGraphDescriptor = async (
 class GraphDescriptorNodeHandler implements NodeHandlerObject {
   #base: URL;
   #type: string;
-  #maybeGraph: string | GraphDescriptor;
-  #graph: GraphDescriptor | null = null;
+  #graph: GraphDescriptor;
+  metadata: NodeHandlerMetadata;
 
-  constructor(base: URL, type: string, maybeGraph: string | GraphDescriptor) {
+  constructor(base: URL, type: string, graph: GraphDescriptor) {
     this.#base = base;
     this.#type = type;
-    this.#maybeGraph = maybeGraph;
-  }
-
-  async #ensureGraph(): Promise<GraphDescriptor> {
-    return (this.#graph ??= await getGraphDescriptor(
-      this.#base,
-      this.#type,
-      this.#maybeGraph
-    ));
+    this.#graph = setBaseURL(base, type, graph);
+    this.describe = this.describe.bind(this);
+    this.invoke = this.invoke.bind(this);
+    const { title, description } = this.#graph;
+    this.metadata = { title, description };
   }
 
   async describe() {
-    const graph = await this.#ensureGraph();
-    return await inspect(graph).describe();
+    return await inspect(this.#graph).describe();
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
-    const graph = await this.#ensureGraph();
-    const board = await BoardRunner.fromGraphDescriptor(graph);
+    const board = await BoardRunner.fromGraphDescriptor(this.#graph);
     return await board.runOnce(inputs, context);
   }
 }
