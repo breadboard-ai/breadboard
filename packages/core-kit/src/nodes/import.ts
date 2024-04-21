@@ -22,6 +22,9 @@ export type ImportNodeInputs = InputValues & {
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: async (inputs?: InputValues) => {
     return {
       inputSchema: new SchemaBuilder()

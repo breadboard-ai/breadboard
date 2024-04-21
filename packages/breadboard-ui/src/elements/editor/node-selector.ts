@@ -1,7 +1,7 @@
 import {
   GraphDescriptor,
-  InspectableNodeTypeMetadata,
   Kit,
+  NodeHandlerMetadata,
   inspect,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
@@ -237,7 +237,7 @@ export class NodeSelector extends LitElement {
     const kits = graph.kits() || [];
     const kitList = new Map<
       string,
-      { id: string; metadata: InspectableNodeTypeMetadata }[]
+      { id: string; metadata: NodeHandlerMetadata }[]
     >();
     kits.sort((kit1, kit2) =>
       (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
@@ -250,6 +250,7 @@ export class NodeSelector extends LitElement {
 
       let kitNodes = kit.nodeTypes;
       kitNodes = kit.nodeTypes.filter((node) => {
+        if (node.metadata().deprecated) return false;
         if (!this.filter) {
           return true;
         }
