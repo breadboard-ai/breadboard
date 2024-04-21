@@ -263,6 +263,20 @@ const foundEvent = run.getEventById(id);
 console.assert(event === foundEvent, "Will return the same event.");
 ```
 
+## Getting inputs, acquired during the run
+
+It can be very handy to quickly get all the inputs that were acquired during the run. For instance, we could take these inputs and pre-populate the respective input fields for the next run. The `inputs()` method is designed exactly for this purpose. It returns a `Map` of all inputs:
+
+```ts
+// Returns a Map<NodeIdentifier, OutputValues[]>
+const inputs = run.inputs();
+console.log("Inputs acquired during this run:");
+Object.entries(inputs).map(([id, values]) => {
+  console.log(`Input Id: ${id}`);
+  console.log("Values", values);
+});
+```
+
 ## Serializing and loading runs
 
 Runs can be serialized into a common format. This can be used to save runs into
