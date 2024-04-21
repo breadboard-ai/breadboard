@@ -69,12 +69,12 @@ const getKeys = (
   return keys;
 };
 
-/**
- * A kind of input node that provides secret values, such as API keys.
- * Currently, it simply reads them from environment.
- */
 export default defineNodeType({
   name: "secrets",
+  metadata: {
+    title: "Secrets",
+    description: "Retrieves secret values, such as API keys.",
+  },
   inputs: {
     keys: {
       title: "secrets",

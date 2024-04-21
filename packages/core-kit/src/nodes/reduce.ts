@@ -7,6 +7,7 @@
 import {
   InputValues,
   NodeHandlerContext,
+  NodeHandlerMetadata,
   NodeValue,
   OutputValues,
   SchemaBuilder,
@@ -104,4 +105,10 @@ const describe = async () => {
   return { inputSchema, outputSchema };
 };
 
-export default { invoke, describe };
+const metadata = {
+  title: "Reduce",
+  description:
+    "Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.",
+} satisfies NodeHandlerMetadata;
+
+export default { metadata, invoke, describe };

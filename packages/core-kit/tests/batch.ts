@@ -13,7 +13,7 @@ test("works with reasonable arguments", async (t) => {
     list: [1, 2, 3],
     size: 2,
   };
-  const outputs = await batcher(inputs);
+  const outputs = await batcher.invoke(inputs);
   t.deepEqual(outputs, {
     list: [[1, 2], [3]],
   });
@@ -25,7 +25,7 @@ test("handles unreasonable arguments", async (t) => {
       list: [],
       size: 2,
     };
-    const outputs = await batcher(inputs);
+    const outputs = await batcher.invoke(inputs);
     t.deepEqual(outputs, {
       list: [[]],
     });
@@ -35,16 +35,16 @@ test("handles unreasonable arguments", async (t) => {
       list: [1, 2],
       size: 0,
     };
-    await t.throwsAsync(async () => await batcher(inputs));
+    await t.throwsAsync(async () => await batcher.invoke(inputs));
   }
   {
     const inputs = {};
-    await t.throwsAsync(async () => await batcher(inputs));
+    await t.throwsAsync(async () => await batcher.invoke(inputs));
   }
   {
     const inputs = {
       size: 100,
     };
-    await t.throwsAsync(async () => await batcher(inputs));
+    await t.throwsAsync(async () => await batcher.invoke(inputs));
   }
 });

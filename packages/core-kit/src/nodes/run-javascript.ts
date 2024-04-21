@@ -262,6 +262,10 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
 };
 
 export default {
+  metadata: {
+    title: "Run Javascript",
+    description: "Runs supplied `code` input as Javascript.",
+  },
   describe: runJavascriptDescriber,
   invoke: runJavascriptHandler,
 } satisfies NodeHandler;
