@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeHandlerObject,
   SchemaBuilder,
   type InputValues,
   type NodeDescriberFunction,
@@ -194,6 +195,11 @@ const describe: NodeDescriberFunction = async () => {
 };
 
 export default {
+  metadata: {
+    title: "Validate JSON",
+    description:
+      "Validates given text as JSON, trying its best to parse it first.",
+  },
   invoke,
   describe,
-};
+} as NodeHandlerObject;
