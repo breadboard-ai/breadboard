@@ -242,12 +242,28 @@ export type NodeDescriberFunction = (
   context?: NodeDescriberContext
 ) => Promise<NodeDescriberResult>;
 
-export type NodeHandler =
-  | {
-      invoke: NodeHandlerFunction;
-      describe?: NodeDescriberFunction;
-    }
-  | NodeHandlerFunction;
+export type NodeHandlerMetadata = {
+  /**
+   * Title of the node type.
+   */
+  title?: string;
+  /**
+   * Description of the node type.
+   */
+  description?: string;
+  /**
+   * Whether or not the node is deprecated.
+   */
+  deprecated?: boolean;
+};
+
+export type NodeHandlerObject = {
+  invoke: NodeHandlerFunction;
+  describe?: NodeDescriberFunction;
+  metadata?: NodeHandlerMetadata;
+};
+
+export type NodeHandler = NodeHandlerObject | NodeHandlerFunction;
 
 /**
  * All known node handlers.

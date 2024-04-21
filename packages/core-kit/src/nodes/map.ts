@@ -11,6 +11,7 @@ import {
   OutputValues,
   NodeHandlerContext,
   SchemaBuilder,
+  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { getRunner } from "../utils.js";
 
@@ -110,4 +111,10 @@ const describe = async () => {
   return { inputSchema, outputSchema };
 };
 
-export default { invoke, describe };
+const metadata = {
+  title: "Map",
+  description:
+    "Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.",
+} satisfies NodeHandlerMetadata;
+
+export default { metadata, invoke, describe };

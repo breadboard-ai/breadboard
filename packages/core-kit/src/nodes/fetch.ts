@@ -37,6 +37,11 @@ const serverSentEventTransform = () =>
 
 export default defineNodeType({
   name: "fetch",
+  metadata: {
+    title: "Fetch",
+    description:
+      "A wrapper around `fetch` API. Use this node to fetch content from the Web.",
+  },
   inputs: {
     url: {
       description: "The URL to fetch",

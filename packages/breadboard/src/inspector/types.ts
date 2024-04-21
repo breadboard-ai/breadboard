@@ -20,6 +20,7 @@ import {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeHandlerMetadata,
   NodeIdentifier,
   NodeTypeIdentifier,
   NodeValue,
@@ -388,6 +389,10 @@ export type InspectableKit = {
 };
 
 export type InspectableNodeType = {
+  /**
+   * Returns the metadata, associated with this node type.
+   */
+  metadata(): NodeHandlerMetadata;
   /**
    * Returns the type of the node.
    */

@@ -1,4 +1,9 @@
-import { GraphDescriptor, Kit, inspect } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  Kit,
+  NodeHandlerMetadata,
+  inspect,
+} from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -230,7 +235,10 @@ export class NodeSelector extends LitElement {
     });
 
     const kits = graph.kits() || [];
-    const kitList = new Map<string, string[]>();
+    const kitList = new Map<
+      string,
+      { id: string; metadata: NodeHandlerMetadata }[]
+    >();
     kits.sort((kit1, kit2) =>
       (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
     );
@@ -242,6 +250,7 @@ export class NodeSelector extends LitElement {
 
       let kitNodes = kit.nodeTypes;
       kitNodes = kit.nodeTypes.filter((node) => {
+        if (node.metadata().deprecated) return false;
         if (!this.filter) {
           return true;
         }
@@ -255,7 +264,7 @@ export class NodeSelector extends LitElement {
 
       kitList.set(
         kit.descriptor.title,
-        kitNodes.map((node) => node.type())
+        kitNodes.map((node) => ({ id: node.type(), metadata: node.metadata() }))
       );
     }
 
@@ -296,27 +305,29 @@ export class NodeSelector extends LitElement {
               /><label for="${kitId}"><span>${kitName}</span></label>
               <div class="kit-contents">
                 <ul>
-                  ${map(kitContents, (kitItemName) => {
-                    const kitItemId = kitItemName
+                  ${map(kitContents, (nodeTypeInfo) => {
+                    const className = nodeTypeInfo.id
                       .toLocaleLowerCase()
                       .replace(/\W/, "-");
+                    const id = nodeTypeInfo.id;
                     return html`<li
                       class=${classMap({
-                        [kitItemId]: true,
+                        [className]: true,
                         ["kit-item"]: true,
                       })}
                       draggable="true"
+                      title=${nodeTypeInfo.metadata.description || ""}
                       @dblclick=${() => {
-                        this.dispatchEvent(new KitNodeChosenEvent(kitItemName));
+                        this.dispatchEvent(new KitNodeChosenEvent(id));
                       }}
                       @dragstart=${(evt: DragEvent) => {
                         if (!evt.dataTransfer) {
                           return;
                         }
-                        evt.dataTransfer.setData(DATA_TYPE, kitItemName);
+                        evt.dataTransfer.setData(DATA_TYPE, id);
                       }}
                     >
-                      <span>${kitItemName}</span>
+                      <span>${id}</span>
                     </li>`;
                   })}
                 </ul>

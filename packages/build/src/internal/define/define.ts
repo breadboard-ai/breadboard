@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { NodeHandlerMetadata } from "@google-labs/breadboard";
 import type { CountUnion, Expand } from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
@@ -128,6 +129,7 @@ export function defineNodeType<
     outputs: O;
     invoke: F;
     describe?: D;
+    metadata?: NodeHandlerMetadata;
   } & {
     // Then narrow down the types with further constraints. This 2-step
     // approach lets us generate additional and more precise errors.
@@ -189,6 +191,7 @@ export function defineNodeType<
   return Object.assign(impl.instantiate.bind(impl), {
     invoke: impl.invoke.bind(impl),
     describe: impl.describe.bind(impl),
+    metadata: params.metadata || {},
   });
 }
 

@@ -12,6 +12,7 @@ import type {
   GraphDescriptor,
   Schema,
   NodeDescriberContext,
+  NodeHandlerObject,
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
@@ -108,6 +109,11 @@ const describe = async (
 };
 
 export default {
+  metadata: {
+    title: "Invoke",
+    description:
+      "Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.",
+  },
   describe,
   invoke: async (
     inputs: InputValues,
@@ -130,4 +136,4 @@ export default {
 
     return await board.runOnce(args, invocationContext);
   },
-};
+} satisfies NodeHandlerObject;

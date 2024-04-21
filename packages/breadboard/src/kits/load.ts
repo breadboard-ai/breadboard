@@ -6,51 +6,58 @@
 
 import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
-import { createLoader } from "../loader/index.js";
 import { BoardRunner } from "../runner.js";
-import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  Kit,
+  KitManifest,
+  NodeHandlerContext,
+  NodeHandlerMetadata,
+  NodeHandlerObject,
+} from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
 
-type ManifestEntry = string | GraphDescriptor;
-
-const getGraphDescriptor = async (
-  base: URL,
-  key: string,
-  entry: ManifestEntry
-) => {
-  if (typeof entry === "string") {
-    const loader = createLoader();
-    const result = await loader.load(entry, { base });
-    if (result === null) {
-      throw new Error(`Unable to load graph descriptor from "${entry}"`);
-    }
-    return result;
-  } else if (entry.edges && entry.nodes) {
+const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
+  if (graph.edges && graph.nodes) {
     const url = new URL(base);
     url.searchParams.set("graph", key);
-    return { ...entry, url: url.href };
+    return { ...graph, url: url.href };
   } else {
     throw new Error("Invalid graph descriptor");
   }
 };
 
+class GraphDescriptorNodeHandler implements NodeHandlerObject {
+  #base: URL;
+  #type: string;
+  #graph: GraphDescriptor;
+  metadata: NodeHandlerMetadata;
+
+  constructor(base: URL, type: string, graph: GraphDescriptor) {
+    this.#base = base;
+    this.#type = type;
+    this.#graph = setBaseURL(base, type, graph);
+    this.describe = this.describe.bind(this);
+    this.invoke = this.invoke.bind(this);
+    const { title, description } = this.#graph;
+    this.metadata = { title, description };
+  }
+
+  async describe() {
+    return await inspect(this.#graph).describe();
+  }
+
+  async invoke(inputs: InputValues, context: NodeHandlerContext) {
+    const board = await BoardRunner.fromGraphDescriptor(this.#graph);
+    return await board.runOnce(inputs, context);
+  }
+}
+
 const createHandlersFromManifest = (base: URL, nodes: KitManifest["nodes"]) => {
   return Object.fromEntries(
     Object.entries(nodes).map(([key, value]) => {
-      return [
-        key,
-        {
-          describe: async () => {
-            const graph = await getGraphDescriptor(base, key, value);
-            return await inspect(graph).describe();
-          },
-          invoke: async (inputs, context) => {
-            const graph = await getGraphDescriptor(base, key, value);
-            const board = await BoardRunner.fromGraphDescriptor(graph);
-            return await board.runOnce(inputs, context);
-          },
-        } as NodeHandler,
-      ];
+      return [key, new GraphDescriptorNodeHandler(base, key, value)];
     })
   );
 };

@@ -62,6 +62,11 @@ export const embedTextDescriber: NodeDescriberFunction = async () => {
 };
 
 export default {
+  metadata: {
+    title: "Embed Text",
+    description:
+      "Uses `embedding-gecko-001` model to generate an embedding of a given text",
+  },
   describe: embedTextDescriber,
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const values = inputs as EmbedTextInputs;

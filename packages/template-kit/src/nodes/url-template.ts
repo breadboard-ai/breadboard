@@ -48,6 +48,11 @@ export const getUrlTemplateParameters = (
  */
 export default defineNodeType({
   name: "urlTemplate",
+  metadata: {
+    title: "URL Template",
+    description:
+      "Use this node to safely construct URLs. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.",
+  },
   inputs: {
     template: {
       type: "string",

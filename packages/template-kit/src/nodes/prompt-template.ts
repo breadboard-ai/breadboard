@@ -49,7 +49,7 @@ const promptTemplateHandler = (
 
 /**
  * Use this node to populate simple handlebar-style templates. A required
- * input is `template`, which is a string that conains the template prompt
+ * input is `template`, which is a string that contains the template prompt
  * template. The template can contain zero or more placeholders that will be
  * replaced with values from inputs. Specify placeholders as `{{inputName}}`
  * in the template. The placeholders in the template must match the inputs
@@ -59,6 +59,11 @@ const promptTemplateHandler = (
  */
 export default defineNodeType({
   name: "promptTemplate",
+  metadata: {
+    title: "Prompt Template",
+    description:
+      "Use this node to populate simple handlebar-style templates. A required input is `template`, which is a string that contains the template prompt template. The template can contain zero or more placeholders that will be replaced with values from inputs. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the inputs wired into this node. The node will replace all placeholders with values from the input property bag and pass the result along as the `prompt` output property.",
+  },
   inputs: {
     template: {
       type: "string",

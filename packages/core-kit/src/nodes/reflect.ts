@@ -17,6 +17,9 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: async () => {
     return {
       inputSchema: SchemaBuilder.empty(),

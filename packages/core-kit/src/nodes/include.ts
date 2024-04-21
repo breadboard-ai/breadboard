@@ -26,6 +26,9 @@ export type IncludeNodeInputs = InputValues & {
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: async (inputs?: InputValues) => ({
     inputSchema: new SchemaBuilder()
       .setAdditionalProperties(true)

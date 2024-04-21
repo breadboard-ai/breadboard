@@ -10,8 +10,8 @@ import {
   NodeHandlerFunction,
   NodeHandlerContext,
   Schema,
-  NodeHandler,
   SchemaBuilder,
+  NodeHandlerObject,
 } from "@google-labs/breadboard";
 
 import jsonata from "jsonata";
@@ -111,6 +111,11 @@ export const jsonataDescriber: NodeDescriberFunction = async (
 };
 
 export default {
+  metadata: {
+    title: "JSONata",
+    description:
+      "Uses JSONata (a kind of SQL for JSON) to transform incoming JSON object. See https://jsonata.org/ for details on the language.",
+  },
   describe: jsonataDescriber,
   invoke: jsonataHandler,
-} satisfies NodeHandler;
+} satisfies NodeHandlerObject;
