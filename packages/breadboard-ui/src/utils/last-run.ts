@@ -9,7 +9,6 @@ import {
   InspectableRunEvent,
   InspectableRunNodeEvent,
   OutputValues,
-  Schema,
 } from "@google-labs/breadboard";
 
 const isInput = (
@@ -40,24 +39,4 @@ export const inputsFromRun = (run?: InspectableRun): InputsFromRun | null => {
   });
 
   return result.size > 0 ? result : null;
-};
-
-export const valuesFromLastRun = (
-  id: string,
-  schema: Schema,
-  inputs: InputsFromRun | null
-) => {
-  if (!inputs) return schema;
-  const input = inputs.get(id);
-  if (!input) return schema;
-  // TODO: Implement support for multiple iterations over the
-  // same input over a run. Currently, we will only grab the
-  // first value.
-  const values = input[0];
-  if (!values) return schema;
-  const result = structuredClone(schema);
-  Object.entries(result.properties || {}).forEach(([property, schema]) => {
-    schema.examples = [values[property] as string];
-  });
-  return result;
 };

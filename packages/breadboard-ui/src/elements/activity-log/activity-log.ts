@@ -21,7 +21,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
-import { InputsFromRun, valuesFromLastRun } from "../../utils/last-run.js";
+import { InputsFromRun } from "../../utils/last-run.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -644,11 +644,12 @@ export class ActivityLog extends LitElement {
     const { inputs, node } = event;
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
-    const schema = valuesFromLastRun(
-      descriptor.id,
-      nodeSchema?.outputSchema || inputs.schema,
-      this.inputsFromLastRun
-    );
+    const schema = nodeSchema?.outputSchema || inputs.schema;
+
+    // TODO: Implement support for multiple iterations over the
+    // same input over a run. Currently, we will only grab the
+    // first value.
+    const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
@@ -656,8 +657,10 @@ export class ActivityLog extends LitElement {
       <bb-input
         id="${descriptor.id}"
         .secret=${false}
+        .autosubmit=${false}
         .remember=${false}
         .schema=${schema}
+        .values=${values}
       ></bb-input>
     </section>`;
   }
@@ -828,6 +831,7 @@ export class ActivityLog extends LitElement {
                       .values=${values}
                       .secret=${true}
                       .remember=${true}
+                      .autosubmit=${true}
                       .schema=${configuration.schema}
                     ></bb-input>`;
                   })}
