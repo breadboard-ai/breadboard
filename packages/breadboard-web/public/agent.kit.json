@@ -810,6 +810,162 @@
       ],
       "graphs": {}
     },
+    "superWorker": {
+      "title": "Super Worker",
+      "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+      "edges": [
+        {
+          "from": "fn-5",
+          "to": "output-2",
+          "out": "context",
+          "in": "out"
+        },
+        {
+          "from": "fn-3",
+          "to": "text-4",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-3",
+          "to": "fn-5",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "text-4",
+          "to": "fn-5",
+          "out": "context",
+          "in": "generated"
+        },
+        {
+          "from": "input-1",
+          "to": "fn-3",
+          "out": "in",
+          "in": "context"
+        },
+        {
+          "from": "input-1",
+          "to": "fn-3",
+          "out": "task",
+          "in": "toAdd"
+        },
+        {
+          "from": "input-1",
+          "to": "text-4",
+          "out": "persona",
+          "in": "systemInstruction"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "output-2",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "out": {
+                  "type": "string",
+                  "title": "out"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "fn-5",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_5 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
+            "name": "fn_5",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Add Generated",
+            "description": "Adding work to the output to pass along"
+          }
+        },
+        {
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context,toAdd})=>{const existing=context;if(!existing)throw new Error(\"Context is required\");const incoming=toAdd;const last=existing[existing.length-1];if(!last){return{context:[toAdd]}}if(last.role===\"model\"){return{context:[...existing,toAdd]}}else{const result=structuredClone(existing);result[result.length-1].parts.push(...incoming.parts);return{context:result}}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Add Task",
+            "description": "Adding task to the prompt."
+          }
+        },
+        {
+          "id": "text-4",
+          "type": "text",
+          "configuration": {},
+          "metadata": {
+            "title": "Gemini API Call",
+            "description": "Applying Gemini to do work"
+          }
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "in": {
+                  "title": "In",
+                  "description": "The source material for the worker",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "examples": [
+                    "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\nbook description: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+                  ]
+                },
+                "task": {
+                  "title": "Task",
+                  "description": "The particular task that the worker will perform on the provided source materials",
+                  "type": "object",
+                  "behavior": [
+                    "llm-content",
+                    "config"
+                  ],
+                  "examples": [
+                    "{\n  \"parts\": [\n    {\n      \"text\": \"\\nWrite an outline for a novel, following the provided specs.\\n\"\n    }\n  ]\n}"
+                  ]
+                },
+                "persona": {
+                  "type": "object",
+                  "title": "Persona",
+                  "description": "The worker persona, including skills and various capabilities, the mindset, etc.",
+                  "examples": [
+                    "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
+                  ],
+                  "default": "",
+                  "behavior": [
+                    "llm-content",
+                    "config"
+                  ]
+                }
+              },
+              "required": [
+                "in",
+                "task",
+                "persona"
+              ]
+            }
+          }
+        }
+      ],
+      "graphs": {}
+    },
     "toolWorker": {
       "title": "Tool Worker",
       "description": "A worker that can use tools to accomplish tasks.",

@@ -13,6 +13,7 @@ import { RepeaterType } from "./boards/repeater.js";
 import { StructuredWorkerType } from "./boards/structured-worker.js";
 import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
+import { SuperWorkerType } from "./boards/super-worker.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -36,6 +37,7 @@ const AgentKit = builder.build({
   structuredWorker: adapter.handlerForNode("structured-worker"),
   toolWorker: adapter.handlerForNode("tool-worker"),
   human: adapter.handlerForNode("human"),
+  superWorker: adapter.handlerForNode("super-worker"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -66,6 +68,10 @@ export type AgentKitType = {
    * into your team of synthetic team.
    */
   human: HumanType;
+  /**
+   * All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.
+   */
+  superWorker: SuperWorkerType;
 };
 
 export default AgentKit;

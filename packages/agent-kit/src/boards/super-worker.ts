@@ -4,9 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board } from "@google-labs/breadboard";
+import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
 import { ContextItem, contextAssembler, userPartsAdder } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
+
+export type SuperWorkerType = NewNodeFactory<
+  {
+    in: NewNodeValue;
+  },
+  {
+    out: NewNodeValue;
+  }
+>;
 
 const contextFromText = (text: string, role?: string): ContextItem => {
   const parts = [{ text }];
