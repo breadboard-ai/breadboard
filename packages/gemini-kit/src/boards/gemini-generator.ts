@@ -169,6 +169,13 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    safetySettings: {
+      type: "object",
+      title: "Safety Settings",
+      description:
+        "The safety settings object (see https://ai.google.dev/api/rest/v1beta/SafetySetting for more information)",
+      default: "null",
+    },
     stopSequences: {
       type: "array",
       title: "Stop Sequences",
@@ -288,6 +295,20 @@ export default await board(() => {
               "text": systemInstruction
             }]
           },
+          "safetySettings": safetySettings ? safetySettings : [
+            {
+              "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              "threshold": "BLOCK_NONE"
+            },
+            {
+              "category": "HARM_CATEGORY_HARASSMENT",
+              "threshold": "BLOCK_NONE"
+            },
+            {
+              "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+              "threshold": "BLOCK_NONE"
+            }
+          ],
           "generationConfig": stopSequences ? {
             "stopSequences": stopSequences
           },
