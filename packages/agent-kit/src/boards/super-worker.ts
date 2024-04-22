@@ -5,7 +5,7 @@
  */
 
 import { board } from "@google-labs/breadboard";
-import { ContextItem } from "../context.js";
+import { ContextItem, userPartsAdder } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 
 const contextFromText = (text: string, role?: string): ContextItem => {
@@ -39,11 +39,9 @@ Then, your first step is to write a detailed outline for the novel.  You keep th
 You are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.
 `);
 
-const sampleTask: ContextItem[] = [
-  contextFromText(`
+const sampleTask: ContextItem = contextFromText(`
 Write an outline for a novel, following the provided specs.
-`),
-];
+`);
 
 export default await board(({ in: context, persona, task }) => {
   context
@@ -69,13 +67,19 @@ export default await board(({ in: context, persona, task }) => {
     .behavior("llm-content", "config")
     .examples(JSON.stringify(sampleTask, null, 2));
 
+  const addTask = userPartsAdder({
+    $metadata: { title: "Add Task", description: "Adding task to the prompt." },
+    context,
+    toAdd: task,
+  });
+
   const generator = gemini.text({
     $metadata: {
       title: "Gemini API Call",
       description: "Applying Gemini to do work",
     },
     systemInstruction: persona,
-    context,
+    context: addTask.context,
   });
 
   return { out: generator.text };

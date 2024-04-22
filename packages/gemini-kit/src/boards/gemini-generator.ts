@@ -293,7 +293,6 @@ const bodyBuilder = code(
       }
       if (olderModel) {
         contents[contents.length - 1].parts.unshift(...parts);
-        console.log("CONTENTS:", contents);
       } else {
         result["system_instruction"] = { parts };
       }
