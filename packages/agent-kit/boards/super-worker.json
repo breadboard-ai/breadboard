@@ -1,0 +1,68 @@
+{
+  "title": "Super Worker",
+  "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\ndescription: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\ndescription: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+              ]
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}
