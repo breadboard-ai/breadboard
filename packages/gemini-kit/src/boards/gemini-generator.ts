@@ -258,11 +258,11 @@ const bodyBuilder = code(
     text,
     model,
     tools,
-    useStreaming,
     safetySettings,
     stopSequences,
   }) => {
     let contents = context as unknown[];
+    const olderModel = model === "gemini-pro" || model === "gemini-ultra";
     const turn = [{ role: "user", parts: [{ text }] }];
     if (!contents || contents.length === 0) {
       if (text) {
@@ -278,7 +278,12 @@ const bodyBuilder = code(
     }
     const result: Record<string, unknown> = { contents };
     if (systemInstruction) {
-      result["system_instruction"] = { parts: [{ text: systemInstruction }] };
+      const part = { text: systemInstruction };
+      if (olderModel) {
+        turn[turn.length - 1].parts.unshift(part);
+      } else {
+        result["system_instruction"] = { parts: [part] };
+      }
     }
     if (safetySettings) {
       result["safetySetting"] = [
