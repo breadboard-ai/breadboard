@@ -593,6 +593,15 @@ export class NodeInfo extends LitElement {
     this.#forceRender = false;
   }
 
+  #saveCurrentState(evt: Event) {
+    if (!this.#configurationFormRef.value) {
+      return;
+    }
+
+    evt.stopImmediatePropagation();
+    this.#onConfigurationFormSubmit(this.#configurationFormRef.value);
+  }
+
   render() {
     if (!this.graph || !this.selectedNodeId) {
       return html`<div id="no-node-selected">No node selected</div>`;
@@ -699,14 +708,14 @@ export class NodeInfo extends LitElement {
             <form
               ${ref(this.#configurationFormRef)}
               @submit=${(evt: Event) => evt.preventDefault()}
-              @input=${() => {
-                if (!this.#configurationFormRef.value) {
+              @paste=${this.#saveCurrentState}
+              @input=${this.#saveCurrentState}
+              @keyup=${(evt: KeyboardEvent) => {
+                if (evt.key !== "Backspace") {
                   return;
                 }
 
-                this.#onConfigurationFormSubmit(
-                  this.#configurationFormRef.value
-                );
+                this.#saveCurrentState(evt);
               }}
             >
               <div class="fields">
