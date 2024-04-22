@@ -222,6 +222,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Super Worker Testing Grounds",
+    "url": "/graphs/super-worker-test.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Team Builder",
     "url": "/graphs/team-builder.json",
     "version": "0.0.1"

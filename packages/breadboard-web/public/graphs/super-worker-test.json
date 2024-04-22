@@ -1,0 +1,91 @@
+{
+  "title": "Super Worker Testing Grounds",
+  "description": "A board for testing the super worker",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "superWorker-3",
+      "to": "output-2",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "superWorker-3",
+      "out": "context",
+      "in": "in"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "out"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "superWorker-3",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are a famous author.  You are writing a novel.\n\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\n\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\n\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Write an outline for a novel, following the provided specs."
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Outline Writer"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Book Specs",
+              "description": "The source material for the worker",
+              "type": "object",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"book description: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+              ],
+              "behavior": [
+                "llm-content"
+              ]
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
