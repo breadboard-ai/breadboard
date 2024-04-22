@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
+import {
+  GraphMetadata,
+  Schema,
+  V,
+  base,
+  board,
+  code,
+} from "@google-labs/breadboard";
 import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
@@ -133,6 +140,7 @@ const parametersSchema = {
       title: "Text",
       description: "The text to generate",
       examples: ["What is the square root of pi?"],
+      default: "",
     },
     model: {
       type: "string",
@@ -169,6 +177,13 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    safetySettings: {
+      type: "object",
+      title: "Safety Settings",
+      description:
+        "The safety settings object (see https://ai.google.dev/api/rest/v1beta/SafetySetting for more information)",
+      default: "{}",
+    },
     stopSequences: {
       type: "array",
       title: "Stop Sequences",
@@ -179,8 +194,6 @@ const parametersSchema = {
       default: "[]",
     },
   },
-  // TODO: Make text not required when context ends with user turn
-  required: ["text"],
 } satisfies Schema;
 
 const textOutputSchema = {
@@ -238,6 +251,68 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
+const bodyBuilder = code(
+  ({
+    context,
+    systemInstruction,
+    text,
+    model,
+    tools,
+    safetySettings,
+    stopSequences,
+  }) => {
+    let contents = context as unknown[];
+    const olderModel = model === "gemini-pro" || model === "gemini-ultra";
+    const turn = [{ role: "user", parts: [{ text }] }];
+    if (!contents || contents.length === 0) {
+      if (text) {
+        contents = turn;
+      } else {
+        throw new Error("Either `text` or `context` parameter is required");
+      }
+    } else {
+      const last = contents[contents.length - 1] as { role: string };
+      if (last.role === "model") {
+        contents.push(turn);
+      }
+    }
+    const result: Record<string, unknown> = { contents };
+    if (systemInstruction) {
+      const part = { text: systemInstruction };
+      if (olderModel) {
+        turn[turn.length - 1].parts.unshift(part);
+      } else {
+        result["system_instruction"] = { parts: [part] };
+      }
+    }
+    if (safetySettings && !Object.keys(safetySettings).length) {
+      result["safetySettings"] = [
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_NONE",
+        },
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_NONE",
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_NONE",
+        },
+      ];
+    } else {
+      result["safetySettings"] = safetySettings;
+    }
+    if (stopSequences && (stopSequences as unknown[]).length > 0) {
+      result["generationConfig"] = { stopSequences };
+    }
+    if (tools && (tools as unknown[]).length > 0) {
+      result["tools"] = { function_declarations: tools };
+    }
+    return { result };
+  }
+);
+
 export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
@@ -267,37 +342,8 @@ export default await board(() => {
     ...chooseMethod,
   });
 
-  const makeBody = json.jsonata({
-    $id: "makeBody",
-    expression: `(
-      $context := $append(
-          context ? context, $not(context) or (context[-1].role!="user" and context[-1].role!="function") ? [
-              {
-                  "role": "user",
-                  "parts": [
-                      {
-                          "text": text
-                      }
-                  ]
-              }
-          ]);
-      text ? {
-          "contents": $context,
-          "system_instruction": systemInstruction ? {
-            "parts": [{
-              "text": systemInstruction
-            }]
-          },
-          "generationConfig": stopSequences ? {
-            "stopSequences": stopSequences
-          },
-          "tools": tools ? {
-            "function_declarations": tools
-          }
-      } : {
-          "$error": "\`text\` input is required"
-      }
-    )`,
+  const makeBody = bodyBuilder({
+    $metadata: { title: "Make Request Body" },
     ...parameters,
   });
 
