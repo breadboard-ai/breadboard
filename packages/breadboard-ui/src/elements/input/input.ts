@@ -305,8 +305,12 @@ export class Input extends LitElement {
           } else {
             // Text inputs: multi line and single line.
             const examples = property.examples?.[0];
-            const value =
+            let value =
               (values[key] as string) ?? examples ?? property.default ?? "";
+            value =
+              typeof value === "string"
+                ? value
+                : JSON.stringify(value, null, 2);
             if (isMultiline(property)) {
               // Multi line input.
               input = html`<div class="multiline">

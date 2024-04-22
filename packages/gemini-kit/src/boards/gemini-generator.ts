@@ -261,28 +261,40 @@ const bodyBuilder = code(
     safetySettings,
     stopSequences,
   }) => {
-    let contents = context as unknown[];
+    type Part = { text: unknown };
+    type Content = { role?: string; parts: Part[] };
+    let contents = context as Content[];
     const olderModel = model === "gemini-pro" || model === "gemini-ultra";
-    const turn = [{ role: "user", parts: [{ text }] }];
+    const turn: Content = { role: "user", parts: [{ text }] };
     if (!contents || contents.length === 0) {
       if (text) {
-        contents = turn;
+        contents = [turn];
       } else {
         throw new Error("Either `text` or `context` parameter is required");
       }
     } else {
-      const last = contents[contents.length - 1] as { role: string };
+      const last = contents[contents.length - 1] as Content;
       if (last.role === "model") {
         contents.push(turn);
       }
     }
     const result: Record<string, unknown> = { contents };
     if (systemInstruction) {
-      const part = { text: systemInstruction };
-      if (olderModel) {
-        turn[turn.length - 1].parts.unshift(part);
+      let parts;
+      if (typeof systemInstruction === "string") {
+        parts = [{ text: systemInstruction }];
       } else {
-        result["system_instruction"] = { parts: [part] };
+        parts = (systemInstruction as Content).parts;
+        if (!parts) {
+          throw new Error(
+            `Malformed system instruction: ${JSON.stringify(systemInstruction)}`
+          );
+        }
+      }
+      if (olderModel) {
+        contents[contents.length - 1].parts.unshift(...parts);
+      } else {
+        result["system_instruction"] = { parts };
       }
     }
     if (safetySettings && !Object.keys(safetySettings).length) {

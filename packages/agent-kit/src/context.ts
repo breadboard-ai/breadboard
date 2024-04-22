@@ -13,9 +13,26 @@ export type FunctionCallPart = {
 };
 
 export type ContextItem = {
-  role: string;
+  role?: string;
   parts: (TextPart | FunctionCallPart)[];
 };
+
+export const userPartsAdder = code(({ context, toAdd }) => {
+  const existing = context as ContextItem[];
+  if (!existing) throw new Error("Context is required");
+  const incoming = toAdd as ContextItem;
+  const last = existing[existing.length - 1];
+  if (!last) {
+    return { context: [toAdd] };
+  }
+  if (last.role === "model") {
+    return { context: [...existing, toAdd] };
+  } else {
+    const result = structuredClone(existing);
+    result[result.length - 1].parts.push(...incoming.parts);
+    return { context: result };
+  }
+});
 
 export const contextBuilder = code(({ context, instruction }) => {
   if (typeof context === "string") {
