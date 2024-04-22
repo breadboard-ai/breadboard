@@ -4,9 +4,21 @@
   "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
   "edges": [
     {
-      "from": "input-1",
+      "from": "text-3",
       "to": "output-2",
-      "out": "context",
+      "out": "text",
+      "in": "out"
+    },
+    {
+      "from": "input-1",
+      "to": "text-3",
+      "out": "persona",
+      "in": "systemInstruction"
+    },
+    {
+      "from": "input-1",
+      "to": "text-3",
+      "out": "in",
       "in": "context"
     }
   ],
@@ -18,21 +30,22 @@
         "schema": {
           "type": "object",
           "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\ndescription: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
-              ]
+            "out": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
             }
           }
         }
+      }
+    },
+    {
+      "id": "text-3",
+      "type": "text",
+      "configuration": {},
+      "metadata": {
+        "title": "Gemini API Call",
+        "description": "Applying Gemini to do work"
       }
     },
     {
@@ -42,22 +55,38 @@
         "schema": {
           "type": "object",
           "properties": {
-            "context": {
-              "title": "Context",
+            "persona": {
+              "type": "object",
+              "title": "Persona",
+              "description": "The worker persona, including skills and various capabilities, the mindset, etc.",
+              "examples": [
+                "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
+              ],
+              "default": "",
+              "behavior": [
+                "llm-content",
+                "config"
+              ]
+            },
+            "in": {
               "type": "array",
+              "title": "In",
+              "description": "The source material for the worker",
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
               },
+              "default": "[]",
               "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\ndescription: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\nbook description: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
               ]
             }
           },
           "required": [
-            "context"
+            "persona",
+            "in"
           ]
         }
       }

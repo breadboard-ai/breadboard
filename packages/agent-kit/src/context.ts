@@ -13,7 +13,7 @@ export type FunctionCallPart = {
 };
 
 export type ContextItem = {
-  role: string;
+  role?: string;
   parts: (TextPart | FunctionCallPart)[];
 };
 
