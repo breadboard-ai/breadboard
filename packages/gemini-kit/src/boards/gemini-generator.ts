@@ -182,7 +182,7 @@ const parametersSchema = {
       title: "Safety Settings",
       description:
         "The safety settings object (see https://ai.google.dev/api/rest/v1beta/SafetySetting for more information)",
-      default: "null",
+      default: "{}",
     },
     stopSequences: {
       type: "array",
@@ -285,8 +285,8 @@ const bodyBuilder = code(
         result["system_instruction"] = { parts: [part] };
       }
     }
-    if (safetySettings) {
-      result["safetySetting"] = [
+    if (safetySettings && !Object.keys(safetySettings).length) {
+      result["safetySettings"] = [
         {
           category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
           threshold: "BLOCK_NONE",
@@ -300,6 +300,8 @@ const bodyBuilder = code(
           threshold: "BLOCK_NONE",
         },
       ];
+    } else {
+      result["safetySettings"] = safetySettings;
     }
     if (stopSequences && (stopSequences as unknown[]).length > 0) {
       result["generationConfig"] = { stopSequences };
