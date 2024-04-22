@@ -4,10 +4,28 @@
   "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
   "edges": [
     {
-      "from": "text-4",
+      "from": "fn-5",
       "to": "output-2",
-      "out": "text",
+      "out": "context",
       "in": "out"
+    },
+    {
+      "from": "fn-3",
+      "to": "text-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "fn-3",
+      "to": "fn-5",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "text-4",
+      "to": "fn-5",
+      "out": "context",
+      "in": "generated"
     },
     {
       "from": "input-1",
@@ -26,12 +44,6 @@
       "to": "text-4",
       "out": "persona",
       "in": "systemInstruction"
-    },
-    {
-      "from": "fn-3",
-      "to": "text-4",
-      "out": "context",
-      "in": "context"
     }
   ],
   "nodes": [
@@ -44,11 +56,36 @@
           "properties": {
             "out": {
               "type": "string",
-              "title": "Text",
-              "description": "The generated text"
+              "title": "out"
             }
           }
         }
+      }
+    },
+    {
+      "id": "fn-5",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_5 = ({ context, generated }) => {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n};",
+        "name": "fn_5",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Add Generated",
+        "description": "Adding work to the output to pass along"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = context;\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = toAdd;\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [toAdd] };\n  }\n  if (last.role === \"model\") {\n    return { context: [...existing, toAdd] };\n  } else {\n    const result = structuredClone(existing);\n    result[result.length - 1].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "name": "fn_3",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Add Task",
+        "description": "Adding task to the prompt."
       }
     },
     {
@@ -113,19 +150,6 @@
             "persona"
           ]
         }
-      }
-    },
-    {
-      "id": "fn-3",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = context;\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = toAdd;\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [toAdd] };\n  }\n  if (last.role === \"model\") {\n    return { context: [...existing, toAdd] };\n  } else {\n    const result = structuredClone(existing);\n    result[result.length - 1].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
-        "name": "fn_3",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Add Task",
-        "description": "Adding task to the prompt."
       }
     }
   ],

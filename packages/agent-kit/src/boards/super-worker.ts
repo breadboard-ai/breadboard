@@ -5,7 +5,7 @@
  */
 
 import { board } from "@google-labs/breadboard";
-import { ContextItem, userPartsAdder } from "../context.js";
+import { ContextItem, contextAssembler, userPartsAdder } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 
 const contextFromText = (text: string, role?: string): ContextItem => {
@@ -82,7 +82,16 @@ export default await board(({ in: context, persona, task }) => {
     context: addTask.context,
   });
 
-  return { out: generator.text };
+  const addGenerated = contextAssembler({
+    $metadata: {
+      title: "Add Generated",
+      description: "Adding work to the output to pass along",
+    },
+    context: addTask.context,
+    generated: generator.context,
+  });
+
+  return { out: addGenerated.context };
 }).serialize({
   title: "Super Worker",
   description:
