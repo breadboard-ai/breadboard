@@ -21,7 +21,7 @@ working title: Aurora
   ),
 ];
 
-const samplePersona =
+const outlineWriterPersona =
   contextFromText(`You are a famous author.  You are writing a novel.
 
 Your well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.
@@ -30,8 +30,28 @@ Then, your first step is to write a detailed outline for the novel.  You keep th
 
 You are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.`);
 
-const sampleTask = contextFromText(
+const outlineWriterTask = contextFromText(
   `Write an outline for a novel, following the provided specs.`
+);
+
+const outlineCriticPersona = contextFromText(
+  `You are an accomplished book editor and publisher.  Your specialty is being able to recognize what story elements and characters will make a great novel.  You are great at giving insightful feedback to authors to help them make their novels better.`
+);
+
+const outlineCriticTask =
+  contextFromText(`Your friend, an accomplished author, has written an outline for a new book and has asked you for insightful feedback.  
+
+Review the outline that the author submitted.  Please read it very carefully.  Then, provide feedback for the author.  Give the author up to five specific suggestions to make the novel more compelling and have more chance to be a bestseller!`);
+
+const outlineEditorPersona =
+  contextFromText(`You are a famous author.  You are writing a novel.
+
+You have written a first draft of your outline, and then asked an outstanding book editor and publisher to give you suggestions.  Based on their suggestions you are going to rewrite and improve your outline.
+
+This is great feedback and you want to try to incorporate some of it, while still staying true to your original vision for the novel.`);
+
+const outlineEditorTask = contextFromText(
+  `Please write an improved outline for your novel, by taking the feedback into account.`
 );
 
 export default await board(({ context }) => {
@@ -44,12 +64,26 @@ export default await board(({ context }) => {
   const outlineWriter = agents.superWorker({
     $metadata: { title: "Outline Writer" },
     in: context,
-    persona: samplePersona,
-    task: sampleTask,
+    persona: outlineWriterPersona,
+    task: outlineWriterTask,
   });
-  return { context: outlineWriter.out };
+
+  const outlineCritic = agents.superWorker({
+    $metadata: { title: "Outline Critic" },
+    in: outlineWriter.out,
+    persona: outlineCriticPersona,
+    task: outlineCriticTask,
+  });
+
+  const outlineEditor = agents.superWorker({
+    $metadata: { title: "Outline Editor" },
+    in: outlineCritic.out,
+    persona: outlineEditorPersona,
+    task: outlineEditorTask,
+  });
+  return { context: outlineEditor.out };
 }).serialize({
-  title: "Super Worker Testing Grounds",
-  description: "A board for testing the super worker",
+  title: "Specialist Testing Grounds",
+  description: "A board for testing the Specialist worker",
   version: "0.0.1",
 });
