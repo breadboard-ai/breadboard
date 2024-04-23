@@ -30,7 +30,7 @@ export function portConfigMapToJSONSchema(
         if (description) {
           schema.description = description;
         }
-        if (config.default !== undefined) {
+        if ("default" in config && config.default !== undefined) {
           schema.default = config.default;
         }
         Object.assign(schema, toJSONSchema(type));
@@ -48,7 +48,9 @@ export function portConfigMapToJSONSchema(
   };
   if (!omitRequired) {
     const required = sortedEntries
-      .filter(([, config]) => config.default === undefined)
+      .filter(
+        ([, config]) => !("default" in config) || config.default === undefined
+      )
       .map(([name]) => name);
     if (required.length > 0) {
       schema.required = required;
