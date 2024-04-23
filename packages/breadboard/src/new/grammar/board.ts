@@ -8,7 +8,7 @@ import {
   GraphDescriptor,
   Schema,
   NodeDescriberFunction,
-  GraphMetadata,
+  GraphInlineMetadata,
   BreadboardCapability,
 } from "../../types.js";
 import {
@@ -42,7 +42,7 @@ export const board: BoardFactory = (
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
-      } & GraphMetadata)
+      } & GraphInlineMetadata)
     | GraphDeclarationFunction,
   maybeFn?: GraphDeclarationFunction
 ) => {
@@ -78,7 +78,7 @@ function lambdaFactory(
     invoke?: NodeProxyHandlerFunction;
     describe?: NodeDescriberFunction;
     name?: string;
-  } & GraphMetadata
+  } & GraphInlineMetadata
 ): Lambda {
   if (!options.invoke && !options.graph)
     throw new Error("Missing invoke or graph definition function");
@@ -88,7 +88,7 @@ function lambdaFactory(
 
   // Extract board metadata from config. Used in serialize().
   const { url, title, description, version } = options ?? {};
-  const configMetadata: GraphMetadata = {
+  const configMetadata: GraphInlineMetadata = {
     ...(url ? { url } : {}),
     ...(title ? { title } : {}),
     ...(description ? { description } : {}),
@@ -251,7 +251,7 @@ function lambdaFactory(
 
   // (Will be called and then overwritten by `createLambda` below
   // once this turns into a closure)
-  factory.serialize = async (metadata?: GraphMetadata) => {
+  factory.serialize = async (metadata?: GraphInlineMetadata) => {
     const node = new BuilderNode(handler, lexicalScope);
     const [singleNode, graph] = await node.serializeNode();
 
@@ -312,7 +312,7 @@ function lambdaFactory(
 
     // Replace the serialize function with one that returns a graph with that
     // lambda node and an invoke node, not the original graph.
-    factory.serialize = async (metadata?: GraphMetadata) => {
+    factory.serialize = async (metadata?: GraphInlineMetadata) => {
       // If there are no incoming wires to the lambda node, it's not a closure
       // and we can just return the original board.
       if (lambdaNode?.incoming.length === 0 && closureEdgesToWire.length === 0)

@@ -23,7 +23,7 @@ export type {
   Edge,
   GraphDescriptor,
   GraphIdentifier,
-  GraphMetadata,
+  GraphInlineMetadata,
   InputIdentifier,
   InputValues,
   KitDescriptor,

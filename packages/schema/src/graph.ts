@@ -179,7 +179,7 @@ export type KitManifest = KitDescriptor & {
 /**
  * Represents graph metadata.
  */
-export type GraphMetadata = {
+export type GraphInlineMetadata = {
   /**
    * The schema of the graph.
    */
@@ -271,7 +271,7 @@ type TestProperties = {
 /**
  * Represents a graph.
  */
-export type GraphDescriptor = GraphMetadata & {
+export type GraphDescriptor = GraphInlineMetadata & {
   /**
    * The collection of all edges in the graph.
    */
@@ -293,7 +293,7 @@ export type GraphDescriptor = GraphMetadata & {
   graphs?: SubGraphs;
 
   /**
-   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   * Arguments that are passed to the graph, useful to bind values to graphs.
    */
   args?: InputValues;
 } & TestProperties;

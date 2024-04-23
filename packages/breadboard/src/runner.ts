@@ -11,7 +11,7 @@ import type {
   InputValues,
   GraphDescriptor,
   OutputValues,
-  GraphMetadata,
+  GraphInlineMetadata,
   SubGraphs,
   BreadboardRunner,
   BreadboardSlotSpec,
@@ -80,7 +80,7 @@ export class BoardRunner implements BreadboardRunner {
    * to provide title, description, version, and URL for the board.
    */
   constructor(
-    { url, title, description, version, $schema }: GraphMetadata = {
+    { url, title, description, version, $schema }: GraphInlineMetadata = {
       $schema: breadboardSchema.$id,
     }
   ) {

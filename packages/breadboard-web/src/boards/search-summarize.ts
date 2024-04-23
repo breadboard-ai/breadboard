@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
+import {
+  GraphInlineMetadata,
+  Schema,
+  V,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
@@ -14,7 +20,7 @@ const metadata = {
   description:
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.1.1",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const inputSchema = {
   type: "object",

@@ -88,7 +88,7 @@
 				},
 				"args": {
 					"$ref": "#/definitions/InputValues",
-					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
+					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
 				"$schema": {
 					"type": "string",

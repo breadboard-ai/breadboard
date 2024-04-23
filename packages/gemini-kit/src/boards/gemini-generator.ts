@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphMetadata,
+  GraphInlineMetadata,
   Schema,
   V,
   base,
@@ -68,7 +68,7 @@ const metadata = {
   title: "Gemini Pro Generator",
   description: "The text generator board powered by the Gemini Pro model",
   version: "0.0.2",
-} as GraphMetadata;
+} as GraphInlineMetadata;
 
 const toolsExample = [
   {

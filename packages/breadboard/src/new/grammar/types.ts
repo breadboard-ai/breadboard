@@ -7,7 +7,7 @@
 import {
   BreadboardCapability,
   NodeDescriberFunction,
-  GraphMetadata,
+  GraphInlineMetadata,
   Schema,
   BehaviorSchema,
 } from "../../types.js";
@@ -148,7 +148,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphMetadata
+    } & GraphInlineMetadata
   ): Lambda<I, Required<O>>;
 
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
@@ -159,7 +159,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphMetadata,
+    } & GraphInlineMetadata,
     fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 }
