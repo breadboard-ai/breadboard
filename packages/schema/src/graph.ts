@@ -177,7 +177,7 @@ export type KitManifest = KitDescriptor & {
 };
 
 /**
- * Represents graph metadata.
+ * Represents graph metadata that is stored inline in the GraphDescriptor.
  */
 export type GraphInlineMetadata = {
   /**
@@ -206,6 +206,11 @@ export type GraphInlineMetadata = {
    */
   version?: string;
 };
+
+/**
+ * Represents graph metadata.
+ */
+export type GraphMetadata = Record<string, unknown>;
 
 /**
  * Unique identifier of a graph.
@@ -272,6 +277,10 @@ type TestProperties = {
  * Represents a graph.
  */
 export type GraphDescriptor = GraphInlineMetadata & {
+  /**
+   * Metadata associated with the graph.
+   */
+  metadata?: GraphMetadata;
   /**
    * The collection of all edges in the graph.
    */
