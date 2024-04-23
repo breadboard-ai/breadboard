@@ -210,7 +210,7 @@ export type GraphInlineMetadata = {
 /**
  * Represents graph metadata.
  */
-export type GraphMetadata = Record<string, unknown>;
+export type GraphMetadata = Record<string, NodeValue>;
 
 /**
  * Unique identifier of a graph.

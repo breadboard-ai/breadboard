@@ -191,7 +191,9 @@
 		},
 		"GraphMetadata": {
 			"type": "object",
-			"additionalProperties": {},
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
 			"description": "Represents graph metadata."
 		},
 		"Edge": {
