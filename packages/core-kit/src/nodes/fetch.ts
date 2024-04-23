@@ -10,7 +10,7 @@ import {
   enumeration,
   object,
 } from "@breadboard-ai/build";
-import { StreamCapability } from "@google-labs/breadboard";
+import { NodeHandlerContext, StreamCapability } from "@google-labs/breadboard";
 
 const serverSentEventTransform = () =>
   new TransformStream({
@@ -101,11 +101,15 @@ export default defineNodeType({
       type: object({}, "string"),
     },
   },
-  invoke: async ({ url, method, body, headers, raw, stream }) => {
+  invoke: async (
+    { url, method, body, headers, raw, stream },
+    { signal }: NodeHandlerContext
+  ) => {
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
       method,
       headers,
+      signal,
     };
     // GET can not have a body.
     if (method !== "GET") {

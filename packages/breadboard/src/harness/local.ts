@@ -12,6 +12,7 @@ import {
   BreadboardRunner,
   ErrorObject,
   Kit,
+  NodeDescriptor,
   ProbeMessage,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
@@ -96,6 +97,10 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   return Board.fromGraphDescriptor(graph);
 };
 
+const isAbortError = (e: unknown) => {
+  return (e as Error).name === "AbortError";
+};
+
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
@@ -113,11 +118,22 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         kits,
         loader,
         base: config.base,
+        signal: config.signal,
       })) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());
     } catch (e) {
+      if (isAbortError(e)) {
+        await next(
+          errorResult({
+            error: e as object,
+            descriptor: {} as NodeDescriptor,
+            inputs: {},
+          })
+        );
+        return;
+      }
       const error = extractError(e);
       console.error("Local Run error:", error);
       await next(errorResult(error));

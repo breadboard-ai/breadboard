@@ -84,6 +84,7 @@ export class Main extends LitElement {
   @state()
   providerOps = 0;
 
+  #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
@@ -912,6 +913,8 @@ export class Main extends LitElement {
 
             const runner = await BoardRunner.fromGraphDescriptor(this.graph);
 
+            this.#abortController = new AbortController();
+
             this.#runBoard(
               run(
                 addNodeProxyServerConfig({
@@ -920,6 +923,7 @@ export class Main extends LitElement {
                   diagnostics: true,
                   kits: this.kits,
                   loader: this.#loader,
+                  signal: this.#abortController?.signal,
                 })
               )
             );

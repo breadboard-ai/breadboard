@@ -695,6 +695,10 @@ export interface NodeHandlerContext {
   ) => Promise<void>;
   readonly invocationPath?: number[];
   readonly state?: RunState;
+  /**
+   * The `AbortSignal` that can be used to stop the board run.
+   */
+  readonly signal?: AbortSignal;
 }
 
 export interface BreadboardNode<Inputs, Outputs> {
