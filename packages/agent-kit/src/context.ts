@@ -20,13 +20,16 @@ export type ContextItem = {
 export const userPartsAdder = code(({ context, toAdd }) => {
   const existing = context as ContextItem[];
   if (!existing) throw new Error("Context is required");
-  const incoming = toAdd as ContextItem;
+  const incoming = structuredClone(toAdd) as ContextItem;
+  if (!incoming.role) {
+    incoming.role = "user";
+  }
   const last = existing[existing.length - 1];
   if (!last) {
-    return { context: [toAdd] };
+    return { context: [incoming] };
   }
   if (last.role === "model") {
-    return { context: [...existing, toAdd] };
+    return { context: [...existing, incoming] };
   } else {
     const result = structuredClone(existing);
     result[result.length - 1].parts.push(...incoming.parts);

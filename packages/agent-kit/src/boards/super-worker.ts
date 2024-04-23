@@ -62,7 +62,7 @@ export default await board(({ in: context, persona, task }) => {
   persona
     .title("Persona")
     .description(
-      "The worker persona, including skills and various capabilities, the mindset, etc."
+      "Describe the worker persona: the skills and various capabilities, the mindset, the thinking process, etc."
     )
     .isObject()
     .behavior("llm-content", "config")
@@ -70,7 +70,7 @@ export default await board(({ in: context, persona, task }) => {
   task
     .title("Task")
     .description(
-      "The particular task that the worker will perform on the provided source materials"
+      "Give it the task to perform on the provided source materials. Ideally, the task is a call to action with the necessary details on how to best complete this action."
     )
     .isObject()
     .behavior("llm-content", "config")
