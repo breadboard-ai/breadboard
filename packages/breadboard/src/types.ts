@@ -785,9 +785,11 @@ export type LambdaNodeInputs = InputValues & {
   args: InputValues;
 };
 
-export type LambdaNodeOutputs = OutputValues & {
-  /**
-   * The lambda board that can be run.
-   */
-  board: BreadboardCapability;
-};
+export type LambdaNodeOutputs =
+  | OutputValues
+  | {
+      /**
+       * The lambda board that can be run.
+       */
+      board: BreadboardCapability;
+    };

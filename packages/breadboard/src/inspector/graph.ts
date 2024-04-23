@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { handlersFromKits } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
@@ -73,6 +74,10 @@ class Graph implements InspectableGraphWithStore {
 
   raw() {
     return this.#graph;
+  }
+
+  metadata(): GraphMetadata | undefined {
+    return this.#graph.metadata;
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {

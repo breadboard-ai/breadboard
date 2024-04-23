@@ -6,6 +6,7 @@
 
 import {
   GraphIdentifier,
+  GraphMetadata,
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
@@ -171,6 +172,10 @@ export type InspectableGraph = {
    * TODO: Replace all uses of it with a proper inspector API.
    */
   raw(): GraphDescriptor;
+  /**
+   * Returns this graph's metadata, if exists.
+   */
+  metadata(): GraphMetadata | undefined;
   /**
    * Returns the node with the given id, or undefined if no such node exists.
    * @param id id of the node to find

@@ -49,8 +49,8 @@ export const TestKit = new KitBuilder({
    * This is a primitive implementation of the `include` node in Core Kit,
    * just enough for testing.
    */
-  include: async (inputs: IncludeInputValues, context: NodeHandlerContext) => {
-    const { graph } = inputs;
+  include: async (inputs: InputValues, context: NodeHandlerContext) => {
+    const { graph } = inputs as IncludeInputValues;
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
