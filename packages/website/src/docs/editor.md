@@ -63,7 +63,7 @@ const graph = edit(bgl, { kits: [asRuntime(Core), asRunTime(JSONKit)] });
 
 ## Editing a graph
 
-There are five edit operations that we can perform on the graph:
+There are the six edit operations that we can perform on the graph:
 
 - `addNode` -- adds a new node to the graph (or check if we can do so with `canAddNode`)
 
@@ -76,6 +76,8 @@ There are five edit operations that we can perform on the graph:
 - `changeConfiguration` -- change configuration of a node (`canChangeConfiguration` to check only).
 
 - `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
+
+- `changeGraphMetadata` - change graph metadata. Since this operation does not impact the integrity of the graph, it does not have the corresponding `canChange` helper.
 
 ### Editing `star` edges and alternatives
 
