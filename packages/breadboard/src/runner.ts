@@ -157,6 +157,8 @@ export class BoardRunner implements BreadboardRunner {
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
+        context?.signal?.throwIfAborted();
+
         invocationId++;
         const { inputs, descriptor, missingInputs } = result;
 

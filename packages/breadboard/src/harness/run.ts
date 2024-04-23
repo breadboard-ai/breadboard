@@ -80,6 +80,10 @@ export type RunConfig = {
    * from a URL.
    */
   runner?: BreadboardRunner;
+  /**
+   * The `AbortSignal` that can be used to stop the board run.
+   */
+  signal?: AbortSignal;
 };
 
 const configureKits = (config: RunConfig) => {
