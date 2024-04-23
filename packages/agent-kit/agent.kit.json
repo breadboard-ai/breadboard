@@ -931,7 +931,7 @@
                 },
                 "task": {
                   "title": "Task",
-                  "description": "The particular task that the worker will perform on the provided source materials",
+                  "description": "Give it the task to perform on the provided source materials. Ideally, the task is a call to action with the necessary details on how to best complete this action.",
                   "type": "object",
                   "behavior": [
                     "llm-content",
@@ -944,7 +944,7 @@
                 "persona": {
                   "type": "object",
                   "title": "Persona",
-                  "description": "The worker persona, including skills and various capabilities, the mindset, etc.",
+                  "description": "Describe the worker persona: the skills and various capabilities, the mindset, the thinking process, etc.",
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
                   ],
