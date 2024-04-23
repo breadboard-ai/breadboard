@@ -11,6 +11,7 @@ import {
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerMetadata,
+  NodeValue,
   OutputValues,
   Schema,
   SchemaBuilder,
@@ -35,7 +36,7 @@ const invoke = async (
 
   const graph = await getGraphDescriptor($board, context);
 
-  return { board: { ...graph, args } };
+  return { board: { ...graph, args } as NodeValue };
 };
 
 const describe = async (

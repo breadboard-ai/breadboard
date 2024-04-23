@@ -13,7 +13,7 @@ import { AbstractNode, ScopeConfig } from "../runner/types.js";
 
 import { Scope } from "../runner/scope.js";
 import { BuilderNode } from "./node.js";
-import { GraphMetadata, GraphDescriptor } from "../../types.js";
+import { GraphInlineMetadata, GraphDescriptor } from "../../types.js";
 
 /**
  * Adds syntactic sugar to support unproxying and serialization of nodes/graphs.
@@ -37,7 +37,7 @@ export class BuilderScope extends Scope implements BuilderScopeInterface {
   }
 
   async serialize(
-    metadata?: GraphMetadata,
+    metadata?: GraphInlineMetadata,
     node?: AbstractNode
   ): Promise<GraphDescriptor> {
     return super.serialize(

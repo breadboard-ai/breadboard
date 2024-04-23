@@ -23,7 +23,7 @@ export type {
   Edge,
   GraphDescriptor,
   GraphIdentifier,
-  GraphMetadata,
+  GraphInlineMetadata,
   InputIdentifier,
   InputValues,
   KitDescriptor,
@@ -785,9 +785,11 @@ export type LambdaNodeInputs = InputValues & {
   args: InputValues;
 };
 
-export type LambdaNodeOutputs = OutputValues & {
-  /**
-   * The lambda board that can be run.
-   */
-  board: BreadboardCapability;
-};
+export type LambdaNodeOutputs =
+  | OutputValues
+  | {
+      /**
+       * The lambda board that can be run.
+       */
+      board: BreadboardCapability;
+    };

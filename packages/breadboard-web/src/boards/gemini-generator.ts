@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
+import {
+  GraphInlineMetadata,
+  Schema,
+  V,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
@@ -61,7 +67,7 @@ const metadata = {
   title: "Gemini Pro Generator",
   description: "The text generator board powered by the Gemini Pro model",
   version: "0.0.2",
-} as GraphMetadata;
+} as GraphInlineMetadata;
 
 const toolsExample = [
   {

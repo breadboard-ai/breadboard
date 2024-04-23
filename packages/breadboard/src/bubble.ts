@@ -6,7 +6,7 @@
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import {
-  GraphMetadata,
+  GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
@@ -18,7 +18,7 @@ import {
 
 export const createErrorMessage = (
   inputName: string,
-  metadata: GraphMetadata = {},
+  metadata: GraphInlineMetadata = {},
   required: boolean
 ): string => {
   const boardTitle = metadata.title ?? metadata?.url;
@@ -29,7 +29,7 @@ export const createErrorMessage = (
 };
 
 export const bubbleUpInputsIfNeeded = async (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
   descriptor: NodeDescriptor,
   result: TraversalResult,
@@ -47,7 +47,7 @@ export const bubbleUpInputsIfNeeded = async (
 };
 
 export const createBubbleHandler = (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
   descriptor: NodeDescriptor
 ) => {

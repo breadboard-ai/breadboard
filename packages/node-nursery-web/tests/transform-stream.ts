@@ -11,6 +11,7 @@ import transformStream, {
 } from "../src/nodes/transform-stream.js";
 import {
   Board,
+  BreadboardCapability,
   GraphDescriptor,
   StreamCapability,
   StreamCapabilityType,
@@ -91,7 +92,7 @@ test("transform stream with a board", async (t) => {
     board: {
       kind: "board",
       board: graph,
-    },
+    } as BreadboardCapability,
   };
   const outputs = (await callHandler(transformStream, inputs, {})) as {
     stream: StreamCapabilityType<number>;

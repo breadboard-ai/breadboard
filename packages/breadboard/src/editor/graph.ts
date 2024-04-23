@@ -1,4 +1,7 @@
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphMetadata,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import { fixUpStarEdge, fixupConstantEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
@@ -513,6 +516,12 @@ export class Graph implements EditableGraph {
     this.#updateGraph(false);
 
     return editable;
+  }
+
+  async changeGraphMetadata(metadata: GraphMetadata): Promise<EditResult> {
+    this.#graph.metadata = metadata;
+    this.#updateGraph(false);
+    return { success: true };
   }
 
   raw() {

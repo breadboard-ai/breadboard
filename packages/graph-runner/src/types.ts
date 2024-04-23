@@ -142,7 +142,7 @@ export type KitDescriptor = KitReference & {
 /**
  * Represents graph metadata.
  */
-export type GraphMetadata = {
+export type GraphInlineMetadata = {
   /**
    * The URL pointing to the location of the graph.
    * This URL is used to resolve relative paths in the graph.
@@ -180,7 +180,7 @@ export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
 /**
  * Represents a graph.
  */
-export type GraphDescriptor = GraphMetadata & {
+export type GraphDescriptor = GraphInlineMetadata & {
   /**
    * The collection of all edges in the graph.
    */

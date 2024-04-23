@@ -61,6 +61,10 @@
 					"description": "For internal testing only. Do not use.",
 					"deprecated": "For internal testing only. Do not use."
 				},
+				"metadata": {
+					"$ref": "#/definitions/GraphMetadata",
+					"description": "Metadata associated with the graph."
+				},
 				"edges": {
 					"type": "array",
 					"items": {
@@ -88,7 +92,7 @@
 				},
 				"args": {
 					"$ref": "#/definitions/InputValues",
-					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
+					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
 				"$schema": {
 					"type": "string",
@@ -184,6 +188,13 @@
 		"NodeIdentifier": {
 			"type": "string",
 			"description": "Unique identifier of a node in a graph."
+		},
+		"GraphMetadata": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"description": "Represents graph metadata."
 		},
 		"Edge": {
 			"type": "object",

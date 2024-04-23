@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphMetadata,
+  GraphInlineMetadata,
   Schema,
   base,
   board,
@@ -20,7 +20,7 @@ const metadata = {
   title: "Gemini Pro Vision",
   description: "A simple example of using `gemini-pro-vision` model",
   version: "0.0.2",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const inputSchema = {
   type: "object",

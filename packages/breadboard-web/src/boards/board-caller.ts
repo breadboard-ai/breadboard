@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
+import {
+  GraphInlineMetadata,
+  Schema,
+  V,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -13,7 +19,7 @@ const metadata = {
   description:
     "Takes a tool-calling-capable generator and a list of board URLs, and helps generator call these boards as tools",
   version: "0.0.6",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const outputSchema = {
   type: "object",

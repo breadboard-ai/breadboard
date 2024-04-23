@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, base, board } from "@google-labs/breadboard";
+import {
+  GraphInlineMetadata,
+  Schema,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -15,7 +20,7 @@ const metadata = {
   description:
     "This board is the simplest possible invocation of OpenAI's GPT 4 Vision Preview API to generate text from multipart inputs.",
   version: "0.0.2",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const inputSchema = {
   type: "object",

@@ -6,7 +6,7 @@
 
 import {
   GraphDescriptor,
-  GraphMetadata,
+  GraphInlineMetadata,
   NodeDescriptor,
   InputValues as OriginalInputValues,
   Schema,
@@ -157,7 +157,7 @@ export class BaseNode<
       : undefined;
   }
 
-  async serialize(metadata?: GraphMetadata): Promise<GraphDescriptor> {
+  async serialize(metadata?: GraphInlineMetadata): Promise<GraphDescriptor> {
     return this.#scope.serialize(metadata, this as unknown as BaseNode);
   }
 

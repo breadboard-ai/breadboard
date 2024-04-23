@@ -177,9 +177,9 @@ export type KitManifest = KitDescriptor & {
 };
 
 /**
- * Represents graph metadata.
+ * Represents graph metadata that is stored inline in the GraphDescriptor.
  */
-export type GraphMetadata = {
+export type GraphInlineMetadata = {
   /**
    * The schema of the graph.
    */
@@ -206,6 +206,11 @@ export type GraphMetadata = {
    */
   version?: string;
 };
+
+/**
+ * Represents graph metadata.
+ */
+export type GraphMetadata = Record<string, NodeValue>;
 
 /**
  * Unique identifier of a graph.
@@ -271,7 +276,11 @@ type TestProperties = {
 /**
  * Represents a graph.
  */
-export type GraphDescriptor = GraphMetadata & {
+export type GraphDescriptor = GraphInlineMetadata & {
+  /**
+   * Metadata associated with the graph.
+   */
+  metadata?: GraphMetadata;
   /**
    * The collection of all edges in the graph.
    */
@@ -293,7 +302,7 @@ export type GraphDescriptor = GraphMetadata & {
   graphs?: SubGraphs;
 
   /**
-   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   * Arguments that are passed to the graph, useful to bind values to graphs.
    */
   args?: InputValues;
 } & TestProperties;

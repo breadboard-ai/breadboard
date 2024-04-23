@@ -6,6 +6,7 @@
 
 import {
   GraphIdentifier,
+  GraphMetadata,
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import {
@@ -144,6 +145,12 @@ export type EditableGraph = {
     id: NodeIdentifier,
     metadata: NodeMetadata
   ): Promise<EditResult>;
+
+  /**
+   * Replaces the current graph metadata with the provided new value.
+   * @param metadata -- the new graph metadata.
+   */
+  changeGraphMetadata(metadata: GraphMetadata): Promise<EditResult>;
 
   raw(): GraphDescriptor;
 
