@@ -593,13 +593,10 @@ export interface Probe extends EventTarget {
 
 export interface RunnerLike {
   run(
-    context?: NodeHandlerContext,
+    context?: RunArguments,
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult>;
-  runOnce(
-    inputs: InputValues,
-    context?: NodeHandlerContext
-  ): Promise<OutputValues>;
+  runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
 }
 
 export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
@@ -700,6 +697,14 @@ export interface NodeHandlerContext {
    */
   readonly signal?: AbortSignal;
 }
+
+export type RunArguments = NodeHandlerContext & {
+  /**
+   * Input values that will be used for bubbled inputs. If not found, a fallback
+   * action will be taken. For example, the web-based harness will ask the user.
+   */
+  inputs?: InputValues;
+};
 
 export interface BreadboardNode<Inputs, Outputs> {
   /**
