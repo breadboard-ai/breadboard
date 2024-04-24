@@ -20,7 +20,10 @@ export const substitute = (template: string, values: InputValues) => {
   );
 };
 
-export const parametersFromTemplate = (template: string): string[] => {
+export const parametersFromTemplate = (
+  template: string | undefined
+): string[] => {
+  if (!template) return [];
   const matches = template.matchAll(/{{(?<name>[\w-]+)}}/g);
   const parameters = Array.from(matches).map(
     (match) => match.groups?.name || ""

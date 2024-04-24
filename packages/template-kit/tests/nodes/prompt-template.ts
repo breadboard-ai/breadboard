@@ -16,6 +16,10 @@ test("parametersFromTemplate returns an empty array when there are no parameters
   t.deepEqual(parametersFromTemplate("foo"), []);
 });
 
+test("parametersFromTemplate returns an empty array when there's no template", (t) => {
+  t.deepEqual(parametersFromTemplate(undefined), []);
+});
+
 test("parametersFromTemplate returns an array of parameters", (t) => {
   t.deepEqual(parametersFromTemplate("{{foo}}"), ["foo"]);
   t.deepEqual(parametersFromTemplate("{{foo}} {{bar}}"), ["foo", "bar"]);
