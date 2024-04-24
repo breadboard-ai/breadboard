@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
+import { BehaviorSchema, Schema } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -150,7 +150,7 @@ export class SchemaEditor extends LitElement {
               ?readonly=${!this.editable}
               .items=${JSON.parse(value.default || "null")}
               .type=${resolveArrayType(value)}
-              .behavior=${resolveBehaviorType(value)}
+              .behavior=${resolveBehaviorType(value.items)}
             ></bb-array-editor>`;
           break;
         }
@@ -216,10 +216,111 @@ export class SchemaEditor extends LitElement {
           .type=${"string"}
         ></bb-array-editor>`;
 
+      let itemType: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "array": {
+          const selectedItemType =
+            value.items && !Array.isArray(value.items) && value.items.type
+              ? value.items.type
+              : "none";
+          itemType = html`<label for="${id}-items">Array Item Type</label>
+            <select
+              name="${id}-items"
+              id="${id}-items"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No type</option>
+              <option ?selected=${selectedItemType === "object"} value="object">
+                Object
+              </option>
+              <option ?selected=${selectedItemType === "string"} value="string">
+                String
+              </option>
+              <option ?selected=${selectedItemType === "number"} value="number">
+                Number
+              </option>
+              <option
+                ?selected=${selectedItemType === "boolean"}
+                value="boolean"
+              >
+                Boolean
+              </option>
+            </select>`;
+          break;
+        }
+      }
+
+      let behavior: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "array":
+        case "object": {
+          // Only show the behavior for object array items.
+          let behaviorList = value.behavior || [];
+          if (
+            value.type === "array" &&
+            (!value.items ||
+              Array.isArray(value.items) ||
+              value.items.type !== "object")
+          ) {
+            break;
+          }
+
+          // If this is an array with behaviors set, set the list to search to
+          // be the items one.
+          if (
+            value.type === "array" &&
+            value.items &&
+            !Array.isArray(value.items) &&
+            value.items.behavior
+          ) {
+            behaviorList = value.items.behavior;
+          }
+
+          behavior = html`<label for="${id}-behavior">Behavior</label>
+            <select
+              name="${id}-behavior"
+              id="${id}-behavior"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No behavior</option>
+              <option
+                value="llm-content"
+                ?selected=${behaviorList.includes("llm-content")}
+              >
+                LLM Content
+              </option>
+              <option value="board" ?selected=${behaviorList.includes("board")}>
+                Board
+              </option>
+              <option
+                value="stream"
+                ?selected=${behaviorList.includes("stream")}
+              >
+                Stream
+              </option>
+              <option
+                value="json-schema"
+                ?selected=${behaviorList.includes("json-schema")}
+              >
+                JSON Schema
+              </option>
+              <option
+                value="ports-spec"
+                ?selected=${behaviorList.includes("ports-spec")}
+              >
+                Port Spec
+              </option>
+              <option value="code" ?selected=${behaviorList.includes("code")}>
+                Code
+              </option>
+            </select>`;
+          break;
+        }
+      }
+
       let format: HTMLTemplateResult | symbol = nothing;
       switch (value.type) {
-        case "string":
-        case "array": {
+        case "string": {
           format = html`<label for="${id}-format">Format</label>
             <select
               name="${id}-format"
@@ -238,6 +339,99 @@ export class SchemaEditor extends LitElement {
                 Multiline
               </option>
             </select>`;
+          break;
+        }
+
+        case "array":
+        case "object": {
+          const isLLMObject =
+            value.type === "object" && value.behavior?.includes("llm-content");
+          const isArrayOfLLMObjects =
+            value.type === "array" &&
+            value.items !== undefined &&
+            !Array.isArray(value.items) &&
+            value.items.type === "object" &&
+            value.items.behavior?.includes("llm-content");
+
+          if (isLLMObject || isArrayOfLLMObjects) {
+            let objectFormat = value.format;
+            if (
+              isArrayOfLLMObjects &&
+              value.items &&
+              !Array.isArray(value.items)
+            ) {
+              objectFormat = value.items.format;
+            }
+
+            format = html`<label for="${id}-format">Format</label>
+              <select
+                name="${id}-format"
+                id="${id}-format"
+                ?readonly=${!this.editable}
+              >
+                <option value="none">Any</option>
+                <option
+                  value="audio-file"
+                  ?selected=${objectFormat === "audio-file"}
+                >
+                  Audio File
+                </option>
+                <option
+                  value="audio-microphone"
+                  ?selected=${objectFormat === "audio-microphone"}
+                >
+                  Audio (Microphone)
+                </option>
+                <option
+                  value="video-file"
+                  ?selected=${objectFormat === "video-file"}
+                >
+                  Video (File)
+                </option>
+                <option
+                  value="video-webcam"
+                  ?selected=${objectFormat === "video-webcam"}
+                >
+                  Video (Webcam)
+                </option>
+                <option
+                  value="image-file"
+                  ?selected=${objectFormat === "image-file"}
+                >
+                  Image (File)
+                </option>
+                <option
+                  value="image-webcam"
+                  ?selected=${objectFormat === "image-webcam"}
+                >
+                  Image (Webcam)
+                </option>
+                <option
+                  value="image-drawable"
+                  ?selected=${objectFormat === "image-drawable"}
+                >
+                  Image (Drawable)
+                </option>
+                <option
+                  value="pdf-file"
+                  ?selected=${objectFormat === "pdf-file"}
+                >
+                  PDF (File)
+                </option>
+                <option
+                  value="text-file"
+                  ?selected=${objectFormat === "text-file"}
+                >
+                  Text (File)
+                </option>
+                <option
+                  value="text-inline"
+                  ?selected=${objectFormat === "text-inline"}
+                >
+                  Text (Inline)
+                </option>
+              </select>`;
+          }
           break;
         }
 
@@ -345,15 +539,10 @@ export class SchemaEditor extends LitElement {
             <option ?selected=${value.type === "boolean"} value="boolean">
               Boolean
             </option>
-            <option ?selected=${value.type === "image/png"} value="image/png">
-              Image
-            </option>
-            <option ?selected=${value.type === "audio/ogg"} value="audio/ogg">
-              Audio
-            </option>
           </select>
 
-          ${format} ${value.type === "string" ? enumerations : nothing}
+          ${itemType} ${behavior} ${format}
+          ${value.type === "string" ? enumerations : nothing}
           ${value.type === "string" || value.type === "number"
             ? examples
             : nothing}
@@ -406,9 +595,15 @@ export class SchemaEditor extends LitElement {
         const inExamples = form.querySelector(
           `#${id}-examples`
         ) as HTMLInputElement | null;
+        const inItems = form.querySelector(
+          `#${id}-items`
+        ) as HTMLSelectElement | null;
+        const inBehavior = form.querySelector(
+          `#${id}-behavior`
+        ) as HTMLInputElement | null;
         const inFormat = form.querySelector(
           `#${id}-format`
-        ) as HTMLInputElement | null;
+        ) as HTMLSelectElement | null;
         const inEnum = form.querySelector(
           `#${id}-enum`
         ) as HTMLInputElement | null;
@@ -420,6 +615,7 @@ export class SchemaEditor extends LitElement {
         ) as HTMLInputElement | null;
 
         const oldType = property.type;
+        const oldBehavior = property.behavior;
 
         property.title = inTitle?.value || property.title;
         property.type = inType?.value || property.type;
@@ -428,10 +624,73 @@ export class SchemaEditor extends LitElement {
 
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
-        if (inFormat && inFormat.value !== "none") {
-          property.format = inFormat.value;
+        if (property.type === "object") {
+          if (inBehavior && inBehavior.value !== "none") {
+            property.behavior = [inBehavior.value as BehaviorSchema];
+          } else {
+            delete property.behavior;
+          }
+
+          if (inFormat && inFormat.value !== "none") {
+            if (inFormat.multiple) {
+              property.format = [...inFormat.selectedOptions]
+                .map((opt) => opt.value)
+                .join(",");
+            } else {
+              property.format = inFormat.value;
+            }
+          } else {
+            delete property.format;
+          }
+        }
+
+        // Update Array Items.
+        if (property.type === "array" && inItems && inItems.value !== "none") {
+          if (
+            // Items does not exist
+            !property.items ||
+            // Items exist but the type value is different.
+            (!Array.isArray(property.items) &&
+              property.items.type !== inItems.value)
+          ) {
+            property.items = { type: inItems.value };
+          }
         } else {
-          delete property.format;
+          delete property.items;
+        }
+
+        // Update Array Item Behaviors & Formats
+        if (property.type === "array") {
+          if (property.items && !Array.isArray(property.items)) {
+            if (property.items.type === "object") {
+              // Set the behavior.
+              if (inBehavior && inBehavior.value !== "none") {
+                property.items.behavior = [inBehavior.value as BehaviorSchema];
+              } else {
+                delete property.items.behavior;
+              }
+
+              // If the behavior is llm-content acknowledge the format.
+              if (
+                property.items.behavior &&
+                property.items.behavior.includes("llm-content") &&
+                inFormat &&
+                inFormat.value !== "none"
+              ) {
+                if (inFormat.multiple) {
+                  property.format = [...inFormat.selectedOptions]
+                    .map((opt) => opt.value)
+                    .join(",");
+                } else {
+                  property.items.format = inFormat.value;
+                }
+              } else {
+                delete property.items.format;
+              }
+            } else {
+              delete property.items.behavior;
+            }
+          }
         }
 
         if (inDefault) {
@@ -468,6 +727,25 @@ export class SchemaEditor extends LitElement {
         // the value entirely.
         if (oldType === "boolean" && property.type !== oldType) {
           delete property.default;
+        }
+
+        if (oldType === "array" && property.type !== oldType) {
+          delete property.items;
+        }
+
+        if (oldType === "object" && property.type !== oldType) {
+          delete property.behavior;
+        }
+
+        // Going from llm-content -> any other behavior means removing the
+        // format entirely.
+        if (
+          oldBehavior &&
+          oldBehavior.includes("llm-content") &&
+          property.behavior &&
+          !property.behavior.includes("llm-content")
+        ) {
+          delete property.format;
         }
 
         if (inID && inID.value && inID.value !== id) {

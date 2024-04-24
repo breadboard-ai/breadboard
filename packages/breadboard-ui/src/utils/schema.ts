@@ -88,17 +88,17 @@ export function resolveArrayType(value: Schema) {
     const valueItems = value.items as Items;
     if (valueItems.type) {
       return valueItems.type;
-    } else if (resolveBehaviorType(valueItems) === "llm-content") {
-      return "object";
     }
-  } else if (resolveBehaviorType(value) === "llm-content") {
-    return "object";
   }
 
   return "string";
 }
 
-export function resolveBehaviorType(value: Schema | Items) {
+export function resolveBehaviorType(value: Schema | Schema[] | undefined) {
+  if (!value || Array.isArray(value)) {
+    return null;
+  }
+
   if (value.behavior) {
     if (Array.isArray(value.behavior) && value.behavior.length > 0) {
       return value.behavior[0];

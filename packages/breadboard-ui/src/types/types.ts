@@ -41,13 +41,6 @@ export interface ImageHandler {
   stop(): void;
 }
 
-export interface CanvasData {
-  inline_data: {
-    data: string;
-    mime_type: string;
-  };
-}
-
 export type HistoryEntry = HarnessRunResult & {
   id: string;
   guid: string;
@@ -84,7 +77,7 @@ export type OutputArgs = {
 };
 
 type InlineData = {
-  inlineData: { data: string; mime_type: string };
+  inline_data: { data: string; mime_type: string };
 };
 
 type FunctionCall = {
@@ -104,6 +97,7 @@ type FunctionResponse = {
 type Part = InlineData | FunctionCall | FunctionResponse;
 
 export type LLMContent = {
+  role?: string;
   parts: Part[];
 };
 

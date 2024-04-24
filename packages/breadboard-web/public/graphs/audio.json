@@ -10,22 +10,16 @@
       "in": "text"
     },
     {
-      "from": "combineAudioAndPrompt",
+      "from": "contextify",
       "to": "describeAudio",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "combineAudioAndPrompt",
+      "to": "contextify",
       "out": "audio",
       "in": "audio"
-    },
-    {
-      "from": "input-1",
-      "to": "combineAudioAndPrompt",
-      "out": "prompt",
-      "in": "prompt"
     }
   ],
   "nodes": [
@@ -51,16 +45,21 @@
       "type": "text",
       "configuration": {
         "model": "gemini-1.5-pro-latest",
-        "text": "unused"
+        "text": "unused",
+        "systemInstruction": "Describe what you hear in the audio. Please respond in markdown"
       }
     },
     {
-      "id": "combineAudioAndPrompt",
+      "id": "contextify",
       "type": "runJavascript",
       "configuration": {
-        "code": "const combineAudioAndPrompt = ({audio,prompt})=>{return{context:{parts:[audio,{text:prompt}]}}};",
-        "name": "combineAudioAndPrompt",
+        "code": "const contextify = ({audio})=>{return{context:[audio]}};",
+        "name": "contextify",
         "raw": true
+      },
+      "metadata": {
+        "title": "Wrap audio",
+        "description": "Wraps the audio in a context object for Gemini"
       }
     },
     {
@@ -71,21 +70,16 @@
           "type": "object",
           "properties": {
             "audio": {
-              "type": "audio/webm",
-              "title": "Audio",
-              "format": "microphone"
-            },
-            "prompt": {
-              "type": "string",
-              "title": "Prompt",
-              "examples": [
-                "Describe what you hear in the audio. Please respond in markdown"
-              ]
+              "type": "object",
+              "behavior": [
+                "llm-content"
+              ],
+              "format": "audio-microphone",
+              "title": "Audio"
             }
           },
           "required": [
-            "audio",
-            "prompt"
+            "audio"
           ]
         }
       }

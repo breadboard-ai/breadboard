@@ -7,7 +7,6 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { CanvasData } from "../../../types/types.js";
 
 @customElement("bb-webcam-input")
 export class WebcamInput extends LitElement {
@@ -105,19 +104,20 @@ export class WebcamInput extends LitElement {
   }
 
   get value() {
-    const value = { inline_data: { data: "", mime_type: this.type } };
-    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80);
-    if (!inlineData) {
-      return value;
-    }
-
+    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
-    value.inline_data.data = inlineData.substring(preamble.length);
-    return value;
-  }
 
-  set value(_v: CanvasData) {
-    console.warn("Value set on webcam, but values are not supported");
+    return {
+      role: "user",
+      parts: [
+        {
+          inline_data: {
+            data: inlineData.substring(preamble.length),
+            mime_type: this.type,
+          },
+        },
+      ],
+    };
   }
 
   disconnectedCallback(): void {

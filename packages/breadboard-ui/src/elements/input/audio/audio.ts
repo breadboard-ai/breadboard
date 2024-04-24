@@ -85,10 +85,14 @@ export class AudioInput extends LitElement {
   `;
 
   get value() {
-    const value = {
-      inline_data: { data: this.#output || "", mime_type: this.#mimeType },
+    return {
+      role: "user",
+      parts: [
+        {
+          inline_data: { data: this.#output || "", mime_type: this.#mimeType },
+        },
+      ],
     };
-    return value;
   }
 
   async #requestPermission() {

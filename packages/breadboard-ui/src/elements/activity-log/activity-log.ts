@@ -21,7 +21,7 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { LLMContent, SETTINGS_TYPE, Settings } from "../../types/types.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -514,14 +514,12 @@ export class ActivityLog extends LitElement {
     return "image_url" in nodeValue;
   }
 
-  #isImageOrAudioData(
-    nodeValue: unknown
-  ): nodeValue is { inline_data: { data: string; mime_type: string } } {
+  #isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
     if (typeof nodeValue !== "object" || !nodeValue) {
       return false;
     }
 
-    return "inline_data" in nodeValue;
+    return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
   protected updated(): void {
@@ -678,22 +676,30 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (this.#isImageOrAudioData(nodeValue)) {
-            if (!nodeValue.inline_data.data.length) {
+          if (this.#isLLMContent(nodeValue)) {
+            if (!nodeValue.parts.length) {
               value = html`No data provided`;
             } else {
-              if (nodeValue.inline_data.mime_type.startsWith("image")) {
-                value = html`<img
-                  src="data:image/${nodeValue.inline_data
-                    .mime_type};base64,${nodeValue.inline_data.data}"
-                />`;
-              } else {
-                value = html`<audio
-                  controls
-                  src="data:${nodeValue.inline_data
-                    .mime_type};base64,${nodeValue.inline_data.data}"
-                />`;
-              }
+              value = html`${map(nodeValue.parts, (part) => {
+                if (!("inline_data" in part)) {
+                  return html`Unsupported part`;
+                }
+
+                if (part.inline_data.mime_type.startsWith("image")) {
+                  return html`<img
+                    src="data:image/${part.inline_data.mime_type};base64,${part
+                      .inline_data.data}"
+                  />`;
+                }
+
+                if (part.inline_data.mime_type.startsWith("audio")) {
+                  return html`<audio
+                    controls
+                    src="data:${part.inline_data.mime_type};base64,${part
+                      .inline_data.data}"
+                  />`;
+                }
+              })}`;
             }
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
