@@ -424,9 +424,9 @@
                 "context": {
                   "title": "Context",
                   "type": "array",
-                  "format": "multiline",
                   "items": {
                     "type": "object",
+                    "format": "multiline",
                     "behavior": [
                       "llm-content"
                     ]
