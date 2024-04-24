@@ -282,7 +282,10 @@ function parseDynamicPorts(
 ): Array<[string, { description?: string }]> {
   return Array.isArray(ports)
     ? ports.map((name) => [name, {}])
-    : Object.entries(ports);
+    : (Object.entries(ports).filter(
+        /** See {@link DynamicInputPorts} for why undefined is possible here. */
+        ([, config]) => config !== undefined
+      ) as Array<[string, { description?: string }]>);
 }
 
 type LooseInstantiateArgs = object;

@@ -326,7 +326,24 @@ type LooseDescribeFn = Function;
 
 export type DynamicInputPorts =
   | string[]
-  | { [K: string]: { description: string } };
+  | {
+      [K: string]:
+        | { description?: string }
+        // We include undefined here because TypeScript sometimes generates a
+        // type which would otherwise not match our constraint. For example,
+        // the expression:
+        //
+        //   outputFoo ? { foo: { description: "foo" } } : {}
+        //
+        // Gets assigned this type:
+        //
+        //   { foo: { description:"foo" } } | { foo?: undefined }
+        //
+        // Instead of:
+        //
+        //   { foo: { description:"foo" } } | {}
+        | undefined;
+    };
 
 type StrictDescribeFn<
   I extends Record<string, InputPortConfig>,

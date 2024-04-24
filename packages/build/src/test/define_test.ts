@@ -1074,6 +1074,23 @@ test("override title", async () => {
   });
 });
 
+test("describe is lenient with odd TypeScript types", () => {
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      outputFoo: { type: "boolean" },
+    },
+    outputs: {
+      "*": { type: "unknown" },
+    },
+    describe: ({ outputFoo }) => ({
+      /** See {@link DynamicInputPorts} for why this is an interesting case. */
+      outputs: outputFoo ? { foo: { description: "foo" } } : {},
+    }),
+    invoke: () => ({}),
+  });
+});
+
 test("error: missing name", () => {
   assert.throws(
     () =>
