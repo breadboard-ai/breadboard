@@ -45,6 +45,7 @@
     "build:tsc": "wireit",
     "test": "wireit",
     "test:only": "wireit",
+    "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
     "dev": "npm run test-and-lint --watch"
@@ -86,6 +87,16 @@
       ],
       "files": [],
       "output": []
+    },
+    "coverage": {
+      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "lcov.info"
+      ]
     },
     "lint": {
       "command": "eslint src/ --ext .ts",
