@@ -22,22 +22,30 @@ export function isBoolean(schema: Schema) {
   return schema.type == "boolean";
 }
 
-export function isAudio(schema: Schema) {
-  return typeof schema.type === "string" && schema.type.startsWith("audio");
-}
-
-export function isMultipartImage(schema: Schema) {
-  return typeof schema.type === "string" && schema.type.startsWith("image");
+export function isMicrophoneAudio(schema: Schema) {
+  return (
+    schema.type === "object" &&
+    schema.behavior?.includes("llm-content") &&
+    schema.format === "audio-microphone"
+  );
 }
 
 export function isMultipartText(schema: Schema) {
   return schema.type === "object" && schema.format?.startsWith("text");
 }
 
-export function isWebcam(schema: Schema) {
-  return schema.format === "webcam";
+export function isWebcamImage(schema: Schema) {
+  return (
+    schema.type === "object" &&
+    schema.behavior?.includes("llm-content") &&
+    schema.format === "image-webcam"
+  );
 }
 
-export function isDrawable(schema: Schema) {
-  return schema.format === "drawable";
+export function isDrawableImage(schema: Schema) {
+  return (
+    schema.type === "object" &&
+    schema.behavior?.includes("llm-content") &&
+    schema.format === "image-drawable"
+  );
 }

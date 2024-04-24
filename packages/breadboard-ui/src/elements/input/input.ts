@@ -11,13 +11,12 @@ import {
   isMultipart,
 } from "./input-multipart/input-multipart.js";
 import {
-  isAudio,
+  isMicrophoneAudio,
   isBoolean,
-  isDrawable,
-  isMultipartImage,
+  isDrawableImage,
   isMultiline,
   isSelect,
-  isWebcam,
+  isWebcamImage,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -196,7 +195,11 @@ export class Input extends LitElement {
     for (const [key, property] of Object.entries(properties)) {
       if (isMultipart(property)) {
         const values = await getMultipartValue(form, key);
-        data[key] = values.value;
+        if (property.type && property.type === "array") {
+          data[key] = [{ parts: values.value }];
+        } else {
+          data[key] = values.value;
+        }
       } else {
         const input = form[key];
         if (input && input.value) {
@@ -264,17 +267,12 @@ export class Input extends LitElement {
             >${property.title || key}</label
           >`;
           let input;
-          if (isAudio(property)) {
+          if (isMicrophoneAudio(property)) {
             input = html`<bb-audio-capture id="${key}"></bb-audio-capture>`;
-          } else if (isMultipartImage(property)) {
-            // Webcam input.
-            if (isWebcam(property)) {
-              input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
-            } else if (isDrawable(property)) {
-              input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
-            } else {
-              input = html`Image type not supported yet.`;
-            }
+          } else if (isWebcamImage(property)) {
+            input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
+          } else if (isDrawableImage(property)) {
+            input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
           } else if (isSelect(property)) {
             // Select input.
             const options = property.enum || [];
