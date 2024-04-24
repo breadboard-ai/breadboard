@@ -26,7 +26,6 @@ test("describer correctly responds to no inputs", async (t) => {
     },
     outputSchema: {
       type: "object",
-      properties: {},
     },
   });
 });
@@ -78,7 +77,6 @@ test("describer correctly responds to unknown inputs", async (t) => {
     },
     outputSchema: {
       type: "object",
-      properties: {},
     },
   });
 });

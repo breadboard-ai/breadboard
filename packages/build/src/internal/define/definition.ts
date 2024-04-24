@@ -194,7 +194,7 @@ export class DefinitionImpl<
     }
 
     let inputSchema: JSONSchema4 & {
-      properties: { [k: string]: JSONSchema4 };
+      properties?: { [k: string]: JSONSchema4 };
     };
     if (this.#dynamicInputs === undefined) {
       // All inputs are static.
@@ -224,7 +224,7 @@ export class DefinitionImpl<
     }
 
     let outputSchema: JSONSchema4 & {
-      properties: { [k: string]: JSONSchema4 };
+      properties?: { [k: string]: JSONSchema4 };
     };
     if (this.#dynamicOutputs === undefined) {
       // All outputs are static.
@@ -240,9 +240,9 @@ export class DefinitionImpl<
       );
     } else if (this.#reflective) {
       // We're reflective, so our outputs are determined by our dynamic inputs.
-      const dynamicInputNames = Object.keys(inputSchema.properties).filter(
-        (name) => this.#staticInputs[name] === undefined
-      );
+      const dynamicInputNames = Object.keys(
+        inputSchema.properties ?? {}
+      ).filter((name) => this.#staticInputs[name] === undefined);
       const d = this.#dynamicOutputs;
       outputSchema = portConfigMapToJSONSchema(
         {

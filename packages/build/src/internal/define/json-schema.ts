@@ -12,16 +12,16 @@ export function portConfigMapToJSONSchema(
   config: PortConfigMap,
   omitRequired = false
 ): JSONSchema4 & {
-  properties: { [k: string]: JSONSchema4 };
+  properties?: { [k: string]: JSONSchema4 };
 } {
+  const schema: JSONSchema4 & { properties?: { [k: string]: JSONSchema4 } } = {
+    type: "object",
+  };
   const sortedEntries = Object.entries(config).sort(([nameA], [nameB]) =>
     nameA.localeCompare(nameB)
   );
-  const schema: JSONSchema4 & {
-    properties: { [k: string]: JSONSchema4 };
-  } = {
-    type: "object",
-    properties: Object.fromEntries(
+  if (sortedEntries.length > 0) {
+    schema.properties = Object.fromEntries(
       sortedEntries.map(([name, config]) => {
         const { description, type, behavior } = config;
         const schema: JSONSchema4 = {
@@ -42,16 +42,16 @@ export function portConfigMapToJSONSchema(
         }
         return [name, schema];
       })
-    ),
-  };
-  if (!omitRequired) {
-    const required = sortedEntries
-      .filter(
-        ([, config]) => !("default" in config) || config.default === undefined
-      )
-      .map(([name]) => name);
-    if (required.length > 0) {
-      schema.required = required;
+    );
+    if (!omitRequired) {
+      const required = sortedEntries
+        .filter(
+          ([, config]) => !("default" in config) || config.default === undefined
+        )
+        .map(([name]) => name);
+      if (required.length > 0) {
+        schema.required = required;
+      }
     }
   }
   return schema;
