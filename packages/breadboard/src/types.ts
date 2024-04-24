@@ -567,11 +567,11 @@ export type ErrorObject = {
   /**
    * The node that threw the error.
    */
-  descriptor: NodeDescriptor;
+  descriptor?: NodeDescriptor;
   /**
    * The inputs that were passed to the node that threw the error.
    */
-  inputs: InputValues;
+  inputs?: InputValues;
 };
 /**
  * Sent by the runner when an error occurs.
