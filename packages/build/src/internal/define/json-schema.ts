@@ -10,19 +10,19 @@ import { toJSONSchema } from "../type-system/type.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
-  omitRequired = false
+  omitRequired: boolean
 ): JSONSchema4 & {
   properties?: { [k: string]: JSONSchema4 };
 } {
   const schema: JSONSchema4 & { properties?: { [k: string]: JSONSchema4 } } = {
     type: "object",
   };
-  const sortedEntries = Object.entries(config).sort(([nameA], [nameB]) =>
+  const sortedProperties = Object.entries(config).sort(([nameA], [nameB]) =>
     nameA.localeCompare(nameB)
   );
-  if (sortedEntries.length > 0) {
+  if (sortedProperties.length > 0) {
     schema.properties = Object.fromEntries(
-      sortedEntries.map(([name, config]) => {
+      sortedProperties.map(([name, config]) => {
         const { description, type, behavior } = config;
         const schema: JSONSchema4 = {
           title: config.title ?? name,
@@ -44,7 +44,7 @@ export function portConfigMapToJSONSchema(
       })
     );
     if (!omitRequired) {
-      const required = sortedEntries
+      const required = sortedProperties
         .filter(
           ([, config]) => !("default" in config) || config.default === undefined
         )

@@ -122,6 +122,7 @@ function setupKits<
           },
         },
         required: ["str"],
+        additionalProperties: false,
       },
       outputSchema: {
         type: "object",
@@ -131,6 +132,7 @@ function setupKits<
             type: "number",
           },
         },
+        additionalProperties: false,
       },
     });
   });
@@ -237,6 +239,7 @@ function setupKits<
           // TODO(aomarks) Shouldn't num1, num2, num3 show up here?
         },
         required: ["base"],
+        additionalProperties: { type: "number" },
       },
       outputSchema: {
         type: "object",
@@ -246,6 +249,7 @@ function setupKits<
             type: "number",
           },
         },
+        additionalProperties: false,
       },
     });
   });
