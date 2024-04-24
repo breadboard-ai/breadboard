@@ -374,7 +374,7 @@ export class SchemaEditor extends LitElement {
                   value="audio-file"
                   ?selected=${objectFormat === "audio-file"}
                 >
-                  Audio File
+                  Audio (File)
                 </option>
                 <option
                   value="audio-microphone"
@@ -411,12 +411,6 @@ export class SchemaEditor extends LitElement {
                   ?selected=${objectFormat === "image-drawable"}
                 >
                   Image (Drawable)
-                </option>
-                <option
-                  value="pdf-file"
-                  ?selected=${objectFormat === "pdf-file"}
-                >
-                  PDF (File)
                 </option>
                 <option
                   value="text-file"
