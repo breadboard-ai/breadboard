@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { BehaviorSchema } from "@google-labs/breadboard";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 
 export type PortConfig = InputPortConfig | OutputPortConfig;
@@ -43,6 +44,13 @@ interface BaseConfig {
    * visual editor.
    */
   format?: Format;
+
+  /**
+   * Can be used to provide additional hints to the UI or to other parts of
+   * the system about behavior of this particular input/output or input/output
+   * port.
+   */
+  behavior?: BehaviorSchema[];
 }
 
 interface StaticBase {

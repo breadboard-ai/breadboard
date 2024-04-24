@@ -910,6 +910,53 @@ test("multiline/javascript", async () => {
   });
 });
 
+test("behavior", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: {
+        type: "string",
+        behavior: ["config"],
+      },
+    },
+    outputs: {
+      so1: {
+        type: "string",
+        behavior: ["image", "code"],
+      },
+    },
+    invoke: () => {
+      return { so1: "foo" };
+    },
+  });
+
+  assert.deepEqual(await d.describe(), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        si1: {
+          title: "si1",
+          type: "string",
+          behavior: ["config"],
+        },
+      },
+      required: ["si1"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        so1: {
+          title: "so1",
+          type: "string",
+          behavior: ["image", "code"],
+        },
+      },
+      additionalProperties: false,
+    },
+  });
+});
+
 test("dynamic port descriptions", async () => {
   const d = defineNodeType({
     name: "foo",

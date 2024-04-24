@@ -23,7 +23,7 @@ export function portConfigMapToJSONSchema(
     type: "object",
     properties: Object.fromEntries(
       sortedEntries.map(([name, config]) => {
-        const { description, type } = config;
+        const { description, type, behavior } = config;
         const schema: JSONSchema4 = {
           title: config.title ?? name,
         };
@@ -36,6 +36,9 @@ export function portConfigMapToJSONSchema(
         Object.assign(schema, toJSONSchema(type));
         if ("format" in config && config.format !== undefined) {
           schema.format = config.format;
+        }
+        if (behavior !== undefined && behavior.length > 0) {
+          schema.behavior = behavior;
         }
         return [name, schema];
       })
