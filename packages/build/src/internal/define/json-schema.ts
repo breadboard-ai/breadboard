@@ -23,7 +23,7 @@ export function portConfigMapToJSONSchema(
     type: "object",
     properties: Object.fromEntries(
       sortedEntries.map(([name, config]) => {
-        const { description, type, multiline } = config;
+        const { description, type } = config;
         const schema: JSONSchema4 = {
           title: config.title ?? name,
         };
@@ -34,13 +34,8 @@ export function portConfigMapToJSONSchema(
           schema.default = config.default;
         }
         Object.assign(schema, toJSONSchema(type));
-        if (multiline === true) {
-          // TODO(aomarks) This is not a valid use of the JSON Schema format
-          // keyword according to
-          // https://opis.io/json-schema/2.x/formats.html. We should probably put
-          // Breadboard specific stuff somewhere else (e.g. in a breadboard
-          // property).
-          schema.format = "multiline";
+        if ("format" in config && config.format !== undefined) {
+          schema.format = config.format;
         }
         return [name, schema];
       })

@@ -847,23 +847,31 @@ test("primary input + output", () => {
   );
 });
 
-test("multiline", async () => {
+test("multiline/javascript", async () => {
   const d = defineNodeType({
     name: "foo",
     inputs: {
       si1: {
         type: "string",
-        multiline: true,
+        format: "multiline",
+      },
+      si2: {
+        type: "string",
+        format: "javascript",
       },
     },
     outputs: {
       so1: {
         type: "string",
-        multiline: true,
+        format: "multiline",
+      },
+      so2: {
+        type: "string",
+        format: "javascript",
       },
     },
     invoke: () => {
-      return { so1: "foo" };
+      return { so1: "foo", so2: "foo" };
     },
   });
 
@@ -876,8 +884,13 @@ test("multiline", async () => {
           type: "string",
           format: "multiline",
         },
+        si2: {
+          title: "si2",
+          type: "string",
+          format: "javascript",
+        },
       },
-      required: ["si1"],
+      required: ["si1", "si2"],
     },
     outputSchema: {
       type: "object",
@@ -886,6 +899,11 @@ test("multiline", async () => {
           title: "so1",
           type: "string",
           format: "multiline",
+        },
+        so2: {
+          title: "so2",
+          type: "string",
+          format: "javascript",
         },
       },
     },

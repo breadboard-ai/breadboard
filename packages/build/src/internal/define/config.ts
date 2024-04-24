@@ -12,6 +12,14 @@ export type PortConfigs = Record<string, PortConfig>;
 export type InputPortConfig = StaticInputPortConfig | DynamicInputPortConfig;
 export type OutputPortConfig = StaticOutputPortConfig | DynamicOutputPortConfig;
 
+/**
+ * Additional information about the format of the value. Primarily used to
+ * determine how strings are displayed in the Breadboard Visual Editor.
+ */
+export type Format =
+  | /* A string that is likely to contain multiple lines. */ "multiline"
+  | /* A string that is JavaScript code. */ "javascript";
+
 interface BaseConfig {
   /**
    * The {@link BreadboardType} that values sent or received on this port will
@@ -31,13 +39,13 @@ interface BaseConfig {
   description?: string;
 
   /**
-   * A hint for the Breadboard visual editor to indicate that the text is likely
-   * to contain multiple lines.
+   * Special format annotations. Primarily used as hints for the Breadboard
+   * visual editor.
    */
-  multiline?: true;
+  format?: Format;
 }
 
-interface WithPrimary {
+interface StaticBase {
   /**
    * If true, this port is is the `primary` input or output port of the node it
    * belongs to.
@@ -65,7 +73,7 @@ interface WithPrimary {
 /**
  * Configuration for a static import ports of a Breadboard node.
  */
-export interface StaticInputPortConfig extends BaseConfig, WithPrimary {
+export interface StaticInputPortConfig extends BaseConfig, StaticBase {
   /**
    * A default value for this port.
    */
@@ -80,7 +88,7 @@ export interface DynamicInputPortConfig extends BaseConfig {}
 /**
  * Configuration for a static output port of a Breadboard node.
  */
-export interface StaticOutputPortConfig extends BaseConfig, WithPrimary {}
+export interface StaticOutputPortConfig extends BaseConfig, StaticBase {}
 
 /**
  * Configuration for the dynamic output ports of a Breadboard node.
