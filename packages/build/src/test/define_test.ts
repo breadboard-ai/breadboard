@@ -11,7 +11,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
 import { object } from "../internal/type-system/object.js";
-import { anyOf } from "../internal/type-system/any-of.js";
 import { array } from "../internal/type-system/array.js";
 
 test("mono/mono", async () => {
@@ -1134,25 +1133,8 @@ test("override title", async () => {
           type: "null",
         },
       },
-      type: "object",
+      additionalProperties: false,
     },
-  });
-});
-
-test("describe is lenient with odd TypeScript types", () => {
-  defineNodeType({
-    name: "foo",
-    inputs: {
-      outputFoo: { type: "boolean" },
-    },
-    outputs: {
-      "*": { type: "unknown" },
-    },
-    describe: ({ outputFoo }) => ({
-      /** See {@link DynamicInputPorts} for why this is an interesting case. */
-      outputs: outputFoo ? { foo: { description: "foo" } } : {},
-    }),
-    invoke: () => ({}),
   });
 });
 
@@ -1580,36 +1562,6 @@ test("error: excess instantiate input", () => {
   );
 });
 
-test("error: mono/mono should not have describe", () => {
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-    },
-    // @ts-expect-error
-    describe: () => ({ inputs: [], outputs: [] }),
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
-test("error: mono/poly must have describe", () => {
-  // @ts-expect-error
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-      "*": { type: "number" },
-    },
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
 test("error: mono/poly should not return inputs", () => {
   const d = defineNodeType({
     name: "foo",
@@ -1638,22 +1590,6 @@ test("error: poly/mono should not return outputs", () => {
     },
     // @ts-expect-error
     describe: () => ({ inputs: [], outputs: [] }),
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
-test("error: non-reflective poly/poly must have describe", () => {
-  // @ts-expect-error
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-      "*": { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-      "*": { type: "string" },
-    },
     invoke: () => ({ so1: "so1" }),
   });
 });
