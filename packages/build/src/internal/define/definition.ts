@@ -180,7 +180,10 @@ export class DefinitionImpl<
     };
   }
 
-  async describe(values?: InputValues): Promise<NodeDescriberResult> {
+  async describe(
+    values?: InputValues,
+    inboundEdges?: Schema
+  ): Promise<NodeDescriberResult> {
     let user:
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
       | undefined = undefined;
@@ -200,7 +203,7 @@ export class DefinitionImpl<
     if (this.#dynamicInputs === undefined) {
       // All inputs are static.
       inputSchema = {
-        ...portConfigMapToJSONSchema(this.#staticInputs, false),
+        ...portConfigMapToJSONSchema(this.#staticInputs, []),
         additionalProperties: false,
       };
     } else if (user?.inputs !== undefined) {
@@ -211,7 +214,9 @@ export class DefinitionImpl<
       );
       inputSchema = portConfigMapToJSONSchema(
         { ...newStatic, ...this.#staticInputs },
-        false
+        // TODO(aomarks) The user should be able to indicate from their describe
+        // function whether a specific input is optional/required.
+        []
       );
       if (newDynamic === undefined) {
         inputSchema.additionalProperties = false;
@@ -220,27 +225,33 @@ export class DefinitionImpl<
       } else {
         inputSchema.additionalProperties = toJSONSchema(newDynamic.type);
       }
-    } else if (values !== undefined) {
+    } else {
       // No definition author inputs, assume all actual inputs are valid.
-      const d = this.#dynamicInputs;
+      const actualInputNames = [
+        ...new Set([
+          ...Object.keys(values ?? {}),
+          ...Object.keys(inboundEdges?.properties ?? {}),
+        ]),
+      ].sort();
+      const actualDynamicInputNames = actualInputNames.filter(
+        // Only include the actual input names that aren't in our static inputs.
+        (name) => this.#staticInputs[name] === undefined
+      );
+      const dynamicInputConfig = this.#dynamicInputs;
       inputSchema = {
         ...portConfigMapToJSONSchema(
           {
-            ...Object.fromEntries(Object.keys(values).map((name) => [name, d])),
+            ...Object.fromEntries(
+              actualInputNames.map((name) => [name, dynamicInputConfig])
+            ),
             ...this.#staticInputs,
           },
-          false
+          actualDynamicInputNames
         ),
         additionalProperties:
           this.#dynamicInputs.type === "unknown"
             ? true
             : toJSONSchema(this.#dynamicInputs.type),
-      };
-    } else {
-      // No definition author inputs or values.
-      inputSchema = {
-        ...portConfigMapToJSONSchema(this.#staticInputs, false),
-        additionalProperties: toJSONSchema(this.#dynamicInputs.type),
       };
     }
 

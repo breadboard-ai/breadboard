@@ -10,7 +10,7 @@ import { toJSONSchema } from "../type-system/type.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
-  omitRequired: boolean
+  optional: string[] | /* all */ true
 ): JSONSchema4 & {
   properties?: { [k: string]: JSONSchema4 };
 } {
@@ -43,15 +43,17 @@ export function portConfigMapToJSONSchema(
         return [name, schema];
       })
     );
-    if (!omitRequired) {
-      const required = sortedProperties
-        .filter(
-          ([, config]) => !("default" in config) || config.default === undefined
-        )
-        .map(([name]) => name);
-      if (required.length > 0) {
-        schema.required = required;
-      }
+    const omitRequiredSet = new Set(
+      optional === true ? Object.keys(config) : optional
+    );
+    const required = sortedProperties
+      .filter(([name, config]) => {
+        const hasDefault = "default" in config && config.default !== undefined;
+        return !hasDefault && !omitRequiredSet.has(name);
+      })
+      .map(([name]) => name);
+    if (required.length > 0) {
+      schema.required = required;
     }
   }
   return schema;

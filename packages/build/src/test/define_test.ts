@@ -512,7 +512,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
-      required: ["di1", "di2", "si1"],
+      required: ["si1"],
       additionalProperties: { type: "number" },
     },
     outputSchema: {
@@ -666,7 +666,7 @@ test("reflective", async () => {
         di2: { type: "number", title: "di2" },
         si1: { type: "string", title: "si1" },
       },
-      required: ["di1", "di2", "si1"],
+      required: ["si1"],
       additionalProperties: { type: "number" },
     },
     outputSchema: {

@@ -157,7 +157,7 @@ test("dynamic input schema with custom describe (open)", async () => {
   );
 });
 
-test("dynamic input schema with default describe and no values", async () => {
+test("dynamic input schema with default describe passed nothing", async () => {
   assert.deepEqual(
     (
       await defineNodeType({
@@ -184,7 +184,7 @@ test("dynamic input schema with default describe and no values", async () => {
   );
 });
 
-test("dynamic input schema with default describe and values", async () => {
+test("dynamic input schema with default describe passed values", async () => {
   assert.deepEqual(
     (
       await defineNodeType({
@@ -213,7 +213,48 @@ test("dynamic input schema with default describe and values", async () => {
           type: "number",
         },
       },
-      required: ["a", "b", "foo"],
+      required: ["foo"],
+      additionalProperties: { type: "number" },
+    }
+  );
+});
+
+test("dynamic input schema with default describe passed inbound edges", async () => {
+  assert.deepEqual(
+    (
+      await defineNodeType({
+        name: "foo",
+        inputs: {
+          foo: { type: "string" },
+          "*": { type: "number" },
+        },
+        outputs: {},
+        invoke: () => ({}),
+      }).describe(undefined, {
+        type: "object",
+        properties: {
+          a: { type: "number" },
+          b: { type: "string" },
+        },
+      })
+    ).inputSchema,
+    {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+        },
+        a: {
+          title: "a",
+          type: "number",
+        },
+        b: {
+          title: "b",
+          type: "number",
+        },
+      },
+      required: ["foo"],
       additionalProperties: { type: "number" },
     }
   );
