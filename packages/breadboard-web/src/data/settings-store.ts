@@ -64,6 +64,15 @@ export class SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show Node Shortcuts",
+          {
+            name: "Show Node Shortcuts",
+            description:
+              "Toggles the visibility of common nodes next to the node selector",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

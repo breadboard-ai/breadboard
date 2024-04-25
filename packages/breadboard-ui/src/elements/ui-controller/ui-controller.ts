@@ -281,6 +281,11 @@ export class UI extends LitElement {
       ? EditorMode.MINIMAL
       : EditorMode.ADVANCED;
 
+    const showNodeShortcuts = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Node Shortcuts")
+          ?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -295,6 +300,7 @@ export class UI extends LitElement {
       .collapseNodesByDefault=${collapseNodesByDefault}
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       .mode=${editorMode}
+      .showNodeShortcuts=${showNodeShortcuts}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;
