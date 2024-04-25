@@ -210,7 +210,13 @@ export type GraphInlineMetadata = {
 /**
  * Represents graph metadata.
  */
-export type GraphMetadata = Record<string, NodeValue>;
+export type GraphMetadata = {
+  /**
+   * The icon that identifies the graph. Can be a URL or a Material Design id.
+   */
+  icon?: string;
+  [name: string]: NodeValue;
+};
 
 /**
  * Unique identifier of a graph.

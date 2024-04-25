@@ -191,6 +191,12 @@
 		},
 		"GraphMetadata": {
 			"type": "object",
+			"properties": {
+				"icon": {
+					"type": "string",
+					"description": "The icon that identifies the graph. Can be a URL or a Material Design id."
+				}
+			},
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
