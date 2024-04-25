@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { STATUS, Settings } from "../../types/types.js";
+import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -258,6 +258,11 @@ export class UI extends LitElement {
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
     const nodeId = currentNode();
+    const collapseNodesByDefault = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Collapse Nodes by Default"
+        )?.value
+      : false;
 
     /**
      * Create all the elements we need.
@@ -270,6 +275,7 @@ export class UI extends LitElement {
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
+      .collapseNodesByDefault=${collapseNodesByDefault}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;

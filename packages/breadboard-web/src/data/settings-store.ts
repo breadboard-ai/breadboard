@@ -37,6 +37,15 @@ export class SettingsStore {
             value: true,
           },
         ],
+        [
+          "Collapse Nodes by Default",
+          {
+            name: "Collapse Nodes by Default",
+            description:
+              "Whether you wish to have nodes in the graph collapsed by default",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
