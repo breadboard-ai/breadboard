@@ -7,6 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
+import type { NodeDescriberContext } from "@google-labs/breadboard";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -393,4 +394,30 @@ test("async describe", async () => {
       },
     }
   );
+});
+
+test("describe receives context", async () => {
+  const expected: NodeDescriberContext = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+  };
+  let actual: NodeDescriberContext | undefined;
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "number" },
+    },
+    outputs: {
+      "*": { type: "number" },
+    },
+    describe: (_staticInputs, _dynamicInputs, context) => {
+      actual = context;
+      return {
+        inputs: [],
+        outputs: [],
+      };
+    },
+    invoke: () => ({}),
+  }).describe({}, {}, {}, expected);
+  assert.deepEqual(actual, expected);
 });

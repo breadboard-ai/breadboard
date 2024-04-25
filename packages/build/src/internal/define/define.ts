@@ -5,7 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeHandlerMetadata } from "@google-labs/breadboard";
+import type {
+  NodeDescriberContext,
+  NodeHandlerMetadata,
+} from "@google-labs/breadboard";
 import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
@@ -318,7 +321,8 @@ type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
 export type LooseDescribeFn = (
   staticParams: Record<string, JsonSerializable>,
-  dynamicParams: Record<string, JsonSerializable>
+  dynamicParams: Record<string, JsonSerializable>,
+  context?: NodeDescriberContext
 ) => MaybePromise<{
   inputs?: DynamicInputPorts;
   outputs?: DynamicInputPorts;
@@ -357,7 +361,8 @@ type StrictDescribeFn<
           // poly/poly reflective
           describe?: (
             staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>
+            dynamicInputs: Expand<DynamicInvokeParams<I>>,
+            context?: NodeDescriberContext
           ) => MaybePromise<{
             inputs: DynamicInputPorts;
             outputs?: never;
@@ -367,7 +372,8 @@ type StrictDescribeFn<
           // poly/poly non-reflective
           describe: (
             staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>
+            dynamicInputs: Expand<DynamicInvokeParams<I>>,
+            context?: NodeDescriberContext
           ) => MaybePromise<{
             inputs?: DynamicInputPorts;
             outputs: DynamicInputPorts;
@@ -377,7 +383,8 @@ type StrictDescribeFn<
         // poly/mono
         describe?: (
           staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>
+          dynamicInputs: Expand<DynamicInvokeParams<I>>,
+          context?: NodeDescriberContext
         ) => MaybePromise<{
           inputs: DynamicInputPorts;
           outputs?: never;
@@ -388,7 +395,8 @@ type StrictDescribeFn<
         // mono/poly
         describe: (
           staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>
+          dynamicInputs: Expand<DynamicInvokeParams<I>>,
+          context?: NodeDescriberContext
         ) => MaybePromise<{
           inputs?: never;
           outputs: DynamicInputPorts;
