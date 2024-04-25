@@ -6,6 +6,7 @@
 
 import type {
   InputValues,
+  NodeDescriberContext,
   NodeDescriberResult,
   OutputValues,
   Schema,
@@ -170,7 +171,9 @@ export class DefinitionImpl<
 
   async describe(
     values?: InputValues,
-    inboundEdges?: Schema
+    inboundEdges?: Schema,
+    _outboundEdges?: Schema,
+    context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     let user:
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
@@ -179,9 +182,9 @@ export class DefinitionImpl<
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
           this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = await this.#describe(staticValues, dynamicValues);
+        user = await this.#describe(staticValues, dynamicValues, context);
       } else {
-        user = await this.#describe({}, {});
+        user = await this.#describe({}, {}, context);
       }
     }
 
