@@ -12,6 +12,7 @@ import {
   NodeHandlerContext,
   NodeValue,
   OutputValues,
+  RunArguments,
   Schema,
   TraversalResult,
 } from "./types.js";
@@ -122,8 +123,10 @@ export class RequestedInputsManager {
   #context: NodeHandlerContext;
   #cache: Map<string, NodeValue> = new Map();
 
-  constructor(context: NodeHandlerContext) {
+  constructor(args: RunArguments) {
+    const { inputs, ...context } = args;
     this.#context = context;
+    this.#cache = new Map(inputs ? Object.entries(inputs) : []);
   }
 
   createHandler(

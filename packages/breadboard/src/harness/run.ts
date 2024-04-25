@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardRunner, Kit, asyncGen } from "../index.js";
+import { BreadboardRunner, InputValues, Kit, asyncGen } from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
@@ -84,6 +84,12 @@ export type RunConfig = {
    * The `AbortSignal` that can be used to stop the board run.
    */
   signal?: AbortSignal;
+  /**
+   * The values that will be supplied to the bubbled inputs during a board run.
+   * This enables automatically providing some of the values like the model
+   * name without interrupting the run of the board.
+   */
+  inputs?: InputValues;
 };
 
 const configureKits = (config: RunConfig) => {

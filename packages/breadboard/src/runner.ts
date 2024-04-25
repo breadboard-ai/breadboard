@@ -21,6 +21,7 @@ import type {
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
+  RunArguments,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
@@ -129,9 +130,11 @@ export class BoardRunner implements BreadboardRunner {
    * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
-    context: NodeHandlerContext = {},
+    args: RunArguments = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { inputs, ...context } = args;
     const base = context.base || SENTINEL_BASE_URL;
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
@@ -141,7 +144,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const machine = new TraversalMachine(this, result?.state);
 
-      const requestedInputs = new RequestedInputsManager(context);
+      const requestedInputs = new RequestedInputsManager(args);
 
       const invocationPath = context.invocationPath || [];
 

@@ -31,6 +31,7 @@ import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
 import { addNodeProxyServerConfig } from "./config";
 import { SettingsStore } from "./data/settings-store";
+import { inputsFromSettings } from "./data/inputs";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -924,6 +925,7 @@ export class Main extends LitElement {
                   kits: this.kits,
                   loader: this.#loader,
                   signal: this.#abortController?.signal,
+                  inputs: inputsFromSettings(this.#settings),
                 })
               )
             );
