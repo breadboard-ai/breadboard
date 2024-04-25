@@ -349,3 +349,48 @@ test("dynamic output schema with custom describe (open)", async () => {
     }
   );
 });
+
+test("async describe", async () => {
+  assert.deepEqual(
+    await defineNodeType({
+      name: "foo",
+      inputs: {
+        "*": { type: "number" },
+      },
+      outputs: {
+        "*": { type: "number" },
+      },
+      describe: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        return {
+          inputs: ["foo"],
+          outputs: ["bar"],
+        };
+      },
+      invoke: () => ({}),
+    }).describe(),
+    {
+      inputSchema: {
+        type: "object",
+        properties: {
+          foo: {
+            title: "foo",
+            type: "number",
+          },
+        },
+        required: ["foo"],
+        additionalProperties: false,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          bar: {
+            title: "bar",
+            type: "number",
+          },
+        },
+        additionalProperties: false,
+      },
+    }
+  );
+});
