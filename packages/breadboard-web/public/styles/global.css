@@ -64,6 +64,7 @@ html {
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-frame-reload: url(/third_party/icons/frame-reload.svg);
   --bb-icon-history: url(/third_party/icons/history.svg);
+  --bb-icon-human: url(/third_party/icons/human.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
@@ -82,6 +83,7 @@ html {
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-settings: url(/third_party/icons/settings.svg);
+  --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
