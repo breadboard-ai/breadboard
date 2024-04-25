@@ -120,7 +120,7 @@ export function defineNodeType<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
   F extends LooseInvokeFn<I>,
-  D extends LooseDescribeFn,
+  D extends VeryLooseDescribeFn,
 >(
   params: {
     // Start with a loose type to help TypeScript bind the generics.
@@ -180,13 +180,7 @@ export function defineNodeType<
       staticParams: Record<string, JsonSerializable>,
       dynamicParams: Record<string, JsonSerializable>
     ) => { [K: string]: JsonSerializable },
-    params.describe as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => {
-      inputs?: string[];
-      outputs?: string[];
-    }
+    params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
     invoke: impl.invoke.bind(impl),
@@ -322,7 +316,15 @@ type GetReflective<O extends Record<string, OutputPortConfig>> =
 
 type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
-type LooseDescribeFn = Function;
+export type LooseDescribeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>
+) => {
+  inputs?: DynamicInputPorts;
+  outputs?: DynamicInputPorts;
+};
+
+type VeryLooseDescribeFn = Function;
 
 export type DynamicInputPorts =
   | string[]
