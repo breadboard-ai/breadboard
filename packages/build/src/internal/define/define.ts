@@ -7,6 +7,7 @@
 
 import type {
   NodeDescriberContext,
+  NodeHandlerContext,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
@@ -179,10 +180,7 @@ export function defineNodeType<
     params.outputs["*"],
     primary(params.inputs),
     primary(params.outputs),
-    params.invoke as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => { [K: string]: JsonSerializable },
+    params.invoke as Function as VeryLooseInvokeFn,
     params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
@@ -245,10 +243,14 @@ type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
   (
     staticParams: Expand<StaticInvokeParams<I>>,
     dynamicParams: Expand<DynamicInvokeParams<I>>
-  ) =>
-    | { [K: string]: JsonSerializable }
-    | Promise<{ [K: string]: JsonSerializable }>
+  ) => MaybePromise<{ [K: string]: JsonSerializable }>
 >;
+
+export type VeryLooseInvokeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>,
+  context: NodeHandlerContext
+) => { [K: string]: JsonSerializable };
 
 type StrictInvokeFn<
   I extends Record<string, InputPortConfig>,
@@ -256,8 +258,9 @@ type StrictInvokeFn<
   F extends LooseInvokeFn<I>,
 > = (
   staticInputs: Expand<StaticInvokeParams<I>>,
-  dynamicInputs: Expand<DynamicInvokeParams<I>>
-) => StrictInvokeFnReturn<I, O, F> | Promise<StrictInvokeFnReturn<I, O, F>>;
+  dynamicInputs: Expand<DynamicInvokeParams<I>>,
+  context: NodeHandlerContext
+) => MaybePromise<StrictInvokeFnReturn<I, O, F>>;
 
 type StrictInvokeFnReturn<
   I extends Record<string, InputPortConfig>,

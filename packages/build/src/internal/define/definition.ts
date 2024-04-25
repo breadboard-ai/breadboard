@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeDescriberContext,
   NodeDescriberResult,
+  NodeHandlerContext,
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
@@ -26,7 +27,11 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
-import type { DynamicInputPorts, LooseDescribeFn } from "./define.js";
+import type {
+  DynamicInputPorts,
+  LooseDescribeFn,
+  VeryLooseInvokeFn,
+} from "./define.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
 
@@ -71,11 +76,7 @@ export class DefinitionImpl<
   readonly #reflective: boolean;
   readonly #primaryInput: string | undefined;
   readonly #primaryOutput: string | undefined;
-  // TODO(aomarks) Support promises
-  readonly #invoke: (
-    staticParams: Record<string, JsonSerializable>,
-    dynamicParams: Record<string, JsonSerializable>
-  ) => { [K: string]: JsonSerializable };
+  readonly #invoke: VeryLooseInvokeFn;
   readonly #describe?: LooseDescribeFn;
 
   constructor(
@@ -86,10 +87,7 @@ export class DefinitionImpl<
     dynamicOutputs: DynamicOutputPortConfig | undefined,
     primaryInput: string | undefined,
     primaryOutput: string | undefined,
-    invoke: (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => { [K: string]: JsonSerializable },
+    invoke: VeryLooseInvokeFn,
     describe?: LooseDescribeFn
   ) {
     this.#name = name;
@@ -130,10 +128,13 @@ export class DefinitionImpl<
     );
   }
 
-  invoke(values: InputValues): Promise<OutputValues> {
+  invoke(
+    values: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
       this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-    return Promise.resolve(this.#invoke(staticValues, dynamicValues));
+    return Promise.resolve(this.#invoke(staticValues, dynamicValues, context));
   }
 
   /**
