@@ -78,10 +78,10 @@ export class BoardRunner implements BreadboardRunner {
   /**
    *
    * @param metadata - optional metadata for the board. Use this parameter
-   * to provide title, description, version, and URL for the board.
+   * to provide title, description, version, icon, and URL for the board.
    */
   constructor(
-    { url, title, description, version, $schema }: GraphInlineMetadata = {
+    { url, title, description, version, icon, $schema }: GraphInlineMetadata = {
       $schema: breadboardSchema.$id,
     }
   ) {
@@ -91,6 +91,7 @@ export class BoardRunner implements BreadboardRunner {
       title,
       description,
       version,
+      icon,
     });
   }
 

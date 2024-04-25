@@ -28,8 +28,14 @@ export class GraphToKitAdapter {
   }
 
   populateDescriptor(descriptor: KitBuilderOptions) {
-    const { title, description, version } = this.graph;
-    return { title, description, version, ...descriptor };
+    const { title, description, version, icon } = this.graph;
+    return {
+      title,
+      description,
+      version,
+      ...(icon ? { icon } : {}),
+      ...descriptor,
+    };
   }
 
   async #initialize(url: string, kits: Kit[] = []) {

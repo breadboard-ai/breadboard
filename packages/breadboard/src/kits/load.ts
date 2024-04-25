@@ -40,8 +40,8 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     this.#graph = setBaseURL(base, type, graph);
     this.describe = this.describe.bind(this);
     this.invoke = this.invoke.bind(this);
-    const { title, description } = this.#graph;
-    this.metadata = { title, description };
+    const { title, description, icon } = this.#graph;
+    this.metadata = { title, description, ...(icon ? { icon } : {}) };
   }
 
   async describe() {
@@ -67,12 +67,13 @@ const createHandlersFromManifest = (base: URL, nodes: KitManifest["nodes"]) => {
  * @param manifest -- a `KitManifest` instance
  */
 export const fromManifest = (manifest: KitManifest): Kit => {
-  const { title, description, version, url } = manifest;
+  const { title, description, version, url, icon } = manifest;
   return {
     title,
     description,
     version,
     url,
+    ...(icon ? { icon } : {}),
     handlers: createHandlersFromManifest(new URL(url), manifest.nodes),
   };
 };
