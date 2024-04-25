@@ -48,9 +48,9 @@ def breadboard_node(func):
   print(inspect.signature(func).parameters)
   print(inspect.signature(func).return_annotation)
   #code = inspect.getsource(func)
-  code = cloudpickle.dumps(func)
-  code = base64.b64encode(code).decode('ascii')
-  print(code)
+  pickled_code = cloudpickle.dumps(func)
+  pickled_code = base64.b64encode(pickled_code).decode('ascii')
+  print(pickled_code)
 
   # get the input/output schema of the function. set it to a master registry.
   # replace all function calls with decorated ones.
@@ -59,7 +59,8 @@ def breadboard_node(func):
     type = "runPython"
     description = "func.get_docstring()"
     _is_node = True
-    _source_code = code
+    _source_code = None
+    _pickled_code = pickled_code
     _python_version = '.'.join(str(x) for x in sys.version_info[:3])
     def describe(self, input, output):
       pass
@@ -69,6 +70,7 @@ def breadboard_node(func):
       if "code" in config:
         raise Exception("Code is already populated.")
       config["code"] = self._source_code
+      config["pickle"] = self._pickled_code
       config["python_version"] = self._python_version
       return config
 

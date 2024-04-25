@@ -1,0 +1,42 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "phJAzfnfq6Tf"
+      },
+      "outputs": [],
+      "source": [
+        "print(\"step1\")\n",
+        "a = 3"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(\"step2\")\n",
+        "print(f\"a: {a}\")"
+      ],
+      "metadata": {
+        "id": "ke8vzZ2XC1jK"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}

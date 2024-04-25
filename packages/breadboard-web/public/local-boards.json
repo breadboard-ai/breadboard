@@ -70,6 +70,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Run Python Notebook",
+    "url": "/graphs/convert-ipnyb.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Data Board",
     "url": "/graphs/data-board.json",
     "version": "0.0.3"

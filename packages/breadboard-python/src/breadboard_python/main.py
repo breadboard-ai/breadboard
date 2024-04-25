@@ -726,7 +726,7 @@ class Board(Generic[T, S]):
       elif isinstance(arg, Board):
         self.set_inputs["*"].append(arg)
       else:
-        raise Exception("Unexpected type for arg")
+        raise Exception(f"Unexpected type for arg: {arg}")
     
     self.loaded = False
     return self

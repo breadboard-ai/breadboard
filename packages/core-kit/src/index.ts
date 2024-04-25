@@ -19,6 +19,7 @@ import batch from "./nodes/batch.js";
 import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
 import runJavascript from "./nodes/run-javascript.js";
+import runPython from "./nodes/run-python.js";
 import secrets from "./nodes/secrets.js";
 
 const builder = new KitBuilder({
@@ -182,6 +183,7 @@ export const Core = builder.build({
   batch,
   fetch,
   runJavascript,
+  runPython,
   secrets,
   curry,
 });
