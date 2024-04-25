@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandler,
-  NodeHandlerFunction,
-  Schema,
-} from "@google-labs/breadboard";
+import { defineNodeType } from "@breadboard-ai/build";
+import type { InputValues } from "@google-labs/breadboard";
 
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>
@@ -154,12 +149,10 @@ export function convertToNamedFunction({
 }
 
 const DEFAULT_FUNCTION_NAME = "run";
-export const runJavascriptHandler: NodeHandlerFunction = async ({
-  code,
-  name,
-  raw,
-  ...args
-}: InputValues & RunJavascriptInputs) => {
+export const runJavascriptHandler = async (
+  { code, name, raw }: RunJavascriptInputs,
+  args: InputValues
+) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
   code = stripCodeBlock(code);
   name ??= DEFAULT_FUNCTION_NAME;
@@ -193,79 +186,47 @@ export const runJavascriptHandler: NodeHandlerFunction = async ({
   }
 };
 
-export const computeOutputSchema = (inputs: InputValues): Schema => {
-  if (!inputs || !inputs.raw)
-    return {
-      type: "object",
-      properties: {
-        result: {
-          title: "result",
-          description: "The result of running the JavaScript code",
-          type: ["string", "object"],
-        },
-      },
-      required: ["result"],
-    };
-  return {
-    type: "object",
-    additionalProperties: true,
-  };
-};
-
-type SchemaProperties = Schema["properties"];
-
-export const computeAdditionalInputs = (
-  inputsSchema?: SchemaProperties
-): SchemaProperties => {
-  if (!inputsSchema) return {};
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { code, name, raw, ...args } = inputsSchema;
-  return args;
-};
-
-export const runJavascriptDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues,
-  inputsSchema?: Schema
-) => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        code: {
-          title: "code",
-          behavior: ["config", "code"],
-          format: "javascript",
-          description: "The JavaScript code to run",
-          type: "string",
-        },
-        name: {
-          title: "name",
-          description:
-            'The name of the function to invoke in the supplied code. Default value is "run".',
-          type: "string",
-          default: "run",
-        },
-        raw: {
-          title: "raw",
-          behavior: ["config"],
-          description:
-            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
-          type: "boolean",
-        },
-        ...computeAdditionalInputs(inputsSchema?.properties || {}),
-      },
-      required: ["code"],
-      additionalProperties: true,
-    },
-    outputSchema: computeOutputSchema(inputs || {}),
-  };
-};
-
-export default {
+export default defineNodeType({
+  name: "runJavascript",
   metadata: {
     title: "Run Javascript",
     description: "Runs supplied `code` input as Javascript.",
   },
-  describe: runJavascriptDescriber,
-  invoke: runJavascriptHandler,
-} satisfies NodeHandler;
+  inputs: {
+    code: {
+      behavior: ["config", "code"],
+      format: "javascript",
+      description: "The JavaScript code to run",
+      type: "string",
+    },
+    name: {
+      description:
+        'The name of the function to invoke in the supplied code. Default value is "run".',
+      type: "string",
+      default: "run",
+    },
+    raw: {
+      behavior: ["config"],
+      description:
+        "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+      type: "boolean",
+      default: false,
+    },
+    "*": {
+      type: "unknown",
+    },
+  },
+  outputs: {
+    "*": {
+      type: "unknown",
+    },
+  },
+  describe: ({ raw }) => ({
+    outputs: raw
+      ? { "*": {} }
+      : {
+          result: { description: "The result of running the JavaScript code" },
+        },
+  }),
+  invoke: (config, args) => runJavascriptHandler(config, args),
+});
