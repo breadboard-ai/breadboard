@@ -62,6 +62,13 @@ the following fields:
 
 - `default`: (Optional) A default value for this input.
 
+- `format`: (Optional) Additional information about the format of the value.
+  Primarily used to determine how strings are displayed in the Breadboard Visual
+  Editor. Valid values:
+
+  - `multiline`: A string that is likely to contain multiple lines.
+  - `javascript`: A string that is JavaScript code.
+
 - `primary`: (Optional) Enables a syntactic sugar feature for an output port to
   make wiring nodes more concise. When a node has a `primary` output port, then
   it becomes possible to use the node itself in API positions where an output

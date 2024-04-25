@@ -10,45 +10,47 @@ import { toJSONSchema } from "../type-system/type.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
-  omitRequired = false
+  optional: string[] | /* all */ true
 ): JSONSchema4 & {
-  properties: { [k: string]: JSONSchema4 };
+  properties?: { [k: string]: JSONSchema4 };
 } {
-  const sortedEntries = Object.entries(config).sort(([nameA], [nameB]) =>
+  const schema: JSONSchema4 & { properties?: { [k: string]: JSONSchema4 } } = {
+    type: "object",
+  };
+  const sortedProperties = Object.entries(config).sort(([nameA], [nameB]) =>
     nameA.localeCompare(nameB)
   );
-  const schema: JSONSchema4 & {
-    properties: { [k: string]: JSONSchema4 };
-  } = {
-    type: "object",
-    properties: Object.fromEntries(
-      sortedEntries.map(([name, config]) => {
-        const { description, type, multiline } = config;
+  if (sortedProperties.length > 0) {
+    schema.properties = Object.fromEntries(
+      sortedProperties.map(([name, config]) => {
+        const { description, type, behavior } = config;
         const schema: JSONSchema4 = {
           title: config.title ?? name,
         };
         if (description) {
           schema.description = description;
         }
-        if (config.default !== undefined) {
+        if ("default" in config && config.default !== undefined) {
           schema.default = config.default;
         }
         Object.assign(schema, toJSONSchema(type));
-        if (multiline === true) {
-          // TODO(aomarks) This is not a valid use of the JSON Schema format
-          // keyword according to
-          // https://opis.io/json-schema/2.x/formats.html. We should probably put
-          // Breadboard specific stuff somewhere else (e.g. in a breadboard
-          // property).
-          schema.format = "multiline";
+        if ("format" in config && config.format !== undefined) {
+          schema.format = config.format;
+        }
+        if (behavior !== undefined && behavior.length > 0) {
+          schema.behavior = behavior;
         }
         return [name, schema];
       })
-    ),
-  };
-  if (!omitRequired) {
-    const required = sortedEntries
-      .filter(([, config]) => config.default === undefined)
+    );
+    const omitRequiredSet = new Set(
+      optional === true ? Object.keys(config) : optional
+    );
+    const required = sortedProperties
+      .filter(([name, config]) => {
+        const hasDefault = "default" in config && config.default !== undefined;
+        return !hasDefault && !omitRequiredSet.has(name);
+      })
       .map(([name]) => name);
     if (required.length > 0) {
       schema.required = required;

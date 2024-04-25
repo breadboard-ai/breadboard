@@ -23,10 +23,11 @@ test("describer correctly responds to no inputs", async (t) => {
         },
       },
       required: ["keys"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
-      properties: {},
+      additionalProperties: { type: "string" },
     },
   });
 });
@@ -49,6 +50,7 @@ test("describer correctly responds to inputs", async (t) => {
         },
       },
       required: ["keys"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -56,6 +58,7 @@ test("describer correctly responds to inputs", async (t) => {
         SECRET1: { title: "SECRET1", type: "string" },
         SECRET2: { title: "SECRET2", type: "string" },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -75,10 +78,11 @@ test("describer correctly responds to unknown inputs", async (t) => {
         },
       },
       required: ["keys"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
-      properties: {},
+      additionalProperties: { type: "string" },
     },
   });
 });

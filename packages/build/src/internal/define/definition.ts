@@ -16,13 +16,14 @@ import type { Placeholder } from "../board/placeholder.js";
 import type { StrictNodeHandler } from "../common/compatibility.js";
 import type { OutputPortReference } from "../common/port.js";
 import type { Expand } from "../common/type-util.js";
-import type { JsonSerializable } from "../type-system/type.js";
+import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
   PortConfig,
   PortConfigs,
   StaticInputPortConfig,
+  StaticOutputPortConfig,
 } from "./config.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
@@ -179,7 +180,10 @@ export class DefinitionImpl<
     };
   }
 
-  async describe(values?: InputValues): Promise<NodeDescriberResult> {
+  async describe(
+    values?: InputValues,
+    inboundEdges?: Schema
+  ): Promise<NodeDescriberResult> {
     let user:
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
       | undefined = undefined;
@@ -194,80 +198,122 @@ export class DefinitionImpl<
     }
 
     let inputSchema: JSONSchema4 & {
-      properties: { [k: string]: JSONSchema4 };
+      properties?: { [k: string]: JSONSchema4 };
     };
     if (this.#dynamicInputs === undefined) {
       // All inputs are static.
-      inputSchema = portConfigMapToJSONSchema(this.#staticInputs);
+      inputSchema = {
+        ...portConfigMapToJSONSchema(this.#staticInputs, []),
+        additionalProperties: false,
+      };
     } else if (user?.inputs !== undefined) {
       // The definition author has provided the inputs.
-      const d = this.#dynamicInputs;
-      inputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(
-          parseDynamicPorts(user.inputs).map(([name, config]) => [
-            name,
-            { ...d, ...config },
-          ])
-        ),
-        ...this.#staticInputs,
-      });
-    } else if (values !== undefined) {
-      // No definition author inputs, assume all actual inputs are valid.
-      const d = this.#dynamicInputs;
-      inputSchema = portConfigMapToJSONSchema({
-        ...Object.fromEntries(Object.keys(values).map((name) => [name, d])),
-        ...this.#staticInputs,
-      });
+      const { newStatic, newDynamic } = parseDynamicPorts(
+        user.inputs,
+        this.#dynamicInputs
+      );
+      inputSchema = portConfigMapToJSONSchema(
+        { ...newStatic, ...this.#staticInputs },
+        // TODO(aomarks) The user should be able to indicate from their describe
+        // function whether a specific input is optional/required.
+        []
+      );
+      if (newDynamic === undefined) {
+        inputSchema.additionalProperties = false;
+      } else if (newDynamic.type === "unknown") {
+        inputSchema.additionalProperties = true;
+      } else {
+        inputSchema.additionalProperties = toJSONSchema(newDynamic.type);
+      }
     } else {
-      // No definition author inputs or values.
-      inputSchema = portConfigMapToJSONSchema(this.#staticInputs);
+      // No definition author inputs, assume all actual inputs are valid.
+      const actualInputNames = [
+        ...new Set([
+          ...Object.keys(values ?? {}),
+          ...Object.keys(inboundEdges?.properties ?? {}),
+        ]),
+      ].sort();
+      const actualDynamicInputNames = actualInputNames.filter(
+        // Only include the actual input names that aren't in our static inputs.
+        (name) => this.#staticInputs[name] === undefined
+      );
+      const dynamicInputConfig = this.#dynamicInputs;
+      inputSchema = {
+        ...portConfigMapToJSONSchema(
+          {
+            ...Object.fromEntries(
+              actualInputNames.map((name) => [name, dynamicInputConfig])
+            ),
+            ...this.#staticInputs,
+          },
+          actualDynamicInputNames
+        ),
+        additionalProperties:
+          this.#dynamicInputs.type === "unknown"
+            ? true
+            : toJSONSchema(this.#dynamicInputs.type),
+      };
     }
 
     let outputSchema: JSONSchema4 & {
-      properties: { [k: string]: JSONSchema4 };
+      properties?: { [k: string]: JSONSchema4 };
     };
     if (this.#dynamicOutputs === undefined) {
       // All outputs are static.
-      outputSchema = portConfigMapToJSONSchema(
-        this.#staticOutputs,
-        // TODO(aomarks) The Breadboard visual editor interprets JSON schema
-        // "required" on an output as "the user must wire this to something"
-        // (shows up as a red port). That might be not quite right, it seems
-        // like "required" here should describe the expectations of the node
-        // implementation's return object, not the way the user choses to use
-        // the output.
-        true
-      );
+      outputSchema = {
+        ...portConfigMapToJSONSchema(
+          this.#staticOutputs,
+          // TODO(aomarks) The Breadboard visual editor interprets JSON schema
+          // "required" on an output as "the user must wire this to something"
+          // (shows up as a red port). That might be not quite right, it seems
+          // like "required" here should describe the expectations of the node
+          // implementation's return object, not the way the user choses to use
+          // the output.
+          true
+        ),
+        additionalProperties: false,
+      };
     } else if (this.#reflective) {
       // We're reflective, so our outputs are determined by our dynamic inputs.
-      const dynamicInputNames = Object.keys(inputSchema.properties).filter(
-        (name) => this.#staticInputs[name] === undefined
-      );
+      const dynamicInputNames = Object.keys(
+        inputSchema.properties ?? {}
+      ).filter((name) => this.#staticInputs[name] === undefined);
       const d = this.#dynamicOutputs;
-      outputSchema = portConfigMapToJSONSchema(
-        {
-          ...Object.fromEntries(dynamicInputNames.map((name) => [name, d])),
-          ...this.#staticOutputs,
-        },
-        true
-      );
+      outputSchema = {
+        ...portConfigMapToJSONSchema(
+          {
+            ...Object.fromEntries(dynamicInputNames.map((name) => [name, d])),
+            ...this.#staticOutputs,
+          },
+          true
+        ),
+        additionalProperties: false,
+      };
     } else if (user?.outputs !== undefined) {
       // The definition author has provided the outputs.
-      const d = this.#dynamicOutputs;
+      const { newStatic, newDynamic } = parseDynamicPorts(
+        user.outputs,
+        this.#dynamicOutputs
+      );
       outputSchema = portConfigMapToJSONSchema(
         {
-          ...Object.fromEntries(
-            parseDynamicPorts(user.outputs).map(([name, config]) => [
-              name,
-              { ...d, ...config },
-            ])
-          ),
+          ...newStatic,
           ...this.#staticOutputs,
         },
         true
       );
+      if (newDynamic === undefined) {
+        outputSchema.additionalProperties = false;
+      } else if (newDynamic.type === "unknown") {
+        outputSchema.additionalProperties = true;
+      } else {
+        outputSchema.additionalProperties = toJSONSchema(newDynamic.type);
+      }
     } else {
-      outputSchema = portConfigMapToJSONSchema(this.#staticOutputs, true);
+      outputSchema = {
+        ...portConfigMapToJSONSchema(this.#staticOutputs, true),
+        additionalProperties: toJSONSchema(this.#dynamicOutputs.type),
+      };
     }
 
     return {
@@ -278,11 +324,26 @@ export class DefinitionImpl<
 }
 
 function parseDynamicPorts(
-  ports: DynamicInputPorts
-): Array<[string, { description?: string }]> {
-  return Array.isArray(ports)
-    ? ports.map((name) => [name, {}])
-    : Object.entries(ports);
+  ports: DynamicInputPorts,
+  base: DynamicInputPortConfig | DynamicOutputPortConfig
+): {
+  newStatic: Record<string, StaticInputPortConfig | StaticOutputPortConfig>;
+  newDynamic: DynamicInputPortConfig | DynamicOutputPortConfig | undefined;
+} {
+  ports = Array.isArray(ports)
+    ? Object.fromEntries(ports.map((name) => [name, {}]))
+    : ports;
+  const newStatic = Object.fromEntries(
+    Object.entries(ports)
+      .filter(
+        /** See {@link DynamicInputPorts} for why undefined is possible here. */
+        ([name, config]) => config !== undefined && name !== "*"
+      )
+      .map(([name, config]) => [name, { ...base, ...config }])
+  );
+  const newDynamic =
+    ports["*"] !== undefined ? { ...base, ...ports["*"] } : undefined;
+  return { newStatic, newDynamic };
 }
 
 type LooseInstantiateArgs = object;

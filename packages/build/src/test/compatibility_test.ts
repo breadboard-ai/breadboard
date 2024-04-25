@@ -122,6 +122,7 @@ function setupKits<
           },
         },
         required: ["str"],
+        additionalProperties: false,
       },
       outputSchema: {
         type: "object",
@@ -131,6 +132,7 @@ function setupKits<
             type: "number",
           },
         },
+        additionalProperties: false,
       },
     });
   });
@@ -234,9 +236,21 @@ function setupKits<
             title: "base",
             type: "number",
           },
-          // TODO(aomarks) Shouldn't num1, num2, num3 show up here?
+          num1: {
+            title: "num1",
+            type: "number",
+          },
+          num2: {
+            title: "num2",
+            type: "number",
+          },
+          num3: {
+            title: "num3",
+            type: "number",
+          },
         },
         required: ["base"],
+        additionalProperties: { type: "number" },
       },
       outputSchema: {
         type: "object",
@@ -246,6 +260,7 @@ function setupKits<
             type: "number",
           },
         },
+        additionalProperties: false,
       },
     });
   });

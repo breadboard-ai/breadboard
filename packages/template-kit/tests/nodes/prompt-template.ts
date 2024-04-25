@@ -110,6 +110,7 @@ test("`generateInputSchema` correctly generates schema for a template with no pa
       },
     },
     required: ["template"],
+    additionalProperties: false,
   });
 });
 
@@ -137,5 +138,6 @@ test("`generateInputSchema` correctly generates schema for a template with param
       },
     },
     required: ["bar", "foo", "template"],
+    additionalProperties: false,
   });
 });
