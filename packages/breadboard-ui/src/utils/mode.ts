@@ -12,8 +12,8 @@ import {
 } from "@google-labs/breadboard";
 
 export enum EditorMode {
-  EASY = "easy",
-  HARD = "hard",
+  MINIMAL = "minimal",
+  ADVANCED = "advanced",
 }
 
 const removeHardPort = (...names: string[]) => {
@@ -43,7 +43,7 @@ export const filterConfigByMode = (
   ports: InspectableNodePorts,
   mode: EditorMode
 ) => {
-  if (mode === EditorMode.HARD) return ports;
+  if (mode === EditorMode.ADVANCED) return ports;
 
   const inputs: InspectablePortList = {
     fixed: ports.inputs.fixed,
@@ -62,7 +62,7 @@ export const filterPortsByMode = (
   ports: InspectableNodePorts,
   mode: EditorMode
 ): InspectableNodePorts => {
-  if (mode === EditorMode.HARD) return ports;
+  if (mode === EditorMode.ADVANCED) return ports;
 
   const inputs: InspectablePortList = {
     fixed: ports.inputs.fixed,

@@ -29,6 +29,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { EditorMode } from "../../utils/mode.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -270,6 +271,16 @@ export class UI extends LitElement {
         )?.value
       : false;
 
+    const hideAdvancedPortsOnNodes = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Advanced Ports on Nodes"
+        )?.value
+      : false;
+
+    const editorMode = hideAdvancedPortsOnNodes
+      ? EditorMode.MINIMAL
+      : EditorMode.ADVANCED;
+
     /**
      * Create all the elements we need.
      */
@@ -283,6 +294,7 @@ export class UI extends LitElement {
       .boardId=${this.boardId}
       .collapseNodesByDefault=${collapseNodesByDefault}
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
+      .mode=${editorMode}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;

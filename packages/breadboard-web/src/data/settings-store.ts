@@ -55,6 +55,15 @@ export class SettingsStore {
             value: false,
           },
         ],
+        [
+          "Hide Advanced Ports on Nodes",
+          {
+            name: "Hide Advanced Ports on Nodes",
+            description:
+              "Toggles the visibility of $error, star (*), and control ports on nodes (unless connected)",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
