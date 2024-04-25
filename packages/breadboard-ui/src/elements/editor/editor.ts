@@ -65,6 +65,9 @@ export class Editor extends LitElement {
   hideSubboardSelectorWhenEmpty = false;
 
   @property()
+  mode = EditorMode.ADVANCED;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -312,7 +315,7 @@ export class Editor extends LitElement {
     for (const node of breadboardGraph.nodes()) {
       ports.set(
         node.descriptor.id,
-        filterPortsByMode(await node.ports(), EditorMode.HARD)
+        filterPortsByMode(await node.ports(), this.mode)
       );
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
@@ -410,13 +413,15 @@ export class Editor extends LitElement {
           graph: GraphDescriptor | null;
           subGraphId: string | null;
           kits: Kit[];
+          mode: EditorMode;
         }>
       | Map<PropertyKey, unknown>
   ): void {
     const shouldProcessGraph =
       changedProperties.has("graph") ||
       changedProperties.has("kits") ||
-      changedProperties.has("subGraphId");
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("mode");
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
       this.#processGraph();
