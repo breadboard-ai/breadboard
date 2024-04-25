@@ -179,10 +179,7 @@ export function defineNodeType<
     params.outputs["*"],
     primary(params.inputs),
     primary(params.outputs),
-    params.invoke as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => { [K: string]: JsonSerializable },
+    params.invoke as Function as VeryLooseInvokeFn,
     params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
@@ -247,6 +244,11 @@ type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
     dynamicParams: Expand<DynamicInvokeParams<I>>
   ) => MaybePromise<{ [K: string]: JsonSerializable }>
 >;
+
+export type VeryLooseInvokeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>
+) => { [K: string]: JsonSerializable };
 
 type StrictInvokeFn<
   I extends Record<string, InputPortConfig>,
