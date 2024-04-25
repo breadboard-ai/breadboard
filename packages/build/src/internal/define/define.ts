@@ -6,7 +6,7 @@
  */
 
 import type { NodeHandlerMetadata } from "@google-labs/breadboard";
-import type { CountUnion, Expand } from "../common/type-util.js";
+import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
   JsonSerializable,
@@ -319,10 +319,10 @@ type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 export type LooseDescribeFn = (
   staticParams: Record<string, JsonSerializable>,
   dynamicParams: Record<string, JsonSerializable>
-) => {
+) => MaybePromise<{
   inputs?: DynamicInputPorts;
   outputs?: DynamicInputPorts;
-};
+}>;
 
 type VeryLooseDescribeFn = Function;
 
@@ -358,30 +358,30 @@ type StrictDescribeFn<
           describe?: (
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+          ) => MaybePromise<{
             inputs: DynamicInputPorts;
             outputs?: never;
-          };
+          }>;
         }
       : {
           // poly/poly non-reflective
           describe: (
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+          ) => MaybePromise<{
             inputs?: DynamicInputPorts;
             outputs: DynamicInputPorts;
-          };
+          }>;
         }
     : {
         // poly/mono
         describe?: (
           staticInputs: Expand<StaticInvokeParams<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+        ) => MaybePromise<{
           inputs: DynamicInputPorts;
           outputs?: never;
-        };
+        }>;
       }
   : O["*"] extends DynamicOutputPortConfig
     ? {
@@ -389,10 +389,10 @@ type StrictDescribeFn<
         describe: (
           staticInputs: Expand<StaticInvokeParams<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+        ) => MaybePromise<{
           inputs?: never;
           outputs: DynamicInputPorts;
-        };
+        }>;
       }
     : {
         // mono/mono

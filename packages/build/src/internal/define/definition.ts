@@ -179,9 +179,9 @@ export class DefinitionImpl<
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
           this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = this.#describe(staticValues, dynamicValues);
+        user = await this.#describe(staticValues, dynamicValues);
       } else {
-        user = this.#describe({}, {});
+        user = await this.#describe({}, {});
       }
     }
 
