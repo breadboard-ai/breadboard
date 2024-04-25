@@ -46,6 +46,15 @@ export class SettingsStore {
             value: false,
           },
         ],
+        [
+          "Hide Embedded Board Selector When Empty",
+          {
+            name: "Hide Embedded Board Selector When Empty",
+            description:
+              "If there are no embedded boards in the current one, hide the selector",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

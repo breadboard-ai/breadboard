@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   inspect,
@@ -60,6 +60,9 @@ export class Editor extends LitElement {
 
   @property()
   collapseNodesByDefault = false;
+
+  @property()
+  hideSubboardSelectorWhenEmpty = false;
 
   @property()
   kits: Kit[] = [];
@@ -317,7 +320,6 @@ export class Editor extends LitElement {
       }
     }
 
-    // TODO: Make this a flag.
     this.#graph.collapseNodesByDefault = this.collapseNodesByDefault;
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
@@ -592,6 +594,15 @@ export class Editor extends LitElement {
 
     const subGraphs: SubGraphs | null =
       this.graph && this.graph.graphs ? this.graph.graphs : null;
+
+    let showSubGraphSelector = true;
+    if (
+      this.hideSubboardSelectorWhenEmpty &&
+      (!subGraphs || (subGraphs && Object.entries(subGraphs).length === 0))
+    ) {
+      showSubGraphSelector = false;
+    }
+
     return html`${this.#graphRenderer}
       <input
         ${ref(this.#addButtonRef)}
@@ -623,7 +634,8 @@ export class Editor extends LitElement {
           Reset Layout
         </button>
 
-        <div class="divider"></div>
+        ${showSubGraphSelector
+          ? html`<div class="divider"></div>
         <select
           id="subgraph-selector"
           @input=${(evt: Event) => {
@@ -674,15 +686,17 @@ export class Editor extends LitElement {
         >
           Delete sub board
         </button>
-      </div>
+      </div>`
+          : nothing}
 
-      <bb-node-selector
-        .graph=${this.graph}
-        .kits=${this.kits}
-        @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
-          const id = this.#createRandomID(evt.nodeType);
-          this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
-        }}
-      ></bb-node-selector>`;
+        <bb-node-selector
+          .graph=${this.graph}
+          .kits=${this.kits}
+          @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
+            const id = this.#createRandomID(evt.nodeType);
+            this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+          }}
+        ></bb-node-selector>
+      </div>`;
   }
 }

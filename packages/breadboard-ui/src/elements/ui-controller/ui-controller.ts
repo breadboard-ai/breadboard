@@ -264,6 +264,12 @@ export class UI extends LitElement {
         )?.value
       : false;
 
+    const hideSubboardSelectorWhenEmpty = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Embedded Board Selector When Empty"
+        )?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -276,6 +282,7 @@ export class UI extends LitElement {
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
       .collapseNodesByDefault=${collapseNodesByDefault}
+      .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;
