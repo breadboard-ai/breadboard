@@ -39,6 +39,7 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 8;
   #editable = false;
 
+  collapseNodesByDefault = false;
   layoutRect: DOMRectReadOnly | null = null;
 
   constructor() {
@@ -82,6 +83,10 @@ export class Graph extends PIXI.Container {
       }
 
       if (evt.target instanceof GraphNodePort) {
+        if (!evt.target.editable) {
+          return;
+        }
+
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
         nodePortBeingEdited.overrideStatus = PortStatus.Connected;
@@ -108,6 +113,17 @@ export class Graph extends PIXI.Container {
               nodeBeingEdited.name || "",
               nodePortBeingEdited
             );
+
+            // Both nodes need to be open before a change can be made. Otherwise
+            // we don't know exactly which edge is being edited.
+            if (
+              edgeBeingEdited &&
+              (edgeBeingEdited.toNode.collapsed ||
+                edgeBeingEdited.fromNode.collapsed)
+            ) {
+              edgeBeingEdited = null;
+              return;
+            }
 
             nodePortType = GraphNodePortType.IN;
             if (!edgeBeingEdited) {
@@ -615,6 +631,7 @@ export class Graph extends PIXI.Container {
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
+        graphNode.collapsed = this.collapseNodesByDefault;
 
         this.#nodeById.set(id, graphNode);
       }
@@ -655,6 +672,10 @@ export class Graph extends PIXI.Container {
         graphNode,
         layout: this.#layout.get(id) || null,
       });
+
+      graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
+        this.#redrawAllEdges();
+      });
       this.addChild(graphNode);
     }
 
@@ -688,6 +709,21 @@ export class Graph extends PIXI.Container {
     this.#edgeContainer.addChild(edgeGraphic);
 
     return edgeGraphic;
+  }
+
+  #redrawAllEdges() {
+    if (!this.#edges) {
+      return;
+    }
+
+    for (const edge of this.#edges) {
+      const edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
+      if (!edgeGraphic) {
+        continue;
+      }
+
+      edgeGraphic.forceRedraw();
+    }
   }
 
   #drawEdges() {

@@ -59,6 +59,9 @@ export class Editor extends LitElement {
   boardId: number = -1;
 
   @property()
+  collapseNodesByDefault = false;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -314,6 +317,8 @@ export class Editor extends LitElement {
       }
     }
 
+    // TODO: Make this a flag.
+    this.#graph.collapseNodesByDefault = this.collapseNodesByDefault;
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
