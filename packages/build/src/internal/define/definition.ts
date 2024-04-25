@@ -25,9 +25,9 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
+import type { DynamicInputPorts, LooseDescribeFn } from "./define.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
-import type { DynamicInputPorts } from "./define.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -75,13 +75,7 @@ export class DefinitionImpl<
     staticParams: Record<string, JsonSerializable>,
     dynamicParams: Record<string, JsonSerializable>
   ) => { [K: string]: JsonSerializable };
-  readonly #describe?: (
-    staticParams: Record<string, JsonSerializable>,
-    dynamicParams: Record<string, JsonSerializable>
-  ) => {
-    inputs?: DynamicInputPorts;
-    outputs?: DynamicInputPorts;
-  };
+  readonly #describe?: LooseDescribeFn;
 
   constructor(
     name: string,
@@ -95,13 +89,7 @@ export class DefinitionImpl<
       staticParams: Record<string, JsonSerializable>,
       dynamicParams: Record<string, JsonSerializable>
     ) => { [K: string]: JsonSerializable },
-    describe?: (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => {
-      inputs?: DynamicInputPorts;
-      outputs?: DynamicInputPorts;
-    }
+    describe?: LooseDescribeFn
   ) {
     this.#name = name;
     this.#staticInputs = staticInputs;
@@ -191,9 +179,9 @@ export class DefinitionImpl<
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
           this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = this.#describe(staticValues, dynamicValues);
+        user = await this.#describe(staticValues, dynamicValues);
       } else {
-        user = this.#describe({}, {});
+        user = await this.#describe({}, {});
       }
     }
 

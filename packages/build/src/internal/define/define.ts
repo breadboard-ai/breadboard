@@ -6,7 +6,7 @@
  */
 
 import type { NodeHandlerMetadata } from "@google-labs/breadboard";
-import type { CountUnion, Expand } from "../common/type-util.js";
+import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
   JsonSerializable,
@@ -120,7 +120,7 @@ export function defineNodeType<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
   F extends LooseInvokeFn<I>,
-  D extends LooseDescribeFn,
+  D extends VeryLooseDescribeFn,
 >(
   params: {
     // Start with a loose type to help TypeScript bind the generics.
@@ -180,13 +180,7 @@ export function defineNodeType<
       staticParams: Record<string, JsonSerializable>,
       dynamicParams: Record<string, JsonSerializable>
     ) => { [K: string]: JsonSerializable },
-    params.describe as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => {
-      inputs?: string[];
-      outputs?: string[];
-    }
+    params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
     invoke: impl.invoke.bind(impl),
@@ -322,7 +316,15 @@ type GetReflective<O extends Record<string, OutputPortConfig>> =
 
 type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
-type LooseDescribeFn = Function;
+export type LooseDescribeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>
+) => MaybePromise<{
+  inputs?: DynamicInputPorts;
+  outputs?: DynamicInputPorts;
+}>;
+
+type VeryLooseDescribeFn = Function;
 
 export type DynamicInputPorts =
   | string[]
@@ -356,30 +358,30 @@ type StrictDescribeFn<
           describe?: (
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+          ) => MaybePromise<{
             inputs: DynamicInputPorts;
             outputs?: never;
-          };
+          }>;
         }
       : {
           // poly/poly non-reflective
           describe: (
             staticInputs: Expand<StaticInvokeParams<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+          ) => MaybePromise<{
             inputs?: DynamicInputPorts;
             outputs: DynamicInputPorts;
-          };
+          }>;
         }
     : {
         // poly/mono
         describe?: (
           staticInputs: Expand<StaticInvokeParams<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+        ) => MaybePromise<{
           inputs: DynamicInputPorts;
           outputs?: never;
-        };
+        }>;
       }
   : O["*"] extends DynamicOutputPortConfig
     ? {
@@ -387,10 +389,10 @@ type StrictDescribeFn<
         describe: (
           staticInputs: Expand<StaticInvokeParams<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+        ) => MaybePromise<{
           inputs?: never;
           outputs: DynamicInputPorts;
-        };
+        }>;
       }
     : {
         // mono/mono
