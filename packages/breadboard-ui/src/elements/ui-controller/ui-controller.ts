@@ -419,6 +419,8 @@ export class UI extends LitElement {
       direction=${this.isPortrait ? "vertical" : "horizontal"}
       name="layout-main"
       split="[0.75, 0.25]"
+      .quickExpandCollapse=${[0.2, 0.75]}
+      .showQuickExpandCollapse=${true}
     >
       <section id="diagram" slot="slot-0">
         ${this.graph === null && this.failedToLoad
