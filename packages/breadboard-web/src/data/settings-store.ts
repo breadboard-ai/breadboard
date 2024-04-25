@@ -83,7 +83,6 @@ export class SettingsStore {
         await settingsDb.clear(settingsStore);
       }
 
-      console.log("🌻 store, data", store, data);
       const tx = settingsDb.transaction(settingsStore, "readwrite");
       await Promise.all([
         [...data.items.values()].map((setting) => {
