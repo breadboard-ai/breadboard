@@ -56,7 +56,7 @@ export default defineNodeType({
   inputs: {
     template: {
       type: "string",
-      multiline: true,
+      format: "multiline",
       description: "The URL template to use",
     },
     "*": {

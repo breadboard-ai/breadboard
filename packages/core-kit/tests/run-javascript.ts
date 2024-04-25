@@ -8,11 +8,7 @@ import test from "ava";
 
 import { NodeHandlerContext } from "@google-labs/breadboard";
 
-import handler, {
-  RunJavascriptOutputs,
-  computeAdditionalInputs,
-  computeOutputSchema,
-} from "../src/nodes/run-javascript.js";
+import handler, { RunJavascriptOutputs } from "../src/nodes/run-javascript.js";
 
 test("runJavascript runs code", async (t) => {
   const runJavascript = handler.invoke;
@@ -84,20 +80,74 @@ test("runJavascript understands `raw` input", async (t) => {
   t.deepEqual(result, { hello: "world" });
 });
 
-test("`computeOutputSchema` correctly reacts to `raw` input", async (t) => {
-  const result = computeOutputSchema({ raw: true });
-  t.deepEqual(result, { type: "object", additionalProperties: true });
+test("describe outputs when raw = true", async (t) => {
+  const result = (await handler.describe({ raw: true })).outputSchema;
+  t.deepEqual(result, {
+    type: "object",
+    additionalProperties: true,
+  });
 });
 
-test("`computeAdditionalInputs` correctly reacts to arguments", async (t) => {
-  const result = computeAdditionalInputs({
-    code: { title: "code" },
-    name: { title: "name" },
-    raw: { title: "raw" },
-    what: { title: "what" },
-  });
+test("describe outputs when raw = false", async (t) => {
+  const result = (await handler.describe({ raw: false })).outputSchema;
   t.deepEqual(result, {
-    what: { title: "what" },
+    type: "object",
+    properties: {
+      result: {
+        title: "result",
+        description: "The result of running the JavaScript code",
+      },
+    },
+    additionalProperties: false,
+  });
+});
+
+test("describe inputs", async (t) => {
+  const result = (
+    await handler.describe(
+      {},
+      {
+        type: "object",
+        properties: {
+          code: { title: "code" },
+          name: { title: "name" },
+          raw: { title: "raw" },
+          what: { title: "what" },
+        },
+      }
+    )
+  ).inputSchema;
+  t.deepEqual(result, {
+    type: "object",
+    properties: {
+      code: {
+        behavior: ["config", "code"],
+        description: "The JavaScript code to run",
+        format: "javascript",
+        title: "code",
+        type: "string",
+      },
+      name: {
+        default: "run",
+        description:
+          'The name of the function to invoke in the supplied code. Default value is "run".',
+        title: "name",
+        type: "string",
+      },
+      raw: {
+        behavior: ["config"],
+        default: false,
+        description:
+          "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+        title: "raw",
+        type: "boolean",
+      },
+      what: {
+        title: "what",
+      },
+    },
+    required: ["code"],
+    additionalProperties: true,
   });
 });
 

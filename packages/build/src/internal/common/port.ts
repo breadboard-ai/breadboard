@@ -6,6 +6,7 @@
 
 import type { Input, InputWithDefault } from "../board/input.js";
 import type { Placeholder } from "../board/placeholder.js";
+import type { PortConfig } from "../define/config.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
@@ -16,74 +17,6 @@ import type {
   SerializableNode,
   SerializableOutputPort,
 } from "./serializable.js";
-
-// TODO(aomarks) Combine with PortConfig from define.ts
-export type PortConfig = StaticPortConfig | DynamicPortConfig;
-
-/**
- * Configuration parameters for a static Breadboard node port. A port is static
- * if it always exists for all instances of a node type.
- */
-interface StaticPortConfig {
-  /**
-   * The {@link BreadboardType} that values sent or received on this port will
-   * be required to conform to.
-   */
-  type: BreadboardType;
-
-  /**
-   * An optional title for the port. Defaults to the name of the port.
-   */
-  title?: string;
-
-  /**
-   * An optional brief description of this port. Useful when introspecting and
-   * debugging.
-   */
-  description?: string;
-
-  /**
-   * If true, this port is is the `primary` input or output port of the node it
-   * belongs to.
-   *
-   * When a node definition has one primary input port, and/or one primary
-   * output port, then instances of that node will themselves behave like that
-   * primary input and/or output ports, depending on the context. Note that it
-   * is an error for a node to have more than 1 primary input ports, or more
-   * than 1 primary output ports.
-   *
-   * For example, an LLM node might have a primary input for `prompt`, and a
-   * primary output for `completion`. This would mean that in API locations
-   * where an input port is expected, instead of writing `llm.inputs.prompt`,
-   * one could simply write `llm`, and the `prompt` port will be selected
-   * automatically. Likewise for `completion`, where `llm` would be equivalent
-   * to `llm.outputs.completion` where an output port is expected.
-   *
-   * Note this has no effect on Breadboard runtime behavior, it is purely a hint
-   * to the JavaScript/TypeScript API to help make board construction more
-   * concise.
-   */
-  primary?: boolean;
-
-  multiline?: true;
-
-  default?: JsonSerializable;
-}
-
-/**
- * Configuration parameters that apply to all dynamic Breadboard ports on a
- * node.
- *
- * A port is dynamic if its existence, name, type, or other metadata can be
- * different across different instances of a node type.
- */
-interface DynamicPortConfig extends StaticPortConfig {
-  /**
-   * The `primary` property should never be set on a dynamic port config,
-   * because it is not possible for a dynamic port to be primary.
-   */
-  primary?: never;
-}
 
 // TODO(aomarks) Just make this a normal property, no need to export (it was
 // originally a symbol to try and make a package-private API).

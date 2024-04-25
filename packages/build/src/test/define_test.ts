@@ -11,7 +11,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
 import { object } from "../internal/type-system/object.js";
-import { anyOf } from "../internal/type-system/any-of.js";
 import { array } from "../internal/type-system/array.js";
 
 test("mono/mono", async () => {
@@ -109,6 +108,7 @@ test("mono/mono", async () => {
         },
       },
       required: ["si1", "si2"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -122,6 +122,7 @@ test("mono/mono", async () => {
           type: "null",
         },
       },
+      additionalProperties: false,
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -225,6 +226,7 @@ test("poly/mono", async () => {
         },
       },
       required: ["si1"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -234,6 +236,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      additionalProperties: false,
     },
   });
 
@@ -255,6 +258,7 @@ test("poly/mono", async () => {
         },
       },
       required: ["di1", "di2", "si1"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -264,6 +268,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -347,6 +352,7 @@ test("mono/poly", async () => {
         },
       },
       required: ["si1"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -360,6 +366,7 @@ test("mono/poly", async () => {
           type: "number",
         },
       },
+      additionalProperties: false,
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -470,6 +477,7 @@ test("poly/poly", async () => {
         },
       },
       required: ["si1"],
+      additionalProperties: { type: "number" },
     },
     outputSchema: {
       type: "object",
@@ -483,6 +491,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      additionalProperties: false,
     },
   });
 
@@ -503,7 +512,8 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
-      required: ["di1", "di2", "si1"],
+      required: ["si1"],
+      additionalProperties: { type: "number" },
     },
     outputSchema: {
       type: "object",
@@ -517,6 +527,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -636,12 +647,14 @@ test("reflective", async () => {
         si1: { type: "string", title: "si1" },
       },
       required: ["si1"],
+      additionalProperties: { type: "number" },
     },
     outputSchema: {
       type: "object",
       properties: {
         so1: { type: "boolean", title: "so1" },
       },
+      additionalProperties: false,
     },
   });
 
@@ -653,7 +666,8 @@ test("reflective", async () => {
         di2: { type: "number", title: "di2" },
         si1: { type: "string", title: "si1" },
       },
-      required: ["di1", "di2", "si1"],
+      required: ["si1"],
+      additionalProperties: { type: "number" },
     },
     outputSchema: {
       type: "object",
@@ -662,6 +676,7 @@ test("reflective", async () => {
         di2: { type: "string", title: "di2" },
         so1: { type: "boolean", title: "so1" },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -847,19 +862,84 @@ test("primary input + output", () => {
   );
 });
 
-test("multiline", async () => {
+test("multiline/javascript", async () => {
   const d = defineNodeType({
     name: "foo",
     inputs: {
       si1: {
         type: "string",
-        multiline: true,
+        format: "multiline",
+      },
+      si2: {
+        type: "string",
+        format: "javascript",
       },
     },
     outputs: {
       so1: {
         type: "string",
-        multiline: true,
+        format: "multiline",
+      },
+      so2: {
+        type: "string",
+        format: "javascript",
+      },
+    },
+    invoke: () => {
+      return { so1: "foo", so2: "foo" };
+    },
+  });
+
+  assert.deepEqual(await d.describe(), {
+    inputSchema: {
+      type: "object",
+      properties: {
+        si1: {
+          title: "si1",
+          type: "string",
+          format: "multiline",
+        },
+        si2: {
+          title: "si2",
+          type: "string",
+          format: "javascript",
+        },
+      },
+      required: ["si1", "si2"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        so1: {
+          title: "so1",
+          type: "string",
+          format: "multiline",
+        },
+        so2: {
+          title: "so2",
+          type: "string",
+          format: "javascript",
+        },
+      },
+      additionalProperties: false,
+    },
+  });
+});
+
+test("behavior", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: {
+        type: "string",
+        behavior: ["config"],
+      },
+    },
+    outputs: {
+      so1: {
+        type: "string",
+        behavior: ["image", "code"],
       },
     },
     invoke: () => {
@@ -874,10 +954,11 @@ test("multiline", async () => {
         si1: {
           title: "si1",
           type: "string",
-          format: "multiline",
+          behavior: ["config"],
         },
       },
       required: ["si1"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -885,9 +966,10 @@ test("multiline", async () => {
         so1: {
           title: "so1",
           type: "string",
-          format: "multiline",
+          behavior: ["image", "code"],
         },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -929,6 +1011,7 @@ test("dynamic port descriptions", async () => {
         },
       },
       required: ["foo"],
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -939,6 +1022,7 @@ test("dynamic port descriptions", async () => {
           description: 'output "foo"',
         },
       },
+      additionalProperties: false,
     },
   });
 });
@@ -1007,6 +1091,7 @@ test("defaults", async () => {
           default: [12, 34],
         },
       },
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -1021,6 +1106,7 @@ test("defaults", async () => {
           items: { type: "number" },
         },
       },
+      additionalProperties: false,
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -1045,6 +1131,7 @@ test("override title", async () => {
   });
   assert.deepEqual(await d.describe(), {
     inputSchema: {
+      type: "object",
       properties: {
         si1: {
           title: "custom1",
@@ -1056,9 +1143,10 @@ test("override title", async () => {
         },
       },
       required: ["si1", "si2"],
-      type: "object",
+      additionalProperties: false,
     },
     outputSchema: {
+      type: "object",
       properties: {
         so1: {
           title: "so1",
@@ -1069,7 +1157,7 @@ test("override title", async () => {
           type: "null",
         },
       },
-      type: "object",
+      additionalProperties: false,
     },
   });
 });
@@ -1498,36 +1586,6 @@ test("error: excess instantiate input", () => {
   );
 });
 
-test("error: mono/mono should not have describe", () => {
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-    },
-    // @ts-expect-error
-    describe: () => ({ inputs: [], outputs: [] }),
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
-test("error: mono/poly must have describe", () => {
-  // @ts-expect-error
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-      "*": { type: "number" },
-    },
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
 test("error: mono/poly should not return inputs", () => {
   const d = defineNodeType({
     name: "foo",
@@ -1556,22 +1614,6 @@ test("error: poly/mono should not return outputs", () => {
     },
     // @ts-expect-error
     describe: () => ({ inputs: [], outputs: [] }),
-    invoke: () => ({ so1: "so1" }),
-  });
-});
-
-test("error: non-reflective poly/poly must have describe", () => {
-  // @ts-expect-error
-  const d = defineNodeType({
-    name: "foo",
-    inputs: {
-      si1: { type: "string" },
-      "*": { type: "string" },
-    },
-    outputs: {
-      so1: { type: "string" },
-      "*": { type: "string" },
-    },
     invoke: () => ({ so1: "so1" }),
   });
 });
