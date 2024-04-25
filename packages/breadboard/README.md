@@ -1,6 +1,6 @@
-# Breadboard
+# [](https://www.npmjs.com/package/@google-labs/breadboard#breadboard)Breadboard
 
-![Milestone](https://img.shields.io/badge/milestone-M4-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
+[![Milestone](https://camo.githubusercontent.com/be3b7f4f41ae3718fcf8ea07682a052ad751377a3e1684de0833426e08a3428a/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d696c6573746f6e652d4d342d726564)](https://camo.githubusercontent.com/be3b7f4f41ae3718fcf8ea07682a052ad751377a3e1684de0833426e08a3428a/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d696c6573746f6e652d4d342d726564) [![Stability](https://camo.githubusercontent.com/d4d33b1521ccf68c37ac06099329a6d770e4ae60aa31b8770cfd80f0797a66c3/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f73746162696c6974792d7769702d677265656e)](https://camo.githubusercontent.com/d4d33b1521ccf68c37ac06099329a6d770e4ae60aa31b8770cfd80f0797a66c3/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f73746162696c6974792d7769702d677265656e) [![Discord](https://camo.githubusercontent.com/3789d541c135cbaec0a85a907aebed3d0d97296a6bad088aba54d783a563ec22/68747470733a2f2f696d672e736869656c64732e696f2f646973636f72642f313133383534363939393837323939393535363f6c6f676f3d646973636f7264)](https://discord.gg/breadboard)
 
 A library for prototyping generative AI applications.
 
@@ -13,143 +13,103 @@ This library's design emphasizes two key properties:
 :one: **Ease and flexibility of wiring**. Make wiring prototypes easy and fun.
 
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
+- [Breadboard](https://www.npmjs.com/package/@google-labs/breadboard#breadboard)
+	- [Installation](https://www.npmjs.com/package/@google-labs/breadboard#installation)
+	- [Usage](https://www.npmjs.com/package/@google-labs/breadboard#usage)
+	- ...
+## [](https://www.npmjs.com/package/@google-labs/breadboard#installation) Installation
+Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
 
-## Requirements
+Check what version of node you're running with `node -v`.
 
-Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
+In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
 
-> [!WARNING]
-> The library is in active development, and we're transitioning to new syntax. Stuff below will likely be out of date.
-> Please bear with us as we bring our words up to speed with our thoughts/actions.
-
-## Installing the library
-
-To install breadboard, run:
-
-```sh
+To install Breadboard with [npm](https://www.npmjs.com/), then run:
+```shell
 npm install @google-labs/breadboard
 ```
+##### Useful packages (optional)
 
-You will also need the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit):
+| Name                                                                                            | Description                                                                                                                                    | Install                                   |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [Breadboard Core Kit](https://www.npmjs.com/package/@google-labs/core-kit)                      | Breadboard kit for foundational board operations like `map` and `invoke`. This contains operations that enable composition and reuse of boards | `npm install @google-labs/core-kit`       |
+| [Breadboard CLI](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard-cli) | Command-line tool for generating, running, and debugging boards. This lets you run and build breadboards directly from the command-line.      | `npm install @google-labs/breadboard-cli` |
 
-```sh
-npm install @google-labs/core-kit
-```
+You can find many other helpful [Breadboard packages](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages) available.
+## [](https://www.npmjs.com/package/@google-labs/breadboard#usage) Usage
+### Making your first board
+```typescript
+import { board } from "@google-labs/breadboard";
 
-## Using breadboard
-
-Just like for hardware makers, the wiring of a prototype begins with the `Board`.
-
-```js
-import { Board } from "@google-labs/breadboard";
-
-const board = new Board();
-```
-
-Breadboards are all nodes and wires. Nodes do useful things, and wires flow control and data between them.
-
-Placing things on the board is simple. This example places an `input` and an `output` node on the board:
-
-```js
-const input = board.input();
-const output = board.output();
-```
-
-Wiring things is also simple:
-
-```js
-input.wire("say->hear", output);
-```
-
-The statement above wires the `say` property of the `input` node to the `hear` property of the `output` node.
-
-The `wire` method is chainable, so you can wire multiple wires at once. Wiring can also happen in both directions, allowing for more expressivity and flexibility.
-
-Here's an example: a board that uses [PaLM API](https://developers.generativeai.google/) to generate text:
-
-```js
-const output = board.output();
-board
-  .input()
-  .wire("say->", output)
-  .wire(
-    "say->text",
-    kit
-      .generateText()
-      .wire("completion->hear", output)
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
-  );
-```
-
-You can run boards using `runOnce` and `run` methods. The `runOnce` is the simplest; it takes inputs and produces a set of outputs:
-
-```js
-const result = await board.runOnce({
-  say: "Hi, how are you?",
+const echo = board<{ say: string; }>(({ say }, { output }) => {
+	return output({ hear: say })
 });
-console.log("result", result);
+
+console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
 
-When run, the output of the sample board above will look something like this:
+This simple example demonstrates a board with an input port named `say` that gets passed to an output port named `output` . When running the board, `"Hello Breadboard!"` is passed to `say` which then passes it to the output as a property called `hear`. 
 
-```sh
-result { say: 'Hi, how are you?', hear: 'Doing alright.' }
+Similarly, this can be achieved through chaining the nodes.
+```typescript
+const echo = board<{ say: string; }>(({ say }, { output }) => {
+	return say.as("hear").to(output());
+});
 ```
 
-The `run` method provides a lot more flexibility on how the board run happens, and is described in more detail [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial.
+In this example, `say` is renamed to `hear` using `.as(...)`, which is then sent to the output using `.to(...)`.
 
-Breadboard is designed for modularity. You can easily save boards: they nicely serialize as JSON:
+Alternatively, we can use `base` to create input and output nodes.
+```typescript
+import { base, board } from "@google-labs/breadboard";
 
-```js
-const json = JSON.stringify(board, null, 2);
-await writeFile("./docs/tutorial/news-summarizer.json", json);
+const echo = board(() => {
+	const input = base.input();
+	const output = base.output();
+	input.say.as("hear").to(output);
+	return output;
+});
+
+console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
+### Using the `code` node
+```typescript
+import { base, board, code } from "@google-labs/breadboard";
+  
+const calculator = board(() => {
+	const input = base.input();
+	const output = base.output();
+	const calculate = code(({ x, y }) => {
+		if (typeof x !== "number" || typeof y !== "number") return {}
+		
+		const sum = x + y;
+		const diff = x - y;
+		const prod = x * y;
+		const quo = x / y;
+		
+		return { results: { sum, diff, prod, quo } } 
+	})();
+	
+	input.to(calculate);
+	calculate.results.to(output);
+	
+	return output;
+});
 
-You can load this JSON from URLs:
-
-```js
-const NEWS_BOARD_URL =
-  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
-const board = Board.load(NEWS_BOARD_URL);
+console.log(await calculator({ x: 1, y: 2 })); // { results: { sum: 3, diff: -1, prod: 2, quo: 0.5 } }
 ```
-
-You can include them into your own boards, similar to JS modules, and then treat them as nodes in your graph:
-
-```js
-board
-  .input()
-  .wire(
-    "say->text",
-    board.invoke(NEWS_BOARD_URL).wire("text->hear", board.output())
-  );
-```
-
-You can even create board templates by leaving "slots" in your board for others to fill in:
-
-```js
-const input = board.input();
-input.wire(
-  "topic->",
-  board.slot("news").wire(
-    "headlines->",
-    template.wire("topic<-", input).wire(
-      "prompt->text",
-      kit
-        .generateText()
-        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
-        .wire("completion->summary", board.output())
-    )
-  )
-);
-```
-
+### Creating kits [TBD]
+### Serialization [TBD]
+### Running boards [TBD]
+## [](https://www.npmjs.com/package/@google-labs/breadboard#concepts) Concepts [TBD]
+...
 ## For more information
 
 To learn more about Breadboard, here are a couple of resources:
 
-- [Breadboard Tutorial](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/tutorial/README.md) -- learn how to use breadboard step-by-step, from easy to more complex.
-- [Node Types Reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
-- [Wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/wires.md) -- all the different ways to wire nodes.
+- [Breadboard Tutorial](https://breadboard-ai.github.io/breadboard/docs/happy-path/) -- learn how to use breadboard step-by-step, from easy to more complex.
+<!-- - [Node Types Reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
+- [Wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/wires.md) -- all the different ways to wire nodes. -->
 - Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the the link next to "Original:" heading to see the board code):
   - [Simple text completion](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/simplest.md)
   - [Google Search summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/search-summarize.md)
