@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 1;
+const SETTINGS_VERSION = 2;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -47,6 +47,14 @@ export class SettingsStore {
       },
       items: new Map([]),
     },
+    [BreadboardUI.Types.SETTINGS_TYPE.INPUTS]: {
+      configuration: {
+        extensible: true,
+        description: `Inputs that the boards ask for in the middle of the run, such as model names`,
+        nameEditable: true,
+      },
+      items: new Map([]),
+    },
   };
 
   get values() {
@@ -71,8 +79,11 @@ export class SettingsStore {
 
     for (const [store, data] of Object.entries(settings)) {
       const settingsStore = store as BreadboardUI.Types.SETTINGS_TYPE;
-      await settingsDb.clear(settingsStore);
+      if (settingsDb.objectStoreNames.contains(settingsStore)) {
+        await settingsDb.clear(settingsStore);
+      }
 
+      console.log("🌻 store, data", store, data);
       const tx = settingsDb.transaction(settingsStore, "readwrite");
       await Promise.all([
         [...data.items.values()].map((setting) => {
@@ -96,6 +107,7 @@ export class SettingsStore {
           settingsFound = false;
           for (const groupName of Object.keys(settings)) {
             const name = groupName as BreadboardUI.Types.SETTINGS_TYPE;
+            if (db.objectStoreNames.contains(name)) continue;
             db.createObjectStore(name, {
               keyPath: "id",
               autoIncrement: true,

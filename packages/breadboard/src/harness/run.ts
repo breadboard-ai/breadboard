@@ -89,7 +89,7 @@ export type RunConfig = {
    * This enables automatically providing some of the values like the model
    * name without interrupting the run of the board.
    */
-  inputs: InputValues;
+  inputs?: InputValues;
 };
 
 const configureKits = (config: RunConfig) => {

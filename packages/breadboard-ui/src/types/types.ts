@@ -104,6 +104,7 @@ export type LLMContent = {
 export enum SETTINGS_TYPE {
   SECRETS = "Secrets",
   GENERAL = "General",
+  INPUTS = "Inputs",
 }
 
 export interface SettingEntry {
@@ -119,6 +120,7 @@ export interface SettingEntry {
 export interface SettingsList {
   [SETTINGS_TYPE.GENERAL]: SettingEntry;
   [SETTINGS_TYPE.SECRETS]: SettingEntry;
+  [SETTINGS_TYPE.INPUTS]: SettingEntry;
 }
 
 export type Settings = {
