@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeDescriberContext,
   NodeDescriberResult,
+  NodeHandlerContext,
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
@@ -127,10 +128,13 @@ export class DefinitionImpl<
     );
   }
 
-  invoke(values: InputValues): Promise<OutputValues> {
+  invoke(
+    values: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
       this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-    return Promise.resolve(this.#invoke(staticValues, dynamicValues));
+    return Promise.resolve(this.#invoke(staticValues, dynamicValues, context));
   }
 
   /**

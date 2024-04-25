@@ -7,6 +7,7 @@
 
 import type {
   NodeDescriberContext,
+  NodeHandlerContext,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
@@ -247,7 +248,8 @@ type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
 
 export type VeryLooseInvokeFn = (
   staticParams: Record<string, JsonSerializable>,
-  dynamicParams: Record<string, JsonSerializable>
+  dynamicParams: Record<string, JsonSerializable>,
+  context: NodeHandlerContext
 ) => { [K: string]: JsonSerializable };
 
 type StrictInvokeFn<
@@ -256,7 +258,8 @@ type StrictInvokeFn<
   F extends LooseInvokeFn<I>,
 > = (
   staticInputs: Expand<StaticInvokeParams<I>>,
-  dynamicInputs: Expand<DynamicInvokeParams<I>>
+  dynamicInputs: Expand<DynamicInvokeParams<I>>,
+  context: NodeHandlerContext
 ) => MaybePromise<StrictInvokeFnReturn<I, O, F>>;
 
 type StrictInvokeFnReturn<
