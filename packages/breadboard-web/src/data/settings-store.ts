@@ -50,7 +50,7 @@ export class SettingsStore {
     [BreadboardUI.Types.SETTINGS_TYPE.INPUTS]: {
       configuration: {
         extensible: true,
-        description: `Inputs that the boards ask for in the middle of the run, such as model names`,
+        description: `Inputs that the boards ask for in the middle of the run (also known as "bubbled inputs"), such as model names`,
         nameEditable: true,
       },
       items: new Map([]),
