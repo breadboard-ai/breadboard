@@ -33,18 +33,6 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
 
 const kitConstructors = [GeminiKit];
 
-export const addNodeProxyServerConfig = (config: RunConfig) => {
-  // try to find node proxy server in local storage:
-  const proxyServerURL = globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY);
-  if (!proxyServerURL) return config;
-
-  console.log("🚀 Using proxy server:", proxyServerURL);
-  config.proxy = [
-    { location: "http", url: proxyServerURL, nodes: PROXY_NODES },
-  ];
-  return config;
-};
-
 export const createRunConfig = async (url: string): Promise<RunConfig> => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;

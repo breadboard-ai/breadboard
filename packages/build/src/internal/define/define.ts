@@ -5,8 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeHandlerMetadata } from "@google-labs/breadboard";
-import type { CountUnion, Expand } from "../common/type-util.js";
+import type {
+  NodeDescriberContext,
+  NodeHandlerContext,
+  NodeHandlerMetadata,
+} from "@google-labs/breadboard";
+import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
   JsonSerializable,
@@ -120,7 +124,7 @@ export function defineNodeType<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
   F extends LooseInvokeFn<I>,
-  D extends LooseDescribeFn,
+  D extends VeryLooseDescribeFn,
 >(
   params: {
     // Start with a loose type to help TypeScript bind the generics.
@@ -176,17 +180,8 @@ export function defineNodeType<
     params.outputs["*"],
     primary(params.inputs),
     primary(params.outputs),
-    params.invoke as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => { [K: string]: JsonSerializable },
-    params.describe as Function as (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => {
-      inputs?: string[];
-      outputs?: string[];
-    }
+    params.invoke as Function as VeryLooseInvokeFn,
+    params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
     invoke: impl.invoke.bind(impl),
@@ -248,10 +243,14 @@ type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
   (
     staticParams: Expand<StaticInvokeParams<I>>,
     dynamicParams: Expand<DynamicInvokeParams<I>>
-  ) =>
-    | { [K: string]: JsonSerializable }
-    | Promise<{ [K: string]: JsonSerializable }>
+  ) => MaybePromise<{ [K: string]: JsonSerializable }>
 >;
+
+export type VeryLooseInvokeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>,
+  context: NodeHandlerContext
+) => { [K: string]: JsonSerializable };
 
 type StrictInvokeFn<
   I extends Record<string, InputPortConfig>,
@@ -259,8 +258,9 @@ type StrictInvokeFn<
   F extends LooseInvokeFn<I>,
 > = (
   staticInputs: Expand<StaticInvokeParams<I>>,
-  dynamicInputs: Expand<DynamicInvokeParams<I>>
-) => StrictInvokeFnReturn<I, O, F> | Promise<StrictInvokeFnReturn<I, O, F>>;
+  dynamicInputs: Expand<DynamicInvokeParams<I>>,
+  context: NodeHandlerContext
+) => MaybePromise<StrictInvokeFnReturn<I, O, F>>;
 
 type StrictInvokeFnReturn<
   I extends Record<string, InputPortConfig>,
@@ -322,7 +322,16 @@ type GetReflective<O extends Record<string, OutputPortConfig>> =
 
 type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
-type LooseDescribeFn = Function;
+export type LooseDescribeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>,
+  context?: NodeDescriberContext
+) => MaybePromise<{
+  inputs?: DynamicInputPorts;
+  outputs?: DynamicInputPorts;
+}>;
+
+type VeryLooseDescribeFn = Function;
 
 export type DynamicInputPorts =
   | string[]
@@ -355,42 +364,46 @@ type StrictDescribeFn<
           // poly/poly reflective
           describe?: (
             staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+            dynamicInputs: Expand<DynamicInvokeParams<I>>,
+            context?: NodeDescriberContext
+          ) => MaybePromise<{
             inputs: DynamicInputPorts;
             outputs?: never;
-          };
+          }>;
         }
       : {
           // poly/poly non-reflective
           describe: (
             staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>
-          ) => {
+            dynamicInputs: Expand<DynamicInvokeParams<I>>,
+            context?: NodeDescriberContext
+          ) => MaybePromise<{
             inputs?: DynamicInputPorts;
             outputs: DynamicInputPorts;
-          };
+          }>;
         }
     : {
         // poly/mono
         describe?: (
           staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+          dynamicInputs: Expand<DynamicInvokeParams<I>>,
+          context?: NodeDescriberContext
+        ) => MaybePromise<{
           inputs: DynamicInputPorts;
           outputs?: never;
-        };
+        }>;
       }
   : O["*"] extends DynamicOutputPortConfig
     ? {
         // mono/poly
         describe: (
           staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>
-        ) => {
+          dynamicInputs: Expand<DynamicInvokeParams<I>>,
+          context?: NodeDescriberContext
+        ) => MaybePromise<{
           inputs?: never;
           outputs: DynamicInputPorts;
-        };
+        }>;
       }
     : {
         // mono/mono

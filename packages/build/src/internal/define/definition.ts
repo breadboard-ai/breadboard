@@ -6,7 +6,9 @@
 
 import type {
   InputValues,
+  NodeDescriberContext,
   NodeDescriberResult,
+  NodeHandlerContext,
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
@@ -25,9 +27,13 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
+import type {
+  DynamicInputPorts,
+  LooseDescribeFn,
+  VeryLooseInvokeFn,
+} from "./define.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
-import type { DynamicInputPorts } from "./define.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -70,18 +76,8 @@ export class DefinitionImpl<
   readonly #reflective: boolean;
   readonly #primaryInput: string | undefined;
   readonly #primaryOutput: string | undefined;
-  // TODO(aomarks) Support promises
-  readonly #invoke: (
-    staticParams: Record<string, JsonSerializable>,
-    dynamicParams: Record<string, JsonSerializable>
-  ) => { [K: string]: JsonSerializable };
-  readonly #describe?: (
-    staticParams: Record<string, JsonSerializable>,
-    dynamicParams: Record<string, JsonSerializable>
-  ) => {
-    inputs?: DynamicInputPorts;
-    outputs?: DynamicInputPorts;
-  };
+  readonly #invoke: VeryLooseInvokeFn;
+  readonly #describe?: LooseDescribeFn;
 
   constructor(
     name: string,
@@ -91,17 +87,8 @@ export class DefinitionImpl<
     dynamicOutputs: DynamicOutputPortConfig | undefined,
     primaryInput: string | undefined,
     primaryOutput: string | undefined,
-    invoke: (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => { [K: string]: JsonSerializable },
-    describe?: (
-      staticParams: Record<string, JsonSerializable>,
-      dynamicParams: Record<string, JsonSerializable>
-    ) => {
-      inputs?: DynamicInputPorts;
-      outputs?: DynamicInputPorts;
-    }
+    invoke: VeryLooseInvokeFn,
+    describe?: LooseDescribeFn
   ) {
     this.#name = name;
     this.#staticInputs = staticInputs;
@@ -141,10 +128,13 @@ export class DefinitionImpl<
     );
   }
 
-  invoke(values: InputValues): Promise<OutputValues> {
+  invoke(
+    values: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
       this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-    return Promise.resolve(this.#invoke(staticValues, dynamicValues));
+    return Promise.resolve(this.#invoke(staticValues, dynamicValues, context));
   }
 
   /**
@@ -182,7 +172,9 @@ export class DefinitionImpl<
 
   async describe(
     values?: InputValues,
-    inboundEdges?: Schema
+    inboundEdges?: Schema,
+    _outboundEdges?: Schema,
+    context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     let user:
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
@@ -191,9 +183,9 @@ export class DefinitionImpl<
       if (values !== undefined) {
         const { staticValues, dynamicValues } =
           this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = this.#describe(staticValues, dynamicValues);
+        user = await this.#describe(staticValues, dynamicValues, context);
       } else {
-        user = this.#describe({}, {});
+        user = await this.#describe({}, {}, context);
       }
     }
 

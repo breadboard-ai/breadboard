@@ -7,6 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
+import type { NodeDescriberContext } from "@google-labs/breadboard";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -348,4 +349,75 @@ test("dynamic output schema with custom describe (open)", async () => {
       additionalProperties: { type: "number" },
     }
   );
+});
+
+test("async describe", async () => {
+  assert.deepEqual(
+    await defineNodeType({
+      name: "foo",
+      inputs: {
+        "*": { type: "number" },
+      },
+      outputs: {
+        "*": { type: "number" },
+      },
+      describe: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        return {
+          inputs: ["foo"],
+          outputs: ["bar"],
+        };
+      },
+      invoke: () => ({}),
+    }).describe(),
+    {
+      inputSchema: {
+        type: "object",
+        properties: {
+          foo: {
+            title: "foo",
+            type: "number",
+          },
+        },
+        required: ["foo"],
+        additionalProperties: false,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          bar: {
+            title: "bar",
+            type: "number",
+          },
+        },
+        additionalProperties: false,
+      },
+    }
+  );
+});
+
+test("describe receives context", async () => {
+  const expected: NodeDescriberContext = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+  };
+  let actual: NodeDescriberContext | undefined;
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "number" },
+    },
+    outputs: {
+      "*": { type: "number" },
+    },
+    describe: (_staticInputs, _dynamicInputs, context) => {
+      actual = context;
+      return {
+        inputs: [],
+        outputs: [],
+      };
+    },
+    invoke: () => ({}),
+  }).describe({}, {}, {}, expected);
+  assert.deepEqual(actual, expected);
 });

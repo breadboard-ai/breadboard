@@ -29,9 +29,9 @@ import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
-import { addNodeProxyServerConfig } from "./config";
 import { SettingsStore } from "./data/settings-store";
 import { inputsFromSettings } from "./data/inputs";
+import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -918,15 +918,18 @@ export class Main extends LitElement {
 
             this.#runBoard(
               run(
-                addNodeProxyServerConfig({
-                  url: this.graph.url,
-                  runner,
-                  diagnostics: true,
-                  kits: this.kits,
-                  loader: this.#loader,
-                  signal: this.#abortController?.signal,
-                  inputs: inputsFromSettings(this.#settings),
-                })
+                addNodeProxyServerConfig(
+                  {
+                    url: this.graph.url,
+                    runner,
+                    diagnostics: true,
+                    kits: this.kits,
+                    loader: this.#loader,
+                    signal: this.#abortController?.signal,
+                    inputs: inputsFromSettings(this.#settings),
+                  },
+                  this.#settings
+                )
               )
             );
           }}
