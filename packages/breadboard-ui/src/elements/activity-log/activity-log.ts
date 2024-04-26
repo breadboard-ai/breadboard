@@ -851,7 +851,7 @@ export class ActivityLog extends LitElement {
                 if (typeof error === "string") {
                   output = error;
                 } else {
-                  if ((error.error as Error).name === "AbortError") {
+                  if ((error.error as Error)?.name === "AbortError") {
                     console.log("💖 actually aborted");
                   }
                   let messageOutput = "";
