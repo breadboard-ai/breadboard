@@ -47,3 +47,15 @@ export type Expand<T> = T extends unknown ? { [K in keyof T]: T[K] } : never;
  * Some type, or a promise of it.
  */
 export type MaybePromise<T> = T | Promise<T>;
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type Defined = {} | null;
+
+export type BroadenBasicType<T extends string | number | boolean> =
+  T extends string
+    ? string
+    : T extends number
+      ? number
+      : T extends boolean
+        ? boolean
+        : never;
