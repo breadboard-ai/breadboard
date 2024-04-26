@@ -40,8 +40,9 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     this.#graph = setBaseURL(base, type, graph);
     this.describe = this.describe.bind(this);
     this.invoke = this.invoke.bind(this);
-    const { title, description } = this.#graph;
+    const { title, description, metadata } = this.#graph;
     this.metadata = { title, description };
+    if (metadata?.icon) this.metadata.icon = metadata.icon;
   }
 
   async describe() {
