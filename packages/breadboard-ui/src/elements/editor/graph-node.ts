@@ -8,6 +8,7 @@ import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
+import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -41,7 +42,7 @@ export class GraphNode extends PIXI.Graphics {
   // The title that shows up in the graph.
   #title = "";
   #titleText: PIXI.Text | null = null;
-  #borderRadius = 3;
+  #borderRadius = 8;
   #color = nodeTextColor;
   #titleTextColor = nodeTextColor;
   #portTextColor = nodeTextColor;
@@ -50,6 +51,7 @@ export class GraphNode extends PIXI.Graphics {
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 10;
+  #menuPadding = 4;
   #portLabelVerticalPadding = 5;
   #portLabelHorizontalPadding = 20;
   #portPadding = 6;
@@ -69,6 +71,7 @@ export class GraphNode extends PIXI.Graphics {
   #collapsed = false;
   #emitCollapseToggleEventOnNextDraw = false;
 
+  #overflowMenu = new GraphOverflowMenu();
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
   #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
   #lastClickTime = 0;
@@ -112,6 +115,13 @@ export class GraphNode extends PIXI.Graphics {
 
     this.#headerInPort.visible = false;
     this.#headerOutPort.visible = false;
+
+    this.#overflowMenu.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_MENU_CLICKED,
+      (location: PIXI.ObservablePoint) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED, this, location);
+      }
+    );
   }
 
   addPointerEventListeners() {
@@ -148,7 +158,6 @@ export class GraphNode extends PIXI.Graphics {
       }
 
       this.collapsed = !this.collapsed;
-      this.#emitCollapseToggleEventOnNextDraw = true;
       this.#lastClickTime = 0;
     });
 
@@ -244,6 +253,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set collapsed(collapsed: boolean) {
     this.#collapsed = collapsed;
+    this.#emitCollapseToggleEventOnNextDraw = true;
     this.#isDirty = true;
   }
 
@@ -484,7 +494,12 @@ export class GraphNode extends PIXI.Graphics {
     }
 
     // Width calculations.
-    let width = this.#padding + (this.#titleText?.width || 0) + this.#padding;
+    let width =
+      this.#padding +
+      (this.#titleText?.width || 0) +
+      this.#padding +
+      this.#overflowMenu.width +
+      this.#menuPadding;
     const inPortLabels = Array.from(this.#inPorts.values());
     const outPortLabels = Array.from(this.#outPorts.values());
     for (let p = 0; p < portCount; p++) {
@@ -509,7 +524,6 @@ export class GraphNode extends PIXI.Graphics {
 
   #draw() {
     this.forceUpdateDimensions();
-
     this.#drawBackground();
     const portStartY = this.#drawTitle();
 
@@ -521,6 +535,18 @@ export class GraphNode extends PIXI.Graphics {
       this.#drawOutPorts(portStartY);
       this.#hideHeaderPorts();
     }
+    this.#drawOverflowMenu();
+  }
+
+  #drawOverflowMenu() {
+    this.addChild(this.#overflowMenu);
+
+    const titleHeight =
+      this.#padding + (this.#titleText?.height || 0) + this.#padding;
+
+    this.#overflowMenu.x =
+      this.#width - this.#menuPadding - GraphOverflowMenu.width;
+    this.#overflowMenu.y = (titleHeight - GraphOverflowMenu.height) * 0.5;
   }
 
   #showHeaderPorts() {

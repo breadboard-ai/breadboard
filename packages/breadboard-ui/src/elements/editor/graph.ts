@@ -668,6 +668,19 @@ export class Graph extends PIXI.Container {
         id,
       });
 
+      // PIXI doesn't bubble events automatically, so we re-issue the event for
+      // requesting the menu to the graph renderer.
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
+        (graphNode: GraphNode, location: PIXI.ObservablePoint) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
+            graphNode,
+            location
+          );
+        }
+      );
+
       graphNode.once(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, onDraw, {
         graphNode,
         layout: this.#layout.get(id) || null,
