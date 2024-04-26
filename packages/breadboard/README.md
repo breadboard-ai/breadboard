@@ -56,6 +56,18 @@ console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadbo
 
 This simple example demonstrates a board with an input port named `say` that gets passed to an output port named `output`. When running the board, `"Hello Breadboard!"` is passed to `say` which then passes it to the output as a property called `hear`.
 
+```typescript
+const echo = board<{
+	 say: string; // Input string to be echoed
+	}>(({ 
+		say // Input port for string
+	}, { 
+		output // Output port for result
+	}) => {
+	return output({ hear: say }) // Echo the input string as 'hear' property
+});
+```
+
 Similarly, this can be achieved through chaining the nodes.
 ```typescript
 const echo = board<{ say: string; }>(({ say }, { output }) => {
