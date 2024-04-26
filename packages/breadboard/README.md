@@ -16,7 +16,7 @@ This library's design emphasizes two key properties:
 ## [](https://www.npmjs.com/package/@google-labs/breadboard#table-of-contents) Table of Contents
 - [Breadboard](https://www.npmjs.com/package/@google-labs/breadboard#breadboard)
 	- [Installation](https://www.npmjs.com/package/@google-labs/breadboard#installation)
-	- [Usage](https://www.npmjs.com/package/@google-labs/breadboard#usage)
+	- <a href="#usage">Usage</a>
 	- [Concepts](https://www.npmjs.com/package/@google-labs/breadboard#concepts)
 	- [Additional Info](https://www.npmjs.com/package/@google-labs/breadboard#additional-info)
 
@@ -40,7 +40,8 @@ npm install @google-labs/breadboard
 
 You can find many other helpful [Breadboard packages](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages) available.
 
-## [](https://www.npmjs.com/package/@google-labs/breadboard#usage) Usage
+<h2 id="usage">Usage</h2>
+
 ### Making your first board
 ```typescript
 import { board } from "@google-labs/breadboard";
