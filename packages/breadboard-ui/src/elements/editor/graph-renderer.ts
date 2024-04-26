@@ -68,8 +68,9 @@ export class GraphRenderer extends LitElement {
       child.layoutRect = contentRect;
 
       // Reposition it to retain its center.
-      child.position.x += delta.x;
-      child.position.y += delta.y;
+      const ratio = 1 / this.#container.scale.x;
+      child.position.x += delta.x * ratio;
+      child.position.y += delta.y * ratio;
     }
 
     this.#lastContentRect = contentRect;

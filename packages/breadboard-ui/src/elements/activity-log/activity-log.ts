@@ -96,11 +96,10 @@ export class ActivityLog extends LitElement {
     :host > h1 {
       position: sticky;
       top: 0;
-      font-size: var(--bb-font-medium);
-      font-weight: normal;
+      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
       margin: 0 0 var(--bb-grid-size) 0;
-      padding: var(--padding-x) var(--padding-x) var(--padding-y)
-        var(--padding-x);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
       background: white;
       z-index: 2;
       display: flex;
