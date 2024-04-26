@@ -6,6 +6,7 @@
 
 import {
   AbstractNode,
+  GraphCombinedMetadata,
   InputValues,
   InvokeCallbacks,
   NodeHandler,
@@ -18,7 +19,6 @@ import {
 
 import {
   GraphDescriptor,
-  GraphInlineMetadata,
   NodeDescriberResult,
   Schema,
   SubGraphs,
@@ -257,7 +257,7 @@ export class Scope implements ScopeInterface {
   }
 
   async serialize(
-    metadata?: GraphInlineMetadata,
+    metadata?: GraphCombinedMetadata,
     node?: AbstractNode
   ): Promise<GraphDescriptor> {
     const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(

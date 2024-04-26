@@ -6,7 +6,6 @@
 
 import {
   GraphDescriptor,
-  GraphInlineMetadata,
   NodeDescriptor,
   InputValues as OriginalInputValues,
   Schema,
@@ -22,6 +21,7 @@ import {
   EdgeInterface,
   OptionalIdConfiguration,
   ScopeInterface,
+  GraphCombinedMetadata,
 } from "./types.js";
 
 import { Scope } from "./scope.js";
@@ -157,7 +157,7 @@ export class BaseNode<
       : undefined;
   }
 
-  async serialize(metadata?: GraphInlineMetadata): Promise<GraphDescriptor> {
+  async serialize(metadata?: GraphCombinedMetadata): Promise<GraphDescriptor> {
     return this.#scope.serialize(metadata, this as unknown as BaseNode);
   }
 

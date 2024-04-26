@@ -252,6 +252,11 @@ export type NodeHandlerMetadata = {
    */
   description?: string;
   /**
+   * An icon associated with this node type.
+   * Can be a URL or a Material Design id.
+   */
+  icon?: string;
+  /**
    * Whether or not the node is deprecated.
    */
   deprecated?: boolean;

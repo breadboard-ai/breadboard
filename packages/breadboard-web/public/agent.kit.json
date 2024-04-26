@@ -812,6 +812,9 @@
     },
     "superWorker": {
       "title": "Super Worker",
+      "metadata": {
+        "icon": "smart-toy"
+      },
       "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
       "edges": [
         {

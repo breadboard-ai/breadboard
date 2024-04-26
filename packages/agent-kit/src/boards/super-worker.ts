@@ -103,6 +103,9 @@ export default await board(({ in: context, persona, task }) => {
   return { out: addGenerated.context };
 }).serialize({
   title: "Super Worker",
+  metadata: {
+    icon: "smart-toy",
+  },
   description:
     "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
 });

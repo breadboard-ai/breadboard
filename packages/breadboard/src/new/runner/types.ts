@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphMetadata,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import {
   NodeDescriptor,
   GraphDescriptor,
@@ -22,6 +25,9 @@ import {
 export type NodeValue = OriginalNodeValue | PromiseLike<NodeValue> | unknown;
 export type NodeTypeIdentifier = string;
 
+export type GraphCombinedMetadata = GraphInlineMetadata & {
+  metadata?: GraphMetadata;
+};
 export type InputValues = { [key: string]: NodeValue };
 
 export type OutputValues = { [key: string]: NodeValue };
@@ -50,7 +56,7 @@ export type NodeHandlers = Record<
 
 export interface Serializeable {
   serialize(
-    metadata?: GraphInlineMetadata
+    metadata?: GraphCombinedMetadata
   ): Promise<GraphDescriptor> | GraphDescriptor;
 }
 
@@ -103,7 +109,9 @@ export abstract class AbstractNode<
     outputSchema?: Schema
   ): Promise<NodeDescriberResult | undefined>;
 
-  abstract serialize(metadata?: GraphInlineMetadata): Promise<GraphDescriptor>;
+  abstract serialize(
+    metadata?: GraphCombinedMetadata
+  ): Promise<GraphDescriptor>;
 
   abstract serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]>;
 }
@@ -280,7 +288,7 @@ export interface ScopeInterface {
    * @param node Node to serialize, or undefined to serialize all pinned nodes
    */
   serialize(
-    metadata?: GraphInlineMetadata,
+    metadata?: GraphCombinedMetadata,
     node?: AbstractNode
   ): Promise<GraphDescriptor>;
 }
