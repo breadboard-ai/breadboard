@@ -10,7 +10,7 @@ import { toJSONSchema } from "../type-system/type.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
-  optional: string[] | /* all */ true
+  forceOptional: string[] | /* all */ true
 ): JSONSchema4 & {
   properties?: { [k: string]: JSONSchema4 };
 } {
@@ -21,6 +21,9 @@ export function portConfigMapToJSONSchema(
     nameA.localeCompare(nameB)
   );
   if (sortedProperties.length > 0) {
+    const optional = new Set(
+      forceOptional === true ? Object.keys(config) : forceOptional
+    );
     schema.properties = Object.fromEntries(
       sortedProperties.map(([name, config]) => {
         const { description, type, behavior } = config;
@@ -40,16 +43,16 @@ export function portConfigMapToJSONSchema(
         if (behavior !== undefined && behavior.length > 0) {
           schema.behavior = behavior;
         }
+        if ("optional" in config && config.optional === true) {
+          optional.add(name);
+        }
         return [name, schema];
       })
-    );
-    const omitRequiredSet = new Set(
-      optional === true ? Object.keys(config) : optional
     );
     const required = sortedProperties
       .filter(([name, config]) => {
         const hasDefault = "default" in config && config.default !== undefined;
-        return !hasDefault && !omitRequiredSet.has(name);
+        return !hasDefault && !optional.has(name);
       })
       .map(([name]) => name);
     if (required.length > 0) {
