@@ -533,7 +533,7 @@ export class SettingsEditOverlay extends LitElement {
                 ${map(
                   Object.entries(this.settings),
                   ([name, { configuration, items }], idx) => {
-                    const id = name.toLocaleLowerCase().replace(/\s/, "-");
+                    const id = name.toLocaleLowerCase().replace(/\s/g, "_");
                     let addNewItem: HTMLTemplateResult | symbol = nothing;
                     if (configuration.extensible) {
                       addNewItem = html`<button
@@ -551,7 +551,7 @@ export class SettingsEditOverlay extends LitElement {
                       <li>
                         <input
                           type="radio"
-                          id="${name}"
+                          id="${id}"
                           name="setting"
                           ?checked=${idx === 0}
                           .value=${name}
@@ -582,7 +582,7 @@ export class SettingsEditOverlay extends LitElement {
                             });
                           }}
                         />
-                        <label for="${name}">${name}</label>
+                        <label for="${id}">${name}</label>
                         <section class="settings-group-items" id="items-${id}">
                           <p class="description">
                             ${configuration.description}
