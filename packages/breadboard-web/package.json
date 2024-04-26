@@ -210,7 +210,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.12.7",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
