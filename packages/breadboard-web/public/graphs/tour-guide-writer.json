@@ -257,11 +257,18 @@
                       },
                       "generator": {
                         "title": "board",
+                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
+                        "type": [
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
+                        ],
                         "behavior": [
                           "board"
-                        ],
-                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
