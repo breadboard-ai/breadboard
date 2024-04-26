@@ -282,6 +282,7 @@ test("static output schema", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["foo"],
+      required: [],
       additionalProperties: false,
     }
   );
@@ -316,6 +317,7 @@ test("dynamic output schema with custom describe (closed)", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["bar", "foo"],
+      required: [],
       additionalProperties: false,
     }
   );
@@ -346,6 +348,7 @@ test("dynamic output schema with custom describe (open)", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["foo"],
+      required: [],
       additionalProperties: { type: "number" },
     }
   );
@@ -390,6 +393,7 @@ test("async describe", async () => {
             type: "number",
           },
         },
+        required: [],
         additionalProperties: false,
       },
     }
@@ -482,6 +486,7 @@ test("unsafeSchema can be used to force a raw JSON schema", async () => {
             type: "string",
           },
         },
+        required: [],
       },
     }
   );

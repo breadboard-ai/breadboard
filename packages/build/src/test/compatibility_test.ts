@@ -132,6 +132,7 @@ function setupKits<
             type: "number",
           },
         },
+        required: [],
         additionalProperties: false,
       },
     });
@@ -260,6 +261,7 @@ function setupKits<
             type: "number",
           },
         },
+        required: [],
         additionalProperties: false,
       },
     });

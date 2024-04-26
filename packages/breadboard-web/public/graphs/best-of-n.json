@@ -309,8 +309,12 @@
               "title": "Task",
               "description": "The task to perform",
               "type": [
-                "string",
-                "object"
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
               ],
               "format": "multiline",
               "examples": [

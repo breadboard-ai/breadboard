@@ -122,6 +122,7 @@ test("mono/mono", async () => {
           type: "null",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
@@ -236,6 +237,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -268,6 +270,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -366,6 +369,7 @@ test("mono/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
@@ -491,6 +495,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -527,6 +532,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -654,6 +660,7 @@ test("reflective", async () => {
       properties: {
         so1: { type: "boolean", title: "so1" },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -676,6 +683,7 @@ test("reflective", async () => {
         di2: { type: "string", title: "di2" },
         so1: { type: "boolean", title: "so1" },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -922,6 +930,7 @@ test("multiline/javascript", async () => {
           format: "javascript",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -969,6 +978,7 @@ test("behavior", async () => {
           behavior: ["image", "code"],
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -1022,6 +1032,7 @@ test("dynamic port descriptions", async () => {
           description: 'output "foo"',
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -1091,6 +1102,7 @@ test("defaults", async () => {
           default: [12, 34],
         },
       },
+      required: [],
       additionalProperties: false,
     },
     outputSchema: {
@@ -1106,6 +1118,7 @@ test("defaults", async () => {
           items: { type: "number" },
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
@@ -1188,6 +1201,7 @@ test("optional", async () => {
         },
       },
       additionalProperties: false,
+      required: [],
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
@@ -1238,6 +1252,7 @@ test("override title", async () => {
           type: "null",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });

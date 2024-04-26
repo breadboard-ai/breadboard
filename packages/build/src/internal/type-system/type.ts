@@ -86,9 +86,15 @@ export function toJSONSchema(type: BreadboardType): JSONSchema4 {
       return { type };
     }
     case "unknown": {
-      // {} is our equivalent to TypeScript's `unknown` in JSON Schema, since it
-      // enforces no type constraints at all.
-      return {};
+      // All possible JSON schema data types.
+      //
+      // We could return {} here, but returning all possible types is a bit more
+      // explicit. Also, there is some other Breadboard code which assumes when
+      // there is no type, that the type is string (this is a bug, since no type
+      // actually means anything).
+      return {
+        type: ["array", "boolean", "null", "number", "object", "string"],
+      };
     }
     default: {
       throw new Error(
