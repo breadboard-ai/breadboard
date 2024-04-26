@@ -107,11 +107,11 @@
             },
             "generator": {
               "title": "Generator",
+              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
+              "type": "string",
               "behavior": [
                 "board"
               ],
-              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-              "type": "string",
               "default": "gemini-generator.json"
             }
           },

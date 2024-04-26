@@ -14,6 +14,8 @@ export enum GRAPH_OPERATIONS {
   GRAPH_EDGE_DETACH = "graphedgedetach",
   GRAPH_EDGE_CHANGE = "graphedgechange",
   GRAPH_NODE_EXPAND_COLLAPSE = "graphnodeexpandcollapse",
+  GRAPH_NODE_MENU_CLICKED = "graphnodemenuclicked",
+  GRAPH_NODE_MENU_REQUESTED = "graphnodemenurequested",
 }
 
 export enum GraphNodePortType {

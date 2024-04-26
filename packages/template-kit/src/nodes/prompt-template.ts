@@ -34,7 +34,7 @@ export const parametersFromTemplate = (
 
 const promptTemplateHandler = (
   template: string,
-  inputs: { [K: string]: string | object }
+  inputs: { [K: string]: unknown }
 ) => {
   const parameters = parametersFromTemplate(template);
   if (!parameters.length) return { prompt: template, text: template };
@@ -74,7 +74,7 @@ export default defineNodeType({
       description: "The template with placeholders to fill in.",
     },
     "*": {
-      type: anyOf("string", object({}, "unknown")),
+      type: "unknown",
     },
   },
   outputs: {

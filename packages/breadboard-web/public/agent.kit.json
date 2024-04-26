@@ -415,10 +415,10 @@
               "properties": {
                 "worker": {
                   "title": "Worker",
+                  "description": "Worker to repeat",
                   "behavior": [
                     "board"
                   ],
-                  "description": "Worker to repeat",
                   "type": "object"
                 },
                 "context": {

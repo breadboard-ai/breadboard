@@ -52,7 +52,9 @@ test("unknown", () => {
   "unknown" satisfies BreadboardType;
   // @ts-expect-error not a valid basic type
   "xunknown" satisfies BreadboardType;
-  assert.deepEqual(toJSONSchema("unknown"), {});
+  assert.deepEqual(toJSONSchema("unknown"), {
+    type: ["array", "boolean", "null", "number", "object", "string"],
+  });
   /* eslint-disable @typescript-eslint/no-unused-vars */
   // $ExpectType JsonSerializable
   type t = ConvertBreadboardType<"unknown">;
@@ -102,6 +104,8 @@ describe("object", () => {
     type t1 = ConvertBreadboardType<typeof obj1>;
     assert.deepEqual(toJSONSchema(obj1), {
       type: "object",
+      properties: {},
+      required: [],
       additionalProperties: false,
     });
   });
@@ -193,7 +197,9 @@ describe("object", () => {
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
       properties: {
-        foo: {},
+        foo: {
+          type: ["array", "boolean", "null", "number", "object", "string"],
+        },
       },
       required: ["foo"],
       additionalProperties: false,
@@ -206,6 +212,8 @@ describe("object", () => {
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
+      properties: {},
+      required: [],
       additionalProperties: false,
     });
   });
@@ -216,6 +224,8 @@ describe("object", () => {
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
+      properties: {},
+      required: [],
       additionalProperties: { type: "string" },
     });
   });
@@ -242,6 +252,9 @@ describe("object", () => {
     type objType = ConvertBreadboardType<typeof obj>;
     assert.deepEqual(toJSONSchema(obj), {
       type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
     });
   });
 
@@ -318,7 +331,9 @@ describe("array", () => {
     // $ExpectType JsonSerializable[]
     type arrayType = ConvertBreadboardType<typeof arr>;
     assert.deepEqual(toJSONSchema(arr), {
-      items: {},
+      items: {
+        type: ["array", "boolean", "null", "number", "object", "string"],
+      },
       type: "array",
     });
   });

@@ -122,6 +122,7 @@ test("mono/mono", async () => {
           type: "null",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
@@ -236,6 +237,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -268,6 +270,7 @@ test("poly/mono", async () => {
           type: "boolean",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -366,6 +369,7 @@ test("mono/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
@@ -491,6 +495,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -527,6 +532,7 @@ test("poly/poly", async () => {
           type: "number",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -654,6 +660,7 @@ test("reflective", async () => {
       properties: {
         so1: { type: "boolean", title: "so1" },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -676,6 +683,7 @@ test("reflective", async () => {
         di2: { type: "string", title: "di2" },
         so1: { type: "boolean", title: "so1" },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -922,6 +930,7 @@ test("multiline/javascript", async () => {
           format: "javascript",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -969,6 +978,7 @@ test("behavior", async () => {
           behavior: ["image", "code"],
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -1022,6 +1032,7 @@ test("dynamic port descriptions", async () => {
           description: 'output "foo"',
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -1091,6 +1102,7 @@ test("defaults", async () => {
           default: [12, 34],
         },
       },
+      required: [],
       additionalProperties: false,
     },
     outputSchema: {
@@ -1106,11 +1118,94 @@ test("defaults", async () => {
           items: { type: "number" },
         },
       },
+      required: [],
       additionalProperties: false,
     },
   };
   assert.deepEqual(await d.describe(), expectedSchema);
   assert.deepEqual(await d.describe({ si1: "bar", si2: 123 }), expectedSchema);
+});
+
+test("optional", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      a: {
+        type: "string",
+      },
+      b: {
+        type: array("number"),
+        optional: true,
+      },
+    },
+    outputs: {
+      serializedStaticInputs: {
+        type: "string",
+      },
+    },
+    invoke: (
+      // $ExpectType { a: string; b: number[] | undefined; }
+      staticInputs
+    ) => ({
+      serializedStaticInputs: JSON.stringify(staticInputs),
+    }),
+  });
+
+  d({ a: "foo" });
+  d({ a: "foo", b: [1, 2] });
+
+  assert.throws(() =>
+    d(
+      // @ts-expect-error
+      {}
+    )
+  );
+  assert.throws(() =>
+    d(
+      // @ts-expect-error
+      { b: [1, 2] }
+    )
+  );
+
+  assert.deepEqual(await d.invoke({ a: "foo" }, null as never), {
+    serializedStaticInputs: JSON.stringify({ a: "foo" }),
+  });
+
+  assert.deepEqual(await d.invoke({ a: "foo", b: [1, 2] }, null as never), {
+    serializedStaticInputs: JSON.stringify({ a: "foo", b: [1, 2] }),
+  });
+
+  const expectedSchema = {
+    inputSchema: {
+      type: "object",
+      properties: {
+        a: {
+          title: "a",
+          type: "string",
+        },
+        b: {
+          title: "b",
+          type: "array",
+          items: { type: "number" },
+        },
+      },
+      additionalProperties: false,
+      required: ["a"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        serializedStaticInputs: {
+          title: "serializedStaticInputs",
+          type: "string",
+        },
+      },
+      additionalProperties: false,
+      required: [],
+    },
+  };
+  assert.deepEqual(await d.describe(), expectedSchema);
+  assert.deepEqual(await d.describe({ a: "foo", b: [1, 2] }), expectedSchema);
 });
 
 test("override title", async () => {
@@ -1157,6 +1252,7 @@ test("override title", async () => {
           type: "null",
         },
       },
+      required: [],
       additionalProperties: false,
     },
   });
@@ -1755,6 +1851,22 @@ test("error: default does not match type", () => {
         type: "string",
         // @ts-expect-error
         default: 123,
+      },
+    },
+    outputs: {},
+    invoke: () => ({}),
+  });
+});
+
+test("error: can't set optional when there is a default", () => {
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: {
+        type: "string",
+        default: "foo",
+        // @ts-expect-error
+        optional: true,
       },
     },
     outputs: {},

@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /**
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/* eslint-disable @typescript-eslint/ban-types */
 
 import type {
   NodeDescriberContext,
@@ -15,6 +16,7 @@ import type {
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
+import type { UnsafeSchema } from "./unsafe-schema.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
@@ -209,7 +211,12 @@ function primary(configs: PortConfigs): keyof typeof configs | undefined {
 type StrictInputs<I extends Record<string, InputPortConfig>> = {
   [K in keyof I]: K extends "*"
     ? StrictMatch<I[K], DynamicInputPortConfig>
-    : StrictMatch<I[K], StaticInputPortConfig & { default?: Convert<I[K]> }>;
+    : StrictMatch<
+        I[K],
+        GetDefault<I[K]> extends JsonSerializable
+          ? StaticInputPortConfig & { default: Convert<I[K]>; optional: never }
+          : StaticInputPortConfig
+      >;
 } & ForbidMultiplePrimaries<I>;
 
 type StrictOutputs<O extends Record<string, OutputPortConfig>> = {
@@ -217,6 +224,10 @@ type StrictOutputs<O extends Record<string, OutputPortConfig>> = {
     ? StrictMatch<O[K], DynamicOutputPortConfig>
     : StrictMatch<O[K], StaticOutputPortConfig>;
 } & ForbidMultiplePrimaries<O>;
+
+type GetDefault<I extends PortConfig> = I extends StaticInputPortConfig
+  ? I["default"]
+  : undefined;
 
 /**
  * Check that ACTUAL is assignable to EXPECTED and that there are no excess
@@ -250,7 +261,7 @@ export type VeryLooseInvokeFn = (
   staticParams: Record<string, JsonSerializable>,
   dynamicParams: Record<string, JsonSerializable>,
   context: NodeHandlerContext
-) => { [K: string]: JsonSerializable };
+) => { [K: string]: JsonSerializable | undefined };
 
 type StrictInvokeFn<
   I extends Record<string, InputPortConfig>,
@@ -279,7 +290,11 @@ type StrictInvokeFnReturn<
 };
 
 type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
-  [K in keyof Omit<I, "*">]: Convert<I[K]>;
+  [K in keyof Omit<I, "*">]: I[K] extends StaticInputPortConfig
+    ? I[K]["optional"] extends true
+      ? Convert<I[K]> | undefined
+      : Convert<I[K]>
+    : Convert<I[K]>;
 };
 
 type DynamicInvokeParams<I extends Record<string, InputPortConfig>> =
@@ -294,9 +309,11 @@ type GetStaticTypes<C extends Record<string, PortConfig>> = {
 
 type GetOptionalInputs<I extends Record<string, InputPortConfig>> = {
   [K in keyof I]: I[K] extends StaticInputPortConfig
-    ? I[K]["default"] extends JsonSerializable
+    ? I[K]["optional"] extends true
       ? K
-      : never
+      : I[K]["default"] extends JsonSerializable
+        ? K
+        : never
     : never;
 }[keyof I];
 
@@ -352,7 +369,8 @@ export type DynamicInputPorts =
         //
         //   { foo: { description:"foo" } } | {}
         | undefined;
-    };
+    }
+  | UnsafeSchema;
 
 type StrictDescribeFn<
   I extends Record<string, InputPortConfig>,

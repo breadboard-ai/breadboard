@@ -6,17 +6,14 @@
 
 import type {
   InputValues,
-  OutputValues,
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
-  Schema,
   NodeDescriberContext,
-  NodeHandlerObject,
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
-import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import { getRunner, loadGraphFromPath } from "../utils.js";
+import { defineNodeType, unsafeSchema } from "@breadboard-ai/build";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -57,31 +54,11 @@ const getRunnableBoard = async (
 };
 
 const describe = async (
-  inputs?: InputValues,
-  _in?: Schema,
-  _out?: Schema,
+  inputs?: InvokeNodeInputs,
   context?: NodeDescriberContext
 ) => {
-  const inputBuilder = new SchemaBuilder().addProperties({
-    path: {
-      title: "path",
-      behavior: ["deprecated"],
-      description: "The path to the board to invoke.",
-      type: "string",
-    },
-    $board: {
-      title: "board",
-      behavior: ["board"],
-      description:
-        "The board to invoke. Can be a BoardCapability, a graph or a URL",
-      type: "object",
-    },
-  });
-  const outputBuilder = new SchemaBuilder();
   if (context?.base) {
     let board: GraphDescriptor | undefined;
-    outputBuilder.setAdditionalProperties(true);
-    inputBuilder.setAdditionalProperties(true);
     if (inputs) {
       try {
         board = (await getRunnableBoard(context, inputs)).board;
@@ -92,33 +69,60 @@ const describe = async (
       if (board) {
         const inspectableGraph = inspect(board);
         const { inputSchema, outputSchema } = await inspectableGraph.describe();
-        inputBuilder.addProperties(inputSchema?.properties);
-        inputBuilder.setAdditionalProperties(inputSchema.additionalProperties);
-        inputSchema?.required &&
-          inputBuilder.addRequired(inputSchema?.required);
-        outputBuilder.addProperties(outputSchema?.properties);
-        outputBuilder.setAdditionalProperties(
-          outputSchema.additionalProperties
-        );
+        return {
+          inputs: unsafeSchema(inputSchema),
+          outputs: unsafeSchema(outputSchema),
+        };
       }
+      return { inputs: { "*": {} }, outputs: { "*": {} } };
     }
   }
-  const inputSchema = inputBuilder.build();
-  const outputSchema = outputBuilder.build();
-  return { inputSchema, outputSchema };
+  return { inputs: {}, outputs: {} };
 };
 
-export default {
+export default defineNodeType({
+  name: "invoke",
   metadata: {
     title: "Invoke",
     description:
       "Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.",
   },
-  describe,
-  invoke: async (
-    inputs: InputValues,
-    context: NodeHandlerContext
-  ): Promise<OutputValues> => {
+  inputs: {
+    path: {
+      title: "path",
+      behavior: ["deprecated"],
+      description: "The path to the board to invoke.",
+      type: "string",
+      optional: true,
+    },
+    $board: {
+      title: "board",
+      behavior: ["board"],
+      description:
+        "The board to invoke. Can be a BoardCapability, a graph or a URL",
+      // TODO(aomarks) A better type.
+      type: "unknown",
+      optional: true,
+    },
+    "*": {
+      type: "unknown",
+    },
+  },
+  outputs: {
+    "*": {
+      type: "unknown",
+    },
+  },
+  describe: async (staticInputs, dynamicInputs, context) => {
+    // TODO(aomarks) Cast here because the type system doesn't understand
+    // BreadboardCapability or GraphDescriptors yet.
+    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
+    return describe(inputs, context);
+  },
+  invoke: async (staticInputs, dynamicInputs, context) => {
+    // TODO(aomarks) Cast here because the type system doesn't understand
+    // BreadboardCapability or GraphDescriptors yet.
+    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
     const { board, args } = await getRunnableBoard(context, inputs);
     if (!board) {
       console.warn("Could not get a runnable board");
@@ -136,4 +140,4 @@ export default {
 
     return await board.runOnce(args, invocationContext);
   },
-} satisfies NodeHandlerObject;
+});

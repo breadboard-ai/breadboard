@@ -46,8 +46,12 @@
               "title": "response",
               "description": "The response from the fetch request",
               "type": [
-                "string",
-                "object"
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
               ]
             }
           }

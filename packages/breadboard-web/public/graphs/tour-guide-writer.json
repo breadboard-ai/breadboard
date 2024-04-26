@@ -247,17 +247,28 @@
                         "title": "location",
                         "description": "The value to substitute for the parameter \"location\"",
                         "type": [
-                          "string",
-                          "object"
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
                         ]
                       },
                       "generator": {
                         "title": "board",
+                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
+                        "type": [
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
+                        ],
                         "behavior": [
                           "board"
-                        ],
-                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
@@ -285,8 +296,12 @@
                         "title": "activity",
                         "description": "The value to substitute for the parameter \"activity\"",
                         "type": [
-                          "string",
-                          "object"
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
                         ]
                       }
                     },

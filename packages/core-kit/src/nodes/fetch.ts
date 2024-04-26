@@ -59,8 +59,8 @@ export default defineNodeType({
     },
     body: {
       description: "The body of the request",
-      type: anyOf("string", object({}, "unknown"), "null"),
-      default: null,
+      type: "unknown",
+      optional: true,
     },
     raw: {
       description:
@@ -77,12 +77,7 @@ export default defineNodeType({
   outputs: {
     response: {
       description: "The response from the fetch request",
-      type: anyOf(
-        "string",
-        // TODO(aomarks) Is this right? Technically it could be any JSON, right?
-        // So number, null, array, are also possible.
-        object({}, "unknown")
-      ),
+      type: "unknown",
     },
     status: {
       description: "The HTTP status code of the response",

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { array, defineNodeType, unsafeSchema } from "@breadboard-ai/build";
+import type { NodeDescriberContext } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defineNodeType } from "../internal/define/define.js";
-import type { NodeDescriberContext } from "@google-labs/breadboard";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -282,6 +282,7 @@ test("static output schema", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["foo"],
+      required: [],
       additionalProperties: false,
     }
   );
@@ -316,6 +317,7 @@ test("dynamic output schema with custom describe (closed)", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["bar", "foo"],
+      required: [],
       additionalProperties: false,
     }
   );
@@ -346,6 +348,7 @@ test("dynamic output schema with custom describe (open)", async () => {
       // TODO(aomarks) I think this should be required, but currently the visual
       // editor will show this in red, which doesn't seem right.
       // required: ["foo"],
+      required: [],
       additionalProperties: { type: "number" },
     }
   );
@@ -390,6 +393,7 @@ test("async describe", async () => {
             type: "number",
           },
         },
+        required: [],
         additionalProperties: false,
       },
     }
@@ -420,4 +424,70 @@ test("describe receives context", async () => {
     invoke: () => ({}),
   }).describe({}, {}, {}, expected);
   assert.deepEqual(actual, expected);
+});
+
+test("unsafeSchema can be used to force a raw JSON schema", async () => {
+  assert.deepEqual(
+    await defineNodeType({
+      name: "foo",
+      inputs: {
+        si1: { type: array("number") },
+        "*": { type: "number" },
+      },
+      outputs: {
+        so1: { type: array("string") },
+        "*": { type: "number" },
+      },
+      describe: () => ({
+        inputs: unsafeSchema({
+          properties: {
+            foo: { type: "number" },
+            bar: { type: "string" },
+          },
+          required: ["bar"],
+          additionalProperties: true,
+        }),
+        outputs: unsafeSchema({
+          properties: {
+            bar: { type: "string" },
+          },
+        }),
+      }),
+      invoke: () => ({ so1: ["foo"] }),
+    }).describe(),
+    {
+      inputSchema: {
+        type: "object",
+        properties: {
+          si1: {
+            title: "si1",
+            type: "array",
+            items: { type: "number" },
+          },
+          foo: {
+            type: "number",
+          },
+          bar: {
+            type: "string",
+          },
+        },
+        required: ["si1", "bar"],
+        additionalProperties: true,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          so1: {
+            title: "so1",
+            type: "array",
+            items: { type: "string" },
+          },
+          bar: {
+            type: "string",
+          },
+        },
+        required: [],
+      },
+    }
+  );
 });

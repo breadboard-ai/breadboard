@@ -123,12 +123,12 @@ test("`generateInputSchema` correctly generates schema for a template with param
       foo: {
         title: "foo",
         description: 'The value to substitute for the parameter "foo"',
-        type: ["string", "object"],
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
       bar: {
         title: "bar",
         description: 'The value to substitute for the parameter "bar"',
-        type: ["string", "object"],
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
       template: {
         title: "template",
