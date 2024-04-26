@@ -41,7 +41,8 @@ export class GraphRenderer extends LitElement {
       wheel: true,
     },
   });
-  #minMaxSingleNode: Ref<HTMLButtonElement> = createRef();
+  #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
+  #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
   #overflowMenuGraphNode: GraphNode | null = null;
   #padding = 50;
@@ -161,6 +162,10 @@ export class GraphRenderer extends LitElement {
 
     #overflow-menu #min-max.minimized::after {
       content: "Maximize node";
+    }
+
+    #overflow-menu #delete-node::before {
+      background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
     }
   `;
 
@@ -321,8 +326,8 @@ export class GraphRenderer extends LitElement {
         overflowMenu.classList.add("visible");
         overflowMenu.style.translate = `${location.x}px ${location.y}px`;
 
-        if (this.#minMaxSingleNode.value) {
-          this.#minMaxSingleNode.value.classList.toggle(
+        if (this.#overflowMinMaxSingleNode.value) {
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
             "minimized",
             graphNode.collapsed
           );
@@ -333,13 +338,33 @@ export class GraphRenderer extends LitElement {
         window.addEventListener(
           "pointerdown",
           (evt: Event) => {
+            if (!this.#overflowMenuGraphNode) {
+              return;
+            }
+
             const [topItem] = evt.composedPath();
-            if (
-              topItem === this.#minMaxSingleNode.value &&
-              this.#overflowMenuGraphNode
-            ) {
-              this.#overflowMenuGraphNode.collapsed =
-                !this.#overflowMenuGraphNode.collapsed;
+            switch (topItem) {
+              case this.#overflowMinMaxSingleNode.value: {
+                this.#overflowMenuGraphNode.collapsed =
+                  !this.#overflowMenuGraphNode.collapsed;
+                break;
+              }
+
+              case this.#overflowDeleteNode.value: {
+                if (!this.#overflowMenuGraphNode.name) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                if (!confirm("Are you sure you want to delete this node?")) {
+                  return;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeDeleteEvent(this.#overflowMenuGraphNode.name)
+                );
+                break;
+              }
             }
 
             overflowMenu.classList.remove("visible");
@@ -501,7 +526,10 @@ export class GraphRenderer extends LitElement {
       ${ref(this.#overflowMenuRef)}
       id="overflow-menu"
     >
-      <button id="min-max" ${ref(this.#minMaxSingleNode)}></button>
+      <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
+      <button id="delete-node" ${ref(this.#overflowDeleteNode)}>
+        Delete node
+      </button>
     </div>`;
 
     return html`${this.#app.view}${overflowMenu}`;
