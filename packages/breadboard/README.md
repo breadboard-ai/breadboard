@@ -53,7 +53,7 @@ const echo = board<{ say: string; }>(({ say }, { output }) => {
 console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
 
-This simple example demonstrates a board with an input port named `say` that gets passed to an output port named `output` . When running the board, `"Hello Breadboard!"` is passed to `say` which then passes it to the output as a property called `hear`. 
+This simple example demonstrates a board with an input port named `say` that gets passed to an output port named `output`. When running the board, `"Hello Breadboard!"` is passed to `say` which then passes it to the output as a property called `hear`.
 
 Similarly, this can be achieved through chaining the nodes.
 ```typescript
@@ -79,28 +79,28 @@ console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadbo
 ```
 
 ### Creating `code` nodes
-The `code` function helps us create a new type of node, of type `code`. The result of calling code is a special function -- let's call it a "node factory". A node factory can be used to create many instances of the node. 
+The `code` function helps us create a new type of node, of type `code`. The result of calling code is a special function -- let's call it a "node factory". A node factory can be used to create many instances of the node.
 ```typescript
 import { base, board, code } from "@google-labs/breadboard";
-  
+
 const calculator = board(() => {
 	const input = base.input();
 	const output = base.output();
 
 	const calculate = code(({ x, y }) => {
 		if (typeof x !== "number" || typeof y !== "number") return {}
-		
+
 		const sum = x + y;
 		const diff = x - y;
 		const prod = x * y;
 		const quo = x / y;
-		
-		return { results: { sum, diff, prod, quo } } 
+
+		return { results: { sum, diff, prod, quo } }
 	})();
-	
+
 	input.to(calculate);
 	calculate.results.to(output);
-	
+
 	return output;
 });
 
@@ -116,7 +116,7 @@ Kits are collections of ready-made node factory functions for all types of nodes
 #### Using pre-made kits
 Kits are an easy way to add functionality to your board without writing it yourself, and you can think of them as purpose-built third-party libraries you'd add to your web application.
 
-For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`. The npm package, which contains the kit, must be installed before they can be imported. 
+For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`. The npm package, which contains the kit, must be installed before they can be imported.
 
 ```typescript
 import { addKit, board } from "@google-labs/breadboard";
