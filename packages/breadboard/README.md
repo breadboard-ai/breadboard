@@ -106,7 +106,7 @@ const calculator = board(() => {
 
 console.log(await calculator({ x: 1, y: 2 })); // { results: { sum: 3, diff: -1, prod: 2, quo: 0.5 } }
 ```
-In this example, the `code` simply takes two properties, `x` and `y`, and checks that they are numbers before performing arithmetic operations using the values, and then returning each of the calculations as properties of `results`. If either inputs are not of the `number` type, then an empty object gets returned.
+In this example, the `code` simply takes two properties, `x` and `y`, and checks that they are numbers before performing arithmetic operations using the values, and then returning each of the calculations as properties of `results`. If either input is not of the `number` type, then an empty object gets returned.
 
 These nodes can be created inside or outside the board. They can also be used when creating custom kits.
 
@@ -114,7 +114,7 @@ These nodes can be created inside or outside the board. They can also be used wh
 Kits are collections of ready-made node factory functions for all types of nodes.
 
 #### Using pre-made kits
-Kits are an easy way to add functionality into your board without writing it yourself, and you can think of them as purpose-built third-party libraries you'd add into your web application.
+Kits are an easy way to add functionality to your board without writing it yourself, and you can think of them as purpose-built third-party libraries you'd add to your web application.
 
 For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`. The npm package, which contains the kit, must be installed before they can be imported. 
 
