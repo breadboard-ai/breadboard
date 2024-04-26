@@ -8,7 +8,6 @@ import {
   GraphDescriptor,
   Schema,
   NodeDescriberFunction,
-  GraphInlineMetadata,
   BreadboardCapability,
 } from "../../types.js";
 import {
@@ -23,6 +22,7 @@ import {
   InputsMaybeAsValues,
   Lambda,
   ClosureEdge,
+  GraphCombinedMetadata,
 } from "./types.js";
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
@@ -42,7 +42,7 @@ export const board: BoardFactory = (
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
-      } & GraphInlineMetadata)
+      } & GraphCombinedMetadata)
     | GraphDeclarationFunction,
   maybeFn?: GraphDeclarationFunction
 ) => {
@@ -78,7 +78,7 @@ function lambdaFactory(
     invoke?: NodeProxyHandlerFunction;
     describe?: NodeDescriberFunction;
     name?: string;
-  } & GraphInlineMetadata
+  } & GraphCombinedMetadata
 ): Lambda {
   if (!options.invoke && !options.graph)
     throw new Error("Missing invoke or graph definition function");
@@ -88,7 +88,7 @@ function lambdaFactory(
 
   // Extract board metadata from config. Used in serialize().
   const { url, title, description, version } = options ?? {};
-  const configMetadata: GraphInlineMetadata = {
+  const configMetadata: GraphCombinedMetadata = {
     ...(url ? { url } : {}),
     ...(title ? { title } : {}),
     ...(description ? { description } : {}),
@@ -251,7 +251,7 @@ function lambdaFactory(
 
   // (Will be called and then overwritten by `createLambda` below
   // once this turns into a closure)
-  factory.serialize = async (metadata?: GraphInlineMetadata) => {
+  factory.serialize = async (metadata?: GraphCombinedMetadata) => {
     const node = new BuilderNode(handler, lexicalScope);
     const [singleNode, graph] = await node.serializeNode();
 
@@ -312,7 +312,7 @@ function lambdaFactory(
 
     // Replace the serialize function with one that returns a graph with that
     // lambda node and an invoke node, not the original graph.
-    factory.serialize = async (metadata?: GraphInlineMetadata) => {
+    factory.serialize = async (metadata?: GraphCombinedMetadata) => {
       // If there are no incoming wires to the lambda node, it's not a closure
       // and we can just return the original board.
       if (lambdaNode?.incoming.length === 0 && closureEdgesToWire.length === 0)

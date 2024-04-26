@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   BreadboardCapability,
   NodeDescriberFunction,
@@ -21,6 +22,10 @@ import {
   AbstractNode,
   Serializeable,
 } from "../runner/types.js";
+
+export type GraphCombinedMetadata = GraphInlineMetadata & {
+  metadata?: GraphMetadata;
+};
 
 export type NodeValue =
   | BaseNodeValue
@@ -148,7 +153,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphInlineMetadata
+    } & GraphCombinedMetadata
   ): Lambda<I, Required<O>>;
 
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
@@ -159,7 +164,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphInlineMetadata,
+    } & GraphCombinedMetadata,
     fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 }
