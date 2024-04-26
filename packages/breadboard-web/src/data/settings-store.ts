@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -87,6 +87,15 @@ export class SettingsStore {
       configuration: {
         extensible: true,
         description: `Inputs that the boards ask for in the middle of the run (also known as "bubbled inputs"), such as model names`,
+        nameEditable: true,
+      },
+      items: new Map([]),
+    },
+    [BreadboardUI.Types.SETTINGS_TYPE.NODE_PROXY_SERVERS]: {
+      configuration: {
+        extensible: true,
+        description:
+          "Node proxy servers to use when running boards. Put the URL of the node proxy server in the first field and a comma-separated list of nodes to proxy in the second field.",
         nameEditable: true,
       },
       items: new Map([]),
