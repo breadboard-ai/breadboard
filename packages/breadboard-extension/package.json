@@ -193,7 +193,7 @@
     "@types/node": "^20.12.7",
     "@types/vscode": "^1.88.0",
     "@vscode/debugadapter": "^1.65.0",
-    "@vscode/vsce": "^2.24.0",
+    "@vscode/vsce": "^2.26.0",
     "dotenv": "^16.4.5",
     "esbuild": "^0.20.1",
     "mermaid": "^10.9.0",

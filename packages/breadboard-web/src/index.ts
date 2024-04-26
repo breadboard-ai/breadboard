@@ -1430,6 +1430,7 @@ export class Main extends LitElement {
               BreadboardUI.Events.ToastType.INFORMATION
             );
           } catch (err) {
+            console.warn(err);
             this.toast(
               "Unable to save settings",
               BreadboardUI.Events.ToastType.ERROR

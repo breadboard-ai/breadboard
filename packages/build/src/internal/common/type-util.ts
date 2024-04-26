@@ -42,3 +42,8 @@ type PermuteUnion<U, T = U> = [U] extends [never]
  * https://github.com/microsoft/TypeScript/issues/47980#issuecomment-1049304607
  */
 export type Expand<T> = T extends unknown ? { [K in keyof T]: T[K] } : never;
+
+/**
+ * Some type, or a promise of it.
+ */
+export type MaybePromise<T> = T | Promise<T>;

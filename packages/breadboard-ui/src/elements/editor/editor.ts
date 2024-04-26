@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   inspect,
@@ -59,6 +59,18 @@ export class Editor extends LitElement {
   boardId: number = -1;
 
   @property()
+  collapseNodesByDefault = false;
+
+  @property()
+  hideSubboardSelectorWhenEmpty = false;
+
+  @property()
+  showNodeShortcuts = true;
+
+  @property()
+  mode = EditorMode.ADVANCED;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -99,6 +111,10 @@ export class Editor extends LitElement {
   #addButtonRef: Ref<HTMLInputElement> = createRef();
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: flex;
       align-items: center;
@@ -117,40 +133,61 @@ export class Editor extends LitElement {
       visibility: hidden;
       pointer-events: none;
       position: absolute;
-      bottom: 72px;
-      right: 16px;
+      bottom: 52px;
+      right: 0;
     }
 
-    #add-node {
-      display: none;
-    }
-
-    label[for="add-node"] {
+    #nodes {
+      height: calc(var(--bb-grid-size) * 9);
       position: absolute;
       bottom: calc(var(--bb-grid-size) * 4);
       right: calc(var(--bb-grid-size) * 4);
       border-radius: 50px;
-      padding: 12px 16px;
       border: 1px solid #d9d9d9;
       background: #ffffff;
-      cursor: pointer;
-      opacity: 0.6;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
     }
 
-    label[for="add-node"]:hover {
-      opacity: 1;
+    #shortcut-add-superworker,
+    #shortcut-add-human {
+      font-size: 0;
+      width: 20px;
+      height: 20px;
+      background: red;
+      margin-right: calc(var(--bb-grid-size) * 2);
+    }
+
+    #shortcut-add-superworker {
+      background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
+    }
+
+    #shortcut-add-human {
+      background: var(--bb-icon-human) center center / 20px 20px no-repeat;
+    }
+
+    label[for="add-node"] {
+      font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+        var(--bb-font-family);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: var(--bb-grid-size);
     }
 
     label[for="add-node"]::before {
       content: "";
       width: 16px;
       height: 16px;
-      background: var(--bb-icon-add) center center no-repeat;
-      background-size: 16px 16px;
+      background: var(--bb-icon-add) center center / 16px 16px no-repeat;
       margin-right: calc(var(--bb-grid-size) * 2);
+    }
+
+    #add-node {
+      display: none;
     }
 
     #add-node:checked ~ bb-node-selector {
@@ -171,6 +208,7 @@ export class Editor extends LitElement {
     }
 
     #controls {
+      height: calc(var(--bb-grid-size) * 9);
       position: absolute;
       left: calc(var(--bb-grid-size) * 4);
       bottom: calc(var(--bb-grid-size) * 4);
@@ -220,7 +258,7 @@ export class Editor extends LitElement {
 
     .divider {
       width: 1px;
-      height: calc(var(--bb-grid-size) * 7);
+      height: calc(var(--bb-grid-size) * 5);
       background: var(--bb-neutral-300);
       margin: 0px calc(var(--bb-grid-size) * 3);
     }
@@ -306,7 +344,7 @@ export class Editor extends LitElement {
     for (const node of breadboardGraph.nodes()) {
       ports.set(
         node.descriptor.id,
-        filterPortsByMode(await node.ports(), EditorMode.HARD)
+        filterPortsByMode(await node.ports(), this.mode)
       );
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
@@ -314,6 +352,7 @@ export class Editor extends LitElement {
       }
     }
 
+    this.#graph.collapseNodesByDefault = this.collapseNodesByDefault;
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
@@ -403,13 +442,15 @@ export class Editor extends LitElement {
           graph: GraphDescriptor | null;
           subGraphId: string | null;
           kits: Kit[];
+          mode: EditorMode;
         }>
       | Map<PropertyKey, unknown>
   ): void {
     const shouldProcessGraph =
       changedProperties.has("graph") ||
       changedProperties.has("kits") ||
-      changedProperties.has("subGraphId");
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("mode");
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
       this.#processGraph();
@@ -587,14 +628,72 @@ export class Editor extends LitElement {
 
     const subGraphs: SubGraphs | null =
       this.graph && this.graph.graphs ? this.graph.graphs : null;
+
+    let showSubGraphSelector = true;
+    if (
+      this.hideSubboardSelectorWhenEmpty &&
+      (!subGraphs || (subGraphs && Object.entries(subGraphs).length === 0))
+    ) {
+      showSubGraphSelector = false;
+    }
+
     return html`${this.#graphRenderer}
-      <input
-        ${ref(this.#addButtonRef)}
-        name="add-node"
-        id="add-node"
-        type="checkbox"
-      />
-      <label for="add-node">Add node</label>
+      <div id="nodes">
+        <input
+          ${ref(this.#addButtonRef)}
+          name="add-node"
+          id="add-node"
+          type="checkbox"
+        />
+        <label for="add-node">Nodes</label>
+
+        <bb-node-selector
+          .graph=${this.graph}
+          .kits=${this.kits}
+          @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
+            const id = this.#createRandomID(evt.nodeType);
+            this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+          }}
+        ></bb-node-selector>
+
+        ${this.showNodeShortcuts
+          ? html`<div class="divider"></div>
+              <div
+                draggable="true"
+                title="Add superWorker"
+                id="shortcut-add-superworker"
+                @dblclick=${() => {
+                  const id = this.#createRandomID("superWorker");
+                  this.dispatchEvent(new NodeCreateEvent(id, "superWorker"));
+                }}
+                @dragstart=${(evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "superWorker");
+                }}
+              >
+                Add superWorker
+              </div>
+              <div
+                draggable="true"
+                title="Add human"
+                id="shortcut-add-human"
+                @dblclick=${() => {
+                  const id = this.#createRandomID("human");
+                  this.dispatchEvent(new NodeCreateEvent(id, "human"));
+                }}
+                @dragstart=${(evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "human");
+                }}
+              >
+                Add Human
+              </div>`
+          : nothing}
+      </div>
 
       <div id="controls">
         <button
@@ -618,7 +717,8 @@ export class Editor extends LitElement {
           Reset Layout
         </button>
 
-        <div class="divider"></div>
+        ${showSubGraphSelector
+          ? html`<div class="divider"></div>
         <select
           id="subgraph-selector"
           @input=${(evt: Event) => {
@@ -669,15 +769,8 @@ export class Editor extends LitElement {
         >
           Delete sub board
         </button>
-      </div>
-
-      <bb-node-selector
-        .graph=${this.graph}
-        .kits=${this.kits}
-        @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
-          const id = this.#createRandomID(evt.nodeType);
-          this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
-        }}
-      ></bb-node-selector>`;
+      </div>`
+          : nothing}
+      </div>`;
   }
 }

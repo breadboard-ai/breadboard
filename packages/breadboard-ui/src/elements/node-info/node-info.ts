@@ -98,7 +98,7 @@ export class NodeInfo extends LitElement {
       const configuration = node.configuration();
       const { inputs } = filterConfigByMode(
         await node.ports(),
-        EditorMode.HARD
+        EditorMode.ADVANCED
       );
       const ports = structuredClone(inputs.ports).sort((portA, portB) =>
         portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1

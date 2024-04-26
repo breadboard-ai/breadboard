@@ -37,6 +37,42 @@ export class SettingsStore {
             value: true,
           },
         ],
+        [
+          "Collapse Nodes by Default",
+          {
+            name: "Collapse Nodes by Default",
+            description:
+              "Whether you wish to have nodes in the graph collapsed by default",
+            value: false,
+          },
+        ],
+        [
+          "Hide Embedded Board Selector When Empty",
+          {
+            name: "Hide Embedded Board Selector When Empty",
+            description:
+              "If there are no embedded boards in the current one, hide the selector",
+            value: false,
+          },
+        ],
+        [
+          "Hide Advanced Ports on Nodes",
+          {
+            name: "Hide Advanced Ports on Nodes",
+            description:
+              "Toggles the visibility of $error, star (*), and control ports on nodes (unless connected)",
+            value: false,
+          },
+        ],
+        [
+          "Show Node Shortcuts",
+          {
+            name: "Show Node Shortcuts",
+            description:
+              "Toggles the visibility of common nodes next to the node selector",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

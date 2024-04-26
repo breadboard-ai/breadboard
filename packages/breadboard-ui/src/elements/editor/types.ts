@@ -13,6 +13,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_EDGE_ATTACH = "graphedgeattach",
   GRAPH_EDGE_DETACH = "graphedgedetach",
   GRAPH_EDGE_CHANGE = "graphedgechange",
+  GRAPH_NODE_EXPAND_COLLAPSE = "graphnodeexpandcollapse",
 }
 
 export enum GraphNodePortType {

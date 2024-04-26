@@ -6,7 +6,7 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { STATUS, Settings } from "../../types/types.js";
+import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
   GraphNodeSelectedEvent,
   InputEnterEvent,
@@ -29,6 +29,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { EditorMode } from "../../utils/mode.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -258,6 +259,32 @@ export class UI extends LitElement {
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
     const nodeId = currentNode();
+    const collapseNodesByDefault = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Collapse Nodes by Default"
+        )?.value
+      : false;
+
+    const hideSubboardSelectorWhenEmpty = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Embedded Board Selector When Empty"
+        )?.value
+      : false;
+
+    const hideAdvancedPortsOnNodes = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Advanced Ports on Nodes"
+        )?.value
+      : false;
+
+    const editorMode = hideAdvancedPortsOnNodes
+      ? EditorMode.MINIMAL
+      : EditorMode.ADVANCED;
+
+    const showNodeShortcuts = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Node Shortcuts")
+          ?.value
+      : false;
 
     /**
      * Create all the elements we need.
@@ -270,6 +297,10 @@ export class UI extends LitElement {
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
+      .collapseNodesByDefault=${collapseNodesByDefault}
+      .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
+      .mode=${editorMode}
+      .showNodeShortcuts=${showNodeShortcuts}
       @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;
@@ -406,6 +437,8 @@ export class UI extends LitElement {
       direction=${this.isPortrait ? "vertical" : "horizontal"}
       name="layout-main"
       split="[0.75, 0.25]"
+      .quickExpandCollapse=${[0.2, 0.75]}
+      .showQuickExpandCollapse=${true}
     >
       <section id="diagram" slot="slot-0">
         ${this.graph === null && this.failedToLoad
