@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, PropertyValueMap, html, nothing } from "lit";
+import { LitElement, PropertyValueMap, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
@@ -30,6 +30,7 @@ import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode } from "../../utils/mode.js";
+import { guard } from "lit/directives/guard.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -91,7 +92,6 @@ export class UI extends LitElement {
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
   #lastBoardId = -1;
-  #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
@@ -239,10 +239,6 @@ export class UI extends LitElement {
     }
   }
 
-  protected updated(): void {
-    this.#autoSwitchSidePanel = null;
-  }
-
   render() {
     const currentNode = (): NodeIdentifier | null => {
       if (!this.run) return null;
@@ -255,6 +251,18 @@ export class UI extends LitElement {
 
       return currentNodeEvent.node.descriptor.id;
     };
+
+    let boardTitle = this.graph?.title;
+    let boardVersion = this.graph?.version;
+    let boardDescription = this.graph?.description;
+    if (this.subGraphId && this.graph && this.graph.graphs) {
+      const subGraph = this.graph.graphs[this.subGraphId];
+      if (subGraph) {
+        boardTitle = subGraph.title;
+        boardVersion = subGraph.version;
+        boardDescription = subGraph.description;
+      }
+    }
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
@@ -310,100 +318,24 @@ export class UI extends LitElement {
       }}
       @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
-        this.#autoSwitchSidePanel = 1;
         this.requestUpdate();
       }}
     ></bb-editor>`;
 
-    const sidePanel = html`
-      <bb-switcher
-        slots="2"
-        .disabled=${this.failedToLoad}
-        .selected=${this.#autoSwitchSidePanel !== null
-          ? this.#autoSwitchSidePanel
-          : nothing}
-      >
-        <bb-activity-log
-          .run=${this.run}
-          .inputsFromLastRun=${this.inputsFromLastRun}
-          .events=${events}
-          .eventPosition=${eventPosition}
-          .showExtendedInfo=${true}
-          .settings=${this.settings}
-          @breadboardinputrequested=${() => {
-            this.#autoSwitchSidePanel = 0;
-            this.requestUpdate();
-          }}
-          @pointerdown=${(evt: PointerEvent) => {
-            if (!this.#detailsRef.value) {
-              return;
-            }
+    const nodeMetaDetails = guard(
+      [this.selectedNodeId],
+      () => html`<bb-node-details
+      .selectedNodeId=${this.selectedNodeId}
+      .subGraphId=${this.subGraphId}
+      .graph=${this.graph}
+      .kits=${this.kits}
+      .loader=${this.loader}></bb-board-details>`
+    );
 
-            const [top] = evt.composedPath();
-            if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-              return;
-            }
-
-            evt.stopImmediatePropagation();
-
-            const id = top.dataset.messageId;
-            const event = this.run?.getEventById(id);
-
-            if (!event) {
-              // TODO: Offer the user more information.
-              console.warn(`Unable to find event with ID "${id}"`);
-              return;
-            }
-
-            if (event.type !== "node") {
-              return;
-            }
-
-            const bounds = top.getBoundingClientRect();
-            const details = this.#detailsRef.value;
-            details.classList.toggle("active");
-
-            if (!details.classList.contains("active")) {
-              return;
-            }
-
-            details.style.setProperty("--left", `${bounds.left}px`);
-            details.style.setProperty("--top", `${bounds.top + 20}px`);
-
-            const tree = details.querySelector("bb-json-tree") as JSONTree;
-            tree.json = event as unknown as Record<string, string>;
-            tree.autoExpand = true;
-          }}
-          @breadboardinputenter=${(event: InputEnterEvent) => {
-            // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < events.length - 1) {
-              // The user has attempted to provide input for a stale
-              // request.
-              // TODO: Enable resuming from this point.
-              this.dispatchEvent(
-                new ToastEvent(
-                  "Unable to submit: board evaluation has already passed this point",
-                  ToastType.ERROR
-                )
-              );
-              return;
-            }
-
-            const data = event.data;
-            const handlers = this.#handlers.get(event.id) || [];
-            if (handlers.length === 0) {
-              console.warn(
-                `Received event for input(id="${event.id}") but no handlers were found`
-              );
-            }
-            for (const handler of handlers) {
-              handler.call(null, data);
-            }
-          }}
-          name="Board"
-          slot="slot-0"
-        ></bb-activity-log>
-        <bb-node-info
+    const nodeInfo = guard(
+      [this.selectedNodeId],
+      () =>
+        html`<bb-node-info
           .selectedNodeId=${this.selectedNodeId}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
@@ -413,20 +345,115 @@ export class UI extends LitElement {
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           name="Selected Node"
-          slot="slot-1"
-        ></bb-node-info>
-      </bb-switcher>
+        ></bb-node-info>`
+    );
 
-      <div
-        id="details"
-        ${ref(this.#detailsRef)}
-        @pointerdown=${(evt: PointerEvent) => {
-          evt.stopImmediatePropagation();
-        }}
-      >
-        <bb-json-tree></bb-json-tree>
-      </div>
-    `;
+    const boardDetails = guard(
+      [this.boardId, this.graph, this.subGraphId],
+      () =>
+        html`<bb-board-details
+          .boardTitle=${boardTitle}
+          .boardVersion=${boardVersion}
+          .boardDescription=${boardDescription}
+          .subGraphId=${this.subGraphId}
+        >
+        </bb-board-details>`
+    );
+
+    const activityLog = html`<bb-activity-log
+      .run=${this.run}
+      .inputsFromLastRun=${this.inputsFromLastRun}
+      .events=${events}
+      .eventPosition=${eventPosition}
+      .showExtendedInfo=${true}
+      .settings=${this.settings}
+      .logTitle=${"Activity"}
+      @breadboardinputrequested=${() => {
+        this.selectedNodeId = null;
+        this.requestUpdate();
+      }}
+      @pointerdown=${(evt: PointerEvent) => {
+        if (!this.#detailsRef.value) {
+          return;
+        }
+
+        const [top] = evt.composedPath();
+        if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+          return;
+        }
+
+        evt.stopImmediatePropagation();
+
+        const id = top.dataset.messageId;
+        const event = this.run?.getEventById(id);
+
+        if (!event) {
+          // TODO: Offer the user more information.
+          console.warn(`Unable to find event with ID "${id}"`);
+          return;
+        }
+
+        if (event.type !== "node") {
+          return;
+        }
+
+        const bounds = top.getBoundingClientRect();
+        const details = this.#detailsRef.value;
+        details.classList.toggle("active");
+
+        if (!details.classList.contains("active")) {
+          return;
+        }
+
+        details.style.setProperty("--left", `${bounds.left}px`);
+        details.style.setProperty("--top", `${bounds.top + 20}px`);
+
+        const tree = details.querySelector("bb-json-tree") as JSONTree;
+        tree.json = event as unknown as Record<string, string>;
+        tree.autoExpand = true;
+      }}
+      @breadboardinputenter=${(event: InputEnterEvent) => {
+        // Notify any pending handlers that the input has arrived.
+        if (this.#messagePosition < events.length - 1) {
+          // The user has attempted to provide input for a stale
+          // request.
+          // TODO: Enable resuming from this point.
+          this.dispatchEvent(
+            new ToastEvent(
+              "Unable to submit: board evaluation has already passed this point",
+              ToastType.ERROR
+            )
+          );
+          return;
+        }
+
+        const data = event.data;
+        const handlers = this.#handlers.get(event.id) || [];
+        if (handlers.length === 0) {
+          console.warn(
+            `Received event for input(id="${event.id}") but no handlers were found`
+          );
+        }
+        for (const handler of handlers) {
+          handler.call(null, data);
+        }
+      }}
+      name="Board"
+    ></bb-activity-log>`;
+
+    const entryDetails = html`<div
+      id="details"
+      ${ref(this.#detailsRef)}
+      @pointerdown=${(evt: PointerEvent) => {
+        evt.stopImmediatePropagation();
+      }}
+    >
+      <bb-json-tree></bb-json-tree>
+    </div>`;
+
+    const sidePanel = this.selectedNodeId
+      ? html`${nodeMetaDetails}${nodeInfo}`
+      : html`${boardDetails}${activityLog}${entryDetails} `;
 
     const breadcrumbs = [MAIN_BOARD_ID];
     if (this.subGraphId) {
@@ -457,7 +484,7 @@ export class UI extends LitElement {
             id="run"
             ?disabled=${this.status !== STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
-              this.#autoSwitchSidePanel = 0;
+              this.selectedNodeId = null;
               this.dispatchEvent(new RunEvent());
             }}
           >

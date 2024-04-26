@@ -10,6 +10,22 @@
 
 html {
   --bb-grid-size: 4px;
+  --bb-grid-size-2: calc(var(--bb-grid-size) * 2);
+  --bb-grid-size-3: calc(var(--bb-grid-size) * 3);
+  --bb-grid-size-4: calc(var(--bb-grid-size) * 4);
+  --bb-grid-size-5: calc(var(--bb-grid-size) * 5);
+  --bb-grid-size-6: calc(var(--bb-grid-size) * 6);
+  --bb-grid-size-7: calc(var(--bb-grid-size) * 7);
+  --bb-grid-size-8: calc(var(--bb-grid-size) * 8);
+  --bb-grid-size-9: calc(var(--bb-grid-size) * 9);
+  --bb-grid-size-10: calc(var(--bb-grid-size) * 10);
+  --bb-grid-size-11: calc(var(--bb-grid-size) * 11);
+  --bb-grid-size-12: calc(var(--bb-grid-size) * 12);
+  --bb-grid-size-13: calc(var(--bb-grid-size) * 13);
+  --bb-grid-size-14: calc(var(--bb-grid-size) * 14);
+  --bb-grid-size-15: calc(var(--bb-grid-size) * 15);
+  --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
+
   --bb-selected-color: rgb(46, 139, 232);
   --bb-continue-color: rgb(192, 223, 255);
   --bb-font-family-header: "Fira Code";
@@ -86,6 +102,8 @@ html {
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
+  --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
+  --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);
   --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
@@ -138,6 +156,7 @@ html {
   --bb-output-800: #1b548c;
   --bb-output-900: #1b548c;
 
+  --bb-neutral-0: #ffffff;
   --bb-neutral-10: #fafafa;
   --bb-neutral-50: #f6f6f6;
   --bb-neutral-100: #ededed;

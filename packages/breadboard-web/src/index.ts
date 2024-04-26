@@ -681,6 +681,39 @@ export class Main extends LitElement {
     return this.#attemptBoardSave();
   }
 
+  #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
+    if (evt.subGraphId) {
+      const editableGraph = this.#getEditor();
+      if (!editableGraph) {
+        console.warn("Unable to update board information; no active graph");
+        return;
+      }
+
+      const subGraph = editableGraph.getGraph(evt.subGraphId);
+      if (!subGraph) {
+        console.warn("Unable to update board information; no active graph");
+        return;
+      }
+
+      const subGraphDescriptor = subGraph.raw();
+      subGraphDescriptor.title = evt.title;
+      subGraphDescriptor.version = evt.version;
+      subGraphDescriptor.description = evt.description;
+
+      editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
+    } else if (this.graph) {
+      this.graph.title = evt.title;
+      this.graph.version = evt.version;
+      this.graph.description = evt.description;
+    } else {
+      this.toast(
+        "Unable to update sub board information - board not found",
+        BreadboardUI.Events.ToastType.INFORMATION
+      );
+      return;
+    }
+  }
+
   render() {
     const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
       const offset = toasts.length - idx - 1;
@@ -823,6 +856,12 @@ export class Main extends LitElement {
           .settings=${settings}
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
+          @breadboardboardinfoupdate=${(
+            evt: BreadboardUI.Events.BoardInfoUpdateEvent
+          ) => {
+            this.#handleBoardInfoUpdate(evt);
+            this.requestUpdate();
+          }}
           @breadboardboardinforequestupdate=${(
             evt: BreadboardUI.Events.BoardInfoUpdateRequestEvent
           ) => {
@@ -1354,41 +1393,7 @@ export class Main extends LitElement {
         @breadboardboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
-          if (evt.subGraphId) {
-            const editableGraph = this.#getEditor();
-            if (!editableGraph) {
-              console.warn(
-                "Unable to update board information; no active graph"
-              );
-              return;
-            }
-
-            const subGraph = editableGraph.getGraph(evt.subGraphId);
-            if (!subGraph) {
-              console.warn(
-                "Unable to update board information; no active graph"
-              );
-              return;
-            }
-
-            const subGraphDescriptor = subGraph.raw();
-            subGraphDescriptor.title = evt.title;
-            subGraphDescriptor.version = evt.version;
-            subGraphDescriptor.description = evt.description;
-
-            editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
-          } else if (this.graph) {
-            this.graph.title = evt.title;
-            this.graph.version = evt.version;
-            this.graph.description = evt.description;
-          } else {
-            this.toast(
-              "Unable to update sub board information - board not found",
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-            return;
-          }
-
+          this.#handleBoardInfoUpdate(evt);
           this.toast(
             "Board information updated",
             BreadboardUI.Events.ToastType.INFORMATION

@@ -28,7 +28,7 @@ export const styles = css`
 
   #controls-activity {
     display: grid;
-    grid-template-rows: auto calc(var(--bb-grid-size) * 14);
+    grid-auto-rows: min-content auto calc(var(--bb-grid-size) * 14);
   }
 
   #diagram {
