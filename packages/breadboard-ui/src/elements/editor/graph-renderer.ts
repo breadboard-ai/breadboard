@@ -182,7 +182,6 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addEventListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        console.log(evt);
         for (const graph of this.#container.children) {
           if (!(graph instanceof Graph)) {
             continue;
@@ -234,7 +233,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on(
       "wheel",
       function (this: GraphRenderer, evt) {
-        let delta = 1 + evt.deltaY / this.zoomFactor;
+        let delta = 1 - evt.deltaY / this.zoomFactor;
         const newScale = this.#container.scale.x * delta;
         if (newScale < this.minScale || newScale > this.maxScale) {
           delta = 1;
