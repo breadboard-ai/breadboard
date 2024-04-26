@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /**
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/* eslint-disable @typescript-eslint/ban-types */
 
 import type {
   NodeDescriberContext,
@@ -15,6 +16,7 @@ import type {
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
+import type { UnsafeSchema } from "./unsafe-schema.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
@@ -352,7 +354,8 @@ export type DynamicInputPorts =
         //
         //   { foo: { description:"foo" } } | {}
         | undefined;
-    };
+    }
+  | UnsafeSchema;
 
 type StrictDescribeFn<
   I extends Record<string, InputPortConfig>,

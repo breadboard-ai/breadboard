@@ -34,6 +34,11 @@ import type {
 } from "./define.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
+import {
+  isUnsafeSchema,
+  unsafeSchemaAccessor,
+  type UnsafeSchema,
+} from "./unsafe-schema.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -192,7 +197,12 @@ export class DefinitionImpl<
     let inputSchema: JSONSchema4 & {
       properties?: { [k: string]: JSONSchema4 };
     };
-    if (this.#dynamicInputs === undefined) {
+    if (isUnsafeSchema(user?.inputs)) {
+      inputSchema = mergeStaticsAndUnsafeUserSchema(
+        portConfigMapToJSONSchema(this.#staticInputs, []),
+        user.inputs[unsafeSchemaAccessor]
+      );
+    } else if (this.#dynamicInputs === undefined) {
       // All inputs are static.
       inputSchema = {
         ...portConfigMapToJSONSchema(this.#staticInputs, []),
@@ -250,7 +260,12 @@ export class DefinitionImpl<
     let outputSchema: JSONSchema4 & {
       properties?: { [k: string]: JSONSchema4 };
     };
-    if (this.#dynamicOutputs === undefined) {
+    if (isUnsafeSchema(user?.outputs)) {
+      outputSchema = mergeStaticsAndUnsafeUserSchema(
+        portConfigMapToJSONSchema(this.#staticOutputs, true),
+        user.outputs[unsafeSchemaAccessor]
+      );
+    } else if (this.#dynamicOutputs === undefined) {
       // All outputs are static.
       outputSchema = {
         ...portConfigMapToJSONSchema(
@@ -316,7 +331,7 @@ export class DefinitionImpl<
 }
 
 function parseDynamicPorts(
-  ports: DynamicInputPorts,
+  ports: Exclude<DynamicInputPorts, UnsafeSchema>,
   base: DynamicInputPortConfig | DynamicOutputPortConfig
 ): {
   newStatic: Record<string, StaticInputPortConfig | StaticOutputPortConfig>;
@@ -375,3 +390,29 @@ type InstantiateArg<T extends JsonSerializable> =
   | Input<T>
   | InputWithDefault<T>
   | Placeholder<T>;
+
+function mergeStaticsAndUnsafeUserSchema(
+  statics: JSONSchema4,
+  unsafe: JSONSchema4
+): JSONSchema4 {
+  const merged = { ...statics, ...unsafe };
+  if (statics.properties || unsafe.properties) {
+    merged.properties = { ...statics.properties, ...unsafe.properties };
+  }
+  // The JSON Schema types say that required can be boolean, but there is
+  // no evidence for that in the JSON Schema documentation.
+  const aRequired = statics.required as Exclude<
+    JSONSchema4["required"],
+    boolean
+  >;
+  const bRequired = unsafe.required as Exclude<
+    JSONSchema4["required"],
+    boolean
+  >;
+  if (aRequired || bRequired) {
+    merged.required = [
+      ...new Set([...(aRequired ?? []), ...(bRequired ?? [])]),
+    ];
+  }
+  return merged;
+}
