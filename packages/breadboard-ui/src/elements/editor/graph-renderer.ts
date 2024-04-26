@@ -20,6 +20,7 @@ import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
 import { InspectableEdge } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -40,6 +41,9 @@ export class GraphRenderer extends LitElement {
       wheel: true,
     },
   });
+  #minMaxSingleNode: Ref<HTMLButtonElement> = createRef();
+  #overflowMenuRef: Ref<HTMLDivElement> = createRef();
+  #overflowMenuGraphNode: GraphNode | null = null;
   #padding = 50;
   #container = new PIXI.Container();
   #background: PIXI.TilingSprite | null = null;
@@ -80,6 +84,10 @@ export class GraphRenderer extends LitElement {
   #onWheelBound = this.#onWheel.bind(this);
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
       position: relative;
@@ -89,6 +97,70 @@ export class GraphRenderer extends LitElement {
     canvas {
       display: block;
       touch-action: none;
+    }
+
+    #overflow-menu {
+      z-index: 1000;
+      display: none;
+      top: 0;
+      left: 0;
+      position: fixed;
+      box-shadow:
+        0px 4px 8px 3px rgba(0, 0, 0, 0.05),
+        0px 1px 3px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size-2);
+      overflow: auto;
+    }
+
+    #overflow-menu.visible {
+      display: grid;
+      grid-template-rows: var(--bb-grid-size-11);
+    }
+
+    #overflow-menu button {
+      display: flex;
+      align-items: center;
+      background: none;
+      margin: 0;
+      padding: var(--bb-grid-size-3);
+      border: none;
+      border-bottom: 1px solid var(--bb-neutral-300);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #overflow-menu button:hover,
+    #overflow-menu button:focus {
+      background: var(--bb-neutral-50);
+    }
+
+    #overflow-menu button:last-of-type {
+      border: none;
+    }
+
+    #overflow-menu button::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      margin-right: var(--bb-grid-size-3);
+    }
+
+    #overflow-menu #min-max::before {
+      background: var(--bb-icon-minimize) center center / 20px 20px no-repeat;
+    }
+
+    #overflow-menu #min-max.minimized::before {
+      background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
+    }
+
+    #overflow-menu #min-max::after {
+      content: "Minimize node";
+    }
+
+    #overflow-menu #min-max.minimized::after {
+      content: "Maximize node";
     }
   `;
 
@@ -110,6 +182,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addEventListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
+        console.log(evt);
         for (const graph of this.#container.children) {
           if (!(graph instanceof Graph)) {
             continue;
@@ -237,6 +310,46 @@ export class GraphRenderer extends LitElement {
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
       graph.layout();
     });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
+      (graphNode: GraphNode, location: PIXI.ObservablePoint) => {
+        if (!this.#overflowMenuRef.value) {
+          return;
+        }
+
+        const overflowMenu = this.#overflowMenuRef.value;
+        overflowMenu.classList.add("visible");
+        overflowMenu.style.translate = `${location.x}px ${location.y}px`;
+
+        if (this.#minMaxSingleNode.value) {
+          this.#minMaxSingleNode.value.classList.toggle(
+            "minimized",
+            graphNode.collapsed
+          );
+        }
+
+        this.#overflowMenuGraphNode = graphNode;
+
+        window.addEventListener(
+          "pointerdown",
+          (evt: Event) => {
+            const [topItem] = evt.composedPath();
+            if (
+              topItem === this.#minMaxSingleNode.value &&
+              this.#overflowMenuGraphNode
+            ) {
+              this.#overflowMenuGraphNode.collapsed =
+                !this.#overflowMenuGraphNode.collapsed;
+            }
+
+            overflowMenu.classList.remove("visible");
+            this.#overflowMenuGraphNode = null;
+          },
+          { once: true }
+        );
+      }
+    );
 
     this.#container.addChild(graph);
   }
@@ -385,6 +498,13 @@ export class GraphRenderer extends LitElement {
   }
 
   render() {
-    return html`${this.#app.view}`;
+    const overflowMenu = html`<div
+      ${ref(this.#overflowMenuRef)}
+      id="overflow-menu"
+    >
+      <button id="min-max" ${ref(this.#minMaxSingleNode)}></button>
+    </div>`;
+
+    return html`${this.#app.view}${overflowMenu}`;
   }
 }
