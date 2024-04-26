@@ -59,7 +59,7 @@ export class SettingsStore {
       configuration: {
         extensible: true,
         description:
-          "Node proxy servers to use when running boards. use the name as a friendly name for yourself and enter URL of the Node Proxy Server as value",
+          "Node proxy servers to use when running boards. Put the URL of the node proxy server in the first field and a comma-separated list of nodes to proxy in the second field.",
         nameEditable: true,
       },
       items: new Map([]),
