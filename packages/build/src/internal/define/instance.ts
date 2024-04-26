@@ -129,7 +129,11 @@ export class Instance<
     // Static inputs
     for (const [name, config] of Object.entries(staticInputs)) {
       const arg = args[name];
-      if (arg === undefined && config.default === undefined) {
+      if (
+        arg === undefined &&
+        config.optional !== true &&
+        config.default === undefined
+      ) {
         throw new Error(`Argument ${name} is required`);
       }
       const port = new InputPort(config.type, name, this, arg ?? DefaultValue);

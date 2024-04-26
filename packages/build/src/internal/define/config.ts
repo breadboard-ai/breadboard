@@ -79,13 +79,19 @@ interface StaticBase {
 }
 
 /**
- * Configuration for a static import ports of a Breadboard node.
+ * Configuration for a static import port of a Breadboard node.
  */
 export interface StaticInputPortConfig extends BaseConfig, StaticBase {
   /**
    * A default value for this port.
    */
   default?: JsonSerializable;
+
+  /**
+   * If true, this port is not required and will be passed to `invoke` as
+   * `undefined`.
+   */
+  optional?: true;
 }
 
 /**

@@ -1113,6 +1113,87 @@ test("defaults", async () => {
   assert.deepEqual(await d.describe({ si1: "bar", si2: 123 }), expectedSchema);
 });
 
+test("optional", async () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      a: {
+        type: "string",
+      },
+      b: {
+        type: array("number"),
+        optional: true,
+      },
+    },
+    outputs: {
+      serializedStaticInputs: {
+        type: "string",
+      },
+    },
+    invoke: (
+      // $ExpectType { a: string; b: number[] | undefined; }
+      staticInputs
+    ) => ({
+      serializedStaticInputs: JSON.stringify(staticInputs),
+    }),
+  });
+
+  d({ a: "foo" });
+  d({ a: "foo", b: [1, 2] });
+
+  assert.throws(() =>
+    d(
+      // @ts-expect-error
+      {}
+    )
+  );
+  assert.throws(() =>
+    d(
+      // @ts-expect-error
+      { b: [1, 2] }
+    )
+  );
+
+  assert.deepEqual(await d.invoke({ a: "foo" }, null as never), {
+    serializedStaticInputs: JSON.stringify({ a: "foo" }),
+  });
+
+  assert.deepEqual(await d.invoke({ a: "foo", b: [1, 2] }, null as never), {
+    serializedStaticInputs: JSON.stringify({ a: "foo", b: [1, 2] }),
+  });
+
+  const expectedSchema = {
+    inputSchema: {
+      type: "object",
+      properties: {
+        a: {
+          title: "a",
+          type: "string",
+        },
+        b: {
+          title: "b",
+          type: "array",
+          items: { type: "number" },
+        },
+      },
+      additionalProperties: false,
+      required: ["a"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        serializedStaticInputs: {
+          title: "serializedStaticInputs",
+          type: "string",
+        },
+      },
+      additionalProperties: false,
+    },
+  };
+  assert.deepEqual(await d.describe(), expectedSchema);
+  assert.deepEqual(await d.describe({ a: "foo", b: [1, 2] }), expectedSchema);
+});
+
 test("override title", async () => {
   const d = defineNodeType({
     name: "foo",
@@ -1755,6 +1836,22 @@ test("error: default does not match type", () => {
         type: "string",
         // @ts-expect-error
         default: 123,
+      },
+    },
+    outputs: {},
+    invoke: () => ({}),
+  });
+});
+
+test("error: can't set optional when there is a default", () => {
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      si1: {
+        type: "string",
+        default: "foo",
+        // @ts-expect-error
+        optional: true,
       },
     },
     outputs: {},
