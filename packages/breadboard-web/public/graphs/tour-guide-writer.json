@@ -247,8 +247,12 @@
                         "title": "location",
                         "description": "The value to substitute for the parameter \"location\"",
                         "type": [
-                          "string",
-                          "object"
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
                         ]
                       },
                       "generator": {
@@ -285,8 +289,12 @@
                         "title": "activity",
                         "description": "The value to substitute for the parameter \"activity\"",
                         "type": [
-                          "string",
-                          "object"
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
                         ]
                       }
                     },

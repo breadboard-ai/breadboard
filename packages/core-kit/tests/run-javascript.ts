@@ -84,6 +84,8 @@ test("describe outputs when raw = true", async (t) => {
   const result = (await handler.describe({ raw: true })).outputSchema;
   t.deepEqual(result, {
     type: "object",
+    properties: {},
+    required: [],
     additionalProperties: true,
   });
 });
@@ -96,8 +98,10 @@ test("describe outputs when raw = false", async (t) => {
       result: {
         title: "result",
         description: "The result of running the JavaScript code",
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
     },
+    required: [],
     additionalProperties: false,
   });
 });
@@ -144,6 +148,7 @@ test("describe inputs", async (t) => {
       },
       what: {
         title: "what",
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
     },
     required: ["code"],

@@ -7,6 +7,7 @@
 import type { JSONSchema4 } from "json-schema";
 import type { PortConfigMap } from "../common/port.js";
 import { toJSONSchema } from "../type-system/type.js";
+import type { StaticInputPortConfig } from "./config.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
@@ -14,50 +15,43 @@ export function portConfigMapToJSONSchema(
 ): JSONSchema4 & {
   properties?: { [k: string]: JSONSchema4 };
 } {
-  const schema: JSONSchema4 & { properties?: { [k: string]: JSONSchema4 } } = {
-    type: "object",
-  };
-  const sortedProperties = Object.entries(config).sort(([nameA], [nameB]) =>
-    nameA.localeCompare(nameB)
+  const sortedPropertyEntries = Object.entries(config).sort(
+    ([nameA], [nameB]) => nameA.localeCompare(nameB)
   );
-  if (sortedProperties.length > 0) {
-    const optional = new Set(
-      forceOptional === true ? Object.keys(config) : forceOptional
-    );
-    schema.properties = Object.fromEntries(
-      sortedProperties.map(([name, config]) => {
-        const { description, type, behavior } = config;
-        const schema: JSONSchema4 = {
-          title: config.title ?? name,
-        };
-        if (description) {
-          schema.description = description;
+  const forceOptionalSet = new Set(
+    forceOptional === true ? Object.keys(config) : forceOptional
+  );
+  return {
+    type: "object",
+    properties: Object.fromEntries(
+      sortedPropertyEntries.map(
+        ([name, { title, description, type, behavior, ...config }]) => {
+          const schema: JSONSchema4 = { title: title ?? name };
+          if (description) {
+            schema.description = description;
+          }
+          Object.assign(schema, toJSONSchema(type));
+          const defaultValue = (config as StaticInputPortConfig).default;
+          if (defaultValue !== undefined) {
+            schema.default = defaultValue;
+          }
+          if (config.format !== undefined) {
+            schema.format = config.format;
+          }
+          if (behavior !== undefined && behavior.length > 0) {
+            schema.behavior = behavior;
+          }
+          return [name, schema];
         }
-        if ("default" in config && config.default !== undefined) {
-          schema.default = config.default;
-        }
-        Object.assign(schema, toJSONSchema(type));
-        if ("format" in config && config.format !== undefined) {
-          schema.format = config.format;
-        }
-        if (behavior !== undefined && behavior.length > 0) {
-          schema.behavior = behavior;
-        }
-        if ("optional" in config && config.optional === true) {
-          optional.add(name);
-        }
-        return [name, schema];
-      })
-    );
-    const required = sortedProperties
+      )
+    ),
+    required: sortedPropertyEntries
       .filter(([name, config]) => {
-        const hasDefault = "default" in config && config.default !== undefined;
-        return !hasDefault && !optional.has(name);
+        const isOptional = (config as StaticInputPortConfig).optional === true;
+        const hasDefault =
+          (config as StaticInputPortConfig).default !== undefined;
+        return !isOptional && !hasDefault && !forceOptionalSet.has(name);
       })
-      .map(([name]) => name);
-    if (required.length > 0) {
-      schema.required = required;
-    }
-  }
-  return schema;
+      .map(([name]) => name),
+  };
 }

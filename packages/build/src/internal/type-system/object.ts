@@ -48,20 +48,20 @@ export function object(
   properties: Record<string, BreadboardType>,
   additional?: BreadboardType
 ): AdvancedBreadboardType<JsonSerializable> {
-  const jsonSchema: JSONSchema4 = { type: "object" };
-  if (Object.keys(properties).length > 0) {
-    jsonSchema.properties = Object.fromEntries(
+  const jsonSchema: JSONSchema4 = {
+    type: "object",
+    properties: Object.fromEntries(
       Object.entries(properties).map(([name, type]) => [
         name,
         toJSONSchema(type),
       ])
-    );
-    jsonSchema.required = Object.keys(properties);
-  }
+    ),
+  };
+  jsonSchema.required = Object.keys(properties);
   if (additional === undefined) {
     jsonSchema.additionalProperties = false;
   } else if (additional === "unknown") {
-    // This is the JSON Schema default if you omit additionalProperties.
+    jsonSchema.additionalProperties = true;
   } else {
     jsonSchema.additionalProperties = toJSONSchema(additional);
   }
