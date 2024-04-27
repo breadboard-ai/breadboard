@@ -61,6 +61,18 @@ export const contextBuilder = code(({ context, instruction }) => {
   };
 });
 
+export const contextBuilderWithoutSystemInstruction = code(({ context }) => {
+  if (typeof context === "string") {
+    // A clever trick. Let's see if this works
+    // A user can supply context as either ContextItem[] or as a string.
+    // When it's a string, let's just conjure up the proper ContextItem[]
+    // from that.
+    context = [{ role: "user", parts: [{ text: context }] }];
+  }
+  const list = (context as unknown[]) || [];
+  return { context: list };
+});
+
 export const contextAssembler = code(({ context, generated }) => {
   if (!context) throw new Error("Context is required");
   return { context: [...(context as ContextItem[]), generated as ContextItem] };

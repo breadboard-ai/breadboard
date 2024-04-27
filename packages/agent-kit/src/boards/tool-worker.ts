@@ -8,7 +8,11 @@ import { NewNodeFactory, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
-import { contextAssembler, contextBuilder } from "../context.js";
+import {
+  contextAssembler,
+  contextBuilder,
+  contextBuilderWithoutSystemInstruction,
+} from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 import {
   boardInvokeAssembler,
@@ -237,7 +241,7 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     .examples(sampleTools)
     .default("[]");
 
-  const buildContext = contextBuilder({
+  const buildContext = contextBuilderWithoutSystemInstruction({
     $id: "buildContext",
     $metadata: {
       title: "Build Context",
@@ -272,6 +276,7 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     $metadata: { title: "Do Work", description: "Using Gemini to do the work" },
     tools: formatFunctionDeclarations.tools,
     context: buildContext.context,
+    systemInstruction: instruction,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
