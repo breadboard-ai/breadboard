@@ -1199,9 +1199,7 @@
         {
           "id": "doWork",
           "type": "text",
-          "configuration": {
-            "text": "unused"
-          },
+          "configuration": {},
           "metadata": {
             "title": "Do Work",
             "description": "Using Gemini to do the work"
@@ -1321,9 +1319,7 @@
         {
           "id": "replyToFunction",
           "type": "text",
-          "configuration": {
-            "text": "unused"
-          },
+          "configuration": {},
           "metadata": {
             "title": "Reply to Function",
             "description": "Using Gemini to reply to function results"

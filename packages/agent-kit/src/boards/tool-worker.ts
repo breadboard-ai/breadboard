@@ -276,7 +276,6 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     tools: formatFunctionDeclarations.tools,
     context: buildContext.context,
     systemInstruction: instruction,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
   const router = functionCallOrText({
@@ -334,7 +333,6 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     },
     tools: formatFunctionDeclarations.tools,
     context: formatFunctionResponse.context,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
   });
 
   const assembleContext = contextAssembler({
