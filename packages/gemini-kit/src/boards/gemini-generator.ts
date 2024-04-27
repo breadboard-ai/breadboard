@@ -378,17 +378,26 @@ const methodChooser = code(({ useStreaming }) => {
 
 export default await board(() => {
   const parameters = base.input({
-    $id: "parameters",
+    $metadata: {
+      title: "Input Parameters",
+      description: "Collecting input parameters",
+    },
     schema: parametersSchema,
   });
 
   const chooseMethod = methodChooser({
-    $metadata: { title: "Choose Method" },
+    $metadata: {
+      title: "Choose Method",
+      description: "Choosing the right Gemini API method",
+    },
     useStreaming: parameters.useStreaming,
   });
 
   const makeUrl = templates.urlTemplate({
-    $id: "makeURL",
+    $metadata: {
+      title: "Make URL",
+      description: "Creating the Gemini API URL",
+    },
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
     GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
@@ -424,7 +433,7 @@ export default await board(() => {
   });
 
   const fetch = core.fetch({
-    $id: "callGeminiAPI",
+    $metadata: { title: "Make API Call", description: "Calling Gemini API" },
     method: "POST",
     stream: parameters.useStreaming.memoize(),
     url: makeUrl.url.memoize(),
@@ -451,7 +460,10 @@ export default await board(() => {
   });
 
   const streamTransform = nursery.transformStream({
-    $id: "streamTransform",
+    $metadata: {
+      title: "Transform Stream",
+      description: "Transforming the API output stream to be consumable",
+    },
     board: board(() => {
       const transformChunk = json.jsonata({
         $id: "transformChunk",
@@ -465,21 +477,24 @@ export default await board(() => {
   });
 
   base.output({
-    $id: "textOutput",
+    $metadata: { title: "Content Output", description: "Outputting content" },
     schema: textOutputSchema,
     context: formatResponse,
     text: formatResponse,
   });
 
   base.output({
-    $id: "toolCallsOutput",
+    $metadata: {
+      title: "Tool Call Output",
+      description: "Outputting a tool call",
+    },
     schema: toolCallOutputSchema,
     context: formatResponse,
     toolCalls: formatResponse,
   });
 
   return base.output({
-    $id: "streamOutput",
+    $metadata: { title: "Stream Output", description: "Outputting a stream" },
     schema: streamOutputSchema,
     stream: streamTransform,
   });
