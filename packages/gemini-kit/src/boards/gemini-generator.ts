@@ -259,12 +259,15 @@ const streamOutputSchema = {
 } satisfies Schema;
 
 const retryCounter = code((inputs) => {
+  type FetchError = { error?: { code?: number } };
   const retry = (inputs.retry as number) || 0;
-  // incorporate error codes
-  // 500 and 200 with empty content
-  // but not 404, 429 or 400, because these are either the caller's problem
-  // or in case of 429, retries are actually doing more harm than good.
-  if (retry < 0)
+  const errorCode = (inputs.error as FetchError)?.error?.code;
+  // Retry won't help with 404, 429 or 400, because these are either the
+  // caller's problem or in case of 429, retries are actually doing more harm
+  // than good.
+  const retryWontHelp =
+    errorCode && (errorCode == 400 || errorCode == 429 || errorCode == 404);
+  if (retryWontHelp || retry < 0)
     return {
       $error: {
         error:
@@ -419,6 +422,7 @@ export default await board(() => {
     safetySettings: parameters.safetySettings.memoize(),
     stopSequences: parameters.stopSequences.memoize(),
     retry: parameters.retry,
+    error: {},
   });
 
   const makeBody = bodyBuilder({
@@ -442,7 +446,7 @@ export default await board(() => {
 
   const errorCollector = core.passthrough({
     $metadata: {
-      title: "Error Collector",
+      title: "Collect Errors",
       description: "Collecting the error from Gemini API",
     },
     error: fetch.$error,
@@ -450,6 +454,7 @@ export default await board(() => {
   });
 
   errorCollector.retry.to(countRetries);
+  errorCollector.error.to(countRetries);
 
   const formatResponse = responseFormatter({
     $metadata: {
@@ -458,6 +463,8 @@ export default await board(() => {
     },
     response: fetch.response,
   });
+
+  formatResponse.$error.as("error").to(errorCollector);
 
   const streamTransform = nursery.transformStream({
     $metadata: {
