@@ -388,17 +388,6 @@ export default await board(() => {
     body: makeBody.result,
   });
 
-  // const formatResponse = json.jsonata({
-  //   $id: "formatResponse",
-  //   expression: `
-  // response.candidates[0].content.parts[0].{
-  //   "text": text ? text,
-  //   "toolCalls": functionCall ? [ functionCall ],
-  //   "context": $append($$.context, %.$)
-  // }`,
-  //   raw: true,
-  //   response: fetch,
-  // });
   const formatResponse = responseFormatter({
     $metadata: {
       title: "Format Response",
