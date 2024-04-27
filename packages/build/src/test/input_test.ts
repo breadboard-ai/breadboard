@@ -7,36 +7,44 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { anyOf, array, object } from "../index.js";
-import { input } from "../internal/board/input.js";
-import type { BreadboardType } from "../internal/type-system/type.js";
+import { input, type GenericSpecialInput } from "../internal/board/input.js";
+import type {
+  BreadboardType,
+  JsonSerializable,
+} from "../internal/type-system/type.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-function assertType<T extends { type: BreadboardType }>(
+function checkInput<T extends GenericSpecialInput>(
   input: T,
-  expected: BreadboardType
+  expectedType: BreadboardType,
+  expectedExamples?: JsonSerializable[]
 ): T {
-  assert.equal(input.type, expected);
+  assert.equal(input.type, expectedType);
+  assert.deepEqual(input.examples, expectedExamples);
   return input;
 }
 
 test("defaults to string", () => {
   // $ExpectType Input<string>
-  assertType(input(), "string");
+  checkInput(input(), "string");
 
-  // $ExpectType Input<string>
-  assertType(input({ description: "Hello" }), "string");
+  checkInput(
+    // $ExpectType Input<string>
+    input({ description: "Hello" }),
+    "string"
+  );
 });
 
 test("only type", () => {
   // $ExpectType Input<string>
-  assertType(input({ type: "string" }), "string");
+  checkInput(input({ type: "string" }), "string");
 
   // $ExpectType Input<number>
-  assertType(input({ type: "number" }), "number");
+  checkInput(input({ type: "number" }), "number");
 
   // $ExpectType Input<boolean>
-  assertType(input({ type: "boolean" }), "boolean");
+  checkInput(input({ type: "boolean" }), "boolean");
 
   // $ExpectType Input<string | number>
   input({ type: anyOf("string", "number") });
@@ -47,24 +55,24 @@ test("only type", () => {
 
 test("only default", () => {
   // $ExpectType InputWithDefault<string>
-  assertType(input({ default: "foo" }), "string");
+  checkInput(input({ default: "foo" }), "string");
 
   // $ExpectType InputWithDefault<number>
-  assertType(input({ default: 42 }), "number");
+  checkInput(input({ default: 42 }), "number");
 
   // $ExpectType InputWithDefault<boolean>
-  assertType(input({ default: true }), "boolean");
+  checkInput(input({ default: true }), "boolean");
 });
 
 test("type and default", () => {
   // $ExpectType InputWithDefault<string>
-  assertType(input({ type: "string", default: "foo" }), "string");
+  checkInput(input({ type: "string", default: "foo" }), "string");
 
   // $ExpectType InputWithDefault<number>
-  assertType(input({ type: "number", default: 42 }), "number");
+  checkInput(input({ type: "number", default: 42 }), "number");
 
   // $ExpectType InputWithDefault<boolean>
-  assertType(input({ type: "boolean", default: true }), "boolean");
+  checkInput(input({ type: "boolean", default: true }), "boolean");
 
   // $ExpectType InputWithDefault<{ foo: string[]; }>
   input({
@@ -73,22 +81,101 @@ test("type and default", () => {
   });
 });
 
+test("type and default and examples", () => {
+  // $ExpectType InputWithDefault<string>
+  checkInput(
+    input({ type: "string", default: "foo", examples: ["a", "b"] }),
+    "string",
+    ["a", "b"]
+  );
+
+  // $ExpectType InputWithDefault<number>
+  checkInput(
+    input({ type: "number", default: 42, examples: [1, 2, 3] }),
+    "number",
+    [1, 2, 3]
+  );
+
+  // $ExpectType InputWithDefault<boolean>
+  checkInput(
+    input({ type: "boolean", default: true, examples: [true, false] }),
+    "boolean",
+    [true, false]
+  );
+
+  // $ExpectType InputWithDefault<{ foo: string[]; }>
+  input({
+    type: object({ foo: array("string") }),
+    default: { foo: ["bar"] },
+    examples: [{ foo: ["a"] }, { foo: ["b"] }],
+  });
+});
+
 test("default doesn't match type", () => {
-  // @ts-expect-error
-  input({ type: "string", default: 42 });
+  input({
+    // TODO(aomarks) Only default should error ideally.
+    // @ts-expect-error
+    type: "string",
+    // @ts-expect-error
+    default: 42,
+  });
 
-  // @ts-expect-error
-  input({ type: "number", default: true });
+  input({
+    // TODO(aomarks) Only default should error ideally.
+    // @ts-expect-error
+    type: "number",
+    // @ts-expect-error
+    default: true,
+  });
 
-  // @ts-expect-error
-  input({ type: "boolean", default: "foo" });
+  input({
+    // TODO(aomarks) Only default should error ideally.
+    // @ts-expect-error
+    type: "boolean",
+    // @ts-expect-error
+    default: "foo",
+  });
+
+  input({
+    type: object({ foo: array("string") }),
+    default: {
+      foo: [
+        // @ts-expect-error
+        42,
+      ],
+    },
+  });
+});
+
+test("examples don't match type", () => {
+  input({
+    type: "string",
+    examples: [
+      // @ts-expect-error
+      42,
+    ],
+  });
+
+  input({
+    type: "number",
+    examples: [
+      // @ts-expect-error
+      true,
+    ],
+  });
+
+  input({
+    type: "boolean",
+    examples: [
+      // @ts-expect-error
+      "foo",
+    ],
+  });
 
   input({
     type: object({ foo: array("string") }),
     // @ts-expect-error
-    default: {
-      foo: [42],
-    },
+    examples: [{ foo: [42] }],
   });
 });
 
@@ -115,4 +202,15 @@ test("invalid defaults", () => {
     () => input({ default: { foo: "bar" } }),
     /Error: Unknown default type: {"foo":"bar"}/
   );
+});
+
+test("invalid examples", () => {
+  // @ts-expect-error
+  input({ examples: undefined });
+
+  // @ts-expect-error
+  input({ examples: null });
+
+  // @ts-expect-error
+  input({ examples: { foo: "bar" } });
 });

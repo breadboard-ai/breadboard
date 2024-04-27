@@ -495,6 +495,71 @@ test("input with default", () => {
   );
 });
 
+test("input with examples", () => {
+  const myInput = input({ examples: ["example 1", "example 2"] });
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {
+      myNodeIn: { type: "string" },
+    },
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({
+    myNodeIn: myInput,
+  });
+  checkSerialization(
+    board({
+      inputs: { myInput },
+      outputs: { boardOut: myNode.outputs.myNodeOut },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                myInput: {
+                  type: "string",
+                  examples: ["example 1", "example 2"],
+                  //        ^^^^^^^^^^^^^^^^^^^^^^^^^^ here it is!
+                },
+              },
+              required: ["myInput"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: { type: "string" },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+      edges: [
+        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
+        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
+      ],
+    }
+  );
+});
+
 test("input with description", () => {
   const myInput = input({ description: "This is my description" });
   const myNode = defineNodeType({
