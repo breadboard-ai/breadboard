@@ -13,6 +13,7 @@ export const inputsFromSettings = (settings: SettingsStore | null) => {
   const inputsSection = settings.getSection(
     BreadboardUI.Types.SETTINGS_TYPE.INPUTS
   );
+  if (!inputsSection) return undefined;
   const values = Array.from(inputsSection.items.values());
   if (!values.length) return undefined;
 
