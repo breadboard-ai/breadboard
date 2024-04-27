@@ -258,6 +258,23 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
+const retryCounter = code((inputs) => {
+  const retry = (inputs.retry as number) || 0;
+  // incorporate error codes
+  // 500 and 200 with empty content
+  // but not 404, 429 or 400, because these are either the caller's problem
+  // or in case of 429, retries are actually doing more harm than good.
+  if (retry < 0)
+    return {
+      $error: {
+        error:
+          "Exceeded retry count, was unable to produce a useful response from the Gemini API.",
+      },
+    };
+  inputs.retry = retry - 1;
+  return inputs;
+});
+
 const bodyBuilder = code(
   ({
     context,
@@ -376,21 +393,54 @@ export default await board(() => {
       "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
     GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
     model: parameters.model,
-    ...chooseMethod,
+    method: chooseMethod.method,
+    sseOption: chooseMethod.sseOption,
+  });
+
+  const countRetries = retryCounter({
+    $metadata: {
+      title: "Check Retry Count",
+      description: "Making sure we can retry, if necessary.",
+    },
+    context: parameters.context.memoize(),
+    systemInstruction: parameters.systemInstruction.memoize(),
+    text: parameters.text.memoize(),
+    model: parameters.model.memoize(),
+    tools: parameters.tools.memoize(),
+    safetySettings: parameters.safetySettings.memoize(),
+    stopSequences: parameters.stopSequences.memoize(),
+    retry: parameters.retry,
   });
 
   const makeBody = bodyBuilder({
     $metadata: { title: "Make Request Body" },
-    ...parameters,
+    context: countRetries.context,
+    systemInstruction: countRetries.systemInstruction,
+    text: countRetries.text,
+    model: countRetries.model,
+    tools: countRetries.tools,
+    safetySettings: countRetries.safetySettings,
+    stopSequences: countRetries.stopSequences,
   });
 
   const fetch = core.fetch({
     $id: "callGeminiAPI",
     method: "POST",
-    stream: parameters.useStreaming,
-    url: makeUrl.url,
+    stream: parameters.useStreaming.memoize(),
+    url: makeUrl.url.memoize(),
     body: makeBody.result,
   });
+
+  const errorCollector = core.passthrough({
+    $metadata: {
+      title: "Error Collector",
+      description: "Collecting the error from Gemini API",
+    },
+    error: fetch.$error,
+    retry: countRetries.retry,
+  });
+
+  errorCollector.retry.to(countRetries);
 
   const formatResponse = responseFormatter({
     $metadata: {
