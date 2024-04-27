@@ -177,6 +177,13 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    retry: {
+      type: "number",
+      title: "Retry Count",
+      description:
+        "The number of times to retry the LLM call in case of failure",
+      default: "1",
+    },
     safetySettings: {
       type: "object",
       title: "Safety Settings",
@@ -346,24 +353,21 @@ const responseFormatter = code(({ response }) => {
   }
 });
 
+const methodChooser = code(({ useStreaming }) => {
+  const method = useStreaming ? "streamGenerateContent" : "generateContent";
+  const sseOption = useStreaming ? "&alt=sse" : "";
+  return { method, sseOption };
+});
+
 export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
   });
 
-  function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
-    const method = useStreaming ? "streamGenerateContent" : "generateContent";
-    const sseOption = useStreaming ? "&alt=sse" : "";
-    return { method, sseOption };
-  }
-
-  const chooseMethod = core.runJavascript({
-    $id: "chooseMethod",
-    name: "chooseMethodFunction",
-    code: chooseMethodFunction.toString(),
-    raw: true,
-    useStreaming: parameters,
+  const chooseMethod = methodChooser({
+    $metadata: { title: "Choose Method" },
+    useStreaming: parameters.useStreaming,
   });
 
   const makeUrl = templates.urlTemplate({
