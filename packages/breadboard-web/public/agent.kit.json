@@ -1020,7 +1020,8 @@
           "from": "buildContext",
           "to": "doWork",
           "out": "context",
-          "in": "context"
+          "in": "context",
+          "constant": true
         },
         {
           "from": "buildContext",
@@ -1033,6 +1034,12 @@
           "to": "fn-3",
           "out": "context",
           "in": "context"
+        },
+        {
+          "from": "doWork",
+          "to": "doWork",
+          "out": "$error",
+          "in": "retry"
         },
         {
           "from": "doWork",
@@ -1080,13 +1087,15 @@
           "from": "input-1",
           "to": "doWork",
           "out": "instruction",
-          "in": "systemInstruction"
+          "in": "systemInstruction",
+          "constant": true
         },
         {
           "from": "formatFunctionDeclarations",
           "to": "doWork",
           "out": "tools",
-          "in": "tools"
+          "in": "tools",
+          "constant": true
         },
         {
           "from": "formatFunctionDeclarations",
@@ -1199,7 +1208,9 @@
         {
           "id": "doWork",
           "type": "text",
-          "configuration": {},
+          "configuration": {
+            "retry": "none"
+          },
           "metadata": {
             "title": "Do Work",
             "description": "Using Gemini to do the work"

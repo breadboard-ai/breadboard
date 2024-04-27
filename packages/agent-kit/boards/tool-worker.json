@@ -107,6 +107,12 @@
       "in": "list"
     },
     {
+      "from": "input-1",
+      "to": "doWork",
+      "out": "instruction",
+      "in": "systemInstruction"
+    },
+    {
       "from": "formatFunctionDeclarations",
       "to": "doWork",
       "out": "tools",
@@ -211,7 +217,7 @@
       "id": "buildContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const buildContext = ({ context, instruction }) => {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n};",
+        "code": "const buildContext = ({ context }) => {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  return { context: list };\n};",
         "name": "buildContext",
         "raw": true
       },
@@ -223,9 +229,7 @@
     {
       "id": "doWork",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Do Work",
         "description": "Using Gemini to do the work"
@@ -276,12 +280,14 @@
               "default": "What is the square root of e?"
             },
             "instruction": {
+              "type": "string",
               "title": "Instruction",
-              "format": "multiline",
+              "description": "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
               "examples": [
                 "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
               ],
-              "type": "string"
+              "default": "",
+              "format": "multiline"
             },
             "tools": {
               "title": "Tools",
@@ -343,9 +349,7 @@
     {
       "id": "replyToFunction",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Reply to Function",
         "description": "Using Gemini to reply to function results"
