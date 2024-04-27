@@ -70,6 +70,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (input.description !== undefined) {
         schema.description = input.description;
       }
+      if (input.examples !== undefined && input.examples.length > 0) {
+        schema.examples = input.examples;
+      }
     }
     mainInputSchema[mainInputName] = schema;
   }
