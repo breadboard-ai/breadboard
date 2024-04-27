@@ -325,6 +325,27 @@ const bodyBuilder = code(
   }
 );
 
+const responseFormatter = code(({ response }) => {
+  type Part = { text: string } | { functionCall: unknown };
+  type ContentItem = { content: { parts: Part[] } };
+  type Response = { candidates: ContentItem[] } | undefined;
+  const r = response as Response;
+  const context = r?.candidates?.[0].content;
+  const firstPart = context?.parts?.[0];
+  if (!firstPart) {
+    return {
+      $error: {
+        error: `No parts in response "${JSON.stringify(response)}" found`,
+      },
+    };
+  }
+  if ("text" in firstPart) {
+    return { text: firstPart.text, context };
+  } else {
+    return { toolCalls: firstPart.functionCall, context };
+  }
+});
+
 export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
@@ -367,16 +388,23 @@ export default await board(() => {
     body: makeBody.result,
   });
 
-  const formatResponse = json.jsonata({
-    $id: "formatResponse",
-    expression: `
-  response.candidates[0].content.parts.{
-    "text": text ? text,
-    "toolCalls": functionCall ? [ functionCall ],
-    "context": $append($$.context, %.$)
-  }`,
-    raw: true,
-    response: fetch,
+  // const formatResponse = json.jsonata({
+  //   $id: "formatResponse",
+  //   expression: `
+  // response.candidates[0].content.parts[0].{
+  //   "text": text ? text,
+  //   "toolCalls": functionCall ? [ functionCall ],
+  //   "context": $append($$.context, %.$)
+  // }`,
+  //   raw: true,
+  //   response: fetch,
+  // });
+  const formatResponse = responseFormatter({
+    $metadata: {
+      title: "Format Response",
+      description: "Formatting Gemini API response",
+    },
+    response: fetch.response,
   });
 
   const streamTransform = nursery.transformStream({
