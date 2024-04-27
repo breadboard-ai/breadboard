@@ -221,7 +221,7 @@ const boardToFunction = await board(({ item }) => {
     "Use this board to convert specified boards into function-calling signatures",
 });
 
-const toolWorker = await board(({ context, instruction, tools }) => {
+const toolWorker = await board(({ context, instruction, tools, retry }) => {
   context
     .title("Context")
     .isArray()
@@ -239,6 +239,12 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     .optional()
     .examples(sampleTools)
     .default("[]");
+  retry
+    .title("Retry Count")
+    .description("How many times to retry in case of LLM error")
+    .isNumber()
+    .optional()
+    .default("5");
 
   const buildContext = contextBuilderWithoutSystemInstruction({
     $id: "buildContext",
@@ -333,6 +339,7 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     },
     tools: formatFunctionDeclarations.tools,
     context: formatFunctionResponse.context,
+    retry,
   });
 
   const assembleContext = contextAssembler({
