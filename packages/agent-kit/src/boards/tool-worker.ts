@@ -10,7 +10,6 @@ import { json } from "@google-labs/json-kit";
 
 import {
   contextAssembler,
-  contextBuilder,
   contextBuilderWithoutSystemInstruction,
 } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
