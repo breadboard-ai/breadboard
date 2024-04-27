@@ -108,7 +108,7 @@ export default defineNodeType({
     };
     // GET can not have a body.
     if (method !== "GET") {
-      init.body = body as BodyInit;
+      init.body = JSON.stringify(body);
     } else if (body) {
       throw new Error("GET requests can not have a body");
     }
