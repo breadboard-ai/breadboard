@@ -31,6 +31,7 @@ export class Instance<
   /* Reflective     */ R extends boolean,
 > implements SerializableNode
 {
+  readonly id?: string;
   readonly type: string;
   readonly inputs: { [K in keyof I]: InputPort<I[K]> };
   readonly outputs: { [K in keyof O]: OutputPort<O[K]> };
@@ -53,12 +54,18 @@ export class Instance<
     reflective: boolean,
     args: {
       [K: string]: JsonSerializable | OutputPortReference<JsonSerializable>;
-    }
+    } & { $id?: string }
   ) {
     this.type = type;
     this.#dynamicInputType = dynamicInputs?.type;
     this.#dynamicOutputType = dynamicOutputs?.type;
     this.#reflective = reflective;
+
+    this.id = args["$id"];
+    if (this.id !== undefined) {
+      args = { ...args };
+      delete args["$id"];
+    }
 
     {
       const { ports, primary } = this.#processInputs(staticInputs, args);

@@ -1184,3 +1184,62 @@ test("board title, description, and version", () => {
     }
   );
 });
+
+test("node can have IDs", () => {
+  const d1 = defineNodeType({
+    name: "d1",
+    inputs: {},
+    outputs: {
+      foo: { type: "string", primary: true },
+    },
+    invoke: () => ({ foo: "foo" }),
+  });
+
+  const d2 = defineNodeType({
+    name: "d2",
+    inputs: {
+      bar: { type: "string" },
+    },
+    outputs: {
+      baz: { type: "string", primary: true },
+    },
+    invoke: () => ({ baz: "baz" }),
+  });
+
+  const i1 = d1({ $id: "myCustomId1" });
+  const i2 = d2({ $id: "myCustomId2", bar: i1 });
+  const b = board({ inputs: {}, outputs: { i2 } });
+
+  checkSerialization(b, {
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {},
+            required: [],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { i2: { type: "string" } },
+            required: ["i2"],
+          },
+        },
+      },
+      { id: "myCustomId1", type: "d1", configuration: {} },
+      { id: "myCustomId2", type: "d2", configuration: {} },
+    ],
+    edges: [
+      { from: "myCustomId1", out: "foo", to: "myCustomId2", in: "bar" },
+      { from: "myCustomId2", out: "baz", to: "output-0", in: "i2" },
+    ],
+  });
+});

@@ -167,7 +167,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     }
 
     const { type } = node;
-    const thisNodeId = nextIdForType(type);
+    const thisNodeId = node.id ?? nextIdForType(type);
     const configuration: Record<string, NodeValue> = {};
 
     // Note it's important we add the node to the nodes map before we next

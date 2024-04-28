@@ -209,14 +209,19 @@ function primary(configs: PortConfigs): keyof typeof configs | undefined {
 }
 
 type StrictInputs<I extends Record<string, InputPortConfig>> = {
-  [K in keyof I]: K extends "*"
-    ? StrictMatch<I[K], DynamicInputPortConfig>
-    : StrictMatch<
-        I[K],
-        GetDefault<I[K]> extends JsonSerializable
-          ? StaticInputPortConfig & { default: Convert<I[K]>; optional: never }
-          : StaticInputPortConfig
-      >;
+  [K in keyof I]: K extends "$id"
+    ? never
+    : K extends "*"
+      ? StrictMatch<I[K], DynamicInputPortConfig>
+      : StrictMatch<
+          I[K],
+          GetDefault<I[K]> extends JsonSerializable
+            ? StaticInputPortConfig & {
+                default: Convert<I[K]>;
+                optional: never;
+              }
+            : StaticInputPortConfig
+        >;
 } & ForbidMultiplePrimaries<I>;
 
 type StrictOutputs<O extends Record<string, OutputPortConfig>> = {

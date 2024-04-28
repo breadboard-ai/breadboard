@@ -12,6 +12,7 @@ import { test } from "node:test";
 import { defineNodeType } from "../internal/define/define.js";
 import { object } from "../internal/type-system/object.js";
 import { array } from "../internal/type-system/array.js";
+import { input } from "../internal/board/input.js";
 
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
@@ -1872,4 +1873,98 @@ test("error: can't set optional when there is a default", () => {
     outputs: {},
     invoke: () => ({}),
   });
+});
+
+test("error: input port can't be called $id", () => {
+  assert.throws(
+    () =>
+      defineNodeType({
+        name: "foo",
+        inputs: {
+          // @ts-expect-error
+          $id: { type: "string" },
+        },
+        outputs: {},
+        invoke: () => ({}),
+      }),
+    /"\$id" cannot be used as an input port name because it is reserved/
+  );
+});
+
+test("error: $id must only be a string, not an output port", () => {
+  const d1 = defineNodeType({
+    name: "d1",
+    inputs: {},
+    outputs: {
+      foo: { type: "string", primary: true },
+    },
+    invoke: () => ({ foo: "foo" }),
+  });
+  const i1 = d1({});
+
+  const d2 = defineNodeType({
+    name: "d2",
+    inputs: {},
+    outputs: {},
+    invoke: () => ({}),
+  });
+
+  d2({ $id: "foo" });
+  d2({
+    // @ts-expect-error
+    $id: i1.outputs.foo,
+  });
+  d2({
+    // @ts-expect-error
+    $id: input(),
+  });
+});
+
+test("$id should not show up as an instance input", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {},
+    invoke: () => ({}),
+  });
+  const i = d({ $id: "foo" });
+  // $ExpectType {}
+  i.inputs;
+  // $ExpectType {}
+  i.outputs;
+  assert.equal(
+    // @ts-expect-error
+    i.inputs.$id,
+    undefined
+  );
+});
+
+test("$id should not show up as a reflective output", () => {
+  const d = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": {
+        type: "string",
+      },
+    },
+    outputs: {
+      "*": {
+        type: "string",
+        reflective: true,
+      },
+    },
+    describe: () => ({ inputs: {} }),
+    invoke: () => ({}),
+  });
+  const i = d({ $id: "foo", notId: "foo" });
+  // $ExpectType { notId: InputPort<string>; }
+  i.inputs;
+  // $ExpectType { notId: OutputPort<string>; }
+  i.outputs;
+  assert.equal(
+    // @ts-expect-error
+    i.outputs.$id,
+    undefined
+  );
+  assert.ok(i.outputs.notId);
 });
