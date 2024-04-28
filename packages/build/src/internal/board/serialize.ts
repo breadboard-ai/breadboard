@@ -139,6 +139,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     a.id.localeCompare(b.id)
   );
   return {
+    title: board.title,
+    description: board.description,
+    version: board.version,
     nodes: [mainInputNode, mainOutputNode, ...sortedNodes],
     edges: edges.sort((a, b) => {
       if (a.from != b.from) {

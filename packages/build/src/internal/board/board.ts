@@ -88,6 +88,9 @@ export type BoardDefinition<
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
+  readonly title?: string;
+  readonly description?: string;
+  readonly version?: string;
 };
 
 // TODO(aomarks) Fix this definition so that it doesn't need <any, any>.
