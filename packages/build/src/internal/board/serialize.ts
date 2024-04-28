@@ -142,22 +142,22 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     ...(board.title ? { title: board.title } : {}),
     ...(board.description ? { description: board.description } : {}),
     ...(board.version ? { version: board.version } : {}),
-    nodes: [mainInputNode, mainOutputNode, ...sortedNodes],
     edges: edges.sort((a, b) => {
       if (a.from != b.from) {
         return a.from.localeCompare(b.from);
       }
-      if (a.out != b.out) {
-        return a.out.localeCompare(b.out);
-      }
       if (a.to != b.to) {
         return a.to.localeCompare(b.to);
+      }
+      if (a.out != b.out) {
+        return a.out.localeCompare(b.out);
       }
       if (a.in != b.in) {
         return a.in.localeCompare(b.in);
       }
       return 0;
     }),
+    nodes: [mainInputNode, mainOutputNode, ...sortedNodes],
   };
 
   function visitNodeAndReturnItsId(node: SerializableNode): string {
@@ -236,7 +236,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   }
 
   function addEdge(from: string, fromPort: string, to: string, toPort: string) {
-    edges.push({ from, out: fromPort, to, in: toPort });
+    edges.push({ from, to, out: fromPort, in: toPort });
   }
 
   function nextIdForType(type: string): string {
