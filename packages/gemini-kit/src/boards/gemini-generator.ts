@@ -261,13 +261,24 @@ const streamOutputSchema = {
 const retryCounter = code((inputs) => {
   type FetchError = { error?: { code?: number } };
   const retry = (inputs.retry as number) || 0;
-  const errorCode = (inputs.error as FetchError)?.error?.code;
-  // Retry won't help with 404, 429 or 400, because these are either the
-  // caller's problem or in case of 429, retries are actually doing more harm
-  // than good.
-  const retryWontHelp =
-    errorCode && (errorCode == 400 || errorCode == 429 || errorCode == 404);
-  if (retryWontHelp || retry < 0)
+  const error = inputs.error as FetchError;
+  const errorCode = error?.error?.code;
+  if (errorCode) {
+    // Retry won't help with 404, 429 or 400, because these are either the
+    // caller's problem or in case of 429, retries are actually doing more harm
+    // than good.
+    const retryWontHelp =
+      errorCode == 400 || errorCode == 429 || errorCode == 404;
+    if (retryWontHelp) {
+      return { $error: { error } };
+    }
+    // The "-1" value is something that responseFormatter sends when empty
+    // response is encountered.
+    if (errorCode == -1) {
+      return { $error: error };
+    }
+  }
+  if (retry < 0)
     return {
       $error: {
         error:
@@ -362,7 +373,10 @@ const responseFormatter = code(({ response }) => {
   if (!firstPart) {
     return {
       $error: {
-        error: `No parts in response "${JSON.stringify(response)}" found`,
+        error: {
+          message: `No parts in response "${JSON.stringify(response)}" found`,
+          code: -1,
+        },
       },
     };
   }
