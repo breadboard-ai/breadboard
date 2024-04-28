@@ -18,6 +18,7 @@ export interface SerializableBoard {
 }
 
 export interface SerializableNode {
+  id?: string;
   type: string;
   inputs: Record<string, SerializableInputPort>;
 }

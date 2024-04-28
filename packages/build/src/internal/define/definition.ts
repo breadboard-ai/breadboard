@@ -95,6 +95,11 @@ export class DefinitionImpl<
     invoke: VeryLooseInvokeFn,
     describe?: LooseDescribeFn
   ) {
+    if ("$id" in staticInputs) {
+      throw new Error(
+        '"$id" cannot be used as an input port name because it is reserved'
+      );
+    }
     this.#name = name;
     this.#staticInputs = staticInputs;
     this.#staticOutputs = staticOutputs;
@@ -360,10 +365,10 @@ type StrictInstantiateArgs<
   OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
-> = { [K in keyof Omit<SI, OI>]: InstantiateArg<SI[K]> } & {
+> = { $id?: string } & { [K in keyof Omit<SI, OI>]: InstantiateArg<SI[K]> } & {
   [K in OI]?: InstantiateArg<SI[K]> | undefined;
 } & {
-  [K in keyof Omit<A, keyof SI>]: DI extends JsonSerializable
+  [K in keyof Omit<A, keyof SI | "$id">]: DI extends JsonSerializable
     ? InstantiateArg<DI>
     : never;
 };
@@ -372,7 +377,9 @@ type InstanceInputs<
   SI extends { [K: string]: JsonSerializable },
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
-> = Expand<SI & { [K in keyof A]: K extends keyof SI ? SI[K] : DI }>;
+> = Expand<
+  SI & { [K in keyof Omit<A, "$id">]: K extends keyof SI ? SI[K] : DI }
+>;
 
 type InstanceOutputs<
   SI extends { [K: string]: JsonSerializable },
@@ -381,7 +388,7 @@ type InstanceOutputs<
   R extends boolean,
   A extends LooseInstantiateArgs,
 > = R extends true
-  ? Expand<SO & { [K in Exclude<keyof A, keyof SI>]: DO }>
+  ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id">]: DO }>
   : SO;
 
 type InstantiateArg<T extends JsonSerializable> =
