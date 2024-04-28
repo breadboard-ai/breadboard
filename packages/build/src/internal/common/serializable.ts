@@ -12,6 +12,9 @@ import type { DefaultValue, OutputPortGetter } from "./port.js";
 export interface SerializableBoard {
   inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
   outputs: Record<string, SerializableOutputPortReference>;
+  title?: string;
+  description?: string;
+  version?: string;
 }
 
 export interface SerializableNode {

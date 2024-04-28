@@ -1,4 +1,7 @@
 {
+  "title": "Example of @breadboard-ai/build",
+  "description": "A simple example of using the @breadboard-ai/build API",
+  "version": "1.0.0",
   "nodes": [
     {
       "id": "input-0",

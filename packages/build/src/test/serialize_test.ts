@@ -1137,3 +1137,50 @@ test("error: input not reachable from output", () => {
     /Board input "boardInput2" is not reachable from any of its outputs./
   );
 });
+
+test("board title, description, and version", () => {
+  const foo = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      foo: { type: "string", primary: true },
+    },
+    invoke: () => ({ foo: "foo" }),
+  })({});
+  checkSerialization(
+    board({
+      title: "Board Name",
+      description: "Board Description",
+      version: "1.2.3",
+      inputs: {},
+      outputs: { foo },
+    }),
+    {
+      title: "Board Name",
+      description: "Board Description",
+      version: "1.2.3",
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: { type: "object", properties: {}, required: [] },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { foo: { type: "string" } },
+              required: ["foo"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+      edges: [{ from: "foo-0", out: "foo", to: "output-0", in: "foo" }],
+    }
+  );
+});
