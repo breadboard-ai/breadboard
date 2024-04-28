@@ -841,6 +841,74 @@ test("long chain", () => {
   );
 });
 
+test("triangle", () => {
+  const aDef = defineNodeType({
+    name: "a",
+    inputs: {},
+    outputs: {
+      aOut1: { type: "number" },
+      aOut2: { type: "number" },
+    },
+    invoke: () => ({ aOut1: 123, aOut2: 123 }),
+  });
+
+  const bDef = defineNodeType({
+    name: "b",
+    inputs: {
+      bIn: { type: "number" },
+    },
+    outputs: {
+      bOut: { type: "number", primary: true },
+    },
+    invoke: () => ({ bOut: 123 }),
+  });
+
+  const a = aDef({});
+  const b1 = bDef({ bIn: a.outputs.aOut2 });
+  const b2 = bDef({ bIn: a.outputs.aOut1 });
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { b1, b2 },
+    }),
+    {
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: { type: "object", properties: {}, required: [] },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                b1: { type: "number" },
+                b2: { type: "number" },
+              },
+              required: ["b1", "b2"],
+            },
+          },
+        },
+        { id: "a-0", type: "a", configuration: {} },
+        { id: "b-0", type: "b", configuration: {} },
+        { id: "b-1", type: "b", configuration: {} },
+      ],
+      edges: [
+        { from: "a-0", out: "aOut1", to: "b-1", in: "bIn" },
+        { from: "a-0", out: "aOut2", to: "b-0", in: "bIn" },
+        { from: "b-0", out: "bOut", to: "output-0", in: "b1" },
+        { from: "b-1", out: "bOut", to: "output-0", in: "b2" },
+      ],
+    }
+  );
+});
+
 test("polymorphic inputs", () => {
   const bInput = input({ type: "number" });
   const myNode = defineNodeType({
