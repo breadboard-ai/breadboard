@@ -853,17 +853,21 @@ export class ActivityLog extends LitElement {
                   if ((error.error as Error)?.name === "AbortError") {
                     console.log("💖 actually aborted");
                   }
-                  let messageOutput = "";
-                  let errorData = error;
-                  while (typeof errorData === "object") {
-                    if (errorData && "message" in errorData) {
-                      messageOutput += `${errorData.message}\n`;
+                  if (typeof error.error === "string") {
+                    output = error.error;
+                  } else {
+                    let messageOutput = "";
+                    let errorData = error;
+                    while (typeof errorData === "object") {
+                      if (errorData && "message" in errorData) {
+                        messageOutput += `${errorData.message}\n`;
+                      }
+
+                      errorData = errorData.error as ErrorObject;
                     }
 
-                    errorData = errorData.error as ErrorObject;
+                    output = messageOutput;
                   }
-
-                  output = messageOutput;
                 }
 
                 content = html`${output}`;

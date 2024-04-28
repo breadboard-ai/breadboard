@@ -29,7 +29,10 @@ export default {
         .addInputs(inputs)
         .setAdditionalProperties(true)
         .build(),
-      outputSchema: new SchemaBuilder().addInputs(inputs).build(),
+      outputSchema: new SchemaBuilder()
+        .addInputs(inputs)
+        .setAdditionalProperties(true)
+        .build(),
     };
   },
   invoke: async (inputs: InputValues): Promise<OutputValues> => {

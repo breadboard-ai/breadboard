@@ -177,6 +177,13 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    retry: {
+      type: "number",
+      title: "Retry Count",
+      description:
+        "The number of times to retry the LLM call in case of failure",
+      default: "1",
+    },
     safetySettings: {
       type: "object",
       title: "Safety Settings",
@@ -250,6 +257,37 @@ const streamOutputSchema = {
     },
   },
 } satisfies Schema;
+
+const retryCounter = code((inputs) => {
+  type FetchError = { error?: { code?: number } };
+  const retry = (inputs.retry as number) || 0;
+  const error = inputs.error as FetchError;
+  const errorCode = error?.error?.code;
+  if (errorCode) {
+    // Retry won't help with 404, 429 or 400, because these are either the
+    // caller's problem or in case of 429, retries are actually doing more harm
+    // than good.
+    const retryWontHelp =
+      errorCode == 400 || errorCode == 429 || errorCode == 404;
+    if (retryWontHelp) {
+      return { $error: { error } };
+    }
+    // The "-1" value is something that responseFormatter sends when empty
+    // response is encountered.
+    if (errorCode == -1) {
+      return { $error: error };
+    }
+  }
+  if (retry < 0)
+    return {
+      $error: {
+        error:
+          "Exceeded retry count, was unable to produce a useful response from the Gemini API.",
+      },
+    };
+  inputs.retry = retry - 1;
+  return inputs;
+});
 
 const bodyBuilder = code(
   ({
@@ -325,62 +363,128 @@ const bodyBuilder = code(
   }
 );
 
+const responseFormatter = code(({ response }) => {
+  type Part = { text: string } | { functionCall: unknown };
+  type ContentItem = { content: { parts: Part[] } };
+  type Response = { candidates: ContentItem[] } | undefined;
+  const r = response as Response;
+  const context = r?.candidates?.[0].content;
+  const firstPart = context?.parts?.[0];
+  if (!firstPart) {
+    return {
+      $error: {
+        error: {
+          message: `No parts in response "${JSON.stringify(response)}" found`,
+          code: -1,
+        },
+      },
+    };
+  }
+  if ("text" in firstPart) {
+    return { text: firstPart.text, context };
+  } else {
+    return { toolCalls: firstPart.functionCall, context };
+  }
+});
+
+const methodChooser = code(({ useStreaming }) => {
+  const method = useStreaming ? "streamGenerateContent" : "generateContent";
+  const sseOption = useStreaming ? "&alt=sse" : "";
+  return { method, sseOption };
+});
+
 export default await board(() => {
   const parameters = base.input({
-    $id: "parameters",
+    $metadata: {
+      title: "Input Parameters",
+      description: "Collecting input parameters",
+    },
     schema: parametersSchema,
   });
 
-  function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
-    const method = useStreaming ? "streamGenerateContent" : "generateContent";
-    const sseOption = useStreaming ? "&alt=sse" : "";
-    return { method, sseOption };
-  }
-
-  const chooseMethod = core.runJavascript({
-    $id: "chooseMethod",
-    name: "chooseMethodFunction",
-    code: chooseMethodFunction.toString(),
-    raw: true,
-    useStreaming: parameters,
+  const chooseMethod = methodChooser({
+    $metadata: {
+      title: "Choose Method",
+      description: "Choosing the right Gemini API method",
+    },
+    useStreaming: parameters.useStreaming,
   });
 
   const makeUrl = templates.urlTemplate({
-    $id: "makeURL",
+    $metadata: {
+      title: "Make URL",
+      description: "Creating the Gemini API URL",
+    },
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
     GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
     model: parameters.model,
-    ...chooseMethod,
+    method: chooseMethod.method,
+    sseOption: chooseMethod.sseOption,
+  });
+
+  const countRetries = retryCounter({
+    $metadata: {
+      title: "Check Retry Count",
+      description: "Making sure we can retry, if necessary.",
+    },
+    context: parameters.context.memoize(),
+    systemInstruction: parameters.systemInstruction.memoize(),
+    text: parameters.text.memoize(),
+    model: parameters.model.memoize(),
+    tools: parameters.tools.memoize(),
+    safetySettings: parameters.safetySettings.memoize(),
+    stopSequences: parameters.stopSequences.memoize(),
+    retry: parameters.retry,
+    error: {},
   });
 
   const makeBody = bodyBuilder({
     $metadata: { title: "Make Request Body" },
-    ...parameters,
+    context: countRetries.context,
+    systemInstruction: countRetries.systemInstruction,
+    text: countRetries.text,
+    model: countRetries.model,
+    tools: countRetries.tools,
+    safetySettings: countRetries.safetySettings,
+    stopSequences: countRetries.stopSequences,
   });
 
   const fetch = core.fetch({
-    $id: "callGeminiAPI",
+    $metadata: { title: "Make API Call", description: "Calling Gemini API" },
     method: "POST",
-    stream: parameters.useStreaming,
-    url: makeUrl.url,
+    stream: parameters.useStreaming.memoize(),
+    url: makeUrl.url.memoize(),
     body: makeBody.result,
   });
 
-  const formatResponse = json.jsonata({
-    $id: "formatResponse",
-    expression: `
-  response.candidates[0].content.parts.{
-    "text": text ? text,
-    "toolCalls": functionCall ? [ functionCall ],
-    "context": $append($$.context, %.$)
-  }`,
-    raw: true,
-    response: fetch,
+  const errorCollector = core.passthrough({
+    $metadata: {
+      title: "Collect Errors",
+      description: "Collecting the error from Gemini API",
+    },
+    error: fetch.$error,
+    retry: countRetries.retry,
   });
 
+  errorCollector.retry.to(countRetries);
+  errorCollector.error.to(countRetries);
+
+  const formatResponse = responseFormatter({
+    $metadata: {
+      title: "Format Response",
+      description: "Formatting Gemini API response",
+    },
+    response: fetch.response,
+  });
+
+  formatResponse.$error.as("error").to(errorCollector);
+
   const streamTransform = nursery.transformStream({
-    $id: "streamTransform",
+    $metadata: {
+      title: "Transform Stream",
+      description: "Transforming the API output stream to be consumable",
+    },
     board: board(() => {
       const transformChunk = json.jsonata({
         $id: "transformChunk",
@@ -394,21 +498,24 @@ export default await board(() => {
   });
 
   base.output({
-    $id: "textOutput",
+    $metadata: { title: "Content Output", description: "Outputting content" },
     schema: textOutputSchema,
     context: formatResponse,
     text: formatResponse,
   });
 
   base.output({
-    $id: "toolCallsOutput",
+    $metadata: {
+      title: "Tool Call Output",
+      description: "Outputting a tool call",
+    },
     schema: toolCallOutputSchema,
     context: formatResponse,
     toolCalls: formatResponse,
   });
 
   return base.output({
-    $id: "streamOutput",
+    $metadata: { title: "Stream Output", description: "Outputting a stream" },
     schema: streamOutputSchema,
     stream: streamTransform,
   });

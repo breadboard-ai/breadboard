@@ -8,7 +8,10 @@ import { NewNodeFactory, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
-import { contextAssembler, contextBuilder } from "../context.js";
+import {
+  contextAssembler,
+  contextBuilderWithoutSystemInstruction,
+} from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 import {
   boardInvokeAssembler,
@@ -218,7 +221,7 @@ const boardToFunction = await board(({ item }) => {
     "Use this board to convert specified boards into function-calling signatures",
 });
 
-const toolWorker = await board(({ context, instruction, tools }) => {
+const toolWorker = await board(({ context, instruction, tools, retry }) => {
   context
     .title("Context")
     .isArray()
@@ -236,8 +239,14 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     .optional()
     .examples(sampleTools)
     .default("[]");
+  retry
+    .title("Retry Count")
+    .description("How many times to retry in case of LLM error")
+    .isNumber()
+    .optional()
+    .default("5");
 
-  const buildContext = contextBuilder({
+  const buildContext = contextBuilderWithoutSystemInstruction({
     $id: "buildContext",
     $metadata: {
       title: "Build Context",
@@ -272,7 +281,7 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     $metadata: { title: "Do Work", description: "Using Gemini to do the work" },
     tools: formatFunctionDeclarations.tools,
     context: buildContext.context,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
+    systemInstruction: instruction,
   });
 
   const router = functionCallOrText({
@@ -330,7 +339,7 @@ const toolWorker = await board(({ context, instruction, tools }) => {
     },
     tools: formatFunctionDeclarations.tools,
     context: formatFunctionResponse.context,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
+    retry,
   });
 
   const assembleContext = contextAssembler({

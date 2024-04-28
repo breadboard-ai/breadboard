@@ -28,6 +28,7 @@ export const addNodeProxyServerConfig = (
   const servers = settings.getSection(
     BreadboardUI.Types.SETTINGS_TYPE.NODE_PROXY_SERVERS
   );
+  if (!servers) return config;
   const values = Array.from(servers.items.values());
   if (!values.length) return config;
 

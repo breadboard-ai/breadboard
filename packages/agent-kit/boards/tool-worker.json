@@ -107,6 +107,18 @@
       "in": "list"
     },
     {
+      "from": "input-1",
+      "to": "doWork",
+      "out": "instruction",
+      "in": "systemInstruction"
+    },
+    {
+      "from": "input-1",
+      "to": "replyToFunction",
+      "out": "retry",
+      "in": "retry"
+    },
+    {
       "from": "formatFunctionDeclarations",
       "to": "doWork",
       "out": "tools",
@@ -211,7 +223,7 @@
       "id": "buildContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const buildContext = ({ context, instruction }) => {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n};",
+        "code": "const buildContext = ({ context }) => {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  return { context: list };\n};",
         "name": "buildContext",
         "raw": true
       },
@@ -223,9 +235,7 @@
     {
       "id": "doWork",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Do Work",
         "description": "Using Gemini to do the work"
@@ -276,12 +286,14 @@
               "default": "What is the square root of e?"
             },
             "instruction": {
+              "type": "string",
               "title": "Instruction",
-              "format": "multiline",
+              "description": "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
               "examples": [
                 "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
               ],
-              "type": "string"
+              "default": "",
+              "format": "multiline"
             },
             "tools": {
               "title": "Tools",
@@ -297,6 +309,12 @@
                 "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
               ],
               "default": "[]"
+            },
+            "retry": {
+              "title": "Retry Count",
+              "description": "How many times to retry in case of LLM error",
+              "type": "number",
+              "default": "5"
             }
           },
           "required": [
@@ -343,9 +361,7 @@
     {
       "id": "replyToFunction",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Reply to Function",
         "description": "Using Gemini to reply to function results"
