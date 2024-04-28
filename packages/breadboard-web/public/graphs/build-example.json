@@ -2,6 +2,32 @@
   "title": "Example of @breadboard-ai/build",
   "description": "A simple example of using the @breadboard-ai/build API",
   "version": "1.0.0",
+  "edges": [
+    {
+      "from": "input-0",
+      "to": "promptTemplate-0",
+      "out": "word",
+      "in": "p0"
+    },
+    {
+      "from": "input-0",
+      "to": "reverseString-0",
+      "out": "word",
+      "in": "forwards"
+    },
+    {
+      "from": "promptTemplate-0",
+      "to": "output-0",
+      "out": "prompt",
+      "in": "result"
+    },
+    {
+      "from": "reverseString-0",
+      "to": "promptTemplate-0",
+      "out": "backwards",
+      "in": "p1"
+    }
+  ],
   "nodes": [
     {
       "id": "input-0",
@@ -49,32 +75,6 @@
       "id": "reverseString-0",
       "type": "reverseString",
       "configuration": {}
-    }
-  ],
-  "edges": [
-    {
-      "from": "input-0",
-      "out": "word",
-      "to": "promptTemplate-0",
-      "in": "p0"
-    },
-    {
-      "from": "input-0",
-      "out": "word",
-      "to": "reverseString-0",
-      "in": "forwards"
-    },
-    {
-      "from": "promptTemplate-0",
-      "out": "prompt",
-      "to": "output-0",
-      "in": "result"
-    },
-    {
-      "from": "reverseString-0",
-      "out": "backwards",
-      "to": "promptTemplate-0",
-      "in": "p1"
     }
   ]
 }
