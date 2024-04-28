@@ -4,12 +4,6 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "repeater-5",
-      "to": "output-2",
-      "out": "*",
-      "in": ""
-    },
-    {
       "from": "curry-3",
       "to": "repeater-5",
       "out": "board",
@@ -20,21 +14,41 @@
       "to": "curry-3",
       "out": "instruction",
       "in": "instruction"
+    },
+    {
+      "from": "repeater-5",
+      "to": "output-2",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
     {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "instruction": {
+              "title": "Chat Bot Instructions",
+              "type": "string",
+              "format": "multiline",
+              "examples": [
+                "\nAs a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.\n\nPretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.\n\nYou are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers."
+              ]
+            }
+          },
+          "required": [
+            "instruction"
+          ]
+        }
+      }
+    },
+    {
       "id": "output-2",
       "type": "output",
       "configuration": {}
-    },
-    {
-      "id": "repeater-5",
-      "type": "repeater",
-      "configuration": {},
-      "metadata": {
-        "title": "Chat Bot"
-      }
     },
     {
       "id": "curry-3",
@@ -150,27 +164,12 @@
       }
     },
     {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "instruction": {
-              "title": "Chat Bot Instructions",
-              "type": "string",
-              "format": "multiline",
-              "examples": [
-                "\nAs a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.\n\nPretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.\n\nYou are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers."
-              ]
-            }
-          },
-          "required": [
-            "instruction"
-          ]
-        }
+      "id": "repeater-5",
+      "type": "repeater",
+      "configuration": {},
+      "metadata": {
+        "title": "Chat Bot"
       }
     }
-  ],
-  "graphs": {}
+  ]
 }

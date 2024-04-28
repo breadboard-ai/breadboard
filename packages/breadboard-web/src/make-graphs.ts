@@ -10,6 +10,7 @@ import { Dirent } from "fs";
 import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { formatGraphDescriptor } from "./bgl-formatter";
 // import { execSync } from "child_process";
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
@@ -95,7 +96,11 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
       };
       await writeFile(
         path.join(graphDir, jsonFile),
-        JSON.stringify(board, null, 2)
+        JSON.stringify(
+          formatGraphDescriptor(JSON.parse(JSON.stringify(board))),
+          null,
+          2
+        )
       );
       return manifest;
     }

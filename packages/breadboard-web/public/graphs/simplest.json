@@ -18,6 +18,28 @@
   ],
   "nodes": [
     {
+      "id": "text",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Prompt",
+              "description": "The prompt to generate a completion for",
+              "examples": [
+                "Tell me a fun story about playing with breadboards"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
       "id": "response",
       "type": "output",
       "configuration": {
@@ -42,29 +64,6 @@
       "configuration": {
         "$board": "gemini-generator.json"
       }
-    },
-    {
-      "id": "text",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Prompt",
-              "description": "The prompt to generate a completion for",
-              "examples": [
-                "Tell me a fun story about playing with breadboards"
-              ]
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

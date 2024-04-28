@@ -10,10 +10,10 @@
       "in": "dates"
     },
     {
-      "from": "urlTemplate",
-      "to": "fetch",
-      "out": "url",
-      "in": "url"
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "countryCode",
+      "in": "countryCode"
     },
     {
       "from": "query",
@@ -22,75 +22,13 @@
       "in": "year"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
-      "out": "countryCode",
-      "in": "countryCode"
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
     }
   ],
   "nodes": [
-    {
-      "id": "output",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "date": {
-                "type": "string",
-                "format": "date"
-              },
-              "localName": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "countryCode": {
-                "type": "string"
-              },
-              "fixed": {
-                "type": "boolean"
-              },
-              "global": {
-                "type": "boolean"
-              },
-              "counties": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "launchYear": {
-                "type": "integer"
-              },
-              "type": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
-      }
-    },
-    {
-      "id": "urlTemplate",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://date.nager.at/api/v3/PublicHolidays/{year}/{countryCode}"
-      }
-    },
     {
       "id": "query",
       "type": "input",
@@ -245,7 +183,68 @@
           ]
         }
       }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "localName": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "fixed": {
+                "type": "boolean"
+              },
+              "global": {
+                "type": "boolean"
+              },
+              "counties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "launchYear": {
+                "type": "integer"
+              },
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://date.nager.at/api/v3/PublicHolidays/{year}/{countryCode}"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

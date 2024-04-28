@@ -10,14 +10,8 @@
       "in": "dates"
     },
     {
-      "from": "urlTemplate",
-      "to": "fetch",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "getCurrentYear",
+      "to": "query",
       "out": "year",
       "in": "year"
     },
@@ -28,50 +22,19 @@
       "in": "countryCode"
     },
     {
-      "from": "getCurrentYear",
-      "to": "query",
+      "from": "query",
+      "to": "urlTemplate",
       "out": "year",
       "in": "year"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
     }
   ],
   "nodes": [
-    {
-      "id": "output",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "dates": {
-              "title": "response",
-              "description": "The response from the fetch request",
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
-      }
-    },
-    {
-      "id": "urlTemplate",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}"
-      }
-    },
     {
       "id": "query",
       "type": "input",
@@ -228,6 +191,36 @@
       }
     },
     {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "dates": {
+              "title": "response",
+              "description": "The response from the fetch request",
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
       "id": "getCurrentYear",
       "type": "runJavascript",
       "configuration": {
@@ -235,7 +228,13 @@
         "name": "getCurrentYear",
         "raw": true
       }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

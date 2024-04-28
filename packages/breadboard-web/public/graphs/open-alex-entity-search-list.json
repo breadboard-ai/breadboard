@@ -4,34 +4,10 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "urlTemplate",
-      "to": "fetch",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "urlTemplate",
-      "to": "response",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
-      "out": "meta",
-      "in": "meta"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
-      "out": "results",
-      "in": "results"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
-      "out": "group_by",
-      "in": "group_by"
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
     },
     {
       "from": "query",
@@ -64,13 +40,93 @@
       "in": "select"
     },
     {
-      "from": "fetch",
-      "to": "spreadResponse",
-      "out": "response",
-      "in": "object"
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "group_by",
+      "in": "group_by"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "meta",
+      "in": "meta"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "results",
+      "in": "results"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "response",
+      "out": "url",
+      "in": "url"
     }
   ],
   "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "OpenAlex Search",
+          "properties": {
+            "search": {
+              "type": "string",
+              "title": "Search term",
+              "default": "Artificial Intelligence",
+              "description": "Search term to search for, double quotes for exact match"
+            },
+            "page": {
+              "type": "integer",
+              "default": "1",
+              "title": "Page number",
+              "description": "Page number to return"
+            },
+            "per_page": {
+              "type": "integer",
+              "default": "5",
+              "title": "Results per page",
+              "description": "Number of results to return per page"
+            },
+            "entity": {
+              "description": "Entity type to search for",
+              "type": "string",
+              "default": "works",
+              "enum": [
+                "works",
+                "authors",
+                "sources",
+                "institutions",
+                "topics",
+                "publishers",
+                "funders",
+                "concepts"
+              ],
+              "title": "Entity"
+            },
+            "select": {
+              "type": "string",
+              "title": "Select",
+              "default": "id,display_name,title,relevance_score",
+              "description": "Comma-separated list of fields to return"
+            }
+          },
+          "type": "object",
+          "required": [
+            "search"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
     {
       "id": "response",
       "type": "output",
@@ -150,10 +206,10 @@
       }
     },
     {
-      "id": "urlTemplate",
-      "type": "urlTemplate",
+      "id": "fetch",
+      "type": "fetch",
       "configuration": {
-        "template": "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}"
+        "method": "GET"
       }
     },
     {
@@ -166,68 +222,11 @@
       }
     },
     {
-      "id": "query",
-      "type": "input",
+      "id": "urlTemplate",
+      "type": "urlTemplate",
       "configuration": {
-        "schema": {
-          "title": "OpenAlex Search",
-          "properties": {
-            "search": {
-              "type": "string",
-              "title": "Search term",
-              "default": "Artificial Intelligence",
-              "description": "Search term to search for, double quotes for exact match"
-            },
-            "page": {
-              "type": "integer",
-              "default": "1",
-              "title": "Page number",
-              "description": "Page number to return"
-            },
-            "per_page": {
-              "type": "integer",
-              "default": "5",
-              "title": "Results per page",
-              "description": "Number of results to return per page"
-            },
-            "entity": {
-              "description": "Entity type to search for",
-              "type": "string",
-              "default": "works",
-              "enum": [
-                "works",
-                "authors",
-                "sources",
-                "institutions",
-                "topics",
-                "publishers",
-                "funders",
-                "concepts"
-              ],
-              "title": "Entity"
-            },
-            "select": {
-              "type": "string",
-              "title": "Select",
-              "default": "id,display_name,title,relevance_score",
-              "description": "Comma-separated list of fields to return"
-            }
-          },
-          "type": "object",
-          "required": [
-            "search"
-          ],
-          "additionalProperties": false
-        }
-      }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
+        "template": "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}"
       }
     }
-  ],
-  "graphs": {}
+  ]
 }

@@ -12,21 +12,6 @@
   ],
   "nodes": [
     {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "text"
-            }
-          }
-        }
-      }
-    },
-    {
       "id": "input-1",
       "type": "input",
       "configuration": {
@@ -43,7 +28,21 @@
           ]
         }
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          }
+        }
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

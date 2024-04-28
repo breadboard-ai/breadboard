@@ -5,20 +5,14 @@
   "edges": [
     {
       "from": "human-4",
-      "to": "structuredWorker-3",
-      "out": "again",
-      "in": "context"
-    },
-    {
-      "from": "human-4",
       "to": "output-2",
       "out": "context",
       "in": "text"
     },
     {
-      "from": "structuredWorker-3",
-      "to": "human-4",
-      "out": "context",
+      "from": "human-4",
+      "to": "structuredWorker-3",
+      "out": "again",
       "in": "context"
     },
     {
@@ -26,9 +20,44 @@
       "to": "structuredWorker-3",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "structuredWorker-3",
+      "to": "human-4",
+      "out": "context",
+      "in": "context"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Ad specs",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[]",
+              "examples": [
+                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n- Breadboard for Developers\n- Play and experiment with AI Patterns\n- Prototype quickly\n- Use with Gemini APIs \n- Integrate AI Into Your Project\n- Create graphs with prompts\n- Accessible AI for Developers"
+              ],
+              "format": "multiline"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -96,36 +125,6 @@
       "metadata": {
         "title": "Ad Writer"
       }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Ad specs",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[]",
-              "examples": [
-                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n- Breadboard for Developers\n- Play and experiment with AI Patterns\n- Prototype quickly\n- Use with Gemini APIs \n- Integrate AI Into Your Project\n- Create graphs with prompts\n- Accessible AI for Developers"
-              ],
-              "format": "multiline"
-            }
-          },
-          "required": [
-            "context"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

@@ -10,21 +10,9 @@
       "in": "prompts"
     },
     {
-      "from": "workflow",
-      "to": "output-2",
-      "out": "json",
-      "in": "json"
-    },
-    {
-      "from": "splitJobDescriptions",
-      "to": "createPrompts",
-      "out": "result",
-      "in": "list"
-    },
-    {
-      "from": "jobDescriptions",
-      "to": "workflow",
-      "out": "context",
+      "from": "input-1",
+      "to": "jobDescriptions",
+      "out": "purpose",
       "in": "context"
     },
     {
@@ -34,13 +22,54 @@
       "in": "json"
     },
     {
-      "from": "input-1",
-      "to": "jobDescriptions",
-      "out": "purpose",
+      "from": "jobDescriptions",
+      "to": "workflow",
+      "out": "context",
       "in": "context"
+    },
+    {
+      "from": "splitJobDescriptions",
+      "to": "createPrompts",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "workflow",
+      "to": "output-2",
+      "out": "json",
+      "in": "json"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "purpose": {
+              "title": "Purpose",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[]",
+              "examples": [
+                "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
+              ],
+              "format": "multiline"
+            }
+          },
+          "required": [
+            "purpose"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -152,44 +181,10 @@
       }
     },
     {
-      "id": "workflow",
-      "type": "structuredWorker",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "workflow": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "from": {
-                    "type": "string",
-                    "description": "an expert from whom the work is passed"
-                  },
-                  "to": {
-                    "type": "string",
-                    "description": "an expert to whom the work is passed"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "instruction": "Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another."
-      }
-    },
-    {
-      "id": "splitJobDescriptions",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "descriptions"
-      }
-    },
-    {
       "id": "jobDescriptions",
       "type": "structuredWorker",
       "configuration": {
+        "instruction": "You are building a team of expert LLM-based agents a specific purpose.\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts.",
         "schema": {
           "type": "object",
           "properties": {
@@ -213,39 +208,43 @@
               }
             }
           }
-        },
-        "instruction": "You are building a team of expert LLM-based agents a specific purpose.\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
+        }
       }
     },
     {
-      "id": "input-1",
-      "type": "input",
+      "id": "splitJobDescriptions",
+      "type": "jsonata",
       "configuration": {
+        "expression": "descriptions"
+      }
+    },
+    {
+      "id": "workflow",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another.",
         "schema": {
           "type": "object",
           "properties": {
-            "purpose": {
-              "title": "Purpose",
+            "workflow": {
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[]",
-              "examples": [
-                "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
-              ],
-              "format": "multiline"
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "an expert from whom the work is passed"
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "an expert to whom the work is passed"
+                  }
+                }
+              }
             }
-          },
-          "required": [
-            "purpose"
-          ]
+          }
         }
       }
     }
-  ],
-  "graphs": {}
+  ]
 }

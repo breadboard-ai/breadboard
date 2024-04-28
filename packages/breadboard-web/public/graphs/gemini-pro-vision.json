@@ -4,16 +4,22 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "formatOutput",
-      "to": "textOutput",
-      "out": "result",
-      "in": "result"
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "method",
+      "in": "method"
     },
     {
-      "from": "fetch-4",
-      "to": "formatError",
-      "out": "$error",
-      "in": "json"
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "sseOption",
+      "in": "sseOption"
+    },
+    {
+      "from": "chunkToText",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
     },
     {
       "from": "fetch-4",
@@ -23,15 +29,39 @@
     },
     {
       "from": "fetch-4",
+      "to": "formatError",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "fetch-4",
       "to": "formatOutput",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "parameters",
-      "to": "makeBody",
-      "out": "parts",
-      "in": "parts"
+      "from": "formatError",
+      "to": "errorOutput",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "formatOutput",
+      "to": "textOutput",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "makeBody",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "makeURL",
+      "to": "fetch-4",
+      "out": "url",
+      "in": "url"
     },
     {
       "from": "parameters",
@@ -46,40 +76,10 @@
       "in": "stream"
     },
     {
-      "from": "makeURL",
-      "to": "fetch-4",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "makeBody",
-      "to": "fetch-4",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "formatError",
-      "to": "errorOutput",
-      "out": "result",
-      "in": "error"
-    },
-    {
-      "from": "chunkToText",
-      "to": "streamOutput",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "chooseMethod",
-      "to": "makeURL",
-      "out": "method",
-      "in": "method"
-    },
-    {
-      "from": "chooseMethod",
-      "to": "makeURL",
-      "out": "sseOption",
-      "in": "sseOption"
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "parts",
+      "in": "parts"
     },
     {
       "from": "secrets-3",
@@ -89,35 +89,6 @@
     }
   ],
   "nodes": [
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "result": {
-              "type": "string",
-              "title": "Result"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "formatOutput",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$join(candidates.content.parts.text)"
-      }
-    },
-    {
-      "id": "fetch-4",
-      "type": "fetch",
-      "configuration": {
-        "method": "POST"
-      }
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -151,24 +122,57 @@
       }
     },
     {
-      "id": "makeURL",
-      "type": "urlTemplate",
+      "id": "errorOutput",
+      "type": "output",
       "configuration": {
-        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string",
+              "title": "Error"
+            }
+          }
+        }
       }
     },
     {
-      "id": "makeBody",
-      "type": "jsonata",
+      "id": "streamOutput",
+      "type": "output",
       "configuration": {
-        "expression": "{ \"contents\": { \"parts\": $.parts }}"
+        "schema": {
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Result",
+              "format": "stream"
+            }
+          }
+        }
       }
     },
     {
-      "id": "formatError",
-      "type": "jsonata",
+      "id": "textOutput",
+      "type": "output",
       "configuration": {
-        "expression": "error.message"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "name": "chooseMethodFunction",
+        "raw": true
       }
     },
     {
@@ -233,12 +237,38 @@
       }
     },
     {
-      "id": "chooseMethod",
-      "type": "runJavascript",
+      "id": "fetch-4",
+      "type": "fetch",
       "configuration": {
-        "name": "chooseMethodFunction",
-        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
-        "raw": true
+        "method": "POST"
+      }
+    },
+    {
+      "id": "formatError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "error.message"
+      }
+    },
+    {
+      "id": "formatOutput",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(candidates.content.parts.text)"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"contents\": { \"parts\": $.parts }}"
+      }
+    },
+    {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
       }
     },
     {
@@ -249,37 +279,6 @@
           "GEMINI_KEY"
         ]
       }
-    },
-    {
-      "id": "errorOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "error": {
-              "type": "string",
-              "title": "Error"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "streamOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "stream": {
-              "type": "object",
-              "title": "Result",
-              "format": "stream"
-            }
-          }
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

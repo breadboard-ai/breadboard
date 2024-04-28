@@ -4,22 +4,10 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "streamTransform",
-      "to": "streamOutput",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "openai",
-      "to": "getResponse",
-      "out": "response",
-      "in": "json"
-    },
-    {
-      "from": "openai",
-      "to": "streamTransform",
-      "out": "stream",
-      "in": "stream"
+      "from": "getResponse",
+      "to": "textOutput",
+      "out": "result",
+      "in": "text"
     },
     {
       "from": "input",
@@ -34,31 +22,65 @@
       "in": "stream"
     },
     {
-      "from": "makeHeaders",
-      "to": "openai",
-      "out": "result",
-      "in": "headers"
-    },
-    {
       "from": "makeBody",
       "to": "openai",
       "out": "result",
       "in": "body"
     },
     {
-      "from": "getResponse",
-      "to": "textOutput",
+      "from": "makeHeaders",
+      "to": "openai",
       "out": "result",
-      "in": "text"
+      "in": "headers"
+    },
+    {
+      "from": "openai",
+      "to": "getResponse",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "openai",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
     },
     {
       "from": "secrets-3",
       "to": "makeHeaders",
       "out": "OPENAI_API_KEY",
       "in": "OPENAI_API_KEY"
+    },
+    {
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "title": "Content",
+              "format": "multipart"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            }
+          }
+        }
+      }
+    },
     {
       "id": "streamOutput",
       "type": "output",
@@ -74,6 +96,60 @@
             }
           }
         }
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "getResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.content"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
+      }
+    },
+    {
+      "id": "makeHeaders",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
+      }
+    },
+    {
+      "id": "openai",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
       }
     },
     {
@@ -149,83 +225,6 @@
           }
         }
       }
-    },
-    {
-      "id": "openai",
-      "type": "fetch",
-      "configuration": {
-        "url": "https://api.openai.com/v1/chat/completions",
-        "method": "POST"
-      }
-    },
-    {
-      "id": "input",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "content": {
-              "type": "array",
-              "title": "Content",
-              "format": "multipart"
-            },
-            "useStreaming": {
-              "type": "boolean",
-              "title": "Stream",
-              "description": "Whether to stream the output",
-              "default": "false"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "makeHeaders",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
-      }
-    },
-    {
-      "id": "makeBody",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
-      }
-    },
-    {
-      "id": "getResponse",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "choices[0].message.content"
-      }
-    },
-    {
-      "id": "secrets-3",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "OPENAI_API_KEY"
-        ]
-      }
-    },
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

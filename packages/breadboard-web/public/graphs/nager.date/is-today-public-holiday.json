@@ -4,22 +4,10 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "statusCodeToResult",
-      "to": "output",
-      "out": "isPublicHoliday",
-      "in": "isPublicHoliday"
-    },
-    {
       "from": "fetch",
       "to": "statusCodeToResult",
       "out": "status",
       "in": "status"
-    },
-    {
-      "from": "urlTemplate",
-      "to": "fetch",
-      "out": "url",
-      "in": "url"
     },
     {
       "from": "query",
@@ -32,50 +20,21 @@
       "to": "urlTemplate",
       "out": "offset",
       "in": "offset"
+    },
+    {
+      "from": "statusCodeToResult",
+      "to": "output",
+      "out": "isPublicHoliday",
+      "in": "isPublicHoliday"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
     }
   ],
   "nodes": [
-    {
-      "id": "output",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "isPublicHoliday": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "isPublicHoliday"
-          ]
-        }
-      }
-    },
-    {
-      "id": "statusCodeToResult",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const statusCodeToResult = ({status})=>{if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)};",
-        "name": "statusCodeToResult",
-        "raw": true
-      }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "raw": true,
-        "method": "GET"
-      }
-    },
-    {
-      "id": "urlTemplate",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}"
-      }
-    },
     {
       "id": "query",
       "type": "input",
@@ -232,7 +191,47 @@
           ]
         }
       }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "isPublicHoliday": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "isPublicHoliday"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET",
+        "raw": true
+      }
+    },
+    {
+      "id": "statusCodeToResult",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const statusCodeToResult = ({status})=>{if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)};",
+        "name": "statusCodeToResult",
+        "raw": true
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

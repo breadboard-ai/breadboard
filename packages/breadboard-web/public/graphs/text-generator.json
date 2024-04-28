@@ -4,18 +4,6 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "invoke",
-      "to": "textOutput",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "invoke",
-      "to": "streamOutput",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
       "from": "fn-3",
       "to": "invoke",
       "out": "path",
@@ -32,39 +20,21 @@
       "to": "invoke",
       "out": "*",
       "in": ""
+    },
+    {
+      "from": "invoke",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "invoke",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
     }
   ],
   "nodes": [
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "invoke",
-      "type": "invoke",
-      "configuration": {}
-    },
-    {
-      "id": "fn-3",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_3 = ({MODEL})=>{const models={\"Gemini Pro\":\"gemini-generator.json\",PaLM:\"palm-text-generator.json\",mock:\"mock-text-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[MODEL];if(!path)throw new Error(`Unsupported model: ${MODEL}`);return{path}};",
-        "name": "fn_3",
-        "raw": true
-      }
-    },
     {
       "id": "input",
       "type": "input",
@@ -120,7 +90,36 @@
           }
         }
       }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({MODEL})=>{const models={\"Gemini Pro\":\"gemini-generator.json\",PaLM:\"palm-text-generator.json\",mock:\"mock-text-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[MODEL];if(!path)throw new Error(`Unsupported model: ${MODEL}`);return{path}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "invoke",
+      "type": "invoke",
+      "configuration": {}
     }
-  ],
-  "graphs": {}
+  ]
 }

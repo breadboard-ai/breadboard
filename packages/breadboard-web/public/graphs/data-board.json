@@ -36,6 +36,36 @@
   ],
   "nodes": [
     {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "title": "Number of parallel attemps",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
+            },
+            "text": {
+              "title": "Ad specs",
+              "format": "multiline",
+              "examples": [
+                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "n",
+            "text"
+          ]
+        }
+      }
+    },
+    {
       "id": "output-2",
       "type": "output",
       "configuration": {
@@ -66,37 +96,6 @@
         "agent": "ad-writer.json",
         "context": []
       }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "n": {
-              "title": "Number of parallel attemps",
-              "type": "number",
-              "examples": [
-                "4"
-              ]
-            },
-            "text": {
-              "title": "Ad specs",
-              "format": "multiline",
-              "examples": [
-                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "n",
-            "text"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

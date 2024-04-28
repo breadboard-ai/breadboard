@@ -23,15 +23,15 @@
     },
     {
       "from": "input-1",
-      "to": "generate",
+      "to": "assemble",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
       "to": "generate",
-      "out": "stopSequences",
-      "in": "stopSequences"
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "input-1",
@@ -41,47 +41,12 @@
     },
     {
       "from": "input-1",
-      "to": "assemble",
-      "out": "context",
-      "in": "context"
+      "to": "generate",
+      "out": "stopSequences",
+      "in": "stopSequences"
     }
   ],
   "nodes": [
-    {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Context",
-              "description": "Agent context after generation",
-              "type": "object"
-            },
-            "text": {
-              "title": "Output",
-              "type": "string",
-              "description": "Agent's output"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "assemble",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$append(context ? context, [generated])"
-      }
-    },
-    {
-      "id": "generate",
-      "type": "invoke",
-      "configuration": {
-        "text": "unused"
-      }
-    },
     {
       "id": "input-1",
       "type": "input",
@@ -120,7 +85,41 @@
           ]
         }
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "description": "Agent context after generation",
+              "type": "object"
+            },
+            "text": {
+              "title": "Output",
+              "type": "string",
+              "description": "Agent's output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "assemble",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append(context ? context, [generated])"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "invoke",
+      "configuration": {
+        "text": "unused"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

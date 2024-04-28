@@ -4,16 +4,16 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "describePicture",
-      "to": "output-2",
-      "out": "result",
-      "in": "text"
-    },
-    {
       "from": "combinePictureAndPrompt",
       "to": "describePicture",
       "out": "parts",
       "in": "parts"
+    },
+    {
+      "from": "describePicture",
+      "to": "output-2",
+      "out": "result",
+      "in": "text"
     },
     {
       "from": "input-1",
@@ -29,35 +29,6 @@
     }
   ],
   "nodes": [
-    {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Result"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "describePicture",
-      "type": "vision",
-      "configuration": {}
-    },
-    {
-      "id": "combinePictureAndPrompt",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{const picturePart=picture.parts[0];return{parts:[picturePart,{text:prompt}]}};",
-        "name": "combinePictureAndPrompt",
-        "raw": true
-      }
-    },
     {
       "id": "input-1",
       "type": "input",
@@ -87,7 +58,35 @@
           ]
         }
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "combinePictureAndPrompt",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{const picturePart=picture.parts[0];return{parts:[picturePart,{text:prompt}]}};",
+        "name": "combinePictureAndPrompt",
+        "raw": true
+      }
+    },
+    {
+      "id": "describePicture",
+      "type": "vision",
+      "configuration": {}
     }
-  ],
-  "graphs": {}
+  ]
 }
