@@ -64,6 +64,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     unconnectedInputs.add(input);
     const schema = toJSONSchema(input.type);
     if (isSpecialInput(input)) {
+      if (input.title !== undefined) {
+        schema.title = input.title;
+      }
       if (input.description !== undefined) {
         schema.description = input.description;
       }

@@ -560,8 +560,11 @@ test("input with examples", () => {
   );
 });
 
-test("input with description", () => {
-  const myInput = input({ description: "This is my description" });
+test("input with title and description", () => {
+  const myInput = input({
+    title: "This is my title",
+    description: "This is my description",
+  });
   const myNode = defineNodeType({
     name: "myNode",
     inputs: {
@@ -594,6 +597,7 @@ test("input with description", () => {
               properties: {
                 myInput: {
                   type: "string",
+                  title: "This is my title",
                   description: "This is my description",
                 },
               },
