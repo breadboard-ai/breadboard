@@ -46,6 +46,9 @@ test("0 inputs, 1 output", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -76,9 +79,6 @@ test("0 inputs, 1 output", () => {
           type: "myNode",
           configuration: {},
         },
-      ],
-      edges: [
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
       ],
     }
   );
@@ -99,6 +99,14 @@ test("monomorphic node with primary output can itself act as that output", () =>
       outputs: { boardOut: myNode },
     }),
     {
+      edges: [
+        {
+          from: "myNode-0",
+          to: "output-0",
+          out: "myNodeOutPrimary",
+          in: "boardOut",
+        },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -128,14 +136,6 @@ test("monomorphic node with primary output can itself act as that output", () =>
           id: "myNode-0",
           type: "myNode",
           configuration: {},
-        },
-      ],
-      edges: [
-        {
-          from: "myNode-0",
-          out: "myNodeOutPrimary",
-          to: "output-0",
-          in: "boardOut",
         },
       ],
     }
@@ -161,6 +161,14 @@ test("polymorphic node with primary output can itself act as that output", () =>
       outputs: { boardOut: myNode },
     }),
     {
+      edges: [
+        {
+          from: "myNode-0",
+          to: "output-0",
+          out: "myNodeOutPrimary",
+          in: "boardOut",
+        },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -192,14 +200,6 @@ test("polymorphic node with primary output can itself act as that output", () =>
           configuration: {},
         },
       ],
-      edges: [
-        {
-          from: "myNode-0",
-          out: "myNodeOutPrimary",
-          to: "output-0",
-          in: "boardOut",
-        },
-      ],
     }
   );
 });
@@ -220,6 +220,9 @@ test("raw value input is serialized to configuration", () => {
   checkSerialization(
     board({ inputs: {}, outputs: { boardOut: myNode.outputs.myNodeOut } }),
     {
+      edges: [
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -252,9 +255,6 @@ test("raw value input is serialized to configuration", () => {
           },
         },
       ],
-      edges: [
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -282,6 +282,7 @@ test("default value input is omitted from configuration", () => {
       },
     }),
     {
+      edges: [{ from: "myNode-0", to: "output-0", out: "out", in: "boardOut" }],
       nodes: [
         {
           id: "input-0",
@@ -315,7 +316,6 @@ test("default value input is omitted from configuration", () => {
           },
         },
       ],
-      edges: [{ from: "myNode-0", out: "out", to: "output-0", in: "boardOut" }],
     }
   );
 
@@ -330,6 +330,7 @@ test("default value input is omitted from configuration", () => {
       },
     }),
     {
+      edges: [{ from: "myNode-0", to: "output-0", out: "out", in: "boardOut" }],
       nodes: [
         {
           id: "input-0",
@@ -364,7 +365,6 @@ test("default value input is omitted from configuration", () => {
           },
         },
       ],
-      edges: [{ from: "myNode-0", out: "out", to: "output-0", in: "boardOut" }],
     }
   );
 });
@@ -389,6 +389,10 @@ test("input", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        { from: "input-0", to: "myNode-0", out: "myInput", in: "myNodeIn" },
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -422,10 +426,6 @@ test("input", () => {
           configuration: {},
         },
       ],
-      edges: [
-        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -450,6 +450,10 @@ test("input with default", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        { from: "input-0", to: "myNode-0", out: "myInput", in: "myNodeIn" },
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -487,10 +491,6 @@ test("input with default", () => {
           configuration: {},
         },
       ],
-      edges: [
-        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -515,6 +515,10 @@ test("input with examples", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        { from: "input-0", to: "myNode-0", out: "myInput", in: "myNodeIn" },
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -552,10 +556,6 @@ test("input with examples", () => {
           configuration: {},
         },
       ],
-      edges: [
-        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -580,6 +580,10 @@ test("input with description", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        { from: "input-0", to: "myNode-0", out: "myInput", in: "myNodeIn" },
+        { from: "myNode-0", to: "output-0", out: "myNodeOut", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -616,10 +620,6 @@ test("input with description", () => {
           configuration: {},
         },
       ],
-      edges: [
-        { from: "input-0", out: "myInput", to: "myNode-0", in: "myNodeIn" },
-        { from: "myNode-0", out: "myNodeOut", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -649,6 +649,20 @@ test("fancy types", () => {
       outputs: { boardOut: myNode.outputs.myNodeOut },
     }),
     {
+      edges: [
+        {
+          from: "input-0",
+          to: "myNode-0",
+          out: "boardInput1",
+          in: "myNodeIn1",
+        },
+        {
+          from: "myNode-0",
+          to: "output-0",
+          out: "myNodeOut",
+          in: "boardOut",
+        },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -706,20 +720,6 @@ test("fancy types", () => {
           },
         },
       ],
-      edges: [
-        {
-          from: "input-0",
-          out: "boardInput1",
-          to: "myNode-0",
-          in: "myNodeIn1",
-        },
-        {
-          from: "myNode-0",
-          out: "myNodeOut",
-          to: "output-0",
-          in: "boardOut",
-        },
-      ],
     }
   );
 });
@@ -772,6 +772,27 @@ test("long chain", () => {
       outputs: { boardStringArrayOut: boolToStringArray },
     }),
     {
+      edges: [
+        {
+          from: "boolToStringArray-0",
+          to: "output-0",
+          out: "out",
+          in: "boardStringArrayOut",
+        },
+        {
+          from: "input-0",
+          to: "numToString-0",
+          out: "boardNumInput",
+          in: "in",
+        },
+        { from: "numToString-0", to: "stringToBool-0", out: "out", in: "in" },
+        {
+          from: "stringToBool-0",
+          to: "boolToStringArray-0",
+          out: "out",
+          in: "in",
+        },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -816,26 +837,73 @@ test("long chain", () => {
           configuration: {},
         },
       ],
+    }
+  );
+});
+
+test("triangle", () => {
+  const aDef = defineNodeType({
+    name: "a",
+    inputs: {},
+    outputs: {
+      aOut1: { type: "number" },
+      aOut2: { type: "number" },
+    },
+    invoke: () => ({ aOut1: 123, aOut2: 123 }),
+  });
+
+  const bDef = defineNodeType({
+    name: "b",
+    inputs: {
+      bIn: { type: "number" },
+    },
+    outputs: {
+      bOut: { type: "number", primary: true },
+    },
+    invoke: () => ({ bOut: 123 }),
+  });
+
+  const a = aDef({});
+  const b1 = bDef({ bIn: a.outputs.aOut2 });
+  const b2 = bDef({ bIn: a.outputs.aOut1 });
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { b1, b2 },
+    }),
+    {
       edges: [
+        { from: "a-0", to: "b-0", out: "aOut2", in: "bIn" },
+        { from: "a-0", to: "b-1", out: "aOut1", in: "bIn" },
+        { from: "b-0", to: "output-0", out: "bOut", in: "b1" },
+        { from: "b-1", to: "output-0", out: "bOut", in: "b2" },
+      ],
+      nodes: [
         {
-          from: "boolToStringArray-0",
-          out: "out",
-          to: "output-0",
-          in: "boardStringArrayOut",
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: { type: "object", properties: {}, required: [] },
+          },
         },
         {
-          from: "input-0",
-          out: "boardNumInput",
-          to: "numToString-0",
-          in: "in",
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                b1: { type: "number" },
+                b2: { type: "number" },
+              },
+              required: ["b1", "b2"],
+            },
+          },
         },
-        { from: "numToString-0", out: "out", to: "stringToBool-0", in: "in" },
-        {
-          from: "stringToBool-0",
-          out: "out",
-          to: "boolToStringArray-0",
-          in: "in",
-        },
+        { id: "a-0", type: "a", configuration: {} },
+        { id: "b-0", type: "b", configuration: {} },
+        { id: "b-1", type: "b", configuration: {} },
       ],
     }
   );
@@ -861,6 +929,10 @@ test("polymorphic inputs", () => {
       outputs: { boardOut: myNode.outputs.out },
     }),
     {
+      edges: [
+        { from: "input-0", to: "myNode-0", out: "bInput", in: "b" },
+        { from: "myNode-0", to: "output-0", out: "out", in: "boardOut" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -897,10 +969,6 @@ test("polymorphic inputs", () => {
           },
         },
       ],
-      edges: [
-        { from: "input-0", out: "bInput", to: "myNode-0", in: "b" },
-        { from: "myNode-0", out: "out", to: "output-0", in: "boardOut" },
-      ],
     }
   );
 });
@@ -927,6 +995,11 @@ test("polymorphic outputs", () => {
       },
     }),
     {
+      edges: [
+        { from: "myNode-0", to: "output-0", out: "asserted1", in: "boardOut1" },
+        { from: "myNode-0", to: "output-0", out: "asserted1", in: "boardOut3" },
+        { from: "myNode-0", to: "output-0", out: "asserted2", in: "boardOut2" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -955,11 +1028,6 @@ test("polymorphic outputs", () => {
           },
         },
         { id: "myNode-0", type: "myNode", configuration: {} },
-      ],
-      edges: [
-        { from: "myNode-0", out: "asserted1", to: "output-0", in: "boardOut1" },
-        { from: "myNode-0", out: "asserted1", to: "output-0", in: "boardOut3" },
-        { from: "myNode-0", out: "asserted2", to: "output-0", in: "boardOut2" },
       ],
     }
   );
@@ -991,6 +1059,12 @@ test("placeholder", () => {
       },
     }),
     {
+      edges: [
+        { from: "myNode-0", to: "myNode-1", out: "bar", in: "foo" },
+        { from: "myNode-0", to: "output-0", out: "bar", in: "outA" },
+        { from: "myNode-1", to: "myNode-0", out: "bar", in: "foo" },
+        { from: "myNode-1", to: "output-0", out: "bar", in: "outB" },
+      ],
       nodes: [
         {
           id: "input-0",
@@ -1015,12 +1089,6 @@ test("placeholder", () => {
         },
         { id: "myNode-0", type: "myNode", configuration: {} },
         { id: "myNode-1", type: "myNode", configuration: {} },
-      ],
-      edges: [
-        { from: "myNode-0", out: "bar", to: "myNode-1", in: "foo" },
-        { from: "myNode-0", out: "bar", to: "output-0", in: "outA" },
-        { from: "myNode-1", out: "bar", to: "myNode-0", in: "foo" },
-        { from: "myNode-1", out: "bar", to: "output-0", in: "outB" },
       ],
     }
   );
@@ -1159,6 +1227,7 @@ test("board title, description, and version", () => {
       title: "Board Name",
       description: "Board Description",
       version: "1.2.3",
+      edges: [{ from: "foo-0", to: "output-0", out: "foo", in: "foo" }],
       nodes: [
         {
           id: "input-0",
@@ -1180,7 +1249,6 @@ test("board title, description, and version", () => {
         },
         { id: "foo-0", type: "foo", configuration: {} },
       ],
-      edges: [{ from: "foo-0", out: "foo", to: "output-0", in: "foo" }],
     }
   );
 });
@@ -1211,6 +1279,10 @@ test("node can have IDs", () => {
   const b = board({ inputs: {}, outputs: { i2 } });
 
   checkSerialization(b, {
+    edges: [
+      { from: "myCustomId1", to: "myCustomId2", out: "foo", in: "bar" },
+      { from: "myCustomId2", to: "output-0", out: "baz", in: "i2" },
+    ],
     nodes: [
       {
         id: "input-0",
@@ -1236,10 +1308,6 @@ test("node can have IDs", () => {
       },
       { id: "myCustomId1", type: "d1", configuration: {} },
       { id: "myCustomId2", type: "d2", configuration: {} },
-    ],
-    edges: [
-      { from: "myCustomId1", out: "foo", to: "myCustomId2", in: "bar" },
-      { from: "myCustomId2", out: "baz", to: "output-0", in: "i2" },
     ],
   });
 });
