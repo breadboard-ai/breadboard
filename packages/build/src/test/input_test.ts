@@ -31,7 +31,19 @@ test("defaults to string", () => {
 
   checkInput(
     // $ExpectType Input<string>
-    input({ description: "Hello" }),
+    input({ description: "Description" }),
+    "string"
+  );
+
+  checkInput(
+    // $ExpectType Input<string>
+    input({ title: "Title" }),
+    "string"
+  );
+
+  checkInput(
+    // $ExpectType Input<string>
+    input({ description: "Description", title: "Title" }),
     "string"
   );
 });

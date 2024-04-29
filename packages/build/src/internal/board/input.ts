@@ -47,6 +47,16 @@ export function input<T extends Record<string, unknown>>(
 // just description
 export function input(params: {
   description: string;
+  title?: string;
+  type?: undefined;
+  default?: undefined;
+  examples?: undefined;
+}): Input<string>;
+
+// just title
+export function input(params: {
+  description?: string;
+  title: string;
   type?: undefined;
   default?: undefined;
   examples?: undefined;
@@ -99,6 +109,7 @@ export function input(
   return {
     __SpecialInputBrand: true,
     type,
+    title: params?.title,
     description: params?.description,
     default: params?.default,
     examples: params?.examples,
@@ -111,6 +122,7 @@ export function input(
 
 interface LooseParams {
   type?: BreadboardType;
+  title?: string;
   description?: string;
   default?: JsonSerializable;
   examples?: JsonSerializable[];
@@ -120,6 +132,7 @@ export interface Input<T extends JsonSerializable> {
   readonly __SpecialInputBrand: true;
   readonly __type: T;
   readonly type: BreadboardType;
+  readonly title?: string;
   readonly description?: string;
   readonly default: undefined;
   readonly examples?: T[];
@@ -127,6 +140,7 @@ export interface Input<T extends JsonSerializable> {
 
 export interface InputWithDefault<T extends JsonSerializable> {
   readonly __SpecialInputBrand: true;
+  readonly title?: string;
   readonly type: BreadboardType;
   readonly description?: string;
   readonly default: T;
@@ -140,6 +154,7 @@ export type GenericSpecialInput =
 type CheckParams<T extends LooseParams> = (T["type"] extends Defined
   ? {
       type: BreadboardType;
+      title?: string;
       default?: T["type"] extends BreadboardType
         ? ConvertBreadboardType<T["type"]>
         : JsonSerializable;
@@ -153,6 +168,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
   : T["default"] extends Defined
     ? {
         type?: never;
+        title?: string;
         default: string | number | boolean;
         examples?: Array<T["default"]>;
         description?: string;
@@ -160,12 +176,18 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
     : T["examples"] extends Defined
       ? {
           type?: never;
+          title?: string;
           default?: never;
           examples?: string[] | number[] | boolean[];
           description?: string;
         }
       : never) & {
-  [K in keyof T]: K extends "type" | "default" | "examples" | "description"
+  [K in keyof T]: K extends
+    | "type"
+    | "title"
+    | "default"
+    | "examples"
+    | "description"
     ? unknown
     : never;
 };
