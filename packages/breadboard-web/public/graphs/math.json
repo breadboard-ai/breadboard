@@ -6,8 +6,8 @@
     {
       "from": "compute",
       "to": "answer",
-      "out": "*",
-      "in": ""
+      "out": "result",
+      "in": "result"
     },
     {
       "from": "generator",

@@ -72,5 +72,5 @@ Solution:`,
       name: "compute",
       code: generator.text as V<string>,
     })
-    .to(base.output({ $id: "answer", schema: outputSchema }));
+    .result.to(base.output({ $id: "answer", schema: outputSchema }));
 }).serialize(metadata);
