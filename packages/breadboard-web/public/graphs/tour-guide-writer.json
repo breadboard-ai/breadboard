@@ -4,58 +4,16 @@
   "version": "0.0.3",
   "edges": [
     {
-      "from": "travelItineraryGenerator",
-      "to": "guide",
-      "out": "text",
-      "in": "itinerary"
-    },
-    {
-      "from": "travelItineraryGenerator",
-      "to": "fn-3",
-      "out": "text",
-      "in": "itinerary"
-    },
-    {
-      "from": "fn-6",
-      "to": "guide",
-      "out": "guide",
-      "in": "guide"
-    },
-    {
-      "from": "parameters",
-      "to": "travelItinerary",
-      "out": "location",
-      "in": "location"
-    },
-    {
-      "from": "parameters",
-      "to": "travelItineraryGenerator",
-      "out": "generator",
-      "in": "$board"
-    },
-    {
-      "from": "parameters",
-      "to": "curry-4",
-      "out": "location",
-      "in": "location"
-    },
-    {
-      "from": "parameters",
-      "to": "curry-4",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "parameters",
+      "from": "createGuides",
       "to": "fn-6",
-      "out": "location",
-      "in": "location"
+      "out": "list",
+      "in": "guides"
     },
     {
-      "from": "travelItinerary",
-      "to": "travelItineraryGenerator",
-      "out": "prompt",
-      "in": "text"
+      "from": "curry-4",
+      "to": "createGuides",
+      "out": "board",
+      "in": "board"
     },
     {
       "from": "fn-3",
@@ -70,55 +28,61 @@
       "in": "activities"
     },
     {
-      "from": "createGuides",
-      "to": "fn-6",
-      "out": "list",
-      "in": "guides"
+      "from": "fn-6",
+      "to": "guide",
+      "out": "guide",
+      "in": "guide"
     },
     {
-      "from": "curry-4",
-      "to": "createGuides",
-      "out": "board",
-      "in": "board"
+      "from": "parameters",
+      "to": "curry-4",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
+      "from": "parameters",
+      "to": "curry-4",
+      "out": "location",
+      "in": "location"
+    },
+    {
+      "from": "parameters",
+      "to": "fn-6",
+      "out": "location",
+      "in": "location"
+    },
+    {
+      "from": "parameters",
+      "to": "travelItinerary",
+      "out": "location",
+      "in": "location"
+    },
+    {
+      "from": "parameters",
+      "to": "travelItineraryGenerator",
+      "out": "generator",
+      "in": "$board"
+    },
+    {
+      "from": "travelItinerary",
+      "to": "travelItineraryGenerator",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "travelItineraryGenerator",
+      "to": "fn-3",
+      "out": "text",
+      "in": "itinerary"
+    },
+    {
+      "from": "travelItineraryGenerator",
+      "to": "guide",
+      "out": "text",
+      "in": "itinerary"
     }
   ],
   "nodes": [
-    {
-      "id": "guide",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "guide": {
-              "type": "string",
-              "title": "Guide",
-              "description": "The tour guide for the specified location",
-              "format": "markdown"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "travelItineraryGenerator",
-      "type": "invoke",
-      "configuration": {
-        "stopSequences": [
-          "\n[Place]"
-        ],
-        "useStreaming": false
-      }
-    },
-    {
-      "id": "fn-6",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_6 = ({location,activities,guides})=>{const guideList=guides.map(item=>item.guide);return{guide:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}};",
-        "name": "fn_6",
-        "raw": true
-      }
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -150,19 +114,20 @@
       }
     },
     {
-      "id": "travelItinerary",
-      "type": "promptTemplate",
+      "id": "guide",
+      "type": "output",
       "configuration": {
-        "template": "[Place] Seattle, WA\n  [Top ten place-based experiences with no duplicates]\n  1) See the city from the Space Needle\n  2) Watch the fish throwing at Pike Place Market\n  3) Add chewing gum to the The Gum Wall\n  4) Stroll the Chihuly Garden and Glass Museum\n  5) Take a selfie with the Fremont Troll\n  6) Walk the quad at the University of Washington\n  7) Watch the octopus feeding at the Seattle Aquarium\n  8) Learn about aviation history at the Museum of Flight\n  9) Wander the art at the Seattle Art Museum\n  10) See the baby gorilla at the Woodland Park Zoo\n\n  [Place] Madrid, Spain\n  [Top ten place-based experiences with no duplicates]\n  1) Stroll the Gran Via\n  2) See the Prado Museum\n  3) Attend a Real Madrid game\n  4) Stroll through the Mercado de San Miguel\n  5) Sip wine at the Bodega de Palacio\n  6) Go clubbing at the Chueca district\n  7) Shop at the El Rastro flea market\n  8) Take a selfie at the Puerta del Sol\n  9) Shop at the El Corte Ingles\n  10) Enjoy tapas and wine at La Latina\n\n  [Place] Chicago, IL\n  [Top ten place-based experiences with no duplicates]\n  1) Attend a Chicago Bulls game\n  2) Stroll the Magnificent Mile\n  3) Go to a museum at the Museum of Science and Industry\n  4) Stroll the Millennium Park\n  5) Visit the Willis Tower\n  6) See the Chicago River\n  7) Take a selfie at the Bean\n  8) Eat deep dish pizza at Giordano's\n  9) Shop at the Water Tower Place\n  10) See the Chicago Theatre\n\n  [Place] {{location}}\n  [Top ten place-based experiences with no duplicates]\n  "
-      }
-    },
-    {
-      "id": "fn-3",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_3 = ({itinerary})=>{const list=itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\");return{list}};",
-        "name": "fn_3",
-        "raw": true
+        "schema": {
+          "type": "object",
+          "properties": {
+            "guide": {
+              "type": "string",
+              "title": "Guide",
+              "description": "The tour guide for the specified location",
+              "format": "markdown"
+            }
+          }
+        }
       }
     },
     {
@@ -319,7 +284,41 @@
       "metadata": {
         "title": "Curry Params into Guide"
       }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({itinerary})=>{const list=itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\");return{list}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "fn-6",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_6 = ({location,activities,guides})=>{const guideList=guides.map(item=>item.guide);return{guide:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}};",
+        "name": "fn_6",
+        "raw": true
+      }
+    },
+    {
+      "id": "travelItinerary",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "[Place] Seattle, WA\n  [Top ten place-based experiences with no duplicates]\n  1) See the city from the Space Needle\n  2) Watch the fish throwing at Pike Place Market\n  3) Add chewing gum to the The Gum Wall\n  4) Stroll the Chihuly Garden and Glass Museum\n  5) Take a selfie with the Fremont Troll\n  6) Walk the quad at the University of Washington\n  7) Watch the octopus feeding at the Seattle Aquarium\n  8) Learn about aviation history at the Museum of Flight\n  9) Wander the art at the Seattle Art Museum\n  10) See the baby gorilla at the Woodland Park Zoo\n\n  [Place] Madrid, Spain\n  [Top ten place-based experiences with no duplicates]\n  1) Stroll the Gran Via\n  2) See the Prado Museum\n  3) Attend a Real Madrid game\n  4) Stroll through the Mercado de San Miguel\n  5) Sip wine at the Bodega de Palacio\n  6) Go clubbing at the Chueca district\n  7) Shop at the El Rastro flea market\n  8) Take a selfie at the Puerta del Sol\n  9) Shop at the El Corte Ingles\n  10) Enjoy tapas and wine at La Latina\n\n  [Place] Chicago, IL\n  [Top ten place-based experiences with no duplicates]\n  1) Attend a Chicago Bulls game\n  2) Stroll the Magnificent Mile\n  3) Go to a museum at the Museum of Science and Industry\n  4) Stroll the Millennium Park\n  5) Visit the Willis Tower\n  6) See the Chicago River\n  7) Take a selfie at the Bean\n  8) Eat deep dish pizza at Giordano's\n  9) Shop at the Water Tower Place\n  10) See the Chicago Theatre\n\n  [Place] {{location}}\n  [Top ten place-based experiences with no duplicates]\n  "
+      }
+    },
+    {
+      "id": "travelItineraryGenerator",
+      "type": "invoke",
+      "configuration": {
+        "stopSequences": [
+          "\n[Place]"
+        ],
+        "useStreaming": false
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

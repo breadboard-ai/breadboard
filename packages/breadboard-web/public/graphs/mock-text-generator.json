@@ -16,44 +16,19 @@
       "in": "text"
     },
     {
-      "from": "parameters",
-      "to": "fn-3",
-      "out": "*",
-      "in": ""
-    },
-    {
       "from": "mockModelStream",
       "to": "streamOutput",
       "out": "stream",
       "in": "stream"
+    },
+    {
+      "from": "parameters",
+      "to": "fn-3",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "fn-3",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_3 = ({text,useStreaming})=>{text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}};",
-        "name": "fn_3",
-        "raw": true
-      }
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -80,11 +55,6 @@
       }
     },
     {
-      "id": "mockModelStream",
-      "type": "listToStream",
-      "configuration": {}
-    },
-    {
       "id": "streamOutput",
       "type": "output",
       "configuration": {
@@ -100,7 +70,36 @@
           }
         }
       }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({text,useStreaming})=>{text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "mockModelStream",
+      "type": "listToStream",
+      "configuration": {}
     }
-  ],
-  "graphs": {}
+  ]
 }

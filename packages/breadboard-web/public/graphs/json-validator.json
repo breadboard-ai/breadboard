@@ -5,58 +5,10 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "parameters",
-      "to": "validateJson-1",
-      "out": "text",
-      "in": "json"
-    },
-    {
-      "from": "parameters",
-      "to": "validateJson-1",
-      "out": "schema",
-      "in": "schema"
-    },
-    {
-      "from": "validateJson-1",
-      "to": "outputSuccess",
-      "out": "json",
-      "in": "text"
-    },
-    {
-      "from": "parameters",
-      "to": "formatValidationError",
-      "out": "schema",
-      "in": "schema"
-    },
-    {
-      "from": "validateJson-1",
-      "to": "formatValidationError",
-      "out": "$error",
-      "in": "$error"
-    },
-    {
-      "from": "validateJson-1",
-      "to": "formatParsingError",
-      "out": "$error",
-      "in": "$error"
-    },
-    {
-      "from": "validateJson-1",
-      "to": "parseErrorType",
-      "out": "$error",
-      "in": "json"
-    },
-    {
-      "from": "parseErrorType",
-      "to": "formatValidationError",
-      "out": "validation",
-      "in": "validation"
-    },
-    {
-      "from": "parseErrorType",
-      "to": "formatParsingError",
-      "out": "parsing",
-      "in": "parsing"
+      "from": "formatParsingError",
+      "to": "outputFailure",
+      "out": "result",
+      "in": "error"
     },
     {
       "from": "formatValidationError",
@@ -65,10 +17,58 @@
       "in": "error"
     },
     {
-      "from": "formatParsingError",
-      "to": "outputFailure",
-      "out": "result",
-      "in": "error"
+      "from": "parameters",
+      "to": "formatValidationError",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "parameters",
+      "to": "validateJson-1",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "parameters",
+      "to": "validateJson-1",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "parseErrorType",
+      "to": "formatParsingError",
+      "out": "parsing",
+      "in": "parsing"
+    },
+    {
+      "from": "parseErrorType",
+      "to": "formatValidationError",
+      "out": "validation",
+      "in": "validation"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "formatParsingError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "formatValidationError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "outputSuccess",
+      "out": "json",
+      "in": "text"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "parseErrorType",
+      "out": "$error",
+      "in": "json"
     }
   ],
   "nodes": [
@@ -105,8 +105,20 @@
       }
     },
     {
-      "id": "validateJson-1",
-      "type": "validateJson"
+      "id": "outputFailure",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "title": "Errors",
+              "description": "The validator errors that occurred"
+            }
+          }
+        }
+      }
     },
     {
       "id": "outputSuccess",
@@ -125,17 +137,17 @@
       }
     },
     {
-      "id": "formatValidationError",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "\"JSON Validation Error: \" & `$error`.error.message & \"\nWhen validaing against this schema:\n\n\" & $string(schema, true)"
-      }
-    },
-    {
       "id": "formatParsingError",
       "type": "jsonata",
       "configuration": {
         "expression": "\"JSON Parsing Error: \" & `$error`.error.message"
+      }
+    },
+    {
+      "id": "formatValidationError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\"JSON Validation Error: \" & `$error`.error.message & \"\nWhen validaing against this schema:\n\n\" & $string(schema, true)"
       }
     },
     {
@@ -147,20 +159,9 @@
       }
     },
     {
-      "id": "outputFailure",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "error": {
-              "type": "object",
-              "title": "Errors",
-              "description": "The validator errors that occurred"
-            }
-          }
-        }
-      }
+      "id": "validateJson-1",
+      "type": "validateJson",
+      "configuration": {}
     }
   ],
   "kits": [

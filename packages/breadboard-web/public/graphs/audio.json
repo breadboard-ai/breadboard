@@ -4,16 +4,16 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "describeAudio",
-      "to": "output-2",
-      "out": "text",
-      "in": "text"
-    },
-    {
       "from": "contextify",
       "to": "describeAudio",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "describeAudio",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
     },
     {
       "from": "input-1",
@@ -23,45 +23,6 @@
     }
   ],
   "nodes": [
-    {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text",
-              "format": "markdown"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "describeAudio",
-      "type": "text",
-      "configuration": {
-        "model": "gemini-1.5-pro-latest",
-        "text": "unused",
-        "systemInstruction": "Describe what you hear in the audio. Please respond in markdown"
-      }
-    },
-    {
-      "id": "contextify",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const contextify = ({audio})=>{return{context:[audio]}};",
-        "name": "contextify",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Wrap audio",
-        "description": "Wraps the audio in a context object for Gemini"
-      }
-    },
     {
       "id": "input-1",
       "type": "input",
@@ -83,7 +44,45 @@
           ]
         }
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text",
+              "format": "markdown"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "contextify",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const contextify = ({audio})=>{return{context:[audio]}};",
+        "name": "contextify",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Wrap audio",
+        "description": "Wraps the audio in a context object for Gemini"
+      }
+    },
+    {
+      "id": "describeAudio",
+      "type": "text",
+      "configuration": {
+        "model": "gemini-1.5-pro-latest",
+        "systemInstruction": "Describe what you hear in the audio. Please respond in markdown",
+        "text": "unused"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

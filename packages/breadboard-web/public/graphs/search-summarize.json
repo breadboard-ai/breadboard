@@ -4,10 +4,22 @@
   "version": "0.1.1",
   "edges": [
     {
+      "from": "customSearchURL",
+      "to": "search",
+      "out": "url",
+      "in": "url"
+    },
+    {
       "from": "generator",
       "to": "output-4",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "getSnippets",
+      "to": "summarizing-template",
+      "out": "result",
+      "in": "context"
     },
     {
       "from": "parameters",
@@ -17,33 +29,21 @@
     },
     {
       "from": "parameters",
-      "to": "summarizing-template",
-      "out": "text",
-      "in": "question"
-    },
-    {
-      "from": "parameters",
       "to": "generator",
       "out": "generator",
       "in": "$board"
     },
     {
-      "from": "summarizing-template",
-      "to": "generator",
-      "out": "prompt",
-      "in": "text"
-    },
-    {
-      "from": "customSearchURL",
-      "to": "search",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "getSnippets",
+      "from": "parameters",
       "to": "summarizing-template",
-      "out": "result",
-      "in": "context"
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "search",
+      "to": "getSnippets",
+      "out": "response",
+      "in": "json"
     },
     {
       "from": "secrets-3",
@@ -52,37 +52,13 @@
       "in": ""
     },
     {
-      "from": "search",
-      "to": "getSnippets",
-      "out": "response",
-      "in": "json"
+      "from": "summarizing-template",
+      "to": "generator",
+      "out": "prompt",
+      "in": "text"
     }
   ],
   "nodes": [
-    {
-      "id": "output-4",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Answer",
-              "description": "The answer to the query"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
-    },
-    {
-      "id": "generator",
-      "type": "invoke",
-      "configuration": {}
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -109,10 +85,22 @@
       }
     },
     {
-      "id": "summarizing-template",
-      "type": "promptTemplate",
+      "id": "output-4",
+      "type": "output",
       "configuration": {
-        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the query"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {
@@ -123,11 +111,21 @@
       }
     },
     {
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
       "id": "getSnippets",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(items.snippet, '\n')"
       }
+    },
+    {
+      "id": "search",
+      "type": "fetch",
+      "configuration": {}
     },
     {
       "id": "secrets-3",
@@ -140,10 +138,11 @@
       }
     },
     {
-      "id": "search",
-      "type": "fetch",
-      "configuration": {}
+      "id": "summarizing-template",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

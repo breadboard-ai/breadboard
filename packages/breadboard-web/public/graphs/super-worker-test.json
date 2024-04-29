@@ -4,15 +4,9 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "superWorker-5",
-      "to": "output-2",
-      "out": "out",
-      "in": "context"
-    },
-    {
-      "from": "superWorker-4",
-      "to": "superWorker-5",
-      "out": "out",
+      "from": "input-1",
+      "to": "superWorker-3",
+      "out": "context",
       "in": "in"
     },
     {
@@ -22,97 +16,19 @@
       "in": "in"
     },
     {
-      "from": "input-1",
-      "to": "superWorker-3",
-      "out": "context",
+      "from": "superWorker-4",
+      "to": "superWorker-5",
+      "out": "out",
       "in": "in"
+    },
+    {
+      "from": "superWorker-5",
+      "to": "output-2",
+      "out": "out",
+      "in": "context"
     }
   ],
   "nodes": [
-    {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "type": "string",
-              "title": "out"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "superWorker-5",
-      "type": "superWorker",
-      "configuration": {
-        "persona": {
-          "parts": [
-            {
-              "text": "You are a famous author.  You are writing a novel.\n\nYou have written a first draft of your outline, and then asked an outstanding book editor and publisher to give you suggestions.  Based on their suggestions you are going to rewrite and improve your outline.\n\nThis is great feedback and you want to try to incorporate some of it, while still staying true to your original vision for the novel."
-            }
-          ]
-        },
-        "task": {
-          "parts": [
-            {
-              "text": "Please write an improved outline for your novel, by taking the feedback into account."
-            }
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Outline Editor"
-      }
-    },
-    {
-      "id": "superWorker-4",
-      "type": "superWorker",
-      "configuration": {
-        "persona": {
-          "parts": [
-            {
-              "text": "You are an accomplished book editor and publisher.  Your specialty is being able to recognize what story elements and characters will make a great novel.  You are great at giving insightful feedback to authors to help them make their novels better."
-            }
-          ]
-        },
-        "task": {
-          "parts": [
-            {
-              "text": "Your friend, an accomplished author, has written an outline for a new book and has asked you for insightful feedback.  \n\nReview the outline that the author submitted.  Please read it very carefully.  Then, provide feedback for the author.  Give the author up to five specific suggestions to make the novel more compelling and have more chance to be a bestseller!"
-            }
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Outline Critic"
-      }
-    },
-    {
-      "id": "superWorker-3",
-      "type": "superWorker",
-      "configuration": {
-        "persona": {
-          "parts": [
-            {
-              "text": "You are a famous author.  You are writing a novel.\n\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\n\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\n\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book."
-            }
-          ]
-        },
-        "task": {
-          "parts": [
-            {
-              "text": "Write an outline for a novel, following the provided specs."
-            }
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Outline Writer"
-      }
-    },
     {
       "id": "input-1",
       "type": "input",
@@ -143,7 +59,90 @@
           ]
         }
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "out"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "superWorker-3",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are a famous author.  You are writing a novel.\n\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\n\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\n\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Write an outline for a novel, following the provided specs."
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Outline Writer"
+      }
+    },
+    {
+      "id": "superWorker-4",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are an accomplished book editor and publisher.  Your specialty is being able to recognize what story elements and characters will make a great novel.  You are great at giving insightful feedback to authors to help them make their novels better."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Your friend, an accomplished author, has written an outline for a new book and has asked you for insightful feedback.  \n\nReview the outline that the author submitted.  Please read it very carefully.  Then, provide feedback for the author.  Give the author up to five specific suggestions to make the novel more compelling and have more chance to be a bestseller!"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Outline Critic"
+      }
+    },
+    {
+      "id": "superWorker-5",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are a famous author.  You are writing a novel.\n\nYou have written a first draft of your outline, and then asked an outstanding book editor and publisher to give you suggestions.  Based on their suggestions you are going to rewrite and improve your outline.\n\nThis is great feedback and you want to try to incorporate some of it, while still staying true to your original vision for the novel."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Please write an improved outline for your novel, by taking the feedback into account."
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Outline Editor"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

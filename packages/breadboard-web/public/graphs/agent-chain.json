@@ -4,19 +4,45 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "reduce-3",
-      "to": "output-2",
-      "out": "accumulator",
-      "in": "context"
-    },
-    {
       "from": "input-1",
       "to": "reduce-3",
       "out": "spec",
       "in": "list"
+    },
+    {
+      "from": "reduce-3",
+      "to": "output-2",
+      "out": "accumulator",
+      "in": "context"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "title": "Chain spec",
+              "type": "array",
+              "description": "The list to iterate over.",
+              "items": {
+                "type": "object",
+                "format": "multiline"
+              },
+              "examples": [
+                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n\\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
+              ]
+            }
+          },
+          "required": [
+            "spec"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -146,33 +172,6 @@
         "title": "Reducer",
         "description": "Takes a chain spec and runs through it sequentially, accumulating outputs."
       }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "spec": {
-              "title": "Chain spec",
-              "type": "array",
-              "description": "The list to iterate over.",
-              "items": {
-                "type": "object",
-                "format": "multiline"
-              },
-              "examples": [
-                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n\\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
-              ]
-            }
-          },
-          "required": [
-            "spec"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

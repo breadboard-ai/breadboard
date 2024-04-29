@@ -4,10 +4,28 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "pickFirst",
+      "from": "createList",
+      "to": "generateN",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "curry-3",
+      "to": "generateN",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "filterErrors",
       "to": "output-2",
-      "out": "result",
-      "in": "best"
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "filterErrors",
+      "to": "pickFirst",
+      "out": "list",
+      "in": "list"
     },
     {
       "from": "filterErrors",
@@ -22,56 +40,8 @@
       "in": "n"
     },
     {
-      "from": "filterErrors",
-      "to": "pickFirst",
-      "out": "list",
-      "in": "list"
-    },
-    {
-      "from": "filterErrors",
-      "to": "output-2",
-      "out": "list",
-      "in": "list"
-    },
-    {
-      "from": "rank",
-      "to": "pickFirst",
-      "out": "json",
-      "in": "rank"
-    },
-    {
-      "from": "rank",
-      "to": "output-2",
-      "out": "json",
-      "in": "rank"
-    },
-    {
       "from": "generateN",
       "to": "filterErrors",
-      "out": "list",
-      "in": "list"
-    },
-    {
-      "from": "presentChoices",
-      "to": "promptTemplate-5",
-      "out": "result",
-      "in": "list"
-    },
-    {
-      "from": "promptTemplate-5",
-      "to": "rank",
-      "out": "prompt",
-      "in": "instruction"
-    },
-    {
-      "from": "curry-3",
-      "to": "generateN",
-      "out": "board",
-      "in": "board"
-    },
-    {
-      "from": "createList",
-      "to": "generateN",
       "out": "list",
       "in": "list"
     },
@@ -98,9 +68,86 @@
       "to": "promptTemplate-5",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "pickFirst",
+      "to": "output-2",
+      "out": "result",
+      "in": "best"
+    },
+    {
+      "from": "presentChoices",
+      "to": "promptTemplate-5",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "promptTemplate-5",
+      "to": "rank",
+      "out": "prompt",
+      "in": "instruction"
+    },
+    {
+      "from": "rank",
+      "to": "output-2",
+      "out": "json",
+      "in": "rank"
+    },
+    {
+      "from": "rank",
+      "to": "pickFirst",
+      "out": "json",
+      "in": "rank"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "title": "Number of parallel attempts",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
+            },
+            "agent": {
+              "title": "Agent",
+              "description": "Agent to apply to the task",
+              "examples": [
+                "ad-writer.json"
+              ],
+              "type": "string"
+            },
+            "text": {
+              "title": "Task",
+              "description": "The task to perform",
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
+              "format": "multiline",
+              "examples": [
+                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+              ]
+            }
+          },
+          "required": [
+            "n",
+            "agent",
+            "text"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -127,66 +174,12 @@
       }
     },
     {
-      "id": "pickFirst",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item"
-      }
-    },
-    {
-      "id": "filterErrors",
+      "id": "createList",
       "type": "runJavascript",
       "configuration": {
-        "code": "const filterErrors = ({list})=>{const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}};",
-        "name": "filterErrors",
+        "code": "const createList = ({n:n2})=>{return{list:[...Array(n2).keys()]}};",
+        "name": "createList",
         "raw": true
-      }
-    },
-    {
-      "id": "rank",
-      "type": "structuredWorker",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "ranking": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "choice": {
-                    "type": "string",
-                    "description": "Title of ranked choice"
-                  },
-                  "justification": {
-                    "type": "string",
-                    "description": "Detailed justification of why this is the right position within ranking"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "context": []
-      }
-    },
-    {
-      "id": "generateN",
-      "type": "map",
-      "configuration": {}
-    },
-    {
-      "id": "presentChoices",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
-      }
-    },
-    {
-      "id": "promptTemplate-5",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n\n        TASK:\n\n        {{text}}\n\n        CHOICES:\n\n        {{list}}"
       }
     },
     {
@@ -275,61 +268,67 @@
       }
     },
     {
-      "id": "createList",
+      "id": "filterErrors",
       "type": "runJavascript",
       "configuration": {
-        "code": "const createList = ({n:n2})=>{return{list:[...Array(n2).keys()]}};",
-        "name": "createList",
+        "code": "const filterErrors = ({list})=>{const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}};",
+        "name": "filterErrors",
         "raw": true
       }
     },
     {
-      "id": "input-1",
-      "type": "input",
+      "id": "generateN",
+      "type": "map",
+      "configuration": {}
+    },
+    {
+      "id": "pickFirst",
+      "type": "jsonata",
       "configuration": {
+        "expression": "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item"
+      }
+    },
+    {
+      "id": "presentChoices",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
+      }
+    },
+    {
+      "id": "promptTemplate-5",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n\n        TASK:\n\n        {{text}}\n\n        CHOICES:\n\n        {{list}}"
+      }
+    },
+    {
+      "id": "rank",
+      "type": "structuredWorker",
+      "configuration": {
+        "context": [],
         "schema": {
           "type": "object",
           "properties": {
-            "n": {
-              "title": "Number of parallel attempts",
-              "type": "number",
-              "examples": [
-                "4"
-              ]
-            },
-            "agent": {
-              "title": "Agent",
-              "description": "Agent to apply to the task",
-              "examples": [
-                "ad-writer.json"
-              ],
-              "type": "string"
-            },
-            "text": {
-              "title": "Task",
-              "description": "The task to perform",
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ],
-              "format": "multiline",
-              "examples": [
-                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
-              ]
+            "ranking": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "choice": {
+                    "type": "string",
+                    "description": "Title of ranked choice"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "Detailed justification of why this is the right position within ranking"
+                  }
+                }
+              }
             }
-          },
-          "required": [
-            "n",
-            "agent",
-            "text"
-          ]
+          }
         }
       }
     }
-  ],
-  "graphs": {}
+  ]
 }
