@@ -16,6 +16,7 @@ export { GraphRenderer } from "./editor/graph-renderer.js";
 export { Input } from "./input/input.js";
 export { InputContainer } from "./input/input-container/input-container.js";
 export { JSONTree } from "./json-tree/json-tree.js";
+export { LLMInput } from "./input/llm-input/llm-input.js";
 export { Navigation } from "./nav/nav.js";
 export { NodeDetails } from "./node-details/node-details.js";
 export { NodeInfo } from "./node-info/node-info.js";

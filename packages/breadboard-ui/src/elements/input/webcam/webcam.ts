@@ -7,6 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { LLMContent } from "../../../types/types.js";
 
 @customElement("bb-webcam-input")
 export class WebcamInput extends LitElement {
@@ -103,7 +104,7 @@ export class WebcamInput extends LitElement {
       );
   }
 
-  get value() {
+  get value(): LLMContent {
     const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
 
@@ -111,9 +112,9 @@ export class WebcamInput extends LitElement {
       role: "user",
       parts: [
         {
-          inline_data: {
+          inlineData: {
             data: inlineData.substring(preamble.length),
-            mime_type: this.type,
+            mimeType: this.type,
           },
         },
       ],

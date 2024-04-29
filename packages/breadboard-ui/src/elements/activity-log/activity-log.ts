@@ -680,23 +680,35 @@ export class ActivityLog extends LitElement {
               value = html`No data provided`;
             } else {
               value = html`${map(nodeValue.parts, (part) => {
-                if (!("inline_data" in part)) {
-                  return html`Unsupported part`;
-                }
+                if ("inlineData" in part) {
+                  if (part.inlineData.mimeType.startsWith("image")) {
+                    return html`<img
+                      src="data:image/${part.inlineData.mimeType};base64,${part
+                        .inlineData.data}"
+                    />`;
+                  }
 
-                if (part.inline_data.mime_type.startsWith("image")) {
-                  return html`<img
-                    src="data:image/${part.inline_data.mime_type};base64,${part
-                      .inline_data.data}"
-                  />`;
-                }
+                  if (part.inlineData.mimeType.startsWith("audio")) {
+                    return html`<audio
+                      controls
+                      src="data:${part.inlineData.mimeType};base64,${part
+                        .inlineData.data}"
+                    ></audio>`;
+                  }
 
-                if (part.inline_data.mime_type.startsWith("audio")) {
-                  return html`<audio
-                    controls
-                    src="data:${part.inline_data.mime_type};base64,${part
-                      .inline_data.data}"
-                  />`;
+                  if (part.inlineData.mimeType.startsWith("video")) {
+                    return html`<video
+                      controls
+                      src="data:${part.inlineData.mimeType};base64,${part
+                        .inlineData.data}"
+                    ></video>`;
+                  }
+                } else if ("text" in part) {
+                  value = html`${part.text}`;
+                } else if ("functionCall" in part) {
+                  value = html`${JSON.stringify(part.functionCall)}`;
+                } else if ("functionResponse" in part) {
+                  value = html`${JSON.stringify(part.functionResponse)}`;
                 }
               })}`;
             }

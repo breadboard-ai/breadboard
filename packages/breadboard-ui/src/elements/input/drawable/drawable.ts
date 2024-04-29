@@ -7,6 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { LLMContent } from "../../../types/types.js";
 
 @customElement("bb-drawable-input")
 export class DrawableInput extends LitElement {
@@ -286,7 +287,7 @@ export class DrawableInput extends LitElement {
     this.#lastPosition.y = y;
   }
 
-  get value() {
+  get value(): LLMContent {
     const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
 
@@ -294,9 +295,9 @@ export class DrawableInput extends LitElement {
       role: "user",
       parts: [
         {
-          inline_data: {
+          inlineData: {
             data: inlineData.substring(preamble.length),
-            mime_type: this.type,
+            mimeType: this.type,
           },
         },
       ],

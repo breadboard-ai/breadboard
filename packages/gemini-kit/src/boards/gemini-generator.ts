@@ -22,8 +22,8 @@ type TextPartType = {
 };
 
 type ImagePartType = {
-  inline_data: {
-    mime_type:
+  inlineData: {
+    mimeType:
       | "image/png"
       | "image/jpeg"
       | "image/heic"

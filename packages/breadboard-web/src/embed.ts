@@ -64,7 +64,7 @@ export class Embed extends LitElement {
       --bb-easing-duration-in: 0.15s;
       --bb-easing-duration-out: 0.3s;
       --bb-icon-add-note: url(/third_party/icons/add-note.svg);
-      --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
+      --bb-icon-add-image: url(/third_party/icons/add-image.svg);
       --bb-icon-arrow: url(/third_party/icons/arrow.svg);
       --bb-icon-arrow-back-white: url(/third_party/icons/arrow-back-white.svg);
       --bb-icon-before: url(/third_party/icons/before.svg);
