@@ -12,7 +12,7 @@ const metadata = {
   title: "The Calculator Board",
   description:
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-  version: "0.0.2",
+  version: "0.0.3",
 };
 
 const inputSchema = {
@@ -72,5 +72,5 @@ Solution:`,
       name: "compute",
       code: generator.text as V<string>,
     })
-    .to(base.output({ $id: "answer", schema: outputSchema }));
+    .result.to(base.output({ $id: "answer", schema: outputSchema }));
 }).serialize(metadata);
