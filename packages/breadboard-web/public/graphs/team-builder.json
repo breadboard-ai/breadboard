@@ -77,15 +77,15 @@
         "schema": {
           "type": "object",
           "properties": {
-            "prompts": {
-              "title": "List",
-              "type": "array",
-              "description": "The list of outputs from the board."
-            },
             "json": {
               "title": "json",
               "description": "The validated JSON.",
               "type": "string"
+            },
+            "prompts": {
+              "title": "List",
+              "type": "array",
+              "description": "The list of outputs from the board."
             }
           }
         }

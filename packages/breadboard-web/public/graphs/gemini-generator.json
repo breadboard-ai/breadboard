@@ -96,6 +96,27 @@
         "schema": {
           "type": "object",
           "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "An array of messages to use as conversation context",
+              "items": {
+                "type": "object"
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
+              ]
+            },
+            "stopSequences": {
+              "type": "array",
+              "title": "Stop Sequences",
+              "description": "An array of strings that will stop the output",
+              "items": {
+                "type": "string"
+              },
+              "default": "[]"
+            },
             "text": {
               "type": "string",
               "title": "Text",
@@ -116,32 +137,11 @@
                 "[\n  {\n    \"name\": \"The_Calculator_Board\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Board\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
               ]
             },
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "description": "An array of messages to use as conversation context",
-              "items": {
-                "type": "object"
-              },
-              "default": "[]",
-              "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
-              ]
-            },
             "useStreaming": {
               "type": "boolean",
               "title": "Stream",
               "description": "Whether to stream the output",
               "default": "false"
-            },
-            "stopSequences": {
-              "type": "array",
-              "title": "Stop Sequences",
-              "description": "An array of strings that will stop the output",
-              "items": {
-                "type": "string"
-              },
-              "default": "[]"
             }
           },
           "required": [
@@ -174,15 +174,15 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            },
             "context": {
               "type": "array",
               "title": "Context",
               "description": "The conversation context"
+            },
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
             }
           }
         }
@@ -195,15 +195,15 @@
         "schema": {
           "type": "object",
           "properties": {
-            "toolCalls": {
-              "type": "array",
-              "title": "Tool Calls",
-              "description": "The generated tool calls"
-            },
             "context": {
               "type": "array",
               "title": "Context",
               "description": "The conversation context"
+            },
+            "toolCalls": {
+              "type": "array",
+              "title": "Tool Calls",
+              "description": "The generated tool calls"
             }
           }
         }

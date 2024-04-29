@@ -78,24 +78,6 @@
         "schema": {
           "title": "OpenAlex Search",
           "properties": {
-            "search": {
-              "type": "string",
-              "title": "Search term",
-              "default": "Artificial Intelligence",
-              "description": "Search term to search for, double quotes for exact match"
-            },
-            "page": {
-              "type": "integer",
-              "default": "1",
-              "title": "Page number",
-              "description": "Page number to return"
-            },
-            "per_page": {
-              "type": "integer",
-              "default": "5",
-              "title": "Results per page",
-              "description": "Number of results to return per page"
-            },
             "entity": {
               "description": "Entity type to search for",
               "type": "string",
@@ -111,6 +93,24 @@
                 "concepts"
               ],
               "title": "Entity"
+            },
+            "page": {
+              "type": "integer",
+              "default": "1",
+              "title": "Page number",
+              "description": "Page number to return"
+            },
+            "per_page": {
+              "type": "integer",
+              "default": "5",
+              "title": "Results per page",
+              "description": "Number of results to return per page"
+            },
+            "search": {
+              "type": "string",
+              "title": "Search term",
+              "default": "Artificial Intelligence",
+              "description": "Search term to search for, double quotes for exact match"
             },
             "select": {
               "type": "string",
@@ -134,10 +134,9 @@
         "schema": {
           "type": "object",
           "properties": {
-            "url": {
-              "type": "string",
-              "description": "URL to fetch",
-              "title": "URL"
+            "group_by": {
+              "type": "array",
+              "items": {}
             },
             "meta": {
               "type": "object",
@@ -190,9 +189,10 @@
                 "additionalProperties": true
               }
             },
-            "group_by": {
-              "type": "array",
-              "items": {}
+            "url": {
+              "type": "string",
+              "description": "URL to fetch",
+              "title": "URL"
             }
           },
           "required": [

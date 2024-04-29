@@ -90,20 +90,20 @@
         "schema": {
           "type": "object",
           "properties": {
-            "location": {
-              "type": "string",
-              "title": "Location",
-              "description": "The location for which to write a tour guide",
-              "examples": [
-                "Stresa, Italy"
-              ]
-            },
             "generator": {
               "type": "board",
               "title": "Text Generator",
               "description": "The text generator to use for writing the tour guide",
               "examples": [
                 "text-generator.json"
+              ]
+            },
+            "location": {
+              "type": "string",
+              "title": "Location",
+              "description": "The location for which to write a tour guide",
+              "examples": [
+                "Stresa, Italy"
               ]
             }
           },

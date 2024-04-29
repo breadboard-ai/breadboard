@@ -36,12 +36,6 @@
         "schema": {
           "type": "object",
           "properties": {
-            "year": {
-              "title": "year",
-              "type": "number",
-              "description": "The data for year",
-              "default": "2024"
-            },
             "countryCode": {
               "title": "countryCode",
               "type": "string",
@@ -175,6 +169,12 @@
                 "ZW"
               ],
               "default": "US"
+            },
+            "year": {
+              "title": "year",
+              "type": "number",
+              "description": "The data for year",
+              "default": "2024"
             }
           },
           "required": [
