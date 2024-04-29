@@ -100,7 +100,7 @@ export class MultipartInput extends HTMLElement {
           }
 
           #add-image::before {
-            background: var(--bb-icon-add-photo) center center no-repeat;
+            background: var(--bb-icon-add-image) center center no-repeat;
           }
 
           @media (min-width: 910px) {
@@ -295,7 +295,7 @@ export class MultipartInputImage extends MultipartInputPart {
         const data = base64url.slice(base64url.indexOf(",") + 1);
         resolve({
           value: {
-            inline_data: { mime_type: "image/png", data },
+            inlineData: { mimeType: "image/png", data },
           },
           html,
           type: "image",

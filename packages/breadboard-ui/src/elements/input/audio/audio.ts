@@ -8,6 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { Task } from "@lit/task";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { asBase64 } from "../../../utils/as-base-64.js";
+import { LLMContent } from "../../../types/types.js";
 
 @customElement("bb-audio-capture")
 export class AudioInput extends LitElement {
@@ -84,12 +85,12 @@ export class AudioInput extends LitElement {
     }
   `;
 
-  get value() {
+  get value(): LLMContent {
     return {
       role: "user",
       parts: [
         {
-          inline_data: { data: this.#output || "", mime_type: this.#mimeType },
+          inlineData: { data: this.#output || "", mimeType: this.#mimeType },
         },
       ],
     };

@@ -76,29 +76,37 @@ export type OutputArgs = {
   } & Record<string, unknown>;
 };
 
-type InlineData = {
-  inline_data: { data: string; mime_type: string };
+export type LLMInlineData = {
+  inlineData: { data: string; mimeType: string };
 };
 
-type FunctionCall = {
+export type LLMFunctionCall = {
   functionCall: {
     name: string;
     args: object;
   };
 };
 
-type FunctionResponse = {
+export type LLMFunctionResponse = {
   functionResponse: {
     name: string;
     response: object;
   };
 };
 
-type Part = InlineData | FunctionCall | FunctionResponse;
+export type LLMText = {
+  text: string;
+};
+
+export type LLMPart =
+  | LLMInlineData
+  | LLMFunctionCall
+  | LLMFunctionResponse
+  | LLMText;
 
 export type LLMContent = {
   role?: string;
-  parts: Part[];
+  parts: LLMPart[];
 };
 
 export enum SETTINGS_TYPE {

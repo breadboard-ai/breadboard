@@ -17,6 +17,7 @@ import {
   isMultiline,
   isSelect,
   isWebcamImage,
+  isMultiformatLLMContent,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -25,6 +26,8 @@ import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AudioInput } from "./audio/audio.js";
+import { LLMContent } from "../../types/types.js";
+import { LLMInput } from "./llm-input/llm-input.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -226,6 +229,16 @@ export class Input extends LitElement {
             const value = element.value;
             data[key] = value;
           }
+
+          const isMultiformatLLMContent = element instanceof LLMInput;
+          if (isMultiformatLLMContent) {
+            const value = element.value;
+            if (property.type && property.type === "array") {
+              data[key] = [value];
+            } else {
+              data[key] = value;
+            }
+          }
         }
       }
     }
@@ -267,7 +280,24 @@ export class Input extends LitElement {
             >${property.title || key}</label
           >`;
           let input;
-          if (isMicrophoneAudio(property)) {
+
+          const showLLMContent =
+            isMultiformatLLMContent(property) ||
+            (property.type &&
+              property.items &&
+              property.type === "array" &&
+              !Array.isArray(property.items) &&
+              property.items.type === "object" &&
+              property.items.behavior?.includes("llm-content"));
+          if (showLLMContent) {
+            const value: LLMContent = property.default
+              ? JSON.parse(property.default)
+              : null;
+            input = html`<bb-llm-input
+              id="${key}"
+              .value=${value}
+            ></bb-llm-input>`;
+          } else if (isMicrophoneAudio(property)) {
             input = html`<bb-audio-capture id="${key}"></bb-audio-capture>`;
           } else if (isWebcamImage(property)) {
             input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;

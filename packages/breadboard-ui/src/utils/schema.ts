@@ -7,7 +7,7 @@
 import { BehaviorSchema, Schema } from "@google-labs/breadboard";
 import { validate } from "jsonschema";
 
-const LLMSchema = {
+const LLMContentSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   title: "LLM Content Schema",
   type: "object",
@@ -35,9 +35,9 @@ const LLMSchema = {
               inlineData: {
                 properties: {
                   data: { type: "string" },
-                  mime_type: { type: "string" },
+                  mimeType: { type: "string" },
                 },
-                required: ["data", "mime_type"],
+                required: ["data", "mimeType"],
                 additionalProperties: false,
               },
             },
@@ -110,12 +110,20 @@ export function resolveBehaviorType(value: Schema | Schema[] | undefined) {
   return null;
 }
 
+export function isLLMContent(item: unknown) {
+  if (typeof item !== "object" || item === null) {
+    return false;
+  }
+
+  return validate(item, LLMContentSchema).valid;
+}
+
 export function assertIsLLMContent(item: unknown) {
   if (typeof item !== "object" || item === null) {
     throw new Error("Not an object");
   }
 
-  const result = validate(item, LLMSchema);
+  const result = validate(item, LLMContentSchema);
   if (result.valid) {
     return;
   }

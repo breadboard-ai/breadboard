@@ -34,6 +34,14 @@ export function isMultipartText(schema: Schema) {
   return schema.type === "object" && schema.format?.startsWith("text");
 }
 
+export function isMultiformatLLMContent(schema: Schema) {
+  return (
+    schema.type === "object" &&
+    schema.behavior?.includes("llm-content") &&
+    !schema.format
+  );
+}
+
 export function isWebcamImage(schema: Schema) {
   return (
     schema.type === "object" &&

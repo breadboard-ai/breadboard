@@ -31,7 +31,12 @@ import { ArrayEditor } from "./array-editor.js";
 import { BoardSelector } from "./board-selector.js";
 import { isBoard } from "../../utils/board.js";
 import { CodeEditor } from "../input/code-editor/code-editor.js";
+import { LLMInput } from "../input/llm-input/llm-input.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
+
+function isLLMContent(port: InspectablePort) {
+  return port.schema.behavior?.includes("llm-content") || false;
+}
 
 @customElement("bb-node-info")
 export class NodeInfo extends LitElement {
@@ -166,7 +171,6 @@ export class NodeInfo extends LitElement {
 
     .node-properties .fields {
       overflow: auto;
-      scrollbar-gutter: stable;
       width: 100%;
     }
 
@@ -342,6 +346,15 @@ export class NodeInfo extends LitElement {
       }
 
       data.set(codeEditor.id, codeEditor.value || "");
+    }
+
+    for (const llmInput of form.querySelectorAll<LLMInput>("bb-llm-input")) {
+      if (!llmInput.id) {
+        continue;
+      }
+
+      data.set(llmInput.id, JSON.stringify(llmInput.value));
+      toConvert.set(llmInput.id, "llm-content");
     }
 
     const id = data.get("$id") as string;
@@ -545,16 +558,21 @@ export class NodeInfo extends LitElement {
                 return guard([port.name], () => {
                   const name = port.name;
                   const value = port.value;
+                  const title = port.schema.title ?? port.name;
 
                   let input;
                   const type = port.schema.type;
                   const behavior = port.schema.behavior;
                   const defaultValue = port.schema.default;
-                  const description = port.schema.description
-                    ? html`<p class="port-description">
-                        ${port.schema.description}
-                      </p>`
-                    : nothing;
+
+                  // LLM Inputs show their own description, so don't include it
+                  // here.
+                  const description =
+                    port.schema.description && !isLLMContent(port)
+                      ? html`<p class="port-description">
+                          ${port.schema.description}
+                        </p>`
+                      : nothing;
                   switch (type) {
                     case "object": {
                       // Only show the schema editor for inputs & outputs
@@ -603,6 +621,13 @@ export class NodeInfo extends LitElement {
                           id="${name}"
                           name="${name}"
                         ></bb-board-selector>`;
+                      } else if (isLLMContent(port)) {
+                        input = html`<bb-llm-input
+                          id="${name}"
+                          name="${name}"
+                          .schema=${port.schema}
+                          .value=${value}
+                        ></bb-llm-input>`;
                       } else {
                         input = html`<textarea
                           id="${name}"
@@ -734,7 +759,7 @@ export class NodeInfo extends LitElement {
 
                   return html`<div class="configuration-item">
                     <label title="${schema.description}" for="${name}"
-                      >${name}
+                      >${title}
                       (${Array.isArray(schema.type)
                         ? schema.type.join(", ")
                         : schema.type || "No type"}):
