@@ -125,6 +125,12 @@
         "schema": {
           "type": "object",
           "properties": {
+            "generator": {
+              "type": "board",
+              "title": "Text Generator",
+              "description": "The text generator to use for healing.",
+              "default": "text-generator.json"
+            },
             "text": {
               "type": "string",
               "title": "Text to Heal",
@@ -132,23 +138,17 @@
               "description": "The text to heal, if necessary",
               "default": "{\n  first_answer: \"to live\",\n  \"assumptionss\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
             },
-            "generator": {
-              "type": "board",
-              "title": "Text Generator",
-              "description": "The text generator to use for healing.",
-              "default": "text-generator.json"
+            "tries": {
+              "type": "number",
+              "title": "Tries",
+              "description": "The number of tries to attempt to fix the problem",
+              "default": "5"
             },
             "validator": {
               "type": "board",
               "title": "Text Validator",
               "description": "The text validator to use for healing.",
               "default": "json-validator.json"
-            },
-            "tries": {
-              "type": "number",
-              "title": "Tries",
-              "description": "The number of tries to attempt to fix the problem",
-              "default": "5"
             }
           },
           "required": [

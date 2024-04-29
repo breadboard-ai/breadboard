@@ -66,16 +66,16 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
-              "type": "string",
-              "title": "Query",
-              "description": "What would you like to search for?"
-            },
             "generator": {
               "type": "string",
               "title": "Generator",
               "description": "The URL of the generator to call",
               "default": "text-generator.json"
+            },
+            "text": {
+              "type": "string",
+              "title": "Query",
+              "description": "What would you like to search for?"
             }
           },
           "required": [

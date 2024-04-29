@@ -108,13 +108,6 @@
         "schema": {
           "type": "object",
           "properties": {
-            "n": {
-              "title": "Number of parallel attempts",
-              "type": "number",
-              "examples": [
-                "4"
-              ]
-            },
             "agent": {
               "title": "Agent",
               "description": "Agent to apply to the task",
@@ -122,6 +115,13 @@
                 "ad-writer.json"
               ],
               "type": "string"
+            },
+            "n": {
+              "title": "Number of parallel attempts",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
             },
             "text": {
               "title": "Task",

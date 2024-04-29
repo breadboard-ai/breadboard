@@ -42,17 +42,6 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The text to generate"
-            },
-            "useStreaming": {
-              "type": "boolean",
-              "title": "Stream",
-              "description": "Whether to stream the output",
-              "default": "false"
-            },
             "MODEL": {
               "type": "string",
               "title": "Model",
@@ -66,6 +55,17 @@
               "examples": [
                 "Gemini Pro"
               ]
+            },
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
             }
           },
           "required": [

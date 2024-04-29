@@ -42,6 +42,12 @@
         "schema": {
           "type": "object",
           "properties": {
+            "generator": {
+              "type": "string",
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "text-generator.json"
+            },
             "question": {
               "type": "string",
               "title": "Math problem",
@@ -49,12 +55,6 @@
               "examples": [
                 "What is the square root of pi?"
               ]
-            },
-            "generator": {
-              "type": "string",
-              "title": "Generator",
-              "description": "The URL of the generator to call",
-              "default": "text-generator.json"
             }
           },
           "required": [

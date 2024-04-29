@@ -99,16 +99,16 @@
               ],
               "default": "[]"
             },
-            "title": {
-              "title": "Title",
-              "description": "The title to ask",
-              "default": "User",
-              "type": "string"
-            },
             "description": {
               "title": "Description",
               "description": "The description of what to ask",
               "default": "User's question or request",
+              "type": "string"
+            },
+            "title": {
+              "title": "Title",
+              "description": "The title to ask",
+              "default": "User",
               "type": "string"
             }
           },

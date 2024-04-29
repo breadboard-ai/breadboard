@@ -97,6 +97,12 @@
         "schema": {
           "type": "object",
           "properties": {
+            "generator": {
+              "type": "board",
+              "title": "Board",
+              "description": "The board to retry.",
+              "default": "text-generator.json"
+            },
             "text": {
               "type": "string",
               "title": "Original",
@@ -107,12 +113,6 @@
               "title": "Tries",
               "description": "The number of tries to attempt to fix the problem",
               "default": "5"
-            },
-            "generator": {
-              "type": "board",
-              "title": "Board",
-              "description": "The board to retry.",
-              "default": "text-generator.json"
             }
           },
           "required": [
