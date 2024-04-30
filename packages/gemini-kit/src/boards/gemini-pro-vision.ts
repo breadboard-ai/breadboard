@@ -27,13 +27,13 @@ const inputSchema = {
   properties: {
     parts: {
       type: "array",
-      format: "multipart",
       title: "Content",
       description: "Add content here",
       minItems: 1,
       items: {
         type: "object",
         behavior: ["llm-content"],
+        format: "image-file,image-webcam",
       },
     },
     useStreaming: {

@@ -39,9 +39,6 @@ type MainArguments = {
   settings?: SettingsStore;
 };
 
-// TODO: Remove once all elements are Lit-based.
-BreadboardUI.register();
-
 @customElement("bb-main")
 export class Main extends LitElement {
   @property({ reflect: true })

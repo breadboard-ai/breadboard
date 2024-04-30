@@ -49,9 +49,6 @@ export const getBoardInfo = async (url: string) => {
   return { title, description, version };
 };
 
-// TODO: Remove once all elements are Lit-based.
-BreadboardUI.register();
-
 @customElement("bb-preview-run")
 export class PreviewRun extends LitElement {
   @property({ reflect: true })

@@ -6,11 +6,6 @@
 
 import { type Schema } from "@google-labs/breadboard";
 import {
-  createMultipartInput,
-  getMultipartValue,
-  isMultipart,
-} from "./input-multipart/input-multipart.js";
-import {
   isMicrophoneAudio,
   isBoolean,
   isDrawableImage,
@@ -196,55 +191,46 @@ export class Input extends LitElement {
     const data: InputData = {};
 
     for (const [key, property] of Object.entries(properties)) {
-      if (isMultipart(property)) {
-        const values = await getMultipartValue(form, key);
-        if (property.type && property.type === "array") {
-          data[key] = [{ parts: values.value }];
-        } else {
-          data[key] = values.value;
+      const input = form[key];
+      if (input && input.value) {
+        try {
+          const parsedValue = parseValue(property.type, input);
+          data[key] = parsedValue;
+        } catch (e) {
+          const event = new InputErrorEvent(`${e}`);
+          this.dispatchEvent(event);
         }
       } else {
-        const input = form[key];
-        if (input && input.value) {
-          try {
-            const parsedValue = parseValue(property.type, input);
-            data[key] = parsedValue;
-          } catch (e) {
-            const event = new InputErrorEvent(`${e}`);
-            this.dispatchEvent(event);
-          }
-        } else {
-          // Custom elements don't look like form elements, so they need to be
-          // processed separately.
-          const element = form.querySelector(`#${key}`);
-          if (!element) {
-            console.warn(`Unable to find element for key ${key}`);
-            continue;
+        // Custom elements don't look like form elements, so they need to be
+        // processed separately.
+        const element = form.querySelector(`#${key}`);
+        if (!element) {
+          console.warn(`Unable to find element for key ${key}`);
+          continue;
+        }
+
+        const isImage =
+          element instanceof WebcamInput || element instanceof DrawableInput;
+        const isAudio = element instanceof AudioInput;
+        if (isImage || isAudio) {
+          const value = element.value;
+          data[key] = value;
+        }
+
+        const isMultiformatLLMContent = element instanceof LLMInput;
+        if (isMultiformatLLMContent) {
+          // If there are any uncommitted parts, ask the LLM Input to handle
+          // them at this point.
+          await element.processAllOpenParts();
+          const value = element.value;
+          if (!element.value || element.value.parts.length === 0) {
+            return;
           }
 
-          const isImage =
-            element instanceof WebcamInput || element instanceof DrawableInput;
-          const isAudio = element instanceof AudioInput;
-          if (isImage || isAudio) {
-            const value = element.value;
+          if (property.type && property.type === "array") {
+            data[key] = [value];
+          } else {
             data[key] = value;
-          }
-
-          const isMultiformatLLMContent = element instanceof LLMInput;
-          if (isMultiformatLLMContent) {
-            // If there are any uncommitted parts, ask the LLM Input to handle
-            // them at this point.
-            await element.processAllOpenParts();
-            const value = element.value;
-            if (!element.value || element.value.parts.length === 0) {
-              return;
-            }
-
-            if (property.type && property.type === "array") {
-              data[key] = [value];
-            } else {
-              data[key] = value;
-            }
           }
         }
       }
@@ -429,10 +415,6 @@ export class Input extends LitElement {
               type="checkbox"
               ?checked=${checked}
             />`;
-          } else if (isMultipart(property)) {
-            // Multi-part input.
-            const multipart = createMultipartInput(property, key);
-            input = html`${multipart}`;
           } else {
             // Text inputs: multi line and single line.
             const examples = property.examples?.[0];
