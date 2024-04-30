@@ -5,10 +5,19 @@
   },
   "version": "0.2.6",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./*.js": {
+      "types": "./*.d.ts",
+      "default": null
+    }
+  },
   "scripts": {
     "prepack": "npm run build",
     "generate:docs": "wireit",
