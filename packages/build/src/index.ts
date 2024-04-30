@@ -11,6 +11,7 @@ import type { JsonSerializable } from "./internal/type-system/type.js";
 
 export { board } from "./internal/board/board.js";
 export { input } from "./internal/board/input.js";
+export { output } from "./internal/board/output.js";
 export { placeholder } from "./internal/board/placeholder.js";
 export { serialize } from "./internal/board/serialize.js";
 export type {

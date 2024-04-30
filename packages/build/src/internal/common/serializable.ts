@@ -5,13 +5,17 @@
  */
 
 import type { GenericSpecialInput } from "../board/input.js";
+import type { Output } from "../board/output.js";
 import type { Placeholder } from "../board/placeholder.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type { DefaultValue, OutputPortGetter } from "./port.js";
 
 export interface SerializableBoard {
   inputs: Record<string, SerializableInputPort | GenericSpecialInput>;
-  outputs: Record<string, SerializableOutputPortReference>;
+  outputs: Record<
+    string,
+    SerializableOutputPortReference | Output<JsonSerializable>
+  >;
   title?: string;
   description?: string;
   version?: string;

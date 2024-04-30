@@ -20,6 +20,7 @@ import type {
 } from "../common/serializable.js";
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
+import type { Output } from "./output.js";
 import { isPlaceholder } from "./placeholder.js";
 
 /**
@@ -35,8 +36,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
 
   // Prepare our main input and output nodes. They represent the overall
   // signature of the board.
-  const defaultOutputNodeId = nextIdForType("output");
-  const mainOutputSchema: Record<string, JSONSchema4> = {};
+  const outputNodes = new Map<string, InputOrOutputNodeDescriptor>();
 
   // Analyze inputs and remember some things about them that we'll need when we
   // traverse the outputs.
@@ -107,15 +107,32 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     // Sort so that mainOutputSchema will also be sorted.
     ([nameA], [nameB]) => nameA.localeCompare(nameB)
   );
-  for (const [mainOutputName, output] of sortedBoardOutputs) {
-    const actualOutput = output[OutputPortGetter];
-    mainOutputSchema[mainOutputName] = toJSONSchema(actualOutput.type);
-    addEdge(
-      visitNodeAndReturnItsId(actualOutput.node),
-      actualOutput.name,
-      defaultOutputNodeId,
-      mainOutputName
-    );
+  for (const [name, output] of sortedBoardOutputs) {
+    const port = isSpecialOutput(output)
+      ? output.port[OutputPortGetter]
+      : output[OutputPortGetter];
+    const outputNodeId = isSpecialOutput(output)
+      ? output.id ?? "output-0"
+      : "output-0";
+    let outputNode = outputNodes.get(outputNodeId);
+    if (outputNode === undefined) {
+      outputNode = {
+        id: outputNodeId,
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {},
+            required: [],
+            // TODO(aomarks) Disallow extra properties?
+          },
+        },
+      };
+      outputNodes.set(outputNodeId, outputNode);
+    }
+    outputNode.configuration.schema.properties[name] = toJSONSchema(port.type);
+    outputNode.configuration.schema.required.push(name);
+    addEdge(visitNodeAndReturnItsId(port.node), port.name, outputNodeId, name);
   }
 
   if (unconnectedInputs.size > 0) {
@@ -135,26 +152,11 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
   }
 
-  const mainOutputNode: NodeDescriptor = {
-    id: defaultOutputNodeId,
-    type: "output",
-    configuration: {
-      schema: {
-        type: "object",
-        properties: mainOutputSchema,
-        required: Object.keys(mainOutputSchema),
-      },
-    },
-  };
-
-  // Sort the nodes and edges for deterministic BGL output.
-  const sortedNodes = [...nodes.values()].sort((a, b) =>
-    a.id.localeCompare(b.id)
-  );
   return {
     ...(board.title ? { title: board.title } : {}),
     ...(board.description ? { description: board.description } : {}),
     ...(board.version ? { version: board.version } : {}),
+    // Sort the nodes and edges for deterministic BGL output.
     edges: edges.sort((a, b) => {
       if (a.from != b.from) {
         return a.from.localeCompare(b.from);
@@ -170,7 +172,11 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       }
       return 0;
     }),
-    nodes: [...inputNodes.values(), mainOutputNode, ...sortedNodes],
+    nodes: [
+      ...[...inputNodes.values()].sort((a, b) => a.id.localeCompare(b.id)),
+      ...[...outputNodes.values()].sort((a, b) => a.id.localeCompare(b.id)),
+      ...[...nodes.values()].sort((a, b) => a.id.localeCompare(b.id)),
+    ],
   };
 
   function visitNodeAndReturnItsId(node: SerializableNode): string {
@@ -269,6 +275,14 @@ function isSpecialInput(value: unknown): value is GenericSpecialInput {
     typeof value === "object" &&
     value !== null &&
     "__SpecialInputBrand" in value
+  );
+}
+
+function isSpecialOutput(value: unknown): value is Output<JsonSerializable> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__SpecialOutputBrand" in value
   );
 }
 

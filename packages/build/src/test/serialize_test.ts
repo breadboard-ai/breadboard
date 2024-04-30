@@ -9,7 +9,7 @@
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { anyOf, array, defineNodeType, object } from "../index.js";
+import { anyOf, array, defineNodeType, object, output } from "../index.js";
 import { board, type GenericBoardDefinition } from "../internal/board/board.js";
 import { input } from "../internal/board/input.js";
 import { serialize } from "../internal/board/serialize.js";
@@ -1264,7 +1264,7 @@ test("custom input id", () => {
   );
 });
 
-test("two custom input ids", () => {
+test("two different custom input ids", () => {
   const passthru = defineNodeType({
     name: "passthru",
     inputs: {
@@ -1324,6 +1324,77 @@ test("two custom input ids", () => {
                 in2: { type: "string" },
               },
               required: ["in2"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result1: { type: "string" },
+                result2: { type: "string" },
+              },
+              required: ["result1", "result2"],
+            },
+          },
+        },
+        { id: "passthru-0", type: "passthru", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("two same custom input ids", () => {
+  const passthru = defineNodeType({
+    name: "passthru",
+    inputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    outputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    invoke: ({ value1, value2 }) => ({ value1, value2 }),
+  });
+
+  const in1 = input({ $id: "custom-input" });
+  const in2 = input({ $id: "custom-input" });
+  const pt = passthru({ value1: in1, value2: in2 });
+
+  checkSerialization(
+    board({
+      inputs: {
+        in1,
+        in2,
+      },
+      outputs: {
+        result1: pt.outputs.value1,
+        result2: pt.outputs.value2,
+      },
+    }),
+    {
+      edges: [
+        { from: "custom-input", to: "passthru-0", out: "in1", in: "value1" },
+        { from: "custom-input", to: "passthru-0", out: "in2", in: "value2" },
+        { from: "passthru-0", to: "output-0", out: "value1", in: "result1" },
+        { from: "passthru-0", to: "output-0", out: "value2", in: "result2" },
+      ],
+      nodes: [
+        {
+          id: "custom-input",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                in1: { type: "string" },
+                in2: { type: "string" },
+              },
+              required: ["in1", "in2"],
             },
           },
         },
@@ -1425,6 +1496,210 @@ test("custom and default input id", () => {
           },
         },
         { id: "passthru-0", type: "passthru", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("custom output id", () => {
+  const def = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      value: { type: "string", primary: true },
+    },
+    invoke: () => ({ value: "foo" }),
+  });
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        result: output(def({}), { id: "custom-output" }),
+      },
+    }),
+    {
+      edges: [
+        { from: "foo-0", to: "custom-output", out: "value", in: "result" },
+      ],
+      nodes: [
+        {
+          id: "custom-output",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { result: { type: "string" } },
+              required: ["result"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("two different custom output ids", () => {
+  const def = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    invoke: () => ({ value1: "foo", value2: "foo" }),
+  });
+
+  const foo = def({});
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        result1: output(foo.outputs.value1, { id: "custom-input-1" }),
+        result2: output(foo.outputs.value2, { id: "custom-input-2" }),
+      },
+    }),
+    {
+      edges: [
+        { from: "foo-0", to: "custom-input-1", out: "value1", in: "result1" },
+        { from: "foo-0", to: "custom-input-2", out: "value2", in: "result2" },
+      ],
+      nodes: [
+        {
+          id: "custom-input-1",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result1: { type: "string" },
+              },
+              required: ["result1"],
+            },
+          },
+        },
+        {
+          id: "custom-input-2",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result2: { type: "string" },
+              },
+              required: ["result2"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("two same custom output ids", () => {
+  const def = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    invoke: () => ({ value1: "foo", value2: "foo" }),
+  });
+
+  const foo = def({});
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        result1: output(foo.outputs.value1, { id: "custom-input" }),
+        result2: output(foo.outputs.value2, { id: "custom-input" }),
+      },
+    }),
+    {
+      edges: [
+        { from: "foo-0", to: "custom-input", out: "value1", in: "result1" },
+        { from: "foo-0", to: "custom-input", out: "value2", in: "result2" },
+      ],
+      nodes: [
+        {
+          id: "custom-input",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result1: { type: "string" },
+                result2: { type: "string" },
+              },
+              required: ["result1", "result2"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("custom and default output ids", () => {
+  const def = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    invoke: () => ({ value1: "foo", value2: "foo" }),
+  });
+
+  const foo = def({});
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        result1: foo.outputs.value1,
+        result2: output(foo.outputs.value2, { id: "custom-output" }),
+      },
+    }),
+    {
+      edges: [
+        { from: "foo-0", to: "custom-output", out: "value2", in: "result2" },
+        { from: "foo-0", to: "output-0", out: "value1", in: "result1" },
+      ],
+      nodes: [
+        {
+          id: "custom-output",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result2: { type: "string" },
+              },
+              required: ["result2"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result1: { type: "string" },
+              },
+              required: ["result1"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
       ],
     }
   );

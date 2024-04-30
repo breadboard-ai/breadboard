@@ -12,6 +12,7 @@ import {
 import type { SerializableBoard } from "../common/serializable.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
+import type { Output } from "./output.js";
 
 // TODO(aomarks) Support primary ports in boards.
 // TODO(aomarks) Support adding descriptions to board ports.
@@ -79,7 +80,7 @@ export type BoardInputPorts = Record<
 
 export type BoardOutputPorts = Record<
   string,
-  OutputPortReference<JsonSerializable>
+  OutputPortReference<JsonSerializable> | Output<JsonSerializable>
 >;
 
 export type BoardDefinition<
