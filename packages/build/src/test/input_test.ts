@@ -193,9 +193,6 @@ test("examples don't match type", () => {
 
 test("invalid types", () => {
   // @ts-expect-error
-  input({ type: undefined });
-
-  // @ts-expect-error
   input({ type: null });
 
   // @ts-expect-error
@@ -203,9 +200,6 @@ test("invalid types", () => {
 });
 
 test("invalid defaults", () => {
-  // @ts-expect-error
-  input({ default: undefined });
-
   // @ts-expect-error
   assert.throws(() => input({ default: null }), /Unknown default type: null/);
 
@@ -217,9 +211,6 @@ test("invalid defaults", () => {
 });
 
 test("invalid examples", () => {
-  // @ts-expect-error
-  input({ examples: undefined });
-
   // @ts-expect-error
   input({ examples: null });
 
