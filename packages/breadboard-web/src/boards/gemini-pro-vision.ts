@@ -81,7 +81,7 @@ export default await board(() => {
 
   const makeBody = json.jsonata({
     $id: "makeBody",
-    expression: `{ "contents": { "parts": $.parts }}`,
+    expression: `{ "contents": $.parts[0] }`,
     parts: parameters,
   });
 
