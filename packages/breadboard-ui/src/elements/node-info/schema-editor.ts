@@ -361,6 +361,7 @@ export class SchemaEditor extends LitElement {
               !Array.isArray(value.items)
             ) {
               objectFormat = value.items.format?.split(",") || [];
+              console.log(objectFormat, value.items.format);
             }
 
             format = html`<label for="${id}-format">Format</label>

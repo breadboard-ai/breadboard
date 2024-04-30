@@ -33,6 +33,7 @@ const inputSchema = {
       items: {
         type: "object",
         behavior: ["llm-content"],
+        format: "image-file,image-webcam",
       },
     },
     useStreaming: {
