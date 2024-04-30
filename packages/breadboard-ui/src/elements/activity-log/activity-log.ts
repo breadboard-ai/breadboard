@@ -22,6 +22,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { LLMContent, SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { cache } from "lit/directives/cache.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -46,6 +47,7 @@ export class ActivityLog extends LitElement {
   @property()
   settings: Settings | null = null;
 
+  #partDataURLs = new Map<string, string>();
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #isHidden = false;
@@ -521,6 +523,14 @@ export class ActivityLog extends LitElement {
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
+  #isArrayOfLLMContent(nodeValue: unknown): nodeValue is LLMContent[] {
+    if (!Array.isArray(nodeValue)) {
+      return false;
+    }
+
+    return this.#isLLMContent(nodeValue[0]);
+  }
+
   protected updated(): void {
     if (!this.#newestEntry.value) {
       return;
@@ -675,43 +685,66 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (this.#isLLMContent(nodeValue)) {
-            if (!nodeValue.parts.length) {
-              value = html`No data provided`;
-            } else {
-              value = html`${map(nodeValue.parts, (part) => {
-                if ("inlineData" in part) {
-                  if (part.inlineData.mimeType.startsWith("image")) {
-                    return html`<img
-                      src="data:image/${part.inlineData.mimeType};base64,${part
-                        .inlineData.data}"
-                    />`;
-                  }
+          if (
+            this.#isLLMContent(nodeValue) ||
+            this.#isArrayOfLLMContent(nodeValue)
+          ) {
+            const values = this.#isArrayOfLLMContent(nodeValue)
+              ? nodeValue
+              : [nodeValue];
 
-                  if (part.inlineData.mimeType.startsWith("audio")) {
-                    return html`<audio
-                      controls
-                      src="data:${part.inlineData.mimeType};base64,${part
-                        .inlineData.data}"
-                    ></audio>`;
-                  }
+            value = html`${values.map((llmContent) => {
+              if (!llmContent.parts.length) {
+                return html`No data provided`;
+              } else {
+                return html`${map(llmContent.parts, (part, idx) => {
+                  if ("inlineData" in part) {
+                    const key = `${event.id}-${idx}`;
+                    let partDataURL: Promise<string> =
+                      Promise.resolve("No source");
 
-                  if (part.inlineData.mimeType.startsWith("video")) {
-                    return html`<video
-                      controls
-                      src="data:${part.inlineData.mimeType};base64,${part
-                        .inlineData.data}"
-                    ></video>`;
+                    if (this.#partDataURLs.has(key)) {
+                      partDataURL = Promise.resolve(
+                        this.#partDataURLs.get(key)!
+                      );
+                    } else if (part.inlineData.data !== "") {
+                      const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                      partDataURL = fetch(dataURL)
+                        .then((response) => response.blob())
+                        .then((data) => {
+                          const url = URL.createObjectURL(data);
+                          this.#partDataURLs.set(key, url);
+                          return url;
+                        });
+                    }
+
+                    const tmpl = partDataURL.then((url: string) => {
+                      if (part.inlineData.mimeType.startsWith("image")) {
+                        return cache(
+                          html`<img src="${url}" alt="LLM Image" />`
+                        );
+                      }
+
+                      if (part.inlineData.mimeType.startsWith("audio")) {
+                        return cache(html`<audio src="${url}" controls />`);
+                      }
+
+                      if (part.inlineData.mimeType.startsWith("video")) {
+                        return cache(html`<video src="${url}" controls />`);
+                      }
+                    });
+
+                    return until(tmpl);
+                  } else if ("text" in part) {
+                    return html`${part.text}`;
+                  } else if ("functionCall" in part) {
+                    return html`${JSON.stringify(part.functionCall)}`;
+                  } else if ("functionResponse" in part) {
+                    return html`${JSON.stringify(part.functionResponse)}`;
                   }
-                } else if ("text" in part) {
-                  value = html`${part.text}`;
-                } else if ("functionCall" in part) {
-                  value = html`${JSON.stringify(part.functionCall)}`;
-                } else if ("functionResponse" in part) {
-                  value = html`${JSON.stringify(part.functionResponse)}`;
-                }
-              })}`;
-            }
+                })}`;
+              }
+            })}`;
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {
@@ -744,9 +777,19 @@ export class ActivityLog extends LitElement {
     </dl>`;
   }
 
+  #clearPartDataURLs() {
+    for (const url of this.#partDataURLs.values()) {
+      console.info(`Revoking ${url}`);
+      URL.revokeObjectURL(url);
+    }
+
+    this.#partDataURLs.clear();
+  }
+
   render() {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
+      this.#clearPartDataURLs();
     }
     const showLogDownload = this.run && this.run.serialize;
 
