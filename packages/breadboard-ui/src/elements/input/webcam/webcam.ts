@@ -23,6 +23,7 @@ export class WebcamInput extends LitElement {
         0 2px 3px 0 rgba(0, 0, 0, 0.23);
       --default-bb-border-radius: 8px;
       --default-bb-input-background-color: #fff;
+      --default-bb-outline: transparent;
 
       display: block;
       width: 100%;
@@ -33,6 +34,7 @@ export class WebcamInput extends LitElement {
       box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
       border-radius: var(--bb-grid-size);
       aspect-ratio: 4/3;
+      outline: 1px solid var(--bb-outline, var(--default-bb-outline));
     }
 
     canvas {
