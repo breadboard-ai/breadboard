@@ -59,7 +59,9 @@ html {
   --bb-icon-add: url(/third_party/icons/add.svg);
   --bb-icon-add-audio: url(/third_party/icons/add-audio.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
+  --bb-icon-add-drawable: url(/third_party/icons/add-drawable.svg);
   --bb-icon-add-file: url(/third_party/icons/add-file.svg);
+  --bb-icon-add-image-webcam: url(/third_party/icons/add-image-webcam.svg);
   --bb-icon-add-image: url(/third_party/icons/add-image.svg);
   --bb-icon-add-note: url(/third_party/icons/add-note.svg);
   --bb-icon-add-text: url(/third_party/icons/add-text.svg);
@@ -71,6 +73,7 @@ html {
   --bb-icon-board: url(/third_party/icons/board.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
+  --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-delay: url(/third_party/icons/delay.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);

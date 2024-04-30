@@ -109,6 +109,18 @@ export type LLMContent = {
   parts: LLMPart[];
 };
 
+export interface AllowedLLMContentTypes {
+  audioFile: boolean;
+  audioMicrophone: boolean;
+  videoFile: boolean;
+  videoWebcam: boolean;
+  imageFile: boolean;
+  imageWebcam: boolean;
+  imageDrawable: boolean;
+  textFile: boolean;
+  textInline: boolean;
+}
+
 export enum SETTINGS_TYPE {
   SECRETS = "Secrets",
   GENERAL = "General",

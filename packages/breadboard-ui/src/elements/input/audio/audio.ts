@@ -10,7 +10,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { asBase64 } from "../../../utils/as-base-64.js";
 import { LLMContent } from "../../../types/types.js";
 
-@customElement("bb-audio-capture")
+@customElement("bb-audio-input")
 export class AudioInput extends LitElement {
   @property()
   audio: string | null = null;
@@ -125,14 +125,14 @@ export class AudioInput extends LitElement {
     });
 
     this.#recorder.addEventListener("dataavailable", (evt) => {
-      this.#mimeType = evt.data.type;
+      this.#mimeType = evt.data.type.replace(/;.*$/, "");
       this.#parts.push(evt.data);
     });
 
     this.#recorder.addEventListener("stop", async () => {
       // Take all the audio parts received and combine them into one Blob.
       const audioFile = new Blob(this.#parts, {
-        type: this.#recorder?.mimeType,
+        type: this.#mimeType,
       });
       // Create a preview for the user.
       this.audio = URL.createObjectURL(audioFile);
@@ -177,7 +177,7 @@ export class AudioInput extends LitElement {
             }}
             id="capture"
           >
-            Hold to capture
+            Hold to record
           </button>
           <span>${this.recording ? "Recording..." : nothing}</span>
           ${this.audio

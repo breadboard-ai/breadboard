@@ -31,6 +31,7 @@ import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode } from "../../utils/mode.js";
 import { guard } from "lit/directives/guard.js";
+import { cache } from "lit/directives/cache.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -451,9 +452,11 @@ export class UI extends LitElement {
       <bb-json-tree></bb-json-tree>
     </div>`;
 
-    const sidePanel = this.selectedNodeId
-      ? html`${nodeMetaDetails}${nodeInfo}`
-      : html`${boardDetails}${activityLog}${entryDetails} `;
+    const sidePanel = cache(
+      this.selectedNodeId
+        ? html`${nodeMetaDetails}${nodeInfo}`
+        : html`${boardDetails}${activityLog}${entryDetails}`
+    );
 
     const breadcrumbs = [MAIN_BOARD_ID];
     if (this.subGraphId) {

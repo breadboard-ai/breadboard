@@ -17,7 +17,7 @@ import {
   isMultiline,
   isSelect,
   isWebcamImage,
-  isMultiformatLLMContent,
+  isLLMContent,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -26,7 +26,7 @@ import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AudioInput } from "./audio/audio.js";
-import { LLMContent } from "../../types/types.js";
+import { AllowedLLMContentTypes, LLMContent } from "../../types/types.js";
 import { LLMInput } from "./llm-input/llm-input.js";
 
 export type InputData = Record<string, unknown>;
@@ -232,7 +232,14 @@ export class Input extends LitElement {
 
           const isMultiformatLLMContent = element instanceof LLMInput;
           if (isMultiformatLLMContent) {
+            // If there are any uncommitted parts, ask the LLM Input to handle
+            // them at this point.
+            await element.processAllOpenParts();
             const value = element.value;
+            if (!element.value || element.value.parts.length === 0) {
+              return;
+            }
+
             if (property.type && property.type === "array") {
               data[key] = [value];
             } else {
@@ -272,6 +279,56 @@ export class Input extends LitElement {
     }
   }
 
+  #updateAllowList(allow: AllowedLLMContentTypes, format: string | string[]) {
+    if (typeof format === "string") {
+      switch (format) {
+        case "audio-file": {
+          allow.audioFile = true;
+          break;
+        }
+
+        case "audio-microphone": {
+          allow.audioMicrophone = true;
+          break;
+        }
+
+        case "video-file": {
+          allow.videoFile = true;
+          break;
+        }
+
+        case "video-webcam": {
+          allow.videoWebcam = true;
+          break;
+        }
+
+        case "image-file": {
+          allow.imageFile = true;
+          break;
+        }
+
+        case "image-webcam": {
+          allow.imageWebcam = true;
+          break;
+        }
+
+        case "image-drawable": {
+          allow.imageDrawable = true;
+          break;
+        }
+
+        case "text-file": {
+          allow.textFile = true;
+          break;
+        }
+      }
+    } else {
+      for (const item of format) {
+        this.#updateAllowList(allow, item);
+      }
+    }
+  }
+
   #renderForm(properties: Record<string, Schema>, values: InputData) {
     return html`<div id="input">
       <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
@@ -282,7 +339,7 @@ export class Input extends LitElement {
           let input;
 
           const showLLMContent =
-            isMultiformatLLMContent(property) ||
+            isLLMContent(property) ||
             (property.type &&
               property.items &&
               property.type === "array" &&
@@ -293,12 +350,58 @@ export class Input extends LitElement {
             const value: LLMContent = property.default
               ? JSON.parse(property.default)
               : null;
+
+            const allow: AllowedLLMContentTypes = {
+              audioFile: false,
+              audioMicrophone: false,
+              videoFile: false,
+              videoWebcam: false,
+              imageFile: false,
+              imageWebcam: false,
+              imageDrawable: false,
+              textFile: false,
+              textInline: true,
+            };
+
+            let format = property.format;
+            if (
+              property.type === "array" &&
+              property.type &&
+              property.items &&
+              property.type === "array" &&
+              !Array.isArray(property.items) &&
+              property.items.type === "object" &&
+              property.items.format
+            ) {
+              format = property.items.format;
+            }
+
+            if (format) {
+              if (format.includes(",")) {
+                this.#updateAllowList(allow, format.split(","));
+              } else {
+                this.#updateAllowList(allow, format);
+              }
+            } else {
+              allow.audioFile = true;
+              allow.audioMicrophone = true;
+              allow.videoFile = true;
+              allow.videoWebcam = true;
+              allow.imageFile = true;
+              allow.imageWebcam = true;
+              allow.imageDrawable = true;
+              allow.textFile = true;
+              allow.textInline = true;
+            }
+
             input = html`<bb-llm-input
               id="${key}"
+              .description=${property.description}
               .value=${value}
+              .allow=${allow}
             ></bb-llm-input>`;
           } else if (isMicrophoneAudio(property)) {
-            input = html`<bb-audio-capture id="${key}"></bb-audio-capture>`;
+            input = html`<bb-audio-input id="${key}"></bb-audio-input>`;
           } else if (isWebcamImage(property)) {
             input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
           } else if (isDrawableImage(property)) {
