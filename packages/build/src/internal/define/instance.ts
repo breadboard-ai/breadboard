@@ -87,7 +87,7 @@ export class Instance<
 
   #assertedOutputs = new Map<string, OutputPort<JsonSerializable>>();
 
-  assertOutput: DO extends JsonSerializable
+  unsafeOutput: DO extends JsonSerializable
     ? R extends false
       ? <N extends string>(
           name: N extends keyof O ? never : N
@@ -96,21 +96,21 @@ export class Instance<
     : never = ((name) => {
     if (this.#dynamicOutputType === undefined) {
       throw new Error(
-        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+        `unsafeOutput was called unnecessarily on a BreadboardNode. ` +
           `Type "${this.type}" has entirely static outputs. ` +
           `Use "<node>.outputs.${name}" instead.`
       );
     }
     if (this.#reflective) {
       throw new Error(
-        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+        `unsafeOutput was called unnecessarily on a BreadboardNode. ` +
           `Type "${this.type}" is reflective. ` +
           `Use "<node>.outputs.${name}" instead.`
       );
     }
     if (this.outputs[name] !== undefined) {
       throw new Error(
-        `assertOutput was called unnecessarily on a BreadboardNode. ` +
+        `unsafeOutput was called unnecessarily on a BreadboardNode. ` +
           `Type "${this.type}" already has a static port called "${name}". ` +
           `Use "<node>.outputs.${name}" instead.`
       );
@@ -122,7 +122,7 @@ export class Instance<
     port = new OutputPort(this.#dynamicOutputType, name, this);
     this.#assertedOutputs.set(name, port);
     return port;
-  }) as (typeof this)["assertOutput"];
+  }) as (typeof this)["unsafeOutput"];
 
   #processInputs(
     staticInputs: { [K: string]: StaticInputPortConfig },
