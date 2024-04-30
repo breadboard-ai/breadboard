@@ -354,73 +354,74 @@ export class SchemaEditor extends LitElement {
             value.items.behavior?.includes("llm-content");
 
           if (isLLMObject || isArrayOfLLMObjects) {
-            let objectFormat = value.format;
+            let objectFormat = [value.format];
             if (
               isArrayOfLLMObjects &&
               value.items &&
               !Array.isArray(value.items)
             ) {
-              objectFormat = value.items.format;
+              objectFormat = value.items.format?.split(",") || [];
             }
 
             format = html`<label for="${id}-format">Format</label>
               <select
                 name="${id}-format"
                 id="${id}-format"
+                multiple
                 ?readonly=${!this.editable}
               >
                 <option value="none">Any</option>
                 <option
                   value="audio-file"
-                  ?selected=${objectFormat === "audio-file"}
+                  ?selected=${objectFormat.includes("audio-file")}
                 >
                   Audio (File)
                 </option>
                 <option
                   value="audio-microphone"
-                  ?selected=${objectFormat === "audio-microphone"}
+                  ?selected=${objectFormat.includes("audio-microphone")}
                 >
                   Audio (Microphone)
                 </option>
                 <option
                   value="video-file"
-                  ?selected=${objectFormat === "video-file"}
+                  ?selected=${objectFormat.includes("video-file")}
                 >
                   Video (File)
                 </option>
                 <option
                   value="video-webcam"
-                  ?selected=${objectFormat === "video-webcam"}
+                  ?selected=${objectFormat.includes("video-webcam")}
                 >
                   Video (Webcam)
                 </option>
                 <option
                   value="image-file"
-                  ?selected=${objectFormat === "image-file"}
+                  ?selected=${objectFormat.includes("image-file")}
                 >
                   Image (File)
                 </option>
                 <option
                   value="image-webcam"
-                  ?selected=${objectFormat === "image-webcam"}
+                  ?selected=${objectFormat.includes("image-webcam")}
                 >
                   Image (Webcam)
                 </option>
                 <option
                   value="image-drawable"
-                  ?selected=${objectFormat === "image-drawable"}
+                  ?selected=${objectFormat.includes("image-drawable")}
                 >
                   Image (Drawable)
                 </option>
                 <option
                   value="text-file"
-                  ?selected=${objectFormat === "text-file"}
+                  ?selected=${objectFormat.includes("text-file")}
                 >
                   Text (File)
                 </option>
                 <option
                   value="text-inline"
-                  ?selected=${objectFormat === "text-inline"}
+                  ?selected=${objectFormat.includes("text-inline")}
                 >
                   Text (Inline)
                 </option>
@@ -672,7 +673,7 @@ export class SchemaEditor extends LitElement {
                 inFormat.value !== "none"
               ) {
                 if (inFormat.multiple) {
-                  property.format = [...inFormat.selectedOptions]
+                  property.items.format = [...inFormat.selectedOptions]
                     .map((opt) => opt.value)
                     .join(",");
                 } else {
@@ -731,6 +732,16 @@ export class SchemaEditor extends LitElement {
           delete property.behavior;
         }
 
+        // Moving to an array of objects means removing any top-level format.
+        if (
+          property.type === "array" &&
+          property.items &&
+          !Array.isArray(property.items) &&
+          property.items.type === "object"
+        ) {
+          delete property.format;
+        }
+
         // Going from llm-content -> any other behavior means removing the
         // format entirely.
         if (
@@ -780,6 +791,8 @@ export class SchemaEditor extends LitElement {
     if (schema.properties) {
       schema.type = "object";
     }
+
+    console.log(schema);
 
     this.schema = schema;
     return true;

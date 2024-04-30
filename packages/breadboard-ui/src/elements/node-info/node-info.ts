@@ -627,6 +627,7 @@ export class NodeInfo extends LitElement {
                           name="${name}"
                           .schema=${port.schema}
                           .value=${value}
+                          .description=${port.schema?.description || null}
                         ></bb-llm-input>`;
                       } else {
                         input = html`<textarea

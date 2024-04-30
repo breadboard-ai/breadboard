@@ -6,6 +6,7 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
+  AllowedLLMContentTypes,
   LLMContent,
   LLMFunctionCall,
   LLMFunctionResponse,
@@ -21,6 +22,9 @@ import { asBase64 } from "../../../utils/as-base-64.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
 import { guard } from "lit/directives/guard.js";
+import type { AudioInput } from "../audio/audio.js";
+import type { DrawableInput } from "../drawable/drawable.js";
+import type { WebcamInput } from "../webcam/webcam.js";
 
 function isText(part: LLMPart): part is LLMText {
   return "text" in part;
@@ -40,6 +44,8 @@ function isInlineData(part: LLMPart): part is LLMInlineData {
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
+type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
+
 @customElement("bb-llm-input")
 export class LLMInput extends LitElement {
   @property()
@@ -48,10 +54,27 @@ export class LLMInput extends LitElement {
   @property()
   schema: Schema | null = null;
 
+  @property()
+  description: string | null = null;
+
+  @property()
+  allow: AllowedLLMContentTypes = {
+    audioFile: true,
+    audioMicrophone: true,
+    videoFile: true,
+    videoWebcam: true,
+    imageFile: true,
+    imageWebcam: true,
+    imageDrawable: true,
+    textFile: true,
+    textInline: true,
+  };
+
   #focusLastPart = false;
   #triggerSelectionFlow = false;
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
   #lastInputRef: Ref<HTMLInputElement> = createRef();
+  #containerRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
 
@@ -72,7 +95,6 @@ export class LLMInput extends LitElement {
     }
 
     #description {
-      flex: 1;
       display: inline-block;
       width: 100%;
       overflow: hidden;
@@ -81,10 +103,10 @@ export class LLMInput extends LitElement {
     }
 
     #controls {
-      width: 200px;
-      flex: 0 0 auto;
+      flex: 1 0 auto;
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       padding-left: var(--bb-grid-size-4);
     }
 
@@ -93,10 +115,11 @@ export class LLMInput extends LitElement {
     }
 
     #controls #add-text,
-    #controls #add-image-file,
-    #controls #add-video-file,
-    #controls #add-audio-file,
-    #controls #add-text-file {
+    #controls #add-image-webcam,
+    #controls #add-image-drawable,
+    #controls #add-video-webcam,
+    #controls #add-audio-microphone,
+    #controls #add-file {
       width: 20px;
       height: 20px;
       opacity: 0.5;
@@ -112,43 +135,50 @@ export class LLMInput extends LitElement {
         no-repeat;
     }
 
-    #controls #add-image-file {
-      background: #fff var(--bb-icon-add-image) center center / 20px 20px
+    #controls #add-image-webcam {
+      background: #fff var(--bb-icon-add-image-webcam) center center / 20px 20px
         no-repeat;
     }
 
-    #controls #add-video-file {
+    #controls #add-image-drawable {
+      background: #fff var(--bb-icon-add-drawable) center center / 20px 20px
+        no-repeat;
+    }
+
+    #controls #add-video-webcam {
       background: #fff var(--bb-icon-add-video) center center / 20px 20px
         no-repeat;
     }
 
-    #controls #add-audio-file {
+    #controls #add-audio-microphone {
       background: #fff var(--bb-icon-add-audio) center center / 20px 20px
         no-repeat;
     }
 
-    #controls #add-text-file {
+    #controls #add-file {
       background: #fff var(--bb-icon-add-file) center center / 20px 20px
         no-repeat;
     }
 
     #controls #add-text:hover,
-    #controls #add-image-file:hover,
-    #controls #add-video-file:hover,
-    #controls #add-audio-file:hover,
-    #controls #add-text-file:hover,
+    #controls #add-image-webcam:hover,
+    #controls #add-image-drawable:hover,
+    #controls #add-video-webcam:hover,
+    #controls #add-audio-microphone:hover,
+    #controls #add-file:hover,
     #controls #add-text:focus,
-    #controls #add-image-file:focus,
-    #controls #add-video-file:focus,
-    #controls #add-audio-file:focus,
-    #controls #add-text-file:focus {
+    #controls #add-image-webcam:focus,
+    #controls #add-image-drawable:focus,
+    #controls #add-video-webcam:focus,
+    #controls #add-audio-microphone:focus,
+    #controls #add-file:focus {
       opacity: 1;
     }
 
     #container {
       resize: vertical;
       overflow: auto;
-      height: 15vh;
+      height: 30vh;
       min-height: var(--bb-grid-size-6);
       border: 2px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
@@ -199,6 +229,17 @@ export class LLMInput extends LitElement {
     #no-parts {
       padding: 0 var(--bb-grid-size-3);
     }
+
+    .confirm {
+      background: var(--bb-continue-color) var(--bb-icon-confirm-blue) 8px 4px /
+        16px 16px no-repeat;
+      color: var(--bb-output-700);
+      border-radius: var(--bb-grid-size-5);
+      border: none;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+      margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+    }
   `;
 
   connectedCallback(): void {
@@ -242,7 +283,7 @@ export class LLMInput extends LitElement {
     this.requestUpdate();
   }
 
-  #addFilePart(mimeType: string, triggerSelectionFlow = false) {
+  #addPart(mimeType: string, triggerSelectionFlow = true) {
     if (!this.value) {
       this.value = { role: "user", parts: [] };
     }
@@ -251,22 +292,6 @@ export class LLMInput extends LitElement {
     this.#focusLastPart = true;
     this.#triggerSelectionFlow = triggerSelectionFlow;
     this.requestUpdate();
-  }
-
-  #addImageFilePart() {
-    this.#addFilePart("image-file", true);
-  }
-
-  #addVideoFilePart() {
-    this.#addFilePart("video-file", true);
-  }
-
-  #addAudioFilePart() {
-    this.#addFilePart("audio-file", true);
-  }
-
-  #addTextFilePart() {
-    this.#addFilePart("text-file", true);
   }
 
   protected updated(): void {
@@ -288,6 +313,28 @@ export class LLMInput extends LitElement {
         this.#lastInputRef.value.click();
       });
     }
+  }
+
+  async processAllOpenParts() {
+    if (!this.value) {
+      return;
+    }
+
+    return Promise.all([
+      this.value.parts.map((part, idx) => {
+        if (!isInlineData(part)) {
+          return;
+        }
+
+        switch (part.inlineData.mimeType) {
+          case "audio-microphone":
+          case "image-webcam":
+          case "image-drawable": {
+            return this.#processInputPart(idx);
+          }
+        }
+      }),
+    ]);
   }
 
   async #processFilePart(evt: InputEvent, partIdx: number) {
@@ -317,6 +364,73 @@ export class LLMInput extends LitElement {
     part.inlineData.mimeType = files[0].type;
     this.#emitUpdate();
     this.requestUpdate();
+  }
+
+  async #processInputPart(partIdx: number) {
+    if (!this.value) {
+      this.value = { role: "user", parts: [] };
+    }
+
+    if (!this.value.parts[partIdx]) {
+      this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
+    }
+
+    let part = this.value.parts[partIdx];
+    if (!isInlineData(part)) {
+      part = structuredClone(inlineDataTemplate);
+    }
+
+    switch (part.inlineData.mimeType) {
+      case "audio-microphone":
+      case "image-webcam":
+      case "image-drawable": {
+        const inputEl =
+          this.#containerRef.value?.querySelector<MultiModalInput>(
+            `#part-${partIdx}`
+          );
+        if (!inputEl) {
+          break;
+        }
+
+        const content = inputEl.value as LLMContent;
+        if (!content.parts.length || !isInlineData(content.parts[0])) {
+          break;
+        }
+
+        const contentPart = content.parts[0];
+        part.inlineData = contentPart.inlineData;
+        break;
+      }
+    }
+
+    this.#emitUpdate();
+    this.requestUpdate();
+  }
+
+  #createAcceptList() {
+    const accept = [];
+    if (this.allow.audioFile) {
+      accept.push("audio/*");
+    }
+
+    if (this.allow.videoFile) {
+      accept.push("video/*");
+    }
+
+    if (this.allow.imageFile) {
+      accept.push("image/*");
+    }
+
+    if (this.allow.textFile) {
+      accept.push("text/plain");
+    }
+
+    if (accept.length === 0) {
+      console.warn("No file types are allowed - defaulting to text");
+      accept.push("text/plain");
+    }
+
+    return accept.join(",");
   }
 
   async #getPartDataAsHTML(
@@ -363,24 +477,8 @@ export class LLMInput extends LitElement {
         return cache(html`<div class="plain-text">${atob(part.inlineData.data)}</div>`);
       }
 
-      // New File
-      case "image-file":
-      case "audio-file":
-      case "video-file":
-      case "text-file": {
-        let accept = "image/*";
-        switch (part.inlineData.mimeType) {
-          case "text-file":
-            accept = "text/plain";
-            break;
-          case "video-file":
-            accept = "video/*";
-            break;
-          case "audio-file":
-            accept = "audio/*";
-            break;
-        }
-
+      case "file": {
+        const accept = this.#createAcceptList();
         return html`<label for="part-${idx}"
           ><input
             ${isLastPart ? ref(this.#lastInputRef) : nothing}
@@ -396,6 +494,61 @@ export class LLMInput extends LitElement {
         /></label>`;
       }
 
+      case "audio-microphone": {
+        return cache(
+          html`<bb-audio-input id="part-${idx}"></bb-audio-input
+            ><button
+              class="confirm"
+              @click=${(evt: InputEvent) => {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+
+                this.#processInputPart(idx);
+              }}
+            >
+              Confirm
+            </button>`
+        );
+      }
+
+      case "image-webcam": {
+        return cache(
+          html`<bb-webcam-input id="part-${idx}"></bb-webcam-input
+            ><button
+              class="confirm"
+              @click=${(evt: InputEvent) => {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+
+                this.#processInputPart(idx);
+              }}
+            >
+              Confirm
+            </button>`
+        );
+      }
+
+      case "image-drawable": {
+        return cache(
+          html`<bb-drawable-input id="part-${idx}"></bb-drawable-input
+            ><button
+              class="confirm"
+              @click=${(evt: InputEvent) => {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+
+                this.#processInputPart(idx);
+              }}
+            >
+              Confirm
+            </button>`
+        );
+      }
+
+      case "video-webcam": {
+        return html`Video inputs are not yet supported`;
+      }
+
       default: {
         return html`<label for="part-${idx}"
           ><input type="file" id="part-${idx}"
@@ -405,26 +558,64 @@ export class LLMInput extends LitElement {
   }
 
   render() {
+    const allowFile =
+      this.allow.audioFile ||
+      this.allow.imageFile ||
+      this.allow.videoFile ||
+      this.allow.textFile;
+
     return html` <header>
-        <span id="description">${this.schema?.description}</span>
+        <span id="description">${this.description}</span>
         <span id="controls">
           <span>Insert:</span>
-          <button id="add-text" @click=${this.#addTextPart}>Text</button>
-          <button id="add-image-file" @click=${this.#addImageFilePart}>
-            Image
-          </button>
-          <button id="add-video-file" @click=${this.#addVideoFilePart}>
-            Video
-          </button>
-          <button id="add-audio-file" @click=${this.#addAudioFilePart}>
-            Audio
-          </button>
-          <button id="add-text-file" @click=${this.#addTextFilePart}>
-            Text File
-          </button>
+          ${this.allow.textInline
+            ? html`<button
+                title="Add text field"
+                id="add-text"
+                @click=${this.#addTextPart}
+              >
+                Text
+              </button>`
+            : nothing}
+          ${this.allow.imageWebcam
+            ? html`<button
+                title="Add image from webcam"
+                id="add-image-webcam"
+                @click=${() => this.#addPart("image-webcam")}
+              >
+                Image (Webcam)
+              </button>`
+            : nothing}
+          ${this.allow.imageDrawable
+            ? html`<button
+                title="Add image from drawable"
+                id="add-image-drawable"
+                @click=${() => this.#addPart("image-drawable")}
+              >
+                Image (Drawable)
+              </button>`
+            : nothing}
+          ${this.allow.audioMicrophone
+            ? html`<button
+                title="Add audio from microphone"
+                id="add-audio-microphone"
+                @click=${() => this.#addPart("audio-microphone")}
+              >
+                Audio
+              </button>`
+            : nothing}
+          ${allowFile
+            ? html`<button
+                title="Add file"
+                id="add-file"
+                @click=${() => this.#addPart("file")}
+              >
+                File
+              </button>`
+            : nothing}
         </span>
       </header>
-      <div id="container">
+      <div id="container" ${ref(this.#containerRef)}>
         ${this.value
           ? map(this.value.parts, (part, idx) => {
               const isLastPart = idx === (this.value?.parts.length || 0) - 1;
@@ -452,12 +643,25 @@ export class LLMInput extends LitElement {
                   // Remove all vowels except the first.
                   .replace(/(?<!^)[aeiou]/gi, "");
 
-                if (part.inlineData.mimeType === "text/plain") {
-                  prefix = "txt";
-                }
-
-                if (part.inlineData.mimeType.endsWith("-file")) {
-                  prefix = "";
+                switch (part.inlineData.mimeType) {
+                  case "text/plain":
+                    prefix = "txt";
+                    break;
+                  case "file":
+                    prefix = "";
+                    break;
+                  case "image-webcam":
+                    prefix = "img";
+                    break;
+                  case "image-drawable":
+                    prefix = "drwbl";
+                    break;
+                  case "audio-microphone":
+                    prefix = "mic";
+                    break;
+                  case "video-webcam":
+                    prefix = "vid";
+                    break;
                 }
 
                 value = html`${until(
