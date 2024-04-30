@@ -688,6 +688,7 @@ export class Graph extends PIXI.Container {
 
       graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
         this.#redrawAllEdges();
+        this.#drawNodeHighlight();
       });
       this.addChild(graphNode);
     }
