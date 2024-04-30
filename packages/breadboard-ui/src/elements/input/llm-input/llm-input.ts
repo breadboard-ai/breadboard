@@ -226,6 +226,18 @@ export class LLMInput extends LitElement {
       color: var(--bb-neutral-600);
     }
 
+    .value bb-webcam-input {
+      --bb-border-radius: var(--bb-grid-size);
+      --bb-box-shadow: none;
+      --bb-outline: var(--bb-neutral-300);
+    }
+
+    .value bb-drawable-input {
+      --bb-border-radius: var(--bb-grid-size);
+      --bb-box-shadow: none;
+      --bb-outline: var(--bb-neutral-300);
+    }
+
     #no-parts {
       padding: 0 var(--bb-grid-size-3);
     }

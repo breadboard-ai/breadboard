@@ -354,7 +354,7 @@ export class SchemaEditor extends LitElement {
             value.items.behavior?.includes("llm-content");
 
           if (isLLMObject || isArrayOfLLMObjects) {
-            let objectFormat = [value.format];
+            let objectFormat = value.format ? [value.format] : [];
             if (
               isArrayOfLLMObjects &&
               value.items &&
@@ -369,8 +369,26 @@ export class SchemaEditor extends LitElement {
                 id="${id}-format"
                 multiple
                 ?readonly=${!this.editable}
+                @input=${(evt: InputEvent) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
+
+                  if (
+                    evt.target.selectedOptions.length === 0 ||
+                    evt.target.selectedOptions[0].value !== "none"
+                  ) {
+                    return;
+                  }
+
+                  for (let i = 1; i < evt.target.options.length; i++) {
+                    evt.target.options[i].selected = false;
+                  }
+                }}
               >
-                <option value="none">Any</option>
+                <option value="none" ?selected=${objectFormat.length === 0}>
+                  Any
+                </option>
                 <option
                   value="audio-file"
                   ?selected=${objectFormat.includes("audio-file")}
@@ -791,8 +809,6 @@ export class SchemaEditor extends LitElement {
     if (schema.properties) {
       schema.type = "object";
     }
-
-    console.log(schema);
 
     this.schema = schema;
     return true;

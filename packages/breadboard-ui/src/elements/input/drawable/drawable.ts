@@ -33,6 +33,7 @@ export class DrawableInput extends LitElement {
         0 2px 3px 0 rgba(0, 0, 0, 0.23);
       --default-bb-border-radius: 8px;
       --default-bb-input-background-color: #fff;
+      --default-bb-outline: transparent;
 
       position: relative;
       display: block;
@@ -44,6 +45,7 @@ export class DrawableInput extends LitElement {
       box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
       border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
       aspect-ratio: 4/3;
+      outline: 1px solid var(--bb-outline, var(--default-bb-outline));
     }
 
     canvas {
