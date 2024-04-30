@@ -45,7 +45,7 @@ export function formatGraphDescriptor(bgl: GraphDescriptor): GraphDescriptor {
       node.configuration = sortKeys(node.configuration ?? {}, []);
       if (node.type === "input" || node.type === "output") {
         const configWithSchema = node.configuration as {
-          schema?: { properties?: Record<string, unknown> };
+          schema?: { properties?: Record<string, unknown>; required?: [] };
         };
         if (configWithSchema.schema?.properties) {
           configWithSchema.schema.properties = sortKeys(
@@ -53,6 +53,7 @@ export function formatGraphDescriptor(bgl: GraphDescriptor): GraphDescriptor {
             []
           );
         }
+        configWithSchema.schema?.required?.sort();
       }
       return sortKeys(node, nodeFieldOrder);
     })

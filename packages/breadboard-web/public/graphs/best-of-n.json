@@ -141,8 +141,8 @@
             }
           },
           "required": [
-            "n",
             "agent",
+            "n",
             "text"
           ]
         }

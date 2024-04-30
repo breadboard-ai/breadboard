@@ -196,10 +196,10 @@
             }
           },
           "required": [
-            "url",
+            "group_by",
             "meta",
             "results",
-            "group_by"
+            "url"
           ],
           "additionalProperties": false
         }

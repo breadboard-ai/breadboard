@@ -184,8 +184,8 @@
             }
           },
           "required": [
-            "year",
-            "countryCode"
+            "countryCode",
+            "year"
           ]
         }
       }

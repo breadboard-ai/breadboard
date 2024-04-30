@@ -58,8 +58,8 @@
             }
           },
           "required": [
-            "question",
-            "generator"
+            "generator",
+            "question"
           ]
         }
       }

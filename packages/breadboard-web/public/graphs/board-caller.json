@@ -122,8 +122,8 @@
             }
           },
           "required": [
-            "text",
-            "boards"
+            "boards",
+            "text"
           ]
         }
       }

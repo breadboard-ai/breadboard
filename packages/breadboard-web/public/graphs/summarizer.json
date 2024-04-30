@@ -70,8 +70,8 @@
             }
           },
           "required": [
-            "paragraph",
-            "n"
+            "n",
+            "paragraph"
           ]
         }
       }

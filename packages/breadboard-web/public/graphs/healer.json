@@ -152,8 +152,8 @@
             }
           },
           "required": [
-            "text",
             "gnerator",
+            "text",
             "validator"
           ]
         }
