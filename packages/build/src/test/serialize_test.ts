@@ -927,9 +927,9 @@ test("polymorphic outputs", () => {
     board({
       inputs: {},
       outputs: {
-        boardOut1: myNode.assertOutput("asserted1"),
-        boardOut2: myNode.assertOutput("asserted2"),
-        boardOut3: myNode.assertOutput("asserted1"),
+        boardOut1: myNode.unsafeOutput("asserted1"),
+        boardOut2: myNode.unsafeOutput("asserted2"),
+        boardOut3: myNode.unsafeOutput("asserted1"),
       },
     }),
     {

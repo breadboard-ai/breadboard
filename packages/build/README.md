@@ -175,17 +175,17 @@ _Static_ means there is not.)
 | Dynamic | Dynamic    | Optional        | **Required**     |
 | Dynamic | Reflective | Optional        | N/A              |
 
-### `assertOutput`
+### `unsafeOutput`
 
 When a node has dynamic outputs, but is not `reflective`, it is not possible at
 compile time for Breadboard to know what the valid output ports of a node are.
-In this case, use the `assertOutput` method to get an output port with a given
+In this case, use the `unsafeOutput` method to get an output port with a given
 name. Note that there is no guarantee this port will exist at runtime, so a
 runtime error could occur.
 
 (Note that the following example is highly contrived. It is better to find a
 way to use fully static or reflective nodes whenever possible to avoid the use
-of `assertOutput`).
+of `unsafeOutput`).
 
 ```ts
 import { defineNodeType, array } from "@breadboard-ai/build";
@@ -210,9 +210,9 @@ const lengths = weirdStringLength({ strings: ["foo", "bar"] });
 // All 3 of these variables will have type OutputPort<number> and can be wired
 // up to other nodes and boards as normal, but only `foo` and `bar` will
 // *actually* be valid at runtime.
-const foo = lengths.assertOutput("foo");
-const bar = lengths.assertOutput("bar");
-const baz = lengths.assertOutput("baz"); // Oops!
+const foo = lengths.unsafeOutput("foo");
+const bar = lengths.unsafeOutput("bar");
+const baz = lengths.unsafeOutput("baz"); // Oops!
 ```
 
 ## Adding nodes to Kits

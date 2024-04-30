@@ -453,7 +453,7 @@ test("poly/poly", async () => {
 
   assert.ok(
     // $ExpectType OutputPort<number>
-    i.assertOutput("do1")
+    i.unsafeOutput("do1")
   );
 
   assert.equal(
@@ -1732,7 +1732,7 @@ test("error: reflective poly/poly should not return outputs", () => {
   });
 });
 
-test("error: assertOutput with entirely static outputs", () => {
+test("error: unsafeOutput with entirely static outputs", () => {
   const d = defineNodeType({
     name: "foo",
     inputs: {},
@@ -1745,12 +1745,12 @@ test("error: assertOutput with entirely static outputs", () => {
   assert.throws(
     () =>
       // @ts-expect-error
-      i.assertOutput("do1"),
-    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" has entirely static outputs. Use "<node>.outputs.do1" instead./
+      i.unsafeOutput("do1"),
+    /unsafeOutput was called unnecessarily on a BreadboardNode. Type "foo" has entirely static outputs. Use "<node>.outputs.do1" instead./
   );
 });
 
-test("error: assertOutput on reflective node", () => {
+test("error: unsafeOutput on reflective node", () => {
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -1766,12 +1766,12 @@ test("error: assertOutput on reflective node", () => {
   assert.throws(
     () =>
       // @ts-expect-error
-      i.assertOutput("do1"),
-    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" is reflective. Use "<node>.outputs.do1" instead./
+      i.unsafeOutput("do1"),
+    /unsafeOutput was called unnecessarily on a BreadboardNode. Type "foo" is reflective. Use "<node>.outputs.do1" instead./
   );
 });
 
-test("error: assertOutput on existing static output", () => {
+test("error: unsafeOutput on existing static output", () => {
   const d = defineNodeType({
     name: "foo",
     inputs: {},
@@ -1785,11 +1785,11 @@ test("error: assertOutput on existing static output", () => {
   const i = d({});
   assert.throws(
     () =>
-      i.assertOutput(
+      i.unsafeOutput(
         // @ts-expect-error
         "so1"
       ),
-    /assertOutput was called unnecessarily on a BreadboardNode. Type "foo" already has a static port called "so1". Use "<node>.outputs.so1" instead./
+    /unsafeOutput was called unnecessarily on a BreadboardNode. Type "foo" already has a static port called "so1". Use "<node>.outputs.so1" instead./
   );
 });
 
