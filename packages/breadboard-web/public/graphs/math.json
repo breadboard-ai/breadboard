@@ -1,7 +1,7 @@
 {
   "title": "The Calculator Board",
   "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "edges": [
     {
       "from": "compute",
