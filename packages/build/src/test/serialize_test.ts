@@ -1704,3 +1704,60 @@ test("custom and default output ids", () => {
     }
   );
 });
+
+test("output with title and description", () => {
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {},
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({});
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut: output(myNode.outputs.myNodeOut, {
+          id: "custom-output",
+          title: "Custom Title",
+          description: "Custom Description",
+        }),
+      },
+    }),
+    {
+      edges: [
+        {
+          from: "myNode-0",
+          to: "custom-output",
+          out: "myNodeOut",
+          in: "boardOut",
+        },
+      ],
+      nodes: [
+        {
+          id: "custom-output",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: {
+                  type: "string",
+                  title: "Custom Title",
+                  description: "Custom Description",
+                },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+    }
+  );
+});
