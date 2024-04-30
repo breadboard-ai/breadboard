@@ -1616,18 +1616,18 @@ test("two same custom output ids", () => {
     board({
       inputs: {},
       outputs: {
-        result1: output(foo.outputs.value1, { id: "custom-input" }),
-        result2: output(foo.outputs.value2, { id: "custom-input" }),
+        result1: output(foo.outputs.value1, { id: "custom-output" }),
+        result2: output(foo.outputs.value2, { id: "custom-output" }),
       },
     }),
     {
       edges: [
-        { from: "foo-0", to: "custom-input", out: "value1", in: "result1" },
-        { from: "foo-0", to: "custom-input", out: "value2", in: "result2" },
+        { from: "foo-0", to: "custom-output", out: "value1", in: "result1" },
+        { from: "foo-0", to: "custom-output", out: "value2", in: "result2" },
       ],
       nodes: [
         {
-          id: "custom-input",
+          id: "custom-output",
           type: "output",
           configuration: {
             schema: {
