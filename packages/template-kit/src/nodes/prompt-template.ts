@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anyOf, defineNodeType, object } from "@breadboard-ai/build";
+import { defineNodeType } from "@breadboard-ai/build";
 import type { InputValues } from "@google-labs/breadboard";
 
 export const stringify = (value: unknown): string => {
