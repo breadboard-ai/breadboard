@@ -9,7 +9,14 @@
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { anyOf, array, defineNodeType, object, output } from "../index.js";
+import {
+  anyOf,
+  array,
+  defineNodeType,
+  object,
+  output,
+  unsafeCast,
+} from "../index.js";
 import { board, type GenericBoardDefinition } from "../internal/board/board.js";
 import { input } from "../internal/board/input.js";
 import { serialize } from "../internal/board/serialize.js";
@@ -1757,6 +1764,124 @@ test("output with title and description", () => {
           type: "myNode",
           configuration: {},
         },
+      ],
+    }
+  );
+});
+
+test("unsafe cast as output", () => {
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {},
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({});
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut: output(unsafeCast(myNode.outputs.myNodeOut, "number"), {
+          id: "custom-output",
+          title: "Custom Title",
+          description: "Custom Description",
+        }),
+      },
+    }),
+    {
+      edges: [
+        {
+          from: "myNode-0",
+          to: "custom-output",
+          out: "myNodeOut",
+          in: "boardOut",
+        },
+      ],
+      nodes: [
+        {
+          id: "custom-output",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: {
+                  type: "number",
+                  title: "Custom Title",
+                  description: "Custom Description",
+                },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
+      ],
+    }
+  );
+});
+
+test("unsafe cast as input to another node", () => {
+  const makesStringDef = defineNodeType({
+    name: "makesString",
+    inputs: {},
+    outputs: {
+      str: { type: "string", primary: true },
+    },
+    invoke: () => ({ str: "foo" }),
+  });
+
+  const takesNumberDef = defineNodeType({
+    name: "takesNumber",
+    inputs: {
+      num: { type: "number" },
+    },
+    outputs: {
+      num: { type: "number", primary: true },
+    },
+    invoke: ({ num }) => ({ num }),
+  });
+
+  takesNumberDef({
+    // @ts-expect-error
+    num: makesStringDef({}),
+  });
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        strAsNum: takesNumberDef({
+          num: unsafeCast(makesStringDef({}), "number"),
+        }),
+      },
+    }),
+    {
+      edges: [
+        { from: "makesString-0", to: "takesNumber-0", out: "str", in: "num" },
+        { from: "takesNumber-0", to: "output-0", out: "num", in: "strAsNum" },
+      ],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                strAsNum: { type: "number" },
+              },
+              required: ["strAsNum"],
+            },
+          },
+        },
+        { id: "makesString-0", type: "makesString", configuration: {} },
+        { id: "takesNumber-0", type: "takesNumber", configuration: {} },
       ],
     }
   );
