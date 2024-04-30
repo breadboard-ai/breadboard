@@ -44,19 +44,11 @@ export function input<T extends Record<string, unknown>>(
     : JsonSerializable
 >;
 
-// just description
+// nothing we can use for types means string
 export function input(params: {
-  description: string;
-  title?: string;
-  type?: undefined;
-  default?: undefined;
-  examples?: undefined;
-}): Input<string>;
-
-// just title
-export function input(params: {
+  $id?: string;
   description?: string;
-  title: string;
+  title?: string;
   type?: undefined;
   default?: undefined;
   examples?: undefined;
@@ -108,6 +100,7 @@ export function input(
   }
   return {
     __SpecialInputBrand: true,
+    id: params?.$id,
     type,
     title: params?.title,
     description: params?.description,
@@ -121,6 +114,7 @@ export function input(
 }
 
 interface LooseParams {
+  $id?: string;
   type?: BreadboardType;
   title?: string;
   description?: string;
@@ -131,6 +125,7 @@ interface LooseParams {
 export interface Input<T extends JsonSerializable> {
   readonly __SpecialInputBrand: true;
   readonly __type: T;
+  readonly id?: string;
   readonly type: BreadboardType;
   readonly title?: string;
   readonly description?: string;
@@ -140,6 +135,7 @@ export interface Input<T extends JsonSerializable> {
 
 export interface InputWithDefault<T extends JsonSerializable> {
   readonly __SpecialInputBrand: true;
+  readonly id?: string;
   readonly title?: string;
   readonly type: BreadboardType;
   readonly description?: string;
@@ -153,6 +149,7 @@ export type GenericSpecialInput =
 
 type CheckParams<T extends LooseParams> = (T["type"] extends Defined
   ? {
+      $id?: string;
       type: BreadboardType;
       title?: string;
       default?: T["type"] extends BreadboardType
@@ -167,6 +164,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
     }
   : T["default"] extends Defined
     ? {
+        $id?: string;
         type?: never;
         title?: string;
         default: string | number | boolean;
@@ -175,6 +173,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
       }
     : T["examples"] extends Defined
       ? {
+          $id?: string;
           type?: never;
           title?: string;
           default?: never;
@@ -183,6 +182,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
         }
       : never) & {
   [K in keyof T]: K extends
+    | "$id"
     | "type"
     | "title"
     | "default"

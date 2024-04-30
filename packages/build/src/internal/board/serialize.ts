@@ -35,17 +35,17 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
 
   // Prepare our main input and output nodes. They represent the overall
   // signature of the board.
-  const mainInputNodeId = nextIdForType("input");
-  const mainOutputNodeId = nextIdForType("output");
-  const mainInputSchema: Record<string, JSONSchema4> = {};
+  const defaultOutputNodeId = nextIdForType("output");
   const mainOutputSchema: Record<string, JSONSchema4> = {};
 
   // Analyze inputs and remember some things about them that we'll need when we
   // traverse the outputs.
-  const inputNames = new Map<
+  const inputNodes = new Map<string, InputOrOutputNodeDescriptor>();
+  const inputObjectsToInputNodeInfo = new Map<
     GenericSpecialInput | SerializableInputPort,
-    string
+    { nodeId: string; portName: string }
   >();
+
   const unconnectedInputs = new Set<
     GenericSpecialInput | SerializableInputPort
   >();
@@ -54,13 +54,18 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     ([nameA], [nameB]) => nameA.localeCompare(nameB)
   );
   for (const [mainInputName, input] of sortedBoardInputs) {
-    if (inputNames.has(input)) {
+    if (inputObjectsToInputNodeInfo.has(input)) {
       errors.push(
         `The same input was used as both ` +
-          `${inputNames.get(input)!} and ${mainInputName}.`
+          `${inputObjectsToInputNodeInfo.get(input)!.portName} and ${mainInputName}.`
       );
     }
-    inputNames.set(input, mainInputName);
+    const inputNodeId =
+      isSpecialInput(input) && input.id ? input.id : "input-0";
+    inputObjectsToInputNodeInfo.set(input, {
+      nodeId: inputNodeId,
+      portName: mainInputName,
+    });
     unconnectedInputs.add(input);
     const schema = toJSONSchema(input.type);
     if (isSpecialInput(input)) {
@@ -77,7 +82,24 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         schema.examples = input.examples;
       }
     }
-    mainInputSchema[mainInputName] = schema;
+    let inputNode = inputNodes.get(inputNodeId);
+    if (inputNode === undefined) {
+      inputNode = {
+        id: inputNodeId,
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {},
+            required: [],
+            // TODO(aomarks) Disallow extra properties?
+          },
+        },
+      };
+      inputNodes.set(inputNodeId, inputNode);
+    }
+    inputNode.configuration.schema.properties[mainInputName] = schema;
+    inputNode.configuration.schema.required.push(mainInputName);
   }
 
   // Recursively traverse the graph starting from outputs.
@@ -91,7 +113,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     addEdge(
       visitNodeAndReturnItsId(actualOutput.node),
       actualOutput.name,
-      mainOutputNodeId,
+      defaultOutputNodeId,
       mainOutputName
     );
   }
@@ -99,7 +121,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   if (unconnectedInputs.size > 0) {
     for (const input of unconnectedInputs.values()) {
       errors.push(
-        `Board input "${inputNames.get(input)}" ` +
+        `Board input "${inputObjectsToInputNodeInfo.get(input)!.portName}" ` +
           `is not reachable from any of its outputs.`
       );
     }
@@ -113,20 +135,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
   }
 
-  const mainInputNode: NodeDescriptor = {
-    id: mainInputNodeId,
-    type: "input",
-    configuration: {
-      schema: {
-        type: "object",
-        properties: mainInputSchema,
-        required: Object.keys(mainInputSchema),
-        // TODO(aomarks) Disallow extra properties
-      },
-    },
-  };
   const mainOutputNode: NodeDescriptor = {
-    id: mainOutputNodeId,
+    id: defaultOutputNodeId,
     type: "output",
     configuration: {
       schema: {
@@ -160,7 +170,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       }
       return 0;
     }),
-    nodes: [mainInputNode, mainOutputNode, ...sortedNodes],
+    nodes: [...inputNodes.values(), mainOutputNode, ...sortedNodes],
   };
 
   function visitNodeAndReturnItsId(node: SerializableNode): string {
@@ -191,9 +201,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
 
       if (isSpecialInput(value)) {
         unconnectedInputs.delete(value);
-        const mainInputPortName = inputNames.get(value);
-        if (mainInputPortName !== undefined) {
-          addEdge(mainInputNodeId, mainInputPortName, thisNodeId, portName);
+        const inputNodeInfo = inputObjectsToInputNodeInfo.get(value);
+        if (inputNodeInfo !== undefined) {
+          addEdge(
+            inputNodeInfo.nodeId,
+            inputNodeInfo.portName,
+            thisNodeId,
+            portName
+          );
         } else {
           // TODO(aomarks) Does it actually make sense in some cases to wire up
           // an input, but not make it part of the board's interface? In that
@@ -264,3 +279,12 @@ function isOutputPortReference(
     typeof value === "object" && value !== null && OutputPortGetter in value
   );
 }
+
+type InputOrOutputNodeDescriptor = NodeDescriptor & {
+  configuration: {
+    schema: JSONSchema4 & {
+      properties: Record<string, JSONSchema4>;
+      required: string[];
+    };
+  };
+};
