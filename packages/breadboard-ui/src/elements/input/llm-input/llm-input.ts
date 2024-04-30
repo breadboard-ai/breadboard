@@ -210,7 +210,8 @@ export class LLMInput extends LitElement {
     .value img,
     .value video,
     .value audio {
-      max-width: 100%;
+      width: 100%;
+      max-width: 320px;
     }
 
     .value img,
@@ -230,12 +231,16 @@ export class LLMInput extends LitElement {
       --bb-border-radius: var(--bb-grid-size);
       --bb-box-shadow: none;
       --bb-outline: var(--bb-neutral-300);
+      width: 100%;
+      max-width: 320px;
     }
 
     .value bb-drawable-input {
       --bb-border-radius: var(--bb-grid-size);
       --bb-box-shadow: none;
       --bb-outline: var(--bb-neutral-300);
+      width: 100%;
+      max-width: 320px;
     }
 
     #no-parts {
@@ -256,6 +261,13 @@ export class LLMInput extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.#clearPartDataURLs();
+  }
+
+  #clearPartDataURLs() {
+    for (const url of this.#partDataURLs.values()) {
+      URL.revokeObjectURL(url);
+    }
 
     this.#partDataURLs.clear();
   }
