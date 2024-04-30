@@ -21,6 +21,11 @@ test("output usage", () => {
   output(foo);
   output(foo, { id: "foo" });
   output(foo.outputs.foo, { id: "foo" });
+  output(foo.outputs.foo, {
+    id: "foo",
+    title: "My Title",
+    description: "My Description",
+  });
 
   // @ts-expect-error
   output();
@@ -34,6 +39,21 @@ test("output usage", () => {
   output(foo, {
     // @ts-expect-error
     id: 123,
+  });
+
+  output(foo, {
+    // @ts-expect-error
+    title: 123,
+  });
+
+  output(foo, {
+    // @ts-expect-error
+    description: 123,
+  });
+
+  output(foo, {
+    // @ts-expect-error
+    unknown: 123,
   });
 
   output(foo, {

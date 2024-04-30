@@ -130,7 +130,16 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       };
       outputNodes.set(outputNodeId, outputNode);
     }
-    outputNode.configuration.schema.properties[name] = toJSONSchema(port.type);
+    const schema = toJSONSchema(port.type);
+    if (isSpecialOutput(output)) {
+      if (output.title !== undefined) {
+        schema.title = output.title;
+      }
+      if (output.description !== undefined) {
+        schema.description = output.description;
+      }
+    }
+    outputNode.configuration.schema.properties[name] = schema;
     outputNode.configuration.schema.required.push(name);
     addEdge(visitNodeAndReturnItsId(port.node), port.name, outputNodeId, name);
   }

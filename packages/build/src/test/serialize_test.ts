@@ -1616,18 +1616,18 @@ test("two same custom output ids", () => {
     board({
       inputs: {},
       outputs: {
-        result1: output(foo.outputs.value1, { id: "custom-input" }),
-        result2: output(foo.outputs.value2, { id: "custom-input" }),
+        result1: output(foo.outputs.value1, { id: "custom-output" }),
+        result2: output(foo.outputs.value2, { id: "custom-output" }),
       },
     }),
     {
       edges: [
-        { from: "foo-0", to: "custom-input", out: "value1", in: "result1" },
-        { from: "foo-0", to: "custom-input", out: "value2", in: "result2" },
+        { from: "foo-0", to: "custom-output", out: "value1", in: "result1" },
+        { from: "foo-0", to: "custom-output", out: "value2", in: "result2" },
       ],
       nodes: [
         {
-          id: "custom-input",
+          id: "custom-output",
           type: "output",
           configuration: {
             schema: {
@@ -1700,6 +1700,63 @@ test("custom and default output ids", () => {
           },
         },
         { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("output with title and description", () => {
+  const myNode = defineNodeType({
+    name: "myNode",
+    inputs: {},
+    outputs: {
+      myNodeOut: { type: "string" },
+    },
+    invoke: () => ({ myNodeOut: "aaa" }),
+  })({});
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        boardOut: output(myNode.outputs.myNodeOut, {
+          id: "custom-output",
+          title: "Custom Title",
+          description: "Custom Description",
+        }),
+      },
+    }),
+    {
+      edges: [
+        {
+          from: "myNode-0",
+          to: "custom-output",
+          out: "myNodeOut",
+          in: "boardOut",
+        },
+      ],
+      nodes: [
+        {
+          id: "custom-output",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                boardOut: {
+                  type: "string",
+                  title: "Custom Title",
+                  description: "Custom Description",
+                },
+              },
+              required: ["boardOut"],
+            },
+          },
+        },
+        {
+          id: "myNode-0",
+          type: "myNode",
+          configuration: {},
+        },
       ],
     }
   );
