@@ -498,7 +498,7 @@ export class GraphNode extends PIXI.Graphics {
       this.#padding +
       (this.#titleText?.width || 0) +
       this.#padding +
-      this.#overflowMenu.width +
+      GraphOverflowMenu.width +
       this.#menuPadding;
     const inPortLabels = Array.from(this.#inPorts.values());
     const outPortLabels = Array.from(this.#outPorts.values());
