@@ -5,7 +5,8 @@
  */
 
 import { board, input } from "@breadboard-ai/build";
-import { reverseString, prompt } from "../build-example-kit.js";
+import { prompt } from "@google-labs/template-kit";
+import { reverseString } from "../build-example-kit.js";
 
 const word = input({ description: "The word to reverse" });
 const reversed = reverseString({ forwards: word });
