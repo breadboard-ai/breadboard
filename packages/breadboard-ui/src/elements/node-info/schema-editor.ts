@@ -637,6 +637,12 @@ export class SchemaEditor extends LitElement {
 
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
+        if (property.type === "string") {
+          if (inFormat && inFormat.value !== "none") {
+            property.format = inFormat.value;
+          }
+        }
+
         if (property.type === "object") {
           if (inBehavior && inBehavior.value !== "none") {
             property.behavior = [inBehavior.value as BehaviorSchema];
