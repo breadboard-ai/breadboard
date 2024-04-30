@@ -9,6 +9,7 @@ import { addKit } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import promptTemplate from "./nodes/prompt-template.js";
 import urlTemplate from "./nodes/url-template.js";
+export { prompt, promptPlaceholder } from "./nodes/prompt-template-tag.js";
 export { default as promptTemplate } from "./nodes/prompt-template.js";
 export { default as urlTemplate } from "./nodes/url-template.js";
 

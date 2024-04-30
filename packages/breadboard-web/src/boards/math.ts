@@ -6,7 +6,7 @@
 
 import { board, input, output, unsafeCast } from "@breadboard-ai/build";
 import { invoke, runJavascript } from "@google-labs/core-kit";
-import { promptTemplate } from "@google-labs/template-kit";
+import { prompt, promptPlaceholder } from "@google-labs/template-kit";
 
 const question = input({
   $id: "math-question",
@@ -22,26 +22,21 @@ const generator = input({
   default: "text-generator.json",
 });
 
-// TODO(aomarks) Implement a prompt`...` template literal function that enforces
-// placeholders.
-const prompt = promptTemplate({
-  $id: "math-function",
-  template: `Translate the math problem below into a self-contained,
+const instructions =
+  prompt`Translate the math problem below into a self-contained,
 zero-argument JavaScript function named \`compute\` that can be executed
 to provide the answer to the problem.
 
 Do not use any dependencies or libraries.
 
-Math Problem: {{question}}
+Math Problem: ${promptPlaceholder(question, { name: "question" })}
 
-Solution:`,
-  question,
-});
+Solution:`.configure({ id: "math-function" });
 
 const generatedCode = invoke({
   $id: "generator",
   $board: generator,
-  text: prompt,
+  text: instructions,
   // TODO(aomarks) Some kind of helper that can abstract over multiple boards
   // (need to convert all underyling boards to the new API first).
 }).unsafeOutput("text");
