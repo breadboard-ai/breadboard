@@ -18,7 +18,9 @@ export type ContextItem = {
 };
 
 export const userPartsAdder = code(({ context, toAdd }) => {
-  const existing = context as ContextItem[];
+  const existing = (
+    Array.isArray(context) ? context : [context]
+  ) as ContextItem[];
   if (!existing) throw new Error("Context is required");
   const incoming = structuredClone(toAdd) as ContextItem;
   if (!incoming.role) {

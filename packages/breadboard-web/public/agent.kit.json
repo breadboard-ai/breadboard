@@ -893,7 +893,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{const existing=context;if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role===\"model\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);result[result.length-1].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role===\"model\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);result[result.length-1].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
