@@ -1264,7 +1264,7 @@ test("custom input id", () => {
   );
 });
 
-test("two custom input ids", () => {
+test("two different custom input ids", () => {
   const passthru = defineNodeType({
     name: "passthru",
     inputs: {
@@ -1324,6 +1324,77 @@ test("two custom input ids", () => {
                 in2: { type: "string" },
               },
               required: ["in2"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                result1: { type: "string" },
+                result2: { type: "string" },
+              },
+              required: ["result1", "result2"],
+            },
+          },
+        },
+        { id: "passthru-0", type: "passthru", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("two same custom input ids", () => {
+  const passthru = defineNodeType({
+    name: "passthru",
+    inputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    outputs: {
+      value1: { type: "string" },
+      value2: { type: "string" },
+    },
+    invoke: ({ value1, value2 }) => ({ value1, value2 }),
+  });
+
+  const in1 = input({ $id: "custom-input" });
+  const in2 = input({ $id: "custom-input" });
+  const pt = passthru({ value1: in1, value2: in2 });
+
+  checkSerialization(
+    board({
+      inputs: {
+        in1,
+        in2,
+      },
+      outputs: {
+        result1: pt.outputs.value1,
+        result2: pt.outputs.value2,
+      },
+    }),
+    {
+      edges: [
+        { from: "custom-input", to: "passthru-0", out: "in1", in: "value1" },
+        { from: "custom-input", to: "passthru-0", out: "in2", in: "value2" },
+        { from: "passthru-0", to: "output-0", out: "value1", in: "result1" },
+        { from: "passthru-0", to: "output-0", out: "value2", in: "result2" },
+      ],
+      nodes: [
+        {
+          id: "custom-input",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                in1: { type: "string" },
+                in2: { type: "string" },
+              },
+              required: ["in1", "in2"],
             },
           },
         },
