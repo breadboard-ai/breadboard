@@ -262,7 +262,7 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "{ \"contents\": { \"parts\": $.parts }}"
+        "expression": "{ \"contents\": $.parts[0] }"
       }
     },
     {
