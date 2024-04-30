@@ -31,7 +31,7 @@ const inputSchema = {
       default: "text-generator.json",
     },
   },
-  required: ["text"],
+  required: ["question", "generator"],
 } satisfies Schema;
 
 const outputSchema = {
@@ -43,7 +43,7 @@ const outputSchema = {
       description: "The answer to the math problem",
     },
   },
-  required: ["text"],
+  required: ["result"],
 } satisfies Schema;
 
 export default await board(() => {

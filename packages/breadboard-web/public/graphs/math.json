@@ -58,7 +58,8 @@
             }
           },
           "required": [
-            "text"
+            "question",
+            "generator"
           ]
         }
       }
@@ -77,7 +78,7 @@
             }
           },
           "required": [
-            "text"
+            "result"
           ]
         }
       }
