@@ -14,6 +14,7 @@ export { input } from "./internal/board/input.js";
 export { output } from "./internal/board/output.js";
 export { placeholder } from "./internal/board/placeholder.js";
 export { serialize } from "./internal/board/serialize.js";
+export { unsafeCast } from "./internal/board/unsafe-cast.js";
 export type {
   // TODO(aomarks) Not quite sure about exporting and/or the name of
   // SerializableBoard.
