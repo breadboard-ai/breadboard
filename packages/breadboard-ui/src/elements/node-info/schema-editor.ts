@@ -507,15 +507,12 @@ export class SchemaEditor extends LitElement {
           </button>
         </summary>
         <div class="schema-item">
-          <label for="${id}-id">ID</label>
           <input
             name="${id}-id"
             id="${id}-id"
-            type="text"
-            pattern="^[\\$0-9A-Za-z\\-]+$"
+            type="hidden"
             value="${id}"
             required="required"
-            ?readonly=${!this.editable}
           />
 
           <label for="${id}-title">Title</label>
