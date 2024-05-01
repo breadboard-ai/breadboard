@@ -1,7 +1,7 @@
 {
   "title": "Structured Worker",
   "description": "A worker who outputs structure data (JSON) provided a schema.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
