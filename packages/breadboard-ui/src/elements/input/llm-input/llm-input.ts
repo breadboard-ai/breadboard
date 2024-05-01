@@ -70,7 +70,7 @@ export class LLMInput extends LitElement {
     textInline: true,
   };
 
-  #forceReRender = 0;
+  #forceRenderCount = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
@@ -526,9 +526,7 @@ export class LLMInput extends LitElement {
       this.#partDataURLs.set(idx + distance, tempUrlA);
     }
 
-    this.#emitUpdate();
-    this.#forceReRender++;
-    this.requestUpdate();
+    this.#forceReRender();
   }
 
   #addPartAfter(idx: number) {
@@ -537,9 +535,7 @@ export class LLMInput extends LitElement {
     }
 
     this.value.parts.splice(idx + 1, 0, { text: "" });
-    this.#emitUpdate();
-    this.#forceReRender++;
-    this.requestUpdate();
+    this.#forceReRender();
   }
 
   #movePartUp(idx: number) {
@@ -560,7 +556,12 @@ export class LLMInput extends LitElement {
     }
 
     this.value.parts.splice(idx, 1);
+    this.#forceReRender();
+  }
+
+  #forceReRender() {
     this.#emitUpdate();
+    this.#forceRenderCount++;
     this.requestUpdate();
   }
 
@@ -827,7 +828,7 @@ export class LLMInput extends LitElement {
                 )}`;
               }
 
-              return guard([prefix, this.#forceReRender], () => {
+              return guard([prefix, this.#forceRenderCount], () => {
                 return html`<div
                   class=${classMap({ part: true, [partClass]: true })}
                 >
