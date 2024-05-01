@@ -96,6 +96,7 @@
         "src/**/*.ts",
         "wild/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []

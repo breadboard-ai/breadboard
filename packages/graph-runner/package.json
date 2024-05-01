@@ -60,6 +60,7 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
