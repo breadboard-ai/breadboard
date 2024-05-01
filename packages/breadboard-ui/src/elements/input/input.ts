@@ -333,8 +333,9 @@ export class Input extends LitElement {
               property.items.type === "object" &&
               property.items.behavior?.includes("llm-content"));
           if (showLLMContent) {
-            const value: LLMContent | LLMContent[] | null = property.default
-              ? JSON.parse(property.default)
+            const unparsedValue = property.examples?.[0] ?? property.default;
+            const value: LLMContent | LLMContent[] | null = unparsedValue
+              ? JSON.parse(unparsedValue)
               : null;
 
             const allow: AllowedLLMContentTypes = {
