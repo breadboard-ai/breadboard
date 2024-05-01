@@ -43,6 +43,7 @@
       },
       "files": [
         "src/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []

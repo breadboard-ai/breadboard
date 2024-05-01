@@ -3,7 +3,11 @@
     "browser": true,
     "es2021": true
   },
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:expect-type/recommended"
+  ],
   "overrides": [],
   "ignorePatterns": ["dist"],
 
@@ -12,7 +16,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "eslint-plugin-expect-type"],
   "rules": {
     "@typescript-eslint/no-unused-vars": [
       "warn",
