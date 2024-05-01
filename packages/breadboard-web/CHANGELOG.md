@@ -1,5 +1,116 @@
 # @google-labs/breadboard-web
 
+## 1.8.0
+
+### Minor Changes
+
+- f03d11f: Make node proxy servers configurable in settings.
+- cdc23bb: Make bubbled input values configurable.
+- e736f37: Remove deprecated input-multipart
+- 3d48482: Change all multi-modal inputs to be a format of llm-content
+- 24230c1: Introduce LLM Content Editor
+- bd44e29: Support audio input
+- 12b825f: Implement streamlined properties panel
+
+### Patch Changes
+
+- dbd9267: Teach graph how to expand and collapse nodes
+- 39016d9: Teach node selector about node shortcuts
+- 54baba8: Implement `AbortSignal` support.
+- cc47fe7: Add additional types to LLM Content Input
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5d601fb: Add setting for show/hide of "advanced ports"
+- 6a2af3e: Hide Embedded Board Selector When Empty
+- ad5f570: Teach Editor to have basic overflow menu
+- 5369037: Fix JSONata calls to account for LLM Content
+- Updated dependencies [dbd9267]
+- Updated dependencies [3f9507d]
+- Updated dependencies [39016d9]
+- Updated dependencies [cef20ca]
+- Updated dependencies [55a9647]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [18b9f34]
+- Updated dependencies [1adb24c]
+- Updated dependencies [1e86a87]
+- Updated dependencies [d7829a1]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [fefd109]
+- Updated dependencies [706c6a8]
+- Updated dependencies [e7faf4b]
+- Updated dependencies [c1dcb0a]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [c1652c2]
+- Updated dependencies [416aed2]
+- Updated dependencies [1adb24c]
+- Updated dependencies [fefd109]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [1aa96c6]
+- Updated dependencies [d9ac358]
+- Updated dependencies [691f3d6]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [81a43c4]
+- Updated dependencies [cc47fe7]
+- Updated dependencies [f1883d1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [d8cb0c9]
+- Updated dependencies [e736f37]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [e6e0168]
+- Updated dependencies [3d48482]
+- Updated dependencies [fb3f870]
+- Updated dependencies [24230c1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [c117d4f]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [5d601fb]
+- Updated dependencies [3f9507d]
+- Updated dependencies [626139b]
+- Updated dependencies [1adb24c]
+- Updated dependencies [3f9507d]
+- Updated dependencies [bd44e29]
+- Updated dependencies [c4ca6dc]
+- Updated dependencies [1adb24c]
+- Updated dependencies [6a2af3e]
+- Updated dependencies [cfbcdf2]
+- Updated dependencies [1d9cb16]
+- Updated dependencies [ad5f570]
+- Updated dependencies [49da151]
+- Updated dependencies [31200be]
+- Updated dependencies [43da00a]
+- Updated dependencies [3f9507d]
+- Updated dependencies [dfd5ce2]
+- Updated dependencies [cfc0f15]
+- Updated dependencies [5d08172]
+- Updated dependencies [00ccb9d]
+- Updated dependencies [776f043]
+- Updated dependencies [08eabf4]
+- Updated dependencies [79909eb]
+- Updated dependencies [5369037]
+- Updated dependencies [12b825f]
+- Updated dependencies [c3587e1]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [99fcffe]
+- Updated dependencies [1e86a87]
+- Updated dependencies [4d6ce42]
+- Updated dependencies [3f9507d]
+- Updated dependencies [ff4bfe9]
+- Updated dependencies [d9ac358]
+  - @google-labs/breadboard-ui@0.7.0
+  - @breadboard-ai/build@0.5.0
+  - @google-labs/breadboard@0.18.0
+  - @google-labs/template-kit@0.3.0
+  - @google-labs/core-kit@0.8.0
+  - @google-labs/node-nursery-web@1.1.1
+  - @google-labs/json-kit@0.2.1
+  - @google-labs/palm-kit@0.0.12
+  - @google-labs/gemini-kit@0.3.0
+  - @google-labs/agent-kit@0.6.0
+  - @google-labs/pinecone-kit@0.1.10
+
 ## 1.7.0
 
 ### Minor Changes
