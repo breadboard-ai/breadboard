@@ -12,7 +12,13 @@ import {
   InspectableRunNodeEvent,
   OutputValues,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  HTMLTemplateResult,
+  nothing,
+  TemplateResult,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -23,6 +29,13 @@ import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { LLMContent, SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { cache } from "lit/directives/cache.js";
+import {
+  isFunctionCall,
+  isFunctionResponse,
+  isInlineData,
+  isText,
+} from "../../utils/llm-content.js";
+import { styles as activityLogStyles } from "./activity-log.styles.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -82,430 +95,7 @@ export class ActivityLog extends LitElement {
     }
   });
 
-  static styles = css`
-    :host {
-      display: block;
-      background: #fff;
-      width: 100%;
-      height: 100%;
-      overflow-y: scroll;
-      scrollbar-gutter: stable;
-
-      --padding-x: calc(var(--bb-grid-size) * 4);
-      --padding-y: calc(var(--bb-grid-size) * 2);
-    }
-
-    :host > h1 {
-      position: sticky;
-      top: 0;
-      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-      margin: 0 0 var(--bb-grid-size) 0;
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-      background: white;
-      z-index: 2;
-      display: flex;
-    }
-
-    :host > h1 > span {
-      flex: 1;
-    }
-
-    :host > h1::after {
-      content: "";
-      width: calc(100% - var(--padding-x) * 2);
-      height: 1px;
-      position: absolute;
-      bottom: var(--bb-grid-size);
-      left: var(--padding-x);
-      background: #f6f6f6;
-    }
-
-    :host > h1 > a {
-      font-size: var(--bb-label-small);
-      color: var(--bb-neutral-500);
-      text-decoration: none;
-      user-select: none;
-      cursor: pointer;
-    }
-
-    :host > h1 > a:hover,
-    :host > h1 > a:active {
-      color: var(--bb-neutral-700);
-    }
-
-    .activity-entry {
-      padding: var(--padding-y) 0;
-      position: relative;
-      font-size: var(--bb-font-medium);
-      user-select: none;
-    }
-
-    :host > .activity-entry {
-      padding-left: var(--padding-x);
-      padding-right: var(--padding-x);
-    }
-
-    :host > .activity-entry:last-of-type {
-      margin-bottom: 100px;
-    }
-
-    .activity-entry.error {
-      color: #cc0000;
-      user-select: text;
-    }
-
-    .activity-entry h1 {
-      font-size: var(--bb-text-regular);
-      margin: 0;
-      font-weight: 400;
-    }
-
-    .activity-entry h1 .newest-task {
-      font-size: var(--bb-text-medium);
-      font-weight: 300;
-      margin-left: var(--bb-grid-size);
-    }
-
-    .activity-entry::after {
-      content: "";
-      width: calc(var(--bb-grid-size) * 4);
-      height: calc(var(--bb-grid-size) * 4);
-      border-radius: 50%;
-      top: calc(var(--padding-y) + var(--bb-grid-size) - 3px);
-      left: -2px;
-      position: absolute;
-      --background: var(--bb-nodes-400);
-    }
-
-    :host > .activity-entry::after {
-      left: calc(var(--padding-x) + 10px);
-    }
-
-    .activity-entry.icon::after {
-      width: calc(var(--bb-grid-size) * 7);
-      height: calc(var(--bb-grid-size) * 7);
-      left: calc(var(--padding-x) + 3px);
-      top: calc(var(--padding-y) - var(--bb-grid-size));
-      background: #fff var(--node-icon) center center no-repeat;
-      background-size: 20px 20px;
-      border: 1px solid #d9d9d9;
-    }
-
-    .activity-entry::before {
-      --top: calc(var(--padding-y) + 5px);
-      content: "";
-      width: 2px;
-      height: 100%;
-      left: 5px;
-      top: 0;
-      height: 100%;
-      position: absolute;
-      background: var(--bb-neutral-300);
-    }
-
-    :host > .activity-entry::before {
-      left: calc(var(--padding-x) + 17px);
-    }
-
-    .neural-activity {
-      width: calc(var(--bb-grid-size) * 4);
-      height: calc(var(--bb-grid-size) * 4);
-      border-radius: 50%;
-      display: inline-block;
-      margin-left: -2px;
-      margin-top: -2px;
-      margin-right: calc(var(--bb-grid-size) * 2);
-      position: relative;
-      z-index: 1;
-      --background: var(--bb-nodes-400);
-    }
-
-    .neural-activity:last-of-type {
-      margin-right: 0;
-    }
-
-    .neural-activity.error,
-    .activity-entry.error::after {
-      --background: #cc0000;
-    }
-
-    .neural-activity.input,
-    .activity-entry.input::after {
-      --background: var(--bb-inputs-300);
-    }
-
-    .neural-activity.secret,
-    .activity-entry.secret::after {
-      --background: var(--bb-inputs-300);
-    }
-
-    .neural-activity.output,
-    .activity-entry.output::after {
-      --background: var(--bb-output-300);
-    }
-
-    .neural-activity,
-    .activity-entry::after {
-      background: radial-gradient(
-        var(--background) 0%,
-        var(--background) 50%,
-        transparent 50%
-      );
-    }
-
-    .neural-activity.pending,
-    .activity-entry.pending::after {
-      box-shadow: 0 0 0 4px #3399ff40;
-      box-sizing: border-box;
-      background: radial-gradient(
-          var(--background) 0%,
-          var(--background) 50%,
-          transparent 50%
-        ),
-        linear-gradient(#3399ff40, #3399ffff);
-      animation: rotate 1s linear infinite forwards;
-    }
-
-    .activity-entry:first-of-type::before {
-      top: var(--top);
-      height: calc(100% - var(--top));
-    }
-
-    .activity-entry:last-of-type::before {
-      height: var(--top);
-    }
-
-    .activity-entry:first-of-type:last-of-type::before {
-      display: none;
-    }
-
-    .activity-entry > .content {
-      padding-left: calc(var(--bb-grid-size) * 6);
-    }
-
-    :host > .activity-entry > .content {
-      padding-left: calc(var(--bb-grid-size) * 10);
-    }
-
-    .subgraph-info {
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-    }
-
-    .subgraph-info summary {
-      margin-left: -20px;
-      display: grid;
-      grid-template-columns: 20px auto;
-      align-items: center;
-    }
-
-    .subgraph-info summary::before {
-      content: "";
-      width: 12px;
-      height: 12px;
-      background: var(--bb-expand-arrow) 1px -2px no-repeat;
-      display: inline-block;
-    }
-
-    .subgraph-info[open] > summary::before {
-      background: var(--bb-collapse-arrow) 1px 2px no-repeat;
-    }
-
-    .subgraph-info[open] > summary {
-      margin-bottom: -20px;
-    }
-
-    .activity-summary {
-      width: fit-content;
-      position: relative;
-    }
-
-    .activity-summary::before {
-      content: "";
-      position: absolute;
-      background: #ededed;
-      border-radius: 8px;
-      bottom: 6px;
-      right: 2px;
-      left: 1px;
-      top: 1px;
-      z-index: 0;
-    }
-
-    .subgraph-info[open] > summary .activity-summary {
-      position: absolute;
-      pointer-events: none;
-      opacity: 0;
-    }
-
-    h1[data-message-id] {
-      cursor: pointer;
-    }
-
-    summary::-webkit-details-marker {
-      display: none;
-    }
-
-    summary {
-      list-style: none;
-    }
-
-    .node-output details {
-      padding: calc(var(--bb-grid-size) * 2);
-    }
-
-    .node-output summary {
-      font-size: var(--bb-text-small);
-      margin: calc(var(--bb-grid-size) * 2) 0;
-      font-weight: normal;
-    }
-
-    .node-output details div {
-      font-size: var(--bb-text-nano);
-      font-family: var(--bb-font-family-mono);
-      line-height: 1.65;
-    }
-
-    .node-output img {
-      border-radius: var(--bb-grid-size);
-      display: block;
-      width: 100%;
-      border: 1px solid var(--bb-neutral-300);
-    }
-
-    dl {
-      margin: 0;
-      padding: 0;
-    }
-
-    dd {
-      display: block;
-      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
-      font-size: var(--bb-text-small);
-    }
-
-    dt {
-      font-size: var(--bb-text-medium);
-    }
-
-    dt .value {
-      white-space: pre-line;
-      border-radius: var(--bb-grid-size);
-      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-      user-select: text;
-    }
-
-    dt .value.markdown {
-      white-space: normal;
-      line-height: 1.5;
-      user-select: text;
-    }
-
-    dt .value.output * {
-      margin: var(--bb-grid-size) 0;
-    }
-
-    dt .value.output h1 {
-      font-size: var(--bb-title-large);
-      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
-    }
-
-    dt .value.output h2 {
-      font-size: var(--bb-title-medium);
-      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
-    }
-
-    dt .value.output h3,
-    dt .value.output h4,
-    dt .value.output h5 {
-      font-size: var(--bb-title-small);
-      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
-    }
-
-    dt .value.output p {
-      font-size: var(--bb-body-medium);
-      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
-    }
-
-    dt .value.input {
-      border: 1px solid var(--bb-neutral-300);
-      white-space: pre-line;
-      max-height: 300px;
-      overflow-y: auto;
-      scrollbar-gutter: stable;
-    }
-
-    pre {
-      display: inline-block;
-      margin: 0;
-    }
-
-    #click-run {
-      font-size: var(--bb-text-small);
-      color: #9c9c9c;
-      padding: 0 var(--padding-x) var(--padding-y) var(--padding-x);
-    }
-
-    .user-required {
-      position: relative;
-    }
-
-    .user-required::before {
-      content: "";
-      position: absolute;
-      left: -20px;
-      top: -10px;
-      right: -10px;
-      bottom: -10px;
-      background: var(--bb-selected-color);
-      border-radius: var(--bb-grid-size);
-      animation: fadeOut 1s ease-out forwards;
-    }
-
-    @keyframes slideIn {
-      from {
-        translate: 0 -5px;
-        opacity: 0;
-      }
-
-      to {
-        translate: 0 0;
-        opacity: 1;
-      }
-    }
-
-    @keyframes rotate {
-      from {
-        transform: rotate(0);
-      }
-
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes fadeOut {
-      0% {
-        opacity: 0;
-      }
-
-      25% {
-        opacity: 0.15;
-      }
-
-      50% {
-        opacity: 0;
-      }
-
-      75% {
-        opacity: 0.15;
-      }
-
-      100% {
-        opacity: 0;
-      }
-    }
-  `;
+  static styles = activityLogStyles;
 
   #isImageURL(nodeValue: unknown): nodeValue is { image_url: string } {
     if (typeof nodeValue !== "object" || !nodeValue) {
@@ -697,52 +287,73 @@ export class ActivityLog extends LitElement {
               if (!llmContent.parts.length) {
                 return html`No data provided`;
               } else {
-                return html`${map(llmContent.parts, (part, idx) => {
-                  if ("inlineData" in part) {
-                    const key = `${event.id}-${idx}`;
-                    let partDataURL: Promise<string> =
-                      Promise.resolve("No source");
+                return html`<div class="llm-content">
+                  ${map(llmContent.parts, (part, idx) => {
+                    let value: TemplateResult | symbol = nothing;
+                    let prefix = "";
 
-                    if (this.#partDataURLs.has(key)) {
-                      partDataURL = Promise.resolve(
-                        this.#partDataURLs.get(key)!
-                      );
-                    } else if (part.inlineData.data !== "") {
-                      const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                      partDataURL = fetch(dataURL)
-                        .then((response) => response.blob())
-                        .then((data) => {
-                          const url = URL.createObjectURL(data);
-                          this.#partDataURLs.set(key, url);
-                          return url;
-                        });
+                    if (isText(part)) {
+                      value = html`${part.text}`;
+                      prefix = "txt";
+                    } else if (isInlineData(part)) {
+                      const key = `${event.id}-${idx}`;
+                      let partDataURL: Promise<string> =
+                        Promise.resolve("No source");
+
+                      if (this.#partDataURLs.has(key)) {
+                        partDataURL = Promise.resolve(
+                          this.#partDataURLs.get(key)!
+                        );
+                      } else if (part.inlineData.data !== "") {
+                        const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                        partDataURL = fetch(dataURL)
+                          .then((response) => response.blob())
+                          .then((data) => {
+                            const url = URL.createObjectURL(data);
+                            this.#partDataURLs.set(key, url);
+                            return url;
+                          });
+                      }
+
+                      const tmpl = partDataURL.then((url: string) => {
+                        if (part.inlineData.mimeType.startsWith("image")) {
+                          return cache(
+                            html`<img src="${url}" alt="LLM Image" />`
+                          );
+                        }
+
+                        if (part.inlineData.mimeType.startsWith("audio")) {
+                          return cache(html`<audio src="${url}" controls />`);
+                        }
+
+                        if (part.inlineData.mimeType.startsWith("video")) {
+                          return cache(html`<video src="${url}" controls />`);
+                        }
+                      });
+
+                      value = html`${until(tmpl)}`;
+                      prefix = part.inlineData.mimeType
+                        .replace(/^[^\\/]+\//, "")
+                        // Remove all vowels except the first.
+                        .replace(/(?<!^)[aeiou]/gi, "");
+                    } else if (
+                      isFunctionCall(part) ||
+                      isFunctionResponse(part)
+                    ) {
+                      value = html` <bb-json-tree
+                        .json=${part}
+                      ></bb-json-tree>`;
+                      prefix = "fn";
+                    } else {
+                      value = html`Unrecognized part`;
                     }
 
-                    const tmpl = partDataURL.then((url: string) => {
-                      if (part.inlineData.mimeType.startsWith("image")) {
-                        return cache(
-                          html`<img src="${url}" alt="LLM Image" />`
-                        );
-                      }
-
-                      if (part.inlineData.mimeType.startsWith("audio")) {
-                        return cache(html`<audio src="${url}" controls />`);
-                      }
-
-                      if (part.inlineData.mimeType.startsWith("video")) {
-                        return cache(html`<video src="${url}" controls />`);
-                      }
-                    });
-
-                    return until(tmpl);
-                  } else if ("text" in part) {
-                    return html`${part.text}`;
-                  } else if ("functionCall" in part) {
-                    return html`${JSON.stringify(part.functionCall)}`;
-                  } else if ("functionResponse" in part) {
-                    return html`${JSON.stringify(part.functionResponse)}`;
-                  }
-                })}`;
+                    return html`<div class="content">
+                      <span class="prefix">${prefix}</span>
+                      <span class="value">${value}</span>
+                    </div>`;
+                  })}
+                </div>`;
               }
             })}`;
           } else if (this.#isImageURL(nodeValue)) {
