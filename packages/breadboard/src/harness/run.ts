@@ -90,6 +90,13 @@ export type RunConfig = {
    * name without interrupting the run of the board.
    */
   inputs?: InputValues;
+  /**
+   * Specifies whether or not secrets are asked for interactively. When `true`,
+   * the `secret` result will start showing up in the run results whenever
+   * the secret is asked for. Otherwise, the `secrets` node will try to find
+   * the secrets on its own.
+   */
+  interactiveSecrets?: boolean;
 };
 
 const configureKits = (config: RunConfig) => {
@@ -112,7 +119,10 @@ const configureKits = (config: RunConfig) => {
 export async function* run(config: RunConfig) {
   if (!config.remote) {
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const kits = [createSecretAskingKit(next), ...configureKits(config)];
+      const secretAskingKit = config.interactiveSecrets
+        ? [createSecretAskingKit(next)]
+        : [];
+      const kits = [...secretAskingKit, ...configureKits(config)];
 
       for await (const data of runLocally(config, kits)) {
         await next(data);

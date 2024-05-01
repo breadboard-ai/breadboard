@@ -203,6 +203,7 @@ export class PreviewRun extends LitElement {
       kits: this.kits,
       diagnostics: true,
       loader: this.#loader,
+      interactiveSecrets: true,
     };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
