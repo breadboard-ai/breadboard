@@ -1,5 +1,47 @@
 # @google-labs/gemini-kit
 
+## 0.3.0
+
+### Minor Changes
+
+- 691f3d6: Give gemini-generator an overhaul, adding proper system instruction support and safety settings.
+- e736f37: Remove deprecated input-multipart
+- 24230c1: Introduce LLM Content Editor
+
+### Patch Changes
+
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5369037: Fix JSONata calls to account for LLM Content
+- Updated dependencies [cef20ca]
+- Updated dependencies [18b9f34]
+- Updated dependencies [d7829a1]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [fefd109]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [1aa96c6]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [3d48482]
+- Updated dependencies [c117d4f]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [776f043]
+- Updated dependencies [c3587e1]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [4d6ce42]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+  - @google-labs/template-kit@0.3.0
+  - @google-labs/core-kit@0.8.0
+  - @google-labs/node-nursery-web@1.1.1
+  - @google-labs/json-kit@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

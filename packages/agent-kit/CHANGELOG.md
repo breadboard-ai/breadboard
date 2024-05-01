@@ -1,5 +1,17 @@
 # @google-labs/agent-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- 79909eb: Introduce SuperWorker.
+
+### Patch Changes
+
+- fb3f870: Fix a problem with incorrect context appending.
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5d08172: Teach tool worker to properly accumulate context.
+
 ## 0.5.0
 
 ### Minor Changes
