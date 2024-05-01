@@ -276,6 +276,18 @@ export class RunEvent extends Event {
   }
 }
 
+export class StopEvent extends Event {
+  static eventName = "bbstopboard";
+
+  constructor() {
+    super(StopEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",

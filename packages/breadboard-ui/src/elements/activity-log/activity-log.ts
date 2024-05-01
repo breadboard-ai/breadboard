@@ -268,6 +268,7 @@ export class ActivityLog extends LitElement {
     const type = node.descriptor.type;
     const isOutput = type === "output";
     const portList = isOutput ? allPorts.inputs : allPorts.outputs;
+
     return html`<dl class="node-output">
       ${portList.ports.map((port) => {
         if (port.star) return nothing;
@@ -288,71 +289,77 @@ export class ActivityLog extends LitElement {
                 return html`No data provided`;
               } else {
                 return html`<div class="llm-content">
-                  ${map(llmContent.parts, (part, idx) => {
-                    let value: TemplateResult | symbol = nothing;
-                    let prefix = "";
+                  ${llmContent.parts.length
+                    ? map(llmContent.parts, (part, idx) => {
+                        let value: TemplateResult | symbol = nothing;
+                        let prefix = "";
 
-                    if (isText(part)) {
-                      value = html`${part.text}`;
-                      prefix = "txt";
-                    } else if (isInlineData(part)) {
-                      const key = `${event.id}-${idx}`;
-                      let partDataURL: Promise<string> =
-                        Promise.resolve("No source");
+                        if (isText(part)) {
+                          value = html`${part.text}`;
+                          prefix = "txt";
+                        } else if (isInlineData(part)) {
+                          const key = `${event.id}-${idx}`;
+                          let partDataURL: Promise<string> =
+                            Promise.resolve("No source");
 
-                      if (this.#partDataURLs.has(key)) {
-                        partDataURL = Promise.resolve(
-                          this.#partDataURLs.get(key)!
-                        );
-                      } else if (part.inlineData.data !== "") {
-                        const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                        partDataURL = fetch(dataURL)
-                          .then((response) => response.blob())
-                          .then((data) => {
-                            const url = URL.createObjectURL(data);
-                            this.#partDataURLs.set(key, url);
-                            return url;
+                          if (this.#partDataURLs.has(key)) {
+                            partDataURL = Promise.resolve(
+                              this.#partDataURLs.get(key)!
+                            );
+                          } else if (part.inlineData.data !== "") {
+                            const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                            partDataURL = fetch(dataURL)
+                              .then((response) => response.blob())
+                              .then((data) => {
+                                const url = URL.createObjectURL(data);
+                                this.#partDataURLs.set(key, url);
+                                return url;
+                              });
+                          }
+
+                          const tmpl = partDataURL.then((url: string) => {
+                            if (part.inlineData.mimeType.startsWith("image")) {
+                              return cache(
+                                html`<img src="${url}" alt="LLM Image" />`
+                              );
+                            }
+
+                            if (part.inlineData.mimeType.startsWith("audio")) {
+                              return cache(
+                                html`<audio src="${url}" controls />`
+                              );
+                            }
+
+                            if (part.inlineData.mimeType.startsWith("video")) {
+                              return cache(
+                                html`<video src="${url}" controls />`
+                              );
+                            }
                           });
-                      }
 
-                      const tmpl = partDataURL.then((url: string) => {
-                        if (part.inlineData.mimeType.startsWith("image")) {
-                          return cache(
-                            html`<img src="${url}" alt="LLM Image" />`
-                          );
+                          value = html`${until(tmpl)}`;
+                          prefix = part.inlineData.mimeType
+                            .replace(/^[^\\/]+\//, "")
+                            // Remove all vowels except the first.
+                            .replace(/(?<!^)[aeiou]/gi, "");
+                        } else if (
+                          isFunctionCall(part) ||
+                          isFunctionResponse(part)
+                        ) {
+                          value = html` <bb-json-tree
+                            .json=${part}
+                          ></bb-json-tree>`;
+                          prefix = "fn";
+                        } else {
+                          value = html`Unrecognized part`;
                         }
 
-                        if (part.inlineData.mimeType.startsWith("audio")) {
-                          return cache(html`<audio src="${url}" controls />`);
-                        }
-
-                        if (part.inlineData.mimeType.startsWith("video")) {
-                          return cache(html`<video src="${url}" controls />`);
-                        }
-                      });
-
-                      value = html`${until(tmpl)}`;
-                      prefix = part.inlineData.mimeType
-                        .replace(/^[^\\/]+\//, "")
-                        // Remove all vowels except the first.
-                        .replace(/(?<!^)[aeiou]/gi, "");
-                    } else if (
-                      isFunctionCall(part) ||
-                      isFunctionResponse(part)
-                    ) {
-                      value = html` <bb-json-tree
-                        .json=${part}
-                      ></bb-json-tree>`;
-                      prefix = "fn";
-                    } else {
-                      value = html`Unrecognized part`;
-                    }
-
-                    return html`<div class="content">
-                      <span class="prefix">${prefix}</span>
-                      <span class="value">${value}</span>
-                    </div>`;
-                  })}
+                        return html`<div class="content">
+                          <span class="prefix">${prefix}</span>
+                          <span class="value">${value}</span>
+                        </div>`;
+                      })
+                    : html`No data provided`}
                 </div>`;
               }
             })}`;
@@ -369,7 +376,9 @@ export class ActivityLog extends LitElement {
           ) {
             renderableValue = html`${markdown(nodeValue)}`;
           } else {
-            renderableValue = html`${nodeValue}`;
+            renderableValue = html`${nodeValue
+              ? nodeValue
+              : "No value provided"}`;
           }
 
           // prettier-ignore

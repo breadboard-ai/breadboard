@@ -41,11 +41,29 @@ export const styles = css`
     border-radius: 20px;
     border: none;
     font-size: var(--bb-label-large);
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 8);
+    padding: var(--bb-grid-size-2) var(--bb-grid-size-8);
+    margin-right: var(--bb-grid-size-2);
+    cursor: pointer;
   }
 
   #run[disabled] {
     opacity: 0.4;
+    cursor: auto;
+  }
+
+  #stop {
+    background: #fff var(--bb-icon-stop-circle) center center / 24px 24px
+      no-repeat;
+    height: 32px;
+    width: 32px;
+    font-size: 0;
+    border: none;
+    cursor: pointer;
+  }
+
+  #stop[disabled] {
+    opacity: 0.4;
+    cursor: auto;
   }
 
   #controls {
