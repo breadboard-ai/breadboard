@@ -374,7 +374,7 @@ export class GraphNode extends PIXI.Graphics {
     for (const port of ports) {
       let portItem = this.#inPorts.get(port.name);
       if (!portItem) {
-        const label = new PIXI.Text(port.name, {
+        const label = new PIXI.Text(port.title, {
           fontFamily: "Arial",
           fontSize: this.#textSize,
           fill: this.#portTextColor,
@@ -390,6 +390,10 @@ export class GraphNode extends PIXI.Graphics {
 
         portItem = { label, port, nodePort };
         this.#inPorts.set(port.name, portItem);
+      }
+
+      if (portItem.label.text !== port.title) {
+        portItem.label.text = port.title;
       }
 
       portItem.port = port;
@@ -414,7 +418,7 @@ export class GraphNode extends PIXI.Graphics {
     for (const port of ports) {
       let portItem = this.#outPorts.get(port.name);
       if (!portItem) {
-        const label = new PIXI.Text(port.name, {
+        const label = new PIXI.Text(port.title, {
           fontFamily: "Arial",
           fontSize: this.#textSize,
           fill: this.#portTextColor,
@@ -431,6 +435,12 @@ export class GraphNode extends PIXI.Graphics {
         portItem = { label, port, nodePort };
         this.#outPorts.set(port.name, portItem);
       }
+
+      if (portItem.label.text !== port.title) {
+        portItem.label.text = port.title;
+      }
+
+      portItem.port = port;
     }
 
     for (const [outPortName, portItem] of this.#outPorts) {
