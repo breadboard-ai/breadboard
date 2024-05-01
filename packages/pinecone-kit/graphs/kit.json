@@ -1,7 +1,7 @@
 {
   "title": "Pinecone API Node Kit",
   "description": "This board is actually a kit: a collection of nodes for working with the Pinecone API.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [],
   "nodes": [
@@ -44,7 +44,7 @@
     "config": {
       "title": "Pinecone API configuration helper",
       "description": "Loads the Pinecone API key and other necessary variables from the environment. Currently looks for the following environment variables: `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_PROJECT_ID`, `PINECONE_ENVIRONMENT`.",
-      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
       "version": "0.0.1",
       "edges": [
         {
@@ -182,7 +182,7 @@
     "query": {
       "title": "Pinecone API query invocation",
       "description": "This board invokes the Pinecone [`query`](https://docs.pinecone.io/reference/query) API.",
-      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
       "version": "0.0.1",
       "edges": [
         {
@@ -283,7 +283,7 @@
     "upsert": {
       "title": "Pinecone API upsert invocation",
       "description": "This board invokes the Pinecone [`vectors/upsert`](https://docs.pinecone.io/reference/upsert) API.",
-      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
       "version": "0.0.1",
       "edges": [
         {
@@ -388,7 +388,7 @@
     "vector": {
       "title": "Pinecone API vector call builder",
       "description": "This board helps making [vector API calls](https://docs.pinecone.io/reference/describe_index_stats_post) to Pinecone.",
-      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+      "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
       "version": "0.0.1",
       "edges": [
         {
