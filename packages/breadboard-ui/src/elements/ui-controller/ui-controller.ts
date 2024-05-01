@@ -501,6 +501,7 @@ export class UI extends LitElement {
         <div id="controls">
           <button
             id="run"
+            title="Run this board"
             ?disabled=${this.status !== STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
               this.selectedNodeId = null;
@@ -511,6 +512,7 @@ export class UI extends LitElement {
           </button>
           <button
             id="stop"
+            title="Stop this board"
             ?disabled=${this.status === STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
               this.selectedNodeId = null;
