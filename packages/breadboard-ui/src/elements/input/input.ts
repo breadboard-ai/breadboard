@@ -382,6 +382,13 @@ export class Input extends LitElement {
 
             input = html`<bb-llm-input
               id="${key}"
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!(evt.key === "Enter" && evt.metaKey)) {
+                  return;
+                }
+
+                this.processInput();
+              }}
               .description=${property.description}
               .value=${value}
               .allow=${allow}
