@@ -12,6 +12,7 @@ import {
   InputEnterEvent,
   NodeDeleteEvent,
   RunEvent,
+  StopEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
@@ -218,6 +219,17 @@ export class UI extends LitElement {
 
       case "secret": {
         return this.#registerSecretsHandler(data.keys);
+      }
+    }
+  }
+
+  /**
+   * Called when a user stops a board.
+   */
+  #callAllPendingInputHandlers() {
+    for (const handlers of this.#handlers.values()) {
+      for (const handler of handlers) {
+        handler.call(null, {});
       }
     }
   }
@@ -496,6 +508,17 @@ export class UI extends LitElement {
             }}
           >
             Run
+          </button>
+          <button
+            id="stop"
+            ?disabled=${this.status === STATUS.STOPPED || this.failedToLoad}
+            @click=${() => {
+              this.selectedNodeId = null;
+              this.dispatchEvent(new StopEvent());
+              this.#callAllPendingInputHandlers();
+            }}
+          >
+            Stop
           </button>
         </div>
       </section>

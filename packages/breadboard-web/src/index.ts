@@ -970,6 +970,14 @@ export class Main extends LitElement {
               )
             );
           }}
+          @bbstopboard=${() => {
+            if (!this.#abortController) {
+              return;
+            }
+
+            this.#abortController.abort("Stopped board");
+            this.requestUpdate();
+          }}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
