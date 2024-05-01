@@ -334,7 +334,7 @@ export class UI extends LitElement {
     );
 
     const nodeInfo = guard(
-      [this.selectedNodeId],
+      [this.boardId, this.selectedNodeId],
       () =>
         html`<bb-node-info
           .selectedNodeId=${this.selectedNodeId}
