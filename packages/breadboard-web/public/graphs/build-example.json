@@ -1,7 +1,7 @@
 {
   "title": "Example of @breadboard-ai/build",
   "description": "A simple example of using the @breadboard-ai/build API",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "edges": [
     {
       "from": "input-0",
@@ -16,6 +16,12 @@
       "in": "forwards"
     },
     {
+      "from": "input-0",
+      "to": "runJavascript-0",
+      "out": "word",
+      "in": "str"
+    },
+    {
       "from": "promptTemplate-0",
       "to": "output-0",
       "out": "prompt",
@@ -26,6 +32,12 @@
       "to": "promptTemplate-0",
       "out": "backwards",
       "in": "p1"
+    },
+    {
+      "from": "runJavascript-0",
+      "to": "promptTemplate-0",
+      "out": "capitalized",
+      "in": "p2"
     }
   ],
   "nodes": [
@@ -68,13 +80,21 @@
       "id": "promptTemplate-0",
       "type": "promptTemplate",
       "configuration": {
-        "template": "The word \"{{p0}}\" is \"{{p1}}\" in reverse"
+        "template": "The word \"{{p0}}\" is \"{{p1}}\" in reverse\nand \"{{p2}}\" when capitalized."
       }
     },
     {
       "id": "reverseString-0",
       "type": "reverseString",
       "configuration": {}
+    },
+    {
+      "id": "runJavascript-0",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "({str})=>({capitalized:str.toUpperCase()})",
+        "raw": true
+      }
     }
   ]
 }
