@@ -333,7 +333,7 @@ export class Input extends LitElement {
               property.items.type === "object" &&
               property.items.behavior?.includes("llm-content"));
           if (showLLMContent) {
-            const value: LLMContent = property.default
+            const value: LLMContent | LLMContent[] | null = property.default
               ? JSON.parse(property.default)
               : null;
 
@@ -390,7 +390,7 @@ export class Input extends LitElement {
                 this.processInput();
               }}
               .description=${property.description}
-              .value=${value}
+              .value=${Array.isArray(value) ? value[0] : value}
               .allow=${allow}
             ></bb-llm-input>`;
           } else if (isMicrophoneAudio(property)) {
