@@ -295,7 +295,7 @@ export class ActivityLog extends LitElement {
                         let prefix = "";
 
                         if (isText(part)) {
-                          value = html`${part.text}`;
+                          value = html`${markdown(part.text)}`;
                           prefix = "txt";
                         } else if (isInlineData(part)) {
                           const key = `${event.id}-${idx}`;
