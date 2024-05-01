@@ -318,26 +318,40 @@ export const styles = css`
     user-select: text;
   }
 
+  dt .llm-content .value {
+    white-space: normal;
+    border-radius: none;
+    padding: 0;
+    user-select: text;
+  }
+
+  dt .llm-content .value.markdown,
   dt .value.markdown {
     white-space: normal;
     line-height: 1.5;
     user-select: text;
   }
 
+  dt .llm-content .value *,
   dt .value.output * {
     margin: var(--bb-grid-size) 0;
   }
 
+  dt .llm-content .value h1,
   dt .value.output h1 {
     font-size: var(--bb-title-large);
     margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
   }
 
+  dt .llm-content .value h2,
   dt .value.output h2 {
     font-size: var(--bb-title-medium);
     margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
   }
 
+  dt .llm-content .value h3,
+  dt .llm-content .value h4,
+  dt .llm-content .value h5,
   dt .value.output h3,
   dt .value.output h4,
   dt .value.output h5 {
@@ -345,9 +359,22 @@ export const styles = css`
     margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
   }
 
+  dt .llm-content .value p,
   dt .value.output p {
     font-size: var(--bb-body-medium);
     margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+  }
+
+  dt .llm-content .value h1:first-of-type,
+  dt .llm-content .value h2:first-of-type,
+  dt .llm-content .value h3:first-of-type,
+  dt .llm-content .value h4:first-of-type,
+  dt .llm-content .value h5:first-of-type {
+    margin-top: 0;
+  }
+
+  dt .llm-content .value p:last-of-type {
+    margin-bottom: 0;
   }
 
   dt .value.input {
