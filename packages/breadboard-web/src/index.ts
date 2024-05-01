@@ -963,6 +963,7 @@ export class Main extends LitElement {
                     loader: this.#loader,
                     signal: this.#abortController?.signal,
                     inputs: inputsFromSettings(this.#settings),
+                    interactiveSecrets: true,
                   },
                   this.#settings
                 )
