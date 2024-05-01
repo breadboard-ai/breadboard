@@ -92,6 +92,7 @@ export class UI extends LitElement {
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
+  #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
@@ -324,7 +325,7 @@ export class UI extends LitElement {
     ></bb-editor>`;
 
     const nodeMetaDetails = guard(
-      [this.selectedNodeId],
+      [this.boardId, this.selectedNodeId],
       () => html`<bb-node-details
       .selectedNodeId=${this.selectedNodeId}
       .subGraphId=${this.subGraphId}
@@ -333,8 +334,11 @@ export class UI extends LitElement {
       .loader=${this.loader}></bb-board-details>`
     );
 
+    // Track the number of edges; if it changes we need to inform the node info
+    // element, and force it to re-render.
+    this.#lastEdgeCount = this.graph?.edges.length || -1;
     const nodeInfo = guard(
-      [this.boardId, this.selectedNodeId],
+      [this.boardId, this.selectedNodeId, this.#lastEdgeCount],
       () =>
         html`<bb-node-info
           .selectedNodeId=${this.selectedNodeId}
