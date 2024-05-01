@@ -534,13 +534,6 @@ export class NodeInfo extends LitElement {
             @submit=${(evt: Event) => evt.preventDefault()}
             @paste=${this.#saveCurrentState}
             @input=${this.#saveCurrentState}
-            @keyup=${(evt: KeyboardEvent) => {
-              if (evt.key !== "Backspace") {
-                return;
-              }
-
-              this.#saveCurrentState(evt);
-            }}
           >
             <div class="fields">
               <input
