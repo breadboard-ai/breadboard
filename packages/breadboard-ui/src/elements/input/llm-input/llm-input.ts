@@ -8,11 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import {
   AllowedLLMContentTypes,
   LLMContent,
-  LLMFunctionCall,
-  LLMFunctionResponse,
   LLMInlineData,
-  LLMPart,
-  LLMText,
 } from "../../../types/types.js";
 import { Schema } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
@@ -25,22 +21,12 @@ import { guard } from "lit/directives/guard.js";
 import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
-
-function isText(part: LLMPart): part is LLMText {
-  return "text" in part;
-}
-
-function isFunctionCall(part: LLMPart): part is LLMFunctionCall {
-  return "functionCall" in part;
-}
-
-function isFunctionResponse(part: LLMPart): part is LLMFunctionResponse {
-  return "functionResponse" in part;
-}
-
-function isInlineData(part: LLMPart): part is LLMInlineData {
-  return "inlineData" in part;
-}
+import {
+  isFunctionCall,
+  isFunctionResponse,
+  isInlineData,
+  isText,
+} from "../../../utils/llm-content.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -208,10 +194,6 @@ export class LLMInput extends LitElement {
       background: #fff;
     }
 
-    .part:hover {
-      background: var(--bb-output-50);
-    }
-
     .part:hover .part-controls {
       display: flex;
     }
@@ -280,6 +262,10 @@ export class LLMInput extends LitElement {
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
+    }
+
+    .value[contenteditable] {
+      background: var(--bb-neutral-0);
     }
 
     .value img,
