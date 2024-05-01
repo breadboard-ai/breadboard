@@ -159,7 +159,6 @@
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.8.0",
     "ava": "^5.2.0",
-    "eslint-plugin-expect-type": "^0.4.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.17.2",
     "typedoc": "^0.25.12",
