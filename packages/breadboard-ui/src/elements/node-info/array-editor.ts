@@ -418,6 +418,8 @@ export class ArrayEditor extends LitElement {
                       id="item-${idx}"
                       .value=${value}
                       @input=${(evt: InputEvent) => {
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
                         if (!(evt.target instanceof HTMLTextAreaElement)) {
                           return;
                         }
@@ -426,7 +428,9 @@ export class ArrayEditor extends LitElement {
                           evt.target as unknown as HTMLObjectElement;
                         target.setCustomValidity("");
                       }}
-                      @blur=${() => {
+                      @blur=${(evt: InputEvent) => {
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
                         if (!this.#updateItems()) {
                           return;
                         }
