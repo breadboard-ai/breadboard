@@ -1,7 +1,7 @@
 {
   "title": "Tool Worker",
   "description": "A worker that can use tools to accomplish tasks.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -311,9 +311,9 @@
               "default": "[]"
             },
             "retry": {
+              "type": "number",
               "title": "Retry Count",
               "description": "How many times to retry in case of LLM error",
-              "type": "number",
               "default": "5"
             }
           },

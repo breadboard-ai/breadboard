@@ -1,7 +1,7 @@
 {
   "title": "Super Worker",
   "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "edges": [
     {
       "from": "fn-5",
@@ -79,7 +79,7 @@
       "id": "fn-3",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = context;\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role === \"model\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    result[result.length - 1].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role === \"model\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    result[result.length - 1].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
         "name": "fn_3",
         "raw": true
       },
