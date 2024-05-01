@@ -368,9 +368,6 @@ export class UI extends LitElement {
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           name="Selected Node"
-          @breadboardnodeupdate=${() => {
-            this.#nodeConfigurationUpdateCount++;
-          }}
         ></bb-node-info>`
     );
 
