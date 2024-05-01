@@ -47,9 +47,8 @@
               },
               "default": "[]",
               "examples": [
-                "Write an ad for Breadboard. The ad must incorporate the following key messages: \n- Breadboard for Developers\n- Play and experiment with AI Patterns\n- Prototype quickly\n- Use with Gemini APIs \n- Integrate AI Into Your Project\n- Create graphs with prompts\n- Accessible AI for Developers"
-              ],
-              "format": "multiline"
+                "{\"role\":\"user\",\"parts\":[{\"text\":\"Write an ad for Breadboard. The ad must incorporate the following key messages: \\n- Breadboard for Developers\\n- Play and experiment with AI Patterns\\n- Prototype quickly\\n- Use with Gemini APIs \\n- Integrate AI Into Your Project\\n- Create graphs with prompts\\n- Accessible AI for Developers\"}]}"
+              ]
             }
           },
           "required": [

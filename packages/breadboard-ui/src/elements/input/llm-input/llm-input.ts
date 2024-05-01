@@ -27,6 +27,7 @@ import {
   isInlineData,
   isText,
 } from "../../../utils/llm-content.js";
+import { markdown } from "../../../directives/markdown.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -770,7 +771,7 @@ export class LLMInput extends LitElement {
               if (isText(part)) {
                 partClass = "text";
                 prefix = "txt";
-                value = html`${part.text}`;
+                value = html`${markdown(part.text)}`;
               } else if (isFunctionCall(part)) {
                 partClass = "function-call";
                 prefix = "fn";

@@ -154,17 +154,24 @@ const refineAd = board(({ context }) => {
   return { context: shortener.context };
 });
 
-const adExample = `Write an ad for Breadboard. The ad must incorporate the following key messages: 
+const adExample = JSON.stringify({
+  role: "user",
+  parts: [
+    {
+      text: `Write an ad for Breadboard. The ad must incorporate the following key messages: 
 - Breadboard for Developers
 - Play and experiment with AI Patterns
 - Prototype quickly
 - Use with Gemini APIs 
 - Integrate AI Into Your Project
 - Create graphs with prompts
-- Accessible AI for Developers`;
+- Accessible AI for Developers`,
+    },
+  ],
+});
 
 export default await board(({ context }) => {
-  context.title("Ad specs").format("multiline").examples(adExample);
+  context.title("Ad specs").examples(adExample);
 
   const customerPromptMaker = agents.structuredWorker({
     $metadata: {
