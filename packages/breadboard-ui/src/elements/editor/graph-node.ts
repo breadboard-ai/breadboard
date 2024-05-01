@@ -392,6 +392,10 @@ export class GraphNode extends PIXI.Graphics {
         this.#inPorts.set(port.name, portItem);
       }
 
+      if (portItem.label.text !== port.title) {
+        portItem.label.text = port.title;
+      }
+
       portItem.port = port;
     }
 
@@ -431,6 +435,12 @@ export class GraphNode extends PIXI.Graphics {
         portItem = { label, port, nodePort };
         this.#outPorts.set(port.name, portItem);
       }
+
+      if (portItem.label.text !== port.title) {
+        portItem.label.text = port.title;
+      }
+
+      portItem.port = port;
     }
 
     for (const [outPortName, portItem] of this.#outPorts) {
