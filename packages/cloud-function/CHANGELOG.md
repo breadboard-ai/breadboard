@@ -1,5 +1,14 @@
 # @google-labs/cloud-function
 
+## 0.0.13
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/breadboard-server@0.1.15
+  - @google-labs/template-kit@0.3.1
+
 ## 0.0.12
 
 ### Patch Changes
