@@ -30,13 +30,20 @@ const requirementsSchema = {
   },
 } satisfies Schema;
 
+const example = {
+  role: "user",
+  parts: [
+    {
+      text: `This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`,
+    },
+  ],
+};
+
 export default await board(({ context }) => {
   context
     .title("Ad specs")
     .format("multiline")
-    .examples(
-      `This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`
-    );
+    .examples(JSON.stringify(example));
 
   const requirementsExtractor = agents.structuredWorker({
     $metadata: {

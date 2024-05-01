@@ -59,7 +59,9 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "format": "multiline"
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "examples": [
                 "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
