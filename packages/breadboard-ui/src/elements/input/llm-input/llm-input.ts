@@ -70,6 +70,7 @@ export class LLMInput extends LitElement {
     textInline: true,
   };
 
+  #forceReRender = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
@@ -189,6 +190,80 @@ export class LLMInput extends LitElement {
       display: grid;
       grid-template-columns: var(--bb-grid-size-12) auto;
       margin-bottom: var(--bb-grid-size-4);
+    }
+
+    .part {
+      position: relative;
+    }
+
+    .part-controls {
+      display: none;
+      position: absolute;
+      top: calc(var(--bb-grid-size) * -1);
+      right: calc(var(--bb-grid-size) * 2);
+      height: var(--bb-grid-size-7);
+      padding: var(--bb-grid-size) var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-8);
+      border: 1px solid var(--bb-neutral-300);
+      background: #fff;
+    }
+
+    .part:hover {
+      background: var(--bb-output-50);
+    }
+
+    .part:hover .part-controls {
+      display: flex;
+    }
+
+    .part-controls .add-part-after,
+    .part-controls .move-part-up,
+    .part-controls .move-part-down,
+    .part-controls .delete-part {
+      width: 20px;
+      height: 20px;
+      opacity: 0.5;
+      margin-right: var(--bb-grid-size);
+      border: none;
+      border-radius: 0;
+      font-size: 0;
+      cursor: pointer;
+    }
+
+    .part-controls .add-part-after {
+      background: #fff var(--bb-icon-add) center center / 16px 16px no-repeat;
+    }
+
+    .part-controls .move-part-up {
+      background: #fff var(--bb-icon-move-up) center center / 16px 16px
+        no-repeat;
+    }
+
+    .part-controls .move-part-down {
+      background: #fff var(--bb-icon-move-down) center center / 16px 16px
+        no-repeat;
+    }
+
+    .part-controls .delete-part {
+      background: #fff var(--bb-icon-delete) center center / 16px 16px no-repeat;
+      margin-right: 0;
+    }
+
+    .part-controls .add-part-after:hover,
+    .part-controls .move-part-up:hover,
+    .part-controls .move-part-down:hover,
+    .part-controls .delete-part:hover,
+    .part-controls .add-part-after:focus,
+    .part-controls .move-part-up:focus,
+    .part-controls .move-part-down:focus,
+    .part-controls .delete-part:focus {
+      opacity: 1;
+    }
+
+    .part-controls .move-part-up[disabled],
+    .part-controls .move-part-down[disabled] {
+      opacity: 0.3;
+      cursor: auto;
     }
 
     .prefix {
@@ -427,6 +502,64 @@ export class LLMInput extends LitElement {
       }
     }
 
+    this.#emitUpdate();
+    this.requestUpdate();
+  }
+
+  #move(idx: number, distance: number) {
+    if (!this.value) {
+      return;
+    }
+
+    if (idx + distance < 0 || idx + distance >= this.value.parts.length) {
+      return;
+    }
+
+    const tempPart = this.value.parts[idx + distance];
+    this.value.parts[idx + distance] = this.value.parts[idx];
+    this.value.parts[idx] = tempPart;
+
+    const tempUrlA = this.#partDataURLs.get(idx);
+    const tempUrlB = this.#partDataURLs.get(idx + distance);
+    if (tempUrlA && tempUrlB) {
+      this.#partDataURLs.set(idx, tempUrlB);
+      this.#partDataURLs.set(idx + distance, tempUrlA);
+    }
+
+    this.#emitUpdate();
+    this.#forceReRender++;
+    this.requestUpdate();
+  }
+
+  #addPartAfter(idx: number) {
+    if (!this.value) {
+      return;
+    }
+
+    this.value.parts.splice(idx + 1, 0, { text: "" });
+    this.#emitUpdate();
+    this.#forceReRender++;
+    this.requestUpdate();
+  }
+
+  #movePartUp(idx: number) {
+    this.#move(idx, -1);
+  }
+
+  #movePartDown(idx: number) {
+    this.#move(idx, 1);
+  }
+
+  #deletePart(idx: number) {
+    if (!this.value) {
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this part?")) {
+      return;
+    }
+
+    this.value.parts.splice(idx, 1);
     this.#emitUpdate();
     this.requestUpdate();
   }
@@ -694,36 +827,66 @@ export class LLMInput extends LitElement {
                 )}`;
               }
 
-              return guard(
-                [prefix],
-                () =>
-                  html`<div
-                    class=${classMap({ part: true, [partClass]: true })}
-                  >
-                    <div class="content">
-                      <span class="prefix">${prefix}</span>
-                      <span
-                        class="value"
-                        ?contenteditable=${isText(part)}
-                        @input=${(evt: Event) => {
-                          if (!isText(part)) {
-                            return;
-                          }
+              return guard([prefix, this.#forceReRender], () => {
+                return html`<div
+                  class=${classMap({ part: true, [partClass]: true })}
+                >
+                  <div class="content">
+                    <span class="prefix">${prefix}</span>
+                    <span
+                      class="value"
+                      ?contenteditable=${isText(part)}
+                      @input=${(evt: Event) => {
+                        if (!isText(part)) {
+                          return;
+                        }
 
-                          if (!(evt.target instanceof HTMLSpanElement)) {
-                            return;
-                          }
+                        if (!(evt.target instanceof HTMLSpanElement)) {
+                          return;
+                        }
 
-                          part.text = evt.target.textContent || "";
-                        }}
-                        @paste=${this.#sanitizePastedContent}
-                        tabIndex="0"
-                        ${isLastPart ? ref(this.#lastPartRef) : nothing}
-                        >${value}</span
-                      >
-                    </div>
-                  </div>`
-              );
+                        part.text = evt.target.textContent || "";
+                      }}
+                      @paste=${this.#sanitizePastedContent}
+                      tabIndex="0"
+                      ${isLastPart ? ref(this.#lastPartRef) : nothing}
+                      >${value}</span
+                    >
+                  </div>
+                  <div class="part-controls">
+                    <button
+                      class="add-part-after"
+                      @click=${() => this.#addPartAfter(idx)}
+                      title="Add part after"
+                    >
+                      Add part after
+                    </button>
+                    <button
+                      class="move-part-up"
+                      @click=${() => this.#movePartUp(idx)}
+                      ?disabled=${idx === 0}
+                      title="Move part up"
+                    >
+                      Move part up
+                    </button>
+                    <button
+                      class="move-part-down"
+                      @click=${() => this.#movePartDown(idx)}
+                      ?disabled=${isLastPart}
+                      title="Move part down"
+                    >
+                      Move part down
+                    </button>
+                    <button
+                      class="delete-part"
+                      @click=${() => this.#deletePart(idx)}
+                      title="Delete part"
+                    >
+                      Delete part
+                    </button>
+                  </div>
+                </div>`;
+              });
             })
           : html`<div id="no-parts">No parts yet - please add one</div>`}
       </div>`;

@@ -94,6 +94,8 @@ html {
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
   --bb-icon-menu: url(/third_party/icons/menu.svg);
+  --bb-icon-move-up: url(/third_party/icons/move-up.svg);
+  --bb-icon-move-down: url(/third_party/icons/move-down.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);

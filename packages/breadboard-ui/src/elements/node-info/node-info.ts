@@ -555,7 +555,7 @@ export class NodeInfo extends LitElement {
               />
               ${ports.map((port) => {
                 if (!configuration || port.star) return;
-                return guard([port.name], () => {
+                return guard([this.graph, port.name], () => {
                   const name = port.name;
                   const value = port.value;
                   const title = port.schema.title ?? port.name;
@@ -756,14 +756,9 @@ export class NodeInfo extends LitElement {
                     }
                   }
 
-                  const schema = port.schema;
-
                   return html`<div class="configuration-item">
-                    <label title="${schema.description}" for="${name}"
+                    <label title="${port.schema.description}" for="${name}"
                       >${title}
-                      (${Array.isArray(schema.type)
-                        ? schema.type.join(", ")
-                        : schema.type || "No type"}):
                     </label>
                     ${description} ${input}
                   </div>`;
