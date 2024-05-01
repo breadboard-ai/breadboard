@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Nursery for new nodes. Move to other kits to publish.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -123,11 +123,11 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.17.0",
+    "@google-labs/breadboard": "^0.18.0",
     "@google-labs/chunker": "^0.0.1",
-    "@google-labs/core-kit": "^0.7.0",
+    "@google-labs/core-kit": "^0.8.0",
     "@google-labs/palm-lite": "^0.0.3",
-    "@google-labs/template-kit": "^0.2.6",
+    "@google-labs/template-kit": "^0.3.0",
     "json-stable-stringify": "^1.0.2",
     "jsonschema": "^1.4.1",
     "ml-distance": "^4.0.1",

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A Breadboard Kit for building agent-like experiences",
   "main": "./dist/src/index.js",
   "exports": {
@@ -140,11 +140,11 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/breadboard": "^0.17.0",
-    "@google-labs/core-kit": "^0.7.0",
-    "@google-labs/gemini-kit": "^0.2.0",
-    "@google-labs/json-kit": "^0.2.0",
-    "@google-labs/template-kit": "^0.2.6",
+    "@google-labs/breadboard": "^0.18.0",
+    "@google-labs/core-kit": "^0.8.0",
+    "@google-labs/gemini-kit": "^0.3.0",
+    "@google-labs/json-kit": "^0.2.1",
+    "@google-labs/template-kit": "^0.3.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.7.1",

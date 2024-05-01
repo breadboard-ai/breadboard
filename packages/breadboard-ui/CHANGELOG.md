@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- cdc23bb: Make bubbled input values configurable.
+- e736f37: Remove deprecated input-multipart
+- 3d48482: Change all multi-modal inputs to be a format of llm-content
+- 24230c1: Introduce LLM Content Editor
+- bd44e29: Support audio input
+- 43da00a: Introduce the concept of editor modes.
+- 12b825f: Implement streamlined properties panel
+- ff4bfe9: Remember format changes for string types.
+
+### Patch Changes
+
+- dbd9267: Teach graph how to expand and collapse nodes
+- 39016d9: Teach node selector about node shortcuts
+- 706c6a8: Treat schema.examples as an array, rather than single value.
+- e7faf4b: Teach Splitter how to auto-expand & collapse
+- 54baba8: Implement `AbortSignal` support.
+- c1652c2: Support arrays of LLM Content in Activity Log
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 81a43c4: Fix graph node padding
+- cc47fe7: Add additional types to LLM Content Input
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5d601fb: Add setting for show/hide of "advanced ports"
+- 6a2af3e: Hide Embedded Board Selector When Empty
+- ad5f570: Teach Editor to have basic overflow menu
+- 31200be: Recognize that Error object may not exist.
+- Updated dependencies [cef20ca]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [3d48482]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [c3587e1]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+
 ## 0.6.0
 
 ### Minor Changes

@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- 55a9647: Rename assertOutput to unsafeOutput
+- 1adb24c: Replace multiline field with format, which can be multiline or javascript
+- d9ac358: Convert secrets node to use @breadboard-ai/build. No functional difference, but the JSON schema should be slightly stricter.
+- 1e86a87: Allow object types to have additional properties. Additional properties are now disabled by default.
+
+### Patch Changes
+
+- 3f9507d: The breadboard type expression object({}) is now more strictly constrained to plain objects (rather than anything).
+- 1e86a87: Add enumeration type
+- 3f9507d: Simpler JSON schema serialization for array
+- 1adb24c: additionalProperties is now set on generated port JSON schemas
+- 1e86a87: Add support for default values on static inputs
+- fefd109: JSON schema for outputs no longer sets any required properties
+- c1dcb0a: Make serialization order more similar to existing one
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- f1883d1: Add an output function for customizing a board's output node layout
+- 1adb24c: Inbound edges, even if they don't have a value, now inform the auto generated input schema
+- d8cb0c9: Add unsafeCast function as an escape hatch for when an output doesn't match a type but you're really really sure it's ok
+- 34d9c6d: Generated JSON schemas are now more explicit and verbose
+- e6e0168: Allow describe functions to be async
+- 1adb24c: Fix some incorrect type errors from certain describe functions.
+- 3f9507d: The describe function can now return objects with new descriptions
+- 1adb24c: Automatically detected input ports are no longer required. Only static ones.
+- 3f9507d: Add multiline option to port config
+- c4ca6dc: Allow setting node IDs
+- 1adb24c: Allow specifying behaviors
+- cfbcdf2: Pass NodeHandlerContext to invoke functions
+- 1d9cb16: Inputs can now have examples
+- 49da151: Allow setting id on inputs, which can be used to customize the input node id,
+  or to create multiple input nodes. If two input objects reference the same
+  id, then they will both be placed into a BGL input node with that ID. If no
+  id is specified, the usual "input-0" is used.
+- 3f9507d: Simpler JSON schema serialization for anyOf
+- dfd5ce2: Input ports can now be marked as optional.
+- cfc0f15: Add support for input titles
+- 00ccb9d: Add unsafeSchema function which allows returning raw arbitrary JSON schema from a describe function
+- 08eabf4: Title, description, and version are now included in BGL
+- 99fcffe: describe function now receives a NodeDescriberContext
+- d9ac358: Add ability to override default port title
+- Updated dependencies [cef20ca]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [3d48482]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [c3587e1]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,68 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 18b9f34: Convert template-kit to new @breadboard-ai/build package. Should be a no-op.
+- 34d9c6d: prompt-template is now slightly more correct in its description (object vs any JSON value)
+- 4d6ce42: Expand the exports of template-kit to allow internal types to be referenced (but still prevent JS from actually being imported at runtime)
+
+### Patch Changes
+
+- d7829a1: Add a prompt`...` tagged template literal function to more safely/concisely instantiate promptTemplate nodes.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 1aa96c6: Allow undefined template in describer.
+- Updated dependencies [3f9507d]
+- Updated dependencies [cef20ca]
+- Updated dependencies [55a9647]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [1adb24c]
+- Updated dependencies [1e86a87]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [fefd109]
+- Updated dependencies [c1dcb0a]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [1adb24c]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [d9ac358]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [f1883d1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [d8cb0c9]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [e6e0168]
+- Updated dependencies [3d48482]
+- Updated dependencies [1adb24c]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [3f9507d]
+- Updated dependencies [626139b]
+- Updated dependencies [1adb24c]
+- Updated dependencies [3f9507d]
+- Updated dependencies [bd44e29]
+- Updated dependencies [c4ca6dc]
+- Updated dependencies [1adb24c]
+- Updated dependencies [cfbcdf2]
+- Updated dependencies [1d9cb16]
+- Updated dependencies [49da151]
+- Updated dependencies [43da00a]
+- Updated dependencies [3f9507d]
+- Updated dependencies [dfd5ce2]
+- Updated dependencies [cfc0f15]
+- Updated dependencies [00ccb9d]
+- Updated dependencies [08eabf4]
+- Updated dependencies [c3587e1]
+- Updated dependencies [99fcffe]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [d9ac358]
+  - @breadboard-ai/build@0.5.0
+  - @google-labs/breadboard@0.18.0
+
 ## 0.2.6
 
 ### Patch Changes
