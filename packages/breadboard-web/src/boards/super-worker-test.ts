@@ -8,13 +8,20 @@ const contextFromText = (text: string, role?: string) => {
 
 const sampleContext = [
   contextFromText(
-    `book description: This book will be about breadboards and how awesome they are
+    `book description: This book will be about breadboards and how awesome they are:
+
 chapter target: 10
+
 page target: 400
+
 fiction genre: space opera
+
 setting: the planet where there are no breadboards
-story arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. 
+
+story arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better.
+
 tonality: futuristic struggle, but optimistic
+
 working title: Aurora
 `,
     "user"
