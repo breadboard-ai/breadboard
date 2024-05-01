@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Experimenting with Breadboard and Cloud Functions",
   "main": "./src/index.js",
   "type": "module",
@@ -84,9 +84,9 @@
     "ava": "^5.2.0"
   },
   "dependencies": {
-    "@google-labs/breadboard-server": "^0.1.14",
-    "@google-labs/breadboard": "^0.18.0",
-    "@google-labs/template-kit": "^0.3.0",
+    "@google-labs/breadboard-server": "^0.1.15",
+    "@google-labs/breadboard": "^0.19.0",
+    "@google-labs/template-kit": "^0.3.1",
     "dotenv": "^16.4.5"
   }
 }

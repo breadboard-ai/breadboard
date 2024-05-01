@@ -1,5 +1,13 @@
 # @google-labs/pinecone-kit
 
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/core-kit@0.8.1
+
 ## 0.1.10
 
 ### Patch Changes

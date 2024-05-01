@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.1
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @breadboard-ai/build@0.5.1
+
 ## 0.8.0
 
 ### Minor Changes

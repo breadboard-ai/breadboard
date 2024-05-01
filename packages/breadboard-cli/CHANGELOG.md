@@ -1,5 +1,17 @@
 # @google-labs/breadboard-cli
 
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/breadboard-web@1.8.1
+  - @breadboard-ai/build@0.5.1
+  - @google-labs/core-kit@0.8.1
+  - @breadboard-ai/import@0.1.2
+  - @google-labs/template-kit@0.3.1
+
 ## 0.9.1
 
 ### Patch Changes

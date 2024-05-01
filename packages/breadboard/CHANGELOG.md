@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.0
+
+### Minor Changes
+
+- 63eb779: Add support for `interactiveSecrets` option on `RunConfig`.
+
 ## 0.18.0
 
 ### Minor Changes
