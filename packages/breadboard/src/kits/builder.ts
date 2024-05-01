@@ -106,6 +106,7 @@ export class KitBuilder {
     } as KitConstructor<GenericKit<Handlers>>;
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
   static wrap<F extends Record<string, Function>>(
     params: KitBuilderOptions,
     functions: F
@@ -114,6 +115,7 @@ export class KitBuilder {
   > {
     const createHandler = (
       previous: NodeHandlers,
+      // eslint-disable-next-line @typescript-eslint/ban-types
       current: [string, Function]
     ) => {
       const [name, fn] = current;
