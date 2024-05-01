@@ -150,8 +150,8 @@ export function defineNodeType<
   GetDynamicTypes<O>,
   GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
   GetReflective<O>,
-  GetPrimary<I>,
-  GetPrimary<O>
+  Expand<GetPrimary<I>>,
+  Expand<GetPrimary<O>>
 > {
   if (!params.name) {
     throw new Error("params.name is required");
@@ -172,8 +172,8 @@ export function defineNodeType<
     GetDynamicTypes<O>,
     GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
     GetReflective<O>,
-    GetPrimary<I>,
-    GetPrimary<O>
+    Expand<GetPrimary<I>>,
+    Expand<GetPrimary<O>>
   >(
     params.name,
     omitDynamic(params.inputs),
@@ -331,9 +331,10 @@ type GetPrimary<C extends Record<string, PortConfig>> = {
     | StaticOutputPortConfig
     ? C[K]["primary"] extends true
       ? K
-      : undefined
-    : undefined;
-}[keyof Omit<C, "*">];
+      : never
+    : never;
+}[keyof Omit<C, "*">] &
+  string;
 
 type GetReflective<O extends Record<string, OutputPortConfig>> =
   O["*"] extends DynamicOutputPortConfig
