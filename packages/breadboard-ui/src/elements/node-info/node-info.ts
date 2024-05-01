@@ -100,9 +100,11 @@ export class NodeInfo extends LitElement {
         await node.ports(),
         EditorMode.ADVANCED
       );
-      const ports = structuredClone(inputs.ports).sort((portA, portB) =>
-        portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
-      );
+      const ports = structuredClone(inputs.ports)
+        .sort((portA, portB) =>
+          portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
+        )
+        .filter((port) => port.edges.length === 0); // Remove wired ports.
 
       return { node, ports, configuration };
     },
