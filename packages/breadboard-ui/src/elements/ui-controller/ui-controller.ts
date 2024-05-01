@@ -226,7 +226,7 @@ export class UI extends LitElement {
   /**
    * Called when a user stops a board.
    */
-  #fireAllInputHandlers() {
+  #callAllPendingInputHandlers() {
     for (const handlers of this.#handlers.values()) {
       for (const handler of handlers) {
         handler.call(null, {});
@@ -515,7 +515,7 @@ export class UI extends LitElement {
             @click=${() => {
               this.selectedNodeId = null;
               this.dispatchEvent(new StopEvent());
-              this.#fireAllInputHandlers();
+              this.#callAllPendingInputHandlers();
             }}
           >
             Stop
