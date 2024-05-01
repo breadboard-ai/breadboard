@@ -13,6 +13,7 @@ import {
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { Settings } from "../../types/types.js";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-settings-edit-overlay")
 export class SettingsEditOverlay extends LitElement {
@@ -191,6 +192,10 @@ export class SettingsEditOverlay extends LitElement {
     .setting-description {
       font-size: var(--bb-body-x-small);
       line-height: var(--bb-body-line-height-x-small);
+    }
+
+    .setting-name.double {
+      grid-column: 1 / 3;
     }
 
     ul {
@@ -668,12 +673,22 @@ export class SettingsEditOverlay extends LitElement {
                                     </button>`
                                   : nothing;
 
+                                const double =
+                                  typeof item.value === "boolean" &&
+                                  !configuration.extensible;
                                 return html` <input
                                     type="hidden"
                                     name="setting-${id}-section-${idx}"
                                     .value=${name}
                                   />
-                                  <div>${inName}</div>
+                                  <div
+                                    class=${classMap({
+                                      "setting-name": true,
+                                      double,
+                                    })}
+                                  >
+                                    ${inName}
+                                  </div>
                                   <div>${inValue}</div>
                                   <div>${deleteButton}</div>`;
                               })
