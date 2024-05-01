@@ -333,10 +333,12 @@ export class Input extends LitElement {
               property.items.type === "object" &&
               property.items.behavior?.includes("llm-content"));
           if (showLLMContent) {
-            const unparsedValue = property.examples?.[0] ?? property.default;
-            const value: LLMContent | LLMContent[] | null = unparsedValue
-              ? JSON.parse(unparsedValue)
-              : null;
+            let value: LLMContent | LLMContent[] | null = null;
+            value = values[key] as LLMContent | LLMContent[] | null;
+            if (!value) {
+              const unparsedValue = property.examples?.[0] ?? property.default;
+              value = unparsedValue ? JSON.parse(unparsedValue) : null;
+            }
 
             const allow: AllowedLLMContentTypes = {
               audioFile: false,
