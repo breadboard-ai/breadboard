@@ -391,11 +391,12 @@ export class LLMInput extends LitElement {
       return;
     }
 
+    let range: Range | null = null;
     if (this.shadowRoot && "getSelection" in this.shadowRoot) {
       // @ts-expect-error New API.
       const selection = this.shadowRoot.getSelection() as Selection;
       if (selection.rangeCount !== 0) {
-        const range = selection.getRangeAt(0);
+        range = selection.getRangeAt(0);
         range.deleteContents();
       }
     }
@@ -404,11 +405,24 @@ export class LLMInput extends LitElement {
     for (let l = 0; l < lines.length; l++) {
       const line = lines[l];
       const textNode = document.createTextNode(line);
-      evt.currentTarget.append(textNode);
+
+      if (range) {
+        range.insertNode(textNode);
+        range.setEndAfter(textNode);
+        range.collapse();
+      } else {
+        evt.currentTarget.append(textNode);
+      }
 
       if (l < lines.length - 1) {
         const breakNode = document.createElement("br");
-        evt.currentTarget.append(breakNode);
+        if (range) {
+          range.insertNode(breakNode);
+          range.setEndAfter(breakNode);
+          range.collapse();
+        } else {
+          evt.currentTarget.append(breakNode);
+        }
       }
     }
   }
