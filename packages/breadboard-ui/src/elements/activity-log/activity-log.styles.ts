@@ -363,6 +363,7 @@ export const styles = css`
   dt .value.output p {
     font-size: var(--bb-body-medium);
     margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    white-space: pre-line;
   }
 
   dt .llm-content .value h1:first-of-type,
