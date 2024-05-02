@@ -636,8 +636,8 @@ export class Graph extends PIXI.Container {
         this.#nodeById.set(id, graphNode);
       }
 
-      if (graphNode.nodeTitle !== node.title()) {
-        graphNode.nodeTitle = node.title();
+      if (graphNode.title !== node.title()) {
+        graphNode.title = node.title();
       }
 
       if (node.descriptor.metadata?.visual) {
