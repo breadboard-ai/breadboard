@@ -186,8 +186,8 @@ export class LLMInput extends LitElement {
     .part-controls {
       display: none;
       position: absolute;
-      top: calc(var(--bb-grid-size) * -1);
-      right: calc(var(--bb-grid-size) * 2);
+      top: calc(var(--bb-grid-size) * -3 + 1px);
+      right: 1px;
       height: var(--bb-grid-size-7);
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size-8);
