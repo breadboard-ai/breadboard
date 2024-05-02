@@ -14,7 +14,6 @@ export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
 export { Input } from "./input/input.js";
-export { InputContainer } from "./input/input-container/input-container.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { LLMInput } from "./input/llm-input/llm-input.js";
 export { Navigation } from "./nav/nav.js";

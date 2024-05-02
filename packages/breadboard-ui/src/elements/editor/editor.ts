@@ -39,6 +39,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
+import type { NodeSelector } from "./node-selector.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -109,6 +110,7 @@ export class Editor extends LitElement {
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
+  #nodeSelectorRef: Ref<NodeSelector> = createRef();
 
   static styles = css`
     * {
@@ -644,10 +646,29 @@ export class Editor extends LitElement {
           name="add-node"
           id="add-node"
           type="checkbox"
+          @input=${(evt: InputEvent) => {
+            if (!(evt.target instanceof HTMLInputElement)) {
+              return;
+            }
+
+            if (!this.#nodeSelectorRef.value) {
+              return;
+            }
+
+            const nodeSelector = this.#nodeSelectorRef.value;
+            nodeSelector.inert = !evt.target.checked;
+
+            if (!evt.target.checked) {
+              return;
+            }
+            nodeSelector.selectSearchInput();
+          }}
         />
         <label for="add-node">Nodes</label>
 
         <bb-node-selector
+          ${ref(this.#nodeSelectorRef)}
+          inert
           .graph=${this.graph}
           .kits=${this.kits}
           @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
