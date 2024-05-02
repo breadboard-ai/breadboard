@@ -274,7 +274,7 @@ export class LLMInput extends LitElement {
 
     .value[contenteditable] {
       background: var(--bb-neutral-0);
-      white-space: pre;
+      white-space: pre-line;
     }
 
     .value * {
