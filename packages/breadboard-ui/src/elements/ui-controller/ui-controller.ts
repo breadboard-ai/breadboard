@@ -93,7 +93,7 @@ export class UI extends LitElement {
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
-  #nodeConfigurationUpdateCount = -1;
+  #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
@@ -355,7 +355,7 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeId,
         this.#lastEdgeCount,
-        this.#nodeConfigurationUpdateCount,
+        this.#nodeSchemaUpdateCount,
       ],
       () =>
         html`<bb-node-info
@@ -368,6 +368,9 @@ export class UI extends LitElement {
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           name="Selected Node"
+          @breadboardschemachange=${() => {
+            this.#nodeSchemaUpdateCount++;
+          }}
         ></bb-node-info>`
     );
 
