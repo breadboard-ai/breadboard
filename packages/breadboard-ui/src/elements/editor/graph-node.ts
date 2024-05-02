@@ -698,6 +698,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
+      nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
 
       this.#inPortLocations.set(port.name, nodePort.position);
@@ -729,6 +730,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
+      nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
 
       this.#outPortLocations.set(port.name, nodePort.position);
