@@ -245,7 +245,10 @@ export class NodeDetails extends LitElement {
         <form
           ${ref(this.#formRef)}
           class=${classMap({ visible: this.expanded })}
-          @focusout=${() => {
+          @input=${(evt: Event) => {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+
             this.#emitUpdatedInfo();
           }}
           @keydown=${(evt: KeyboardEvent) => {
