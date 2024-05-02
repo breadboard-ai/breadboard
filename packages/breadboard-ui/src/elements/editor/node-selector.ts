@@ -24,6 +24,7 @@ export class NodeSelector extends LitElement {
   @state()
   filter: string | null = null;
 
+  #searchInputRef: Ref<HTMLInputElement> = createRef();
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
 
@@ -198,6 +199,14 @@ export class NodeSelector extends LitElement {
     }
   `;
 
+  selectSearchInput() {
+    if (!this.#searchInputRef.value) {
+      return;
+    }
+
+    this.#searchInputRef.value.select();
+  }
+
   updated() {
     if (!this.#listRef.value) {
       return;
@@ -278,6 +287,7 @@ export class NodeSelector extends LitElement {
         type="search"
         id="search"
         placeholder="Search nodes"
+        ${ref(this.#searchInputRef)}
         @input=${(evt: InputEvent) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
