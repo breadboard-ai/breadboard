@@ -36,10 +36,6 @@ export class GraphNode extends PIXI.Graphics {
   #isDirty = true;
   #id = "";
   #type = "";
-  // A title that is provided in the constructor, not
-  // the one that shows up in the graph.
-  #nodeTitle = "";
-  // The title that shows up in the graph.
   #title = "";
   #titleText: PIXI.Text | null = null;
   #borderRadius = 8;
@@ -79,7 +75,7 @@ export class GraphNode extends PIXI.Graphics {
   constructor(id: string, type: string, title: string) {
     super();
 
-    this.#nodeTitle = title;
+    this.title = title;
     this.id = id;
     this.type = type;
 
@@ -206,16 +202,6 @@ export class GraphNode extends PIXI.Graphics {
     this.addEventListener("pointerup", onPointerUp);
   }
 
-  #clearOldTitle() {
-    if (!this.#titleText) {
-      return;
-    }
-
-    this.#titleText.removeFromParent();
-    this.#titleText.destroy();
-    this.#titleText = null;
-  }
-
   get id() {
     return this.#id;
   }
@@ -224,17 +210,12 @@ export class GraphNode extends PIXI.Graphics {
     this.#id = id;
   }
 
-  get nodeTitle() {
-    return this.#nodeTitle;
+  get title() {
+    return this.#title;
   }
 
-  set nodeTitle(nodeTitle: string) {
-    this.#nodeTitle = nodeTitle;
-    if (!this.#titleText) {
-      return;
-    }
-
-    this.#titleText.text = this.#nodeTitle;
+  set title(title: string) {
+    this.#title = title;
     this.#isDirty = true;
   }
 
@@ -263,9 +244,6 @@ export class GraphNode extends PIXI.Graphics {
 
   set type(type: string) {
     this.#type = type;
-    this.#title = `${this.#nodeTitle}`;
-    this.#clearOldTitle();
-
     this.#isDirty = true;
   }
 
@@ -465,11 +443,15 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #createTitleTextIfNeeded() {
+    const nodeTitle = `${this.#title} (${this.#type})`;
     if (this.#titleText) {
+      if (this.#titleText.text !== nodeTitle) {
+        this.#titleText.text = nodeTitle;
+      }
       return;
     }
 
-    this.#titleText = new PIXI.Text(this.#title, {
+    this.#titleText = new PIXI.Text(nodeTitle, {
       fontFamily: "Arial",
       fontSize: this.#textSize,
       fill: this.#titleTextColor,
