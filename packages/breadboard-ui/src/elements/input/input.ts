@@ -21,8 +21,9 @@ import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AudioInput } from "./audio/audio.js";
-import { AllowedLLMContentTypes, LLMContent } from "../../types/types.js";
+import { LLMContent } from "../../types/types.js";
 import { LLMInput } from "./llm-input/llm-input.js";
+import { createAllowListFromProperty } from "../../utils/llm-content.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -265,56 +266,6 @@ export class Input extends LitElement {
     }
   }
 
-  #updateAllowList(allow: AllowedLLMContentTypes, format: string | string[]) {
-    if (typeof format === "string") {
-      switch (format) {
-        case "audio-file": {
-          allow.audioFile = true;
-          break;
-        }
-
-        case "audio-microphone": {
-          allow.audioMicrophone = true;
-          break;
-        }
-
-        case "video-file": {
-          allow.videoFile = true;
-          break;
-        }
-
-        case "video-webcam": {
-          allow.videoWebcam = true;
-          break;
-        }
-
-        case "image-file": {
-          allow.imageFile = true;
-          break;
-        }
-
-        case "image-webcam": {
-          allow.imageWebcam = true;
-          break;
-        }
-
-        case "image-drawable": {
-          allow.imageDrawable = true;
-          break;
-        }
-
-        case "text-file": {
-          allow.textFile = true;
-          break;
-        }
-      }
-    } else {
-      for (const item of format) {
-        this.#updateAllowList(allow, item);
-      }
-    }
-  }
-
   #renderForm(properties: Record<string, Schema>, values: InputData) {
     return html`<div id="input">
       <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
@@ -340,49 +291,7 @@ export class Input extends LitElement {
               value = unparsedValue ? JSON.parse(unparsedValue) : null;
             }
 
-            const allow: AllowedLLMContentTypes = {
-              audioFile: false,
-              audioMicrophone: false,
-              videoFile: false,
-              videoWebcam: false,
-              imageFile: false,
-              imageWebcam: false,
-              imageDrawable: false,
-              textFile: false,
-              textInline: true,
-            };
-
-            let format = property.format;
-            if (
-              property.type === "array" &&
-              property.type &&
-              property.items &&
-              property.type === "array" &&
-              !Array.isArray(property.items) &&
-              property.items.type === "object" &&
-              property.items.format
-            ) {
-              format = property.items.format;
-            }
-
-            if (format) {
-              if (format.includes(",")) {
-                this.#updateAllowList(allow, format.split(","));
-              } else {
-                this.#updateAllowList(allow, format);
-              }
-            } else {
-              allow.audioFile = true;
-              allow.audioMicrophone = true;
-              allow.videoFile = true;
-              allow.videoWebcam = true;
-              allow.imageFile = true;
-              allow.imageWebcam = true;
-              allow.imageDrawable = true;
-              allow.textFile = true;
-              allow.textInline = true;
-            }
-
+            const allow = createAllowListFromProperty(property);
             input = html`<bb-llm-input
               id="${key}"
               @keydown=${(evt: KeyboardEvent) => {

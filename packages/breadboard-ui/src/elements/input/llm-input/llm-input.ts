@@ -44,6 +44,9 @@ export class LLMInput extends LitElement {
   @property()
   description: string | null = null;
 
+  @property({ reflect: true })
+  minimal = false;
+
   @property()
   allow: AllowedLLMContentTypes = {
     audioFile: true,
@@ -171,6 +174,10 @@ export class LLMInput extends LitElement {
       border: 2px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0;
+    }
+
+    :host([minimal]) #container {
+      height: 100px;
     }
 
     .content {
