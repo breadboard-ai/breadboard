@@ -9,6 +9,7 @@ import {
   AllowedLLMContentTypes,
   LLMContent,
   LLMInlineData,
+  LLMText,
 } from "../../../types/types.js";
 import { Schema } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
@@ -27,7 +28,6 @@ import {
   isInlineData,
   isText,
 } from "../../../utils/llm-content.js";
-import { markdown } from "../../../directives/markdown.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -267,6 +267,45 @@ export class LLMInput extends LitElement {
 
     .value[contenteditable] {
       background: var(--bb-neutral-0);
+      white-space: pre;
+    }
+
+    .value * {
+      margin: var(--bb-grid-size) 0;
+    }
+
+    .value h1 {
+      font-size: var(--bb-title-large);
+      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    }
+
+    .value h2 {
+      font-size: var(--bb-title-medium);
+      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    }
+
+    .value h3,
+    .value h4,
+    .value h5 {
+      font-size: var(--bb-title-small);
+      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    }
+
+    .value p {
+      font-size: var(--bb-body-medium);
+      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    }
+
+    .value h1:first-of-type,
+    .value h2:first-of-type,
+    .value h3:first-of-type,
+    .value h4:first-of-type,
+    .value h5:first-of-type {
+      margin-top: 0;
+    }
+
+    .value p:last-of-type {
+      margin-bottom: 0;
     }
 
     .value img,
@@ -345,8 +384,26 @@ export class LLMInput extends LitElement {
       return;
     }
 
-    const text = document.createTextNode(evt.clipboardData.getData("text"));
-    evt.currentTarget.append(text);
+    if (this.shadowRoot && "getSelection" in this.shadowRoot) {
+      // @ts-expect-error New API.
+      const selection = this.shadowRoot.getSelection() as Selection;
+      if (selection.rangeCount !== 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+      }
+    }
+
+    const lines = evt.clipboardData.getData("text").split("\n");
+    for (let l = 0; l < lines.length; l++) {
+      const line = lines[l];
+      const textNode = document.createTextNode(line);
+      evt.currentTarget.append(textNode);
+
+      if (l < lines.length - 1) {
+        const breakNode = document.createElement("br");
+        evt.currentTarget.append(breakNode);
+      }
+    }
   }
 
   #emitUpdate() {
@@ -550,6 +607,23 @@ export class LLMInput extends LitElement {
     this.#emitUpdate();
     this.#forceRenderCount++;
     this.requestUpdate();
+  }
+
+  #collectElementNodes(part: LLMText, target: EventTarget | null): string {
+    if (!(target instanceof HTMLSpanElement)) {
+      return "";
+    }
+
+    let str = "";
+    for (const node of target.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        str += node.textContent || "";
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        str += "\n";
+      }
+    }
+
+    return str;
   }
 
   #createAcceptList() {
@@ -771,7 +845,7 @@ export class LLMInput extends LitElement {
               if (isText(part)) {
                 partClass = "text";
                 prefix = "txt";
-                value = html`${markdown(part.text)}`;
+                value = html`${part.text}`;
               } else if (isFunctionCall(part)) {
                 partClass = "function-call";
                 prefix = "fn";
@@ -829,13 +903,16 @@ export class LLMInput extends LitElement {
                           return;
                         }
 
-                        if (!(evt.target instanceof HTMLSpanElement)) {
+                        part.text = this.#collectElementNodes(part, evt.target);
+                      }}
+                      @paste=${(evt: ClipboardEvent) => {
+                        this.#sanitizePastedContent(evt);
+                        if (!isText(part)) {
                           return;
                         }
 
-                        part.text = evt.target.textContent || "";
+                        part.text = this.#collectElementNodes(part, evt.target);
                       }}
-                      @paste=${this.#sanitizePastedContent}
                       tabIndex="0"
                       ${isLastPart ? ref(this.#lastPartRef) : nothing}
                       >${value}</span
