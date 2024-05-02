@@ -11,7 +11,13 @@ import { map } from "lit/directives/map.js";
 import { SchemaChangeEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { classMap } from "lit/directives/class-map.js";
-import { resolveArrayType, resolveBehaviorType } from "../../utils/schema.js";
+import {
+  assertIsLLMContent,
+  resolveArrayType,
+  resolveBehaviorType,
+} from "../../utils/schema.js";
+import { LLMContent } from "../../types/types.js";
+import { createAllowListFromProperty } from "../../utils/llm-content.js";
 
 @customElement("bb-schema-editor")
 export class SchemaEditor extends LitElement {
@@ -138,75 +144,6 @@ export class SchemaEditor extends LitElement {
     required: string[]
   ) {
     return html`${map(Object.entries(properties), ([id, value]) => {
-      const defaultLabel = html` <label for="${id}-default">Default</label>`;
-      let defaultValue: HTMLTemplateResult | symbol = nothing;
-      let valueType = "string";
-      switch (value.type) {
-        case "array": {
-          valueType = "array";
-          defaultValue = html`${defaultLabel}<bb-array-editor
-              id="${id}-default"
-              name="${id}-default"
-              ?readonly=${!this.editable}
-              .items=${JSON.parse(value.default || "null")}
-              .type=${resolveArrayType(value)}
-              .behavior=${resolveBehaviorType(value.items)}
-            ></bb-array-editor>`;
-          break;
-        }
-
-        case "boolean": {
-          valueType = "boolean";
-          defaultValue = html`${defaultLabel}<input
-              type="checkbox"
-              id="${id}-default"
-              name="${id}-default"
-              ?checked="${value.default === "true"}"
-              ?readonly=${!this.editable}
-            />`;
-          break;
-        }
-
-        case "number": {
-          valueType = "number";
-          defaultValue = html`${defaultLabel}<input
-              type="number"
-              id="${id}-default"
-              name="${id}-default"
-              value="${value.default}"
-              ?readonly=${!this.editable}
-            />`;
-          break;
-        }
-
-        case "string":
-        case "object": {
-          if (value.enum) {
-            defaultValue = html`${defaultLabel}<select
-                type="text"
-                id="${id}-default"
-                name="${id}-default"
-                ?readonly=${!this.editable}
-              >
-                ${map(value.enum, (option) => {
-                  return html`<option ?selected=${option === value.default}>
-                    ${option}
-                  </option>`;
-                })}
-              </select>`;
-          } else {
-            defaultValue = html`${defaultLabel}<input
-                type="text"
-                id="${id}-default"
-                name="${id}-default"
-                value="${value.default || ""}"
-                ?readonly=${!this.editable}
-              />`;
-          }
-          break;
-        }
-      }
-
       const enumerations = html`<label for="${id}-enum">User choices</label>
         <bb-array-editor
           id="${id}-enum"
@@ -485,6 +422,92 @@ export class SchemaEditor extends LitElement {
         }
       }
 
+      const defaultLabel = html` <label for="${id}-default">Default</label>`;
+      let defaultValue: HTMLTemplateResult | symbol = nothing;
+      let valueType = "string";
+      switch (value.type) {
+        case "array": {
+          valueType = "array";
+          defaultValue = html`${defaultLabel}<bb-array-editor
+              id="${id}-default"
+              name="${id}-default"
+              ?readonly=${!this.editable}
+              .items=${JSON.parse(value.default || "null")}
+              .type=${resolveArrayType(value)}
+              .behavior=${resolveBehaviorType(value.items)}
+            ></bb-array-editor>`;
+          break;
+        }
+
+        case "boolean": {
+          valueType = "boolean";
+          defaultValue = html`${defaultLabel}<input
+              type="checkbox"
+              id="${id}-default"
+              name="${id}-default"
+              ?checked="${value.default === "true"}"
+              ?readonly=${!this.editable}
+            />`;
+          break;
+        }
+
+        case "number": {
+          valueType = "number";
+          defaultValue = html`${defaultLabel}<input
+              type="number"
+              id="${id}-default"
+              name="${id}-default"
+              value="${value.default}"
+              ?readonly=${!this.editable}
+            />`;
+          break;
+        }
+
+        case "string":
+        case "object": {
+          if (value.enum) {
+            defaultValue = html`${defaultLabel}<select
+                type="text"
+                id="${id}-default"
+                name="${id}-default"
+                ?readonly=${!this.editable}
+              >
+                ${map(value.enum, (option) => {
+                  return html`<option ?selected=${option === value.default}>
+                    ${option}
+                  </option>`;
+                })}
+              </select>`;
+          } else if (value.behavior?.includes("llm-content")) {
+            let defaultValueContent: LLMContent | null = null;
+            try {
+              defaultValueContent = JSON.parse(value.default || "null");
+              assertIsLLMContent(defaultValueContent);
+            } catch (err) {
+              defaultValueContent = null;
+            }
+
+            const allow = createAllowListFromProperty(value);
+            defaultValue = html`${defaultLabel}<bb-llm-input
+                id="${id}-default"
+                name="${id}-default"
+                .minimal=${true}
+                .allow=${allow}
+                .value=${defaultValueContent}
+              ></bb-llm-input>`;
+          } else {
+            defaultValue = html`${defaultLabel}<input
+                type="text"
+                id="${id}-default"
+                name="${id}-default"
+                value="${value.default || ""}"
+                ?readonly=${!this.editable}
+              />`;
+          }
+          break;
+        }
+      }
+
       const examples = html`<label for="${id}-examples">Examples</label>
         <bb-array-editor
           id="${id}-examples"
@@ -712,6 +735,8 @@ export class SchemaEditor extends LitElement {
         if (inDefault) {
           if (inDefault.type === "checkbox") {
             property.default = inDefault.checked.toString();
+          } else if (typeof inDefault.value === "object") {
+            property.default = JSON.stringify(inDefault.value);
           } else {
             property.default = inDefault.value ?? property.default;
           }
