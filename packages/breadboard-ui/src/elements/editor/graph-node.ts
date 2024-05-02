@@ -9,6 +9,7 @@ import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
+import { GraphAssets } from "./graph-assets.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -28,6 +29,7 @@ const outputNodeColor = getGlobalColor("--bb-output-100");
 // const boardNodeColor = getGlobalColor('--bb-boards-100');
 
 const DBL_CLICK_DELTA = 450;
+const ICON_SCALE = 0.75;
 
 export class GraphNode extends PIXI.Graphics {
   #width = 0;
@@ -48,6 +50,7 @@ export class GraphNode extends PIXI.Graphics {
   #backgroundColor = 0x333333;
   #padding = 10;
   #menuPadding = 4;
+  #iconPadding = 8;
   #portLabelVerticalPadding = 5;
   #portLabelHorizontalPadding = 20;
   #portPadding = 6;
@@ -71,6 +74,8 @@ export class GraphNode extends PIXI.Graphics {
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
   #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
   #lastClickTime = 0;
+  #icon: string | null = null;
+  #iconSprite: PIXI.Sprite | null = null;
 
   constructor(id: string, type: string, title: string) {
     super();
@@ -216,6 +221,24 @@ export class GraphNode extends PIXI.Graphics {
 
   set title(title: string) {
     this.#title = title;
+    this.#isDirty = true;
+  }
+
+  get icon() {
+    return this.#icon;
+  }
+
+  set icon(icon: string | null) {
+    this.#icon = icon;
+    if (icon) {
+      if (!this.#iconSprite) {
+        const texture = GraphAssets.instance().get(icon);
+        this.#iconSprite = texture ? new PIXI.Sprite(texture) : null;
+      }
+    } else {
+      this.#iconSprite = null;
+    }
+
     this.#isDirty = true;
   }
 
@@ -488,6 +511,7 @@ export class GraphNode extends PIXI.Graphics {
     // Width calculations.
     let width =
       this.#padding +
+      (this.#icon ? (this.#iconSprite?.width || 0) + this.#iconPadding : 0) +
       (this.#titleText?.width || 0) +
       this.#padding +
       GraphOverflowMenu.width +
@@ -663,15 +687,26 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #drawTitle() {
+    const titleHeight =
+      this.#padding + (this.#titleText?.height || 0) + this.#padding;
+
+    let titleStartX = this.#padding;
+    if (this.#iconSprite) {
+      this.#iconSprite.scale.x = ICON_SCALE;
+      this.#iconSprite.scale.y = ICON_SCALE;
+      this.#iconSprite.eventMode = "none";
+      this.#iconSprite.x = titleStartX;
+      this.#iconSprite.y = (titleHeight - this.#iconSprite.height) / 2;
+      titleStartX += this.#iconSprite.width + this.#iconPadding;
+      this.addChild(this.#iconSprite);
+    }
+
     let portStartY = 0;
     if (this.#titleText) {
       this.#titleText.eventMode = "none";
-      this.#titleText.x = this.#padding;
+      this.#titleText.x = titleStartX;
       this.#titleText.y = this.#padding;
       this.addChild(this.#titleText);
-
-      const titleHeight =
-        this.#padding + this.#titleText.height + this.#padding;
 
       // Move the labels a padding's distance from the bottom of the title.
       portStartY += titleHeight + this.#padding;

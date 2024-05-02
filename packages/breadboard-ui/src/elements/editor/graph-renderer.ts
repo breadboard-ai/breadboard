@@ -21,6 +21,8 @@ import { Graph } from "./graph.js";
 import { InspectableEdge } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
+import { GraphAssets } from "./graph-assets.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -521,6 +523,11 @@ export class GraphRenderer extends LitElement {
     this.removeEventListener("wheel", this.#onWheelBound);
   }
 
+  async loadTexturesAndRender() {
+    await GraphAssets.instance().loaded;
+    return this.#app.view;
+  }
+
   render() {
     const overflowMenu = html`<div
       ${ref(this.#overflowMenuRef)}
@@ -532,6 +539,6 @@ export class GraphRenderer extends LitElement {
       </button>
     </div>`;
 
-    return html`${this.#app.view}${overflowMenu}`;
+    return html`${until(this.loadTexturesAndRender())}${overflowMenu}`;
   }
 }

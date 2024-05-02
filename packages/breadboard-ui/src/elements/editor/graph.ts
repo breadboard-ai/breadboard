@@ -17,6 +17,7 @@ import { GraphEdge } from "./graph-edge.js";
 import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
+import { GraphAssets } from "./graph-assets.js";
 
 function edgeToString(edge: InspectableEdge): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
@@ -638,6 +639,20 @@ export class Graph extends PIXI.Container {
 
       if (graphNode.title !== node.title()) {
         graphNode.title = node.title();
+      }
+
+      const metadata = node.metadata();
+
+      // TODO: Decide where this data should come from.
+      if (
+        "icon" in metadata &&
+        GraphAssets.instance().has(metadata.icon as string)
+      ) {
+        graphNode.icon = metadata.icon as string;
+      } else if (node.descriptor.type === "superWorker") {
+        graphNode.icon = "smart-toy";
+      } else if (node.descriptor.type === "human") {
+        graphNode.icon = "human";
       }
 
       if (node.descriptor.metadata?.visual) {
