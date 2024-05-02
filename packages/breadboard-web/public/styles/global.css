@@ -124,6 +124,17 @@ html {
   --bb-expand-arrow: url(/images/expand.svg);
   --bb-collapse-arrow: url(/images/collapse.svg);
 
+  --bb-warning-50: hsl(0, 100%, 950%);
+  --bb-warning-100: hsl(0, 100%, 90%);
+  --bb-warning-200: hsl(0, 100%, 80%);
+  --bb-warning-300: hsl(0, 100%, 70%);
+  --bb-warning-400: hsl(0, 100%, 60%);
+  --bb-warning-500: hsl(0, 100%, 50%);
+  --bb-warning-600: hsl(0, 100%, 40%);
+  --bb-warning-700: hsl(0, 100%, 30%);
+  --bb-warning-800: hsl(0, 100%, 20%);
+  --bb-warning-900: hsl(0, 100%, 10%);
+
   --bb-inputs-50: #eaf7e7;
   --bb-inputs-100: #bbe7b0;
   --bb-inputs-200: #9adc8a;

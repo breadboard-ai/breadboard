@@ -33,6 +33,7 @@ import { isBoard } from "../../utils/board.js";
 import { CodeEditor } from "../input/code-editor/code-editor.js";
 import { LLMInput } from "../input/llm-input/llm-input.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
+import { classMap } from "lit/directives/class-map.js";
 
 function isLLMContent(port: InspectablePort) {
   return port.schema.behavior?.includes("llm-content") || false;
@@ -100,11 +101,9 @@ export class NodeInfo extends LitElement {
         await node.ports(),
         EditorMode.ADVANCED
       );
-      const ports = structuredClone(inputs.ports)
-        .sort((portA, portB) =>
-          portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
-        )
-        .filter((port) => port.edges.length === 0); // Remove wired ports.
+      const ports = structuredClone(inputs.ports).sort((portA, portB) =>
+        portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
+      );
 
       return { node, ports, configuration };
     },
@@ -222,6 +221,27 @@ export class NodeInfo extends LitElement {
 
     .node-properties .configuration-item > label {
       font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+
+    .node-properties .configuration-item > label::before {
+      content: "";
+      width: var(--bb-grid-size-2);
+      height: var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-500);
+      background: #fff;
+      margin-right: var(--bb-grid-size-2);
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+
+    .node-properties .configuration-item.connected > label::before {
+      background: var(--bb-inputs-300);
+    }
+
+    .node-properties .configuration-item.connected.configured > label::before {
+      background: var(--bb-boards-500);
     }
 
     .node-properties .configuration-item > div {
@@ -549,7 +569,7 @@ export class NodeInfo extends LitElement {
                 value="${node.descriptor.type}"
               />
               ${ports.map((port) => {
-                if (!configuration || port.star) return;
+                if (!configuration || port.star) return nothing;
                 return guard([this.graph, port.name], () => {
                   const name = port.name;
                   const value = port.value;
@@ -568,190 +588,202 @@ export class NodeInfo extends LitElement {
                           ${port.schema.description}
                         </p>`
                       : nothing;
-                  switch (type) {
-                    case "object": {
-                      // Only show the schema editor for inputs & outputs
-                      if (port.schema.behavior?.includes("ports-spec")) {
-                        input = html`<bb-schema-editor
-                          .editable=${this.editable}
-                          .schema=${value}
-                          .schemaVersion=${this.#schemaVersion}
-                          @breadboardschemachange=${() => {
-                            if (!this.#configurationFormRef.value) {
-                              return;
-                            }
+                  if (port.edges.length === 0) {
+                    switch (type) {
+                      case "object": {
+                        // Only show the schema editor for inputs & outputs
+                        if (port.schema.behavior?.includes("ports-spec")) {
+                          input = html`<bb-schema-editor
+                            .editable=${this.editable}
+                            .schema=${value}
+                            .schemaVersion=${this.#schemaVersion}
+                            @breadboardschemachange=${() => {
+                              if (!this.#configurationFormRef.value) {
+                                return;
+                              }
 
-                            this.#schemaVersion++;
-                            this.#onConfigurationFormSubmit(
-                              this.#configurationFormRef.value
-                            );
-                          }}
+                              this.#schemaVersion++;
+                              this.#onConfigurationFormSubmit(
+                                this.#configurationFormRef.value
+                              );
+                            }}
+                            id="${name}"
+                            name="${name}"
+                          ></bb-schema-editor>`;
+                        } else if (isBoard(port, value)) {
+                          const selectorValue = value
+                            ? typeof value === "string"
+                              ? value
+                              : value.path
+                            : "";
+                          input = html`<bb-board-selector
+                            .graph=${this.graph}
+                            .subGraphIds=${this.graph && this.graph.graphs
+                              ? Object.keys(this.graph.graphs)
+                              : []}
+                            .providers=${this.providers}
+                            .providerOps=${this.providerOps}
+                            .value=${selectorValue || ""}
+                            @input=${(evt: Event) => {
+                              evt.preventDefault();
+                              if (!this.#configurationFormRef.value) {
+                                return;
+                              }
+
+                              this.#onConfigurationFormSubmit(
+                                this.#configurationFormRef.value
+                              );
+                            }}
+                            id="${name}"
+                            name="${name}"
+                          ></bb-board-selector>`;
+                        } else if (isLLMContent(port)) {
+                          input = html`<bb-llm-input
+                            id="${name}"
+                            name="${name}"
+                            .schema=${port.schema}
+                            .value=${value}
+                            .description=${port.schema?.description || null}
+                          ></bb-llm-input>`;
+                        } else {
+                          input = html`<textarea
+                            id="${name}"
+                            name="${name}"
+                            placeholder="${defaultValue}"
+                            data-type="${type}"
+                            data-behavior=${behavior ? behavior : nothing}
+                            @input=${(evt: Event) => {
+                              const field = evt.target;
+                              if (!(field instanceof HTMLTextAreaElement)) {
+                                return;
+                              }
+
+                              field.setCustomValidity("");
+                            }}
+                            @blur=${(evt: Event) => {
+                              const field = evt.target;
+                              if (!(field instanceof HTMLTextAreaElement)) {
+                                return;
+                              }
+
+                              field.setCustomValidity("");
+                              if (field.value === "") {
+                                return;
+                              }
+
+                              try {
+                                JSON.parse(field.value);
+                                if (field.dataset.behavior === "llm-content") {
+                                  assertIsLLMContent(field.value);
+                                }
+                              } catch (err) {
+                                if (err instanceof SyntaxError) {
+                                  field.setCustomValidity("Invalid JSON");
+                                } else {
+                                  const llmError = err as Error;
+                                  field.setCustomValidity(
+                                    `Invalid LLM Content: ${llmError.message}`
+                                  );
+                                }
+                              }
+
+                              field.reportValidity();
+                            }}
+                            .value=${value
+                              ? JSON.stringify(value, null, 2)
+                              : ""}
+                          ></textarea>`;
+                        }
+                        break;
+                      }
+
+                      case "array": {
+                        let renderableValue = value;
+                        if (typeof value !== "string") {
+                          renderableValue = JSON.stringify(value);
+                        }
+                        input = html`<bb-array-editor
                           id="${name}"
                           name="${name}"
-                        ></bb-schema-editor>`;
-                      } else if (isBoard(port, value)) {
-                        const selectorValue = value
-                          ? typeof value === "string"
-                            ? value
-                            : value.path
-                          : "";
-                        input = html`<bb-board-selector
-                          .graph=${this.graph}
+                          .items=${JSON.parse(
+                            (renderableValue as string) || "null"
+                          )}
+                          .type=${resolveArrayType(port.schema)}
+                          .behavior=${resolveBehaviorType(
+                            port.schema.items
+                              ? Array.isArray(port.schema.items)
+                                ? port.schema.items[0]
+                                : port.schema.items
+                              : port.schema
+                          )}
                           .subGraphIds=${this.graph && this.graph.graphs
                             ? Object.keys(this.graph.graphs)
                             : []}
                           .providers=${this.providers}
                           .providerOps=${this.providerOps}
-                          .value=${selectorValue || ""}
-                          @input=${(evt: Event) => {
-                            evt.preventDefault();
-                            if (!this.#configurationFormRef.value) {
-                              return;
-                            }
-
-                            this.#onConfigurationFormSubmit(
-                              this.#configurationFormRef.value
-                            );
-                          }}
-                          id="${name}"
-                          name="${name}"
-                        ></bb-board-selector>`;
-                      } else if (isLLMContent(port)) {
-                        input = html`<bb-llm-input
-                          id="${name}"
-                          name="${name}"
-                          .schema=${port.schema}
-                          .value=${value}
-                          .description=${port.schema?.description || null}
-                        ></bb-llm-input>`;
-                      } else {
-                        input = html`<textarea
-                          id="${name}"
-                          name="${name}"
-                          placeholder="${defaultValue}"
-                          data-type="${type}"
-                          data-behavior=${behavior ? behavior : nothing}
-                          @input=${(evt: Event) => {
-                            const field = evt.target;
-                            if (!(field instanceof HTMLTextAreaElement)) {
-                              return;
-                            }
-
-                            field.setCustomValidity("");
-                          }}
-                          @blur=${(evt: Event) => {
-                            const field = evt.target;
-                            if (!(field instanceof HTMLTextAreaElement)) {
-                              return;
-                            }
-
-                            field.setCustomValidity("");
-                            if (field.value === "") {
-                              return;
-                            }
-
-                            try {
-                              JSON.parse(field.value);
-                              if (field.dataset.behavior === "llm-content") {
-                                assertIsLLMContent(field.value);
-                              }
-                            } catch (err) {
-                              if (err instanceof SyntaxError) {
-                                field.setCustomValidity("Invalid JSON");
-                              } else {
-                                const llmError = err as Error;
-                                field.setCustomValidity(
-                                  `Invalid LLM Content: ${llmError.message}`
-                                );
-                              }
-                            }
-
-                            field.reportValidity();
-                          }}
-                          .value=${value ? JSON.stringify(value, null, 2) : ""}
-                        ></textarea>`;
+                        ></bb-array-editor>`;
+                        break;
                       }
-                      break;
-                    }
 
-                    case "array": {
-                      let renderableValue = value;
-                      if (typeof value !== "string") {
-                        renderableValue = JSON.stringify(value);
-                      }
-                      input = html`<bb-array-editor
-                        id="${name}"
-                        name="${name}"
-                        .items=${JSON.parse(
-                          (renderableValue as string) || "null"
-                        )}
-                        .type=${resolveArrayType(port.schema)}
-                        .behavior=${resolveBehaviorType(
-                          port.schema.items
-                            ? Array.isArray(port.schema.items)
-                              ? port.schema.items[0]
-                              : port.schema.items
-                            : port.schema
-                        )}
-                        .subGraphIds=${this.graph && this.graph.graphs
-                          ? Object.keys(this.graph.graphs)
-                          : []}
-                        .providers=${this.providers}
-                        .providerOps=${this.providerOps}
-                      ></bb-array-editor>`;
-                      break;
-                    }
-
-                    case "number": {
-                      input = html`<div>
-                        <input
-                          type="number"
-                          value="${value}"
-                          name="${name}"
-                          id=${name}
-                        />
-                      </div>`;
-                      break;
-                    }
-
-                    case "boolean": {
-                      input = html`<div>
-                        <input
-                          type="checkbox"
-                          name="${name}"
-                          id=${name}
-                          .checked=${value}
-                        />
-                      </div>`;
-                      break;
-                    }
-
-                    default: {
-                      if (port.schema.behavior?.includes("code")) {
-                        input = html` <div>
-                          <bb-code-editor
-                            id="${name}"
+                      case "number": {
+                        input = html`<div>
+                          <input
+                            type="number"
+                            value="${value}"
                             name="${name}"
-                            .value=${value ?? defaultValue ?? ""}
-                          ></bb-code-editor>
+                            id=${name}
+                          />
                         </div>`;
                         break;
                       }
 
-                      input = html` <div>
-                        <textarea
-                          id="${name}"
-                          name="${name}"
-                          data-type="${type}"
-                          .value=${value ?? defaultValue ?? ""}
-                        ></textarea>
-                      </div>`;
+                      case "boolean": {
+                        input = html`<div>
+                          <input
+                            type="checkbox"
+                            name="${name}"
+                            id=${name}
+                            .checked=${value}
+                          />
+                        </div>`;
+                        break;
+                      }
 
-                      break;
+                      default: {
+                        if (port.schema.behavior?.includes("code")) {
+                          input = html` <div>
+                            <bb-code-editor
+                              id="${name}"
+                              name="${name}"
+                              .value=${value ?? defaultValue ?? ""}
+                            ></bb-code-editor>
+                          </div>`;
+                          break;
+                        }
+
+                        input = html` <div>
+                          <textarea
+                            id="${name}"
+                            name="${name}"
+                            data-type="${type}"
+                            .value=${value ?? defaultValue ?? ""}
+                          ></textarea>
+                        </div>`;
+
+                        break;
+                      }
                     }
+                  } else {
+                    input = nothing;
                   }
 
-                  return html`<div class="configuration-item">
+                  return html`<div
+                    class=${classMap({
+                      "configuration-item": true,
+                      configured: port.configured && port.edges.length === 0,
+                      [port.status]: true,
+                    })}
+                  >
                     <label title="${port.schema.description}" for="${name}"
                       >${title}
                     </label>
