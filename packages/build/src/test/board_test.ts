@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import { defineNodeType } from "@breadboard-ai/build";
 import { test } from "node:test";
 import { board } from "../internal/board/board.js";
+import assert from "node:assert/strict";
 
 const testNode = defineNodeType({
   name: "example",
@@ -90,6 +93,44 @@ test("expect type error: missing instantiate param", () => {
   definition({ inNum: 123 });
   // @ts-expect-error missing inNum
   definition({ inStr: "inStr" });
+});
+
+test("expect type error: board input/output types", () => {
+  const noPrimary = defineNodeType({
+    name: "noPrimary",
+    inputs: {
+      in: { type: "string" },
+    },
+    outputs: {
+      out: { type: "string" },
+    },
+    invoke: () => ({ out: "foo" }),
+  });
+
+  assert.throws(() =>
+    board({
+      inputs: {
+        // @ts-expect-error
+        in1: undefined,
+        // @ts-expect-error
+        in2: null,
+        // @ts-expect-error
+        in3: "foo",
+        // @ts-expect-error
+        in4: noPrimary({}),
+      },
+      outputs: {
+        // @ts-expect-error
+        out1: undefined,
+        // @ts-expect-error
+        out2: null,
+        // @ts-expect-error
+        out3: "foo",
+        // @ts-expect-error
+        out4: noPrimary({}),
+      },
+    })
+  );
 });
 
 test("expect type error: incorrect make instance param type", () => {

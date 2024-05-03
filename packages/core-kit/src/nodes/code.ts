@@ -93,7 +93,7 @@ export type CodeNode<
     { code: string; name: string; raw: boolean } & I,
     O,
     JsonSerializable,
-    undefined,
+    false,
     never,
     false
   >;

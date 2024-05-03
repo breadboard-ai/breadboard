@@ -11,7 +11,12 @@ import type {
   NodeHandlerContext,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import type { CountUnion, Expand, MaybePromise } from "../common/type-util.js";
+import type {
+  CountUnion,
+  Expand,
+  IsNever,
+  MaybePromise,
+} from "../common/type-util.js";
 import type {
   ConvertBreadboardType,
   JsonSerializable,
@@ -325,16 +330,23 @@ type GetOptionalInputs<I extends Record<string, InputPortConfig>> = {
 type GetDynamicTypes<C extends Record<string, PortConfig>> =
   C["*"] extends PortConfig ? Convert<C["*"]> : undefined;
 
-type GetPrimary<C extends Record<string, PortConfig>> = {
-  [K in keyof Omit<C, "*">]: C[K] extends
-    | StaticInputPortConfig
-    | StaticOutputPortConfig
-    ? C[K]["primary"] extends true
-      ? K
-      : never
-    : never;
-}[keyof Omit<C, "*">] &
-  string;
+type GetPrimary<C extends Record<string, PortConfig>> = ReplaceNever<
+  Extract<
+    {
+      [K in keyof Omit<C, "*">]: C[K] extends
+        | StaticInputPortConfig
+        | StaticOutputPortConfig
+        ? C[K]["primary"] extends true
+          ? K
+          : false
+        : false;
+    }[keyof Omit<C, "*">],
+    string
+  >,
+  false
+>;
+
+type ReplaceNever<T, R> = IsNever<T> extends true ? R : T;
 
 type GetReflective<O extends Record<string, OutputPortConfig>> =
   O["*"] extends DynamicOutputPortConfig

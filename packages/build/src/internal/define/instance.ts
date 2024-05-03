@@ -26,8 +26,8 @@ export class Instance<
   /* Inputs         */ I extends { [K: string]: JsonSerializable },
   /* Outputs        */ O extends { [K: string]: JsonSerializable },
   /* Dynamic Output */ DO extends JsonSerializable | undefined,
-  /* Primary Input  */ PI extends string | undefined,
-  /* Primary Output */ PO extends string | undefined,
+  /* Primary Input  */ PI extends string | false,
+  /* Primary Output */ PO extends string | false,
   /* Reflective     */ R extends boolean,
 > implements SerializableNode
 {

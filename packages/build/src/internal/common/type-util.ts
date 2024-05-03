@@ -59,3 +59,8 @@ export type BroadenBasicType<T extends string | number | boolean> =
       : T extends boolean
         ? boolean
         : never;
+
+/**
+ * See https://github.com/microsoft/TypeScript/issues/31751#issuecomment-498526919
+ */
+export type IsNever<T> = [T] extends [never] ? true : false;
