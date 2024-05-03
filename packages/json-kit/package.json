@@ -86,6 +86,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@breadboard-ai/build": "^0.5.1",
     "@google-labs/breadboard": "^0.19.0",
     "@rgrove/parse-xml": "^4.1.0",
     "ajv": "^8.13.0",
