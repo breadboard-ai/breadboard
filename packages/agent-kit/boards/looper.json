@@ -7,7 +7,7 @@
     {
       "from": "fn-3",
       "to": "output-2",
-      "out": "stop",
+      "out": "context",
       "in": "context"
     },
     {
@@ -20,7 +20,7 @@
       "from": "input-1",
       "to": "fn-3",
       "out": "plan",
-      "in": "count"
+      "in": "plan"
     }
   ],
   "nodes": [
@@ -49,12 +49,12 @@
       "id": "fn-3",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({ context, count }) => {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n};",
+        "code": "const fn_3 = ({ context, plan }) => {\n  const addMetadata = (contents2) => {\n    contents2.push({\n      role: \"$metadata\",\n      data: {\n        looperStart: true,\n        plan\n      }\n    });\n    return contents2;\n  };\n  const contents = context;\n  return { context: addMetadata(structuredClone(contents)) };\n};",
         "name": "fn_3",
         "raw": true
       },
       "metadata": {
-        "title": "Count Iteration"
+        "title": "Read Plan"
       }
     },
     {
@@ -74,6 +74,9 @@
                 ]
               },
               "default": "[]",
+              "examples": [
+                "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
+              ],
               "description": "Initial conversation context"
             },
             "plan": {

@@ -5,11 +5,11 @@
  */
 
 import { code } from "@google-labs/breadboard";
-import { ContextItem, FunctionCallPart } from "./context.js";
+import { LlmContent, FunctionCallPart } from "./context.js";
 
 export const functionCallOrText = code(({ context }) => {
   if (!context) throw new Error("Context is a required input");
-  const item = context as ContextItem;
+  const item = context as LlmContent;
   const part = item.parts[0];
   console.assert(
     item.parts.length === 1,
@@ -54,7 +54,7 @@ export const functionResponseFormatter = code(
     const call = functionCall as FunctionCallPart["functionCall"];
     return {
       context: [
-        ...(context as ContextItem[]),
+        ...(context as LlmContent[]),
         generated,
         {
           role: "function",

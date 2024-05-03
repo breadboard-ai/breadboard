@@ -1,0 +1,121 @@
+{
+  "title": "Looper Testing Grounds",
+  "description": "A board where we teach the Looper Node to crawl/walk/fly.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "looper-3",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-3",
+      "to": "output-2",
+      "out": "done",
+      "in": "context"
+    },
+    {
+      "from": "looper-3",
+      "to": "superWorker-4",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "superWorker-4",
+      "to": "looper-3",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Book Specs",
+              "type": "object",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"book description: This book will be about breadboards and how awesome they are:\\n\\nchapter target: 10\\n\\npage target: 400\\n\\nfiction genre: space opera\\n\\nsetting: the planet where there are no breadboards\\n\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better.\\n\\ntonality: futuristic struggle, but optimistic\\n\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+              ],
+              "description": "Initial conversation context",
+              "behavior": [
+                "llm-content"
+              ]
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "Done"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "looper-3",
+      "type": "looper",
+      "configuration": {
+        "plan": {
+          "max": 3
+        }
+      },
+      "metadata": {
+        "title": "Looper"
+      }
+    },
+    {
+      "id": "superWorker-4",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are a famous author. You are writing a novel.\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\n\nThen you write each chapter of the novel, starting from the first chapter.\n\nYou know that as a general rule of thumb, shorter chapters tend to be more snappy and fast-paced, whereas longer chapters offer more opportunities for plot and character development, world-building, and other integral story elements. That's why the average chapter length tends to be between 1,500-8,000 words.\n\nEach chapter builds on the next one, culminating in a masterpiece that will fly off the bookshelves."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Write a chapter of this book"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Writer"
+      }
+    }
+  ]
+}

@@ -119,6 +119,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Looper Testing Grounds",
+    "url": "/graphs/looper-test.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Math, chain style graph",
     "url": "/graphs/math-chain.json"
   },

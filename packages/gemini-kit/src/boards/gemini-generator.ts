@@ -316,7 +316,7 @@ const bodyBuilder = code(
         contents.push(turn);
       }
     }
-    // Filter out a special "$metadata" role.
+    // Filter out the special "$metadata" role.
     contents = contents.filter((item) => item.role !== "$metadata");
     const result: Record<string, unknown> = { contents };
     if (systemInstruction) {

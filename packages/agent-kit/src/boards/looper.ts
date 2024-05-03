@@ -7,9 +7,11 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  base,
   board,
   code,
 } from "@google-labs/breadboard";
+import { Context } from "../context.js";
 
 export type LooperType = NewNodeFactory<
   {
@@ -31,23 +33,50 @@ export type LooperPlan = {
    * Maximum iterations to make. This can be used to create simple
    * "repeat N times" loops as well as
    */
-  max: number;
+  max?: number;
 };
 
-const defaultPlan = JSON.stringify({
-  max: 0,
-} satisfies LooperPlan);
+const defaultPlan = JSON.stringify({} satisfies LooperPlan);
 
 const examplePlan = JSON.stringify({
   max: 1,
 } satisfies LooperPlan);
 
-const counter = code(({ context, count }) => {
-  const num = (count as number) - 1;
-  if (num != 0) {
-    return { continue: context, count: num };
+const contextExample = JSON.stringify({
+  parts: [{ text: "test" }],
+  role: "user",
+});
+
+const planReader = code(({ context, plan }) => {
+  const existing = (Array.isArray(context) ? context : [context]) as Context[];
+  if (!plan) {
+    throw new Error("Plan is required for Looper to function.");
   }
-  return { stop: context };
+  const p = plan as LooperPlan;
+  if (p.max) {
+    // Look for metadata in the context, and return the first one
+    let count = 0;
+    for (let i = existing.length - 1; i >= 0; i--) {
+      const item = existing[i];
+      if (item.role === "$metadata") {
+        count++;
+      }
+    }
+    const max = (plan as LooperPlan).max || 0;
+    if (count >= max) {
+      return { done: existing };
+    }
+    const contents = structuredClone(existing) as Context[];
+    contents.push({
+      role: "$metadata",
+      data: {
+        type: "looper",
+        count,
+      },
+    });
+    return { context: contents };
+  }
+  return { done: existing };
 });
 
 export default await board(({ context, plan }) => {
@@ -57,6 +86,7 @@ export default await board(({ context, plan }) => {
     .behavior("llm-content")
     .optional()
     .default("[]")
+    .examples(contextExample)
     .description("Initial conversation context");
 
   plan
@@ -69,14 +99,19 @@ export default await board(({ context, plan }) => {
     .default(defaultPlan)
     .examples(examplePlan);
 
-  const count = counter({
-    $metadata: { title: "Count Iteration" },
+  const readPlan = planReader({
+    $metadata: { title: "Read Plan" },
     context,
-    count: plan,
+    plan,
+  });
+
+  base.output({
+    $metadata: { title: "Exit" },
+    done: readPlan.done.isArray().behavior("llm-content").title("Done"),
   });
 
   return {
-    context: count.stop.isArray().behavior("llm-content").title("Done"),
+    loop: readPlan.context.isArray().behavior("llm-content").title("Loop"),
   };
 }).serialize({
   title: "Looper",
