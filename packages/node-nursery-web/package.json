@@ -107,7 +107,7 @@
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.8.0",
     "ava": "^5.2.0",
-    "npm": "^10.5.2",
+    "npm": "^10.7.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {
