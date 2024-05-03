@@ -191,6 +191,7 @@ export class SchemaEditor extends LitElement {
     }
 
     bb-llm-input {
+      margin-top: var(--bb-grid-size);
       --bb-border-size: 1px;
     }
 
