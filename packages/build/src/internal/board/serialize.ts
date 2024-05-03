@@ -11,7 +11,11 @@ import type {
   NodeValue,
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
-import { DefaultValue, OutputPortGetter } from "../common/port.js";
+import {
+  DefaultValue,
+  OutputPortGetter,
+  type OutputPortReference,
+} from "../common/port.js";
 import type {
   SerializableBoard,
   SerializableInputPort,
@@ -22,6 +26,7 @@ import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
 import type { Output } from "./output.js";
 import { isPlaceholder } from "./placeholder.js";
+import { isConstant } from "./constant.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -29,8 +34,7 @@ import { isPlaceholder } from "./placeholder.js";
  */
 export function serialize(board: SerializableBoard): GraphDescriptor {
   const nodes = new Map<object, NodeDescriptor>();
-  const edges: Array<{ from: string; out: string; to: string; in: string }> =
-    [];
+  const edges: Edge[] = [];
   const errors: string[] = [];
   const typeCounts = new Map<string, number>();
 
@@ -141,7 +145,16 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     }
     outputNode.configuration.schema.properties[name] = schema;
     outputNode.configuration.schema.required.push(name);
-    addEdge(visitNodeAndReturnItsId(port.node), port.name, outputNodeId, name);
+    addEdge(
+      visitNodeAndReturnItsId(port.node),
+      port.name,
+      outputNodeId,
+      name,
+      isConstant(
+        // TODO(aomarks) Should not need this cast.
+        output as OutputPortReference<JsonSerializable>
+      )
+    );
   }
 
   if (unconnectedInputs.size > 0) {
@@ -222,7 +235,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             inputNodeInfo.nodeId,
             inputNodeInfo.portName,
             thisNodeId,
-            portName
+            portName,
+            // TODO(aomarks) Maybe inputs can be constant, no?
+            false
           );
         } else {
           // TODO(aomarks) Does it actually make sense in some cases to wire up
@@ -241,7 +256,11 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           visitNodeAndReturnItsId(wiredOutputPort.node),
           wiredOutputPort.name,
           thisNodeId,
-          portName
+          portName,
+          isConstant(
+            // TODO(aomarks) Should not need this cast.
+            value as OutputPortReference<JsonSerializable>
+          )
         );
       } else if (value === undefined) {
         // TODO(aomarks) Why is this possible in the type system? An inport port
@@ -268,8 +287,18 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     return thisNodeId;
   }
 
-  function addEdge(from: string, fromPort: string, to: string, toPort: string) {
-    edges.push({ from, to, out: fromPort, in: toPort });
+  function addEdge(
+    from: string,
+    fromPort: string,
+    to: string,
+    toPort: string,
+    constant: boolean
+  ) {
+    const edge: Edge = { from, to, out: fromPort, in: toPort };
+    if (constant) {
+      edge.constant = true;
+    }
+    edges.push(edge);
   }
 
   function nextIdForType(type: string): string {
@@ -302,6 +331,15 @@ function isOutputPortReference(
     typeof value === "object" && value !== null && OutputPortGetter in value
   );
 }
+
+// Note this is a little stricter than the standard Edge type.
+type Edge = {
+  from: string;
+  out: string;
+  to: string;
+  in: string;
+  constant?: true;
+};
 
 type InputOrOutputNodeDescriptor = NodeDescriptor & {
   configuration: {
