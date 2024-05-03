@@ -18,7 +18,6 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { asBase64 } from "../../../utils/as-base-64.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
-import { guard } from "lit/directives/guard.js";
 import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
@@ -391,53 +390,6 @@ export class LLMInput extends LitElement {
     }
 
     this.#partDataURLs.clear();
-  }
-
-  #sanitizePastedContent(evt: ClipboardEvent) {
-    evt.preventDefault();
-
-    if (!evt.clipboardData) {
-      return;
-    }
-
-    if (!(evt.currentTarget instanceof HTMLSpanElement)) {
-      return;
-    }
-
-    let range: Range | null = null;
-    if (this.shadowRoot && "getSelection" in this.shadowRoot) {
-      // @ts-expect-error New API.
-      const selection = this.shadowRoot.getSelection() as Selection;
-      if (selection.rangeCount !== 0) {
-        range = selection.getRangeAt(0);
-        range.deleteContents();
-      }
-    }
-
-    const lines = evt.clipboardData.getData("text").split("\n");
-    for (let l = 0; l < lines.length; l++) {
-      const line = lines[l];
-      const textNode = document.createTextNode(line);
-
-      if (range) {
-        range.insertNode(textNode);
-        range.setEndAfter(textNode);
-        range.collapse();
-      } else {
-        evt.currentTarget.append(textNode);
-      }
-
-      if (l < lines.length - 1) {
-        const breakNode = document.createElement("br");
-        if (range) {
-          range.insertNode(breakNode);
-          range.setEndAfter(breakNode);
-          range.collapse();
-        } else {
-          evt.currentTarget.append(breakNode);
-        }
-      }
-    }
   }
 
   #emitUpdate() {
