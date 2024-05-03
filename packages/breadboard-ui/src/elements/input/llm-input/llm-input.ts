@@ -75,6 +75,8 @@ export class LLMInput extends LitElement {
 
     :host {
       display: block;
+      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
 
     header {
