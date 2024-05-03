@@ -25,6 +25,7 @@ import {
 import { LLMContent } from "../../types/types.js";
 import { createAllowListFromProperty } from "../../utils/llm-content.js";
 import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
 
 const STORAGE_PREFIX = "bb-schema-editor";
 
@@ -590,13 +591,17 @@ export class SchemaEditor extends LitElement {
             }
 
             const allow = createAllowListFromProperty(value);
-            defaultValue = html`${defaultLabel}<bb-llm-input
-                id="${id}-default"
-                name="${id}-default"
-                .minimal=${true}
-                .allow=${allow}
-                .value=${defaultValueContent}
-              ></bb-llm-input>`;
+            defaultValue = html`${guard(
+              [this.nodeId],
+              () =>
+                html`${defaultLabel}<bb-llm-input
+                    id="${id}-default"
+                    name="${id}-default"
+                    .minimal=${true}
+                    .allow=${allow}
+                    .value=${defaultValueContent}
+                  ></bb-llm-input>`
+            )}`;
           } else {
             defaultValue = html`${defaultLabel}<input
                 type="text"

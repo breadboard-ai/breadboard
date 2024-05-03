@@ -273,9 +273,18 @@ export class LLMInput extends LitElement {
       color: var(--bb-neutral-900);
     }
 
-    .value[contenteditable] {
+    .value textarea {
       background: var(--bb-neutral-0);
+      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+      color: var(--bb-neutral-900);
       white-space: pre-line;
+      resize: none;
+      field-sizing: content;
+      margin: 0;
+      padding: 0;
+      border: none;
+      width: 100%;
     }
 
     .value * {
@@ -860,7 +869,7 @@ export class LLMInput extends LitElement {
         </span>
       </header>
       <div id="container" ${ref(this.#containerRef)}>
-        ${this.value
+        ${this.value && this.value.parts.length
           ? map(this.value.parts, (part, idx) => {
               const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
@@ -870,7 +879,20 @@ export class LLMInput extends LitElement {
               if (isText(part)) {
                 partClass = "text";
                 prefix = "txt";
-                value = html`${part.text}`;
+                value = html` <textarea
+                  @input=${(evt: Event) => {
+                    if (
+                      !isText(part) ||
+                      !(evt.target instanceof HTMLTextAreaElement)
+                    ) {
+                      return;
+                    }
+
+                    part.text = evt.target.value;
+                  }}
+                  .value=${part.text}
+                  ${isLastPart ? ref(this.#lastPartRef) : nothing}
+                ></textarea>`;
               } else if (isFunctionCall(part)) {
                 partClass = "function-call";
                 prefix = "fn";
@@ -914,69 +936,46 @@ export class LLMInput extends LitElement {
                 )}`;
               }
 
-              return guard([prefix, this.#forceRenderCount], () => {
-                return html`<div
-                  class=${classMap({ part: true, [partClass]: true })}
-                >
-                  <div class="content">
-                    <span class="prefix">${prefix}</span>
-                    <span
-                      class="value"
-                      ?contenteditable=${isText(part)}
-                      @input=${(evt: Event) => {
-                        if (!isText(part)) {
-                          return;
-                        }
-
-                        part.text = this.#collectElementNodes(part, evt.target);
-                      }}
-                      @paste=${(evt: ClipboardEvent) => {
-                        this.#sanitizePastedContent(evt);
-                        if (!isText(part)) {
-                          return;
-                        }
-
-                        part.text = this.#collectElementNodes(part, evt.target);
-                      }}
-                      tabIndex="0"
-                      ${isLastPart ? ref(this.#lastPartRef) : nothing}
-                      >${value}</span
-                    >
-                  </div>
-                  <div class="part-controls">
-                    <button
-                      class="add-part-after"
-                      @click=${() => this.#addPartAfter(idx)}
-                      title="Add part after"
-                    >
-                      Add part after
-                    </button>
-                    <button
-                      class="move-part-up"
-                      @click=${() => this.#movePartUp(idx)}
-                      ?disabled=${idx === 0}
-                      title="Move part up"
-                    >
-                      Move part up
-                    </button>
-                    <button
-                      class="move-part-down"
-                      @click=${() => this.#movePartDown(idx)}
-                      ?disabled=${isLastPart}
-                      title="Move part down"
-                    >
-                      Move part down
-                    </button>
-                    <button
-                      class="delete-part"
-                      @click=${() => this.#deletePart(idx)}
-                      title="Delete part"
-                    >
-                      Delete part
-                    </button>
-                  </div>
-                </div>`;
-              });
+              return html`<div
+                class=${classMap({ part: true, [partClass]: true })}
+              >
+                <div class="content">
+                  <span class="prefix">${prefix}</span>
+                  <span class="value">${value}</span>
+                </div>
+                <div class="part-controls">
+                  <button
+                    class="add-part-after"
+                    @click=${() => this.#addPartAfter(idx)}
+                    title="Add part after"
+                  >
+                    Add part after
+                  </button>
+                  <button
+                    class="move-part-up"
+                    @click=${() => this.#movePartUp(idx)}
+                    ?disabled=${idx === 0}
+                    title="Move part up"
+                  >
+                    Move part up
+                  </button>
+                  <button
+                    class="move-part-down"
+                    @click=${() => this.#movePartDown(idx)}
+                    ?disabled=${isLastPart}
+                    title="Move part down"
+                  >
+                    Move part down
+                  </button>
+                  <button
+                    class="delete-part"
+                    @click=${() => this.#deletePart(idx)}
+                    title="Delete part"
+                  >
+                    Delete part
+                  </button>
+                </div>
+              </div>`;
             })
           : html`<div id="no-parts">No parts yet - please add one</div>`}
       </div>`;
