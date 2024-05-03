@@ -90,6 +90,6 @@
     "ajv": "^8.13.0",
     "ajv-formats": "^3.0.1",
     "ts-json-schema-generator": "^1.5.0",
-    "tsx": "^4.7.3"
+    "tsx": "^4.9.0"
   }
 }
