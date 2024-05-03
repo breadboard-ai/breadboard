@@ -26,7 +26,6 @@ import type {
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
@@ -479,8 +478,6 @@ export class BoardRunner implements BreadboardRunner {
 
     return handlersFromKits(kits);
   }
-
-  static runRemote = runRemote;
 }
 
 // HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).
