@@ -17,7 +17,7 @@ import { input } from "../internal/board/input.js";
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
 
-  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, never, false, never, never>
+  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, never, false, false, false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -40,7 +40,7 @@ test("mono/mono", async () => {
     },
   });
 
-  // $ExpectType Instance<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, never, never, false>
+  // $ExpectType Instance<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, false, false, false>
   const i = d(values);
 
   assert.ok(
@@ -80,12 +80,12 @@ test("mono/mono", async () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
@@ -134,7 +134,7 @@ test("mono/mono", async () => {
 test("poly/mono", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, never, false, never, never>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, never, false, false, false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -164,7 +164,7 @@ test("poly/mono", async () => {
     },
   });
 
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, undefined, never, never, false>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, undefined, false, false, false>
   const i = d(values);
 
   assert.ok(
@@ -204,12 +204,12 @@ test("poly/mono", async () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
@@ -280,7 +280,7 @@ test("poly/mono", async () => {
 test("mono/poly", async () => {
   const values = { si1: "si1" };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, never, false, never, never>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, never, false, false, false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -308,7 +308,7 @@ test("mono/poly", async () => {
     },
   });
 
-  // $ExpectType Instance<{ si1: string; }, { so1: boolean; }, number, never, never, false>
+  // $ExpectType Instance<{ si1: string; }, { so1: boolean; }, number, false, false, false>
   const i = d(values);
 
   assert.ok(
@@ -336,9 +336,9 @@ test("mono/poly", async () => {
   // @ts-expect-error
   i.outputs.do1;
 
-  // $ExpectType never
+  // $ExpectType undefined
   i.primaryInput;
-  // $ExpectType never
+  // $ExpectType undefined
   i.primaryOutput;
 
   assert.deepEqual(await d.invoke(values, null as never), {
@@ -381,7 +381,7 @@ test("mono/poly", async () => {
 test("poly/poly", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, never, false, never, never>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, never, false, false, false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -410,7 +410,7 @@ test("poly/poly", async () => {
     },
   });
 
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, number, never, never, false>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; }, number, false, false, false>
   const i = d(values);
 
   assert.ok(
@@ -457,12 +457,12 @@ test("poly/poly", async () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
@@ -562,7 +562,7 @@ test("async invoke function", async () => {
 test("reflective", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, never, true, never, never>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, never, true, false, false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -585,7 +585,7 @@ test("reflective", async () => {
     },
   });
 
-  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; di1: string; di2: string; }, undefined, never, never, true>
+  // $ExpectType Instance<{ si1: string; di1: number; di2: number; }, { so1: boolean; di1: string; di2: string; }, undefined, false, false, true>
   const i = d(values);
 
   assert.ok(
@@ -633,12 +633,12 @@ test("reflective", async () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
@@ -693,7 +693,7 @@ test("reflective", async () => {
 test("primary input with no other inputs", () => {
   const values = { si1: 123 };
 
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", never>
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -710,7 +710,7 @@ test("primary input with no other inputs", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", never, false>
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, "si1", false, false>
   const i = d(values);
 
   assert.ok(
@@ -746,7 +746,7 @@ test("primary input with no other inputs", () => {
     i.primaryInput
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
@@ -755,7 +755,7 @@ test("primary input with no other inputs", () => {
 test("primary input with another input", () => {
   const values = { si1: 123, si2: true };
 
-  // $ExpectType Definition<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, undefined, never, false, "si1", never>
+  // $ExpectType Definition<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -773,7 +773,7 @@ test("primary input with another input", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, "si1", never, false>
+  // $ExpectType Instance<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, "si1", false, false>
   const i = d(values);
 
   assert.ok(
@@ -809,14 +809,14 @@ test("primary input with another input", () => {
     i.primaryInput
   );
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryOutput,
     undefined
   );
 });
 
 test("primary output with no other outputs", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, never, "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, false, "so1">
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -833,7 +833,7 @@ test("primary output with no other outputs", () => {
     ) => ({ so1: true }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, never, "so1", false>
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; }, undefined, false, "so1", false>
   const i = d({ si1: 123 });
 
   assert.ok(
@@ -865,7 +865,7 @@ test("primary output with no other outputs", () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );
@@ -876,7 +876,7 @@ test("primary output with no other outputs", () => {
 });
 
 test("primary output with other outputs", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; so2: number; }, undefined, undefined, never, false, never, "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; so2: number; }, undefined, undefined, never, false, false, "so1">
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -894,7 +894,7 @@ test("primary output with other outputs", () => {
     ) => ({ so1: true, so2: 123 }),
   });
 
-  // $ExpectType Instance<{ si1: number; }, { so1: boolean; so2: number; }, undefined, never, "so1", false>
+  // $ExpectType Instance<{ si1: number; }, { so1: boolean; so2: number; }, undefined, false, "so1", false>
   const i = d({ si1: 123 });
 
   assert.ok(
@@ -926,7 +926,7 @@ test("primary output with other outputs", () => {
   );
 
   assert.equal(
-    // $ExpectType never
+    // $ExpectType undefined
     i.primaryInput,
     undefined
   );

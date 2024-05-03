@@ -47,8 +47,8 @@ export interface Definition<
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
   /* Optional Inputs */ OI extends keyof SI,
   /* Reflective?     */ R extends boolean,
-  /* Primary Input   */ PI extends string | undefined,
-  /* Primary Output  */ PO extends string | undefined,
+  /* Primary Input   */ PI extends string | false,
+  /* Primary Output  */ PO extends string | false,
 > extends StrictNodeHandler {
   <A extends LooseInstantiateArgs>(
     args: A & StrictInstantiateArgs<SI, OI, DI, A>
@@ -69,8 +69,8 @@ export class DefinitionImpl<
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
   /* Optional Inputs */ OI extends keyof SI,
   /* Reflective?     */ R extends boolean,
-  /* Primary Input   */ PI extends string | undefined,
-  /* Primary Output  */ PO extends string | undefined,
+  /* Primary Input   */ PI extends string | false,
+  /* Primary Output  */ PO extends string | false,
 > implements StrictNodeHandler
 {
   readonly #name: string;
