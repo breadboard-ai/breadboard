@@ -75,17 +75,6 @@
       ],
       "clean": "if-file-deleted"
     },
-    "typescript-files-and-deps": {
-      "dependencies": [
-        "../breadboard:build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ]
-    },
     "lint": {
       "command": "eslint . --ext .ts",
       "env": {
@@ -105,7 +94,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps"
+        "build"
       ]
     }
   }
