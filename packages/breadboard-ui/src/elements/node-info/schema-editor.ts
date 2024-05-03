@@ -68,6 +68,8 @@ export class SchemaEditor extends LitElement {
       font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
+      padding: 0;
+      opacity: 0.6;
     }
 
     #create-new-port::before {
@@ -76,6 +78,11 @@ export class SchemaEditor extends LitElement {
       height: 20px;
       background: var(--bb-icon-add-circle) center center / 20px 20px no-repeat;
       margin-right: var(--bb-grid-size-2);
+    }
+
+    #create-new-port:hover,
+    #create-new-port:focus {
+      opacity: 1;
     }
 
     summary {
@@ -159,7 +166,6 @@ export class SchemaEditor extends LitElement {
 
     #controls {
       display: flex;
-      justify-content: flex-end;
     }
 
     button[disabled] {
@@ -1000,7 +1006,15 @@ export class SchemaEditor extends LitElement {
       this.schema?.required || []
     );
 
-    return html` <div id="controls">
+    return html` <form
+        @submit=${(evt: Event) => {
+          evt.preventDefault();
+        }}
+        ${ref(this.#formRef)}
+      >
+        ${properties}
+      </form>
+      <div id="controls">
         <button
           id="create-new-port"
           type="button"
@@ -1009,14 +1023,6 @@ export class SchemaEditor extends LitElement {
         >
           Add a port
         </button>
-      </div>
-      <form
-        @submit=${(evt: Event) => {
-          evt.preventDefault();
-        }}
-        ${ref(this.#formRef)}
-      >
-        ${properties}
-      </form>`;
+      </div>`;
   }
 }
