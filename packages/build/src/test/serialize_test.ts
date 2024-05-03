@@ -18,9 +18,10 @@ import {
   unsafeCast,
 } from "../index.js";
 import { board, type GenericBoardDefinition } from "../internal/board/board.js";
+import { constant } from "../internal/board/constant.js";
 import { input } from "../internal/board/input.js";
-import { serialize } from "../internal/board/serialize.js";
 import { placeholder } from "../internal/board/placeholder.js";
+import { serialize } from "../internal/board/serialize.js";
 
 function checkSerialization(
   board: GenericBoardDefinition,
@@ -1882,6 +1883,84 @@ test("unsafe cast as input to another node", () => {
         },
         { id: "makesString-0", type: "makesString", configuration: {} },
         { id: "takesNumber-0", type: "takesNumber", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("constant", () => {
+  const a = defineNodeType({
+    name: "a",
+    inputs: {},
+    outputs: {
+      ao1: { type: "string", primary: true },
+      ao2: { type: "number" },
+      ao3: { type: "boolean" },
+    },
+    invoke: () => ({ ao1: "foo", ao2: 123, ao3: true }),
+  });
+
+  const b = defineNodeType({
+    name: "b",
+    inputs: {
+      bi1c: { type: "string" },
+      bi2: { type: "number" },
+      bi3c: { type: "boolean" },
+    },
+    outputs: {
+      bo1: { type: "string", primary: true },
+      bo2: { type: "number" },
+      bo3: { type: "boolean" },
+    },
+    invoke: () => ({ bo1: "foo", bo2: 123, bo3: true }),
+  });
+
+  const { ao1, ao2, ao3 } = a({}).outputs;
+  const { bo1, bo2 } = b({
+    bi1c: constant(ao1),
+    bi2: ao2,
+    bi3c: constant(ao3),
+  }).outputs;
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: {
+        ao1,
+        ao2c: constant(ao2),
+        bo1,
+        bo2c: constant(bo2),
+      },
+    }),
+    {
+      edges: [
+        { from: "a-0", to: "b-0", out: "ao1", in: "bi1c", constant: true },
+        { from: "a-0", to: "b-0", out: "ao2", in: "bi2" },
+        { from: "a-0", to: "b-0", out: "ao3", in: "bi3c", constant: true },
+        { from: "a-0", to: "output-0", out: "ao1", in: "ao1" },
+        { from: "a-0", to: "output-0", out: "ao2", in: "ao2c", constant: true },
+        { from: "b-0", to: "output-0", out: "bo1", in: "bo1" },
+        { from: "b-0", to: "output-0", out: "bo2", in: "bo2c", constant: true },
+      ],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                ao1: { type: "string" },
+                ao2c: { type: "number" },
+                bo1: { type: "string" },
+                bo2c: { type: "number" },
+              },
+              required: ["ao1", "ao2c", "bo1", "bo2c"],
+            },
+          },
+        },
+        { id: "a-0", type: "a", configuration: {} },
+        { id: "b-0", type: "b", configuration: {} },
       ],
     }
   );
