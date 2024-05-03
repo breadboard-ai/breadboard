@@ -105,7 +105,7 @@ export class NodeDetails extends LitElement {
       grid-template-columns: auto min-content;
       align-items: center;
       border: none;
-      background: none;
+      background: #fff;
       font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4);

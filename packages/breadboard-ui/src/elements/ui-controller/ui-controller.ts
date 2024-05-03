@@ -505,7 +505,7 @@ export class UI extends LitElement {
       </section>
 
       <section id="controls-activity" slot="slot-1">
-        ${sidePanel}
+        <div id="controls-activity-content">${sidePanel}</div>
 
         <div id="controls">
           <button
