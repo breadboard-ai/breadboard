@@ -12,17 +12,26 @@ export type FunctionCallPart = {
   functionCall: { name: string; args: Record<string, string> };
 };
 
-export type ContextItem = {
-  role?: string;
+export type LlmContentRole = "user" | "model" | "tool";
+
+export type LlmContent = {
+  role?: LlmContentRole;
   parts: (TextPart | FunctionCallPart)[];
 };
+
+export type Metadata = {
+  role: "$metadata";
+  data: unknown;
+};
+
+export type Context = LlmContent | Metadata;
 
 export const userPartsAdder = code(({ context, toAdd }) => {
   const existing = (
     Array.isArray(context) ? context : [context]
-  ) as ContextItem[];
+  ) as LlmContent[];
   if (!existing) throw new Error("Context is required");
-  const incoming = structuredClone(toAdd) as ContextItem;
+  const incoming = structuredClone(toAdd) as LlmContent;
   if (!incoming.role) {
     incoming.role = "user";
   }
@@ -30,11 +39,12 @@ export const userPartsAdder = code(({ context, toAdd }) => {
   if (!last) {
     return { context: [incoming] };
   }
-  if (last.role === "model") {
+  if (last.role !== "user") {
     return { context: [...existing, incoming] };
   } else {
     const result = structuredClone(existing);
-    result[result.length - 1].parts.push(...incoming.parts);
+    const index = result.length - 1;
+    result[index].parts.push(...incoming.parts);
     return { context: result };
   }
 });
@@ -49,7 +59,7 @@ export const contextBuilder = code(({ context, instruction }) => {
   }
   const list = (context as unknown[]) || [];
   if (list.length > 0) {
-    const last = list[list.length - 1] as ContextItem;
+    const last = list[list.length - 1] as LlmContent;
     if (last.role === "user") {
       // A trick: the instruction typically sits in front of the actual task
       // that the user requests. So do just that -- add it at the front of the
@@ -77,5 +87,5 @@ export const contextBuilderWithoutSystemInstruction = code(({ context }) => {
 
 export const contextAssembler = code(({ context, generated }) => {
   if (!context) throw new Error("Context is required");
-  return { context: [...(context as ContextItem[]), generated as ContextItem] };
+  return { context: [...(context as LlmContent[]), generated as LlmContent] };
 });

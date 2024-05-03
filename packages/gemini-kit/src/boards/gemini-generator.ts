@@ -54,7 +54,7 @@ type PartType =
   | FunctionResponsePartType;
 
 type GenerateContentContentsType = {
-  role: "model" | "user" | "tool";
+  role: "model" | "user" | "tool" | "$metadata";
   parts: PartType[];
 };
 
@@ -316,6 +316,8 @@ const bodyBuilder = code(
         contents.push(turn);
       }
     }
+    // Filter out the special "$metadata" role.
+    contents = contents.filter((item) => item.role !== "$metadata");
     const result: Record<string, unknown> = { contents };
     if (systemInstruction) {
       let parts;

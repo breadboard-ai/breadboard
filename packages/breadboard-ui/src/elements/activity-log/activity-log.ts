@@ -285,6 +285,12 @@ export class ActivityLog extends LitElement {
               : [nodeValue];
 
             value = html`${values.map((llmContent) => {
+              if (!llmContent.parts) {
+                // Special case for "$metadata" item.
+                // See https://github.com/breadboard-ai/breadboard/issues/1673
+                // TODO: Make this not ugly.
+                return html`Metadata: ${JSON.stringify(llmContent)}`;
+              }
               if (!llmContent.parts.length) {
                 return html`No data provided`;
               } else {

@@ -1,0 +1,99 @@
+{
+  "title": "Looper",
+  "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fn-3",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "plan",
+      "in": "plan"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "Done"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({ context, plan }) => {\n  const addMetadata = (contents2) => {\n    contents2.push({\n      role: \"$metadata\",\n      data: {\n        looperStart: true,\n        plan\n      }\n    });\n    return contents2;\n  };\n  const contents = context;\n  return { context: addMetadata(structuredClone(contents)) };\n};",
+        "name": "fn_3",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Read Plan"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context in",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[]",
+              "examples": [
+                "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
+              ],
+              "description": "Initial conversation context"
+            },
+            "plan": {
+              "title": "Plan",
+              "description": "For now, the maximum number of repetitions to make (set to -1 to go infinitely)",
+              "type": "object",
+              "default": "{\"max\":0}",
+              "examples": [
+                "{\"max\":1}"
+              ]
+            }
+          },
+          "required": []
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}

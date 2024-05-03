@@ -893,7 +893,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role===\"model\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);result[result.length-1].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1637,6 +1637,133 @@
                 "instruction"
               ]
             }
+          }
+        }
+      ],
+      "graphs": {}
+    },
+    "looper": {
+      "title": "Looper",
+      "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
+      "version": "0.0.1",
+      "edges": [
+        {
+          "from": "fn-3",
+          "to": "output-4",
+          "out": "done",
+          "in": "done"
+        },
+        {
+          "from": "fn-3",
+          "to": "output-2",
+          "out": "context",
+          "in": "loop"
+        },
+        {
+          "from": "input-1",
+          "to": "fn-3",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "input-1",
+          "to": "fn-3",
+          "out": "plan",
+          "in": "plan"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "output-2",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "loop": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "title": "Loop"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context,plan})=>{const existing=Array.isArray(context)?context:[context];if(!plan){throw new Error(\"Plan is required for Looper to function.\")}const p=plan;if(p.max){let count=0;for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){count++}}const max=plan.max||0;if(count>=max){return{done:existing}}const contents=structuredClone(existing);contents.push({role:\"$metadata\",data:{type:\"looper\",count}});return{context:contents}}return{done:existing}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Read Plan"
+          }
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "title": "Context in",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "default": "[]",
+                  "examples": [
+                    "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
+                  ],
+                  "description": "Initial conversation context"
+                },
+                "plan": {
+                  "title": "Plan",
+                  "description": "For now, the maximum number of repetitions to make (set to -1 to go infinitely)",
+                  "type": "object",
+                  "default": "{}",
+                  "examples": [
+                    "{\"max\":1}"
+                  ]
+                }
+              },
+              "required": []
+            }
+          }
+        },
+        {
+          "id": "output-4",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "done": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "title": "Done"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Exit"
           }
         }
       ],

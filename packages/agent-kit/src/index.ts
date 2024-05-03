@@ -14,6 +14,7 @@ import { StructuredWorkerType } from "./boards/structured-worker.js";
 import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SuperWorkerType } from "./boards/super-worker.js";
+import { LooperType } from "./boards/looper.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -38,6 +39,7 @@ const AgentKit = builder.build({
   toolWorker: adapter.handlerForNode("tool-worker"),
   human: adapter.handlerForNode("human"),
   superWorker: adapter.handlerForNode("super-worker"),
+  looper: adapter.handlerForNode("looper"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -72,6 +74,10 @@ export type AgentKitType = {
    * All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.
    */
   superWorker: SuperWorkerType;
+  /**
+   * Facilitate looping, A work in progress.
+   */
+  looper: LooperType;
 };
 
 export default AgentKit;

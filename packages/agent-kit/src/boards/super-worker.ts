@@ -5,7 +5,12 @@
  */
 
 import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
-import { ContextItem, contextAssembler, userPartsAdder } from "../context.js";
+import {
+  LlmContent,
+  LlmContentRole,
+  contextAssembler,
+  userPartsAdder,
+} from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 
 export type SuperWorkerType = NewNodeFactory<
@@ -17,12 +22,12 @@ export type SuperWorkerType = NewNodeFactory<
   }
 >;
 
-const contextFromText = (text: string, role?: string): ContextItem => {
+const contextFromText = (text: string, role?: LlmContentRole): LlmContent => {
   const parts = [{ text }];
   return role ? { role, parts } : { parts };
 };
 
-const sampleContext: ContextItem[] = [
+const sampleContext: LlmContent[] = [
   contextFromText(
     `
 book description: This book will be about breadboards and how awesome they are
@@ -38,7 +43,7 @@ working title: Aurora
   ),
 ];
 
-const samplePersona: ContextItem = contextFromText(`
+const samplePersona: LlmContent = contextFromText(`
 You are a famous author.  You are writing a novel.
 
 Your well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.
@@ -48,7 +53,7 @@ Then, your first step is to write a detailed outline for the novel.  You keep th
 You are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.
 `);
 
-const sampleTask: ContextItem = contextFromText(`
+const sampleTask: LlmContent = contextFromText(`
 Write an outline for a novel, following the provided specs.
 `);
 
