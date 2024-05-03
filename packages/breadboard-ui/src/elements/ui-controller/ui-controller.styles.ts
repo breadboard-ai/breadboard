@@ -28,7 +28,16 @@ export const styles = css`
 
   #controls-activity {
     display: grid;
-    grid-auto-rows: min-content auto calc(var(--bb-grid-size) * 14);
+    grid-auto-rows: 1fr calc(var(--bb-grid-size) * 14);
+    background: #fff;
+  }
+
+  #controls-activity-content {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
   #diagram {

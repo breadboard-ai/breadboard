@@ -9,10 +9,6 @@ export const styles = css`
   :host {
     display: block;
     background: #fff;
-    width: 100%;
-    height: 100%;
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
 
     --padding-x: calc(var(--bb-grid-size) * 4);
     --padding-y: calc(var(--bb-grid-size) * 2);
