@@ -5,12 +5,18 @@
  */
 
 import { BehaviorSchema, Schema } from "@google-labs/breadboard";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValueMap,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { SchemaChangeEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { classMap } from "lit/directives/class-map.js";
 import {
   assertIsLLMContent,
   resolveArrayType,
@@ -18,9 +24,15 @@ import {
 } from "../../utils/schema.js";
 import { LLMContent } from "../../types/types.js";
 import { createAllowListFromProperty } from "../../utils/llm-content.js";
+import { classMap } from "lit/directives/class-map.js";
+
+const STORAGE_PREFIX = "bb-schema-editor";
 
 @customElement("bb-schema-editor")
 export class SchemaEditor extends LitElement {
+  @property({ reflect: false })
+  nodeId: string | null = null;
+
   @property({ reflect: true })
   editable = false;
 
@@ -30,34 +42,39 @@ export class SchemaEditor extends LitElement {
   @property()
   schemaVersion = 0;
 
+  @state()
+  expanded = new Map<string, boolean>();
+
+  #formRef: Ref<HTMLFormElement> = createRef();
+
   static styles = css`
     :host {
       display: block;
     }
 
     #apply-changes[disabled],
-    #add-new-item[disabled] {
+    #create-new-port[disabled] {
       display: none;
     }
 
-    #add-new-item {
-      width: 24px;
-      height: 24px;
-      background: var(--bb-icon-add-circle) center center no-repeat;
+    #create-new-port {
+      display: flex;
+      align-items: center;
+      background: none;
       border: none;
       font-size: 0;
-      opacity: 0.5;
       cursor: pointer;
+      font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+        var(--bb-font-family);
+      color: var(--bb-neutral-900);
     }
 
-    #add-new-item:hover {
-      opacity: 1;
-    }
-
-    details {
-      border: 1px solid #cccccc;
-      border-radius: 4px;
-      margin: calc(var(--bb-grid-size) * 2) 0;
+    #create-new-port::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-add-circle) center center / 20px 20px no-repeat;
+      margin-right: var(--bb-grid-size-2);
     }
 
     summary {
@@ -73,45 +90,70 @@ export class SchemaEditor extends LitElement {
       flex: 1;
     }
 
-    details .schema-item {
+    .schema-item {
       display: grid;
       align-items: center;
-      justify-content: stretch;
-      border-top: 1px solid #cccccc;
       grid-template-columns: 100px auto;
-      grid-auto-rows: minmax(calc(var(--bb-grid-size) * 5), auto);
       row-gap: var(--bb-grid-size);
       column-gap: var(--bb-grid-size);
-      font-size: var(--bb-text-nano);
-      padding: calc(var(--bb-grid-size) * 2);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-50);
+      border-radius: var(--bb-grid-size-2);
+      margin: var(--bb-grid-size-4) 0;
+      overflow-x: auto;
     }
 
-    details .schema-item label {
-      line-height: calc(var(--bb-grid-size) * 5);
-      align-self: start;
+    .schema-item label {
+      font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      align-self: center;
     }
 
-    details .schema-item input[type="checkbox"] {
+    .schema-item input[type="checkbox"] {
       justify-self: start;
     }
 
-    details .schema-item input,
-    details .schema-item select {
+    .schema-item input,
+    .schema-item select {
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
+      background: #fff;
       margin: 0;
-      padding: 0;
-      font-size: var(--bb-text-nano);
+      padding: var(--bb-grid-size) var(--bb-grid-size-2);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
 
-    details .schema-item textarea {
-      font-family: var(--bb-font-family);
-      font-size: var(--bb-body-small);
-      line-height: var(--bb-body-line-height-small);
-      resize: none;
+    .schema-item select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: #fff var(--bb-icon-expand) calc(100% - 5px) 4px / 16px 16px
+        no-repeat;
+    }
+
+    .schema-item select[multiple] {
+      resize: vertical;
+      background: #fff;
+    }
+
+    .schema-item select option {
+      padding: 0;
+    }
+
+    .schema-item textarea {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      resize: vertical;
       display: block;
       box-sizing: border-box;
       width: 100%;
       field-sizing: content;
       max-height: 300px;
+      min-height: var(--bb-grid-size-5);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
     }
 
     #controls {
@@ -119,25 +161,125 @@ export class SchemaEditor extends LitElement {
       justify-content: flex-end;
     }
 
-    .delete-schema-item {
-      background: #5e5e5e;
-      color: #fff;
-      font-size: var(--bb-text-nano);
-      border: none;
-      border-radius: 4px;
-      padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
-    }
-
-    .delete-schema-item {
-      background: #666;
-    }
-
     button[disabled] {
       opacity: 0.5;
     }
+
+    .title-and-delete,
+    .type-and-required {
+      display: flex;
+    }
+
+    .title-and-delete input[type="text"],
+    .type-and-required select {
+      flex: 1;
+    }
+
+    .type-and-required input[type="checkbox"] {
+      margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
+    }
+
+    .title-and-delete .delete {
+      width: 24px;
+      height: 24px;
+      border: none;
+      font-size: 0;
+      background: transparent var(--bb-icon-delete) center center / 20px 20px
+        no-repeat;
+      margin-left: var(--bb-grid-size-2);
+    }
+
+    bb-llm-input {
+      --bb-border-size: 1px;
+    }
+
+    .show-more,
+    .show-less {
+      grid-column: 1/3;
+      border: none;
+      background: transparent;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
+
+    .show-more {
+      display: block;
+      background: transparent var(--bb-icon-expand) calc(50% - 44px) center /
+        20px 20px no-repeat;
+    }
+
+    .show-less {
+      display: none;
+      background: transparent var(--bb-icon-collapse) calc(50% - 44px) center /
+        20px 20px no-repeat;
+    }
+
+    .expanded .show-more {
+      display: none;
+    }
+
+    .expanded .show-less {
+      display: block;
+    }
+
+    .more-info {
+      display: none;
+      align-items: center;
+      grid-template-columns: 100px auto;
+      row-gap: var(--bb-grid-size);
+      column-gap: var(--bb-grid-size);
+      grid-column: 1/3;
+    }
+
+    .expanded .more-info {
+      display: grid;
+    }
   `;
 
-  #formRef: Ref<HTMLFormElement> = createRef();
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.expanded.clear();
+  }
+
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ nodeId: string }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (!changedProperties.has("nodeId")) {
+      return;
+    }
+    const expandedData = globalThis.sessionStorage.getItem(
+      `${STORAGE_PREFIX}-${this.nodeId}-expanded`
+    );
+
+    if (!expandedData) {
+      return;
+    }
+
+    const expanded = JSON.parse(expandedData) as [string, boolean][];
+    this.expanded = new Map(expanded);
+  }
+
+  #toggleExpanded(key: string) {
+    if (!this.nodeId) {
+      return;
+    }
+
+    let val = this.expanded.get(key);
+    if (val === undefined) {
+      this.expanded.set(key, false);
+      val = false;
+    }
+
+    this.expanded.set(key, !val);
+    globalThis.sessionStorage.setItem(
+      `${STORAGE_PREFIX}-${this.nodeId}-expanded`,
+      JSON.stringify([...this.expanded.entries()])
+    );
+    this.requestUpdate();
+  }
 
   #convertPropertiesToForms(
     properties: Record<string, Schema>,
@@ -384,50 +526,12 @@ export class SchemaEditor extends LitElement {
           }
           break;
         }
-
-        case "audio/webm": {
-          format = html`<label for="${id}-format">Format</label>
-            <select
-              name="${id}-format"
-              id="${id}-format"
-              type="text"
-              ?readonly=${!this.editable}
-            >
-              <option
-                value="microphone"
-                ?selected=${value.format === "microphone"}
-              >
-                Microphone
-              </option>
-            </select>`;
-          break;
-        }
-
-        case "image/png": {
-          format = html`<label for="${id}-format">Format</label>
-            <select
-              name="${id}-format"
-              id="${id}-format"
-              type="text"
-              ?readonly=${!this.editable}
-            >
-              <option value="webcam" ?selected=${value.format === "webcam"}>
-                Webcam
-              </option>
-              <option value="drawable" ?selected=${value.format === "drawable"}>
-                Drawable Canvas
-              </option>
-            </select>`;
-          break;
-        }
       }
 
       const defaultLabel = html` <label for="${id}-default">Default</label>`;
       let defaultValue: HTMLTemplateResult | symbol = nothing;
-      let valueType = "string";
       switch (value.type) {
         case "array": {
-          valueType = "array";
           defaultValue = html`${defaultLabel}<bb-array-editor
               id="${id}-default"
               name="${id}-default"
@@ -440,7 +544,6 @@ export class SchemaEditor extends LitElement {
         }
 
         case "boolean": {
-          valueType = "boolean";
           defaultValue = html`${defaultLabel}<input
               type="checkbox"
               id="${id}-default"
@@ -452,7 +555,6 @@ export class SchemaEditor extends LitElement {
         }
 
         case "number": {
-          valueType = "number";
           defaultValue = html`${defaultLabel}<input
               type="number"
               id="${id}-default"
@@ -517,28 +619,22 @@ export class SchemaEditor extends LitElement {
           .type=${value.type}
         ></bb-array-editor>`;
 
-      return html`<details open class=${classMap({ [valueType]: true })}>
-        <summary>
-          <span>${value.title ?? id}</span>
-          <button
-            class="delete-schema-item"
-            type="button"
-            @click=${() => this.#deleteProperty(id)}
-            ?disabled=${!this.editable}
-          >
-            Delete
-          </button>
-        </summary>
-        <div class="schema-item">
-          <input
-            name="${id}-id"
-            id="${id}-id"
-            type="hidden"
-            value="${id}"
-            required="required"
-          />
+      return html`<div
+        class=${classMap({
+          ["schema-item"]: true,
+          expanded: this.expanded.get(id) || false,
+        })}
+      >
+        <input
+          name="${id}-id"
+          id="${id}-id"
+          type="hidden"
+          value="${id}"
+          required="required"
+        />
 
-          <label for="${id}-title">Title</label>
+        <label for="${id}-title">Title</label>
+        <div class="title-and-delete">
           <input
             name="${id}-title"
             id="${id}-title"
@@ -546,8 +642,18 @@ export class SchemaEditor extends LitElement {
             value="${value.title || ""}"
             ?readonly=${!this.editable}
           />
+          <button
+            class="delete"
+            type="button"
+            @click=${() => this.#deleteProperty(id)}
+            ?disabled=${!this.editable}
+          >
+            Delete
+          </button>
+        </div>
 
-          <label for="${id}-type">Type</label>
+        <label for="${id}-type">Type</label>
+        <div class="type-and-required">
           <select
             name="${id}-type"
             id="${id}-type"
@@ -574,7 +680,21 @@ export class SchemaEditor extends LitElement {
             </option>
           </select>
 
-          ${itemType} ${behavior} ${format}
+          <input
+            name="${id}-required"
+            id="${id}-required"
+            type="checkbox"
+            ?checked=${required.includes(id)}
+            ?readonly=${!this.editable}
+          />
+          <label for="${id}-required">Required</label>
+        </div>
+
+        ${itemType} ${behavior} ${format}
+        <button class="show-more" @click=${() => this.#toggleExpanded(id)}>
+          Show more
+        </button>
+        <div class="more-info">
           ${value.type === "string" ? enumerations : nothing}
           ${value.type === "string" || value.type === "number"
             ? examples
@@ -588,17 +708,11 @@ export class SchemaEditor extends LitElement {
             .value="${value.description || ""}"
             ?readonly=${!this.editable}
           ></textarea>
-
-          <label for="${id}-required">Required</label>
-          <input
-            name="${id}-required"
-            id="${id}-required"
-            type="checkbox"
-            ?checked=${required.includes(id)}
-            ?readonly=${!this.editable}
-          />
+          <button class="show-less" @click=${() => this.#toggleExpanded(id)}>
+            Show less
+          </button>
         </div>
-      </details> `;
+      </div>`;
     })}`;
   }
 
@@ -858,7 +972,7 @@ export class SchemaEditor extends LitElement {
     this.dispatchEvent(new SchemaChangeEvent());
   }
 
-  #createEmptyProperty() {
+  #createNewPort() {
     const schema: Schema = structuredClone(this.schema || {});
     schema.properties =
       typeof schema.properties === "object" ? schema.properties : {};
@@ -882,12 +996,12 @@ export class SchemaEditor extends LitElement {
 
     return html` <div id="controls">
         <button
-          id="add-new-item"
+          id="create-new-port"
           type="button"
           ?disabled=${!this.editable}
-          @click=${this.#createEmptyProperty}
+          @click=${this.#createNewPort}
         >
-          Add a new item
+          Add a port
         </button>
       </div>
       <form

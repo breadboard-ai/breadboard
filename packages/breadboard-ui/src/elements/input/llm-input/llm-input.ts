@@ -122,32 +122,32 @@ export class LLMInput extends LitElement {
     }
 
     #controls #add-text {
-      background: #fff var(--bb-icon-add-text) center center / 20px 20px
+      background: transparent var(--bb-icon-add-text) center center / 20px 20px
         no-repeat;
     }
 
     #controls #add-image-webcam {
-      background: #fff var(--bb-icon-add-image-webcam) center center / 20px 20px
-        no-repeat;
+      background: transparent var(--bb-icon-add-image-webcam) center center /
+        20px 20px no-repeat;
     }
 
     #controls #add-image-drawable {
-      background: #fff var(--bb-icon-add-drawable) center center / 20px 20px
-        no-repeat;
+      background: transparent var(--bb-icon-add-drawable) center center / 20px
+        20px no-repeat;
     }
 
     #controls #add-video-webcam {
-      background: #fff var(--bb-icon-add-video) center center / 20px 20px
+      background: transparent var(--bb-icon-add-video) center center / 20px 20px
         no-repeat;
     }
 
     #controls #add-audio-microphone {
-      background: #fff var(--bb-icon-add-audio) center center / 20px 20px
+      background: transparent var(--bb-icon-add-audio) center center / 20px 20px
         no-repeat;
     }
 
     #controls #add-file {
-      background: #fff var(--bb-icon-add-file) center center / 20px 20px
+      background: transparent var(--bb-icon-add-file) center center / 20px 20px
         no-repeat;
     }
 
@@ -171,9 +171,10 @@ export class LLMInput extends LitElement {
       overflow: auto;
       height: 30vh;
       min-height: var(--bb-grid-size-6);
-      border: 2px solid var(--bb-neutral-300);
+      border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0;
+      background: #fff;
     }
 
     :host([minimal]) #container {
@@ -353,6 +354,9 @@ export class LLMInput extends LitElement {
 
     #no-parts {
       padding: 0 var(--bb-grid-size-3);
+
+      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
     }
 
     .confirm {
