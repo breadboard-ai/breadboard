@@ -648,6 +648,7 @@ export class NodeInfo extends LitElement {
                       >
                         ${portSpec.map((port) => {
                           return html`<bb-schema-editor
+                            .nodeId=${node.descriptor.id}
                             .editable=${this.editable}
                             .schema=${port.value}
                             .schemaVersion=${this.#schemaVersion}

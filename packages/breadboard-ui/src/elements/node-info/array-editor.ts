@@ -51,6 +51,8 @@ export class ArrayEditor extends LitElement {
   static styles = css`
     :host {
       display: block;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
 
     ul {
