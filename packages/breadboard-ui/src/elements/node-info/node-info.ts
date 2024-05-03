@@ -591,12 +591,25 @@ export class NodeInfo extends LitElement {
         ports: InspectablePort[];
         configuration: NodeConfiguration;
       }) => {
-        const portSpec = ports.filter((port) =>
-          port.schema.behavior?.includes("ports-spec")
+        const portSpec = ports.filter(
+          (port) =>
+            port.schema.behavior?.includes("ports-spec") &&
+            port.edges.length === 0
         );
-        const inputs = ports.filter(
-          (port) => !(port.star || port.schema.behavior?.includes("ports-spec"))
-        );
+        const inputs = ports.filter((port) => {
+          if (port.star) {
+            return false;
+          }
+
+          if (
+            port.schema.behavior?.includes("ports-spec") &&
+            port.edges.length === 0
+          ) {
+            return false;
+          }
+
+          return true;
+        });
 
         return html`
           <div class="node-properties">
