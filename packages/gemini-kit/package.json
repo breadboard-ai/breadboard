@@ -14,7 +14,8 @@
     "dev": "wireit",
     "test": "wireit",
     "build": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "generate:graphs": "wireit"
   },
   "wireit": {
     "dev": {
@@ -81,6 +82,17 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "generate:graphs": {
+      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\"",
+      "dependencies": [
+        "build:tsc",
+        "../breadboard-cli:build"
+      ],
+      "files": [],
+      "output": [
+        "graphs/"
+      ]
     }
   },
   "repository": {
