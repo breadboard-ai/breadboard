@@ -145,7 +145,7 @@ test("poly/mono", async () => {
       so1: { type: "boolean" },
     },
     describe: (
-      // $ExpectType { si1: string; }
+      // $ExpectType { si1: string | undefined; }
       staticInputs,
       // $ExpectType { [x: string]: number; }
       dynamicInputs
@@ -291,7 +291,7 @@ test("mono/poly", async () => {
       "*": { type: "number" },
     },
     describe: (
-      // $ExpectType { si1: string; }
+      // $ExpectType { si1: string | undefined; }
       staticInputs,
       // $ExpectType {}
       dynamicInputs
@@ -393,7 +393,7 @@ test("poly/poly", async () => {
       "*": { type: "number" },
     },
     describe: (
-      // $ExpectType { si1: string; }
+      // $ExpectType { si1: string | undefined; }
       staticInputs,
       // $ExpectType { [x: string]: number; }
       dynamicInputs

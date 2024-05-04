@@ -27,11 +27,8 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
-import type {
-  DynamicInputPorts,
-  LooseDescribeFn,
-  VeryLooseInvokeFn,
-} from "./define.js";
+import type { DynamicInputPorts, VeryLooseInvokeFn } from "./define.js";
+import type { LooseDescribeFn } from "./describe.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
 import {
@@ -190,13 +187,9 @@ export class DefinitionImpl<
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
       | undefined = undefined;
     if (this.#describe !== undefined) {
-      if (values !== undefined) {
-        const { staticValues, dynamicValues } =
-          this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = await this.#describe(staticValues, dynamicValues, context);
-      } else {
-        user = await this.#describe({}, {}, context);
-      }
+      const { staticValues, dynamicValues } =
+        this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
+      user = await this.#describe(staticValues, dynamicValues, context);
     }
 
     let inputSchema: JSONSchema4 & {
