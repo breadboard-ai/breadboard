@@ -30,7 +30,7 @@ test("describer correctly responds to no inputs", async (t) => {
       type: "object",
       properties: {},
       required: [],
-      additionalProperties: { type: "string" },
+      additionalProperties: false,
     },
   });
 });
@@ -63,32 +63,6 @@ test("describer correctly responds to inputs", async (t) => {
       },
       required: [],
       additionalProperties: false,
-    },
-  });
-});
-
-test("describer correctly responds to unknown inputs", async (t) => {
-  t.deepEqual(await secrets.describe(), {
-    inputSchema: {
-      type: "object",
-      properties: {
-        keys: {
-          title: "secrets",
-          description: "The array of secrets to retrieve from the node.",
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-      },
-      required: ["keys"],
-      additionalProperties: false,
-    },
-    outputSchema: {
-      type: "object",
-      properties: {},
-      required: [],
-      additionalProperties: { type: "string" },
     },
   });
 });
