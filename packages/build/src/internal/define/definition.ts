@@ -27,11 +27,8 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
-import type {
-  DynamicInputPorts,
-  LooseDescribeFn,
-  VeryLooseInvokeFn,
-} from "./define.js";
+import type { DynamicInputPorts, VeryLooseInvokeFn } from "./define.js";
+import type { LooseDescribeFn } from "./describe.js";
 import { Instance } from "./instance.js";
 import { portConfigMapToJSONSchema } from "./json-schema.js";
 import {
