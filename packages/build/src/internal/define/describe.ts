@@ -6,18 +6,19 @@
 
 import type { NodeDescriberContext } from "@google-labs/breadboard";
 import type { Expand, MaybePromise } from "../common/type-util.js";
-import type { JsonSerializable } from "../type-system/type.js";
+import type {
+  ConvertBreadboardType,
+  JsonSerializable,
+} from "../type-system/type.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
   InputPortConfig,
   OutputPortConfig,
+  PortConfig,
+  StaticInputPortConfig,
 } from "./config.js";
-import type {
-  DynamicInputPorts,
-  DynamicInvokeParams,
-  StaticInvokeParams,
-} from "./define.js";
+import type { DynamicInputPorts, DynamicInvokeParams } from "./define.js";
 
 export type LooseDescribeFn = (
   staticParams: Record<string, JsonSerializable>,
@@ -28,6 +29,16 @@ export type LooseDescribeFn = (
   outputs?: DynamicInputPorts;
 }>;
 
+export type StaticDescribeValues<I extends Record<string, InputPortConfig>> = {
+  [K in keyof Omit<I, "*">]: I[K] extends StaticInputPortConfig
+    ? I[K]["default"] extends JsonSerializable
+      ? Convert<I[K]>
+      : Convert<I[K]> | undefined
+    : Convert<I[K]>;
+};
+
+type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
+
 export type StrictDescribeFn<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
@@ -37,7 +48,7 @@ export type StrictDescribeFn<
       ? {
           // poly/poly reflective
           describe?: (
-            staticInputs: Expand<StaticInvokeParams<I>>,
+            staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
             context?: NodeDescriberContext
           ) => MaybePromise<{
@@ -48,7 +59,7 @@ export type StrictDescribeFn<
       : {
           // poly/poly non-reflective
           describe: (
-            staticInputs: Expand<StaticInvokeParams<I>>,
+            staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
             context?: NodeDescriberContext
           ) => MaybePromise<{
@@ -59,7 +70,7 @@ export type StrictDescribeFn<
     : {
         // poly/mono
         describe?: (
-          staticInputs: Expand<StaticInvokeParams<I>>,
+          staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
           context?: NodeDescriberContext
         ) => MaybePromise<{
@@ -71,7 +82,7 @@ export type StrictDescribeFn<
     ? {
         // mono/poly
         describe: (
-          staticInputs: Expand<StaticInvokeParams<I>>,
+          staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
           context?: NodeDescriberContext
         ) => MaybePromise<{

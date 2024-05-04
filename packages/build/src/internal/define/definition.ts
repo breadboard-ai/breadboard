@@ -187,13 +187,9 @@ export class DefinitionImpl<
       | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
       | undefined = undefined;
     if (this.#describe !== undefined) {
-      if (values !== undefined) {
-        const { staticValues, dynamicValues } =
-          this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-        user = await this.#describe(staticValues, dynamicValues, context);
-      } else {
-        user = await this.#describe({}, {}, context);
-      }
+      const { staticValues, dynamicValues } =
+        this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
+      user = await this.#describe(staticValues, dynamicValues, context);
     }
 
     let inputSchema: JSONSchema4 & {

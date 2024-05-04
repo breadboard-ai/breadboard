@@ -426,6 +426,93 @@ test("describe receives context", async () => {
   assert.deepEqual(actual, expected);
 });
 
+test("describe receives defaults with undefined values", async () => {
+  let describeRan = false;
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      withDefault: { type: "string", default: "DEFAULT1" },
+      withoutDefault: { type: "string" },
+      "*": { type: "string" },
+    },
+    outputs: {},
+    describe: ({ withDefault, withoutDefault }) => {
+      assert.equal(
+        // $ExpectType string
+        withDefault,
+        "DEFAULT1"
+      );
+      assert.equal(
+        // $ExpectType string | undefined
+        withoutDefault,
+        undefined
+      );
+      describeRan = true;
+      return {
+        inputs: [],
+      };
+    },
+    invoke: () => ({}),
+  }).describe(undefined, {}, null as never);
+  assert.equal(describeRan, true);
+});
+
+test("describe receives defaults with overrides", async () => {
+  let describeRan = false;
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      withDefault: { type: "string", default: "DEFAULT1" },
+      withDefaultOverride: { type: "string", default: "DEFAULT2" },
+      withoutDefault: { type: "string" },
+      withoutDefaultOverride: { type: "string" },
+      "*": { type: "string" },
+    },
+    outputs: {},
+    describe: ({
+      withDefault,
+      withDefaultOverride,
+      withoutDefault,
+      withoutDefaultOverride,
+    }) => {
+      assert.equal(
+        // $ExpectType string
+        withDefault,
+        "DEFAULT1"
+      );
+      assert.equal(
+        // $ExpectType string
+        withDefaultOverride,
+        "OVERRIDE1"
+      );
+      assert.equal(
+        // $ExpectType string | undefined
+        withoutDefault,
+        undefined
+      );
+      assert.equal(
+        // $ExpectType string | undefined
+        withoutDefaultOverride,
+        "OVERRIDE2"
+      );
+      describeRan = true;
+      return {
+        inputs: [],
+      };
+    },
+    invoke: () => ({}),
+  }).describe(
+    {
+      withDefaultOverride: "OVERRIDE1",
+      withoutDefaultOverride: "OVERRIDE2",
+    },
+    {},
+    {},
+    null as never
+  );
+  assert.equal(describeRan, true);
+});
+
 test("unsafeSchema can be used to force a raw JSON schema", async () => {
   assert.deepEqual(
     await defineNodeType({
