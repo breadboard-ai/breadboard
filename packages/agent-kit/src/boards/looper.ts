@@ -31,9 +31,16 @@ export type LooperType = NewNodeFactory<
 export type LooperPlan = {
   /**
    * Maximum iterations to make. This can be used to create simple
-   * "repeat N times" loops as well as
+   * "repeat N times" loops.
    */
   max?: number;
+  /**
+   * Plan items. Each item represents one trip down the "Loop" output, and
+   * at the end of the list, the "Context Out".
+   */
+  todo?: {
+    task: string;
+  }[];
 };
 
 const defaultPlan = JSON.stringify({} satisfies LooperPlan);
@@ -48,30 +55,61 @@ const contextExample = JSON.stringify({
 });
 
 const planReader = code(({ context, plan }) => {
+  type LooperData = {
+    type: "looper";
+    remaining: LooperPlan["todo"];
+  };
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
   if (!plan) {
     throw new Error("Plan is required for Looper to function.");
   }
   const p = plan as LooperPlan;
-  if (p.max) {
-    // Look for metadata in the context, and return the first one
-    let count = 0;
-    for (let i = existing.length - 1; i >= 0; i--) {
-      const item = existing[i];
-      if (item.role === "$metadata") {
-        count++;
-      }
+  const max = p.max || p.todo?.length || Infinity;
+  const done: LooperData[] = [];
+  // Collect all metadata entries in the context.
+  // Gives us where we've been and where we're going.
+  for (let i = existing.length - 1; i >= 0; i--) {
+    const item = existing[i];
+    if (item.role === "$metadata") {
+      done.push(item.data as LooperData);
     }
-    const max = (plan as LooperPlan).max || 0;
+  }
+  const contents = structuredClone(existing) as Context[];
+  const count = done.length;
+  if (count >= max) {
+    return { done: existing };
+  }
+  if (p.todo && Array.isArray(p.todo)) {
+    const last = done[0] || {
+      type: "looper",
+      remaining: p.todo,
+    };
+    const next = last.remaining?.shift();
+    if (!next) {
+      return { done: existing };
+    }
+    contents.push({
+      role: "$metadata",
+      data: last,
+    });
+    contents.push({
+      role: "user",
+      parts: [
+        {
+          text: next.task,
+        },
+      ],
+    });
+    return { context: contents };
+  } else if (max) {
+    const count = done.length;
     if (count >= max) {
       return { done: existing };
     }
-    const contents = structuredClone(existing) as Context[];
     contents.push({
       role: "$metadata",
       data: {
         type: "looper",
-        count,
       },
     });
     return { context: contents };
@@ -107,7 +145,7 @@ export default await board(({ context, plan }) => {
 
   base.output({
     $metadata: { title: "Exit" },
-    done: readPlan.done.isArray().behavior("llm-content").title("Done"),
+    done: readPlan.done.isArray().behavior("llm-content").title("Context Out"),
   });
 
   return {

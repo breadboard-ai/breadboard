@@ -1698,7 +1698,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,plan})=>{const existing=Array.isArray(context)?context:[context];if(!plan){throw new Error(\"Plan is required for Looper to function.\")}const p=plan;if(p.max){let count=0;for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){count++}}const max=plan.max||0;if(count>=max){return{done:existing}}const contents=structuredClone(existing);contents.push({role:\"$metadata\",data:{type:\"looper\",count}});return{context:contents}}return{done:existing}};",
+            "code": "const fn_3 = ({context,plan})=>{const existing=Array.isArray(context)?context:[context];if(!plan){throw new Error(\"Plan is required for Looper to function.\")}const p=plan;const max=p.max||p.todo?.length||Infinity;const done=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){done.push(item.data)}}const contents=structuredClone(existing);const count=done.length;if(count>=max){return{done:existing}}if(p.todo&&Array.isArray(p.todo)){const last=done[0]||{type:\"looper\",remaining:p.todo};const next=last.remaining?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:last});contents.push({role:\"user\",parts:[{text:next.task}]});return{context:contents}}else if(max){const count2=done.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1757,7 +1757,7 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Done"
+                  "title": "Context Out"
                 }
               }
             }
