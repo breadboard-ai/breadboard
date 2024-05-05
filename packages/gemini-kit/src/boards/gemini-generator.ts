@@ -155,6 +155,7 @@ const parametersSchema = {
       description: "Output response mimetype of the generated text.",
       enum: ["text/plain", "application/json"],
       examples: ["text/plain"],
+      default: "text/plain",
     },
     tools: {
       type: "array",
