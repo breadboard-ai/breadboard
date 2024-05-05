@@ -80,38 +80,20 @@ const planReader = code(({ context, plan }) => {
     return { done: existing };
   }
   if (p.todo && Array.isArray(p.todo)) {
-    const last = done[0] || {
-      type: "looper",
-      remaining: p.todo,
-    };
+    const last = done[0] || { type: "looper", remaining: p.todo };
     const next = last.remaining?.shift();
     if (!next) {
       return { done: existing };
     }
-    contents.push({
-      role: "$metadata",
-      data: last,
-    });
-    contents.push({
-      role: "user",
-      parts: [
-        {
-          text: next.task,
-        },
-      ],
-    });
+    contents.push({ role: "$metadata", data: last });
+    contents.push({ role: "user", parts: [{ text: next.task }] });
     return { context: contents };
   } else if (max) {
     const count = done.length;
     if (count >= max) {
       return { done: existing };
     }
-    contents.push({
-      role: "$metadata",
-      data: {
-        type: "looper",
-      },
-    });
+    contents.push({ role: "$metadata", data: { type: "looper" } });
     return { context: contents };
   }
   return { done: existing };
@@ -129,9 +111,7 @@ export default await board(({ context, plan }) => {
 
   plan
     .title("Plan")
-    .description(
-      "For now, the maximum number of repetitions to make (set to -1 to go infinitely)"
-    )
+    .description("What to iterate over, and/or how many times")
     .isObject()
     .optional()
     .default(defaultPlan)

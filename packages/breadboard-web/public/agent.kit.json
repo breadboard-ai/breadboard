@@ -1730,7 +1730,7 @@
                 },
                 "plan": {
                   "title": "Plan",
-                  "description": "For now, the maximum number of repetitions to make (set to -1 to go infinitely)",
+                  "description": "What to iterate over, and/or how many times",
                   "type": "object",
                   "default": "{}",
                   "examples": [
