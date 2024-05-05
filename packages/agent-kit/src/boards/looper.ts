@@ -91,14 +91,12 @@ Your output must be a valid JSON of the following format:
 
 \`\`\`json
 {
-  "max": "number, how many iterations to make, optional. Useful when the job specifies the upper limit the number of items in the list.
+  "max": "number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.",
   "todo": [{
     "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task"
   }]
 }
-\`\`\`
-
-Here is the job:`,
+\`\`\``,
     },
   ],
 } satisfies LlmContent;

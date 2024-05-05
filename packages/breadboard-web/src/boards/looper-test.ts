@@ -122,7 +122,7 @@ export default await board(({ context }) => {
     $metadata: { title: "Looper" },
     context,
     task: contextFromText(
-      `Write the book chapter by chapter, following the outline`
+      `Given the outline, create a list of tasks for writers. Each task is to write a chapter, following the outline.`
       // `Write the first three chapters of the book, following the outline. Each chapter is a single task.`
     ),
   });

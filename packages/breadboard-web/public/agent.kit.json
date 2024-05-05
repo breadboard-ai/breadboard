@@ -1867,7 +1867,7 @@
             "systemInstruction": {
               "parts": [
                 {
-                  "text": "You are a talented planner. Given any job, you can create a plan for it. Depending on the job, this plan you produce may be as simple as \"repeat N times\" or it could be a list of todo items for concrete tasks to perform.\n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, how many iterations to make, optional. Useful when the job specifies the upper limit the number of items in the list.\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task\"\n  }]\n}\n```\n\nHere is the job:"
+                  "text": "You are a talented planner. Given any job, you can create a plan for it. Depending on the job, this plan you produce may be as simple as \"repeat N times\" or it could be a list of todo items for concrete tasks to perform.\n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.\",\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task\"\n  }]\n}\n```"
                 }
               ]
             },
