@@ -5,10 +5,16 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "fn-3",
+      "from": "fn-7",
+      "to": "output-8",
+      "out": "done",
+      "in": "done"
+    },
+    {
+      "from": "fn-7",
       "to": "output-2",
       "out": "context",
-      "in": "context"
+      "in": "loop"
     },
     {
       "from": "input-1",
@@ -18,9 +24,45 @@
     },
     {
       "from": "input-1",
-      "to": "fn-3",
-      "out": "plan",
-      "in": "plan"
+      "to": "fn-4",
+      "out": "task",
+      "in": "toAdd"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-7",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "fn-3",
+      "to": "fn-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "fn-3",
+      "to": "fn-7",
+      "out": "progress",
+      "in": "progress"
+    },
+    {
+      "from": "validateJson-6",
+      "to": "fn-7",
+      "out": "json",
+      "in": "progress"
+    },
+    {
+      "from": "fn-4",
+      "to": "text-5",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "text-5",
+      "to": "validateJson-6",
+      "out": "text",
+      "in": "json"
     }
   ],
   "nodes": [
@@ -31,7 +73,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "context": {
+            "loop": {
               "type": "array",
               "items": {
                 "type": "object",
@@ -39,18 +81,18 @@
                   "llm-content"
                 ]
               },
-              "title": "Done"
+              "title": "Loop"
             }
           }
         }
       }
     },
     {
-      "id": "fn-3",
+      "id": "fn-7",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({ context, plan }) => {\n  const addMetadata = (contents2) => {\n    contents2.push({\n      role: \"$metadata\",\n      data: {\n        looperStart: true,\n        plan\n      }\n    });\n    return contents2;\n  };\n  const contents = context;\n  return { context: addMetadata(structuredClone(contents)) };\n};",
-        "name": "fn_3",
+        "code": "const fn_7 = ({ context, progress }) => {\n  const plans = Array.isArray(progress) ? progress : [progress];\n  const existing = Array.isArray(context) ? context : [context];\n  if (!plans) {\n    throw new Error(\"Plan is required for Looper to function.\");\n  }\n  try {\n    const p = plans[0];\n    const originalPlan = plans[plans.length - 1];\n    const max = p.max || originalPlan.todo?.length || Infinity;\n    const contents = structuredClone(existing);\n    const count = plans.length;\n    if (count >= max) {\n      return { done: existing };\n    }\n    if (p.todo && Array.isArray(p.todo)) {\n      const next = p.todo?.shift();\n      if (!next) {\n        return { done: existing };\n      }\n      contents.push({ role: \"$metadata\", data: p });\n      contents.push({ role: \"user\", parts: [{ text: next.task }] });\n      return { context: contents };\n    } else if (max) {\n      const count2 = plans.length;\n      if (count2 >= max) {\n        return { done: existing };\n      }\n      contents.push({ role: \"$metadata\", data: { type: \"looper\" } });\n      return { context: contents };\n    }\n    return { done: existing };\n  } catch (e) {\n    const error = e;\n    throw new Error(`Invalid plan, unable to proceed: ${error.message}`);\n  }\n};",
+        "name": "fn_7",
         "raw": true
       },
       "metadata": {
@@ -77,20 +119,124 @@
               "examples": [
                 "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
               ],
-              "description": "Initial conversation context"
+              "description": "The source material for this worker."
             },
-            "plan": {
-              "title": "Plan",
-              "description": "For now, the maximum number of repetitions to make (set to -1 to go infinitely)",
+            "task": {
+              "title": "Task",
+              "description": "The task from which to create the plan for looping.",
               "type": "object",
-              "default": "{\"max\":0}",
-              "examples": [
-                "{\"max\":1}"
+              "behavior": [
+                "llm-content"
               ]
             }
           },
-          "required": []
+          "required": [
+            "task"
+          ]
         }
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({ context }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  const progress = [];\n  for (let i = existing.length - 1; i >= 0; i--) {\n    const item = existing[i];\n    if (item.role === \"$metadata\") {\n      progress.push(item.data.plan);\n    }\n  }\n  if (progress.length) {\n    return { progress };\n  } else {\n    return { context };\n  }\n};",
+        "name": "fn_3",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Read progress so far"
+      }
+    },
+    {
+      "id": "validateJson-6",
+      "type": "validateJson",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "max": {
+              "type": "number",
+              "description": "Maximum iterations to make, optional. Default is infinity"
+            },
+            "todo": {
+              "type": "array",
+              "description": "Items in the plan, optional. Use this if the plan contains a definite, concrete list of items",
+              "items": {
+                "type": "object",
+                "description": "The object that represent an item in the plan",
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "description": "The task description. Use action-oriented language, starting with a verb that fits the task"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Validate Plan",
+        "description": "Validating JSON of the Plan"
+      }
+    },
+    {
+      "id": "output-8",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "done": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "Context Out"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Exit"
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_4 = ({ context, toAdd }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== \"user\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "name": "fn_4",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Add Task"
+      }
+    },
+    {
+      "id": "text-5",
+      "type": "text",
+      "configuration": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "You are a talented planner. Given any job, you can break it down into a plan. Depending on the task, the plan you produce may be as simple as \"repeat N times\" or it could be a list of todo items for concrete tasks to perform."
+            },
+            {
+              "text": "Reply as valid JSON that conforms to this JSON schema:"
+            },
+            {
+              "text": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"max\": {\n      \"type\": \"number\",\n      \"description\": \"Maximum iterations to make, optional. Default is infinity\"\n    },\n    \"todo\": {\n      \"type\": \"array\",\n      \"description\": \"Items in the plan, optional. Use this if the plan contains a definite, concrete list of items\",\n      \"items\": {\n        \"type\": \"object\",\n        \"description\": \"The object that represent an item in the plan\",\n        \"properties\": {\n          \"task\": {\n            \"type\": \"string\",\n            \"description\": \"The task description. Use action-oriented language, starting with a verb that fits the task\"\n          }\n        }\n      }\n    }\n  }\n}"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Generating Plan"
       }
     }
   ],

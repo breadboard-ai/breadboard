@@ -149,6 +149,14 @@ const parametersSchema = {
       enum: ["gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"],
       examples: ["gemini-1.5-pro-latest"],
     },
+    responseMimeType: {
+      type: "string",
+      title: "Response MIME Type",
+      description: "Output response mimetype of the generated text.",
+      enum: ["text/plain", "application/json"],
+      examples: ["text/plain"],
+      default: "text/plain",
+    },
     tools: {
       type: "array",
       title: "Tools",
@@ -293,6 +301,7 @@ const bodyBuilder = code(
   ({
     context,
     systemInstruction,
+    responseMimeType,
     text,
     model,
     tools,
@@ -334,7 +343,7 @@ const bodyBuilder = code(
       if (olderModel) {
         contents[contents.length - 1].parts.unshift(...parts);
       } else {
-        result["system_instruction"] = { parts };
+        result["systemInstruction"] = { parts };
       }
     }
     if (safetySettings && !Object.keys(safetySettings).length) {
@@ -355,8 +364,18 @@ const bodyBuilder = code(
     } else {
       result["safetySettings"] = safetySettings;
     }
+    const generationConfig = {} as {
+      stopSequences?: unknown;
+      responseMimeType?: unknown;
+    };
     if (stopSequences && (stopSequences as unknown[]).length > 0) {
-      result["generationConfig"] = { stopSequences };
+      generationConfig.stopSequences = stopSequences;
+    }
+    if (responseMimeType) {
+      generationConfig.responseMimeType = responseMimeType;
+    }
+    if (Object.keys(generationConfig).length > 0) {
+      result["generationConfig"] = generationConfig;
     }
     if (tools && (tools as unknown[]).length > 0) {
       result["tools"] = { function_declarations: tools };
@@ -437,6 +456,7 @@ export default await board(() => {
     tools: parameters.tools.memoize(),
     safetySettings: parameters.safetySettings.memoize(),
     stopSequences: parameters.stopSequences.memoize(),
+    responseMimeType: parameters.responseMimeType.memoize(),
     retry: parameters.retry,
     error: {},
   });
@@ -450,6 +470,7 @@ export default await board(() => {
     tools: countRetries.tools,
     safetySettings: countRetries.safetySettings,
     stopSequences: countRetries.stopSequences,
+    responseMimeType: countRetries.responseMimeType,
   });
 
   const fetch = core.fetch({

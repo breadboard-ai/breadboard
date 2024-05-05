@@ -1648,13 +1648,13 @@
       "version": "0.0.1",
       "edges": [
         {
-          "from": "fn-3",
-          "to": "output-4",
+          "from": "fn-7",
+          "to": "output-8",
           "out": "done",
           "in": "done"
         },
         {
-          "from": "fn-3",
+          "from": "fn-7",
           "to": "output-2",
           "out": "context",
           "in": "loop"
@@ -1667,9 +1667,45 @@
         },
         {
           "from": "input-1",
-          "to": "fn-3",
-          "out": "plan",
-          "in": "plan"
+          "to": "fn-4",
+          "out": "task",
+          "in": "toAdd"
+        },
+        {
+          "from": "input-1",
+          "to": "fn-7",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-3",
+          "to": "fn-4",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-3",
+          "to": "fn-7",
+          "out": "progress",
+          "in": "progress"
+        },
+        {
+          "from": "validateJson-6",
+          "to": "fn-7",
+          "out": "json",
+          "in": "progress"
+        },
+        {
+          "from": "fn-4",
+          "to": "text-5",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "text-5",
+          "to": "validateJson-6",
+          "out": "text",
+          "in": "json"
         }
       ],
       "nodes": [
@@ -1695,11 +1731,11 @@
           }
         },
         {
-          "id": "fn-3",
+          "id": "fn-7",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,plan})=>{const existing=Array.isArray(context)?context:[context];if(!plan){throw new Error(\"Plan is required for Looper to function.\")}const p=plan;if(p.max){let count=0;for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){count++}}const max=plan.max||0;if(count>=max){return{done:existing}}const contents=structuredClone(existing);contents.push({role:\"$metadata\",data:{type:\"looper\",count}});return{context:contents}}return{done:existing}};",
-            "name": "fn_3",
+            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];const originalPlan=plans[plans.length-1];const max=originalPlan.max||originalPlan.todo?.length||Infinity;const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:current});contents.push({role:\"user\",parts:[{text:next.task}]});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
+            "name": "fn_7",
             "raw": true
           },
           "metadata": {
@@ -1726,24 +1762,70 @@
                   "examples": [
                     "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
                   ],
-                  "description": "Initial conversation context"
+                  "description": "The source material for this worker."
                 },
-                "plan": {
-                  "title": "Plan",
-                  "description": "For now, the maximum number of repetitions to make (set to -1 to go infinitely)",
+                "task": {
+                  "title": "Task",
+                  "description": "The task from which to create the plan for looping.",
                   "type": "object",
-                  "default": "{}",
-                  "examples": [
-                    "{\"max\":1}"
+                  "behavior": [
+                    "llm-content"
                   ]
                 }
               },
-              "required": []
+              "required": [
+                "task"
+              ]
             }
           }
         },
         {
-          "id": "output-4",
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context})=>{const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){progress.push(item.data)}}if(progress.length){return{progress}}else{return{context}}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Read progress so far"
+          }
+        },
+        {
+          "id": "validateJson-6",
+          "type": "validateJson",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "max": {
+                  "type": "number",
+                  "description": "Maximum iterations to make, optional. Default is infinity"
+                },
+                "todo": {
+                  "type": "array",
+                  "description": "Items in the plan, optional. Use this if the plan contains a definite, concrete list of items",
+                  "items": {
+                    "type": "object",
+                    "description": "The object that represent an item in the plan",
+                    "properties": {
+                      "task": {
+                        "type": "string",
+                        "description": "The task description. Use action-oriented language, starting with a verb that fits the task"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Validate Plan",
+            "description": "Validating JSON of the Plan"
+          }
+        },
+        {
+          "id": "output-8",
           "type": "output",
           "configuration": {
             "schema": {
@@ -1757,13 +1839,42 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Done"
+                  "title": "Context Out"
                 }
               }
             }
           },
           "metadata": {
             "title": "Exit"
+          }
+        },
+        {
+          "id": "fn-4",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_4 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "name": "fn_4",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Add Task"
+          }
+        },
+        {
+          "id": "text-5",
+          "type": "text",
+          "configuration": {
+            "systemInstruction": {
+              "parts": [
+                {
+                  "text": "You are a talented planner. Given any job, you can create a plan for it. Depending on the job, this plan you produce may be as simple as \"repeat N times\" or it could be a list of todo items for concrete tasks to perform.\n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.\",\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task\"\n  }]\n}\n```"
+                }
+              ]
+            },
+            "responseMimeType": "application/json"
+          },
+          "metadata": {
+            "title": "Generating Plan"
           }
         }
       ],
