@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 import type {
-  NodeDescriberContext,
   NodeHandlerContext,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
@@ -21,7 +20,6 @@ import type {
   ConvertBreadboardType,
   JsonSerializable,
 } from "../type-system/type.js";
-import type { UnsafeSchema } from "./unsafe-schema.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
@@ -33,6 +31,8 @@ import type {
   StaticOutputPortConfig,
 } from "./config.js";
 import { DefinitionImpl, type Definition } from "./definition.js";
+import type { LooseDescribeFn, StrictDescribeFn } from "./describe.js";
+import type { UnsafeSchema } from "./unsafe-schema.js";
 
 /**
  * Define a new Breadboard node type.
@@ -299,7 +299,7 @@ type StrictInvokeFnReturn<
       : never;
 };
 
-type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
+export type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
   [K in keyof Omit<I, "*">]: I[K] extends StaticInputPortConfig
     ? I[K]["optional"] extends true
       ? Convert<I[K]> | undefined
@@ -307,7 +307,7 @@ type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
     : Convert<I[K]>;
 };
 
-type DynamicInvokeParams<I extends Record<string, InputPortConfig>> =
+export type DynamicInvokeParams<I extends Record<string, InputPortConfig>> =
   I["*"] extends DynamicInputPortConfig
     ? { [K: string]: Convert<I["*"]> }
     : // eslint-disable-next-line @typescript-eslint/ban-types
@@ -357,15 +357,6 @@ type GetReflective<O extends Record<string, OutputPortConfig>> =
 
 type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
-export type LooseDescribeFn = (
-  staticParams: Record<string, JsonSerializable>,
-  dynamicParams: Record<string, JsonSerializable>,
-  context?: NodeDescriberContext
-) => MaybePromise<{
-  inputs?: DynamicInputPorts;
-  outputs?: DynamicInputPorts;
-}>;
-
 type VeryLooseDescribeFn = Function;
 
 export type DynamicInputPorts =
@@ -389,59 +380,3 @@ export type DynamicInputPorts =
         | undefined;
     }
   | UnsafeSchema;
-
-type StrictDescribeFn<
-  I extends Record<string, InputPortConfig>,
-  O extends Record<string, OutputPortConfig>,
-> = I["*"] extends DynamicInputPortConfig
-  ? O["*"] extends DynamicOutputPortConfig
-    ? O["*"]["reflective"] extends true
-      ? {
-          // poly/poly reflective
-          describe?: (
-            staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
-          ) => MaybePromise<{
-            inputs: DynamicInputPorts;
-            outputs?: never;
-          }>;
-        }
-      : {
-          // poly/poly non-reflective
-          describe: (
-            staticInputs: Expand<StaticInvokeParams<I>>,
-            dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
-          ) => MaybePromise<{
-            inputs?: DynamicInputPorts;
-            outputs: DynamicInputPorts;
-          }>;
-        }
-    : {
-        // poly/mono
-        describe?: (
-          staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
-        ) => MaybePromise<{
-          inputs: DynamicInputPorts;
-          outputs?: never;
-        }>;
-      }
-  : O["*"] extends DynamicOutputPortConfig
-    ? {
-        // mono/poly
-        describe: (
-          staticInputs: Expand<StaticInvokeParams<I>>,
-          dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
-        ) => MaybePromise<{
-          inputs?: never;
-          outputs: DynamicInputPorts;
-        }>;
-      }
-    : {
-        // mono/mono
-        describe?: never;
-      };

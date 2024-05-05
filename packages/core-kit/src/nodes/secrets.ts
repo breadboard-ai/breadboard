@@ -88,7 +88,7 @@ const secrets = defineNodeType({
     },
   },
   describe: (inputs) => ({
-    outputs: inputs.keys,
+    outputs: inputs.keys ?? [],
   }),
   invoke: (inputs) =>
     Object.fromEntries(
