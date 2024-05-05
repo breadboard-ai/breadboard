@@ -76,6 +76,7 @@ const writerTask = contextFromText(
 );
 
 const looperPlan = {
+  max: 3,
   todo: [
     {
       task: "Write Chapter 1: Echoes of the Past",
@@ -96,16 +97,16 @@ const looperPlan = {
       task: "Write Chapter 6: The Price of Progress",
     },
     {
-      task: "Chapter 7: The Unseen Threat",
+      task: "Write Chapter 7: The Unseen Threat",
     },
     {
-      task: "Chapter 8: A Call to Action",
+      task: "Write Chapter 8: A Call to Action",
     },
     {
-      task: "Chapter 9: A New Dawn",
+      task: "Write Chapter 9: A New Dawn",
     },
     {
-      task: "Chapter 10: The Journey Continues",
+      task: "Write Chapter 10: The Journey Continues",
     },
   ],
 };

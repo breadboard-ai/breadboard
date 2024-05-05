@@ -7,6 +7,7 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  Schema,
   base,
   board,
   code,
@@ -41,7 +42,43 @@ export type LooperPlan = {
   todo?: {
     task: string;
   }[];
+  /**
+   * Whether to append only the last item in the loop to the context or all
+   * of them.
+   */
+  appendLast?: boolean;
+  /**
+   * Whether to return only last item from the context as the final product
+   * or all of them;
+   */
+  returnLast?: boolean;
 };
+
+export const planSchema = {
+  type: "object",
+  properties: {
+    max: {
+      type: "number",
+      description: "Maximum iterations to make, optional. Default is infinity",
+    },
+    todo: {
+      type: "array",
+      description:
+        "Items in the plan, optional. Use this if the plan contains a definite, concrete list of items",
+      items: {
+        type: "object",
+        description: "The object that represent an item in the plan",
+        properties: {
+          task: {
+            type: "string",
+            description:
+              "The task description. Use action-oriented language, starting with a verb that fits the task",
+          },
+        },
+      },
+    },
+  },
+} satisfies Schema;
 
 const defaultPlan = JSON.stringify({} satisfies LooperPlan);
 
