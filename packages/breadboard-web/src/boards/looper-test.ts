@@ -75,41 +75,41 @@ const writerTask = contextFromText(
   `Write a chapter following the story of the the outline.`
 );
 
-const looperPlan = {
-  max: 3,
-  todo: [
-    {
-      task: "Write Chapter 1: Echoes of the Past",
-    },
-    {
-      task: "Write Chapter 2: Whispers of Rebellion",
-    },
-    {
-      task: "Write Chapter 3: The Spark of Creation",
-    },
-    {
-      task: "Write Chapter 4: A World Transformed",
-    },
-    {
-      task: "Write Chapter 5: The Seeds of Doubt",
-    },
-    {
-      task: "Write Chapter 6: The Price of Progress",
-    },
-    {
-      task: "Write Chapter 7: The Unseen Threat",
-    },
-    {
-      task: "Write Chapter 8: A Call to Action",
-    },
-    {
-      task: "Write Chapter 9: A New Dawn",
-    },
-    {
-      task: "Write Chapter 10: The Journey Continues",
-    },
-  ],
-};
+// const looperPlan = {
+//   max: 3,
+//   todo: [
+//     {
+//       task: "Write Chapter 1: Echoes of the Past",
+//     },
+//     {
+//       task: "Write Chapter 2: Whispers of Rebellion",
+//     },
+//     {
+//       task: "Write Chapter 3: The Spark of Creation",
+//     },
+//     {
+//       task: "Write Chapter 4: A World Transformed",
+//     },
+//     {
+//       task: "Write Chapter 5: The Seeds of Doubt",
+//     },
+//     {
+//       task: "Write Chapter 6: The Price of Progress",
+//     },
+//     {
+//       task: "Write Chapter 7: The Unseen Threat",
+//     },
+//     {
+//       task: "Write Chapter 8: A Call to Action",
+//     },
+//     {
+//       task: "Write Chapter 9: A New Dawn",
+//     },
+//     {
+//       task: "Write Chapter 10: The Journey Continues",
+//     },
+//   ],
+// };
 
 export default await board(({ context }) => {
   context
@@ -121,7 +121,10 @@ export default await board(({ context }) => {
   const loop = agents.looper({
     $metadata: { title: "Looper" },
     context,
-    plan: looperPlan,
+    task: contextFromText(
+      `Write the book chapter by chapter, following the outline`
+      // `Write the first three chapters of the book, following the outline. Each chapter is a single task.`
+    ),
   });
 
   const writer = agents.superWorker({

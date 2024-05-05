@@ -12,7 +12,9 @@ import {
   board,
   code,
 } from "@google-labs/breadboard";
-import { Context } from "../context.js";
+import { Context, LlmContent, userPartsAdder } from "../context.js";
+import { gemini } from "@google-labs/gemini-kit";
+import { json } from "@google-labs/json-kit";
 
 export type LooperType = NewNodeFactory<
   {
@@ -80,63 +82,96 @@ export const planSchema = {
   },
 } satisfies Schema;
 
-const defaultPlan = JSON.stringify({} satisfies LooperPlan);
+const plannerInstruction = {
+  parts: [
+    {
+      text: `You are a talented planner. Given any job, you can create a plan for it. Depending on the job, this plan you produce may be as simple as "repeat N times" or it could be a list of todo items for concrete tasks to perform.
 
-const examplePlan = JSON.stringify({
-  max: 1,
-} satisfies LooperPlan);
+Your output must be a valid JSON of the following format:
+
+\`\`\`json
+{
+  "max": "number, how many iterations to make, optional. Useful when the job specifies the upper limit the number of items in the list.
+  "todo": [{
+    "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task"
+  }]
+}
+\`\`\`
+
+Here is the job:`,
+    },
+  ],
+} satisfies LlmContent;
 
 const contextExample = JSON.stringify({
   parts: [{ text: "test" }],
   role: "user",
 });
 
-const planReader = code(({ context, plan }) => {
-  type LooperData = {
-    type: "looper";
-    remaining: LooperPlan["todo"];
-  };
+export type LooperData = {
+  type: "looper";
+  data: LooperPlan;
+};
+
+const progressReader = code(({ context }) => {
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
-  if (!plan) {
-    throw new Error("Plan is required for Looper to function.");
-  }
-  const p = plan as LooperPlan;
-  const max = p.max || p.todo?.length || Infinity;
-  const done: LooperData[] = [];
+  const progress: LooperPlan[] = [];
   // Collect all metadata entries in the context.
   // Gives us where we've been and where we're going.
   for (let i = existing.length - 1; i >= 0; i--) {
     const item = existing[i];
     if (item.role === "$metadata") {
-      done.push(item.data as LooperData);
+      progress.push(item.data as LooperPlan);
     }
   }
-  const contents = structuredClone(existing) as Context[];
-  const count = done.length;
-  if (count >= max) {
-    return { done: existing };
+  if (progress.length) {
+    return { progress };
+  } else {
+    return { context: context };
   }
-  if (p.todo && Array.isArray(p.todo)) {
-    const last = done[0] || { type: "looper", remaining: p.todo };
-    const next = last.remaining?.shift();
-    if (!next) {
-      return { done: existing };
-    }
-    contents.push({ role: "$metadata", data: last });
-    contents.push({ role: "user", parts: [{ text: next.task }] });
-    return { context: contents };
-  } else if (max) {
-    const count = done.length;
+});
+
+const planReader = code(({ context, progress }) => {
+  const plans = (
+    Array.isArray(progress) ? progress : [progress]
+  ) as LooperPlan[];
+  const existing = (Array.isArray(context) ? context : [context]) as Context[];
+  if (!plans || !plans.length) {
+    throw new Error("Plan is required for Looper to function.");
+  }
+  try {
+    const current = plans[0];
+    const originalPlan = plans[plans.length - 1];
+    const max = originalPlan.max || originalPlan.todo?.length || Infinity;
+    const contents = structuredClone(existing) as Context[];
+    const count = plans.length;
     if (count >= max) {
       return { done: existing };
     }
-    contents.push({ role: "$metadata", data: { type: "looper" } });
-    return { context: contents };
+    if (current.todo && Array.isArray(current.todo)) {
+      const next = current.todo?.shift();
+      if (!next) {
+        return { done: existing };
+      }
+      contents.push({ role: "$metadata", data: current });
+      contents.push({ role: "user", parts: [{ text: next.task }] });
+      return { context: contents };
+    } else if (max) {
+      const count = plans.length;
+      if (count >= max) {
+        return { done: existing };
+      }
+      contents.push({ role: "$metadata", data: { type: "looper" } });
+      return { context: contents };
+    }
+    return { done: existing };
+  } catch (e) {
+    const error = e as Error;
+    throw new Error(`Invalid plan, unable to proceed: ${error.message}`);
   }
-  return { done: existing };
 });
 
-export default await board(({ context, plan }) => {
+export default await board(({ context, task }) => {
   context
     .title("Context in")
     .isArray()
@@ -144,21 +179,56 @@ export default await board(({ context, plan }) => {
     .optional()
     .default("[]")
     .examples(contextExample)
-    .description("Initial conversation context");
+    .description("The source material for this worker.");
 
-  plan
-    .title("Plan")
-    .description("What to iterate over, and/or how many times")
+  task
+    .title("Task")
+    .description("The task from which to create the plan for looping.")
     .isObject()
-    .optional()
-    .default(defaultPlan)
-    .examples(examplePlan);
+    .behavior("llm-content");
+
+  // plan
+  //   .title("Plan")
+  //   .description("What to iterate over, and/or how many times")
+  //   .isObject()
+  //   .optional()
+  //   .default(defaultPlan)
+  //   .examples(examplePlan);
+
+  const readProgress = progressReader({
+    $metadata: { title: "Read progress so far" },
+    context,
+  });
+
+  const addTask = userPartsAdder({
+    $metadata: { title: "Add Task" },
+    context: readProgress.context,
+    toAdd: task,
+  });
+
+  const generatePlan = gemini.text({
+    $metadata: { title: "Generating Plan" },
+    context: addTask.context,
+    systemInstruction: plannerInstruction,
+    responseMimeType: "application/json",
+  });
+
+  const validate = json.validateJson({
+    $metadata: {
+      title: "Validate Plan",
+      description: "Validating JSON of the Plan",
+    },
+    json: generatePlan.text.isString(),
+    schema: planSchema,
+  });
 
   const readPlan = planReader({
     $metadata: { title: "Read Plan" },
     context,
-    plan,
+    progress: readProgress.progress,
   });
+
+  validate.json.as("progress").to(readPlan);
 
   base.output({
     $metadata: { title: "Exit" },

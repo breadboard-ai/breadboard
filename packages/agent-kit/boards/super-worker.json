@@ -79,7 +79,7 @@
       "id": "fn-3",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role === \"model\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    result[result.length - 1].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "code": "const fn_3 = ({ context, toAdd }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== \"user\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
         "name": "fn_3",
         "raw": true
       },
