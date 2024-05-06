@@ -209,20 +209,6 @@
                     "type": "object",
                     "properties": {
                       "location": {
-                        "title": "location",
-                        "description": "The value to substitute for the parameter \"location\"",
-                        "type": [
-                          "array",
-                          "boolean",
-                          "null",
-                          "number",
-                          "object",
-                          "string"
-                        ]
-                      },
-                      "generator": {
-                        "title": "board",
-                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "type": [
                           "array",
                           "boolean",
@@ -231,6 +217,20 @@
                           "object",
                           "string"
                         ],
+                        "title": "location",
+                        "description": "The value to substitute for the parameter \"location\""
+                      },
+                      "generator": {
+                        "type": [
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
+                        ],
+                        "title": "board",
+                        "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "behavior": [
                           "board"
                         ]
@@ -258,8 +258,6 @@
                     "type": "object",
                     "properties": {
                       "item": {
-                        "title": "activity",
-                        "description": "The value to substitute for the parameter \"activity\"",
                         "type": [
                           "array",
                           "boolean",
@@ -267,7 +265,9 @@
                           "number",
                           "object",
                           "string"
-                        ]
+                        ],
+                        "title": "activity",
+                        "description": "The value to substitute for the parameter \"activity\""
                       }
                     },
                     "required": [

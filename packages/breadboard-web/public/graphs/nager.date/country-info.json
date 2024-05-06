@@ -179,8 +179,6 @@
           "type": "object",
           "properties": {
             "dates": {
-              "title": "response",
-              "description": "The response from the fetch request",
               "type": [
                 "array",
                 "boolean",
@@ -188,7 +186,9 @@
                 "number",
                 "object",
                 "string"
-              ]
+              ],
+              "title": "response",
+              "description": "The response from the fetch request"
             }
           }
         }

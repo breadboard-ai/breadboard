@@ -68,9 +68,9 @@
               ]
             },
             "generator": {
+              "type": "string",
               "title": "Generator",
               "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-              "type": "string",
               "behavior": [
                 "board"
               ],
@@ -96,9 +96,9 @@
           "type": "object",
           "properties": {
             "context": {
+              "type": "object",
               "title": "Context",
-              "description": "Agent context after generation",
-              "type": "object"
+              "description": "Agent context after generation"
             },
             "text": {
               "title": "Output",
