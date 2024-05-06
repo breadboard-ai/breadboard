@@ -402,6 +402,38 @@ test("async describe", async () => {
 });
 
 test("describe receives context", async () => {
+  const input: NodeDescriberContext = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+  };
+  const expected: NodeDescriberContextWithSchemas = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+    inputSchema: {},
+    outputSchema: {},
+  };
+  let actual: NodeDescriberContext | undefined;
+  defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "number" },
+    },
+    outputs: {
+      "*": { type: "number" },
+    },
+    describe: (_staticInputs, _dynamicInputs, context) => {
+      actual = context;
+      return {
+        inputs: [],
+        outputs: [],
+      };
+    },
+    invoke: () => ({}),
+  }).describe({}, {}, {}, input);
+  assert.deepEqual(actual, expected);
+});
+
+test("describe receives converted inputSchema and outputSchema and can return it", async () => {
   let actualContext: NodeDescriberContextWithSchemas | undefined;
   const testDefinition = defineNodeType({
     name: "foo",
