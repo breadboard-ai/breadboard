@@ -1,0 +1,119 @@
+{
+  "title": "Looper Chat Testing Grounds",
+  "description": "A board where we teach the Looper Node facilitate conversations.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "human-6",
+      "to": "looper-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-4",
+      "to": "output-2",
+      "out": "done",
+      "in": "context"
+    },
+    {
+      "from": "looper-4",
+      "to": "superWorker-5",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "passthrough-3",
+      "to": "looper-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "superWorker-5",
+      "to": "human-6",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "Context Out"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "human-6",
+      "type": "human",
+      "configuration": {},
+      "metadata": {
+        "title": "User",
+        "description": "Giving control back to the user"
+      }
+    },
+    {
+      "id": "looper-4",
+      "type": "looper",
+      "configuration": {
+        "task": {
+          "parts": [
+            {
+              "text": "Ask the user to about the name of their business and the the location of the business, then conclude the conversation."
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Looper"
+      }
+    },
+    {
+      "id": "passthrough-3",
+      "type": "passthrough",
+      "configuration": {
+        "context": []
+      },
+      "metadata": {
+        "title": "Start",
+        "description": "The entry point into the graph"
+      }
+    },
+    {
+      "id": "superWorker-5",
+      "type": "superWorker",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "As a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.\n\n  Pretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.\n  \n  You are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers."
+            }
+          ]
+        },
+        "task": {
+          "parts": [
+            {
+              "text": "Carry a fun, engaging conversation with the user"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Chat Bot"
+      }
+    }
+  ]
+}

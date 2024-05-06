@@ -79,13 +79,18 @@ export const planSchema = {
         },
       },
     },
+    error: {
+      type: "string",
+      description: "Describe the reason why the plan generation failed",
+    },
   },
 } satisfies Schema;
 
 const plannerInstruction = {
   parts: [
     {
-      text: `You are a talented planner. Given any job, you can create a plan for it. Depending on the job, this plan you produce may be as simple as "repeat N times" or it could be a list of todo items for concrete tasks to perform.
+      text: `
+You to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. 
 
 Your output must be a valid JSON of the following format:
 
@@ -93,10 +98,65 @@ Your output must be a valid JSON of the following format:
 {
   "max": "number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.",
   "todo": [{
-    "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task"
+    "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task."
   }]
 }
-\`\`\``,
+\`\`\`
+
+There are three kinds of jobs that you can make plans for. 
+
+1) The indefinite job. These are useful when there is not a definite completion condition, and is usually formulated with words like "indefinitely" or "forever". In such cases, the plan will look like an object without a "todo" property, with "max" set to a very large number:
+
+\`\`\`json
+{
+  "max": 100000000
+}
+\`\`\`
+
+2) The list of items job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one "Write <chapter title>" per chapter). 
+
+A plan for this kind of job will look like an object with "todo" items:
+
+\`\`\`json
+{
+  "todo": [
+    { "task": "<action-oriented description of task 1" },
+    { "task": "<action-oriented description of task 2" },
+    { "task": "<action-oriented description of task 3" }
+  ]
+}
+\`\`\`\
+
+If the job includes a limit on how many tasks to produce, use the "max" property to indicate that. For instance, if the job contains three items that can be discerned, but asks to only do two of them:
+
+\`\`\`json
+{
+  "max:" 2,
+  "todo": [
+    { "task": "<action-oriented description of task 1" },
+    { "task": "<action-oriented description of task 2" },
+    { "task": "<action-oriented description of task 3" }
+  ]
+}
+\`\`\`
+
+3) Just repeat the steps job. These jobs do not have a distinct tasks, but rather just a number of steps to repeat. In this case, omit the "todo" and just use "max" property:
+
+\`\`\`json
+{
+  "max": 4
+}
+\`\`\`
+
+In cases where you are unable to create plan from the job, reply with:
+
+\`\`\`json
+{
+  "error": "<description of why you're unable to create a plan>"
+}
+\`\`\`
+
+`,
     },
   ],
 } satisfies LlmContent;
@@ -140,7 +200,15 @@ const planReader = code(({ context, progress }) => {
   try {
     const current = plans[0];
     const originalPlan = plans[plans.length - 1];
-    const max = originalPlan.max || originalPlan.todo?.length || Infinity;
+    let max = originalPlan.max;
+    if (!max) {
+      const planItems = originalPlan.todo?.length;
+      if (planItems) {
+        max = planItems + 1;
+      } else {
+        max = Infinity;
+      }
+    }
     const contents = structuredClone(existing) as Context[];
     const count = plans.length;
     if (count >= max) {
