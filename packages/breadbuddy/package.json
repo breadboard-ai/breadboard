@@ -78,7 +78,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.12.7",
+    "@types/node": "^20.12.9",
     "@types/nunjucks": "^3.2.6",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
