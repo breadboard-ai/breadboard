@@ -79,6 +79,10 @@ export const planSchema = {
         },
       },
     },
+    error: {
+      type: "string",
+      description: "Describe the reason why the plan generation failed",
+    },
   },
 } satisfies Schema;
 
@@ -196,7 +200,15 @@ const planReader = code(({ context, progress }) => {
   try {
     const current = plans[0];
     const originalPlan = plans[plans.length - 1];
-    const max = originalPlan.max || originalPlan.todo?.length || Infinity;
+    let max = originalPlan.max;
+    if (!max) {
+      const planItems = originalPlan.todo?.length;
+      if (planItems) {
+        max = planItems + 1;
+      } else {
+        max = Infinity;
+      }
+    }
     const contents = structuredClone(existing) as Context[];
     const count = plans.length;
     if (count >= max) {
