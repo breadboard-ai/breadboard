@@ -70,6 +70,10 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns the `InspectableNodeType` instance for the node.
+   */
+  type(): InspectableNodeType;
 
   /**
    * Returns the API of the node.
