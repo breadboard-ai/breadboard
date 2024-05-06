@@ -27,11 +27,13 @@ export function portConfigMapToJSONSchema(
     properties: Object.fromEntries(
       sortedPropertyEntries.map(
         ([name, { title, description, type, behavior, ...config }]) => {
-          const schema: JSONSchema4 = { title: title ?? name };
+          const schema: JSONSchema4 = {
+            ...toJSONSchema(type),
+            title: title ?? name,
+          };
           if (description) {
             schema.description = description;
           }
-          Object.assign(schema, toJSONSchema(type));
           const defaultValue = (config as StaticInputPortConfig).default;
           if (defaultValue !== undefined) {
             schema.default = defaultValue;
