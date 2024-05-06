@@ -38,7 +38,7 @@ export interface NodeDescriberContextWithSchemas extends NodeDescriberContext {
 export type LooseDescribeFn = (
   staticParams: Record<string, JsonSerializable>,
   dynamicParams: Record<string, JsonSerializable>,
-  context?: NodeDescriberContext
+  context?: NodeDescriberContextWithSchemas
 ) => MaybePromise<{
   inputs?: CustomDescribePortManifest;
   outputs?: CustomDescribePortManifest;
@@ -65,7 +65,7 @@ export type StrictDescribeFn<
           describe?: (
             staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
+            context?: NodeDescriberContextWithSchemas
           ) => MaybePromise<{
             inputs: CustomDescribePortManifest;
             outputs?: never;
@@ -76,7 +76,7 @@ export type StrictDescribeFn<
           describe: (
             staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
+            context?: NodeDescriberContextWithSchemas
           ) => MaybePromise<{
             inputs?: CustomDescribePortManifest;
             outputs: CustomDescribePortManifest;
@@ -87,7 +87,7 @@ export type StrictDescribeFn<
         describe?: (
           staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
+          context?: NodeDescriberContextWithSchemas
         ) => MaybePromise<{
           inputs: CustomDescribePortManifest;
           outputs?: never;
@@ -99,7 +99,7 @@ export type StrictDescribeFn<
         describe: (
           staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
+          context?: NodeDescriberContextWithSchemas
         ) => MaybePromise<{
           inputs?: never;
           outputs: CustomDescribePortManifest;

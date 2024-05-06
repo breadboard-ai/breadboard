@@ -195,7 +195,11 @@ export class DefinitionImpl<
     if (this.#describe !== undefined) {
       const { staticValues, dynamicValues } =
         this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
-      user = await this.#describe(staticValues, dynamicValues, context);
+      user = await this.#describe(staticValues, dynamicValues, {
+        ...(context ?? { outerGraph: { nodes: [], edges: [] } }),
+        inputSchema: {},
+        outputSchema: {},
+      });
     }
 
     let inputSchema: JSONSchema4 & {

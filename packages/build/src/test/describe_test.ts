@@ -8,6 +8,7 @@ import { array, defineNodeType, unsafeSchema } from "@breadboard-ai/build";
 import type { NodeDescriberContext } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import type { NodeDescriberContextWithSchemas } from "../internal/define/describe.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -401,11 +402,17 @@ test("async describe", async () => {
 });
 
 test("describe receives context", async () => {
-  const expected: NodeDescriberContext = {
+  const input: NodeDescriberContext = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
   };
-  let actual: NodeDescriberContext | undefined;
+  const expected: NodeDescriberContextWithSchemas = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+    inputSchema: {},
+    outputSchema: {},
+  };
+  let actual: NodeDescriberContextWithSchemas | undefined;
   defineNodeType({
     name: "foo",
     inputs: {
@@ -422,7 +429,7 @@ test("describe receives context", async () => {
       };
     },
     invoke: () => ({}),
-  }).describe({}, {}, {}, expected);
+  }).describe({}, {}, {}, input);
   assert.deepEqual(actual, expected);
 });
 
