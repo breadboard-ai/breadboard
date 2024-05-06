@@ -78,6 +78,8 @@ export default await board(({ in: context, persona, task }) => {
       "Give it the task to perform on the provided source materials. Ideally, the task is a call to action with the necessary details on how to best complete this action."
     )
     .isObject()
+    .optional()
+    .default(JSON.stringify({ parts: [] }))
     .behavior("llm-content", "config")
     .examples(JSON.stringify(sampleTask, null, 2));
 
