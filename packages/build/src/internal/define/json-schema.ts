@@ -7,8 +7,14 @@
 import type { JSONSchema4 } from "json-schema";
 import type { PortConfigMap } from "../common/port.js";
 import { toJSONSchema } from "../type-system/type.js";
-import type { PortConfig, StaticInputPortConfig } from "./config.js";
+import type {
+  Format,
+  PortConfig,
+  StaticInputPortConfig,
+  StaticOutputPortConfig,
+} from "./config.js";
 import { unsafeType } from "../type-system/unsafe.js";
+import type { BehaviorSchema } from "@google-labs/breadboard";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
@@ -63,12 +69,29 @@ export function jsonSchemaToPortConfigMap(
   ioSchema: JSONSchema4
 ): PortConfigMap {
   return Object.fromEntries(
-    Object.entries(ioSchema.properties ?? {}).map(([portName, portSchema]) => [
-      portName,
-      {
-        ...portSchema,
+    Object.entries(ioSchema.properties ?? {}).map(([portName, portSchema]) => {
+      const config: StaticInputPortConfig | StaticOutputPortConfig = {
+        // Note we preserve the entire JSON schema inside the type wrapper. The
+        // rest of the fields have special meaning in port configs so we also
+        // put them at the top-level.
         type: unsafeType(portSchema),
-      } as PortConfig,
-    ])
+      };
+      if (portSchema.title !== undefined) {
+        config.title = portSchema.title;
+      }
+      if (portSchema.description !== undefined) {
+        config.description = portSchema.description;
+      }
+      if (portSchema.default !== undefined) {
+        (config as StaticInputPortConfig).default = portSchema.default;
+      }
+      if (portSchema.format !== undefined) {
+        config.format = portSchema.format as Format | undefined;
+      }
+      if (portSchema.behavior !== undefined) {
+        config.behavior = portSchema.behavior;
+      }
+      return [portName, config];
+    })
   );
 }
