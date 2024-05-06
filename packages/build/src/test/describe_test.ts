@@ -402,9 +402,21 @@ test("async describe", async () => {
 });
 
 test("describe receives context", async () => {
-  const input: NodeDescriberContext = {
+  const testContext: NodeDescriberContext = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
+  };
+  const testInputSchema = {
+    type: "object",
+    properties: {
+      foo: { type: "string", default: "foo" },
+    },
+  };
+  const testOutputSchema = {
+    type: "object",
+    properties: {
+      bar: { type: "number" },
+    },
   };
   const expected: NodeDescriberContextWithSchemas = {
     base: new URL("http://example.com/"),
@@ -429,7 +441,7 @@ test("describe receives context", async () => {
       };
     },
     invoke: () => ({}),
-  }).describe({}, {}, {}, input);
+  }).describe({}, testInputSchema, testOutputSchema, testContext);
   assert.deepEqual(actual, expected);
 });
 

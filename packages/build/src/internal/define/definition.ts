@@ -33,7 +33,10 @@ import type {
 } from "./define.js";
 import type { LooseDescribeFn } from "./describe.js";
 import { Instance } from "./instance.js";
-import { portConfigMapToJSONSchema } from "./json-schema.js";
+import {
+  jsonSchemaToPortConfigMap,
+  portConfigMapToJSONSchema,
+} from "./json-schema.js";
 import {
   isUnsafeSchema,
   unsafeSchemaAccessor,
@@ -183,7 +186,7 @@ export class DefinitionImpl<
   async describe(
     values?: InputValues,
     inboundEdges?: Schema,
-    _outboundEdges?: Schema,
+    outboundEdges?: Schema,
     context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     let user:
@@ -197,8 +200,12 @@ export class DefinitionImpl<
         this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
       user = await this.#describe(staticValues, dynamicValues, {
         ...(context ?? { outerGraph: { nodes: [], edges: [] } }),
-        inputSchema: {},
-        outputSchema: {},
+        inputSchema: jsonSchemaToPortConfigMap(
+          (inboundEdges as JSONSchema4) ?? {}
+        ),
+        outputSchema: jsonSchemaToPortConfigMap(
+          (outboundEdges as JSONSchema4) ?? {}
+        ),
       });
     }
 

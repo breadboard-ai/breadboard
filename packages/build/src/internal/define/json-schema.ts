@@ -55,3 +55,7 @@ export function portConfigMapToJSONSchema(
       .map(([name]) => name),
   };
 }
+
+export function jsonSchemaToPortConfigMap(_schema: JSONSchema4): PortConfigMap {
+  return {};
+}
