@@ -35,6 +35,7 @@ import {
   InspectableNode,
   InspectableSubgraphs,
   NodeTypeDescriberOptions,
+  InspectableNodeType,
 } from "./types.js";
 
 export const inspectableGraph = (
@@ -56,6 +57,7 @@ const maybeURL = (url?: string): URL | undefined => {
 class Graph implements InspectableGraphWithStore {
   #url?: URL;
   #kits?: InspectableKit[];
+  #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
@@ -145,6 +147,18 @@ class Graph implements InspectableGraphWithStore {
 
   kits(): InspectableKit[] {
     return (this.#kits ??= collectKits(this.#options.kits || []));
+  }
+
+  typeForNode(id: string): InspectableNodeType | undefined {
+    const kits = this.kits();
+    const node = this.nodeById(id);
+    if (!node) {
+      return undefined;
+    }
+    this.#nodeTypes ??= new Map(
+      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
+    );
+    return this.#nodeTypes.get(node.descriptor.type);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {

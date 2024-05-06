@@ -24,6 +24,7 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
+  InspectableNodeType,
   InspectablePortList,
   NodeTypeDescriberOptions,
 } from "./types.js";
@@ -59,6 +60,16 @@ class Node implements InspectableNode {
 
   isExit(): boolean {
     return this.outgoing().length === 0;
+  }
+
+  type(): InspectableNodeType {
+    const type = this.#graph.typeForNode(this.descriptor.id);
+    if (!type) {
+      throw new Error(
+        `Possible integrity error: node ${this.descriptor.id} does not have a type`
+      );
+    }
+    return type;
   }
 
   configuration(): NodeConfiguration {

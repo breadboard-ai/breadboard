@@ -70,6 +70,10 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns the `InspectableNodeType` instance for the node.
+   */
+  type(): InspectableNodeType;
 
   /**
    * Returns the API of the node.
@@ -202,6 +206,11 @@ export type InspectableGraph = {
    * @param type type of the nodes to find
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
+  /**
+   * Returns the `InspectableNodeType` for a given node or undefined if the
+   * node does not exist.
+   */
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
   /**
    * Describe a given type of the node
    */
