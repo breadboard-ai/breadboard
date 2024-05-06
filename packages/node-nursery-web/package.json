@@ -104,7 +104,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/gapi": "^0.0.47",
     "@types/node": "^20.12.7",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
     "ava": "^5.2.0",
     "npm": "^10.7.0",
