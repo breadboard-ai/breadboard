@@ -110,7 +110,14 @@ export class ActivityLog extends LitElement {
       return false;
     }
 
-    return "parts" in nodeValue && Array.isArray(nodeValue.parts);
+    if ("parts" in nodeValue && Array.isArray(nodeValue.parts)) {
+      return true;
+    }
+
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
+    return false;
   }
 
   #isArrayOfLLMContent(nodeValue: unknown): nodeValue is LLMContent[] {
@@ -289,7 +296,8 @@ export class ActivityLog extends LitElement {
                 // Special case for "$metadata" item.
                 // See https://github.com/breadboard-ai/breadboard/issues/1673
                 // TODO: Make this not ugly.
-                return html`Metadata: ${JSON.stringify(llmContent)}`;
+                const data = (llmContent as unknown as { data: unknown }).data;
+                return html`<bb-json-tree .json=${data}></bb-json-tree>`;
               }
               if (!llmContent.parts.length) {
                 return html`No data provided`;
