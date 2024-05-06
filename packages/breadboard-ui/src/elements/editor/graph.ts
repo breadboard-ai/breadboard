@@ -641,18 +641,9 @@ export class Graph extends PIXI.Container {
         graphNode.title = node.title();
       }
 
-      const metadata = node.metadata();
-
-      // TODO: Decide where this data should come from.
-      if (
-        "icon" in metadata &&
-        GraphAssets.instance().has(metadata.icon as string)
-      ) {
-        graphNode.icon = metadata.icon as string;
-      } else if (node.descriptor.type === "superWorker") {
-        graphNode.icon = "smart-toy";
-      } else if (node.descriptor.type === "human") {
-        graphNode.icon = "human";
+      const icon = node.type().metadata().icon;
+      if (icon && GraphAssets.instance().has(icon)) {
+        graphNode.icon = icon;
       }
 
       if (node.descriptor.metadata?.visual) {
