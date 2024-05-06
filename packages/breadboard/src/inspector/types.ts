@@ -203,6 +203,11 @@ export type InspectableGraph = {
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
   /**
+   * Returns the `InspectableNodeType` for a given node or undefined if the
+   * node does not exist.
+   */
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
+  /**
    * Describe a given type of the node
    */
   describeType(
