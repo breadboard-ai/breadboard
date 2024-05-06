@@ -5,9 +5,10 @@
  */
 
 import { array, defineNodeType, unsafeSchema } from "@breadboard-ai/build";
-import type { NodeDescriberContext } from "@google-labs/breadboard";
+import type { NodeDescriberContext, Schema } from "@google-labs/breadboard";
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import type { NodeDescriberContextWithSchemas } from "../internal/define/describe.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -401,9 +402,15 @@ test("async describe", async () => {
 });
 
 test("describe receives context", async () => {
-  const expected: NodeDescriberContext = {
+  const input: NodeDescriberContext = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
+  };
+  const expected: NodeDescriberContextWithSchemas = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+    inputSchema: {},
+    outputSchema: {},
   };
   let actual: NodeDescriberContext | undefined;
   defineNodeType({
@@ -422,8 +429,148 @@ test("describe receives context", async () => {
       };
     },
     invoke: () => ({}),
-  }).describe({}, {}, {}, expected);
+  }).describe({}, {}, {}, input);
   assert.deepEqual(actual, expected);
+});
+
+test("describe receives converted inputSchema and outputSchema and can return it", async () => {
+  let actualContext: NodeDescriberContextWithSchemas | undefined;
+  const testDefinition = defineNodeType({
+    name: "foo",
+    inputs: {
+      "*": { type: "number" },
+    },
+    outputs: {
+      "*": { type: "number" },
+    },
+    describe: (_staticInputs, _dynamicInputs, context) => {
+      actualContext = context;
+      return {
+        // Solidfy that the actual input/output ports are valid by returning
+        // them here so they show up in the description
+        inputs: {
+          ...context?.inputSchema,
+          // Also continue to allow additional ports.
+          "*": {},
+        },
+        outputs: {
+          ...context?.outputSchema,
+          // Stop allowing additional ports (no "*").
+          // But do add some specific other property for some reason.
+          new: {
+            type: array("boolean"),
+          },
+        },
+      };
+    },
+    invoke: () => ({}),
+  });
+
+  const testContext: NodeDescriberContext = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+  };
+
+  const testInputSchema: Schema = {
+    type: "object",
+    properties: {
+      foo: {
+        type: "string",
+        default: "foo",
+        format: "javascript",
+        behavior: ["bubble"],
+        ["weirdThing" as never]: 123,
+      },
+    },
+  };
+  const testOutputSchema: Schema = {
+    type: "object",
+    properties: {
+      bar: {
+        type: "number",
+        ["anotherWeirdThing" as never]: 456,
+      },
+    },
+  };
+
+  const expectedContext: NodeDescriberContextWithSchemas = {
+    base: new URL("http://example.com/"),
+    outerGraph: { nodes: [], edges: [] },
+    inputSchema: {
+      foo: {
+        type: {
+          jsonSchema: {
+            behavior: ["bubble"],
+            default: "foo",
+            format: "javascript",
+            type: "string",
+            weirdThing: 123,
+          },
+        },
+        default: "foo",
+        format: "javascript",
+        behavior: ["bubble"],
+      },
+    },
+    outputSchema: {
+      bar: {
+        type: {
+          jsonSchema: {
+            anotherWeirdThing: 456,
+            type: "number",
+          },
+        },
+      },
+    },
+  };
+
+  const expectedDescription = {
+    inputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+          default: "foo",
+          behavior: ["bubble"],
+          format: "javascript",
+          weirdThing: 123,
+        },
+      },
+      required: [],
+      additionalProperties: {
+        type: "number",
+      },
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        bar: {
+          title: "bar",
+          type: "number",
+          anotherWeirdThing: 456,
+        },
+        new: {
+          title: "new",
+          type: "array",
+          items: {
+            type: "boolean",
+          },
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+  };
+
+  const actualDescription = await testDefinition.describe(
+    {},
+    testInputSchema,
+    testOutputSchema,
+    testContext
+  );
+  assert.deepEqual(actualContext, expectedContext);
+  assert.deepEqual(actualDescription, expectedDescription);
 });
 
 test("describe receives defaults with undefined values", async () => {

@@ -17,16 +17,31 @@ import type {
   OutputPortConfig,
   PortConfig,
   StaticInputPortConfig,
+  StaticOutputPortConfig,
 } from "./config.js";
-import type { DynamicInputPorts, DynamicInvokeParams } from "./define.js";
+import type {
+  CustomDescribePortManifest,
+  DynamicInvokeParams,
+} from "./define.js";
+
+/**
+ * The same as {@link NodeDescriberContext} but with `inputSchema ` and
+ * `outputSchema` added in, to simplify the signature of `describe`.
+ *
+ * TODO(aomarks) Roll this into {@link NodeDescriberContext}.
+ */
+export interface NodeDescriberContextWithSchemas extends NodeDescriberContext {
+  inputSchema: { [k: string]: StaticInputPortConfig };
+  outputSchema: { [k: string]: StaticOutputPortConfig };
+}
 
 export type LooseDescribeFn = (
   staticParams: Record<string, JsonSerializable>,
   dynamicParams: Record<string, JsonSerializable>,
-  context?: NodeDescriberContext
+  context?: NodeDescriberContextWithSchemas
 ) => MaybePromise<{
-  inputs?: DynamicInputPorts;
-  outputs?: DynamicInputPorts;
+  inputs?: CustomDescribePortManifest;
+  outputs?: CustomDescribePortManifest;
 }>;
 
 export type StaticDescribeValues<I extends Record<string, InputPortConfig>> = {
@@ -50,9 +65,9 @@ export type StrictDescribeFn<
           describe?: (
             staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
+            context?: NodeDescriberContextWithSchemas
           ) => MaybePromise<{
-            inputs: DynamicInputPorts;
+            inputs: CustomDescribePortManifest;
             outputs?: never;
           }>;
         }
@@ -61,10 +76,10 @@ export type StrictDescribeFn<
           describe: (
             staticInputs: Expand<StaticDescribeValues<I>>,
             dynamicInputs: Expand<DynamicInvokeParams<I>>,
-            context?: NodeDescriberContext
+            context?: NodeDescriberContextWithSchemas
           ) => MaybePromise<{
-            inputs?: DynamicInputPorts;
-            outputs: DynamicInputPorts;
+            inputs?: CustomDescribePortManifest;
+            outputs: CustomDescribePortManifest;
           }>;
         }
     : {
@@ -72,9 +87,9 @@ export type StrictDescribeFn<
         describe?: (
           staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
+          context?: NodeDescriberContextWithSchemas
         ) => MaybePromise<{
-          inputs: DynamicInputPorts;
+          inputs: CustomDescribePortManifest;
           outputs?: never;
         }>;
       }
@@ -84,10 +99,10 @@ export type StrictDescribeFn<
         describe: (
           staticInputs: Expand<StaticDescribeValues<I>>,
           dynamicInputs: Expand<DynamicInvokeParams<I>>,
-          context?: NodeDescriberContext
+          context?: NodeDescriberContextWithSchemas
         ) => MaybePromise<{
           inputs?: never;
-          outputs: DynamicInputPorts;
+          outputs: CustomDescribePortManifest;
         }>;
       }
     : {

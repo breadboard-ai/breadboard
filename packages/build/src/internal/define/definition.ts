@@ -27,10 +27,16 @@ import type {
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
-import type { DynamicInputPorts, VeryLooseInvokeFn } from "./define.js";
+import type {
+  CustomDescribePortManifest,
+  VeryLooseInvokeFn,
+} from "./define.js";
 import type { LooseDescribeFn } from "./describe.js";
 import { Instance } from "./instance.js";
-import { portConfigMapToJSONSchema } from "./json-schema.js";
+import {
+  jsonSchemaToPortConfigMap,
+  portConfigMapToJSONSchema,
+} from "./json-schema.js";
 import {
   isUnsafeSchema,
   unsafeSchemaAccessor,
@@ -180,16 +186,27 @@ export class DefinitionImpl<
   async describe(
     values?: InputValues,
     inboundEdges?: Schema,
-    _outboundEdges?: Schema,
+    outboundEdges?: Schema,
     context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     let user:
-      | { inputs?: DynamicInputPorts; outputs?: DynamicInputPorts }
+      | {
+          inputs?: CustomDescribePortManifest;
+          outputs?: CustomDescribePortManifest;
+        }
       | undefined = undefined;
     if (this.#describe !== undefined) {
       const { staticValues, dynamicValues } =
         this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
-      user = await this.#describe(staticValues, dynamicValues, context);
+      user = await this.#describe(staticValues, dynamicValues, {
+        ...(context ?? { outerGraph: { nodes: [], edges: [] } }),
+        inputSchema: jsonSchemaToPortConfigMap(
+          (inboundEdges as JSONSchema4) ?? {}
+        ),
+        outputSchema: jsonSchemaToPortConfigMap(
+          (outboundEdges as JSONSchema4) ?? {}
+        ),
+      });
     }
 
     let inputSchema: JSONSchema4 & {
@@ -329,7 +346,7 @@ export class DefinitionImpl<
 }
 
 function parseDynamicPorts(
-  ports: Exclude<DynamicInputPorts, UnsafeSchema>,
+  ports: Exclude<CustomDescribePortManifest, UnsafeSchema>,
   base: DynamicInputPortConfig | DynamicOutputPortConfig
 ): {
   newStatic: Record<string, StaticInputPortConfig | StaticOutputPortConfig>;
@@ -341,7 +358,7 @@ function parseDynamicPorts(
   const newStatic = Object.fromEntries(
     Object.entries(ports)
       .filter(
-        /** See {@link DynamicInputPorts} for why undefined is possible here. */
+        /** See {@link CustomDescribePortManifest} for why undefined is possible here. */
         ([name, config]) => config !== undefined && name !== "*"
       )
       .map(([name, config]) => [name, { ...base, ...config }])
