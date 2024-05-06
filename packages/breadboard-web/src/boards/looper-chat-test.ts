@@ -15,8 +15,6 @@ const chatBotPersona = contextFromText(
   You are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers.`
 );
 
-const chatTask = contextFromText(``);
-
 export default await board(() => {
   const start = core.passthrough({
     $metadata: {
@@ -30,7 +28,7 @@ export default await board(() => {
     $metadata: { title: "Looper" },
     context: start.context,
     task: contextFromText(
-      `Write a plan to first greet the user, then have 5 turns of the conversation.`
+      `Ask the user to about the name of their business and the the location of the business, then conclude the conversation.`
     ),
   });
 
@@ -38,7 +36,7 @@ export default await board(() => {
     $metadata: { title: "Chat Bot" },
     in: loop.loop,
     persona: chatBotPersona,
-    task: chatTask,
+    task: contextFromText(`Carry a fun, engaging conversation with the user`),
   });
 
   const user = agents.human({
@@ -51,7 +49,7 @@ export default await board(() => {
 
   user.context.as("context").to(loop);
 
-  return { context: loop.done.isArray().behavior("llm-content") };
+  return { context: loop.done };
 }).serialize({
   title: "Looper Chat Testing Grounds",
   description:

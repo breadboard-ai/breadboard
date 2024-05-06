@@ -72,7 +72,7 @@
         "task": {
           "parts": [
             {
-              "text": "Write a plan to first greet the user, then have 5 turns of the conversation."
+              "text": "Ask the user to about the name of their business and the the location of the business, then conclude the conversation."
             }
           ]
         }
@@ -106,7 +106,7 @@
         "task": {
           "parts": [
             {
-              "text": ""
+              "text": "Carry a fun, engaging conversation with the user"
             }
           ]
         }
