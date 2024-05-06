@@ -406,26 +406,66 @@ test("describe receives context", async () => {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
   };
+
   const testInputSchema = {
     type: "object",
     properties: {
-      foo: { type: "string", default: "foo" },
+      foo: { type: "string", default: "foo", weirdThing: 123 },
     },
   };
   const testOutputSchema = {
     type: "object",
     properties: {
-      bar: { type: "number" },
+      bar: { type: "number", anotherWeirdThing: 456 },
     },
   };
-  const expected: NodeDescriberContextWithSchemas = {
+
+  const expectedContext: NodeDescriberContextWithSchemas = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
-    inputSchema: {},
-    outputSchema: {},
+    inputSchema: {
+      foo: {
+        type: {
+          jsonSchema: {
+            type: "string",
+            default: "foo",
+            weirdThing: 123,
+          },
+        },
+        default: "foo",
+        ["weirdThing" as never]: 123,
+      },
+    },
+    outputSchema: {
+      bar: {
+        type: {
+          jsonSchema: {
+            type: "number",
+            anotherWeirdThing: 456,
+          },
+        },
+        ["anotherWeirdThing" as never]: 456,
+      },
+    },
   };
-  let actual: NodeDescriberContextWithSchemas | undefined;
-  defineNodeType({
+
+  const expectedDescription = {
+    inputSchema: {
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      type: "object",
+    },
+    outputSchema: {
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      type: "object",
+    },
+  };
+
+  let actualContext: NodeDescriberContextWithSchemas | undefined;
+  const testDefinition = defineNodeType({
     name: "foo",
     inputs: {
       "*": { type: "number" },
@@ -434,15 +474,23 @@ test("describe receives context", async () => {
       "*": { type: "number" },
     },
     describe: (_staticInputs, _dynamicInputs, context) => {
-      actual = context;
+      actualContext = context;
       return {
-        inputs: [],
-        outputs: [],
+        inputs: {},
+        outputs: {},
       };
     },
     invoke: () => ({}),
-  }).describe({}, testInputSchema, testOutputSchema, testContext);
-  assert.deepEqual(actual, expected);
+  });
+
+  const actualDescription = await testDefinition.describe(
+    {},
+    testInputSchema,
+    testOutputSchema,
+    testContext
+  );
+  assert.deepEqual(actualContext, expectedContext);
+  assert.deepEqual(actualDescription, expectedDescription);
 });
 
 test("describe receives defaults with undefined values", async () => {
