@@ -7,7 +7,8 @@
 import type { JSONSchema4 } from "json-schema";
 import type { PortConfigMap } from "../common/port.js";
 import { toJSONSchema } from "../type-system/type.js";
-import type { StaticInputPortConfig } from "./config.js";
+import type { PortConfig, StaticInputPortConfig } from "./config.js";
+import { unsafeType } from "../type-system/unsafe.js";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,
@@ -56,6 +57,16 @@ export function portConfigMapToJSONSchema(
   };
 }
 
-export function jsonSchemaToPortConfigMap(_schema: JSONSchema4): PortConfigMap {
-  return {};
+export function jsonSchemaToPortConfigMap(
+  ioSchema: JSONSchema4
+): PortConfigMap {
+  return Object.fromEntries(
+    Object.entries(ioSchema.properties ?? {}).map(([portName, portSchema]) => [
+      portName,
+      {
+        ...portSchema,
+        type: unsafeType(portSchema),
+      } as PortConfig,
+    ])
+  );
 }
