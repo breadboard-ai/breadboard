@@ -359,7 +359,7 @@ type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
 
 type VeryLooseDescribeFn = Function;
 
-export type DynamicInputPorts =
+export type CustomDescribePortManifest =
   | string[]
   | {
       [K: string]:
