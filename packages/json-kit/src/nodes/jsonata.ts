@@ -4,118 +4,100 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandlerFunction,
-  NodeHandlerContext,
-  Schema,
-  SchemaBuilder,
-  NodeHandlerObject,
-} from "@google-labs/breadboard";
-
+import { defineNodeType } from "@breadboard-ai/build";
+import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import jsonata from "jsonata";
 
-export type JsonataOutputs = Record<string, unknown> & {
-  result: unknown;
-};
-
-export type JsonataInputs = {
-  expression: string;
-  raw: boolean;
-  json?: unknown;
-};
-
-export const jsonataHandler: NodeHandlerFunction = async (
-  inputs: InputValues
-) => {
-  const { expression, raw, ...rest } = inputs as JsonataInputs;
-  if (!expression) throw new Error("Jsonata node requires `expression` input");
-  const json = rest.json || rest;
-  const result = await jsonata(expression).evaluate(json);
-  return raw ? result : { result };
-};
-
-export const computeOutputSchema = async (
-  inputs: InputValues
-): Promise<Schema> => {
-  if (!inputs || !inputs.raw) {
-    return {
-      type: "object",
-      properties: {
-        result: {
-          title: "result",
-          description: "The result of the Jsonata expression",
-          type: "string",
-        },
-      },
-      required: ["result"],
-    };
-  }
-
-  try {
-    const result = await jsonataHandler(inputs, {} as NodeHandlerContext);
-    if (!result) return {};
-    const properties: Schema["properties"] = {};
-    const outputSchema = {
-      type: "object",
-      properties,
-    };
-    Object.entries(result).forEach(([key, value]) => {
-      properties[key] = {
-        type: typeof value,
-        title: key,
-      };
-    });
-    return outputSchema;
-  } catch (e) {
-    return {
-      type: "object",
-      properties: {},
-    };
-  }
-};
-
-export const jsonataDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues,
-  inputSchema?: Schema
-) => {
-  const outputSchema = await computeOutputSchema(inputs || {});
-  return {
-    inputSchema: new SchemaBuilder()
-      .addProperties({
-        expression: {
-          title: "expression",
-          behavior: ["config"],
-          description: "The Jsonata expression to evaluate",
-          type: "string",
-        },
-        raw: {
-          title: "raw",
-          behavior: ["config"],
-          description:
-            "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
-          type: "boolean",
-        },
-        json: {
-          title: "json",
-          description: "The JSON object to evaluate",
-          type: ["object", "string"],
-        },
-      })
-      .addRequired("expression")
-      .addProperties(inputSchema?.properties)
-      .build(),
-    outputSchema,
-  };
-};
-
-export default {
+export default defineNodeType({
+  name: "jsonata",
   metadata: {
     title: "JSONata",
     description:
       "Uses JSONata (a kind of SQL for JSON) to transform incoming JSON object. See https://jsonata.org/ for details on the language.",
   },
-  describe: jsonataDescriber,
-  invoke: jsonataHandler,
-} satisfies NodeHandlerObject;
+  inputs: {
+    expression: {
+      title: "expression",
+      behavior: ["config"],
+      description: "The Jsonata expression to evaluate",
+      type: "string",
+    },
+    raw: {
+      title: "raw",
+      behavior: ["config"],
+      description:
+        "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
+      type: "boolean",
+      default: false,
+    },
+    json: {
+      title: "json",
+      description:
+        "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
+      type: "unknown",
+      optional: true,
+    },
+    "*": {
+      type: "unknown",
+    },
+  },
+  outputs: {
+    "*": {
+      type: "unknown",
+    },
+  },
+  describe: async ({ expression, raw, json }, rest) => ({
+    // Extra properties are allowed only if json is undefined.
+    inputs: json === undefined ? { "*": {} } : {},
+    outputs: raw
+      ? // When raw, we assume that the jsonata expression returns an object,
+        // and update the output schema with any properties we detect on that
+        // object. That's not exhaustive, though, so we also still include "*"
+        // to indicate that there could be additional properties we didn't
+        // detect with the current particular value.
+        { ...(await detectOutputProperties(expression, json, rest)), "*": {} }
+      : // When not raw, the result goes to the result port, and there won't be
+        // any other outputs.
+        { result: { description: "The result of the Jsonata expression" } },
+  }),
+  invoke: async ({ expression, raw, json }, rest) => {
+    if (!expression) {
+      // TODO(aomarks) We shouldn't need this if we ensure that invoke isn't
+      // called unless all required properties are set.
+      throw new Error("Jsonata node requires `expression` input");
+    }
+    // TODO(aomarks) Error if both json and rest are set.
+    const result: JsonSerializable = await jsonata(expression).evaluate(
+      json ?? rest
+    );
+    if (raw) {
+      if (typeof result !== "object" || result === null) {
+        throw new Error(
+          "jsonata node in raw mode but expression did not return an object"
+        );
+      }
+      return result;
+    }
+    return { result };
+  },
+});
+
+async function detectOutputProperties(
+  expression: string | undefined,
+  json: JsonSerializable | undefined,
+  rest: Record<string, JsonSerializable>
+) {
+  if (!expression) {
+    return {};
+  }
+  let result;
+  try {
+    result = await jsonata(expression).evaluate(json ?? rest);
+  } catch {
+    return {};
+  }
+  if (typeof result !== "object" || result === null) {
+    return {};
+  }
+  return Object.fromEntries(Object.keys(result).map((name) => [name, {}]));
+}

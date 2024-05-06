@@ -414,9 +414,9 @@
               "type": "object",
               "properties": {
                 "worker": {
+                  "type": "object",
                   "title": "Worker",
                   "description": "Worker to repeat",
-                  "type": "object",
                   "behavior": [
                     "board"
                   ]
@@ -1425,7 +1425,14 @@
                   "type": "object",
                   "properties": {
                     "function": {
-                      "type": "object",
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ],
                       "title": "function"
                     },
                     "boardURL": {

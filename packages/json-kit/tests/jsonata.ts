@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { deepEqual } from "node:assert";
+import assert from "node:assert/strict";
 import test, { describe } from "node:test";
-import { jsonataDescriber } from "../src/nodes/jsonata.js";
+import jsonata from "../src/nodes/jsonata.js";
+
 describe("jsonata", () => {
-  test("`jsonataDescriber` correctly reacts to `raw = false`", async () => {
-    const result = await jsonataDescriber();
+  test("`jsonata.describe` correctly reacts to `raw = <default=false>`", async () => {
+    const result = await jsonata.describe();
     const expected = {
       inputSchema: {
         type: "object",
@@ -26,14 +27,16 @@ describe("jsonata", () => {
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
             type: "boolean",
+            default: false,
           },
           json: {
             title: "json",
-            description: "The JSON object to evaluate",
-            type: ["object", "string"],
+            description:
+              "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
+            type: ["array", "boolean", "null", "number", "object", "string"],
           },
         },
-        additionalProperties: false,
+        additionalProperties: true,
         required: ["expression"],
       },
       outputSchema: {
@@ -42,17 +45,18 @@ describe("jsonata", () => {
           result: {
             title: "result",
             description: "The result of the Jsonata expression",
-            type: "string",
+            type: ["array", "boolean", "null", "number", "object", "string"],
           },
         },
-        required: ["result"],
+        required: [],
+        additionalProperties: false,
       },
     };
-    deepEqual(result, expected);
+    assert.deepEqual(result, expected);
   });
 
-  test("`jsonataDescriber` correctly reacts to `raw = true`", async () => {
-    const result = await jsonataDescriber({
+  test("`jsonata.describe` correctly reacts to `raw = true`", async () => {
+    const result = await jsonata.describe({
       expression: "foo",
       json: { foo: { bar: "baz" } },
       raw: true,
@@ -73,11 +77,13 @@ describe("jsonata", () => {
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
             type: "boolean",
+            default: false,
           },
           json: {
             title: "json",
-            description: "The JSON object to evaluate",
-            type: ["object", "string"],
+            description:
+              "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
+            type: ["array", "boolean", "null", "number", "object", "string"],
           },
         },
         additionalProperties: false,
@@ -87,17 +93,19 @@ describe("jsonata", () => {
         type: "object",
         properties: {
           bar: {
-            type: "string",
+            type: ["array", "boolean", "null", "number", "object", "string"],
             title: "bar",
           },
         },
+        required: [],
+        additionalProperties: true,
       },
     };
-    deepEqual(result, expected);
+    assert.deepEqual(result, expected);
   });
 
-  test("`jsonataDescriber` correctly reacts to invalid input", async () => {
-    const result = await jsonataDescriber({
+  test("`jsonata.describe` correctly reacts to invalid input", async () => {
+    const result = await jsonata.describe({
       raw: true,
     });
     const expected = {
@@ -116,21 +124,84 @@ describe("jsonata", () => {
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
             type: "boolean",
+            default: false,
           },
           json: {
             title: "json",
-            description: "The JSON object to evaluate",
-            type: ["object", "string"],
+            description:
+              "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
+            type: ["array", "boolean", "null", "number", "object", "string"],
           },
         },
-        additionalProperties: false,
+        additionalProperties: true,
         required: ["expression"],
       },
       outputSchema: {
         type: "object",
         properties: {},
+        required: [],
+        additionalProperties: true,
       },
     };
-    deepEqual(result, expected);
+    assert.deepEqual(result, expected);
+  });
+
+  test("invoke in raw mode", async () => {
+    const actual = await jsonata.invoke(
+      {
+        raw: true,
+        expression: "foo",
+        json: { foo: { bar: "baz" } },
+      },
+      null as never
+    );
+    const expected = {
+      bar: "baz",
+    };
+    assert.deepEqual(actual, expected);
+  });
+
+  test("invoke in not raw mode", async () => {
+    const actual = await jsonata.invoke(
+      {
+        expression: "foo",
+        json: { foo: { bar: "baz" } },
+      },
+      null as never
+    );
+    const expected = {
+      result: {
+        bar: "baz",
+      },
+    };
+    assert.deepEqual(actual, expected);
+  });
+
+  test("invoke in not raw mode and doesn't return object", async () => {
+    assert.deepEqual(
+      await jsonata.invoke(
+        {
+          expression: "foo.bar",
+          json: { foo: { bar: "baz" } },
+        },
+        null as never
+      ),
+      { result: "baz" }
+    );
+  });
+
+  test("invoke in raw mode and doesn't return object", async () => {
+    assert.rejects(
+      () =>
+        jsonata.invoke(
+          {
+            raw: true,
+            expression: "foo.bar",
+            json: { foo: { bar: "baz" } },
+          },
+          null as never
+        ),
+      /jsonata node in raw mode but expression did not return an object/
+    );
   });
 });

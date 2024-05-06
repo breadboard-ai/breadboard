@@ -24,12 +24,16 @@
           "type": "object",
           "properties": {
             "text": {
-              "title": "json",
-              "description": "The JSON object to evaluate",
               "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
                 "object",
                 "string"
               ],
+              "title": "json",
+              "description": "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
               "default": "Could you please throw an error?"
             }
           },
@@ -47,9 +51,16 @@
           "type": "object",
           "properties": {
             "stub": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
               "title": "result",
-              "description": "The result of the Jsonata expression",
-              "type": "string"
+              "description": "The result of the Jsonata expression"
             }
           }
         }

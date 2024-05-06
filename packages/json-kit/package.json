@@ -13,12 +13,14 @@
     "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
+    "test:coverage": "wireit",
     "lint": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "../breadboard:build",
+        "../build:build",
         "build:tsc"
       ]
     },
@@ -28,7 +30,8 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard:build:tsc",
+        "../build:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -42,10 +45,20 @@
       "clean": "if-file-deleted"
     },
     "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:coverage": {
       "command": "find tests -name '*.ts' | xargs c8 node --test --test-reporter=spec --loader ts-node/esm",
-      "env": {
-        "FORCE_COLOR": "1"
-      }
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
     },
     "lint": {
       "command": "eslint . --ext .ts",
@@ -86,8 +99,10 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@breadboard-ai/build": "^0.5.1",
     "@google-labs/breadboard": "^0.19.0",
     "@rgrove/parse-xml": "^4.1.0",
+    "@types/json-schema": "^7.0.15",
     "ajv": "^8.13.0",
     "jsonata": "^2.0.4",
     "jsonschema": "^1.4.1"

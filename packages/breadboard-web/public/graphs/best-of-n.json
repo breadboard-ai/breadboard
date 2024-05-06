@@ -124,8 +124,6 @@
               ]
             },
             "text": {
-              "title": "Task",
-              "description": "The task to perform",
               "type": [
                 "array",
                 "boolean",
@@ -134,6 +132,8 @@
                 "object",
                 "string"
               ],
+              "title": "Task",
+              "description": "The task to perform",
               "format": "multiline",
               "examples": [
                 "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
@@ -156,9 +156,16 @@
           "type": "object",
           "properties": {
             "best": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
               "title": "result",
-              "description": "The result of the Jsonata expression",
-              "type": "string"
+              "description": "The result of the Jsonata expression"
             },
             "list": {
               "type": "string",
@@ -243,9 +250,9 @@
                         "title": "context"
                       },
                       "agent": {
+                        "type": "string",
                         "title": "board",
                         "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-                        "type": "string",
                         "behavior": [
                           "board"
                         ]
