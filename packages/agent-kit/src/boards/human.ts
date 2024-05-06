@@ -312,6 +312,9 @@ export default await board(({ context, title, description }) => {
   };
 }).serialize({
   title: "Human",
+  metadata: {
+    icon: "human",
+  },
   description:
     "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
   version: "0.0.1",
