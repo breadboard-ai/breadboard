@@ -9,6 +9,7 @@ import * as PIXI from "pixi.js";
 const ASSET_LIST = new Map([
   ["smart-toy", "/third_party/icons/smart-toy.svg"],
   ["human", "/third_party/icons/human.svg"],
+  ["laps", "/third_party/icons/laps.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture<PIXI.Resource>>;
