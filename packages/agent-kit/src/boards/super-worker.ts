@@ -9,6 +9,8 @@ import {
   LlmContent,
   LlmContentRole,
   contextAssembler,
+  looperTaskAdder,
+  progressReader,
   userPartsAdder,
 } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
@@ -59,7 +61,7 @@ Write an outline for a novel, following the provided specs.
 
 export default await board(({ in: context, persona, task }) => {
   context
-    .title("In")
+    .title("Context In")
     .description("The source material for the worker")
     .isArray()
     .behavior("llm-content")
@@ -79,7 +81,7 @@ export default await board(({ in: context, persona, task }) => {
     )
     .isObject()
     .optional()
-    .default(JSON.stringify({ parts: [] }))
+    .default(JSON.stringify({}))
     .behavior("llm-content", "config")
     .examples(JSON.stringify(sampleTask, null, 2));
 
@@ -89,13 +91,27 @@ export default await board(({ in: context, persona, task }) => {
     toAdd: task,
   });
 
+  const readProgress = progressReader({
+    $metadata: { title: "Read Progress so far" },
+    context,
+  });
+
+  const addLooperTask = looperTaskAdder({
+    $metadata: {
+      title: "Add Looper Task",
+      description: "If there is a pending Looper task, add it.",
+    },
+    context: addTask.context,
+    progress: readProgress.progress,
+  });
+
   const generator = gemini.text({
     $metadata: {
       title: "Gemini API Call",
       description: "Applying Gemini to do work",
     },
     systemInstruction: persona,
-    context: addTask.context,
+    context: addLooperTask.context,
   });
 
   const addGenerated = contextAssembler({
@@ -107,7 +123,7 @@ export default await board(({ in: context, persona, task }) => {
     generated: generator.context,
   });
 
-  return { out: addGenerated.context };
+  return { out: addGenerated.context.title("Context Out") };
 }).serialize({
   title: "Super Worker",
   metadata: {

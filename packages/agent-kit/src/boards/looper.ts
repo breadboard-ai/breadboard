@@ -12,7 +12,14 @@ import {
   board,
   code,
 } from "@google-labs/breadboard";
-import { Context, LlmContent, userPartsAdder } from "../context.js";
+import {
+  Context,
+  LlmContent,
+  LooperPlan,
+  LooperProgress,
+  progressReader,
+  userPartsAdder,
+} from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -30,31 +37,6 @@ export type LooperType = NewNodeFactory<
     context: NewNodeValue;
   }
 >;
-
-export type LooperPlan = {
-  /**
-   * Maximum iterations to make. This can be used to create simple
-   * "repeat N times" loops.
-   */
-  max?: number;
-  /**
-   * Plan items. Each item represents one trip down the "Loop" output, and
-   * at the end of the list, the "Context Out".
-   */
-  todo?: {
-    task: string;
-  }[];
-  /**
-   * Whether to append only the last item in the loop to the context or all
-   * of them.
-   */
-  appendLast?: boolean;
-  /**
-   * Whether to return only last item from the context as the final product
-   * or all of them;
-   */
-  returnLast?: boolean;
-};
 
 export const planSchema = {
   type: "object",
@@ -90,7 +72,7 @@ const plannerInstruction = {
   parts: [
     {
       text: `
-You to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. 
+You are to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. 
 
 Your output must be a valid JSON of the following format:
 
@@ -168,26 +150,8 @@ const contextExample = JSON.stringify({
 
 export type LooperData = {
   type: "looper";
-  data: LooperPlan;
+  data: LooperProgress;
 };
-
-const progressReader = code(({ context }) => {
-  const existing = (Array.isArray(context) ? context : [context]) as Context[];
-  const progress: LooperPlan[] = [];
-  // Collect all metadata entries in the context.
-  // Gives us where we've been and where we're going.
-  for (let i = existing.length - 1; i >= 0; i--) {
-    const item = existing[i];
-    if (item.role === "$metadata") {
-      progress.push(item.data as LooperPlan);
-    }
-  }
-  if (progress.length) {
-    return { progress };
-  } else {
-    return { context: context };
-  }
-});
 
 const planReader = code(({ context, progress }) => {
   const plans = (
@@ -219,8 +183,10 @@ const planReader = code(({ context, progress }) => {
       if (!next) {
         return { done: existing };
       }
-      contents.push({ role: "$metadata", data: current });
-      contents.push({ role: "user", parts: [{ text: next.task }] });
+      contents.push({
+        role: "$metadata",
+        data: { ...current, next: next.task },
+      });
       return { context: contents };
     } else if (max) {
       const count = plans.length;
@@ -249,21 +215,16 @@ export default await board(({ context, task }) => {
 
   task
     .title("Task")
+    .optional()
+    .default("{}")
     .description("The task from which to create the plan for looping.")
     .isObject()
-    .behavior("llm-content");
-
-  // plan
-  //   .title("Plan")
-  //   .description("What to iterate over, and/or how many times")
-  //   .isObject()
-  //   .optional()
-  //   .default(defaultPlan)
-  //   .examples(examplePlan);
+    .behavior("llm-content", "config");
 
   const readProgress = progressReader({
     $metadata: { title: "Read progress so far" },
     context,
+    forkOutputs: true,
   });
 
   const addTask = userPartsAdder({

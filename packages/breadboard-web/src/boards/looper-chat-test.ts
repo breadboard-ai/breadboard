@@ -1,6 +1,5 @@
 import { agents } from "@google-labs/agent-kit";
 import { board } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
 
 const contextFromText = (text: string, role?: string) => {
   const parts = [{ text }];
@@ -16,27 +15,22 @@ const chatBotPersona = contextFromText(
 );
 
 export default await board(() => {
-  const start = core.passthrough({
-    $metadata: {
-      title: "Start",
-      description: "The entry point into the graph",
-    },
-    context: [],
-  });
-
-  const loop = agents.looper({
+  const planner = agents.looper({
     $metadata: { title: "Looper" },
-    context: start.context,
     task: contextFromText(
-      `Ask the user to about the name of their business and the the location of the business, then conclude the conversation.`
+      `Ask the user to about the name of their business and the location of the business, then conclude the conversation.`
     ),
   });
 
   const bot = agents.superWorker({
     $metadata: { title: "Chat Bot" },
-    in: loop.loop,
+    in: planner.loop,
     persona: chatBotPersona,
-    task: contextFromText(`Carry a fun, engaging conversation with the user`),
+  });
+
+  const loop = agents.looper({
+    $metadata: { title: "Looper" },
+    context: bot.out,
   });
 
   const user = agents.human({
@@ -44,10 +38,10 @@ export default await board(() => {
       title: "User",
       description: "Giving control back to the user",
     },
-    context: bot.out,
+    context: loop.loop,
   });
 
-  user.context.as("context").to(loop);
+  user.context.as("in").to(bot);
 
   return { context: loop.done };
 }).serialize({
