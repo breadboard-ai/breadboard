@@ -72,7 +72,7 @@
         "task": {
           "parts": [
             {
-              "text": "Ask the user to about the name of their business and the the location of the business, then conclude the conversation."
+              "text": "Ask the user to about the name of their business and the location of the business, then conclude the conversation."
             }
           ]
         }
@@ -84,15 +84,7 @@
     {
       "id": "looper-5",
       "type": "looper",
-      "configuration": {
-        "task": {
-          "parts": [
-            {
-              "text": "Ask the user to about the name of their business and the the location of the business, then conclude the conversation."
-            }
-          ]
-        }
-      },
+      "configuration": {},
       "metadata": {
         "title": "Looper"
       }

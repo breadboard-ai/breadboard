@@ -61,7 +61,7 @@ Write an outline for a novel, following the provided specs.
 
 export default await board(({ in: context, persona, task }) => {
   context
-    .title("In")
+    .title("Context In")
     .description("The source material for the worker")
     .isArray()
     .behavior("llm-content")
@@ -123,7 +123,7 @@ export default await board(({ in: context, persona, task }) => {
     generated: generator.context,
   });
 
-  return { out: addGenerated.context };
+  return { out: addGenerated.context.title("Context Out") };
 }).serialize({
   title: "Super Worker",
   metadata: {

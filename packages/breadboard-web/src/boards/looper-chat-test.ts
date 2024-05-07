@@ -18,7 +18,7 @@ export default await board(() => {
   const planner = agents.looper({
     $metadata: { title: "Looper" },
     task: contextFromText(
-      `Ask the user to about the name of their business and the the location of the business, then conclude the conversation.`
+      `Ask the user to about the name of their business and the location of the business, then conclude the conversation.`
     ),
   });
 
@@ -31,9 +31,6 @@ export default await board(() => {
   const loop = agents.looper({
     $metadata: { title: "Looper" },
     context: bot.out,
-    task: contextFromText(
-      `Ask the user to about the name of their business and the the location of the business, then conclude the conversation.`
-    ),
   });
 
   const user = agents.human({

@@ -72,7 +72,7 @@ const plannerInstruction = {
   parts: [
     {
       text: `
-You to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. 
+You are to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. 
 
 Your output must be a valid JSON of the following format:
 
@@ -216,10 +216,10 @@ export default await board(({ context, task }) => {
   task
     .title("Task")
     .optional()
-    .default("")
+    .default("{}")
     .description("The task from which to create the plan for looping.")
     .isObject()
-    .behavior("llm-content");
+    .behavior("llm-content", "config");
 
   const readProgress = progressReader({
     $metadata: { title: "Read progress so far" },

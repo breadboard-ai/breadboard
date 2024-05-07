@@ -201,11 +201,13 @@ export default await board(({ context, title, description }) => {
     .title("Title")
     .description("The title to ask")
     .optional()
+    .behavior("config")
     .default("User");
   description
     .title("Description")
     .description("The description of what to ask")
     .optional()
+    .behavior("config")
     .default("User's question or request");
 
   const maybeOutputRouter = maybeOutput({
