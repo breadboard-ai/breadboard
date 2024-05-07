@@ -55,11 +55,13 @@ export class GraphNode extends PIXI.Graphics {
   #portLabelHorizontalPadding = 20;
   #portPadding = 6;
   #portRadius = 3;
-  #inPorts: Map<
+  #inPorts: InspectablePort[] | null = null;
+  #inPortsData: Map<
     string,
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
-  #outPorts: Map<
+  #outPorts: InspectablePort[] | null = null;
+  #outPortsData: Map<
     string,
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
@@ -110,9 +112,6 @@ export class GraphNode extends PIXI.Graphics {
 
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
-
-    this.#headerInPort.editable = false;
-    this.#headerOutPort.editable = false;
 
     this.#headerInPort.visible = false;
     this.#headerOutPort.visible = false;
@@ -371,9 +370,15 @@ export class GraphNode extends PIXI.Graphics {
     }
   }
 
-  set inPorts(ports: InspectablePort[]) {
+  set inPorts(ports: InspectablePort[] | null) {
+    this.#inPorts = ports;
+    this.#isDirty = true;
+    if (!ports) {
+      return;
+    }
+
     for (const port of ports) {
-      let portItem = this.#inPorts.get(port.name);
+      let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
         const label = new PIXI.Text(port.title, {
           fontFamily: "Arial",
@@ -390,7 +395,7 @@ export class GraphNode extends PIXI.Graphics {
         nodePort.visible = false;
 
         portItem = { label, port, nodePort };
-        this.#inPorts.set(port.name, portItem);
+        this.#inPortsData.set(port.name, portItem);
       }
 
       if (portItem.label.text !== port.title) {
@@ -400,7 +405,7 @@ export class GraphNode extends PIXI.Graphics {
       portItem.port = port;
     }
 
-    for (const [inPortName, portItem] of this.#inPorts) {
+    for (const [inPortName, portItem] of this.#inPortsData) {
       if (!ports.find((inPort) => inPort.name === inPortName)) {
         portItem?.label.removeFromParent();
         portItem?.label?.destroy();
@@ -408,16 +413,24 @@ export class GraphNode extends PIXI.Graphics {
         portItem?.nodePort.removeFromParent();
         portItem?.nodePort.destroy();
 
-        this.#inPorts.delete(inPortName);
+        this.#inPortsData.delete(inPortName);
       }
     }
-
-    this.#isDirty = true;
   }
 
-  set outPorts(ports: InspectablePort[]) {
+  get inPorts() {
+    return this.#inPorts;
+  }
+
+  set outPorts(ports: InspectablePort[] | null) {
+    this.#outPorts = ports;
+    this.#isDirty = true;
+    if (!ports) {
+      return;
+    }
+
     for (const port of ports) {
-      let portItem = this.#outPorts.get(port.name);
+      let portItem = this.#outPortsData.get(port.name);
       if (!portItem) {
         const label = new PIXI.Text(port.title, {
           fontFamily: "Arial",
@@ -434,7 +447,7 @@ export class GraphNode extends PIXI.Graphics {
         nodePort.visible = false;
 
         portItem = { label, port, nodePort };
-        this.#outPorts.set(port.name, portItem);
+        this.#outPortsData.set(port.name, portItem);
       }
 
       if (portItem.label.text !== port.title) {
@@ -444,7 +457,7 @@ export class GraphNode extends PIXI.Graphics {
       portItem.port = port;
     }
 
-    for (const [outPortName, portItem] of this.#outPorts) {
+    for (const [outPortName, portItem] of this.#outPortsData) {
       if (!ports.find((outPort) => outPort.name === outPortName)) {
         portItem?.label.removeFromParent();
         portItem?.label.destroy();
@@ -452,11 +465,13 @@ export class GraphNode extends PIXI.Graphics {
         portItem?.nodePort.removeFromParent();
         portItem?.nodePort.destroy();
 
-        this.#outPorts.delete(outPortName);
+        this.#outPortsData.delete(outPortName);
       }
     }
+  }
 
-    this.#isDirty = true;
+  get outPorts() {
+    return this.#outPorts;
   }
 
   forceUpdateDimensions() {
@@ -498,7 +513,7 @@ export class GraphNode extends PIXI.Graphics {
 
   #updateDimensions() {
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
-    const portCount = Math.max(this.#inPorts.size, this.#outPorts.size);
+    const portCount = Math.max(this.#inPortsData.size, this.#outPortsData.size);
 
     // Height calculations.
     let height = this.#padding + (this.#titleText?.height || 0) + this.#padding;
@@ -516,8 +531,8 @@ export class GraphNode extends PIXI.Graphics {
       this.#padding +
       GraphOverflowMenu.width +
       this.#menuPadding;
-    const inPortLabels = Array.from(this.#inPorts.values());
-    const outPortLabels = Array.from(this.#outPorts.values());
+    const inPortLabels = Array.from(this.#inPortsData.values());
+    const outPortLabels = Array.from(this.#outPortsData.values());
     for (let p = 0; p < portCount; p++) {
       const inPortWidth = inPortLabels[p]?.label.width || 0;
       const outPortWidth = outPortLabels[p]?.label.width || 0;
@@ -569,6 +584,9 @@ export class GraphNode extends PIXI.Graphics {
     this.#headerInPort.visible = true;
     this.#headerOutPort.visible = true;
 
+    this.#headerInPort.editable = false;
+    this.#headerOutPort.editable = false;
+
     const titleHeight =
       this.#padding + (this.#titleText?.height || 0) + this.#padding;
 
@@ -579,7 +597,7 @@ export class GraphNode extends PIXI.Graphics {
     this.#headerOutPort.x = this.#width;
 
     let inPortStatus = this.#headerInPort.status;
-    for (const inPort of this.#inPorts.values()) {
+    for (const inPort of this.#inPortsData.values()) {
       if (!inPort) {
         continue;
       }
@@ -595,7 +613,7 @@ export class GraphNode extends PIXI.Graphics {
     }
 
     let outPortStatus = this.#headerOutPort.status;
-    for (const outPort of this.#outPorts.values()) {
+    for (const outPort of this.#outPortsData.values()) {
       if (!outPort) {
         continue;
       }
@@ -617,7 +635,7 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #hideAllPorts() {
-    for (const portItem of this.#inPorts.values()) {
+    for (const portItem of this.#inPortsData.values()) {
       if (!portItem) {
         continue;
       }
@@ -626,7 +644,7 @@ export class GraphNode extends PIXI.Graphics {
       portItem.nodePort.visible = false;
     }
 
-    for (const portItem of this.#outPorts.values()) {
+    for (const portItem of this.#outPortsData.values()) {
       if (!portItem) {
         continue;
       }
@@ -720,7 +738,7 @@ export class GraphNode extends PIXI.Graphics {
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
 
     let portY = portStartY;
-    for (const [portName, portItem] of this.#inPorts) {
+    for (const [portName, portItem] of this.#inPortsData) {
       if (!portItem) {
         console.warn(`No data for ${portName}`);
         continue;
@@ -752,7 +770,7 @@ export class GraphNode extends PIXI.Graphics {
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
 
     let portY = portStartY;
-    for (const [portName, portItem] of this.#outPorts) {
+    for (const [portName, portItem] of this.#outPortsData) {
       if (!portItem) {
         console.warn(`No label for ${portName}`);
         continue;
