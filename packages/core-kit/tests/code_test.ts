@@ -113,7 +113,16 @@ test("serialization", (t) => {
   });
 
   const codeResult = code(
-    { str, num, bool: false },
+    {
+      str,
+      num,
+      bool: false,
+      $id: "customId",
+      $metadata: {
+        title: "Custom title",
+        description: "Custom description",
+      },
+    },
     {
       strLen: "number",
       strReversed: "string",
@@ -152,19 +161,14 @@ test("serialization", (t) => {
   );
   t.deepEqual(bgl, {
     edges: [
-      { from: "input-0", to: "runJavascript-0", out: "num", in: "num" },
-      { from: "input-0", to: "runJavascript-0", out: "str", in: "str" },
+      { from: "customId", to: "other-0", out: "doubleNum", in: "num" },
+      { from: "customId", to: "output-0", out: "doubleNum", in: "out3" },
+      { from: "customId", to: "output-0", out: "not", in: "out4" },
+      { from: "customId", to: "output-0", out: "strLen", in: "out1" },
+      { from: "customId", to: "output-0", out: "strReversed", in: "out2" },
+      { from: "input-0", to: "customId", out: "num", in: "num" },
+      { from: "input-0", to: "customId", out: "str", in: "str" },
       { from: "other-0", to: "output-0", out: "halfNum", in: "out5" },
-      { from: "runJavascript-0", to: "other-0", out: "doubleNum", in: "num" },
-      { from: "runJavascript-0", to: "output-0", out: "doubleNum", in: "out3" },
-      { from: "runJavascript-0", to: "output-0", out: "not", in: "out4" },
-      { from: "runJavascript-0", to: "output-0", out: "strLen", in: "out1" },
-      {
-        from: "runJavascript-0",
-        to: "output-0",
-        out: "strReversed",
-        in: "out2",
-      },
     ],
     nodes: [
       {
@@ -195,16 +199,17 @@ test("serialization", (t) => {
           },
         },
       },
-      { id: "other-0", type: "other", configuration: {} },
       {
-        id: "runJavascript-0",
+        id: "customId",
         type: "runJavascript",
         configuration: {
           bool: false,
           code: '({ str, num, bool }) => ({\n        strLen: str.length,\n        strReversed: str.split("").reverse().join(""),\n        doubleNum: num * 2,\n        not: !bool,\n    })',
           raw: true,
         },
+        metadata: { title: "Custom title", description: "Custom description" },
       },
+      { id: "other-0", type: "other", configuration: {} },
     ],
   });
 });
