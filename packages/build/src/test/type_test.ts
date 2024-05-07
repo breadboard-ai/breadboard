@@ -366,6 +366,7 @@ describe("array", () => {
 test("can annotate a nested object with a behavior", () => {
   assert.deepEqual(
     toJSONSchema(
+      // $ExpectType AdvancedBreadboardType<{ foo: number; }[]>
       array(
         annotate(object({ foo: "number" }), {
           behavior: ["llm-content"],
@@ -390,6 +391,7 @@ test("can annotate a nested object with a behavior", () => {
 test("can annotate basic type with behavior", () => {
   assert.deepEqual(
     toJSONSchema(
+      // $ExpectType "string"
       annotate("string", {
         behavior: ["llm-content"],
       })
