@@ -191,7 +191,7 @@
     "@google-labs/node-nursery-web": "^1.1.2",
     "@google-labs/palm-kit": "^0.0.13",
     "@google-labs/template-kit": "^0.3.1",
-    "@types/node": "^20.12.9",
+    "@types/node": "^20.12.10",
     "@types/vscode": "^1.89.0",
     "@vscode/debugadapter": "^1.65.0",
     "@vscode/vsce": "^2.26.0",
