@@ -325,8 +325,13 @@ export class NodeInfo extends LitElement {
       `${STORAGE_PREFIX}-input-expanded`
     );
 
-    this.schemaExpanded = isSchemaExpanded === "true";
-    this.inputsExpanded = isInputExpanded === "true";
+    if (isSchemaExpanded !== null) {
+      this.schemaExpanded = isSchemaExpanded === "true";
+    }
+
+    if (isInputExpanded !== null) {
+      this.inputsExpanded = isInputExpanded === "true";
+    }
   }
 
   #assertIsValidBehavior(
