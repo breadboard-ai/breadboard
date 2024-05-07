@@ -287,17 +287,26 @@ type StrictInvokeFnReturn<
   I extends Record<string, InputPortConfig>,
   O extends Record<string, OutputPortConfig>,
   F extends LooseInvokeFn<I>,
-> = {
-  [K in keyof Omit<O, "*">]: Convert<O[K]>;
-} & {
-  [K in keyof ReturnType<
-    F extends (...args: unknown[]) => unknown ? F : never
-  >]: K extends keyof O
-    ? Convert<O[K]>
-    : O["*"] extends DynamicOutputPortConfig
-      ? Convert<O["*"]>
-      : never;
-};
+> =
+  ReturnType<F extends (...args: unknown[]) => unknown ? F : never> extends {
+    $error: unknown;
+  }
+    ? {
+        [K in keyof ReturnType<
+          F extends (...args: unknown[]) => unknown ? F : never
+        >]: K extends "$error" ? string | { message: string } : never;
+      }
+    : {
+        [K in keyof Omit<O, "*">]: Convert<O[K]>;
+      } & {
+        [K in keyof ReturnType<
+          F extends (...args: unknown[]) => unknown ? F : never
+        >]: K extends keyof O
+          ? Convert<O[K]>
+          : O["*"] extends DynamicOutputPortConfig
+            ? Convert<O["*"]>
+            : never;
+      };
 
 export type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
   [K in keyof Omit<I, "*">]: I[K] extends StaticInputPortConfig

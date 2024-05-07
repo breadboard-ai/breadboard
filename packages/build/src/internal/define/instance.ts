@@ -6,6 +6,7 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 
+import { breadboardErrorType, type BreadboardError } from "../common/error.js";
 import {
   DefaultValue,
   InputPort,
@@ -34,7 +35,11 @@ export class Instance<
   readonly id?: string;
   readonly type: string;
   readonly inputs: { [K in keyof I]: InputPort<I[K]> };
-  readonly outputs: { [K in keyof O]: OutputPort<O[K]> };
+  readonly outputs: {
+    [K in keyof O | "$error"]: K extends "$error"
+      ? OutputPort<BreadboardError>
+      : OutputPort<O[K]>;
+  };
   readonly primaryInput: PI extends keyof I ? InputPort<I[PI]> : undefined;
   readonly primaryOutput: PO extends keyof O ? OutputPort<O[PO]> : undefined;
   // TODO(aomarks) Clean up output port getter
@@ -178,7 +183,9 @@ export class Instance<
   ) {
     const ports: { [K: string]: OutputPort<JsonSerializable> } & {
       assert?: (name: string) => OutputPort<JsonSerializable>;
-    } = {};
+    } = {
+      $error: new OutputPort(breadboardErrorType, "$error", this),
+    };
     let primary: OutputPort<JsonSerializable> | undefined = undefined;
 
     for (const [name, config] of Object.entries(staticOutputs)) {
