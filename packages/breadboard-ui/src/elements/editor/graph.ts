@@ -272,7 +272,6 @@ export class Graph extends PIXI.Container {
       const targetEdgeDescriptor = structuredClone(
         targetEdge.edge
       ) as InspectableEdge;
-      const edgeKey = edgeToString(targetEdgeDescriptor);
 
       // Clean all the variables.
       nodePortBeingEdited = null;
@@ -280,56 +279,117 @@ export class Graph extends PIXI.Container {
       edgeBeingEdited = null;
       visibleOnNextMove = false;
 
-      // Process the edge.
+      let action: GRAPH_OPERATIONS | null = null;
       if (
         !(topTarget instanceof GraphNodePort) ||
         topTarget.type !== nodePortType
       ) {
-        // Temporary edges don't need to be sent out to the Editor API.
+        action = GRAPH_OPERATIONS.GRAPH_EDGE_DETACH;
+      } else if (targetEdge.temporary) {
+        action = GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH;
+      } else if (originalEdgeDescriptor) {
+        action = GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE;
+      }
+
+      // Update the edge if either of the nodes is collapsed.
+      const disambiguateFrom: string[] = [];
+      if (targetEdge.fromNode.collapsed) {
+        const commonPorts = (targetEdge.fromNode.outPorts || []).filter(
+          (port) => !port.star && port.name !== ""
+        );
+        if (commonPorts.length === 1) {
+          targetEdgeDescriptor.out = commonPorts[0].name;
+        } else {
+          disambiguateFrom.push(...commonPorts.map((port) => port.name));
+        }
+      }
+
+      const disambiguateTo: string[] = [];
+      if (targetEdge.toNode.collapsed) {
+        const commonPorts = (targetEdge.toNode.inPorts || []).filter(
+          (port) => !port.star && port.name !== ""
+        );
+        if (commonPorts.length === 1) {
+          targetEdgeDescriptor.in = commonPorts[0].name;
+        } else {
+          disambiguateTo.push(...commonPorts.map((port) => port.name));
+        }
+      }
+
+      if (disambiguateFrom.length || disambiguateTo.length) {
         if (targetEdge.temporary) {
           if (targetNodePort) {
             targetNodePort.overrideStatus = null;
           }
 
           this.#cleanEdges();
-          return;
         }
 
-        this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, targetEdgeDescriptor);
         return;
       }
 
-      targetEdge.overrideColor = null;
+      const edgeKey = edgeToString(targetEdgeDescriptor);
+      switch (action) {
+        case GRAPH_OPERATIONS.GRAPH_EDGE_DETACH: {
+          // Temporary edges don't need to be sent out to the Editor API.
+          if (targetEdge.temporary) {
+            if (targetNodePort) {
+              targetNodePort.overrideStatus = null;
+            }
 
-      const existingEdge = this.#edgeGraphics.get(edgeKey);
-      if (existingEdge) {
-        return;
+            this.#cleanEdges();
+            break;
+          }
+
+          this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, targetEdgeDescriptor);
+          break;
+        }
+
+        case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
+          targetEdge.overrideColor = null;
+
+          const existingEdge = this.#edgeGraphics.get(edgeKey);
+          if (existingEdge) {
+            break;
+          }
+
+          if (evt.metaKey) {
+            targetEdgeDescriptor.type =
+              "constant" as InspectableEdgeType.Constant;
+          }
+          this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, targetEdgeDescriptor);
+          break;
+        }
+
+        case GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE: {
+          targetEdge.overrideColor = null;
+
+          const existingEdge = this.#edgeGraphics.get(edgeKey);
+          if (existingEdge) {
+            break;
+          }
+
+          if (evt.metaKey) {
+            targetEdgeDescriptor.type =
+              "constant" as InspectableEdgeType.Constant;
+          }
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
+            originalEdgeDescriptor,
+            targetEdgeDescriptor
+          );
+          break;
+        }
+
+        default: {
+          console.warn("Unable to update edge");
+          break;
+        }
       }
-
-      if (evt.metaKey) {
-        // TODO: Export InspectableEdgeType as non-type?
-        targetEdgeDescriptor.type = "constant" as InspectableEdgeType.Constant;
-      }
-
-      if (targetEdge.temporary) {
-        this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, targetEdgeDescriptor);
-        return;
-      } else if (originalEdgeDescriptor) {
-        this.emit(
-          GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
-          originalEdgeDescriptor,
-          targetEdgeDescriptor
-        );
-        return;
-      }
-
-      console.warn("Unable to update edge");
     };
 
     this.addEventListener("pointerup", onPointerUp);
     this.addEventListener("pointerupoutside", onPointerUp);
-
-    // TODO: Add layout reset option.
   }
 
   deselectAllChildren() {
@@ -498,21 +558,23 @@ export class Graph extends PIXI.Container {
     }
 
     const predicateForInputPorts = (edge: InspectableEdge) =>
-      edge.to.descriptor.id === id && edge.in === port.name;
+      edge.to.descriptor.id === id &&
+      (port.name ? edge.in === port.name : true);
     const predicateForOutputPorts = (edge: InspectableEdge) =>
-      edge.from.descriptor.id === id && edge.out === port.name;
+      edge.from.descriptor.id === id &&
+      (port.name ? edge.out === port.name : true);
 
-    const edge = this.#edges.find(
+    const edges = this.#edges.filter(
       port.type === GraphNodePortType.IN
         ? predicateForInputPorts
         : predicateForOutputPorts
     );
 
-    if (!edge) {
-      return null;
+    if (edges.length >= 1) {
+      return this.#edgeGraphics.get(edgeToString(edges[0])) || null;
     }
 
-    return this.#edgeGraphics.get(edgeToString(edge)) || null;
+    return null;
   }
 
   #onChildMoved(

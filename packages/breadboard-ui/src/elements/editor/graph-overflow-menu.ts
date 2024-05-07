@@ -18,11 +18,11 @@ const menuColor = getGlobalColor("--bb-neutral-600");
 
 export class GraphOverflowMenu extends PIXI.Graphics {
   #isDirty = true;
-  #radius = 2;
+  #radius = 1.5;
   #gap = 2;
 
   static readonly width = 24;
-  static readonly height = 24;
+  static readonly height = 16;
 
   constructor() {
     super();
