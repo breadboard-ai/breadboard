@@ -9,12 +9,10 @@ import type { PortConfigMap } from "../common/port.js";
 import { toJSONSchema } from "../type-system/type.js";
 import type {
   Format,
-  PortConfig,
   StaticInputPortConfig,
   StaticOutputPortConfig,
 } from "./config.js";
 import { unsafeType } from "../type-system/unsafe.js";
-import type { BehaviorSchema } from "@google-labs/breadboard";
 
 export function portConfigMapToJSONSchema(
   config: PortConfigMap,

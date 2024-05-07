@@ -1968,24 +1968,30 @@ test("constant", () => {
 
 test("constant input", () => {
   const stringInput = input();
+  const inputWithDefault = input({ default: 123 });
 
   const a = defineNodeType({
     name: "a",
     inputs: {
-      ai1: { type: "string", primary: true },
+      ai1: { type: "string" },
+      ai2: { type: "number" },
     },
     outputs: {
-      ao1: { type: "string", primary: true },
+      ao1: { type: "string" },
     },
     invoke: () => ({ ao1: "foo" }),
   });
 
-  const { ao1 } = a({ ai1: constant(stringInput) }).outputs;
+  const { ao1 } = a({
+    ai1: constant(stringInput),
+    ai2: constant(inputWithDefault),
+  }).outputs;
 
   checkSerialization(
     board({
       inputs: {
         stringInput,
+        inputWithDefault,
       },
       outputs: {
         ao1,
@@ -2002,6 +2008,13 @@ test("constant input", () => {
         {
           from: "input-0",
           to: "a-0",
+          out: "inputWithDefault",
+          in: "ai2",
+          constant: true,
+        },
+        {
+          from: "input-0",
+          to: "a-0",
           out: "stringInput",
           in: "ai1",
           constant: true,
@@ -2014,8 +2027,11 @@ test("constant input", () => {
           configuration: {
             schema: {
               type: "object",
-              properties: { stringInput: { type: "string" } },
-              required: ["stringInput"],
+              properties: {
+                inputWithDefault: { type: "number", default: 123 },
+                stringInput: { type: "string" },
+              },
+              required: ["inputWithDefault", "stringInput"],
             },
           },
         },
