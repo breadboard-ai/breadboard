@@ -11,7 +11,7 @@ import { toJSONSchema, type BreadboardType } from "./type.js";
  * Add Breadboard-specific annotations to a schema.
  */
 export function annotate<T extends BreadboardType>(
-  value: BreadboardType,
+  value: T,
   annotations: {
     behavior: BehaviorSchema[];
   }
