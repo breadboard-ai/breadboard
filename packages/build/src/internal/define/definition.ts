@@ -50,7 +50,6 @@ import { unsafeType } from "../type-system/unsafe.js";
 import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
-import { normalize } from "path";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
