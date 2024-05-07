@@ -6,7 +6,6 @@
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import type { OutputPortReference } from "../common/port.js";
 import type { BroadenBasicType, Defined } from "../common/type-util.js";
 import type {
   BreadboardType,
