@@ -111,6 +111,11 @@ export class DefinitionImpl<
         '"$id" cannot be used as an input port name because it is reserved'
       );
     }
+    if ("$error" in staticOutputs) {
+      throw new Error(
+        '"$error" cannot be used as an output port name because it is reserved'
+      );
+    }
     this.#name = name;
     this.#staticInputs = staticInputs;
     this.#staticOutputs = staticOutputs;
