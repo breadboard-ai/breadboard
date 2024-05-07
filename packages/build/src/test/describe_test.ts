@@ -253,7 +253,7 @@ test("dynamic input schema with default describe passed inbound edges", async ()
         },
         b: {
           title: "b",
-          type: "number",
+          type: "string",
         },
       },
       required: ["foo"],
