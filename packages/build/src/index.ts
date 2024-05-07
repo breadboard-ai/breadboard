@@ -24,6 +24,7 @@ export type {
 export { defineNodeType } from "./internal/define/define.js";
 export type { NodeFactoryFromDefinition } from "./internal/define/node-factory.js";
 export { unsafeSchema } from "./internal/define/unsafe-schema.js";
+export { annotate } from "./internal/type-system/annotate.js";
 export { anyOf } from "./internal/type-system/any-of.js";
 export { array } from "./internal/type-system/array.js";
 export { enumeration } from "./internal/type-system/enumeration.js";
