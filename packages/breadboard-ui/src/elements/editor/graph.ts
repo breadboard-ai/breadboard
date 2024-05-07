@@ -61,21 +61,21 @@ export class Graph extends PIXI.Container {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode) {
-        evt.target.selected = true;
-
+        this.deselectAllChildren();
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
 
-        for (const child of this.children) {
-          if (
-            !(child instanceof GraphNode) ||
-            child === evt.target ||
-            !child.selected
-          ) {
-            continue;
-          }
+        evt.target.selected = true;
+        return;
+      }
 
-          child.selected = false;
+      if (evt.target instanceof GraphEdge) {
+        this.deselectAllChildren();
+
+        if (evt.target.toNode.collapsed || evt.target.fromNode.collapsed) {
+          return;
         }
+
+        evt.target.selected = true;
         return;
       }
 
@@ -110,11 +110,6 @@ export class Graph extends PIXI.Container {
           }
 
           case GraphNodePortType.IN: {
-            edgeBeingEdited = this.findEdge(
-              nodeBeingEdited.name || "",
-              nodePortBeingEdited
-            );
-
             // Both nodes need to be open before a change can be made. Otherwise
             // we don't know exactly which edge is being edited.
             if (
@@ -333,11 +328,6 @@ export class Graph extends PIXI.Container {
         case GRAPH_OPERATIONS.GRAPH_EDGE_DETACH: {
           // Temporary edges don't need to be sent out to the Editor API.
           if (targetEdge.temporary) {
-            if (targetNodePort) {
-              targetNodePort.overrideStatus = null;
-            }
-
-            this.#cleanEdges();
             break;
           }
 
@@ -346,8 +336,6 @@ export class Graph extends PIXI.Container {
         }
 
         case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
-          targetEdge.overrideColor = null;
-
           const existingEdge = this.#edgeGraphics.get(edgeKey);
           if (existingEdge) {
             break;
@@ -386,6 +374,13 @@ export class Graph extends PIXI.Container {
           break;
         }
       }
+
+      targetEdge.overrideColor = null;
+      if (targetNodePort) {
+        targetNodePort.overrideStatus = null;
+      }
+
+      this.#cleanEdges();
     };
 
     this.addEventListener("pointerup", onPointerUp);
@@ -401,7 +396,39 @@ export class Graph extends PIXI.Container {
       child.selected = false;
     }
 
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge) || !edge.selected) {
+        continue;
+      }
+
+      edge.selected = false;
+    }
+
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
+  }
+
+  getSelectedChild() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      if (child.selected) {
+        return child;
+      }
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      if (edge.selected) {
+        return edge;
+      }
+    }
+
+    return null;
   }
 
   getNodeLayoutPositions() {
@@ -550,31 +577,6 @@ export class Graph extends PIXI.Container {
 
   get highlightedNodeId() {
     return this.#highlightedNodeId;
-  }
-
-  findEdge(id: string, port: GraphNodePort): GraphEdge | null {
-    if (!this.#edges) {
-      return null;
-    }
-
-    const predicateForInputPorts = (edge: InspectableEdge) =>
-      edge.to.descriptor.id === id &&
-      (port.name ? edge.in === port.name : true);
-    const predicateForOutputPorts = (edge: InspectableEdge) =>
-      edge.from.descriptor.id === id &&
-      (port.name ? edge.out === port.name : true);
-
-    const edges = this.#edges.filter(
-      port.type === GraphNodePortType.IN
-        ? predicateForInputPorts
-        : predicateForOutputPorts
-    );
-
-    if (edges.length >= 1) {
-      return this.#edgeGraphics.get(edgeToString(edges[0])) || null;
-    }
-
-    return null;
   }
 
   #onChildMoved(

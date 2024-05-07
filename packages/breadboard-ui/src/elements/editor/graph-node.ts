@@ -750,6 +750,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.x = 0;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
+      nodePort.overrideStatus = null;
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
@@ -782,6 +783,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.x = this.#width;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
+      nodePort.overrideStatus = null;
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
