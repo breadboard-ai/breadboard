@@ -89,7 +89,7 @@
   "devDependencies": {
     "ajv": "^8.13.0",
     "ajv-formats": "^3.0.1",
-    "ts-json-schema-generator": "^1.5.0",
+    "ts-json-schema-generator": "^2.1.1",
     "tsx": "^4.9.3"
   }
 }
