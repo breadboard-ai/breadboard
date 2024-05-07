@@ -111,6 +111,16 @@ export class DefinitionImpl<
         '"$id" cannot be used as an input port name because it is reserved'
       );
     }
+    if ("$metadata" in staticInputs) {
+      throw new Error(
+        '"$metadata" cannot be used as an input port name because it is reserved'
+      );
+    }
+    if ("$error" in staticOutputs) {
+      throw new Error(
+        '"$error" cannot be used as an output port name because it is reserved'
+      );
+    }
     this.#name = name;
     this.#staticInputs = staticInputs;
     this.#staticOutputs = staticOutputs;
@@ -423,12 +433,21 @@ type StrictInstantiateArgs<
   OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
-> = { $id?: string } & { [K in keyof Omit<SI, OI>]: InstantiateArg<SI[K]> } & {
+> = {
+  $id?: string;
+  $metadata?: {
+    title?: string;
+    description?: string;
+  };
+} & {
+  [K in keyof Omit<SI, OI | "$id" | "$metadata">]: InstantiateArg<SI[K]>;
+} & {
   [K in OI]?: InstantiateArg<SI[K]> | undefined;
 } & {
-  [K in keyof Omit<A, keyof SI | "$id">]: DI extends JsonSerializable
-    ? InstantiateArg<DI>
-    : never;
+  [K in keyof Omit<
+    A,
+    keyof SI | "$id" | "$metadata"
+  >]: DI extends JsonSerializable ? InstantiateArg<DI> : never;
 };
 
 type InstanceInputs<
@@ -436,7 +455,9 @@ type InstanceInputs<
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
 > = Expand<
-  SI & { [K in keyof Omit<A, "$id">]: K extends keyof SI ? SI[K] : DI }
+  SI & {
+    [K in keyof Omit<A, "$id" | "$metadata">]: K extends keyof SI ? SI[K] : DI;
+  }
 >;
 
 type InstanceOutputs<
@@ -446,7 +467,7 @@ type InstanceOutputs<
   R extends boolean,
   A extends LooseInstantiateArgs,
 > = R extends true
-  ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id">]: DO }>
+  ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id" | "$metadata">]: DO }>
   : SO;
 
 type InstantiateArg<T extends JsonSerializable> =

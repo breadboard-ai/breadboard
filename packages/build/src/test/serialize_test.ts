@@ -1215,6 +1215,100 @@ test("node can have IDs", () => {
   });
 });
 
+test("node can have metadata", () => {
+  const d1 = defineNodeType({
+    name: "d1",
+    inputs: {},
+    outputs: {
+      foo: { type: "string", primary: true },
+    },
+    invoke: () => ({ foo: "foo" }),
+  });
+
+  const d2 = defineNodeType({
+    name: "d2",
+    inputs: {
+      bar: { type: "string" },
+    },
+    outputs: {
+      baz: { type: "string", primary: true },
+    },
+    invoke: () => ({ baz: "baz" }),
+  });
+
+  const i1 = d1({
+    $id: "myCustomId1",
+    $metadata: {
+      title: "my custom title 1",
+    },
+  });
+  const i2 = d2({
+    $id: "myCustomId2",
+    bar: i1,
+    $metadata: {
+      title: "my custom title 2",
+      description: "my custom description 2",
+    },
+  });
+  const b = board({ inputs: {}, outputs: { i2 } });
+
+  checkSerialization(b, {
+    edges: [
+      { from: "myCustomId1", to: "myCustomId2", out: "foo", in: "bar" },
+      { from: "myCustomId2", to: "output-0", out: "baz", in: "i2" },
+    ],
+    nodes: [
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { i2: { type: "string" } },
+            required: ["i2"],
+          },
+        },
+      },
+      {
+        id: "myCustomId1",
+        type: "d1",
+        configuration: {},
+        metadata: {
+          title: "my custom title 1",
+        },
+      },
+      {
+        id: "myCustomId2",
+        type: "d2",
+        configuration: {},
+        metadata: {
+          title: "my custom title 2",
+          description: "my custom description 2",
+        },
+      },
+    ],
+  });
+});
+
+test("can't declare an input port called $metadata because it's reserved", () => {
+  assert.throws(() => {
+    const def = defineNodeType({
+      name: "d1",
+      inputs: {
+        // @ts-expect-error
+        $metadata: {
+          type: "string",
+        },
+      },
+      outputs: {
+        foo: { type: "string", primary: true },
+      },
+      invoke: () => ({ foo: "foo" }),
+    });
+    def({});
+  }, /"\$metadata" cannot be used as an input port name because it is reserved/);
+});
+
 test("custom input id", () => {
   const passthru = defineNodeType({
     name: "passthru",

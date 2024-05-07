@@ -2026,19 +2026,18 @@ test("error: can't set optional when there is a default", () => {
 });
 
 test("error: input port can't be called $id", () => {
-  assert.throws(
-    () =>
-      defineNodeType({
-        name: "foo",
-        inputs: {
-          // @ts-expect-error
-          $id: { type: "string" },
-        },
-        outputs: {},
-        invoke: () => ({}),
-      }),
-    /"\$id" cannot be used as an input port name because it is reserved/
-  );
+  assert.throws(() => {
+    const def = defineNodeType({
+      name: "foo",
+      inputs: {
+        // @ts-expect-error
+        $id: { type: "string" },
+      },
+      outputs: {},
+      invoke: () => ({}),
+    });
+    def({});
+  }, /"\$id" cannot be used as an input port name because it is reserved/);
 });
 
 test("error: $id must only be a string, not an output port", () => {
