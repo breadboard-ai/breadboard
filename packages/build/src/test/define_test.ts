@@ -680,8 +680,8 @@ test("reflective", async () => {
     outputSchema: {
       type: "object",
       properties: {
-        di1: { type: "string", title: "di1" },
-        di2: { type: "string", title: "di2" },
+        di1: { type: "number", title: "di1" },
+        di2: { type: "number", title: "di2" },
         so1: { type: "boolean", title: "so1" },
       },
       required: [],

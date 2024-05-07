@@ -18,7 +18,11 @@ import type { Placeholder } from "../board/placeholder.js";
 import type { StrictNodeHandler } from "../common/compatibility.js";
 import type { OutputPortReference } from "../common/port.js";
 import type { Expand } from "../common/type-util.js";
-import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
+import {
+  toJSONSchema,
+  type BreadboardType,
+  type JsonSerializable,
+} from "../type-system/type.js";
 import type {
   DynamicInputPortConfig,
   DynamicOutputPortConfig,
@@ -42,6 +46,9 @@ import {
   unsafeSchemaAccessor,
   type UnsafeSchema,
 } from "./unsafe-schema.js";
+import { unsafeType } from "../type-system/unsafe.js";
+import { array } from "../type-system/array.js";
+import { object } from "../type-system/object.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -255,11 +262,25 @@ export class DefinitionImpl<
         (name) => this.#staticInputs[name] === undefined
       );
       const dynamicInputConfig = this.#dynamicInputs;
+      const getInputType = (name: string): BreadboardType => {
+        const fromInbound = inboundEdges?.properties?.[name];
+        if (fromInbound) {
+          return unsafeType(fromInbound as JSONSchema4);
+        }
+        const fromValues = values?.[name];
+        if (fromValues !== undefined) {
+          return inferType(fromValues);
+        }
+        return dynamicInputConfig.type;
+      };
       inputSchema = {
         ...portConfigMapToJSONSchema(
           {
             ...Object.fromEntries(
-              actualInputNames.map((name) => [name, dynamicInputConfig])
+              actualInputNames.map((name) => [
+                name,
+                { type: getInputType(name) },
+              ])
             ),
             ...this.#staticInputs,
           },
@@ -297,14 +318,18 @@ export class DefinitionImpl<
       };
     } else if (this.#reflective) {
       // We're reflective, so our outputs are determined by our dynamic inputs.
-      const dynamicInputNames = Object.keys(
-        inputSchema.properties ?? {}
-      ).filter((name) => this.#staticInputs[name] === undefined);
-      const d = this.#dynamicOutputs;
+      const dynamicInputs = Object.entries(inputSchema.properties ?? {}).filter(
+        ([name]) => this.#staticInputs[name] === undefined
+      );
       outputSchema = {
         ...portConfigMapToJSONSchema(
           {
-            ...Object.fromEntries(dynamicInputNames.map((name) => [name, d])),
+            ...Object.fromEntries(
+              dynamicInputs.map(([name, schema]) => [
+                name,
+                { type: unsafeType(schema) },
+              ])
+            ),
             ...this.#staticOutputs,
           },
           true
@@ -432,4 +457,25 @@ function mergeStaticsAndUnsafeUserSchema(
     ];
   }
   return merged;
+}
+
+function inferType(value: unknown): BreadboardType {
+  const t = typeof value;
+  switch (t) {
+    case "string":
+    case "number":
+    case "boolean": {
+      return t;
+    }
+    case "object": {
+      if (value === null) {
+        return "null";
+      }
+      if (Array.isArray(value)) {
+        return array("unknown");
+      }
+      return object({}, "unknown");
+    }
+  }
+  return "unknown";
 }

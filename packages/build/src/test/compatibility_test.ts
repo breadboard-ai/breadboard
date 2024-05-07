@@ -239,15 +239,19 @@ function setupKits<
           },
           num1: {
             title: "num1",
-            type: "number",
+            // TODO(aomarks) I'm unsure why these and the next 3 are string. The
+            // describe function is receiving an inputSchema that sets them all
+            // to string. I wonder if this is an issue with the previous board
+            // API?
+            type: "string",
           },
           num2: {
             title: "num2",
-            type: "number",
+            type: "string",
           },
           num3: {
             title: "num3",
-            type: "number",
+            type: "string",
           },
         },
         required: ["base"],

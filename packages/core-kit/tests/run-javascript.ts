@@ -116,7 +116,7 @@ test("describe inputs", async (t) => {
           code: { title: "code" },
           name: { title: "name" },
           raw: { title: "raw" },
-          what: { title: "what" },
+          what: { title: "what", type: "array", items: { type: "number" } },
         },
       }
     )
@@ -148,7 +148,8 @@ test("describe inputs", async (t) => {
       },
       what: {
         title: "what",
-        type: ["array", "boolean", "null", "number", "object", "string"],
+        type: "array",
+        items: { type: "number" },
       },
     },
     required: ["code"],
