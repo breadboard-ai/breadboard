@@ -27,7 +27,7 @@ export { unsafeSchema } from "./internal/define/unsafe-schema.js";
 export { anyOf } from "./internal/type-system/any-of.js";
 export { array } from "./internal/type-system/array.js";
 export { enumeration } from "./internal/type-system/enumeration.js";
-export { object } from "./internal/type-system/object.js";
+export { object, optional } from "./internal/type-system/object.js";
 export { unsafeType } from "./internal/type-system/unsafe.js";
 
 /**
