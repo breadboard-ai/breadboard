@@ -123,8 +123,11 @@ type ContextItem = { parts: Part | Part[] };
 const maybeOutput = code(({ context }) => {
   const action: Action = { action: "none" };
   if (Array.isArray(context) && context.length > 0) {
-    const lastItem = context[context.length - 1];
-    if (lastItem.role === "model") {
+    let lastItem = context[context.length - 1];
+    if (lastItem.role === "$metadata") {
+      lastItem = context[context.length - 2];
+    }
+    if (lastItem && lastItem.role === "model") {
       const parts = lastItem.parts;
       const text = Array.isArray(parts)
         ? (parts as Part[]).map((item) => item.text).join("/n")
