@@ -1965,3 +1965,73 @@ test("constant", () => {
     }
   );
 });
+
+test("constant input", () => {
+  const stringInput = input();
+
+  const a = defineNodeType({
+    name: "a",
+    inputs: {
+      ai1: { type: "string", primary: true },
+    },
+    outputs: {
+      ao1: { type: "string", primary: true },
+    },
+    invoke: () => ({ ao1: "foo" }),
+  });
+
+  const { ao1 } = a({ ai1: constant(stringInput) }).outputs;
+
+  checkSerialization(
+    board({
+      inputs: {
+        stringInput,
+      },
+      outputs: {
+        ao1,
+      },
+    }),
+    {
+      edges: [
+        {
+          from: "a-0",
+          to: "output-0",
+          out: "ao1",
+          in: "ao1",
+        },
+        {
+          from: "input-0",
+          to: "a-0",
+          out: "stringInput",
+          in: "ai1",
+          constant: true,
+        },
+      ],
+      nodes: [
+        {
+          id: "input-0",
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { stringInput: { type: "string" } },
+              required: ["stringInput"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { ao1: { type: "string" } },
+              required: ["ao1"],
+            },
+          },
+        },
+        { id: "a-0", type: "a", configuration: {} },
+      ],
+    }
+  );
+});

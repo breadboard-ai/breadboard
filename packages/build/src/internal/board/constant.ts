@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OutputPortGetter, type OutputPortReference } from "../common/port.js";
+import { type OutputPortReference } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
+import type { Input } from "./input.js";
 
 // TODO(aomarks) Possible other names: `sticky`, `persistent`, `retained`.
 // `memoized` was also used previously, but that makes me think of caching which
@@ -21,24 +22,27 @@ import type { JsonSerializable } from "../type-system/type.js";
  * any edges connected from that wrapped version of the port will have the
  * `constant` bit set on its BGL `edges` object.
  */
-export function constant<T extends JsonSerializable>(
-  output: OutputPortReference<T>
-): ConstantOutputValue<T> {
+export function constant<
+  T extends OutputPortReference<JsonSerializable> | Input<JsonSerializable>,
+>(output: T): T & Constant {
   return {
-    [IsConstant]: true,
-    [OutputPortGetter]: output[OutputPortGetter],
+    ...output,
+    [ConstantVersionOf]: output,
   };
 }
 
-const IsConstant = Symbol();
+export const ConstantVersionOf = Symbol();
 
-export interface ConstantOutputValue<T extends JsonSerializable>
-  extends OutputPortReference<T> {
-  [IsConstant]: true;
+interface Constant {
+  [ConstantVersionOf]:
+    | OutputPortReference<JsonSerializable>
+    | Input<JsonSerializable>;
 }
 
-export function isConstant<T extends JsonSerializable>(
-  value: OutputPortReference<T>
-): value is ConstantOutputValue<T> {
-  return (value as ConstantOutputValue<T>)[IsConstant] === true;
+export function isConstant(value: unknown): value is Constant {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as Partial<Constant>)[ConstantVersionOf] !== undefined
+  );
 }
