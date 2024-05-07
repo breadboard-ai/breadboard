@@ -118,7 +118,7 @@
     "@typescript-eslint/parser": "^7.8.0",
     "ava": "^5.2.0",
     "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^3.16.0",
+    "typedoc-plugin-markdown": "^4.0.1",
     "typescript": "^5.4.5"
   },
   "dependencies": {
