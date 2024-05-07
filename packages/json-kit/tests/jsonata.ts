@@ -191,17 +191,21 @@ describe("jsonata", () => {
   });
 
   test("invoke in raw mode and doesn't return object", async () => {
-    assert.rejects(
-      () =>
-        jsonata.invoke(
-          {
-            raw: true,
-            expression: "foo.bar",
-            json: { foo: { bar: "baz" } },
-          },
-          null as never
-        ),
-      /jsonata node in raw mode but expression did not return an object/
+    assert.deepEqual(
+      await jsonata.invoke(
+        {
+          raw: true,
+          expression: "foo.bar",
+          json: { foo: { bar: "baz" } },
+        },
+        null as never
+      ),
+      {
+        $error: {
+          message:
+            "jsonata node in raw mode but expression did not return an object",
+        },
+      }
     );
   });
 });

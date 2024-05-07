@@ -64,7 +64,7 @@ export default defineNodeType({
     if (!expression) {
       // TODO(aomarks) We shouldn't need this if we ensure that invoke isn't
       // called unless all required properties are set.
-      throw new Error("Jsonata node requires `expression` input");
+      return { $error: "Jsonata node requires `expression` input" };
     }
     // TODO(aomarks) Error if both json and rest are set.
     const result: JsonSerializable = await jsonata(expression).evaluate(
@@ -72,9 +72,10 @@ export default defineNodeType({
     );
     if (raw) {
       if (typeof result !== "object" || result === null) {
-        throw new Error(
-          "jsonata node in raw mode but expression did not return an object"
-        );
+        return {
+          $error:
+            "jsonata node in raw mode but expression did not return an object",
+        };
       }
       return result;
     }
