@@ -138,11 +138,12 @@ export class GraphEdge extends PIXI.Graphics {
 
     if (this.#isDirty) {
       this.clear();
+      this.#hitArea.clear();
+
       this.#draw();
       this.#isDirty = false;
+      this.addChild(this.#hitArea);
     }
-
-    this.addChildAt(this.#hitArea, 0);
   }
 
   forceRedraw() {
@@ -214,8 +215,6 @@ export class GraphEdge extends PIXI.Graphics {
     const ndy = outLocation.y - inLocation.y;
     const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
     const padding = Math.min(nodeDistance * 0.25, 50);
-
-    this.#hitArea.clear();
 
     // Loopback.
     if (
