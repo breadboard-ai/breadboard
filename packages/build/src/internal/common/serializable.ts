@@ -25,6 +25,7 @@ export interface SerializableNode {
   id?: string;
   type: string;
   inputs: Record<string, SerializableInputPort>;
+  metadata?: { title?: string; description?: string };
 }
 
 export interface SerializableInputPort {

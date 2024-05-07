@@ -100,3 +100,21 @@ test("all nodes have an $error output even if they don't return $error", () => {
     inst.outputs.$error
   );
 });
+
+test("can't declare node with $error output because it's automatic", () => {
+  assert.throws(
+    () =>
+      defineNodeType({
+        name: "test",
+        inputs: {},
+        outputs: {
+          // @ts-expect-error
+          $error: {
+            type: "string",
+          },
+        },
+        invoke: () => ({}),
+      }),
+    /"\$error" cannot be used as an output port name because it is reserved/
+  );
+});

@@ -214,7 +214,7 @@ function primary(configs: PortConfigs): keyof typeof configs | undefined {
 }
 
 type StrictInputs<I extends Record<string, InputPortConfig>> = {
-  [K in keyof I]: K extends "$id"
+  [K in keyof I]: K extends "$id" | "$metadata"
     ? never
     : K extends "*"
       ? StrictMatch<I[K], DynamicInputPortConfig>
@@ -230,9 +230,11 @@ type StrictInputs<I extends Record<string, InputPortConfig>> = {
 } & ForbidMultiplePrimaries<I>;
 
 type StrictOutputs<O extends Record<string, OutputPortConfig>> = {
-  [K in keyof O]: K extends "*"
-    ? StrictMatch<O[K], DynamicOutputPortConfig>
-    : StrictMatch<O[K], StaticOutputPortConfig>;
+  [K in keyof O]: K extends "$error"
+    ? never
+    : K extends "*"
+      ? StrictMatch<O[K], DynamicOutputPortConfig>
+      : StrictMatch<O[K], StaticOutputPortConfig>;
 } & ForbidMultiplePrimaries<O>;
 
 type GetDefault<I extends PortConfig> = I extends StaticInputPortConfig
@@ -297,7 +299,7 @@ type StrictInvokeFnReturn<
         >]: K extends "$error" ? string | { message: string } : never;
       }
     : {
-        [K in keyof Omit<O, "*">]: Convert<O[K]>;
+        [K in keyof Omit<O, "*" | "$error">]: Convert<O[K]>;
       } & {
         [K in keyof ReturnType<
           F extends (...args: unknown[]) => unknown ? F : never
