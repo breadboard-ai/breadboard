@@ -49,6 +49,7 @@ import {
 import { unsafeType } from "../type-system/unsafe.js";
 import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
+import { normalizeBreadboardError } from "../common/error.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -148,13 +149,35 @@ export class DefinitionImpl<
     );
   }
 
-  invoke(
+  async invoke(
     values: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
       this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-    return Promise.resolve(this.#invoke(staticValues, dynamicValues, context));
+    let result;
+    try {
+      result = await this.#invoke(staticValues, dynamicValues, context);
+    } catch (e) {
+      console.error(
+        `
+A node's invoke function raised an exception. This indicates an internal error.
+Expected errors should always be returned as a value on the $error port.
+
+Node type: ${this.#name}
+
+Error: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
+
+Values: ${JSON.stringify(values, null, 2)}`
+      );
+      return {
+        $error: { message: "Internal error (see server logs for details)" },
+      };
+    }
+    if (result.$error !== undefined) {
+      result.$error = normalizeBreadboardError(result.$error);
+    }
+    return result;
   }
 
   /**
