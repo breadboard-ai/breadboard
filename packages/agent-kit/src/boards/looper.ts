@@ -82,10 +82,11 @@ Your output must be a valid JSON of the following format:
   "todo": [{
     "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task."
   }]
+  "doneMarker": "string, optional. The marker that will be used by others to signal completion."
 }
 \`\`\`
 
-There are three kinds of jobs that you can make plans for. 
+There are four kinds of jobs that you can make plans for. 
 
 1) The indefinite job. These are useful when there is not a definite completion condition, and is usually formulated with words like "indefinitely" or "forever". In such cases, the plan will look like an object without a "todo" property, with "max" set to a very large number:
 
@@ -130,7 +131,18 @@ If the job includes a limit on how many tasks to produce, use the "max" property
 }
 \`\`\`
 
-In cases where you are unable to create plan from the job, reply with:
+4) The job where the completion is signaled by others. These are the types of jobs where the number of iterations or the exact steps are unknown, and the
+completion signal is issued by those who are executing the. In such cases, use the "doneMarker" property and use the marker specified:
+
+\`\`\`json
+{
+  "doneMarker": "<the marker that will be used to signal completion>"
+}
+\`\`\`
+
+Common markers are "##STOP##" or "##DONE##", but could be different depending on a job.
+
+When you are unable to create plan from the job, reply with:
 
 \`\`\`json
 {
