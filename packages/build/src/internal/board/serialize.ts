@@ -202,18 +202,29 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   };
 
   function visitNodeAndReturnItsId(node: SerializableNode): string {
-    const descriptor = nodes.get(node);
+    let descriptor = nodes.get(node);
     if (descriptor !== undefined) {
       return descriptor.id;
     }
 
-    const { type } = node;
+    const { type, metadata } = node;
     const thisNodeId = node.id ?? nextIdForType(type);
     const configuration: Record<string, NodeValue> = {};
+    descriptor = { id: thisNodeId, type, configuration };
 
+    const { title, description } = metadata ?? {};
+    if (title || description) {
+      descriptor.metadata = {};
+      if (title) {
+        descriptor.metadata.title = title;
+      }
+      if (description) {
+        descriptor.metadata.description = description;
+      }
+    }
     // Note it's important we add the node to the nodes map before we next
     // recurse, or else we can get stuck in a loop.
-    nodes.set(node, { id: thisNodeId, type, configuration });
+    nodes.set(node, descriptor);
 
     const configurationEntries: Array<[string, NodeValue]> = [];
     for (const [portName, inputPort] of Object.entries(node.inputs)) {

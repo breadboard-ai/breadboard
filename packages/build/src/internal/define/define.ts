@@ -214,7 +214,7 @@ function primary(configs: PortConfigs): keyof typeof configs | undefined {
 }
 
 type StrictInputs<I extends Record<string, InputPortConfig>> = {
-  [K in keyof I]: K extends "$id"
+  [K in keyof I]: K extends "$id" | "$metadata"
     ? never
     : K extends "*"
       ? StrictMatch<I[K], DynamicInputPortConfig>

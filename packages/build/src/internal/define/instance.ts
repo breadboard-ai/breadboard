@@ -49,6 +49,7 @@ export class Instance<
   readonly #dynamicInputType?: BreadboardType;
   readonly #dynamicOutputType?: BreadboardType;
   readonly #reflective: boolean;
+  readonly metadata?: { title: string; description: string };
 
   constructor(
     type: string,
@@ -73,9 +74,13 @@ export class Instance<
     }
 
     {
-      const { ports, primary } = this.#processInputs(staticInputs, args);
+      const { ports, primary, metadata } = this.#processInputs(
+        staticInputs,
+        args
+      );
       this.inputs = ports as (typeof this)["inputs"];
       this.primaryInput = primary as (typeof this)["primaryInput"];
+      this.metadata = metadata as (typeof this)["metadata"];
     }
 
     {
@@ -138,6 +143,12 @@ export class Instance<
     const ports: { [K: string]: InputPort<JsonSerializable> } = {};
     let primary: InputPort<JsonSerializable> | undefined = undefined;
 
+    const metadata = args["$metadata"];
+    if (metadata !== undefined) {
+      args = { ...args };
+      delete args["$metadata"];
+    }
+
     // Static inputs
     for (const [name, config] of Object.entries(staticInputs)) {
       const arg = args[name];
@@ -171,7 +182,7 @@ export class Instance<
       ports[name] = port;
     }
 
-    return { ports, primary };
+    return { ports, primary, metadata };
   }
 
   #processOutputs(
