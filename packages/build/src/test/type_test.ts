@@ -5,21 +5,20 @@
  */
 
 import {
+  annotate,
   anyOf,
   array,
   object,
   optional,
   unsafeType,
 } from "@breadboard-ai/build";
-
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 import {
   toJSONSchema,
   type BreadboardType,
   type ConvertBreadboardType,
 } from "../internal/type-system/type.js";
-
-import assert from "node:assert/strict";
-import { describe, test } from "node:test";
 
 test("string", () => {
   "string" satisfies BreadboardType;
@@ -362,4 +361,42 @@ describe("array", () => {
     });
   });
   /* eslint-enable @typescript-eslint/no-unused-vars */
+});
+
+test("can annotate a nested object with a behavior", () => {
+  assert.deepEqual(
+    toJSONSchema(
+      array(
+        annotate(object({ foo: "number" }), {
+          behavior: ["llm-content"],
+        })
+      )
+    ),
+    {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          foo: { type: "number" },
+        },
+        required: ["foo"],
+        additionalProperties: false,
+        behavior: ["llm-content"],
+      },
+    }
+  );
+});
+
+test("can annotate basic type with behavior", () => {
+  assert.deepEqual(
+    toJSONSchema(
+      annotate("string", {
+        behavior: ["llm-content"],
+      })
+    ),
+    {
+      type: "string",
+      behavior: ["llm-content"],
+    }
+  );
 });
