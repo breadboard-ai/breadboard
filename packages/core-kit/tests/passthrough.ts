@@ -6,7 +6,6 @@
 
 import test from "ava";
 
-import type { NodeHandlerObject } from "@google-labs/breadboard";
 import passthrough from "../src/nodes/passthrough.js";
 
 test("pass through all values", async (t) => {
@@ -15,7 +14,7 @@ test("pass through all values", async (t) => {
     num: 123,
     arr: [{ bool: true }],
   };
-  const actual = await passthrough.invoke(inputs);
+  const actual = await passthrough.invoke(inputs, null as never);
   const expected = inputs;
   t.deepEqual(actual, expected);
 });
@@ -26,17 +25,21 @@ test("describe with no parameters returns empty schemas", async (t) => {
     inputSchema: {
       type: "object",
       properties: {},
+      required: [],
+      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
       properties: {},
+      required: [],
+      additionalProperties: false,
     },
   };
   t.deepEqual(actual, expected);
 });
 
 test("describe uses input values to generate output schema", async (t) => {
-  const actual = await (passthrough as NodeHandlerObject).describe?.(
+  const actual = await passthrough.describe(
     {
       str: "foo",
       num: 123,
@@ -63,18 +66,46 @@ test("describe uses input values to generate output schema", async (t) => {
     inputSchema: {
       type: "object",
       properties: {
-        str: { type: "string" },
-        num: { type: "number" },
-        arr: { type: "array" },
+        str: {
+          title: "str",
+          type: "string",
+        },
+        num: {
+          title: "num",
+          type: "number",
+        },
+        arr: {
+          title: "arr",
+          type: "array",
+          items: {
+            type: "boolean",
+          },
+        },
       },
+      required: [],
+      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
       properties: {
-        str: { type: "string" },
-        num: { type: "number" },
-        arr: { type: "array" },
+        str: {
+          title: "str",
+          type: "string",
+        },
+        num: {
+          title: "num",
+          type: "number",
+        },
+        arr: {
+          title: "arr",
+          type: "array",
+          items: {
+            type: "boolean",
+          },
+        },
       },
+      required: [],
+      additionalProperties: false,
     },
   };
   t.deepEqual(actual, expected);

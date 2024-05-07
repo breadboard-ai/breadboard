@@ -4,38 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeHandlerObject,
-  OutputValues,
-} from "@google-labs/breadboard";
-import { SchemaBuilder } from "@google-labs/breadboard/kits";
+import { defineNodeType } from "@breadboard-ai/build";
 
-export default {
+export default defineNodeType({
+  name: "passthrough",
   metadata: {
     title: "Passthrough",
     description:
       "Takes all inputs and passes them through as outputs. Effectively, a no-op node in Breadboard.",
   },
-  describe: async (inputs?: InputValues) => {
-    if (!inputs) {
-      return {
-        inputSchema: SchemaBuilder.empty(true),
-        outputSchema: SchemaBuilder.empty(true),
-      };
-    }
-    return {
-      inputSchema: new SchemaBuilder()
-        .addInputs(inputs)
-        .setAdditionalProperties(true)
-        .build(),
-      outputSchema: new SchemaBuilder()
-        .addInputs(inputs)
-        .setAdditionalProperties(true)
-        .build(),
-    };
+  inputs: {
+    "*": {
+      type: "unknown",
+    },
   },
-  invoke: async (inputs: InputValues): Promise<OutputValues> => {
-    return inputs;
+  outputs: {
+    "*": {
+      type: "unknown",
+      reflective: true,
+    },
   },
-} satisfies NodeHandlerObject;
+  invoke: (_, inputs) => inputs,
+});
