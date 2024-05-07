@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anyOf, array, object, unsafeType } from "@breadboard-ai/build";
+import {
+  anyOf,
+  array,
+  object,
+  optional,
+  unsafeType,
+} from "@breadboard-ai/build";
 
 import {
   toJSONSchema,
@@ -255,6 +261,24 @@ describe("object", () => {
       properties: {},
       required: [],
       additionalProperties: true,
+    });
+  });
+
+  test("object with optional property", () => {
+    const obj = object({
+      req: "number",
+      opt: optional("number"),
+    });
+    // $ExpectType { req: number; opt?: number | undefined; }
+    type objType = ConvertBreadboardType<typeof obj>;
+    assert.deepEqual(toJSONSchema(obj), {
+      type: "object",
+      properties: {
+        opt: { type: "number" },
+        req: { type: "number" },
+      },
+      required: ["req"],
+      additionalProperties: false,
     });
   });
 
