@@ -26,7 +26,7 @@ import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
 import type { Output } from "./output.js";
 import { isPlaceholder } from "./placeholder.js";
-import { isConstant } from "./constant.js";
+import { ConstantVersionOf, isConstant } from "./constant.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -220,6 +220,13 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       unconnectedInputs.delete(inputPort);
       let value = inputPort.value;
 
+      let wasConstant = false;
+      if (isConstant(value)) {
+        // TODO(aomarks) The way constant works is kind of hacky.
+        value = value[ConstantVersionOf];
+        wasConstant = true;
+      }
+
       if (isPlaceholder(value)) {
         value = value.value;
         if (value === undefined) {
@@ -236,8 +243,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             inputNodeInfo.portName,
             thisNodeId,
             portName,
-            // TODO(aomarks) Maybe inputs can be constant, no?
-            false
+            wasConstant
           );
         } else {
           // TODO(aomarks) Does it actually make sense in some cases to wire up
@@ -257,10 +263,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           wiredOutputPort.name,
           thisNodeId,
           portName,
-          isConstant(
-            // TODO(aomarks) Should not need this cast.
-            value as OutputPortReference<JsonSerializable>
-          )
+          wasConstant
         );
       } else if (value === undefined) {
         // TODO(aomarks) Why is this possible in the type system? An inport port
