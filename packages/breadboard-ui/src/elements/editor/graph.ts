@@ -67,12 +67,14 @@ export class Graph extends PIXI.Container {
     let visibleOnNextMove = false;
 
     this.onRender = () => {
-      if (this.#isDirty) {
-        this.#isDirty = false;
-        this.#drawEdges();
-        this.#drawNodes();
-        this.#drawNodeHighlight();
+      if (!this.#isDirty) {
+        return;
       }
+
+      this.#isDirty = false;
+      this.#drawEdges();
+      this.#drawNodes();
+      this.#drawNodeHighlight();
     };
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {

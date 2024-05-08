@@ -130,7 +130,6 @@ export class GraphNode extends PIXI.Container {
     this.onRender = () => {
       if (this.#isDirty) {
         this.#isDirty = false;
-        // this.clear();
         this.#draw();
 
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN);
