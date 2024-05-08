@@ -413,6 +413,7 @@ const methodChooser = code(({ useStreaming }) => {
 
 export default await board(() => {
   const parameters = base.input({
+    $id: "inputs",
     $metadata: {
       title: "Input Parameters",
       description: "Collecting input parameters",
@@ -421,6 +422,7 @@ export default await board(() => {
   });
 
   const chooseMethod = methodChooser({
+    $id: "choose-method",
     $metadata: {
       title: "Choose Method",
       description: "Choosing the right Gemini API method",
@@ -429,19 +431,24 @@ export default await board(() => {
   });
 
   const makeUrl = templates.urlTemplate({
+    $id: "make-url",
     $metadata: {
       title: "Make URL",
       description: "Creating the Gemini API URL",
     },
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
-    GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
+    GEMINI_KEY: core.secrets({
+      $id: "GEMINI_KEY-secret",
+      keys: ["GEMINI_KEY"],
+    }),
     model: parameters.model,
     method: chooseMethod.method,
     sseOption: chooseMethod.sseOption,
   });
 
   const countRetries = retryCounter({
+    $id: "count-retries",
     $metadata: {
       title: "Check Retry Count",
       description: "Making sure we can retry, if necessary.",
@@ -459,6 +466,7 @@ export default await board(() => {
   });
 
   const makeBody = bodyBuilder({
+    $id: "make-body",
     $metadata: { title: "Make Request Body" },
     context: countRetries.context,
     systemInstruction: countRetries.systemInstruction,
@@ -471,6 +479,7 @@ export default await board(() => {
   });
 
   const fetch = core.fetch({
+    $id: "fetch-gemini-api",
     $metadata: { title: "Make API Call", description: "Calling Gemini API" },
     method: "POST",
     stream: parameters.useStreaming.memoize(),
@@ -479,6 +488,7 @@ export default await board(() => {
   });
 
   const errorCollector = core.passthrough({
+    $id: "collect-errors",
     $metadata: {
       title: "Collect Errors",
       description: "Collecting the error from Gemini API",
@@ -491,6 +501,7 @@ export default await board(() => {
   errorCollector.error.to(countRetries);
 
   const formatResponse = responseFormatter({
+    $id: "format-response",
     $metadata: {
       title: "Format Response",
       description: "Formatting Gemini API response",
