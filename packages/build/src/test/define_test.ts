@@ -13,6 +13,8 @@ import { defineNodeType } from "../internal/define/define.js";
 import { object } from "../internal/type-system/object.js";
 import { array } from "../internal/type-system/array.js";
 import { input } from "../internal/board/input.js";
+import type { OutputPort } from "../internal/common/port.js";
+import type { BreadboardError } from "../internal/common/error.js";
 
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
@@ -62,8 +64,11 @@ test("mono/mono", async () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; so2: OutputPort<null>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      so2: OutputPort<null>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -190,8 +195,10 @@ test("poly/mono", async () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -326,8 +333,10 @@ test("mono/poly", async () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -438,8 +447,10 @@ test("poly/poly", async () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -611,8 +622,12 @@ test("reflective", async () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; di1: OutputPort<string>; di2: OutputPort<string>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      di1: OutputPort<string>;
+      di2: OutputPort<string>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -728,8 +743,10 @@ test("primary input with no other inputs", () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -791,8 +808,10 @@ test("primary input with another input", () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -851,8 +870,10 @@ test("primary output with no other outputs", () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -912,8 +933,11 @@ test("primary output with other outputs", () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; so2: OutputPort<number>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      so2: OutputPort<number>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -972,8 +996,10 @@ test("primary input + output", () => {
   );
 
   assert.ok(
-    // $ExpectType { so1: OutputPort<boolean>; }
-    i.outputs
+    i.outputs satisfies {
+      so1: OutputPort<boolean>;
+      $error: OutputPort<BreadboardError>;
+    }
   );
   assert.ok(
     // $ExpectType OutputPort<boolean>
@@ -2000,19 +2026,18 @@ test("error: can't set optional when there is a default", () => {
 });
 
 test("error: input port can't be called $id", () => {
-  assert.throws(
-    () =>
-      defineNodeType({
-        name: "foo",
-        inputs: {
-          // @ts-expect-error
-          $id: { type: "string" },
-        },
-        outputs: {},
-        invoke: () => ({}),
-      }),
-    /"\$id" cannot be used as an input port name because it is reserved/
-  );
+  assert.throws(() => {
+    const def = defineNodeType({
+      name: "foo",
+      inputs: {
+        // @ts-expect-error
+        $id: { type: "string" },
+      },
+      outputs: {},
+      invoke: () => ({}),
+    });
+    def({});
+  }, /"\$id" cannot be used as an input port name because it is reserved/);
 });
 
 test("error: $id must only be a string, not an output port", () => {
@@ -2054,7 +2079,7 @@ test("$id should not show up as an instance input", () => {
   const i = d({ $id: "foo" });
   // $ExpectType {}
   i.inputs;
-  // $ExpectType {}
+  // $ExpectType { $error: OutputPort<{ message: string; }>; }
   i.outputs;
   assert.equal(
     // @ts-expect-error
@@ -2083,8 +2108,10 @@ test("$id should not show up as a reflective output", () => {
   const i = d({ $id: "foo", notId: "foo" });
   // $ExpectType { notId: InputPort<string>; }
   i.inputs;
-  // $ExpectType { notId: OutputPort<string>; }
-  i.outputs;
+  i.outputs satisfies {
+    notId: OutputPort<string>;
+    $error: OutputPort<BreadboardError>;
+  };
   assert.equal(
     // @ts-expect-error
     i.outputs.$id,

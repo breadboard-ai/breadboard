@@ -6,7 +6,7 @@
 
 import { type OutputPortReference } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
-import type { Input } from "./input.js";
+import type { Input, InputWithDefault } from "./input.js";
 
 // TODO(aomarks) Possible other names: `sticky`, `persistent`, `retained`.
 // `memoized` was also used previously, but that makes me think of caching which
@@ -23,7 +23,10 @@ import type { Input } from "./input.js";
  * `constant` bit set on its BGL `edges` object.
  */
 export function constant<
-  T extends OutputPortReference<JsonSerializable> | Input<JsonSerializable>,
+  T extends
+    | OutputPortReference<JsonSerializable>
+    | Input<JsonSerializable>
+    | InputWithDefault<JsonSerializable>,
 >(output: T): T & Constant {
   return {
     ...output,
@@ -36,7 +39,8 @@ export const ConstantVersionOf = Symbol();
 interface Constant {
   [ConstantVersionOf]:
     | OutputPortReference<JsonSerializable>
-    | Input<JsonSerializable>;
+    | Input<JsonSerializable>
+    | InputWithDefault<JsonSerializable>;
 }
 
 export function isConstant(value: unknown): value is Constant {

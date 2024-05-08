@@ -6,6 +6,7 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 
+import { breadboardErrorType, type BreadboardError } from "../common/error.js";
 import {
   DefaultValue,
   InputPort,
@@ -34,7 +35,11 @@ export class Instance<
   readonly id?: string;
   readonly type: string;
   readonly inputs: { [K in keyof I]: InputPort<I[K]> };
-  readonly outputs: { [K in keyof O]: OutputPort<O[K]> };
+  readonly outputs: {
+    [K in keyof O | "$error"]: K extends "$error"
+      ? OutputPort<BreadboardError>
+      : OutputPort<O[K]>;
+  };
   readonly primaryInput: PI extends keyof I ? InputPort<I[PI]> : undefined;
   readonly primaryOutput: PO extends keyof O ? OutputPort<O[PO]> : undefined;
   // TODO(aomarks) Clean up output port getter
@@ -44,6 +49,7 @@ export class Instance<
   readonly #dynamicInputType?: BreadboardType;
   readonly #dynamicOutputType?: BreadboardType;
   readonly #reflective: boolean;
+  readonly metadata?: { title: string; description: string };
 
   constructor(
     type: string,
@@ -68,9 +74,13 @@ export class Instance<
     }
 
     {
-      const { ports, primary } = this.#processInputs(staticInputs, args);
+      const { ports, primary, metadata } = this.#processInputs(
+        staticInputs,
+        args
+      );
       this.inputs = ports as (typeof this)["inputs"];
       this.primaryInput = primary as (typeof this)["primaryInput"];
+      this.metadata = metadata as (typeof this)["metadata"];
     }
 
     {
@@ -133,6 +143,12 @@ export class Instance<
     const ports: { [K: string]: InputPort<JsonSerializable> } = {};
     let primary: InputPort<JsonSerializable> | undefined = undefined;
 
+    const metadata = args["$metadata"];
+    if (metadata !== undefined) {
+      args = { ...args };
+      delete args["$metadata"];
+    }
+
     // Static inputs
     for (const [name, config] of Object.entries(staticInputs)) {
       const arg = args[name];
@@ -166,7 +182,7 @@ export class Instance<
       ports[name] = port;
     }
 
-    return { ports, primary };
+    return { ports, primary, metadata };
   }
 
   #processOutputs(
@@ -178,7 +194,9 @@ export class Instance<
   ) {
     const ports: { [K: string]: OutputPort<JsonSerializable> } & {
       assert?: (name: string) => OutputPort<JsonSerializable>;
-    } = {};
+    } = {
+      $error: new OutputPort(breadboardErrorType, "$error", this),
+    };
     let primary: OutputPort<JsonSerializable> | undefined = undefined;
 
     for (const [name, config] of Object.entries(staticOutputs)) {

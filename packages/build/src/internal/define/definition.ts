@@ -49,6 +49,7 @@ import {
 import { unsafeType } from "../type-system/unsafe.js";
 import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
+import { normalizeBreadboardError } from "../common/error.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -110,6 +111,16 @@ export class DefinitionImpl<
         '"$id" cannot be used as an input port name because it is reserved'
       );
     }
+    if ("$metadata" in staticInputs) {
+      throw new Error(
+        '"$metadata" cannot be used as an input port name because it is reserved'
+      );
+    }
+    if ("$error" in staticOutputs) {
+      throw new Error(
+        '"$error" cannot be used as an output port name because it is reserved'
+      );
+    }
     this.#name = name;
     this.#staticInputs = staticInputs;
     this.#staticOutputs = staticOutputs;
@@ -148,13 +159,35 @@ export class DefinitionImpl<
     );
   }
 
-  invoke(
+  async invoke(
     values: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> {
     const { staticValues, dynamicValues } =
       this.#applyDefaultsAndPartitionRuntimeInputValues(values);
-    return Promise.resolve(this.#invoke(staticValues, dynamicValues, context));
+    let result;
+    try {
+      result = await this.#invoke(staticValues, dynamicValues, context);
+    } catch (e) {
+      console.error(
+        `
+A node's invoke function raised an exception. This indicates an internal error.
+Expected errors should always be returned as a value on the $error port.
+
+Node type: ${this.#name}
+
+Error: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
+
+Values: ${JSON.stringify(values, null, 2)}`
+      );
+      return {
+        $error: { message: "Internal error (see server logs for details)" },
+      };
+    }
+    if (result.$error !== undefined) {
+      result.$error = normalizeBreadboardError(result.$error);
+    }
+    return result;
   }
 
   /**
@@ -400,12 +433,21 @@ type StrictInstantiateArgs<
   OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
-> = { $id?: string } & { [K in keyof Omit<SI, OI>]: InstantiateArg<SI[K]> } & {
+> = {
+  $id?: string;
+  $metadata?: {
+    title?: string;
+    description?: string;
+  };
+} & {
+  [K in keyof Omit<SI, OI | "$id" | "$metadata">]: InstantiateArg<SI[K]>;
+} & {
   [K in OI]?: InstantiateArg<SI[K]> | undefined;
 } & {
-  [K in keyof Omit<A, keyof SI | "$id">]: DI extends JsonSerializable
-    ? InstantiateArg<DI>
-    : never;
+  [K in keyof Omit<
+    A,
+    keyof SI | "$id" | "$metadata"
+  >]: DI extends JsonSerializable ? InstantiateArg<DI> : never;
 };
 
 type InstanceInputs<
@@ -413,7 +455,9 @@ type InstanceInputs<
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
 > = Expand<
-  SI & { [K in keyof Omit<A, "$id">]: K extends keyof SI ? SI[K] : DI }
+  SI & {
+    [K in keyof Omit<A, "$id" | "$metadata">]: K extends keyof SI ? SI[K] : DI;
+  }
 >;
 
 type InstanceOutputs<
@@ -423,7 +467,7 @@ type InstanceOutputs<
   R extends boolean,
   A extends LooseInstantiateArgs,
 > = R extends true
-  ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id">]: DO }>
+  ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id" | "$metadata">]: DO }>
   : SO;
 
 type InstantiateArg<T extends JsonSerializable> =

@@ -24,8 +24,9 @@ import secrets from "./nodes/secrets.js";
 export { code } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
 export { default as invoke } from "./nodes/invoke.js";
+export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
-export { default as secrets, secret } from "./nodes/secrets.js";
+export { secret, default as secrets } from "./nodes/secrets.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
