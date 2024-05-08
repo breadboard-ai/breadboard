@@ -21,6 +21,14 @@ const edgeColorConstant = getGlobalColor("--bb-output-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
 
+/**
+ * Calculates an [x,y] pair of points from start to end via the control point.
+ * Per the math, this is defined as:
+ *
+ * (1-t)² * start + 2(1 - t) * t * cp + t² * end.
+ *
+ * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
+ */
 function calculatePointsOnQuadraticBezierCurve(
   startX: number,
   startY: number,
@@ -48,6 +56,14 @@ function calculatePointsOnQuadraticBezierCurve(
   return points;
 }
 
+/**
+ * Calculates an [x,y] pair of points from start to end via two control points.
+ * Per the math, this is defined as:
+ *
+ * (1-t)³ * start + 3(1 - t)² * t * cp + 3(1 - t) * t² * cp + t³ * end.
+ *
+ * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
+ */
 function calculatePointsOnCubicBezierCurve(
   startX: number,
   startY: number,
