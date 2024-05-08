@@ -52,6 +52,14 @@ export class GraphNodePort extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
+    this.onRender = () => {
+      if (!this.#isDirty) {
+        return;
+      }
+      this.#isDirty = false;
+      this.clear();
+      this.#draw();
+    };
   }
 
   set editable(editable: boolean) {
@@ -114,16 +122,6 @@ export class GraphNodePort extends PIXI.Graphics {
     return this.#status;
   }
 
-  render(renderer: PIXI.Renderer): void {
-    super.render(renderer);
-
-    if (this.#isDirty) {
-      this.#isDirty = false;
-      this.clear();
-      this.#draw();
-    }
-  }
-
   #draw() {
     // Adjust the hit area so it's a bit bigger.
     this.hitArea = new PIXI.Rectangle(
@@ -134,17 +132,21 @@ export class GraphNodePort extends PIXI.Graphics {
     );
 
     const status = this.#overrideStatus ?? this.#status;
-    this.lineStyle({
+    this.setStrokeStyle({
       color: this.#configured
         ? this.#borderColors["configured"]
         : this.#borderColors[status],
       width: 1,
     });
 
-    this.beginFill(
-      this.#configured ? this.#colors["configured"] : this.#colors[status]
-    );
-    this.drawCircle(0, 0, this.#radius);
-    this.endFill();
+    this.beginPath();
+    this.circle(0, 0, this.#radius);
+    this.fill({
+      color: this.#configured
+        ? this.#colors["configured"]
+        : this.#colors[status],
+    });
+    this.stroke();
+    this.closePath();
   }
 }

@@ -12,7 +12,7 @@ const ASSET_LIST = new Map([
   ["laps", "/third_party/icons/laps.svg"],
 ]);
 
-type AssetMap = Map<string, PIXI.Texture<PIXI.Resource>>;
+type AssetMap = Map<string, PIXI.Texture>;
 
 export class GraphAssets {
   static #instance: GraphAssets;
@@ -29,7 +29,7 @@ export class GraphAssets {
   // Not to be instantiated directly.
   private constructor() {
     const loadedAssets = [...ASSET_LIST.entries()].map(
-      async ([name, path]): Promise<[string, PIXI.Texture<PIXI.Resource>]> => {
+      async ([name, path]): Promise<[string, PIXI.Texture]> => {
         const texture = await PIXI.Assets.load<PIXI.Texture>(path);
         return [name, texture];
       }

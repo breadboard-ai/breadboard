@@ -30,20 +30,7 @@ export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   editable = false;
 
-  #app = new PIXI.Application({
-    background: "rgb(244, 247, 252)",
-    resizeTo: this,
-    antialias: true,
-    autoDensity: true,
-    resolution: Math.max(2, window.devicePixelRatio),
-    eventMode: "static",
-    eventFeatures: {
-      globalMove: true,
-      move: true,
-      click: true,
-      wheel: true,
-    },
-  });
+  #app = new PIXI.Application();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
@@ -53,7 +40,9 @@ export class GraphRenderer extends LitElement {
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
-    this.#app.resize();
+    if ("resize" in this.#app) {
+      this.#app.resize();
+    }
 
     if (entries.length < 1) {
       return;
@@ -181,13 +170,14 @@ export class GraphRenderer extends LitElement {
 
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
-    this.#app.stop();
+    // this.#app.stop();
+    // this.#app.stop();
     this.tabIndex = 0;
 
-    let dragStart: PIXI.IPointData | null = null;
-    let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
-    let tilePosition: PIXI.ObservablePoint<unknown> | null = null;
-    this.#app.stage.addEventListener(
+    let dragStart: PIXI.PointData | null = null;
+    let originalPosition: PIXI.ObservablePoint | null = null;
+    let tilePosition: PIXI.ObservablePoint | null = null;
+    this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
         for (const graph of this.#container.children) {
@@ -208,7 +198,7 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    this.#app.stage.addEventListener(
+    this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
         if (!dragStart || !originalPosition) {
@@ -235,8 +225,8 @@ export class GraphRenderer extends LitElement {
       originalPosition = null;
       tilePosition = null;
     };
-    this.#app.stage.addEventListener("pointerup", onPointerUp);
-    this.#app.stage.addEventListener("pointerupoutside", onPointerUp);
+    this.#app.stage.addListener("pointerup", onPointerUp);
+    this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
     this.#app.stage.on(
       "wheel",
@@ -260,7 +250,7 @@ export class GraphRenderer extends LitElement {
     );
   }
 
-  #scaleContainerAroundPoint(delta: number, pivot: PIXI.IPointData) {
+  #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
     const m = new PIXI.Matrix();
     m.identity()
       .scale(this.#container.scale.x, this.#container.scale.y)
@@ -276,7 +266,7 @@ export class GraphRenderer extends LitElement {
     m.ty = Math.round(m.ty);
 
     // Apply back to the container.
-    this.#container.transform.setFromMatrix(m);
+    this.#container.setFromMatrix(m);
     return m;
   }
 
@@ -354,7 +344,7 @@ export class GraphRenderer extends LitElement {
               }
 
               case this.#overflowDeleteNode.value: {
-                if (!this.#overflowMenuGraphNode.name) {
+                if (!this.#overflowMenuGraphNode.label) {
                   console.warn("Tried to delete unnamed node");
                   break;
                 }
@@ -364,7 +354,7 @@ export class GraphRenderer extends LitElement {
                 }
 
                 this.dispatchEvent(
-                  new GraphNodeDeleteEvent(this.#overflowMenuGraphNode.name)
+                  new GraphNodeDeleteEvent(this.#overflowMenuGraphNode.label)
                 );
                 break;
               }
@@ -468,11 +458,11 @@ export class GraphRenderer extends LitElement {
       }
 
       if (selectedChild instanceof GraphNode) {
-        if (!selectedChild.name) {
+        if (!selectedChild.label) {
           console.warn("Node has no name - unable to delete");
           return;
         }
-        this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.name));
+        this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
       } else if (selectedChild instanceof GraphEdge) {
         if (!selectedChild.edge) {
           console.warn("Invalid edge - unable to delete");
@@ -494,6 +484,70 @@ export class GraphRenderer extends LitElement {
 
     this.addEventListener("wheel", this.#onWheelBound, { passive: false });
 
+    this.#resizeObserver.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    if ("stop" in this.#app) {
+      this.#app.stop();
+    }
+
+    this.#resizeObserver.disconnect();
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("wheel", this.#onWheelBound);
+  }
+
+  async loadTexturesAndRender() {
+    await Promise.all([
+      GraphAssets.instance().loaded,
+      this.#app.init({
+        webgpu: {
+          background: "#ededed",
+          antialias: true,
+        },
+        webgl: {
+          background: "#ededed",
+          antialias: true,
+        },
+        preference: "webgl",
+        resizeTo: this,
+        autoDensity: true,
+        resolution: Math.max(2, window.devicePixelRatio),
+        eventMode: "static",
+        eventFeatures: {
+          globalMove: true,
+          move: true,
+          click: true,
+          wheel: true,
+        },
+      }),
+    ]);
+
+    if (!this.#background) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        console.warn("Unable to create background texture");
+        return;
+      }
+      ctx.fillStyle = "#ededed";
+      ctx.fillRect(0, 0, 1, 1);
+
+      const texture = PIXI.Texture.from(canvas);
+
+      this.#background = new PIXI.TilingSprite(texture);
+      this.#background.width = this.#app.canvas.width;
+      this.#background.height = this.#app.canvas.height;
+
+      this.#app.stage.addChildAt(this.#background, 0);
+    } else {
+      this.#app.stage.addChildAt(this.#background, 0);
+    }
+
     this.#app.start();
     this.#app.resize();
     this.#app.renderer.addListener("resize", () => {
@@ -505,39 +559,7 @@ export class GraphRenderer extends LitElement {
       this.#background.height = this.#app.renderer.height;
     });
 
-    this.#resizeObserver.observe(this);
-
-    if (!this.#background) {
-      const buffer = new Uint8Array([0xed, 0xed, 0xed]);
-      const texture = PIXI.Texture.fromBuffer(buffer, 1, 1, {
-        type: PIXI.TYPES.UNSIGNED_BYTE,
-        format: PIXI.FORMATS.RGB,
-        mipmap: PIXI.MIPMAP_MODES.OFF,
-        scaleMode: PIXI.SCALE_MODES.LINEAR,
-      });
-
-      this.#background = new PIXI.TilingSprite(texture);
-      this.#background.width = this.#app.renderer.width;
-      this.#background.height = this.#app.renderer.height;
-
-      this.#app.stage.addChildAt(this.#background, 0);
-    } else {
-      this.#app.stage.addChildAt(this.#background, 0);
-    }
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.#app.stop();
-    this.#resizeObserver.disconnect();
-    window.removeEventListener("keydown", this.#onKeyDownBound);
-    this.removeEventListener("wheel", this.#onWheelBound);
-  }
-
-  async loadTexturesAndRender() {
-    await GraphAssets.instance().loaded;
-    return this.#app.view;
+    return this.#app.canvas;
   }
 
   render() {
