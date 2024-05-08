@@ -33,6 +33,16 @@ export const userPartsAdder = code(({ context, toAdd }) => {
   if (!existing) throw new Error("Context is required");
   const incoming = structuredClone(toAdd) as LlmContent;
   if (!incoming.parts) {
+    const containsUserRole =
+      existing.filter((item) => item.role === "model").length > 0;
+    if (!containsUserRole) {
+      return {
+        context: [
+          ...existing,
+          { role: "user", parts: [{ text: "Do your magic" }] },
+        ],
+      };
+    }
     return { context };
   }
   if (!incoming.role) {
