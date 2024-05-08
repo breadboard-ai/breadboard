@@ -82,11 +82,14 @@ export class GraphNode extends PIXI.Container {
   #iconSprite: PIXI.Sprite | null = null;
 
   constructor(id: string, type: string, title: string) {
-    super();
+    super({
+      isRenderGroup: true,
+    });
 
     this.title = title;
     this.id = id;
     this.type = type;
+    this.isRenderGroup = true;
 
     switch (type) {
       case "input":
