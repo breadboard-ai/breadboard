@@ -15,10 +15,90 @@ function getGlobalColor(name: string, defaultValue = "#333333") {
   return parseInt(value || defaultValue, 16);
 }
 
+const edgeColorSelected = getGlobalColor("--bb-nodes-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
 const edgeColorConstant = getGlobalColor("--bb-output-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
+
+/**
+ * Calculates an [x,y] pair of points from start to end via the control point.
+ * Per the math, this is defined as:
+ *
+ * (1-t)² * start + 2(1 - t) * t * cp + t² * end.
+ *
+ * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
+ */
+function calculatePointsOnQuadraticBezierCurve(
+  startX: number,
+  startY: number,
+  cpX: number,
+  cpY: number,
+  endX: number,
+  endY: number,
+  from: number,
+  to: number,
+  step: number
+) {
+  if (from > to || from < 0 || from > 1 || to < 0 || to > 1) {
+    throw new Error(
+      "from must be less than to, and both must be between 0 and 1"
+    );
+  }
+
+  const points: number[] = [];
+  for (let t = from; t <= to; t += step) {
+    points.push(
+      (1 - t) ** 2 * startX + 2 * (1 - t) * t * cpX + t ** 2 * endX,
+      (1 - t) ** 2 * startY + 2 * (1 - t) * t * cpY + t ** 2 * endY
+    );
+  }
+  return points;
+}
+
+/**
+ * Calculates an [x,y] pair of points from start to end via two control points.
+ * Per the math, this is defined as:
+ *
+ * (1-t)³ * start + 3(1 - t)² * t * cp + 3(1 - t) * t² * cp + t³ * end.
+ *
+ * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
+ */
+function calculatePointsOnCubicBezierCurve(
+  startX: number,
+  startY: number,
+  cp1X: number,
+  cp1Y: number,
+  cp2X: number,
+  cp2Y: number,
+  endX: number,
+  endY: number,
+  from: number,
+  to: number,
+  step: number
+) {
+  if (from > to || from < 0 || from > 1 || to < 0 || to > 1) {
+    throw new Error(
+      "from must be less than to, and both must be between 0 and 1"
+    );
+  }
+
+  const points: number[] = [];
+  for (let t = from; t <= to; t += step) {
+    points.push(
+      (1 - t) ** 3 * startX +
+        3 * (1 - t) ** 2 * t * cp1X +
+        3 * (1 - t) * t ** 2 * cp2X +
+        t ** 3 * endX,
+
+      (1 - t) ** 3 * startY +
+        3 * (1 - t) ** 2 * t * cp1Y +
+        3 * (1 - t) * t ** 2 * cp2Y +
+        t ** 3 * endY
+    );
+  }
+  return points;
+}
 
 export class GraphEdge extends PIXI.Graphics {
   #isDirty = true;
@@ -29,6 +109,8 @@ export class GraphEdge extends PIXI.Graphics {
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
   #type: InspectableEdgeType | null = null;
+  #selected = false;
+  #hitAreaSpacing = 6;
 
   constructor(
     public fromNode: GraphNode,
@@ -36,6 +118,9 @@ export class GraphEdge extends PIXI.Graphics {
     public temporary = false
   ) {
     super();
+
+    this.eventMode = "static";
+    this.cursor = "pointer";
   }
 
   set edge(edge: InspectableEdge | null) {
@@ -50,6 +135,15 @@ export class GraphEdge extends PIXI.Graphics {
           type: edge.type,
         }
       : null;
+    this.#isDirty = true;
+  }
+
+  get selected() {
+    return this.#selected;
+  }
+
+  set selected(selected: boolean) {
+    this.#selected = selected;
     this.#isDirty = true;
   }
 
@@ -176,12 +270,18 @@ export class GraphEdge extends PIXI.Graphics {
       }
     }
 
-    const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
-    const color = this.#overrideColor ?? edgeColor;
+    if (this.#overrideColor) {
+      edgeColor = this.#overrideColor;
+    }
 
-    this.lineStyle(2, color);
+    if (this.selected) {
+      edgeColor = edgeColorSelected;
+    }
+
+    this.lineStyle(2, edgeColor);
     this.moveTo(outLocation.x, outLocation.y);
 
+    const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
     const ndx = outLocation.x - inLocation.x;
     const ndy = outLocation.y - inLocation.y;
     const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
@@ -193,6 +293,7 @@ export class GraphEdge extends PIXI.Graphics {
       !this.#overrideInLocation &&
       !this.#overrideOutLocation
     ) {
+      // Line.
       this.lineTo(
         outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
         outLocation.y
@@ -243,6 +344,57 @@ export class GraphEdge extends PIXI.Graphics {
       );
 
       this.lineTo(inLocation.x, inLocation.y);
+
+      // Hit Area.
+      this.hitArea = new PIXI.Polygon([
+        outLocation.x,
+        outLocation.y - this.#hitAreaSpacing,
+
+        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
+        outLocation.y - this.#hitAreaSpacing,
+
+        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding +
+          this.#hitAreaSpacing,
+
+        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding +
+          this.#hitAreaSpacing,
+
+        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+        inLocation.y - this.#hitAreaSpacing,
+
+        inLocation.x,
+        inLocation.y - this.#hitAreaSpacing,
+
+        inLocation.x,
+        inLocation.y + this.#hitAreaSpacing,
+
+        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+        inLocation.y + this.#hitAreaSpacing,
+
+        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#hitAreaSpacing,
+
+        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
+        this.fromNode.y +
+          this.fromNode.height +
+          this.#loopBackPadding -
+          this.#hitAreaSpacing,
+
+        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
+        outLocation.y + this.#hitAreaSpacing,
+
+        outLocation.x,
+        outLocation.y + this.#hitAreaSpacing,
+      ]);
       return;
     }
 
@@ -304,7 +456,7 @@ export class GraphEdge extends PIXI.Graphics {
       y: pivotB.y - Math.sin(angleB) * distance,
     };
 
-    // Now draw the lines.
+    // Lines.
     this.moveTo(outLocation.x, outLocation.y);
     if (Math.abs(midA.x - midB.x) > 0.5) {
       this.bezierCurveTo(cpA1.x, cpA1.y, cpA2.x, cpA2.y, midA.x, midA.y);
@@ -323,9 +475,174 @@ export class GraphEdge extends PIXI.Graphics {
     }
 
     // Circles at the start & end.
-    this.beginFill(color);
+    this.beginFill(edgeColor);
     this.drawCircle(outLocation.x, outLocation.y, 2);
     this.drawCircle(inLocation.x, inLocation.y, 2);
     this.endFill();
+
+    // Hit Area.
+    if (Math.abs(midA.x - midB.x) > 0.5) {
+      const hitAreaSpacingX =
+        this.#hitAreaSpacing * (outLocation.y < inLocation.y ? 1 : -1);
+      const hitAreaSpacingY = this.#hitAreaSpacing;
+
+      this.hitArea = new PIXI.Polygon([
+        outLocation.x,
+        outLocation.y - hitAreaSpacingY,
+        ...calculatePointsOnCubicBezierCurve(
+          outLocation.x,
+          outLocation.y - hitAreaSpacingY,
+          cpA1.x + hitAreaSpacingX,
+          cpA1.y,
+          cpA2.x + hitAreaSpacingX,
+          cpA2.y,
+          midA.x,
+          midA.y + hitAreaSpacingY,
+          0.0,
+          1,
+          0.1
+        ),
+        midA.x,
+        midA.y + hitAreaSpacingY,
+        midB.x,
+        midB.y + hitAreaSpacingY,
+        ...calculatePointsOnCubicBezierCurve(
+          midB.x,
+          midB.y + hitAreaSpacingY,
+          cpB1.x + hitAreaSpacingX,
+          cpB1.y,
+          cpB2.x + hitAreaSpacingX,
+          cpB2.y,
+          inLocation.x,
+          inLocation.y - hitAreaSpacingY,
+          0.0,
+          1,
+          0.1
+        ),
+        inLocation.x,
+        inLocation.y + hitAreaSpacingY,
+        ...calculatePointsOnCubicBezierCurve(
+          inLocation.x,
+          inLocation.y + hitAreaSpacingY,
+          cpB2.x - hitAreaSpacingX,
+          cpB2.y,
+          cpB1.x - hitAreaSpacingX,
+          cpB1.y,
+          midB.x,
+          midB.y - hitAreaSpacingY,
+          0.0,
+          1,
+          0.1
+        ),
+        midA.x,
+        midA.y - hitAreaSpacingY,
+        ...calculatePointsOnCubicBezierCurve(
+          midA.x,
+          midA.y - hitAreaSpacingY,
+          cpA2.x - hitAreaSpacingX,
+          cpA2.y,
+          cpA1.x - hitAreaSpacingX,
+          cpA1.y,
+          outLocation.x,
+          outLocation.y + hitAreaSpacingY,
+          0.0,
+          1,
+          0.1
+        ),
+      ]);
+    } else {
+      const angle = Math.atan2(
+        inLocation.y - outLocation.y,
+        inLocation.x - outLocation.x
+      );
+      const xDist = Math.sin(angle) * this.#hitAreaSpacing;
+      const yDist = Math.cos(angle) * this.#hitAreaSpacing;
+
+      this.hitArea = new PIXI.Polygon([
+        outLocation.x,
+        outLocation.y - this.#hitAreaSpacing,
+
+        ...calculatePointsOnQuadraticBezierCurve(
+          // Start
+          outLocation.x,
+          outLocation.y - this.#hitAreaSpacing,
+
+          // Control
+          pivotA.x + xDist,
+          outLocation.y - this.#hitAreaSpacing,
+
+          // End
+          midA.x + xDist,
+          midA.y - yDist,
+
+          0.2,
+          0.8,
+          0.1
+        ),
+
+        ...calculatePointsOnQuadraticBezierCurve(
+          // Start
+          midA.x + xDist,
+          midA.y - yDist,
+
+          // Control
+          pivotB.x + xDist,
+          inLocation.y - this.#hitAreaSpacing,
+
+          // End
+          inLocation.x,
+          inLocation.y - this.#hitAreaSpacing,
+
+          0.2,
+          0.8,
+          0.1
+        ),
+
+        inLocation.x,
+        inLocation.y - this.#hitAreaSpacing,
+
+        inLocation.x,
+        inLocation.y + this.#hitAreaSpacing,
+
+        ...calculatePointsOnQuadraticBezierCurve(
+          // Start
+          inLocation.x,
+          inLocation.y + this.#hitAreaSpacing,
+
+          // Control
+          pivotB.x - xDist,
+          inLocation.y + this.#hitAreaSpacing,
+
+          // End
+          midA.x - xDist,
+          midA.y + yDist,
+
+          0.2,
+          0.8,
+          0.1
+        ),
+
+        ...calculatePointsOnQuadraticBezierCurve(
+          // Start
+          midA.x - xDist,
+          midA.y + yDist,
+
+          // Control
+          pivotA.x - xDist,
+          outLocation.y + this.#hitAreaSpacing,
+
+          // End
+          outLocation.x,
+          outLocation.y + this.#hitAreaSpacing,
+
+          0.2,
+          0.8,
+          0.1
+        ),
+
+        outLocation.x,
+        outLocation.y + this.#hitAreaSpacing,
+      ]);
+    }
   }
 }

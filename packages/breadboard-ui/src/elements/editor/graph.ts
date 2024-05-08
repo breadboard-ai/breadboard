@@ -19,11 +19,20 @@ import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
 
+const documentStyles = getComputedStyle(document.documentElement);
+
+function getGlobalColor(name: string, defaultValue = "#333333") {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  return parseInt(value || defaultValue, 16);
+}
+
 function edgeToString(edge: InspectableEdge): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
+
+const highlightedNodeColor = getGlobalColor("--bb-output-600");
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -36,7 +45,7 @@ export class Graph extends PIXI.Container {
   #layout = new Map<string, LayoutInfo>();
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
-  #highlightedNodeColor = 0x0084ff;
+  #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
   #editable = false;
 
@@ -61,21 +70,21 @@ export class Graph extends PIXI.Container {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode) {
-        evt.target.selected = true;
-
+        this.deselectAllChildren();
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
 
-        for (const child of this.children) {
-          if (
-            !(child instanceof GraphNode) ||
-            child === evt.target ||
-            !child.selected
-          ) {
-            continue;
-          }
+        evt.target.selected = true;
+        return;
+      }
 
-          child.selected = false;
+      if (evt.target instanceof GraphEdge) {
+        this.deselectAllChildren();
+
+        if (evt.target.toNode.collapsed || evt.target.fromNode.collapsed) {
+          return;
         }
+
+        evt.target.selected = true;
         return;
       }
 
@@ -110,11 +119,6 @@ export class Graph extends PIXI.Container {
           }
 
           case GraphNodePortType.IN: {
-            edgeBeingEdited = this.findEdge(
-              nodeBeingEdited.name || "",
-              nodePortBeingEdited
-            );
-
             // Both nodes need to be open before a change can be made. Otherwise
             // we don't know exactly which edge is being edited.
             if (
@@ -333,11 +337,6 @@ export class Graph extends PIXI.Container {
         case GRAPH_OPERATIONS.GRAPH_EDGE_DETACH: {
           // Temporary edges don't need to be sent out to the Editor API.
           if (targetEdge.temporary) {
-            if (targetNodePort) {
-              targetNodePort.overrideStatus = null;
-            }
-
-            this.#cleanEdges();
             break;
           }
 
@@ -346,8 +345,6 @@ export class Graph extends PIXI.Container {
         }
 
         case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
-          targetEdge.overrideColor = null;
-
           const existingEdge = this.#edgeGraphics.get(edgeKey);
           if (existingEdge) {
             break;
@@ -386,6 +383,13 @@ export class Graph extends PIXI.Container {
           break;
         }
       }
+
+      targetEdge.overrideColor = null;
+      if (targetNodePort) {
+        targetNodePort.overrideStatus = null;
+      }
+
+      this.#cleanEdges();
     };
 
     this.addEventListener("pointerup", onPointerUp);
@@ -401,7 +405,39 @@ export class Graph extends PIXI.Container {
       child.selected = false;
     }
 
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge) || !edge.selected) {
+        continue;
+      }
+
+      edge.selected = false;
+    }
+
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
+  }
+
+  getSelectedChild() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      if (child.selected) {
+        return child;
+      }
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      if (edge.selected) {
+        return edge;
+      }
+    }
+
+    return null;
   }
 
   getNodeLayoutPositions() {
@@ -552,31 +588,6 @@ export class Graph extends PIXI.Container {
     return this.#highlightedNodeId;
   }
 
-  findEdge(id: string, port: GraphNodePort): GraphEdge | null {
-    if (!this.#edges) {
-      return null;
-    }
-
-    const predicateForInputPorts = (edge: InspectableEdge) =>
-      edge.to.descriptor.id === id &&
-      (port.name ? edge.in === port.name : true);
-    const predicateForOutputPorts = (edge: InspectableEdge) =>
-      edge.from.descriptor.id === id &&
-      (port.name ? edge.out === port.name : true);
-
-    const edges = this.#edges.filter(
-      port.type === GraphNodePortType.IN
-        ? predicateForInputPorts
-        : predicateForOutputPorts
-    );
-
-    if (edges.length >= 1) {
-      return this.#edgeGraphics.get(edgeToString(edges[0])) || null;
-    }
-
-    return null;
-  }
-
   #onChildMoved(
     this: { graph: Graph; id: string },
     x: number,
@@ -619,11 +630,7 @@ export class Graph extends PIXI.Container {
 
       const { width, height } = graphNode.dimensions;
       this.#highlightedNode.clear();
-      this.#highlightedNode.lineStyle({
-        width: this.#highlightPadding - 2,
-        color: this.#highlightedNodeColor,
-        alpha: 0.25,
-      });
+      this.#highlightedNode.beginFill(this.#highlightedNodeColor, 0.25);
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,
         graphNode.y - this.#highlightPadding,
@@ -631,8 +638,9 @@ export class Graph extends PIXI.Container {
         height + this.#highlightPadding * 2,
         graphNode.borderRadius + this.#highlightPadding
       );
+      this.#highlightedNode.endFill();
 
-      this.addChild(this.#highlightedNode);
+      this.addChildAt(this.#highlightedNode, 0);
     };
 
     // It's possible this will be called before the graph node has rendered, so

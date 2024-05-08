@@ -134,13 +134,13 @@ export class GraphNodePort extends PIXI.Graphics {
     );
 
     const status = this.#overrideStatus ?? this.#status;
-
     this.lineStyle({
       color: this.#configured
         ? this.#borderColors["configured"]
         : this.#borderColors[status],
       width: 1,
     });
+
     this.beginFill(
       this.#configured ? this.#colors["configured"] : this.#colors[status]
     );
