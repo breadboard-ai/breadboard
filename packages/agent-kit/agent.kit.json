@@ -20,7 +20,7 @@
         },
         {
           "from": "input",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "text",
           "in": "text"
         },
@@ -31,19 +31,19 @@
           "in": "text"
         },
         {
-          "from": "fn-4",
-          "to": "output-5",
+          "from": "fn-6",
+          "to": "output-7",
           "out": "again",
           "in": "again"
         },
         {
-          "from": "fn-4",
+          "from": "fn-6",
           "to": "appendContext",
           "out": "context",
           "in": "context"
         },
         {
-          "from": "fn-4",
+          "from": "fn-6",
           "to": "appendContext",
           "out": "text",
           "in": "text"
@@ -56,13 +56,13 @@
         },
         {
           "from": "createSchema",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "context",
           "in": "context"
         },
         {
           "from": "maybeOutputRouter",
-          "to": "createSchema",
+          "to": "fn-3",
           "out": "context",
           "in": "context"
         },
@@ -74,7 +74,7 @@
         },
         {
           "from": "maybeOutputRouter",
-          "to": "output-3",
+          "to": "output-5",
           "out": "feedback",
           "in": "feedback"
         },
@@ -86,7 +86,7 @@
         },
         {
           "from": "maybeOutputRouter",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "action",
           "in": "action"
         },
@@ -107,6 +107,18 @@
           "to": "createSchema",
           "out": "description",
           "in": "description"
+        },
+        {
+          "from": "fn-3",
+          "to": "output-4",
+          "out": "done",
+          "in": "context"
+        },
+        {
+          "from": "fn-3",
+          "to": "createSchema",
+          "out": "context",
+          "in": "context"
         }
       ],
       "nodes": [
@@ -171,11 +183,11 @@
           }
         },
         {
-          "id": "fn-4",
+          "id": "fn-6",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
-            "name": "fn_4",
+            "code": "const fn_6 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
+            "name": "fn_6",
             "raw": true
           },
           "metadata": {
@@ -210,7 +222,7 @@
           }
         },
         {
-          "id": "output-5",
+          "id": "output-7",
           "type": "output",
           "configuration": {
             "schema": {
@@ -274,7 +286,20 @@
           }
         },
         {
-          "id": "output-3",
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context})=>{if(!context)throw new Error(\"Context is required\");const c=context;let done=false;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.done){done=true;break}}}if(done){return{done:context}}else{return{context}}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Done Check",
+            "description": "Checking to see if we can skip work altogether"
+          }
+        },
+        {
+          "id": "output-5",
           "type": "output",
           "configuration": {
             "schema": {
@@ -317,6 +342,25 @@
           "metadata": {
             "title": "Output",
             "description": "Displaying the output the user."
+          }
+        },
+        {
+          "id": "output-4",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "title": "context"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Done",
+            "description": "Skipping because we're done"
           }
         }
       ],
@@ -907,20 +951,20 @@
           "id": "fn-7",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
+            "code": "const fn_7 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
             "name": "fn_7",
             "raw": true
           },
           "metadata": {
-            "title": "Add Generated",
-            "description": "Adding work to the output to pass along"
+            "title": "Done Check",
+            "description": "Checking for the 'Done' marker"
           }
         },
         {
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role===\"model\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1796,7 +1840,7 @@
           "id": "fn-7",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];const originalPlan=plans[plans.length-1];let max=originalPlan.max;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:{...current,next:next.task}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
+            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];if(current.done){return{done:existing}}const originalPlan=plans[plans.length-1];let max=originalPlan.max;const doneMarker=originalPlan.doneMarker;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:{...current,next:next.task}});return{context:contents}}else if(doneMarker){contents.push({role:\"$metadata\",data:{type:\"looper\",doneMarker}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
             "name": "fn_7",
             "raw": true
           },
@@ -1879,6 +1923,10 @@
                     }
                   }
                 },
+                "doneMarker": {
+                  "type": "string",
+                  "description": "The marker that will be used by others to signal completion of the job."
+                },
                 "error": {
                   "type": "string",
                   "description": "Describe the reason why the plan generation failed"
@@ -1919,7 +1967,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_4 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role===\"model\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_4",
             "raw": true
           },
@@ -1934,7 +1982,7 @@
             "systemInstruction": {
               "parts": [
                 {
-                  "text": "\nYou are to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. \n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.\",\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task.\"\n  }]\n}\n```\n\nThere are three kinds of jobs that you can make plans for. \n\n1) The indefinite job. These are useful when there is not a definite completion condition, and is usually formulated with words like \"indefinitely\" or \"forever\". In such cases, the plan will look like an object without a \"todo\" property, with \"max\" set to a very large number:\n\n```json\n{\n  \"max\": 100000000\n}\n```\n\n2) The list of items job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one \"Write <chapter title>\" per chapter). \n\nA plan for this kind of job will look like an object with \"todo\" items:\n\n```json\n{\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\nIf the job includes a limit on how many tasks to produce, use the \"max\" property to indicate that. For instance, if the job contains three items that can be discerned, but asks to only do two of them:\n\n```json\n{\n  \"max:\" 2,\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\n\n3) Just repeat the steps job. These jobs do not have a distinct tasks, but rather just a number of steps to repeat. In this case, omit the \"todo\" and just use \"max\" property:\n\n```json\n{\n  \"max\": 4\n}\n```\n\nIn cases where you are unable to create plan from the job, reply with:\n\n```json\n{\n  \"error\": \"<description of why you're unable to create a plan>\"\n}\n```\n\n"
+                  "text": "\nYou are to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. \n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.\",\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task.\"\n  }]\n  \"doneMarker\": \"string, optional. The marker that will be used by others to signal completion.\"\n  \"error\": \"string, optional. A description of why you're unable to create a plan\"\n}\n```\n\nThere are four kinds of jobs that you can make plans for. \n\n1) The indefinite job. These are useful when there is not a definite completion condition, and is usually formulated with words like \"indefinitely\" or \"forever\". In such cases, the plan will look like an object without a \"todo\" property, with \"max\" set to a very large number:\n\n```json\n{\n  \"max\": 100000000\n}\n```\n\n2) The list of items job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one \"Write <chapter title>\" per chapter). \n\nA plan for this kind of job will look like an object with \"todo\" items:\n\n```json\n{\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\nIf the job includes a limit on how many tasks to produce, use the \"max\" property to indicate that. For instance, if the job contains three items that can be discerned, but asks to only do two of them:\n\n```json\n{\n  \"max:\" 2,\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\n\n3) Just repeat the steps job. These jobs do not have a distinct tasks, but rather just a number of steps to repeat. In this case, omit the \"todo\" and just use \"max\" property:\n\n```json\n{\n  \"max\": 4\n}\n```\n\n4) The job where the completion is signaled by others. These are the types of jobs where the number of iterations or the exact steps are unknown, and the\ncompletion signal is issued by those who are executing the. In such cases, use the \"doneMarker\" property and use the marker specified:\n\n```json\n{\n  \"doneMarker\": \"<the marker that will be used to signal completion>\"\n}\n```\n\nCommon markers are \"##STOP##\" or \"##DONE##\", but could be different depending on a job.\n\nWhen you are unable to create plan from the job, reply with:\n\n```json\n{\n  \"error\": \"<description of why you're unable to create a plan>\"\n}\n```\n\n"
                 }
               ]
             },

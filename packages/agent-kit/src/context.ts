@@ -26,6 +26,17 @@ export type Metadata = {
 
 export type Context = LlmContent | Metadata;
 
+/**
+ * Type helper for wrapping `code` functions.
+ * @param f -- code function
+ * @returns -- code function
+ */
+export const fun = (
+  f: (inputs: Record<string, unknown>) => Record<string, unknown>
+) => {
+  return f;
+};
+
 export const userPartsAdder = code(({ context, toAdd }) => {
   const existing = (
     Array.isArray(context) ? context : [context]
@@ -33,6 +44,16 @@ export const userPartsAdder = code(({ context, toAdd }) => {
   if (!existing) throw new Error("Context is required");
   const incoming = structuredClone(toAdd) as LlmContent;
   if (!incoming.parts) {
+    const containsUserRole =
+      existing.filter((item) => item.role === "model").length > 0;
+    if (!containsUserRole) {
+      return {
+        context: [
+          ...existing,
+          { role: "user", parts: [{ text: "Do your magic" }] },
+        ],
+      };
+    }
     return { context };
   }
   if (!incoming.role) {
@@ -65,6 +86,14 @@ export type LooperPlan = {
   todo?: {
     task: string;
   }[];
+  /**
+   * The marker that will be used by others to signal completion of the job.
+   */
+  doneMarker?: string;
+  /**
+   * Indicator that this job is done.
+   */
+  done?: boolean;
   /**
    * Whether to append only the last item in the loop to the context or all
    * of them.
@@ -157,3 +186,80 @@ export const contextAssembler = code(({ context, generated }) => {
   if (!context) throw new Error("Context is required");
   return { context: [...(context as LlmContent[]), generated as LlmContent] };
 });
+
+export const checkAreWeDoneFunction = fun(({ context, generated }) => {
+  if (!context) throw new Error("Context is required");
+  if (!generated) throw new Error("Generated is required");
+  const c = context as Context[];
+  const g = generated as LlmContent;
+  // are there any doneMakers in the context?
+  let doneMarker: string | null = null;
+  for (let i = 0; i < c.length; ++i) {
+    const item = c[i];
+    if (item.role === "$metadata") {
+      const plan = item.data as LooperPlan;
+      if (plan.doneMarker) {
+        doneMarker = plan.doneMarker;
+        break;
+      }
+    }
+  }
+
+  if (!doneMarker) {
+    return { context: [...c, g] };
+  }
+
+  // does generated content contain the markers?
+  let containsMarkers = false;
+  for (let i = 0; i < g.parts.length; ++i) {
+    const part = g.parts[i];
+    if ("text" in part && part.text.includes(doneMarker)) {
+      containsMarkers = true;
+      // remove marker from generated
+      part.text = part.text.replaceAll(doneMarker, "").trim();
+      break;
+    }
+  }
+  if (!containsMarkers) {
+    return { context: [...c, g] };
+  }
+
+  const metadata = {
+    role: "$metadata",
+    data: {
+      type: "looper",
+      done: true,
+    },
+  } as Metadata;
+  return { context: [...c, g, metadata] };
+});
+
+export const checkAreWeDone = code(checkAreWeDoneFunction);
+
+/**
+ * Given a context, decides if we should skip our turn when the earlier
+ * workers signaled that they are done.
+ */
+export const skipIfDoneFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = context as Context[];
+  // are there any done:true in the context?
+  let done = false;
+  for (let i = 0; i < c.length; ++i) {
+    const item = c[i];
+    if (item.role === "$metadata") {
+      const plan = item.data as LooperPlan;
+      if (plan.done) {
+        done = true;
+        break;
+      }
+    }
+  }
+  if (done) {
+    return { done: context };
+  } else {
+    return { context };
+  }
+});
+
+export const skipIfDone = code(skipIfDoneFunction);

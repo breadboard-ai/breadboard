@@ -1,5 +1,6 @@
 import { agents } from "@google-labs/agent-kit";
 import { board } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
 
 const contextFromText = (text: string, role?: string) => {
   const parts = [{ text }];
@@ -7,30 +8,29 @@ const contextFromText = (text: string, role?: string) => {
 };
 
 const chatBotPersona = contextFromText(
-  `As a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.
-
-  Pretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.
+  `You are a friendly chat bot. You typically start conversation with a warm greeting, and then get to work.
   
-  You are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers.`
+  Your job is to collect the name, the location, and the instagram account of the customer's business.
+
+  When you have this information, reply with a brief summary of the information you've collected in a neat bulleted list, then conclude the conversation by saying "OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##"`
 );
 
 export default await board(() => {
-  const planner = agents.looper({
-    $metadata: { title: "Looper" },
-    task: contextFromText(
-      `Ask the user to about the name of their business and the location of the business, then conclude the conversation.`
-    ),
-  });
-
-  const bot = agents.superWorker({
-    $metadata: { title: "Chat Bot" },
-    in: planner.loop,
-    persona: chatBotPersona,
+  const start = core.passthrough({
+    $metadata: { title: "Start" },
+    context: [],
   });
 
   const loop = agents.looper({
     $metadata: { title: "Looper" },
-    context: bot.out,
+    context: start.context,
+    task: contextFromText(`Chat until "##DONE##".`),
+  });
+
+  const bot = agents.superWorker({
+    $metadata: { title: "Chat Bot" },
+    in: loop.loop,
+    persona: chatBotPersona,
   });
 
   const user = agents.human({
@@ -38,10 +38,10 @@ export default await board(() => {
       title: "User",
       description: "Giving control back to the user",
     },
-    context: loop.loop,
+    context: bot.out,
   });
 
-  user.context.as("in").to(bot);
+  user.context.as("context").to(loop);
 
   return { context: loop.done };
 }).serialize({

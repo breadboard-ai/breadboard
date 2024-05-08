@@ -5,31 +5,31 @@
   "edges": [
     {
       "from": "human-6",
-      "to": "superWorker-4",
+      "to": "looper-4",
       "out": "context",
-      "in": "in"
-    },
-    {
-      "from": "looper-3",
-      "to": "superWorker-4",
-      "out": "loop",
-      "in": "in"
-    },
-    {
-      "from": "looper-5",
-      "to": "human-6",
-      "out": "loop",
       "in": "context"
     },
     {
-      "from": "looper-5",
+      "from": "looper-4",
       "to": "output-2",
       "out": "done",
       "in": "context"
     },
     {
-      "from": "superWorker-4",
-      "to": "looper-5",
+      "from": "looper-4",
+      "to": "superWorker-5",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "passthrough-3",
+      "to": "looper-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "superWorker-5",
+      "to": "human-6",
       "out": "out",
       "in": "context"
     }
@@ -66,13 +66,13 @@
       }
     },
     {
-      "id": "looper-3",
+      "id": "looper-4",
       "type": "looper",
       "configuration": {
         "task": {
           "parts": [
             {
-              "text": "Ask the user to about the name of their business and the location of the business, then conclude the conversation."
+              "text": "Chat until \"##DONE##\"."
             }
           ]
         }
@@ -82,21 +82,23 @@
       }
     },
     {
-      "id": "looper-5",
-      "type": "looper",
-      "configuration": {},
+      "id": "passthrough-3",
+      "type": "passthrough",
+      "configuration": {
+        "context": []
+      },
       "metadata": {
-        "title": "Looper"
+        "title": "Start"
       }
     },
     {
-      "id": "superWorker-4",
+      "id": "superWorker-5",
       "type": "superWorker",
       "configuration": {
         "persona": {
           "parts": [
             {
-              "text": "As a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.\n\n  Pretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.\n  \n  You are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers."
+              "text": "You are a friendly chat bot. You typically start conversation with a warm greeting, and then get to work.\n  \n  Your job is to collect the name, the location, and the instagram account of the customer's business.\n\n  When you have this information, reply with a brief summary of the information you've collected in a neat bulleted list, then conclude the conversation by saying \"OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##\""
             }
           ]
         }
