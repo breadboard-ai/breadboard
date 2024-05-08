@@ -89,6 +89,7 @@ export class GraphNode extends PIXI.Container {
     this.title = title;
     this.id = id;
     this.type = type;
+    this.isRenderGroup = true;
 
     switch (type) {
       case "input":

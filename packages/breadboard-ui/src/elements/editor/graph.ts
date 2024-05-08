@@ -59,6 +59,7 @@ export class Graph extends PIXI.Container {
       isRenderGroup: true,
     });
 
+    this.isRenderGroup = true;
     this.eventMode = "static";
     this.sortableChildren = true;
 
