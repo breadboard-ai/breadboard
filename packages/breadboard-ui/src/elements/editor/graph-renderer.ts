@@ -23,6 +23,7 @@ import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { GraphAssets } from "./graph-assets.js";
+import { GraphEdge } from "./graph-edge.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -461,12 +462,23 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      for (const child of graph.children) {
-        if (!(child instanceof GraphNode) || !child.name || !child.selected) {
-          continue;
-        }
+      const selectedChild = graph.getSelectedChild();
+      if (!selectedChild) {
+        continue;
+      }
 
-        this.dispatchEvent(new GraphNodeDeleteEvent(child.name));
+      if (selectedChild instanceof GraphNode) {
+        if (!selectedChild.name) {
+          console.warn("Node has no name - unable to delete");
+          return;
+        }
+        this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.name));
+      } else if (selectedChild instanceof GraphEdge) {
+        if (!selectedChild.edge) {
+          console.warn("Invalid edge - unable to delete");
+          return;
+        }
+        this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
       }
     }
   }
