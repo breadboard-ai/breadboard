@@ -66,7 +66,18 @@ export class Graph extends PIXI.Container {
     let originalEdgeDescriptor: InspectableEdge | null = null;
     let visibleOnNextMove = false;
 
-    this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
+    this.onRender = () => {
+      if (!this.#isDirty) {
+        return;
+      }
+
+      this.#isDirty = false;
+      this.#drawEdges();
+      this.#drawNodes();
+      this.#drawNodeHighlight();
+    };
+
+    this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode) {
@@ -104,9 +115,9 @@ export class Graph extends PIXI.Container {
         switch (nodePortBeingEdited.type) {
           case GraphNodePortType.OUT: {
             originalEdgeDescriptor = {
-              from: { descriptor: { id: nodeBeingEdited.name } },
-              to: { descriptor: { id: nodeBeingEdited.name } },
-              out: nodePortBeingEdited.name,
+              from: { descriptor: { id: nodeBeingEdited.label } },
+              to: { descriptor: { id: nodeBeingEdited.label } },
+              out: nodePortBeingEdited.label,
               in: "*",
             } as InspectableEdge;
 
@@ -133,10 +144,10 @@ export class Graph extends PIXI.Container {
             nodePortType = GraphNodePortType.IN;
             if (!edgeBeingEdited) {
               originalEdgeDescriptor = {
-                from: { descriptor: { id: nodeBeingEdited.name } },
-                to: { descriptor: { id: nodeBeingEdited.name } },
+                from: { descriptor: { id: nodeBeingEdited.label } },
+                to: { descriptor: { id: nodeBeingEdited.label } },
                 out: "*",
-                in: nodePortBeingEdited.name,
+                in: nodePortBeingEdited.label,
               } as InspectableEdge;
 
               edgeBeingEdited = this.#createTemporaryEdge(
@@ -166,109 +177,108 @@ export class Graph extends PIXI.Container {
       }
     });
 
-    this.addEventListener(
-      "globalpointermove",
-      (evt: PIXI.FederatedPointerEvent) => {
-        if (!edgeBeingEdited || !nodeBeingEdited || !originalEdgeDescriptor) {
-          return;
-        }
-
-        if (!edgeBeingEdited.edge) {
-          console.warn("Unable to update temporary edge value");
-          return;
-        }
-
-        if (visibleOnNextMove) {
-          edgeBeingEdited.forceRedraw();
-          edgeBeingEdited.visible = true;
-        }
-
-        const topTarget = evt.path[evt.path.length - 1];
-
-        if (
-          topTarget instanceof GraphNodePort &&
-          topTarget.type === nodePortType &&
-          visibleOnNextMove
-        ) {
-          // Snap to nearest port.
-          topTarget.overrideStatus = PortStatus.Connected;
-          lastHoverPort = topTarget;
-
-          const nodeBeingTargeted = topTarget.parent as GraphNode;
-
-          if (nodePortType === GraphNodePortType.IN) {
-            edgeBeingEdited.toNode = nodeBeingTargeted;
-            edgeBeingEdited.edge.in = topTarget.name || "";
-            edgeBeingEdited.edge.to = {
-              descriptor: { id: nodeBeingTargeted.name },
-            } as InspectableNode;
-          } else {
-            edgeBeingEdited.fromNode = nodeBeingTargeted;
-            edgeBeingEdited.edge.out = topTarget.name || "";
-            edgeBeingEdited.edge.from = {
-              descriptor: { id: nodeBeingTargeted.name },
-            } as InspectableNode;
-          }
-
-          edgeBeingEdited.overrideColor = 0xffa500;
-          edgeBeingEdited.overrideInLocation = null;
-          edgeBeingEdited.overrideOutLocation = null;
-        } else {
-          // Track mouse.
-          if (nodePortType === GraphNodePortType.IN) {
-            edgeBeingEdited.toNode = nodeBeingEdited;
-            edgeBeingEdited.edge.in = originalEdgeDescriptor.in;
-            edgeBeingEdited.edge.to = originalEdgeDescriptor.to;
-
-            if (!edgeBeingEdited.overrideInLocation) {
-              edgeBeingEdited.overrideInLocation =
-                nodeBeingEdited.position.clone();
-            }
-
-            nodeBeingEdited.toLocal(
-              evt.global,
-              undefined,
-              edgeBeingEdited.overrideInLocation
-            );
-          } else {
-            edgeBeingEdited.fromNode = nodeBeingEdited;
-            edgeBeingEdited.edge.out = originalEdgeDescriptor.out;
-            edgeBeingEdited.edge.from = originalEdgeDescriptor.from;
-
-            if (!edgeBeingEdited.overrideOutLocation) {
-              edgeBeingEdited.overrideOutLocation =
-                nodeBeingEdited.position.clone();
-            }
-
-            nodeBeingEdited.toLocal(
-              evt.global,
-              undefined,
-              edgeBeingEdited.overrideOutLocation
-            );
-          }
-
-          edgeBeingEdited.overrideColor = 0xffcc00;
-
-          if (lastHoverPort) {
-            lastHoverPort.overrideStatus = null;
-            lastHoverPort = null;
-          }
-
-          if (!visibleOnNextMove) {
-            visibleOnNextMove = true;
-          }
-        }
-
-        edgeBeingEdited.forceRedraw();
+    this.addListener("globalpointermove", (evt: PIXI.FederatedPointerEvent) => {
+      if (!edgeBeingEdited || !nodeBeingEdited || !originalEdgeDescriptor) {
+        return;
       }
-    );
+
+      if (!edgeBeingEdited.edge) {
+        console.warn("Unable to update temporary edge value");
+        return;
+      }
+
+      if (visibleOnNextMove) {
+        edgeBeingEdited.forceRedraw();
+        edgeBeingEdited.visible = true;
+      }
+
+      const path = evt.composedPath();
+      const topTarget = path[path.length - 1];
+
+      if (
+        topTarget instanceof GraphNodePort &&
+        topTarget.type === nodePortType &&
+        visibleOnNextMove
+      ) {
+        // Snap to nearest port.
+        topTarget.overrideStatus = PortStatus.Connected;
+        lastHoverPort = topTarget;
+
+        const nodeBeingTargeted = topTarget.parent as GraphNode;
+
+        if (nodePortType === GraphNodePortType.IN) {
+          edgeBeingEdited.toNode = nodeBeingTargeted;
+          edgeBeingEdited.edge.in = topTarget.label || "";
+          edgeBeingEdited.edge.to = {
+            descriptor: { id: nodeBeingTargeted.label },
+          } as InspectableNode;
+        } else {
+          edgeBeingEdited.fromNode = nodeBeingTargeted;
+          edgeBeingEdited.edge.out = topTarget.label || "";
+          edgeBeingEdited.edge.from = {
+            descriptor: { id: nodeBeingTargeted.label },
+          } as InspectableNode;
+        }
+
+        edgeBeingEdited.overrideColor = 0xffa500;
+        edgeBeingEdited.overrideInLocation = null;
+        edgeBeingEdited.overrideOutLocation = null;
+      } else {
+        // Track mouse.
+        if (nodePortType === GraphNodePortType.IN) {
+          edgeBeingEdited.toNode = nodeBeingEdited;
+          edgeBeingEdited.edge.in = originalEdgeDescriptor.in;
+          edgeBeingEdited.edge.to = originalEdgeDescriptor.to;
+
+          if (!edgeBeingEdited.overrideInLocation) {
+            edgeBeingEdited.overrideInLocation =
+              nodeBeingEdited.position.clone();
+          }
+
+          nodeBeingEdited.toLocal(
+            evt.global,
+            undefined,
+            edgeBeingEdited.overrideInLocation
+          );
+        } else {
+          edgeBeingEdited.fromNode = nodeBeingEdited;
+          edgeBeingEdited.edge.out = originalEdgeDescriptor.out;
+          edgeBeingEdited.edge.from = originalEdgeDescriptor.from;
+
+          if (!edgeBeingEdited.overrideOutLocation) {
+            edgeBeingEdited.overrideOutLocation =
+              nodeBeingEdited.position.clone();
+          }
+
+          nodeBeingEdited.toLocal(
+            evt.global,
+            undefined,
+            edgeBeingEdited.overrideOutLocation
+          );
+        }
+
+        edgeBeingEdited.overrideColor = 0xffcc00;
+
+        if (lastHoverPort) {
+          lastHoverPort.overrideStatus = null;
+          lastHoverPort = null;
+        }
+
+        if (!visibleOnNextMove) {
+          visibleOnNextMove = true;
+        }
+      }
+
+      edgeBeingEdited.forceRedraw();
+    });
 
     const onPointerUp = (evt: PIXI.FederatedPointerEvent) => {
       if (!edgeBeingEdited || !edgeBeingEdited.edge) {
         return;
       }
 
-      const topTarget = evt.path[evt.path.length - 1];
+      const path = evt.composedPath();
+      const topTarget = path[path.length - 1];
 
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
@@ -392,8 +402,8 @@ export class Graph extends PIXI.Container {
       this.#cleanEdges();
     };
 
-    this.addEventListener("pointerup", onPointerUp);
-    this.addEventListener("pointerupoutside", onPointerUp);
+    this.addListener("pointerup", onPointerUp);
+    this.addListener("pointerupoutside", onPointerUp);
   }
 
   deselectAllChildren() {
@@ -450,7 +460,7 @@ export class Graph extends PIXI.Container {
 
   setNodeLayoutPosition(
     node: string,
-    position: PIXI.IPointData,
+    position: PIXI.PointData,
     justAdded = false
   ) {
     this.#layout.set(node, { ...this.toLocal(position), justAdded });
@@ -522,17 +532,6 @@ export class Graph extends PIXI.Container {
     }
 
     this.#drawEdges();
-  }
-
-  render(renderer: PIXI.Renderer) {
-    if (this.#isDirty) {
-      this.#isDirty = false;
-      this.#drawEdges();
-      this.#drawNodes();
-      this.#drawNodeHighlight();
-    }
-
-    super.render(renderer);
   }
 
   set editable(editable: boolean) {
@@ -630,15 +629,20 @@ export class Graph extends PIXI.Container {
 
       const { width, height } = graphNode.dimensions;
       this.#highlightedNode.clear();
-      this.#highlightedNode.beginFill(this.#highlightedNodeColor, 0.25);
-      this.#highlightedNode.drawRoundedRect(
+      this.#highlightedNode.setFillStyle({
+        color: this.#highlightedNodeColor,
+        alpha: 0.25,
+      });
+      this.#highlightedNode.beginPath();
+      this.#highlightedNode.roundRect(
         graphNode.x - this.#highlightPadding,
         graphNode.y - this.#highlightPadding,
         width + this.#highlightPadding * 2,
         height + this.#highlightPadding * 2,
         graphNode.borderRadius + this.#highlightPadding
       );
-      this.#highlightedNode.endFill();
+      this.#highlightedNode.closePath();
+      this.#highlightedNode.fill();
 
       this.addChildAt(this.#highlightedNode, 0);
     };
@@ -683,7 +687,7 @@ export class Graph extends PIXI.Container {
         this.graphNode.position.set(this.layout.x, this.layout.y);
         this.graphNode.parent.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-          this.graphNode.name
+          this.graphNode.label
         );
       }
 
@@ -732,7 +736,7 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      graphNode.name = id;
+      graphNode.label = id;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
 
