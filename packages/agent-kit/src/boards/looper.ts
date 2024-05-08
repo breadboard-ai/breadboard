@@ -170,7 +170,13 @@ export type LooperData = {
   data: LooperProgress;
 };
 
-const planReader = code(({ context, progress }) => {
+const fun = (
+  f: (inputs: Record<string, unknown>) => Record<string, unknown>
+) => {
+  return f;
+};
+
+export const planReaderFunction = fun(({ context, progress }) => {
   const plans = (
     Array.isArray(progress) ? progress : [progress]
   ) as LooperPlan[];
@@ -226,6 +232,8 @@ const planReader = code(({ context, progress }) => {
     throw new Error(`Invalid plan, unable to proceed: ${error.message}`);
   }
 });
+
+const planReader = code(planReaderFunction);
 
 export default await board(({ context, task }) => {
   context
