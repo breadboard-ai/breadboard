@@ -36,7 +36,9 @@ export class GraphRenderer extends LitElement {
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
   #overflowMenuGraphNode: GraphNode | null = null;
   #padding = 50;
-  #container = new PIXI.Container();
+  #container = new PIXI.Container({
+    isRenderGroup: true,
+  });
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
