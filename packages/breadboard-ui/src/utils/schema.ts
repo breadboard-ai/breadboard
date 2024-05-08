@@ -5,7 +5,7 @@
  */
 
 import { BehaviorSchema, Schema } from "@google-labs/breadboard";
-import { validate } from "jsonschema";
+import Ajv, { AnySchema } from "ajv";
 
 const LLMContentSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -110,6 +110,24 @@ export function resolveBehaviorType(value: Schema | Schema[] | undefined) {
   return null;
 }
 
+export const validate = (item: unknown, schema: unknown) => {
+  const validator = new Ajv.default({ strict: false });
+  let validate: Ajv.ValidateFunction;
+  try {
+    validate = validator.compile(schema as AnySchema);
+  } catch (e) {
+    return { valid: false, errors: (e as Error).message };
+  }
+
+  const valid = validate(item);
+
+  if (!valid) {
+    return { valid: false, errors: validator.errorsText(validate.errors) };
+  }
+
+  return { valid: validate(item) };
+};
+
 export function isLLMContent(item: unknown) {
   if (typeof item !== "object" || item === null) {
     return false;
@@ -128,13 +146,5 @@ export function assertIsLLMContent(item: unknown) {
     return;
   }
 
-  const msg = result.errors.reduce((prev, curr, idx) => {
-    return (
-      prev +
-      (idx > 0 ? "\n" : "") +
-      `${curr.path.join(".")} ${curr.message.split(",").join(", ")}`
-    );
-  }, "");
-
-  throw new Error(msg);
+  throw new Error(result.errors);
 }
