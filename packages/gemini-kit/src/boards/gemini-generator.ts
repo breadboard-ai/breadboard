@@ -7,15 +7,12 @@
 import {
   GraphInlineMetadata,
   Schema,
-  V,
   base,
   board,
   code,
 } from "@google-labs/breadboard";
-import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
-import { nursery } from "@google-labs/node-nursery-web";
+import { templates } from "@google-labs/template-kit";
 
 type TextPartType = {
   text: string;
@@ -254,17 +251,17 @@ const toolCallOutputSchema = {
   },
 } satisfies Schema;
 
-const streamOutputSchema = {
-  type: "object",
-  properties: {
-    stream: {
-      type: "object",
-      title: "Stream",
-      format: "stream",
-      description: "The generated text",
-    },
-  },
-} satisfies Schema;
+// const streamOutputSchema = {
+//   type: "object",
+//   properties: {
+//     stream: {
+//       type: "object",
+//       title: "Stream",
+//       format: "stream",
+//       description: "The generated text",
+//     },
+//   },
+// } satisfies Schema;
 
 const retryCounter = code((inputs) => {
   type FetchError = { error?: { code?: number } };
@@ -416,6 +413,7 @@ const methodChooser = code(({ useStreaming }) => {
 
 export default await board(() => {
   const parameters = base.input({
+    $id: "inputs",
     $metadata: {
       title: "Input Parameters",
       description: "Collecting input parameters",
@@ -424,6 +422,7 @@ export default await board(() => {
   });
 
   const chooseMethod = methodChooser({
+    $id: "choose-method",
     $metadata: {
       title: "Choose Method",
       description: "Choosing the right Gemini API method",
@@ -432,19 +431,24 @@ export default await board(() => {
   });
 
   const makeUrl = templates.urlTemplate({
+    $id: "make-url",
     $metadata: {
       title: "Make URL",
       description: "Creating the Gemini API URL",
     },
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
-    GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
+    GEMINI_KEY: core.secrets({
+      $id: "GEMINI_KEY-secret",
+      keys: ["GEMINI_KEY"],
+    }),
     model: parameters.model,
     method: chooseMethod.method,
     sseOption: chooseMethod.sseOption,
   });
 
   const countRetries = retryCounter({
+    $id: "count-retries",
     $metadata: {
       title: "Check Retry Count",
       description: "Making sure we can retry, if necessary.",
@@ -462,6 +466,7 @@ export default await board(() => {
   });
 
   const makeBody = bodyBuilder({
+    $id: "make-body",
     $metadata: { title: "Make Request Body" },
     context: countRetries.context,
     systemInstruction: countRetries.systemInstruction,
@@ -474,6 +479,7 @@ export default await board(() => {
   });
 
   const fetch = core.fetch({
+    $id: "fetch-gemini-api",
     $metadata: { title: "Make API Call", description: "Calling Gemini API" },
     method: "POST",
     stream: parameters.useStreaming.memoize(),
@@ -482,6 +488,7 @@ export default await board(() => {
   });
 
   const errorCollector = core.passthrough({
+    $id: "collect-errors",
     $metadata: {
       title: "Collect Errors",
       description: "Collecting the error from Gemini API",
@@ -494,6 +501,7 @@ export default await board(() => {
   errorCollector.error.to(countRetries);
 
   const formatResponse = responseFormatter({
+    $id: "format-response",
     $metadata: {
       title: "Format Response",
       description: "Formatting Gemini API response",
@@ -503,31 +511,33 @@ export default await board(() => {
 
   formatResponse.$error.as("error").to(errorCollector);
 
-  const streamTransform = nursery.transformStream({
-    $metadata: {
-      title: "Transform Stream",
-      description: "Transforming the API output stream to be consumable",
-    },
-    board: board(() => {
-      const transformChunk = json.jsonata({
-        $id: "transformChunk",
-        expression:
-          "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
-        json: base.input({}).chunk as V<string>,
-      });
-      return base.output({ chunk: transformChunk.result });
-    }),
-    stream: fetch,
-  });
+  // TODO(aomarks) Streaming is not working. Temporarily removing streaming
+  // support to ease the conversion of this board to the new API.
+
+  // const streamTransform = nursery.transformStream({ $metadata: { title:
+  //   "Transform Stream", description: "Transforming the API output stream to
+  //   be consumable",
+  //   },
+  //   board: board(() => { const transformChunk = json.jsonata({ $id:
+  //     "transformChunk", expression: "candidates[0].content.parts.text ?
+  //     $join(candidates[0].content.parts.text) : ''", json:
+  //     base.input({}).chunk as V<string>,
+  //     });
+  //     return base.output({ chunk: transformChunk.result });
+  //   }),
+  //   stream: fetch,
+  // });
 
   base.output({
+    $id: "content-output",
     $metadata: { title: "Content Output", description: "Outputting content" },
     schema: textOutputSchema,
     context: formatResponse,
     text: formatResponse,
   });
 
-  base.output({
+  return base.output({
+    $id: "tool-call-output",
     $metadata: {
       title: "Tool Call Output",
       description: "Outputting a tool call",
@@ -537,9 +547,9 @@ export default await board(() => {
     toolCalls: formatResponse,
   });
 
-  return base.output({
-    $metadata: { title: "Stream Output", description: "Outputting a stream" },
-    schema: streamOutputSchema,
-    stream: streamTransform,
-  });
+  // return base.output({
+  //   $metadata: { title: "Stream Output", description: "Outputting a stream" },
+  //   schema: streamOutputSchema,
+  //   stream: streamTransform,
+  // });
 }).serialize(metadata);
