@@ -7,15 +7,12 @@
 import {
   GraphInlineMetadata,
   Schema,
-  V,
   base,
   board,
   code,
 } from "@google-labs/breadboard";
-import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
-import { nursery } from "@google-labs/node-nursery-web";
+import { templates } from "@google-labs/template-kit";
 
 type TextPartType = {
   text: string;
@@ -254,17 +251,17 @@ const toolCallOutputSchema = {
   },
 } satisfies Schema;
 
-const streamOutputSchema = {
-  type: "object",
-  properties: {
-    stream: {
-      type: "object",
-      title: "Stream",
-      format: "stream",
-      description: "The generated text",
-    },
-  },
-} satisfies Schema;
+// const streamOutputSchema = {
+//   type: "object",
+//   properties: {
+//     stream: {
+//       type: "object",
+//       title: "Stream",
+//       format: "stream",
+//       description: "The generated text",
+//     },
+//   },
+// } satisfies Schema;
 
 const retryCounter = code((inputs) => {
   type FetchError = { error?: { code?: number } };
@@ -503,31 +500,33 @@ export default await board(() => {
 
   formatResponse.$error.as("error").to(errorCollector);
 
-  const streamTransform = nursery.transformStream({
-    $metadata: {
-      title: "Transform Stream",
-      description: "Transforming the API output stream to be consumable",
-    },
-    board: board(() => {
-      const transformChunk = json.jsonata({
-        $id: "transformChunk",
-        expression:
-          "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
-        json: base.input({}).chunk as V<string>,
-      });
-      return base.output({ chunk: transformChunk.result });
-    }),
-    stream: fetch,
-  });
+  // TODO(aomarks) Streaming is not working. Temporarily removing streaming
+  // support to ease the conversion of this board to the new API.
+
+  // const streamTransform = nursery.transformStream({ $metadata: { title:
+  //   "Transform Stream", description: "Transforming the API output stream to
+  //   be consumable",
+  //   },
+  //   board: board(() => { const transformChunk = json.jsonata({ $id:
+  //     "transformChunk", expression: "candidates[0].content.parts.text ?
+  //     $join(candidates[0].content.parts.text) : ''", json:
+  //     base.input({}).chunk as V<string>,
+  //     });
+  //     return base.output({ chunk: transformChunk.result });
+  //   }),
+  //   stream: fetch,
+  // });
 
   base.output({
+    $id: "content-output",
     $metadata: { title: "Content Output", description: "Outputting content" },
     schema: textOutputSchema,
     context: formatResponse,
     text: formatResponse,
   });
 
-  base.output({
+  return base.output({
+    $id: "tool-call-output",
     $metadata: {
       title: "Tool Call Output",
       description: "Outputting a tool call",
@@ -537,9 +536,9 @@ export default await board(() => {
     toolCalls: formatResponse,
   });
 
-  return base.output({
-    $metadata: { title: "Stream Output", description: "Outputting a stream" },
-    schema: streamOutputSchema,
-    stream: streamTransform,
-  });
+  // return base.output({
+  //   $metadata: { title: "Stream Output", description: "Outputting a stream" },
+  //   schema: streamOutputSchema,
+  //   stream: streamTransform,
+  // });
 }).serialize(metadata);
