@@ -56,6 +56,7 @@ export class GraphNode extends PIXI.Graphics {
   #portLabelHorizontalPadding = 20;
   #portPadding = 6;
   #portRadius = 3;
+  #background = new PIXI.Graphics();
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
@@ -111,6 +112,8 @@ export class GraphNode extends PIXI.Graphics {
     this.eventMode = "static";
     this.cursor = "pointer";
 
+    this.#background.eventMode = "auto";
+    this.addChild(this.#background);
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
 
@@ -234,6 +237,9 @@ export class GraphNode extends PIXI.Graphics {
       if (!this.#iconSprite) {
         const texture = GraphAssets.instance().get(icon);
         this.#iconSprite = texture ? new PIXI.Sprite(texture) : null;
+        if (this.#iconSprite) {
+          this.#iconSprite.cacheAsBitmap = true;
+        }
       }
     } else {
       this.#iconSprite = null;
@@ -659,50 +665,79 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #drawBackground() {
+    // Toggling cacheAsBitmap back to false for the background seems to trip up
+    // PIXI, so instead we swap it out for a new Graphics instance, and we
+    // schedule its removal in the next frame.
+    if (this.#background) {
+      const existingBackground = this.#background;
+      existingBackground.removeFromParent();
+      requestAnimationFrame(() => {
+        existingBackground.destroy();
+      });
+
+      this.#background = new PIXI.Graphics();
+      this.#background.eventMode = "auto";
+      this.addChildAt(this.#background, 0);
+    }
+
     if (this.selected) {
       const borderSize = 3;
-      this.beginFill(this.#selectedColor);
-      this.drawRoundedRect(
+      this.#background.beginFill(this.#selectedColor);
+      this.#background.drawRoundedRect(
         -borderSize,
         -borderSize,
         this.#width + 2 * borderSize,
         this.#height + 2 * borderSize,
         this.#borderRadius + borderSize
       );
-      this.endFill();
+      this.#background.endFill();
     }
 
     const borderSize = 1;
-    this.beginFill(this.#borderColor);
-    this.drawRoundedRect(
+    this.#background.beginFill(this.#borderColor);
+    this.#background.drawRoundedRect(
       -borderSize,
       -borderSize,
       this.#width + 2 * borderSize,
       this.#height + 2 * borderSize,
       this.#borderRadius + borderSize
     );
-    this.endFill();
+    this.#background.endFill();
 
-    this.beginFill(this.#backgroundColor);
-    this.drawRoundedRect(0, 0, this.#width, this.#height, this.#borderRadius);
-    this.endFill();
+    this.#background.beginFill(this.#backgroundColor);
+    this.#background.drawRoundedRect(
+      0,
+      0,
+      this.#width,
+      this.#height,
+      this.#borderRadius
+    );
+    this.#background.endFill();
 
     if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
-      this.beginFill(this.#color);
-      this.drawRoundedRect(0, 0, this.#width, titleHeight, this.#borderRadius);
+      this.#background.beginFill(this.#color);
+      this.#background.drawRoundedRect(
+        0,
+        0,
+        this.#width,
+        titleHeight,
+        this.#borderRadius
+      );
 
       if (!this.collapsed) {
-        this.drawRect(
+        this.#background.drawRect(
           0,
           titleHeight - 2 * this.#borderRadius,
           this.#width,
           2 * this.#borderRadius
         );
       }
-      this.endFill();
+      this.#background.endFill();
     }
+
+    this.#background.cacheAsBitmap = true;
   }
 
   #drawTitle() {
