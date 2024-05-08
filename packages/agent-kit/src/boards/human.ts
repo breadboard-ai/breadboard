@@ -13,6 +13,7 @@ import {
   NewNodeValue,
 } from "@google-labs/breadboard";
 import { Context } from "vm";
+import { skipIfDone } from "../context.js";
 
 const voteRequestContent = {
   adCampaign: {
@@ -219,6 +220,19 @@ export default await board(({ context, title, description }) => {
     context,
   });
 
+  const areWeDoneChecker = skipIfDone({
+    $metadata: {
+      title: "Done Check",
+      description: "Checking to see if we can skip work altogether",
+    },
+    context: maybeOutputRouter.context,
+  });
+
+  base.output({
+    $metadata: { title: "Done", description: "Skipping because we're done" },
+    context: areWeDoneChecker.done,
+  });
+
   const createSchema = schema({
     $id: "createSchema",
     $metadata: {
@@ -227,7 +241,7 @@ export default await board(({ context, title, description }) => {
     },
     title: title.isString(),
     description: description.isString(),
-    context: maybeOutputRouter.context,
+    context: areWeDoneChecker.context,
     action: maybeOutputRouter.action,
   });
 

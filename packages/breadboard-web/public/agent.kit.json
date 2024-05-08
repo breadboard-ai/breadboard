@@ -20,7 +20,7 @@
         },
         {
           "from": "input",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "text",
           "in": "text"
         },
@@ -31,19 +31,19 @@
           "in": "text"
         },
         {
-          "from": "fn-4",
-          "to": "output-5",
+          "from": "fn-6",
+          "to": "output-7",
           "out": "again",
           "in": "again"
         },
         {
-          "from": "fn-4",
+          "from": "fn-6",
           "to": "appendContext",
           "out": "context",
           "in": "context"
         },
         {
-          "from": "fn-4",
+          "from": "fn-6",
           "to": "appendContext",
           "out": "text",
           "in": "text"
@@ -56,13 +56,13 @@
         },
         {
           "from": "createSchema",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "context",
           "in": "context"
         },
         {
           "from": "maybeOutputRouter",
-          "to": "createSchema",
+          "to": "fn-3",
           "out": "context",
           "in": "context"
         },
@@ -74,7 +74,7 @@
         },
         {
           "from": "maybeOutputRouter",
-          "to": "output-3",
+          "to": "output-5",
           "out": "feedback",
           "in": "feedback"
         },
@@ -86,7 +86,7 @@
         },
         {
           "from": "maybeOutputRouter",
-          "to": "fn-4",
+          "to": "fn-6",
           "out": "action",
           "in": "action"
         },
@@ -107,6 +107,18 @@
           "to": "createSchema",
           "out": "description",
           "in": "description"
+        },
+        {
+          "from": "fn-3",
+          "to": "output-4",
+          "out": "done",
+          "in": "context"
+        },
+        {
+          "from": "fn-3",
+          "to": "createSchema",
+          "out": "context",
+          "in": "context"
         }
       ],
       "nodes": [
@@ -171,11 +183,11 @@
           }
         },
         {
-          "id": "fn-4",
+          "id": "fn-6",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
-            "name": "fn_4",
+            "code": "const fn_6 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
+            "name": "fn_6",
             "raw": true
           },
           "metadata": {
@@ -210,7 +222,7 @@
           }
         },
         {
-          "id": "output-5",
+          "id": "output-7",
           "type": "output",
           "configuration": {
             "schema": {
@@ -274,7 +286,20 @@
           }
         },
         {
-          "id": "output-3",
+          "id": "fn-3",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_3 = ({context})=>{if(!context)throw new Error(\"Context is required\");const c=context;let done=false;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.done){done=true;break}}}if(done){return{done:context}}else{return{context}}};",
+            "name": "fn_3",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Done Check",
+            "description": "Checking to see if we can skip work altogether"
+          }
+        },
+        {
+          "id": "output-5",
           "type": "output",
           "configuration": {
             "schema": {
@@ -317,6 +342,25 @@
           "metadata": {
             "title": "Output",
             "description": "Displaying the output the user."
+          }
+        },
+        {
+          "id": "output-4",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "title": "context"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Done",
+            "description": "Skipping because we're done"
           }
         }
       ],
@@ -1796,7 +1840,7 @@
           "id": "fn-7",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];const originalPlan=plans[plans.length-1];let max=originalPlan.max;const doneMarker=originalPlan.doneMarker;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:{...current,next:next.task}});return{context:contents}}else if(doneMarker){contents.push({role:\"$metadata\",data:{type:\"looper\",doneMarker}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
+            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];if(current.done){return{done:existing}}const originalPlan=plans[plans.length-1];let max=originalPlan.max;const doneMarker=originalPlan.doneMarker;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}contents.push({role:\"$metadata\",data:{...current,next:next.task}});return{context:contents}}else if(doneMarker){contents.push({role:\"$metadata\",data:{type:\"looper\",doneMarker}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\"}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
             "name": "fn_7",
             "raw": true
           },

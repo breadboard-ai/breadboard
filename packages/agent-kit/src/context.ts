@@ -261,3 +261,5 @@ export const skipIfDoneFunction = fun(({ context }) => {
     return { context };
   }
 });
+
+export const skipIfDone = code(skipIfDoneFunction);

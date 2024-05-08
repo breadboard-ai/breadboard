@@ -182,6 +182,9 @@ export const planReaderFunction = fun(({ context, progress }) => {
   }
   try {
     const current = plans[0];
+    if (current.done) {
+      return { done: existing };
+    }
     const originalPlan = plans[plans.length - 1];
     let max = originalPlan.max;
     const doneMarker = originalPlan.doneMarker;
