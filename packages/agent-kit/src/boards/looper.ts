@@ -88,6 +88,7 @@ Your output must be a valid JSON of the following format:
     "task": "string, The task description. Use action-oriented language, starting with a verb that fits the task."
   }]
   "doneMarker": "string, optional. The marker that will be used by others to signal completion."
+  "error": "string, optional. A description of why you're unable to create a plan"
 }
 \`\`\`
 
