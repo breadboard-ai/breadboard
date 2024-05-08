@@ -920,7 +920,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role===\"model\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1919,7 +1919,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_4 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role===\"model\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_4",
             "raw": true
           },
