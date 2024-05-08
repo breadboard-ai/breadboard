@@ -19,11 +19,20 @@ import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
 
+const documentStyles = getComputedStyle(document.documentElement);
+
+function getGlobalColor(name: string, defaultValue = "#333333") {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  return parseInt(value || defaultValue, 16);
+}
+
 function edgeToString(edge: InspectableEdge): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
+
+const highlightedNodeColor = getGlobalColor("--bb-output-600");
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -36,7 +45,7 @@ export class Graph extends PIXI.Container {
   #layout = new Map<string, LayoutInfo>();
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
-  #highlightedNodeColor = 0x0084ff;
+  #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
   #editable = false;
 
@@ -621,11 +630,7 @@ export class Graph extends PIXI.Container {
 
       const { width, height } = graphNode.dimensions;
       this.#highlightedNode.clear();
-      this.#highlightedNode.lineStyle({
-        width: this.#highlightPadding - 2,
-        color: this.#highlightedNodeColor,
-        alpha: 0.25,
-      });
+      this.#highlightedNode.beginFill(this.#highlightedNodeColor, 0.25);
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,
         graphNode.y - this.#highlightPadding,
@@ -633,8 +638,9 @@ export class Graph extends PIXI.Container {
         height + this.#highlightPadding * 2,
         graphNode.borderRadius + this.#highlightPadding
       );
+      this.#highlightedNode.endFill();
 
-      this.addChild(this.#highlightedNode);
+      this.addChildAt(this.#highlightedNode, 0);
     };
 
     // It's possible this will be called before the graph node has rendered, so

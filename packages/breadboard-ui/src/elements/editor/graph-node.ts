@@ -24,6 +24,7 @@ const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const defaultNodeColor = getGlobalColor("--bb-nodes-100");
 const inputNodeColor = getGlobalColor("--bb-inputs-100");
 const secretNodeColor = getGlobalColor("--bb-inputs-100");
+const selectedNodeColor = getGlobalColor("--bb-output-600");
 const outputNodeColor = getGlobalColor("--bb-output-100");
 // TODO: Enable board node coloring.
 // const boardNodeColor = getGlobalColor('--bb-boards-100');
@@ -45,7 +46,7 @@ export class GraphNode extends PIXI.Graphics {
   #titleTextColor = nodeTextColor;
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
-  #selectedColor = 0x0084ff;
+  #selectedColor = selectedNodeColor;
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 10;
@@ -659,7 +660,7 @@ export class GraphNode extends PIXI.Graphics {
 
   #drawBackground() {
     if (this.selected) {
-      const borderSize = 2;
+      const borderSize = 3;
       this.beginFill(this.#selectedColor);
       this.drawRoundedRect(
         -borderSize,
