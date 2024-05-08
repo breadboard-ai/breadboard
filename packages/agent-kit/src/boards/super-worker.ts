@@ -8,7 +8,7 @@ import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
 import {
   LlmContent,
   LlmContentRole,
-  contextAssembler,
+  checkAreWeDone,
   looperTaskAdder,
   progressReader,
   userPartsAdder,
@@ -114,16 +114,16 @@ export default await board(({ in: context, persona, task }) => {
     context: addLooperTask.context,
   });
 
-  const addGenerated = contextAssembler({
+  const areWeDoneChecker = checkAreWeDone({
     $metadata: {
-      title: "Add Generated",
-      description: "Adding work to the output to pass along",
+      title: "Done Check",
+      description: "Checking for the 'Done' marker",
     },
     context: addTask.context,
     generated: generator.context,
   });
 
-  return { out: addGenerated.context.title("Context Out") };
+  return { out: areWeDoneChecker.context.title("Context Out") };
 }).serialize({
   title: "Super Worker",
   metadata: {

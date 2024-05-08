@@ -17,6 +17,7 @@ import {
   LlmContent,
   LooperPlan,
   LooperProgress,
+  fun,
   progressReader,
   userPartsAdder,
 } from "../context.js";
@@ -169,12 +170,6 @@ const contextExample = JSON.stringify({
 export type LooperData = {
   type: "looper";
   data: LooperProgress;
-};
-
-const fun = (
-  f: (inputs: Record<string, unknown>) => Record<string, unknown>
-) => {
-  return f;
 };
 
 export const planReaderFunction = fun(({ context, progress }) => {
