@@ -85,7 +85,7 @@
     "vite": "^5.2.11",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.7.0",
-    "vitest": "^1.5.3",
+    "vitest": "^1.6.0",
     "wireit": "^0.14.4"
   },
   "dependencies": {
