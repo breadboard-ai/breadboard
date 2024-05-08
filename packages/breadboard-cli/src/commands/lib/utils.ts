@@ -15,6 +15,8 @@ import { relative } from "path/posix";
 import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
+import { MakeOptions } from "../commandTypes.js";
+import { formatGraphDescriptor } from "@google-labs/breadboard";
 
 export const SERVER_URL = "http://localhost:3000";
 
@@ -81,7 +83,7 @@ export const resolveFilePath = (file: string) => {
 
 export const loadBoard = async (
   file: string,
-  options: Options
+  options: MakeOptions
 ): Promise<BoardRunner> => {
   const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
@@ -89,8 +91,11 @@ export const loadBoard = async (
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
   if (save) {
-    const boardClone = JSON.parse(JSON.stringify(board));
+    let boardClone = JSON.parse(JSON.stringify(board));
     delete boardClone.url; // Boards shouldn't have URLs serialized.
+    if (options.format) {
+      boardClone = formatGraphDescriptor(boardClone);
+    }
     const boardJson = JSON.stringify(boardClone, null, 2);
 
     // Most commands will pass in the output directory, but if they don't, we'll use the directory of the file being loaded.
