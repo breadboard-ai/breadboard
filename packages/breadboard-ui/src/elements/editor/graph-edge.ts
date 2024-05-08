@@ -106,8 +106,8 @@ export class GraphEdge extends PIXI.Graphics {
   #overrideColor: number | null = null;
   #loopBackPadding = 30;
   #loopBackCurveRadius = 10;
-  #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
-  #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
+  #overrideInLocation: PIXI.ObservablePoint | null = null;
+  #overrideOutLocation: PIXI.ObservablePoint | null = null;
   #type: InspectableEdgeType | null = null;
   #selected = false;
   #hitAreaSpacing = 6;
@@ -121,6 +121,14 @@ export class GraphEdge extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
+    this.onRender = () => {
+      if (!this.#isDirty) {
+        return;
+      }
+      this.clear();
+      this.#draw();
+      this.#isDirty = false;
+    };
   }
 
   set edge(edge: InspectableEdge | null) {
@@ -164,9 +172,7 @@ export class GraphEdge extends PIXI.Graphics {
     return this.#overrideColor;
   }
 
-  set overrideInLocation(
-    overrideInLocation: PIXI.ObservablePoint<unknown> | null
-  ) {
+  set overrideInLocation(overrideInLocation: PIXI.ObservablePoint | null) {
     if (overrideInLocation === this.#overrideInLocation) {
       return;
     }
@@ -179,9 +185,7 @@ export class GraphEdge extends PIXI.Graphics {
     return this.#overrideInLocation;
   }
 
-  set overrideOutLocation(
-    overrideOutLocation: PIXI.ObservablePoint<unknown> | null
-  ) {
+  set overrideOutLocation(overrideOutLocation: PIXI.ObservablePoint | null) {
     if (overrideOutLocation === this.#overrideOutLocation) {
       return;
     }
@@ -205,16 +209,6 @@ export class GraphEdge extends PIXI.Graphics {
 
   get type() {
     return this.#type;
-  }
-
-  render(renderer: PIXI.Renderer) {
-    super.render(renderer);
-
-    if (this.#isDirty) {
-      this.clear();
-      this.#draw();
-      this.#isDirty = false;
-    }
   }
 
   forceRedraw() {
@@ -278,8 +272,7 @@ export class GraphEdge extends PIXI.Graphics {
       edgeColor = edgeColorSelected;
     }
 
-    this.lineStyle(2, edgeColor);
-    this.moveTo(outLocation.x, outLocation.y);
+    this.setStrokeStyle({ width: 2, color: edgeColor });
 
     const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
     const ndx = outLocation.x - inLocation.x;
@@ -294,6 +287,8 @@ export class GraphEdge extends PIXI.Graphics {
       !this.#overrideOutLocation
     ) {
       // Line.
+      this.beginPath();
+      this.moveTo(outLocation.x, outLocation.y);
       this.lineTo(
         outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
         outLocation.y
@@ -344,6 +339,8 @@ export class GraphEdge extends PIXI.Graphics {
       );
 
       this.lineTo(inLocation.x, inLocation.y);
+      this.stroke();
+      this.closePath();
 
       // Hit Area.
       this.hitArea = new PIXI.Polygon([
@@ -457,6 +454,7 @@ export class GraphEdge extends PIXI.Graphics {
     };
 
     // Lines.
+    this.beginPath();
     this.moveTo(outLocation.x, outLocation.y);
     if (Math.abs(midA.x - midB.x) > 0.5) {
       this.bezierCurveTo(cpA1.x, cpA1.y, cpA2.x, cpA2.y, midA.x, midA.y);
@@ -473,12 +471,15 @@ export class GraphEdge extends PIXI.Graphics {
       this.quadraticCurveTo(pivotA.x, outLocation.y, midA.x, midA.y);
       this.quadraticCurveTo(pivotB.x, inLocation.y, inLocation.x, inLocation.y);
     }
+    this.stroke();
+    this.closePath();
 
     // Circles at the start & end.
-    this.beginFill(edgeColor);
-    this.drawCircle(outLocation.x, outLocation.y, 2);
-    this.drawCircle(inLocation.x, inLocation.y, 2);
-    this.endFill();
+    this.beginPath();
+    this.circle(outLocation.x, outLocation.y, 2);
+    this.circle(inLocation.x, inLocation.y, 2);
+    this.closePath();
+    this.fill({ color: edgeColor });
 
     // Hit Area.
     if (Math.abs(midA.x - midB.x) > 0.5) {
@@ -489,6 +490,7 @@ export class GraphEdge extends PIXI.Graphics {
       this.hitArea = new PIXI.Polygon([
         outLocation.x,
         outLocation.y - hitAreaSpacingY,
+
         ...calculatePointsOnCubicBezierCurve(
           outLocation.x,
           outLocation.y - hitAreaSpacingY,
@@ -502,10 +504,13 @@ export class GraphEdge extends PIXI.Graphics {
           1,
           0.1
         ),
+
         midA.x,
         midA.y + hitAreaSpacingY,
+
         midB.x,
         midB.y + hitAreaSpacingY,
+
         ...calculatePointsOnCubicBezierCurve(
           midB.x,
           midB.y + hitAreaSpacingY,
@@ -519,8 +524,10 @@ export class GraphEdge extends PIXI.Graphics {
           1,
           0.1
         ),
+
         inLocation.x,
         inLocation.y + hitAreaSpacingY,
+
         ...calculatePointsOnCubicBezierCurve(
           inLocation.x,
           inLocation.y + hitAreaSpacingY,
@@ -534,8 +541,10 @@ export class GraphEdge extends PIXI.Graphics {
           1,
           0.1
         ),
+
         midA.x,
         midA.y - hitAreaSpacingY,
+
         ...calculatePointsOnCubicBezierCurve(
           midA.x,
           midA.y - hitAreaSpacingY,

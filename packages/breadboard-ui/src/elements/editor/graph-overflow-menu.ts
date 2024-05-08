@@ -40,26 +40,26 @@ export class GraphOverflowMenu extends PIXI.Graphics {
     this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MENU_CLICKED, evt.client);
     });
-  }
 
-  render(renderer: PIXI.Renderer) {
-    super.render(renderer);
-
-    if (this.#isDirty) {
+    this.onRender = () => {
+      if (!this.#isDirty) {
+        return;
+      }
       this.clear();
       this.#draw();
       this.#isDirty = false;
-    }
+    };
   }
 
   #draw() {
     const midX = GraphOverflowMenu.width / 2;
     const midY = GraphOverflowMenu.height / 2;
 
-    this.beginFill(menuColor);
-    this.drawCircle(midX, midY - this.#gap - 2 * this.#radius, this.#radius);
-    this.drawCircle(midX, midY, this.#radius);
-    this.drawCircle(midX, midY + this.#gap + 2 * this.#radius, this.#radius);
-    this.endFill();
+    this.beginPath();
+    this.circle(midX, midY - this.#gap - 2 * this.#radius, this.#radius);
+    this.circle(midX, midY, this.#radius);
+    this.circle(midX, midY + this.#gap + 2 * this.#radius, this.#radius);
+    this.fill({ color: menuColor });
+    this.closePath();
   }
 }
