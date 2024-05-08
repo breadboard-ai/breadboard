@@ -12,7 +12,7 @@ const chatBotPersona = contextFromText(
   
   Your job is to collect the name, the location, and the instagram account of the customer's business.
 
-  When you have this information, conclude the conversation by saying "OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##"`
+  When you have this information, reply with a brief summary of the information you've collected in a neat bulleted list, then conclude the conversation by saying "OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##"`
 );
 
 export default await board(() => {
@@ -43,21 +43,7 @@ export default await board(() => {
 
   user.context.as("context").to(loop);
 
-  const summarizer = agents.superWorker({
-    $metadata: {
-      title: "Summarizer",
-      description: "Summarizing the conversation",
-    },
-    persona: contextFromText(
-      `You are a superb customer conversation reviewer. You take pride in replying with nothing but the facts in a bulleted list.`
-    ),
-    task: contextFromText(
-      `Review the conversation with the user and provide key facts that the user disclosed as a bulleted list`
-    ),
-    in: loop.done,
-  });
-
-  return { context: summarizer.out };
+  return { context: loop.done };
 }).serialize({
   title: "Looper Chat Testing Grounds",
   description:

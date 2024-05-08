@@ -11,14 +11,14 @@
     },
     {
       "from": "looper-4",
-      "to": "superWorker-5",
-      "out": "loop",
-      "in": "in"
+      "to": "output-2",
+      "out": "done",
+      "in": "context"
     },
     {
       "from": "looper-4",
-      "to": "superWorker-7",
-      "out": "done",
+      "to": "superWorker-5",
+      "out": "loop",
       "in": "in"
     },
     {
@@ -32,12 +32,6 @@
       "to": "human-6",
       "out": "out",
       "in": "context"
-    },
-    {
-      "from": "superWorker-7",
-      "to": "output-2",
-      "out": "out",
-      "in": "context"
     }
   ],
   "nodes": [
@@ -49,8 +43,14 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context Out",
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "Context Out"
             }
           }
         }
@@ -98,37 +98,13 @@
         "persona": {
           "parts": [
             {
-              "text": "You are a friendly chat bot. You typically start conversation with a warm greeting, and then get to work.\n  \n  Your job is to collect the name, the location, and the instagram account of the customer's business.\n\n  When you have this information, conclude the conversation by saying \"OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##\""
+              "text": "You are a friendly chat bot. You typically start conversation with a warm greeting, and then get to work.\n  \n  Your job is to collect the name, the location, and the instagram account of the customer's business.\n\n  When you have this information, reply with a brief summary of the information you've collected in a neat bulleted list, then conclude the conversation by saying \"OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##\""
             }
           ]
         }
       },
       "metadata": {
         "title": "Chat Bot"
-      }
-    },
-    {
-      "id": "superWorker-7",
-      "type": "superWorker",
-      "configuration": {
-        "persona": {
-          "parts": [
-            {
-              "text": "You are a superb customer conversation reviewer. You take pride in replying with nothing but the facts in a bulleted list."
-            }
-          ]
-        },
-        "task": {
-          "parts": [
-            {
-              "text": "Review the conversation with the user and provide key facts that the user disclosed as a bulleted list"
-            }
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Summarizer",
-        "description": "Summarizing the conversation"
       }
     }
   ]
