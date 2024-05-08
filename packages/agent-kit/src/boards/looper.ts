@@ -61,6 +61,11 @@ export const planSchema = {
         },
       },
     },
+    doneMarker: {
+      type: "string",
+      description:
+        "The marker that will be used by others to signal completion of the job.",
+    },
     error: {
       type: "string",
       description: "Describe the reason why the plan generation failed",
@@ -177,6 +182,7 @@ const planReader = code(({ context, progress }) => {
     const current = plans[0];
     const originalPlan = plans[plans.length - 1];
     let max = originalPlan.max;
+    const doneMarker = originalPlan.doneMarker;
     if (!max) {
       const planItems = originalPlan.todo?.length;
       if (planItems) {
@@ -198,6 +204,12 @@ const planReader = code(({ context, progress }) => {
       contents.push({
         role: "$metadata",
         data: { ...current, next: next.task },
+      });
+      return { context: contents };
+    } else if (doneMarker) {
+      contents.push({
+        role: "$metadata",
+        data: { type: "looper", doneMarker },
       });
       return { context: contents };
     } else if (max) {

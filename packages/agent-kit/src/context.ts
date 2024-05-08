@@ -76,6 +76,10 @@ export type LooperPlan = {
     task: string;
   }[];
   /**
+   * The marker that will be used by others to signal completion of the job.
+   */
+  doneMarker: string;
+  /**
    * Whether to append only the last item in the loop to the context or all
    * of them.
    */
