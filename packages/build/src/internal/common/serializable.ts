@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Convergence } from "../board/converge.js";
 import type { GenericSpecialInput } from "../board/input.js";
 import type { Output } from "../board/output.js";
 import type { Placeholder } from "../board/placeholder.js";
@@ -37,6 +38,7 @@ export interface SerializableInputPort {
     | SerializableOutputPortReference
     | GenericSpecialInput
     | Placeholder<JsonSerializable>
+    | Convergence<JsonSerializable>
     | typeof DefaultValue;
 }
 
