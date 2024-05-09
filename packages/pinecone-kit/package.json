@@ -117,7 +117,7 @@
     "@ava/typescript": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
-    "@types/node": "^20.12.10",
+    "@types/node": "^20.12.11",
     "ava": "^5.2.0",
     "typescript": "^5.4.5",
     "@google-labs/tsconfig": "^0.0.1",
