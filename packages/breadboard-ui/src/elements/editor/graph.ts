@@ -356,7 +356,12 @@ export class Graph extends PIXI.Container {
 
         if (topTarget instanceof GraphNodePort) {
           topTarget.overrideStatus = null;
-        } else {
+        }
+
+        if (
+          !(topTarget instanceof GraphNodePort) ||
+          topTarget === targetNodePort
+        ) {
           return;
         }
 
