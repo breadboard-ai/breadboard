@@ -41,7 +41,8 @@ export class Graph extends PIXI.Container {
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
-  #nodeById = new Map<string, GraphNode>();
+  #nodeById = new Map<string, InspectableNode>();
+  #graphNodeById = new Map<string, GraphNode>();
   #layout = new Map<string, LayoutInfo>();
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
@@ -83,19 +84,37 @@ export class Graph extends PIXI.Container {
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       evt.stopPropagation();
 
-      if (evt.target instanceof GraphNode) {
-        this.deselectAllChildren();
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
-
-        evt.target.selected = true;
-        return;
-      }
-
-      if (evt.target instanceof GraphEdge) {
+      if (evt.target instanceof GraphNode || evt.target instanceof GraphEdge) {
         this.deselectAllChildren();
 
-        if (evt.target.toNode.collapsed || evt.target.fromNode.collapsed) {
-          return;
+        if (evt.target instanceof GraphNode) {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
+            evt.target.id
+          );
+        } else {
+          if (evt.target.toNode.collapsed && evt.target.fromNode.collapsed) {
+            const possibleEdges = this.#edgesBetween(
+              evt.target.fromNode,
+              evt.target.toNode
+            );
+
+            if (possibleEdges.length === 1) {
+              evt.target.selected = true;
+              return;
+            }
+
+            const requestDisambiguation = () => {
+              this.emit(
+                GRAPH_OPERATIONS.GRAPH_EDGE_DISAMBIGUATION_REQUESTED,
+                possibleEdges,
+                evt.client
+              );
+            };
+
+            this.once("pointerup", requestDisambiguation);
+            return;
+          }
         }
 
         evt.target.selected = true;
@@ -526,7 +545,7 @@ export class Graph extends PIXI.Container {
 
     // Step through any Dagre-set and custom set locations.
     for (const [id, position] of this.#layout) {
-      const graphNode = this.#nodeById.get(id);
+      const graphNode = this.#graphNodeById.get(id);
       if (!graphNode) {
         continue;
       }
@@ -566,6 +585,15 @@ export class Graph extends PIXI.Container {
   set nodes(nodes: InspectableNode[] | null) {
     this.#nodes = nodes;
     this.#isDirty = true;
+
+    this.#nodeById.clear();
+    if (!nodes) {
+      return;
+    }
+
+    for (const node of nodes) {
+      this.#nodeById.set(node.descriptor.id, node);
+    }
   }
 
   get nodes() {
@@ -590,6 +618,38 @@ export class Graph extends PIXI.Container {
     return this.#highlightedNodeId;
   }
 
+  selectEdge(edge: InspectableEdge) {
+    const edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
+    if (!edgeGraphic) {
+      return;
+    }
+
+    this.#edgeContainer.setChildIndex(
+      edgeGraphic,
+      this.#edgeContainer.children.length - 1
+    );
+
+    this.deselectAllChildren();
+    edgeGraphic.selected = true;
+  }
+
+  #edgesBetween(from: GraphNode, to: GraphNode): InspectableEdge[] {
+    if (!this.#edges) {
+      return [];
+    }
+
+    const fromNode = this.#nodeById.get(from.label);
+    const toNode = this.#nodeById.get(to.label);
+
+    if (!(fromNode && toNode)) {
+      return [];
+    }
+
+    return this.#edges.filter(
+      (edge) => edge.from === fromNode && edge.to === toNode
+    );
+  }
+
   #onChildMoved(
     this: { graph: Graph; id: string },
     x: number,
@@ -610,7 +670,7 @@ export class Graph extends PIXI.Container {
   }
 
   #drawNodeHighlight() {
-    if (!this.#nodeById) {
+    if (!this.#graphNodeById) {
       return;
     }
 
@@ -619,7 +679,7 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    const graphNode = this.#nodeById.get(this.#highlightedNodeId);
+    const graphNode = this.#graphNodeById.get(this.#highlightedNodeId);
     if (!graphNode) {
       this.#highlightedNode.clear();
       return;
@@ -705,13 +765,13 @@ export class Graph extends PIXI.Container {
 
     for (const node of this.#nodes) {
       const { id } = node.descriptor;
-      let graphNode = this.#nodeById.get(id);
+      let graphNode = this.#graphNodeById.get(id);
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
         graphNode.collapsed = this.collapseNodesByDefault;
 
-        this.#nodeById.set(id, graphNode);
+        this.#graphNodeById.set(id, graphNode);
       }
 
       if (graphNode.title !== node.title()) {
@@ -777,15 +837,15 @@ export class Graph extends PIXI.Container {
     }
 
     // Node has been removed - clean it up.
-    if (this.#nodes.length < this.#nodeById.size) {
-      for (const [id, graphNode] of this.#nodeById) {
+    if (this.#nodes.length < this.#graphNodeById.size) {
+      for (const [id, graphNode] of this.#graphNodeById) {
         if (this.#nodes.find((node) => node.descriptor.id === id)) {
           continue;
         }
 
         graphNode.removeFromParent();
         graphNode.destroy();
-        this.#nodeById.delete(id);
+        this.#graphNodeById.delete(id);
         this.#layout.delete(id);
       }
     }
@@ -793,8 +853,8 @@ export class Graph extends PIXI.Container {
 
   // TODO: Merge this with below.
   #createTemporaryEdge(edge: InspectableEdge): GraphEdge | null {
-    const fromNode = this.#nodeById.get(edge.from.descriptor.id);
-    const toNode = this.#nodeById.get(edge.to.descriptor.id);
+    const fromNode = this.#graphNodeById.get(edge.from.descriptor.id);
+    const toNode = this.#graphNodeById.get(edge.to.descriptor.id);
 
     if (!(fromNode && toNode)) {
       return null;
@@ -831,8 +891,8 @@ export class Graph extends PIXI.Container {
     for (const edge of this.#edges) {
       let edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
       if (!edgeGraphic) {
-        const fromNode = this.#nodeById.get(edge.from.descriptor.id);
-        const toNode = this.#nodeById.get(edge.to.descriptor.id);
+        const fromNode = this.#graphNodeById.get(edge.from.descriptor.id);
+        const toNode = this.#graphNodeById.get(edge.to.descriptor.id);
 
         // Only create the edge when the nodes are present.
         if (!(fromNode && toNode)) {
