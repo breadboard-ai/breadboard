@@ -104,7 +104,7 @@
     "@rgrove/parse-xml": "^4.1.0",
     "@types/json-schema": "^7.0.15",
     "ajv": "^8.13.0",
-    "jsonata": "^2.0.4",
+    "jsonata": "^2.0.5",
     "jsonschema": "^1.4.1"
   }
 }
