@@ -34,18 +34,21 @@ test("can return $error as string and it gets normalized", async () => {
   });
 });
 
-test("throwing returns an $error without leaking internal stack", async () => {
+test("throwing returns an $error with Internal Exception prefix and stack trace", async () => {
   const def = defineNodeType({
     name: "test",
     inputs: {},
     outputs: {},
     invoke: () => {
-      throw new Error("private internal details the user shouldn't see");
+      throw new Error("internal details");
     },
   });
-  assert.deepEqual(await def.invoke({}, null as never), {
-    $error: { message: "Internal error (see server logs for details)" },
-  });
+  const result = await def.invoke({}, null as never);
+  const message = (result?.$error as { message?: string } | undefined)?.message;
+  assert.match(
+    message!,
+    /Internal Exception: internal details\n.*error_test.ts.*/
+  );
 });
 
 test("must include message in $error object", () => {
