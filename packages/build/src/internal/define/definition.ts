@@ -169,19 +169,11 @@ export class DefinitionImpl<
     try {
       result = await this.#invoke(staticValues, dynamicValues, context);
     } catch (e) {
-      console.error(
-        `
-A node's invoke function raised an exception. This indicates an internal error.
-Expected errors should always be returned as a value on the $error port.
-
-Node type: ${this.#name}
-
-Error: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
-
-Values: ${JSON.stringify(values, null, 2)}`
-      );
       return {
-        $error: { message: "Internal error (see server logs for details)" },
+        $error: {
+          message: `Internal Exception: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
+}`,
+        },
       };
     }
     if (result.$error !== undefined) {
