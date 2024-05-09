@@ -36,9 +36,7 @@ const highlightedNodeColor = getGlobalColor("--bb-output-600");
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
-  #edgeContainer = new PIXI.Container({
-    isRenderGroup: true,
-  });
+  #edgeContainer = new PIXI.Container();
   #edgeGraphics = new Map<string, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
