@@ -18,7 +18,7 @@ import {
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdge, InspectablePort } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
@@ -44,8 +44,15 @@ export class GraphRenderer extends LitElement {
   #activeGraph: Graph | null = null;
   #edgesForDisambiguation: InspectableEdge[] | null = null;
   #edgeDisambiguationMenuLocation: PIXI.ObservablePoint | null = null;
-  #edgeDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
+  #edgeSelectDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
+  #edgeCreateDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
   #autoFocusSelf = false;
+  #newEdgeDisambiguationInfo: {
+    from: string;
+    to: string;
+    portsOut: InspectablePort[];
+    portsIn: InspectablePort[];
+  } | null = null;
 
   #padding = 50;
   #container = new PIXI.Container({
@@ -106,7 +113,8 @@ export class GraphRenderer extends LitElement {
       touch-action: none;
     }
 
-    #edge-disambiguation-menu,
+    #edge-create-disambiguation-menu,
+    #edge-select-disambiguation-menu,
     #overflow-menu {
       z-index: 1000;
       display: none;
@@ -122,13 +130,26 @@ export class GraphRenderer extends LitElement {
       overflow: auto;
     }
 
-    #edge-disambiguation-menu.visible,
+    #edge-select-disambiguation-menu.visible,
     #overflow-menu.visible {
       display: grid;
       grid-template-rows: var(--bb-grid-size-11);
     }
 
-    #edge-disambiguation-menu button {
+    #edge-create-disambiguation-menu.visible {
+      display: grid;
+      padding: var(--bb-grid-size-2);
+      grid-template-columns: 1fr 16px 1fr;
+      align-items: center;
+    }
+
+    #edge-create-disambiguation-menu #edge-create-from,
+    #edge-create-disambiguation-menu #edge-create-to {
+      grid-template-rows: var(--bb-grid-size-11);
+    }
+
+    #edge-create-disambiguation-menu button,
+    #edge-select-disambiguation-menu button {
       display: flex;
       align-items: center;
       background: none;
@@ -140,18 +161,43 @@ export class GraphRenderer extends LitElement {
       cursor: pointer;
     }
 
-    #edge-disambiguation-menu button:hover,
-    #edge-disambiguation-menu button:focus {
+    #edge-create-disambiguation-menu button {
+      width: 100%;
+      border-bottom: none;
+      border-radius: var(--bb-grid-size-2);
+      text-align: center;
+    }
+
+    #edge-create-disambiguation-menu button:hover,
+    #edge-create-disambiguation-menu button:focus,
+    #edge-select-disambiguation-menu button:hover,
+    #edge-select-disambiguation-menu button:focus {
       background: var(--bb-neutral-50);
     }
 
-    #edge-disambiguation-menu button .edge-arrow {
+    #edge-create-disambiguation-menu button.selected,
+    #edge-create-disambiguation-menu button.selected:hover,
+    #edge-create-disambiguation-menu button.selected:focus {
+      background: var(--bb-output-50);
+      color: var(--bb-output-600);
+    }
+
+    #edge-create-disambiguation-menu button[disabled] {
+      cursor: auto;
+    }
+
+    #edge-create-disambiguation-menu .edge-arrow,
+    #edge-select-disambiguation-menu button .edge-arrow {
       display: block;
       margin: 0 var(--bb-grid-size-2);
       width: 16px;
       height: 16px;
       background: var(--bb-icon-edge-connector) center center / 16px 16px
         no-repeat;
+    }
+
+    #edge-create-disambiguation-menu .edge-arrow {
+      margin: 0;
     }
 
     #overflow-menu button {
@@ -418,10 +464,32 @@ export class GraphRenderer extends LitElement {
     );
 
     graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_DISAMBIGUATION_REQUESTED,
+      GRAPH_OPERATIONS.GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED,
       (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
         this.#activeGraph = graph;
         this.#edgesForDisambiguation = possibleEdges;
+        this.#edgeDisambiguationMenuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[],
+        portsIn: InspectablePort[],
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeDisambiguationInfo = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
         this.#edgeDisambiguationMenuLocation = location;
 
         this.requestUpdate();
@@ -626,11 +694,17 @@ export class GraphRenderer extends LitElement {
   }
 
   protected updated(): void {
-    if (this.#edgesForDisambiguation && this.#edgeDisambiguationMenuRef) {
+    if (
+      (this.#edgesForDisambiguation &&
+        this.#edgeSelectDisambiguationMenuRef.value) ||
+      (this.#newEdgeDisambiguationInfo &&
+        this.#edgeCreateDisambiguationMenuRef.value)
+    ) {
       window.addEventListener(
         "pointerdown",
         () => {
           this.#edgesForDisambiguation = null;
+          this.#newEdgeDisambiguationInfo = null;
           this.#autoFocusSelf = true;
           this.requestUpdate();
         },
@@ -646,6 +720,65 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  #createEdgeIfTwoPortsSelected() {
+    if (!this.#edgeCreateDisambiguationMenuRef.value) {
+      return false;
+    }
+
+    if (!this.#newEdgeDisambiguationInfo) {
+      return false;
+    }
+
+    if (!this.#activeGraph) {
+      return false;
+    }
+
+    const menu = this.#edgeCreateDisambiguationMenuRef.value;
+    const lhs = menu.querySelector<HTMLButtonElement>(
+      "#edge-create-from .selected"
+    );
+    const rhs = menu.querySelector<HTMLButtonElement>(
+      "#edge-create-to .selected"
+    );
+
+    if (!(lhs && rhs)) {
+      return false;
+    }
+
+    const outPortName = lhs.dataset.portName;
+    const inPortName = rhs.dataset.portName;
+    if (!(outPortName && inPortName)) {
+      return false;
+    }
+
+    const newEdgeDisambiguationInfo = this.#newEdgeDisambiguationInfo;
+    const existingEdge = this.#activeGraph.edges?.find((edge) => {
+      return (
+        edge.from.descriptor.id === newEdgeDisambiguationInfo.from &&
+        edge.to.descriptor.id === newEdgeDisambiguationInfo.to &&
+        edge.out === outPortName &&
+        edge.in === inPortName
+      );
+    });
+
+    if (existingEdge) {
+      return true;
+    }
+
+    // TODO: Support non-ordinary wires here?
+    const edge = {
+      from: { descriptor: { id: this.#newEdgeDisambiguationInfo.from } },
+      to: { descriptor: { id: this.#newEdgeDisambiguationInfo.to } },
+      out: outPortName,
+      in: inPortName,
+      type: "ordinary",
+    } as InspectableEdge;
+
+    this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
+
+    return true;
+  }
+
   render() {
     const overflowMenu = html`<div
       ${ref(this.#overflowMenuRef)}
@@ -657,14 +790,14 @@ export class GraphRenderer extends LitElement {
       </button>
     </div>`;
 
-    const edgeDisambiguationMenuLocation: PIXI.Point =
+    const edgeSelectDisambiguationMenuLocation: PIXI.Point =
       this.#edgeDisambiguationMenuLocation || new PIXI.Point(0, 0);
-    const edgeDisambiguationMenu = html`<div
-      ${ref(this.#edgeDisambiguationMenuRef)}
-      id="edge-disambiguation-menu"
+    const edgeSelectDisambiguationMenu = html`<div
+      ${ref(this.#edgeSelectDisambiguationMenuRef)}
+      id="edge-select-disambiguation-menu"
       class=${classMap({ visible: this.#edgesForDisambiguation !== null })}
       style=${styleMap({
-        translate: `${edgeDisambiguationMenuLocation.x}px ${edgeDisambiguationMenuLocation.y}px`,
+        translate: `${edgeSelectDisambiguationMenuLocation.x}px ${edgeSelectDisambiguationMenuLocation.y}px`,
       })}
     >
       ${this.#edgesForDisambiguation
@@ -704,8 +837,71 @@ export class GraphRenderer extends LitElement {
         : html`No edges require disambiguation`}
     </div>`;
 
+    const edgeCreateDisambiguationMenuLocation: PIXI.Point =
+      this.#edgeDisambiguationMenuLocation || new PIXI.Point(0, 0);
+    const edgeCreateDisambiguationMenu = html`<div
+      ${ref(this.#edgeCreateDisambiguationMenuRef)}
+      id="edge-create-disambiguation-menu"
+      class=${classMap({ visible: this.#newEdgeDisambiguationInfo !== null })}
+      style=${styleMap({
+        translate: `${edgeCreateDisambiguationMenuLocation.x}px ${edgeCreateDisambiguationMenuLocation.y}px`,
+      })}
+    >
+      <div id="edge-create-from">
+        ${this.#newEdgeDisambiguationInfo &&
+        this.#newEdgeDisambiguationInfo.portsOut.length
+          ? this.#newEdgeDisambiguationInfo.portsOut.map(
+              (port, _idx, ports) => {
+                return html`<button
+                  @pointerdown=${(evt: Event) => {
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
+                    }
+
+                    evt.target.classList.toggle("selected");
+                    if (!this.#createEdgeIfTwoPortsSelected()) {
+                      evt.stopImmediatePropagation();
+                    }
+                  }}
+                  ?disabled=${ports.length === 1}
+                  class=${classMap({ selected: ports.length === 1 })}
+                  data-port-name="${port.name}"
+                >
+                  ${port.title ?? port.name}
+                </button>`;
+              }
+            )
+          : html`No outgoing ports`}
+      </div>
+      <span class="edge-arrow"></span>
+      <div id="edge-create-to">
+        ${this.#newEdgeDisambiguationInfo &&
+        this.#newEdgeDisambiguationInfo.portsIn.length
+          ? this.#newEdgeDisambiguationInfo.portsIn.map((port, _idx, ports) => {
+              return html`<button
+                @pointerdown=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
+
+                  evt.target.classList.toggle("selected");
+                  if (!this.#createEdgeIfTwoPortsSelected()) {
+                    evt.stopImmediatePropagation();
+                  }
+                }}
+                ?disabled=${ports.length === 1}
+                class=${classMap({ selected: ports.length === 1 })}
+                data-port-name="${port.name}"
+              >
+                ${port.title ?? port.name}
+              </button>`;
+            })
+          : html`No incoming ports`}
+      </div>
+    </div>`;
+
     return html`${until(
       this.loadTexturesAndRender()
-    )}${overflowMenu}${edgeDisambiguationMenu}`;
+    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeCreateDisambiguationMenu}`;
   }
 }

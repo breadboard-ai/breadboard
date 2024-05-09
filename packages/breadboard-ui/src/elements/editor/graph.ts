@@ -9,6 +9,7 @@ import {
   InspectableEdgeType,
   InspectableNode,
   InspectableNodePorts,
+  InspectablePort,
   PortStatus,
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
@@ -93,7 +94,7 @@ export class Graph extends PIXI.Container {
             evt.target.id
           );
         } else {
-          if (evt.target.toNode.collapsed && evt.target.fromNode.collapsed) {
+          if (evt.target.toNode.collapsed || evt.target.fromNode.collapsed) {
             const possibleEdges = this.#edgesBetween(
               evt.target.fromNode,
               evt.target.toNode
@@ -106,7 +107,7 @@ export class Graph extends PIXI.Container {
 
             const requestDisambiguation = () => {
               this.emit(
-                GRAPH_OPERATIONS.GRAPH_EDGE_DISAMBIGUATION_REQUESTED,
+                GRAPH_OPERATIONS.GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED,
                 possibleEdges,
                 evt.client
               );
@@ -328,40 +329,45 @@ export class Graph extends PIXI.Container {
       }
 
       // Update the edge if either of the nodes is collapsed.
-      const disambiguateFrom: string[] = [];
-      if (targetEdge.fromNode.collapsed) {
-        const commonPorts = (targetEdge.fromNode.outPorts || []).filter(
-          (port) => !port.star && port.name !== ""
-        );
-        if (commonPorts.length === 1) {
-          targetEdgeDescriptor.out = commonPorts[0].name;
-        } else {
-          disambiguateFrom.push(...commonPorts.map((port) => port.name));
-        }
-      }
+      const fromNodePortsOut = targetEdge.fromNode.outPorts || [];
+      const possiblePortsOut: InspectablePort[] = targetEdge.fromNode.collapsed
+        ? fromNodePortsOut.filter((port) => !port.star && port.name !== "")
+        : fromNodePortsOut.filter(
+            (port) => targetNodePort && port.name === targetNodePort.label
+          );
 
-      const disambiguateTo: string[] = [];
-      if (targetEdge.toNode.collapsed) {
-        const commonPorts = (targetEdge.toNode.inPorts || []).filter(
-          (port) => !port.star && port.name !== ""
-        );
-        if (commonPorts.length === 1) {
-          targetEdgeDescriptor.in = commonPorts[0].name;
-        } else {
-          disambiguateTo.push(...commonPorts.map((port) => port.name));
-        }
-      }
+      const toNodePortsIn = targetEdge.toNode.inPorts || [];
+      const possiblePortsIn: InspectablePort[] = targetEdge.toNode.collapsed
+        ? toNodePortsIn.filter((port) => !port.star && port.name !== "")
+        : toNodePortsIn.filter(
+            (port) =>
+              topTarget instanceof GraphNodePort &&
+              port.name === topTarget.label
+          );
 
-      if (disambiguateFrom.length || disambiguateTo.length) {
+      if (targetEdge.fromNode.collapsed || targetEdge.toNode.collapsed) {
         if (targetEdge.temporary) {
-          if (targetNodePort) {
-            targetNodePort.overrideStatus = null;
-          }
-
           this.#cleanEdges();
         }
 
-        return;
+        if (targetNodePort) {
+          targetNodePort.overrideStatus = null;
+        }
+
+        if (possiblePortsOut.length === 1 && possiblePortsIn.length === 1) {
+          targetEdgeDescriptor.out = possiblePortsOut[0].name;
+          targetEdgeDescriptor.in = possiblePortsIn[0].name;
+        } else {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED,
+            targetEdgeDescriptor.from.descriptor.id,
+            targetEdgeDescriptor.to.descriptor.id,
+            possiblePortsOut,
+            possiblePortsIn,
+            evt.client
+          );
+          return;
+        }
       }
 
       const edgeKey = edgeToString(targetEdgeDescriptor);

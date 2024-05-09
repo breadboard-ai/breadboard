@@ -594,8 +594,8 @@ export class GraphNode extends PIXI.Container {
     this.#headerInPort.visible = true;
     this.#headerOutPort.visible = true;
 
-    this.#headerInPort.editable = false;
-    this.#headerOutPort.editable = false;
+    this.#headerInPort.editable = this.editable;
+    this.#headerOutPort.editable = this.editable;
 
     const titleHeight =
       this.#padding + (this.#titleText?.height || 0) + this.#padding;
