@@ -24,6 +24,9 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GraphEdge } from "./graph-edge.js";
+import { map } from "lit/directives/map.js";
+import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -31,10 +34,19 @@ export class GraphRenderer extends LitElement {
   editable = false;
 
   #app = new PIXI.Application();
+  #appInitialized = false;
+
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
   #overflowMenuGraphNode: GraphNode | null = null;
+
+  #activeGraph: Graph | null = null;
+  #edgesForDisambiguation: InspectableEdge[] | null = null;
+  #edgeDisambiguationMenuLocation: PIXI.ObservablePoint | null = null;
+  #edgeDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
+  #autoFocusSelf = false;
+
   #padding = 50;
   #container = new PIXI.Container({
     isRenderGroup: true,
@@ -94,6 +106,7 @@ export class GraphRenderer extends LitElement {
       touch-action: none;
     }
 
+    #edge-disambiguation-menu,
     #overflow-menu {
       z-index: 1000;
       display: none;
@@ -109,9 +122,36 @@ export class GraphRenderer extends LitElement {
       overflow: auto;
     }
 
+    #edge-disambiguation-menu.visible,
     #overflow-menu.visible {
       display: grid;
       grid-template-rows: var(--bb-grid-size-11);
+    }
+
+    #edge-disambiguation-menu button {
+      display: flex;
+      align-items: center;
+      background: none;
+      margin: 0;
+      padding: var(--bb-grid-size-3);
+      border: none;
+      border-bottom: 1px solid var(--bb-neutral-300);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #edge-disambiguation-menu button:hover,
+    #edge-disambiguation-menu button:focus {
+      background: var(--bb-neutral-50);
+    }
+
+    #edge-disambiguation-menu button .edge-arrow {
+      display: block;
+      margin: 0 var(--bb-grid-size-2);
+      width: 16px;
+      height: 16px;
+      background: var(--bb-icon-edge-connector) center center / 16px 16px
+        no-repeat;
     }
 
     #overflow-menu button {
@@ -172,8 +212,6 @@ export class GraphRenderer extends LitElement {
 
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
-    // this.#app.stop();
-    // this.#app.stop();
     this.tabIndex = 0;
 
     let dragStart: PIXI.PointData | null = null;
@@ -272,6 +310,15 @@ export class GraphRenderer extends LitElement {
     return m;
   }
 
+  #notifyGraphOfEdgeSelection(edge: InspectableEdge) {
+    if (!this.#activeGraph) {
+      return;
+    }
+
+    this.#activeGraph.selectEdge(edge);
+    this.#activeGraph = null;
+  }
+
   addGraph(graph: Graph) {
     graph.editable = this.editable;
 
@@ -367,6 +414,17 @@ export class GraphRenderer extends LitElement {
           },
           { once: true }
         );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_DISAMBIGUATION_REQUESTED,
+      (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
+        this.#activeGraph = graph;
+        this.#edgesForDisambiguation = possibleEdges;
+        this.#edgeDisambiguationMenuLocation = location;
+
+        this.requestUpdate();
       }
     );
 
@@ -482,11 +540,9 @@ export class GraphRenderer extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    window.addEventListener("keydown", this.#onKeyDownBound);
-
-    this.addEventListener("wheel", this.#onWheelBound, { passive: false });
-
     this.#resizeObserver.observe(this);
+    window.addEventListener("keydown", this.#onKeyDownBound);
+    this.addEventListener("wheel", this.#onWheelBound, { passive: false });
   }
 
   disconnectedCallback(): void {
@@ -502,6 +558,10 @@ export class GraphRenderer extends LitElement {
   }
 
   async loadTexturesAndRender() {
+    if (this.#appInitialized) {
+      return this.#app.canvas;
+    }
+
     await Promise.all([
       GraphAssets.instance().loaded,
       this.#app.init({
@@ -561,7 +621,29 @@ export class GraphRenderer extends LitElement {
       this.#background.height = this.#app.renderer.height;
     });
 
+    this.#appInitialized = true;
     return this.#app.canvas;
+  }
+
+  protected updated(): void {
+    if (this.#edgesForDisambiguation && this.#edgeDisambiguationMenuRef) {
+      window.addEventListener(
+        "pointerdown",
+        () => {
+          this.#edgesForDisambiguation = null;
+          this.#autoFocusSelf = true;
+          this.requestUpdate();
+        },
+        { once: true }
+      );
+    }
+
+    if (this.#autoFocusSelf) {
+      this.#autoFocusSelf = false;
+      requestAnimationFrame(() => {
+        this.focus();
+      });
+    }
   }
 
   render() {
@@ -575,6 +657,55 @@ export class GraphRenderer extends LitElement {
       </button>
     </div>`;
 
-    return html`${until(this.loadTexturesAndRender())}${overflowMenu}`;
+    const edgeDisambiguationMenuLocation: PIXI.Point =
+      this.#edgeDisambiguationMenuLocation || new PIXI.Point(0, 0);
+    const edgeDisambiguationMenu = html`<div
+      ${ref(this.#edgeDisambiguationMenuRef)}
+      id="edge-disambiguation-menu"
+      class=${classMap({ visible: this.#edgesForDisambiguation !== null })}
+      style=${styleMap({
+        translate: `${edgeDisambiguationMenuLocation.x}px ${edgeDisambiguationMenuLocation.y}px`,
+      })}
+    >
+      ${this.#edgesForDisambiguation
+        ? map(this.#edgesForDisambiguation, (edge) => {
+            const labelOut = edge.from.ports().then((portInfo) => {
+              const port = portInfo.outputs.ports.find(
+                (port) => port.name === edge.out
+              );
+              if (!port) {
+                return html`${edge.out}`;
+              }
+
+              return html`${port.title ?? port.name}`;
+            });
+
+            const labelIn = edge.to.ports().then((portInfo) => {
+              const port = portInfo.inputs.ports.find(
+                (port) => port.name === edge.in
+              );
+              if (!port) {
+                return html`${edge.out}`;
+              }
+
+              return html`${port.title ?? port.name}`;
+            });
+
+            return html`<button
+              @pointerdown=${() => {
+                this.#notifyGraphOfEdgeSelection(edge);
+              }}
+            >
+              ${until(labelOut, html`Out...`)}
+              <span class="edge-arrow"></span>
+              ${until(labelIn, html`In...`)}
+            </button>`;
+          })
+        : html`No edges require disambiguation`}
+    </div>`;
+
+    return html`${until(
+      this.loadTexturesAndRender()
+    )}${overflowMenu}${edgeDisambiguationMenu}`;
   }
 }
