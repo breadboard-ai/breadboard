@@ -223,17 +223,21 @@ const boardToFunction = await board(({ item }) => {
 
 const toolWorker = await board(({ context, instruction, tools, retry }) => {
   context
-    .title("Context")
+    .title("Context In")
     .isArray()
     .behavior("llm-content")
     .optional()
     .default(sampleContext);
   instruction
     .title("Instruction")
+    .description(
+      "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action."
+    )
     .format("multiline")
     .examples(sampleInstruction);
   tools
     .title("Tools")
+    .description("The boards to use as tools")
     .isArray()
     .behavior("board")
     .optional()

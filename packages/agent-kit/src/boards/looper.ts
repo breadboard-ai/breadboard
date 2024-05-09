@@ -17,6 +17,7 @@ import {
   LlmContent,
   LooperPlan,
   LooperProgress,
+  cleanUpMetadata,
   fun,
   progressReader,
   userPartsAdder,
@@ -288,9 +289,20 @@ export default await board(({ context, task }) => {
 
   validate.json.as("progress").to(readPlan);
 
+  const cleaner = cleanUpMetadata({
+    $metadata: {
+      title: "Clean up",
+      description: "Cleaning up the metadata that was used for running loops",
+    },
+    context: readPlan.done,
+  });
+
   base.output({
     $metadata: { title: "Exit" },
-    done: readPlan.done.isArray().behavior("llm-content").title("Context Out"),
+    done: cleaner.context
+      .isArray()
+      .behavior("llm-content")
+      .title("Context Out"),
   });
 
   return {

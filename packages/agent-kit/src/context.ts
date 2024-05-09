@@ -263,3 +263,15 @@ export const skipIfDoneFunction = fun(({ context }) => {
 });
 
 export const skipIfDone = code(skipIfDoneFunction);
+
+/**
+ * Given a context, removes all metadata from it
+ */
+export const cleanUpMetadataFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = context as Context[];
+  const result = c.filter((item) => item.role !== "$metadata");
+  return { context: result };
+});
+
+export const cleanUpMetadata = code(cleanUpMetadataFunction);

@@ -77,7 +77,7 @@ export default await board(({ in: context, persona, task }) => {
   task
     .title("Task")
     .description(
-      "Give it the task to perform on the provided source materials. Ideally, the task is a call to action with the necessary details on how to best complete this action."
+      "Optional. Give it a task to perform on the provided source materials. The ideal task is a call to action with the necessary details on how to best complete this action."
     )
     .isObject()
     .optional()
