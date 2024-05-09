@@ -68,8 +68,8 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context Out",
-              "type": "string"
+              "type": "string",
+              "title": "out"
             }
           }
         }
