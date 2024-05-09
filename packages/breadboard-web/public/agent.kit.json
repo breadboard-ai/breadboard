@@ -871,7 +871,7 @@
       "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
       "edges": [
         {
-          "from": "fn-7",
+          "from": "fn-10",
           "to": "output-2",
           "out": "context",
           "in": "out"
@@ -884,15 +884,39 @@
         },
         {
           "from": "fn-3",
-          "to": "fn-7",
+          "to": "fn-8",
           "out": "context",
           "in": "context"
         },
         {
-          "from": "text-6",
-          "to": "fn-7",
+          "from": "fn-3",
+          "to": "fn-10",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "router",
+          "to": "assembleBoardInvoke",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "router",
+          "to": "assembleBoardInvoke",
+          "out": "functionCall",
+          "in": "functionCall"
+        },
+        {
+          "from": "router",
+          "to": "fn-10",
           "out": "context",
           "in": "generated"
+        },
+        {
+          "from": "router",
+          "to": "fn-10",
+          "out": "text",
+          "in": "text"
         },
         {
           "from": "input-1",
@@ -914,6 +938,12 @@
         },
         {
           "from": "input-1",
+          "to": "turnBoardsToFunctions",
+          "out": "tools",
+          "in": "list"
+        },
+        {
+          "from": "input-1",
           "to": "text-6",
           "out": "persona",
           "in": "systemInstruction"
@@ -925,10 +955,58 @@
           "in": "context"
         },
         {
+          "from": "fn-8",
+          "to": "output-9",
+          "out": "context",
+          "in": "out"
+        },
+        {
+          "from": "text-6",
+          "to": "router",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "assembleBoardInvoke",
+          "to": "invokeBoard",
+          "out": "*",
+          "in": ""
+        },
+        {
           "from": "fn-4",
           "to": "fn-5",
           "out": "progress",
           "in": "progress"
+        },
+        {
+          "from": "turnBoardsToFunctions",
+          "to": "formatFunctionDeclarations",
+          "out": "list",
+          "in": "list"
+        },
+        {
+          "from": "fn-7",
+          "to": "fn-8",
+          "out": "response",
+          "in": "toAdd"
+        },
+        {
+          "from": "formatFunctionDeclarations",
+          "to": "text-6",
+          "out": "tools",
+          "in": "tools"
+        },
+        {
+          "from": "formatFunctionDeclarations",
+          "to": "assembleBoardInvoke",
+          "out": "urlMap",
+          "in": "urlMap"
+        },
+        {
+          "from": "invokeBoard",
+          "to": "fn-7",
+          "out": "*",
+          "in": ""
         }
       ],
       "nodes": [
@@ -948,11 +1026,11 @@
           }
         },
         {
-          "id": "fn-7",
+          "id": "fn-10",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
-            "name": "fn_7",
+            "code": "const fn_10 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
+            "name": "fn_10",
             "raw": true
           },
           "metadata": {
@@ -974,12 +1052,16 @@
           }
         },
         {
-          "id": "text-6",
-          "type": "text",
-          "configuration": {},
+          "id": "router",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "name": "router",
+            "raw": true
+          },
           "metadata": {
-            "title": "Gemini API Call",
-            "description": "Applying Gemini to do work"
+            "title": "Router",
+            "description": "Routing to either function call invocation or text reply"
           }
         },
         {
@@ -1016,6 +1098,19 @@
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nWrite an outline for a novel, following the provided specs.\\n\"\n    }\n  ]\n}"
                   ]
                 },
+                "tools": {
+                  "title": "Tools",
+                  "type": "array",
+                  "description": "Optional. Equip it with tools by adding them to this list. If specified, the worker will invoke them when the job calls for it.",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "board",
+                      "config"
+                    ]
+                  },
+                  "default": "[]"
+                },
                 "persona": {
                   "type": "object",
                   "title": "Persona",
@@ -1051,6 +1146,41 @@
           }
         },
         {
+          "id": "fn-8",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_8 = ({context,toAdd})=>{const existing=Array.isArray(context)?context:[context];if(!existing)throw new Error(\"Context is required\");const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role===\"model\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==\"user\"){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "name": "fn_8",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Add Tool Response",
+            "description": "Adding tool response to context"
+          }
+        },
+        {
+          "id": "text-6",
+          "type": "text",
+          "configuration": {},
+          "metadata": {
+            "title": "Gemini API Call",
+            "description": "Applying Gemini to do work"
+          }
+        },
+        {
+          "id": "assembleBoardInvoke",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "name": "assembleBoardInvoke",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Assemble Tool Invoke",
+            "description": "Assembling the tool invocation based on Gemini response"
+          }
+        },
+        {
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
@@ -1061,9 +1191,169 @@
           "metadata": {
             "title": "Read Progress so far"
           }
+        },
+        {
+          "id": "turnBoardsToFunctions",
+          "type": "map",
+          "configuration": {
+            "board": "#boardToFunction"
+          },
+          "metadata": {
+            "title": "Turn Boards into Functions",
+            "description": "Turning provided boards into functions"
+          }
+        },
+        {
+          "id": "fn-7",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_7 = inputs=>{for(const key in inputs){const input=inputs[key];if(\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){return{response:content}}}}const text=JSON.stringify(inputs);return{response:{parts:[{text}]}}};",
+            "name": "fn_7",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Format Tool Response",
+            "description": "Formatting tool response"
+          }
+        },
+        {
+          "id": "output-9",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "out": {
+                  "type": "string",
+                  "title": "out"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Tool Output",
+            "description": "Return tool results as output"
+          }
+        },
+        {
+          "id": "formatFunctionDeclarations",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}};",
+            "name": "formatFunctionDeclarations",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Format Function Declarations",
+            "description": "Formatting the function declarations"
+          }
+        },
+        {
+          "id": "invokeBoard",
+          "type": "invoke",
+          "configuration": {},
+          "metadata": {
+            "title": "Invoke Tool",
+            "description": "Invoking the board"
+          }
         }
       ],
-      "graphs": {}
+      "graphs": {
+        "boardToFunction": {
+          "title": "Board to functions",
+          "description": "Use this board to convert specified boards into function-calling signatures",
+          "edges": [
+            {
+              "from": "getFunctionSignature",
+              "to": "output-2",
+              "out": "function",
+              "in": "function"
+            },
+            {
+              "from": "input-1",
+              "to": "curry-3",
+              "out": "item",
+              "in": "$board"
+            },
+            {
+              "from": "input-1",
+              "to": "output-2",
+              "out": "item",
+              "in": "boardURL"
+            },
+            {
+              "from": "curry-3",
+              "to": "getFunctionSignature",
+              "out": "board",
+              "in": "json"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "output-2",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "function": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ],
+                      "title": "function"
+                    },
+                    "boardURL": {
+                      "type": "string",
+                      "title": "boardURL"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "getFunctionSignature",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "raw": true
+              }
+            },
+            {
+              "id": "input-1",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "title": "board",
+                      "behavior": [
+                        "board"
+                      ],
+                      "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "item"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "curry-3",
+              "type": "curry",
+              "configuration": {}
+            }
+          ],
+          "graphs": {}
+        }
+      }
     },
     "toolWorker": {
       "title": "Tool Worker",
@@ -1276,7 +1566,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.assert(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
             "name": "router",
             "raw": true
           },

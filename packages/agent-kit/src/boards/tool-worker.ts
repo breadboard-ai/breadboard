@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NewNodeFactory, base, board, code } from "@google-labs/breadboard";
+import { NewNodeFactory, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
 
 import {
   contextAssembler,
@@ -16,8 +15,10 @@ import { gemini } from "@google-labs/gemini-kit";
 import {
   boardInvokeAssembler,
   boardResponseExtractor,
-  functionCallOrText,
+  functionOrTextRouter,
   functionResponseFormatter,
+  boardToFunction,
+  functionDeclarationsFormatter,
 } from "../function-calling.js";
 
 export type ToolWorkerType = NewNodeFactory<
@@ -162,65 +163,6 @@ const sampleTools = JSON.stringify([
   },
 ]);
 
-type FunctionSignatureItem = {
-  function: { name: string };
-  boardURL: string;
-};
-
-const formatResults = code(({ list }) => {
-  const tools: unknown[] = [];
-  const urlMap: Record<string, string> = {};
-  (list as FunctionSignatureItem[]).forEach((item) => {
-    tools.push(item.function);
-    urlMap[item.function.name] = item.boardURL;
-  });
-  return { tools, urlMap };
-});
-
-const boardToFunction = await board(({ item }) => {
-  const url = item.isString();
-
-  const importBoard = core.curry({
-    $board: url,
-  });
-
-  // TODO: Convert to `code`.
-  const getFunctionSignature = json.jsonata({
-    $id: "getFunctionSignature",
-    expression: `
-      (
-        $adjustType := function ($type) {
-            $type = "object" or $type = "array" ? "string" : $type
-        };
-
-        {
-        "function": {
-            "name": $replace(title, /\\W/, "_"),
-            "description": description,
-            "parameters": {
-                "type": "object",
-                "properties": nodes[type="input"][0].configuration.schema.properties ~> $each(function($v, $k) {
-                { $k: {
-                    "type": $v.type ~> $adjustType,
-                    "description": $v.description
-                } }
-                }) ~> $merge
-            }
-        },
-        "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
-        }
-    )`,
-    json: importBoard.board,
-    raw: true,
-  });
-
-  return { function: getFunctionSignature.function, boardURL: url };
-}).serialize({
-  title: "Board to functions",
-  description:
-    "Use this board to convert specified boards into function-calling signatures",
-});
-
 const toolWorker = await board(({ context, instruction, tools, retry }) => {
   context
     .title("Context In")
@@ -271,7 +213,7 @@ const toolWorker = await board(({ context, instruction, tools, retry }) => {
     list: tools.isArray(),
   });
 
-  const formatFunctionDeclarations = formatResults({
+  const formatFunctionDeclarations = functionDeclarationsFormatter({
     $id: "formatFunctionDeclarations",
     $metadata: {
       title: "Format Function Declarations",
@@ -288,7 +230,7 @@ const toolWorker = await board(({ context, instruction, tools, retry }) => {
     systemInstruction: instruction,
   });
 
-  const router = functionCallOrText({
+  const router = functionOrTextRouter({
     $id: "router",
     $metadata: {
       title: "Router",

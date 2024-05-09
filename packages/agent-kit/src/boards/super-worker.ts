@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
+import {
+  NewNodeFactory,
+  NewNodeValue,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import {
   LlmContent,
   LlmContentRole,
@@ -14,6 +19,14 @@ import {
   userPartsAdder,
 } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
+import { core } from "@google-labs/core-kit";
+import {
+  boardInvokeAssembler,
+  boardToFunction,
+  functionDeclarationsFormatter,
+  functionOrTextRouter,
+  toolResponseFormatter,
+} from "../function-calling.js";
 
 export type SuperWorkerType = NewNodeFactory<
   {
@@ -59,7 +72,7 @@ const sampleTask: LlmContent = contextFromText(`
 Write an outline for a novel, following the provided specs.
 `);
 
-export default await board(({ in: context, persona, task }) => {
+const specialist = await board(({ in: context, persona, task, tools }) => {
   context
     .title("Context In")
     .description("The source material for the worker")
@@ -84,6 +97,15 @@ export default await board(({ in: context, persona, task }) => {
     .default(JSON.stringify({}))
     .behavior("llm-content", "config")
     .examples(JSON.stringify(sampleTask, null, 2));
+  tools
+    .title("Tools")
+    .description(
+      "Optional. Equip it with tools by adding them to this list. If specified, the worker will invoke them when the job calls for it."
+    )
+    .isArray()
+    .behavior("board", "config")
+    .optional()
+    .default("[]");
 
   const addTask = userPartsAdder({
     $metadata: { title: "Add Task", description: "Adding task to the prompt." },
@@ -105,13 +127,84 @@ export default await board(({ in: context, persona, task }) => {
     progress: readProgress.progress,
   });
 
+  const turnBoardsToFunctions = core.map({
+    $id: "turnBoardsToFunctions",
+    $metadata: {
+      title: "Turn Boards into Functions",
+      description: "Turning provided boards into functions",
+    },
+    board: "#boardToFunction",
+    list: tools.isArray(),
+  });
+
+  const formatFunctionDeclarations = functionDeclarationsFormatter({
+    $id: "formatFunctionDeclarations",
+    $metadata: {
+      title: "Format Function Declarations",
+      description: "Formatting the function declarations",
+    },
+    list: turnBoardsToFunctions.list,
+  });
+
   const generator = gemini.text({
     $metadata: {
       title: "Gemini API Call",
       description: "Applying Gemini to do work",
     },
     systemInstruction: persona,
+    tools: formatFunctionDeclarations.tools,
     context: addLooperTask.context,
+  });
+
+  const routeToFunctionsOrText = functionOrTextRouter({
+    $id: "router",
+    $metadata: {
+      title: "Router",
+      description: "Routing to either function call invocation or text reply",
+    },
+    context: generator.context,
+  });
+
+  const toolInvocationAssembler = boardInvokeAssembler({
+    $id: "assembleBoardInvoke",
+    $metadata: {
+      title: "Assemble Tool Invoke",
+      description: "Assembling the tool invocation based on Gemini response",
+    },
+    urlMap: formatFunctionDeclarations.urlMap,
+    context: routeToFunctionsOrText.context,
+    functionCall: routeToFunctionsOrText.functionCall,
+  });
+
+  const toolInvoker = core.invoke({
+    $id: "invokeBoard",
+    $metadata: { title: "Invoke Tool", description: "Invoking the board" },
+    ...toolInvocationAssembler,
+  });
+
+  const formatToolResponse = toolResponseFormatter({
+    $metadata: {
+      title: "Format Tool Response",
+      description: "Formatting tool response",
+    },
+    ...toolInvoker,
+  });
+
+  const addToolResponseToContext = userPartsAdder({
+    $metadata: {
+      title: "Add Tool Response",
+      description: "Adding tool response to context",
+    },
+    context: addTask.context,
+    toAdd: formatToolResponse.response,
+  });
+
+  base.output({
+    $metadata: {
+      title: "Tool Output",
+      description: "Return tool results as output",
+    },
+    out: addToolResponseToContext.context,
   });
 
   const areWeDoneChecker = checkAreWeDone({
@@ -120,7 +213,8 @@ export default await board(({ in: context, persona, task }) => {
       description: "Checking for the 'Done' marker",
     },
     context: addTask.context,
-    generated: generator.context,
+    generated: routeToFunctionsOrText.context,
+    text: routeToFunctionsOrText.text,
   });
 
   return { out: areWeDoneChecker.context.title("Context Out") };
@@ -132,3 +226,7 @@ export default await board(({ in: context, persona, task }) => {
   description:
     "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
 });
+
+specialist.graphs = { boardToFunction };
+
+export default specialist;
