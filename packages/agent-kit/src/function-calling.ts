@@ -13,7 +13,7 @@ export const functionOrTextRouter = code(({ context }) => {
   if (!context) throw new Error("Context is a required input");
   const item = context as LlmContent;
   const part = item.parts[0];
-  console.assert(
+  console.warn(
     item.parts.length === 1,
     "Only one part is expected in Gemini response"
   );
@@ -127,12 +127,15 @@ export const functionDeclarationsFormatter = code(({ list }) => {
 });
 
 export const toolResponseFormatter = code((inputs) => {
-  if ("content" in inputs) {
-    // Presume that this is an LLMContent
-    const content = inputs.content as LlmContent;
-    // Let's double check...
-    if (content.parts && Array.isArray(content.parts)) {
-      return { response: content };
+  for (const key in inputs) {
+    const input = inputs[key] as LlmContent;
+    if ("content" in input) {
+      // Presume that this is an LLMContent
+      const content = input.content as LlmContent;
+      // Let's double check...
+      if (content.parts && Array.isArray(content.parts)) {
+        return { response: content };
+      }
     }
   }
   const text = JSON.stringify(inputs);
