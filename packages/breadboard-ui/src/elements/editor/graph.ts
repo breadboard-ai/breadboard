@@ -354,6 +354,10 @@ export class Graph extends PIXI.Container {
           targetNodePort.overrideStatus = null;
         }
 
+        if (topTarget instanceof GraphNodePort) {
+          topTarget.overrideStatus = null;
+        }
+
         if (possiblePortsOut.length === 1 && possiblePortsIn.length === 1) {
           targetEdgeDescriptor.out = possiblePortsOut[0].name;
           targetEdgeDescriptor.in = possiblePortsIn[0].name;
