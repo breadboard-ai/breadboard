@@ -606,36 +606,76 @@ export class GraphNode extends PIXI.Container {
     this.#headerInPort.x = 0;
     this.#headerOutPort.x = this.#width;
 
-    let inPortStatus = this.#headerInPort.status;
+    let connectedInPorts = 0;
+    let inPortConfigured = false;
     for (const inPort of this.#inPortsData.values()) {
       if (!inPort) {
         continue;
       }
 
       if (inPort.port.status === PortStatus.Connected) {
-        inPortStatus = PortStatus.Connected;
-        break;
+        connectedInPorts++;
+      }
+
+      if (inPort.port.configured) {
+        inPortConfigured = true;
       }
     }
 
-    if (inPortStatus !== this.#headerInPort.status) {
-      this.#headerInPort.status = inPortStatus;
+    if (connectedInPorts > 0) {
+      if (this.#headerInPort.status !== PortStatus.Connected) {
+        this.#headerInPort.status = PortStatus.Connected;
+      }
+
+      if (connectedInPorts === 1) {
+        if (this.#headerInPort.configured !== inPortConfigured) {
+          this.#headerInPort.configured = inPortConfigured;
+        }
+      } else {
+        if (this.#headerInPort.configured) {
+          this.#headerInPort.configured = false;
+        }
+      }
+    } else {
+      if (this.#headerInPort.status !== PortStatus.Indeterminate) {
+        this.#headerInPort.status = PortStatus.Indeterminate;
+      }
     }
 
-    let outPortStatus = this.#headerOutPort.status;
+    let connectedOutPorts = 0;
+    let outPortConfigured = false;
     for (const outPort of this.#outPortsData.values()) {
       if (!outPort) {
         continue;
       }
 
       if (outPort.port.status === PortStatus.Connected) {
-        outPortStatus = PortStatus.Connected;
-        break;
+        connectedOutPorts++;
+      }
+
+      if (outPort.port.configured) {
+        outPortConfigured = true;
       }
     }
 
-    if (outPortStatus !== this.#headerOutPort.status) {
-      this.#headerOutPort.status = outPortStatus;
+    if (connectedOutPorts > 0) {
+      if (this.#headerOutPort.status !== PortStatus.Connected) {
+        this.#headerOutPort.status = PortStatus.Connected;
+      }
+
+      if (connectedOutPorts === 1) {
+        if (this.#headerOutPort.configured !== outPortConfigured) {
+          this.#headerOutPort.configured = outPortConfigured;
+        }
+      } else {
+        if (this.#headerOutPort.configured) {
+          this.#headerOutPort.configured = false;
+        }
+      }
+    } else {
+      if (this.#headerOutPort.status !== PortStatus.Indeterminate) {
+        this.#headerOutPort.status = PortStatus.Indeterminate;
+      }
     }
   }
 
