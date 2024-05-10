@@ -152,20 +152,16 @@ export const styles = css`
     z-index: 100;
     background: #fff;
     padding: 10px;
-    width: auto;
-    height: calc(100% - var(--top));
-    max-height: 50vh;
-    top: var(--top, 0);
-    left: var(--left, 0);
+    width: 35vw;
+    height: calc(100svh - 220px);
+    top: 142px;
+    left: calc(var(--left) - 35vw - var(--bb-grid-size-2));
     border: 1px solid #d9d9d9;
     border-radius: calc(var(--bb-grid-size) * 2);
     overflow-y: scroll;
     box-shadow:
       0px 1px 2px rgba(0, 0, 0, 0.3),
       0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-    margin-bottom: 40px;
-    margin-right: 40px;
-    max-width: 400px;
   }
 
   #details.active {

@@ -97,6 +97,7 @@ export class UI extends LitElement {
   #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
+  #controlsActivityRef: Ref<HTMLDivElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
   #resizeObserver = new ResizeObserver(() => {
@@ -311,8 +312,6 @@ export class UI extends LitElement {
           ?.value
       : false;
 
-    console.log(this.run, nodeId);
-
     /**
      * Create all the elements we need.
      */
@@ -407,6 +406,10 @@ export class UI extends LitElement {
           return;
         }
 
+        if (!this.#controlsActivityRef.value) {
+          return;
+        }
+
         const [top] = evt.composedPath();
         if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
           return;
@@ -427,7 +430,7 @@ export class UI extends LitElement {
           return;
         }
 
-        const bounds = top.getBoundingClientRect();
+        const bounds = this.#controlsActivityRef.value.getBoundingClientRect();
         const details = this.#detailsRef.value;
         details.classList.toggle("active");
 
@@ -436,7 +439,6 @@ export class UI extends LitElement {
         }
 
         details.style.setProperty("--left", `${bounds.left}px`);
-        details.style.setProperty("--top", `${bounds.top + 20}px`);
 
         const tree = details.querySelector("bb-json-tree") as JSONTree;
         tree.json = event as unknown as Record<string, string>;
@@ -507,7 +509,11 @@ export class UI extends LitElement {
           : editor}
       </section>
 
-      <section id="controls-activity" slot="slot-1">
+      <section
+        ${ref(this.#controlsActivityRef)}
+        id="controls-activity"
+        slot="slot-1"
+      >
         <div id="controls-activity-content">${sidePanel}</div>
 
         <div id="controls">
