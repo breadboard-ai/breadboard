@@ -357,8 +357,8 @@
           "type": "object",
           "properties": {
             "out": {
-              "type": "string",
-              "title": "out"
+              "title": "Context Out",
+              "type": "string"
             }
           }
         }

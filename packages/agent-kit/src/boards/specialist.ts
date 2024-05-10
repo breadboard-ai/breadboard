@@ -204,7 +204,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Tool Output",
       description: "Return tool results as output",
     },
-    out: addToolResponseToContext.context,
+    out: addToolResponseToContext.context.title("Context Out"),
   });
 
   const areWeDoneChecker = checkAreWeDone({
