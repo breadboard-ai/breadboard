@@ -38,14 +38,14 @@ export const fun = (
 };
 
 export const userPartsAdder = code(({ context, toAdd }) => {
-  const existing = (
-    Array.isArray(context) ? context : [context]
-  ) as LlmContent[];
-  if (!existing) throw new Error("Context is required");
+  if (!context) throw new Error("Context is required");
+  const existing = (Array.isArray(context) ? context : [context]) as Context[];
   const incoming = structuredClone(toAdd) as LlmContent;
   if (!incoming.parts) {
     const containsUserRole =
-      existing.filter((item) => item.role === "model").length > 0;
+      existing.filter(
+        (item) => item.role !== "model" && item.role !== "$metadata"
+      ).length > 0;
     if (!containsUserRole) {
       return {
         context: [
@@ -54,7 +54,7 @@ export const userPartsAdder = code(({ context, toAdd }) => {
         ],
       };
     }
-    return { context };
+    return { context: existing };
   }
   if (!incoming.role) {
     incoming.role = "user";
@@ -63,10 +63,10 @@ export const userPartsAdder = code(({ context, toAdd }) => {
   if (!last) {
     return { context: [incoming] };
   }
-  if (last.role !== "user") {
+  if (last.role !== incoming.role) {
     return { context: [...existing, incoming] };
   } else {
-    const result = structuredClone(existing);
+    const result = structuredClone(existing) as LlmContent[];
     const index = result.length - 1;
     result[index].parts.push(...incoming.parts);
     return { context: result };

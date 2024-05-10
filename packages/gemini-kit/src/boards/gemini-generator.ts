@@ -317,6 +317,10 @@ const bodyBuilder = code(
         throw new Error("Either `text` or `context` parameter is required");
       }
     } else {
+      // Replace the "tool" role with "user".
+      contents = contents.map((item) =>
+        item.role === "tool" ? ((item.role = "user"), item) : item
+      );
       const last = contents[contents.length - 1] as Content;
       if (last.role === "model") {
         contents.push(turn);
