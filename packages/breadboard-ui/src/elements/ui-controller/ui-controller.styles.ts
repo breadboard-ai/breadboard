@@ -164,6 +164,13 @@ export const styles = css`
       0px 1px 3px 1px rgba(0, 0, 0, 0.15);
   }
 
+  #details.portrait {
+    top: 60px;
+    width: 50vw;
+    left: var(--bb-grid-size-2);
+    height: calc(var(--bottom) - 80px);
+  }
+
   #details.active {
     display: block;
   }

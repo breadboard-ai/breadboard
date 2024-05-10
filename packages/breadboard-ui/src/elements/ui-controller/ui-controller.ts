@@ -433,12 +433,14 @@ export class UI extends LitElement {
         const bounds = this.#controlsActivityRef.value.getBoundingClientRect();
         const details = this.#detailsRef.value;
         details.classList.toggle("active");
+        details.classList.toggle("portrait", this.isPortrait);
 
         if (!details.classList.contains("active")) {
           return;
         }
 
         details.style.setProperty("--left", `${bounds.left}px`);
+        details.style.setProperty("--bottom", `${bounds.top}px`);
 
         const tree = details.querySelector("bb-json-tree") as JSONTree;
         tree.json = event as unknown as Record<string, string>;
