@@ -816,17 +816,17 @@ export class Main extends LitElement {
           @click=${this.#getBoardJson}
           >Export</a
         >
-        <button
+        <!-- <button
           class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
           title="Toggle Board Preview"
           ?disabled=${this.graph === null}
           @click=${() => {
-            this.showPreviewOverlay = !this.showPreviewOverlay;
-          }}
+          this.showPreviewOverlay = !this.showPreviewOverlay;
+        }}
         >
           Preview
-        </button>
+        </button> -->
         <button
           class=${classMap({ active: this.showSettingsOverlay })}
           id="toggle-settings"
