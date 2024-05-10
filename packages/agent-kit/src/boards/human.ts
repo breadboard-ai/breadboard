@@ -12,8 +12,7 @@ import {
   NewNodeFactory,
   NewNodeValue,
 } from "@google-labs/breadboard";
-import { Context } from "vm";
-import { skipIfDone } from "../context.js";
+import { LlmContent, Context, TextPart, skipIfDone } from "../context.js";
 
 const voteRequestContent = {
   adCampaign: {
@@ -117,30 +116,27 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   }
 );
 
-type Part = { text: string };
 type WithFeedback = Record<string, unknown> & { voteRequest?: string };
-type ContextItem = { parts: Part | Part[] };
 
 const maybeOutput = code(({ context }) => {
   const action: Action = { action: "none" };
   if (Array.isArray(context) && context.length > 0) {
-    let lastItem = context[context.length - 1];
+    let lastItem = context[context.length - 1] as Context;
     if (lastItem.role === "$metadata") {
       lastItem = context[context.length - 2];
     }
-    if (lastItem && lastItem.role === "model") {
-      const parts = lastItem.parts;
-      const text = Array.isArray(parts)
-        ? (parts as Part[]).map((item) => item.text).join("/n")
-        : (parts as Part).text;
-      const output = text;
+    if (lastItem && lastItem.role !== "user") {
+      const output = lastItem;
       try {
-        const data = JSON.parse(output) as WithFeedback;
-        if (data.voteRequest) {
-          const feedback = structuredClone(data);
-          delete feedback["voteRequest"];
-          const action: Action = { action: "vote", title: data.voteRequest };
-          return { feedback, action, context };
+        if ("parts" in output && "text" in output.parts[0]) {
+          const json = output.parts[0]?.text;
+          const data = JSON.parse(json) as WithFeedback;
+          if (data.voteRequest) {
+            const feedback = structuredClone(data);
+            delete feedback["voteRequest"];
+            const action: Action = { action: "vote", title: data.voteRequest };
+            return { feedback, action, context };
+          }
         }
       } catch {
         // it's okay to fail here.
@@ -161,12 +157,12 @@ const actionRecognizer = code(({ text, context, action }) => {
       return { text, again: context };
     }
     // Clip out the `votingRequest`.
-    const c = structuredClone(context) as ContextItem[];
+    const c = structuredClone(context) as LlmContent[];
     const lastItem = c[c.length - 1];
     const parts = lastItem.parts;
     const t = Array.isArray(parts)
-      ? (parts as Part[]).map((item) => item.text).join("/n")
-      : (parts as Part).text;
+      ? (parts as TextPart[]).map((item) => item.text).join("/n")
+      : (parts as TextPart).text;
     const output = t;
     const data = JSON.parse(output) as WithFeedback;
     delete data["voteRequest"];
@@ -276,7 +272,8 @@ export default await board(({ context, title, description }) => {
       behavior: ["bubble"],
       properties: {
         output: {
-          type: "string",
+          type: "object",
+          behavior: ["llm-content"],
           title: "Output",
           description: "The output to display",
         },
