@@ -400,3 +400,84 @@ To learn more about Breadboard, here are a couple of resources:
   - [ReAct with slot](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/react-with-slot.md)
   - [Example of calling "ReAct with slot"](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/call-react-with-slot.md)
   - [Semantic retrieval](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/find-file-by-similarity.md)
+
+# Breadboard Web
+
+Breadboard web is a package that can run Breadboard applications on a web browser.
+
+There are two ways to run a board using Breadboard Web:
+
+1. Using Breadboard Web hosted by Google.
+
+We have already demonstrated how to serialize a board into a graph representation. We can store this graph representation as a json file. 
+
+```Typescript
+const serialized = await board(() => {
+	// board code
+    return { output }
+}).serialize({
+    title: "Serialize Example",
+    description: "Serialize Example"
+});
+
+// save as JSON file
+fs.writeFileSync(
+    path.join(".", "board.json"),
+    JSON.stringify(serialized, null, "\t")
+);
+
+```
+
+This can then be stored as file on the internet, in this example we are using a github repository. The file can then be provided as the board in the request parameter and loaded into Breadboard Web (https://breadboard-ai.web.app):
+
+(TODO add a breadboard web link using a simple board)
+
+https://breadboard-ai.web.app/?mode=build&board=https%3A%2F%2Fraw.githubusercontent.com%2FExaDev%2Fbreadboard-examples%2FHugging-Face-Clean-History%2Fsrc%2Fexamples%2Ffill-mask%2Fboard.json
+
+2. Running Breadboard Web locally.
+
+We can also run our own instance of Breadboard Web. This requires us to work in the Breadboard Monorepo. We can add our board into `packages/breadboard-web/src/boards`.
+
+Instead of saving the file as a JSON, we can export the graph representation of a board. We can then run `npm run dev` while in the boards directory. This deploys an instance of Breadboard Web accessible on http://localhost:5173/. Breadboard Web will automatically pick up this graph and allow the board to be selectable on the UI.
+
+```Typescript
+
+export default board(() => {
+	// board code
+    return { output }
+}).serialize({
+    title: "Locally Running Breadboard Web",
+    description: "Locally running breadboard web"
+});
+```
+
+Running Breadboard Web locally also features hot reloading which is handy if we are constantly making changes to our board. Local instances of Breadboard Web can also load boards via json file and the board request parameter. Option 1 is great if you would like to show off your boards to other people!
+
+## Using breadboard web
+Now we have described how to run a board on Breadboard Web, let's discuss how to use it.
+
+When looking at the board on Breadboard Web we can see all the nodes this board is composed of.
+(Show screenshot of the breadboard web ui)
+
+Clicking `run` on the UI will prompt the user to provide inputs to the board. One of the great features of Breadboard Web is that it is interactive, by clicking on the input node we can see more information about these inputs. As we can see, we have provided information about what the inputs are for. This is metadata that was attatched to the board by using a board schema. This is also where schema defaults come in handy. We can use these defaults if the user does not want to provide their own, as well as providing guidance on what kind of inputs are accepted. We'll discuss schemas in greater detail in the next section.
+
+Once we have provided inputs and run the board, let's see what happens! 
+(add screenshot of board output)
+
+After the board has finished executing we can see its output. And just like that, we were able to quickly create a board and run it in a web environment.
+# Breadboard Board Schema
+
+As we saw in the previous section, we can add metadata to boards which assist in their usage. One one way doing this is through the use of schemas. Schemas can be used to define and describe inputs as well as providing their default values. 
+
+```Typescript
+
+const numberSchema = {
+    type: "number",
+    title: "myNumber",
+    default: "1",
+    description: "The number I want to print out"
+};
+
+TODO add board + code node which makes use of schema
+
+```
