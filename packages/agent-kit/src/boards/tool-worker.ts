@@ -325,6 +325,9 @@ const toolWorker = await board(({ context, instruction, tools, retry }) => {
   title: "Tool Worker",
   description: "A worker that can use tools to accomplish tasks.",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });
 
 toolWorker.graphs = {

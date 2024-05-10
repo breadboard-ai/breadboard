@@ -42,6 +42,8 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     this.invoke = this.invoke.bind(this);
     const { title, description, metadata } = this.#graph;
     this.metadata = { title, description };
+    if (metadata?.deprecated)
+      this.metadata.deprecated = metadata.deprecated as boolean;
     if (metadata?.icon) this.metadata.icon = metadata.icon;
   }
 
