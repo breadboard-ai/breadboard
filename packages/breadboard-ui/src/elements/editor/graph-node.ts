@@ -18,7 +18,7 @@ function getGlobalColor(name: string, defaultValue = "#333333") {
   return parseInt(value || defaultValue, 16);
 }
 
-const borderColor = getGlobalColor("--bb-neutral-300");
+const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 
 const defaultNodeColor = getGlobalColor("--bb-nodes-100");
@@ -723,21 +723,7 @@ export class GraphNode extends PIXI.Container {
       this.addChildAt(this.#background, 0);
     }
 
-    if (this.selected) {
-      const borderSize = 3;
-      this.#background.beginPath();
-      this.#background.roundRect(
-        -borderSize,
-        -borderSize,
-        this.#width + 2 * borderSize,
-        this.#height + 2 * borderSize,
-        this.#borderRadius + borderSize
-      );
-      this.#background.closePath();
-      this.#background.fill({ color: this.#selectedColor });
-    }
-
-    const borderSize = 1;
+    const borderSize = this.selected ? 2 : 1;
     this.#background.beginPath();
     this.#background.roundRect(
       -borderSize,
@@ -747,7 +733,9 @@ export class GraphNode extends PIXI.Container {
       this.#borderRadius + borderSize
     );
     this.#background.closePath();
-    this.#background.fill({ color: this.#borderColor });
+    this.#background.fill({
+      color: this.selected ? this.#selectedColor : this.#borderColor,
+    });
 
     this.#background.beginPath();
     this.#background.roundRect(

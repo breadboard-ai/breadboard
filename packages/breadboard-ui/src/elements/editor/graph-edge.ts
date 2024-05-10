@@ -15,7 +15,7 @@ function getGlobalColor(name: string, defaultValue = "#333333") {
   return parseInt(value || defaultValue, 16);
 }
 
-const edgeColorSelected = getGlobalColor("--bb-nodes-600");
+const edgeColorSelected = getGlobalColor("--bb-output-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
 const edgeColorConstant = getGlobalColor("--bb-output-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
