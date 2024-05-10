@@ -69,7 +69,7 @@ const echo = board<{
 	}, { 
 		output // Output port for result
 	}) => {
-	return output({ hear: say }) // Echo the input string as 'hear' property
+	return output({ hear: say }); // Echo the input string as 'hear' property
 });
 ```
 
@@ -204,8 +204,8 @@ Boards can be serialized into Breadboard Graph Language (BGL). BGL is the common
 
 #### Serialization
 ```typescript
-const echo = await board<{ say: string; }>(({ say }, { output }) => {
-	return output({ hear: say })
+export default await board(({ say }, { output }) => {
+	return output({ hear: say });
 }).serialize({
     url: ".",
     title: "Echo board",
@@ -303,7 +303,7 @@ This board simply takes a `name` property and inserts the value into a template 
 Boards are programs which can be executed by Breadboard runtimes, and they can have multiple input and output nodes which can visited more than once.
 In most real-world scenarios, boards will need to run continuously, sometimes stopping to receive inputs or provide outputs, but a simple board might just run once and return a single output.
 
-We will use this simple board for the following examples.
+For the following examples, we will use a simple board which just takes a property called `say` from the input object and passes it, as a property called `hear`, to the output node.
 ```typescript
 import { base, board } from "@google-labs/breadboard";
 
@@ -311,7 +311,6 @@ export default board(({ say }) => {
     return say.as("hear").to(base.output());
 });
 ```
-This board simply takes a property called `say` from the input object and passes it, as a property called `hear`, to an output node.
 
 `board` instances can be invoked, which initiates a single run (equivalent to the `BoardRunner` using `runOnce(...)`).
 ```typescript
@@ -319,18 +318,7 @@ import myBoard from "./board/board.js";
 
 console.log(await myBoard({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
-Whereas `BoardRunner` can create runnable boards from serialized graphs: they can run boards continuously or initiate a single run. 
-
-We can serialize our board and use `fromGraphDescriptor` to get the runner.
-```typescript
-import myBoard from "./board/board.js";
-import { BoardRunner } from "@google-labs/breadboard";
-
-const serialized = await myBoard.serialize(); // serialize the board invocation result into a graph
-const runner = await BoardRunner.fromGraphDescriptor(serialized); // Get runner from graph
-```
-
-Then, `BoardRunner` has two ways of running a board:
+Whereas `BoardRunner` can create runnable boards from serialized graphs: it can run boards continuously or initiate a single run. `BoardRunner` has two ways of running a board:
 - `runOnce(...)`: A simplified version of `run` that runs the board until the board provides an output, and returns that output.
 	```typescript
 	console.log(await runner.runOnce({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
@@ -368,7 +356,29 @@ else if (stop.type === "output") {
 
 If we were to use `runOnce`, or invoke the board, then we would only receive one output before the board stops running.
 
-### Using a board within a board [TBD]
+### Using a board within a board
+Using the [Breadboard Core Kit](https://www.npmjs.com/package/@google-labs/core-kit), boards can be invoked with `core` by passing its graph to the `invoke` function. **Important:** `invoke` runs as `runOnce`, so only the first output of an invoked board will be returned.
+
+```typescript
+import { asRuntimeKit, board, BoardRunner } from "@google-labs/breadboard";
+import { core, Core } from "@google-labs/core-kit";
+import JoinerBoard from "./board/index.js";
+
+const myBoard = await board((inputs, { output }) => {
+	const invokedBoard = core.invoke({ graph: JoinerBoard });
+	
+	inputs.to(invokedBoard);
+
+	return invokedBoard.to(output());
+}).serialize();
+
+const runner = await BoardRunner.fromGraphDescriptor(myBoard);
+const result = await runner.runOnce(
+	{ greeting: "Hello", subject: "World" },
+	{ kits: [asRuntimeKit(Core)] }
+);
+console.log(result); // { joined: 'Hello World' }
+```
 ### Slots [TBD]
 ### Adding metadata (titles, descriptions, schemas, etc,...) [TBD]
 
