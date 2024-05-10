@@ -256,6 +256,8 @@ export class UI extends LitElement {
 
   render() {
     const currentNode = (): NodeIdentifier | null => {
+      if (this.status === STATUS.STOPPED) return null;
+
       if (!this.run) return null;
 
       const currentNodeEvent = this.run.stack()[0];
@@ -308,6 +310,8 @@ export class UI extends LitElement {
       ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Node Shortcuts")
           ?.value
       : false;
+
+    console.log(this.run, nodeId);
 
     /**
      * Create all the elements we need.
