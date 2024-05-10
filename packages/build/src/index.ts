@@ -6,7 +6,7 @@
 
 import type { Convergence } from "./internal/board/converge.js";
 import type { Input, InputWithDefault } from "./internal/board/input.js";
-import type { Placeholder } from "./internal/board/placeholder.js";
+import type { Loopback } from "./internal/board/loopback.js";
 import type { OutputPortReference } from "./internal/common/port.js";
 import type { JsonSerializable } from "./internal/type-system/type.js";
 
@@ -15,7 +15,7 @@ export { constant } from "./internal/board/constant.js";
 export { converge } from "./internal/board/converge.js";
 export { input } from "./internal/board/input.js";
 export { output } from "./internal/board/output.js";
-export { placeholder } from "./internal/board/placeholder.js";
+export { loopback } from "./internal/board/loopback.js";
 export { serialize } from "./internal/board/serialize.js";
 export { unsafeCast } from "./internal/board/unsafe-cast.js";
 export type {
@@ -49,5 +49,5 @@ export type Value<T extends JsonSerializable> =
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Placeholder<T>
+  | Loopback<T>
   | Convergence<T>;

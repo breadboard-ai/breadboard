@@ -14,7 +14,7 @@ import type {
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
 import type { Input, InputWithDefault } from "../board/input.js";
-import type { Placeholder } from "../board/placeholder.js";
+import type { Loopback } from "../board/loopback.js";
 import type { StrictNodeHandler } from "../common/compatibility.js";
 import type { OutputPortReference } from "../common/port.js";
 import type { Expand } from "../common/type-util.js";
@@ -468,7 +468,7 @@ type InstantiateArg<T extends JsonSerializable> =
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Placeholder<T>
+  | Loopback<T>
   | Convergence<T>;
 
 function mergeStaticsAndUnsafeUserSchema(

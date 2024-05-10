@@ -7,7 +7,7 @@
 import type { Convergence } from "../board/converge.js";
 import type { GenericSpecialInput } from "../board/input.js";
 import type { Output } from "../board/output.js";
-import type { Placeholder } from "../board/placeholder.js";
+import type { Loopback } from "../board/loopback.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type { DefaultValue, OutputPortGetter } from "./port.js";
 
@@ -37,7 +37,7 @@ export interface SerializableInputPort {
     | JsonSerializable
     | SerializableOutputPortReference
     | GenericSpecialInput
-    | Placeholder<JsonSerializable>
+    | Loopback<JsonSerializable>
     | Convergence<JsonSerializable>
     | typeof DefaultValue;
 }
