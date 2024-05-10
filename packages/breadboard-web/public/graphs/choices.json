@@ -65,7 +65,7 @@
           "type": "object",
           "properties": {
             "text": {
-              "title": "Context Out",
+              "title": "Context out",
               "type": "string"
             }
           }

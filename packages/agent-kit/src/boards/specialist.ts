@@ -74,7 +74,7 @@ Write an outline for a novel, following the provided specs.
 
 const specialist = await board(({ in: context, persona, task, tools }) => {
   context
-    .title("Context In")
+    .title("Context in")
     .description("The source material for the worker")
     .isArray()
     .behavior("llm-content")
@@ -204,7 +204,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Tool Output",
       description: "Return tool results as output",
     },
-    out: addToolResponseToContext.context.title("Context Out"),
+    out: addToolResponseToContext.context.title("Context out"),
   });
 
   const areWeDoneChecker = checkAreWeDone({
@@ -217,7 +217,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     text: routeToFunctionsOrText.text,
   });
 
-  return { out: areWeDoneChecker.context.title("Context Out") };
+  return { out: areWeDoneChecker.context.title("Context out") };
 }).serialize({
   title: "Specialist",
   metadata: {

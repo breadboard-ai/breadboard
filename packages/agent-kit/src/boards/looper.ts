@@ -237,7 +237,7 @@ const planReader = code(planReaderFunction);
 
 export default await board(({ context, task }) => {
   context
-    .title("Context In")
+    .title("Context in")
     .isArray()
     .behavior("llm-content")
     .optional()
@@ -302,7 +302,7 @@ export default await board(({ context, task }) => {
     done: cleaner.context
       .isArray()
       .behavior("llm-content")
-      .title("Context Out"),
+      .title("Context out"),
   });
 
   return {

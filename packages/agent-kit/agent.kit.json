@@ -137,7 +137,7 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Context Out"
+                  "title": "Context out"
                 },
                 "text": {
                   "title": "Text",
@@ -257,7 +257,7 @@
               "type": "object",
               "properties": {
                 "context": {
-                  "title": "Context In",
+                  "title": "Context in",
                   "description": "Incoming conversation context",
                   "type": "array",
                   "items": {
@@ -364,7 +364,7 @@
               "type": "object",
               "properties": {
                 "context": {
-                  "title": "Context Out",
+                  "title": "Context out",
                   "type": "string"
                 }
               }
@@ -1030,7 +1030,7 @@
               "type": "object",
               "properties": {
                 "out": {
-                  "title": "Context Out",
+                  "title": "Context out",
                   "type": "string"
                 }
               }
@@ -1084,7 +1084,7 @@
               "type": "object",
               "properties": {
                 "in": {
-                  "title": "Context In",
+                  "title": "Context in",
                   "description": "The source material for the worker",
                   "type": "array",
                   "items": {
@@ -1236,7 +1236,7 @@
               "type": "object",
               "properties": {
                 "out": {
-                  "title": "Context Out",
+                  "title": "Context out",
                   "type": "string"
                 }
               }
@@ -2164,7 +2164,7 @@
               "type": "object",
               "properties": {
                 "context": {
-                  "title": "Context In",
+                  "title": "Context in",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -2304,7 +2304,7 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Context Out"
+                  "title": "Context out"
                 }
               }
             }

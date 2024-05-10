@@ -68,7 +68,7 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context Out",
+              "title": "Context out",
               "type": "string"
             }
           }
