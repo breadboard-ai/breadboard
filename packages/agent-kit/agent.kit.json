@@ -1371,6 +1371,9 @@
       "title": "Tool Worker",
       "description": "A worker that can use tools to accomplish tasks.",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "fn-3",
