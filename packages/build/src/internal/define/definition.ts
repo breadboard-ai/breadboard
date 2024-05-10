@@ -50,6 +50,7 @@ import { unsafeType } from "../type-system/unsafe.js";
 import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
+import type { Convergence } from "../board/converge.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -467,7 +468,8 @@ type InstantiateArg<T extends JsonSerializable> =
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Placeholder<T>;
+  | Placeholder<T>
+  | Convergence<T>;
 
 function mergeStaticsAndUnsafeUserSchema(
   statics: JSONSchema4,

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Convergence } from "./internal/board/converge.js";
 import type { Input, InputWithDefault } from "./internal/board/input.js";
 import type { Placeholder } from "./internal/board/placeholder.js";
 import type { OutputPortReference } from "./internal/common/port.js";
@@ -11,6 +12,7 @@ import type { JsonSerializable } from "./internal/type-system/type.js";
 
 export { board } from "./internal/board/board.js";
 export { constant } from "./internal/board/constant.js";
+export { converge } from "./internal/board/converge.js";
 export { input } from "./internal/board/input.js";
 export { output } from "./internal/board/output.js";
 export { placeholder } from "./internal/board/placeholder.js";
@@ -47,4 +49,5 @@ export type Value<T extends JsonSerializable> =
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Placeholder<T>;
+  | Placeholder<T>
+  | Convergence<T>;
