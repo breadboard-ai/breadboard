@@ -9,7 +9,6 @@ import {
   AllowedLLMContentTypes,
   LLMContent,
   LLMInlineData,
-  LLMText,
 } from "../../../types/types.js";
 import { Schema } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
@@ -80,30 +79,26 @@ export class LLMInput extends LitElement {
     }
 
     header {
-      display: flex;
-      align-items: center;
-      height: var(--bb-grid-size-5);
-      margin-bottom: var(--bb-grid-size-2);
+      display: block;
     }
 
     #description {
-      display: inline-block;
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      margin-bottom: var(--bb-grid-size-2);
     }
 
     #controls {
-      flex: 1 0 auto;
+      color: var(--bb-neutral-700);
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      padding-left: var(--bb-grid-size-4);
+      padding: var(--bb-grid-size);
+      background: var(--bb-neutral-100);
+      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+      width: fit-content;
+      height: var(--bb-grid-size-7);
     }
 
-    #controls > span {
-      margin-right: var(--bb-grid-size-2);
+    #controls > #insert {
+      margin: 0 var(--bb-grid-size-2);
     }
 
     #controls #add-text,
@@ -115,7 +110,7 @@ export class LLMInput extends LitElement {
       width: 20px;
       height: 20px;
       opacity: 0.5;
-      margin-right: var(--bb-grid-size-2);
+      margin: 0 var(--bb-grid-size);
       border: none;
       border-radius: 0;
       font-size: 0;
@@ -173,7 +168,7 @@ export class LLMInput extends LitElement {
       height: 30vh;
       min-height: var(--bb-grid-size-6);
       border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size);
+      border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0;
       background: #fff;
     }
@@ -183,9 +178,8 @@ export class LLMInput extends LitElement {
     }
 
     .content {
-      display: grid;
-      grid-template-columns: var(--bb-grid-size-12) auto;
-      margin-bottom: var(--bb-grid-size-4);
+      display: block;
+      margin-bottom: var(--bb-grid-size-2);
     }
 
     .part {
@@ -258,20 +252,26 @@ export class LLMInput extends LitElement {
       cursor: auto;
     }
 
-    .prefix {
-      border-right: 2px solid var(--bb-output-200);
-      display: flex;
-      justify-content: center;
-      font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-300);
-    }
-
     .value {
-      margin: 0 var(--bb-grid-size-3);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 0 var(--bb-grid-size-3);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
+      margin-left: var(--bb-grid-size-3);
+    }
+
+    .value::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      border-radius: var(--bb-grid-size-3);
+      background: var(--bb-output-100);
+      width: 3px;
     }
 
     .value textarea {
@@ -597,23 +597,6 @@ export class LLMInput extends LitElement {
     this.requestUpdate();
   }
 
-  #collectElementNodes(part: LLMText, target: EventTarget | null): string {
-    if (!(target instanceof HTMLSpanElement)) {
-      return "";
-    }
-
-    let str = "";
-    for (const node of target.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        str += node.textContent || "";
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        str += "\n";
-      }
-    }
-
-    return str;
-  }
-
   #createAcceptList() {
     const accept = [];
     if (this.allow.audioFile) {
@@ -720,35 +703,39 @@ export class LLMInput extends LitElement {
 
       case "image-webcam": {
         return cache(
-          html`<bb-webcam-input id="part-${idx}"></bb-webcam-input
-            ><button
-              class="confirm"
-              @click=${(evt: InputEvent) => {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
+          html`<bb-webcam-input id="part-${idx}"></bb-webcam-input>
+            <div>
+              <button
+                class="confirm"
+                @click=${(evt: InputEvent) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                this.#processInputPart(idx);
-              }}
-            >
-              Confirm
-            </button>`
+                  this.#processInputPart(idx);
+                }}
+              >
+                Confirm
+              </button>
+            </div>`
         );
       }
 
       case "image-drawable": {
         return cache(
-          html`<bb-drawable-input id="part-${idx}"></bb-drawable-input
-            ><button
-              class="confirm"
-              @click=${(evt: InputEvent) => {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
+          html`<bb-drawable-input id="part-${idx}"></bb-drawable-input>
+            <div>
+              <button
+                class="confirm"
+                @click=${(evt: InputEvent) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                this.#processInputPart(idx);
-              }}
-            >
-              Confirm
-            </button>`
+                  this.#processInputPart(idx);
+                }}
+              >
+                Confirm
+              </button>
+            </div>`
         );
       }
 
@@ -772,55 +759,57 @@ export class LLMInput extends LitElement {
       this.allow.textFile;
 
     return html` <header>
-        <span id="description">${this.description}</span>
-        <span id="controls">
-          <span>Insert:</span>
-          ${this.allow.textInline
-            ? html`<button
-                title="Add text field"
-                id="add-text"
-                @click=${this.#addTextPart}
-              >
-                Text
-              </button>`
-            : nothing}
-          ${this.allow.imageWebcam
-            ? html`<button
-                title="Add image from webcam"
-                id="add-image-webcam"
-                @click=${() => this.#addPart("image-webcam")}
-              >
-                Image (Webcam)
-              </button>`
-            : nothing}
-          ${this.allow.imageDrawable
-            ? html`<button
-                title="Add image from drawable"
-                id="add-image-drawable"
-                @click=${() => this.#addPart("image-drawable")}
-              >
-                Image (Drawable)
-              </button>`
-            : nothing}
-          ${this.allow.audioMicrophone
-            ? html`<button
-                title="Add audio from microphone"
-                id="add-audio-microphone"
-                @click=${() => this.#addPart("audio-microphone")}
-              >
-                Audio
-              </button>`
-            : nothing}
-          ${allowFile
-            ? html`<button
-                title="Add file"
-                id="add-file"
-                @click=${() => this.#addPart("file")}
-              >
-                File
-              </button>`
-            : nothing}
-        </span>
+        <div id="description">${this.description}</div>
+        <div id="controls-container">
+          <div id="controls">
+            <span id="insert">Insert:</span>
+            ${this.allow.textInline
+              ? html`<button
+                  title="Add text field"
+                  id="add-text"
+                  @click=${this.#addTextPart}
+                >
+                  Text
+                </button>`
+              : nothing}
+            ${this.allow.imageWebcam
+              ? html`<button
+                  title="Add image from webcam"
+                  id="add-image-webcam"
+                  @click=${() => this.#addPart("image-webcam")}
+                >
+                  Image (Webcam)
+                </button>`
+              : nothing}
+            ${this.allow.imageDrawable
+              ? html`<button
+                  title="Add image from drawable"
+                  id="add-image-drawable"
+                  @click=${() => this.#addPart("image-drawable")}
+                >
+                  Image (Drawable)
+                </button>`
+              : nothing}
+            ${this.allow.audioMicrophone
+              ? html`<button
+                  title="Add audio from microphone"
+                  id="add-audio-microphone"
+                  @click=${() => this.#addPart("audio-microphone")}
+                >
+                  Audio
+                </button>`
+              : nothing}
+            ${allowFile
+              ? html`<button
+                  title="Add file"
+                  id="add-file"
+                  @click=${() => this.#addPart("file")}
+                >
+                  File
+                </button>`
+              : nothing}
+          </div>
+        </div>
       </header>
       <div id="container" ${ref(this.#containerRef)}>
         ${this.value && this.value.parts.length
@@ -828,11 +817,9 @@ export class LLMInput extends LitElement {
               const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
               let partClass = "";
-              let prefix = "";
               let value: HTMLTemplateResult | symbol = nothing;
               if (isText(part)) {
                 partClass = "text";
-                prefix = "txt";
                 value = html` <textarea
                   @input=${(evt: Event) => {
                     if (
@@ -849,40 +836,13 @@ export class LLMInput extends LitElement {
                 ></textarea>`;
               } else if (isFunctionCall(part)) {
                 partClass = "function-call";
-                prefix = "fn";
                 value = html`${part.functionCall.name}`;
               } else if (isFunctionResponse(part)) {
                 partClass = "function-response";
-                prefix = "fn";
                 value = html`${part.functionResponse.name}
                 ${JSON.stringify(part.functionResponse.response, null, 2)}`;
               } else if (isInlineData(part)) {
                 partClass = "inline-data";
-                prefix = part.inlineData.mimeType
-                  .replace(/^[^\\/]+\//, "")
-                  // Remove all vowels except the first.
-                  .replace(/(?<!^)[aeiou]/gi, "");
-
-                switch (part.inlineData.mimeType) {
-                  case "text/plain":
-                    prefix = "txt";
-                    break;
-                  case "file":
-                    prefix = "";
-                    break;
-                  case "image-webcam":
-                    prefix = "img";
-                    break;
-                  case "image-drawable":
-                    prefix = "drwbl";
-                    break;
-                  case "audio-microphone":
-                    prefix = "mic";
-                    break;
-                  case "video-webcam":
-                    prefix = "vid";
-                    break;
-                }
 
                 value = html`${until(
                   this.#getPartDataAsHTML(idx, part, isLastPart),
@@ -894,7 +854,6 @@ export class LLMInput extends LitElement {
                 class=${classMap({ part: true, [partClass]: true })}
               >
                 <div class="content">
-                  <span class="prefix">${prefix}</span>
                   <span class="value">${value}</span>
                 </div>
                 <div class="part-controls">

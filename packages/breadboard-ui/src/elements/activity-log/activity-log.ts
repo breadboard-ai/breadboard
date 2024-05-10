@@ -306,11 +306,9 @@ export class ActivityLog extends LitElement {
                   ${llmContent.parts.length
                     ? map(llmContent.parts, (part, idx) => {
                         let value: TemplateResult | symbol = nothing;
-                        let prefix = "";
 
                         if (isText(part)) {
                           value = html`${markdown(part.text)}`;
-                          prefix = "txt";
                         } else if (isInlineData(part)) {
                           const key = `${event.id}-${idx}`;
                           let partDataURL: Promise<string> =
@@ -362,10 +360,6 @@ export class ActivityLog extends LitElement {
                           });
 
                           value = html`${until(tmpl)}`;
-                          prefix = part.inlineData.mimeType
-                            .replace(/^[^\\/]+\//, "")
-                            // Remove all vowels except the first.
-                            .replace(/(?<!^)[aeiou]/gi, "");
                         } else if (
                           isFunctionCall(part) ||
                           isFunctionResponse(part)
@@ -373,13 +367,11 @@ export class ActivityLog extends LitElement {
                           value = html` <bb-json-tree
                             .json=${part}
                           ></bb-json-tree>`;
-                          prefix = "fn";
                         } else {
                           value = html`Unrecognized part`;
                         }
 
                         return html`<div class="content">
-                          <span class="prefix">${prefix}</span>
                           <span class="value">${value}</span>
                         </div>`;
                       })
