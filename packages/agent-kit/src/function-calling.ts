@@ -134,10 +134,11 @@ export const toolResponseFormatter = code((inputs) => {
       const content = input.content as LlmContent;
       // Let's double check...
       if (content.parts && Array.isArray(content.parts)) {
+        content.role = "tool";
         return { response: content };
       }
     }
   }
   const text = JSON.stringify(inputs);
-  return { response: { parts: [{ text }] } satisfies LlmContent };
+  return { response: { parts: [{ text }], role: "tool" } satisfies LlmContent };
 });
