@@ -320,7 +320,10 @@ export class ActivityLog extends LitElement {
                             partDataURL = Promise.resolve(
                               this.#partDataURLs.get(key)!
                             );
-                          } else if (part.inlineData.data !== "") {
+                          } else if (
+                            part.inlineData.data !== "" &&
+                            !part.inlineData.mimeType.startsWith("text")
+                          ) {
                             const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
                             partDataURL = fetch(dataURL)
                               .then((response) => response.blob())
@@ -347,6 +350,13 @@ export class ActivityLog extends LitElement {
                             if (part.inlineData.mimeType.startsWith("video")) {
                               return cache(
                                 html`<video src="${url}" controls />`
+                              );
+                            }
+
+                            if (part.inlineData.mimeType.startsWith("text")) {
+                              return cache(
+                                // prettier-ignore
+                                html`<div class="plain-text">${atob(part.inlineData.data)}</div>`
                               );
                             }
                           });
