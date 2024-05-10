@@ -100,9 +100,9 @@
           "type": "object",
           "properties": {
             "worker": {
+              "type": "object",
               "title": "Worker",
               "description": "Worker to repeat",
-              "type": "object",
               "behavior": [
                 "board"
               ]

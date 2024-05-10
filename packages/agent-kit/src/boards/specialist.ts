@@ -28,7 +28,7 @@ import {
   toolResponseFormatter,
 } from "../function-calling.js";
 
-export type SuperWorkerType = NewNodeFactory<
+export type SpecialistType = NewNodeFactory<
   {
     in: NewNodeValue;
   },
@@ -219,7 +219,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
 
   return { out: areWeDoneChecker.context.title("Context Out") };
 }).serialize({
-  title: "Super Worker",
+  title: "Specialist",
   metadata: {
     icon: "smart-toy",
   },

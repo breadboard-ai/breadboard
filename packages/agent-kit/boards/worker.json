@@ -78,7 +78,7 @@
       "id": "assembleContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const assembleContext = ({ context, generated }) => {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n};",
+        "code": "const assembleContext = ({ context, generated }) => {\n  if (!context) throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n};",
         "name": "assembleContext",
         "raw": true
       },

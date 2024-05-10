@@ -27,7 +27,7 @@ export default await board(() => {
     task: contextFromText(`Chat until "##DONE##".`),
   });
 
-  const bot = agents.superWorker({
+  const bot = agents.specialist({
     $metadata: { title: "Chat Bot" },
     in: loop.loop,
     persona: chatBotPersona,

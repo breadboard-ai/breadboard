@@ -68,21 +68,21 @@ export default await board(({ context }) => {
     .behavior("llm-content")
     .examples(JSON.stringify(sampleContext, null, 2));
 
-  const outlineWriter = agents.superWorker({
+  const outlineWriter = agents.specialist({
     $metadata: { title: "Outline Writer" },
     in: context,
     persona: outlineWriterPersona,
     task: outlineWriterTask,
   });
 
-  const outlineCritic = agents.superWorker({
+  const outlineCritic = agents.specialist({
     $metadata: { title: "Outline Critic" },
     in: outlineWriter.out,
     persona: outlineCriticPersona,
     task: outlineCriticTask,
   });
 
-  const outlineEditor = agents.superWorker({
+  const outlineEditor = agents.specialist({
     $metadata: { title: "Outline Editor" },
     in: outlineCritic.out,
     persona: outlineEditorPersona,

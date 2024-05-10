@@ -866,8 +866,8 @@
       ],
       "graphs": {}
     },
-    "superWorker": {
-      "title": "Super Worker",
+    "specialist": {
+      "title": "Specialist",
       "metadata": {
         "icon": "smart-toy"
       },

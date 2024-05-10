@@ -90,7 +90,7 @@ export default await board(({ context }) => {
     ),
   });
 
-  const writer = agents.superWorker({
+  const writer = agents.specialist({
     $metadata: { title: "Writer" },
     in: loop.loop,
     persona: writerPersona,
