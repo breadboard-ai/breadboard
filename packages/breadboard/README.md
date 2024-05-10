@@ -4,6 +4,8 @@
 
 A library for prototyping generative AI applications.
 
+> Breadboard supports authoring in JavaScript/TypeScript and Python (coming soon).
+
 This library was inspired by the hardware maker community and their boundless creativity. They make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all), just wiring things together and trying this and that until it works.
 
 Breadboard is an attempt to bring the same spirit of creativity and simplicity to making generative AI applications.
@@ -23,15 +25,18 @@ This library's design emphasizes two key properties:
 <h2 id="installation">Installation</h2>
 
 Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
-
-Check what version of node you're running with `node -v`.
-
-In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
+- Check what version of node you're running with `node -v`.
+- In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
 
 To install Breadboard with [npm](https://www.npmjs.com/), then run:
 ```shell
 npm install @google-labs/breadboard
 ```
+
+If you want to use [TypeScript](https://www.typescriptlang.org/), you will need to [install the package](https://www.npmjs.com/package/typescript). 
+- You can use npm to download TypeScript into your project using `npm install typescript --save-dev`. 
+- You can then initialize the Typescript project and create a `tsconfig.json` file using `npx tsc --init`.
+
 ### Useful packages (optional)
 
 | Name                                                                                            | Description                                                                                                                                    | Install                                   |
@@ -123,10 +128,14 @@ In this example, the `code` simply takes two properties, `x` and `y`, and checks
 
 These nodes can be created inside or outside the board. They can also be used when creating custom kits.
 
+> **Important**: `code` uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit).
+> 
+> If a board using `code` is serialized, then a runtime instance of the Core Kit must be passed into the board.
+
 ### Kits
 Kits are collections of ready-made node factory functions for all types of nodes.
 
-#### Using pre-made kits
+#### Using kits
 Kits are an easy way to add functionality to your board without writing it yourself, and you can think of them as purpose-built third-party libraries you'd add to your web application.
 
 For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`. The npm package, which contains the kit, must be installed before they can be imported.
@@ -146,11 +155,11 @@ const myBoard = board<{ template: string, name: string; }>(({ template, name }, 
 	return output({ prompt: promptTemplate.prompt });
 });
 
-console.log(await myBoard({ template:"Hi, my name is {{name}}!", name: "Bob" })); // { prompt: 'Hi, my name is Bob!' }
+console.log(await myBoard({ template: "Hi, my name is {{name}}!", name: "Bob" })); // { prompt: 'Hi, my name is Bob!' }
 ```
 Here, `addKit` creates an instance of the Template Kit, which is used to create a `promptTemplate` node within the board. We pass in `template`, which has a placeholder expecting a property called `name` to be supplied, along with the `name` itself. The `promptTemplate` node populates the placeholder in our template with the corresponding inputted value. The value of `prompt`, and a key with the same name, gets passed as an object to the output.
 
-There's a variety of pre-made kits readily available: you can find [a non exhaustive list of kits here](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages).
+There's a variety of pre-made kits readily available: you can find [a non-exhaustive list of kits here](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages).
 
 #### Creating custom kits
 Custom kits can be created using the `KitBuilder`.
@@ -188,10 +197,177 @@ const stringManipulationKit = new KitBuilder({
 });
 ```
 
-### Running boards [TBD]
-Passing in kits
-### Serialization [TBD]
-BGL
+> **Important**: All kits used in a board must be passed in, as runtime kits, when running a board that has been serialized/de-serialized.
+
+### Serializing boards
+Boards can be serialized into Breadboard Graph Language (BGL). BGL is the common format that Breadboard uses to represent boards. BGL is useful to have a unified language, so you can have boards that call into other boards.
+
+#### Serialization
+```typescript
+const echo = await board<{ say: string; }>(({ say }, { output }) => {
+	return output({ hear: say })
+}).serialize({
+    url: ".",
+    title: "Echo board",
+    description: "Say something to the board and it'll echo back!",
+    version: "0.0.1"
+});
+```
+The `serialize` function is called on the result of the board invocation, which is serialized as [JavaScript Object Notation (JSON)](https://www.json.org/json-en.html).
+```json
+{
+  "url":".",
+  "title": "Echo board",
+  "description": "Say something to the board and it'll echo back!",
+  "version": "0.0.1",
+  "edges": [
+    ...
+  ],
+  "nodes": [
+	...
+  ],
+  "graphs": {}
+}
+```
+The `serialize` function is also takes a single argument: a metadata object that describes the board.
+<table style='font-family:"Courier New", Courier, monospace; font-size:80%;'>
+	<td><b>Name</b></td>
+    <td><b>Type</b></td>
+    <td><b>Description</b></td>
+  <tr>
+    <td><code>description?</code></td>
+    <td><code>string</code></td>
+    <td>The description of the graph.</td>
+  </tr>
+  <tr>
+    <td><code>title?</code></td>
+    <td><code>string</code></td>
+    <td>The title of the graph.</td>
+  </tr>
+    <tr>
+    <td><code>url?</code></td>
+    <td><code>string</code></td>
+    <td>The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory.</td>
+  </tr>
+    <tr>
+    <td><code>version?</code></td>
+    <td><code>string</code></td>
+    <td>Version of the graph. <a href="https://semver.org/">semver</a> format is encouraged.</td>
+  </tr>
+</table>
+
+#### Deserialization
+To get a runnable board instance, we can pass our serialized board into the `BoardRunner` with `fromGraphDescriptor`.
+
+```typescript
+import { BoardRunner } from "@google-labs/breadboard";
+import Serialized from "./board/board.js"
+
+const runner = await BoardRunner.fromGraphDescriptor(Serialized);
+console.log(await runner.runOnce({ say: "Hello World!" })); // { hear: 'Hello World!' }
+```
+
+> **Important**: Any kits used by the board will need to be passed in when running a board that's been serialized.
+> 
+> The `code` node requires the `invoke` node from the `core-kit`.
+
+When running a serialized board that uses kits or `code`, then all the kits it uses must be passed in as runtime kits. The `code` function uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit), which would also need to be passed in.
+
+Each of the kits must be wrapped with `asRuntimeKit` and passed in together in an array. 
+
+```typescript
+import { addKit, asRuntimeKit, board, BoardRunner, code } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
+import TemplateKit from "@google-labs/template-kit";
+
+const templateKit = addKit(TemplateKit);
+const helloWorld = await board(({ name }, { output }) => {
+	const template = code(() => {
+		return { greeting: "Hello {{name}}!" };
+	})();
+
+	return output({
+		response: templateKit.promptTemplate({ template: template.greeting, name }).text,
+	}); // Output `response` object containing `text` property from `promptTemplate`
+}).serialize();
+const runner = await BoardRunner.fromGraphDescriptor(helloWorld);
+const result = await runner.runOnce(
+	{ name: "World" },
+	{ kits: [asRuntimeKit(Core), asRuntimeKit(TemplateKit)] } // Array of `asRuntimeKit` wrapped kits
+);
+console.log(result); // { response: 'Hello World!' }
+```
+This board simply takes a `name` property and inserts the value into a template using the `promptTemplate` node, from the `TemplateKit`, which returns the value of `text` as `response` in the object returned to the output.
+
+### Running boards
+Boards are programs which can be executed by Breadboard runtimes, and they can have multiple input and output nodes which can visited more than once.
+In most real-world scenarios, boards will need to run continuously, sometimes stopping to receive inputs or provide outputs, but a simple board might just run once and return a single output.
+
+We will use this simple board for the following examples.
+```typescript
+import { base, board } from "@google-labs/breadboard";
+
+export default board(({ say }) => {
+    return say.as("hear").to(base.output());
+});
+```
+This board simply takes a property called `say` from the input object and passes it, as a property called `hear`, to an output node.
+
+`board` instances can be invoked, which initiates a single run (equivalent to the `BoardRunner` using `runOnce(...)`).
+```typescript
+import myBoard from "./board/board.js";
+
+console.log(await myBoard({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
+```
+Whereas `BoardRunner` can create runnable boards from serialized graphs: they can run boards continuously or initiate a single run. 
+
+We can serialize our board and use `fromGraphDescriptor` to get the runner.
+```typescript
+import myBoard from "./board/board.js";
+import { BoardRunner } from "@google-labs/breadboard";
+
+const serialized = await myBoard.serialize(); // serialize the board invocation result into a graph
+const runner = await BoardRunner.fromGraphDescriptor(serialized); // Get runner from graph
+```
+
+Then, `BoardRunner` has two ways of running a board:
+- `runOnce(...)`: A simplified version of `run` that runs the board until the board provides an output, and returns that output.
+	```typescript
+	console.log(await runner.runOnce({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
+	```
+- `run(...)`: Runs the board continuously. This method is an [async generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator) that yields the results of each stage of the run.
+	```typescript
+	...
+	for await (const stop of runner.run()) {
+		if (stop.type === "input") {
+			stop.inputs = { say: "Hello Breadboard!" };
+		} else if (stop.type === "output") {
+        	console.log(stop.outputs) // { hear: 'Hello Breadboard!' }
+		}
+	}
+	```
+So far, our board only has outputs that are visited once, and we could simply invoke the `board` or use `runOnce` to run it entirely. Let's change our board to return from two different outputs instead of one.
+```typescript
+import { base, board } from "@google-labs/breadboard";
+
+export default board(({ say }) => {
+    say.as("firstHear").to(base.output({ $id: "outputOne" }));
+    return say.as("secondHear").to(base.output({ $id: "outputTwo" }));
+});
+```
+This board takes the `say` property and passes it to the two different output nodes, which can be identified as `outputOne` and `outputTwo` using the `$id` property, as properties named `firstHear` and `secondHear` respectively. For beter clarity, we will change the runner outputs to be logged to the console separately, using the ids we added to the output nodes against the id of the currently iterated node in the runner.
+```typescript
+else if (stop.type === "output") {
+	if (stop.node.id === "outputOne") {
+		console.log("outputOne", stop.outputs); // outputOne { firstHear: 'Hello Breadboard!' }
+	} else if (stop.node.id === "outputTwo") {
+		console.log("outputTwo", stop.outputs); // outputTwo { secondHear: 'Hello Breadboard!' }
+	}
+}
+```
+
+If we were to use `runOnce`, or invoke the board, then we would only receive one output before the board stops running.
+
 ### Using a board within a board [TBD]
 ### Slots [TBD]
 ### Adding metadata (titles, descriptions, schemas, etc,...) [TBD]
@@ -209,37 +385,11 @@ BGL
 | Breadboard Graph Language (BGL) | Breadboard Graph Language (BGL) is a graph serialization format described by [this JSON schema](https://github.com/breadboard-ai/breadboard/blob/main/packages/schema/breadboard.schema.json).                                                                                                                                                                                                                                                 |
 | Runtimes                        | A runtime is a system that executes boards. Current runtimes include: Node and Web.                                                                                                                                                                                                                                                                                                                                                            |
 | Frontends                       | A frontend is a system that generates boards. Current frontends include the `@google-labs/breadboard` API for Node, a Python library (coming soon!), and the Breadboard Visual Playground. Boards can also be written by hand directly as JSON, but using a frontend is typically easier. **Note that frontends are never coupled to a specific runtime.** Boards generated by the Node API can be executed by any runtime.                    |
-### Board
-A board is a kind of executable program, expressed declaratively as a graph.
-### Nodes
-A node is a step in a board that performs some action. This might be calling an external API, or executing some local computation. Nodes are similar to functions in traditional programs.
-### Ports
-A port is a named input or output of a node. Nodes can have any number of ports. Ports can be source ports (data flows out), or destination ports (data flows in). Source ports are analogous to the parameters of a function. Destination ports are analogous to the results returned by a function.
-### Edges
-An edge is a connection between two ports through which data flows.
-#### Constants
-Edges can be optional, which means that the execution of a node will not wait for data to be present before proceeding with execution.
-#### Optional
-Edges can be constant, which means the most recent object that flowed through the edge will remain available indefinitely, instead of being destructively consumed.
-### Kits
-A kit is a library that provides graphs.
-### Slots
-Boards can have slots, which is Breadboard's way of expressing inversion of control. When a board exposes a slot, it means that users of that board are expected to provide an implementation for some portion of the graph themselves.
-### Breadboard Graph Language (BGL)
-Breadboard Graph Language (BGL) is a graph serialization format described by [this JSON schema](https://github.com/breadboard-ai/breadboard/blob/main/packages/schema/breadboard.schema.json).
-### Runtimes
-A runtime is a system that executes boards. Current runtimes include: Node and Web.
-### Frontends
-A frontend is a system that generates boards. Current frontends include the `@google-labs/breadboard` API for Node, a Python library (coming soon!), and the Breadboard Visual Playground. Boards can also be written by hand directly as JSON, but using a frontend is typically easier.
-
->Note that frontends are never coupled to a specific runtime. Boards generated by the Node API can be executed by any runtime.
 
 <h2 id="additional-info">Additional Info</h2>
 To learn more about Breadboard, here are a couple of resources:
 
 - [Breadboard Tutorial](https://breadboard-ai.github.io/breadboard/docs/happy-path/) -- learn how to use breadboard step-by-step, from easy to more complex.
-<!-- - [Node Types Reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
-- [Wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/wires.md) -- all the different ways to wire nodes. -->
 - Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the the link next to "Original:" heading to see the board code):
   - [Simple text completion](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/simplest.md)
   - [Google Search summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/search-summarize.md)
