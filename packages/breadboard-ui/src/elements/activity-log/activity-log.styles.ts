@@ -317,7 +317,6 @@ export const styles = css`
   dt .llm-content .value {
     white-space: normal;
     border-radius: none;
-    padding: 0;
     user-select: text;
   }
 
@@ -421,26 +420,32 @@ export const styles = css`
   }
 
   .llm-content .content {
-    display: grid;
-    grid-template-columns: var(--bb-grid-size-12) auto;
-    margin-bottom: var(--bb-grid-size-4);
-  }
-
-  .llm-content .prefix {
-    border-right: 2px solid var(--bb-output-200);
-    display: flex;
-    justify-content: center;
-    font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
-      var(--bb-font-family);
-    color: var(--bb-neutral-300);
+    display: block;
+    margin-bottom: var(--bb-grid-size-2);
   }
 
   .llm-content .value {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
     margin: 0 var(--bb-grid-size-3);
     font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
       var(--bb-font-family);
     color: var(--bb-neutral-900);
-    padding: 0;
+
+    padding: 0 var(--bb-grid-size-3);
+  }
+
+  .llm-content .value::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: var(--bb-grid-size-3);
+    background: var(--bb-output-100);
+    width: 3px;
   }
 
   .llm-content .value img,
