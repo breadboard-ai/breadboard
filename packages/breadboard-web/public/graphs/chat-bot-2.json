@@ -121,7 +121,7 @@
                     "type": "object",
                     "properties": {
                       "context": {
-                        "title": "Context",
+                        "title": "Context in",
                         "description": "Incoming conversation context",
                         "type": "array",
                         "items": {

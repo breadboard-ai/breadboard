@@ -17,12 +17,12 @@
     },
     {
       "from": "looper-3",
-      "to": "superWorker-4",
+      "to": "specialist-4",
       "out": "loop",
       "in": "in"
     },
     {
-      "from": "superWorker-4",
+      "from": "specialist-4",
       "to": "looper-3",
       "out": "out",
       "in": "context"
@@ -73,7 +73,7 @@
                   "llm-content"
                 ]
               },
-              "title": "Context Out"
+              "title": "Context out"
             }
           }
         }
@@ -96,8 +96,8 @@
       }
     },
     {
-      "id": "superWorker-4",
-      "type": "superWorker",
+      "id": "specialist-4",
+      "type": "specialist",
       "configuration": {
         "persona": {
           "parts": [

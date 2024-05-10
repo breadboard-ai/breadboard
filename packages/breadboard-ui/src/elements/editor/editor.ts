@@ -153,7 +153,7 @@ export class Editor extends LitElement {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
     }
 
-    #shortcut-add-superworker,
+    #shortcut-add-specialist,
     #shortcut-add-human {
       font-size: 0;
       width: 20px;
@@ -162,7 +162,7 @@ export class Editor extends LitElement {
       margin-right: calc(var(--bb-grid-size) * 2);
     }
 
-    #shortcut-add-superworker {
+    #shortcut-add-specialist {
       background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
     }
 
@@ -681,20 +681,20 @@ export class Editor extends LitElement {
           ? html`<div class="divider"></div>
               <div
                 draggable="true"
-                title="Add superWorker"
-                id="shortcut-add-superworker"
+                title="Add Specialist"
+                id="shortcut-add-specialist"
                 @dblclick=${() => {
-                  const id = this.#createRandomID("superWorker");
-                  this.dispatchEvent(new NodeCreateEvent(id, "superWorker"));
+                  const id = this.#createRandomID("specialist");
+                  this.dispatchEvent(new NodeCreateEvent(id, "specialist"));
                 }}
                 @dragstart=${(evt: DragEvent) => {
                   if (!evt.dataTransfer) {
                     return;
                   }
-                  evt.dataTransfer.setData(DATA_TYPE, "superWorker");
+                  evt.dataTransfer.setData(DATA_TYPE, "specialist");
                 }}
               >
-                Add superWorker
+                Add Specialist
               </div>
               <div
                 draggable="true"

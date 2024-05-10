@@ -13,7 +13,7 @@ import { RepeaterType } from "./boards/repeater.js";
 import { StructuredWorkerType } from "./boards/structured-worker.js";
 import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
-import { SuperWorkerType } from "./boards/super-worker.js";
+import { SpecialistType } from "./boards/specialist.js";
 import { LooperType } from "./boards/looper.js";
 
 // TODO: Replace with the actual URL.
@@ -38,7 +38,7 @@ const AgentKit = builder.build({
   structuredWorker: adapter.handlerForNode("structured-worker"),
   toolWorker: adapter.handlerForNode("tool-worker"),
   human: adapter.handlerForNode("human"),
-  superWorker: adapter.handlerForNode("super-worker"),
+  specialist: adapter.handlerForNode("specialist"),
   looper: adapter.handlerForNode("looper"),
 });
 
@@ -73,7 +73,7 @@ export type AgentKitType = {
   /**
    * All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.
    */
-  superWorker: SuperWorkerType;
+  specialist: SpecialistType;
   /**
    * Facilitate looping, A work in progress.
    */

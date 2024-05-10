@@ -176,7 +176,7 @@ const actionRecognizer = code(({ text, context, action }) => {
 
 export default await board(({ context, title, description }) => {
   context
-    .title("Context")
+    .title("Context in")
     .description("Incoming conversation context")
     .isArray()
     .behavior("llm-content")
@@ -226,7 +226,7 @@ export default await board(({ context, title, description }) => {
 
   base.output({
     $metadata: { title: "Done", description: "Skipping because we're done" },
-    context: areWeDoneChecker.done,
+    context: areWeDoneChecker.done.title("Context out"),
   });
 
   const createSchema = schema({
@@ -306,7 +306,7 @@ export default await board(({ context, title, description }) => {
       title: "Rejection",
       description: "Rejecting latest agent work per user action",
     },
-    again: recognizeAction.again,
+    again: recognizeAction.again.behavior("deprecated"),
   });
 
   const appendContext = contextAppender({
@@ -323,8 +323,8 @@ export default await board(({ context, title, description }) => {
     context: appendContext.context
       .isArray()
       .behavior("llm-content")
-      .title("Context"),
-    text: input.text.title("Text"),
+      .title("Context out"),
+    text: input.text.title("Text").behavior("deprecated"),
   };
 }).serialize({
   title: "Human",

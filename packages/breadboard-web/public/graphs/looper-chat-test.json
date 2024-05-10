@@ -17,7 +17,7 @@
     },
     {
       "from": "looper-4",
-      "to": "superWorker-5",
+      "to": "specialist-5",
       "out": "loop",
       "in": "in"
     },
@@ -28,7 +28,7 @@
       "in": "context"
     },
     {
-      "from": "superWorker-5",
+      "from": "specialist-5",
       "to": "human-6",
       "out": "out",
       "in": "context"
@@ -50,7 +50,7 @@
                   "llm-content"
                 ]
               },
-              "title": "Context Out"
+              "title": "Context out"
             }
           }
         }
@@ -92,8 +92,8 @@
       }
     },
     {
-      "id": "superWorker-5",
-      "type": "superWorker",
+      "id": "specialist-5",
+      "type": "specialist",
       "configuration": {
         "persona": {
           "parts": [

@@ -12,7 +12,7 @@
     },
     {
       "from": "input",
-      "to": "fn-4",
+      "to": "fn-6",
       "out": "text",
       "in": "text"
     },
@@ -23,19 +23,19 @@
       "in": "text"
     },
     {
-      "from": "fn-4",
-      "to": "output-5",
+      "from": "fn-6",
+      "to": "output-7",
       "out": "again",
       "in": "again"
     },
     {
-      "from": "fn-4",
+      "from": "fn-6",
       "to": "appendContext",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "fn-4",
+      "from": "fn-6",
       "to": "appendContext",
       "out": "text",
       "in": "text"
@@ -48,13 +48,13 @@
     },
     {
       "from": "createSchema",
-      "to": "fn-4",
+      "to": "fn-6",
       "out": "context",
       "in": "context"
     },
     {
       "from": "maybeOutputRouter",
-      "to": "createSchema",
+      "to": "fn-3",
       "out": "context",
       "in": "context"
     },
@@ -66,7 +66,7 @@
     },
     {
       "from": "maybeOutputRouter",
-      "to": "output-3",
+      "to": "output-5",
       "out": "feedback",
       "in": "feedback"
     },
@@ -78,7 +78,7 @@
     },
     {
       "from": "maybeOutputRouter",
-      "to": "fn-4",
+      "to": "fn-6",
       "out": "action",
       "in": "action"
     },
@@ -99,6 +99,18 @@
       "to": "createSchema",
       "out": "description",
       "in": "description"
+    },
+    {
+      "from": "fn-3",
+      "to": "output-4",
+      "out": "done",
+      "in": "context"
+    },
+    {
+      "from": "fn-3",
+      "to": "createSchema",
+      "out": "context",
+      "in": "context"
     }
   ],
   "nodes": [
@@ -131,7 +143,7 @@
       "id": "appendContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const appendContext = ({ context, text }) => {\n    if (!text)\n      return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  };",
+        "code": "const appendContext = ({ context, text }) => {\n    if (!text) return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  };",
         "name": "appendContext",
         "raw": true
       },
@@ -163,11 +175,11 @@
       }
     },
     {
-      "id": "fn-4",
+      "id": "fn-6",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_4 = ({ text, context, action }) => {\n  const a = action;\n  if (a?.action === \"vote\") {\n    if (text === \"No\") {\n      context.pop();\n      return { text, again: context };\n    }\n    const c = structuredClone(context);\n    const lastItem = c[c.length - 1];\n    const parts = lastItem.parts;\n    const t = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n    const output = t;\n    const data = JSON.parse(output);\n    delete data[\"voteRequest\"];\n    lastItem.parts = [{ text: JSON.stringify(data) }];\n    return { text: \"\", context: c };\n  }\n  return { text, context };\n};",
-        "name": "fn_4",
+        "code": "const fn_6 = ({ text, context, action }) => {\n  const a = action;\n  if (a?.action === \"vote\") {\n    if (text === \"No\") {\n      context.pop();\n      return { text, again: context };\n    }\n    const c = structuredClone(context);\n    const lastItem = c[c.length - 1];\n    const parts = lastItem.parts;\n    const t = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n    const output = t;\n    const data = JSON.parse(output);\n    delete data[\"voteRequest\"];\n    lastItem.parts = [{ text: JSON.stringify(data) }];\n    return { text: \"\", context: c };\n  }\n  return { text, context };\n};",
+        "name": "fn_6",
         "raw": true
       },
       "metadata": {
@@ -192,7 +204,7 @@
       "id": "maybeOutputRouter",
       "type": "runJavascript",
       "configuration": {
-        "code": "const maybeOutputRouter = ({ context }) => {\n  const action = { action: \"none\" };\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const parts = lastItem.parts;\n      const text = Array.isArray(parts) ? parts.map((item) => item.text).join(\"/n\") : parts.text;\n      const output = text;\n      try {\n        const data = JSON.parse(output);\n        if (data.voteRequest) {\n          const feedback = structuredClone(data);\n          delete feedback[\"voteRequest\"];\n          const action2 = { action: \"vote\", title: data.voteRequest };\n          return { feedback, action: action2, context };\n        }\n      } catch {\n      }\n      return { output, action, context };\n    }\n  }\n  return { context, action };\n};",
+        "code": "const maybeOutputRouter = ({ context }) => {\n  const action = { action: \"none\" };\n  if (Array.isArray(context) && context.length > 0) {\n    let lastItem = context[context.length - 1];\n    if (lastItem.role === \"$metadata\") {\n      lastItem = context[context.length - 2];\n    }\n    if (lastItem && lastItem.role !== \"user\") {\n      const output = lastItem;\n      try {\n        if (\"parts\" in output && \"text\" in output.parts[0]) {\n          const json = output.parts[0]?.text;\n          const data = JSON.parse(json);\n          if (data.voteRequest) {\n            const feedback = structuredClone(data);\n            delete feedback[\"voteRequest\"];\n            const action2 = { action: \"vote\", title: data.voteRequest };\n            return { feedback, action: action2, context };\n          }\n        }\n      } catch {\n      }\n      return { output, action, context };\n    }\n  }\n  return { context, action };\n};",
         "name": "maybeOutputRouter",
         "raw": true
       },
@@ -202,7 +214,7 @@
       }
     },
     {
-      "id": "output-5",
+      "id": "output-7",
       "type": "output",
       "configuration": {
         "schema": {
@@ -245,12 +257,18 @@
             "title": {
               "title": "Title",
               "description": "The title to ask",
+              "behavior": [
+                "config"
+              ],
               "default": "User",
               "type": "string"
             },
             "description": {
               "title": "Description",
               "description": "The description of what to ask",
+              "behavior": [
+                "config"
+              ],
               "default": "User's question or request",
               "type": "string"
             }
@@ -260,7 +278,20 @@
       }
     },
     {
-      "id": "output-3",
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({ context }) => {\n  if (!context) throw new Error(\"Context is required\");\n  const c = context;\n  let done = false;\n  for (let i = 0; i < c.length; ++i) {\n    const item = c[i];\n    if (item.role === \"$metadata\") {\n      const plan = item.data;\n      if (plan.done) {\n        done = true;\n        break;\n      }\n    }\n  }\n  if (done) {\n    return { done: context };\n  } else {\n    return { context };\n  }\n};",
+        "name": "fn_3",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Done Check",
+        "description": "Checking to see if we can skip work altogether"
+      }
+    },
+    {
+      "id": "output-5",
       "type": "output",
       "configuration": {
         "schema": {
@@ -293,7 +324,10 @@
           ],
           "properties": {
             "output": {
-              "type": "string",
+              "type": "object",
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Output",
               "description": "The output to display"
             }
@@ -303,6 +337,25 @@
       "metadata": {
         "title": "Output",
         "description": "Displaying the output the user."
+      }
+    },
+    {
+      "id": "output-4",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Done",
+        "description": "Skipping because we're done"
       }
     }
   ],

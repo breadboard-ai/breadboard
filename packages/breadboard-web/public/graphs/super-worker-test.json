@@ -5,24 +5,24 @@
   "edges": [
     {
       "from": "input-1",
-      "to": "superWorker-3",
+      "to": "specialist-3",
       "out": "context",
       "in": "in"
     },
     {
-      "from": "superWorker-3",
-      "to": "superWorker-4",
+      "from": "specialist-3",
+      "to": "specialist-4",
       "out": "out",
       "in": "in"
     },
     {
-      "from": "superWorker-4",
-      "to": "superWorker-5",
+      "from": "specialist-4",
+      "to": "specialist-5",
       "out": "out",
       "in": "in"
     },
     {
-      "from": "superWorker-5",
+      "from": "specialist-5",
       "to": "output-2",
       "out": "out",
       "in": "context"
@@ -68,16 +68,16 @@
           "type": "object",
           "properties": {
             "context": {
-              "type": "string",
-              "title": "out"
+              "title": "Context out",
+              "type": "string"
             }
           }
         }
       }
     },
     {
-      "id": "superWorker-3",
-      "type": "superWorker",
+      "id": "specialist-3",
+      "type": "specialist",
       "configuration": {
         "persona": {
           "parts": [
@@ -99,8 +99,8 @@
       }
     },
     {
-      "id": "superWorker-4",
-      "type": "superWorker",
+      "id": "specialist-4",
+      "type": "specialist",
       "configuration": {
         "persona": {
           "parts": [
@@ -122,8 +122,8 @@
       }
     },
     {
-      "id": "superWorker-5",
-      "type": "superWorker",
+      "id": "specialist-5",
+      "type": "specialist",
       "configuration": {
         "persona": {
           "parts": [

@@ -137,10 +137,13 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Context"
+                  "title": "Context out"
                 },
                 "text": {
                   "title": "Text",
+                  "behavior": [
+                    "deprecated"
+                  ],
                   "type": "string"
                 }
               }
@@ -169,6 +172,9 @@
               "properties": {
                 "text": {
                   "title": "Text",
+                  "behavior": [
+                    "deprecated"
+                  ],
                   "type": "string"
                 }
               },
@@ -229,6 +235,9 @@
               "type": "object",
               "properties": {
                 "again": {
+                  "behavior": [
+                    "deprecated"
+                  ],
                   "type": "string",
                   "title": "again"
                 }
@@ -248,7 +257,7 @@
               "type": "object",
               "properties": {
                 "context": {
-                  "title": "Context",
+                  "title": "Context in",
                   "description": "Incoming conversation context",
                   "type": "array",
                   "items": {
@@ -355,8 +364,8 @@
               "type": "object",
               "properties": {
                 "context": {
-                  "type": "string",
-                  "title": "context"
+                  "title": "Context out",
+                  "type": "string"
                 }
               }
             }
@@ -866,8 +875,8 @@
       ],
       "graphs": {}
     },
-    "superWorker": {
-      "title": "Super Worker",
+    "specialist": {
+      "title": "Specialist",
       "metadata": {
         "icon": "smart-toy"
       },
@@ -1021,7 +1030,7 @@
               "type": "object",
               "properties": {
                 "out": {
-                  "title": "Context Out",
+                  "title": "Context out",
                   "type": "string"
                 }
               }
@@ -1075,7 +1084,7 @@
               "type": "object",
               "properties": {
                 "in": {
-                  "title": "Context In",
+                  "title": "Context in",
                   "description": "The source material for the worker",
                   "type": "array",
                   "items": {
@@ -1227,8 +1236,8 @@
               "type": "object",
               "properties": {
                 "out": {
-                  "type": "string",
-                  "title": "out"
+                  "title": "Context out",
+                  "type": "string"
                 }
               }
             }
@@ -2295,7 +2304,7 @@
                       "llm-content"
                     ]
                   },
-                  "title": "Context Out"
+                  "title": "Context out"
                 }
               }
             }

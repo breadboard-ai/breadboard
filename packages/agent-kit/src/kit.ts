@@ -13,7 +13,7 @@ import human from "./boards/human.js";
 import toolWorker from "./boards/tool-worker.js";
 
 import { Core } from "@google-labs/core-kit";
-import superWorker from "./boards/super-worker.js";
+import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
 
 // TODO: Convert to new syntax
@@ -30,7 +30,7 @@ core.invoke({ $id: "repeater", $board: repeater });
 core.invoke({ $id: "structured-worker", $board: structuredWorker });
 core.invoke({ $id: "human", $board: human });
 core.invoke({ $id: "tool-worker", $board: toolWorker });
-core.invoke({ $id: "super-worker", $board: superWorker });
+core.invoke({ $id: "specialist", $board: specialist });
 core.invoke({ $id: "looper", $board: looper });
 
 export default kit;

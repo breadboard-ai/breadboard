@@ -6,9 +6,9 @@
   "edges": [
     {
       "from": "fn-7",
-      "to": "output-8",
+      "to": "fn-8",
       "out": "done",
-      "in": "done"
+      "in": "context"
     },
     {
       "from": "fn-7",
@@ -53,6 +53,12 @@
       "in": "progress"
     },
     {
+      "from": "fn-8",
+      "to": "output-9",
+      "out": "context",
+      "in": "done"
+    },
+    {
       "from": "fn-4",
       "to": "text-5",
       "out": "context",
@@ -91,7 +97,7 @@
       "id": "fn-7",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_7 = ({ context, progress }) => {\n  const plans = Array.isArray(progress) ? progress : [progress];\n  const existing = Array.isArray(context) ? context : [context];\n  if (!plans) {\n    throw new Error(\"Plan is required for Looper to function.\");\n  }\n  try {\n    const p = plans[0];\n    const originalPlan = plans[plans.length - 1];\n    const max = p.max || originalPlan.todo?.length || Infinity;\n    const contents = structuredClone(existing);\n    const count = plans.length;\n    if (count >= max) {\n      return { done: existing };\n    }\n    if (p.todo && Array.isArray(p.todo)) {\n      const next = p.todo?.shift();\n      if (!next) {\n        return { done: existing };\n      }\n      contents.push({ role: \"$metadata\", data: p });\n      contents.push({ role: \"user\", parts: [{ text: next.task }] });\n      return { context: contents };\n    } else if (max) {\n      const count2 = plans.length;\n      if (count2 >= max) {\n        return { done: existing };\n      }\n      contents.push({ role: \"$metadata\", data: { type: \"looper\" } });\n      return { context: contents };\n    }\n    return { done: existing };\n  } catch (e) {\n    const error = e;\n    throw new Error(`Invalid plan, unable to proceed: ${error.message}`);\n  }\n};",
+        "code": "const fn_7 = ({ context, progress }) => {\n  const plans = Array.isArray(progress) ? progress : [progress];\n  const existing = Array.isArray(context) ? context : [context];\n  if (!plans || !plans.length) {\n    throw new Error(\"Plan is required for Looper to function.\");\n  }\n  try {\n    const current = plans[0];\n    if (current.done) {\n      return { done: existing };\n    }\n    const originalPlan = plans[plans.length - 1];\n    let max = originalPlan.max;\n    const doneMarker = originalPlan.doneMarker;\n    if (!max) {\n      const planItems = originalPlan.todo?.length;\n      if (planItems) {\n        max = planItems + 1;\n      } else {\n        max = Infinity;\n      }\n    }\n    const contents = structuredClone(existing);\n    const count = plans.length;\n    if (count >= max) {\n      return { done: existing };\n    }\n    if (current.todo && Array.isArray(current.todo)) {\n      const next = current.todo?.shift();\n      if (!next) {\n        return { done: existing };\n      }\n      contents.push({\n        role: \"$metadata\",\n        data: { ...current, next: next.task }\n      });\n      return { context: contents };\n    } else if (doneMarker) {\n      contents.push({\n        role: \"$metadata\",\n        data: { type: \"looper\", doneMarker }\n      });\n      return { context: contents };\n    } else if (max) {\n      const count2 = plans.length;\n      if (count2 >= max) {\n        return { done: existing };\n      }\n      contents.push({ role: \"$metadata\", data: { type: \"looper\" } });\n      return { context: contents };\n    }\n    return { done: existing };\n  } catch (e) {\n    const error = e;\n    throw new Error(`Invalid plan, unable to proceed: ${error.message}`);\n  }\n};",
         "name": "fn_7",
         "raw": true
       },
@@ -123,16 +129,16 @@
             },
             "task": {
               "title": "Task",
+              "default": "{}",
               "description": "The task from which to create the plan for looping.",
               "type": "object",
               "behavior": [
-                "llm-content"
+                "llm-content",
+                "config"
               ]
             }
           },
-          "required": [
-            "task"
-          ]
+          "required": []
         }
       }
     },
@@ -140,7 +146,8 @@
       "id": "fn-3",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({ context }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  const progress = [];\n  for (let i = existing.length - 1; i >= 0; i--) {\n    const item = existing[i];\n    if (item.role === \"$metadata\") {\n      progress.push(item.data.plan);\n    }\n  }\n  if (progress.length) {\n    return { progress };\n  } else {\n    return { context };\n  }\n};",
+        "forkOutputs": true,
+        "code": "const fn_3 = ({ context, forkOutputs }) => {\n  const fork = forkOutputs;\n  const existing = Array.isArray(context) ? context : [context];\n  const progress = [];\n  for (let i = existing.length - 1; i >= 0; i--) {\n    const item = existing[i];\n    if (item.role === \"$metadata\") {\n      progress.push(item.data);\n    }\n  }\n  if (fork) {\n    if (progress.length) {\n      return { progress };\n    } else {\n      return { context };\n    }\n  } else {\n    return { context, progress };\n  }\n};",
         "name": "fn_3",
         "raw": true
       },
@@ -172,6 +179,14 @@
                   }
                 }
               }
+            },
+            "doneMarker": {
+              "type": "string",
+              "description": "The marker that will be used by others to signal completion of the job."
+            },
+            "error": {
+              "type": "string",
+              "description": "Describe the reason why the plan generation failed"
             }
           }
         }
@@ -182,7 +197,49 @@
       }
     },
     {
-      "id": "output-8",
+      "id": "fn-8",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_8 = ({ context }) => {\n  if (!context) throw new Error(\"Context is required\");\n  const c = context;\n  const result = c.filter((item) => item.role !== \"$metadata\");\n  return { context: result };\n};",
+        "name": "fn_8",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Clean up",
+        "description": "Cleaning up the metadata that was used for running loops"
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_4 = ({ context, toAdd }) => {\n  if (!context) throw new Error(\"Context is required\");\n  const existing = Array.isArray(context) ? context : [context];\n  const incoming = structuredClone(toAdd);\n  if (!incoming.parts) {\n    const containsUserRole = existing.filter(\n      (item) => item.role !== \"model\" && item.role !== \"$metadata\"\n    ).length > 0;\n    if (!containsUserRole) {\n      return {\n        context: [\n          ...existing,\n          { role: \"user\", parts: [{ text: \"Do your magic\" }] }\n        ]\n      };\n    }\n    return { context: existing };\n  }\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== incoming.role) {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "name": "fn_4",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Add Task"
+      }
+    },
+    {
+      "id": "text-5",
+      "type": "text",
+      "configuration": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "\nYou are to create a precise plan for a given job. This plan will be executed by others and your responsibility is to produce a plan that reflects the job. \n\nYour output must be a valid JSON of the following format:\n\n```json\n{\n  \"max\": \"number, optional. Specifies how many iterations to make. Useful when the job specifies the upper limit the number of items in the list.\",\n  \"todo\": [{\n    \"task\": \"string, The task description. Use action-oriented language, starting with a verb that fits the task.\"\n  }]\n  \"doneMarker\": \"string, optional. The marker that will be used by others to signal completion.\"\n  \"error\": \"string, optional. A description of why you're unable to create a plan\"\n}\n```\n\nThere are four kinds of jobs that you can make plans for. \n\n1) The indefinite job. These are useful when there is not a definite completion condition, and is usually formulated with words like \"indefinitely\" or \"forever\". In such cases, the plan will look like an object without a \"todo\" property, with \"max\" set to a very large number:\n\n```json\n{\n  \"max\": 100000000\n}\n```\n\n2) The list of items job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one \"Write <chapter title>\" per chapter). \n\nA plan for this kind of job will look like an object with \"todo\" items:\n\n```json\n{\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\nIf the job includes a limit on how many tasks to produce, use the \"max\" property to indicate that. For instance, if the job contains three items that can be discerned, but asks to only do two of them:\n\n```json\n{\n  \"max:\" 2,\n  \"todo\": [\n    { \"task\": \"<action-oriented description of task 1\" },\n    { \"task\": \"<action-oriented description of task 2\" },\n    { \"task\": \"<action-oriented description of task 3\" }\n  ]\n}\n```\n\n3) Just repeat the steps job. These jobs do not have a distinct tasks, but rather just a number of steps to repeat. In this case, omit the \"todo\" and just use \"max\" property:\n\n```json\n{\n  \"max\": 4\n}\n```\n\n4) The job where the completion is signaled by others. These are the types of jobs where the number of iterations or the exact steps are unknown, and the\ncompletion signal is issued by those who are executing the. In such cases, use the \"doneMarker\" property and use the marker specified:\n\n```json\n{\n  \"doneMarker\": \"<the marker that will be used to signal completion>\"\n}\n```\n\nCommon markers are \"##STOP##\" or \"##DONE##\", but could be different depending on a job.\n\nWhen you are unable to create plan from the job, reply with:\n\n```json\n{\n  \"error\": \"<description of why you're unable to create a plan>\"\n}\n```\n\n"
+            }
+          ]
+        },
+        "responseMimeType": "application/json"
+      },
+      "metadata": {
+        "title": "Generating Plan"
+      }
+    },
+    {
+      "id": "output-9",
       "type": "output",
       "configuration": {
         "schema": {
@@ -203,40 +260,6 @@
       },
       "metadata": {
         "title": "Exit"
-      }
-    },
-    {
-      "id": "fn-4",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_4 = ({ context, toAdd }) => {\n  const existing = Array.isArray(context) ? context : [context];\n  if (!existing)\n    throw new Error(\"Context is required\");\n  const incoming = structuredClone(toAdd);\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== \"user\") {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
-        "name": "fn_4",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Add Task"
-      }
-    },
-    {
-      "id": "text-5",
-      "type": "text",
-      "configuration": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "You are a talented planner. Given any job, you can break it down into a plan. Depending on the task, the plan you produce may be as simple as \"repeat N times\" or it could be a list of todo items for concrete tasks to perform."
-            },
-            {
-              "text": "Reply as valid JSON that conforms to this JSON schema:"
-            },
-            {
-              "text": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"max\": {\n      \"type\": \"number\",\n      \"description\": \"Maximum iterations to make, optional. Default is infinity\"\n    },\n    \"todo\": {\n      \"type\": \"array\",\n      \"description\": \"Items in the plan, optional. Use this if the plan contains a definite, concrete list of items\",\n      \"items\": {\n        \"type\": \"object\",\n        \"description\": \"The object that represent an item in the plan\",\n        \"properties\": {\n          \"task\": {\n            \"type\": \"string\",\n            \"description\": \"The task description. Use action-oriented language, starting with a verb that fits the task\"\n          }\n        }\n      }\n    }\n  }\n}"
-            }
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Generating Plan"
       }
     }
   ],

@@ -302,7 +302,7 @@ export default await board(({ context, task }) => {
     done: cleaner.context
       .isArray()
       .behavior("llm-content")
-      .title("Context Out"),
+      .title("Context out"),
   });
 
   return {
