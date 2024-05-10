@@ -237,7 +237,7 @@ const planReader = code(planReaderFunction);
 
 export default await board(({ context, task }) => {
   context
-    .title("Context in")
+    .title("Context In")
     .isArray()
     .behavior("llm-content")
     .optional()
