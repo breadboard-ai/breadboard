@@ -369,7 +369,7 @@ const myBoard = await board((inputs, { output }) => {
 	
 	inputs.to(invokedBoard);
 
-	return invokedBoard.to(output());
+	return { response: output(invokedBoard)}
 }).serialize();
 
 const runner = await BoardRunner.fromGraphDescriptor(myBoard);
@@ -378,6 +378,25 @@ const result = await runner.runOnce(
 	{ kits: [asRuntimeKit(Core)] }
 );
 console.log(result); // { joined: 'Hello World' }
+```
+(show imported `JoinerBoard`)
+```typescript
+import { board, code } from "@google-labs/breadboard";
+
+export default await board((inputs, { output }) => {
+	const message = inputs.to(
+		code((values) => {
+			const joined = Object.values(values).join(" ");
+			return { joined };
+		})()
+	);
+
+	return { response: output(message) };
+}).serialize({
+	title: "Simple Joiner Board",
+	description: "Joins object values and separates with a space.",
+});
+
 ```
 ### Slots [TBD]
 ### Adding metadata (titles, descriptions, schemas, etc,...) [TBD]
