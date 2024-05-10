@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { converge } from "../internal/board/converge.js";
 import { input } from "../internal/board/input.js";
-import { placeholder } from "../internal/board/placeholder.js";
+import { loopback } from "../internal/board/loopback.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { serialize } from "../internal/board/serialize.js";
 import { board } from "../internal/board/board.js";
@@ -50,20 +50,20 @@ test("converge creates a union of types", () => {
   // $ExpectType Convergence<string | number>
   converge(input(), input({ type: "number" }));
   // $ExpectType Convergence<string | number>
-  converge(placeholder(), placeholder({ type: "number" }));
+  converge(loopback(), loopback({ type: "number" }));
   // $ExpectType Convergence<string | number | { foo: number; }[] | { bar: boolean; }[]>
   converge(
     input(),
-    placeholder({ type: "number" }),
+    loopback({ type: "number" }),
     input({ type: array(object({ foo: "number" })) }),
-    placeholder({ type: array(object({ bar: "boolean" })) })
+    loopback({ type: array(object({ bar: "boolean" })) })
   );
 });
 
 test("converge stores the ports in order", () => {
   const str = input();
   const num = input({ type: "number" });
-  const bool = placeholder({ type: "boolean" });
+  const bool = loopback({ type: "boolean" });
   assert.deepEqual(converge(str, num, bool).ports, [str, num, bool]);
   assert.deepEqual(converge(num, bool, str).ports, [num, bool, str]);
 });

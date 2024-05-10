@@ -25,7 +25,7 @@ import type {
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
 import type { Output } from "./output.js";
-import { isPlaceholder, type Placeholder } from "./placeholder.js";
+import { isLoopback, type Loopback } from "./loopback.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence, type Convergence } from "./converge.js";
 import type { Value } from "../../index.js";
@@ -242,10 +242,12 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           wasConstant = true;
         }
 
-        if (isPlaceholder(value)) {
+        if (isLoopback(value)) {
           value = value.value;
           if (value === undefined) {
-            throw new Error("Placeholder was never resolved");
+            // TODO(aomarks) Provide more information about which loopback it
+            // is.
+            throw new Error("Loopback was never resolved");
           }
         }
 

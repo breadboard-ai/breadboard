@@ -5,7 +5,7 @@
  */
 
 import type { Input, InputWithDefault } from "../board/input.js";
-import type { Placeholder } from "../board/placeholder.js";
+import type { Loopback } from "../board/loopback.js";
 import type { PortConfig } from "../define/config.js";
 import type {
   BreadboardType,
@@ -127,4 +127,4 @@ export type ValueOrOutputPort<T extends JsonSerializable> =
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Placeholder<T>;
+  | Loopback<T>;

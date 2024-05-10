@@ -20,7 +20,7 @@ import {
 import { board, type GenericBoardDefinition } from "../internal/board/board.js";
 import { constant } from "../internal/board/constant.js";
 import { input } from "../internal/board/input.js";
-import { placeholder } from "../internal/board/placeholder.js";
+import { loopback } from "../internal/board/loopback.js";
 import { serialize } from "../internal/board/serialize.js";
 
 function checkSerialization(
@@ -961,7 +961,7 @@ test("polymorphic outputs", () => {
   );
 });
 
-test("placeholder", () => {
+test("loopback", () => {
   const def = defineNodeType({
     name: "myNode",
     inputs: {
@@ -973,7 +973,7 @@ test("placeholder", () => {
     invoke: () => ({ bar: "abc" }),
   });
 
-  const node1Bar = placeholder();
+  const node1Bar = loopback();
   const nodeA = def({ foo: node1Bar });
   const nodeB = def({ foo: nodeA.outputs.bar });
   node1Bar.resolve(nodeB.outputs.bar);
@@ -1015,7 +1015,7 @@ test("placeholder", () => {
   );
 });
 
-test("error: placeholder not resolved", () => {
+test("error: loopback not resolved", () => {
   const def = defineNodeType({
     name: "myNode",
     inputs: {
@@ -1027,7 +1027,7 @@ test("error: placeholder not resolved", () => {
     invoke: () => ({ bar: "abc" }),
   });
 
-  const node1Bar = placeholder();
+  const node1Bar = loopback();
   const nodeA = def({ foo: node1Bar });
   const nodeB = def({ foo: nodeA.outputs.bar });
 
@@ -1042,7 +1042,7 @@ test("error: placeholder not resolved", () => {
           },
         })
       ),
-    /Placeholder was never resolved/
+    /Loopback was never resolved/
   );
 });
 

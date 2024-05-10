@@ -307,7 +307,7 @@ The optional `title`, `description`, and `version` fields are currently only
 used by systems such as the Breadboard Visual Editor, for the purposes of
 finding and indexing boards.
 
-### Placeholders & Cycles
+### Cycles & Loopbacks
 
 Occasionally it is desirable to create a board with _cycles_. However,
 instantiating a node normally requires immediately providing a value for all
@@ -315,15 +315,16 @@ inputs. This is a problem because when building a cycle, there will always be an
 input which needs to be connected to an output which has not yet been
 initialized, and so cannot be referenced.
 
-For such situations involving cycles, a `placeholder` is used to defer providing
-a value until it can be named.
+For such situations involving cycles, the `loopback` function is used to create
+an object whose value will be provided at some later time, namely with the
+missing link in the cycle.
 
 <!-- TODO(aomarks) Provide a more realistic example here. -->
 
 ```ts
-import { placeholder } from "@breadboard-ai/build";
+import { loopback } from "@breadboard-ai/build";
 
-const bPlaceholder = placeholder({ type: "number" });
+const bPlaceholder = loopback({ type: "number" });
 const a = someNode({ value: bPlaceholder });
 const b = someNode({ value: a.outputs.result });
 bPlaceholder.resolve(b.outputs.result);

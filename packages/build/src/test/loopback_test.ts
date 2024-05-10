@@ -7,76 +7,76 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { anyOf, defineNodeType, input, object } from "../index.js";
-import { placeholder } from "../internal/board/placeholder.js";
+import { loopback } from "../internal/board/loopback.js";
 import type { BreadboardType } from "../internal/type-system/type.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 function assertType<T extends { type: BreadboardType }>(
-  placeholder: T,
+  loopback: T,
   expected: BreadboardType
 ): T {
-  assert.equal(placeholder.type, expected);
-  return placeholder;
+  assert.equal(loopback.type, expected);
+  return loopback;
 }
 
 test("defaults to string", () => {
-  // $ExpectType Placeholder<string>
-  assertType(placeholder(), "string");
+  // $ExpectType Loopback<string>
+  assertType(loopback(), "string");
 });
 
 test("only type", () => {
-  // $ExpectType Placeholder<string>
-  assertType(placeholder({ type: "string" }), "string");
+  // $ExpectType Loopback<string>
+  assertType(loopback({ type: "string" }), "string");
 
-  // $ExpectType Placeholder<number>
-  assertType(placeholder({ type: "number" }), "number");
+  // $ExpectType Loopback<number>
+  assertType(loopback({ type: "number" }), "number");
 
-  // $ExpectType Placeholder<boolean>
-  assertType(placeholder({ type: "boolean" }), "boolean");
+  // $ExpectType Loopback<boolean>
+  assertType(loopback({ type: "boolean" }), "boolean");
 
-  // $ExpectType Placeholder<string | number>
-  placeholder({ type: anyOf("string", "number") });
+  // $ExpectType Loopback<string | number>
+  loopback({ type: anyOf("string", "number") });
 
-  // $ExpectType Placeholder<{ foo: string; }>
-  placeholder({ type: object({ foo: "string" }) });
+  // $ExpectType Loopback<{ foo: string; }>
+  loopback({ type: object({ foo: "string" }) });
 });
 
 test("invalid types", () => {
   // @ts-expect-error
-  placeholder({ type: undefined });
+  loopback({ type: undefined });
 
   // @ts-expect-error
-  placeholder({ type: null });
+  loopback({ type: null });
 
   // @ts-expect-error
-  placeholder({ type: "foo" });
+  loopback({ type: "foo" });
 });
 
 test("error: missing resolve value", () => {
   // @ts-expect-error
-  placeholder().resolve();
+  loopback().resolve();
 
   // @ts-expect-error
-  placeholder().resolve(undefined);
+  loopback().resolve(undefined);
 
   // @ts-expect-error
-  placeholder().resolve(null);
+  loopback().resolve(null);
 });
 
 test("error: resolve with raw value", () => {
   // @ts-expect-error
-  placeholder().resolve("foo");
+  loopback().resolve("foo");
 });
 
 test("error: resolve with input", () => {
   // @ts-expect-error
-  placeholder().resolve(input());
+  loopback().resolve(input());
 });
 
-test("error: resolve with another placeholder", () => {
+test("error: resolve with another loopback", () => {
   // @ts-expect-error
-  placeholder().resolve(placeholder());
+  loopback().resolve(loopback());
 });
 
 test("error: resolve with wrong type", () => {
@@ -86,7 +86,7 @@ test("error: resolve with wrong type", () => {
     outputs: { a: { type: "string" } },
     invoke: () => ({ a: "a" }),
   })({});
-  const p = placeholder({ type: "number" });
+  const p = loopback({ type: "number" });
   // @ts-expect-error
   p.resolve(node.outputs.a);
 });
@@ -98,10 +98,10 @@ test("error: resolve multiple times", () => {
     outputs: { a: { type: "string" } },
     invoke: () => ({ a: "a" }),
   })({});
-  const p = placeholder();
+  const p = loopback();
   p.resolve(node.outputs.a);
   assert.throws(
     () => p.resolve(node.outputs.a),
-    /Placeholder has already been resolved/
+    /Loopback has already been resolved/
   );
 });
