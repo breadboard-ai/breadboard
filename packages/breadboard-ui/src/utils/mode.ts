@@ -18,6 +18,7 @@ export enum EditorMode {
 
 const removeHardPort = (...names: string[]) => {
   return (port: InspectablePort) => {
+    console.log("🍊 port", port);
     if (
       (port.status === PortStatus.Connected ||
         port.status === PortStatus.Dangling) &&
@@ -26,6 +27,10 @@ const removeHardPort = (...names: string[]) => {
       return true;
     if (port.star) return false;
     if (port.schema.behavior?.includes("config")) return false;
+    const items = port.schema.items;
+    if (items && !Array.isArray(items) && items.behavior?.includes("config")) {
+      return false;
+    }
     if (names.includes(port.name)) return false;
     return true;
   };
