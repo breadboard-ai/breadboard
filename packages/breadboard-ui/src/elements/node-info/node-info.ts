@@ -475,7 +475,6 @@ export class NodeInfo extends LitElement {
       if (name === "$id" || name === "$type") {
         continue;
       }
-      console.log("🌻 null objectValue", value, name);
 
       if (toConvert.has(name)) {
         if (value === "") {
