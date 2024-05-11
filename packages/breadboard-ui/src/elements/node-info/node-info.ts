@@ -475,6 +475,7 @@ export class NodeInfo extends LitElement {
       if (name === "$id" || name === "$type") {
         continue;
       }
+      console.log("🌻 null objectValue", value, name);
 
       if (toConvert.has(name)) {
         if (value === "") {
@@ -489,7 +490,7 @@ export class NodeInfo extends LitElement {
           try {
             // Always attempt a JSON parse of the value.
             const objectValue = JSON.parse(value);
-            if (behavior === "llm-content") {
+            if (behavior === "llm-content" && objectValue !== null) {
               assertIsLLMContent(objectValue);
             }
 
