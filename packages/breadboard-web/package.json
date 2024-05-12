@@ -105,6 +105,10 @@
         {
           "script": "generate:graphs",
           "cascade": false
+        },
+        {
+          "script": "copy-light-kits",
+          "cascade": false
         }
       ],
       "files": [
@@ -141,7 +145,7 @@
     "copy-light-kits": {
       "command": "tsx src/copy-light-kits.ts",
       "dependencies": [
-        "build"
+        "../agent-kit:build"
       ],
       "output": [
         "public/*.kit.json"
