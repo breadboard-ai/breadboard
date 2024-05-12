@@ -104,6 +104,10 @@ export type LooperPlan = {
    * or all of them;
    */
   returnLast?: boolean;
+  /**
+   * The next task.
+   */
+  next?: string;
 };
 
 export type LooperProgress = LooperPlan & { next: string };
