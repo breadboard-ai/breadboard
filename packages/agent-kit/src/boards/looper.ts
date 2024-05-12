@@ -104,7 +104,7 @@ There are four kinds of jobs that you can make plans for.
 }
 \`\`\`
 
-2) The list of items job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one "Write <chapter title>" per chapter). 
+2) The step-by-step job. These are for situations when a distinct, known number of tasks can be discerned from the job. For example, when asked to write chapters of a book following an outline, there's a clear list of tasks that can be discerned (one "Write <chapter title>" per chapter). 
 
 A plan for this kind of job will look like an object with "todo" items:
 
@@ -140,7 +140,7 @@ If the job includes a limit on how many tasks to produce, use the "max" property
 \`\`\`
 
 4) The job where the completion is signaled by others. These are the types of jobs where the number of iterations or the exact steps are unknown, and the
-completion signal is issued by those who are executing the. In such cases, use the "doneMarker" property and use the marker specified:
+completion signal is issued by those who are executing the individual steps. In such cases, use the "doneMarker" property and use the marker specified:
 
 \`\`\`json
 {
@@ -148,7 +148,7 @@ completion signal is issued by those who are executing the. In such cases, use t
 }
 \`\`\`
 
-Common markers are "##STOP##" or "##DONE##", but could be different depending on a job.
+Common markers are "##STOP##" or "##DONE##", but could be different depending on a job. This type of the job is mutually exclusive with the step-by-step type, so the "todo" and "doneMarker" may never be specified together.
 
 When you are unable to create plan from the job, reply with:
 
@@ -207,6 +207,10 @@ export const planReaderFunction = fun(({ context, progress }) => {
       if (!next) {
         return { done: existing };
       }
+      // Sometimes, the Planner gets confused and puts the
+      // doneMaker together with todo.
+      // Quietly fix that problem here by removing doneMarker.
+      delete current.doneMarker;
       contents.push({
         role: "$metadata",
         data: { ...current, next: next.task },
