@@ -489,14 +489,14 @@ export class NodeInfo extends LitElement {
           try {
             // Always attempt a JSON parse of the value.
             const objectValue = JSON.parse(value);
-            if (behavior === "llm-content") {
-              assertIsLLMContent(objectValue);
-            }
-
             // Set nulls & undefineds for deletion.
             if (objectValue === null || objectValue === undefined) {
               delete configuration[name];
               continue;
+            }
+
+            if (behavior === "llm-content") {
+              assertIsLLMContent(objectValue);
             }
 
             configuration[name] = objectValue;

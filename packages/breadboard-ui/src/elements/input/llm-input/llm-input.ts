@@ -588,6 +588,9 @@ export class LLMInput extends LitElement {
     }
 
     this.value.parts.splice(idx, 1);
+    if (this.value.parts.length === 0) {
+      this.value = null;
+    }
     this.#forceReRender();
   }
 

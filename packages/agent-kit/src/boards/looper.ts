@@ -223,7 +223,7 @@ export const planReaderFunction = fun(({ context, progress }) => {
       if (count >= max) {
         return { done: existing };
       }
-      contents.push({ role: "$metadata", data: { type: "looper" } });
+      contents.push({ role: "$metadata", data: { type: "looper", max } });
       return { context: contents };
     }
     return { done: existing };
