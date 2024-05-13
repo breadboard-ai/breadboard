@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import assert from "node:assert/strict";
 import { test } from "node:test";
+import { board } from "../internal/board/board.js";
 import { output } from "../internal/board/output.js";
 import { defineNodeType } from "../internal/define/define.js";
+import { anyOf } from "../internal/type-system/any-of.js";
+import { serialize } from "../internal/board/serialize.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -136,4 +140,126 @@ test("output usage", () => {
     strNode.inputs.foo,
     { id: "foo" }
   );
+});
+
+test("multi-output", () => {
+  const { foo, bar, baz } = defineNodeType({
+    name: "test",
+    inputs: {},
+    outputs: {
+      foo: { type: "string" },
+      bar: { type: "number" },
+      baz: { type: "boolean" },
+    },
+    invoke: () => ({
+      foo: "foo",
+      bar: 123,
+      baz: true,
+    }),
+  })({}).outputs;
+
+  {
+    // $xxExpectType BoardDefinition<{}, { foo: OutputPort<string | undefined>; bar: OutputPort<number>; mix: OutputPort<string | number>; baz: OutputPort<boolean | undefined>; }>
+    const boardDef = board({
+      inputs: {},
+      outputs: [
+        {
+          foo,
+          bar,
+          mix: foo,
+        },
+        {
+          $id: "custom-output-name",
+          $metadata: {
+            title: "Custom Title",
+            description: "Custom Description",
+          },
+          bar,
+          baz,
+          mix: bar,
+        },
+      ],
+    });
+
+    assert.deepEqual(serialize(boardDef), {
+      edges: [
+        { from: "test-0", to: "custom-output-name", out: "bar", in: "bar" },
+        { from: "test-0", to: "custom-output-name", out: "bar", in: "mix" },
+        { from: "test-0", to: "custom-output-name", out: "baz", in: "baz" },
+        { from: "test-0", to: "output-0", out: "bar", in: "bar" },
+        { from: "test-0", to: "output-0", out: "foo", in: "foo" },
+        { from: "test-0", to: "output-0", out: "foo", in: "mix" },
+      ],
+      nodes: [
+        {
+          id: "custom-output-name",
+          metadata: {
+            description: "Custom Description",
+            title: "Custom Title",
+          },
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                bar: { type: "number" },
+                baz: { type: "boolean" },
+                mix: { type: "number" },
+              },
+              required: ["bar", "baz", "mix"],
+            },
+          },
+        },
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                bar: { type: "number" },
+                foo: { type: "string" },
+                mix: { type: "string" },
+              },
+              required: ["bar", "foo", "mix"],
+            },
+          },
+        },
+        { id: "test-0", type: "test", configuration: {} },
+      ],
+    });
+
+    {
+      // $ExpectType BoardInstance<{}, { foo: OutputPort<string | undefined>; bar: OutputPort<number>; mix: OutputPort<string | number>; baz: OutputPort<boolean | undefined>; }>
+      const boardInst = boardDef({});
+
+      const {
+        // $ExpectType OutputPort<string | undefined>
+        foo,
+        // $ExpectType OutputPort<number>
+        bar,
+        // $ExpectType OutputPort<boolean | undefined>
+        baz,
+        // $ExpectType OutputPort<string | number>
+        mix,
+      } = boardInst.outputs;
+
+      defineNodeType({
+        name: "test",
+        inputs: {
+          foo: { type: "string", optional: true },
+          bar: { type: "number" },
+          baz: { type: "boolean", optional: true },
+          mix: { type: anyOf("string", "number") },
+        },
+        outputs: {},
+        invoke: () => ({}),
+      })({
+        foo,
+        bar,
+        baz,
+        mix,
+      });
+    }
+  }
 });

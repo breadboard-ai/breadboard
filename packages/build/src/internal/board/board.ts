@@ -6,10 +6,10 @@
 
 import {
   InputPort,
+  OutputPort,
   type OutputPortReference,
   type ValuesOrOutputPorts,
 } from "../common/port.js";
-import type { SerializableBoard } from "../common/serializable.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { GenericSpecialInput } from "./input.js";
 import type { Output } from "./output.js";
@@ -44,27 +44,68 @@ export function board<
   // directly here? The only way to not have already initialized it to something
   // was to have used an input(), so only inputs should be allowed, right?
   IPORTS extends BoardInputPorts,
-  OPORTS extends BoardOutputPorts,
+  OPORTS extends BoardOutputShape,
 >({
   inputs,
   outputs,
   title,
   description,
   version,
-}: BoardParameters<IPORTS, OPORTS>): BoardDefinition<IPORTS, OPORTS> {
-  const def = new BoardDefinitionImpl(inputs, outputs);
+}: BoardParameters<IPORTS, OPORTS>): BoardDefinition<
+  IPORTS,
+  FlattenMultiOutputs<OPORTS>
+> {
+  const flatOutputs = flattenOutputs(outputs);
+  const def = new BoardDefinitionImpl(inputs, flatOutputs);
   return Object.assign(def.instantiate.bind(def), {
     inputs,
-    outputs,
+    outputs: flatOutputs,
+    outputsForSerialization: outputs as
+      | BoardOutputPorts
+      | Array<BoardOutputPorts>,
     title,
     description,
     version,
   });
 }
 
+function flattenOutputs<OPORTS extends BoardOutputShape>(
+  outputs: OPORTS
+): FlattenMultiOutputs<OPORTS> {
+  if (!Array.isArray(outputs)) {
+    return outputs as FlattenMultiOutputs<OPORTS>;
+  }
+  const ports = {} as FlattenMultiOutputs<OPORTS>;
+  for (const outputNode of outputs as Array<BoardOutputPorts>) {
+    for (const [name, port] of Object.entries(outputNode)) {
+      // TODO(aomarks) This is wrong. We're just clobbering. Doesn't matter up
+      // until we try to invoke a board, which we don't yet support.
+      ports[name] = port;
+    }
+  }
+  return ports;
+}
+
+type FlattenMultiOutputs<O extends BoardOutputShape> =
+  O extends Array<BoardOutputPortsWithUndefined>
+    ? {
+        [K in keyof O[number] as K extends "$id" | "$metadata"
+          ? never
+          : K]-?: O[number][K] extends OutputPort<infer T> | undefined
+          ? undefined extends O[number][K]
+            ? OutputPort<T | undefined>
+            : OutputPort<T>
+          : O[number][K] extends OutputPortReference<infer T> | undefined
+            ? undefined extends O[number][K]
+              ? OutputPortReference<T | undefined>
+              : OutputPortReference<T>
+            : never;
+      }
+    : O;
+
 export interface BoardParameters<
   IPORTS extends BoardInputPorts,
-  OPORTS extends BoardOutputPorts,
+  OPORTS extends BoardOutputShape,
 > {
   inputs: IPORTS;
   outputs: OPORTS;
@@ -78,10 +119,26 @@ export type BoardInputPorts = Record<
   InputPort<JsonSerializable> | GenericSpecialInput
 >;
 
+export type BoardOutputShape =
+  | BoardOutputPorts
+  | Array<BoardOutputPortsWithUndefined>;
+
 export type BoardOutputPorts = Record<
   string,
   OutputPortReference<JsonSerializable> | Output<JsonSerializable>
 >;
+
+export type BoardOutputPortsWithUndefined = Record<
+  string,
+  | OutputPortReference<JsonSerializable>
+  | Output<JsonSerializable>
+  | string
+  | { title?: string; description?: string }
+  | undefined
+> & {
+  $id?: string | undefined;
+  $metadata?: { title?: string; description?: string };
+};
 
 export type BoardDefinition<
   IPORTS extends BoardInputPorts,
@@ -89,6 +146,7 @@ export type BoardDefinition<
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
+  readonly outputsForSerialization: BoardOutputPorts | Array<BoardOutputPorts>;
   readonly title?: string;
   readonly description?: string;
   readonly version?: string;
@@ -127,8 +185,7 @@ class BoardDefinitionImpl<
 class BoardInstance<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
-> implements SerializableBoard
-{
+> {
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
   // TODO(aomarks) This should get used somewhere.

@@ -52,7 +52,7 @@ export class InputPort<T extends JsonSerializable>
 /**
  * A Breadboard node port which sends values.
  */
-export class OutputPort<T extends JsonSerializable>
+export class OutputPort<T extends JsonSerializable | undefined>
   implements OutputPortReference<T>, SerializableOutputPort
 {
   readonly [OutputPortGetter] = this;
@@ -68,7 +68,7 @@ export class OutputPort<T extends JsonSerializable>
   }
 }
 
-export interface OutputPortReference<T extends JsonSerializable> {
+export interface OutputPortReference<T extends JsonSerializable | undefined> {
   readonly [OutputPortGetter]: OutputPort<T>;
 }
 

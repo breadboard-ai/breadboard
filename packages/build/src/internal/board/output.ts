@@ -24,7 +24,7 @@ export function output<T extends JsonSerializable>(
   };
 }
 
-export interface Output<T extends JsonSerializable> {
+export interface Output<T extends JsonSerializable | undefined> {
   readonly __SpecialOutputBrand: true;
   readonly id?: string;
   readonly title?: string;

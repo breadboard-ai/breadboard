@@ -435,7 +435,10 @@ type StrictInstantiateArgs<
 } & {
   [K in keyof Omit<SI, OI | "$id" | "$metadata">]: InstantiateArg<SI[K]>;
 } & {
-  [K in OI]?: InstantiateArg<SI[K]> | undefined;
+  [K in OI]?:
+    | InstantiateArg<SI[K]>
+    | OutputPortReference<SI[K] | undefined>
+    | undefined;
 } & {
   [K in keyof Omit<
     A,

@@ -23,12 +23,11 @@ import type {
   SerializableOutputPortReference,
 } from "../common/serializable.js";
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
-import type { GenericSpecialInput } from "./input.js";
-import type { Output } from "./output.js";
-import { isLoopback, type Loopback } from "./loopback.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
-import { isConvergence, type Convergence } from "./converge.js";
-import type { Value } from "../../index.js";
+import { isConvergence } from "./converge.js";
+import type { GenericSpecialInput } from "./input.js";
+import { isLoopback } from "./loopback.js";
+import type { Output } from "./output.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -108,55 +107,81 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     inputNode.configuration.schema.required.push(mainInputName);
   }
 
-  // Recursively traverse the graph starting from outputs.
-  const sortedBoardOutputs = Object.entries(board.outputs).sort(
-    // Sort so that mainOutputSchema will also be sorted.
-    ([nameA], [nameB]) => nameA.localeCompare(nameB)
-  );
-  for (const [name, output] of sortedBoardOutputs) {
-    const port = isSpecialOutput(output)
-      ? output.port[OutputPortGetter]
-      : output[OutputPortGetter];
-    const outputNodeId = isSpecialOutput(output)
-      ? output.id ?? "output-0"
-      : "output-0";
-    let outputNode = outputNodes.get(outputNodeId);
-    if (outputNode === undefined) {
-      outputNode = {
-        id: outputNodeId,
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {},
-            required: [],
-            // TODO(aomarks) Disallow extra properties?
-          },
-        },
-      };
-      outputNodes.set(outputNodeId, outputNode);
-    }
-    const schema = toJSONSchema(port.type);
-    if (isSpecialOutput(output)) {
-      if (output.title !== undefined) {
-        schema.title = output.title;
-      }
-      if (output.description !== undefined) {
-        schema.description = output.description;
-      }
-    }
-    outputNode.configuration.schema.properties[name] = schema;
-    outputNode.configuration.schema.required.push(name);
-    addEdge(
-      visitNodeAndReturnItsId(port.node),
-      port.name,
-      outputNodeId,
-      name,
-      isConstant(
-        // TODO(aomarks) Should not need this cast.
-        output as OutputPortReference<JsonSerializable>
-      )
+  const outputsArray = Array.isArray(board.outputsForSerialization)
+    ? board.outputsForSerialization
+    : [board.outputsForSerialization];
+  let i = 0;
+  for (const outputs of outputsArray) {
+    // Recursively traverse the graph starting from outputs.
+    const sortedBoardOutputs = Object.entries(outputs).sort(
+      // Sort so that mainOutputSchema will also be sorted.
+      ([nameA], [nameB]) => nameA.localeCompare(nameB)
     );
+    let iterationOutputId: string | undefined = undefined;
+    const autoId = () => {
+      if (iterationOutputId == undefined) {
+        iterationOutputId;
+        iterationOutputId = `output-${i}`;
+        i++;
+      }
+      return iterationOutputId;
+    };
+    for (const [name, output] of sortedBoardOutputs) {
+      if (name === "$id" || name === "$metadata") {
+        continue;
+      }
+      const port = isSpecialOutput(output)
+        ? output.port[OutputPortGetter]
+        : output[OutputPortGetter];
+      const outputNodeId =
+        (outputs.$id as string | undefined) ??
+        (isSpecialOutput(output) ? output.id : undefined) ??
+        autoId();
+      let outputNode = outputNodes.get(outputNodeId);
+      if (outputNode === undefined) {
+        outputNode = {
+          id: outputNodeId,
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+              // TODO(aomarks) Disallow extra properties?
+            },
+          },
+        };
+        const metadata = outputs.$metadata as {
+          title?: string;
+          description?: string;
+        };
+        if (metadata !== undefined) {
+          outputNode.metadata = metadata;
+        }
+        outputNodes.set(outputNodeId, outputNode);
+      }
+      const schema = toJSONSchema(port.type);
+      if (isSpecialOutput(output)) {
+        if (output.title !== undefined) {
+          schema.title = output.title;
+        }
+        if (output.description !== undefined) {
+          schema.description = output.description;
+        }
+      }
+      outputNode.configuration.schema.properties[name] = schema;
+      outputNode.configuration.schema.required.push(name);
+      addEdge(
+        visitNodeAndReturnItsId(port.node),
+        port.name,
+        outputNodeId,
+        name,
+        isConstant(
+          // TODO(aomarks) Should not need this cast.
+          output as OutputPortReference<JsonSerializable>
+        )
+      );
+    }
   }
 
   if (unconnectedInputs.size > 0) {
