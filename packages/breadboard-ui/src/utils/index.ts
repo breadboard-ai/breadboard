@@ -38,6 +38,17 @@ export function isLLMContent(schema: Schema) {
   return schema.type === "object" && schema.behavior?.includes("llm-content");
 }
 
+export function isLLMContentArray(schema: Schema) {
+  return (
+    schema.type &&
+    schema.items &&
+    schema.type === "array" &&
+    !Array.isArray(schema.items) &&
+    schema.items.type === "object" &&
+    schema.items.behavior?.includes("llm-content")
+  );
+}
+
 export function isWebcamImage(schema: Schema) {
   return (
     schema.type === "object" &&

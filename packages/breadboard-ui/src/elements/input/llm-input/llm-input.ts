@@ -10,7 +10,6 @@ import {
   LLMContent,
   LLMInlineData,
 } from "../../../types/types.js";
-import { Schema } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -35,9 +34,6 @@ type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 export class LLMInput extends LitElement {
   @property()
   value: LLMContent | null = null;
-
-  @property()
-  schema: Schema | null = null;
 
   @property()
   description: string | null = null;
@@ -274,12 +270,16 @@ export class LLMInput extends LitElement {
       width: 3px;
     }
 
-    .part:focus-within {
-      background: var(--bb-output-50);
+    .part:hover {
+      background: var(--bb-neutral-50);
     }
 
     .part:hover .value::before {
       background: var(--bb-output-300);
+    }
+
+    .part:focus-within {
+      background: var(--bb-output-50);
     }
 
     .value textarea {
@@ -455,12 +455,12 @@ export class LLMInput extends LitElement {
     }
   }
 
-  async processAllOpenParts() {
+  async processAllOpenParts(): Promise<void> {
     if (!this.value) {
       return;
     }
 
-    return Promise.all([
+    await Promise.all([
       this.value.parts.map((part, idx) => {
         if (!isInlineData(part)) {
           return;
@@ -698,18 +698,20 @@ export class LLMInput extends LitElement {
 
       case "audio-microphone": {
         return cache(
-          html`<bb-audio-input id="part-${idx}"></bb-audio-input
-            ><button
-              class="confirm"
-              @click=${(evt: InputEvent) => {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
+          html`<bb-audio-input id="part-${idx}"></bb-audio-input>
+            <div>
+              <button
+                class="confirm"
+                @click=${(evt: InputEvent) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                this.#processInputPart(idx);
-              }}
-            >
-              Confirm
-            </button>`
+                  this.#processInputPart(idx);
+                }}
+              >
+                Confirm
+              </button>
+            </div>`
         );
       }
 
@@ -771,7 +773,9 @@ export class LLMInput extends LitElement {
       this.allow.textFile;
 
     return html` <header>
-        <div id="description">${this.description}</div>
+        ${this.description
+          ? html`<div id="description">${this.description}</div>`
+          : nothing}
         <div id="controls-container">
           <div id="controls">
             <span id="insert">Insert:</span>

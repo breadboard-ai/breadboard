@@ -12,13 +12,7 @@ import {
   InspectableRunNodeEvent,
   OutputValues,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  HTMLTemplateResult,
-  nothing,
-  TemplateResult,
-} from "lit";
+import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -28,13 +22,6 @@ import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { LLMContent, SETTINGS_TYPE, Settings } from "../../types/types.js";
-import { cache } from "lit/directives/cache.js";
-import {
-  isFunctionCall,
-  isFunctionResponse,
-  isInlineData,
-  isText,
-} from "../../utils/llm-content.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
 
 @customElement("bb-activity-log")
@@ -60,7 +47,6 @@ export class ActivityLog extends LitElement {
   @property()
   settings: Settings | null = null;
 
-  #partDataURLs = new Map<string, string>();
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #isHidden = false;
@@ -283,102 +269,26 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (
-            this.#isLLMContent(nodeValue) ||
-            this.#isArrayOfLLMContent(nodeValue)
-          ) {
-            const values = this.#isArrayOfLLMContent(nodeValue)
-              ? nodeValue
-              : [nodeValue];
+          if (this.#isArrayOfLLMContent(nodeValue)) {
+            value = html`<bb-llm-output-array
+              .values=${nodeValue}
+            ></bb-llm-output-array>`;
+          } else if (this.#isLLMContent(nodeValue)) {
+            if (!nodeValue.parts) {
+              // Special case for "$metadata" item.
+              // See https://github.com/breadboard-ai/breadboard/issues/1673
+              // TODO: Make this not ugly.
+              const data = (nodeValue as unknown as { data: unknown }).data;
+              value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+            }
 
-            value = html`${values.map((llmContent) => {
-              if (!llmContent.parts) {
-                // Special case for "$metadata" item.
-                // See https://github.com/breadboard-ai/breadboard/issues/1673
-                // TODO: Make this not ugly.
-                const data = (llmContent as unknown as { data: unknown }).data;
-                return html`<bb-json-tree .json=${data}></bb-json-tree>`;
-              }
-              if (!llmContent.parts.length) {
-                return html`No data provided`;
-              } else {
-                return html`<div class="llm-content">
-                  ${llmContent.parts.length
-                    ? map(llmContent.parts, (part, idx) => {
-                        let value: TemplateResult | symbol = nothing;
+            if (!nodeValue.parts.length) {
+              value = html`No data provided`;
+            }
 
-                        if (isText(part)) {
-                          value = html`${markdown(part.text)}`;
-                        } else if (isInlineData(part)) {
-                          const key = `${event.id}-${idx}`;
-                          let partDataURL: Promise<string> =
-                            Promise.resolve("No source");
-
-                          if (this.#partDataURLs.has(key)) {
-                            partDataURL = Promise.resolve(
-                              this.#partDataURLs.get(key)!
-                            );
-                          } else if (
-                            part.inlineData.data !== "" &&
-                            !part.inlineData.mimeType.startsWith("text")
-                          ) {
-                            const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                            partDataURL = fetch(dataURL)
-                              .then((response) => response.blob())
-                              .then((data) => {
-                                const url = URL.createObjectURL(data);
-                                this.#partDataURLs.set(key, url);
-                                return url;
-                              });
-                          }
-
-                          const tmpl = partDataURL.then((url: string) => {
-                            if (part.inlineData.mimeType.startsWith("image")) {
-                              return cache(
-                                html`<img src="${url}" alt="LLM Image" />`
-                              );
-                            }
-
-                            if (part.inlineData.mimeType.startsWith("audio")) {
-                              return cache(
-                                html`<audio src="${url}" controls />`
-                              );
-                            }
-
-                            if (part.inlineData.mimeType.startsWith("video")) {
-                              return cache(
-                                html`<video src="${url}" controls />`
-                              );
-                            }
-
-                            if (part.inlineData.mimeType.startsWith("text")) {
-                              return cache(
-                                // prettier-ignore
-                                html`<div class="plain-text">${atob(part.inlineData.data)}</div>`
-                              );
-                            }
-                          });
-
-                          value = html`${until(tmpl)}`;
-                        } else if (
-                          isFunctionCall(part) ||
-                          isFunctionResponse(part)
-                        ) {
-                          value = html` <bb-json-tree
-                            .json=${part}
-                          ></bb-json-tree>`;
-                        } else {
-                          value = html`Unrecognized part`;
-                        }
-
-                        return html`<div class="content">
-                          <span class="value">${value}</span>
-                        </div>`;
-                      })
-                    : html`No data provided`}
-                </div>`;
-              }
-            })}`;
+            value = nodeValue.parts.length
+              ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
+              : html`No data provided`;
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {
@@ -413,19 +323,9 @@ export class ActivityLog extends LitElement {
     </dl>`;
   }
 
-  #clearPartDataURLs() {
-    for (const url of this.#partDataURLs.values()) {
-      console.info(`Revoking ${url}`);
-      URL.revokeObjectURL(url);
-    }
-
-    this.#partDataURLs.clear();
-  }
-
   render() {
     if (!this.events || this.#seenItems.size > this.events.length) {
       this.#seenItems.clear();
-      this.#clearPartDataURLs();
     }
     const showLogDownload = this.run && this.run.serialize;
 

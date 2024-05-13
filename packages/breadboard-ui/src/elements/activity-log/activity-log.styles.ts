@@ -314,39 +314,26 @@ export const styles = css`
     user-select: text;
   }
 
-  dt .llm-content .value {
-    white-space: normal;
-    border-radius: none;
-    user-select: text;
-  }
-
-  dt .llm-content .value.markdown,
   dt .value.markdown {
     white-space: normal;
     line-height: 1.5;
     user-select: text;
   }
 
-  dt .llm-content .value *,
   dt .value.output * {
     margin: var(--bb-grid-size) 0;
   }
 
-  dt .llm-content .value h1,
   dt .value.output h1 {
     font-size: var(--bb-title-large);
     margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
   }
 
-  dt .llm-content .value h2,
   dt .value.output h2 {
     font-size: var(--bb-title-medium);
     margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
   }
 
-  dt .llm-content .value h3,
-  dt .llm-content .value h4,
-  dt .llm-content .value h5,
   dt .value.output h3,
   dt .value.output h4,
   dt .value.output h5 {
@@ -354,23 +341,10 @@ export const styles = css`
     margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
   }
 
-  dt .llm-content .value p,
   dt .value.output p {
     font-size: var(--bb-body-medium);
     margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
     white-space: pre-line;
-  }
-
-  dt .llm-content .value h1:first-of-type,
-  dt .llm-content .value h2:first-of-type,
-  dt .llm-content .value h3:first-of-type,
-  dt .llm-content .value h4:first-of-type,
-  dt .llm-content .value h5:first-of-type {
-    margin-top: 0;
-  }
-
-  dt .llm-content .value p:last-of-type {
-    margin-bottom: 0;
   }
 
   dt .value.input {
@@ -406,66 +380,6 @@ export const styles = css`
     background: var(--bb-selected-color);
     border-radius: var(--bb-grid-size);
     animation: fadeOut 1s ease-out forwards;
-  }
-
-  .llm-content {
-    resize: vertical;
-    overflow: auto;
-    height: 200px;
-    min-height: var(--bb-grid-size-6);
-    border: 2px solid var(--bb-neutral-300);
-    border-radius: var(--bb-grid-size);
-    padding: var(--bb-grid-size-3) 0;
-    margin-bottom: var(--bb-grid-size-2);
-  }
-
-  .llm-content .content {
-    display: block;
-    margin-bottom: var(--bb-grid-size-2);
-  }
-
-  .llm-content .value {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-
-    margin: 0 var(--bb-grid-size-3);
-    font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-      var(--bb-font-family);
-    color: var(--bb-neutral-900);
-
-    padding: 0 var(--bb-grid-size-3);
-  }
-
-  .llm-content .value::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    border-radius: var(--bb-grid-size-3);
-    background: var(--bb-output-100);
-    width: 3px;
-  }
-
-  .llm-content .value img,
-  .llm-content .value video,
-  .llm-content .value audio {
-    width: 100%;
-    max-width: 320px;
-  }
-
-  .llm-content .value img,
-  .llm-content .value video {
-    outline: 1px solid var(--bb-neutral-300);
-    border-radius: var(--bb-grid-size);
-  }
-
-  .llm-content .value .plain-text {
-    white-space: pre;
-    font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
-      var(--bb-font-family-mono);
-    color: var(--bb-neutral-600);
   }
 
   @keyframes slideIn {
