@@ -256,7 +256,7 @@ export class LLMInput extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
-      padding: 0 var(--bb-grid-size-3);
+      padding: var(--bb-grid-size) var(--bb-grid-size-3);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
@@ -274,8 +274,16 @@ export class LLMInput extends LitElement {
       width: 3px;
     }
 
+    .part:focus-within {
+      background: var(--bb-output-50);
+    }
+
+    .part:hover .value::before {
+      background: var(--bb-output-300);
+    }
+
     .value textarea {
-      background: var(--bb-neutral-0);
+      background: transparent;
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
@@ -290,6 +298,7 @@ export class LLMInput extends LitElement {
 
     .value * {
       margin: var(--bb-grid-size) 0;
+      background: transparent;
     }
 
     .value h1 {
