@@ -395,6 +395,22 @@ export class LLMInput extends LitElement {
     this.#clearPartDataURLs();
   }
 
+  getContainerHeight(): number {
+    if (!this.#containerRef.value) {
+      return 0;
+    }
+
+    return this.#containerRef.value.getBoundingClientRect().height || 0;
+  }
+
+  setContainerHeight(height: number) {
+    if (!this.#containerRef.value) {
+      return;
+    }
+
+    this.#containerRef.value.style.height = `${height}px`;
+  }
+
   #clearPartDataURLs() {
     for (const url of this.#partDataURLs.values()) {
       URL.revokeObjectURL(url);
