@@ -10,6 +10,7 @@ import geminiGenerator from "./boards/gemini-generator.js";
 import geminiProVision from "./boards/gemini-pro-vision.js";
 
 import { Core } from "@google-labs/core-kit";
+import { serialize } from "@breadboard-ai/build";
 
 // TODO: Convert to new syntax
 const kit = new Board({
@@ -21,7 +22,7 @@ const kit = new Board({
 const core = kit.addKit(Core);
 
 kit.graphs = {
-  text: geminiGenerator,
+  text: serialize(geminiGenerator),
   vision: geminiProVision,
 };
 

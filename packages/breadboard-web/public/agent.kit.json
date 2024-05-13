@@ -1127,10 +1127,10 @@
                   "type": "object",
                   "title": "Persona",
                   "description": "Describe the worker persona: the skills and various capabilities, the mindset, the thinking process, etc.",
+                  "default": "",
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
                   ],
-                  "default": "",
                   "behavior": [
                     "llm-content",
                     "config"
@@ -1660,10 +1660,10 @@
                   "type": "string",
                   "title": "Instruction",
                   "description": "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action.",
+                  "default": "",
                   "examples": [
                     "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
                   ],
-                  "default": "",
                   "format": "multiline"
                 },
                 "tools": {
@@ -2031,13 +2031,13 @@
                   "type": "array",
                   "title": "Stop Sequences",
                   "description": "An array of strings that will stop the output",
+                  "default": "[]",
                   "items": {
                     "type": "object",
                     "behavior": [
                       "config"
                     ]
-                  },
-                  "default": "[]"
+                  }
                 }
               },
               "required": [
