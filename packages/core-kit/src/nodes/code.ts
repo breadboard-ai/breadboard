@@ -69,8 +69,14 @@ export function code<
   Expand<CodeNodeInputs<I>>,
   { [K in keyof O]: ConvertBreadboardType<O[K]> }
 > {
+  // TODO(aomarks) Do we need any of this logic involving function names? Why
+  // can't we just wrap the code in parens and invoke it like `(<fn>)()`.
+  const id = inputs.$id as string | undefined;
+  const jsFriendlyId = id === undefined ? "run" : id.replace(/-/g, "_");
+  const [code, name] = serializeFunction(jsFriendlyId, fn);
   const node = runJavascript({
-    code: fn.toString(),
+    code,
+    name,
     raw: true,
     ...(inputs as Record<string, JsonSerializable>),
   }) as CodeNode<Expand<CodeNodeInputs<I>>, ConvertBreadboardTypes<O>>;
@@ -113,3 +119,24 @@ type ConvertBreadboardTypes<T extends Record<string, BreadboardType>> = {
 };
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
+
+const serializeFunction = (
+  name: string,
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  handlerFn: Function
+) => {
+  let code = handlerFn.toString();
+
+  const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
+  const traditionalFunctionRegex =
+    /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
+
+  if (arrowFunctionRegex.test(code)) {
+    code = `const ${name} = ${code};`;
+  } else {
+    const match = traditionalFunctionRegex.exec(code);
+    if (match === null) throw new Error("Unexpected serialization: " + code);
+    else name = match[1] || name;
+  }
+  return [code, name];
+};

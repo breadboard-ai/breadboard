@@ -204,7 +204,8 @@ test("serialization", (t) => {
         type: "runJavascript",
         configuration: {
           bool: false,
-          code: '({ str, num, bool }) => ({\n        strLen: str.length,\n        strReversed: str.split("").reverse().join(""),\n        doubleNum: num * 2,\n        not: !bool,\n    })',
+          code: 'const customId = ({ str, num, bool }) => ({\n        strLen: str.length,\n        strReversed: str.split("").reverse().join(""),\n        doubleNum: num * 2,\n        not: !bool,\n    });',
+          name: "customId",
           raw: true,
         },
         metadata: { title: "Custom title", description: "Custom description" },
