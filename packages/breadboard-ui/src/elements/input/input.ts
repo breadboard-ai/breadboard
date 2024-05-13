@@ -13,6 +13,7 @@ import {
   isSelect,
   isWebcamImage,
   isLLMContent,
+  isLLMContentArray,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -24,6 +25,7 @@ import { AudioInput } from "./audio/audio.js";
 import { LLMContent } from "../../types/types.js";
 import { LLMInput } from "./llm-input/llm-input.js";
 import { createAllowListFromProperty } from "../../utils/llm-content.js";
+import { LLMInputArray } from "../elements.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -218,8 +220,8 @@ export class Input extends LitElement {
           data[key] = value;
         }
 
-        const isMultiformatLLMContent = element instanceof LLMInput;
-        if (isMultiformatLLMContent) {
+        const isLLMContent = element instanceof LLMInput;
+        if (isLLMContent) {
           // If there are any uncommitted parts, ask the LLM Input to handle
           // them at this point.
           await element.processAllOpenParts();
@@ -233,6 +235,20 @@ export class Input extends LitElement {
           } else {
             data[key] = value;
           }
+        }
+
+        const isLLMContentArray = element instanceof LLMInputArray;
+        if (isLLMContentArray) {
+          // If there are any uncommitted parts, ask the LLM Input to handle
+          // them at this point.
+          await element.processAllOpenParts();
+          const value = element.values;
+          console.log(value);
+          if (!element.values) {
+            return;
+          }
+
+          data[key] = value;
         }
       }
     }
@@ -275,17 +291,9 @@ export class Input extends LitElement {
           >`;
           let input;
 
-          const showLLMContent =
-            isLLMContent(property) ||
-            (property.type &&
-              property.items &&
-              property.type === "array" &&
-              !Array.isArray(property.items) &&
-              property.items.type === "object" &&
-              property.items.behavior?.includes("llm-content"));
-          if (showLLMContent) {
-            let value: LLMContent | LLMContent[] | null = null;
-            value = values[key] as LLMContent | LLMContent[] | null;
+          if (isLLMContent(property)) {
+            let value: LLMContent | null = null;
+            value = values[key] as LLMContent | null;
             if (!value) {
               const unparsedValue = property.examples?.[0] ?? property.default;
               value = unparsedValue ? JSON.parse(unparsedValue) : null;
@@ -305,6 +313,28 @@ export class Input extends LitElement {
               .value=${Array.isArray(value) ? value[0] : value}
               .allow=${allow}
             ></bb-llm-input>`;
+          } else if (isLLMContentArray(property)) {
+            let value: LLMContent[] | null = null;
+            value = values[key] as LLMContent[] | null;
+            if (!value) {
+              const unparsedValue = property.default;
+              value = unparsedValue ? JSON.parse(unparsedValue) : null;
+            }
+
+            const allow = createAllowListFromProperty(property);
+            input = html`<bb-llm-input-array
+              id="${key}"
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!(evt.key === "Enter" && evt.metaKey)) {
+                  return;
+                }
+
+                this.processInput();
+              }}
+              .description=${property.description}
+              .values=${value}
+              .allow=${allow}
+            ></bb-llm-input-array>`;
           } else if (isMicrophoneAudio(property)) {
             input = html`<bb-audio-input id="${key}"></bb-audio-input>`;
           } else if (isWebcamImage(property)) {
