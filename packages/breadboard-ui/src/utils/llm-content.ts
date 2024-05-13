@@ -7,6 +7,7 @@
 import { Schema } from "@google-labs/breadboard";
 import {
   AllowedLLMContentTypes,
+  LLMContent,
   LLMFunctionCall,
   LLMFunctionResponse,
   LLMInlineData,
@@ -28,6 +29,31 @@ export function isFunctionResponse(part: LLMPart): part is LLMFunctionResponse {
 
 export function isInlineData(part: LLMPart): part is LLMInlineData {
   return "inlineData" in part;
+}
+
+export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
+  if (typeof nodeValue !== "object" || !nodeValue) {
+    return false;
+  }
+
+  if ("parts" in nodeValue && Array.isArray(nodeValue.parts)) {
+    return true;
+  }
+
+  if ("role" in nodeValue && nodeValue.role === "$metadata") {
+    return true;
+  }
+  return false;
+}
+
+export function isArrayOfLLMContent(
+  nodeValue: unknown
+): nodeValue is LLMContent[] {
+  if (!Array.isArray(nodeValue)) {
+    return false;
+  }
+
+  return isLLMContent(nodeValue[0]);
 }
 
 function updateAllowList(
