@@ -21,8 +21,9 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { LLMContent, SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
+import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -89,29 +90,6 @@ export class ActivityLog extends LitElement {
     }
 
     return "image_url" in nodeValue;
-  }
-
-  #isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
-    if (typeof nodeValue !== "object" || !nodeValue) {
-      return false;
-    }
-
-    if ("parts" in nodeValue && Array.isArray(nodeValue.parts)) {
-      return true;
-    }
-
-    if ("role" in nodeValue && nodeValue.role === "$metadata") {
-      return true;
-    }
-    return false;
-  }
-
-  #isArrayOfLLMContent(nodeValue: unknown): nodeValue is LLMContent[] {
-    if (!Array.isArray(nodeValue)) {
-      return false;
-    }
-
-    return this.#isLLMContent(nodeValue[0]);
   }
 
   protected updated(): void {
@@ -269,11 +247,11 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (this.#isArrayOfLLMContent(nodeValue)) {
+          if (isArrayOfLLMContent(nodeValue)) {
             value = html`<bb-llm-output-array
               .values=${nodeValue}
             ></bb-llm-output-array>`;
-          } else if (this.#isLLMContent(nodeValue)) {
+          } else if (isLLMContent(nodeValue)) {
             if (!nodeValue.parts) {
               // Special case for "$metadata" item.
               // See https://github.com/breadboard-ai/breadboard/issues/1673

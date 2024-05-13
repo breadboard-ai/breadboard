@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, PropertyValueMap, html } from "lit";
+import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
@@ -22,17 +22,18 @@ import {
   GraphLoader,
   GraphProvider,
   InspectableRun,
+  InspectableRunEvent,
   InspectableRunInputs,
   Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { JSONTree } from "../elements.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode } from "../../utils/mode.js";
 import { guard } from "lit/directives/guard.js";
 import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -93,6 +94,9 @@ export class UI extends LitElement {
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
+  @state()
+  debugEvent: InspectableRunEvent | null = null;
+
   #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
   #lastBoardId = -1;
@@ -105,18 +109,6 @@ export class UI extends LitElement {
   });
 
   static styles = uiControllerStyles;
-
-  constructor() {
-    super();
-
-    this.addEventListener("pointerdown", () => {
-      if (!this.#detailsRef.value) {
-        return;
-      }
-
-      this.#detailsRef.value.classList.remove("active");
-    });
-  }
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -389,106 +381,105 @@ export class UI extends LitElement {
         </bb-board-details>`
     );
 
-    const activityLog = html`<bb-activity-log
-      .run=${this.run}
-      .inputsFromLastRun=${this.inputsFromLastRun}
-      .events=${events}
-      .eventPosition=${eventPosition}
-      .showExtendedInfo=${true}
-      .settings=${this.settings}
-      .logTitle=${"Activity"}
-      @breadboardinputrequested=${() => {
-        this.selectedNodeId = null;
-        this.requestUpdate();
-      }}
-      @pointerdown=${(evt: PointerEvent) => {
-        if (!this.#detailsRef.value) {
-          return;
-        }
+    const activityLog = guard(
+      [eventPosition],
+      () =>
+        html`<bb-activity-log
+          .run=${this.run}
+          .inputsFromLastRun=${this.inputsFromLastRun}
+          .events=${events}
+          .eventPosition=${eventPosition}
+          .showExtendedInfo=${true}
+          .settings=${this.settings}
+          .logTitle=${"Activity"}
+          @breadboardinputrequested=${() => {
+            this.selectedNodeId = null;
+            this.requestUpdate();
+          }}
+          @pointerdown=${(evt: PointerEvent) => {
+            if (!this.#controlsActivityRef.value) {
+              return;
+            }
 
-        if (!this.#controlsActivityRef.value) {
-          return;
-        }
+            const [top] = evt.composedPath();
+            if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+              return;
+            }
 
-        const [top] = evt.composedPath();
-        if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-          return;
-        }
+            evt.stopImmediatePropagation();
 
-        evt.stopImmediatePropagation();
+            const id = top.dataset.messageId;
+            const event = this.run?.getEventById(id);
 
-        const id = top.dataset.messageId;
-        const event = this.run?.getEventById(id);
+            if (!event) {
+              // TODO: Offer the user more information.
+              console.warn(`Unable to find event with ID "${id}"`);
+              return;
+            }
 
-        if (!event) {
-          // TODO: Offer the user more information.
-          console.warn(`Unable to find event with ID "${id}"`);
-          return;
-        }
+            if (event.type !== "node") {
+              return;
+            }
 
-        if (event.type !== "node") {
-          return;
-        }
+            this.debugEvent = event;
+          }}
+          @breadboardinputenter=${(event: InputEnterEvent) => {
+            // Notify any pending handlers that the input has arrived.
+            if (this.#messagePosition < events.length - 1) {
+              // The user has attempted to provide input for a stale
+              // request.
+              // TODO: Enable resuming from this point.
+              this.dispatchEvent(
+                new ToastEvent(
+                  "Unable to submit: board evaluation has already passed this point",
+                  ToastType.ERROR
+                )
+              );
+              return;
+            }
 
-        const bounds = this.#controlsActivityRef.value.getBoundingClientRect();
-        const details = this.#detailsRef.value;
-        details.classList.toggle("active");
-        details.classList.toggle("portrait", this.isPortrait);
+            const data = event.data;
+            const handlers = this.#handlers.get(event.id) || [];
+            if (handlers.length === 0) {
+              console.warn(
+                `Received event for input(id="${event.id}") but no handlers were found`
+              );
+            }
+            for (const handler of handlers) {
+              handler.call(null, data);
+            }
+          }}
+          name="Board"
+        ></bb-activity-log>`
+    );
 
-        if (!details.classList.contains("active")) {
-          return;
-        }
+    const entryDetails = this.debugEvent
+      ? html`<div
+          id="details"
+          class=${classMap({ portrait: this.isPortrait })}
+          ${ref(this.#detailsRef)}
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+          }}
+        >
+          <bb-event-details .event=${this.debugEvent}></bb-event-details>
+        </div>`
+      : nothing;
 
-        details.style.setProperty("--left", `${bounds.left}px`);
-        details.style.setProperty("--bottom", `${bounds.top}px`);
-
-        const tree = details.querySelector("bb-json-tree") as JSONTree;
-        tree.json = event as unknown as Record<string, string>;
-        tree.autoExpand = true;
-      }}
-      @breadboardinputenter=${(event: InputEnterEvent) => {
-        // Notify any pending handlers that the input has arrived.
-        if (this.#messagePosition < events.length - 1) {
-          // The user has attempted to provide input for a stale
-          // request.
-          // TODO: Enable resuming from this point.
-          this.dispatchEvent(
-            new ToastEvent(
-              "Unable to submit: board evaluation has already passed this point",
-              ToastType.ERROR
-            )
-          );
-          return;
-        }
-
-        const data = event.data;
-        const handlers = this.#handlers.get(event.id) || [];
-        if (handlers.length === 0) {
-          console.warn(
-            `Received event for input(id="${event.id}") but no handlers were found`
-          );
-        }
-        for (const handler of handlers) {
-          handler.call(null, data);
-        }
-      }}
-      name="Board"
-    ></bb-activity-log>`;
-
-    const entryDetails = html`<div
-      id="details"
-      ${ref(this.#detailsRef)}
-      @pointerdown=${(evt: PointerEvent) => {
-        evt.stopImmediatePropagation();
-      }}
-    >
-      <bb-json-tree></bb-json-tree>
-    </div>`;
+    if (this.debugEvent) {
+      this.addEventListener(
+        "pointerdown",
+        () => {
+          this.debugEvent = null;
+        },
+        { once: true }
+      );
+    }
 
     const sidePanel = cache(
       this.selectedNodeId
         ? html`${nodeMetaDetails}${nodeInfo}`
-        : html`${boardDetails}${activityLog}${entryDetails}`
+        : html`${boardDetails}${activityLog}`
     );
 
     const breadcrumbs = [MAIN_BOARD_ID];
@@ -509,6 +500,7 @@ export class UI extends LitElement {
               <p>Please try again, or load a different board</p>
             </div>`
           : editor}
+        ${entryDetails}
       </section>
 
       <section

@@ -147,15 +147,16 @@ export const styles = css`
   }
 
   #details {
-    display: none;
-    position: fixed;
+    display: block;
+    position: absolute;
     z-index: 100;
     background: #fff;
     padding: 10px;
-    width: 35vw;
+    width: 90%;
+    max-width: 35vw;
     height: calc(100svh - 220px);
-    top: 142px;
-    left: calc(var(--left) - 35vw - var(--bb-grid-size-2));
+    top: 90px;
+    right: 10px;
     border: 1px solid #d9d9d9;
     border-radius: calc(var(--bb-grid-size) * 2);
     overflow-y: scroll;
@@ -165,14 +166,12 @@ export const styles = css`
   }
 
   #details.portrait {
-    top: 60px;
-    width: 50vw;
-    left: var(--bb-grid-size-2);
-    height: calc(var(--bottom) - 80px);
-  }
-
-  #details.active {
-    display: block;
+    bottom: 10px;
+    max-width: 55vw;
+    right: auto;
+    height: calc(100% - 20px);
+    top: auto;
+    left: 10px;
   }
 
   .failed-to-load {
