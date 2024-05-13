@@ -218,7 +218,7 @@
     "@typescript-eslint/parser": "^7.8.0",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.9.3",
+    "tsx": "^4.10.2",
     "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^4.0.1",
     "typescript": "^5.4.5",
