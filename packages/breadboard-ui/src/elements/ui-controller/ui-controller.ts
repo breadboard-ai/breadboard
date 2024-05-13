@@ -382,7 +382,7 @@ export class UI extends LitElement {
     );
 
     const activityLog = guard(
-      [eventPosition],
+      [this.run?.events],
       () =>
         html`<bb-activity-log
           .run=${this.run}
