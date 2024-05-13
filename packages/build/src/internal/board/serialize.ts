@@ -23,12 +23,11 @@ import type {
   SerializableOutputPortReference,
 } from "../common/serializable.js";
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
-import type { GenericSpecialInput } from "./input.js";
-import type { Output } from "./output.js";
-import { isLoopback, type Loopback } from "./loopback.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
-import { isConvergence, type Convergence } from "./converge.js";
-import type { Value } from "../../index.js";
+import { isConvergence } from "./converge.js";
+import type { GenericSpecialInput } from "./input.js";
+import { isLoopback } from "./loopback.js";
+import type { Output } from "./output.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
