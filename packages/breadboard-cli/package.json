@@ -169,7 +169,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-virtual": "^3.0.2",
     "commander": "^12.0.0",
-    "esbuild": "^0.21.1",
+    "esbuild": "^0.21.2",
     "rollup": "^4.17.2",
     "serve": "^14.2.3",
     "urlpattern-polyfill": "^10.0.0",
