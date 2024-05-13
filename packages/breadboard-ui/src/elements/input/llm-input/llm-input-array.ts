@@ -39,6 +39,10 @@ export class LLMInputArray extends LitElement {
   selected = 0;
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
     }
@@ -47,7 +51,8 @@ export class LLMInputArray extends LitElement {
       display: flex;
       flex-direction: row;
       align-items: center;
-      margin: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
+      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+      min-height: var(--bb-grid-size-7);
     }
 
     #controls h1 {
@@ -117,6 +122,10 @@ export class LLMInputArray extends LitElement {
       return;
     }
 
+    if (this.values.length === 0) {
+      this.values.push({ role: "user", parts: [] });
+    }
+
     this.selected = this.values.length - 1;
   }
 
@@ -127,7 +136,7 @@ export class LLMInputArray extends LitElement {
 
       <div id="controls">
         <h1>Role</h1>
-        ${this.values
+        ${this.values && this.values.length
           ? map(this.values, (item, idx) => {
               const roleClass = (item.role || "user")
                 .toLocaleLowerCase()
@@ -151,6 +160,21 @@ export class LLMInputArray extends LitElement {
           ? map(this.values, (value, idx) => {
               return html`<bb-llm-input
                 class=${classMap({ visible: idx === this.selected })}
+                @input=${(evt: Event) => {
+                  if (!this.values) {
+                    return;
+                  }
+
+                  if (!(evt.target instanceof LLMInput)) {
+                    return;
+                  }
+
+                  if (!evt.target.value) {
+                    return;
+                  }
+
+                  this.values[idx] = evt.target.value;
+                }}
                 .value=${value}
                 .minimal=${this.minimal}
                 .allow=${this.allow}

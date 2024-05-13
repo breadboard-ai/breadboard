@@ -230,11 +230,7 @@ export class Input extends LitElement {
             return;
           }
 
-          if (property.type && property.type === "array") {
-            data[key] = [value];
-          } else {
-            data[key] = value;
-          }
+          data[key] = value;
         }
 
         const isLLMContentArray = element instanceof LLMInputArray;
@@ -243,7 +239,6 @@ export class Input extends LitElement {
           // them at this point.
           await element.processAllOpenParts();
           const value = element.values;
-          console.log(value);
           if (!element.values) {
             return;
           }
