@@ -8,6 +8,8 @@ import { customElement, property } from "lit/decorators.js";
 import { LLMContent } from "../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { LLMOutput } from "./llm-output.js";
 
 @customElement("bb-llm-output-array")
 export class LLMOutputArray extends LitElement {
@@ -19,6 +21,10 @@ export class LLMOutputArray extends LitElement {
 
   @property({ reflect: true })
   mode: "visual" | "json" = "visual";
+
+  #resizeObserver: ResizeObserver | null = null;
+  #activeLLMContentRef: Ref<LLMOutput> = createRef();
+  #containerRef: Ref<HTMLDivElement> = createRef();
 
   static styles = css`
     * {
@@ -108,6 +114,31 @@ export class LLMOutputArray extends LitElement {
     this.selected = this.values.length - 1;
   }
 
+  protected updated(): void {
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+    }
+
+    if (!this.#activeLLMContentRef.value) {
+      return;
+    }
+
+    this.#resizeObserver = new ResizeObserver((entries) => {
+      if (!this.#containerRef.value) {
+        return;
+      }
+
+      const llmContents = this.#containerRef.value.querySelectorAll<LLMOutput>(
+        "bb-llm-output:not(.visible)"
+      );
+      for (const llmContent of llmContents) {
+        llmContent.style.height = `${entries[0].borderBoxSize[0].blockSize}px`;
+      }
+    });
+
+    this.#resizeObserver.observe(this.#activeLLMContentRef.value);
+  }
+
   render() {
     return this.values
       ? html` <div id="controls">
@@ -154,10 +185,13 @@ export class LLMOutputArray extends LitElement {
             </select>
           </div>
 
-          <div>
+          <div ${ref(this.#containerRef)}>
             ${this.mode === "visual"
               ? map(this.values, (item, idx) => {
                   return html`<bb-llm-output
+                    ${idx === this.selected
+                      ? ref(this.#activeLLMContentRef)
+                      : nothing}
                     class=${classMap({ visible: idx === this.selected })}
                     .value=${item}
                   ></bb-llm-output>`;
