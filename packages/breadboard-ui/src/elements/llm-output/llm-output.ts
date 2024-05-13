@@ -130,6 +130,11 @@ export class LLMOutput extends LitElement {
     this.#clearPartDataURLs();
   }
 
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#clearPartDataURLs();
+  }
+
   #clearPartDataURLs() {
     for (const url of this.#partDataURLs.values()) {
       console.info(`Revoking ${url}`);
@@ -140,7 +145,6 @@ export class LLMOutput extends LitElement {
   }
 
   render() {
-    console.log(this.value);
     return this.value && this.value.parts.length
       ? html`${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
