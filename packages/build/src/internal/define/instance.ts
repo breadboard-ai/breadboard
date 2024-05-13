@@ -192,12 +192,13 @@ export class Instance<
       [K: string]: JsonSerializable | OutputPortReference<JsonSerializable>;
     }
   ) {
-    const ports: { [K: string]: OutputPort<JsonSerializable> } & {
-      assert?: (name: string) => OutputPort<JsonSerializable>;
+    const ports: { [K: string]: OutputPort<JsonSerializable | undefined> } & {
+      assert?: (name: string) => OutputPort<JsonSerializable | undefined>;
     } = {
       $error: new OutputPort(breadboardErrorType, "$error", this),
     };
-    let primary: OutputPort<JsonSerializable> | undefined = undefined;
+    let primary: OutputPort<JsonSerializable | undefined> | undefined =
+      undefined;
 
     for (const [name, config] of Object.entries(staticOutputs)) {
       const port = new OutputPort(config.type, name, this);
@@ -234,7 +235,9 @@ export class Instance<
         // create the OutputPort any time there is a property access. But, we
         // want to make it clear to see when a port is being asserted, since the
         // type system has absolutely no idea if this is a valid port or not.
-        ports.assert = (name: string): OutputPort<JsonSerializable> => {
+        ports.assert = (
+          name: string
+        ): OutputPort<JsonSerializable | undefined> => {
           let port = ports[name];
           if (port !== undefined) {
             return port;

@@ -17,6 +17,14 @@ export interface SerializableBoard {
     string,
     SerializableOutputPortReference | Output<JsonSerializable>
   >;
+  outputsForSerialization:
+    | Record<string, SerializableOutputPortReference | Output<JsonSerializable>>
+    | Array<
+        Record<
+          string,
+          SerializableOutputPortReference | Output<JsonSerializable>
+        >
+      >;
   title?: string;
   description?: string;
   version?: string;
