@@ -198,7 +198,7 @@
     "dotenv": "^16.4.5",
     "esbuild": "^0.21.2",
     "mermaid": "^10.9.0",
-    "rimraf": "^5.0.5",
+    "rimraf": "^5.0.7",
     "typescript": "^5.4.5"
   }
 }
