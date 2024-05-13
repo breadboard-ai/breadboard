@@ -38,6 +38,9 @@ export class LLMInputArray extends LitElement {
   @property({ reflect: true })
   selected = 0;
 
+  #resizeObserver: ResizeObserver | null = null;
+  #activeLLMContentRef: Ref<LLMInput> = createRef();
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -129,6 +132,37 @@ export class LLMInputArray extends LitElement {
     this.selected = this.values.length - 1;
   }
 
+  protected updated(): void {
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+    }
+
+    if (!this.#activeLLMContentRef.value) {
+      return;
+    }
+
+    this.#resizeObserver = new ResizeObserver(() => {
+      if (!this.#containerRef.value) {
+        return;
+      }
+
+      if (!this.#activeLLMContentRef.value) {
+        return;
+      }
+
+      const containerHeight =
+        this.#activeLLMContentRef.value.getContainerHeight();
+      const llmContents = this.#containerRef.value.querySelectorAll<LLMInput>(
+        "bb-llm-input:not(.visible)"
+      );
+      for (const llmContent of llmContents) {
+        llmContent.setContainerHeight(containerHeight);
+      }
+    });
+
+    this.#resizeObserver.observe(this.#activeLLMContentRef.value);
+  }
+
   render() {
     return html`<header>
         ${this.description ? html`${this.description}` : nothing}
@@ -175,6 +209,9 @@ export class LLMInputArray extends LitElement {
 
                   this.values[idx] = evt.target.value;
                 }}
+                ${idx === this.selected
+                  ? ref(this.#activeLLMContentRef)
+                  : nothing}
                 .value=${value}
                 .minimal=${this.minimal}
                 .allow=${this.allow}
