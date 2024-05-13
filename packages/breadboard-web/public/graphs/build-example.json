@@ -92,7 +92,8 @@
       "id": "runJavascript-0",
       "type": "runJavascript",
       "configuration": {
-        "code": "({str})=>({capitalized:str.toUpperCase()})",
+        "code": "const run = ({str})=>({capitalized:str.toUpperCase()});",
+        "name": "run",
         "raw": true
       }
     }
