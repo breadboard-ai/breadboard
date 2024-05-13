@@ -8,8 +8,24 @@
   box-sizing: border-box;
 }
 
-html {
+:root {
   --bb-grid-size: 4px;
+  --bb-grid-size-2: calc(var(--bb-grid-size) * 2);
+  --bb-grid-size-3: calc(var(--bb-grid-size) * 3);
+  --bb-grid-size-4: calc(var(--bb-grid-size) * 4);
+  --bb-grid-size-5: calc(var(--bb-grid-size) * 5);
+  --bb-grid-size-6: calc(var(--bb-grid-size) * 6);
+  --bb-grid-size-7: calc(var(--bb-grid-size) * 7);
+  --bb-grid-size-8: calc(var(--bb-grid-size) * 8);
+  --bb-grid-size-9: calc(var(--bb-grid-size) * 9);
+  --bb-grid-size-10: calc(var(--bb-grid-size) * 10);
+  --bb-grid-size-11: calc(var(--bb-grid-size) * 11);
+  --bb-grid-size-12: calc(var(--bb-grid-size) * 12);
+  --bb-grid-size-13: calc(var(--bb-grid-size) * 13);
+  --bb-grid-size-14: calc(var(--bb-grid-size) * 14);
+  --bb-grid-size-15: calc(var(--bb-grid-size) * 15);
+  --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
+
   --bb-selected-color: rgb(46, 139, 232);
   --bb-continue-color: rgb(192, 223, 255);
   --bb-font-family-header: "Fira Code";
@@ -41,9 +57,15 @@ html {
 
   --bb-icon-access-request: url(/third_party/icons/access-request.svg);
   --bb-icon-add: url(/third_party/icons/add.svg);
+  --bb-icon-add-audio: url(/third_party/icons/add-audio.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
-  --bb-icon-add-note: url(/third_party/icons/add-note.svg);
+  --bb-icon-add-drawable: url(/third_party/icons/add-drawable.svg);
+  --bb-icon-add-file: url(/third_party/icons/add-file.svg);
+  --bb-icon-add-image-webcam: url(/third_party/icons/add-image-webcam.svg);
   --bb-icon-add-image: url(/third_party/icons/add-image.svg);
+  --bb-icon-add-note: url(/third_party/icons/add-note.svg);
+  --bb-icon-add-text: url(/third_party/icons/add-text.svg);
+  --bb-icon-add-video: url(/third_party/icons/add-video.svg);
   --bb-icon-arrow: url(/third_party/icons/arrow.svg);
   --bb-icon-arrow-back: url(/third_party/icons/arrow-back.svg);
   --bb-icon-arrow-back-white: url(/third_party/icons/arrow-back-white.svg);
@@ -51,10 +73,12 @@ html {
   --bb-icon-board: url(/third_party/icons/board.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
+  --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-delay: url(/third_party/icons/delay.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
+  --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
   --bb-icon-edit: url(/third_party/icons/edit.svg);
   --bb-icon-edit-white: url(/third_party/icons/edit-white.svg);
   --bb-icon-eject: url(/third_party/icons/eject.svg);
@@ -64,10 +88,15 @@ html {
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-frame-reload: url(/third_party/icons/frame-reload.svg);
   --bb-icon-history: url(/third_party/icons/history.svg);
+  --bb-icon-human: url(/third_party/icons/human.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
+  --bb-icon-maximize: url(/third_party/icons/maximize.svg);
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
+  --bb-icon-minimize: url(/third_party/icons/minimize.svg);
   --bb-icon-menu: url(/third_party/icons/menu.svg);
+  --bb-icon-move-up: url(/third_party/icons/move-up.svg);
+  --bb-icon-move-down: url(/third_party/icons/move-down.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);
@@ -82,8 +111,12 @@ html {
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-settings: url(/third_party/icons/settings.svg);
+  --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
+  --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
+  --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
+  --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);
   --bb-icon-zoom-out: url(/third_party/icons/zoom-out.svg);
@@ -91,6 +124,17 @@ html {
 
   --bb-expand-arrow: url(/images/expand.svg);
   --bb-collapse-arrow: url(/images/collapse.svg);
+
+  --bb-warning-50: #ffffff;
+  --bb-warning-100: #ffcccc;
+  --bb-warning-200: #ff9999;
+  --bb-warning-300: #ff6666;
+  --bb-warning-400: #ff3333;
+  --bb-warning-500: #ff0000;
+  --bb-warning-600: #cc0000;
+  --bb-warning-700: #990000;
+  --bb-warning-800: #660000;
+  --bb-warning-900: #330000;
 
   --bb-inputs-50: #eaf7e7;
   --bb-inputs-100: #bbe7b0;
@@ -136,6 +180,7 @@ html {
   --bb-output-800: #1b548c;
   --bb-output-900: #1b548c;
 
+  --bb-neutral-0: #ffffff;
   --bb-neutral-10: #fafafa;
   --bb-neutral-50: #f6f6f6;
   --bb-neutral-100: #ededed;
@@ -148,18 +193,35 @@ html {
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
 
-  --bb-title-large: 22px/28px;
-  --bb-title-medium: 16px/24px;
-  --bb-title-small: 14px/20px;
+  --bb-title-large: 22px;
+  --bb-title-line-height-large: 28px;
 
-  --bb-label-large: 14px/20px;
-  --bb-label-medium: 12px/16px;
-  --bb-label-small: 11px/16px;
+  --bb-title-medium: 16px;
+  --bb-title-line-height-medium: 24px;
 
-  --bb-body-large: 16px/24px;
-  --bb-body-medium: 14px/20px;
-  --bb-body-small: 12px/16px;
-  --bb-body-x-small: 10px/13px;
+  --bb-title-small: 14px;
+  --bb-title-line-height-small: 20px;
+
+  --bb-label-large: 14px;
+  --bb-label-line-height-large: 20px;
+
+  --bb-label-medium: 12px;
+  --bb-label-line-height-medium: 16px;
+
+  --bb-label-small: 11px;
+  --bb-label-line-height-small: 16px;
+
+  --bb-body-large: 16px;
+  --bb-body-line-height-large: 24px;
+
+  --bb-body-medium: 14px;
+  --bb-body-line-height-medium: 20px;
+
+  --bb-body-small: 12px;
+  --bb-body-line-height-small: 16px;
+
+  --bb-body-x-small: 10px;
+  --bb-body-line-height-x-small: 13px;
 
   /** Depth Colors */
   --bb-depth-1: hsl(48deg, 60%, 98%);
