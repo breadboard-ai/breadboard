@@ -38,6 +38,7 @@ export const collectPorts = (
   edges: InspectableEdge[],
   schema: Schema,
   addErrorPort: boolean,
+  allowRequired: boolean,
   values?: NodeConfiguration
 ) => {
   let wiredContainsStar = false;
@@ -94,7 +95,7 @@ export const collectPorts = (
         status: computePortStatus(
           wired || configured,
           !fixed || expected || schemaContainsStar,
-          required,
+          allowRequired && required,
           wiredContainsStar
         ),
         schema: portSchema,

@@ -109,6 +109,7 @@ export class BubbledInspectableNode implements InspectableNode {
           this.incoming(),
           described.inputSchema,
           false,
+          true,
           inputValues
         ),
       };
@@ -118,6 +119,7 @@ export class BubbledInspectableNode implements InspectableNode {
           EdgeType.Out,
           [],
           described.outputSchema,
+          false,
           false,
           bubbledValues
         ),

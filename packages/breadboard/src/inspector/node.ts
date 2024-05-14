@@ -121,6 +121,7 @@ class Node implements InspectableNode {
         incoming,
         described.inputSchema,
         false,
+        true,
         this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
@@ -133,6 +134,7 @@ class Node implements InspectableNode {
         outgoing,
         described.outputSchema,
         addErrorPort,
+        false,
         outputValues
       ),
     };
