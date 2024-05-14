@@ -73,8 +73,8 @@
           "type": "object",
           "properties": {
             "text": {
-              "title": "Text",
-              "type": "string"
+              "type": "string",
+              "title": "Text"
             }
           },
           "required": [
@@ -91,25 +91,25 @@
           "type": "object",
           "properties": {
             "context": {
+              "type": "object",
               "title": "Context",
               "description": "Incoming conversation context",
-              "type": "object",
+              "default": "[]",
               "examples": [
                 "[{\"role\":\"model\",\"parts\":[{\"text\":\"Hello, user!\"}]}]"
-              ],
-              "default": "[]"
+              ]
             },
             "description": {
+              "type": "string",
               "title": "Description",
               "description": "The description of what to ask",
-              "default": "User's question or request",
-              "type": "string"
+              "default": "User's question or request"
             },
             "title": {
+              "type": "string",
               "title": "Title",
               "description": "The title to ask",
-              "default": "User",
-              "type": "string"
+              "default": "User"
             }
           },
           "required": []
@@ -147,8 +147,8 @@
               "title": "Context"
             },
             "text": {
-              "title": "Text",
-              "type": "string"
+              "type": "string",
+              "title": "Text"
             }
           }
         }

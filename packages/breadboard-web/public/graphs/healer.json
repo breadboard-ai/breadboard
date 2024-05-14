@@ -134,9 +134,9 @@
             "text": {
               "type": "string",
               "title": "Text to Heal",
-              "format": "multiline",
               "description": "The text to heal, if necessary",
-              "default": "{\n  first_answer: \"to live\",\n  \"assumptionss\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
+              "default": "{\n  first_answer: \"to live\",\n  \"assumptionss\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}",
+              "format": "multiline"
             },
             "tries": {
               "type": "number",

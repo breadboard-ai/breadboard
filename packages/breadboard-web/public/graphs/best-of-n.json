@@ -109,16 +109,16 @@
           "type": "object",
           "properties": {
             "agent": {
+              "type": "string",
               "title": "Agent",
               "description": "Agent to apply to the task",
               "examples": [
                 "ad-writer.json"
-              ],
-              "type": "string"
+              ]
             },
             "n": {
-              "title": "Number of parallel attempts",
               "type": "number",
+              "title": "Number of parallel attempts",
               "examples": [
                 "4"
               ]
@@ -134,10 +134,10 @@
               ],
               "title": "Task",
               "description": "The task to perform",
-              "format": "multiline",
               "examples": [
                 "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
-              ]
+              ],
+              "format": "multiline"
             }
           },
           "required": [
@@ -172,9 +172,9 @@
               "title": "list"
             },
             "rank": {
+              "type": "string",
               "title": "json",
-              "description": "The validated JSON.",
-              "type": "string"
+              "description": "The validated JSON."
             }
           }
         }

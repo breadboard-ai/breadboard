@@ -35,8 +35,8 @@
               "behavior": [
                 "llm-content"
               ],
-              "format": "audio-microphone",
-              "title": "Audio"
+              "title": "Audio",
+              "format": "audio-microphone"
             }
           },
           "required": [

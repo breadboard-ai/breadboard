@@ -82,20 +82,20 @@
             "schema": {
               "type": "object",
               "title": "Schema",
-              "format": "multiline",
               "description": "The schema of the JSON to be generated",
               "examples": [
                 "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"first_answer\": {\n      \"type\": \"string\",\n      \"description\": \"a first attempt at the answer to the question\"\n    },\n    \"assumptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"description\": \"one or more assumptions made when making the response above\",\n        \"type\": \"string\"\n      }\n    },\n    \"critique\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"description\": \"how might these assumptions be wrong?\",\n        \"type\": \"string\"\n      }\n    },\n    \"response\": {\n      \"type\": \"string\",\n      \"description\": \"the final response made synthesizing first_answer, assumptions, and critique\"\n    }\n  },\n  \"required\": [\n    \"first_answer\",\n    \"assumptions\",\n    \"critique\",\n    \"response\"\n  ],\n  \"additionalProperties\": false\n}"
-              ]
+              ],
+              "format": "multiline"
             },
             "text": {
               "type": "string",
               "title": "JSON",
-              "format": "multiline",
               "description": "The JSON to validate",
               "examples": [
                 "{\n  first_answer: \"to live\",\n  \"guesses\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
-              ]
+              ],
+              "format": "multiline"
             }
           },
           "required": [

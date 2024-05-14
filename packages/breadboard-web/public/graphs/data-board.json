@@ -43,19 +43,19 @@
           "type": "object",
           "properties": {
             "n": {
-              "title": "Number of parallel attemps",
               "type": "number",
+              "title": "Number of parallel attemps",
               "examples": [
                 "4"
               ]
             },
             "text": {
+              "type": "string",
               "title": "Ad specs",
-              "format": "multiline",
               "examples": [
                 "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
               ],
-              "type": "string"
+              "format": "multiline"
             }
           },
           "required": [
@@ -73,16 +73,16 @@
           "type": "object",
           "properties": {
             "best": {
-              "title": "Best choice",
-              "type": "string"
+              "type": "string",
+              "title": "Best choice"
             },
             "list": {
-              "title": "The list of choices",
-              "type": "string"
+              "type": "string",
+              "title": "The list of choices"
             },
             "rank": {
-              "title": "Rank and reasoning behind it",
-              "type": "string"
+              "type": "string",
+              "title": "Rank and reasoning behind it"
             }
           }
         }

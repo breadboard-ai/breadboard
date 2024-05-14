@@ -37,21 +37,21 @@
           "type": "object",
           "properties": {
             "context": {
+              "type": "object",
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Book Specs",
               "description": "The source material for the worker",
-              "type": "object",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"book description: This book will be about breadboards and how awesome they are:\\n\\nchapter target: 10\\n\\npage target: 400\\n\\nfiction genre: space opera\\n\\nsetting: the planet where there are no breadboards\\n\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better.\\n\\ntonality: futuristic struggle, but optimistic\\n\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
+              ],
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
-              },
-              "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"book description: This book will be about breadboards and how awesome they are:\\n\\nchapter target: 10\\n\\npage target: 400\\n\\nfiction genre: space opera\\n\\nsetting: the planet where there are no breadboards\\n\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better.\\n\\ntonality: futuristic struggle, but optimistic\\n\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
-              ],
-              "behavior": [
-                "llm-content"
-              ]
+              }
             }
           },
           "required": [
@@ -68,8 +68,8 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context out",
-              "type": "string"
+              "type": "string",
+              "title": "Context out"
             }
           }
         }

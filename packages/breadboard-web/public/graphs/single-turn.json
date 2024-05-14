@@ -31,8 +31,8 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context",
               "type": "array",
+              "title": "Context",
               "examples": [
                 "[]"
               ]

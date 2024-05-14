@@ -75,9 +75,9 @@
           "properties": {
             "generator": {
               "type": "string",
+              "title": "Generator",
               "description": "Text generator to use",
-              "default": "text-generator.json",
-              "title": "Generator"
+              "default": "text-generator.json"
             }
           },
           "additionalProperties": false
@@ -93,8 +93,8 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "Type here to chat with the assistant",
-              "title": "User"
+              "title": "User",
+              "description": "Type here to chat with the assistant"
             }
           },
           "required": [
@@ -113,8 +113,8 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "Assistant's response in the conversation with the user",
-              "title": "Assistant"
+              "title": "Assistant",
+              "description": "Assistant's response in the conversation with the user"
             }
           },
           "required": [

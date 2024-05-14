@@ -79,8 +79,9 @@
           "title": "OpenAlex Search",
           "properties": {
             "entity": {
-              "description": "Entity type to search for",
               "type": "string",
+              "title": "Entity",
+              "description": "Entity type to search for",
               "default": "works",
               "enum": [
                 "works",
@@ -91,32 +92,31 @@
                 "publishers",
                 "funders",
                 "concepts"
-              ],
-              "title": "Entity"
+              ]
             },
             "page": {
               "type": "integer",
-              "default": "1",
               "title": "Page number",
-              "description": "Page number to return"
+              "description": "Page number to return",
+              "default": "1"
             },
             "per_page": {
               "type": "integer",
-              "default": "5",
               "title": "Results per page",
-              "description": "Number of results to return per page"
+              "description": "Number of results to return per page",
+              "default": "5"
             },
             "search": {
               "type": "string",
               "title": "Search term",
-              "default": "Artificial Intelligence",
-              "description": "Search term to search for, double quotes for exact match"
+              "description": "Search term to search for, double quotes for exact match",
+              "default": "Artificial Intelligence"
             },
             "select": {
               "type": "string",
               "title": "Select",
-              "default": "id,display_name,title,relevance_score",
-              "description": "Comma-separated list of fields to return"
+              "description": "Comma-separated list of fields to return",
+              "default": "id,display_name,title,relevance_score"
             }
           },
           "type": "object",
@@ -191,8 +191,8 @@
             },
             "url": {
               "type": "string",
-              "description": "URL to fetch",
-              "title": "URL"
+              "title": "URL",
+              "description": "URL to fetch"
             }
           },
           "required": [

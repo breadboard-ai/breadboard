@@ -31,9 +31,10 @@
           "type": "object",
           "properties": {
             "countryCode": {
-              "title": "countryCode",
               "type": "string",
+              "title": "countryCode",
               "description": "The data for countryCode",
+              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -161,8 +162,7 @@
                 "VN",
                 "ZA",
                 "ZW"
-              ],
-              "default": "US"
+              ]
             }
           },
           "required": [

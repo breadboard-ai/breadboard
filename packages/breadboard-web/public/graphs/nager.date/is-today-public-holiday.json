@@ -43,9 +43,10 @@
           "type": "object",
           "properties": {
             "countryCode": {
-              "title": "countryCode",
               "type": "string",
+              "title": "countryCode",
               "description": "The data for countryCode",
+              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -173,16 +174,15 @@
                 "VN",
                 "ZA",
                 "ZW"
-              ],
-              "default": "US"
+              ]
             },
             "offset": {
-              "title": "offset",
               "type": "number",
+              "title": "offset",
               "description": "utc timezone offset",
+              "default": "0",
               "maximum": 12,
-              "minimum": -12,
-              "default": "0"
+              "minimum": -12
             }
           },
           "required": [

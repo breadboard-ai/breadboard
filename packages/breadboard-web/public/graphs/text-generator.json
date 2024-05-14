@@ -46,14 +46,14 @@
               "type": "string",
               "title": "Model",
               "description": "The model to use for generation",
+              "examples": [
+                "Gemini Pro"
+              ],
               "enum": [
                 "Gemini Pro",
                 "GPT 3.5 Turbo",
                 "PaLM",
                 "mock"
-              ],
-              "examples": [
-                "Gemini Pro"
               ]
             },
             "text": {
