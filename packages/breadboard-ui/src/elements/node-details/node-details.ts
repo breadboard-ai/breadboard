@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { NodeMetadataUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -40,6 +40,10 @@ export class NodeDetails extends LitElement {
   @state()
   expanded = false;
 
+  @property()
+  showNodeTypeDescriptions = true;
+
+  #titleRef: Ref<HTMLSpanElement> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
   #formTask = new Task(this, {
     task: async ([graph, subGraphId, nodeId]) => {
@@ -239,6 +243,8 @@ export class NodeDetails extends LitElement {
     const data = new FormData(form);
     const title = getAsStringOrUndefined(data, "title");
     const description = getAsStringOrUndefined(data, "description");
+    const id = getAsStringOrUndefined(data, "id");
+    const type = getAsStringOrUndefined(data, "type");
     const logLevel = getAsStringOrUndefined(data, "log-level") as
       | "debug"
       | "info";
@@ -255,14 +261,18 @@ export class NodeDetails extends LitElement {
         logLevel,
       })
     );
+
+    if (!this.#titleRef.value) {
+      return;
+    }
+
+    this.#titleRef.value.textContent = `${title ?? id} (${type ?? "Unknown type"})`;
   }
 
   render() {
     if (!this.graph || !this.selectedNodeId) {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
-
-    console.log(this.kits);
 
     return this.#formTask.render({
       pending: () => html`Loading...`,
@@ -275,12 +285,17 @@ export class NodeDetails extends LitElement {
         metadata: NodeMetadata;
         kitNodeDescription: string | null;
       }) => html`
-        <div id="overview">
-          <h1>
-            ${metadata.title ?? node.descriptor.id} (${node.descriptor.type})
-          </h1>
-          <p>${kitNodeDescription ?? html`No description`}</p>
-        </div>
+        ${this.showNodeTypeDescriptions
+          ? html`
+              <div id="overview">
+                <h1 ${ref(this.#titleRef)}>
+                  ${metadata.title ?? node.descriptor.id}
+                  (${node.descriptor.type})
+                </h1>
+                <p>${kitNodeDescription ?? html`No description`}</p>
+              </div>
+            `
+          : nothing}
         <h1>
           <button
             id="unfold"
@@ -317,6 +332,8 @@ export class NodeDetails extends LitElement {
             evt.preventDefault();
           }}
         >
+          <input type="hidden" name="id" .value=${node.descriptor.id} />
+          <input type="hidden" name="type" .value=${node.descriptor.type} />
           <label>Title</label>
           <input
             name="title"
