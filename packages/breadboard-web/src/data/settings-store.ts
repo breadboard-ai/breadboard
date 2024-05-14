@@ -73,6 +73,15 @@ export class SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show Node Type Descriptions",
+          {
+            name: "Show Node Type Descriptions",
+            description:
+              "Toggles the visibility of node type descriptions in the properties panel",
+            value: true,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
