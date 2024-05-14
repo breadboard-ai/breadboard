@@ -121,7 +121,7 @@ export class Editor extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #ededed;
+      background-color: var(--bb-output-50);
       overflow: auto;
       position: relative;
       user-select: none;
