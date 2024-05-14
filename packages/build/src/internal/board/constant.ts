@@ -27,7 +27,7 @@ export function constant<
     | OutputPortReference<JsonSerializable>
     | Input<JsonSerializable>
     | InputWithDefault<JsonSerializable>,
->(output: T): T & Constant {
+>(output: T): T {
   return {
     ...output,
     [ConstantVersionOf]: output,
