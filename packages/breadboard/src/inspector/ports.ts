@@ -5,7 +5,12 @@
  */
 
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
-import { InspectableEdge, InspectablePort, PortStatus } from "./types.js";
+import {
+  InspectableEdge,
+  InspectablePort,
+  InspectablePortType,
+  PortStatus,
+} from "./types.js";
 import { NodeConfiguration, Schema } from "../types.js";
 
 const title = (schema: Schema, key: string) => {
@@ -98,6 +103,16 @@ export const collectPorts = (
     .filter(Boolean) as InspectablePort[];
 };
 
+export class PortType implements InspectablePortType {
+  constructor(public schema: Schema) {}
+  canConnect(to: InspectablePortType): boolean {
+    const type = this.schema.type || "object";
+    const toType = to.schema.type || "object";
+    if (type !== toType) return false;
+    return true;
+  }
+}
+
 export const collectPortsForType = (schema: Schema): InspectablePort[] => {
   const portNames = Object.keys(schema.properties || {});
   const requiredPortNames = schema.required || [];
@@ -118,12 +133,7 @@ export const collectPortsForType = (schema: Schema): InspectablePort[] => {
         false
       ),
       schema: portSchema,
-      type: {
-        schema: portSchema,
-        canConnect() {
-          return false;
-        },
-      },
+      type: new PortType(portSchema),
     };
   });
 };

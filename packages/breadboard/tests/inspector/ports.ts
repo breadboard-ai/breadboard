@@ -8,6 +8,7 @@ import test from "ava";
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import { inspectableGraph } from "../../src/inspector/graph.js";
+import { PortType } from "../../src/inspector/ports.js";
 
 test("collectPorts correctly reports edges", async (t) => {
   const graph = {
@@ -97,4 +98,27 @@ test("collectPorts adds an $error port", async (t) => {
       { name: "*", status: "ready" },
     ]
   );
+});
+
+test("PortType correctly recognizes object types", (t) => {
+  const from = new PortType({});
+  const to = new PortType({ type: "object" });
+  t.true(from.canConnect(to));
+});
+
+test("PortType matches strings, numbers, and booleans", (t) => {
+  {
+    const from = new PortType({ type: "string" });
+    const to = new PortType({ type: "string" });
+    const notTo = new PortType({ type: "number" });
+    t.true(from.canConnect(to));
+    t.false(from.canConnect(notTo));
+  }
+  {
+    const from = new PortType({ type: "number" });
+    const to = new PortType({ type: "number" });
+    const notTo = new PortType({ type: "string" });
+    t.true(from.canConnect(to));
+    t.false(from.canConnect(notTo));
+  }
 });
