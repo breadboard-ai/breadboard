@@ -350,6 +350,25 @@ export type InspectablePort = {
    * Returns the edges connected to this port.
    */
   edges: InspectableEdge[];
+
+  /**
+   * Returns a representation of the port's type.
+   */
+  type: InspectablePortType;
+};
+
+export type InspectablePortType = {
+  /**
+   * Returns port schema as defined by the node.
+   */
+  schema: Schema;
+  /**
+   * Returns `true` if the outgoing port of this type can connect to an
+   * incoming port of the specified type.
+   *
+   * @param to the incoming port type to which to connect.
+   */
+  canConnect(to: InspectablePortType): boolean;
 };
 
 /**

@@ -8,6 +8,8 @@ import test from "ava";
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import { inspectableGraph } from "../../src/inspector/graph.js";
+import { PortType } from "../../src/inspector/ports.js";
+import { Schema } from "../../src/types.js";
 
 test("collectPorts correctly reports edges", async (t) => {
   const graph = {
@@ -97,4 +99,93 @@ test("collectPorts adds an $error port", async (t) => {
       { name: "*", status: "ready" },
     ]
   );
+});
+
+test("PortType correctly recognizes unknown types", (t) => {
+  const from = new PortType({});
+  const notTo = new PortType({ type: "object" });
+  const to = new PortType({});
+  const specificFrom = new PortType({ type: "number" });
+  t.true(from.canConnect(to));
+  t.false(from.canConnect(notTo));
+  t.true(specificFrom.canConnect(to));
+});
+
+test("PortType matches strings, numbers, and booleans", (t) => {
+  {
+    const from = new PortType({ type: "string" });
+    const to = new PortType({ type: "string" });
+    const notTo = new PortType({ type: "number" });
+    t.true(from.canConnect(to));
+    t.false(from.canConnect(notTo));
+  }
+  {
+    const from = new PortType({ type: "number" });
+    const to = new PortType({ type: "number" });
+    const notTo = new PortType({ type: "string" });
+    t.true(from.canConnect(to));
+    t.false(from.canConnect(notTo));
+  }
+});
+
+test("PortType matches behaviors", (t) => {
+  const from = new PortType({ type: "object", behavior: ["llm-content"] });
+  const to = new PortType({ type: "object", behavior: ["llm-content"] });
+  const alsoTo = new PortType({
+    type: "object",
+    behavior: ["llm-content", "deprecated"],
+  });
+  t.true(from.canConnect(to));
+  t.true(from.canConnect(alsoTo));
+});
+
+test("PortType matches formats", (t) => {
+  const audioOnly = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "audio-file",
+  } satisfies Schema);
+  const any = new PortType({ type: "object", behavior: ["llm-content"] });
+  const imageOnly = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "image-file",
+  } satisfies Schema);
+  const audioAndImage = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "audio-file,image-file",
+  } satisfies Schema);
+  t.true(audioOnly.canConnect(audioOnly));
+  t.false(audioOnly.canConnect(imageOnly));
+  t.false(audioAndImage.canConnect(imageOnly));
+  t.true(imageOnly.canConnect(audioAndImage));
+  t.true(audioOnly.canConnect(any));
+  t.false(any.canConnect(audioOnly));
+});
+
+test("PortType handles arrays", (t) => {
+  const audioOnly = new PortType({
+    type: "array",
+    items: {
+      type: "object",
+      behavior: ["llm-content"],
+      format: "audio-file",
+    },
+  } satisfies Schema);
+  const any = new PortType({
+    type: "array",
+    items: { type: "object", behavior: ["llm-content"] },
+  } satisfies Schema);
+
+  t.true(audioOnly.canConnect(any));
+  t.false(any.canConnect(audioOnly));
+
+  const numbers = new PortType({
+    type: "array",
+    items: { type: "number" },
+  });
+  t.false(numbers.canConnect(any));
+  t.false(audioOnly.canConnect(numbers));
+  t.true(numbers.canConnect(numbers));
 });
