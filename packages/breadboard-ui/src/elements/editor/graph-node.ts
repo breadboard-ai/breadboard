@@ -18,7 +18,7 @@ const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const defaultNodeColor = getGlobalColor("--bb-nodes-100");
 const inputNodeColor = getGlobalColor("--bb-inputs-100");
 const secretNodeColor = getGlobalColor("--bb-inputs-100");
-const selectedNodeColor = getGlobalColor("--bb-output-600");
+const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const outputNodeColor = getGlobalColor("--bb-boards-200");
 // TODO: Enable board node coloring.
 // const boardNodeColor = getGlobalColor('--bb-boards-100');

@@ -34,8 +34,8 @@ export class CodeEditor extends LitElement {
 
     .cm-editor.cm-focused {
       outline: none;
-      border: 1px solid var(--bb-output-700);
-      box-shadow: inset 0 0 0 1px var(--bb-output-700);
+      border: 1px solid var(--bb-ui-700);
+      box-shadow: inset 0 0 0 1px var(--bb-ui-700);
     }
   `;
 

@@ -162,7 +162,7 @@ export class PreviewRun extends LitElement {
       flex: 1;
       width: 100%;
       max-width: 740px;
-      scrollbar-color: var(--bb-output-100) white;
+      scrollbar-color: var(--bb-ui-100) white;
     }
   `;
 

@@ -27,7 +27,7 @@ function edgeToString(edge: InspectableEdge): string {
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
 
-const highlightedNodeColor = getGlobalColor("--bb-output-600");
+const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 
 export class Graph extends PIXI.Container {
   #isDirty = true;

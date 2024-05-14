@@ -81,8 +81,8 @@ export class SettingsEditOverlay extends LitElement {
     }
 
     input[type="radio"]:checked ~ label {
-      background: var(--bb-output-100);
-      color: var(--bb-output-700);
+      background: var(--bb-ui-100);
+      color: var(--bb-ui-700);
       cursor: auto;
     }
 

@@ -88,7 +88,7 @@ export class LLMInputArray extends LitElement {
 
     #controls button[disabled] {
       cursor: auto;
-      background-color: var(--bb-output-100);
+      background-color: var(--bb-ui-100);
     }
 
     bb-llm-input {

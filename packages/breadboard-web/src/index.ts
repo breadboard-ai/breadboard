@@ -205,7 +205,7 @@ export class Main extends LitElement {
     }
 
     #toggle-preview.active {
-      background-color: var(--bb-output-800);
+      background-color: var(--bb-ui-800);
     }
 
     #toggle-settings {
@@ -218,7 +218,7 @@ export class Main extends LitElement {
     }
 
     #toggle-settings.active {
-      background-color: var(--bb-output-800);
+      background-color: var(--bb-ui-800);
     }
 
     #new-board {
@@ -249,7 +249,7 @@ export class Main extends LitElement {
     }
 
     #header-bar {
-      background: var(--bb-output-600);
+      background: var(--bb-ui-600);
       display: flex;
       align-items: center;
       color: var(--bb-neutral-50);

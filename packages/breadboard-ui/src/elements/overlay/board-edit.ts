@@ -74,7 +74,7 @@ export class BoardEditOverlay extends LitElement {
     label {
       padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 4);
       font-size: var(--bb-label-small);
-      color: var(--bb-output-600);
+      color: var(--bb-ui-600);
     }
 
     input,

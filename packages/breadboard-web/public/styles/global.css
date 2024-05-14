@@ -171,16 +171,16 @@
   --bb-boards-800: #8c521b;
   --bb-boards-900: #6b3f15;
 
-  --bb-output-50: #ecf5ff;
-  --bb-output-100: #c0dfff;
-  --bb-output-200: #a1d0ff;
-  --bb-output-300: #77bbff;
-  --bb-output-400: #5cadff;
-  --bb-output-500: #3399ff;
-  --bb-output-600: #2e8be8;
-  --bb-output-700: #246db5;
-  --bb-output-800: #1b548c;
-  --bb-output-900: #1b548c;
+  --bb-ui-50: #ecf5ff;
+  --bb-ui-100: #c0dfff;
+  --bb-ui-200: #a1d0ff;
+  --bb-ui-300: #77bbff;
+  --bb-ui-400: #5cadff;
+  --bb-ui-500: #3399ff;
+  --bb-ui-600: #2e8be8;
+  --bb-ui-700: #246db5;
+  --bb-ui-800: #1b548c;
+  --bb-ui-900: #1b548c;
 
   --bb-neutral-0: #ffffff;
   --bb-neutral-10: #fafafa;
