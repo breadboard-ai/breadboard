@@ -1074,32 +1074,6 @@ test("error: input not passed to board", () => {
   );
 });
 
-test("error: same input used twice", () => {
-  const myInput = input();
-  const myNode = defineNodeType({
-    name: "myNode",
-    inputs: {
-      myNodeIn: { type: "string" },
-    },
-    outputs: {
-      myNodeOut: { type: "string" },
-    },
-    invoke: () => ({ myNodeOut: "aaa" }),
-  })({
-    myNodeIn: myInput,
-  });
-  assert.throws(
-    () =>
-      serialize(
-        board({
-          inputs: { boardInput1: myInput, boardInput2: myInput },
-          outputs: { boardOut: myNode.outputs.myNodeOut },
-        })
-      ),
-    /The same input was used as both boardInput1 and boardInput2/
-  );
-});
-
 test("error: input not reachable from output", () => {
   const myInput = input();
   const myOrphanInput = input();

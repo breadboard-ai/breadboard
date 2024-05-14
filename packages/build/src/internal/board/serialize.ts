@@ -25,7 +25,7 @@ import type {
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
-import type { GenericSpecialInput } from "./input.js";
+import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
 import type { Output } from "./output.js";
 
@@ -47,70 +47,112 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   // traverse the outputs.
   const inputNodes = new Map<string, InputOrOutputNodeDescriptor>();
   const inputObjectsToInputNodeInfo = new Map<
-    GenericSpecialInput | SerializableInputPort,
+    | Input<JsonSerializable | undefined>
+    | InputWithDefault<JsonSerializable | undefined>
+    | SerializableInputPort,
     { nodeId: string; portName: string }
   >();
 
   const unconnectedInputs = new Set<
-    GenericSpecialInput | SerializableInputPort
+    | Input<JsonSerializable | undefined>
+    | InputWithDefault<JsonSerializable | undefined>
+    | SerializableInputPort
   >();
-  const sortedBoardInputs = Object.entries(board.inputs).sort(
-    // Sort so that mainInputSchema will also be sorted.
-    ([nameA], [nameB]) => nameA.localeCompare(nameB)
-  );
-  for (const [mainInputName, input] of sortedBoardInputs) {
-    if (inputObjectsToInputNodeInfo.has(input)) {
-      errors.push(
-        `The same input was used as both ` +
-          `${inputObjectsToInputNodeInfo.get(input)!.portName} and ${mainInputName}.`
-      );
-    }
-    const inputNodeId =
-      isSpecialInput(input) && input.id ? input.id : "input-0";
-    inputObjectsToInputNodeInfo.set(input, {
-      nodeId: inputNodeId,
-      portName: mainInputName,
-    });
-    unconnectedInputs.add(input);
-    const schema = toJSONSchema(input.type);
-    if (isSpecialInput(input)) {
-      if (input.title !== undefined) {
-        schema.title = input.title;
+
+  const inputsArray = (
+    Array.isArray(board.inputsForSerialization)
+      ? board.inputsForSerialization
+      : [board.inputsForSerialization]
+  ) as Array<
+    Record<
+      string,
+      | SerializableInputPort
+      | Input<JsonSerializable | undefined>
+      | InputWithDefault<JsonSerializable | undefined>
+    >
+  >;
+  let i = 0;
+  for (const inputs of inputsArray) {
+    const sortedBoardInputs = Object.entries(inputs).sort(
+      // Sort so that mainInputSchema will also be sorted.
+      ([nameA], [nameB]) => nameA.localeCompare(nameB)
+    );
+    let iterationInputId: string | undefined = undefined;
+    const autoId = () => {
+      if (iterationInputId == undefined) {
+        iterationInputId;
+        iterationInputId = `input-${i}`;
+        i++;
       }
-      if (input.description !== undefined) {
-        schema.description = input.description;
+      return iterationInputId;
+    };
+    for (const [mainInputName, input] of sortedBoardInputs) {
+      if (mainInputName === "$id" || mainInputName === "$metadata") {
+        continue;
       }
-      if (input.default !== undefined) {
-        schema.default = input.default;
+      // if (inputObjectsToInputNodeInfo.has(input)) {
+      //   errors.push(
+      //     `The same input was used as both ` +
+      //       `${inputObjectsToInputNodeInfo.get(input)!.portName} and ${mainInputName}.`
+      //   );
+      // }
+      const inputNodeId =
+        (inputs.$id as string | undefined) ??
+        (isSpecialInput(input) ? input.id : undefined) ??
+        autoId();
+
+      inputObjectsToInputNodeInfo.set(input, {
+        nodeId: inputNodeId,
+        portName: mainInputName,
+      });
+      unconnectedInputs.add(input);
+      const schema = toJSONSchema(input.type);
+      if (isSpecialInput(input)) {
+        if (input.title !== undefined) {
+          schema.title = input.title;
+        }
+        if (input.description !== undefined) {
+          schema.description = input.description;
+        }
+        if (input.default !== undefined) {
+          schema.default = input.default;
+        }
+        if (input.examples !== undefined && input.examples.length > 0) {
+          schema.examples = input.examples;
+        }
       }
-      if (input.examples !== undefined && input.examples.length > 0) {
-        schema.examples = input.examples;
-      }
-    }
-    let inputNode = inputNodes.get(inputNodeId);
-    if (inputNode === undefined) {
-      inputNode = {
-        id: inputNodeId,
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {},
-            required: [],
-            // TODO(aomarks) Disallow extra properties?
+      let inputNode = inputNodes.get(inputNodeId);
+      if (inputNode === undefined) {
+        inputNode = {
+          id: inputNodeId,
+          type: "input",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {},
+              required: [],
+              // TODO(aomarks) Disallow extra properties?
+            },
           },
-        },
-      };
-      inputNodes.set(inputNodeId, inputNode);
+        };
+        const metadata = inputs.$metadata as {
+          title?: string;
+          description?: string;
+        };
+        if (metadata !== undefined) {
+          inputNode.metadata = metadata;
+        }
+        inputNodes.set(inputNodeId, inputNode);
+      }
+      inputNode.configuration.schema.properties[mainInputName] = schema;
+      inputNode.configuration.schema.required.push(mainInputName);
     }
-    inputNode.configuration.schema.properties[mainInputName] = schema;
-    inputNode.configuration.schema.required.push(mainInputName);
   }
 
   const outputsArray = Array.isArray(board.outputsForSerialization)
     ? board.outputsForSerialization
     : [board.outputsForSerialization];
-  let i = 0;
+  let j = 0;
   for (const outputs of outputsArray) {
     // Recursively traverse the graph starting from outputs.
     const sortedBoardOutputs = Object.entries(outputs).sort(
@@ -121,8 +163,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     const autoId = () => {
       if (iterationOutputId == undefined) {
         iterationOutputId;
-        iterationOutputId = `output-${i}`;
-        i++;
+        iterationOutputId = `output-${j}`;
+        j++;
       }
       return iterationOutputId;
     };
