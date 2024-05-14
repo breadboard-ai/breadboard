@@ -68,7 +68,7 @@ test("serialization with automatic ID", (t) => {
               },
               steps: {
                 type: "number",
-                default: 10,
+                default: "10",
               },
             },
             required: ["dish"],
@@ -151,7 +151,7 @@ test("serialization with custom node id and placeholder names", (t) => {
               },
               steps: {
                 type: "number",
-                default: 10,
+                default: "10",
               },
             },
             required: ["dish"],

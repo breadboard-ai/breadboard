@@ -115,10 +115,21 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           schema.description = input.description;
         }
         if (input.default !== undefined) {
-          schema.default = input.default;
+          schema.default =
+            typeof input.default === "string"
+              ? input.default
+              : // TODO(aomarks) Why is default JSON stringified? The UI currently
+                // requires it, but seems like it should be real JSON.
+                JSON.stringify(input.default, null, 2);
         }
         if (input.examples !== undefined && input.examples.length > 0) {
-          schema.examples = input.examples;
+          schema.examples = input.examples.map((example) =>
+            typeof example === "string"
+              ? example
+              : // TODO(aomarks) Why is examples JSON stringified? The UI currently
+                // requires it, but seems like it should be real JSON.
+                JSON.stringify(example, null, 2)
+          );
         }
       }
       let inputNode = inputNodes.get(inputNodeId);
