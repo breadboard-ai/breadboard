@@ -262,8 +262,6 @@ export class NodeDetails extends LitElement {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
 
-    console.log(this.kits);
-
     return this.#formTask.render({
       pending: () => html`Loading...`,
       complete: ({
