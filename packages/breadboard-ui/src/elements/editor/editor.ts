@@ -121,7 +121,7 @@ export class Editor extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--bb-output-50);
+      background-color: var(--bb-ui-50);
       overflow: auto;
       position: relative;
       user-select: none;
@@ -282,7 +282,7 @@ export class Editor extends LitElement {
     }
 
     #subgraph-selector {
-      color: var(--bb-output-500);
+      color: var(--bb-ui-500);
       border: none;
       font-size: var(--bb-label-large);
     }

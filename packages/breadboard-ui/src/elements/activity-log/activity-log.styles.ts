@@ -146,7 +146,7 @@ export const styles = css`
 
   .neural-activity.error,
   .activity-entry.error::after {
-    --background: #cc0000;
+    --background: var(--bb-warning-600);
   }
 
   .neural-activity.input,
@@ -161,7 +161,7 @@ export const styles = css`
 
   .neural-activity.output,
   .activity-entry.output::after {
-    --background: var(--bb-output-300);
+    --background: var(--bb-boards-300);
   }
 
   .neural-activity,

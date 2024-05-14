@@ -29,7 +29,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 
-const backgroundColor = getGlobalColor("--bb-output-50");
+const backgroundColor = getGlobalColor("--bb-ui-50");
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -181,8 +181,8 @@ export class GraphRenderer extends LitElement {
     #edge-create-disambiguation-menu button.selected,
     #edge-create-disambiguation-menu button.selected:hover,
     #edge-create-disambiguation-menu button.selected:focus {
-      background: var(--bb-output-50);
-      color: var(--bb-output-600);
+      background: var(--bb-ui-50);
+      color: var(--bb-ui-600);
     }
 
     #edge-create-disambiguation-menu button[disabled] {

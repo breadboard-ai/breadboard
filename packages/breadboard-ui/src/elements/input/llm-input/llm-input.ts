@@ -268,7 +268,7 @@ export class LLMInput extends LitElement {
       left: 0;
       height: 100%;
       border-radius: var(--bb-grid-size-3);
-      background: var(--bb-output-100);
+      background: var(--bb-ui-100);
       width: 3px;
     }
 
@@ -277,11 +277,11 @@ export class LLMInput extends LitElement {
     }
 
     .part:hover .value::before {
-      background: var(--bb-output-300);
+      background: var(--bb-ui-300);
     }
 
     .part:focus-within {
-      background: var(--bb-output-50);
+      background: var(--bb-ui-50);
     }
 
     .value textarea {
@@ -384,7 +384,7 @@ export class LLMInput extends LitElement {
     .confirm {
       background: var(--bb-continue-color) var(--bb-icon-confirm-blue) 8px 4px /
         16px 16px no-repeat;
-      color: var(--bb-output-700);
+      color: var(--bb-ui-700);
       border-radius: var(--bb-grid-size-5);
       border: none;
       height: var(--bb-grid-size-6);
