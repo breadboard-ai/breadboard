@@ -1170,17 +1170,6 @@ export class Main extends LitElement {
 
             editableGraph.removeNode(evt.id);
           }}
-          @bbmessagetraversal=${() => {
-            if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
-              return;
-            }
-
-            this.status = BreadboardUI.Types.STATUS.PAUSED;
-            this.toast(
-              "Board paused",
-              "information" as BreadboardUI.Events.ToastType
-            );
-          }}
           @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
             if (!this.#uiRef.value) {
               return;
