@@ -34,7 +34,7 @@ import runJavascript from "./run-javascript.js";
  */
 export function code<
   I extends Record<string, Value<JsonSerializable>>,
-  O extends Record<string, BreadboardType>,
+  O extends Record<string, BreadboardType | CodeOutputConfig>,
 >(
   inputs: I,
   // TODO(aomarks) We could make the `outputs` parameter optional, but we'd have
@@ -66,11 +66,10 @@ export function code<
   outputs: O,
   fn: (
     params: Expand<StrictCodeFunctionParams<I>>
-  ) => ConvertBreadboardTypes<O> | { $error: string | { message: string } }
-): CodeNode<
-  Expand<CodeNodeInputs<I>>,
-  { [K in keyof O]: ConvertBreadboardType<O[K]> }
-> {
+  ) =>
+    | Expand<ConvertBreadboardTypes<O>>
+    | { $error: string | { message: string } }
+): CodeNode<Expand<CodeNodeInputs<I>>, ConvertBreadboardTypes<O>> {
   // TODO(aomarks) Do we need any of this logic involving function names? Why
   // can't we just wrap the code in parens and invoke it like `(<fn>)()`.
   const id = inputs.$id as string | undefined;
@@ -87,7 +86,11 @@ export function code<
     // ports. Node definitions should probably have a more elegant way to
     // configure dynamic ports at instantiation time.
     const port = node.unsafeOutput(name);
-    (port as Writable<typeof port>).type = type;
+    (port as Writable<typeof port>).type =
+      // TODO(aomarks) Need to also handle the undefined case. This type matters
+      // in that it will determine what schema we write if this output is wired
+      // to a board output.
+      (type as CodeOutputConfig)["type"] ?? type;
     (node.outputs as Record<string, OutputPort<JsonSerializable>>)[name] = port;
   }
   return node;
@@ -95,7 +98,7 @@ export function code<
 
 export type CodeNode<
   I extends Record<string, JsonSerializable>,
-  O extends Record<string, JsonSerializable>,
+  O extends Record<string, JsonSerializable | undefined>,
 > = ReturnType<typeof runJavascript> &
   Instance<
     { code: string; name: string; raw: boolean } & I,
@@ -106,9 +109,26 @@ export type CodeNode<
     false
   >;
 
+export interface CodeOutputConfig {
+  type: BreadboardType;
+  optional?: true;
+}
+
 type CodeNodeInputs<I extends Record<string, Value<JsonSerializable>>> = {
   [K in keyof I]: I[K] extends Value<infer T> ? T : never;
 };
+
+type ConvertOutput<T extends BreadboardType | CodeOutputConfig> =
+  T extends BreadboardType
+    ? ConvertBreadboardType<T>
+    : // TODO(aomarks) Not sure why I need the extends or never check here
+      // given the constraint on T. Probably not enough to distinguish the two
+      // types?
+      T extends CodeOutputConfig
+      ? T["optional"] extends true
+        ? ConvertBreadboardType<T["type"]> | undefined
+        : ConvertBreadboardType<T["type"]>
+      : never;
 
 type StrictCodeFunctionParams<
   I extends Record<string, Value<JsonSerializable>>,
@@ -116,8 +136,14 @@ type StrictCodeFunctionParams<
   [K in keyof I]: I[K] extends Value<infer T> ? T : never;
 };
 
-type ConvertBreadboardTypes<T extends Record<string, BreadboardType>> = {
-  [K in keyof T]: ConvertBreadboardType<T[K]>;
+type ConvertBreadboardTypes<
+  T extends Record<string, BreadboardType | CodeOutputConfig>,
+> = Expand<Optionalize<{ [K in keyof T]: ConvertOutput<T[K]> }>>;
+
+type Optionalize<T> = {
+  [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+} & {
+  [K in keyof T as undefined extends T[K] ? K : never]?: T[K];
 };
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
