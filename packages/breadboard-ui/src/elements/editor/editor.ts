@@ -154,20 +154,30 @@ export class Editor extends LitElement {
     }
 
     #shortcut-add-specialist,
-    #shortcut-add-human {
+    #shortcut-add-human,
+    #shortcut-add-looper {
       font-size: 0;
       width: 20px;
       height: 20px;
-      background: red;
+      background: var(--bb-neutral-0);
       margin-right: calc(var(--bb-grid-size) * 2);
+      border: none;
+      cursor: grab;
     }
 
     #shortcut-add-specialist {
-      background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-smart-toy) center center /
+        20px 20px no-repeat;
     }
 
     #shortcut-add-human {
-      background: var(--bb-icon-human) center center / 20px 20px no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-human) center center / 20px
+        20px no-repeat;
+    }
+
+    #shortcut-add-looper {
+      background: var(--bb-neutral-0) var(--bb-icon-laps) center center / 20px
+        20px no-repeat;
     }
 
     label[for="add-node"] {
@@ -679,7 +689,7 @@ export class Editor extends LitElement {
 
         ${this.showNodeShortcuts
           ? html`<div class="divider"></div>
-              <div
+              <button
                 draggable="true"
                 title="Add Specialist"
                 id="shortcut-add-specialist"
@@ -695,8 +705,8 @@ export class Editor extends LitElement {
                 }}
               >
                 Add Specialist
-              </div>
-              <div
+              </button>
+              <button
                 draggable="true"
                 title="Add human"
                 id="shortcut-add-human"
@@ -712,7 +722,24 @@ export class Editor extends LitElement {
                 }}
               >
                 Add Human
-              </div>`
+              </button>
+              <button
+                draggable="true"
+                title="Add looper"
+                id="shortcut-add-looper"
+                @dblclick=${() => {
+                  const id = this.#createRandomID("looper");
+                  this.dispatchEvent(new NodeCreateEvent(id, "looper"));
+                }}
+                @dragstart=${(evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "looper");
+                }}
+              >
+                Add Human
+              </button>`
           : nothing}
       </div>
 
