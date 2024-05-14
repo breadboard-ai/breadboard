@@ -26,6 +26,7 @@ import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
 import { SettingsStore } from "./data/settings-store.js";
+import { inputsFromSettings } from "./data/inputs";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -204,6 +205,7 @@ export class PreviewRun extends LitElement {
       diagnostics: true,
       loader: this.#loader,
       interactiveSecrets: true,
+      inputs: inputsFromSettings(this.#settings),
     };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
