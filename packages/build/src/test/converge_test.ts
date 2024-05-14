@@ -108,7 +108,7 @@ test("convergences are serialized as multiple edges", () => {
   const a = input({ type: "number" });
   const b = input({ type: "number" });
   const { bar } = def({
-    foo: converge(a, b),
+    foo: converge(a, 123, b),
   }).outputs;
   const brd = board({ inputs: { a, b }, outputs: { bar } });
   const bgl = serialize(brd);
@@ -170,7 +170,9 @@ test("convergences are serialized as multiple edges", () => {
       {
         id: "test-0",
         type: "test",
-        configuration: {},
+        configuration: {
+          foo: 123,
+        },
       },
     ],
   });
