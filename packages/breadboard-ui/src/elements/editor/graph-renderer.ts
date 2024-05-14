@@ -27,6 +27,9 @@ import { GraphEdge } from "./graph-edge.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { getGlobalColor } from "./utils.js";
+
+const backgroundColor = getGlobalColor("--bb-output-50");
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -630,15 +633,17 @@ export class GraphRenderer extends LitElement {
       return this.#app.canvas;
     }
 
+    console.log(backgroundColor);
+
     await Promise.all([
       GraphAssets.instance().loaded,
       this.#app.init({
         webgpu: {
-          background: "#ededed",
+          background: backgroundColor,
           antialias: true,
         },
         webgl: {
-          background: "#ededed",
+          background: backgroundColor,
           antialias: true,
         },
         preference: "webgl",
@@ -664,7 +669,7 @@ export class GraphRenderer extends LitElement {
         console.warn("Unable to create background texture");
         return;
       }
-      ctx.fillStyle = "#ededed";
+      ctx.fillStyle = `#${backgroundColor.toString(16)}`;
       ctx.fillRect(0, 0, 1, 1);
 
       const texture = PIXI.Texture.from(canvas);

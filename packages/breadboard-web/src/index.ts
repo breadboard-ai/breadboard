@@ -267,7 +267,7 @@ export class Main extends LitElement {
     #tab-container h1 {
       font-size: var(--bb-label-medium);
       font-weight: normal;
-      background: var(--bb-neutral-100);
+      background: var(--bb-neutral-0);
       color: var(--bb-neutral-800);
       margin: 0;
       height: calc(100% - var(--bb-grid-size) * 2);
