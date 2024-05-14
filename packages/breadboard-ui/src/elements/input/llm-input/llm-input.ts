@@ -165,7 +165,7 @@ export class LLMInput extends LitElement {
       min-height: var(--bb-grid-size-6);
       border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
-      padding: var(--bb-grid-size-3) 0;
+      padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
       background: #fff;
     }
 
@@ -180,13 +180,14 @@ export class LLMInput extends LitElement {
 
     .part {
       position: relative;
+      margin: 0 var(--bb-grid-size-3);
     }
 
     .part-controls {
       display: none;
       position: absolute;
-      top: calc(var(--bb-grid-size) * -3 + 1px);
-      right: 1px;
+      top: calc(var(--bb-grid-size-4) * -1 - 2px);
+      right: calc(var(--bb-grid-size-2) * -1);
       height: var(--bb-grid-size-7);
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size-8);
@@ -252,11 +253,12 @@ export class LLMInput extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
-      padding: var(--bb-grid-size) var(--bb-grid-size-3);
+      padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size)
+        var(--bb-grid-size-3);
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
-      margin-left: var(--bb-grid-size-3);
+      margin-left: 0;
     }
 
     .value::before {
@@ -294,6 +296,7 @@ export class LLMInput extends LitElement {
       padding: 0;
       border: none;
       width: 100%;
+      outline: none;
     }
 
     .value * {
