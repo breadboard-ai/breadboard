@@ -100,10 +100,14 @@ test("collectPorts adds an $error port", async (t) => {
   );
 });
 
-test("PortType correctly recognizes object types", (t) => {
+test("PortType correctly recognizes unknown types", (t) => {
   const from = new PortType({});
-  const to = new PortType({ type: "object" });
+  const notTo = new PortType({ type: "object" });
+  const to = new PortType({});
+  const specificFrom = new PortType({ type: "number" });
   t.true(from.canConnect(to));
+  t.false(from.canConnect(notTo));
+  t.true(specificFrom.canConnect(to));
 });
 
 test("PortType matches strings, numbers, and booleans", (t) => {
@@ -121,4 +125,40 @@ test("PortType matches strings, numbers, and booleans", (t) => {
     t.true(from.canConnect(to));
     t.false(from.canConnect(notTo));
   }
+});
+
+test("PortType matches behaviors", (t) => {
+  const from = new PortType({ type: "object", behavior: ["llm-content"] });
+  const to = new PortType({ type: "object", behavior: ["llm-content"] });
+  const alsoTo = new PortType({
+    type: "object",
+    behavior: ["llm-content", "deprecated"],
+  });
+  t.true(from.canConnect(to));
+  t.true(from.canConnect(alsoTo));
+});
+
+test("PortType matches formats", (t) => {
+  const audioOnly = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "audio-file",
+  });
+  const any = new PortType({ type: "object", behavior: ["llm-content"] });
+  const imageOnly = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "image-file",
+  });
+  const audioAndImage = new PortType({
+    type: "object",
+    behavior: ["llm-content"],
+    format: "audio-file,image-file",
+  });
+  t.true(audioOnly.canConnect(audioOnly));
+  t.false(audioOnly.canConnect(imageOnly));
+  t.false(audioAndImage.canConnect(imageOnly));
+  t.true(imageOnly.canConnect(audioAndImage));
+  t.true(audioOnly.canConnect(any));
+  t.false(any.canConnect(audioOnly));
 });

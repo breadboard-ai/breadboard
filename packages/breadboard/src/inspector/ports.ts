@@ -11,7 +11,7 @@ import {
   InspectablePortType,
   PortStatus,
 } from "./types.js";
-import { NodeConfiguration, Schema } from "../types.js";
+import { BehaviorSchema, NodeConfiguration, Schema } from "../types.js";
 
 const title = (schema: Schema, key: string) => {
   return schema.properties?.[key]?.title || key;
@@ -105,10 +105,43 @@ export const collectPorts = (
 
 export class PortType implements InspectablePortType {
   constructor(public schema: Schema) {}
+  #onlyTypeRelated(behavior: Set<BehaviorSchema>): Set<BehaviorSchema> {
+    behavior.delete("deprecated");
+    behavior.delete("transient");
+    behavior.delete("config");
+    return behavior;
+  }
+
+  #subset<T>(a: Set<T>, b: Set<T>) {
+    return [...a].every((item) => b.has(item));
+  }
+
+  #difference<T>(a: Set<T>, b: Set<T>) {
+    return new Set([...a].filter((item) => !b.has(item)));
+  }
+
   canConnect(to: InspectablePortType): boolean {
-    const type = this.schema.type || "object";
-    const toType = to.schema.type || "object";
+    const type = this.schema.type || "unknown";
+    const toType = to.schema.type || "unknown";
+    // Allow connecting to the incoming port of unknown type.
+    if (toType === "unknown") return true;
+    // Otherwise, match types exactly.
     if (type !== toType) return false;
+    // Match behaviors.
+    // TODO: Handle arrays.
+    const behavior = this.#onlyTypeRelated(new Set(this.schema.behavior));
+    const toBehavior = this.#onlyTypeRelated(new Set(this.schema.behavior));
+    if (behavior.size !== toBehavior.size) return false;
+    if (!this.#subset(behavior, toBehavior)) return false;
+    // Match formats.
+    const formats = new Set(this.schema.format?.split(",") || []);
+    const toFormats = new Set(to.schema.format?.split(",") || []);
+    // When "to" can accept any format, no need to check for specifics.
+    if (toFormats.size === 0) return true;
+    // When "from" provides any format, we already know we can't handle that.
+    if (formats.size === 0) return false;
+    const formatDiff = this.#difference(formats, toFormats);
+    if (formatDiff.size) return false;
     return true;
   }
 }
