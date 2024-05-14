@@ -95,6 +95,8 @@ export class Main extends LitElement {
   #settings: SettingsStore | null;
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #confirmUnloadWithUserFirstIfNeededBound =
+    this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
 
   static styles = css`
@@ -420,6 +422,25 @@ export class Main extends LitElement {
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
+  #setBoardPendingSaveState(boardPendingSave: boolean) {
+    if (boardPendingSave === this.#boardPendingSave) {
+      return;
+    }
+
+    this.#boardPendingSave = boardPendingSave;
+    if (this.#boardPendingSave) {
+      window.addEventListener(
+        "beforeunload",
+        this.#confirmUnloadWithUserFirstIfNeededBound
+      );
+    } else {
+      window.removeEventListener(
+        "beforeunload",
+        this.#confirmUnloadWithUserFirstIfNeededBound
+      );
+    }
+  }
+
   #startFromProviderDefault() {
     let startingURL;
     for (const provider of this.#providers) {
@@ -476,7 +497,7 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#boardPendingSave = false;
+    this.#setBoardPendingSaveState(false);
     this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
   }
 
@@ -502,7 +523,7 @@ export class Main extends LitElement {
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
-    this.#boardPendingSave = false;
+    this.#setBoardPendingSaveState(false);
 
     this.#checkForPossibleEmbed();
   }
@@ -553,7 +574,7 @@ export class Main extends LitElement {
     this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
     this.#editor.addEventListener("graphchange", (evt) => {
       this.graph = evt.graph;
-      this.#boardPendingSave = !evt.visualOnly;
+      this.#setBoardPendingSaveState(!evt.visualOnly);
     });
     this.#editor.addEventListener("graphchangereject", (evt) => {
       this.graph = evt.graph;
@@ -642,6 +663,15 @@ export class Main extends LitElement {
 
   #getProviderForURL(url: URL) {
     return this.#providers.find((provider) => provider.canProvide(url));
+  }
+
+  #confirmUnloadWithUserFirstIfNeeded(evt: Event) {
+    if (!this.#boardPendingSave) {
+      return;
+    }
+
+    evt.returnValue = true;
+    return true;
   }
 
   async #confirmSaveWithUserFirstIfNeeded() {

@@ -633,8 +633,6 @@ export class GraphRenderer extends LitElement {
       return this.#app.canvas;
     }
 
-    console.log(backgroundColor);
-
     await Promise.all([
       GraphAssets.instance().loaded,
       this.#app.init({
