@@ -23,6 +23,9 @@ export class LLMInputArray extends LitElement {
   minimal = false;
 
   @property()
+  minItems = 0;
+
+  @property()
   allow: AllowedLLMContentTypes = {
     audioFile: true,
     audioMicrophone: true,
@@ -110,6 +113,16 @@ export class LLMInputArray extends LitElement {
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
     return Promise.all([...inputs].map((input) => input.processAllOpenParts()));
+  }
+
+  hasMinItems(): boolean {
+    if (!this.#containerRef.value) {
+      return false;
+    }
+
+    const inputs =
+      this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
+    return [...inputs].every((input) => input.hasMinItems());
   }
 
   protected willUpdate(
@@ -214,6 +227,7 @@ export class LLMInputArray extends LitElement {
                   : nothing}
                 .value=${value}
                 .minimal=${this.minimal}
+                .minItems=${this.minItems}
                 .allow=${this.allow}
               ></bb-llm-input>`;
             })

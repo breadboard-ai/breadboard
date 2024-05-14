@@ -109,6 +109,26 @@ function updateAllowList(
   }
 }
 
+export function getMinItemsFromProperty(property: Schema | undefined): number {
+  if (!property) {
+    return 0;
+  }
+
+  if (property.minItems) {
+    return property.minItems;
+  }
+
+  if (
+    property.items &&
+    !Array.isArray(property.items) &&
+    property.items.minItems !== undefined
+  ) {
+    return property.items.minItems;
+  }
+
+  return 0;
+}
+
 export function createAllowListFromProperty(
   property: Schema | undefined
 ): AllowedLLMContentTypes {

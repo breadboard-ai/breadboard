@@ -883,6 +883,12 @@ export class Main extends LitElement {
           .settings=${settings}
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
+          @breadboardinputerror=${(
+            evt: BreadboardUI.Events.InputErrorEvent
+          ) => {
+            this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
+            return;
+          }}
           @breadboardboardinfoupdate=${(
             evt: BreadboardUI.Events.BoardInfoUpdateEvent
           ) => {

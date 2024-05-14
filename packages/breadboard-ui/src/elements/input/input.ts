@@ -24,7 +24,10 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { AudioInput } from "./audio/audio.js";
 import { LLMContent } from "../../types/types.js";
 import { LLMInput } from "./llm-input/llm-input.js";
-import { createAllowListFromProperty } from "../../utils/llm-content.js";
+import {
+  createAllowListFromProperty,
+  getMinItemsFromProperty,
+} from "../../utils/llm-content.js";
 import { LLMInputArray } from "../elements.js";
 
 export type InputData = Record<string, unknown>;
@@ -226,7 +229,15 @@ export class Input extends LitElement {
           // them at this point.
           await element.processAllOpenParts();
           const value = element.value;
-          if (!element.value || element.value.parts.length === 0) {
+          if (
+            !element.value ||
+            element.value.parts.length === 0 ||
+            !element.hasMinItems()
+          ) {
+            const event = new InputErrorEvent(
+              `Minimum number of LLM Content items not found`
+            );
+            this.dispatchEvent(event);
             return;
           }
 
@@ -239,7 +250,11 @@ export class Input extends LitElement {
           // them at this point.
           await element.processAllOpenParts();
           const value = element.values;
-          if (!element.values) {
+          if (!element.values || !element.hasMinItems()) {
+            const event = new InputErrorEvent(
+              `Minimum number of LLM Content items not found`
+            );
+            this.dispatchEvent(event);
             return;
           }
 
@@ -295,6 +310,7 @@ export class Input extends LitElement {
             }
 
             const allow = createAllowListFromProperty(property);
+            const minItems = getMinItemsFromProperty(property);
             input = html`<bb-llm-input
               id="${key}"
               @keydown=${(evt: KeyboardEvent) => {
@@ -305,8 +321,9 @@ export class Input extends LitElement {
                 this.processInput();
               }}
               .description=${property.description}
-              .value=${Array.isArray(value) ? value[0] : value}
+              .value=${value}
               .allow=${allow}
+              .minItems=${minItems}
             ></bb-llm-input>`;
           } else if (isLLMContentArray(property)) {
             let value: LLMContent[] | null = null;
@@ -317,6 +334,7 @@ export class Input extends LitElement {
             }
 
             const allow = createAllowListFromProperty(property);
+            const minItems = getMinItemsFromProperty(property);
             input = html`<bb-llm-input-array
               id="${key}"
               @keydown=${(evt: KeyboardEvent) => {
@@ -329,6 +347,7 @@ export class Input extends LitElement {
               .description=${property.description}
               .values=${value}
               .allow=${allow}
+              .minItems=${minItems}
             ></bb-llm-input-array>`;
           } else if (isMicrophoneAudio(property)) {
             input = html`<bb-audio-input id="${key}"></bb-audio-input>`;
