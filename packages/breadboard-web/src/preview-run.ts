@@ -326,7 +326,7 @@ export class PreviewRun extends LitElement {
         .settings=${this.#settings.values}
         .events=${events}
         .eventPosition=${eventPosition}
-        @breadboardinputenter=${async (event: InputEnterEvent) => {
+        @bbinputenter=${async (event: InputEnterEvent) => {
           const data = event.data;
           const handlers = this.#handlers.get(event.id) || [];
           if (handlers.length === 0) {

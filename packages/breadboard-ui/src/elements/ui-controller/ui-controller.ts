@@ -325,14 +325,14 @@ export class UI extends LitElement {
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       .mode=${editorMode}
       .showNodeShortcuts=${showNodeShortcuts}
-      @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
+      @bbnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;
         }
 
         this.selectedNodeId = null;
       }}
-      @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+      @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
         this.requestUpdate();
       }}
@@ -372,7 +372,7 @@ export class UI extends LitElement {
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           name="Selected Node"
-          @breadboardschemachange=${() => {
+          @bbschemachange=${() => {
             this.#nodeSchemaUpdateCount++;
           }}
         ></bb-node-info>`
@@ -401,7 +401,7 @@ export class UI extends LitElement {
           .showExtendedInfo=${true}
           .settings=${this.settings}
           .logTitle=${"Activity"}
-          @breadboardinputrequested=${() => {
+          @bbinputrequested=${() => {
             this.selectedNodeId = null;
             this.requestUpdate();
           }}
@@ -432,7 +432,7 @@ export class UI extends LitElement {
 
             this.debugEvent = event;
           }}
-          @breadboardinputenter=${(event: InputEnterEvent) => {
+          @bbinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
             if (this.#messagePosition < events.length - 1) {
               // The user has attempted to provide input for a stale

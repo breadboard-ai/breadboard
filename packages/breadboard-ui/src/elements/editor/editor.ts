@@ -687,7 +687,7 @@ export class Editor extends LitElement {
           inert
           .graph=${this.graph}
           .kits=${this.kits}
-          @breadboardkitnodechosen=${(evt: KitNodeChosenEvent) => {
+          @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
             const id = this.#createRandomID(evt.nodeType);
             this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
           }}
