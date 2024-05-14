@@ -19,13 +19,7 @@ import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
-
-const documentStyles = getComputedStyle(document.documentElement);
-
-function getGlobalColor(name: string, defaultValue = "#333333") {
-  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  return parseInt(value || defaultValue, 16);
-}
+import { getGlobalColor } from "./utils.js";
 
 function edgeToString(edge: InspectableEdge): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;

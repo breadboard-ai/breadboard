@@ -136,14 +136,14 @@ export class Editor extends LitElement {
       pointer-events: none;
       position: absolute;
       bottom: 52px;
-      right: 0;
+      left: 0;
     }
 
     #nodes {
       height: calc(var(--bb-grid-size) * 9);
       position: absolute;
-      bottom: calc(var(--bb-grid-size) * 4);
-      right: calc(var(--bb-grid-size) * 4);
+      bottom: calc(var(--bb-grid-size) * 3);
+      left: calc(var(--bb-grid-size) * 3);
       border-radius: 50px;
       border: 1px solid #d9d9d9;
       background: #ffffff;
@@ -222,8 +222,8 @@ export class Editor extends LitElement {
     #controls {
       height: calc(var(--bb-grid-size) * 9);
       position: absolute;
-      left: calc(var(--bb-grid-size) * 4);
-      bottom: calc(var(--bb-grid-size) * 4);
+      left: calc(var(--bb-grid-size) * 3);
+      top: calc(var(--bb-grid-size) * 3);
       background: #fff;
       border-radius: 40px;
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
