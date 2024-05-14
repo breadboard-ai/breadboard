@@ -106,6 +106,7 @@ export function input(
     description: params?.description,
     default: params?.default,
     examples: params?.examples,
+    optional: params?.optional,
   } satisfies
     | Omit<Input<JsonSerializable>, "__type">
     | InputWithDefault<JsonSerializable> as
@@ -120,6 +121,7 @@ interface LooseParams {
   description?: string;
   default?: JsonSerializable;
   examples?: JsonSerializable[];
+  optional?: true;
 }
 
 export interface Input<T extends JsonSerializable | undefined> {
@@ -131,6 +133,7 @@ export interface Input<T extends JsonSerializable | undefined> {
   readonly description?: string;
   readonly default: undefined;
   readonly examples?: T[];
+  readonly optional?: boolean;
 }
 
 export interface InputWithDefault<T extends JsonSerializable | undefined> {
@@ -161,6 +164,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
           : JsonSerializable
       >;
       description?: string;
+      optional?: T["default"] extends Defined ? never : true;
     }
   : T["default"] extends Defined
     ? {
@@ -170,6 +174,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
         default: string | number | boolean;
         examples?: Array<T["default"]>;
         description?: string;
+        optional?: never;
       }
     : T["examples"] extends Defined
       ? {
@@ -179,6 +184,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
           default?: never;
           examples?: string[] | number[] | boolean[];
           description?: string;
+          optional?: true;
         }
       : never) & {
   [K in keyof T]: K extends
@@ -188,6 +194,7 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
     | "default"
     | "examples"
     | "description"
+    | "optional"
     ? unknown
     : never;
 };
