@@ -55,30 +55,30 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context",
               "type": "array",
+              "title": "Context",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
+              ],
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
-              },
-              "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
-              ]
+              }
             },
             "generator": {
               "type": "string",
-              "title": "Generator",
-              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
               "behavior": [
                 "board"
               ],
+              "title": "Generator",
+              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
               "default": "gemini-generator.json"
             },
             "stopSequences": {
-              "title": "Stop Sequences",
               "type": "array",
+              "title": "Stop Sequences",
               "default": "[]"
             }
           },
@@ -101,8 +101,8 @@
               "description": "Agent context after generation"
             },
             "text": {
-              "title": "Output",
               "type": "string",
+              "title": "Output",
               "description": "Agent's output"
             }
           }

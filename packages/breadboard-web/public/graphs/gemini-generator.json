@@ -100,22 +100,22 @@
               "type": "array",
               "title": "Context",
               "description": "An array of messages to use as conversation context",
-              "items": {
-                "type": "object"
-              },
               "default": "[]",
               "examples": [
                 "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
-              ]
+              ],
+              "items": {
+                "type": "object"
+              }
             },
             "stopSequences": {
               "type": "array",
               "title": "Stop Sequences",
               "description": "An array of strings that will stop the output",
+              "default": "[]",
               "items": {
                 "type": "string"
-              },
-              "default": "[]"
+              }
             },
             "text": {
               "type": "string",
@@ -129,13 +129,13 @@
               "type": "array",
               "title": "Tools",
               "description": "An array of functions to use for tool-calling",
-              "items": {
-                "type": "string"
-              },
               "default": "[]",
               "examples": [
                 "[\n  {\n    \"name\": \"The_Calculator_Board\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Board\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
-              ]
+              ],
+              "items": {
+                "type": "string"
+              }
             },
             "useStreaming": {
               "type": "boolean",
@@ -160,8 +160,8 @@
             "stream": {
               "type": "object",
               "title": "Stream",
-              "format": "stream",
-              "description": "The generated text"
+              "description": "The generated text",
+              "format": "stream"
             }
           }
         }

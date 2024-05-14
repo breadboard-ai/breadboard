@@ -88,21 +88,21 @@
               "type": "array",
               "title": "Tools",
               "description": "URLs of boards to use as tools",
-              "items": {
-                "type": "string"
-              },
               "examples": [
                 "[ \"https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/math.json\", \"https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/search-summarize.json\" ]"
-              ]
+              ],
+              "items": {
+                "type": "string"
+              }
             },
             "context": {
               "type": "array",
               "title": "Context",
               "description": "An array of messages to use as conversation context",
+              "default": "[]",
               "items": {
                 "type": "object"
-              },
-              "default": "[]"
+              }
             },
             "generator": {
               "type": "string",

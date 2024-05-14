@@ -144,7 +144,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "additionalProperties": true
+            "additionalProperties": {}
           },
           "description": "The output of the lambda"
         }

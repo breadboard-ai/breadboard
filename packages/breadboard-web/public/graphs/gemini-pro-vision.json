@@ -100,14 +100,14 @@
               "type": "array",
               "title": "Content",
               "description": "Add content here",
-              "minItems": 1,
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ],
                 "format": "image-file,image-webcam"
-              }
+              },
+              "minItems": 1
             },
             "useStreaming": {
               "type": "boolean",

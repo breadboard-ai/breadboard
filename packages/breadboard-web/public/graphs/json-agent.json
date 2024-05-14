@@ -43,41 +43,41 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context",
               "type": "array",
+              "title": "Context",
+              "default": "[]",
+              "examples": [
+                "[]"
+              ],
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
-              },
-              "default": "[]",
-              "examples": [
-                "[]"
-              ]
+              }
             },
             "instruction": {
-              "title": "Instruction",
+              "type": "string",
               "behavior": [
                 "config"
               ],
-              "format": "multiline",
+              "title": "Instruction",
               "examples": [
                 "You are building a team of skilled experts to create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. These experts can only read text and produce text. Creating melodies and producing music is not their responsibility. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
               ],
-              "type": "string"
+              "format": "multiline"
             },
             "schema": {
-              "title": "Schema",
-              "description": "The schema to convert to schemish.",
               "type": "object",
-              "examples": [
-                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
-              ],
               "behavior": [
                 "json-schema"
               ],
-              "default": "{}"
+              "title": "Schema",
+              "description": "The schema to convert to schemish.",
+              "default": "{}",
+              "examples": [
+                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+              ]
             }
           },
           "required": [
@@ -99,9 +99,9 @@
               "title": "context"
             },
             "json": {
+              "type": "string",
               "title": "json",
-              "description": "The validated JSON.",
-              "type": "string"
+              "description": "The validated JSON."
             }
           }
         }

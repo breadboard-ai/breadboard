@@ -43,9 +43,10 @@
           "type": "object",
           "properties": {
             "countryCode": {
-              "title": "countryCode",
               "type": "string",
+              "title": "countryCode",
               "description": "The data for countryCode",
+              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -173,12 +174,11 @@
                 "VN",
                 "ZA",
                 "ZW"
-              ],
-              "default": "US"
+              ]
             },
             "year": {
-              "title": "year",
               "type": "number",
+              "title": "year",
               "description": "The data for year",
               "default": "2024"
             }

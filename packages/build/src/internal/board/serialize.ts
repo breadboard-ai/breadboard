@@ -144,8 +144,23 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         }
         inputNodes.set(inputNodeId, inputNode);
       }
-      inputNode.configuration.schema.properties[mainInputName] = schema;
-      inputNode.configuration.schema.required.push(mainInputName);
+      inputNode.configuration.schema.properties[mainInputName] = sortKeys(
+        schema,
+        [
+          "type",
+          "behavior",
+          "title",
+          "description",
+          "default",
+          "examples",
+          "anyOf",
+          "properties",
+          "items",
+          "required",
+          "additionalProperties",
+        ]
+      );
+      inputNode.configuration.schema.required!.push(mainInputName);
     }
   }
 
@@ -447,3 +462,22 @@ type InputOrOutputNodeDescriptor = NodeDescriptor & {
     };
   };
 };
+
+function sortKeys<T extends Record<string, unknown>>(
+  obj: T,
+  fieldOrder: string[]
+): T {
+  return Object.fromEntries(
+    Object.entries(obj).sort(([nameA], [nameB]) => {
+      const indexA = fieldOrder.indexOf(nameA);
+      const indexB = fieldOrder.indexOf(nameB);
+      if (indexA !== indexB) {
+        return (
+          (indexA === -1 ? Number.MAX_VALUE : indexA) -
+          (indexB === -1 ? Number.MAX_VALUE : indexB)
+        );
+      }
+      return nameA.localeCompare(nameB);
+    })
+  ) as T;
+}

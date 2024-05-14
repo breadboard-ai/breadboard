@@ -25,16 +25,16 @@
           "type": "object",
           "properties": {
             "spec": {
-              "title": "Chain spec",
               "type": "array",
+              "title": "Chain spec",
               "description": "The list to iterate over.",
+              "examples": [
+                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n\\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
+              ],
               "items": {
                 "type": "object",
                 "format": "multiline"
-              },
-              "examples": [
-                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n\\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
-              ]
+              }
             }
           },
           "required": [
@@ -51,8 +51,8 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context",
               "type": "object",
+              "title": "Context",
               "description": "The context that is the result of the agent chain run"
             }
           }

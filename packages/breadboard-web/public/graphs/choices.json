@@ -37,18 +37,18 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Ad specs",
               "type": "array",
+              "title": "Ad specs",
+              "default": "[]",
+              "examples": [
+                "{\"role\":\"user\",\"parts\":[{\"text\":\"Write an ad for Breadboard. The ad must incorporate the following key messages: \\n- Breadboard for Developers\\n- Play and experiment with AI Patterns\\n- Prototype quickly\\n- Use with Gemini APIs \\n- Integrate AI Into Your Project\\n- Create graphs with prompts\\n- Accessible AI for Developers\"}]}"
+              ],
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
-              },
-              "default": "[]",
-              "examples": [
-                "{\"role\":\"user\",\"parts\":[{\"text\":\"Write an ad for Breadboard. The ad must incorporate the following key messages: \\n- Breadboard for Developers\\n- Play and experiment with AI Patterns\\n- Prototype quickly\\n- Use with Gemini APIs \\n- Integrate AI Into Your Project\\n- Create graphs with prompts\\n- Accessible AI for Developers\"}]}"
-              ]
+              }
             }
           },
           "required": [
@@ -65,8 +65,8 @@
           "type": "object",
           "properties": {
             "text": {
-              "title": "Context out",
-              "type": "string"
+              "type": "string",
+              "title": "Context out"
             }
           }
         }

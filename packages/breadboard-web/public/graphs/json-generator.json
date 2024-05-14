@@ -154,9 +154,9 @@
             "template": {
               "type": "text",
               "title": "Template",
-              "format": "multiline",
               "description": "the template for the reply. Insert {{format}} where you want the format to be specified",
-              "default": "What is the meaning of life?\n{{format}}"
+              "default": "What is the meaning of life?\n{{format}}",
+              "format": "multiline"
             }
           }
         }

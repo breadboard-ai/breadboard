@@ -49,18 +49,18 @@
           "type": "object",
           "properties": {
             "purpose": {
-              "title": "Purpose",
               "type": "array",
+              "title": "Purpose",
+              "default": "[]",
+              "examples": [
+                "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
+              ],
               "items": {
                 "type": "object",
                 "behavior": [
                   "llm-content"
                 ]
               },
-              "default": "[]",
-              "examples": [
-                "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
-              ],
               "format": "multiline"
             }
           },
@@ -78,13 +78,13 @@
           "type": "object",
           "properties": {
             "json": {
+              "type": "string",
               "title": "json",
-              "description": "The validated JSON.",
-              "type": "string"
+              "description": "The validated JSON."
             },
             "prompts": {
-              "title": "List",
               "type": "array",
+              "title": "List",
               "description": "The list of outputs from the board."
             }
           }

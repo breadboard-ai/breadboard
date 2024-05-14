@@ -45,13 +45,33 @@ export function formatGraphDescriptor(bgl: GraphDescriptor): GraphDescriptor {
       node.configuration = sortKeys(node.configuration ?? {}, []);
       if (node.type === "input" || node.type === "output") {
         const configWithSchema = node.configuration as {
-          schema?: { properties?: Record<string, unknown>; required?: [] };
+          schema?: {
+            properties?: Record<string, Record<string, unknown>>;
+            required?: [];
+          };
         };
         if (configWithSchema.schema?.properties) {
           configWithSchema.schema.properties = sortKeys(
             configWithSchema.schema.properties,
             []
           );
+          for (const [name, prop] of Object.entries(
+            configWithSchema.schema.properties
+          )) {
+            configWithSchema.schema.properties[name] = sortKeys(prop, [
+              "type",
+              "behavior",
+              "title",
+              "description",
+              "default",
+              "examples",
+              "anyOf",
+              "properties",
+              "items",
+              "required",
+              "additionalProperties",
+            ]);
+          }
         }
         configWithSchema.schema?.required?.sort();
       }

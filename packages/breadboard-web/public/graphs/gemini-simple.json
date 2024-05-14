@@ -28,10 +28,10 @@
               "type": "string",
               "title": "Prompt",
               "description": "The text to generate",
+              "default": "",
               "examples": [
                 "Write a rhyming poem about breadboards."
-              ],
-              "default": ""
+              ]
             }
           },
           "required": [
