@@ -283,6 +283,12 @@ export class UI extends LitElement {
         )?.value
       : false;
 
+    const showNodeTypeDescriptions = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Show Node Type Descriptions"
+        )?.value
+      : true;
+
     const hideSubboardSelectorWhenEmpty = this.settings
       ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
           "Hide Embedded Board Selector When Empty"
@@ -333,9 +339,10 @@ export class UI extends LitElement {
     ></bb-editor>`;
 
     const nodeMetaDetails = guard(
-      [this.boardId, this.selectedNodeId],
+      [this.boardId, this.selectedNodeId, showNodeTypeDescriptions],
       () =>
         html`<bb-node-details
+          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .selectedNodeId=${this.selectedNodeId}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
