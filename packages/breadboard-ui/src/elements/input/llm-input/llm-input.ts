@@ -42,6 +42,9 @@ export class LLMInput extends LitElement {
   minimal = false;
 
   @property()
+  minItems = 0;
+
+  @property()
   allow: AllowedLLMContentTypes = {
     audioFile: true,
     audioMicrophone: true,
@@ -412,6 +415,14 @@ export class LLMInput extends LitElement {
     }
 
     this.#containerRef.value.style.height = `${height}px`;
+  }
+
+  hasMinItems(): boolean {
+    if (!this.value) {
+      return false;
+    }
+
+    return this.value.parts.length >= this.minItems;
   }
 
   #clearPartDataURLs() {

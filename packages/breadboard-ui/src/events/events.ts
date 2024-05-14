@@ -354,6 +354,8 @@ export class InputErrorEvent extends Event {
   constructor(public detail: string) {
     super(InputErrorEvent.eventName, {
       bubbles: true,
+      cancelable: true,
+      composed: true,
     });
   }
 }
