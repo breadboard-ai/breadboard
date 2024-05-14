@@ -6,7 +6,14 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { anyOf, array, object } from "../index.js";
+import {
+  anyOf,
+  array,
+  board,
+  defineNodeType,
+  object,
+  serialize,
+} from "../index.js";
 import { input, type GenericSpecialInput } from "../internal/board/input.js";
 import type {
   BreadboardType,
@@ -216,4 +223,100 @@ test("invalid examples", () => {
 
   // @ts-expect-error
   input({ examples: { foo: "bar" } });
+});
+
+test.only("multiple input nodes with ids and metadata", () => {
+  const a = input();
+  const b = input({ type: "number" });
+  const c = input({ type: "boolean" });
+
+  const { d } = defineNodeType({
+    name: "test",
+    inputs: {
+      a: { type: "string" },
+      b: { type: "number" },
+      c: { type: "boolean" },
+    },
+    outputs: {
+      d: { type: "string" },
+    },
+    invoke: () => ({ d: "foo" }),
+  })({ a, b, c }).outputs;
+
+  // $ExpectType BoardDefinition<{ a: Input<string | undefined>; b: Input<number | undefined>; c: Input<boolean>; }, { d: OutputPort<string>; }>
+  const brd = board({
+    inputs: [
+      { a, b, c },
+      {
+        $id: "foo",
+        $metadata: { title: "Foo Title", description: "Foo Desc" },
+        b,
+        c,
+      },
+      { c, a },
+    ],
+    outputs: {
+      d,
+    },
+  });
+  assert.deepEqual(serialize(brd), {
+    edges: [
+      { from: "foo", to: "test-0", out: "b", in: "b" },
+      { from: "input-1", to: "test-0", out: "a", in: "a" },
+      { from: "input-1", to: "test-0", out: "c", in: "c" },
+      { from: "test-0", to: "output-0", out: "d", in: "d" },
+    ],
+    nodes: [
+      {
+        id: "foo",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { b: { type: "number" }, c: { type: "boolean" } },
+            required: ["b", "c"],
+          },
+        },
+        metadata: { title: "Foo Title", description: "Foo Desc" },
+      },
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              a: { type: "string" },
+              b: { type: "number" },
+              c: { type: "boolean" },
+            },
+            required: ["a", "b", "c"],
+          },
+        },
+      },
+      {
+        id: "input-1",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { a: { type: "string" }, c: { type: "boolean" } },
+            required: ["a", "c"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { d: { type: "string" } },
+            required: ["d"],
+          },
+        },
+      },
+      { id: "test-0", type: "test", configuration: {} },
+    ],
+  });
 });

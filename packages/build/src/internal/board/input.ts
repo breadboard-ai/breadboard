@@ -122,7 +122,7 @@ interface LooseParams {
   examples?: JsonSerializable[];
 }
 
-export interface Input<T extends JsonSerializable> {
+export interface Input<T extends JsonSerializable | undefined> {
   readonly __SpecialInputBrand: true;
   readonly __type: T;
   readonly id?: string;
@@ -133,7 +133,7 @@ export interface Input<T extends JsonSerializable> {
   readonly examples?: T[];
 }
 
-export interface InputWithDefault<T extends JsonSerializable> {
+export interface InputWithDefault<T extends JsonSerializable | undefined> {
   readonly __SpecialInputBrand: true;
   readonly id?: string;
   readonly title?: string;

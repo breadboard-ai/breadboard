@@ -11,7 +11,7 @@ import {
   type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
-import type { GenericSpecialInput } from "./input.js";
+import type { GenericSpecialInput, Input } from "./input.js";
 import type { Output } from "./output.js";
 
 // TODO(aomarks) Support primary ports in boards.
@@ -43,7 +43,7 @@ export function board<
   // TODO(aomarks) Does it actually make any sense to pass an input port
   // directly here? The only way to not have already initialized it to something
   // was to have used an input(), so only inputs should be allowed, right?
-  IPORTS extends BoardInputPorts,
+  IPORTS extends BoardInputShape,
   OPORTS extends BoardOutputShape,
 >({
   inputs,
@@ -52,13 +52,15 @@ export function board<
   description,
   version,
 }: BoardParameters<IPORTS, OPORTS>): BoardDefinition<
-  IPORTS,
+  FlattenMultiInputs<IPORTS>,
   FlattenMultiOutputs<OPORTS>
 > {
+  const flatInputs = flattenInputs(inputs);
   const flatOutputs = flattenOutputs(outputs);
-  const def = new BoardDefinitionImpl(inputs, flatOutputs);
+  const def = new BoardDefinitionImpl(flatInputs, flatOutputs);
   return Object.assign(def.instantiate.bind(def), {
-    inputs,
+    inputs: flatInputs,
+    inputsForSerialization: inputs as BoardInputPorts | Array<BoardInputPorts>,
     outputs: flatOutputs,
     outputsForSerialization: outputs as
       | BoardOutputPorts
@@ -67,6 +69,24 @@ export function board<
     description,
     version,
   });
+}
+
+function flattenInputs<IPORTS extends BoardInputShape>(
+  inputs: IPORTS
+): FlattenMultiInputs<IPORTS> {
+  if (!Array.isArray(inputs)) {
+    return inputs as FlattenMultiInputs<IPORTS>;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ports = {} as any;
+  for (const inputNode of inputs as Array<BoardInputPorts>) {
+    for (const [name, port] of Object.entries(inputNode)) {
+      // TODO(aomarks) This is wrong. We're just clobbering. Doesn't matter up
+      // until we try to invoke a board, which we don't yet support.
+      ports[name] = port;
+    }
+  }
+  return ports;
 }
 
 function flattenOutputs<OPORTS extends BoardOutputShape>(
@@ -86,6 +106,19 @@ function flattenOutputs<OPORTS extends BoardOutputShape>(
   return ports;
 }
 
+export type FlattenMultiInputs<I extends BoardInputShape> =
+  I extends Array<BoardInputPortsWithUndefined>
+    ? {
+        [K in keyof I[number] as K extends "$id" | "$metadata"
+          ? never
+          : K]-?: I[number][K] extends Input<infer T> | undefined
+          ? undefined extends I[number][K]
+            ? Input<T | undefined>
+            : Input<T>
+          : never;
+      }
+    : I;
+
 type FlattenMultiOutputs<O extends BoardOutputShape> =
   O extends Array<BoardOutputPortsWithUndefined>
     ? {
@@ -104,7 +137,7 @@ type FlattenMultiOutputs<O extends BoardOutputShape> =
     : O;
 
 export interface BoardParameters<
-  IPORTS extends BoardInputPorts,
+  IPORTS extends BoardInputShape,
   OPORTS extends BoardOutputShape,
 > {
   inputs: IPORTS;
@@ -113,11 +146,26 @@ export interface BoardParameters<
   description?: string;
   version?: string;
 }
+export type BoardInputShape =
+  | BoardInputPorts
+  | Array<BoardInputPortsWithUndefined>;
 
 export type BoardInputPorts = Record<
   string,
   InputPort<JsonSerializable> | GenericSpecialInput
 >;
+
+export type BoardInputPortsWithUndefined = Record<
+  string,
+  | InputPort<JsonSerializable>
+  | GenericSpecialInput
+  | string
+  | undefined
+  | { title?: string; description?: string }
+> & {
+  $id?: string | undefined;
+  $metadata?: { title?: string; description?: string };
+};
 
 export type BoardOutputShape =
   | BoardOutputPorts
@@ -145,6 +193,7 @@ export type BoardDefinition<
   OPORTS extends BoardOutputPorts,
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
   readonly inputs: IPORTS;
+  readonly inputsForSerialization: BoardInputPorts | Array<BoardInputPorts>;
   readonly outputs: OPORTS;
   readonly outputsForSerialization: BoardOutputPorts | Array<BoardOutputPorts>;
   readonly title?: string;
