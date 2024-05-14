@@ -312,7 +312,7 @@ test.only("multiple input nodes with ids and metadata", () => {
           schema: {
             type: "object",
             properties: { d: { type: "string" } },
-            required: ["d"],
+            required: [],
           },
         },
       },

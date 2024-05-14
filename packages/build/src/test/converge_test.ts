@@ -155,7 +155,7 @@ test("convergences are serialized as multiple edges", () => {
                 type: "number",
               },
             },
-            required: ["bar"],
+            required: [],
             type: "object",
           },
         },

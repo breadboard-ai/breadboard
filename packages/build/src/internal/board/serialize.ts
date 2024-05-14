@@ -212,7 +212,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         }
       }
       outputNode.configuration.schema.properties[name] = schema;
-      outputNode.configuration.schema.required.push(name);
+      // TODO(aomarks) Should we ever set required outputs? IMO it should mean
+      // "this node will always include this" but it currently seems to mean
+      // "you must wire this up" (since it turns red).
       addEdge(
         visitNodeAndReturnItsId(port.node),
         port.name,
