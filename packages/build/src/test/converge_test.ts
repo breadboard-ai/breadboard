@@ -28,17 +28,22 @@ test("converge must have 2 or more arguments", () => {
   converge(input(), input(), input(), input());
 });
 
-test("converge must be a valid non-basic value", () => {
+test("cannot converge undefined or something weird", () => {
   // @ts-expect-error
   converge(undefined, undefined);
   // @ts-expect-error
   converge(converge, converge);
-  // @ts-expect-error
+});
+
+test("can converge basic types", () => {
+  // $ExpectType Convergence<string>
   converge("foo", "bar");
-  // @ts-expect-error
+  // $ExpectType Convergence<number>
   converge(123, 456);
-  // @ts-expect-error
+  // $ExpectType Convergence<null>
   converge(null, null);
+  // $ExpectType Convergence<{ foo: string; } | {}>
+  converge({}, input({ type: object({ foo: "string" }) }));
 });
 
 test("nested converge is not allowed", () => {
@@ -103,7 +108,7 @@ test("convergences are serialized as multiple edges", () => {
   const a = input({ type: "number" });
   const b = input({ type: "number" });
   const { bar } = def({
-    foo: converge(a, b),
+    foo: converge(a, 123, b),
   }).outputs;
   const brd = board({ inputs: { a, b }, outputs: { bar } });
   const bgl = serialize(brd);
@@ -165,7 +170,9 @@ test("convergences are serialized as multiple edges", () => {
       {
         id: "test-0",
         type: "test",
-        configuration: {},
+        configuration: {
+          foo: 123,
+        },
       },
     ],
   });
