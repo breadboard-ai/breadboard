@@ -7,7 +7,7 @@
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
-  BreadboardOverlayDismissedEvent,
+  OverlayDismissedEvent,
   SettingsUpdateEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -523,7 +523,7 @@ export class SettingsEditOverlay extends LitElement {
           <h1>Settings</h1>
           <button
             @click=${() => {
-              this.dispatchEvent(new BreadboardOverlayDismissedEvent());
+              this.dispatchEvent(new OverlayDismissedEvent());
             }}
             class="close"
             type="button"
@@ -707,7 +707,7 @@ export class SettingsEditOverlay extends LitElement {
         <div id="controls">
           <button
             @click=${() => {
-              this.dispatchEvent(new BreadboardOverlayDismissedEvent());
+              this.dispatchEvent(new OverlayDismissedEvent());
             }}
             class="cancel"
             type="button"

@@ -18,6 +18,27 @@ const eventInit = {
   composed: true,
 };
 
+export enum ToastType {
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+}
+
+/**
+ * Board Management
+ */
+
+export class FileDropEvent extends Event {
+  static eventName = "bbfiledrop";
+
+  constructor(
+    public readonly url: string,
+    public readonly descriptor: GraphDescriptor
+  ) {
+    super(FileDropEvent.eventName, { ...eventInit });
+  }
+}
+
 export class StartEvent extends Event {
   static eventName = "bbstart";
 
@@ -41,54 +62,19 @@ export class StartEvent extends Event {
   }
 }
 
-export class FileDropEvent extends Event {
-  static eventName = "bbfiledrop";
-
-  constructor(
-    public readonly url: string,
-    public readonly descriptor: GraphDescriptor
-  ) {
-    super(FileDropEvent.eventName, { ...eventInit });
-  }
-}
-
-export class KitNodeChosenEvent extends Event {
-  static eventName = "bbkitnodechosen";
-
-  constructor(public readonly nodeType: string) {
-    super(KitNodeChosenEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SubGraphChosenEvent extends Event {
-  static eventName = "bbsubgraphchosen";
-
-  constructor(public readonly subGraphId: string) {
-    super(SubGraphChosenEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SubGraphDeleteEvent extends Event {
-  static eventName = "bbsubgraphdelete";
-
-  constructor(public readonly subGraphId: string) {
-    super(SubGraphDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SubGraphCreateEvent extends Event {
-  static eventName = "bbsubgraphcreate";
-
-  constructor(public readonly subGraphTitle: string) {
-    super(SubGraphCreateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class BreadboardOverlayDismissedEvent extends Event {
-  static eventName = "bboverlaydismissed";
+export class RunEvent extends Event {
+  static eventName = "bbrunboard";
 
   constructor() {
-    super(BreadboardOverlayDismissedEvent.eventName, { ...eventInit });
+    super(RunEvent.eventName, { ...eventInit });
+  }
+}
+
+export class StopEvent extends Event {
+  static eventName = "bbstopboard";
+
+  constructor() {
+    super(StopEvent.eventName, { ...eventInit });
   }
 }
 
@@ -118,6 +104,26 @@ export class BoardInfoUpdateEvent extends Event {
   }
 }
 
+export class BoardUnloadEvent extends Event {
+  static eventName = "bbboardunload";
+
+  constructor() {
+    super(BoardUnloadEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * General UI
+ */
+
+export class OverlayDismissedEvent extends Event {
+  static eventName = "bboverlaydismissed";
+
+  constructor() {
+    super(OverlayDismissedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class SettingsUpdateEvent extends Event {
   static eventName = "bbsettingsupdate";
 
@@ -125,6 +131,96 @@ export class SettingsUpdateEvent extends Event {
     super(SettingsUpdateEvent.eventName, { ...eventInit });
   }
 }
+
+export class ToastEvent extends Event {
+  static eventName = "bbtoast";
+
+  constructor(
+    public readonly message: string,
+    public readonly toastType: ToastType
+  ) {
+    super(ToastEvent.eventName, { ...eventInit });
+  }
+}
+
+export class DelayEvent extends Event {
+  static eventName = "bbdelay";
+
+  constructor(public readonly duration: number) {
+    super(DelayEvent.eventName, { ...eventInit });
+  }
+}
+
+export class InputRequestedEvent extends Event {
+  static eventName = "bbinputrequested";
+
+  constructor() {
+    super(InputRequestedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class InputEnterEvent extends Event {
+  static eventName = "bbinputenter";
+
+  constructor(
+    public readonly id: string,
+    public readonly data: Record<string, unknown>
+  ) {
+    super(InputEnterEvent.eventName, { ...eventInit });
+  }
+}
+
+export class InputErrorEvent extends Event {
+  static eventName = "bbinputerror";
+
+  constructor(public readonly detail: string) {
+    super(InputErrorEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Graph Editing
+ */
+
+export class KitNodeChosenEvent extends Event {
+  static eventName = "bbkitnodechosen";
+
+  constructor(public readonly nodeType: string) {
+    super(KitNodeChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Sub Graph Management
+ */
+
+export class SubGraphChosenEvent extends Event {
+  static eventName = "bbsubgraphchosen";
+
+  constructor(public readonly subGraphId: string) {
+    super(SubGraphChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SubGraphDeleteEvent extends Event {
+  static eventName = "bbsubgraphdelete";
+
+  constructor(public readonly subGraphId: string) {
+    super(SubGraphDeleteEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SubGraphCreateEvent extends Event {
+  static eventName = "bbsubgraphcreate";
+
+  constructor(public readonly subGraphTitle: string) {
+    super(SubGraphCreateEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Graph Providers
+ */
 
 export class GraphProviderConnectRequestEvent extends Event {
   static eventName = "bbgraphproviderconnectrequest";
@@ -202,95 +298,15 @@ export class GraphProviderRefreshEvent extends Event {
   }
 }
 
-export class RunEvent extends Event {
-  static eventName = "bbrunboard";
+/**
+ * Graph Management - UI
+ */
+
+export class SchemaChangeEvent extends Event {
+  static eventName = "bbschemachange";
 
   constructor() {
-    super(RunEvent.eventName, { ...eventInit });
-  }
-}
-
-export class StopEvent extends Event {
-  static eventName = "bbstopboard";
-
-  constructor() {
-    super(StopEvent.eventName, { ...eventInit });
-  }
-}
-
-export enum ToastType {
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-}
-
-export class ToastEvent extends Event {
-  static eventName = "bbtoast";
-
-  constructor(
-    public readonly message: string,
-    public readonly toastType: ToastType
-  ) {
-    super(ToastEvent.eventName, { ...eventInit });
-  }
-}
-
-export class DelayEvent extends Event {
-  static eventName = "bbdelay";
-
-  constructor(public readonly duration: number) {
-    super(DelayEvent.eventName, { ...eventInit });
-  }
-}
-
-export class InputRequestedEvent extends Event {
-  static eventName = "bbinputrequested";
-
-  constructor() {
-    super(InputRequestedEvent.eventName, { ...eventInit });
-  }
-}
-
-export class InputEnterEvent extends Event {
-  static eventName = "bbinputenter";
-
-  constructor(
-    public readonly id: string,
-    public readonly data: Record<string, unknown>
-  ) {
-    super(InputEnterEvent.eventName, { ...eventInit });
-  }
-}
-
-export class InputErrorEvent extends Event {
-  static eventName = "bbinputerror";
-
-  constructor(public readonly detail: string) {
-    super(InputErrorEvent.eventName, { ...eventInit });
-  }
-}
-
-export class BoardUnloadEvent extends Event {
-  static eventName = "bbboardunload";
-
-  constructor() {
-    super(BoardUnloadEvent.eventName, { ...eventInit });
-  }
-}
-
-export class MessageTraversalEvent extends Event {
-  static eventName = "bbmessagetraversal";
-
-  constructor(public readonly index: number) {
-    super(MessageTraversalEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ResumeEvent extends Event {
-  static eventName = "bbresume";
-
-  constructor() {
-    super(ResumeEvent.eventName, { ...eventInit });
+    super(SchemaChangeEvent.eventName, { ...eventInit });
   }
 }
 
@@ -451,13 +467,5 @@ export class GraphNodeDeleteEvent extends Event {
 
   constructor(public readonly id: string) {
     super(GraphNodeDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SchemaChangeEvent extends Event {
-  static eventName = "bbschemachange";
-
-  constructor() {
-    super(SchemaChangeEvent.eventName, { ...eventInit });
   }
 }
