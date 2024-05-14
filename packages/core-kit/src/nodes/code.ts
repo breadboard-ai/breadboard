@@ -64,7 +64,9 @@ export function code<
   //    specified.
   //
   outputs: O,
-  fn: (params: Expand<StrictCodeFunctionParams<I>>) => ConvertBreadboardTypes<O>
+  fn: (
+    params: Expand<StrictCodeFunctionParams<I>>
+  ) => ConvertBreadboardTypes<O> | { $error: string | { message: string } }
 ): CodeNode<
   Expand<CodeNodeInputs<I>>,
   { [K in keyof O]: ConvertBreadboardType<O[K]> }
