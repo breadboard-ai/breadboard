@@ -98,11 +98,12 @@ export const collectPorts = (
     .filter(Boolean) as InspectablePort[];
 };
 
-export const collectPortsForType = (schema: Schema) => {
+export const collectPortsForType = (schema: Schema): InspectablePort[] => {
   const portNames = Object.keys(schema.properties || {});
   const requiredPortNames = schema.required || [];
   portNames.sort();
   return portNames.map((port) => {
+    const portSchema: Schema = schema.properties?.[port] || DEFAULT_SCHEMA;
     return {
       name: port,
       title: title(schema, port),
@@ -116,7 +117,13 @@ export const collectPortsForType = (schema: Schema) => {
         requiredPortNames.includes(port),
         false
       ),
-      schema: schema.properties?.[port] || DEFAULT_SCHEMA,
+      schema: portSchema,
+      type: {
+        schema: portSchema,
+        canConnect() {
+          return false;
+        },
+      },
     };
   });
 };
