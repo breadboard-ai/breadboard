@@ -21,14 +21,31 @@ export function enumeration<T extends [Enumable, ...Enumable[]]>(
   if (values.length === 0) {
     throw new Error("enumeration needs at least one value");
   }
-  for (const value of values) {
-    const t = typeof value;
-    if (t !== "string" && t !== "number" && t !== "boolean" && value !== null) {
+  const types = new Set<"string" | "number" | "boolean" | "null">(
+    values.map((value) => {
+      const t = typeof value;
+      switch (t) {
+        case "string":
+        case "number":
+        case "boolean":
+          return t;
+      }
+      if (value === null) {
+        return "null";
+      }
       throw new Error(
         `enumeration values must be string, number, boolean, or null. ` +
-          `Got ${typeof value}.`
+          `Got ${t}.`
       );
-    }
+    })
+  );
+  if (types.size === 1) {
+    return {
+      jsonSchema: {
+        type: [...types][0]!,
+        enum: values,
+      },
+    };
   }
   return {
     jsonSchema: {

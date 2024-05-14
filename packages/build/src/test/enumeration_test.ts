@@ -18,7 +18,7 @@ test("1 string", () => {
       // $ExpectType AdvancedBreadboardType<"foo">
       enumeration("foo")
     ),
-    { enum: ["foo"] }
+    { type: "string", enum: ["foo"] }
   );
 });
 
@@ -28,7 +28,7 @@ test("3 strings", () => {
       // $ExpectType AdvancedBreadboardType<"foo" | "bar" | "baz">
       enumeration("foo", "bar", "baz")
     ),
-    { enum: ["foo", "bar", "baz"] }
+    { type: "string", enum: ["foo", "bar", "baz"] }
   );
 });
 
@@ -38,7 +38,7 @@ test("2 numbers", () => {
       // $ExpectType AdvancedBreadboardType<123 | 456>
       enumeration(123, 456)
     ),
-    { enum: [123, 456] }
+    { type: "number", enum: [123, 456] }
   );
 });
 
@@ -48,7 +48,7 @@ test("boolean", () => {
       // $ExpectType AdvancedBreadboardType<true>
       enumeration(true)
     ),
-    { enum: [true] }
+    { type: "boolean", enum: [true] }
   );
 });
 
@@ -58,7 +58,7 @@ test("null", () => {
       // $ExpectType AdvancedBreadboardType<null>
       enumeration(null)
     ),
-    { enum: [null] }
+    { type: "null", enum: [null] }
   );
 });
 
