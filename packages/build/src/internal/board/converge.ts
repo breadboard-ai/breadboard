@@ -11,6 +11,7 @@ import type { Input, InputWithDefault } from "./input.js";
 import type { Loopback } from "./loopback.js";
 
 type Convergable<T extends JsonSerializable> =
+  | T
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
