@@ -410,7 +410,7 @@ test("input with default", () => {
                   //       ^^^^^ here it is!
                 },
               },
-              required: ["myInput"],
+              required: [],
             },
           },
         },
@@ -2099,7 +2099,7 @@ test("constant input", () => {
                 inputWithDefault: { type: "number", default: 123 },
                 stringInput: { type: "string" },
               },
-              required: ["inputWithDefault", "stringInput"],
+              required: ["stringInput"],
             },
           },
         },
