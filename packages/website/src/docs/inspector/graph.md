@@ -245,6 +245,17 @@ We can get the [JSON schema](https://json-schema.org/) of the port:
 const schema = firstInputPort.schema;
 ```
 
+If we want to check whether a given port can connect to another port, we can use the `type` property:
+
+```ts
+// Returns an `InspectablePortType` instance.
+const type = outputPort.type;
+// Returns true if `outputPort` can connect to the `inputPort`.
+const canConnect = type.canConnect(firstInputPort.type);
+```
+
+The `canConnect` method will examine the schema of both ports and return `true` when the schemas are compatible and `false` when they are not.
+
 We can check if this is the "star port".
 
 ```ts
