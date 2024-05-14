@@ -205,6 +205,7 @@ export class GraphNode extends PIXI.Container {
         this.y = Math.round(originalPosition.y + dragDeltaY);
         hasMoved = true;
 
+        this.cursor = "grabbing";
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
     );
@@ -217,6 +218,7 @@ export class GraphNode extends PIXI.Container {
       }
 
       hasMoved = false;
+      this.cursor = "pointer";
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 
