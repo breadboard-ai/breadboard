@@ -114,7 +114,7 @@ export class Splitter extends LitElement {
 
     :host([direction="horizontal"]) #quick-expand {
       right: calc(var(--handle-size) * 0.5);
-      top: 3%;
+      top: 9px;
     }
 
     :host([direction="vertical"]) #quick-expand {

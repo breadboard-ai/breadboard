@@ -10,13 +10,7 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
-
-const documentStyles = getComputedStyle(document.documentElement);
-
-function getGlobalColor(name: string, defaultValue = "#333333") {
-  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  return parseInt(value || defaultValue, 16);
-}
+import { getGlobalColor } from "./utils.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -24,8 +18,8 @@ const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const defaultNodeColor = getGlobalColor("--bb-nodes-100");
 const inputNodeColor = getGlobalColor("--bb-inputs-100");
 const secretNodeColor = getGlobalColor("--bb-inputs-100");
-const selectedNodeColor = getGlobalColor("--bb-output-600");
-const outputNodeColor = getGlobalColor("--bb-output-100");
+const selectedNodeColor = getGlobalColor("--bb-ui-600");
+const outputNodeColor = getGlobalColor("--bb-boards-200");
 // TODO: Enable board node coloring.
 // const boardNodeColor = getGlobalColor('--bb-boards-100');
 
@@ -205,6 +199,7 @@ export class GraphNode extends PIXI.Container {
         this.y = Math.round(originalPosition.y + dragDeltaY);
         hasMoved = true;
 
+        this.cursor = "grabbing";
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
     );
@@ -217,6 +212,7 @@ export class GraphNode extends PIXI.Container {
       }
 
       hasMoved = false;
+      this.cursor = "pointer";
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 

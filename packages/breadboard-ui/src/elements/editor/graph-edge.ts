@@ -7,17 +7,11 @@
 import { InspectableEdge, InspectableEdgeType } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
+import { getGlobalColor } from "./utils.js";
 
-const documentStyles = getComputedStyle(document.documentElement);
-
-function getGlobalColor(name: string, defaultValue = "#333333") {
-  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  return parseInt(value || defaultValue, 16);
-}
-
-const edgeColorSelected = getGlobalColor("--bb-output-600");
+const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
-const edgeColorConstant = getGlobalColor("--bb-output-200");
+const edgeColorConstant = getGlobalColor("--bb-ui-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
 

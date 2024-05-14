@@ -283,6 +283,12 @@ export class UI extends LitElement {
         )?.value
       : false;
 
+    const showNodeTypeDescriptions = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Show Node Type Descriptions"
+        )?.value
+      : true;
+
     const hideSubboardSelectorWhenEmpty = this.settings
       ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
           "Hide Embedded Board Selector When Empty"
@@ -319,33 +325,36 @@ export class UI extends LitElement {
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       .mode=${editorMode}
       .showNodeShortcuts=${showNodeShortcuts}
-      @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
+      @bbnodedelete=${(evt: NodeDeleteEvent) => {
         if (evt.id !== this.selectedNodeId) {
           return;
         }
 
         this.selectedNodeId = null;
       }}
-      @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+      @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
         this.selectedNodeId = evt.id;
         this.requestUpdate();
       }}
     ></bb-editor>`;
 
     const nodeMetaDetails = guard(
-      [this.boardId, this.selectedNodeId],
-      () => html`<bb-node-details
-      .selectedNodeId=${this.selectedNodeId}
-      .subGraphId=${this.subGraphId}
-      .graph=${this.graph}
-      .kits=${this.kits}
-      .loader=${this.loader}></bb-board-details>`
+      [this.boardId, this.selectedNodeId, showNodeTypeDescriptions],
+      () =>
+        html`<bb-node-details
+          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
+          .selectedNodeId=${this.selectedNodeId}
+          .subGraphId=${this.subGraphId}
+          .graph=${this.graph}
+          .kits=${this.kits}
+          .loader=${this.loader}
+        ></bb-node-details>`
     );
 
     // Track the number of edges; if it changes we need to inform the node info
     // element, and force it to re-render.
     this.#lastEdgeCount = this.graph?.edges.length || -1;
-    const nodeInfo = guard(
+    const nodeConfiguration = guard(
       [
         this.boardId,
         this.selectedNodeId,
@@ -363,7 +372,7 @@ export class UI extends LitElement {
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           name="Selected Node"
-          @breadboardschemachange=${() => {
+          @bbschemachange=${() => {
             this.#nodeSchemaUpdateCount++;
           }}
         ></bb-node-info>`
@@ -392,7 +401,7 @@ export class UI extends LitElement {
           .showExtendedInfo=${true}
           .settings=${this.settings}
           .logTitle=${"Activity"}
-          @breadboardinputrequested=${() => {
+          @bbinputrequested=${() => {
             this.selectedNodeId = null;
             this.requestUpdate();
           }}
@@ -423,7 +432,7 @@ export class UI extends LitElement {
 
             this.debugEvent = event;
           }}
-          @breadboardinputenter=${(event: InputEnterEvent) => {
+          @bbinputenter=${(event: InputEnterEvent) => {
             // Notify any pending handlers that the input has arrived.
             if (this.#messagePosition < events.length - 1) {
               // The user has attempted to provide input for a stale
@@ -478,7 +487,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeId
-        ? html`${nodeMetaDetails}${nodeInfo}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}`
         : html`${boardDetails}${activityLog}`
     );
 

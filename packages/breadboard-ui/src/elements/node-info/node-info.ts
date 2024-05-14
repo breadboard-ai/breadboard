@@ -670,7 +670,7 @@ export class NodeInfo extends LitElement {
                             .editable=${this.editable}
                             .schema=${port.value}
                             .schemaVersion=${this.#schemaVersion}
-                            @breadboardschemachange=${() => {
+                            @bbschemachange=${() => {
                               if (!this.#configurationFormRef.value) {
                                 return;
                               }

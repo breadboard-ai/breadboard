@@ -214,3 +214,25 @@ test("serialization", (t) => {
     ],
   });
 });
+
+test("can return error", (t) => {
+  code({}, { bar: "string" }, () => ({ $error: "oh no" }));
+  code({}, { bar: "string" }, () => ({ $error: { message: "oh no" } }));
+
+  code({}, { bar: "string" }, () => ({
+    // @ts-expect-error
+    $error: 123,
+  }));
+  code({}, { bar: "string" }, () => ({
+    // @ts-expect-error
+    $error: {},
+  }));
+  code({}, { bar: "string" }, () => ({
+    $error: {
+      // @ts-expect-error
+      msg: "foo",
+    },
+  }));
+
+  t.pass();
+});

@@ -27,6 +27,9 @@ import { GraphEdge } from "./graph-edge.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { getGlobalColor } from "./utils.js";
+
+const backgroundColor = getGlobalColor("--bb-ui-50");
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -178,8 +181,8 @@ export class GraphRenderer extends LitElement {
     #edge-create-disambiguation-menu button.selected,
     #edge-create-disambiguation-menu button.selected:hover,
     #edge-create-disambiguation-menu button.selected:focus {
-      background: var(--bb-output-50);
-      color: var(--bb-output-600);
+      background: var(--bb-ui-50);
+      color: var(--bb-ui-600);
     }
 
     #edge-create-disambiguation-menu button[disabled] {
@@ -634,11 +637,11 @@ export class GraphRenderer extends LitElement {
       GraphAssets.instance().loaded,
       this.#app.init({
         webgpu: {
-          background: "#ededed",
+          background: backgroundColor,
           antialias: true,
         },
         webgl: {
-          background: "#ededed",
+          background: backgroundColor,
           antialias: true,
         },
         preference: "webgl",
@@ -664,7 +667,7 @@ export class GraphRenderer extends LitElement {
         console.warn("Unable to create background texture");
         return;
       }
-      ctx.fillStyle = "#ededed";
+      ctx.fillStyle = `#${backgroundColor.toString(16)}`;
       ctx.fillRect(0, 0, 1, 1);
 
       const texture = PIXI.Texture.from(canvas);

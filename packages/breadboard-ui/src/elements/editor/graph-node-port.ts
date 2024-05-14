@@ -1,13 +1,7 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
 import { PortStatus } from "@google-labs/breadboard";
-
-const documentStyles = getComputedStyle(document.documentElement);
-
-function getGlobalColor(name: string, defaultValue = "#333333") {
-  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  return parseInt(value || defaultValue, 16);
-}
+import { getGlobalColor } from "./utils.js";
 
 const connectedColor = getGlobalColor("--bb-inputs-300");
 const danglingColor = getGlobalColor("--bb-warning-400");

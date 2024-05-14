@@ -86,16 +86,16 @@ export class SubBoardSelector extends LitElement {
       border: 1px solid var(--bb-neutral-100);
       padding: var(--padding-y);
       border-radius: var(--bb-grid-size);
-      color: var(--bb-output-700);
+      color: var(--bb-ui-700);
       cursor: pointer;
       text-align: left;
       width: 100%;
     }
 
     button[disabled] {
-      border: 1px solid var(--bb-output-400);
-      color: var(--bb-output-700);
-      background: var(--bb-output-50);
+      border: 1px solid var(--bb-ui-400);
+      color: var(--bb-ui-700);
+      background: var(--bb-ui-50);
       cursor: auto;
     }
 
