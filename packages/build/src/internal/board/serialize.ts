@@ -160,7 +160,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           "additionalProperties",
         ]
       );
-      inputNode.configuration.schema.required!.push(mainInputName);
+      if (schema.default === undefined) {
+        inputNode.configuration.schema.required.push(mainInputName);
+      }
     }
   }
 
