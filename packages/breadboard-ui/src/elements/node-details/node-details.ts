@@ -11,6 +11,7 @@ import { Task } from "@lit/task";
 import {
   GraphDescriptor,
   GraphLoader,
+  InspectableNode,
   Kit,
   inspect,
 } from "@google-labs/breadboard";
@@ -66,13 +67,22 @@ export class NodeDetails extends LitElement {
       }
 
       const node = breadboardGraph.nodeById(nodeId);
-
       if (!node) {
         throw new Error("Unable to load node");
       }
 
+      let kitNodeDescription: string | null = null;
+      for (const kit of breadboardGraph.kits()) {
+        for (const nodeType of kit.nodeTypes) {
+          if (nodeType.type() === node.descriptor.type) {
+            kitNodeDescription = nodeType.metadata().description || null;
+            break;
+          }
+        }
+      }
+
       const metadata = node.metadata();
-      return { node, metadata };
+      return { node, metadata, kitNodeDescription };
     },
     onError: (err) => {
       console.warn(err);
@@ -96,6 +106,35 @@ export class NodeDetails extends LitElement {
       margin: 0 0 var(--bb-grid-size) 0;
       top: 0;
       z-index: 2;
+    }
+
+    #overview {
+      border-bottom: 1px solid var(--bb-neutral-300);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+    }
+
+    #overview h1 {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      border: none;
+      background: #fff;
+      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
+      padding: 0;
+      text-align: left;
+      position: sticky;
+      margin: 0 0 var(--bb-grid-size) 0;
+      top: 0;
+      z-index: 2;
+    }
+
+    #overview p {
+      color: var(--bb-neutral-700);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      padding: 0;
+      margin: 0 0 var(--bb-grid-size-2) 0;
     }
 
     #unfold {
@@ -223,9 +262,25 @@ export class NodeDetails extends LitElement {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
 
+    console.log(this.kits);
+
     return this.#formTask.render({
       pending: () => html`Loading...`,
-      complete: ({ metadata }: { metadata: NodeMetadata }) => html`
+      complete: ({
+        node,
+        metadata,
+        kitNodeDescription,
+      }: {
+        node: InspectableNode;
+        metadata: NodeMetadata;
+        kitNodeDescription: string | null;
+      }) => html`
+        <div id="overview">
+          <h1>
+            ${metadata.title ?? node.descriptor.id} (${node.descriptor.type})
+          </h1>
+          <p>${kitNodeDescription ?? html`No description`}</p>
+        </div>
         <h1>
           <button
             id="unfold"

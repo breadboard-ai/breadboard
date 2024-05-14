@@ -334,18 +334,20 @@ export class UI extends LitElement {
 
     const nodeMetaDetails = guard(
       [this.boardId, this.selectedNodeId],
-      () => html`<bb-node-details
-      .selectedNodeId=${this.selectedNodeId}
-      .subGraphId=${this.subGraphId}
-      .graph=${this.graph}
-      .kits=${this.kits}
-      .loader=${this.loader}></bb-board-details>`
+      () =>
+        html`<bb-node-details
+          .selectedNodeId=${this.selectedNodeId}
+          .subGraphId=${this.subGraphId}
+          .graph=${this.graph}
+          .kits=${this.kits}
+          .loader=${this.loader}
+        ></bb-node-details>`
     );
 
     // Track the number of edges; if it changes we need to inform the node info
     // element, and force it to re-render.
     this.#lastEdgeCount = this.graph?.edges.length || -1;
-    const nodeInfo = guard(
+    const nodeConfiguration = guard(
       [
         this.boardId,
         this.selectedNodeId,
@@ -478,7 +480,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeId
-        ? html`${nodeMetaDetails}${nodeInfo}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}`
         : html`${boardDetails}${activityLog}`
     );
 

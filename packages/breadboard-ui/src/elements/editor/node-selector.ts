@@ -79,7 +79,7 @@ export class NodeSelector extends LitElement {
       color: #222;
       height: var(--height);
       position: relative;
-      width: min(80vw, 300px);
+      width: min(80vw, 360px);
     }
 
     #kit-list > li {
@@ -90,7 +90,6 @@ export class NodeSelector extends LitElement {
       display: none;
     }
 
-    li.kit-item,
     label {
       height: var(--kit-height);
       display: block;
@@ -105,6 +104,19 @@ export class NodeSelector extends LitElement {
       color: #1a1a1a;
     }
 
+    li.kit-item .node-id {
+      white-space: nowrap;
+      height: var(--kit-height);
+      line-height: var(--kit-height);
+      font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
+    li.kit-item .node-description {
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
+    }
+
     #kit-list li:hover label::before {
       content: "";
       background: #000;
@@ -113,7 +125,7 @@ export class NodeSelector extends LitElement {
       top: 1px;
       bottom: 1px;
       right: 8px;
-      border-radius: var(--border-radius);
+      border-radius: var(--bb-grid-size-12);
       z-index: 0;
       opacity: 0.1;
     }
@@ -178,25 +190,30 @@ export class NodeSelector extends LitElement {
     }
 
     li.kit-item {
-      margin: 0;
-      padding: 0 16px;
+      margin: var(--bb-grid-size) 0;
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
       width: 100%;
       border-radius: 12px;
       position: relative;
       background: #fff;
+      cursor: grab;
     }
 
     li.kit-item:hover::before {
       content: "";
       background: #000;
       position: absolute;
-      left: 6px;
+      left: var(--bb-grid-size-2);
       top: 1px;
       bottom: 1px;
-      right: 8px;
-      border-radius: var(--border-radius);
+      right: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size);
       z-index: 0;
       opacity: 0.05;
+    }
+
+    li.kit-item:active {
+      cursor: grabbing;
     }
 
     li.kit-item span {
@@ -326,13 +343,13 @@ export class NodeSelector extends LitElement {
                       .toLocaleLowerCase()
                       .replace(/\W/, "-");
                     const id = nodeTypeInfo.id;
+                    const description = nodeTypeInfo.metadata.description;
                     return html`<li
                       class=${classMap({
                         [className]: true,
                         ["kit-item"]: true,
                       })}
                       draggable="true"
-                      title=${nodeTypeInfo.metadata.description || ""}
                       @dblclick=${() => {
                         this.dispatchEvent(new KitNodeChosenEvent(id));
                       }}
@@ -343,7 +360,12 @@ export class NodeSelector extends LitElement {
                         evt.dataTransfer.setData(DATA_TYPE, id);
                       }}
                     >
-                      <span>${id}</span>
+                      <div class="node-id">${id}</div>
+                      ${description
+                        ? html`<div class="node-description">
+                            ${description}
+                          </div>`
+                        : nothing}
                     </li>`;
                   })}
                 </ul>
