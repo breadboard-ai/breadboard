@@ -180,6 +180,12 @@ export class Editor extends LitElement {
         20px no-repeat;
     }
 
+    #shortcut-add-specialist:active,
+    #shortcut-add-human:active,
+    #shortcut-add-looper:active {
+      cursor: grabbing;
+    }
+
     label[for="add-node"] {
       font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
         var(--bb-font-family);
