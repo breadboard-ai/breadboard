@@ -2096,7 +2096,7 @@ test("constant input", () => {
             schema: {
               type: "object",
               properties: {
-                inputWithDefault: { type: "number", default: 123 },
+                inputWithDefault: { type: "number", default: "123" },
                 stringInput: { type: "string" },
               },
               required: ["stringInput"],
