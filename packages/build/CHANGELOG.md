@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- f97a4d5: Rename "placeholder" to "loopback".
+
+### Patch Changes
+
+- 29eda71: Board outputs can now be an array of output node configurations
+- f60cb06: Set the "type" field when an enumeration is all of one type.
+- 87eb8fe: Stringify all defaults and examples
+- 60a18c5: Don't make input ports required if there is a default
+- b0ed6f3: Allow converge function to take raw values
+- 4957dc5: Improve handling of defaults in describe functions. Defaults are now always passed into the describe function, and types will be optional or not based on whether there is a default (default means it can never be undefined).
+- a209c51: Use actual schema when auto-computing input schema
+- 7368fdd: Allow inputs to be constant
+- c9c0e06: Allow declaring objects with optional properties
+- c1acf24: Add converge function which allows wiring multiple edges to the same input port
+- 3920805: Allow inputs to be optional
+- 3b2bb4a: Fix type system bug relating to primary input/output ports (it wasn't working quite right when there were more than one input or output ports).
+- 31cf016: Fix a bug in the @breadboard-ai/build type system that allowed node instances to be passed as board outputs even if they did not have a primary port.
+- ab43276: Fix bug where constant wouldn't always preserve type information
+- 477e6e6: Sort more schema fields for easier comparison across serializers
+- cdcbcdb: Node invoke functions can now return $error. All node instances now automatically have an outputs.$error. Throwing from an invoke function will now convert the exception to an $error result; the stack trace is logged to the server, but not shown to the end-user.
+- 791ec2a: Add `constant` function which can be used to annotate edges that should get the `constant` bit (also known as memoize).
+- c0293c9: New syntax for declaring multiple inputs along with metadata
+- b6f5644: Surface a stack trace when an exception is thrown
+- 43edef6: Add support for setting $metadata when instantiating a node
+- Updated dependencies [8097177]
+- Updated dependencies [cec6d54]
+- Updated dependencies [3397974]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [a35406c]
+- Updated dependencies [477e6e6]
+  - @google-labs/breadboard@0.20.0
+
 ## 0.5.1
 
 ### Patch Changes

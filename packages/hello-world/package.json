@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.2.13",
+  "version": "1.2.14",
   "description": "A template for creating a new Breadboard project",
   "type": "module",
   "repository": {
@@ -22,13 +22,13 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@google-labs/agent-kit": "^0.6.0",
-    "@google-labs/breadboard": "^0.19.0",
-    "@google-labs/breadboard-cli": "^0.9.2",
-    "@google-labs/core-kit": "^0.8.1",
-    "@google-labs/gemini-kit": "^0.3.1",
-    "@google-labs/template-kit": "^0.3.1",
-    "@google-labs/json-kit": "^0.2.2",
-    "@google-labs/palm-kit": "^0.0.13"
+    "@google-labs/agent-kit": "^0.7.0",
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/breadboard-cli": "^0.9.3",
+    "@google-labs/core-kit": "^0.9.0",
+    "@google-labs/gemini-kit": "^0.4.0",
+    "@google-labs/template-kit": "^0.3.2",
+    "@google-labs/json-kit": "^0.3.0",
+    "@google-labs/palm-kit": "^0.0.14"
   }
 }

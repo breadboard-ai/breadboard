@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- 29d3712: Teach editor to disambiguate added wires for collapsed nodes
+- 23b8acb: Teach UI to handle arrays of LLM Content
+- 04e892e: Update UI colors
+- 4eeacbe: Bump Pixi.js to v8
+- 69b6e44: Tidy event names
+- b2a968b: Update expanded node behavior in graph editor
+- 42495d8: Teach UI Controller about stopping runs
+- 94caed3: Teach editor about ad-hoc edges
+
+### Patch Changes
+
+- 1db4a8f: Teach Graph Node & Node Info how to handle configuration & edges
+- e00f855: Use port title instead of name for Graph Nodes
+- edec774: Fix pasting in LLM Content (text)
+- fe4c564: Teach settings about node type descriptions
+- 8eaedaf: Teach Node Selector to show node descriptions
+- 4203076: Update boards to make better use of `llm-content`.
+- c3d386a: Teach Schema Editor about LLM Content defaults
+- 9212366: Various UI Tweaks
+- f4ed7ba: Fix the issue wit activity log not always showing outputs.
+- e337629: Add part controls to LLM Content Input
+- c91fb1e: Tidy events a little bit
+- f0cb9e3: Hide ID in Schema Editor
+- 150f3bd: Wire last run values into llm-content
+- ffbea5d: Render LLM Content in Activity Log
+- 339543d: Minor tweak to node header ports
+- a4d9d23: Refactor sidebar ahead of schema editor changes
+- 3397974: Add `InspectableNode.type()` and start using it.
+- b6ade85: Teach graph to use icons
+- fe2066b: Teach LLM Content to handle plain text a bit better
+- 6c659f2: Teach input to accept meta + Enter for LLM Content
+- 3e58d25: Focus search when node selector opens
+- 2197ed6: Emit updates for node and board info
+- d10f568: Various bug fixes to help looper and specialist work better.
+- 1f4e3b4: Fix the bug with LLM Content changes not sticking.
+- cbd6053: Hide wired ports from node info
+- c27aa9b: Add plain text support to Activity Log
+- 093e769: Teach Activity Log to honor markdown in LLM Content
+- afffaaf: Update schema styles
+- a945fba: Teach editor to disambiguate edges
+- Updated dependencies [8097177]
+- Updated dependencies [cec6d54]
+- Updated dependencies [3397974]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [a35406c]
+- Updated dependencies [477e6e6]
+  - @google-labs/breadboard@0.20.0
+
 ## 0.7.1
 
 ### Patch Changes

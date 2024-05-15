@@ -1,5 +1,60 @@
 # @google-labs/gemini-kit
 
+## 0.4.0
+
+### Minor Changes
+
+- c69f1c5: Teach Looper how to plan and add `responseMimeType` to Gemini API.
+- 3f0ce31: Teach Gemini Kit about "tool" role.
+- 8bef702: Convert gemini-text to new Breadboard API
+- bfdb36a: Remove streaming support for now because it's not working anyway.
+
+### Patch Changes
+
+- ffd2e8e: The core-kit code helper function now behaves exactly like the one in breadboard-ai in terms of the function name it selects for the code.
+- bfdb36a: Add IDs to nodes for BGL clarity
+- Updated dependencies [8097177]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [29eda71]
+- Updated dependencies [4957dc5]
+- Updated dependencies [7936d8b]
+- Updated dependencies [f60cb06]
+- Updated dependencies [cec6d54]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [c1acf24]
+- Updated dependencies [af54870]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [ee85b67]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [1d29493]
+- Updated dependencies [b6f5644]
+- Updated dependencies [f870bdd]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/core-kit@0.9.0
+  - @breadboard-ai/build@0.6.0
+  - @google-labs/json-kit@0.3.0
+  - @google-labs/node-nursery-web@1.1.3
+  - @google-labs/template-kit@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

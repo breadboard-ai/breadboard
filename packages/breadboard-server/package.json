@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Scaffolding for running Breadboard as a server",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -124,10 +124,10 @@
     "ava": "^5.2.0",
     "typedoc": "^0.25.12",
     "typescript": "^5.4.5",
-    "@google-labs/core-kit": "^0.8.1"
+    "@google-labs/core-kit": "^0.9.0"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.7.0",
-    "@google-labs/breadboard": "^0.19.0"
+    "@google-labs/breadboard": "^0.20.0"
   }
 }
