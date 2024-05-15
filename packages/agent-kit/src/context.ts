@@ -280,6 +280,9 @@ export const cleanUpMetadataFunction = fun(({ context }) => {
 
 export const cleanUpMetadata = code(cleanUpMetadataFunction);
 
+/**
+ * Given a bunch of context, combines them all into one.
+ */
 export const combineContextsFunction = fun((inputs) => {
   const entries = Object.entries(inputs).sort();
   const context: Context[] = [];
