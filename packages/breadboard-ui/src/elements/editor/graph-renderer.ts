@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
@@ -15,6 +15,7 @@ import {
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
   GraphNodePositionsCalculatedEvent,
+  InputErrorEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -30,6 +31,8 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
+const ADHOC_EDGE_ERROR_MESSAGE =
+  "Ad-hoc edge names must only contain lowercase alphanumeric characters and '-'";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -46,15 +49,15 @@ export class GraphRenderer extends LitElement {
 
   #activeGraph: Graph | null = null;
   #edgesForDisambiguation: InspectableEdge[] | null = null;
-  #edgeDisambiguationMenuLocation: PIXI.ObservablePoint | null = null;
-  #edgeSelectDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
-  #edgeCreateDisambiguationMenuRef: Ref<HTMLDivElement> = createRef();
+  #menuLocation: PIXI.ObservablePoint | null = null;
+  #edgeSelectMenuRef: Ref<HTMLDivElement> = createRef();
+  #edgeCreateMenuRef: Ref<HTMLDivElement> = createRef();
   #autoFocusSelf = false;
-  #newEdgeDisambiguationInfo: {
+  #newEdgeData: {
     from: string;
     to: string;
-    portsOut: InspectablePort[];
-    portsIn: InspectablePort[];
+    portsOut: InspectablePort[] | null;
+    portsIn: InspectablePort[] | null;
   } | null = null;
 
   #padding = 50;
@@ -201,6 +204,26 @@ export class GraphRenderer extends LitElement {
 
     #edge-create-disambiguation-menu .edge-arrow {
       margin: 0;
+    }
+
+    #edge-create-disambiguation-menu input[type="text"] {
+      padding: var(--bb-grid-size);
+      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size);
+    }
+
+    #edge-create-disambiguation-menu #confirm {
+      background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px
+        16px no-repeat;
+      color: var(--bb-ui-700);
+      border-radius: var(--bb-grid-size-5);
+      border: none;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
+      width: auto;
     }
 
     #overflow-menu button {
@@ -471,7 +494,7 @@ export class GraphRenderer extends LitElement {
       (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
         this.#activeGraph = graph;
         this.#edgesForDisambiguation = possibleEdges;
-        this.#edgeDisambiguationMenuLocation = location;
+        this.#menuLocation = location;
 
         this.requestUpdate();
       }
@@ -487,13 +510,35 @@ export class GraphRenderer extends LitElement {
         location: PIXI.ObservablePoint
       ) => {
         this.#activeGraph = graph;
-        this.#newEdgeDisambiguationInfo = {
+        this.#newEdgeData = {
           from,
           to,
           portsOut,
           portsIn,
         };
-        this.#edgeDisambiguationMenuLocation = location;
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[] | null,
+        portsIn: InspectablePort[] | null,
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeData = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
+        this.#menuLocation = location;
 
         this.requestUpdate();
       }
@@ -698,16 +743,14 @@ export class GraphRenderer extends LitElement {
 
   protected updated(): void {
     if (
-      (this.#edgesForDisambiguation &&
-        this.#edgeSelectDisambiguationMenuRef.value) ||
-      (this.#newEdgeDisambiguationInfo &&
-        this.#edgeCreateDisambiguationMenuRef.value)
+      (this.#edgesForDisambiguation && this.#edgeSelectMenuRef.value) ||
+      (this.#newEdgeData && this.#edgeCreateMenuRef.value)
     ) {
       window.addEventListener(
         "pointerdown",
         () => {
           this.#edgesForDisambiguation = null;
-          this.#newEdgeDisambiguationInfo = null;
+          this.#newEdgeData = null;
           this.#autoFocusSelf = true;
           this.requestUpdate();
         },
@@ -723,12 +766,12 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  #createEdgeIfTwoPortsSelected() {
-    if (!this.#edgeCreateDisambiguationMenuRef.value) {
+  #createEdgeIfPossible() {
+    if (!this.#edgeCreateMenuRef.value) {
       return false;
     }
 
-    if (!this.#newEdgeDisambiguationInfo) {
+    if (!this.#newEdgeData) {
       return false;
     }
 
@@ -736,25 +779,54 @@ export class GraphRenderer extends LitElement {
       return false;
     }
 
-    const menu = this.#edgeCreateDisambiguationMenuRef.value;
-    const lhs = menu.querySelector<HTMLButtonElement>(
+    const menu = this.#edgeCreateMenuRef.value;
+    const lhsButton = menu.querySelector<HTMLButtonElement>(
       "#edge-create-from .selected"
     );
-    const rhs = menu.querySelector<HTMLButtonElement>(
+    const lhsInput = menu.querySelector<HTMLInputElement>(
+      "#edge-create-from input"
+    );
+    const rhsButton = menu.querySelector<HTMLButtonElement>(
       "#edge-create-to .selected"
     );
+    const rhsInput = menu.querySelector<HTMLInputElement>(
+      "#edge-create-to input"
+    );
 
-    if (!(lhs && rhs)) {
+    if (!(lhsButton || lhsInput) || !(rhsButton || rhsInput)) {
       return false;
     }
 
-    const outPortName = lhs.dataset.portName;
-    const inPortName = rhs.dataset.portName;
+    let inPortName: string | null = null;
+    let outPortName: string | null = null;
+    if (lhsButton) {
+      outPortName = lhsButton.dataset.portName || null;
+    } else if (lhsInput) {
+      if (lhsInput.value !== "" && !lhsInput.checkValidity()) {
+        const evt = new InputErrorEvent(ADHOC_EDGE_ERROR_MESSAGE);
+        this.dispatchEvent(evt);
+        return false;
+      }
+
+      outPortName = lhsInput.value || null;
+    }
+    if (rhsButton) {
+      inPortName = rhsButton.dataset.portName || null;
+    } else if (rhsInput) {
+      if (rhsInput.value !== "" && !rhsInput.checkValidity()) {
+        const evt = new InputErrorEvent(ADHOC_EDGE_ERROR_MESSAGE);
+        this.dispatchEvent(evt);
+        return false;
+      }
+
+      inPortName = rhsInput.value || null;
+    }
+
     if (!(outPortName && inPortName)) {
       return false;
     }
 
-    const newEdgeDisambiguationInfo = this.#newEdgeDisambiguationInfo;
+    const newEdgeDisambiguationInfo = this.#newEdgeData;
     const existingEdge = this.#activeGraph.edges?.find((edge) => {
       return (
         edge.from.descriptor.id === newEdgeDisambiguationInfo.from &&
@@ -770,8 +842,8 @@ export class GraphRenderer extends LitElement {
 
     // TODO: Support non-ordinary wires here?
     const edge = {
-      from: { descriptor: { id: this.#newEdgeDisambiguationInfo.from } },
-      to: { descriptor: { id: this.#newEdgeDisambiguationInfo.to } },
+      from: { descriptor: { id: this.#newEdgeData.from } },
+      to: { descriptor: { id: this.#newEdgeData.to } },
       out: outPortName,
       in: inPortName,
       type: "ordinary",
@@ -794,9 +866,9 @@ export class GraphRenderer extends LitElement {
     </div>`;
 
     const edgeSelectDisambiguationMenuLocation: PIXI.Point =
-      this.#edgeDisambiguationMenuLocation || new PIXI.Point(0, 0);
+      this.#menuLocation || new PIXI.Point(0, 0);
     const edgeSelectDisambiguationMenu = html`<div
-      ${ref(this.#edgeSelectDisambiguationMenuRef)}
+      ${ref(this.#edgeSelectMenuRef)}
       id="edge-select-disambiguation-menu"
       class=${classMap({ visible: this.#edgesForDisambiguation !== null })}
       style=${styleMap({
@@ -840,71 +912,137 @@ export class GraphRenderer extends LitElement {
         : html`No edges require disambiguation`}
     </div>`;
 
-    const edgeCreateDisambiguationMenuLocation: PIXI.Point =
-      this.#edgeDisambiguationMenuLocation || new PIXI.Point(0, 0);
-    const edgeCreateDisambiguationMenu = html`<div
-      ${ref(this.#edgeCreateDisambiguationMenuRef)}
-      id="edge-create-disambiguation-menu"
-      class=${classMap({ visible: this.#newEdgeDisambiguationInfo !== null })}
-      style=${styleMap({
-        translate: `${edgeCreateDisambiguationMenuLocation.x}px ${edgeCreateDisambiguationMenuLocation.y}px`,
-      })}
-    >
-      <div id="edge-create-from">
-        ${this.#newEdgeDisambiguationInfo &&
-        this.#newEdgeDisambiguationInfo.portsOut.length
-          ? this.#newEdgeDisambiguationInfo.portsOut.map(
-              (port, _idx, ports) => {
-                return html`<button
+    const menuLocation: PIXI.Point = this.#menuLocation || new PIXI.Point(0, 0);
+    const menuRequiresConfirmation =
+      this.#newEdgeData &&
+      (this.#newEdgeData.portsIn === null ||
+        this.#newEdgeData.portsOut === null);
+
+    const edgeMenu = this.#newEdgeData
+      ? html`<div
+          ${ref(this.#edgeCreateMenuRef)}
+          id="edge-create-disambiguation-menu"
+          class=${classMap({
+            visible: this.#newEdgeData !== null,
+          })}
+          style=${styleMap({
+            translate: `${menuLocation.x}px ${menuLocation.y}px`,
+          })}
+        >
+          <div id="edge-create-from">
+            ${this.#newEdgeData.portsOut && this.#newEdgeData.portsOut.length
+              ? this.#newEdgeData.portsOut.map((port, _idx, ports) => {
+                  return html`<button
+                    @pointerdown=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      evt.target.classList.toggle("selected");
+                      if (!this.#createEdgeIfPossible()) {
+                        evt.stopImmediatePropagation();
+                      }
+                    }}
+                    ?disabled=${ports.length === 1}
+                    class=${classMap({ selected: ports.length === 1 })}
+                    data-port-name="${port.name}"
+                  >
+                    ${port.title ?? port.name}
+                  </button>`;
+                })
+              : this.#newEdgeData.portsOut === null
+                ? html`<input
+                    @pointerdown=${(evt: Event) => {
+                      evt.stopImmediatePropagation();
+                    }}
+                    @keydown=${(evt: KeyboardEvent) => {
+                      evt.stopImmediatePropagation();
+                      if (evt.key !== "Enter") {
+                        return;
+                      }
+
+                      if (!this.#createEdgeIfPossible()) {
+                        return;
+                      }
+
+                      window.dispatchEvent(new Event("pointerdown"));
+                    }}
+                    type="text"
+                    placeholder="Enter edge name"
+                    required
+                    pattern="^[a-z\\-]+$"
+                  />`
+                : html`No outgoing ports`}
+          </div>
+          <span class="edge-arrow"></span>
+          <div id="edge-create-to">
+            ${this.#newEdgeData.portsIn && this.#newEdgeData.portsIn.length
+              ? this.#newEdgeData.portsIn.map((port, _idx, ports) => {
+                  return html`<button
+                    @pointerdown=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      evt.target.classList.toggle("selected");
+                      if (!this.#createEdgeIfPossible()) {
+                        evt.stopImmediatePropagation();
+                      }
+                    }}
+                    ?disabled=${ports.length === 1}
+                    class=${classMap({ selected: ports.length === 1 })}
+                    data-port-name="${port.name}"
+                  >
+                    ${port.title ?? port.name}
+                  </button>`;
+                })
+              : this.#newEdgeData.portsIn === null
+                ? html`<input
+                    @pointerdown=${(evt: Event) => {
+                      evt.stopImmediatePropagation();
+                    }}
+                    @keydown=${(evt: KeyboardEvent) => {
+                      evt.stopImmediatePropagation();
+                      if (evt.key !== "Enter") {
+                        return;
+                      }
+
+                      if (!this.#createEdgeIfPossible()) {
+                        return;
+                      }
+
+                      window.dispatchEvent(new Event("pointerdown"));
+                    }}
+                    type="text"
+                    placeholder="Enter edge name"
+                    required
+                    pattern="^[a-z\\-]+$"
+                  />`
+                : html`No incoming ports`}
+          </div>
+          ${menuRequiresConfirmation
+            ? html`<div>
+                <button
+                  id="confirm"
                   @pointerdown=${(evt: Event) => {
                     if (!(evt.target instanceof HTMLButtonElement)) {
                       return;
                     }
 
-                    evt.target.classList.toggle("selected");
-                    if (!this.#createEdgeIfTwoPortsSelected()) {
+                    if (!this.#createEdgeIfPossible()) {
                       evt.stopImmediatePropagation();
                     }
                   }}
-                  ?disabled=${ports.length === 1}
-                  class=${classMap({ selected: ports.length === 1 })}
-                  data-port-name="${port.name}"
                 >
-                  ${port.title ?? port.name}
-                </button>`;
-              }
-            )
-          : html`No outgoing ports`}
-      </div>
-      <span class="edge-arrow"></span>
-      <div id="edge-create-to">
-        ${this.#newEdgeDisambiguationInfo &&
-        this.#newEdgeDisambiguationInfo.portsIn.length
-          ? this.#newEdgeDisambiguationInfo.portsIn.map((port, _idx, ports) => {
-              return html`<button
-                @pointerdown=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) {
-                    return;
-                  }
-
-                  evt.target.classList.toggle("selected");
-                  if (!this.#createEdgeIfTwoPortsSelected()) {
-                    evt.stopImmediatePropagation();
-                  }
-                }}
-                ?disabled=${ports.length === 1}
-                class=${classMap({ selected: ports.length === 1 })}
-                data-port-name="${port.name}"
-              >
-                ${port.title ?? port.name}
-              </button>`;
-            })
-          : html`No incoming ports`}
-      </div>
-    </div>`;
+                  Confirm
+                </button>
+              </div>`
+            : nothing}
+        </div>`
+      : nothing;
 
     return html`${until(
       this.loadTexturesAndRender()
-    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeCreateDisambiguationMenu}`;
+    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeMenu}`;
   }
 }

@@ -58,12 +58,14 @@ export class Graph extends PIXI.Container {
     this.sortableChildren = true;
 
     let lastHoverPort: GraphNodePort | null = null;
+    let lastHoverNode: GraphNode | null = null;
     let nodePortBeingEdited: GraphNodePort | null = null;
     let nodePortType: GraphNodePortType | null = null;
     let nodeBeingEdited: GraphNode | null = null;
     let edgeBeingEdited: GraphEdge | null = null;
     let originalEdgeDescriptor: InspectableEdge | null = null;
     let visibleOnNextMove = false;
+    let creatingAdHocEdge = false;
 
     this.onRender = () => {
       if (!this.#isDirty) {
@@ -240,6 +242,11 @@ export class Graph extends PIXI.Container {
         edgeBeingEdited.overrideColor = 0xffa500;
         edgeBeingEdited.overrideInLocation = null;
         edgeBeingEdited.overrideOutLocation = null;
+
+        if (lastHoverNode) {
+          lastHoverNode.highlightForAdHoc = false;
+          creatingAdHocEdge = false;
+        }
       } else {
         // Track mouse.
         if (nodePortType === GraphNodePortType.IN) {
@@ -284,6 +291,31 @@ export class Graph extends PIXI.Container {
         if (!visibleOnNextMove) {
           visibleOnNextMove = true;
         }
+
+        // If the user drags over a node itself and it supports ad hoc edge
+        // creation then highlight the target node.
+        if (
+          nodePortBeingEdited &&
+          nodePortBeingEdited.label !== "*" &&
+          nodePortBeingEdited.label !== "" &&
+          topTarget instanceof GraphNode &&
+          topTarget !== nodeBeingEdited
+        ) {
+          const targetAllowsAdHocPorts =
+            (nodePortBeingEdited.type === GraphNodePortType.IN &&
+              !topTarget.fixedOutputs) ||
+            (nodePortBeingEdited.type === GraphNodePortType.OUT &&
+              !topTarget.fixedInputs);
+
+          if (targetAllowsAdHocPorts) {
+            topTarget.highlightForAdHoc = true;
+            creatingAdHocEdge = true;
+            lastHoverNode = topTarget;
+          }
+        } else if (lastHoverNode) {
+          lastHoverNode.highlightForAdHoc = false;
+          creatingAdHocEdge = false;
+        }
       }
 
       edgeBeingEdited.forceRedraw();
@@ -295,7 +327,7 @@ export class Graph extends PIXI.Container {
       }
 
       const path = evt.composedPath();
-      const topTarget = path[path.length - 1];
+      const topTarget = path[path.length - 1] as PIXI.Graphics;
 
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
@@ -303,43 +335,72 @@ export class Graph extends PIXI.Container {
       const targetEdgeDescriptor = structuredClone(
         targetEdge.edge
       ) as InspectableEdge;
+      const targetHoverNodeForAdHoc = lastHoverNode;
 
       // Clean all the variables.
       nodePortBeingEdited = null;
       nodeBeingEdited = null;
       edgeBeingEdited = null;
       visibleOnNextMove = false;
+      lastHoverNode = null;
+
+      let fromNode = targetEdge.fromNode;
+      let toNode = targetEdge.toNode;
+      let outPortDisambiguation = targetEdge.fromNode.outPorts;
+      let inPortDisambiguation = targetEdge.toNode.inPorts;
+      let targetInPortName = "_UNSPECIFIED_IN_PORT";
+      let targetOutPortName = "_UNSPECIFIED_OUT_PORT";
+
+      if (targetNodePort) {
+        if (targetNodePort.type === GraphNodePortType.IN) {
+          targetInPortName = targetNodePort.label;
+          targetOutPortName = topTarget.label;
+        } else {
+          targetInPortName = topTarget.label;
+          targetOutPortName = targetNodePort.label;
+        }
+      }
+
+      if (targetHoverNodeForAdHoc) {
+        targetHoverNodeForAdHoc.highlightForAdHoc = false;
+        if (targetNodePort) {
+          if (targetNodePort.type === GraphNodePortType.IN) {
+            fromNode = targetHoverNodeForAdHoc;
+            outPortDisambiguation = targetHoverNodeForAdHoc.outPorts;
+          } else {
+            toNode = targetHoverNodeForAdHoc;
+            inPortDisambiguation = targetHoverNodeForAdHoc.inPorts;
+          }
+        }
+      }
 
       let action: GRAPH_OPERATIONS | null = null;
-      if (
-        !(topTarget instanceof GraphNodePort) ||
-        topTarget.type !== nodePortType
-      ) {
-        action = GRAPH_OPERATIONS.GRAPH_EDGE_DETACH;
-      } else if (targetEdge.temporary) {
-        action = GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH;
-      } else if (originalEdgeDescriptor) {
-        action = GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE;
+      if (topTarget instanceof GraphNodePort) {
+        if (targetEdge.temporary) {
+          action = GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH;
+        } else if (originalEdgeDescriptor) {
+          action = GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE;
+        }
       }
 
       // Update the edge if either of the nodes is collapsed.
-      const fromNodePortsOut = targetEdge.fromNode.outPorts || [];
-      const possiblePortsOut: InspectablePort[] = targetEdge.fromNode.collapsed
+      const fromNodePortsOut = outPortDisambiguation || [];
+      const possiblePortsOut: InspectablePort[] = fromNode.collapsed
         ? fromNodePortsOut.filter((port) => !port.star && port.name !== "")
         : fromNodePortsOut.filter(
-            (port) => targetNodePort && port.name === targetNodePort.label
+            (port) =>
+              !port.star && port.name !== "" && port.name === targetOutPortName
           );
 
-      const toNodePortsIn = targetEdge.toNode.inPorts || [];
-      const possiblePortsIn: InspectablePort[] = targetEdge.toNode.collapsed
+      const toNodePortsIn = inPortDisambiguation || [];
+      const possiblePortsIn: InspectablePort[] = toNode.collapsed
         ? toNodePortsIn.filter((port) => !port.star && port.name !== "")
         : toNodePortsIn.filter(
             (port) =>
-              topTarget instanceof GraphNodePort &&
-              port.name === topTarget.label
+              !port.star && port.name !== "" && port.name === targetInPortName
           );
 
-      if (targetEdge.fromNode.collapsed || targetEdge.toNode.collapsed) {
+      if (action !== null && (fromNode.collapsed || toNode.collapsed)) {
         if (targetEdge.temporary) {
           this.#cleanEdges();
         }
@@ -377,16 +438,6 @@ export class Graph extends PIXI.Container {
 
       const edgeKey = edgeToString(targetEdgeDescriptor);
       switch (action) {
-        case GRAPH_OPERATIONS.GRAPH_EDGE_DETACH: {
-          // Temporary edges don't need to be sent out to the Editor API.
-          if (targetEdge.temporary) {
-            break;
-          }
-
-          this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, targetEdgeDescriptor);
-          break;
-        }
-
         case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
           const existingEdge = this.#edgeGraphics.get(edgeKey);
           if (existingEdge) {
@@ -422,7 +473,36 @@ export class Graph extends PIXI.Container {
         }
 
         default: {
-          console.warn("Unable to update edge");
+          // Possible ad-hoc wire disambiguation.
+          if (creatingAdHocEdge && targetNodePort && targetHoverNodeForAdHoc) {
+            const knownPorts =
+              targetNodePort.type === GraphNodePortType.OUT
+                ? possiblePortsOut
+                : possiblePortsIn;
+
+            const from =
+              targetNodePort.type === GraphNodePortType.OUT
+                ? targetEdgeDescriptor.from.descriptor.id
+                : targetHoverNodeForAdHoc.label;
+
+            const to =
+              targetNodePort.type === GraphNodePortType.IN
+                ? targetEdgeDescriptor.from.descriptor.id
+                : targetHoverNodeForAdHoc.label;
+
+            if (knownPorts.length === 0) {
+              break;
+            }
+
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
+              from,
+              to,
+              targetNodePort.type === GraphNodePortType.OUT ? knownPorts : null,
+              targetNodePort.type === GraphNodePortType.IN ? knownPorts : null,
+              evt.client
+            );
+          }
           break;
         }
       }
@@ -813,6 +893,8 @@ export class Graph extends PIXI.Container {
       graphNode.label = id;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
+      graphNode.fixedInputs = portInfo.inputs.fixed;
+      graphNode.fixedOutputs = portInfo.outputs.fixed;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
