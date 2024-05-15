@@ -19,12 +19,12 @@ const defaultNodeColor = getGlobalColor("--bb-nodes-100");
 const inputNodeColor = getGlobalColor("--bb-inputs-100");
 const secretNodeColor = getGlobalColor("--bb-inputs-100");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
+const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const outputNodeColor = getGlobalColor("--bb-boards-200");
-// TODO: Enable board node coloring.
-// const boardNodeColor = getGlobalColor('--bb-boards-100');
 
 const DBL_CLICK_DELTA = 450;
 const ICON_SCALE = 0.75;
+const IS_HEADER_PORT = true;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -41,6 +41,7 @@ export class GraphNode extends PIXI.Container {
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
   #selectedColor = selectedNodeColor;
+  #highlightForAdHocColor = highlightForAdHocNodeColor;
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 10;
@@ -65,17 +66,24 @@ export class GraphNode extends PIXI.Container {
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #editable = false;
   #selected = false;
+  #highlightForAdHoc = false;
   #collapsed = false;
   #emitCollapseToggleEventOnNextDraw = false;
 
   #overflowMenu = new GraphOverflowMenu();
-  #headerInPort = new GraphNodePort(GraphNodePortType.IN);
-  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
+  #headerInPort = new GraphNodePort(GraphNodePortType.IN, IS_HEADER_PORT);
+  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT, IS_HEADER_PORT);
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
 
-  constructor(id: string, type: string, title: string) {
+  constructor(
+    id: string,
+    type: string,
+    title: string,
+    public fixedInputs = true,
+    public fixedOutputs = true
+  ) {
     super();
 
     this.title = title;
@@ -111,6 +119,8 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
 
+    this.#headerInPort.label = "_header-port-in";
+    this.#headerOutPort.label = "_header-port-out";
     this.#headerInPort.visible = false;
     this.#headerOutPort.visible = false;
 
@@ -261,6 +271,19 @@ export class GraphNode extends PIXI.Container {
 
   set selected(selected: boolean) {
     this.#selected = selected;
+    this.#isDirty = true;
+  }
+
+  get highlightForAdHoc() {
+    return this.#highlightForAdHoc;
+  }
+
+  set highlightForAdHoc(highlightForAdHoc: boolean) {
+    if (this.fixedInputs && this.fixedOutputs) {
+      return;
+    }
+
+    this.#highlightForAdHoc = highlightForAdHoc;
     this.#isDirty = true;
   }
 
@@ -719,7 +742,7 @@ export class GraphNode extends PIXI.Container {
       this.addChildAt(this.#background, 0);
     }
 
-    const borderSize = this.selected ? 2 : 1;
+    const borderSize = this.selected || this.#highlightForAdHoc ? 2 : 1;
     this.#background.beginPath();
     this.#background.roundRect(
       -borderSize,
@@ -730,7 +753,11 @@ export class GraphNode extends PIXI.Container {
     );
     this.#background.closePath();
     this.#background.fill({
-      color: this.selected ? this.#selectedColor : this.#borderColor,
+      color: this.#highlightForAdHoc
+        ? this.#highlightForAdHocColor
+        : this.selected
+          ? this.#selectedColor
+          : this.#borderColor,
     });
 
     this.#background.beginPath();
