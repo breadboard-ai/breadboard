@@ -212,7 +212,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Done Check",
       description: "Checking for the 'Done' marker",
     },
-    context: addTask.context,
+    context: addLooperTask.context,
     generated: routeToFunctionsOrText.context,
     text: routeToFunctionsOrText.text,
   });
