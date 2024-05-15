@@ -1,5 +1,64 @@
 # @google-labs/breadboard-cli
 
+## 0.9.3
+
+### Patch Changes
+
+- a35406c: Add --format flag to make command which formats BGL in a deterministic way
+- Updated dependencies [8097177]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [29eda71]
+- Updated dependencies [4957dc5]
+- Updated dependencies [fe4c564]
+- Updated dependencies [4203076]
+- Updated dependencies [7d0b89c]
+- Updated dependencies [23b8acb]
+- Updated dependencies [f60cb06]
+- Updated dependencies [9212366]
+- Updated dependencies [04e892e]
+- Updated dependencies [cec6d54]
+- Updated dependencies [e337629]
+- Updated dependencies [c91fb1e]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [69b6e44]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [fe2066b]
+- Updated dependencies [c1acf24]
+- Updated dependencies [af54870]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [cc1a625]
+- Updated dependencies [ee85b67]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [1d29493]
+- Updated dependencies [b6f5644]
+- Updated dependencies [f870bdd]
+- Updated dependencies [42495d8]
+- Updated dependencies [a945fba]
+- Updated dependencies [94caed3]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/core-kit@0.9.0
+  - @breadboard-ai/build@0.6.0
+  - @google-labs/breadboard-web@1.9.0
+  - @breadboard-ai/import@0.1.3
+  - @google-labs/template-kit@0.3.2
+
 ## 0.9.2
 
 ### Patch Changes

@@ -1,5 +1,127 @@
 # @google-labs/breadboard-web
 
+## 1.9.0
+
+### Minor Changes
+
+- 23b8acb: Teach UI to handle arrays of LLM Content
+- 04e892e: Update UI colors
+- 69b6e44: Tidy event names
+- 42495d8: Teach UI Controller about stopping runs
+- 94caed3: Teach editor about ad-hoc edges
+
+### Patch Changes
+
+- fe4c564: Teach settings about node type descriptions
+- 4203076: Update boards to make better use of `llm-content`.
+- 7d0b89c: Teach Preview to use inputs in settings
+- 9212366: Various UI Tweaks
+- e337629: Add part controls to LLM Content Input
+- c91fb1e: Tidy events a little bit
+- 3397974: Add `InspectableNode.type()` and start using it.
+- fe2066b: Teach LLM Content to handle plain text a bit better
+- cc1a625: Bring back Preview
+- a945fba: Teach editor to disambiguate edges
+- Updated dependencies [8097177]
+- Updated dependencies [1db4a8f]
+- Updated dependencies [29d3712]
+- Updated dependencies [ffd2e8e]
+- Updated dependencies [e00f855]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [edec774]
+- Updated dependencies [29eda71]
+- Updated dependencies [4957dc5]
+- Updated dependencies [7936d8b]
+- Updated dependencies [fe4c564]
+- Updated dependencies [8eaedaf]
+- Updated dependencies [c69f1c5]
+- Updated dependencies [4203076]
+- Updated dependencies [a297d10]
+- Updated dependencies [23b8acb]
+- Updated dependencies [f60cb06]
+- Updated dependencies [3f0ce31]
+- Updated dependencies [c3d386a]
+- Updated dependencies [9212366]
+- Updated dependencies [f4ed7ba]
+- Updated dependencies [04e892e]
+- Updated dependencies [cec6d54]
+- Updated dependencies [e337629]
+- Updated dependencies [bfdb36a]
+- Updated dependencies [c91fb1e]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [4eeacbe]
+- Updated dependencies [69b6e44]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [f0cb9e3]
+- Updated dependencies [150f3bd]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [f0409d1]
+- Updated dependencies [ffbea5d]
+- Updated dependencies [a209c51]
+- Updated dependencies [339543d]
+- Updated dependencies [3f0ce31]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [a4d9d23]
+- Updated dependencies [40ce086]
+- Updated dependencies [e68c06d]
+- Updated dependencies [3397974]
+- Updated dependencies [09d8288]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [8838ba7]
+- Updated dependencies [b6ade85]
+- Updated dependencies [b2a968b]
+- Updated dependencies [fe2066b]
+- Updated dependencies [6c659f2]
+- Updated dependencies [c1acf24]
+- Updated dependencies [8170942]
+- Updated dependencies [3e58d25]
+- Updated dependencies [8bef702]
+- Updated dependencies [af54870]
+- Updated dependencies [2197ed6]
+- Updated dependencies [3920805]
+- Updated dependencies [d10f568]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [1f4e3b4]
+- Updated dependencies [74434ea]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [7b18cb2]
+- Updated dependencies [cbd6053]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [d66af7b]
+- Updated dependencies [ee85b67]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [bfdb36a]
+- Updated dependencies [c27aa9b]
+- Updated dependencies [1d29493]
+- Updated dependencies [093e769]
+- Updated dependencies [b6f5644]
+- Updated dependencies [f870bdd]
+- Updated dependencies [42495d8]
+- Updated dependencies [afffaaf]
+- Updated dependencies [a945fba]
+- Updated dependencies [94caed3]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/breadboard-ui@0.8.0
+  - @google-labs/gemini-kit@0.4.0
+  - @google-labs/core-kit@0.9.0
+  - @breadboard-ai/build@0.6.0
+  - @google-labs/json-kit@0.3.0
+  - @google-labs/agent-kit@0.7.0
+  - @google-labs/node-nursery-web@1.1.3
+  - @google-labs/palm-kit@0.0.14
+  - @google-labs/pinecone-kit@0.1.12
+  - @google-labs/template-kit@0.3.2
+
 ## 1.8.1
 
 ### Patch Changes

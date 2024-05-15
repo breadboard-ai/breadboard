@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
@@ -74,8 +74,8 @@
   },
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@google-labs/breadboard-hello-world": "^1.2.13",
-    "@google-labs/breadboard": "^0.19.0",
+    "@google-labs/breadboard-hello-world": "^1.2.14",
+    "@google-labs/breadboard": "^0.20.0",
     "chalk": "^5.3.0"
   }
 }

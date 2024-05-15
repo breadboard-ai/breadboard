@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.20.0
+
+### Minor Changes
+
+- 8097177: Allow output ports to be required in their schema without it turning output ports red when they are unwired
+- cec6d54: Introduce `InspectablePortType`.
+- 3397974: Add `InspectableNode.type()` and start using it.
+
+### Patch Changes
+
+- ab9a4ce: Remove `runRemote` method. It is old code that doesn't work and isn't used.
+- a35406c: Add formatGraphDescriptor function which formats BGL in a deterministic way
+- 477e6e6: Sort more schema fields for easier comparison across serializers
+
 ## 0.19.0
 
 ### Minor Changes

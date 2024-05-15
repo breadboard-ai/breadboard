@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- af54870: Convert passthrough to new API. The output schema of passthrough is now taken from the connected inputSchema instead of just using the values. This preserves more information about the ports that are being passed-through.
+
+### Patch Changes
+
+- 8774855: Allow code outputs to be optional
+- 1b596d4: Add a `code` function which creates a `runJavascript` node in a type-safe way.
+- 4957dc5: Handle the case in secrets describe where there are no input keys yet
+- ee85b67: Add a `secret` function which creates and configures a `secrets` node for just
+  one secret, and returns the corresponding output port. A simpler way to get
+  secrets in the API.
+- 1d29493: Export passthrough node definition
+- f870bdd: Allow returning errors from code helper function
+- Updated dependencies [8097177]
+- Updated dependencies [29eda71]
+- Updated dependencies [f60cb06]
+- Updated dependencies [cec6d54]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [c1acf24]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [b6f5644]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @breadboard-ai/build@0.6.0
+
 ## 0.8.1
 
 ### Patch Changes
