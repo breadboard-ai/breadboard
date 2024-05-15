@@ -8,6 +8,7 @@ import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
   ["smart-toy", "/third_party/icons/smart-toy.svg"],
+  ["merge-type", "/third_party/icons/merge-type.svg"],
   ["human", "/third_party/icons/human.svg"],
   ["laps", "/third_party/icons/laps.svg"],
 ]);

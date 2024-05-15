@@ -15,6 +15,7 @@ import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
 import { LooperType } from "./boards/looper.js";
+import { JoinerType } from "./boards/joiner.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -40,6 +41,7 @@ const AgentKit = builder.build({
   human: adapter.handlerForNode("human"),
   specialist: adapter.handlerForNode("specialist"),
   looper: adapter.handlerForNode("looper"),
+  joiner: adapter.handlerForNode("joiner"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -78,6 +80,10 @@ export type AgentKitType = {
    * Facilitate looping, A work in progress.
    */
   looper: LooperType;
+  /**
+   * Combine multiple context into one.
+   */
+  joiner: JoinerType;
 };
 
 export default AgentKit;

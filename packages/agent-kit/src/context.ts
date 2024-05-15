@@ -279,3 +279,15 @@ export const cleanUpMetadataFunction = fun(({ context }) => {
 });
 
 export const cleanUpMetadata = code(cleanUpMetadataFunction);
+
+export const combineContextsFunction = fun((inputs) => {
+  const entries = Object.entries(inputs).sort();
+  const context: Context[] = [];
+  for (const entry of entries) {
+    const input = entry[1];
+    const c = (Array.isArray(input) ? input : [input]) as Context[];
+    context.push(...c);
+  }
+  return { context };
+});
+export const combineContexts = code(combineContextsFunction);

@@ -15,6 +15,7 @@ import toolWorker from "./boards/tool-worker.js";
 import { Core } from "@google-labs/core-kit";
 import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
+import joiner from "./boards/joiner.js";
 
 // TODO: Convert to new syntax
 const kit = new Board({
@@ -32,5 +33,6 @@ core.invoke({ $id: "human", $board: human });
 core.invoke({ $id: "tool-worker", $board: toolWorker });
 core.invoke({ $id: "specialist", $board: specialist });
 core.invoke({ $id: "looper", $board: looper });
+core.invoke({ $id: "joiner", $board: joiner });
 
 export default kit;
