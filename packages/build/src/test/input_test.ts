@@ -225,7 +225,7 @@ test("invalid examples", () => {
   input({ examples: { foo: "bar" } });
 });
 
-test.only("multiple input nodes with ids and metadata", () => {
+test("multiple input nodes with ids and metadata", () => {
   const a = input();
   const b = input({ type: "number" });
   const c = input({ type: "boolean" });
@@ -313,6 +313,77 @@ test.only("multiple input nodes with ids and metadata", () => {
             type: "object",
             properties: { d: { type: "string" } },
             required: ["d"],
+          },
+        },
+      },
+      { id: "test-0", type: "test", configuration: {} },
+    ],
+  });
+});
+
+test("can't be optional with default", () => {
+  input({ optional: true, type: "string" });
+  // @ts-expect-error
+  input({ optional: true, type: "string", default: "foo" });
+  // @ts-expect-error
+  input({ optional: true, default: "foo" });
+});
+
+test("optional inputs aren't required in JSON schema", () => {
+  const req = input({ type: "number" });
+  const opt = input({ type: "number", optional: true });
+
+  const { baz } = defineNodeType({
+    name: "test",
+    inputs: {
+      foo: { type: "number" },
+      bar: { type: "number" },
+    },
+    outputs: {
+      baz: { type: "number" },
+    },
+    invoke: () => ({ baz: 123 }),
+  })({ foo: req, bar: opt }).outputs;
+
+  // $ExpectType BoardDefinition<{ req: Input<number>; opt: Input<number>; }, { baz: OutputPort<number>; }>
+  const brd = board({
+    inputs: {
+      req,
+      opt,
+    },
+    outputs: {
+      baz,
+    },
+  });
+  assert.deepEqual(serialize(brd), {
+    edges: [
+      { from: "input-0", to: "test-0", out: "opt", in: "bar" },
+      { from: "input-0", to: "test-0", out: "req", in: "foo" },
+      { from: "test-0", to: "output-0", out: "baz", in: "baz" },
+    ],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              opt: { type: "number" },
+              req: { type: "number" },
+            },
+            required: ["req"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { baz: { type: "number" } },
+            required: ["baz"],
           },
         },
       },

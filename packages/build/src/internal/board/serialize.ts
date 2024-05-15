@@ -107,6 +107,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       });
       unconnectedInputs.add(input);
       const schema = toJSONSchema(input.type);
+      let isSpecialOptional = false;
       if (isSpecialInput(input)) {
         if (input.title !== undefined) {
           schema.title = input.title;
@@ -130,6 +131,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
                 // requires it, but seems like it should be real JSON.
                 JSON.stringify(example, null, 2)
           );
+        }
+        if ("optional" in input && input.optional) {
+          isSpecialOptional = true;
         }
       }
       let inputNode = inputNodes.get(inputNodeId);
@@ -171,7 +175,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           "additionalProperties",
         ]
       );
-      if (schema.default === undefined) {
+      if (schema.default === undefined && !isSpecialOptional) {
         inputNode.configuration.schema.required.push(mainInputName);
       }
     }
