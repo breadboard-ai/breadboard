@@ -494,15 +494,6 @@ export class Graph extends PIXI.Container {
               break;
             }
 
-            console.log(
-              GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
-              from,
-              to,
-              targetNodePort.type === GraphNodePortType.OUT ? knownPorts : null,
-              targetNodePort.type === GraphNodePortType.IN ? knownPorts : null,
-              evt.client
-            );
-
             this.emit(
               GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
               from,

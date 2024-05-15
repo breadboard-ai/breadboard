@@ -41,10 +41,7 @@ export class GraphNodePort extends PIXI.Graphics {
   #editable = false;
   #overrideStatus: PortStatus | null = null;
 
-  constructor(
-    public type: GraphNodePortType,
-    public isHeaderPort = false
-  ) {
+  constructor(public type: GraphNodePortType) {
     super();
 
     this.eventMode = "static";

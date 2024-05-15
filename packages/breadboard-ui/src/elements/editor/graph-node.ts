@@ -24,7 +24,6 @@ const outputNodeColor = getGlobalColor("--bb-boards-200");
 
 const DBL_CLICK_DELTA = 450;
 const ICON_SCALE = 0.75;
-const IS_HEADER_PORT = true;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -71,8 +70,8 @@ export class GraphNode extends PIXI.Container {
   #emitCollapseToggleEventOnNextDraw = false;
 
   #overflowMenu = new GraphOverflowMenu();
-  #headerInPort = new GraphNodePort(GraphNodePortType.IN, IS_HEADER_PORT);
-  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT, IS_HEADER_PORT);
+  #headerInPort = new GraphNodePort(GraphNodePortType.IN);
+  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
