@@ -1,0 +1,71 @@
+{
+  "title": "Joiner",
+  "description": "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fn-4",
+      "to": "output-5",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-3",
+      "to": "fn-4",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-5",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "title": "context"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Output",
+        "description": "Returning combined values"
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_4 = (inputs) => {\n  const entries = Object.entries(inputs).sort();\n  const context = [];\n  for (const entry of entries) {\n    const input = entry[1];\n    const c = Array.isArray(input) ? input : [input];\n    context.push(...c);\n  }\n  return { context };\n};",
+        "name": "fn_4",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Combine Context",
+        "description": "Combining context into one"
+      }
+    },
+    {
+      "id": "input-3",
+      "type": "input",
+      "configuration": {},
+      "metadata": {
+        "title": "Input",
+        "description": "Getting all the data"
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}
