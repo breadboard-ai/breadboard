@@ -2318,6 +2318,78 @@
         }
       ],
       "graphs": {}
+    },
+    "joiner": {
+      "title": "Joiner",
+      "metadata": {
+        "icon": "merge-type"
+      },
+      "description": "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
+      "version": "0.0.1",
+      "edges": [
+        {
+          "from": "fn-4",
+          "to": "output-5",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "input-3",
+          "to": "fn-4",
+          "out": "*",
+          "in": ""
+        }
+      ],
+      "nodes": [
+        {
+          "id": "output-5",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "title": "context"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Output",
+            "description": "Returning combined values"
+          }
+        },
+        {
+          "id": "fn-4",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_4 = inputs=>{const entries=Object.entries(inputs).sort();const context=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}return{context}};",
+            "name": "fn_4",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Combine Context",
+            "description": "Combining context into one"
+          }
+        },
+        {
+          "id": "input-3",
+          "type": "input",
+          "configuration": {},
+          "metadata": {
+            "title": "Input",
+            "description": "Getting all the data"
+          }
+        }
+      ],
+      "graphs": {}
     }
   }
 }

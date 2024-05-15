@@ -129,10 +129,13 @@
                   "llm-content"
                 ]
               },
-              "title": "Context"
+              "title": "Context out"
             },
             "text": {
               "title": "Text",
+              "behavior": [
+                "deprecated"
+              ],
               "type": "string"
             }
           }
@@ -161,6 +164,9 @@
           "properties": {
             "text": {
               "title": "Text",
+              "behavior": [
+                "deprecated"
+              ],
               "type": "string"
             }
           },
@@ -221,6 +227,9 @@
           "type": "object",
           "properties": {
             "again": {
+              "behavior": [
+                "deprecated"
+              ],
               "type": "string",
               "title": "again"
             }
@@ -240,7 +249,7 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "Context",
+              "title": "Context in",
               "description": "Incoming conversation context",
               "type": "array",
               "items": {
@@ -347,8 +356,8 @@
           "type": "object",
           "properties": {
             "context": {
-              "type": "string",
-              "title": "context"
+              "title": "Context out",
+              "type": "string"
             }
           }
         }

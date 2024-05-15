@@ -78,7 +78,7 @@
       "id": "assembleContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const assembleContext = ({ context, generated }) => {\n  if (!context) throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n};",
+        "code": "const assembleContext = ({ context: context2, generated }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  return { context: [...context2, generated] };\n};",
         "name": "assembleContext",
         "raw": true
       },
@@ -102,7 +102,7 @@
       "id": "buildContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const buildContext = ({ context, instruction }) => {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n};",
+        "code": "const buildContext = ({ context: context2, instruction }) => {\n  if (typeof context2 === \"string\") {\n    context2 = [{ role: \"user\", parts: [{ text: context2 }] }];\n  }\n  const list = context2 || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n};",
         "name": "buildContext",
         "raw": true
       },
@@ -146,13 +146,13 @@
               "type": "array",
               "title": "Stop Sequences",
               "description": "An array of strings that will stop the output",
+              "default": "[]",
               "items": {
                 "type": "object",
                 "behavior": [
                   "config"
                 ]
-              },
-              "default": "[]"
+              }
             }
           },
           "required": [
