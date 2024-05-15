@@ -32,7 +32,7 @@ import { getGlobalColor } from "./utils.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const ADHOC_EDGE_ERROR_MESSAGE =
-  "Ad hoc edge names must only contain lowercase alphanumeric characters and '-'";
+  "Ad-hoc edge names must only contain lowercase alphanumeric characters and '-'";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
