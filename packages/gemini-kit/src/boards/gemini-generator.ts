@@ -558,7 +558,7 @@ errorLoopback.resolve(errorCollector.outputs.error);
 export default board({
   title: "Gemini Pro Generator",
   description: "The text generator board powered by the Gemini Pro model",
-  version: "0.0.2",
+  version: "0.1.0",
   inputs: [
     {
       $id: "inputs",
