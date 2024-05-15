@@ -32,7 +32,7 @@ import { getGlobalColor } from "./utils.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const ADHOC_EDGE_ERROR_MESSAGE =
-  "Ad-hoc edge names must only contain lowercase alphanumeric characters and '-'";
+  "Ad-hoc port names must only contain lowercase alphanumeric characters and '-'";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -968,7 +968,7 @@ export class GraphRenderer extends LitElement {
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
                     type="text"
-                    placeholder="Enter edge name"
+                    placeholder="Enter port name"
                     required
                     pattern="^[a-z\\-]+$"
                   />`
@@ -1014,7 +1014,7 @@ export class GraphRenderer extends LitElement {
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
                     type="text"
-                    placeholder="Enter edge name"
+                    placeholder="Enter port name"
                     required
                     pattern="^[a-z\\-]+$"
                   />`
