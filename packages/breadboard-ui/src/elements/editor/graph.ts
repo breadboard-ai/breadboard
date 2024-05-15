@@ -473,7 +473,7 @@ export class Graph extends PIXI.Container {
         }
 
         default: {
-          // Possible Ad Hoc wire disambiguation.
+          // Possible ad-hoc wire disambiguation.
           if (creatingAdHocEdge && targetNodePort && targetHoverNodeForAdHoc) {
             const knownPorts =
               targetNodePort.type === GraphNodePortType.OUT
