@@ -302,6 +302,12 @@ export class UI extends LitElement {
         )?.value
       : false;
 
+    const invertZoomScrollDirection = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Invert Zoom Scroll Direction"
+        )?.value
+      : false;
+
     const editorMode = hideAdvancedPortsOnNodes
       ? EditorMode.MINIMAL
       : EditorMode.ADVANCED;
@@ -326,6 +332,7 @@ export class UI extends LitElement {
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       .mode=${editorMode}
       .showNodeShortcuts=${showNodeShortcuts}
+      .invertZoomScrollDirection=${invertZoomScrollDirection}
       @bbnodedelete=${(evt: NodeDeleteEvent) => {
         if (!this.selectedNodeIds) {
           return;

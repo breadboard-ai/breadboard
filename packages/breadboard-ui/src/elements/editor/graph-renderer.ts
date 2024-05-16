@@ -49,6 +49,9 @@ export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   editable = false;
 
+  @property({ reflect: true })
+  invertZoomScrollDirection = false;
+
   #app = new PIXI.Application();
   #appInitialized = false;
 
@@ -419,7 +422,10 @@ export class GraphRenderer extends LitElement {
       "wheel",
       function (this: GraphRenderer, evt) {
         if (evt.metaKey) {
-          let delta = 1 - evt.deltaY / this.zoomFactor;
+          let delta =
+            1 -
+            (evt.deltaY / this.zoomFactor) *
+              (this.invertZoomScrollDirection ? -1 : 1);
           const newScale = this.#container.scale.x * delta;
           if (newScale < this.minScale || newScale > this.maxScale) {
             delta = 1;

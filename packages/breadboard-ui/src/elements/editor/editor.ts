@@ -91,6 +91,9 @@ export class Editor extends LitElement {
   @state()
   defaultConfiguration: NodeConfiguration | null = null;
 
+  @property({ reflect: true })
+  invertZoomScrollDirection = false;
+
   #graph = new Graph();
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
@@ -746,6 +749,8 @@ export class Editor extends LitElement {
 
     if (this.#graphRenderer) {
       this.#graphRenderer.editable = this.editable;
+      this.#graphRenderer.invertZoomScrollDirection =
+        this.invertZoomScrollDirection;
     }
 
     const subGraphs: SubGraphs | null =
