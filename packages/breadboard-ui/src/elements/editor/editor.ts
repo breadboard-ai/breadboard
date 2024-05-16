@@ -14,6 +14,8 @@ import {
   InspectableNodePorts,
   GraphLoader,
   SubGraphs,
+  NodeDescriptor,
+  NodeValue,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -96,9 +98,11 @@ export class Editor extends LitElement {
   #graphVersion = 0;
   #lastBoardId: number = -1;
   #lastSubGraphId: string | null = null;
+  #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
+  #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onGraphNodeMoveBound = this.#onGraphNodeMove.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
@@ -111,6 +115,11 @@ export class Editor extends LitElement {
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
   #nodeSelectorRef: Ref<NodeSelector> = createRef();
+
+  #writingToClipboard = false;
+  #readingFromClipboard = false;
+  #lastX = 0;
+  #lastY = 0;
 
   static styles = css`
     * {
@@ -408,6 +417,8 @@ export class Editor extends LitElement {
     );
 
     window.addEventListener("resize", this.#onResizeBound);
+    this.addEventListener("keydown", this.#onKeyDownBound);
+    this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
@@ -447,6 +458,8 @@ export class Editor extends LitElement {
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
@@ -472,6 +485,94 @@ export class Editor extends LitElement {
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
       this.#processGraph();
+    }
+  }
+
+  #onPointerMove(evt: PointerEvent) {
+    this.#lastX = evt.pageX - this.#left + window.scrollX;
+    this.#lastY = evt.pageY - this.#top - window.scrollY;
+  }
+
+  async #onKeyDown(evt: KeyboardEvent) {
+    if (evt.metaKey && this.graph) {
+      // Copy.
+      if (evt.key === "c") {
+        if (this.#writingToClipboard) {
+          return;
+        }
+
+        const selected = this.#graph.getSelectedChild();
+        if (selected) {
+          const node = this.graph.nodes.find(
+            (node) => node.id === selected.label
+          );
+
+          if (!node) {
+            return;
+          }
+
+          this.#writingToClipboard = true;
+          await navigator.clipboard.writeText(JSON.stringify(node, null, 2));
+          this.#writingToClipboard = false;
+        }
+      } else if (evt.key === "v") {
+        // Paste.
+        if (this.#readingFromClipboard) {
+          return;
+        }
+
+        try {
+          this.#readingFromClipboard = true;
+          const data = await navigator.clipboard.readText();
+          if (!data) {
+            return;
+          }
+
+          const nodeData = JSON.parse(data) as NodeDescriptor;
+          if (!("id" in nodeData && "type" in nodeData)) {
+            return;
+          }
+
+          // Update the node ID so it doesn't clash.
+          const existingNode = this.graph.nodes.find(
+            (node) => node.id === nodeData.id
+          );
+          if (existingNode) {
+            nodeData.id = this.#createRandomID(nodeData.type);
+          }
+
+          nodeData.metadata = nodeData.metadata || {};
+          nodeData.metadata.visual = (nodeData.metadata.visual || {}) as Record<
+            string,
+            NodeValue
+          >;
+
+          delete nodeData.metadata.visual["x"];
+          delete nodeData.metadata.visual["y"];
+
+          if (Object.keys(nodeData.metadata.visual).length === 0) {
+            delete nodeData.metadata.visual;
+          }
+
+          const position = { x: this.#lastX, y: this.#lastY };
+          this.#graph.setNodeLayoutPosition(nodeData.id, position, true);
+
+          this.dispatchEvent(
+            new NodeCreateEvent(
+              nodeData.id,
+              nodeData.type,
+              this.subGraphId,
+              nodeData.configuration ?? null,
+              nodeData.metadata ?? null
+            )
+          );
+        } catch (err) {
+          // Not JSON data - ignore.
+          return;
+        } finally {
+          this.#readingFromClipboard = false;
+        }
+      }
     }
   }
 
