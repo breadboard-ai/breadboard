@@ -32,7 +32,7 @@ export class NodeDetails extends LitElement {
   loader: GraphLoader | null = null;
 
   @property()
-  selectedNodeId: string | null = null;
+  selectedNodeIds: string[] = [];
 
   @property()
   subGraphId: string | null = null;
@@ -46,8 +46,17 @@ export class NodeDetails extends LitElement {
   #titleRef: Ref<HTMLSpanElement> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
   #formTask = new Task(this, {
-    task: async ([graph, subGraphId, nodeId]) => {
-      if (typeof graph !== "object" || typeof nodeId !== "string") {
+    task: async ([graph, subGraphId, nodeIds]) => {
+      if (!Array.isArray(nodeIds) || nodeIds.length !== 1) {
+        return null;
+      }
+
+      const nodeId = nodeIds[0];
+      if (
+        typeof graph !== "object" ||
+        Array.isArray(graph) ||
+        typeof nodeId !== "string"
+      ) {
         throw new Error("Unsupported information");
       }
 
@@ -91,7 +100,7 @@ export class NodeDetails extends LitElement {
     onError: (err) => {
       console.warn(err);
     },
-    args: () => [this.graph, this.subGraphId, this.selectedNodeId],
+    args: () => [this.graph, this.subGraphId, this.selectedNodeIds],
   });
 
   static styles = css`
@@ -249,13 +258,13 @@ export class NodeDetails extends LitElement {
       | "debug"
       | "info";
 
-    if (!this.selectedNodeId) {
+    if (!this.selectedNodeIds.length) {
       console.warn("No $id provided for node - unable to update metadata");
       return;
     }
 
     this.dispatchEvent(
-      new NodeMetadataUpdateEvent(this.selectedNodeId, this.subGraphId, {
+      new NodeMetadataUpdateEvent(this.selectedNodeIds[0], this.subGraphId, {
         title,
         description,
         logLevel,
@@ -270,96 +279,102 @@ export class NodeDetails extends LitElement {
   }
 
   render() {
-    if (!this.graph || !this.selectedNodeId) {
+    if (!this.graph || !this.selectedNodeIds.length) {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
 
     return this.#formTask.render({
       pending: () => html`Loading...`,
-      complete: ({
-        node,
-        metadata,
-        kitNodeDescription,
-      }: {
-        node: InspectableNode;
-        metadata: NodeMetadata;
-        kitNodeDescription: string | null;
-      }) => html`
-        ${this.showNodeTypeDescriptions
-          ? html`
-              <div id="overview">
-                <h1 ${ref(this.#titleRef)}>
-                  ${metadata.title ?? node.descriptor.id}
-                  (${node.descriptor.type})
-                </h1>
-                <p>${kitNodeDescription ?? html`No description`}</p>
-              </div>
-            `
-          : nothing}
-        <h1>
-          <button
-            id="unfold"
-            class=${classMap({ visible: this.expanded })}
-            @click=${() => {
-              this.expanded = !this.expanded;
+      complete: (
+        data: {
+          node: InspectableNode;
+          metadata: NodeMetadata;
+          kitNodeDescription: string | null;
+        } | null
+      ) => {
+        if (!data) {
+          return nothing;
+        }
 
-              globalThis.sessionStorage.setItem(
-                `${STORAGE_PREFIX}-expanded`,
-                this.expanded.toString()
-              );
+        const { node, metadata, kitNodeDescription } = data;
+
+        return html`
+          ${this.showNodeTypeDescriptions
+            ? html`
+                <div id="overview">
+                  <h1 ${ref(this.#titleRef)}>
+                    ${metadata.title ?? node.descriptor.id}
+                    (${node.descriptor.type})
+                  </h1>
+                  <p>${kitNodeDescription ?? html`No description`}</p>
+                </div>
+              `
+            : nothing}
+          <h1>
+            <button
+              id="unfold"
+              class=${classMap({ visible: this.expanded })}
+              @click=${() => {
+                this.expanded = !this.expanded;
+
+                globalThis.sessionStorage.setItem(
+                  `${STORAGE_PREFIX}-expanded`,
+                  this.expanded.toString()
+                );
+              }}
+            >
+              Node details
+            </button>
+          </h1>
+          <form
+            ${ref(this.#formRef)}
+            class=${classMap({ visible: this.expanded })}
+            @input=${(evt: Event) => {
+              evt.preventDefault();
+              evt.stopImmediatePropagation();
+
+              this.#emitUpdatedInfo();
+            }}
+            @keydown=${(evt: KeyboardEvent) => {
+              if (evt.key !== "Enter") {
+                return;
+              }
+
+              this.#emitUpdatedInfo();
+            }}
+            @submit=${(evt: Event) => {
+              evt.preventDefault();
             }}
           >
-            Node details
-          </button>
-        </h1>
-        <form
-          ${ref(this.#formRef)}
-          class=${classMap({ visible: this.expanded })}
-          @input=${(evt: Event) => {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
+            <input type="hidden" name="id" .value=${node.descriptor.id} />
+            <input type="hidden" name="type" .value=${node.descriptor.type} />
+            <label>Title</label>
+            <input
+              name="title"
+              type="text"
+              placeholder="Enter the title for this node"
+              .value=${metadata.title || ""}
+            />
 
-            this.#emitUpdatedInfo();
-          }}
-          @keydown=${(evt: KeyboardEvent) => {
-            if (evt.key !== "Enter") {
-              return;
-            }
+            <label>Log Level</label>
+            <select type="text" id="log-level" name="log-level">
+              <option value="debug" ?selected=${metadata.logLevel === "debug"}>
+                Debug
+              </option>
+              <option value="info" ?selected=${metadata.logLevel === "info"}>
+                Information
+              </option>
+            </select>
 
-            this.#emitUpdatedInfo();
-          }}
-          @submit=${(evt: Event) => {
-            evt.preventDefault();
-          }}
-        >
-          <input type="hidden" name="id" .value=${node.descriptor.id} />
-          <input type="hidden" name="type" .value=${node.descriptor.type} />
-          <label>Title</label>
-          <input
-            name="title"
-            type="text"
-            placeholder="Enter the title for this node"
-            .value=${metadata.title || ""}
-          />
-
-          <label>Log Level</label>
-          <select type="text" id="log-level" name="log-level">
-            <option value="debug" ?selected=${metadata.logLevel === "debug"}>
-              Debug
-            </option>
-            <option value="info" ?selected=${metadata.logLevel === "info"}>
-              Information
-            </option>
-          </select>
-
-          <label>Description</label>
-          <textarea
-            name="description"
-            placeholder="Enter the description for this node"
-            .value=${metadata.description || ""}
-          ></textarea>
-        </form>
-      `,
+            <label>Description</label>
+            <textarea
+              name="description"
+              placeholder="Enter the description for this node"
+              .value=${metadata.description || ""}
+            ></textarea>
+          </form>
+        `;
+      },
     });
   }
 }

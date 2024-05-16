@@ -8,6 +8,7 @@ import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
+  GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
   InputEnterEvent,
   NodeDeleteEvent,
@@ -89,7 +90,7 @@ export class UI extends LitElement {
   providerOps = 0;
 
   @state()
-  selectedNodeId: string | null = null;
+  selectedNodeIds: string[] = [];
 
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
@@ -239,11 +240,11 @@ export class UI extends LitElement {
       }
 
       this.#handlers.clear();
-      this.selectedNodeId = null;
+      this.selectedNodeIds.length = 0;
     }
 
     if (changedProperties.has("subGraphId")) {
-      this.selectedNodeId = null;
+      this.selectedNodeIds.length = 0;
     }
   }
 
@@ -326,29 +327,68 @@ export class UI extends LitElement {
       .mode=${editorMode}
       .showNodeShortcuts=${showNodeShortcuts}
       @bbnodedelete=${(evt: NodeDeleteEvent) => {
-        if (evt.id !== this.selectedNodeId) {
+        if (!this.selectedNodeIds) {
           return;
         }
 
-        this.selectedNodeId = null;
+        const idx = this.selectedNodeIds.indexOf(evt.id);
+        if (idx === -1) {
+          return;
+        }
+
+        this.selectedNodeIds = this.selectedNodeIds.filter(
+          (id) => id !== evt.id
+        );
       }}
       @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
-        this.selectedNodeId = evt.id;
+        if (!this.selectedNodeIds) {
+          this.selectedNodeIds = [];
+        }
+
+        if (!evt.id) {
+          return;
+        }
+
+        const idx = this.selectedNodeIds.indexOf(evt.id);
+        if (idx !== -1) {
+          return;
+        }
+
+        this.selectedNodeIds = [...this.selectedNodeIds, evt.id];
+        this.requestUpdate();
+      }}
+      @bbgraphnodedeselected=${(evt: GraphNodeDeselectedEvent) => {
+        if (!this.selectedNodeIds) {
+          return;
+        }
+
+        if (!evt.id) {
+          return;
+        }
+
+        this.selectedNodeIds = this.selectedNodeIds.filter(
+          (id) => id !== evt.id
+        );
+        this.requestUpdate();
+      }}
+      @bbgraphnodedeselectedall=${() => {
+        this.selectedNodeIds = [];
         this.requestUpdate();
       }}
     ></bb-editor>`;
 
     const nodeMetaDetails = guard(
-      [this.boardId, this.selectedNodeId, showNodeTypeDescriptions],
-      () =>
-        html`<bb-node-details
+      [this.boardId, this.selectedNodeIds, showNodeTypeDescriptions],
+      () => {
+        return html`<bb-node-details
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
-          .selectedNodeId=${this.selectedNodeId}
+          .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
           .kits=${this.kits}
           .loader=${this.loader}
-        ></bb-node-details>`
+        ></bb-node-details>`;
+      }
     );
 
     // Track the number of edges; if it changes we need to inform the node info
@@ -357,13 +397,13 @@ export class UI extends LitElement {
     const nodeConfiguration = guard(
       [
         this.boardId,
-        this.selectedNodeId,
+        this.selectedNodeIds,
         this.#lastEdgeCount,
         this.#nodeSchemaUpdateCount,
       ],
-      () =>
-        html`<bb-node-info
-          .selectedNodeId=${this.selectedNodeId}
+      () => {
+        return html`<bb-node-info
+          .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
           .kits=${this.kits}
@@ -375,92 +415,92 @@ export class UI extends LitElement {
           @bbschemachange=${() => {
             this.#nodeSchemaUpdateCount++;
           }}
-        ></bb-node-info>`
+        ></bb-node-info>`;
+      }
     );
 
     const boardDetails = guard(
       [this.boardId, this.graph, this.subGraphId],
-      () =>
-        html`<bb-board-details
+      () => {
+        return html`<bb-board-details
           .boardTitle=${boardTitle}
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}
           .subGraphId=${this.subGraphId}
         >
-        </bb-board-details>`
+        </bb-board-details>`;
+      }
     );
 
-    const activityLog = guard(
-      [this.run?.events],
-      () =>
-        html`<bb-activity-log
-          .run=${this.run}
-          .inputsFromLastRun=${this.inputsFromLastRun}
-          .events=${events}
-          .eventPosition=${eventPosition}
-          .showExtendedInfo=${true}
-          .settings=${this.settings}
-          .logTitle=${"Activity"}
-          @bbinputrequested=${() => {
-            this.selectedNodeId = null;
-            this.requestUpdate();
-          }}
-          @pointerdown=${(evt: PointerEvent) => {
-            if (!this.#controlsActivityRef.value) {
-              return;
-            }
+    const activityLog = guard([this.run?.events], () => {
+      return html`<bb-activity-log
+        .run=${this.run}
+        .inputsFromLastRun=${this.inputsFromLastRun}
+        .events=${events}
+        .eventPosition=${eventPosition}
+        .showExtendedInfo=${true}
+        .settings=${this.settings}
+        .logTitle=${"Activity"}
+        @bbinputrequested=${() => {
+          this.selectedNodeIds.length = 0;
+          this.requestUpdate();
+        }}
+        @pointerdown=${(evt: PointerEvent) => {
+          if (!this.#controlsActivityRef.value) {
+            return;
+          }
 
-            const [top] = evt.composedPath();
-            if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-              return;
-            }
+          const [top] = evt.composedPath();
+          if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+            return;
+          }
 
-            evt.stopImmediatePropagation();
+          evt.stopImmediatePropagation();
 
-            const id = top.dataset.messageId;
-            const event = this.run?.getEventById(id);
+          const id = top.dataset.messageId;
+          const event = this.run?.getEventById(id);
 
-            if (!event) {
-              // TODO: Offer the user more information.
-              console.warn(`Unable to find event with ID "${id}"`);
-              return;
-            }
+          if (!event) {
+            // TODO: Offer the user more information.
+            console.warn(`Unable to find event with ID "${id}"`);
+            return;
+          }
 
-            if (event.type !== "node") {
-              return;
-            }
+          if (event.type !== "node") {
+            return;
+          }
 
-            this.debugEvent = event;
-          }}
-          @bbinputenter=${(event: InputEnterEvent) => {
-            // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < events.length - 1) {
-              // The user has attempted to provide input for a stale
-              // request.
-              // TODO: Enable resuming from this point.
-              this.dispatchEvent(
-                new ToastEvent(
-                  "Unable to submit: board evaluation has already passed this point",
-                  ToastType.ERROR
-                )
-              );
-              return;
-            }
+          this.debugEvent = event;
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          // Notify any pending handlers that the input has arrived.
+          if (this.#messagePosition < events.length - 1) {
+            // The user has attempted to provide input for a stale
+            // request.
+            // TODO: Enable resuming from this point.
+            this.dispatchEvent(
+              new ToastEvent(
+                "Unable to submit: board evaluation has already passed this point",
+                ToastType.ERROR
+              )
+            );
+            return;
+          }
 
-            const data = event.data;
-            const handlers = this.#handlers.get(event.id) || [];
-            if (handlers.length === 0) {
-              console.warn(
-                `Received event for input(id="${event.id}") but no handlers were found`
-              );
-            }
-            for (const handler of handlers) {
-              handler.call(null, data);
-            }
-          }}
-          name="Board"
-        ></bb-activity-log>`
-    );
+          const data = event.data;
+          const handlers = this.#handlers.get(event.id) || [];
+          if (handlers.length === 0) {
+            console.warn(
+              `Received event for input(id="${event.id}") but no handlers were found`
+            );
+          }
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+        name="Board"
+      ></bb-activity-log>`;
+    });
 
     const entryDetails = this.debugEvent
       ? html`<div
@@ -486,7 +526,7 @@ export class UI extends LitElement {
     }
 
     const sidePanel = cache(
-      this.selectedNodeId
+      this.selectedNodeIds.length
         ? html`${nodeMetaDetails}${nodeConfiguration}`
         : html`${boardDetails}${activityLog}`
     );
@@ -525,7 +565,7 @@ export class UI extends LitElement {
             title="Run this board"
             ?disabled=${this.status !== STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
-              this.selectedNodeId = null;
+              this.selectedNodeIds.length = 0;
               this.dispatchEvent(new RunEvent());
             }}
           >
@@ -536,7 +576,7 @@ export class UI extends LitElement {
             title="Stop this board"
             ?disabled=${this.status === STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
-              this.selectedNodeId = null;
+              this.selectedNodeIds.length = 0;
               this.dispatchEvent(new StopEvent());
               this.#callAllPendingInputHandlers();
             }}

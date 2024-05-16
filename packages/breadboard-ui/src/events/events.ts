@@ -437,6 +437,22 @@ export class GraphNodeSelectedEvent extends Event {
   }
 }
 
+export class GraphNodeDeselectedEvent extends Event {
+  static eventName = "bbgraphnodedeselected";
+
+  constructor(public readonly id: string | null) {
+    super(GraphNodeDeselectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeDeselectedAllEvent extends Event {
+  static eventName = "bbgraphnodedeselectedall";
+
+  constructor() {
+    super(GraphNodeDeselectedAllEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "bbgraphedgeattach";
 
