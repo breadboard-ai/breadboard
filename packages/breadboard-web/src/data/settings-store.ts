@@ -82,6 +82,14 @@ export class SettingsStore {
             value: true,
           },
         ],
+        [
+          "Invert Zoom Scroll Direction",
+          {
+            name: "Invert Zoom Scroll Direction",
+            description: "Inverts the board zoom scroll direction",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
