@@ -501,20 +501,18 @@ export class Editor extends LitElement {
           return;
         }
 
-        const selected = this.#graph.getSelectedChild();
-        if (selected) {
-          const node = this.graph.nodes.find(
-            (node) => node.id === selected.label
-          );
-
-          if (!node) {
-            return;
-          }
-
-          this.#writingToClipboard = true;
-          await navigator.clipboard.writeText(JSON.stringify(node, null, 2));
-          this.#writingToClipboard = false;
+        const selected = this.#graph.getSelectedChildren();
+        if (!selected.length) {
+          return;
         }
+
+        const nodes = this.graph.nodes.filter((node) => {
+          return selected.find((item) => item.label === node.id);
+        });
+
+        this.#writingToClipboard = true;
+        await navigator.clipboard.writeText(JSON.stringify(nodes, null, 2));
+        this.#writingToClipboard = false;
       } else if (evt.key === "v") {
         // Paste.
         if (this.#readingFromClipboard) {
@@ -524,48 +522,53 @@ export class Editor extends LitElement {
         try {
           this.#readingFromClipboard = true;
           const data = await navigator.clipboard.readText();
-          if (!data) {
+          if (!data || !this.graph) {
             return;
           }
 
-          const nodeData = JSON.parse(data) as NodeDescriptor;
-          if (!("id" in nodeData && "type" in nodeData)) {
+          const nodes = JSON.parse(data) as NodeDescriptor[];
+          if (!Array.isArray(nodes)) {
             return;
           }
 
-          // Update the node ID so it doesn't clash.
-          const existingNode = this.graph.nodes.find(
-            (node) => node.id === nodeData.id
-          );
-          if (existingNode) {
-            nodeData.id = this.#createRandomID(nodeData.type);
+          for (let i = 0; i < nodes.length; i++) {
+            const nodeData = nodes[i];
+            if (!("id" in nodeData && "type" in nodeData)) {
+              return;
+            }
+
+            // Update the node ID so it doesn't clash.
+            const existingNode = this.graph.nodes.find(
+              (node) => node.id === nodeData.id
+            );
+            if (existingNode) {
+              nodeData.id = this.#createRandomID(nodeData.type);
+            }
+
+            nodeData.metadata = nodeData.metadata || {};
+            nodeData.metadata.visual = (nodeData.metadata.visual ||
+              {}) as Record<string, NodeValue>;
+
+            delete nodeData.metadata.visual["x"];
+            delete nodeData.metadata.visual["y"];
+
+            if (Object.keys(nodeData.metadata.visual).length === 0) {
+              delete nodeData.metadata.visual;
+            }
+
+            const position = { x: this.#lastX + i * 20, y: this.#lastY };
+            this.#graph.setNodeLayoutPosition(nodeData.id, position, true);
+
+            this.dispatchEvent(
+              new NodeCreateEvent(
+                nodeData.id,
+                nodeData.type,
+                this.subGraphId,
+                nodeData.configuration ?? null,
+                nodeData.metadata ?? null
+              )
+            );
           }
-
-          nodeData.metadata = nodeData.metadata || {};
-          nodeData.metadata.visual = (nodeData.metadata.visual || {}) as Record<
-            string,
-            NodeValue
-          >;
-
-          delete nodeData.metadata.visual["x"];
-          delete nodeData.metadata.visual["y"];
-
-          if (Object.keys(nodeData.metadata.visual).length === 0) {
-            delete nodeData.metadata.visual;
-          }
-
-          const position = { x: this.#lastX, y: this.#lastY };
-          this.#graph.setNodeLayoutPosition(nodeData.id, position, true);
-
-          this.dispatchEvent(
-            new NodeCreateEvent(
-              nodeData.id,
-              nodeData.type,
-              this.subGraphId,
-              nodeData.configuration ?? null,
-              nodeData.metadata ?? null
-            )
-          );
         } catch (err) {
           // Not JSON data - ignore.
           return;

@@ -16,6 +16,8 @@ import {
   GraphNodeMoveEvent,
   GraphNodePositionsCalculatedEvent,
   InputErrorEvent,
+  GraphNodeDeselectedEvent,
+  GraphNodeDeselectedAllEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -401,12 +403,17 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-      (id: string | null) => {
-        this.dispatchEvent(new GraphNodeSelectedEvent(id));
-      }
-    );
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_SELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeSelectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeDeselectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL, () => {
+      this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
       this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
@@ -628,23 +635,25 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      const selectedChild = graph.getSelectedChild();
-      if (!selectedChild) {
+      const selectedChildren = graph.getSelectedChildren();
+      if (!selectedChildren.length) {
         continue;
       }
 
-      if (selectedChild instanceof GraphNode) {
-        if (!selectedChild.label) {
-          console.warn("Node has no name - unable to delete");
-          return;
+      for (const selectedChild of selectedChildren) {
+        if (selectedChild instanceof GraphNode) {
+          if (!selectedChild.label) {
+            console.warn("Node has no name - unable to delete");
+            return;
+          }
+          this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
+        } else if (selectedChild instanceof GraphEdge) {
+          if (!selectedChild.edge) {
+            console.warn("Invalid edge - unable to delete");
+            return;
+          }
+          this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
         }
-        this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
-      } else if (selectedChild instanceof GraphEdge) {
-        if (!selectedChild.edge) {
-          console.warn("Invalid edge - unable to delete");
-          return;
-        }
-        this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
       }
     }
   }

@@ -82,14 +82,11 @@ export class Graph extends PIXI.Container {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode || evt.target instanceof GraphEdge) {
-        this.deselectAllChildren();
+        if (!evt.metaKey && !evt.shiftKey) {
+          this.deselectAllChildren();
+        }
 
-        if (evt.target instanceof GraphNode) {
-          this.emit(
-            GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-            evt.target.id
-          );
-        } else {
+        if (evt.target instanceof GraphEdge) {
           if (evt.target.toNode.collapsed || evt.target.fromNode.collapsed) {
             const possibleEdges = this.#edgesBetween(
               evt.target.fromNode,
@@ -114,7 +111,21 @@ export class Graph extends PIXI.Container {
           }
         }
 
-        evt.target.selected = true;
+        if (evt.metaKey) {
+          evt.target.selected = !evt.target.selected;
+        } else {
+          evt.target.selected = true;
+        }
+
+        if (evt.target instanceof GraphNode) {
+          this.emit(
+            evt.target.selected
+              ? GRAPH_OPERATIONS.GRAPH_NODE_SELECTED
+              : GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED,
+            evt.target.id
+          );
+        }
+
         return;
       }
 
@@ -536,31 +547,28 @@ export class Graph extends PIXI.Container {
       edge.selected = false;
     }
 
-    this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, null);
+    this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL);
   }
 
-  getSelectedChild() {
-    for (const child of this.children) {
-      if (!(child instanceof GraphNode)) {
+  getSelectedChildren(): Array<GraphNode | GraphEdge> {
+    const selected = [];
+    for (const node of this.children) {
+      if (!(node instanceof GraphNode) || !node.selected) {
         continue;
       }
 
-      if (child.selected) {
-        return child;
-      }
+      selected.push(node);
     }
 
     for (const edge of this.#edgeContainer.children) {
-      if (!(edge instanceof GraphEdge)) {
+      if (!(edge instanceof GraphEdge) || !edge.selected) {
         continue;
       }
 
-      if (edge.selected) {
-        return edge;
-      }
+      selected.push(edge);
     }
 
-    return null;
+    return selected;
   }
 
   getNodeLayoutPositions() {
@@ -840,7 +848,7 @@ export class Graph extends PIXI.Container {
         this.graphNode.selected = true;
         this.graphNode.position.set(this.layout.x, this.layout.y);
         this.graphNode.parent.emit(
-          GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
+          GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
           this.graphNode.label
         );
       }

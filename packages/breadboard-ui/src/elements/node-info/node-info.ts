@@ -56,7 +56,7 @@ export class NodeInfo extends LitElement {
   editable = false;
 
   @property()
-  selectedNodeId: string | null = null;
+  selectedNodeIds: string[] = [];
 
   @property()
   subGraphId: string | null = null;
@@ -74,8 +74,17 @@ export class NodeInfo extends LitElement {
   inputsExpanded = true;
 
   #formTask = new Task(this, {
-    task: async ([graph, subGraphId, nodeId]) => {
-      if (typeof graph !== "object" || typeof nodeId !== "string") {
+    task: async ([graph, subGraphId, nodeIds]) => {
+      if (!Array.isArray(nodeIds) || nodeIds.length !== 1) {
+        return null;
+      }
+
+      const nodeId = nodeIds[0];
+      if (
+        typeof graph !== "object" ||
+        Array.isArray(graph) ||
+        typeof nodeId !== "string"
+      ) {
         throw new Error("Unsupported information");
       }
 
@@ -118,7 +127,7 @@ export class NodeInfo extends LitElement {
     onError: (err) => {
       console.warn(err);
     },
-    args: () => [this.graph, this.subGraphId, this.selectedNodeId],
+    args: () => [this.graph, this.subGraphId, this.selectedNodeIds],
   });
 
   #configurationFormRef: Ref<HTMLFormElement> = createRef();
@@ -312,6 +321,13 @@ export class NodeInfo extends LitElement {
 
     .divider {
       border-bottom: 1px solid var(--bb-neutral-300);
+    }
+
+    #multiple-nodes-selected {
+      color: var(--bb-neutral-700);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
     }
   `;
 
@@ -581,21 +597,27 @@ export class NodeInfo extends LitElement {
   }
 
   render() {
-    if (!this.graph || !this.selectedNodeId) {
+    if (!this.graph || !this.selectedNodeIds.length) {
       return html`<div id="no-node-selected">No node selected</div>`;
     }
 
     return this.#formTask.render({
       pending: () => html`Loading...`,
-      complete: ({
-        node,
-        ports,
-        configuration,
-      }: {
-        node: InspectableNode;
-        ports: InspectablePort[];
-        configuration: NodeConfiguration;
-      }) => {
+      complete: (
+        data: {
+          node: InspectableNode;
+          ports: InspectablePort[];
+          configuration: NodeConfiguration;
+        } | null
+      ) => {
+        if (!data) {
+          return html`<div id="multiple-nodes-selected">
+            Multiple nodes selected
+          </div>`;
+        }
+
+        const { node, ports, configuration } = data;
+
         const portSpec = ports.filter(
           (port) =>
             port.schema.behavior?.includes("ports-spec") &&
