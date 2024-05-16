@@ -550,6 +550,33 @@ export class Graph extends PIXI.Container {
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL);
   }
 
+  selectInRect(rect: PIXI.Rectangle) {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      const isSelected = child.selected;
+      child.selected = rect.intersects(child.getBounds(true).rectangle);
+      if (isSelected !== child.selected) {
+        this.emit(
+          child.selected
+            ? GRAPH_OPERATIONS.GRAPH_NODE_SELECTED
+            : GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED,
+          child.label
+        );
+      }
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      edge.selected = rect.intersects(edge.getBounds(true).rectangle);
+    }
+  }
+
   getSelectedChildren(): Array<GraphNode | GraphEdge> {
     const selected = [];
     for (const node of this.children) {
