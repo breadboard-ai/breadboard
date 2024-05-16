@@ -11,6 +11,7 @@ import type {
   NodeDescriptor,
 } from "@google-labs/breadboard";
 import type { Settings } from "../types/types.js";
+import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const eventInit = {
   bubbles: true,
@@ -316,7 +317,9 @@ export class NodeCreateEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly nodeType: string,
-    public readonly subGraphId: string | null = null
+    public readonly subGraphId: string | null = null,
+    public readonly configuration: NodeConfiguration | null = null,
+    public readonly metadata: NodeMetadata | null = null
   ) {
     super(NodeCreateEvent.eventName, { ...eventInit });
   }

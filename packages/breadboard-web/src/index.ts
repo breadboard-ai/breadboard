@@ -1126,10 +1126,12 @@ export class Main extends LitElement {
             );
           }}
           @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-            const { id, nodeType } = evt;
+            const { id, nodeType, metadata, configuration } = evt;
             const newNode = {
               id,
               type: nodeType,
+              metadata: metadata || undefined,
+              configuration: configuration || undefined,
             };
 
             let editableGraph = this.#getEditor();
