@@ -212,9 +212,11 @@ export class Graph implements EditableGraph {
       case "removeedge":
         return this.#canRemoveEdge(edit.edge);
       case "changeconfiguration":
-        return this.canChangeConfiguration(edit.id);
+        return this.#canChangeConfiguration(edit.id);
       case "changemetadata":
-        return this.canChangeMetadata(edit.id);
+        return this.#canChangeMetadata(edit.id);
+      case "changeedge":
+        return this.#canChangeEdge(edit.from, edit.to);
       case "changegraphmetadata":
         return { success: true };
       default: {
@@ -411,7 +413,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canChangeEdge(
+  async #canChangeEdge(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec
   ): Promise<EdgeEditResult> {
@@ -430,7 +432,7 @@ export class Graph implements EditableGraph {
     to: EditableEdgeSpec,
     strict: boolean = false
   ): Promise<SingleEditResult> {
-    const can = await this.canChangeEdge(from, to);
+    const can = await this.#canChangeEdge(from, to);
     let alternativeChosen = false;
     if (!can.success) {
       if (!can.alternative || strict) {
@@ -467,7 +469,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult> {
+  async #canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult> {
     const node = this.#inspector.nodeById(id);
     if (!node) {
       return {
@@ -482,7 +484,7 @@ export class Graph implements EditableGraph {
     id: NodeIdentifier,
     configuration: NodeConfiguration
   ): Promise<SingleEditResult> {
-    const can = await this.canChangeConfiguration(id);
+    const can = await this.#canChangeConfiguration(id);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -495,7 +497,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult> {
+  async #canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult> {
     const node = this.#inspector.nodeById(id);
     if (!node) {
       return {
@@ -518,7 +520,7 @@ export class Graph implements EditableGraph {
     id: NodeIdentifier,
     metadata: NodeMetadata
   ): Promise<SingleEditResult> {
-    const can = await this.canChangeMetadata(id);
+    const can = await this.#canChangeMetadata(id);
     if (!can.success) return can;
     const node = this.#inspector.nodeById(id);
     if (!node) {
