@@ -137,8 +137,6 @@ export type EditableGraph = {
 
   edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
 
-  addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
-
   removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
 
   /**

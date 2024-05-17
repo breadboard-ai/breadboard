@@ -1023,7 +1023,9 @@ export class Main extends LitElement {
 
             switch (evt.changeType) {
               case "add": {
-                editableGraph.addEdge(evt.from);
+                editableGraph.edit([
+                  { type: "addedge", edge: evt.from, strict: false },
+                ]);
                 break;
               }
 

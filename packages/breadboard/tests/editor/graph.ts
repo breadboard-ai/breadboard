@@ -296,12 +296,18 @@ test("editor API successfully adds an edge", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.addEdge({
-      from: "node0",
-      out: "out",
-      to: "node2",
-      in: "in",
-    });
+    const result = await graph.edit([
+      {
+        type: "addedge",
+        edge: {
+          from: "node0",
+          out: "out",
+          to: "node2",
+          in: "in",
+        },
+        strict: false,
+      },
+    ]);
 
     t.true(result.success);
 
@@ -590,7 +596,9 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
   }
   {
     const graph = testEditGraph();
-    const result = await graph.addEdge(edgeSpec);
+    const result = await graph.edit([
+      { type: "addedge", edge: edgeSpec, strict: false },
+    ]);
     t.true(result.success);
     t.true(
       graph.inspect().hasEdge({
@@ -604,7 +612,9 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
   }
   {
     const graph = testEditGraph();
-    const result = await graph.addEdge(edgeSpec, true);
+    const result = await graph.edit([
+      { type: "addedge", edge: edgeSpec, strict: true },
+    ]);
     t.false(result.success);
     t.false(
       graph.inspect().hasEdge({
