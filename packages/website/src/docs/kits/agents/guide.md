@@ -1,0 +1,142 @@
+---
+layout: docs.njk
+title: What the heck is Agent Kit?
+tags:
+  - guide
+---
+
+The agent kit is a collection of Breadboard nodes designed to help build **asynchronous, semi-autonomous agents**. That's a mouthful, so let's break it down into parts, starting from the end:
+
+- _agents_, at least in this particular sense, points at a broad variety of LLM-powered experiences designed to perform some particular tasks on behalf of the user.
+
+- _semi-autonomous_ means that our agents perform tasks with some human help, but mostly by themselves.
+
+- _asynchronous_ signifies that these tasks may take a while to perform. They may translate into multiple LLM calls and involve calling external tools. In contrast with chat-based agents (synchronous), we don't expect to hear back right away.
+
+## Key concepts
+
+All nodes in agent kit all have a certain way of fitting together. Like parts of a larger Voltron body, they are designed to clip together easily to build interesting agents. Let's see if we can distill it with a few concepts.
+
+### Conversation context
+
+Conversation context is likely the most important concept in the Agent Kit. All Agent Kit nodes speak in terms of conversation context as their input and output. It is the lingua franca of the kit.
+
+A good way to think of context is as a job folio of sorts that collaborators pass from one to another, contributing to it along the way.
+
+![Context in, context out](/breadboard/static/images/agent-kit/context-in-out.png)
+
+Back in the day, creative agencies had these large folders that contained all the project artifacts, and the name of the client printed on the front. If I had this folder on your desk, that meant that I am working on that project, looking through things that were done already, and adding my own work to it, and passing the folder along to the next person when I am done. Think of the context as such a folder.
+
+If we trace the path that this job folio travels from one collaborator to another, we can capture the collaboration process as a graph.
+
+![Context flow as a graph](/breadboard/static/images/agent-kit/context-flow-as-a-graph.png)
+
+With Agent Kit, we connect nodes with wires to plot the path of the context. The collaborators know what to do with the context, how to ruffle through it, find what they need to do their task, how to add to it, and how to pass it along.
+
+![Context in, context out, zoomed in](/breadboard/static/images/agent-kit/context-in-out-2.png)
+
+> [!NOTE]
+> Under the covers, what flows over the wires is the multi-turn LLM conversation context (specifically, a dialect of Gemini API's [Content](https://ai.google.dev/api/rest/v1beta/Content) list). Since most modern LLMs support multi-turn conversations, the conversation sequence creates a convenient way to represent the history of the work being done.
+
+### Workers and tasks
+
+Each node in the Agent Kit is a kind of worker. Workers are not agents themselves (though they probably dream of becoming fully-fledged agents one day), but rather composite bits out of which an agent can be created.
+
+Every worker is meant to do one task, and do it well. When we add workers, we imbue them with purpose and expertise, and from that point on, we give them agency to perform the task. When they receive context, they do this task, and then pass it along to the next worker. _One worker, one task_.
+
+In this way, using the Agent Kit is very much like **designing a process for a team of workers**. We break a job into a list of discrete tasks, then connect them into a process diagram.
+
+Depending on the job we want the team to do, the way we organize workers might be different. When job requires tasks performed in a sequence, the workers will likely form something of an assembly line.
+
+![Workers forming an assembly line](/breadboard/static/images/agent-kit/assembly-line.png)
+
+When the job calls for an iterative process, a visual representation of the process will likely contain loops.
+
+![Workers forming an iterative loop](/breadboard/static/images/agent-kit/iterative-process.png)
+
+Many jobs will contain a mix of both, where there are both parts of the process that are assembly-line like and the ones that have loops. We may even have parallel assembly lines with loops in them, and one large loop that rules them all. It all depends on what we're trying to accomplish.
+
+> [!NOTE]
+> Under the covers, a worker is a single call to an LLM. Some workers may call LLM more than once, but only in situations when the first call returned an invalid response.
+
+### Inputs and outputs
+
+You may have noticed that the pictures we have so far have these different-looking nodes, in addition to workers, labeled "input" and "output". These represent another important concept. Every job begins with an intake of some source material and produces a deliverable. The "input" and "output" nodes signify those moments. The "input" node is the place where the job begins, and the "output" node (or nodes, depending on the job) is where it ends.
+
+By adding "input" and "output" nodes in our graph, we not only make it easy for ourselves to spot the starting and ending points of the job -- we also make this graph _reusable_. In Breadboard, graphs can be invoked by other graphs, kind of like delegating work. If we already know that there's a team of workers that does a particular job well, we can just call that team and ask it to do the job for us. When we do that, the "input" and "output" nodes of that team will inform us what the team needs to do their job successfully.
+
+## Into the groove
+
+[Breadboard visual editor](https://breadboard-ai.web.app/) is a very flexible tool, and it can be used for many other purposes than just working with Agent Kit. To get the visual editor really honed in for the Agent Kit work, we will want to flip a few settings. To do so, click on the "gear" icon on the top right of the visual editor.
+
+![Settings panel](/breadboard/static/images/agent-kit/settings-panel.png)
+
+In the "General" section of the settings:
+
+- Check _"Hide Embedded Board Selector When Empty"_. The embedded boards are super-cool, but they are a bit of an advanced use case.
+
+- Check _"Hide Advanced Ports on Nodes"_. This will remove some of the options that aren't useful when playing with the Agent Kit.
+
+- Check _"Show Node Shortcuts"_. This will make adding new workers super-easy by adding them as shortcuts at the left bottom part of the visual editor.
+
+In the "Secrets" section:
+
+- Create a "`GEMINI_KEY`" key and put your Gemini API key as the value. This value will be stored locally only and won't be shared with anyone other than the Gemini API.
+
+![Secrets panel](/breadboard/static/images/agent-kit/secrets-panel.png)
+
+Finally, in the "Inputs" section, create a "`model`" key and put in the name of the [Gemini model](https://ai.google.dev/gemini-api/docs/models/gemini#model-variations) to be used by the Workers. Otherwise, the workers will keep asking you for the model every time they want to use one. We recommend either `gemini-1.5-flash-latest` or `gemini-1.5-pro-latest`.
+
+![Inputs panel](/breadboard/static/images/agent-kit/inputs-panel.png)
+
+We are now ready to get introduced to the workers.
+
+## Getting to know the workers
+
+Just like with any team, it seems important to get acquainted with the peeps with whom we will collaborate.
+
+### Specialist
+
+TO DO:
+
+- Create a simple graph with one specialist
+
+- Create a blank graph
+
+- Naming the specialist
+
+- using input/output to specifying input type and output type
+
+- Persona (system instruction)
+
+- Task (talk about the separation)
+
+- Chain specialists together
+
+- Tool-calling: create a specialist that does something useful with a tool
+
+### Human
+
+TO DO:
+
+- Draw Distinction between input/output and human
+
+- Create a chain of specialist and human
+
+### Looper
+
+TO DO:
+
+- Describe the concept of squishy brain and hard brain of Looper
+
+- Describe plan making types
+
+- Create a simple looper with the specialist
+
+### Joiner
+
+TO DO:
+
+- Describe how joiner works
+
+- Create a graph that joins contexts.
