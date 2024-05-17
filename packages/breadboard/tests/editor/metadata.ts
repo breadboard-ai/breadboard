@@ -32,11 +32,16 @@ test("editGraph correctly edits node metadata", async (t) => {
   const metadata = graph.inspect().nodeById("node0")?.descriptor?.metadata;
   t.is(metadata, undefined);
 
-  const result = await graph.canChangeMetadata("node0");
+  const result = await graph.edit(
+    [{ type: "changemetadata", id: "node0" }],
+    true
+  );
   t.is(result.success, true);
 
   const newMetadata = { title: "bar" };
-  const changeResult = await graph.changeMetadata("node0", newMetadata);
+  const changeResult = await graph.edit([
+    { type: "changemetadata", id: "node0", metadata: newMetadata },
+  ]);
   t.is(changeResult.success, true);
   t.is(graph.version(), 1);
 
@@ -44,9 +49,13 @@ test("editGraph correctly edits node metadata", async (t) => {
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, newMetadata);
 
-  const invalidResult = await graph.changeMetadata("nonexistentNode", {
-    title: "baz",
-  });
+  const invalidResult = await graph.edit([
+    {
+      type: "changemetadata",
+      id: "nonexistentNode",
+      metadata: { title: "baz" },
+    },
+  ]);
   t.is(invalidResult.success, false);
   t.is(graph.version(), 1);
 });

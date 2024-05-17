@@ -22,37 +22,39 @@ import { edit } from "google-labs/breadboard";
 const graph = edit(bgl);
 ```
 
-The editor contains a few methods that are paired together: there's one method that performs an edit and the second method that tells us whether we can perform this edit. Both methods return the same value: an `EditResult` promise.
-
-The first method usually has a name like `doStuff` and the second one looks like `canDoStuff`.
-
-This pairing enables checking whether an edit would be valid without actually making an edit. The method that performs an edit calls the method to check whether an edit is valid first, so it is not necessary to call them in succession.
-
-For example we can add nodes to the graph using the `addNode` method:
+The editor API provides one method for applying edits to the graph: `edit`. This method takes an array of objects, also called "Editor Specs" and an optional `dryRun` boolean.
 
 ```ts
+// Adds a node with id = "foo" and type = "type".
 // Returns `Promise<EditResult>`.
-const result = await graph.addNode({ id "foo", type: "bar" });
+const result = await graph.edit([
+  { type: "addnode", node: { id: "foo", type: "type" } },
+]);
 if (!result.success) {
   console.warn("Adding node failed with this error", result.error);
 }
 ```
 
-And we can use its sidekick `canAddNode` to simply check if adding this node is possible:
+When `dryRun` is set to `true`, the method will not perform the actual edit, but report the result as if the edit as applied. This is useful if we want to check whether an edit would be valid without actually making an edit.
 
 ```ts
+// Does not actually add node with id = "foo" and type = "type",
+// just checks to see if such a node could be added.
 // Returns `Promise<EditResult>`.
-const result = await graph.canAddNode({ id: "foo", type: "bar" });
-if (result.success) {
-  console.log("Yay, we can add this node, proceed forth");
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  true
+);
+if (!result.success) {
+  console.warn("Adding node will fail with this error", result.error);
 } else {
-  console.warn("Can't add this node", result.error);
+  console.log("Yay, we can add this node, proceed forth");
 }
 ```
 
 ## Kits
 
-To ensure that `canDoStuff` methods tell us useful things, we need to supply the editor a list of kits. Kits are collections of functions that are invoked during running the graph. We can provide kits as `kits` property on the second, optional `EditableGraphOptions` argument of the `edit` method:
+To ensure that `edit` method does not jeopardize the integrity of the graph, we need to supply the editor a list of kits. Kits are collections of functions that are invoked during running the graph. We can provide kits as `kits` property on the second, optional `EditableGraphOptions` argument of the `edit` method:
 
 ```ts
 import Core from "@google-labs/core-kit";
@@ -65,19 +67,19 @@ const graph = edit(bgl, { kits: [asRuntime(Core), asRunTime(JSONKit)] });
 
 There are the six edit operations that we can perform on the graph:
 
-- `addNode` -- adds a new node to the graph (or check if we can do so with `canAddNode`)
+- `addnode` -- add a new node to the graph
 
-- `removeNode` -- remove a node from the graph (with `canRemoveNode` companion)
+- `remove` -- remove a node from the graph
 
-- `addEdge` -- add an edge to the graph (`canAddEdge` to check if that's possible)
+- `addedge` -- add an edge to the graph
 
-- `removeEdge` -- remove an edge from the graph (`canRemoveEdge` to check only)
+- `removeedge` -- remove an edge from the graph
 
-- `changeConfiguration` -- change configuration of a node (`canChangeConfiguration` to check only).
+- `changeconfiguration` -- change configuration of a node
 
-- `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
+- `changemetadata` -- change metadata (title, description, etc.) of a node
 
-- `changeGraphMetadata` - change graph metadata. Since this operation does not impact the integrity of the graph, it does not have the corresponding `canChange` helper.
+- `changegraphmetadata` - change graph metadata.
 
 ### Editing `star` edges and alternatives
 
@@ -85,7 +87,9 @@ Connecting a `star` port and a named port results in an invalid graph topology a
 
 ```ts
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
-const result = await graph.canAddEdge(edgeSpec);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: false },
+]);
 ```
 
 We will get a result signifying a failure:
@@ -114,15 +118,19 @@ By default, the `addEdge` method will use this alternative to add an edge, assum
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
 // Will add alternative edge:
 // { from: "node-1", out: "text", to: "node-2", in: "text" }
-const result = await graph.addEdge(edgeSpec);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: true },
+]);
 ```
 
-In cases when we don't want the Editor API to make this assumption, we need to supply the optional boolean argument in the `addEdge` method. When `true` the `addEdge` will be more strict about making assumptions and as a result, will fail to add such an edge:
+In cases when we don't want the Editor API to make this assumption, we need to set the `strict` boolean argument in the `addEdge` method to `true`. When `true`, the `addedge` will be more strict about making assumptions and as a result, will fail to add such an edge:
 
 ```ts
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
 // Will not add an alternative edge.
-const result = await graph.addEdge(edgeSpec, false);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: true },
+]);
 ```
 
 The same optional argument also works for the `changeEdge` method.

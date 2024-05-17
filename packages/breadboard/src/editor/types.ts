@@ -48,6 +48,84 @@ export type EditableGraphEventMap = {
   graphchangereject: GraphChangeRejectEvent;
 };
 
+export type AddNodeSpec = {
+  type: "addnode";
+  node: EditableNodeSpec;
+};
+
+export type RemoveNodeSpec = {
+  type: "removenode";
+  id: NodeIdentifier;
+};
+
+export type AddEdgeSpec = {
+  type: "addedge";
+  edge: EditableEdgeSpec;
+  strict: boolean;
+};
+
+export type RemoveEdgeSpec = {
+  type: "removeedge";
+  edge: EditableEdgeSpec;
+};
+
+/**
+ * Changes the edge from `from` to `to`, if it can be changed.
+ * This operation does not change the identity of the edge, but rather
+ * mutates the properties of the edge. This is not an `addEdge` combined
+ * with a `removeEdge`, but rather a true mutation of the edge.
+ */
+export type ChangeEdgeSpec = {
+  type: "changeedge";
+  from: EditableEdgeSpec;
+  to: EditableEdgeSpec;
+};
+
+export type ChangeConfigurationSpec = {
+  type: "changeconfiguration";
+  id: NodeIdentifier;
+  configuration?: NodeConfiguration;
+};
+
+export type ChangeMetadataSpec = {
+  type: "changemetadata";
+  id: NodeIdentifier;
+  metadata?: NodeMetadata;
+};
+
+export type ChangeGraphMetadataSpec = {
+  type: "changegraphmetadata";
+  metadata: GraphMetadata;
+};
+
+export type AddGraphSpec = {
+  type: "addgraph";
+  id: GraphIdentifier;
+  graph: GraphDescriptor;
+};
+
+export type ReplaceGraphSpec = {
+  type: "replacegraph";
+  id: GraphIdentifier;
+  graph: GraphDescriptor;
+};
+
+export type RemoveGraphSpec = {
+  type: "removegraph";
+  id: GraphIdentifier;
+};
+
+export type EditSpec =
+  | AddNodeSpec
+  | RemoveNodeSpec
+  | AddEdgeSpec
+  | RemoveEdgeSpec
+  | ChangeEdgeSpec
+  | ChangeConfigurationSpec
+  | ChangeMetadataSpec
+  | ChangeGraphMetadataSpec;
+export type EditResult = EdgeEditResult;
+
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
     eventName: Key,
@@ -67,17 +145,7 @@ export type EditableGraph = {
    */
   parent(): EditableGraph | null;
 
-  canAddNode(spec: EditableNodeSpec): Promise<EditResult>;
-  addNode(spec: EditableNodeSpec): Promise<EditResult>;
-
-  canRemoveNode(id: NodeIdentifier): Promise<EditResult>;
-  removeNode(id: NodeIdentifier): Promise<EditResult>;
-
-  canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
-  addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
-
-  canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
-  removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+  edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
 
   /**
    * Retrieves a subgraph of this graph.
@@ -112,45 +180,7 @@ export type EditableGraph = {
    * @param id - id of the subgraph to remove
    * @throws when used on an embedded subgraph.
    */
-  removeGraph(id: GraphIdentifier): EditResult;
-
-  /**
-   * Returns whether the edge can be changed from `from` to `to`.
-   *  @param from -- the edge spec to change from
-   * @param to  -- the edge spec to change to
-   */
-  canChangeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec,
-    strict?: boolean
-  ): Promise<EdgeEditResult>;
-  /**
-   * Changes the edge from `from` to `to`, if it can be changed.
-   * This operation does not change the identity of the edge, but rather
-   * mutates the properties of the edge. This is not an `addEdge` combined
-   * with a `removeEdge`, but rather a true mutation of the edge.
-   * @param from -- the edge spec to change from
-   * @param to  -- the edge spec to change to
-   */
-  changeEdge(from: EditableEdgeSpec, to: EditableEdgeSpec): Promise<EditResult>;
-
-  canChangeConfiguration(id: NodeIdentifier): Promise<EditResult>;
-  changeConfiguration(
-    id: NodeIdentifier,
-    configuration: NodeConfiguration
-  ): Promise<EditResult>;
-
-  canChangeMetadata(id: NodeIdentifier): Promise<EditResult>;
-  changeMetadata(
-    id: NodeIdentifier,
-    metadata: NodeMetadata
-  ): Promise<EditResult>;
-
-  /**
-   * Replaces the current graph metadata with the provided new value.
-   * @param metadata -- the new graph metadata.
-   */
-  changeGraphMetadata(metadata: GraphMetadata): Promise<EditResult>;
+  removeGraph(id: GraphIdentifier): SingleEditResult;
 
   raw(): GraphDescriptor;
 
@@ -166,7 +196,7 @@ export type EditableGraphOptions = InspectableGraphOptions & {
 
 export type EditableNodeSpec = NodeDescriptor;
 
-export type EditResult =
+export type SingleEditResult =
   | {
       success: false;
       error: string;
