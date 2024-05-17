@@ -1040,7 +1040,7 @@ export class Main extends LitElement {
               }
 
               case "remove": {
-                editableGraph.removeEdge(evt.from);
+                editableGraph.edit([{ type: "removeedge", edge: evt.from }]);
                 break;
               }
 

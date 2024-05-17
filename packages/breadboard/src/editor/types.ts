@@ -137,8 +137,6 @@ export type EditableGraph = {
 
   edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
 
-  removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
-
   /**
    * Retrieves a subgraph of this graph.
    * @param id -- id of the subgraph

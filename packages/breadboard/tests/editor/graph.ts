@@ -200,12 +200,7 @@ test("editor API successfully tests for edge addition", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node2",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "node2", in: "in" },
           strict: false,
         },
       ],
@@ -219,12 +214,7 @@ test("editor API successfully tests for edge addition", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node0",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "node0", in: "in" },
           strict: false,
         },
       ],
@@ -238,12 +228,7 @@ test("editor API successfully tests for edge addition", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node0",
-            in: "baz",
-          },
+          edge: { from: "node0", out: "out", to: "node0", in: "baz" },
           strict: false,
         },
       ],
@@ -257,12 +242,7 @@ test("editor API successfully tests for edge addition", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "unknown node",
-            out: "out",
-            to: "node2",
-            in: "in",
-          },
+          edge: { from: "unknown node", out: "out", to: "node2", in: "in" },
           strict: false,
         },
       ],
@@ -276,12 +256,7 @@ test("editor API successfully tests for edge addition", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "unknown node",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "unknown node", in: "in" },
           strict: false,
         },
       ],
@@ -299,12 +274,7 @@ test("editor API successfully adds an edge", async (t) => {
     const result = await graph.edit([
       {
         type: "addedge",
-        edge: {
-          from: "node0",
-          out: "out",
-          to: "node2",
-          in: "in",
-        },
+        edge: { from: "node0", out: "out", to: "node2", in: "in" },
         strict: false,
       },
     ]);
@@ -325,12 +295,7 @@ test("editor API successfully adds an edge", async (t) => {
       [
         {
           type: "addedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node2",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "node2", in: "in" },
           strict: false,
         },
       ],
@@ -349,12 +314,7 @@ test("editor API successfully tests for edge removal", async (t) => {
       [
         {
           type: "removeedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node0",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "node0", in: "in" },
         },
       ],
       true
@@ -367,12 +327,7 @@ test("editor API successfully tests for edge removal", async (t) => {
       [
         {
           type: "removeedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node0",
-            in: "baz",
-          },
+          edge: { from: "node0", out: "out", to: "node0", in: "baz" },
         },
       ],
       true
@@ -385,12 +340,7 @@ test("editor API successfully tests for edge removal", async (t) => {
       [
         {
           type: "removeedge",
-          edge: {
-            from: "unknown node",
-            out: "out",
-            to: "node0",
-            in: "in",
-          },
+          edge: { from: "unknown node", out: "out", to: "node0", in: "in" },
         },
       ],
       true
@@ -422,12 +372,12 @@ test("editor API successfully removes an edge", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.removeEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "in",
-    });
+    const result = await graph.edit([
+      {
+        type: "removeedge",
+        edge: { from: "node0", out: "out", to: "node0", in: "in" },
+      },
+    ]);
 
     t.true(result.success);
 
@@ -442,12 +392,7 @@ test("editor API successfully removes an edge", async (t) => {
       [
         {
           type: "removeedge",
-          edge: {
-            from: "node0",
-            out: "out",
-            to: "node0",
-            in: "in",
-          },
+          edge: { from: "node0", out: "out", to: "node0", in: "in" },
         },
       ],
       true
@@ -484,10 +429,7 @@ test("editor API allows adding built-in nodes", async (t) => {
     const result = await graph.edit([
       {
         type: "addnode",
-        node: {
-          id: "node3",
-          type: "output",
-        },
+        node: { id: "node3", type: "output" },
       },
     ]);
 

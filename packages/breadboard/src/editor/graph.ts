@@ -163,9 +163,9 @@ export class Graph implements EditableGraph {
       case "removenode":
         return this.#removeNode(edit.id);
       case "addedge":
-        return this.addEdge(edit.edge, edit.strict);
+        return this.#addEdge(edit.edge, edit.strict);
       case "removeedge":
-        return this.removeEdge(edit.edge);
+        return this.#removeEdge(edit.edge);
       case "changeconfiguration": {
         if (!edit.configuration) {
           return {
@@ -202,13 +202,13 @@ export class Graph implements EditableGraph {
     const edit = edits[0];
     switch (edit.type) {
       case "addnode":
-        return this.canAddNode(edit.node);
+        return this.#canAddNode(edit.node);
       case "removenode":
-        return this.canRemoveNode(edit.id);
+        return this.#canRemoveNode(edit.id);
       case "addedge":
-        return this.canAddEdge(edit.edge);
+        return this.#canAddEdge(edit.edge);
       case "removeedge":
-        return this.canRemoveEdge(edit.edge);
+        return this.#canRemoveEdge(edit.edge);
       case "changeconfiguration":
         return this.canChangeConfiguration(edit.id);
       case "changemetadata":
@@ -224,7 +224,7 @@ export class Graph implements EditableGraph {
     }
   }
 
-  async canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
+  async #canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
     const duplicate = !!this.#inspector.nodeById(spec.id);
     if (duplicate) {
       return {
@@ -245,7 +245,7 @@ export class Graph implements EditableGraph {
   }
 
   async #addNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
-    const can = await this.canAddNode(spec);
+    const can = await this.#canAddNode(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -257,7 +257,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult> {
+  async #canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult> {
     const exists = !!this.#inspector.nodeById(id);
     if (!exists) {
       return {
@@ -269,7 +269,7 @@ export class Graph implements EditableGraph {
   }
 
   async #removeNode(id: NodeIdentifier): Promise<SingleEditResult> {
-    const can = await this.canRemoveNode(id);
+    const can = await this.#canRemoveNode(id);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -290,7 +290,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
+  async #canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
     const inspector = this.#inspector;
     if (inspector.hasEdge(spec)) {
       return {
@@ -357,18 +357,18 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async addEdge(
+  async #addEdge(
     spec: EditableEdgeSpec,
     strict: boolean = false
   ): Promise<EdgeEditResult> {
-    const can = await this.canAddEdge(spec);
+    const can = await this.#canAddEdge(spec);
     if (!can.success) {
       if (!can.alternative || strict) {
         this.#dispatchNoChange(can.error);
         return can;
       }
       if (can.alternative) {
-        const canAlternative = await this.canAddEdge(can.alternative);
+        const canAlternative = await this.#canAddEdge(can.alternative);
         if (!canAlternative.success) {
           this.#dispatchNoChange(canAlternative.error);
           return canAlternative;
@@ -384,7 +384,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
+  async #canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
     if (!this.#inspector.hasEdge(spec)) {
       return {
         success: false,
@@ -394,8 +394,8 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
-    const can = await this.canRemoveEdge(spec);
+  async #removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
+    const can = await this.#canRemoveEdge(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -416,9 +416,9 @@ export class Graph implements EditableGraph {
     if (this.#edgesEqual(from, to)) {
       return { success: true };
     }
-    const canRemove = await this.canRemoveEdge(from);
+    const canRemove = await this.#canRemoveEdge(from);
     if (!canRemove.success) return canRemove;
-    const canAdd = await this.canAddEdge(to);
+    const canAdd = await this.#canAddEdge(to);
     if (!canAdd.success) return canAdd;
     return { success: true };
   }
