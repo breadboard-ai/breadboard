@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
-import { PortStatus } from "@google-labs/breadboard";
+import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import { getGlobalColor } from "./utils.js";
 
 const connectedColor = getGlobalColor("--bb-inputs-300");
@@ -41,7 +41,10 @@ export class GraphNodePort extends PIXI.Graphics {
   #editable = false;
   #overrideStatus: PortStatus | null = null;
 
-  constructor(public type: GraphNodePortType) {
+  constructor(
+    public type: GraphNodePortType,
+    public port: InspectablePort | null
+  ) {
     super();
 
     this.eventMode = "static";
@@ -114,6 +117,18 @@ export class GraphNodePort extends PIXI.Graphics {
 
   get status() {
     return this.#status;
+  }
+
+  canConnectTo(otherGraphNodePort: GraphNodePort | null) {
+    if (this.port && otherGraphNodePort && otherGraphNodePort.port) {
+      return this.port.type.canConnect(otherGraphNodePort.port.type);
+    }
+
+    if (!this.port && otherGraphNodePort && !otherGraphNodePort.port) {
+      return true;
+    }
+
+    return false;
   }
 
   #draw() {

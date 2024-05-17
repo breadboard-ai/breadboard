@@ -57,7 +57,7 @@ export class Graph extends PIXI.Container {
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
     let nodePortBeingEdited: GraphNodePort | null = null;
-    let nodePortType: GraphNodePortType | null = null;
+    let targetNodePortType: GraphNodePortType | null = null;
     let nodeBeingEdited: GraphNode | null = null;
     let edgeBeingEdited: GraphEdge | null = null;
     let originalEdgeDescriptor: InspectableEdge | null = null;
@@ -153,7 +153,7 @@ export class Graph extends PIXI.Container {
             if (!edgeBeingEdited) {
               return;
             }
-            nodePortType = GraphNodePortType.IN;
+            targetNodePortType = GraphNodePortType.IN;
             break;
           }
 
@@ -169,7 +169,7 @@ export class Graph extends PIXI.Container {
               return;
             }
 
-            nodePortType = GraphNodePortType.IN;
+            targetNodePortType = GraphNodePortType.IN;
             if (!edgeBeingEdited) {
               originalEdgeDescriptor = {
                 from: { descriptor: { id: nodeBeingEdited.label } },
@@ -182,12 +182,12 @@ export class Graph extends PIXI.Container {
                 originalEdgeDescriptor
               );
               if (!edgeBeingEdited) {
-                nodePortType = null;
+                targetNodePortType = null;
                 nodePortBeingEdited = null;
                 nodeBeingEdited = null;
                 break;
               }
-              nodePortType = GraphNodePortType.OUT;
+              targetNodePortType = GraphNodePortType.OUT;
             }
 
             originalEdgeDescriptor = structuredClone(edgeBeingEdited.edge);
@@ -225,7 +225,8 @@ export class Graph extends PIXI.Container {
 
       if (
         topTarget instanceof GraphNodePort &&
-        topTarget.type === nodePortType &&
+        topTarget.type === targetNodePortType &&
+        topTarget.canConnectTo(nodePortBeingEdited) &&
         visibleOnNextMove
       ) {
         // Snap to nearest port.
@@ -234,7 +235,7 @@ export class Graph extends PIXI.Container {
 
         const nodeBeingTargeted = topTarget.parent as GraphNode;
 
-        if (nodePortType === GraphNodePortType.IN) {
+        if (targetNodePortType === GraphNodePortType.IN) {
           edgeBeingEdited.toNode = nodeBeingTargeted;
           edgeBeingEdited.edge.in = topTarget.label || "";
           edgeBeingEdited.edge.to = {
@@ -258,7 +259,7 @@ export class Graph extends PIXI.Container {
         }
       } else {
         // Track mouse.
-        if (nodePortType === GraphNodePortType.IN) {
+        if (targetNodePortType === GraphNodePortType.IN) {
           edgeBeingEdited.toNode = nodeBeingEdited;
           edgeBeingEdited.edge.in = originalEdgeDescriptor.in;
           edgeBeingEdited.edge.to = originalEdgeDescriptor.to;
@@ -383,9 +384,12 @@ export class Graph extends PIXI.Container {
         }
       }
 
+      // We're dealing with port-to-port connections.
       let action: GRAPH_OPERATIONS | null = null;
       if (topTarget instanceof GraphNodePort) {
-        if (targetEdge.temporary) {
+        if (!topTarget.canConnectTo(targetNodePort)) {
+          action = null;
+        } else if (targetEdge.temporary) {
           action = GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH;
         } else if (originalEdgeDescriptor) {
           action = GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE;

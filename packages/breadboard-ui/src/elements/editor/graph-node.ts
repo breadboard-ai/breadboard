@@ -70,8 +70,8 @@ export class GraphNode extends PIXI.Container {
   #emitCollapseToggleEventOnNextDraw = false;
 
   #overflowMenu = new GraphOverflowMenu();
-  #headerInPort = new GraphNodePort(GraphNodePortType.IN);
-  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
+  #headerInPort = new GraphNodePort(GraphNodePortType.IN, null);
+  #headerOutPort = new GraphNodePort(GraphNodePortType.OUT, null);
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
@@ -412,7 +412,7 @@ export class GraphNode extends PIXI.Container {
         this.addChild(label);
         label.visible = false;
 
-        const nodePort = new GraphNodePort(GraphNodePortType.IN);
+        const nodePort = new GraphNodePort(GraphNodePortType.IN, port);
         this.addChild(nodePort);
         nodePort.visible = false;
 
@@ -424,6 +424,7 @@ export class GraphNode extends PIXI.Container {
         portItem.label.text = port.title;
       }
 
+      portItem.nodePort.port = port;
       portItem.port = port;
     }
 
@@ -467,7 +468,7 @@ export class GraphNode extends PIXI.Container {
         this.addChild(label);
         label.visible = false;
 
-        const nodePort = new GraphNodePort(GraphNodePortType.OUT);
+        const nodePort = new GraphNodePort(GraphNodePortType.OUT, port);
         this.addChild(nodePort);
         nodePort.visible = false;
 
@@ -479,6 +480,7 @@ export class GraphNode extends PIXI.Container {
         portItem.label.text = port.title;
       }
 
+      portItem.nodePort.port = port;
       portItem.port = port;
     }
 
