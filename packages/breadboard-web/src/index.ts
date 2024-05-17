@@ -1144,7 +1144,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.addNode(newNode);
+            editableGraph.edit([{ type: "addnode", node: newNode }]);
           }}
           @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
             let editableGraph = this.#getEditor();

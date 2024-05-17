@@ -101,10 +101,15 @@ test("editor API successfully tests for node addition", async (t) => {
 test("editor API successfully adds a node", async (t) => {
   const graph = testEditGraph();
 
-  const result = await graph.addNode({
-    id: "node1",
-    type: "foo",
-  });
+  const result = await graph.edit([
+    {
+      type: "addnode",
+      node: {
+        id: "node1",
+        type: "foo",
+      },
+    },
+  ]);
 
   t.true(result.success);
 
@@ -323,10 +328,15 @@ test("editor API allows adding built-in nodes", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.addNode({
-      id: "node1",
-      type: "input",
-    });
+    const result = await graph.edit([
+      {
+        type: "addnode",
+        node: {
+          id: "node1",
+          type: "input",
+        },
+      },
+    ]);
 
     t.true(result.success);
 
@@ -338,10 +348,15 @@ test("editor API allows adding built-in nodes", async (t) => {
   }
 
   {
-    const result = await graph.addNode({
-      id: "node3",
-      type: "output",
-    });
+    const result = await graph.edit([
+      {
+        type: "addnode",
+        node: {
+          id: "node3",
+          type: "output",
+        },
+      },
+    ]);
 
     t.true(result.success);
 

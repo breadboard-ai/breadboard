@@ -156,7 +156,7 @@ export class Graph implements EditableGraph {
     const edit = edits[0];
     switch (edit.type) {
       case "addnode":
-        return this.addNode(edit.node);
+        return this.#addNode(edit.node);
       case "removenode":
         return this.removeNode(edit.id);
       case "addedge":
@@ -202,7 +202,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async addNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
+  async #addNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
     const can = await this.canAddNode(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
