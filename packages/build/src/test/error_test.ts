@@ -10,7 +10,7 @@ import { defineNodeType } from "@breadboard-ai/build";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-test("can return $error as {message}", async () => {
+test("returns $error as ErrorCapability given {message}", async () => {
   const def = defineNodeType({
     name: "test",
     inputs: {},
@@ -18,11 +18,11 @@ test("can return $error as {message}", async () => {
     invoke: () => ({ $error: { message: "oh no" } }),
   });
   assert.deepEqual(await def.invoke({}, null as never), {
-    $error: { message: "oh no" },
+    $error: { kind: "error", error: { message: "oh no" } },
   });
 });
 
-test("can return $error as string and it gets normalized", async () => {
+test("can return $error as ErrorCapability given string", async () => {
   const def = defineNodeType({
     name: "test",
     inputs: {},
@@ -30,7 +30,19 @@ test("can return $error as string and it gets normalized", async () => {
     invoke: () => ({ $error: "oh no" }),
   });
   assert.deepEqual(await def.invoke({}, null as never), {
-    $error: { message: "oh no" },
+    $error: { kind: "error", error: { message: "oh no" } },
+  });
+});
+
+test("can return $error as ErrorCapability given ErrorCapability", async () => {
+  const def = defineNodeType({
+    name: "test",
+    inputs: {},
+    outputs: {},
+    invoke: () => ({ $error: { kind: "error", error: { message: "oh no" } } }),
+  });
+  assert.deepEqual(await def.invoke({}, null as never), {
+    $error: { kind: "error", error: { message: "oh no" } },
   });
 });
 
@@ -85,7 +97,7 @@ test("nodes that return $error have an $error output", () => {
   });
   const inst = def({});
   assert.ok(
-    // $ExpectType OutputPort<{ message: string; }>
+    // $ExpectType OutputPort<{ message: string; } | { kind: string; error: { message: string; }; }>
     inst.outputs.$error
   );
 });
@@ -99,7 +111,7 @@ test("all nodes have an $error output even if they don't return $error", () => {
   });
   const inst = def({});
   assert.ok(
-    // $ExpectType OutputPort<{ message: string; }>
+    // $ExpectType OutputPort<{ message: string; } | { kind: string; error: { message: string; }; }>
     inst.outputs.$error
   );
 });

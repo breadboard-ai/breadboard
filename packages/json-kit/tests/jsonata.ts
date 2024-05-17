@@ -202,8 +202,11 @@ describe("jsonata", () => {
       ),
       {
         $error: {
-          message:
-            "jsonata node in raw mode but expression did not return an object",
+          kind: "error",
+          error: {
+            message:
+              "jsonata node in raw mode but expression did not return an object",
+          },
         },
       }
     );
