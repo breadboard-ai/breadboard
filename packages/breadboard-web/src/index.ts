@@ -1076,7 +1076,9 @@ export class Main extends LitElement {
               ...metadata,
             };
 
-            editableGraph.changeMetadata(id, newMetadata);
+            editableGraph.edit([
+              { type: "changemetadata", id, metadata: newMetadata },
+            ]);
           }}
           @bbnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
             let editableGraph = this.#getEditor();
@@ -1099,10 +1101,13 @@ export class Main extends LitElement {
               visual = {};
             }
 
-            editableGraph.changeMetadata(id, {
-              ...metadata,
-              visual: { ...visual, x, y },
-            });
+            editableGraph.edit([
+              {
+                type: "changemetadata",
+                id,
+                metadata: { ...metadata, visual: { ...visual, x, y } },
+              },
+            ]);
           }}
           @bbnodemultilayout=${(
             evt: BreadboardUI.Events.NodeMultiLayoutEvent
@@ -1130,10 +1135,13 @@ export class Main extends LitElement {
                   visual = {};
                 }
 
-                return editableGraph.changeMetadata(id, {
-                  ...metadata,
-                  visual: { ...visual, x, y },
-                });
+                return editableGraph.edit([
+                  {
+                    type: "changemetadata",
+                    id,
+                    metadata: { ...metadata, visual: { ...visual, x, y } },
+                  },
+                ]);
               })
             );
           }}

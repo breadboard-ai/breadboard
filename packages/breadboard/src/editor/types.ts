@@ -182,11 +182,6 @@ export type EditableGraph = {
     to: EditableEdgeSpec
   ): Promise<SingleEditResult>;
 
-  changeMetadata(
-    id: NodeIdentifier,
-    metadata: NodeMetadata
-  ): Promise<SingleEditResult>;
-
   /**
    * Replaces the current graph metadata with the provided new value.
    * @param metadata -- the new graph metadata.
