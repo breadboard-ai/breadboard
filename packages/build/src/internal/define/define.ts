@@ -296,7 +296,12 @@ type StrictInvokeFnReturn<
     ? {
         [K in keyof ReturnType<
           F extends (...args: unknown[]) => unknown ? F : never
-        >]: K extends "$error" ? string | { message: string } : never;
+        >]: K extends "$error"
+          ?
+              | string
+              | { message: string }
+              | { kind: string; error: { message: string } }
+          : never;
       }
     : {
         [K in keyof Omit<O, "*" | "$error">]: Convert<O[K]>;

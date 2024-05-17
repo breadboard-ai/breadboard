@@ -19,11 +19,7 @@ import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
-import { getGlobalColor } from "./utils.js";
-
-function edgeToString(edge: InspectableEdge): string {
-  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
-}
+import { inspectableEdgeToString, getGlobalColor } from "./utils.js";
 
 type LayoutInfo = { x: number; y: number; justAdded?: boolean };
 
@@ -44,6 +40,7 @@ export class Graph extends PIXI.Container {
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
   #editable = false;
+  #autoSelect = new Set<string>();
 
   collapseNodesByDefault = false;
   layoutRect: DOMRectReadOnly | null = null;
@@ -76,13 +73,14 @@ export class Graph extends PIXI.Container {
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
+      this.#performAutoSelect();
     };
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode || evt.target instanceof GraphEdge) {
-        if (!evt.metaKey && !evt.shiftKey) {
+        if (!evt.metaKey && !evt.shiftKey && !evt.target.selected) {
           this.deselectAllChildren();
         }
 
@@ -447,7 +445,7 @@ export class Graph extends PIXI.Container {
         }
       }
 
-      const edgeKey = edgeToString(targetEdgeDescriptor);
+      const edgeKey = inspectableEdgeToString(targetEdgeDescriptor);
       switch (action) {
         case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
           const existingEdge = this.#edgeGraphics.get(edgeKey);
@@ -550,6 +548,24 @@ export class Graph extends PIXI.Container {
     this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL);
   }
 
+  selectAll() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.selected = true;
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      edge.selected = true;
+    }
+  }
+
   selectInRect(rect: PIXI.Rectangle) {
     for (const child of this.children) {
       if (!(child instanceof GraphNode)) {
@@ -604,6 +620,10 @@ export class Graph extends PIXI.Container {
 
   clearNodeLayoutPositions() {
     this.#layout.clear();
+  }
+
+  getNodeLayoutPosition(node: string) {
+    return this.#layout.get(node);
   }
 
   setNodeLayoutPosition(
@@ -745,7 +765,7 @@ export class Graph extends PIXI.Container {
   }
 
   selectEdge(edge: InspectableEdge) {
-    const edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
+    const edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
     if (!edgeGraphic) {
       return;
     }
@@ -757,6 +777,10 @@ export class Graph extends PIXI.Container {
 
     this.deselectAllChildren();
     edgeGraphic.selected = true;
+  }
+
+  addToAutoSelect(item: string) {
+    this.#autoSelect.add(item);
   }
 
   #edgesBetween(from: GraphNode, to: GraphNode): InspectableEdge[] {
@@ -782,7 +806,41 @@ export class Graph extends PIXI.Container {
     y: number,
     hasSettled: boolean
   ) {
-    this.graph.setNodeLayoutPosition(this.id, this.graph.toGlobal({ x, y }));
+    const position = this.graph.getNodeLayoutPosition(this.id);
+    const delta = { x: 0, y: 0 };
+    if (position) {
+      delta.x = x - position.x;
+      delta.y = y - position.y;
+    }
+
+    // Update all selected nodes.
+    for (const child of this.graph.getSelectedChildren()) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      const childPosition = this.graph.getNodeLayoutPosition(child.label);
+      if (!childPosition) {
+        continue;
+      }
+
+      const newPosition = {
+        x: childPosition.x + delta.x,
+        y: childPosition.y + delta.y,
+      };
+
+      this.graph.setNodeLayoutPosition(
+        child.label,
+        this.graph.toGlobal(newPosition)
+      );
+
+      if (child.label === this.id) {
+        continue;
+      }
+
+      child.x = newPosition.x;
+      child.y = newPosition.y;
+    }
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
@@ -792,7 +850,48 @@ export class Graph extends PIXI.Container {
     }
 
     // Propagate the move event out to the graph renderer when the cursor is released.
-    this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
+    for (const child of this.graph.getSelectedChildren()) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      // this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
+      this.graph.emit(
+        GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+        child.label,
+        child.position.x,
+        child.position.y
+      );
+    }
+  }
+
+  #performAutoSelect() {
+    for (const graphEdge of this.#edgeContainer.children) {
+      if (!(graphEdge instanceof GraphEdge)) {
+        continue;
+      }
+
+      if (!graphEdge.edge) {
+        continue;
+      }
+
+      const edgeDescriptor = inspectableEdgeToString(graphEdge.edge);
+      if (this.#autoSelect.has(edgeDescriptor)) {
+        graphEdge.selected = true;
+        this.#autoSelect.delete(edgeDescriptor);
+      }
+    }
+
+    for (const graphNode of this.children) {
+      if (!(graphNode instanceof GraphNode)) {
+        continue;
+      }
+
+      if (this.#autoSelect.has(graphNode.label)) {
+        graphNode.selected = true;
+        this.#autoSelect.delete(graphNode.label);
+      }
+    }
   }
 
   #drawNodeHighlight() {
@@ -1002,7 +1101,7 @@ export class Graph extends PIXI.Container {
     }
 
     for (const edge of this.#edges) {
-      const edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
+      const edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
       if (!edgeGraphic) {
         continue;
       }
@@ -1017,7 +1116,7 @@ export class Graph extends PIXI.Container {
     }
 
     for (const edge of this.#edges) {
-      let edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
+      let edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
       if (!edgeGraphic) {
         const fromNode = this.#graphNodeById.get(edge.from.descriptor.id);
         const toNode = this.#graphNodeById.get(edge.to.descriptor.id);
@@ -1029,7 +1128,7 @@ export class Graph extends PIXI.Container {
         edgeGraphic = new GraphEdge(fromNode, toNode);
         edgeGraphic.type = edge.type;
 
-        this.#edgeGraphics.set(edgeToString(edge), edgeGraphic);
+        this.#edgeGraphics.set(inspectableEdgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);
       }
 
@@ -1053,7 +1152,11 @@ export class Graph extends PIXI.Container {
     }
 
     for (const [edgeDescription, edgeGraphic] of this.#edgeGraphics) {
-      if (this.#edges.find((edge) => edgeToString(edge) === edgeDescription)) {
+      if (
+        this.#edges.find(
+          (edge) => inspectableEdgeToString(edge) === edgeDescription
+        )
+      ) {
         continue;
       }
 

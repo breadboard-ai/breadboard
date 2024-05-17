@@ -305,8 +305,18 @@ export class Input extends LitElement {
             let value: LLMContent | null = null;
             value = values[key] as LLMContent | null;
             if (!value) {
-              const unparsedValue = property.examples?.[0] ?? property.default;
+              const unparsedValue =
+                property.examples && property.examples.length
+                  ? property.examples[0]
+                  : property.default;
               value = unparsedValue ? JSON.parse(unparsedValue) : null;
+            }
+
+            if (Array.isArray(value)) {
+              value = value[0] as LLMContent;
+              console.warn(
+                "Default value is an array where single value is expected - using first item"
+              );
             }
 
             const allow = createAllowListFromProperty(property);

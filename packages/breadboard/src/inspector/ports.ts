@@ -99,13 +99,18 @@ export const collectPorts = (
           wiredContainsStar
         ),
         schema: portSchema,
-      };
+        type: new PortType(portSchema),
+      } satisfies InspectablePort;
     })
     .filter(Boolean) as InspectablePort[];
 };
 
 export class PortType implements InspectablePortType {
   constructor(public schema: Schema) {}
+
+  hasBehavior(behavior: BehaviorSchema): boolean {
+    return !!this.schema.behavior?.includes(behavior);
+  }
 
   #onlyTypeRelated(behavior: Set<BehaviorSchema>): Set<BehaviorSchema> {
     behavior.delete("deprecated");
@@ -185,6 +190,6 @@ export const collectPortsForType = (schema: Schema): InspectablePort[] => {
       ),
       schema: portSchema,
       type: new PortType(portSchema),
-    };
+    } satisfies InspectablePort;
   });
 };

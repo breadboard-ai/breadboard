@@ -2079,7 +2079,7 @@ test("$id should not show up as an instance input", () => {
   const i = d({ $id: "foo" });
   // $ExpectType {}
   i.inputs;
-  // $ExpectType { $error: OutputPort<{ message: string; }>; }
+  // $ExpectType { $error: OutputPort<{ message: string; } | { kind: string; error: { message: string; }; }>; }
   i.outputs;
   assert.equal(
     // @ts-expect-error
