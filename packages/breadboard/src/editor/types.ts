@@ -61,6 +61,7 @@ export type RemoveNodeSpec = {
 export type AddEdgeSpec = {
   type: "addedge";
   edge: EditableEdgeSpec;
+  strict: boolean;
 };
 
 export type RemoveEdgeSpec = {
@@ -71,13 +72,13 @@ export type RemoveEdgeSpec = {
 export type ChangeConfigurationSpec = {
   type: "changeconfiguration";
   id: NodeIdentifier;
-  configuration: NodeConfiguration;
+  configuration?: NodeConfiguration;
 };
 
 export type ChangeMetadataSpec = {
   type: "changemetadata";
   id: NodeIdentifier;
-  metadata: NodeMetadata;
+  metadata?: NodeMetadata;
 };
 
 export type ChangeGraphMetadataSpec = {

@@ -160,13 +160,27 @@ export class Graph implements EditableGraph {
       case "removenode":
         return this.removeNode(edit.id);
       case "addedge":
-        return this.addEdge(edit.edge);
+        return this.addEdge(edit.edge, edit.strict);
       case "removeedge":
         return this.removeEdge(edit.edge);
-      case "changeconfiguration":
+      case "changeconfiguration": {
+        if (!edit.configuration) {
+          return {
+            success: false,
+            error: "Configuration wasn't supplied.",
+          };
+        }
         return this.changeConfiguration(edit.id, edit.configuration);
-      case "changemetadata":
+      }
+      case "changemetadata": {
+        if (!edit.metadata) {
+          return {
+            success: false,
+            error: "Metadata wasn't supplied.",
+          };
+        }
         return this.changeMetadata(edit.id, edit.metadata);
+      }
       case "changegraphmetadata":
         return this.changeGraphMetadata(edit.metadata);
       default: {
@@ -178,8 +192,33 @@ export class Graph implements EditableGraph {
     }
   }
 
-  async canEdit(_edits: EditSpec[]): Promise<EditResult> {
-    throw new Error("Not implemented");
+  async canEdit(edits: EditSpec[]): Promise<EditResult> {
+    if (edits.length > 1) {
+      throw new Error("Multi-edit is not yet implemented");
+    }
+    const edit = edits[0];
+    switch (edit.type) {
+      case "addnode":
+        return this.canAddNode(edit.node);
+      case "removenode":
+        return this.canRemoveNode(edit.id);
+      case "addedge":
+        return this.canAddEdge(edit.edge);
+      case "removeedge":
+        return this.canRemoveEdge(edit.edge);
+      case "changeconfiguration":
+        return this.canChangeConfiguration(edit.id);
+      case "changemetadata":
+        return this.canChangeMetadata(edit.id);
+      case "changegraphmetadata":
+        return { success: true };
+      default: {
+        return {
+          success: false,
+          error: "Unsupported edit type",
+        };
+      }
+    }
   }
 
   async canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
