@@ -474,6 +474,16 @@ export class Main extends LitElement {
     if (evt.key === "s" && evt.metaKey) {
       evt.preventDefault();
       this.#attemptBoardSave();
+      return;
+    }
+
+    if (evt.key === "z" && evt.metaKey) {
+      if (evt.shiftKey) {
+        // TODO: Redo.
+        return;
+      }
+      // TODO: Undo.
+      return;
     }
   }
 
