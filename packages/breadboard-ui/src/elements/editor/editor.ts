@@ -17,7 +17,6 @@ import {
   NodeDescriptor,
   NodeValue,
   Edge,
-  InspectableEdge,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -45,7 +44,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
 import type { NodeSelector } from "./node-selector.js";
 import { GraphEdge } from "./graph-edge.js";
-import { edgeToString, inspectableEdgeToString } from "./utils.js";
+import { edgeToString } from "./utils.js";
 
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
@@ -555,7 +554,16 @@ export class Editor extends LitElement {
 
         this.#writingToClipboard = true;
         await navigator.clipboard.writeText(
-          JSON.stringify({ edges, nodes }, null, 2)
+          JSON.stringify(
+            {
+              title: this.graph.title,
+              version: this.graph.version,
+              edges,
+              nodes,
+            },
+            null,
+            2
+          )
         );
         this.#writingToClipboard = false;
       } else if (evt.key === "v") {
@@ -706,7 +714,9 @@ export class Editor extends LitElement {
               }
 
               this.#graph.addToAutoSelect(edgeToString(newEdge));
-              this.dispatchEvent(new EdgeChangeEvent("add", newEdge));
+              this.dispatchEvent(
+                new EdgeChangeEvent("add", newEdge, undefined, this.subGraphId)
+              );
             }
           });
         } catch (err) {

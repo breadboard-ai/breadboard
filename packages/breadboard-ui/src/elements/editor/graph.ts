@@ -80,7 +80,7 @@ export class Graph extends PIXI.Container {
       evt.stopPropagation();
 
       if (evt.target instanceof GraphNode || evt.target instanceof GraphEdge) {
-        if (!evt.metaKey && !evt.shiftKey) {
+        if (!evt.metaKey && !evt.shiftKey && !evt.target.selected) {
           this.deselectAllChildren();
         }
 
@@ -604,6 +604,10 @@ export class Graph extends PIXI.Container {
     this.#layout.clear();
   }
 
+  getNodeLayoutPosition(node: string) {
+    return this.#layout.get(node);
+  }
+
   setNodeLayoutPosition(
     node: string,
     position: PIXI.PointData,
@@ -784,7 +788,41 @@ export class Graph extends PIXI.Container {
     y: number,
     hasSettled: boolean
   ) {
-    this.graph.setNodeLayoutPosition(this.id, this.graph.toGlobal({ x, y }));
+    const position = this.graph.getNodeLayoutPosition(this.id);
+    const delta = { x: 0, y: 0 };
+    if (position) {
+      delta.x = x - position.x;
+      delta.y = y - position.y;
+    }
+
+    // Update all selected nodes.
+    for (const child of this.graph.getSelectedChildren()) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      const childPosition = this.graph.getNodeLayoutPosition(child.label);
+      if (!childPosition) {
+        continue;
+      }
+
+      const newPosition = {
+        x: childPosition.x + delta.x,
+        y: childPosition.y + delta.y,
+      };
+
+      this.graph.setNodeLayoutPosition(
+        child.label,
+        this.graph.toGlobal(newPosition)
+      );
+
+      if (child.label === this.id) {
+        continue;
+      }
+
+      child.x = newPosition.x;
+      child.y = newPosition.y;
+    }
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
@@ -794,7 +832,19 @@ export class Graph extends PIXI.Container {
     }
 
     // Propagate the move event out to the graph renderer when the cursor is released.
-    this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
+    for (const child of this.graph.getSelectedChildren()) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      // this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
+      this.graph.emit(
+        GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+        child.label,
+        child.position.x,
+        child.position.y
+      );
+    }
   }
 
   #performAutoSelect() {
