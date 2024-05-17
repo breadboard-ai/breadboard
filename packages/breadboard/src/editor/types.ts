@@ -48,6 +48,73 @@ export type EditableGraphEventMap = {
   graphchangereject: GraphChangeRejectEvent;
 };
 
+export type AddNodeSpec = {
+  type: "addnode";
+  node: EditableNodeSpec;
+};
+
+export type RemoveNodeSpec = {
+  type: "removenode";
+  id: NodeIdentifier;
+};
+
+export type AddEdgeSpec = {
+  type: "addedge";
+  edge: EditableEdgeSpec;
+};
+
+export type RemoveEdgeSpec = {
+  type: "removeedge";
+  edge: EditableEdgeSpec;
+};
+
+export type ChangeConfigurationSpec = {
+  type: "changeconfiguration";
+  id: NodeIdentifier;
+  configuration: NodeConfiguration;
+};
+
+export type ChangeMetadataSpec = {
+  type: "changemetadata";
+  id: NodeIdentifier;
+  metadata: NodeMetadata;
+};
+
+export type ChangeGraphMetadataSpec = {
+  type: "changegraphmetadata";
+  metadata: GraphMetadata;
+};
+
+export type AddGraphSpec = {
+  type: "addgraph";
+  id: GraphIdentifier;
+  graph: GraphDescriptor;
+};
+
+export type ReplaceGraphSpec = {
+  type: "replacegraph";
+  id: GraphIdentifier;
+  graph: GraphDescriptor;
+};
+
+export type RemoveGraphSpec = {
+  type: "removegraph";
+  id: GraphIdentifier;
+};
+
+export type EditSpec =
+  | AddNodeSpec
+  | RemoveNodeSpec
+  | AddEdgeSpec
+  | RemoveEdgeSpec
+  | ChangeConfigurationSpec
+  | ChangeMetadataSpec
+  | ChangeGraphMetadataSpec
+  | AddGraphSpec
+  | ReplaceGraphSpec
+  | RemoveGraphSpec;
+export type EditResult = SingleEditResult;
+
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
     eventName: Key,
@@ -67,17 +134,20 @@ export type EditableGraph = {
    */
   parent(): EditableGraph | null;
 
-  canAddNode(spec: EditableNodeSpec): Promise<EditResult>;
-  addNode(spec: EditableNodeSpec): Promise<EditResult>;
+  canEdit(edits: EditSpec[]): Promise<EditResult>;
+  edit(edits: EditSpec[]): Promise<EditResult>;
 
-  canRemoveNode(id: NodeIdentifier): Promise<EditResult>;
-  removeNode(id: NodeIdentifier): Promise<EditResult>;
+  canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult>;
+  addNode(spec: EditableNodeSpec): Promise<SingleEditResult>;
+
+  canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult>;
+  removeNode(id: NodeIdentifier): Promise<SingleEditResult>;
 
   canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
   addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
 
-  canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
-  removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+  canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
+  removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
 
   /**
    * Retrieves a subgraph of this graph.
@@ -112,7 +182,7 @@ export type EditableGraph = {
    * @param id - id of the subgraph to remove
    * @throws when used on an embedded subgraph.
    */
-  removeGraph(id: GraphIdentifier): EditResult;
+  removeGraph(id: GraphIdentifier): SingleEditResult;
 
   /**
    * Returns whether the edge can be changed from `from` to `to`.
@@ -132,25 +202,28 @@ export type EditableGraph = {
    * @param from -- the edge spec to change from
    * @param to  -- the edge spec to change to
    */
-  changeEdge(from: EditableEdgeSpec, to: EditableEdgeSpec): Promise<EditResult>;
+  changeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<SingleEditResult>;
 
-  canChangeConfiguration(id: NodeIdentifier): Promise<EditResult>;
+  canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult>;
   changeConfiguration(
     id: NodeIdentifier,
     configuration: NodeConfiguration
-  ): Promise<EditResult>;
+  ): Promise<SingleEditResult>;
 
-  canChangeMetadata(id: NodeIdentifier): Promise<EditResult>;
+  canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult>;
   changeMetadata(
     id: NodeIdentifier,
     metadata: NodeMetadata
-  ): Promise<EditResult>;
+  ): Promise<SingleEditResult>;
 
   /**
    * Replaces the current graph metadata with the provided new value.
    * @param metadata -- the new graph metadata.
    */
-  changeGraphMetadata(metadata: GraphMetadata): Promise<EditResult>;
+  changeGraphMetadata(metadata: GraphMetadata): Promise<SingleEditResult>;
 
   raw(): GraphDescriptor;
 
@@ -166,7 +239,7 @@ export type EditableGraphOptions = InspectableGraphOptions & {
 
 export type EditableNodeSpec = NodeDescriptor;
 
-export type EditResult =
+export type SingleEditResult =
   | {
       success: false;
       error: string;
