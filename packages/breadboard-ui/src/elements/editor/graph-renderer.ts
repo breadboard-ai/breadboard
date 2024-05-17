@@ -16,6 +16,8 @@ import {
   GraphNodeMoveEvent,
   GraphNodePositionsCalculatedEvent,
   InputErrorEvent,
+  GraphNodeDeselectedEvent,
+  GraphNodeDeselectedAllEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -31,13 +33,24 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
+const selectionBoxBackgroundAlpha = 0.05;
+const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
+const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
 const ADHOC_EDGE_ERROR_MESSAGE =
   "Ad-hoc port names must only contain lowercase alphanumeric characters and '-'";
+
+enum MODE {
+  MOVE = "move",
+  SELECT = "select",
+}
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   editable = false;
+
+  @property({ reflect: true })
+  invertZoomScrollDirection = false;
 
   #app = new PIXI.Application();
   #appInitialized = false;
@@ -60,10 +73,12 @@ export class GraphRenderer extends LitElement {
     portsIn: InspectablePort[] | null;
   } | null = null;
 
+  #mode = MODE.SELECT;
   #padding = 50;
   #container = new PIXI.Container({
     isRenderGroup: true,
   });
+  #nodeSelection: PIXI.Graphics | null = null;
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
@@ -101,6 +116,7 @@ export class GraphRenderer extends LitElement {
   });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
 
   static styles = css`
@@ -112,6 +128,10 @@ export class GraphRenderer extends LitElement {
       display: block;
       position: relative;
       overflow: hidden;
+    }
+
+    :host(.moving) {
+      cursor: grabbing;
     }
 
     canvas {
@@ -289,6 +309,66 @@ export class GraphRenderer extends LitElement {
     let dragStart: PIXI.PointData | null = null;
     let originalPosition: PIXI.ObservablePoint | null = null;
     let tilePosition: PIXI.ObservablePoint | null = null;
+
+    const onStageMove = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition) {
+        return;
+      }
+
+      this.classList.add("moving");
+
+      const dragPosition = this.#app.stage.toLocal(evt.global);
+      const dragDeltaX = dragPosition.x - dragStart.x;
+      const dragDeltaY = dragPosition.y - dragStart.y;
+
+      this.#container.x = Math.round(originalPosition.x + dragDeltaX);
+      this.#container.y = Math.round(originalPosition.y + dragDeltaY);
+
+      if (!this.#background || !tilePosition) {
+        return;
+      }
+      this.#background.tilePosition.x = tilePosition.x + dragDeltaX;
+      this.#background.tilePosition.y = tilePosition.y + dragDeltaY;
+    };
+
+    const onDragSelect = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition) {
+        return;
+      }
+
+      if (!this.#nodeSelection) {
+        this.#nodeSelection = new PIXI.Graphics();
+      }
+
+      const dragPosition = this.#app.stage.toLocal(evt.global);
+      const dragDeltaX = dragPosition.x - dragStart.x;
+      const dragDeltaY = dragPosition.y - dragStart.y;
+
+      const x = Math.min(dragStart.x, dragPosition.x);
+      const y = Math.min(dragStart.y, dragPosition.y);
+      const w = Math.abs(dragDeltaX);
+      const h = Math.abs(dragDeltaY);
+
+      this.#app.stage.addChild(this.#nodeSelection);
+      this.#nodeSelection.clear();
+      this.#nodeSelection.beginPath();
+      this.#nodeSelection.rect(x, y, w, h);
+      this.#nodeSelection.closePath();
+      this.#nodeSelection.stroke({ width: 1, color: selectionBoxBorderColor });
+      this.#nodeSelection.fill({
+        color: selectionBoxBackgroundColor,
+        alpha: selectionBoxBackgroundAlpha,
+      });
+
+      for (const graph of this.#container.children) {
+        if (!(graph instanceof Graph)) {
+          continue;
+        }
+
+        graph.selectInRect(new PIXI.Rectangle(x, y, w, h));
+      }
+    };
+
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
@@ -313,22 +393,12 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!dragStart || !originalPosition) {
+        if (this.#mode === MODE.MOVE) {
+          onStageMove(evt);
           return;
         }
 
-        const dragPosition = this.#app.stage.toLocal(evt.global);
-        const dragDeltaX = dragPosition.x - dragStart.x;
-        const dragDeltaY = dragPosition.y - dragStart.y;
-
-        this.#container.x = Math.round(originalPosition.x + dragDeltaX);
-        this.#container.y = Math.round(originalPosition.y + dragDeltaY);
-
-        if (!this.#background || !tilePosition) {
-          return;
-        }
-        this.#background.tilePosition.x = tilePosition.x + dragDeltaX;
-        this.#background.tilePosition.y = tilePosition.y + dragDeltaY;
+        onDragSelect(evt);
       }
     );
 
@@ -336,6 +406,14 @@ export class GraphRenderer extends LitElement {
       dragStart = null;
       originalPosition = null;
       tilePosition = null;
+
+      this.classList.remove("moving");
+
+      if (this.#nodeSelection) {
+        this.#nodeSelection.removeFromParent();
+        this.#nodeSelection.destroy();
+        this.#nodeSelection = null;
+      }
     };
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
@@ -343,20 +421,28 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on(
       "wheel",
       function (this: GraphRenderer, evt) {
-        let delta = 1 - evt.deltaY / this.zoomFactor;
-        const newScale = this.#container.scale.x * delta;
-        if (newScale < this.minScale || newScale > this.maxScale) {
-          delta = 1;
+        if (evt.metaKey) {
+          let delta =
+            1 -
+            (evt.deltaY / this.zoomFactor) *
+              (this.invertZoomScrollDirection ? -1 : 1);
+          const newScale = this.#container.scale.x * delta;
+          if (newScale < this.minScale || newScale > this.maxScale) {
+            delta = 1;
+          }
+
+          const pivot = this.#app.stage.toLocal(evt.global);
+          const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+
+          if (!this.#background) {
+            return;
+          }
+
+          this.#background.tileTransform.setFromMatrix(matrix);
+        } else {
+          this.#container.x -= evt.deltaX;
+          this.#container.y -= evt.deltaY;
         }
-
-        const pivot = this.#app.stage.toLocal(evt.global);
-        const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-
-        if (!this.#background) {
-          return;
-        }
-
-        this.#background.tileTransform.setFromMatrix(matrix);
       },
       this
     );
@@ -401,12 +487,17 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-      (id: string | null) => {
-        this.dispatchEvent(new GraphNodeSelectedEvent(id));
-      }
-    );
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_SELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeSelectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeDeselectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL, () => {
+      this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
       this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
@@ -614,6 +705,11 @@ export class GraphRenderer extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
+    if (evt.code === "Space") {
+      this.#mode = MODE.MOVE;
+      return;
+    }
+
     if (evt.code !== "Backspace") {
       return;
     }
@@ -628,24 +724,33 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      const selectedChild = graph.getSelectedChild();
-      if (!selectedChild) {
+      const selectedChildren = graph.getSelectedChildren();
+      if (!selectedChildren.length) {
         continue;
       }
 
-      if (selectedChild instanceof GraphNode) {
-        if (!selectedChild.label) {
-          console.warn("Node has no name - unable to delete");
-          return;
+      for (const selectedChild of selectedChildren) {
+        if (selectedChild instanceof GraphNode) {
+          if (!selectedChild.label) {
+            console.warn("Node has no name - unable to delete");
+            return;
+          }
+          this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
+        } else if (selectedChild instanceof GraphEdge) {
+          if (!selectedChild.edge) {
+            console.warn("Invalid edge - unable to delete");
+            return;
+          }
+          this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
         }
-        this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
-      } else if (selectedChild instanceof GraphEdge) {
-        if (!selectedChild.edge) {
-          console.warn("Invalid edge - unable to delete");
-          return;
-        }
-        this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
       }
+    }
+  }
+
+  #onKeyUp(evt: KeyboardEvent) {
+    if (evt.code === "Space") {
+      this.#mode = MODE.SELECT;
+      return;
     }
   }
 
@@ -657,6 +762,7 @@ export class GraphRenderer extends LitElement {
     super.connectedCallback();
 
     this.#resizeObserver.observe(this);
+    window.addEventListener("keyup", this.#onKeyUpBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("wheel", this.#onWheelBound, { passive: false });
   }
@@ -669,6 +775,7 @@ export class GraphRenderer extends LitElement {
     }
 
     this.#resizeObserver.disconnect();
+    window.removeEventListener("keyup", this.#onKeyUpBound);
     window.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("wheel", this.#onWheelBound);
   }

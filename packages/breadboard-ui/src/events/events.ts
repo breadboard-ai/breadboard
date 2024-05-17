@@ -11,6 +11,7 @@ import type {
   NodeDescriptor,
 } from "@google-labs/breadboard";
 import type { Settings } from "../types/types.js";
+import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const eventInit = {
   bubbles: true,
@@ -316,7 +317,9 @@ export class NodeCreateEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly nodeType: string,
-    public readonly subGraphId: string | null = null
+    public readonly subGraphId: string | null = null,
+    public readonly configuration: NodeConfiguration | null = null,
+    public readonly metadata: NodeMetadata | null = null
   ) {
     super(NodeCreateEvent.eventName, { ...eventInit });
   }
@@ -431,6 +434,22 @@ export class GraphNodeSelectedEvent extends Event {
 
   constructor(public readonly id: string | null) {
     super(GraphNodeSelectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeDeselectedEvent extends Event {
+  static eventName = "bbgraphnodedeselected";
+
+  constructor(public readonly id: string | null) {
+    super(GraphNodeDeselectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeDeselectedAllEvent extends Event {
+  static eventName = "bbgraphnodedeselectedall";
+
+  constructor() {
+    super(GraphNodeDeselectedAllEvent.eventName, { ...eventInit });
   }
 }
 
