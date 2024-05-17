@@ -114,7 +114,7 @@ export type EditSpec =
   | AddGraphSpec
   | ReplaceGraphSpec
   | RemoveGraphSpec;
-export type EditResult = SingleEditResult;
+export type EditResult = EdgeEditResult;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
@@ -135,17 +135,10 @@ export type EditableGraph = {
    */
   parent(): EditableGraph | null;
 
-  canEdit(edits: EditSpec[]): Promise<EditResult>;
-  edit(edits: EditSpec[]): Promise<EditResult>;
+  edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
 
-  canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult>;
-
-  canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult>;
-
-  canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult>;
   addEdge(spec: EditableEdgeSpec, strict?: boolean): Promise<EdgeEditResult>;
 
-  canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult>;
 
   /**
@@ -184,16 +177,6 @@ export type EditableGraph = {
   removeGraph(id: GraphIdentifier): SingleEditResult;
 
   /**
-   * Returns whether the edge can be changed from `from` to `to`.
-   *  @param from -- the edge spec to change from
-   * @param to  -- the edge spec to change to
-   */
-  canChangeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec,
-    strict?: boolean
-  ): Promise<EdgeEditResult>;
-  /**
    * Changes the edge from `from` to `to`, if it can be changed.
    * This operation does not change the identity of the edge, but rather
    * mutates the properties of the edge. This is not an `addEdge` combined
@@ -206,13 +189,11 @@ export type EditableGraph = {
     to: EditableEdgeSpec
   ): Promise<SingleEditResult>;
 
-  canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult>;
   changeConfiguration(
     id: NodeIdentifier,
     configuration: NodeConfiguration
   ): Promise<SingleEditResult>;
 
-  canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult>;
   changeMetadata(
     id: NodeIdentifier,
     metadata: NodeMetadata

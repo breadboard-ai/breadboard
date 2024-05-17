@@ -73,26 +73,50 @@ test("editor API successfully tests for node addition", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.canAddNode({
-      id: "node1",
-      type: "foo",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addnode",
+          node: {
+            id: "node1",
+            type: "foo",
+          },
+        },
+      ],
+      true
+    );
 
     t.true(result.success);
   }
   {
-    const result = await graph.canAddNode({
-      id: "node0",
-      type: "foo",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addnode",
+          node: {
+            id: "node0",
+            type: "foo",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canAddNode({
-      id: "node1",
-      type: "unknown type",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addnode",
+          node: {
+            id: "node1",
+            type: "unknown type",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
@@ -124,12 +148,18 @@ test("editor API successfully tests for node removal", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.canRemoveNode("node0");
+    const result = await graph.edit(
+      [{ type: "removenode", id: "node0" }],
+      true
+    );
 
     t.true(result.success);
   }
   {
-    const result = await graph.canRemoveNode("node1");
+    const result = await graph.edit(
+      [{ type: "removenode", id: "node1" }],
+      true
+    );
 
     t.false(result.success);
   }
@@ -154,7 +184,10 @@ test("editor API successfully removes a node", async (t) => {
   }
 
   {
-    const result = await graph.canAddNode({ id: "node0", type: "foo" });
+    const result = await graph.edit(
+      [{ type: "addnode", node: { id: "node0", type: "foo" } }],
+      true
+    );
     t.true(result.success);
   }
 });
@@ -163,52 +196,97 @@ test("editor API successfully tests for edge addition", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.canAddEdge({
-      from: "node0",
-      out: "out",
-      to: "node2",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node2",
+            in: "in",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.true(result.success);
   }
   {
-    const result = await graph.canAddEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node0",
+            in: "in",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canAddEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "baz",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node0",
+            in: "baz",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canAddEdge({
-      from: "unknown node",
-      out: "out",
-      to: "node2",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "unknown node",
+            out: "out",
+            to: "node2",
+            in: "in",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canAddEdge({
-      from: "node0",
-      out: "out",
-      to: "unknown node",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "unknown node",
+            in: "in",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
@@ -237,12 +315,21 @@ test("editor API successfully adds an edge", async (t) => {
     );
   }
   {
-    const result = await graph.canAddEdge({
-      from: "node0",
-      out: "out",
-      to: "node2",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "addedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node2",
+            in: "in",
+          },
+          strict: false,
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
@@ -252,42 +339,74 @@ test("editor API successfully tests for edge removal", async (t) => {
   const graph = testEditGraph();
 
   {
-    const result = await graph.canRemoveEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "removeedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node0",
+            in: "in",
+          },
+        },
+      ],
+      true
+    );
 
     t.true(result.success);
   }
   {
-    const result = await graph.canRemoveEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "baz",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "removeedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node0",
+            in: "baz",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canRemoveEdge({
-      from: "unknown node",
-      out: "out",
-      to: "node0",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "removeedge",
+          edge: {
+            from: "unknown node",
+            out: "out",
+            to: "node0",
+            in: "in",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
   {
-    const result = await graph.canRemoveEdge({
-      from: "node0",
-      out: "out",
-      to: "unknown node",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "removeedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "unknown node",
+            in: "in",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
@@ -313,12 +432,20 @@ test("editor API successfully removes an edge", async (t) => {
     );
   }
   {
-    const result = await graph.canRemoveEdge({
-      from: "node0",
-      out: "out",
-      to: "node0",
-      in: "in",
-    });
+    const result = await graph.edit(
+      [
+        {
+          type: "removeedge",
+          edge: {
+            from: "node0",
+            out: "out",
+            to: "node0",
+            in: "in",
+          },
+        },
+      ],
+      true
+    );
 
     t.false(result.success);
   }
@@ -394,7 +521,10 @@ test("editor API does not allow connecting a specific output port to a star port
   const graph = testEditGraph();
 
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
-  const result = await graph.canAddEdge(edgeSpec);
+  const result = await graph.edit(
+    [{ type: "addedge", edge: edgeSpec, strict: false }],
+    true
+  );
   t.false(result.success);
 });
 
@@ -443,7 +573,10 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
   {
     const graph = testEditGraph();
-    const result = await graph.canAddEdge(edgeSpec);
+    const result = await graph.edit(
+      [{ type: "addedge", edge: edgeSpec, strict: false }],
+      true
+    );
     if (result.success) {
       t.fail();
     } else {
