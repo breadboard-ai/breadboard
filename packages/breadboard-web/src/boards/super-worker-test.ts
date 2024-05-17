@@ -6,9 +6,8 @@ const contextFromText = (text: string, role?: string) => {
   return role ? { role, parts } : { parts };
 };
 
-const sampleContext = [
-  contextFromText(
-    `book description: This book will be about breadboards and how awesome they are:
+const sampleContext = contextFromText(
+  `book description: This book will be about breadboards and how awesome they are:
 
 chapter target: 10
 
@@ -24,9 +23,8 @@ tonality: futuristic struggle, but optimistic
 
 working title: Aurora
 `,
-    "user"
-  ),
-];
+  "user"
+);
 
 const outlineWriterPersona =
   contextFromText(`You are a famous author.  You are writing a novel.
@@ -46,7 +44,7 @@ const outlineCriticPersona = contextFromText(
 );
 
 const outlineCriticTask =
-  contextFromText(`Your friend, an accomplished author, has written an outline for a new book and has asked you for insightful feedback.  
+  contextFromText(`Your friend, an accomplished author, has written an outline for a new book and has asked you for insightful feedback.
 
 Review the outline that the author submitted.  Please read it very carefully.  Then, provide feedback for the author.  Give the author up to five specific suggestions to make the novel more compelling and have more chance to be a bestseller!`);
 
