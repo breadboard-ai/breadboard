@@ -12,6 +12,7 @@ import {
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {
+  BehaviorSchema,
   Edge,
   ErrorResponse,
   GraphDescriptor,
@@ -362,6 +363,10 @@ export type InspectablePortType = {
    * Returns port schema as defined by the node.
    */
   schema: Schema;
+  /**
+   * Returns `true` if this port has specified behavior
+   */
+  hasBehavior(behavior: BehaviorSchema): boolean;
   /**
    * Returns `true` if the outgoing port of this type can connect to an
    * incoming port of the specified type.

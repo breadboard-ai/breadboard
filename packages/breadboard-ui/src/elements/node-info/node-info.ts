@@ -620,18 +620,14 @@ export class NodeInfo extends LitElement {
 
         const portSpec = ports.filter(
           (port) =>
-            port.schema.behavior?.includes("ports-spec") &&
-            port.edges.length === 0
+            port.type.hasBehavior("ports-spec") && port.edges.length === 0
         );
         const inputs = ports.filter((port) => {
           if (port.star) {
             return false;
           }
 
-          if (
-            port.schema.behavior?.includes("ports-spec") &&
-            port.edges.length === 0
-          ) {
+          if (port.type.hasBehavior("ports-spec") && port.edges.length === 0) {
             return false;
           }
 
@@ -765,9 +761,7 @@ export class NodeInfo extends LitElement {
                               switch (type) {
                                 case "object": {
                                   // Only show the schema editor for inputs & outputs
-                                  if (
-                                    port.schema.behavior?.includes("ports-spec")
-                                  ) {
+                                  if (port.type.hasBehavior("ports-spec")) {
                                     input = html``;
                                   } else if (isBoard(port, value)) {
                                     const selectorValue = value
