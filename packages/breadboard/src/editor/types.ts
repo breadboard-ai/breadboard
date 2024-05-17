@@ -110,10 +110,7 @@ export type EditSpec =
   | RemoveEdgeSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
-  | ChangeGraphMetadataSpec
-  | AddGraphSpec
-  | ReplaceGraphSpec
-  | RemoveGraphSpec;
+  | ChangeGraphMetadataSpec;
 export type EditResult = EdgeEditResult;
 
 export type EditableGraph = {
@@ -183,11 +180,6 @@ export type EditableGraph = {
   changeEdge(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec
-  ): Promise<SingleEditResult>;
-
-  changeConfiguration(
-    id: NodeIdentifier,
-    configuration: NodeConfiguration
   ): Promise<SingleEditResult>;
 
   changeMetadata(

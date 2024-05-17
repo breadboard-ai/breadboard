@@ -1169,7 +1169,13 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.changeConfiguration(evt.id, evt.configuration);
+            editableGraph.edit([
+              {
+                type: "changeconfiguration",
+                id: evt.id,
+                configuration: evt.configuration,
+              },
+            ]);
           }}
           @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
             let editableGraph = this.#getEditor();

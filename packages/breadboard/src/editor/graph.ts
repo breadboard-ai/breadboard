@@ -173,7 +173,7 @@ export class Graph implements EditableGraph {
             error: "Configuration wasn't supplied.",
           };
         }
-        return this.changeConfiguration(edit.id, edit.configuration);
+        return this.#changeConfiguration(edit.id, edit.configuration);
       }
       case "changemetadata": {
         if (!edit.metadata) {
@@ -476,7 +476,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async changeConfiguration(
+  async #changeConfiguration(
     id: NodeIdentifier,
     configuration: NodeConfiguration
   ): Promise<SingleEditResult> {
