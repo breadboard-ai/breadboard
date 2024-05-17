@@ -38,7 +38,7 @@ const runInNode = async ({
     vm = await import(/*@vite-ignore*/ "node:vm");
   }
   const codeToRun = `${code}\n${functionName}(${args});`;
-  const context = vm.createContext({ console });
+  const context = vm.createContext({ console, structuredClone });
   const script = new vm.Script(codeToRun);
   const result = await script.runInNewContext(context);
   return JSON.stringify(result);
