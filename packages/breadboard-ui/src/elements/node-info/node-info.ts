@@ -118,7 +118,7 @@ export class NodeInfo extends LitElement {
         await node.ports(),
         EditorMode.ADVANCED
       );
-      const ports = structuredClone(inputs.ports).sort((portA, portB) =>
+      const ports = [...inputs.ports].sort((portA, portB) =>
         portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
       );
 
