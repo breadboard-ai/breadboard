@@ -16,6 +16,8 @@ import {
   SubGraphs,
   NodeDescriptor,
   NodeValue,
+  Edge,
+  InspectableEdge,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -42,8 +44,11 @@ import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
 import type { NodeSelector } from "./node-selector.js";
+import { GraphEdge } from "./graph-edge.js";
+import { edgeToString, inspectableEdgeToString } from "./utils.js";
 
 const DATA_TYPE = "text/plain";
+const PASTE_OFFSET = 50;
 
 type EditedNode = {
   editAction: "add" | "update";
@@ -496,6 +501,24 @@ export class Editor extends LitElement {
     this.#lastY = evt.pageY - this.#top - window.scrollY;
   }
 
+  #isNodeDescriptor(item: unknown): item is NodeDescriptor {
+    return (
+      typeof item === "object" &&
+      item !== null &&
+      "id" in item &&
+      "type" in item
+    );
+  }
+
+  #isEdge(item: unknown): item is Edge {
+    return (
+      typeof item === "object" &&
+      item !== null &&
+      "from" in item &&
+      "to" in item
+    );
+  }
+
   async #onKeyDown(evt: KeyboardEvent) {
     if (evt.metaKey && this.graph) {
       // Copy.
@@ -513,14 +536,35 @@ export class Editor extends LitElement {
           return selected.find((item) => item.label === node.id);
         });
 
+        const edges = this.graph.edges.filter((edge) => {
+          return selected.find((item) => {
+            if (!(item instanceof GraphEdge)) {
+              return false;
+            }
+
+            if (!item.edge) {
+              return false;
+            }
+
+            return (
+              item.edge.from.descriptor.id === edge.from &&
+              item.edge.to.descriptor.id === edge.to
+            );
+          });
+        });
+
         this.#writingToClipboard = true;
-        await navigator.clipboard.writeText(JSON.stringify(nodes, null, 2));
+        await navigator.clipboard.writeText(
+          JSON.stringify({ edges, nodes }, null, 2)
+        );
         this.#writingToClipboard = false;
       } else if (evt.key === "v") {
         // Paste.
         if (this.#readingFromClipboard) {
           return;
         }
+
+        this.#graph.deselectAllChildren();
 
         try {
           this.#readingFromClipboard = true;
@@ -529,49 +573,142 @@ export class Editor extends LitElement {
             return;
           }
 
-          const nodes = JSON.parse(data) as NodeDescriptor[];
-          if (!Array.isArray(nodes)) {
+          const graph = JSON.parse(data) as GraphDescriptor;
+          if (!("edges" in graph && "nodes" in graph)) {
             return;
           }
 
-          for (let i = 0; i < nodes.length; i++) {
-            const nodeData = nodes[i];
-            if (!("id" in nodeData && "type" in nodeData)) {
-              return;
+          graph.nodes.sort((nodeA: NodeDescriptor, nodeB: NodeDescriptor) => {
+            if (nodeA.metadata?.visual && nodeB.metadata?.visual) {
+              const visualA = nodeA.metadata.visual as Record<string, number>;
+              const visualB = nodeB.metadata.visual as Record<string, number>;
+              return visualA.x - visualB.x;
+            }
+
+            if (nodeA.metadata?.visual && !nodeB.metadata?.visual) {
+              return -1;
+            }
+
+            if (!nodeA.metadata?.visual && nodeB.metadata?.visual) {
+              return 1;
+            }
+
+            return 0;
+          });
+
+          if (!graph.nodes.length) {
+            return;
+          }
+
+          const leftMostNode = graph.nodes[0];
+          let leftMostVisual = structuredClone(
+            leftMostNode.metadata?.visual
+          ) as Record<string, number>;
+          if (!leftMostVisual) {
+            leftMostVisual = { x: 0, y: 0 };
+          }
+
+          const leftMostNodeGlobalPosition = this.#graph.toGlobal({
+            x: leftMostVisual.x,
+            y: leftMostVisual.y,
+          });
+
+          const remappedNodeIds = new Map<string, string>();
+          for (const node of graph.nodes) {
+            if (!this.#isNodeDescriptor(node)) {
+              continue;
             }
 
             // Update the node ID so it doesn't clash.
             const existingNode = this.graph.nodes.find(
-              (node) => node.id === nodeData.id
+              (graphNode) => graphNode.id === node.id
             );
             if (existingNode) {
-              nodeData.id = this.#createRandomID(nodeData.type);
+              node.id = this.#createRandomID(node.type);
+              remappedNodeIds.set(existingNode.id, node.id);
             }
 
-            nodeData.metadata = nodeData.metadata || {};
-            nodeData.metadata.visual = (nodeData.metadata.visual ||
-              {}) as Record<string, NodeValue>;
+            node.metadata = node.metadata || {};
+            node.metadata.visual = (node.metadata.visual || {}) as Record<
+              string,
+              NodeValue
+            >;
 
-            delete nodeData.metadata.visual["x"];
-            delete nodeData.metadata.visual["y"];
+            // Grab the x & y coordinates, delete them, and use them to instruct
+            // the graph where to place the node when it's added.
+            const x = (node.metadata.visual["x"] as number) ?? 0;
+            const y = (node.metadata.visual["y"] as number) ?? 0;
 
-            if (Object.keys(nodeData.metadata.visual).length === 0) {
-              delete nodeData.metadata.visual;
+            delete node.metadata.visual["x"];
+            delete node.metadata.visual["y"];
+            if (Object.keys(node.metadata.visual).length === 0) {
+              delete node.metadata.visual;
             }
 
-            const position = { x: this.#lastX + i * 20, y: this.#lastY };
-            this.#graph.setNodeLayoutPosition(nodeData.id, position, true);
+            const globalPosition = this.#graph.toGlobal({ x, y });
+            const offset = {
+              x: globalPosition.x - leftMostNodeGlobalPosition.x,
+              y: globalPosition.y - leftMostNodeGlobalPosition.y,
+            };
 
+            const position = {
+              x: this.#lastX + offset.x - PASTE_OFFSET,
+              y: this.#lastY + offset.y - PASTE_OFFSET,
+            };
+
+            this.#graph.setNodeLayoutPosition(node.id, position, false);
+            this.#graph.addToAutoSelect(node.id);
             this.dispatchEvent(
               new NodeCreateEvent(
-                nodeData.id,
-                nodeData.type,
+                node.id,
+                node.type,
                 this.subGraphId,
-                nodeData.configuration ?? null,
-                nodeData.metadata ?? null
+                node.configuration ?? null,
+                node.metadata ?? null
               )
             );
           }
+
+          // We currently have to wait a frame for the node creation to take
+          // place, after which we can try to add the new edges.
+          // TODO: Replace this with a multi-change
+          requestAnimationFrame(() => {
+            const currentGraph = this.graph;
+            if (!currentGraph) {
+              return;
+            }
+
+            for (const edge of graph.edges) {
+              if (!this.#isEdge(edge)) {
+                continue;
+              }
+
+              const newEdge = {
+                from: remappedNodeIds.get(edge.from) ?? edge.from,
+                to: remappedNodeIds.get(edge.to) ?? edge.to,
+                in: edge.in ?? "MISSING_WIRE",
+                out: edge.out ?? "MISSING_WIRE",
+              };
+
+              const existingEdge = currentGraph.edges.find(
+                (graphEdge) =>
+                  graphEdge.from === newEdge.from &&
+                  graphEdge.to === newEdge.to &&
+                  graphEdge.out === newEdge.out &&
+                  graphEdge.in === newEdge.in
+              );
+              if (existingEdge) {
+                continue;
+              }
+
+              if (edge.in === "MISSING_WIRE" || edge.out === "MISSING_WIRE") {
+                continue;
+              }
+
+              this.#graph.addToAutoSelect(edgeToString(newEdge));
+              this.dispatchEvent(new EdgeChangeEvent("add", newEdge));
+            }
+          });
         } catch (err) {
           // Not JSON data - ignore.
           return;

@@ -729,21 +729,32 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      for (const selectedChild of selectedChildren) {
-        if (selectedChild instanceof GraphNode) {
-          if (!selectedChild.label) {
+      const nodes = selectedChildren.filter(
+        (child) => child instanceof GraphNode
+      ) as GraphNode[];
+      const edges = selectedChildren.filter(
+        (child) => child instanceof GraphEdge
+      ) as GraphEdge[];
+
+      // Delete all edges first.
+      for (const graphEdge of edges) {
+        if (!graphEdge.edge) {
+          console.warn("Invalid edge - unable to delete");
+          return;
+        }
+        this.dispatchEvent(new GraphNodeEdgeDetachEvent(graphEdge.edge));
+      }
+
+      // Wait a frame and delete all nodes.
+      requestAnimationFrame(() => {
+        for (const graphNode of nodes) {
+          if (!graphNode.label) {
             console.warn("Node has no name - unable to delete");
             return;
           }
-          this.dispatchEvent(new GraphNodeDeleteEvent(selectedChild.label));
-        } else if (selectedChild instanceof GraphEdge) {
-          if (!selectedChild.edge) {
-            console.warn("Invalid edge - unable to delete");
-            return;
-          }
-          this.dispatchEvent(new GraphNodeEdgeDetachEvent(selectedChild.edge));
+          this.dispatchEvent(new GraphNodeDeleteEvent(graphNode.label));
         }
-      }
+      });
     }
   }
 
