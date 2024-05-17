@@ -154,7 +154,7 @@ export class Graph implements EditableGraph {
       throw new Error("Multi-edit is not yet implemented");
     }
     if (dryRun) {
-      return this.canEdit(edits);
+      return this.#canEdit(edits);
     }
     const edit = edits[0];
     switch (edit.type) {
@@ -166,6 +166,8 @@ export class Graph implements EditableGraph {
         return this.#addEdge(edit.edge, edit.strict);
       case "removeedge":
         return this.#removeEdge(edit.edge);
+      case "changeedge":
+        return this.#changeEdge(edit.from, edit.to);
       case "changeconfiguration": {
         if (!edit.configuration) {
           return {
@@ -195,7 +197,7 @@ export class Graph implements EditableGraph {
     }
   }
 
-  async canEdit(edits: EditSpec[]): Promise<EdgeEditResult> {
+  async #canEdit(edits: EditSpec[]): Promise<EdgeEditResult> {
     if (edits.length > 1) {
       throw new Error("Multi-edit is not yet implemented");
     }
@@ -423,7 +425,7 @@ export class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async changeEdge(
+  async #changeEdge(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec,
     strict: boolean = false

@@ -1049,7 +1049,9 @@ export class Main extends LitElement {
                   throw new Error("Unable to move edge - no `to` provided");
                 }
 
-                editableGraph.changeEdge(evt.from, evt.to);
+                editableGraph.edit([
+                  { type: "changeedge", from: evt.from, to: evt.to },
+                ]);
                 break;
               }
             }

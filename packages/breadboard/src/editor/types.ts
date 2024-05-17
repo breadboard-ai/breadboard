@@ -69,6 +69,18 @@ export type RemoveEdgeSpec = {
   edge: EditableEdgeSpec;
 };
 
+/**
+ * Changes the edge from `from` to `to`, if it can be changed.
+ * This operation does not change the identity of the edge, but rather
+ * mutates the properties of the edge. This is not an `addEdge` combined
+ * with a `removeEdge`, but rather a true mutation of the edge.
+ */
+export type ChangeEdgeSpec = {
+  type: "changeedge";
+  from: EditableEdgeSpec;
+  to: EditableEdgeSpec;
+};
+
 export type ChangeConfigurationSpec = {
   type: "changeconfiguration";
   id: NodeIdentifier;
@@ -108,6 +120,7 @@ export type EditSpec =
   | RemoveNodeSpec
   | AddEdgeSpec
   | RemoveEdgeSpec
+  | ChangeEdgeSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec;
@@ -168,19 +181,6 @@ export type EditableGraph = {
    * @throws when used on an embedded subgraph.
    */
   removeGraph(id: GraphIdentifier): SingleEditResult;
-
-  /**
-   * Changes the edge from `from` to `to`, if it can be changed.
-   * This operation does not change the identity of the edge, but rather
-   * mutates the properties of the edge. This is not an `addEdge` combined
-   * with a `removeEdge`, but rather a true mutation of the edge.
-   * @param from -- the edge spec to change from
-   * @param to  -- the edge spec to change to
-   */
-  changeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec
-  ): Promise<SingleEditResult>;
 
   raw(): GraphDescriptor;
 

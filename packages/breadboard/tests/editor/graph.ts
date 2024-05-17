@@ -448,10 +448,13 @@ test("editor API allows changing edge", async (t) => {
 
   const before = graph.inspect().edges()[0];
 
-  const result = await graph.changeEdge(
-    { from: "node0", out: "out", to: "node0", in: "in" },
-    { from: "node0", out: "out", to: "node2", in: "in" }
-  );
+  const result = await graph.edit([
+    {
+      type: "changeedge",
+      from: { from: "node0", out: "out", to: "node0", in: "in" },
+      to: { from: "node0", out: "out", to: "node2", in: "in" },
+    },
+  ]);
 
   t.true(result.success);
 
