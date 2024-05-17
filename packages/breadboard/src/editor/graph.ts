@@ -182,10 +182,10 @@ export class Graph implements EditableGraph {
             error: "Metadata wasn't supplied.",
           };
         }
-        return this.changeMetadata(edit.id, edit.metadata);
+        return this.#changeMetadata(edit.id, edit.metadata);
       }
       case "changegraphmetadata":
-        return this.changeGraphMetadata(edit.metadata);
+        return this.#changeGraphMetadata(edit.metadata);
       default: {
         return {
           success: false,
@@ -512,7 +512,7 @@ export class Graph implements EditableGraph {
     );
   }
 
-  async changeMetadata(
+  async #changeMetadata(
     id: NodeIdentifier,
     metadata: NodeMetadata
   ): Promise<SingleEditResult> {
@@ -595,7 +595,7 @@ export class Graph implements EditableGraph {
     return editable;
   }
 
-  async changeGraphMetadata(
+  async #changeGraphMetadata(
     metadata: GraphMetadata
   ): Promise<SingleEditResult> {
     this.#graph.metadata = metadata;
