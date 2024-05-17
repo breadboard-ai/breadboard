@@ -138,7 +138,7 @@ test("editor API successfully tests for node removal", async (t) => {
 test("editor API successfully removes a node", async (t) => {
   const graph = testEditGraph();
   {
-    const result = await graph.removeNode("node0");
+    const result = await graph.edit([{ type: "removenode", id: "node0" }]);
 
     t.true(result.success);
 

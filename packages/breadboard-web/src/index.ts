@@ -1170,7 +1170,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.removeNode(evt.id);
+            editableGraph.edit([{ type: "removenode", id: evt.id }]);
           }}
           @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
             if (!this.#uiRef.value) {
