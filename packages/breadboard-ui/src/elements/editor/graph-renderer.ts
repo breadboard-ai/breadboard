@@ -704,7 +704,22 @@ export class GraphRenderer extends LitElement {
     graph.destroy();
   }
 
+  selectAll() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.selectAll();
+    }
+  }
+
   #onKeyDown(evt: KeyboardEvent) {
+    if (evt.code === "KeyA" && evt.metaKey) {
+      this.selectAll();
+      return;
+    }
+
     if (evt.code === "Space") {
       this.#mode = MODE.MOVE;
       return;
