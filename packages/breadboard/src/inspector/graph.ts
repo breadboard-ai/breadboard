@@ -149,16 +149,20 @@ class Graph implements InspectableGraphWithStore {
     return (this.#kits ??= collectKits(this.#options.kits || []));
   }
 
-  typeForNode(id: string): InspectableNodeType | undefined {
-    const kits = this.kits();
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
     const node = this.nodeById(id);
     if (!node) {
       return undefined;
     }
+    return this.typeById(node.descriptor.type);
+  }
+
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    const kits = this.kits();
     this.#nodeTypes ??= new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
     );
-    return this.#nodeTypes.get(node.descriptor.type);
+    return this.#nodeTypes.get(id);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
