@@ -16,6 +16,7 @@ import {
   EditResult,
   EditOperation,
   EditOperationContext,
+  EditResultLogEntry,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -155,7 +156,6 @@ export class Graph implements EditableGraph {
     }
     let context: EditOperationContext;
 
-    const edit = edits[0];
     if (dryRun) {
       const graph = structuredClone(this.#graph);
       const inspector = inspectableGraph(graph, this.#options);
@@ -171,17 +171,37 @@ export class Graph implements EditableGraph {
         store: this.#inspector,
       };
     }
-    const result = await this.#singleEdit(edit, context);
-    const log = [{ edit: edit.type, result }];
-    if (!result.success) {
-      !dryRun && this.#dispatchNoChange(result.error);
-      return { success: false, log, error: result.error };
+    const log: EditResultLogEntry[] = [];
+    let error: string | null = null;
+    // Presume that all edits will result in no changes.
+    let noChange = true;
+    // Presume that all edits will be visual only.
+    let visualOnly = true;
+    for (const edit of edits) {
+      const result = await this.#singleEdit(edit, context);
+      log.push({ edit: edit.type, result });
+      if (!result.success) {
+        error = result.error;
+        break;
+      }
+      if (!result.noChange) {
+        noChange = false;
+      }
+      if (!result.visualOnly) {
+        visualOnly = false;
+      }
     }
-    if (result.noChange) {
+    if (error) {
+      // TODO: Rollback
+      !dryRun && this.#dispatchNoChange(error);
+      return { success: false, log, error };
+    }
+
+    if (noChange) {
       !dryRun && this.#dispatchNoChange();
       return { success: true, log };
     }
-    !dryRun && this.#updateGraph(!!result.visualOnly);
+    !dryRun && this.#updateGraph(visualOnly);
     return { success: true, log };
   }
 
