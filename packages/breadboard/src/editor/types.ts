@@ -213,6 +213,11 @@ export type SingleEditResult =
        * resulted in no change.
        */
       nochange?: boolean;
+      /**
+       * Indicates that this edit only involved visual
+       * changes.
+       */
+      visualOnly?: boolean;
     };
 
 export type EdgeEditResult =

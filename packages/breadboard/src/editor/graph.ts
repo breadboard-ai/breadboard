@@ -4,23 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
-import { fixUpStarEdge } from "../inspector/edge.js";
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
-import {
-  GraphDescriptor,
-  GraphIdentifier,
-  NodeConfiguration,
-  NodeIdentifier,
-} from "../types.js";
+import { GraphDescriptor, GraphIdentifier } from "../types.js";
 import {
   EdgeEditResult,
   SingleEditResult,
-  EditableEdgeSpec,
   EditableGraph,
   EditableGraphOptions,
   RejectionReason,
@@ -31,10 +21,10 @@ import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddNode } from "./operations/add-node.js";
 import { RemoveNode } from "./operations/remove-node.js";
-import { edgesEqual, findEdgeIndex } from "./edge.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
 import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
+import { ChangeMetadata } from "./operations/change-metadata.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -162,13 +152,7 @@ export class Graph implements EditableGraph {
         return this.#changeConfiguration(edit);
       }
       case "changemetadata": {
-        if (!edit.metadata) {
-          return {
-            success: false,
-            error: "Metadata wasn't supplied.",
-          };
-        }
-        return this.#changeMetadata(edit.id, edit.metadata);
+        return this.#changeMetadata(edit);
       }
       case "changegraphmetadata":
         return this.#changeGraphMetadata(edit.metadata);
@@ -207,8 +191,10 @@ export class Graph implements EditableGraph {
         const operation = new ChangeConfiguration(this.#graph, this.#inspector);
         return operation.can(edit.id);
       }
-      case "changemetadata":
-        return this.#canChangeMetadata(edit.id);
+      case "changemetadata": {
+        const operation = new ChangeMetadata(this.#graph, this.#inspector);
+        return operation.can(edit.id);
+      }
       case "changeedge": {
         const operation = new ChangeEdge(this.#graph, this.#inspector);
         return operation.can(edit.from, edit.to);
@@ -298,43 +284,26 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult> {
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      return {
-        success: false,
-        error: `Node with id "${id}" does not exist`,
-      };
+  async #changeMetadata(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new ChangeMetadata(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
     }
-    return { success: true };
+    if (can.nochange) {
+      this.#dispatchNoChange();
+      return can;
+    }
+    this.#updateGraph(!!can.visualOnly);
+    return can;
   }
 
-  #isVisualOnly(incoming: NodeMetadata, existing: NodeMetadata): boolean {
-    return (
-      existing.title === incoming.title &&
-      existing.description === incoming.description &&
-      existing.logLevel === incoming.logLevel
-    );
-  }
-
-  async #changeMetadata(
-    id: NodeIdentifier,
-    metadata: NodeMetadata
+  async #changeGraphMetadata(
+    metadata: GraphMetadata
   ): Promise<SingleEditResult> {
-    const can = await this.#canChangeMetadata(id);
-    if (!can.success) return can;
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      const error = `Unknown node with id "${id}"`;
-      this.#dispatchNoChange(error);
-      return { success: false, error };
-    }
-    const visualOnly = this.#isVisualOnly(
-      metadata,
-      node.descriptor.metadata || {}
-    );
-    node.descriptor.metadata = metadata;
-    this.#updateGraph(visualOnly);
+    this.#graph.metadata = metadata;
+    this.#updateGraph(false);
     return { success: true };
   }
 
@@ -398,14 +367,6 @@ export class Graph implements EditableGraph {
     this.#updateGraph(false);
 
     return editable;
-  }
-
-  async #changeGraphMetadata(
-    metadata: GraphMetadata
-  ): Promise<SingleEditResult> {
-    this.#graph.metadata = metadata;
-    this.#updateGraph(false);
-    return { success: true };
   }
 
   raw() {
