@@ -219,7 +219,7 @@ export type SingleEditResult =
        * Indicates that the edit was successful, and
        * resulted in no change.
        */
-      nochange?: boolean;
+      noChange?: boolean;
       /**
        * Indicates that this edit only involved visual
        * changes.

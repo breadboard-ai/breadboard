@@ -150,21 +150,21 @@ export class Graph implements EditableGraph {
         error: "Unsupported edit type",
       };
     }
-    const can = await operation.do(edit, {
+    const result = await operation.do(edit, {
       graph: this.#graph,
       inspector: this.#inspector,
       store: this.#inspector,
     });
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
+    if (!result.success) {
+      this.#dispatchNoChange(result.error);
+      return result;
     }
-    if (can.nochange) {
+    if (result.noChange) {
       this.#dispatchNoChange();
-      return can;
+      return result;
     }
-    this.#updateGraph(!!can.visualOnly);
-    return can;
+    this.#updateGraph(!!result.visualOnly);
+    return result;
   }
 
   async #canEdit(edits: EditSpec[]): Promise<EdgeEditResult> {

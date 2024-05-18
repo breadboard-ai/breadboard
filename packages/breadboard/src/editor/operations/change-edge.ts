@@ -67,7 +67,7 @@ export class ChangeEdge implements EditOperation {
           error,
         };
       }
-      return { success: true, nochange: true };
+      return { success: true, noChange: true };
     }
     const fixedUpEdge = fixUpStarEdge(from);
     const edges = graph.edges;
