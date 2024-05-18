@@ -79,6 +79,7 @@ export type ChangeEdgeSpec = {
   type: "changeedge";
   from: EditableEdgeSpec;
   to: EditableEdgeSpec;
+  strict: boolean;
 };
 
 export type ChangeConfigurationSpec = {
@@ -207,6 +208,11 @@ export type SingleEditResult =
     }
   | {
       success: true;
+      /**
+       * Indicates that the edit was successful, and
+       * resulted in no change.
+       */
+      nochange?: boolean;
     };
 
 export type EdgeEditResult =

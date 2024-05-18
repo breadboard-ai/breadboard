@@ -33,6 +33,7 @@ import { AddNode } from "./operations/add-node.js";
 import { RemoveNode } from "./operations/remove-node.js";
 import { edgesEqual, findEdgeIndex } from "./edge.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
+import { ChangeEdge } from "./operations/change-edge.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -149,7 +150,7 @@ export class Graph implements EditableGraph {
       case "removeedge":
         return this.#removeEdge(edit);
       case "changeedge":
-        return this.#changeEdge(edit.from, edit.to);
+        return this.#changeEdge(edit);
       case "changeconfiguration": {
         if (!edit.configuration) {
           return {
@@ -205,8 +206,10 @@ export class Graph implements EditableGraph {
         return this.#canChangeConfiguration(edit.id);
       case "changemetadata":
         return this.#canChangeMetadata(edit.id);
-      case "changeedge":
-        return this.#canChangeEdge(edit.from, edit.to);
+      case "changeedge": {
+        const operation = new ChangeEdge(this.#graph, this.#inspector);
+        return operation.can(edit.from, edit.to);
+      }
       case "changegraphmetadata":
         return { success: true };
       default: {
@@ -262,62 +265,19 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #canChangeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec
-  ): Promise<EdgeEditResult> {
-    if (edgesEqual(from, to)) {
-      return { success: true };
-    }
-    const canRemoveOp = new RemoveEdge(this.#graph, this.#inspector);
-    const canRemove = await canRemoveOp.can(from);
-    if (!canRemove.success) return canRemove;
-    const canAddOp = new AddEdge(this.#graph, this.#inspector);
-    const canAdd = await canAddOp.can(to);
-    if (!canAdd.success) return canAdd;
-    return { success: true };
-  }
-
-  async #changeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec,
-    strict: boolean = false
-  ): Promise<SingleEditResult> {
-    const can = await this.#canChangeEdge(from, to);
-    let alternativeChosen = false;
+  async #changeEdge(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new ChangeEdge(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
     if (!can.success) {
-      if (!can.alternative || strict) {
-        this.#dispatchNoChange(can.error);
-        return can;
-      }
-      to = can.alternative;
-      alternativeChosen = true;
+      this.#dispatchNoChange(can.error);
+      return can;
     }
-    if (edgesEqual(from, to)) {
-      if (alternativeChosen) {
-        const error = `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`;
-        this.#dispatchNoChange(error);
-        return {
-          success: false,
-          error,
-        };
-      }
+    if (can.nochange) {
       this.#dispatchNoChange();
-      return { success: true };
-    }
-    const spec = fixUpStarEdge(from);
-    const edges = this.#graph.edges;
-    const index = findEdgeIndex(this.#graph, spec);
-    const edge = edges[index];
-    edge.from = to.from;
-    edge.out = to.out;
-    edge.to = to.to;
-    edge.in = to.in;
-    if (to.constant === true) {
-      edge.constant = to.constant;
+      return can;
     }
     this.#updateGraph(false);
-    return { success: true };
+    return can;
   }
 
   async #canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult> {
