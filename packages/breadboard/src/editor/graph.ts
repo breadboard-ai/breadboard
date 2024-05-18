@@ -2,7 +2,7 @@ import {
   GraphMetadata,
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
-import { fixUpStarEdge, fixupConstantEdge } from "../inspector/edge.js";
+import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
@@ -22,8 +22,10 @@ import {
   RejectionReason,
   EditSpec,
   EditResult,
+  AddEdgeSpec,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
+import { AddEdge } from "./operations/addedge.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -163,7 +165,7 @@ export class Graph implements EditableGraph {
       case "removenode":
         return this.#removeNode(edit.id);
       case "addedge":
-        return this.#addEdge(edit.edge, edit.strict);
+        return this.#addEdge(edit);
       case "removeedge":
         return this.#removeEdge(edit.edge);
       case "changeedge":
@@ -295,97 +297,19 @@ export class Graph implements EditableGraph {
   }
 
   async #canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
-    const inspector = this.#inspector;
-    if (inspector.hasEdge(spec)) {
-      return {
-        success: false,
-        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" already exists`,
-      };
-    }
-    const from = inspector.nodeById(spec.from);
-    if (!from) {
-      return {
-        success: false,
-        error: `Node with id "${spec.from}" does not exist, but is required as the "from" part of the edge`,
-      };
-    }
-    const to = inspector.nodeById(spec.to);
-    if (!to) {
-      return {
-        success: false,
-        error: `Node with id "${spec.to}" does not exist, but is required as the "to" part of the edge`,
-      };
-    }
-
-    let error: string | null = null;
-    if (spec.out === "*" && spec.in !== "*") {
-      if (spec.in !== "") {
-        spec = { ...spec, out: spec.in };
-      }
-      error = `A "*" output port cannot be connected to a named or control input port`;
-    } else if (spec.out === "" && spec.in !== "") {
-      error = `A control input port cannot be connected to a named or "*" output part`;
-    } else if (spec.in === "*" && spec.out !== "*") {
-      if (spec.out !== "") {
-        spec = { ...spec, in: spec.out };
-      }
-      error = `A named input port cannot be connected to a "*" output port`;
-    } else if (spec.in === "" && spec.out !== "") {
-      error = `A named input port cannot be connected to a control output port`;
-    }
-    const fromPorts = (await from.ports()).outputs;
-    if (fromPorts.fixed) {
-      const found = fromPorts.ports.find((port) => port.name === spec.out);
-      if (!found) {
-        error ??= `Node with id "${spec.from}" does not have an output port named "${spec.out}"`;
-        return {
-          success: false,
-          error,
-        };
-      }
-    }
-    const toPorts = (await to.ports()).inputs;
-    if (toPorts.fixed) {
-      const found = toPorts.ports.find((port) => port.name === spec.in);
-      if (!found) {
-        error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
-        return {
-          success: false,
-          error,
-        };
-      }
-    }
-    if (error) {
-      return { success: false, error, alternative: spec };
-    }
-    return { success: true };
+    const operation = new AddEdge(this.#graph, this.#inspector);
+    return operation.can(spec);
   }
 
-  async #addEdge(
-    spec: EditableEdgeSpec,
-    strict: boolean = false
-  ): Promise<EdgeEditResult> {
-    const can = await this.#canAddEdge(spec);
+  async #addEdge(editSpec: AddEdgeSpec): Promise<EdgeEditResult> {
+    const operation = new AddEdge(this.#graph, this.#inspector);
+    const can = await operation.do(editSpec);
     if (!can.success) {
-      if (!can.alternative || strict) {
-        this.#dispatchNoChange(can.error);
-        return can;
-      }
-      if (can.alternative) {
-        const canAlternative = await this.#canAddEdge(can.alternative);
-        if (!canAlternative.success) {
-          this.#dispatchNoChange(canAlternative.error);
-          return canAlternative;
-        }
-        spec = can.alternative;
-      }
+      this.#dispatchNoChange(can.error);
+      return can;
     }
-    spec = fixUpStarEdge(spec);
-    spec = fixupConstantEdge(spec);
-    this.#graph.edges.push(spec);
-    this.#inspector.edgeStore.add(spec);
     this.#updateGraph(false);
-    return { success: true };
+    return can;
   }
 
   async #canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
