@@ -38,6 +38,12 @@ export class ChangeConfiguration implements EditOperation {
       );
     }
     const { id, configuration } = spec;
+    if (!configuration) {
+      return {
+        success: false,
+        error: "Configuration wasn't supplied.",
+      };
+    }
     const can = await this.can(id);
     if (!can.success) {
       return can;

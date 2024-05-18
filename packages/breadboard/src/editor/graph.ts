@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import { GraphDescriptor, GraphIdentifier } from "../types.js";
@@ -142,20 +141,12 @@ export class Graph implements EditableGraph {
         return this.#removeEdge(edit);
       case "changeedge":
         return this.#changeEdge(edit);
-      case "changeconfiguration": {
-        if (!edit.configuration) {
-          return {
-            success: false,
-            error: "Configuration wasn't supplied.",
-          };
-        }
+      case "changeconfiguration":
         return this.#changeConfiguration(edit);
-      }
-      case "changemetadata": {
+      case "changemetadata":
         return this.#changeMetadata(edit);
-      }
       case "changegraphmetadata":
-        return this.#changeGraphMetadata(edit.metadata);
+        return this.#changeGraphMetadata(edit);
       default: {
         return {
           success: false,
@@ -299,12 +290,19 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #changeGraphMetadata(
-    metadata: GraphMetadata
-  ): Promise<SingleEditResult> {
-    this.#graph.metadata = metadata;
-    this.#updateGraph(false);
-    return { success: true };
+  async #changeGraphMetadata(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new ChangeMetadata(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
+    if (can.nochange) {
+      this.#dispatchNoChange();
+      return can;
+    }
+    this.#updateGraph(!!can.visualOnly);
+    return can;
   }
 
   getGraph(id: GraphIdentifier) {
