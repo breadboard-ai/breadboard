@@ -11,17 +11,16 @@ export class EditHistoryManager {
   #index: number = 0;
 
   current(): GraphDescriptor | null {
-    return this.history[this.#index] || null;
+    return structuredClone(this.history[this.#index] || null);
   }
 
   add(graph: GraphDescriptor) {
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
     // Insert new entry.
-    this.history.push(graph);
+    this.history.push(structuredClone(graph));
     // Point #index the new entry.
     this.#index = this.history.length - 1;
-    console.log("🌻 add", this);
   }
 
   back(): GraphDescriptor | null {
