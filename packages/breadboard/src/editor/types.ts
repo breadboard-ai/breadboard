@@ -115,6 +115,10 @@ export type RemoveGraphSpec = {
   id: GraphIdentifier;
 };
 
+export type EditOperation = {
+  do(edit: EditSpec): Promise<EditResult>;
+};
+
 export type EditSpec =
   | AddNodeSpec
   | RemoveNodeSpec

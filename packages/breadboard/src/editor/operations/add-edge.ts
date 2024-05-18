@@ -5,11 +5,16 @@
  */
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
-import { EditResult, EditSpec, EditableEdgeSpec } from "../types.js";
+import {
+  EditOperation,
+  EditResult,
+  EditSpec,
+  EditableEdgeSpec,
+} from "../types.js";
 import { InspectableGraphWithStore } from "../../inspector/types.js";
 import { fixUpStarEdge, fixupConstantEdge } from "../../inspector/edge.js";
 
-export class AddEdge {
+export class AddEdge implements EditOperation {
   #graph: GraphDescriptor;
   #inspector: InspectableGraphWithStore;
 
@@ -96,13 +101,11 @@ export class AddEdge {
     const can = await this.can(edge);
     if (!can.success) {
       if (!can.alternative || strict) {
-        // this.#dispatchNoChange(can.error);
         return can;
       }
       if (can.alternative) {
         const canAlternative = await this.can(can.alternative);
         if (!canAlternative.success) {
-          // this.#dispatchNoChange(canAlternative.error);
           return canAlternative;
         }
         edge = can.alternative;

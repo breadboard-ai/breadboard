@@ -25,7 +25,8 @@ import {
   AddEdgeSpec,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
-import { AddEdge } from "./operations/addedge.js";
+import { AddEdge } from "./operations/add-edge.js";
+import { AddNode } from "./operations/add-node.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -63,16 +64,6 @@ export class Graph implements EditableGraph {
   #makeIndependent() {
     this.#parent = null;
     this.#graphs = {};
-  }
-
-  #isValidType(type: NodeTypeIdentifier) {
-    return (this.#validTypes ??= new Set(
-      this.#inspector.kits().flatMap((kit) => {
-        return kit.nodeTypes.map((type) => {
-          return type.type();
-        });
-      })
-    )).has(type);
   }
 
   #findEdgeIndex(spec: EditableEdgeSpec) {
@@ -161,7 +152,7 @@ export class Graph implements EditableGraph {
     const edit = edits[0];
     switch (edit.type) {
       case "addnode":
-        return this.#addNode(edit.node);
+        return this.#addNode(edit);
       case "removenode":
         return this.#removeNode(edit.id);
       case "addedge":
@@ -205,12 +196,16 @@ export class Graph implements EditableGraph {
     }
     const edit = edits[0];
     switch (edit.type) {
-      case "addnode":
-        return this.#canAddNode(edit.node);
+      case "addnode": {
+        const operation = new AddNode(this.#graph, this.#inspector);
+        return operation.can(edit.node);
+      }
       case "removenode":
         return this.#canRemoveNode(edit.id);
-      case "addedge":
-        return this.#canAddEdge(edit.edge);
+      case "addedge": {
+        const operation = new AddEdge(this.#graph, this.#inspector);
+        return operation.can(edit.edge);
+      }
       case "removeedge":
         return this.#canRemoveEdge(edit.edge);
       case "changeconfiguration":
@@ -230,37 +225,15 @@ export class Graph implements EditableGraph {
     }
   }
 
-  async #canAddNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
-    const duplicate = !!this.#inspector.nodeById(spec.id);
-    if (duplicate) {
-      return {
-        success: false,
-        error: `Unable to add node: a node with id "${spec.id}" already exists`,
-      };
-    }
-
-    const validType = this.#isValidType(spec.type);
-    if (!validType) {
-      return {
-        success: false,
-        error: `Unable to add node: node type "${spec.type}" is not a known type`,
-      };
-    }
-
-    return { success: true };
-  }
-
-  async #addNode(spec: EditableNodeSpec): Promise<SingleEditResult> {
-    const can = await this.#canAddNode(spec);
+  async #addNode(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new AddNode(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
     }
-
-    this.#graph.nodes.push(spec);
-    this.#inspector.nodeStore.add(spec);
     this.#updateGraph(false);
-    return { success: true };
+    return can;
   }
 
   async #canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult> {
@@ -294,11 +267,6 @@ export class Graph implements EditableGraph {
     this.#inspector.nodeStore.remove(id);
     this.#updateGraph(false);
     return { success: true };
-  }
-
-  async #canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
-    const operation = new AddEdge(this.#graph, this.#inspector);
-    return operation.can(spec);
   }
 
   async #addEdge(editSpec: AddEdgeSpec): Promise<EdgeEditResult> {
@@ -346,7 +314,8 @@ export class Graph implements EditableGraph {
     }
     const canRemove = await this.#canRemoveEdge(from);
     if (!canRemove.success) return canRemove;
-    const canAdd = await this.#canAddEdge(to);
+    const canAddOp = new AddEdge(this.#graph, this.#inspector);
+    const canAdd = await canAddOp.can(to);
     if (!canAdd.success) return canAdd;
     return { success: true };
   }
