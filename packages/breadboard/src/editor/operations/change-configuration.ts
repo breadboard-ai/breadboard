@@ -4,24 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeIdentifier } from "@google-labs/breadboard-schema/graph.js";
 import {
-  GraphDescriptor,
-  NodeIdentifier,
-} from "@google-labs/breadboard-schema/graph.js";
-import { EditOperation, EditSpec, SingleEditResult } from "../types.js";
-import { InspectableGraphWithStore } from "../../inspector/types.js";
+  EditOperation,
+  EditOperationContext,
+  EditSpec,
+  SingleEditResult,
+} from "../types.js";
+import { InspectableGraph } from "../../inspector/types.js";
 
 export class ChangeConfiguration implements EditOperation {
-  #graph: GraphDescriptor;
-  #inspector: InspectableGraphWithStore;
-
-  constructor(graph: GraphDescriptor, inspector: InspectableGraphWithStore) {
-    this.#graph = graph;
-    this.#inspector = inspector;
-  }
-
-  async can(id: NodeIdentifier): Promise<SingleEditResult> {
-    const node = this.#inspector.nodeById(id);
+  async can(
+    id: NodeIdentifier,
+    inspector: InspectableGraph
+  ): Promise<SingleEditResult> {
+    const node = inspector.nodeById(id);
     if (!node) {
       return {
         success: false,
@@ -31,7 +28,10 @@ export class ChangeConfiguration implements EditOperation {
     return { success: true };
   }
 
-  async do(spec: EditSpec): Promise<SingleEditResult> {
+  async do(
+    spec: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     if (spec.type !== "changeconfiguration") {
       throw new Error(
         `Editor API integrity error: expected type "changeconfiguration", received "${spec.type}" instead.`
@@ -44,11 +44,12 @@ export class ChangeConfiguration implements EditOperation {
         error: "Configuration wasn't supplied.",
       };
     }
-    const can = await this.can(id);
+    const { inspector } = context;
+    const can = await this.can(id, inspector);
     if (!can.success) {
       return can;
     }
-    const node = this.#inspector.nodeById(id);
+    const node = inspector.nodeById(id);
     if (node) {
       node.descriptor.configuration = configuration;
     }

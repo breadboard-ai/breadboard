@@ -10,6 +10,7 @@ import {
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import {
+  GraphStoreMutator,
   InspectableGraph,
   InspectableGraphOptions,
 } from "../inspector/types.js";
@@ -116,8 +117,14 @@ export type RemoveGraphSpec = {
   id: GraphIdentifier;
 };
 
+export type EditOperationContext = {
+  graph: GraphDescriptor;
+  inspector: InspectableGraph;
+  store: GraphStoreMutator;
+};
+
 export type EditOperation = {
-  do(edit: EditSpec): Promise<SingleEditResult>;
+  do(edit: EditSpec, context: EditOperationContext): Promise<SingleEditResult>;
 };
 
 export type EditSpec =

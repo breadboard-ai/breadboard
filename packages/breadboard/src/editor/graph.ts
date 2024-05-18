@@ -27,6 +27,17 @@ import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
 
+const operations = new Map<EditSpec["type"], EditOperation>([
+  ["addnode", new AddNode()],
+  ["removenode", new RemoveNode()],
+  ["addedge", new AddEdge()],
+  ["removeedge", new RemoveEdge()],
+  ["changeedge", new ChangeEdge()],
+  ["changeconfiguration", new ChangeConfiguration()],
+  ["changemetadata", new ChangeMetadata()],
+  ["changegraphmetadata", new ChangeGraphMetadata()],
+]);
+
 export class Graph implements EditableGraph {
   #version = 0;
   #options: EditableGraphOptions;
@@ -132,40 +143,18 @@ export class Graph implements EditableGraph {
       return this.#canEdit(edits);
     }
     const edit = edits[0];
-    let operation: EditOperation;
-    switch (edit.type) {
-      case "addnode":
-        operation = new AddNode(this.#graph, this.#inspector);
-        break;
-      case "removenode":
-        operation = new RemoveNode(this.#graph, this.#inspector);
-        break;
-      case "addedge":
-        operation = new AddEdge(this.#graph, this.#inspector);
-        break;
-      case "removeedge":
-        operation = new RemoveEdge(this.#graph, this.#inspector);
-        break;
-      case "changeedge":
-        operation = new ChangeEdge(this.#graph, this.#inspector);
-        break;
-      case "changeconfiguration":
-        operation = new ChangeConfiguration(this.#graph, this.#inspector);
-        break;
-      case "changemetadata":
-        operation = new ChangeMetadata(this.#graph, this.#inspector);
-        break;
-      case "changegraphmetadata":
-        operation = new ChangeGraphMetadata(this.#graph, this.#inspector);
-        break;
-      default: {
-        return {
-          success: false,
-          error: "Unsupported edit type",
-        };
-      }
+    const operation = operations.get(edit.type);
+    if (!operation) {
+      return {
+        success: false,
+        error: "Unsupported edit type",
+      };
     }
-    const can = await operation.do(edit);
+    const can = await operation.do(edit, {
+      graph: this.#graph,
+      inspector: this.#inspector,
+      store: this.#inspector,
+    });
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -185,32 +174,32 @@ export class Graph implements EditableGraph {
     const edit = edits[0];
     switch (edit.type) {
       case "addnode": {
-        const operation = new AddNode(this.#graph, this.#inspector);
-        return operation.can(edit.node);
+        const operation = new AddNode();
+        return operation.can(edit.node, this.#inspector);
       }
       case "removenode": {
-        const operation = new RemoveNode(this.#graph, this.#inspector);
-        return operation.can(edit.id);
+        const operation = new RemoveNode();
+        return operation.can(edit.id, this.#inspector);
       }
       case "addedge": {
-        const operation = new AddEdge(this.#graph, this.#inspector);
-        return operation.can(edit.edge);
+        const operation = new AddEdge();
+        return operation.can(edit.edge, this.#inspector);
       }
       case "removeedge": {
-        const operation = new RemoveEdge(this.#graph, this.#inspector);
-        return operation.can(edit.edge);
+        const operation = new RemoveEdge();
+        return operation.can(edit.edge, this.#inspector);
       }
       case "changeconfiguration": {
-        const operation = new ChangeConfiguration(this.#graph, this.#inspector);
-        return operation.can(edit.id);
+        const operation = new ChangeConfiguration();
+        return operation.can(edit.id, this.#inspector);
       }
       case "changemetadata": {
-        const operation = new ChangeMetadata(this.#graph, this.#inspector);
-        return operation.can(edit.id);
+        const operation = new ChangeMetadata();
+        return operation.can(edit.id, this.#inspector);
       }
       case "changeedge": {
-        const operation = new ChangeEdge(this.#graph, this.#inspector);
-        return operation.can(edit.from, edit.to);
+        const operation = new ChangeEdge();
+        return operation.can(edit.from, edit.to, this.#inspector);
       }
       case "changegraphmetadata":
         return { success: true };

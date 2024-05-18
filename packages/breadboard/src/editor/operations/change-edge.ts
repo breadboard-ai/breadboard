@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
-import { InspectableGraphWithStore } from "../../inspector/types.js";
+import { InspectableGraph } from "../../inspector/types.js";
 import {
   EdgeEditResult,
   EditOperation,
+  EditOperationContext,
   EditSpec,
   EditableEdgeSpec,
   SingleEditResult,
@@ -19,31 +19,27 @@ import { edgesEqual, findEdgeIndex } from "../edge.js";
 import { fixUpStarEdge } from "../../inspector/edge.js";
 
 export class ChangeEdge implements EditOperation {
-  #graph: GraphDescriptor;
-  #inspector: InspectableGraphWithStore;
-
-  constructor(graph: GraphDescriptor, inspector: InspectableGraphWithStore) {
-    this.#graph = graph;
-    this.#inspector = inspector;
-  }
-
   async can(
     from: EditableEdgeSpec,
-    to: EditableEdgeSpec
+    to: EditableEdgeSpec,
+    inspector: InspectableGraph
   ): Promise<EdgeEditResult> {
     if (edgesEqual(from, to)) {
       return { success: true };
     }
-    const canRemoveOp = new RemoveEdge(this.#graph, this.#inspector);
-    const canRemove = await canRemoveOp.can(from);
+    const canRemoveOp = new RemoveEdge();
+    const canRemove = await canRemoveOp.can(from, inspector);
     if (!canRemove.success) return canRemove;
-    const canAddOp = new AddEdge(this.#graph, this.#inspector);
-    const canAdd = await canAddOp.can(to);
+    const canAddOp = new AddEdge();
+    const canAdd = await canAddOp.can(to, inspector);
     if (!canAdd.success) return canAdd;
     return { success: true };
   }
 
-  async do(spec: EditSpec): Promise<SingleEditResult> {
+  async do(
+    spec: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     if (spec.type !== "changeedge") {
       throw new Error(
         `Editor API integrity error: expected type "changeedge", received "${spec.type}" instead.`
@@ -53,7 +49,8 @@ export class ChangeEdge implements EditOperation {
     let to = spec.to;
     const strict = spec.strict;
 
-    const can = await this.can(from, to);
+    const { graph, inspector } = context;
+    const can = await this.can(from, to, inspector);
     let alternativeChosen = false;
     if (!can.success) {
       if (!can.alternative || strict) {
@@ -73,8 +70,8 @@ export class ChangeEdge implements EditOperation {
       return { success: true, nochange: true };
     }
     const fixedUpEdge = fixUpStarEdge(from);
-    const edges = this.#graph.edges;
-    const index = findEdgeIndex(this.#graph, fixedUpEdge);
+    const edges = graph.edges;
+    const index = findEdgeIndex(graph, fixedUpEdge);
     const edge = edges[index];
     edge.from = to.from;
     edge.out = to.out;

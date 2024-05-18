@@ -4,25 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import {
   EditOperation,
+  EditOperationContext,
   EditSpec,
   EditableNodeSpec,
   SingleEditResult,
 } from "../types.js";
-import { InspectableGraphWithStore } from "../../inspector/types.js";
+import { InspectableGraph } from "../../inspector/types.js";
 
 export class AddNode implements EditOperation {
-  #graph: GraphDescriptor;
-  #inspector: InspectableGraphWithStore;
-
-  constructor(graph: GraphDescriptor, inspector: InspectableGraphWithStore) {
-    this.#graph = graph;
-    this.#inspector = inspector;
-  }
-  async can(spec: EditableNodeSpec): Promise<SingleEditResult> {
-    const duplicate = !!this.#inspector.nodeById(spec.id);
+  async can(
+    spec: EditableNodeSpec,
+    inspector: InspectableGraph
+  ): Promise<SingleEditResult> {
+    const duplicate = !!inspector.nodeById(spec.id);
     if (duplicate) {
       return {
         success: false,
@@ -30,7 +26,7 @@ export class AddNode implements EditOperation {
       };
     }
 
-    const validType = !!this.#inspector.typeById(spec.type);
+    const validType = !!inspector.typeById(spec.type);
     if (!validType) {
       return {
         success: false,
@@ -41,20 +37,24 @@ export class AddNode implements EditOperation {
     return { success: true };
   }
 
-  async do(spec: EditSpec): Promise<SingleEditResult> {
+  async do(
+    spec: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     if (spec.type !== "addnode") {
       throw new Error(
         `Editor API integrity error: expected type "addnode", received "${spec.type}" instead.`
       );
     }
     const node = spec.node;
-    const can = await this.can(node);
+    const { graph, inspector, store } = context;
+    const can = await this.can(node, inspector);
     if (!can.success) {
       return can;
     }
 
-    this.#graph.nodes.push(node);
-    this.#inspector.nodeStore.add(node);
+    graph.nodes.push(node);
+    store.nodeStore.add(node);
     return { success: true };
   }
 }

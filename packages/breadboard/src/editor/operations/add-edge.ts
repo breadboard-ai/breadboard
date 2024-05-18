@@ -4,27 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import {
   EditOperation,
+  EditOperationContext,
   EditResult,
   EditSpec,
   EditableEdgeSpec,
 } from "../types.js";
-import { InspectableGraphWithStore } from "../../inspector/types.js";
+import { InspectableGraph } from "../../inspector/types.js";
 import { fixUpStarEdge, fixupConstantEdge } from "../../inspector/edge.js";
 
 export class AddEdge implements EditOperation {
-  #graph: GraphDescriptor;
-  #inspector: InspectableGraphWithStore;
-
-  constructor(graph: GraphDescriptor, inspector: InspectableGraphWithStore) {
-    this.#graph = graph;
-    this.#inspector = inspector;
-  }
-
-  async can(edge: EditableEdgeSpec): Promise<EditResult> {
-    const inspector = this.#inspector;
+  async can(
+    edge: EditableEdgeSpec,
+    inspector: InspectableGraph
+  ): Promise<EditResult> {
     if (inspector.hasEdge(edge)) {
       return {
         success: false,
@@ -90,7 +84,7 @@ export class AddEdge implements EditOperation {
     return { success: true };
   }
 
-  async do(spec: EditSpec): Promise<EditResult> {
+  async do(spec: EditSpec, context: EditOperationContext): Promise<EditResult> {
     if (spec.type !== "addedge") {
       throw new Error(
         `Editor API integrity error: expected type "addedge", received "${spec.type}" instead.`
@@ -98,13 +92,14 @@ export class AddEdge implements EditOperation {
     }
     let edge = spec.edge;
     const strict = spec.strict;
-    const can = await this.can(edge);
+    const { graph, inspector, store } = context;
+    const can = await this.can(edge, inspector);
     if (!can.success) {
       if (!can.alternative || strict) {
         return can;
       }
       if (can.alternative) {
-        const canAlternative = await this.can(can.alternative);
+        const canAlternative = await this.can(can.alternative, inspector);
         if (!canAlternative.success) {
           return canAlternative;
         }
@@ -114,8 +109,8 @@ export class AddEdge implements EditOperation {
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
     // TODO: Figure out how to make this work in multi-edit mode.
-    this.#inspector.edgeStore.add(edge);
-    this.#graph.edges.push(edge);
+    store.edgeStore.add(edge);
+    graph.edges.push(edge);
     return { success: true };
   }
 }
