@@ -86,13 +86,13 @@ export type ChangeEdgeSpec = {
 export type ChangeConfigurationSpec = {
   type: "changeconfiguration";
   id: NodeIdentifier;
-  configuration?: NodeConfiguration;
+  configuration: NodeConfiguration;
 };
 
 export type ChangeMetadataSpec = {
   type: "changemetadata";
   id: NodeIdentifier;
-  metadata?: NodeMetadata;
+  metadata: NodeMetadata;
 };
 
 export type ChangeGraphMetadataSpec = {

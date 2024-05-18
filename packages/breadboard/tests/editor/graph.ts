@@ -474,7 +474,7 @@ test("editor API does not allow connecting a specific output port to a star port
 
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
   const result = await graph.edit(
-    [{ type: "addedge", edge: edgeSpec, strict: false }],
+    [{ type: "addedge", edge: edgeSpec, strict: true }],
     true
   );
   t.false(result.success);
@@ -526,7 +526,7 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
   {
     const graph = testEditGraph();
     const result = await graph.edit(
-      [{ type: "addedge", edge: edgeSpec, strict: false }],
+      [{ type: "addedge", edge: edgeSpec, strict: true }],
       true
     );
     if (result.success) {
