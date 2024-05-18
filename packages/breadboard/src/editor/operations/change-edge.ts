@@ -6,7 +6,6 @@
 
 import { InspectableGraph } from "../../inspector/types.js";
 import {
-  EdgeEditResult,
   EditOperation,
   EditOperationContext,
   EditSpec,
@@ -23,7 +22,7 @@ export class ChangeEdge implements EditOperation {
     from: EditableEdgeSpec,
     to: EditableEdgeSpec,
     inspector: InspectableGraph
-  ): Promise<EdgeEditResult> {
+  ): Promise<SingleEditResult> {
     if (edgesEqual(from, to)) {
       return { success: true };
     }
