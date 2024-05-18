@@ -479,10 +479,10 @@ export class Main extends LitElement {
 
     if (evt.key === "z" && evt.metaKey) {
       if (evt.shiftKey) {
-        // TODO: Redo.
+        this.#getEditor()?.redo();
         return;
       }
-      // TODO: Undo.
+      this.#getEditor()?.undo();
       return;
     }
   }

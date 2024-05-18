@@ -209,6 +209,14 @@ export class Graph implements EditableGraph {
     return { success: true, log };
   }
 
+  async undo(): Promise<void> {
+    console.log("🌻 undo called");
+  }
+
+  async redo(): Promise<void> {
+    console.log("🌻 redo called");
+  }
+
   getGraph(id: GraphIdentifier) {
     if (!this.#graphs) {
       throw new Error("Embedded graphs can't contain subgraphs.");

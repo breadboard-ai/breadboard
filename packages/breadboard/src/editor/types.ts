@@ -156,7 +156,22 @@ export type EditableGraph = {
    */
   parent(): EditableGraph | null;
 
+  /**
+   * Performs an edit operation on the graph.
+   * @param edits -- a list of changes to apply
+   * @param dryRun -- if true, perform the edit, but discard the changes.
+   */
   edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
+
+  /**
+   * Undoes the last change or does nothing if there isn't one.
+   */
+  undo(): Promise<void>;
+
+  /**
+   * Re-does the change that was undone or does nothing if there isn't one.
+   */
+  redo(): Promise<void>;
 
   /**
    * Retrieves a subgraph of this graph.
