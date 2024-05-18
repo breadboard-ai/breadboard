@@ -5,6 +5,7 @@
  */
 
 import type {
+  EditSpec,
   GraphDescriptor,
   InspectableEdge,
   NodeConfiguration,
@@ -406,6 +407,16 @@ export class NodeMoveEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(NodeMoveEvent.eventName, { ...eventInit });
+  }
+}
+
+export class MultiEditEvent extends Event {
+  static eventName = "bbmultiedit";
+  constructor(
+    public readonly edits: EditSpec[],
+    public readonly subGraphId: string | null = null
+  ) {
+    super(MultiEditEvent.eventName, { ...eventInit });
   }
 }
 

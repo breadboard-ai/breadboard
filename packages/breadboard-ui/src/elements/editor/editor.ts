@@ -17,6 +17,7 @@ import {
   NodeDescriptor,
   NodeValue,
   Edge,
+  EditSpec,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -28,6 +29,7 @@ import {
   GraphNodeMoveEvent,
   GraphNodePositionsCalculatedEvent,
   KitNodeChosenEvent,
+  MultiEditEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
   NodeMoveEvent,
@@ -622,6 +624,7 @@ export class Editor extends LitElement {
           });
 
           const remappedNodeIds = new Map<string, string>();
+          const edits: EditSpec[] = [];
           for (const node of graph.nodes) {
             if (!this.#isNodeDescriptor(node)) {
               continue;
@@ -666,59 +669,46 @@ export class Editor extends LitElement {
 
             this.#graph.setNodeLayoutPosition(node.id, position, false);
             this.#graph.addToAutoSelect(node.id);
-            this.dispatchEvent(
-              new NodeCreateEvent(
-                node.id,
-                node.type,
-                this.subGraphId,
-                node.configuration ?? null,
-                node.metadata ?? null
-              )
-            );
+            edits.push({ type: "addnode", node });
           }
 
-          // We currently have to wait a frame for the node creation to take
-          // place, after which we can try to add the new edges.
-          // TODO: Replace this with a multi-change
-          requestAnimationFrame(() => {
-            const currentGraph = this.graph;
-            if (!currentGraph) {
-              return;
+          const currentGraph = this.graph;
+          if (!currentGraph) {
+            return;
+          }
+
+          for (const edge of graph.edges) {
+            if (!this.#isEdge(edge)) {
+              continue;
             }
 
-            for (const edge of graph.edges) {
-              if (!this.#isEdge(edge)) {
-                continue;
-              }
+            const newEdge = {
+              from: remappedNodeIds.get(edge.from) ?? edge.from,
+              to: remappedNodeIds.get(edge.to) ?? edge.to,
+              in: edge.in ?? "MISSING_WIRE",
+              out: edge.out ?? "MISSING_WIRE",
+            };
 
-              const newEdge = {
-                from: remappedNodeIds.get(edge.from) ?? edge.from,
-                to: remappedNodeIds.get(edge.to) ?? edge.to,
-                in: edge.in ?? "MISSING_WIRE",
-                out: edge.out ?? "MISSING_WIRE",
-              };
-
-              const existingEdge = currentGraph.edges.find(
-                (graphEdge) =>
-                  graphEdge.from === newEdge.from &&
-                  graphEdge.to === newEdge.to &&
-                  graphEdge.out === newEdge.out &&
-                  graphEdge.in === newEdge.in
-              );
-              if (existingEdge) {
-                continue;
-              }
-
-              if (edge.in === "MISSING_WIRE" || edge.out === "MISSING_WIRE") {
-                continue;
-              }
-
-              this.#graph.addToAutoSelect(edgeToString(newEdge));
-              this.dispatchEvent(
-                new EdgeChangeEvent("add", newEdge, undefined, this.subGraphId)
-              );
+            const existingEdge = currentGraph.edges.find(
+              (graphEdge) =>
+                graphEdge.from === newEdge.from &&
+                graphEdge.to === newEdge.to &&
+                graphEdge.out === newEdge.out &&
+                graphEdge.in === newEdge.in
+            );
+            if (existingEdge) {
+              continue;
             }
-          });
+
+            if (edge.in === "MISSING_WIRE" || edge.out === "MISSING_WIRE") {
+              continue;
+            }
+
+            this.#graph.addToAutoSelect(edgeToString(newEdge));
+            edits.push({ type: "addedge", edge: newEdge, strict: true });
+          }
+
+          this.dispatchEvent(new MultiEditEvent(edits, this.subGraphId));
         } catch (err) {
           // Not JSON data - ignore.
           return;
