@@ -6,7 +6,6 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import {
-  EdgeEditResult,
   EditOperation,
   EditSpec,
   EditableNodeSpec,

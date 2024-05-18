@@ -10,7 +10,6 @@ import {
   GraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
-  NodeTypeIdentifier,
 } from "../types.js";
 import {
   EdgeEditResult,
@@ -18,7 +17,6 @@ import {
   EditableEdgeSpec,
   EditableGraph,
   EditableGraphOptions,
-  EditableNodeSpec,
   RejectionReason,
   EditSpec,
   EditResult,
@@ -27,12 +25,12 @@ import {
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddNode } from "./operations/add-node.js";
+import { RemoveNode } from "./operations/remove-node.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
-  #validTypes?: Set<string>;
   #graph: GraphDescriptor;
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
@@ -154,7 +152,7 @@ export class Graph implements EditableGraph {
       case "addnode":
         return this.#addNode(edit);
       case "removenode":
-        return this.#removeNode(edit.id);
+        return this.#removeNode(edit);
       case "addedge":
         return this.#addEdge(edit);
       case "removeedge":
@@ -200,8 +198,10 @@ export class Graph implements EditableGraph {
         const operation = new AddNode(this.#graph, this.#inspector);
         return operation.can(edit.node);
       }
-      case "removenode":
-        return this.#canRemoveNode(edit.id);
+      case "removenode": {
+        const operation = new RemoveNode(this.#graph, this.#inspector);
+        return operation.can(edit.id);
+      }
       case "addedge": {
         const operation = new AddEdge(this.#graph, this.#inspector);
         return operation.can(edit.edge);
@@ -236,37 +236,16 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #canRemoveNode(id: NodeIdentifier): Promise<SingleEditResult> {
-    const exists = !!this.#inspector.nodeById(id);
-    if (!exists) {
-      return {
-        success: false,
-        error: `Unable to remove node: node with id "${id}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  async #removeNode(id: NodeIdentifier): Promise<SingleEditResult> {
-    const can = await this.#canRemoveNode(id);
+  async #removeNode(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new RemoveNode(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
     }
 
-    // Remove any edges that are connected to the removed node.
-    this.#graph.edges = this.#graph.edges.filter((edge) => {
-      const shouldRemove = edge.from === id || edge.to === id;
-      if (shouldRemove) {
-        this.#inspector.edgeStore.remove(edge);
-      }
-      return !shouldRemove;
-    });
-    // Remove the node from the graph.
-    this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
-    this.#inspector.nodeStore.remove(id);
     this.#updateGraph(false);
-    return { success: true };
+    return can;
   }
 
   async #addEdge(editSpec: AddEdgeSpec): Promise<EdgeEditResult> {
