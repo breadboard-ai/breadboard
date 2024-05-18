@@ -453,6 +453,7 @@ test("editor API allows changing edge", async (t) => {
       type: "changeedge",
       from: { from: "node0", out: "out", to: "node0", in: "in" },
       to: { from: "node0", out: "out", to: "node2", in: "in" },
+      strict: false,
     },
   ]);
 

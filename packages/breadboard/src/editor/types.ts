@@ -10,6 +10,7 @@ import {
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import {
+  GraphStoreMutator,
   InspectableGraph,
   InspectableGraphOptions,
 } from "../inspector/types.js";
@@ -79,6 +80,7 @@ export type ChangeEdgeSpec = {
   type: "changeedge";
   from: EditableEdgeSpec;
   to: EditableEdgeSpec;
+  strict: boolean;
 };
 
 export type ChangeConfigurationSpec = {
@@ -113,6 +115,16 @@ export type ReplaceGraphSpec = {
 export type RemoveGraphSpec = {
   type: "removegraph";
   id: GraphIdentifier;
+};
+
+export type EditOperationContext = {
+  graph: GraphDescriptor;
+  inspector: InspectableGraph;
+  store: GraphStoreMutator;
+};
+
+export type EditOperation = {
+  do(edit: EditSpec, context: EditOperationContext): Promise<SingleEditResult>;
 };
 
 export type EditSpec =
@@ -203,6 +215,16 @@ export type SingleEditResult =
     }
   | {
       success: true;
+      /**
+       * Indicates that the edit was successful, and
+       * resulted in no change.
+       */
+      nochange?: boolean;
+      /**
+       * Indicates that this edit only involved visual
+       * changes.
+       */
+      visualOnly?: boolean;
     };
 
 export type EdgeEditResult =
