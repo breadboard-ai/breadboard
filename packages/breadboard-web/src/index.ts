@@ -1152,6 +1152,20 @@ export class Main extends LitElement {
               })
             );
           }}
+          @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
+            const { edits: spec, subGraphId } = evt;
+            let editableGraph = this.#getEditor();
+            if (editableGraph && subGraphId) {
+              editableGraph = editableGraph.getGraph(subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to multi-edit; no active graph");
+              return;
+            }
+
+            editableGraph.edit(spec);
+          }}
           @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
             const { id, nodeType, metadata, configuration } = evt;
             const newNode = {
