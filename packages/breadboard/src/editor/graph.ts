@@ -105,6 +105,13 @@ export class Graph implements EditableGraph {
     );
   }
 
+  #rollbackGraph(checkpoint: GraphDescriptor, error: string) {
+    this.#graph = checkpoint;
+    // TODO: Handle subgraphs.
+    this.#inspector.resetGraph(this.#graph);
+    this.#dispatchNoChange(error);
+  }
+
   #dispatchNoChange(error?: string) {
     if (this.#parent) {
       this.#parent.#dispatchNoChange(error);
@@ -151,13 +158,11 @@ export class Graph implements EditableGraph {
   }
 
   async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
-    if (edits.length > 1) {
-      throw new Error("Multi-edit is not yet implemented");
-    }
     let context: EditOperationContext;
 
+    const checkpoint = structuredClone(this.#graph);
     if (dryRun) {
-      const graph = structuredClone(this.#graph);
+      const graph = checkpoint;
       const inspector = inspectableGraph(graph, this.#options);
       context = {
         graph,
@@ -192,8 +197,7 @@ export class Graph implements EditableGraph {
       }
     }
     if (error) {
-      // TODO: Rollback
-      !dryRun && this.#dispatchNoChange(error);
+      !dryRun && this.#rollbackGraph(checkpoint, error);
       return { success: false, log, error };
     }
 
