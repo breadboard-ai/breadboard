@@ -34,6 +34,7 @@ import { RemoveNode } from "./operations/remove-node.js";
 import { edgesEqual, findEdgeIndex } from "./edge.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
 import { ChangeEdge } from "./operations/change-edge.js";
+import { ChangeConfiguration } from "./operations/change-configuration.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -158,7 +159,7 @@ export class Graph implements EditableGraph {
             error: "Configuration wasn't supplied.",
           };
         }
-        return this.#changeConfiguration(edit.id, edit.configuration);
+        return this.#changeConfiguration(edit);
       }
       case "changemetadata": {
         if (!edit.metadata) {
@@ -202,8 +203,10 @@ export class Graph implements EditableGraph {
         const operation = new RemoveEdge(this.#graph, this.#inspector);
         return operation.can(edit.edge);
       }
-      case "changeconfiguration":
-        return this.#canChangeConfiguration(edit.id);
+      case "changeconfiguration": {
+        const operation = new ChangeConfiguration(this.#graph, this.#inspector);
+        return operation.can(edit.id);
+      }
       case "changemetadata":
         return this.#canChangeMetadata(edit.id);
       case "changeedge": {
@@ -280,32 +283,19 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #canChangeConfiguration(id: NodeIdentifier): Promise<SingleEditResult> {
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      return {
-        success: false,
-        error: `Unable to update configuration: node with id "${id}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  async #changeConfiguration(
-    id: NodeIdentifier,
-    configuration: NodeConfiguration
-  ): Promise<SingleEditResult> {
-    const can = await this.#canChangeConfiguration(id);
+  async #changeConfiguration(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new ChangeConfiguration(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
     }
-    const node = this.#inspector.nodeById(id);
-    if (node) {
-      node.descriptor.configuration = configuration;
+    if (can.nochange) {
+      this.#dispatchNoChange();
+      return can;
     }
     this.#updateGraph(false);
-    return { success: true };
+    return can;
   }
 
   async #canChangeMetadata(id: NodeIdentifier): Promise<SingleEditResult> {
