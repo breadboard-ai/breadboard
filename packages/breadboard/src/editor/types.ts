@@ -117,7 +117,7 @@ export type RemoveGraphSpec = {
 };
 
 export type EditOperation = {
-  do(edit: EditSpec): Promise<EditResult>;
+  do(edit: EditSpec): Promise<SingleEditResult>;
 };
 
 export type EditSpec =

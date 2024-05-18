@@ -15,6 +15,7 @@ import {
   RejectionReason,
   EditSpec,
   EditResult,
+  EditOperation,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -24,6 +25,7 @@ import { RemoveEdge } from "./operations/remove-edge.js";
 import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
+import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -130,23 +132,32 @@ export class Graph implements EditableGraph {
       return this.#canEdit(edits);
     }
     const edit = edits[0];
+    let operation: EditOperation;
     switch (edit.type) {
       case "addnode":
-        return this.#addNode(edit);
+        operation = new AddNode(this.#graph, this.#inspector);
+        break;
       case "removenode":
-        return this.#removeNode(edit);
+        operation = new RemoveNode(this.#graph, this.#inspector);
+        break;
       case "addedge":
-        return this.#addEdge(edit);
+        operation = new AddEdge(this.#graph, this.#inspector);
+        break;
       case "removeedge":
-        return this.#removeEdge(edit);
+        operation = new RemoveEdge(this.#graph, this.#inspector);
+        break;
       case "changeedge":
-        return this.#changeEdge(edit);
+        operation = new ChangeEdge(this.#graph, this.#inspector);
+        break;
       case "changeconfiguration":
-        return this.#changeConfiguration(edit);
+        operation = new ChangeConfiguration(this.#graph, this.#inspector);
+        break;
       case "changemetadata":
-        return this.#changeMetadata(edit);
+        operation = new ChangeMetadata(this.#graph, this.#inspector);
+        break;
       case "changegraphmetadata":
-        return this.#changeGraphMetadata(edit);
+        operation = new ChangeGraphMetadata(this.#graph, this.#inspector);
+        break;
       default: {
         return {
           success: false,
@@ -154,6 +165,17 @@ export class Graph implements EditableGraph {
         };
       }
     }
+    const can = await operation.do(edit);
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
+    if (can.nochange) {
+      this.#dispatchNoChange();
+      return can;
+    }
+    this.#updateGraph(!!can.visualOnly);
+    return can;
   }
 
   async #canEdit(edits: EditSpec[]): Promise<EdgeEditResult> {
@@ -199,110 +221,6 @@ export class Graph implements EditableGraph {
         };
       }
     }
-  }
-
-  async #addNode(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new AddNode(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    this.#updateGraph(false);
-    return can;
-  }
-
-  async #removeNode(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new RemoveNode(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-
-    this.#updateGraph(false);
-    return can;
-  }
-
-  async #addEdge(spec: EditSpec): Promise<EdgeEditResult> {
-    const operation = new AddEdge(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    this.#updateGraph(false);
-    return can;
-  }
-  async #removeEdge(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new RemoveEdge(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    this.#updateGraph(false);
-    return can;
-  }
-
-  async #changeEdge(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new ChangeEdge(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    if (can.nochange) {
-      this.#dispatchNoChange();
-      return can;
-    }
-    this.#updateGraph(false);
-    return can;
-  }
-
-  async #changeConfiguration(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new ChangeConfiguration(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    if (can.nochange) {
-      this.#dispatchNoChange();
-      return can;
-    }
-    this.#updateGraph(false);
-    return can;
-  }
-
-  async #changeMetadata(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new ChangeMetadata(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    if (can.nochange) {
-      this.#dispatchNoChange();
-      return can;
-    }
-    this.#updateGraph(!!can.visualOnly);
-    return can;
-  }
-
-  async #changeGraphMetadata(spec: EditSpec): Promise<SingleEditResult> {
-    const operation = new ChangeMetadata(this.#graph, this.#inspector);
-    const can = await operation.do(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    if (can.nochange) {
-      this.#dispatchNoChange();
-      return can;
-    }
-    this.#updateGraph(!!can.visualOnly);
-    return can;
   }
 
   getGraph(id: GraphIdentifier) {
