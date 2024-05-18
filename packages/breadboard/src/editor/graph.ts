@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   GraphMetadata,
   NodeMetadata,
@@ -20,12 +26,13 @@ import {
   RejectionReason,
   EditSpec,
   EditResult,
-  AddEdgeSpec,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddNode } from "./operations/add-node.js";
 import { RemoveNode } from "./operations/remove-node.js";
+import { edgesEqual, findEdgeIndex } from "./edge.js";
+import { RemoveEdge } from "./operations/remove-edge.js";
 
 export class Graph implements EditableGraph {
   #version = 0;
@@ -62,22 +69,6 @@ export class Graph implements EditableGraph {
   #makeIndependent() {
     this.#parent = null;
     this.#graphs = {};
-  }
-
-  #findEdgeIndex(spec: EditableEdgeSpec) {
-    return this.#graph.edges.findIndex((edge) => {
-      return this.#edgesEqual(spec, edge);
-    });
-  }
-
-  #edgesEqual(a: EditableEdgeSpec, b: EditableEdgeSpec) {
-    return (
-      a.from === b.from &&
-      a.to === b.to &&
-      a.out === b.out &&
-      a.in === b.in &&
-      b.constant === b.constant
-    );
   }
 
   #updateGraph(visualOnly: boolean) {
@@ -156,7 +147,7 @@ export class Graph implements EditableGraph {
       case "addedge":
         return this.#addEdge(edit);
       case "removeedge":
-        return this.#removeEdge(edit.edge);
+        return this.#removeEdge(edit);
       case "changeedge":
         return this.#changeEdge(edit.from, edit.to);
       case "changeconfiguration": {
@@ -206,8 +197,10 @@ export class Graph implements EditableGraph {
         const operation = new AddEdge(this.#graph, this.#inspector);
         return operation.can(edit.edge);
       }
-      case "removeedge":
-        return this.#canRemoveEdge(edit.edge);
+      case "removeedge": {
+        const operation = new RemoveEdge(this.#graph, this.#inspector);
+        return operation.can(edit.edge);
+      }
       case "changeconfiguration":
         return this.#canChangeConfiguration(edit.id);
       case "changemetadata":
@@ -248,9 +241,19 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #addEdge(editSpec: AddEdgeSpec): Promise<EdgeEditResult> {
+  async #addEdge(spec: EditSpec): Promise<EdgeEditResult> {
     const operation = new AddEdge(this.#graph, this.#inspector);
-    const can = await operation.do(editSpec);
+    const can = await operation.do(spec);
+    if (!can.success) {
+      this.#dispatchNoChange(can.error);
+      return can;
+    }
+    this.#updateGraph(false);
+    return can;
+  }
+  async #removeEdge(spec: EditSpec): Promise<SingleEditResult> {
+    const operation = new RemoveEdge(this.#graph, this.#inspector);
+    const can = await operation.do(spec);
     if (!can.success) {
       this.#dispatchNoChange(can.error);
       return can;
@@ -259,39 +262,15 @@ export class Graph implements EditableGraph {
     return can;
   }
 
-  async #canRemoveEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
-    if (!this.#inspector.hasEdge(spec)) {
-      return {
-        success: false,
-        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  async #removeEdge(spec: EditableEdgeSpec): Promise<SingleEditResult> {
-    const can = await this.#canRemoveEdge(spec);
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    spec = fixUpStarEdge(spec);
-    const edges = this.#graph.edges;
-    const index = this.#findEdgeIndex(spec);
-    const edge = edges.splice(index, 1)[0];
-    this.#inspector.edgeStore.remove(edge);
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
   async #canChangeEdge(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec
   ): Promise<EdgeEditResult> {
-    if (this.#edgesEqual(from, to)) {
+    if (edgesEqual(from, to)) {
       return { success: true };
     }
-    const canRemove = await this.#canRemoveEdge(from);
+    const canRemoveOp = new RemoveEdge(this.#graph, this.#inspector);
+    const canRemove = await canRemoveOp.can(from);
     if (!canRemove.success) return canRemove;
     const canAddOp = new AddEdge(this.#graph, this.#inspector);
     const canAdd = await canAddOp.can(to);
@@ -314,7 +293,7 @@ export class Graph implements EditableGraph {
       to = can.alternative;
       alternativeChosen = true;
     }
-    if (this.#edgesEqual(from, to)) {
+    if (edgesEqual(from, to)) {
       if (alternativeChosen) {
         const error = `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`;
         this.#dispatchNoChange(error);
@@ -328,7 +307,7 @@ export class Graph implements EditableGraph {
     }
     const spec = fixUpStarEdge(from);
     const edges = this.#graph.edges;
-    const index = this.#findEdgeIndex(spec);
+    const index = findEdgeIndex(this.#graph, spec);
     const edge = edges[index];
     edge.from = to.from;
     edge.out = to.out;
