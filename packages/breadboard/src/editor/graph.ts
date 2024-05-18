@@ -135,13 +135,10 @@ export class Graph implements EditableGraph {
     return this.#parent;
   }
 
-  async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
-    if (edits.length > 1) {
-      throw new Error("Multi-edit is not yet implemented");
-    }
-    let context: EditOperationContext;
-
-    const edit = edits[0];
+  async #singleEdit(
+    edit: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     const operation = operations.get(edit.type);
     if (!operation) {
       return {
@@ -149,6 +146,16 @@ export class Graph implements EditableGraph {
         error: "Unsupported edit type",
       };
     }
+    return operation.do(edit, context);
+  }
+
+  async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
+    if (edits.length > 1) {
+      throw new Error("Multi-edit is not yet implemented");
+    }
+    let context: EditOperationContext;
+
+    const edit = edits[0];
     if (dryRun) {
       const graph = structuredClone(this.#graph);
       const inspector = inspectableGraph(graph, this.#options);
@@ -164,17 +171,18 @@ export class Graph implements EditableGraph {
         store: this.#inspector,
       };
     }
-    const result = await operation.do(edit, context);
+    const result = await this.#singleEdit(edit, context);
+    const log = [{ edit: edit.type, result }];
     if (!result.success) {
       !dryRun && this.#dispatchNoChange(result.error);
-      return result;
+      return { success: false, log, error: result.error };
     }
     if (result.noChange) {
       !dryRun && this.#dispatchNoChange();
-      return result;
+      return { success: true, log };
     }
     !dryRun && this.#updateGraph(!!result.visualOnly);
-    return result;
+    return { success: true, log };
   }
 
   getGraph(id: GraphIdentifier) {

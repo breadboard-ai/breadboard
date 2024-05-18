@@ -136,7 +136,6 @@ export type EditSpec =
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec;
-export type EditResult = SingleEditResult;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
@@ -231,5 +230,25 @@ export type SingleEditResult =
        */
       visualOnly?: boolean;
     };
+
+export type EditResultLogEntry = {
+  edit: EditSpec["type"];
+  result: SingleEditResult;
+};
+
+/**
+ * Multi-edit result.
+ */
+export type EditResult = {
+  log: EditResultLogEntry[];
+} & (
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+    }
+);
 
 export type EditableEdgeSpec = Edge;

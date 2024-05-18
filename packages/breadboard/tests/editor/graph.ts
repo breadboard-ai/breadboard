@@ -9,7 +9,7 @@ import test from "ava";
 import { editGraph } from "../../src/editor/index.js";
 import { NodeHandler } from "../../src/types.js";
 
-const testEditGraph = () => {
+export const testEditGraph = () => {
   return editGraph(
     structuredClone({
       nodes: [
@@ -532,7 +532,12 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
     if (result.success) {
       t.fail();
     } else {
-      t.deepEqual(result.alternative, {
+      const singleEdit = result.log[0].result;
+      if (singleEdit.success) {
+        t.fail();
+        return;
+      }
+      t.deepEqual(singleEdit.alternative, {
         from: "node0",
         out: "out",
         to: "node2",
