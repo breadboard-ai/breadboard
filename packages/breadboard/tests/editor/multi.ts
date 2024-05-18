@@ -117,4 +117,37 @@ test("Multi-edit gracefully fails", async (t) => {
     t.false(graphChangeDispatched);
     t.true(graphChangeRejectDispatched);
   }
+  {
+    const graph = testEditGraph();
+    let graphChangeRejectDispatched = false;
+    let graphChangeDispatched = false;
+    graph.addEventListener("graphchange", () => {
+      graphChangeDispatched = true;
+    });
+    graph.addEventListener("graphchangereject", () => {
+      graphChangeRejectDispatched = true;
+    });
+    const oldVersion = graph.version();
+    const result = await graph.edit([
+      { type: "addnode", node: { id: "node-1", type: "foo" } },
+      { type: "addnode", node: { id: "node-1", type: "foo" } },
+      { type: "addnode", node: { id: "node-3", type: "foo" } },
+    ]);
+    if (result.success) {
+      t.fail();
+      return;
+    }
+    const failedEdit = result.log[1];
+    t.is(failedEdit.edit, "addnode");
+    if (failedEdit.result.success) {
+      t.fail();
+      return;
+    }
+    const inspector = graph.inspect();
+    t.assert(!inspector.nodeById("node-1"));
+    t.assert(!inspector.nodeById("node-3"));
+    t.assert(oldVersion === graph.version());
+    t.false(graphChangeDispatched);
+    t.true(graphChangeRejectDispatched);
+  }
 });
