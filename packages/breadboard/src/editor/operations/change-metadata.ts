@@ -49,12 +49,6 @@ export class ChangeMetadata implements EditOperation {
       );
     }
     const { id, metadata } = spec;
-    if (!metadata) {
-      return {
-        success: false,
-        error: "Metadata wasn't supplied.",
-      };
-    }
     const { inspector } = context;
     const can = await this.can(id, inspector);
     if (!can.success) return can;

@@ -8,7 +8,6 @@ import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import { GraphDescriptor, GraphIdentifier } from "../types.js";
 import {
-  EdgeEditResult,
   SingleEditResult,
   EditableGraph,
   EditableGraphOptions,
@@ -16,6 +15,8 @@ import {
   EditSpec,
   EditResult,
   EditOperation,
+  EditOperationContext,
+  EditResultLogEntry,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -104,6 +105,13 @@ export class Graph implements EditableGraph {
     );
   }
 
+  #rollbackGraph(checkpoint: GraphDescriptor, error: string) {
+    this.#graph = checkpoint;
+    // TODO: Handle subgraphs.
+    this.#inspector.resetGraph(this.#graph);
+    this.#dispatchNoChange(error);
+  }
+
   #dispatchNoChange(error?: string) {
     if (this.#parent) {
       this.#parent.#dispatchNoChange(error);
@@ -135,14 +143,10 @@ export class Graph implements EditableGraph {
     return this.#parent;
   }
 
-  async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
-    if (edits.length > 1) {
-      throw new Error("Multi-edit is not yet implemented");
-    }
-    if (dryRun) {
-      return this.#canEdit(edits);
-    }
-    const edit = edits[0];
+  async #singleEdit(
+    edit: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     const operation = operations.get(edit.type);
     if (!operation) {
       return {
@@ -150,66 +154,59 @@ export class Graph implements EditableGraph {
         error: "Unsupported edit type",
       };
     }
-    const can = await operation.do(edit, {
-      graph: this.#graph,
-      inspector: this.#inspector,
-      store: this.#inspector,
-    });
-    if (!can.success) {
-      this.#dispatchNoChange(can.error);
-      return can;
-    }
-    if (can.nochange) {
-      this.#dispatchNoChange();
-      return can;
-    }
-    this.#updateGraph(!!can.visualOnly);
-    return can;
+    return operation.do(edit, context);
   }
 
-  async #canEdit(edits: EditSpec[]): Promise<EdgeEditResult> {
-    if (edits.length > 1) {
-      throw new Error("Multi-edit is not yet implemented");
+  async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
+    let context: EditOperationContext;
+
+    const checkpoint = structuredClone(this.#graph);
+    if (dryRun) {
+      const graph = checkpoint;
+      const inspector = inspectableGraph(graph, this.#options);
+      context = {
+        graph,
+        inspector,
+        store: inspector,
+      };
+    } else {
+      context = {
+        graph: this.#graph,
+        inspector: this.#inspector,
+        store: this.#inspector,
+      };
     }
-    const edit = edits[0];
-    switch (edit.type) {
-      case "addnode": {
-        const operation = new AddNode();
-        return operation.can(edit.node, this.#inspector);
+    const log: EditResultLogEntry[] = [];
+    let error: string | null = null;
+    // Presume that all edits will result in no changes.
+    let noChange = true;
+    // Presume that all edits will be visual only.
+    let visualOnly = true;
+    for (const edit of edits) {
+      const result = await this.#singleEdit(edit, context);
+      log.push({ edit: edit.type, result });
+      if (!result.success) {
+        error = result.error;
+        break;
       }
-      case "removenode": {
-        const operation = new RemoveNode();
-        return operation.can(edit.id, this.#inspector);
+      if (!result.noChange) {
+        noChange = false;
       }
-      case "addedge": {
-        const operation = new AddEdge();
-        return operation.can(edit.edge, this.#inspector);
-      }
-      case "removeedge": {
-        const operation = new RemoveEdge();
-        return operation.can(edit.edge, this.#inspector);
-      }
-      case "changeconfiguration": {
-        const operation = new ChangeConfiguration();
-        return operation.can(edit.id, this.#inspector);
-      }
-      case "changemetadata": {
-        const operation = new ChangeMetadata();
-        return operation.can(edit.id, this.#inspector);
-      }
-      case "changeedge": {
-        const operation = new ChangeEdge();
-        return operation.can(edit.from, edit.to, this.#inspector);
-      }
-      case "changegraphmetadata":
-        return { success: true };
-      default: {
-        return {
-          success: false,
-          error: "Unsupported edit type",
-        };
+      if (!result.visualOnly) {
+        visualOnly = false;
       }
     }
+    if (error) {
+      !dryRun && this.#rollbackGraph(checkpoint, error);
+      return { success: false, log, error };
+    }
+
+    if (noChange) {
+      !dryRun && this.#dispatchNoChange();
+      return { success: true, log };
+    }
+    !dryRun && this.#updateGraph(visualOnly);
+    return { success: true, log };
   }
 
   getGraph(id: GraphIdentifier) {

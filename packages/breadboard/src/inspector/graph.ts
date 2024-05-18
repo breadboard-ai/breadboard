@@ -227,6 +227,15 @@ class Graph implements InspectableGraphWithStore {
     this.#graph = graph;
   }
 
+  resetGraph(graph: GraphDescriptor): void {
+    this.#graph = graph;
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
+    this.#graphs = null;
+  }
+
   #populateSubgraphs(): InspectableSubgraphs {
     const subgraphs = this.#graph.graphs;
     if (!subgraphs) return {};

@@ -9,7 +9,7 @@ import test from "ava";
 import { editGraph } from "../../src/editor/index.js";
 import { NodeHandler } from "../../src/types.js";
 
-const testEditGraph = () => {
+export const testEditGraph = () => {
   return editGraph(
     structuredClone({
       nodes: [
@@ -474,7 +474,7 @@ test("editor API does not allow connecting a specific output port to a star port
 
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
   const result = await graph.edit(
-    [{ type: "addedge", edge: edgeSpec, strict: false }],
+    [{ type: "addedge", edge: edgeSpec, strict: true }],
     true
   );
   t.false(result.success);
@@ -526,13 +526,18 @@ test("editor API allows using 'star` ports as drop zones", async (t) => {
   {
     const graph = testEditGraph();
     const result = await graph.edit(
-      [{ type: "addedge", edge: edgeSpec, strict: false }],
+      [{ type: "addedge", edge: edgeSpec, strict: true }],
       true
     );
     if (result.success) {
       t.fail();
     } else {
-      t.deepEqual(result.alternative, {
+      const singleEdit = result.log[0].result;
+      if (singleEdit.success) {
+        t.fail();
+        return;
+      }
+      t.deepEqual(singleEdit.alternative, {
         from: "node0",
         out: "out",
         to: "node2",

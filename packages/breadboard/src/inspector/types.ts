@@ -455,6 +455,9 @@ export type GraphStoreMutator = {
   // TODO: This is probably wrong. A new version of the graph should likely
   // create a new instance of an `InspectableGraph`.
   updateGraph(graph: GraphDescriptor): void;
+  // Destroys all caches.
+  // TODO: Maybe too much machinery here? Just get a new instance of inspector?
+  resetGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };

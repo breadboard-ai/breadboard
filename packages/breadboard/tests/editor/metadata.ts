@@ -34,9 +34,10 @@ test("editGraph correctly edits node metadata", async (t) => {
   t.is(metadata, undefined);
 
   const result = await graph.edit(
-    [{ type: "changemetadata", id: "node0" }],
+    [{ type: "changemetadata", id: "node0", metadata: {} }],
     true
   );
+  console.log(result);
   t.is(result.success, true);
 
   const newMetadata = { title: "bar" };
@@ -67,7 +68,7 @@ test("editGraph correctly edits visual node metadata", async (t) => {
   t.is(metadata, undefined);
 
   const result = await graph.edit(
-    [{ type: "changemetadata", id: "node0" }],
+    [{ type: "changemetadata", id: "node0", metadata: {} }],
     true
   );
   t.is(result.success, true);

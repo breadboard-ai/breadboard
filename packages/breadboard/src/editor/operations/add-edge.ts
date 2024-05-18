@@ -7,9 +7,9 @@
 import {
   EditOperation,
   EditOperationContext,
-  EditResult,
   EditSpec,
   EditableEdgeSpec,
+  SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
 import { fixUpStarEdge, fixupConstantEdge } from "../../inspector/edge.js";
@@ -18,7 +18,7 @@ export class AddEdge implements EditOperation {
   async can(
     edge: EditableEdgeSpec,
     inspector: InspectableGraph
-  ): Promise<EditResult> {
+  ): Promise<SingleEditResult> {
     if (inspector.hasEdge(edge)) {
       return {
         success: false,
@@ -84,7 +84,10 @@ export class AddEdge implements EditOperation {
     return { success: true };
   }
 
-  async do(spec: EditSpec, context: EditOperationContext): Promise<EditResult> {
+  async do(
+    spec: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     if (spec.type !== "addedge") {
       throw new Error(
         `Editor API integrity error: expected type "addedge", received "${spec.type}" instead.`
