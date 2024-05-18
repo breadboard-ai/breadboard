@@ -52,6 +52,21 @@ if (!result.success) {
 }
 ```
 
+Multiple changes to the graph are performed as one atomic unit when specified in the same method:
+
+```ts
+// Adds a node with id = "foo" and type = "type" ...
+// .. and a node with id = "bar" and type = "type" as one atomic operation.
+// Returns `Promise<EditResult>`.
+const result = await graph.edit([
+  { type: "addnode", node: { id: "foo", type: "type" } },
+  { type: "addnode", node: { id: "bar", type: "type" } },
+]);
+if (!result.success) {
+  console.warn("Adding node failed with this error", result.error);
+}
+```
+
 ## Kits
 
 To ensure that `edit` method does not jeopardize the integrity of the graph, we need to supply the editor a list of kits. Kits are collections of functions that are invoked during running the graph. We can provide kits as `kits` property on the second, optional `EditableGraphOptions` argument of the `edit` method:
