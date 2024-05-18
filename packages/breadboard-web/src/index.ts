@@ -1050,7 +1050,12 @@ export class Main extends LitElement {
                 }
 
                 editableGraph.edit([
-                  { type: "changeedge", from: evt.from, to: evt.to },
+                  {
+                    type: "changeedge",
+                    from: evt.from,
+                    to: evt.to,
+                    strict: false,
+                  },
                 ]);
                 break;
               }
