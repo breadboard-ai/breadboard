@@ -414,6 +414,7 @@ export class MultiEditEvent extends Event {
   static eventName = "bbmultiedit";
   constructor(
     public readonly edits: EditSpec[],
+    public readonly description: string,
     public readonly subGraphId: string | null = null
   ) {
     super(MultiEditEvent.eventName, { ...eventInit });

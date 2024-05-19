@@ -708,7 +708,9 @@ export class Editor extends LitElement {
             edits.push({ type: "addedge", edge: newEdge, strict: true });
           }
 
-          this.dispatchEvent(new MultiEditEvent(edits, this.subGraphId));
+          this.dispatchEvent(
+            new MultiEditEvent(edits, "Paste", this.subGraphId)
+          );
         } catch (err) {
           // Not JSON data - ignore.
           return;
@@ -847,7 +849,11 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
-    this.dispatchEvent(new NodeCreateEvent(id, data, this.subGraphId));
+    this.dispatchEvent(
+      new NodeCreateEvent(id, data, this.subGraphId, undefined, {
+        visual: { x, y },
+      })
+    );
   }
 
   #createRandomID(type: string) {

@@ -71,7 +71,7 @@ export class Graph implements EditableGraph {
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
     this.#inspector = inspectableGraph(this.#graph, options);
-    this.#history.add(graph);
+    this.#history.add(graph, "Clean slate");
   }
 
   #makeIndependent() {
@@ -160,7 +160,21 @@ export class Graph implements EditableGraph {
     return operation.do(edit, context);
   }
 
-  async edit(edits: EditSpec[], dryRun = false): Promise<EditResult> {
+  #printHistory(label: string) {
+    const labels = this.#history.history.map((entry) => entry.label);
+    console.group(`History: ${label}`);
+    labels.forEach((label, index) => {
+      const current = index === this.#history.index() ? ">" : " ";
+      console.log(`${index}:${current} ${label}`);
+    });
+    console.groupEnd();
+  }
+
+  async edit(
+    edits: EditSpec[],
+    label: string,
+    dryRun = false
+  ): Promise<EditResult> {
     let context: EditOperationContext;
 
     const checkpoint = structuredClone(this.#graph);
@@ -209,7 +223,11 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.add(this.#graph);
+    this.#history.pause(label, checkpoint, this.#version);
+
+    this.#history.add(this.#graph, label);
+
+    this.#printHistory(label);
 
     !dryRun && this.#updateGraph(visualOnly);
     return { success: true, log };
@@ -223,19 +241,12 @@ export class Graph implements EditableGraph {
     return this.#history.canGoForth();
   }
 
-  pauseUndoRedo(label: string): void {
-    this.#history.pause(label, this.#graph);
-  }
-
-  resumeUndoRedo(): void {
-    this.#history.resume(this.#graph);
-  }
-
   undo(): void {
-    this.#history.resume(this.#graph);
+    this.#history.resume(this.#graph, this.#version);
     const graph = this.#history.back();
     if (!graph) return;
     this.#graph = graph;
+    this.#printHistory("undo");
     // TODO: Handle subgraphs.
     this.#inspector.resetGraph(this.#graph);
     this.#version++;
@@ -245,10 +256,11 @@ export class Graph implements EditableGraph {
   }
 
   redo(): void {
-    this.#history.resume(this.#graph);
+    this.#history.resume(this.#graph, this.#version);
     const graph = this.#history.forth();
     if (!graph) return;
     this.#graph = graph;
+    this.#printHistory("redo");
     // TODO: Handle subgraphs.
     this.#inspector.resetGraph(this.#graph);
     this.#version++;

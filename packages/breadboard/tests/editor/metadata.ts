@@ -35,15 +35,17 @@ test("editGraph correctly edits node metadata", async (t) => {
 
   const result = await graph.edit(
     [{ type: "changemetadata", id: "node0", metadata: {} }],
+    "test",
     true
   );
   console.log(result);
   t.is(result.success, true);
 
   const newMetadata = { title: "bar" };
-  const changeResult = await graph.edit([
-    { type: "changemetadata", id: "node0", metadata: newMetadata },
-  ]);
+  const changeResult = await graph.edit(
+    [{ type: "changemetadata", id: "node0", metadata: newMetadata }],
+    "test"
+  );
   t.is(changeResult.success, true);
   t.is(graph.version(), 1);
 
@@ -51,13 +53,16 @@ test("editGraph correctly edits node metadata", async (t) => {
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, newMetadata);
 
-  const invalidResult = await graph.edit([
-    {
-      type: "changemetadata",
-      id: "nonexistentNode",
-      metadata: { title: "baz" },
-    },
-  ]);
+  const invalidResult = await graph.edit(
+    [
+      {
+        type: "changemetadata",
+        id: "nonexistentNode",
+        metadata: { title: "baz" },
+      },
+    ],
+    "test"
+  );
   t.is(invalidResult.success, false);
   t.is(graph.version(), 1);
 });
@@ -69,6 +74,7 @@ test("editGraph correctly edits visual node metadata", async (t) => {
 
   const result = await graph.edit(
     [{ type: "changemetadata", id: "node0", metadata: {} }],
+    "test",
     true
   );
   t.is(result.success, true);
@@ -77,9 +83,10 @@ test("editGraph correctly edits visual node metadata", async (t) => {
   graph.addEventListener("graphchange", (evt) => {
     t.true(evt.visualOnly);
   });
-  const changeResult = await graph.edit([
-    { type: "changemetadata", id: "node0", metadata: newMetadata },
-  ]);
+  const changeResult = await graph.edit(
+    [{ type: "changemetadata", id: "node0", metadata: newMetadata }],
+    "test"
+  );
   t.is(changeResult.success, true);
   t.is(graph.version(), 1);
 
@@ -87,13 +94,16 @@ test("editGraph correctly edits visual node metadata", async (t) => {
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, newMetadata);
 
-  const invalidResult = await graph.edit([
-    {
-      type: "changemetadata",
-      id: "nonexistentNode",
-      metadata: { title: "baz" },
-    },
-  ]);
+  const invalidResult = await graph.edit(
+    [
+      {
+        type: "changemetadata",
+        id: "nonexistentNode",
+        metadata: { title: "baz" },
+      },
+    ],
+    "test"
+  );
   t.is(invalidResult.success, false);
   t.is(graph.version(), 1);
 });

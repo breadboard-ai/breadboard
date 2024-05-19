@@ -6,21 +6,30 @@
 
 import { GraphDescriptor } from "../types.js";
 
+type HistoryEntry = { graph: GraphDescriptor; label: string };
+
 export class EditHistoryManager {
-  history: GraphDescriptor[] = [];
+  history: HistoryEntry[] = [];
   #index: number = 0;
   pauseLabel: string | null = null;
+  #version: number = 0;
 
   current(): GraphDescriptor | null {
-    return structuredClone(this.history[this.#index] || null);
+    const entry = this.history[this.#index];
+    if (!entry) return null;
+    return structuredClone(entry.graph);
   }
 
-  add(graph: GraphDescriptor) {
+  index() {
+    return this.#index;
+  }
+
+  add(graph: GraphDescriptor, label: string) {
     if (this.paused()) return;
     // Chop off the history at #index.
     this.history.splice(this.#index + 1);
     // Insert new entry.
-    this.history.push(structuredClone(graph));
+    this.history.push({ graph: structuredClone(graph), label });
     // Point #index the new entry.
     this.#index = this.history.length - 1;
   }
@@ -53,16 +62,20 @@ export class EditHistoryManager {
     return this.pauseLabel !== null;
   }
 
-  pause(label: string, graph: GraphDescriptor) {
+  pause(label: string, graph: GraphDescriptor, version: number) {
     if (this.pauseLabel !== label) {
-      this.resume(graph);
+      this.resume(graph, version);
     }
     this.pauseLabel = label;
+    this.#version = version;
   }
 
-  resume(graph: GraphDescriptor) {
+  resume(graph: GraphDescriptor, version: number) {
     if (this.pauseLabel === null) return;
+    const label = this.pauseLabel;
     this.pauseLabel = null;
-    this.add(graph);
+    if (this.#version !== version) {
+      this.add(graph, label);
+    }
   }
 }
