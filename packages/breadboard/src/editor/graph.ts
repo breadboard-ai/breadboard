@@ -215,7 +215,25 @@ export class Graph implements EditableGraph {
     return { success: true, log };
   }
 
-  async undo(): Promise<void> {
+  canUndo(): boolean {
+    return this.#history.canGoBack();
+  }
+
+  canRedo(): boolean {
+    return this.#history.canGoForth();
+  }
+
+  pauseUndoRedo(label: string): void {
+    console.log("🌻 pause undo redo");
+    this.#history.pause(label, this.#graph);
+  }
+
+  resumeUndoRedo(): void {
+    console.log("🌻 resume undo redo");
+    this.#history.resume(this.#graph);
+  }
+
+  undo(): void {
     const graph = this.#history.back();
     if (!graph) return;
     this.#graph = graph;
@@ -227,7 +245,7 @@ export class Graph implements EditableGraph {
     );
   }
 
-  async redo(): Promise<void> {
+  redo(): void {
     const graph = this.#history.forth();
     if (!graph) return;
     this.#graph = graph;
