@@ -224,16 +224,15 @@ export class Graph implements EditableGraph {
   }
 
   pauseUndoRedo(label: string): void {
-    console.log("🌻 pause undo redo");
     this.#history.pause(label, this.#graph);
   }
 
   resumeUndoRedo(): void {
-    console.log("🌻 resume undo redo");
     this.#history.resume(this.#graph);
   }
 
   undo(): void {
+    this.#history.resume(this.#graph);
     const graph = this.#history.back();
     if (!graph) return;
     this.#graph = graph;
@@ -246,6 +245,7 @@ export class Graph implements EditableGraph {
   }
 
   redo(): void {
+    this.#history.resume(this.#graph);
     const graph = this.#history.forth();
     if (!graph) return;
     this.#graph = graph;

@@ -26,11 +26,11 @@ export class EditHistoryManager {
   }
 
   canGoBack(): boolean {
-    return !this.paused() && !this.#index;
+    return !this.#index;
   }
 
   canGoForth(): boolean {
-    return !this.paused() && this.#index < this.history.length - 1;
+    return this.#index < this.history.length - 1;
   }
 
   back(): GraphDescriptor | null {

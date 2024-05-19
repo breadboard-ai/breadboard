@@ -478,11 +478,16 @@ export class Main extends LitElement {
     }
 
     if (evt.key === "z" && evt.metaKey) {
-      if (evt.shiftKey) {
-        this.#getEditor()?.redo();
+      const editor = this.#getEditor();
+      if (!editor) {
         return;
       }
-      this.#getEditor()?.undo();
+      if (evt.shiftKey) {
+        editor.redo();
+        return;
+      }
+
+      editor.undo();
       return;
     }
   }
@@ -1085,7 +1090,7 @@ export class Main extends LitElement {
               ...metadata,
             };
 
-            editableGraph.pauseUndoRedo("changemetadata");
+            editableGraph.pauseUndoRedo(`changemetadata-${id}`);
 
             editableGraph.edit([
               { type: "changemetadata", id, metadata: newMetadata },
@@ -1210,7 +1215,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.pauseUndoRedo("changeconfiguration");
+            editableGraph.pauseUndoRedo(`changeconfiguration-${evt.id}`);
 
             editableGraph.edit([
               {
