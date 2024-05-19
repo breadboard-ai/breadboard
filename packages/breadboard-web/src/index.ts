@@ -478,11 +478,16 @@ export class Main extends LitElement {
     }
 
     if (evt.key === "z" && evt.metaKey) {
-      if (evt.shiftKey) {
-        // TODO: Redo.
+      const editor = this.#getEditor();
+      if (!editor) {
         return;
       }
-      // TODO: Undo.
+      if (evt.shiftKey) {
+        editor.redo();
+        return;
+      }
+
+      editor.undo();
       return;
     }
   }
@@ -1031,6 +1036,8 @@ export class Main extends LitElement {
               return;
             }
 
+            editableGraph.resumeUndoRedo();
+
             switch (evt.changeType) {
               case "add": {
                 editableGraph.edit([
@@ -1083,6 +1090,8 @@ export class Main extends LitElement {
               ...metadata,
             };
 
+            editableGraph.pauseUndoRedo(`changemetadata-${id}`);
+
             editableGraph.edit([
               { type: "changemetadata", id, metadata: newMetadata },
             ]);
@@ -1108,6 +1117,8 @@ export class Main extends LitElement {
               visual = {};
             }
 
+            editableGraph.resumeUndoRedo();
+
             editableGraph.edit([
               {
                 type: "changemetadata",
@@ -1128,6 +1139,8 @@ export class Main extends LitElement {
               console.warn("Unable to update node metadata; no active graph");
               return;
             }
+
+            editableGraph.resumeUndoRedo();
 
             const inspectableGraph = editableGraph.inspect();
 
@@ -1164,6 +1177,8 @@ export class Main extends LitElement {
               return;
             }
 
+            editableGraph.resumeUndoRedo();
+
             editableGraph.edit(spec);
           }}
           @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
@@ -1185,6 +1200,8 @@ export class Main extends LitElement {
               return;
             }
 
+            editableGraph.resumeUndoRedo();
+
             editableGraph.edit([{ type: "addnode", node: newNode }]);
           }}
           @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
@@ -1197,6 +1214,8 @@ export class Main extends LitElement {
               console.warn("Unable to create node; no active graph");
               return;
             }
+
+            editableGraph.pauseUndoRedo(`changeconfiguration-${evt.id}`);
 
             editableGraph.edit([
               {
@@ -1216,6 +1235,8 @@ export class Main extends LitElement {
               console.warn("Unable to create node; no active graph");
               return;
             }
+
+            editableGraph.resumeUndoRedo();
 
             editableGraph.edit([{ type: "removenode", id: evt.id }]);
           }}

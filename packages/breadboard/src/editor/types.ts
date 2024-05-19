@@ -156,7 +156,56 @@ export type EditableGraph = {
    */
   parent(): EditableGraph | null;
 
+  /**
+   * Performs an edit operation on the graph.
+   * @param edits -- a list of changes to apply
+   * @param dryRun -- if true, perform the edit, but discard the changes.
+   */
   edit(edits: EditSpec[], dryRun?: boolean): Promise<EditResult>;
+
+  /**
+   * Reports whether an undo operation is possible at a given moment.
+   * The undo may not be possible because we're at the beginning of the
+   * history, or because the undo/redo operations are paused.
+   */
+  canUndo(): boolean;
+
+  /**
+   * Reports whether a redo operation is possible at a given moment.
+   * The redo may not be possible because we're at the end of the history,
+   * or because the undo/redo operations are paused.
+   */
+  canRedo(): boolean;
+
+  /**
+   * Pauses the undo/redo operations. This is useful when a sequence of
+   * operations should be treated as a single operation for the undo/redo
+   * history.
+   * Can be called any number of times and will only pause once per label.
+   * The label gives the editor a hint about the group of edits that
+   * should be treated as a single operation.
+   * When called with a different label, the method will briefly resume
+   * the undo/redo operations to allow the editor to group all operations
+   * with the same label together and then pause again.
+   * @param label -- a label for the pause operation
+   */
+  pauseUndoRedo(label: string): void;
+
+  /**
+   * Resumes the undo/redo operations after a pause. Can be called any number
+   * of times and will only resume once per pause.
+   */
+  resumeUndoRedo(): void;
+
+  /**
+   * Undoes the last change or does nothing if there isn't one.
+   */
+  undo(): void;
+
+  /**
+   * Re-does the change that was undone or does nothing if there isn't one.
+   */
+  redo(): void;
 
   /**
    * Retrieves a subgraph of this graph.

@@ -27,6 +27,7 @@ import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
+import { EditHistoryManager } from "./history.js";
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -47,6 +48,7 @@ export class Graph implements EditableGraph {
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
+  #history: EditHistoryManager = new EditHistoryManager();
 
   constructor(
     graph: GraphDescriptor,
@@ -69,6 +71,7 @@ export class Graph implements EditableGraph {
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
     this.#inspector = inspectableGraph(this.#graph, options);
+    this.#history.add(graph);
   }
 
   #makeIndependent() {
@@ -205,8 +208,53 @@ export class Graph implements EditableGraph {
       !dryRun && this.#dispatchNoChange();
       return { success: true, log };
     }
+
+    this.#history.add(this.#graph);
+
     !dryRun && this.#updateGraph(visualOnly);
     return { success: true, log };
+  }
+
+  canUndo(): boolean {
+    return this.#history.canGoBack();
+  }
+
+  canRedo(): boolean {
+    return this.#history.canGoForth();
+  }
+
+  pauseUndoRedo(label: string): void {
+    this.#history.pause(label, this.#graph);
+  }
+
+  resumeUndoRedo(): void {
+    this.#history.resume(this.#graph);
+  }
+
+  undo(): void {
+    this.#history.resume(this.#graph);
+    const graph = this.#history.back();
+    if (!graph) return;
+    this.#graph = graph;
+    // TODO: Handle subgraphs.
+    this.#inspector.resetGraph(this.#graph);
+    this.#version++;
+    this.#eventTarget.dispatchEvent(
+      new ChangeEvent(this.#graph, this.#version, false)
+    );
+  }
+
+  redo(): void {
+    this.#history.resume(this.#graph);
+    const graph = this.#history.forth();
+    if (!graph) return;
+    this.#graph = graph;
+    // TODO: Handle subgraphs.
+    this.#inspector.resetGraph(this.#graph);
+    this.#version++;
+    this.#eventTarget.dispatchEvent(
+      new ChangeEvent(this.#graph, this.#version, false)
+    );
   }
 
   getGraph(id: GraphIdentifier) {
