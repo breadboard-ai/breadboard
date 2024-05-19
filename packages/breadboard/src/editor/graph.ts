@@ -17,6 +17,7 @@ import {
   EditOperation,
   EditOperationContext,
   EditResultLogEntry,
+  EditHistory,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -27,7 +28,7 @@ import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
-import { EditHistoryManager } from "./history.js";
+import { GraphEditHistory } from "./history.js";
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -48,7 +49,7 @@ export class Graph implements EditableGraph {
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
-  #history: EditHistoryManager = new EditHistoryManager();
+  #history: GraphEditHistory;
 
   constructor(
     graph: GraphDescriptor,
@@ -71,6 +72,22 @@ export class Graph implements EditableGraph {
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
     this.#inspector = inspectableGraph(this.#graph, options);
+    this.#history = new GraphEditHistory({
+      graph: () => {
+        return this.#graph;
+      },
+      version: () => {
+        return this.#version;
+      },
+      setGraph: (graph) => {
+        this.#graph = graph;
+        this.#version++;
+        this.#inspector.resetGraph(graph);
+        this.#eventTarget.dispatchEvent(
+          new ChangeEvent(this.#graph, this.#version, false)
+        );
+      },
+    });
     this.#history.add(graph, "Clean slate");
   }
 
@@ -160,16 +177,6 @@ export class Graph implements EditableGraph {
     return operation.do(edit, context);
   }
 
-  #printHistory(label: string) {
-    const labels = this.#history.history.map((entry) => entry.label);
-    console.group(`History: ${label}`);
-    labels.forEach((label, index) => {
-      const current = index === this.#history.index() ? ">" : " ";
-      console.log(`${index}:${current} ${label}`);
-    });
-    console.groupEnd();
-  }
-
   async edit(
     edits: EditSpec[],
     label: string,
@@ -223,50 +230,14 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.pause(label, checkpoint, this.#version);
-
-    this.#history.add(this.#graph, label);
-
-    this.#printHistory(label);
+    this.#history.addEdit(this.#graph, checkpoint, label, this.#version);
 
     !dryRun && this.#updateGraph(visualOnly);
     return { success: true, log };
   }
 
-  canUndo(): boolean {
-    return this.#history.canGoBack();
-  }
-
-  canRedo(): boolean {
-    return this.#history.canGoForth();
-  }
-
-  undo(): void {
-    this.#history.resume(this.#graph, this.#version);
-    const graph = this.#history.back();
-    if (!graph) return;
-    this.#graph = graph;
-    this.#printHistory("undo");
-    // TODO: Handle subgraphs.
-    this.#inspector.resetGraph(this.#graph);
-    this.#version++;
-    this.#eventTarget.dispatchEvent(
-      new ChangeEvent(this.#graph, this.#version, false)
-    );
-  }
-
-  redo(): void {
-    this.#history.resume(this.#graph, this.#version);
-    const graph = this.#history.forth();
-    if (!graph) return;
-    this.#graph = graph;
-    this.#printHistory("redo");
-    // TODO: Handle subgraphs.
-    this.#inspector.resetGraph(this.#graph);
-    this.#version++;
-    this.#eventTarget.dispatchEvent(
-      new ChangeEvent(this.#graph, this.#version, false)
-    );
+  history(): EditHistory {
+    return this.#history;
   }
 
   getGraph(id: GraphIdentifier) {

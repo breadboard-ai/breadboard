@@ -166,28 +166,9 @@ export type EditableGraph = {
   edit(edits: EditSpec[], label: string, dryRun?: boolean): Promise<EditResult>;
 
   /**
-   * Reports whether an undo operation is possible at a given moment.
-   * The undo may not be possible because we're at the beginning of the
-   * history, or because the undo/redo operations are paused.
+   * Provides a way to manage the history of the graph.
    */
-  canUndo(): boolean;
-
-  /**
-   * Reports whether a redo operation is possible at a given moment.
-   * The redo may not be possible because we're at the end of the history,
-   * or because the undo/redo operations are paused.
-   */
-  canRedo(): boolean;
-
-  /**
-   * Undoes the last change or does nothing if there isn't one.
-   */
-  undo(): void;
-
-  /**
-   * Re-does the change that was undone or does nothing if there isn't one.
-   */
-  redo(): void;
+  history(): EditHistory;
 
   /**
    * Retrieves a subgraph of this graph.
@@ -227,6 +208,38 @@ export type EditableGraph = {
   raw(): GraphDescriptor;
 
   inspect(): InspectableGraph;
+};
+
+export type EditHistoryController = {
+  graph(): GraphDescriptor;
+  setGraph(graph: GraphDescriptor): void;
+  version(): number;
+};
+
+export type EditHistory = {
+  /**
+   * Reports whether an undo operation is possible at a given moment.
+   * The undo may not be possible because we're at the beginning of the
+   * history, or because the undo/redo operations are paused.
+   */
+  canUndo(): boolean;
+
+  /**
+   * Reports whether a redo operation is possible at a given moment.
+   * The redo may not be possible because we're at the end of the history,
+   * or because the undo/redo operations are paused.
+   */
+  canRedo(): boolean;
+
+  /**
+   * Undoes the last change or does nothing if there isn't one.
+   */
+  undo(): void;
+
+  /**
+   * Re-does the change that was undone or does nothing if there isn't one.
+   */
+  redo(): void;
 };
 
 export type EditableGraphOptions = InspectableGraphOptions & {

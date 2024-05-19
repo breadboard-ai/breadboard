@@ -486,11 +486,11 @@ export class Main extends LitElement {
       }
 
       if (evt.shiftKey) {
-        editor.redo();
+        editor.history().redo();
         return;
       }
 
-      editor.undo();
+      editor.history().undo();
       return;
     }
   }

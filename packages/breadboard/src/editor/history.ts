@@ -5,8 +5,69 @@
  */
 
 import { GraphDescriptor } from "../types.js";
+import { EditHistory, EditHistoryController } from "./types.js";
 
 type HistoryEntry = { graph: GraphDescriptor; label: string };
+
+export class GraphEditHistory implements EditHistory {
+  #controller: EditHistoryController;
+  #history: EditHistoryManager = new EditHistoryManager();
+
+  constructor(controller: EditHistoryController) {
+    this.#controller = controller;
+  }
+
+  #printHistory(label: string) {
+    const labels = this.#history.history.map((entry) => entry.label);
+    console.group(`History: ${label}`);
+    labels.forEach((label, index) => {
+      const current = index === this.#history.index() ? ">" : " ";
+      console.log(`${index}:${current} ${label}`);
+    });
+    console.groupEnd();
+  }
+
+  add(graph: GraphDescriptor, label: string) {
+    this.#history.add(graph, label);
+  }
+
+  addEdit(
+    graph: GraphDescriptor,
+    checkpoint: GraphDescriptor,
+    label: string,
+    version: number
+  ) {
+    this.#history.pause(label, checkpoint, version);
+
+    this.#history.add(graph, label);
+
+    this.#printHistory(label);
+  }
+
+  canUndo(): boolean {
+    return this.#history.canGoBack();
+  }
+
+  canRedo(): boolean {
+    return this.#history.canGoForth();
+  }
+
+  undo(): void {
+    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    const graph = this.#history.back();
+    if (!graph) return;
+    this.#controller.setGraph(graph);
+    this.#printHistory("undo");
+  }
+
+  redo(): void {
+    this.#history.resume(this.#controller.graph(), this.#controller.version());
+    const graph = this.#history.forth();
+    if (!graph) return;
+    this.#controller.setGraph(graph);
+    this.#printHistory("redo");
+  }
+}
 
 export class EditHistoryManager {
   history: HistoryEntry[] = [];
