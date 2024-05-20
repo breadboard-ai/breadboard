@@ -22,10 +22,13 @@ import {
   NodeIdentifier,
 } from "../types.js";
 
+export type ChangeEventType = "edit" | "historychange";
+
 export type GraphChangeEvent = Event & {
   graph: GraphDescriptor;
   version: number;
   visualOnly: boolean;
+  type: ChangeEventType;
 };
 
 export type ErrorRejection = {
