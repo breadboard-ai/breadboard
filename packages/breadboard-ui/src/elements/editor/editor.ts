@@ -28,6 +28,7 @@ import {
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
   GraphNodePositionsCalculatedEvent,
+  GraphNodesMoveEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
   NodeCreateEvent,
@@ -114,6 +115,7 @@ export class Editor extends LitElement {
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onGraphNodeMoveBound = this.#onGraphNodeMove.bind(this);
+  #onGraphNodesMoveBound = this.#onGraphNodesMove.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
@@ -129,6 +131,7 @@ export class Editor extends LitElement {
   #readingFromClipboard = false;
   #lastX = 0;
   #lastY = 0;
+  #pasteCount = 0;
 
   static styles = css`
     * {
@@ -422,6 +425,11 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.addEventListener(
+      GraphNodesMoveEvent.eventName,
+      this.#onGraphNodesMoveBound
+    );
+
+    this.#graphRenderer.addEventListener(
       GraphNodePositionsCalculatedEvent.eventName,
       this.#onGraphNodePositionsCalculatedBound
     );
@@ -460,6 +468,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodeMoveEvent.eventName,
       this.#onGraphNodeMoveBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodesMoveEvent.eventName,
+      this.#onGraphNodesMoveBound
     );
 
     this.#graphRenderer.removeEventListener(
@@ -653,9 +666,6 @@ export class Editor extends LitElement {
 
             delete node.metadata.visual["x"];
             delete node.metadata.visual["y"];
-            if (Object.keys(node.metadata.visual).length === 0) {
-              delete node.metadata.visual;
-            }
 
             const globalPosition = this.#graph.toGlobal({ x, y });
             const offset = {
@@ -670,6 +680,16 @@ export class Editor extends LitElement {
 
             this.#graph.setNodeLayoutPosition(node.id, position, false);
             this.#graph.addToAutoSelect(node.id);
+
+            // Ask the graph for the visual positioning because the graph accounts for
+            // any transforms, whereas our base x & y values do not.
+            const layout = this.#graph.getNodeLayoutPosition(node.id) || {
+              x: 0,
+              y: 0,
+            };
+            node.metadata.visual.x = layout.x;
+            node.metadata.visual.y = layout.y;
+
             edits.push({ type: "addnode", node });
           }
 
@@ -710,7 +730,11 @@ export class Editor extends LitElement {
           }
 
           this.dispatchEvent(
-            new MultiEditEvent(edits, "Paste", this.subGraphId)
+            new MultiEditEvent(
+              edits,
+              `Paste (#${++this.#pasteCount})`,
+              this.subGraphId
+            )
           );
         } catch (err) {
           // Not JSON data - ignore.
@@ -741,6 +765,35 @@ export class Editor extends LitElement {
   #onGraphNodeMove(evt: Event) {
     const { id, x, y } = evt as GraphNodeMoveEvent;
     this.dispatchEvent(new NodeMoveEvent(id, x, y, this.subGraphId));
+  }
+
+  #onGraphNodesMove(evt: Event) {
+    const moveEvt = evt as GraphNodesMoveEvent;
+    const label = moveEvt.nodes.reduce((prev, curr, idx) => {
+      return (
+        prev +
+        (idx > 0 ? ", " : "") +
+        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}})`
+      );
+    }, "");
+    const editsEvt = new MultiEditEvent(
+      moveEvt.nodes.map((node) => {
+        return {
+          type: "changemetadata",
+          id: node.id,
+          metadata: {
+            visual: {
+              x: node.x,
+              y: node.y,
+            },
+          },
+        };
+      }),
+      `Node multimove: ${label}`,
+      this.subGraphId
+    );
+
+    this.dispatchEvent(editsEvt);
   }
 
   #onGraphEdgeAttach(evt: Event) {

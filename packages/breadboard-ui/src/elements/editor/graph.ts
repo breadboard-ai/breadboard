@@ -850,19 +850,20 @@ export class Graph extends PIXI.Container {
     }
 
     // Propagate the move event out to the graph renderer when the cursor is released.
+    const locations = [];
     for (const child of this.graph.getSelectedChildren()) {
       if (!(child instanceof GraphNode)) {
         continue;
       }
 
-      // this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.id, x, y);
-      this.graph.emit(
-        GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
-        child.label,
-        child.position.x,
-        child.position.y
-      );
+      locations.push({
+        id: child.label,
+        x: child.position.x,
+        y: child.position.y,
+      });
     }
+
+    this.graph.emit(GRAPH_OPERATIONS.GRAPH_NODES_MOVED, locations);
   }
 
   #performAutoSelect() {
@@ -977,7 +978,7 @@ export class Graph extends PIXI.Container {
           GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
           this.graphNode.label
         );
-        this.graphNode.emit(
+        this.graphNode.parent.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
           this.layout.x,
           this.layout.y,

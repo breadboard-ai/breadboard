@@ -20,7 +20,10 @@ import {
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SchemaEditor } from "./schema-editor.js";
-import { NodeUpdateEvent } from "../../events/events.js";
+import {
+  GraphNodeDeselectedAllEvent,
+  NodeUpdateEvent,
+} from "../../events/events.js";
 import { guard } from "lit/directives/guard.js";
 import {
   assertIsLLMContent,
@@ -124,8 +127,8 @@ export class NodeInfo extends LitElement {
 
       return { node, ports, configuration };
     },
-    onError: (err) => {
-      console.warn(err);
+    onError: () => {
+      this.dispatchEvent(new GraphNodeDeselectedAllEvent());
     },
     args: () => [this.graph, this.subGraphId, this.selectedNodeIds],
   });
@@ -972,11 +975,8 @@ export class NodeInfo extends LitElement {
           </div>
         `;
       },
-      error: (err) => {
-        console.warn(err);
-        return html`<div class="node-load-error">
-          Error loading node: (${(err as Error).toString()})
-        </div>`;
+      error: () => {
+        this.dispatchEvent(new GraphNodeDeselectedAllEvent());
       },
     });
   }
