@@ -900,6 +900,8 @@ export class Editor extends LitElement {
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
+    this.#graph.deselectAllChildren();
+
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
@@ -1010,6 +1012,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-specialist"
                 @dblclick=${() => {
                   const id = this.#createRandomID("specialist");
+                  this.#graph.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "specialist"));
                 }}
                 @dragstart=${(evt: DragEvent) => {
@@ -1027,6 +1030,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-human"
                 @dblclick=${() => {
                   const id = this.#createRandomID("human");
+                  this.#graph.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "human"));
                 }}
                 @dragstart=${(evt: DragEvent) => {
@@ -1044,6 +1048,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-looper"
                 @dblclick=${() => {
                   const id = this.#createRandomID("looper");
+                  this.#graph.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "looper"));
                 }}
                 @dragstart=${(evt: DragEvent) => {

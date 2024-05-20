@@ -118,6 +118,22 @@ export class BoardUnloadEvent extends Event {
  * General UI
  */
 
+export class UndoEvent extends Event {
+  static eventName = "bbundo";
+
+  constructor() {
+    super(UndoEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RedoEvent extends Event {
+  static eventName = "bbredo";
+
+  constructor() {
+    super(RedoEvent.eventName, { ...eventInit });
+  }
+}
+
 export class OverlayDismissedEvent extends Event {
   static eventName = "bboverlaydismissed";
 

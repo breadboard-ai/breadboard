@@ -66,6 +66,9 @@ export class Main extends LitElement {
   showPreviewOverlay = false;
 
   @state()
+  showHistory = false;
+
+  @state()
   boardEditOverlayInfo: {
     title?: string;
     version?: string;
@@ -475,6 +478,10 @@ export class Main extends LitElement {
       evt.preventDefault();
       this.#attemptBoardSave();
       return;
+    }
+
+    if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+      this.showHistory = !this.showHistory;
     }
 
     if (evt.key === "z" && evt.metaKey) {
@@ -1564,7 +1571,40 @@ export class Main extends LitElement {
       ></bb-settings-edit-overlay>`;
     }
 
+    let historyOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showHistory) {
+      const editor = this.#getEditor();
+      if (!editor) {
+        return;
+      }
+
+      const history = editor.history();
+      historyOverlay = html`<bb-graph-history
+        .entries=${history.entries()}
+        .canRedo=${history.canRedo()}
+        .canUndo=${history.canUndo()}
+        .count=${history.entries().length}
+        .idx=${history.index()}
+        @bbundo=${() => {
+          if (!history.canUndo()) {
+            return;
+          }
+
+          history.undo();
+          this.requestUpdate();
+        }}
+        @bbredo=${() => {
+          if (!history.canRedo()) {
+            return;
+          }
+
+          history.redo();
+          this.requestUpdate();
+        }}
+      ></bb-graph-history>`;
+    }
+
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${toasts} `;
+    ${historyOverlay} ${toasts} `;
   }
 }
