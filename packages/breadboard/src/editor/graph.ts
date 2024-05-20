@@ -84,7 +84,7 @@ export class Graph implements EditableGraph {
         this.#version++;
         this.#inspector.resetGraph(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.#graph, this.#version, false, "historychange")
+          new ChangeEvent(this.#graph, this.#version, false, "history")
         );
       },
     });

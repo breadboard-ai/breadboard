@@ -23,7 +23,7 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
     public graph: GraphDescriptor,
     public version: number,
     public visualOnly: boolean,
-    public type: ChangeEventType
+    public changeType: ChangeEventType
   ) {
     super(ChangeEvent.eventName, {
       bubbles: false,
