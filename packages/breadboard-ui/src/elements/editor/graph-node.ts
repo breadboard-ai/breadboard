@@ -256,6 +256,11 @@ export class GraphNode extends PIXI.Container {
       if (!this.#iconSprite) {
         const texture = GraphAssets.instance().get(icon);
         this.#iconSprite = texture ? new PIXI.Sprite(texture) : null;
+
+        if (this.#iconSprite) {
+          this.#iconSprite.scale.x = ICON_SCALE;
+          this.#iconSprite.scale.y = ICON_SCALE;
+        }
       }
     } else {
       this.#iconSprite = null;

@@ -351,6 +351,7 @@ export class Editor extends LitElement {
         this.#lastSubGraphId !== this.subGraphId)
     ) {
       this.#graph.clearNodeLayoutPositions();
+      this.#graphRenderer.hideAllGraphs();
       this.#graphRenderer.zoomToFit();
 
       if (this.#lastSubGraphId !== this.subGraphId) {
@@ -849,9 +850,12 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y }, true);
 
+    // Ask the graph for the visual positioning because the graph accounts for
+    // any transforms, whereas our base x & y values do not.
+    const layout = this.#graph.getNodeLayoutPosition(id) || { x: 0, y: 0 };
     this.dispatchEvent(
       new NodeCreateEvent(id, data, this.subGraphId, undefined, {
-        visual: { x, y },
+        visual: { x: layout.x, y: layout.y },
       })
     );
   }
@@ -1013,10 +1017,6 @@ export class Editor extends LitElement {
           title="Reset Layout"
           id="reset-layout"
           @click=${() => {
-            if (!confirm("Are you sure you want to reset node positions?")) {
-              return;
-            }
-
             this.#graphRenderer.resetGraphLayout();
           }}
         >
