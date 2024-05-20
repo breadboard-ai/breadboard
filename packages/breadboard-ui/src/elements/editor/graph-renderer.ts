@@ -477,8 +477,29 @@ export class GraphRenderer extends LitElement {
     this.#activeGraph = null;
   }
 
+  hideAllGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.visible = false;
+    }
+  }
+
+  showAllGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.visible = true;
+    }
+  }
+
   addGraph(graph: Graph) {
     graph.editable = this.editable;
+    this.hideAllGraphs();
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
@@ -514,7 +535,10 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => this.zoomToFit());
+    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+      this.showAllGraphs();
+      this.zoomToFit();
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
       graph.layout();
@@ -559,10 +583,6 @@ export class GraphRenderer extends LitElement {
                 if (!this.#overflowMenuGraphNode.label) {
                   console.warn("Tried to delete unnamed node");
                   break;
-                }
-
-                if (!confirm("Are you sure you want to delete this node?")) {
-                  return;
                 }
 
                 this.dispatchEvent(

@@ -977,6 +977,12 @@ export class Graph extends PIXI.Container {
           GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
           this.graphNode.label
         );
+        this.graphNode.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+          this.layout.x,
+          this.layout.y,
+          true
+        );
       }
 
       if (nodesLeftToDraw === 0) {
@@ -1014,8 +1020,17 @@ export class Graph extends PIXI.Container {
           y: number;
         };
 
+        // We may receive visual values for the node, but we may also have
+        // marked the node as having just been added to the editor. So we go
+        // looking for the layout value in order to honour the `justAdded` flag
+        // that may have been set.
+        const existingLayout = this.getNodeLayoutPosition(id);
+        let justAdded = false;
+        if (existingLayout) {
+          justAdded = existingLayout.justAdded || false;
+        }
         const pos = this.toGlobal({ x, y });
-        this.setNodeLayoutPosition(id, pos);
+        this.setNodeLayoutPosition(id, pos, justAdded);
       }
 
       const portInfo = this.#ports.get(id);
