@@ -104,6 +104,7 @@
   --bb-icon-pan: url(/third_party/icons/pan.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
+  --bb-icon-redo-inverted: url(/third_party/icons/redo-inverted.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);
   --bb-icon-reset: url(/third_party/icons/reset.svg);
   --bb-icon-reset-alt: url(/third_party/icons/reset-alt.svg);
@@ -117,6 +118,7 @@
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
+  --bb-icon-undo-inverted: url(/third_party/icons/undo-inverted.svg);
   --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);

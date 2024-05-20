@@ -685,7 +685,10 @@ export class Graph extends PIXI.Container {
         }
 
         const { x, y, width, height } = g.node(id);
-        this.#layout.set(id, { x: x - width / 2, y: y - height / 2 });
+        this.#layout.set(id, {
+          x: Math.round(x - width / 2),
+          y: Math.round(y - height / 2),
+        });
       }
     }
 
@@ -825,8 +828,8 @@ export class Graph extends PIXI.Container {
       }
 
       const newPosition = {
-        x: childPosition.x + delta.x,
-        y: childPosition.y + delta.y,
+        x: Math.round(childPosition.x + delta.x),
+        y: Math.round(childPosition.y + delta.y),
       };
 
       this.graph.setNodeLayoutPosition(
@@ -978,7 +981,7 @@ export class Graph extends PIXI.Container {
           GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
           this.graphNode.label
         );
-        this.graphNode.parent.emit(
+        this.graphNode.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
           this.layout.x,
           this.layout.y,
