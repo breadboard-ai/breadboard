@@ -73,7 +73,10 @@ export class Graph extends PIXI.Container {
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
-      this.#performAutoSelect();
+
+      if (this.#autoSelect.size > 0) {
+        this.#performAutoSelect();
+      }
     };
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
@@ -896,6 +899,8 @@ export class Graph extends PIXI.Container {
         this.#autoSelect.delete(graphNode.label);
       }
     }
+
+    this.emit(GRAPH_OPERATIONS.GRAPH_AUTOSELECTED_NODES);
   }
 
   #drawNodeHighlight() {

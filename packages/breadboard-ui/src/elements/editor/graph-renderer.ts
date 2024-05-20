@@ -497,6 +497,25 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  #emitSelectionState() {
+    this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      const selectedChildren = graph.getSelectedChildren();
+      for (const child of selectedChildren) {
+        if (!(child instanceof GraphNode)) {
+          continue;
+        }
+
+        this.dispatchEvent(new GraphNodeSelectedEvent(child.label));
+      }
+    }
+  }
+
   addGraph(graph: Graph) {
     graph.editable = this.editable;
     this.hideAllGraphs();
@@ -542,9 +561,14 @@ export class GraphRenderer extends LitElement {
       }
     );
 
+    graph.on(GRAPH_OPERATIONS.GRAPH_AUTOSELECTED_NODES, () => {
+      this.#emitSelectionState();
+    });
+
     graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
       this.showAllGraphs();
       this.zoomToFit();
+      this.#emitSelectionState();
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
