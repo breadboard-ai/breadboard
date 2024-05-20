@@ -92,7 +92,7 @@ export class EditHistoryManager {
   }
 
   canGoBack(): boolean {
-    return !this.#index;
+    return this.#index > 0;
   }
 
   canGoForth(): boolean {
