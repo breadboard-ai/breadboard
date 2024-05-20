@@ -18,6 +18,7 @@ import {
   InputErrorEvent,
   GraphNodeDeselectedEvent,
   GraphNodeDeselectedAllEvent,
+  GraphNodesMoveEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -505,6 +506,13 @@ export class GraphRenderer extends LitElement {
       GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
       (id: string, x: number, y: number) => {
         this.dispatchEvent(new GraphNodeMoveEvent(id, x, y));
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODES_MOVED,
+      (nodes: Array<{ id: string; x: number; y: number }>) => {
+        this.dispatchEvent(new GraphNodesMoveEvent(nodes));
       }
     );
 

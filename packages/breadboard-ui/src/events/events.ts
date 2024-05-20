@@ -441,6 +441,20 @@ export class GraphNodeMoveEvent extends Event {
   }
 }
 
+export class GraphNodesMoveEvent extends Event {
+  static eventName = "bbgraphnodesmove";
+
+  constructor(
+    public readonly nodes: Array<{
+      readonly id: string;
+      readonly x: number;
+      readonly y: number;
+    }>
+  ) {
+    super(GraphNodesMoveEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "bbgraphnodeselected";
 

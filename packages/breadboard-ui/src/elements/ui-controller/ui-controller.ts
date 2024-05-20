@@ -422,6 +422,10 @@ export class UI extends LitElement {
           @bbschemachange=${() => {
             this.#nodeSchemaUpdateCount++;
           }}
+          @bbgraphnodedeselectedall=${() => {
+            this.selectedNodeIds = [];
+            this.requestUpdate();
+          }}
         ></bb-node-info>`;
       }
     );
