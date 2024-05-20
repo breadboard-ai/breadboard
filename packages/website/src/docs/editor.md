@@ -22,18 +22,27 @@ import { edit } from "google-labs/breadboard";
 const graph = edit(bgl);
 ```
 
-The editor API provides one method for applying edits to the graph: `edit`. This method takes an array of objects, also called "Editor Specs" and an optional `dryRun` boolean.
+The editor API provides one method for applying edits to the graph: `edit`. This method takes three members (two required):
+
+- an array of objects, also called "Editor Specs";
+
+- a string label for the edit;
+
+- an optional `dryRun` boolean.
 
 ```ts
 // Adds a node with id = "foo" and type = "type".
 // Returns `Promise<EditResult>`.
-const result = await graph.edit([
-  { type: "addnode", node: { id: "foo", type: "type" } },
-]);
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  `Create Node "foo"`
+);
 if (!result.success) {
   console.warn("Adding node failed with this error", result.error);
 }
 ```
+
+The string label plays an important role. It groups the edit operations for the purpose of collecting history. See more about how to use it in the [Graph history management (undo/redo)](#graph-history-management-undoredo) section.
 
 When `dryRun` is set to `true`, the method will not perform the actual edit, but report the result as if the edit as applied. This is useful if we want to check whether an edit would be valid without actually making an edit.
 
@@ -43,6 +52,7 @@ When `dryRun` is set to `true`, the method will not perform the actual edit, but
 // Returns `Promise<EditResult>`.
 const result = await graph.edit(
   [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  "Adding Node (dry run)",
   true
 );
 if (!result.success) {
@@ -189,6 +199,75 @@ const graph = edit(bgl, {
   kits: [asRuntime(Core), asRunTime(JSONKit)],
   version,
 });
+```
+
+## Graph history management (undo/redo)
+
+In addition to simple versioning, the Editor API tracks history of the graph to enable undo/redo capability. The `history()` method on an `EditableGraph` instance provides a few handy helpers for that:
+
+- the `undo()` method undoes the last change. If there's nothing to undo, calling it does nothing.
+
+- the `redo()` method redoes the change that was previously undone, or does nothing if there are no more changes to redo.
+
+- the `canUndo()` method reports whether an undo operation is possible at a given moment. It returns `false` when we're at the beginning of graph edit history, and `true` otherwise.
+
+- the `canRedo()` method returns whether a redo operation is possible, returning `false` when we're at the end of graph edit history and `true` otherwise.
+
+- the `entries()` method returns the list of all entries in the graph edit history.
+
+- the `index()` method returns the index of the current entry in the graph edit history.
+
+```ts
+// Returns an `EditHistory` instance.
+const history = graph.history();
+if (history.canUndo()) {
+  history.undo();
+}
+history.redo();
+
+// Prints out a list of history entries with a ">" marker next
+// to the current history entry.
+const labels = history.entries().map((entry) => entry.label);
+console.group("History:");
+labels.forEach((label, index) => {
+  const current = index === history.index() ? ">" : " ";
+  console.log(`${index}:${current} ${label}`);
+});
+console.groupEnd();
+```
+
+The string label that was supplied for an `edit` operation allows the user of the API to group multiple edit operations into a single history entry.
+
+Each `edit` call that has the same label as the previous `edit` call will be grouped with that previous call: no new history entry will be created for it.
+
+When the `edit` call has a label that's different from the previous call, a new history entry will be created.
+
+```ts
+// Creates a new history entry.
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  `Create Node "foo"`
+);
+// Different label, creates another history entry.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "F" } }],
+  `Editing metadata for node "foo"`
+);
+// Label is the same as the previous call, no new entry created.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "Fo" } }],
+  `Editing metadata for node "foo"`
+);
+// Label is the same as the previous call, no new entry created.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "Foo" } }],
+  `Editing metadata for node "foo"`
+);
+// Different label, creates another history entry.
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "bar", type: "type" } }],
+  `Create Node "bar"`
+);
 ```
 
 ## Editing subgraphs

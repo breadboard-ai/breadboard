@@ -223,14 +223,12 @@ export type EditHistory = {
   /**
    * Reports whether an undo operation is possible at a given moment.
    * The undo may not be possible because we're at the beginning of the
-   * history, or because the undo/redo operations are paused.
-   */
+   * history. */
   canUndo(): boolean;
 
   /**
    * Reports whether a redo operation is possible at a given moment.
-   * The redo may not be possible because we're at the end of the history,
-   * or because the undo/redo operations are paused.
+   * The redo may not be possible because we're at the end of the history.
    */
   canRedo(): boolean;
 
