@@ -5,6 +5,7 @@
  */
 
 export enum GRAPH_OPERATIONS {
+  GRAPH_AUTOSELECTED_NODES = "graphautoselectednodes",
   GRAPH_NODE_DRAWN = "graphnodedrawn",
   GRAPH_NODE_MOVED = "graphnodemoved",
   GRAPH_NODES_MOVED = "graphnodesmoved",
