@@ -485,12 +485,27 @@ export class Main extends LitElement {
         return;
       }
 
+      const history = editor.history();
+
+      // TODO: Make this not a console-only thing.
+      const printHistory = (label: string) => {
+        const labels = history.entries().map((entry) => entry.label);
+        console.group(`History: ${label}`);
+        labels.forEach((label, index) => {
+          const current = index === history.index() ? ">" : " ";
+          console.log(`${index}:${current} ${label}`);
+        });
+        console.groupEnd();
+      };
+
       if (evt.shiftKey) {
-        editor.history().redo();
+        history.redo();
+        printHistory("Redo");
         return;
       }
 
-      editor.history().undo();
+      history.undo();
+      printHistory("Undo");
       return;
     }
   }

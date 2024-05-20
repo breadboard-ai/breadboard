@@ -240,7 +240,19 @@ export type EditHistory = {
    * Re-does the change that was undone or does nothing if there isn't one.
    */
   redo(): void;
+
+  /**
+   * Returns a list of all entries in the history.
+   */
+  entries(): EditHistoryEntry[];
+
+  /**
+   * Current index in the history.
+   */
+  index(): number;
 };
+
+export type EditHistoryEntry = { graph: GraphDescriptor; label: string };
 
 export type EditableGraphOptions = InspectableGraphOptions & {
   /**

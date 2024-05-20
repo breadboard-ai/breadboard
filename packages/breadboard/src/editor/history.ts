@@ -5,9 +5,11 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { EditHistory, EditHistoryController } from "./types.js";
-
-type HistoryEntry = { graph: GraphDescriptor; label: string };
+import {
+  EditHistory,
+  EditHistoryController,
+  EditHistoryEntry,
+} from "./types.js";
 
 export class GraphEditHistory implements EditHistory {
   #controller: EditHistoryController;
@@ -15,16 +17,6 @@ export class GraphEditHistory implements EditHistory {
 
   constructor(controller: EditHistoryController) {
     this.#controller = controller;
-  }
-
-  #printHistory(label: string) {
-    const labels = this.#history.history.map((entry) => entry.label);
-    console.group(`History: ${label}`);
-    labels.forEach((label, index) => {
-      const current = index === this.#history.index() ? ">" : " ";
-      console.log(`${index}:${current} ${label}`);
-    });
-    console.groupEnd();
   }
 
   add(graph: GraphDescriptor, label: string) {
@@ -40,8 +32,6 @@ export class GraphEditHistory implements EditHistory {
     this.#history.pause(label, checkpoint, version);
 
     this.#history.add(graph, label);
-
-    this.#printHistory(label);
   }
 
   canUndo(): boolean {
@@ -57,7 +47,6 @@ export class GraphEditHistory implements EditHistory {
     const graph = this.#history.back();
     if (!graph) return;
     this.#controller.setGraph(graph);
-    this.#printHistory("undo");
   }
 
   redo(): void {
@@ -65,12 +54,19 @@ export class GraphEditHistory implements EditHistory {
     const graph = this.#history.forth();
     if (!graph) return;
     this.#controller.setGraph(graph);
-    this.#printHistory("redo");
+  }
+
+  entries(): EditHistoryEntry[] {
+    return this.#history.history;
+  }
+
+  index(): number {
+    return this.#history.index();
   }
 }
 
 export class EditHistoryManager {
-  history: HistoryEntry[] = [];
+  history: EditHistoryEntry[] = [];
   #index: number = 0;
   pauseLabel: string | null = null;
   #version: number = 0;
