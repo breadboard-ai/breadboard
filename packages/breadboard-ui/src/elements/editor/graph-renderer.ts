@@ -14,7 +14,6 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
-  GraphNodePositionsCalculatedEvent,
   InputErrorEvent,
   GraphNodeDeselectedEvent,
   GraphNodeDeselectedAllEvent,
@@ -703,13 +702,18 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
-
-      this.dispatchEvent(
-        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
-      );
-
+      this.#emitGraphNodePositions(graph);
       return;
     }
+  }
+
+  #emitGraphNodePositions(graph: Graph) {
+    const positions = graph.getNodeLayoutPositions();
+    const nodes = [...positions.entries()].map(([id, layout]) => {
+      return { id, x: layout.x, y: layout.y };
+    });
+
+    this.dispatchEvent(new GraphNodesMoveEvent(nodes));
   }
 
   resetGraphLayout() {
@@ -721,9 +725,7 @@ export class GraphRenderer extends LitElement {
       graph.clearNodeLayoutPositions();
       graph.layout();
 
-      this.dispatchEvent(
-        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
-      );
+      this.#emitGraphNodePositions(graph);
     }
   }
 

@@ -353,17 +353,6 @@ export class NodeDeleteEvent extends Event {
   }
 }
 
-export class NodeMultiLayoutEvent extends Event {
-  static eventName = "bbnodemultilayout";
-
-  constructor(
-    public readonly layout: Map<string, { x: number; y: number }>,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(NodeMultiLayoutEvent.eventName, { ...eventInit });
-  }
-}
-
 export class NodeUpdateEvent extends Event {
   static eventName = "bbnodeupdate";
 
@@ -434,14 +423,6 @@ export class MultiEditEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(MultiEditEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphNodePositionsCalculatedEvent extends Event {
-  static eventName = "bbgraphnodepositionscalculated";
-
-  constructor(public readonly layout: Map<string, { x: number; y: number }>) {
-    super(GraphNodePositionsCalculatedEvent.eventName, { ...eventInit });
   }
 }
 
