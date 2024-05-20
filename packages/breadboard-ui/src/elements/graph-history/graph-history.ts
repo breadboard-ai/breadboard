@@ -32,7 +32,6 @@ export class GraphHistory extends LitElement {
       display: grid;
       grid-template-rows: 36px auto;
       position: fixed;
-      background-color: hsla(from var(--bb-ui-900) h s l / 0.92);
       top: 120px;
       left: 10px;
       border-radius: var(--bb-grid-size-2);
@@ -46,6 +45,18 @@ export class GraphHistory extends LitElement {
       z-index: 1000;
     }
 
+    #underlay {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bb-ui-900);
+      opacity: 0.92;
+    }
+
     h1 {
       display: flex;
       align-items: center;
@@ -53,6 +64,8 @@ export class GraphHistory extends LitElement {
         var(--bb-font-family);
       margin: 0;
       padding: 0 0 var(--bb-grid-size-3) 0;
+      z-index: 1;
+      position: relative;
     }
 
     h1 span {
@@ -86,6 +99,7 @@ export class GraphHistory extends LitElement {
     }
 
     ol {
+      position: relative;
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       margin: 0;
@@ -108,7 +122,8 @@ export class GraphHistory extends LitElement {
       return nothing;
     }
 
-    return html` <h1>
+    return html`<div id="underlay"></div>
+      <h1>
         <span>Change History</span>
         <button
           id="undo"
