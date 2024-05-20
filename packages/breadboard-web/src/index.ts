@@ -478,16 +478,34 @@ export class Main extends LitElement {
     }
 
     if (evt.key === "z" && evt.metaKey) {
+      // TODO: Return early when the user is in various input fields.
+
       const editor = this.#getEditor();
       if (!editor) {
         return;
       }
+
+      const history = editor.history();
+
+      // TODO: Make this not a console-only thing.
+      const printHistory = (label: string) => {
+        const labels = history.entries().map((entry) => entry.label);
+        console.group(`History: ${label}`);
+        labels.forEach((label, index) => {
+          const current = index === history.index() ? ">" : " ";
+          console.log(`${index}:${current} ${label}`);
+        });
+        console.groupEnd();
+      };
+
       if (evt.shiftKey) {
-        editor.redo();
+        history.redo();
+        printHistory("Redo");
         return;
       }
 
-      editor.undo();
+      history.undo();
+      printHistory("Undo");
       return;
     }
   }
@@ -1036,18 +1054,20 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.resumeUndoRedo();
-
             switch (evt.changeType) {
               case "add": {
-                editableGraph.edit([
-                  { type: "addedge", edge: evt.from, strict: false },
-                ]);
+                editableGraph.edit(
+                  [{ type: "addedge", edge: evt.from, strict: false }],
+                  `Add edge between ${evt.from.from} and ${evt.from.to}`
+                );
                 break;
               }
 
               case "remove": {
-                editableGraph.edit([{ type: "removeedge", edge: evt.from }]);
+                editableGraph.edit(
+                  [{ type: "removeedge", edge: evt.from }],
+                  `Remove edge between ${evt.from.from} and ${evt.from.to}`
+                );
                 break;
               }
 
@@ -1056,14 +1076,17 @@ export class Main extends LitElement {
                   throw new Error("Unable to move edge - no `to` provided");
                 }
 
-                editableGraph.edit([
-                  {
-                    type: "changeedge",
-                    from: evt.from,
-                    to: evt.to,
-                    strict: false,
-                  },
-                ]);
+                editableGraph.edit(
+                  [
+                    {
+                      type: "changeedge",
+                      from: evt.from,
+                      to: evt.to,
+                      strict: false,
+                    },
+                  ],
+                  `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
+                );
                 break;
               }
             }
@@ -1090,11 +1113,10 @@ export class Main extends LitElement {
               ...metadata,
             };
 
-            editableGraph.pauseUndoRedo(`changemetadata-${id}`);
-
-            editableGraph.edit([
-              { type: "changemetadata", id, metadata: newMetadata },
-            ]);
+            editableGraph.edit(
+              [{ type: "changemetadata", id, metadata: newMetadata }],
+              `Change metadata for "${id}"`
+            );
           }}
           @bbnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
             let editableGraph = this.#getEditor();
@@ -1117,15 +1139,16 @@ export class Main extends LitElement {
               visual = {};
             }
 
-            editableGraph.resumeUndoRedo();
-
-            editableGraph.edit([
-              {
-                type: "changemetadata",
-                id,
-                metadata: { ...metadata, visual: { ...visual, x, y } },
-              },
-            ]);
+            editableGraph.edit(
+              [
+                {
+                  type: "changemetadata",
+                  id,
+                  metadata: { ...metadata, visual: { ...visual, x, y } },
+                },
+              ],
+              `Move node "${id}" to (${x}, ${y})`
+            );
           }}
           @bbnodemultilayout=${(
             evt: BreadboardUI.Events.NodeMultiLayoutEvent
@@ -1140,8 +1163,6 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.resumeUndoRedo();
-
             const inspectableGraph = editableGraph.inspect();
 
             Promise.all(
@@ -1155,18 +1176,21 @@ export class Main extends LitElement {
                   visual = {};
                 }
 
-                return editableGraph.edit([
-                  {
-                    type: "changemetadata",
-                    id,
-                    metadata: { ...metadata, visual: { ...visual, x, y } },
-                  },
-                ]);
+                return editableGraph.edit(
+                  [
+                    {
+                      type: "changemetadata",
+                      id,
+                      metadata: { ...metadata, visual: { ...visual, x, y } },
+                    },
+                  ],
+                  `Move node "${id}" to (${x}, ${y})`
+                );
               })
             );
           }}
           @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-            const { edits: spec, subGraphId } = evt;
+            const { edits, description, subGraphId } = evt;
             let editableGraph = this.#getEditor();
             if (editableGraph && subGraphId) {
               editableGraph = editableGraph.getGraph(subGraphId);
@@ -1177,9 +1201,7 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.resumeUndoRedo();
-
-            editableGraph.edit(spec);
+            editableGraph.edit(edits, description);
           }}
           @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
             const { id, nodeType, metadata, configuration } = evt;
@@ -1200,9 +1222,10 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.resumeUndoRedo();
-
-            editableGraph.edit([{ type: "addnode", node: newNode }]);
+            editableGraph.edit(
+              [{ type: "addnode", node: newNode }],
+              `Add node ${id}`
+            );
           }}
           @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
             let editableGraph = this.#getEditor();
@@ -1215,15 +1238,16 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.pauseUndoRedo(`changeconfiguration-${evt.id}`);
-
-            editableGraph.edit([
-              {
-                type: "changeconfiguration",
-                id: evt.id,
-                configuration: evt.configuration,
-              },
-            ]);
+            editableGraph.edit(
+              [
+                {
+                  type: "changeconfiguration",
+                  id: evt.id,
+                  configuration: evt.configuration,
+                },
+              ],
+              `Change configuration for "${evt.id}"`
+            );
           }}
           @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
             let editableGraph = this.#getEditor();
@@ -1236,9 +1260,10 @@ export class Main extends LitElement {
               return;
             }
 
-            editableGraph.resumeUndoRedo();
-
-            editableGraph.edit([{ type: "removenode", id: evt.id }]);
+            editableGraph.edit(
+              [{ type: "removenode", id: evt.id }],
+              `Remove node ${evt.id}`
+            );
           }}
           @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
             if (!this.#uiRef.value) {

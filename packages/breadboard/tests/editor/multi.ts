@@ -11,6 +11,7 @@ test("Multi-edit returns a last failed edit's error message", async (t) => {
   const graph = testEditGraph();
   const result = await graph.edit(
     [{ type: "addnode", node: { id: "node0", type: "foo" } }],
+    "test",
     true
   );
 
@@ -39,11 +40,14 @@ test("Multi-edit can do multiple successful edits", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
-    const result = await graph.edit([
-      { type: "addnode", node: { id: "node-1", type: "foo" } },
-      { type: "addnode", node: { id: "node-2", type: "foo" } },
-      { type: "addnode", node: { id: "node-3", type: "foo" } },
-    ]);
+    const result = await graph.edit(
+      [
+        { type: "addnode", node: { id: "node-1", type: "foo" } },
+        { type: "addnode", node: { id: "node-2", type: "foo" } },
+        { type: "addnode", node: { id: "node-3", type: "foo" } },
+      ],
+      "test"
+    );
     t.true(result.success);
     const inspector = graph.inspect();
     t.assert(inspector.nodeById("node-1"));
@@ -70,6 +74,7 @@ test("Multi-edit can do multiple successful edits", async (t) => {
         { type: "addnode", node: { id: "node-2", type: "foo" } },
         { type: "addnode", node: { id: "node-3", type: "foo" } },
       ],
+      "test",
       true
     );
     t.true(result.success);
@@ -95,11 +100,14 @@ test("Multi-edit gracefully fails", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
-    const result = await graph.edit([
-      { type: "addnode", node: { id: "node-1", type: "foo" } },
-      { type: "addnode", node: { id: "node0", type: "foo" } },
-      { type: "addnode", node: { id: "node-3", type: "foo" } },
-    ]);
+    const result = await graph.edit(
+      [
+        { type: "addnode", node: { id: "node-1", type: "foo" } },
+        { type: "addnode", node: { id: "node0", type: "foo" } },
+        { type: "addnode", node: { id: "node-3", type: "foo" } },
+      ],
+      "test"
+    );
     if (result.success) {
       t.fail();
       return;
@@ -128,11 +136,14 @@ test("Multi-edit gracefully fails", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
-    const result = await graph.edit([
-      { type: "addnode", node: { id: "node-1", type: "foo" } },
-      { type: "addnode", node: { id: "node-1", type: "foo" } },
-      { type: "addnode", node: { id: "node-3", type: "foo" } },
-    ]);
+    const result = await graph.edit(
+      [
+        { type: "addnode", node: { id: "node-1", type: "foo" } },
+        { type: "addnode", node: { id: "node-1", type: "foo" } },
+        { type: "addnode", node: { id: "node-3", type: "foo" } },
+      ],
+      "test"
+    );
     if (result.success) {
       t.fail();
       return;

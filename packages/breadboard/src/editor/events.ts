@@ -6,6 +6,7 @@
 
 import { GraphDescriptor } from "../types.js";
 import {
+  ChangeEventType,
   ErrorRejection,
   GraphChangeEvent,
   GraphChangeRejectEvent,
@@ -21,7 +22,8 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
   constructor(
     public graph: GraphDescriptor,
     public version: number,
-    public visualOnly: boolean
+    public visualOnly: boolean,
+    public changeType: ChangeEventType
   ) {
     super(ChangeEvent.eventName, {
       bubbles: false,
