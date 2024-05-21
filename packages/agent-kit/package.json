@@ -144,7 +144,7 @@
     "@google-labs/json-kit": "^0.3.0",
     "@google-labs/template-kit": "^0.3.2",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.12.11",
+    "@types/node": "^20.12.12",
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.9.0",
     "ava": "^5.2.0",
