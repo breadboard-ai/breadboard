@@ -125,7 +125,7 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.12.11",
-    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.9.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
