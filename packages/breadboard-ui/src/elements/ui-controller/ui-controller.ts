@@ -431,7 +431,14 @@ export class UI extends LitElement {
     );
 
     const boardDetails = guard(
-      [this.boardId, this.graph, this.subGraphId],
+      [
+        this.boardId,
+        this.graph,
+        this.subGraphId,
+        boardTitle,
+        boardVersion,
+        boardDescription,
+      ],
       () => {
         return html`<bb-board-details
           .boardTitle=${boardTitle}
