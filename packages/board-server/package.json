@@ -1,0 +1,127 @@
+{
+  "name": "@breadboard-ai/board-server",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "private": true,
+  "version": "0.0.1",
+  "description": "Board Server",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "test": "wireit",
+    "test:only": "wireit",
+    "coverage": "wireit",
+    "lint": "wireit",
+    "test-and-lint": "wireit",
+    "dev": "npm run test-and-lint --watch"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc",
+        "../breadboard:build"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "dependencies": [
+        "../breadboard:build:tsc"
+      ],
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:only": {
+      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "coverage": {
+      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "lcov.info"
+      ]
+    },
+    "lint": {
+      "command": "eslint src/ --ext .ts",
+      "files": [
+        "src/**/*.ts",
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    },
+    "test-and-lint": {
+      "dependencies": [
+        "test",
+        "lint"
+      ]
+    }
+  },
+  "repository": {
+    "directory": "packages/board-server",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0"
+  },
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@types/node": "^18.16.3",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4"
+  }
+}

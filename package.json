@@ -51,6 +51,7 @@
         "./packages/pinecone-kit:build",
         "./packages/website:build",
         "./packages/schema:build",
+        "./packages/board-server:build",
         "./packages/team-kit:build"
       ]
     },
@@ -75,7 +76,8 @@
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
-        "./packages/schema:test"
+        "./packages/schema:test",
+        "./packages/board-server:test"
       ]
     },
     "lint": {
@@ -102,7 +104,8 @@
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/pinecone-kit:lint"
+        "./packages/pinecone-kit:lint",
+        "./packages/board-server:lint"
       ]
     },
     "ci:local": {
