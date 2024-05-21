@@ -37,7 +37,7 @@ export class ChangeConfiguration implements EditOperation {
         `Editor API integrity error: expected type "changeconfiguration", received "${spec.type}" instead.`
       );
     }
-    const { id, configuration } = spec;
+    const { id, configuration, reset = false } = spec;
     if (!configuration) {
       return {
         success: false,
@@ -51,7 +51,14 @@ export class ChangeConfiguration implements EditOperation {
     }
     const node = inspector.nodeById(id);
     if (node) {
-      node.descriptor.configuration = configuration;
+      if (reset) {
+        node.descriptor.configuration = configuration;
+      } else {
+        node.descriptor.configuration = {
+          ...node.descriptor.configuration,
+          ...configuration,
+        };
+      }
     }
     return { success: true };
   }

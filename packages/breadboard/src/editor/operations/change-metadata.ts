@@ -48,7 +48,7 @@ export class ChangeMetadata implements EditOperation {
         `Editor API integrity error: expected type "changemetadata", received "${spec.type}" instead.`
       );
     }
-    const { id, metadata } = spec;
+    const { id, metadata, reset = false } = spec;
     const { inspector } = context;
     const can = await this.can(id, inspector);
     if (!can.success) return can;
@@ -61,7 +61,15 @@ export class ChangeMetadata implements EditOperation {
       metadata,
       node.descriptor.metadata || {}
     );
-    node.descriptor.metadata = metadata;
+    const oldMetadata = node.descriptor.metadata;
+    if (reset) {
+      node.descriptor.metadata = metadata;
+    } else {
+      node.descriptor.metadata = {
+        ...oldMetadata,
+        ...metadata,
+      };
+    }
     return { success: true, visualOnly };
   }
 }

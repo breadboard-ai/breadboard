@@ -107,3 +107,23 @@ test("editGraph correctly edits visual node metadata", async (t) => {
   t.is(invalidResult.success, false);
   t.is(graph.version(), 1);
 });
+
+test("editGraph correctly distinguishes between `reset` and incremental graph metadata changes", async (t) => {
+  const graph = testEditGraph();
+
+  const result = await graph.edit(
+    [
+      { type: "changemetadata", id: "node0", metadata: { title: "hello" } },
+      {
+        type: "changemetadata",
+        id: "node0",
+        metadata: { visual: { x: 8, y: 10 } },
+      },
+    ],
+    "test"
+  );
+  t.is(result.success, true);
+  const changedMetadata = graph.inspect().nodeById("node0")
+    ?.descriptor?.metadata;
+  t.deepEqual(changedMetadata, { title: "hello", visual: { x: 8, y: 10 } });
+});
