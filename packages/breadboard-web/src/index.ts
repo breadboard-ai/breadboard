@@ -32,6 +32,7 @@ import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
+import { RemoteGraphProvider } from "./providers/remote";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -386,30 +387,34 @@ export class Main extends LitElement {
       ]),
       ...this.#providers.map((provider) => provider.restore()),
       this.#settings?.restore(),
-    ]).then(([kits]) => {
-      this.kits = kits;
+    ])
+      .then(([kits]) => {
+        this.kits = kits;
 
-      this.#providers.map((provider) => {
-        if (provider.extendedCapabilities().watch) {
-          provider.watch((change) => {
-            const currentUrl = new URL(window.location.href);
-            const boardFromUrl = currentUrl.searchParams.get("board");
-            if (boardFromUrl?.endsWith(change.filename)) {
-              this.#onStartBoard(
-                new BreadboardUI.Events.StartEvent(change.filename)
-              );
-            }
-          });
+        return this.#setRemoteServersFromSettings();
+      })
+      .then(() => {
+        this.#providers.map((provider) => {
+          if (provider.extendedCapabilities().watch) {
+            provider.watch((change) => {
+              const currentUrl = new URL(window.location.href);
+              const boardFromUrl = currentUrl.searchParams.get("board");
+              if (boardFromUrl?.endsWith(change.filename)) {
+                this.#onStartBoard(
+                  new BreadboardUI.Events.StartEvent(change.filename)
+                );
+              }
+            });
+          }
+        });
+
+        if (boardFromUrl) {
+          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+          return;
         }
+
+        this.#startFromProviderDefault();
       });
-
-      if (boardFromUrl) {
-        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-        return;
-      }
-
-      this.#startFromProviderDefault();
-    });
   }
 
   connectedCallback(): void {
@@ -423,6 +428,68 @@ export class Main extends LitElement {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  async #setRemoteServersFromSettings() {
+    const remoteServers = this.#settings?.getSection(
+      BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS
+    );
+
+    if (remoteServers && remoteServers.items) {
+      for (const server of remoteServers.items.values()) {
+        if (typeof server.value !== "string") {
+          continue;
+        }
+
+        let providerExists = false;
+
+        existingProviders: for (const provider of this.#providers) {
+          if (!(provider instanceof RemoteGraphProvider)) {
+            continue;
+          }
+
+          if (provider.origin === server.value) {
+            providerExists = true;
+            break existingProviders;
+          }
+        }
+
+        if (providerExists) {
+          continue;
+        }
+
+        const remoteGraphProvider = new RemoteGraphProvider(server.value);
+        await remoteGraphProvider.restore();
+        this.#providers.unshift(remoteGraphProvider);
+      }
+
+      // Now clean any providers that should not be there.
+      for (let p = this.#providers.length; p >= 0; p--) {
+        const provider = this.#providers[p];
+        if (!(provider instanceof RemoteGraphProvider)) {
+          continue;
+        }
+
+        let retain = false;
+        for (const server of remoteServers.items.values()) {
+          if (typeof server.value !== "string") {
+            continue;
+          }
+
+          if (provider.origin === server.value) {
+            retain = true;
+            break;
+          }
+        }
+
+        if (retain) {
+          continue;
+        }
+
+        console.log("Removing ", provider.origin);
+        this.#providers.splice(p, 1);
+      }
+    }
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -1547,6 +1614,7 @@ export class Main extends LitElement {
 
           try {
             await this.#settings.save(evt.settings);
+            await this.#setRemoteServersFromSettings();
             this.toast(
               "Saved settings",
               BreadboardUI.Events.ToastType.INFORMATION

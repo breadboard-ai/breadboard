@@ -194,7 +194,12 @@ export class SettingsEditOverlay extends LitElement {
       line-height: var(--bb-body-line-height-x-small);
     }
 
-    .setting-name.double {
+    .setting-name.hidden {
+      display: none;
+    }
+
+    .setting-name.double,
+    .setting-value.double {
       grid-column: 1 / 3;
     }
 
@@ -618,7 +623,9 @@ export class SettingsEditOverlay extends LitElement {
                                           type="hidden"
                                           name="setting-${id}-name-${idx}"
                                           .value=${item.name}
-                                        />${item.name}`}
+                                        />${configuration.nameVisible
+                                          ? item.name
+                                          : ""}`}
                                   ${item.description
                                     ? html`<div class="setting-description">
                                         ${item.description}
@@ -681,15 +688,25 @@ export class SettingsEditOverlay extends LitElement {
                                     name="setting-${id}-section-${idx}"
                                     .value=${name}
                                   />
+
                                   <div
                                     class=${classMap({
                                       "setting-name": true,
                                       double,
+                                      hidden: !configuration.nameVisible,
                                     })}
                                   >
                                     ${inName}
                                   </div>
-                                  <div>${inValue}</div>
+
+                                  <div
+                                    class=${classMap({
+                                      "setting-value": true,
+                                      double: !configuration.nameVisible,
+                                    })}
+                                  >
+                                    ${inValue}
+                                  </div>
                                   <div>${deleteButton}</div>`;
                               })
                             : html`<div class="no-entries">

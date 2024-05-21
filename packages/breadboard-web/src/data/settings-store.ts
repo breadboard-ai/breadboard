@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 3;
+const SETTINGS_VERSION = 4;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -27,6 +27,7 @@ export class SettingsStore {
         extensible: false,
         description: `General Breadboard settings`,
         nameEditable: false,
+        nameVisible: true,
       },
       items: new Map([
         [
@@ -97,6 +98,7 @@ export class SettingsStore {
         extensible: true,
         description: `Secrets that you want to store locally, such as API keys. Please note that items in this list should have unique names.`,
         nameEditable: true,
+        nameVisible: true,
       },
       items: new Map([]),
     },
@@ -105,6 +107,7 @@ export class SettingsStore {
         extensible: true,
         description: `Inputs that the boards ask for in the middle of the run (also known as "bubbled inputs"), such as model names`,
         nameEditable: true,
+        nameVisible: true,
       },
       items: new Map([]),
     },
@@ -114,8 +117,18 @@ export class SettingsStore {
         description:
           "Node proxy servers to use when running boards. Put the URL of the node proxy server in the first field and a comma-separated list of nodes to proxy in the second field.",
         nameEditable: true,
+        nameVisible: true,
       },
       items: new Map([]),
+    },
+    [BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS]: {
+      configuration: {
+        extensible: true,
+        description: "Put the URL of the board server in the field.",
+        nameEditable: false,
+        nameVisible: false,
+      },
+      items: new Map(),
     },
   };
 
