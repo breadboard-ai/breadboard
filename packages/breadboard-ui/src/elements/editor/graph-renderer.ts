@@ -770,6 +770,10 @@ export class GraphRenderer extends LitElement {
 
   #onKeyDown(evt: KeyboardEvent) {
     if (evt.code === "KeyA" && evt.metaKey) {
+      if (evt.composedPath()[0] !== this) {
+        return;
+      }
+
       this.selectAll();
       return;
     }
