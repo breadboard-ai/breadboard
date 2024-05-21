@@ -781,6 +781,27 @@ export class Main extends LitElement {
     }
   }
 
+  async #changeBoard(url: string) {
+    await this.#confirmSaveWithUserFirstIfNeeded();
+
+    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+      if (
+        !confirm("A board is currently running. Do you want to load this file?")
+      ) {
+        return;
+      }
+    }
+
+    try {
+      this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+    } catch (err) {
+      this.toast(
+        `Unable to load file: ${url}`,
+        BreadboardUI.Events.ToastType.ERROR
+      );
+    }
+  }
+
   render() {
     const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
       const offset = toasts.length - idx - 1;
@@ -1315,6 +1336,7 @@ export class Main extends LitElement {
 
           // Trigger a re-render.
           this.providerOps++;
+          this.#changeBoard(url.href);
         }}
         @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
@@ -1417,26 +1439,7 @@ export class Main extends LitElement {
         @bbgraphproviderloadrequest=${async (
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
-          await this.#confirmSaveWithUserFirstIfNeeded();
-
-          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-            if (
-              !confirm(
-                "A board is currently running. Do you want to load this file?"
-              )
-            ) {
-              return;
-            }
-          }
-
-          try {
-            this.#onStartBoard(new BreadboardUI.Events.StartEvent(evt.url));
-          } catch (err) {
-            this.toast(
-              `Unable to load file: ${evt.url}`,
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
+          this.#changeBoard(evt.url);
         }}
         @bbgraphproviderconnectrequest=${async (
           evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
