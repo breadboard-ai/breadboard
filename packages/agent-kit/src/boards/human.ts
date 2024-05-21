@@ -196,16 +196,16 @@ export default await board(({ context, title, description }) => {
     .default("[]");
   title
     .title("Title")
-    .description("The title to ask")
+    .description("The user label")
     .optional()
     .behavior("config")
     .default("User");
   description
     .title("Description")
-    .description("The description of what to ask")
+    .description("The user's input")
     .optional()
     .behavior("config")
-    .default("User's question or request");
+    .default("A request or response");
 
   const maybeOutputRouter = maybeOutput({
     $id: "maybeOutputRouter",

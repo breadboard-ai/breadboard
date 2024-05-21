@@ -273,7 +273,7 @@
                 },
                 "title": {
                   "title": "Title",
-                  "description": "The title to ask",
+                  "description": "The user label",
                   "behavior": [
                     "config"
                   ],
@@ -282,11 +282,11 @@
                 },
                 "description": {
                   "title": "Description",
-                  "description": "The description of what to ask",
+                  "description": "The user's input",
                   "behavior": [
                     "config"
                   ],
-                  "default": "User's question or request",
+                  "default": "A request or response",
                   "type": "string"
                 }
               },
@@ -1132,7 +1132,7 @@
               "properties": {
                 "in": {
                   "title": "Context in",
-                  "description": "The source material for the worker",
+                  "description": "Incoming conversation context",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -1146,7 +1146,7 @@
                 },
                 "task": {
                   "title": "Task",
-                  "description": "Optional. Give it a task to perform on the provided source materials. The ideal task is a call to action with the necessary details on how to best complete this action.",
+                  "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
                   "type": "object",
                   "default": "{}",
                   "behavior": [
@@ -1160,7 +1160,7 @@
                 "tools": {
                   "title": "Tools",
                   "type": "array",
-                  "description": "Optional. Equip it with tools by adding them to this list. If specified, the worker will invoke them when the job calls for it.",
+                  "description": "(Optional) Add tools to this list for the worker to use when needed",
                   "items": {
                     "type": "object",
                     "behavior": [
@@ -1173,7 +1173,7 @@
                 "persona": {
                   "type": "object",
                   "title": "Persona",
-                  "description": "Describe the worker persona: the skills and various capabilities, the mindset, the thinking process, etc.",
+                  "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
                   "default": "",
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
@@ -2179,12 +2179,12 @@
                   "examples": [
                     "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
                   ],
-                  "description": "The source material for this worker."
+                  "description": "Incoming conversation context"
                 },
                 "task": {
                   "title": "Task",
                   "default": "{}",
-                  "description": "The task from which to create the plan for looping.",
+                  "description": "The task to be used for loop planning",
                   "type": "object",
                   "behavior": [
                     "llm-content",
