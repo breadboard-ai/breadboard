@@ -90,12 +90,24 @@ export type ChangeConfigurationSpec = {
   type: "changeconfiguration";
   id: NodeIdentifier;
   configuration: NodeConfiguration;
+  /**
+   * If set to `true`, the configuration will be set to the value specified in
+   * `configuration`. If set to `false`, the value will be merged with the
+   * existing configuration. Defaults to `false`.
+   */
+  reset?: boolean;
 };
 
 export type ChangeMetadataSpec = {
   type: "changemetadata";
   id: NodeIdentifier;
   metadata: NodeMetadata;
+  /**
+   * If set to `true`, the metadata will be set to the value specified in
+   * `metadata`. If set to `false`, the value will be merged with the
+   * existing metadata. Defaults to `false`.
+   */
+  reset?: boolean;
 };
 
 export type ChangeGraphMetadataSpec = {
