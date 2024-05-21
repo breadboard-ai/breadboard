@@ -6,20 +6,17 @@
   "private": true,
   "version": "0.0.1",
   "description": "Board Server",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:only": "wireit",
-    "coverage": "wireit",
-    "lint": "wireit",
-    "test-and-lint": "wireit",
-    "dev": "npm run test-and-lint --watch"
+    "dev:server": "wireit",
+    "dev": "npm run dev:server --watch"
   },
   "wireit": {
     "build": {
@@ -43,6 +40,12 @@
       ],
       "clean": "if-file-deleted"
     },
+    "dev:server": {
+      "command": "node .",
+      "dependencies": [
+        "build"
+      ]
+    },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
       "dependencies": [
@@ -50,39 +53,6 @@
       ],
       "files": [],
       "output": []
-    },
-    "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": []
-    },
-    "coverage": {
-      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": [
-        "lcov.info"
-      ]
-    },
-    "lint": {
-      "command": "eslint src/ --ext .ts",
-      "files": [
-        "src/**/*.ts",
-        ".eslintrc",
-        "../../.eslintrc.json"
-      ],
-      "output": []
-    },
-    "test-and-lint": {
-      "dependencies": [
-        "test",
-        "lint"
-      ]
     }
   },
   "repository": {
@@ -93,19 +63,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -118,10 +75,8 @@
   },
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
     "@types/node": "^18.16.3",
-    "ava": "^5.2.0",
     "typescript": "^5.0.4"
   }
 }
