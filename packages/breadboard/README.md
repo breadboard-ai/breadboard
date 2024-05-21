@@ -19,12 +19,11 @@ This library's design emphasizes two key properties:
 - <a href="#breadboard">Breadboard</a>
 	- <a href="#installation">Installation</a>
 	- <a href="#usage">Usage</a>
+    	- <a href="#Breadboard Board Schema">Breadboard Schema</a>
+    	- <a href="#Breadboard Web">Breadboard Web</a>
+    	- <a href="#Using Breadboard Web">Using Breadboard Web</a>
 	- <a href="#concepts">Concepts</a>
 	- <a href="#additional-info">Additional Info</a>
-    - <a href="#Breadboard Board Schema">Breadboard Schema</a>
-    - <a href="#Breadboard Web">Breadboard Web</a>
-    - <a href="#Using Breadboard Web">Using Breadboard Web</a>
-
 <h2 id="installation">Installation</h2>
 
 Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
@@ -401,13 +400,10 @@ export default await board((inputs, { output }) => {
 });
 
 ```
-### Slots [TBD]
-### Adding metadata (titles, descriptions, schemas, etc,...) [TBD]
-
 
 <h2 id="Breadboard Board Schema">Breadboard Board Schema</h2>
 
-Schemas are used to attatch metadata to a board. This metadata provides useful information that can assist in a board's usage. Schemas can be used to define, describe and provide default values for a board's inputs. In the next section we will see schemas in action when running a board on Breadboard Web. 
+Schemas are used to attach metadata to a board. This metadata provides useful information that can assist in a board's usage. Schemas can be used to define, describe and provide default values for a board's inputs. In the next section we will see schemas in action when running a board on Breadboard Web. 
 
 The following is an example of a board which concatenates two strings together and has a schema. 
 
@@ -472,6 +468,29 @@ The properties can then be accessed similarly to accessing proterties of objects
 `inputs.greeting` will access the `greeting` property of the input, in our example this is the the greeting string. 
 Inputs can then be provided to as inputs to code nodes. 
 
+We can also add metadata to input nodes without using the `base` input.
+```typescript
+export default await board<{ greeting: string; subject: string }>(
+	({ greeting, subject }, { output }) => {
+		const greetNode = greeting
+			.title("My Greeting")
+			.default("Hello")
+			.description("The greeting")
+			.isString();
+
+		const subjectNode = subject
+			.title("Subject")
+			.default("World")
+			.description("The subject we are greeting")
+			.isString();
+		const result = concatStrings({
+			greeting: greetNode,
+			subject: subjectNode,
+		});
+		return result.to(output({ $id: "main" }));
+	}
+)
+```
 
 <h2 id="Breadboard Web">Breadboard Web</h2>
 
