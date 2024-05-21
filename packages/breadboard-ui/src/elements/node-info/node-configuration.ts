@@ -76,7 +76,7 @@ export class NodeConfigurationInfo extends LitElement {
   @state()
   inputsExpanded = true;
 
-  #ignoreNextUpdate = true;
+  #ignoreNextUpdate = false;
 
   #formTask = new Task(this, {
     task: async ([graph, subGraphId, nodeIds]) => {
