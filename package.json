@@ -11,6 +11,9 @@
     "build": "wireit",
     "lint": "wireit",
     "ci": "npm ci",
+    "s": "(cd packages/board-server && npm run dev) # Starts the board server",
+    "d": "(cd packages/website && npm run dev) # Starts the docs website",
+    "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "generate:docs": "wireit",
@@ -104,8 +107,7 @@
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/pinecone-kit:lint",
-        "./packages/board-server:lint"
+        "./packages/pinecone-kit:lint"
       ]
     },
     "ci:local": {
