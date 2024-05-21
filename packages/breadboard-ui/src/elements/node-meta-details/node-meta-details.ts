@@ -18,10 +18,10 @@ import {
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { classMap } from "lit/directives/class-map.js";
 
-const STORAGE_PREFIX = "bb-node-details";
+const STORAGE_PREFIX = "bb-node-meta-details";
 
-@customElement("bb-node-details")
-export class NodeDetails extends LitElement {
+@customElement("bb-node-meta-details")
+export class NodeMetaDetails extends LitElement {
   @property()
   graph: GraphDescriptor | null = null;
 
@@ -43,6 +43,7 @@ export class NodeDetails extends LitElement {
   @property()
   showNodeTypeDescriptions = true;
 
+  #ignoreNextUpdate = false;
   #titleRef: Ref<HTMLSpanElement> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
   #formTask = new Task(this, {
@@ -222,6 +223,15 @@ export class NodeDetails extends LitElement {
     this.expanded = isExpanded === "true";
   }
 
+  protected shouldUpdate(): boolean {
+    if (this.#ignoreNextUpdate) {
+      this.#ignoreNextUpdate = false;
+      return false;
+    }
+
+    return true;
+  }
+
   #emitUpdatedInfo() {
     const form = this.#formRef.value;
     if (!form) {
@@ -263,6 +273,7 @@ export class NodeDetails extends LitElement {
       return;
     }
 
+    this.#ignoreNextUpdate = true;
     this.dispatchEvent(
       new NodeMetadataUpdateEvent(this.selectedNodeIds[0], this.subGraphId, {
         title,
