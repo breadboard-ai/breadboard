@@ -75,14 +75,14 @@ Write an outline for a novel, following the provided specs.
 const specialist = await board(({ in: context, persona, task, tools }) => {
   context
     .title("Context in")
-    .description("The source material for the worker")
+    .description("Incoming conversation context")
     .isArray()
     .behavior("llm-content")
     .examples(JSON.stringify(sampleContext, null, 2));
   persona
     .title("Persona")
     .description(
-      "Describe the worker persona: the skills and various capabilities, the mindset, the thinking process, etc."
+      "Describe the worker's skills, capabilities, mindset, and thinking process"
     )
     .isObject()
     .behavior("llm-content", "config")
@@ -90,7 +90,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
   task
     .title("Task")
     .description(
-      "Optional. Give it a task to perform on the provided source materials. The ideal task is a call to action with the necessary details on how to best complete this action."
+      "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context"
     )
     .isObject()
     .optional()
@@ -100,7 +100,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
   tools
     .title("Tools")
     .description(
-      "Optional. Equip it with tools by adding them to this list. If specified, the worker will invoke them when the job calls for it."
+      "(Optional) Add tools to this list for the worker to use when needed"
     )
     .isArray()
     .behavior("board", "config")

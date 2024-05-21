@@ -247,13 +247,13 @@ export default await board(({ context, task }) => {
     .optional()
     .default("[]")
     .examples(contextExample)
-    .description("The source material for this worker.");
+    .description("Incoming conversation context");
 
   task
     .title("Task")
     .optional()
     .default("{}")
-    .description("The task from which to create the plan for looping.")
+    .description("The task to be used for loop planning")
     .isObject()
     .behavior("llm-content", "config");
 
