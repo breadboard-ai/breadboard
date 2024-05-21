@@ -172,6 +172,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Nager Date Next Public Holiday",
+    "url": "/graphs/nager.date/next-public-holiday.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Nager Date Public Holidays API",
     "url": "/graphs/nager.date/public-holidays.json",
     "version": "0.0.1"
