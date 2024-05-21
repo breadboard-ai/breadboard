@@ -605,6 +605,7 @@ export class Main extends LitElement {
           throw new Error(`Unable to load graph: ${this.url}`);
         }
         this.graph = graph;
+        this.#setPageTitle();
         // TODO: Figure out how to avoid needing to null this out.
         this.#editor = null;
       } catch (err) {
@@ -622,6 +623,16 @@ export class Main extends LitElement {
     } else {
       return;
     }
+  }
+
+  #setPageTitle() {
+    const suffix = "Breadboard - Visual Editor";
+    if (this.graph && this.graph.title) {
+      window.document.title = `${this.graph.title} - ${suffix}`;
+      return;
+    }
+
+    window.document.title = suffix;
   }
 
   #getEditor() {
