@@ -124,8 +124,7 @@ export class SettingsStore {
     [BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS]: {
       configuration: {
         extensible: true,
-        description:
-          "Put the URL of the board server in the first field and a comma-separated list of nodes to proxy in the second field.",
+        description: "Put the URL of the board server in the field.",
         nameEditable: false,
         nameVisible: false,
       },
