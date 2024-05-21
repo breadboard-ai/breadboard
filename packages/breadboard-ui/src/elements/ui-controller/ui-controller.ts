@@ -397,7 +397,6 @@ export class UI extends LitElement {
         this.graph,
       ],
       () => {
-        console.log("Re-render node meta", this.history?.index());
         return html`<bb-node-meta-details
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .selectedNodeIds=${this.selectedNodeIds}
@@ -421,7 +420,6 @@ export class UI extends LitElement {
         this.graph,
       ],
       () => {
-        console.log("Re-render node configuration");
         return html`<bb-node-configuration
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
