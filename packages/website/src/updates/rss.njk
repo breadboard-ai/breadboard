@@ -31,11 +31,9 @@
     <entry>
       <title>{{ post.data.title }}</title>
       <link href="{{ absolutePostUrl }}"/>
-      <tags>
-        {%- for tag in post.data.tags %}
-          <tag>{{ tag }}</tag>
-        {%- endfor %}
-      </tags>
+      {%- for tag in post.data.tags %}
+        <category term="{{ tag }}"/>
+      {%- endfor %}
       <updated>{{ post.date | dateToRfc3339 }}</updated>
       <id>{{ absolutePostUrl }}</id>
       <content xml:lang="{{ metadata.language }}" type="html"

@@ -86,6 +86,19 @@
           font-size: 0.9em;
           color: var(--bb-font-color-faded);
           }
+          .tags {
+          margin-top: 10px;
+          }
+          .tag {
+          display: inline-block;
+          background-color: #f1f1f1;
+          color: #777;
+          padding: 3px 8px;
+          border-radius: 3px;
+          font-size: 0.85em;
+          margin-right: 5px;
+          font-weight: normal;
+          }
         </style>
       </head>
       <body>
@@ -107,7 +120,15 @@
                   <xsl:value-of select="atom:title" />
                 </a>
                 <br />
-                <span class="updated">Updated: <xsl:value-of select="atom:updated" /></span>
+                <span class="updated"><xsl:value-of select="atom:updated" /></span>
+                <div class="tags">
+                  <xsl:for-each select="atom:category">
+                    <span class="tag">
+                      <xsl:text>#</xsl:text>
+                      <xsl:value-of select="@term" />
+                    </span>
+                  </xsl:for-each>
+                </div>
                 <div class="content-preview-container">
                   <div class="content-preview">
                     <xsl:apply-templates select="atom:content" />
