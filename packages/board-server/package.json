@@ -15,8 +15,8 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "dev:server": "wireit",
-    "dev": "npm run dev:server --watch"
+    "serve": "wireit",
+    "dev": "npm run serve --watch"
   },
   "wireit": {
     "build": {
@@ -40,7 +40,8 @@
       ],
       "clean": "if-file-deleted"
     },
-    "dev:server": {
+    "serve": {
+      "service": true,
       "command": "node .",
       "dependencies": [
         "build"
