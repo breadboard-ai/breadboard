@@ -19,6 +19,7 @@ import {
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
+  EditHistory,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -97,6 +98,9 @@ export class UI extends LitElement {
 
   @state()
   debugEvent: InspectableRunEvent | null = null;
+
+  @state()
+  history: EditHistory | null = null;
 
   #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
@@ -248,6 +252,7 @@ export class UI extends LitElement {
     }
   }
 
+  #lastHistoryLocation = -1;
   render() {
     const currentNode = (): NodeIdentifier | null => {
       if (this.status === STATUS.STOPPED) return null;
@@ -385,16 +390,22 @@ export class UI extends LitElement {
     ></bb-editor>`;
 
     const nodeMetaDetails = guard(
-      [this.boardId, this.selectedNodeIds, showNodeTypeDescriptions],
+      [
+        this.boardId,
+        this.selectedNodeIds,
+        showNodeTypeDescriptions,
+        this.graph,
+      ],
       () => {
-        return html`<bb-node-details
+        console.log("Re-render node meta", this.history?.index());
+        return html`<bb-node-meta-details
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
           .kits=${this.kits}
           .loader=${this.loader}
-        ></bb-node-details>`;
+        ></bb-node-meta-details>`;
       }
     );
 
@@ -407,9 +418,11 @@ export class UI extends LitElement {
         this.selectedNodeIds,
         this.#lastEdgeCount,
         this.#nodeSchemaUpdateCount,
+        this.graph,
       ],
       () => {
-        return html`<bb-node-info
+        console.log("Re-render node configuration");
+        return html`<bb-node-configuration
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
@@ -426,7 +439,7 @@ export class UI extends LitElement {
             this.selectedNodeIds = [];
             this.requestUpdate();
           }}
-        ></bb-node-info>`;
+        ></bb-node-configuration>`;
       }
     );
 

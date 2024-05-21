@@ -494,7 +494,15 @@ export class Main extends LitElement {
     }
 
     if (evt.key === "z" && evt.metaKey) {
-      // TODO: Return early when the user is in various input fields.
+      const isFocusedOnRenderer = evt
+        .composedPath()
+        .find(
+          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
+        );
+
+      if (!isFocusedOnRenderer) {
+        return;
+      }
 
       const editor = this.#getEditor();
       if (!editor) {
@@ -852,6 +860,9 @@ export class Main extends LitElement {
         this.graph.graphs[this.subGraphId].title || "Untitled Subgraph";
     }
 
+    const editor = this.#getEditor();
+    const history = editor?.history();
+
     const settings = this.#settings ? this.#settings.values : null;
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
@@ -953,6 +964,7 @@ export class Main extends LitElement {
           .settings=${settings}
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
+          .history=${history}
           @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
             this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
             return;
@@ -1545,13 +1557,7 @@ export class Main extends LitElement {
     }
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showHistory) {
-      const editor = this.#getEditor();
-      if (!editor) {
-        return;
-      }
-
-      const history = editor.history();
+    if (history && this.showHistory) {
       historyOverlay = html`<bb-graph-history
         .entries=${history.entries()}
         .canRedo=${history.canRedo()}

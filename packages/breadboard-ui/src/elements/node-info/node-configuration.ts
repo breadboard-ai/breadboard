@@ -42,10 +42,10 @@ function isLLMContent(port: InspectablePort) {
   return port.schema.behavior?.includes("llm-content") || false;
 }
 
-const STORAGE_PREFIX = "bb-node-info";
+const STORAGE_PREFIX = "bb-node-configuration";
 
-@customElement("bb-node-info")
-export class NodeInfo extends LitElement {
+@customElement("bb-node-configuration")
+export class NodeConfigurationInfo extends LitElement {
   @property()
   graph: GraphDescriptor | null = null;
 
@@ -75,6 +75,8 @@ export class NodeInfo extends LitElement {
 
   @state()
   inputsExpanded = true;
+
+  #ignoreNextUpdate = true;
 
   #formTask = new Task(this, {
     task: async ([graph, subGraphId, nodeIds]) => {
@@ -547,6 +549,7 @@ export class NodeInfo extends LitElement {
       delete configuration[name];
     }
 
+    this.#ignoreNextUpdate = true;
     this.dispatchEvent(new NodeUpdateEvent(id, this.subGraphId, configuration));
   }
 
@@ -555,6 +558,11 @@ export class NodeInfo extends LitElement {
       | PropertyValueMap<{ graph: GraphDescriptor | null }>
       | Map<PropertyKey, unknown>
   ): boolean {
+    if (this.#ignoreNextUpdate) {
+      this.#ignoreNextUpdate = false;
+      return false;
+    }
+
     const lastSchemaVersion = this.#lastSchemaVersion;
     const schemaVersion = this.#schemaVersion;
 
