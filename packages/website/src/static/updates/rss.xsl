@@ -71,9 +71,6 @@
           border-radius: 8px;
           transition: background 0.3s;
           }
-          li:hover {
-          background: #dee2e6;
-          }
           a {
           text-decoration: none;
           color: var(--bb-font-color-accent);
