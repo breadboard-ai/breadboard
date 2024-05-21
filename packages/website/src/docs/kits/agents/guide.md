@@ -97,6 +97,55 @@ Just like with any team, it seems important to get acquainted with the peeps wit
 
 ### Specialist
 
+The Specialist is the most versatile worker in the Agent Kit. It can do many things, and our job is to focus the Specialist on the task we need it to perform. We have the following three ways to imbue a Specialist with purpose:
+
+#### Specialist Persona
+
+We can give Specialist a "Persona". This is a required part of configuring the Specialist, since it gives it the worker a sense of what it is about.
+
+![Specialist Persona](/breadboard/static/images/agent-kit/specialist-persona.png)
+
+> [!NOTE]
+> Under the covers, the "Persona" field populates the [system instruction](https://ai.google.dev/gemini-api/docs/system-instructions) for the LLM call.
+
+#### Specialist Task
+
+We can give Specialist a "Task". This field is optional and can be very handy for specifying a particular task that we'd like this worker to be focused on.
+
+![Specialist Task](/breadboard/static/images/agent-kit/specialist-task.png)
+
+> [!NOTE]
+> Under the covers, the "Task" field populates the "user" turn of the multi-turn conversation.
+
+Sometimes, it might take some thinking to decide what does into the "Persona" and what goes into the "Task" field. Here are a few rules of thumbs that we've found useful:
+
+- "You are" goes into Persona, "You do" goes into Task. When configuring a worker, it helps to split what they are to do from who they are. The "do" part may change from task to task, while the "are" part stays more or less constant.
+
+- Inform the next worker. Unlike Persona, tasks become part of the conversation context, which means that they help the next worker figure out why the previous worker did all that work.
+
+- Leave the task out if it comes with the conversation context. In some cases, (see [Looper](#looper)), the previous worker will tell the next worker what their task will be. In these situations, leave that worker's task blank.
+
+#### Specialist Tools
+
+Finally, we can give Specialist "Tools" to work with. Tools are an optional field and allow the worker to perform tasks that require calling other APIs or perform computations that aren't part of the typical LLM capabilities.
+
+![Specialist Tools](/breadboard/static/images/agent-kit/specialist-tools.png)
+
+In Breadboard land, tools are boards, and boards are tools. For instance, our colleague might build a [board](https://breadboard-ai.web.app/?board=%2Fgraphs%2Fnager.date%2Fpublic-holidays.json) that calls an API that computes public holidays for a given locale and returns the results. Once that board exists, we can use it as a tool for the Specialist.
+
+All you need is a URL for the board:
+
+![Public Holidays Tool in Specialist](/breadboard/static/images/agent-kit/specialist-tool-custom.png)
+
+Once the tool is provided, the Specialist will invoke it whenever the task calls for it, and return the tool's results as part of the conversation context.
+
+> [!NOTE]
+> Under the covers, specialist tools are powered by the [function calling](https://ai.google.dev/gemini-api/docs/function-calling) capability of the LLM. Combined with Breadboard's flexible [composition system](breadboard/docs/too-long/#graph-based-composition-system), the LLM's decision to call a function is translated into an invocation of a board, and the results of this invocation are appended to the conversation context with a special "tool" role.
+
+#### Using Specialist
+
+Let's see if we can build a simple team of Specialists that do something interesting for us.
+
 TO DO:
 
 - Create a simple graph with one specialist
@@ -106,10 +155,6 @@ TO DO:
 - Naming the specialist
 
 - using input/output to specifying input type and output type
-
-- Persona (system instruction)
-
-- Task (talk about the separation)
 
 - Chain specialists together
 
