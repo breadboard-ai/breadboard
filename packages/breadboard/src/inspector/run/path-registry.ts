@@ -139,7 +139,7 @@ class Entry implements PathRegistryEntry {
   ): PathRegistryEntry | null {
     // Marking events dirty, because we're about to mutate something within
     // this swath of the registry.
-    this.#eventsIsDirty = true;
+    if (!readonly) this.#eventsIsDirty = true;
     const [head, ...tail] = path;
     if (head === undefined) {
       return null;
