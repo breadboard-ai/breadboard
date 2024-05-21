@@ -481,6 +481,15 @@ export class Main extends LitElement {
     }
 
     if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+      const isFocusedOnRenderer = evt
+        .composedPath()
+        .find(
+          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
+        );
+      if (!isFocusedOnRenderer) {
+        return;
+      }
+
       this.showHistory = !this.showHistory;
     }
 
