@@ -622,10 +622,6 @@ export class LLMInput extends LitElement {
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this part?")) {
-      return;
-    }
-
     this.value.parts.splice(idx, 1);
     if (this.value.parts.length === 0) {
       this.value = null;
