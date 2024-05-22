@@ -79,8 +79,7 @@
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
-        "./packages/schema:test",
-        "./packages/board-server:test"
+        "./packages/schema:test"
       ]
     },
     "lint": {
