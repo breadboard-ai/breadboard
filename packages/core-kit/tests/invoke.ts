@@ -17,7 +17,10 @@ test("describe with no values and no context.base", async (t) => {
           description:
             "The board to invoke. Can be a BoardCapability, a graph or a URL",
           title: "board",
-          type: ["array", "boolean", "null", "number", "object", "string"],
+          type: "object",
+          additionalProperties: false,
+          properties: {},
+          required: [],
         },
         path: {
           behavior: ["deprecated"],
@@ -52,7 +55,10 @@ test("describe with context.base and no values", async (t) => {
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
             title: "board",
-            type: ["array", "boolean", "null", "number", "object", "string"],
+            type: "object",
+            additionalProperties: false,
+            properties: {},
+            required: [],
           },
           path: {
             behavior: ["deprecated"],
@@ -89,7 +95,10 @@ test("describe with context.base and invalid $board", async (t) => {
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
             title: "board",
-            type: ["array", "boolean", "null", "number", "object", "string"],
+            type: "object",
+            additionalProperties: false,
+            properties: {},
+            required: [],
           },
           path: {
             behavior: ["deprecated"],
@@ -163,7 +172,10 @@ test("describe with context.base and valid $board", async (t) => {
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
             title: "board",
-            type: ["array", "boolean", "null", "number", "object", "string"],
+            type: "object",
+            additionalProperties: false,
+            properties: {},
+            required: [],
           },
           path: {
             behavior: ["deprecated"],
