@@ -512,6 +512,7 @@ export class NodeConfigurationInfo extends LitElement {
             const objectValue = JSON.parse(value);
             // Set nulls & undefineds for deletion.
             if (objectValue === null || objectValue === undefined) {
+              console.log("🍊 deleting", name, objectValue);
               delete configuration[name];
               continue;
             }

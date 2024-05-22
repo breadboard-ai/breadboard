@@ -1330,6 +1330,7 @@ export class Main extends LitElement {
                   type: "changeconfiguration",
                   id: evt.id,
                   configuration: evt.configuration,
+                  reset: true,
                 },
               ],
               `Change configuration for "${evt.id}"`
