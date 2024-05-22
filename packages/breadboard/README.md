@@ -634,7 +634,15 @@ The graph representation can then be stored as a file on the internet. This work
 
 There are several boards available to use on Breadboard Web; below is a board that performs JSON validation.
 
+```
 https://breadboard-ai.web.app/?board=%2Fgraphs%2Fjson-validator.json
+```
+
+It is also possible to load a remote URL directly into Breadboard Web, for example from a Git repo or a Gist.
+
+```
+https://breadboard-ai.web.app/?board=https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-validator.json
+```
 
 Local instances of Breadboard Web can also load boards via a JSON file and the board request parameter. Option 2 is great if you want to showcase your boards to other people!
 
