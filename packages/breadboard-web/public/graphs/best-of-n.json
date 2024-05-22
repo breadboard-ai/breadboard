@@ -251,6 +251,9 @@
                       },
                       "agent": {
                         "type": "string",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false,
                         "title": "board",
                         "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "behavior": [

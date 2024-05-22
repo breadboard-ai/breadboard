@@ -74,7 +74,10 @@
               ],
               "title": "Generator",
               "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
-              "default": "gemini-generator.json"
+              "default": "gemini-generator.json",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
             },
             "stopSequences": {
               "type": "array",
