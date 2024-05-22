@@ -56,11 +56,21 @@ export class GraphNode extends PIXI.Container {
     string,
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
+  #inPortsSortedByName: Array<{
+    port: InspectablePort;
+    label: PIXI.Text;
+    nodePort: GraphNodePort;
+  }> = [];
   #outPorts: InspectablePort[] | null = null;
   #outPortsData: Map<
     string,
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
+  #outPortsSortedByName: Array<{
+    port: InspectablePort;
+    label: PIXI.Text;
+    nodePort: GraphNodePort;
+  }> = [];
   #inPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #editable = false;
@@ -443,6 +453,23 @@ export class GraphNode extends PIXI.Container {
         this.#inPortsData.delete(inPortName);
       }
     }
+
+    this.#inPortsSortedByName.length = 0;
+    for (const portItem of this.#inPortsData.values()) {
+      if (!portItem) {
+        continue;
+      }
+
+      this.#inPortsSortedByName.push(portItem);
+    }
+
+    this.#inPortsSortedByName.sort((portA, portB) => {
+      if (portA.label.text > portB.label.text) {
+        return 1;
+      }
+
+      return -1;
+    });
   }
 
   get inPorts() {
@@ -498,6 +525,23 @@ export class GraphNode extends PIXI.Container {
         this.#outPortsData.delete(outPortName);
       }
     }
+
+    this.#outPortsSortedByName.length = 0;
+    for (const portItem of this.#outPortsData.values()) {
+      if (!portItem) {
+        continue;
+      }
+
+      this.#outPortsSortedByName.push(portItem);
+    }
+
+    this.#outPortsSortedByName.sort((portA, portB) => {
+      if (portA.label.text > portB.label.text) {
+        return 1;
+      }
+
+      return -1;
+    });
   }
 
   get outPorts() {
@@ -832,19 +876,11 @@ export class GraphNode extends PIXI.Container {
   #drawInPorts(portStartY = 0) {
     this.#inPortLocations.clear();
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
-    const sortedInPorts = [...this.#inPortsData].sort(
-      ([portNameA], [portNameB]) => (portNameA > portNameB ? 1 : -1)
-    );
 
     let portY = portStartY;
-    for (const [portName, portItem] of sortedInPorts) {
-      if (!portItem) {
-        console.warn(`No data for ${portName}`);
-        continue;
-      }
-
+    for (const portItem of this.#inPortsSortedByName) {
       const { port, label, nodePort } = portItem;
-      nodePort.label = portName;
+      nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
       nodePort.x = 0;
       nodePort.y = portY + label.height * 0.5;
@@ -868,17 +904,9 @@ export class GraphNode extends PIXI.Container {
   #drawOutPorts(portStartY = 0) {
     this.#outPortLocations.clear();
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
-    const sortedOutPorts = [...this.#outPortsData].sort(
-      ([portNameA], [portNameB]) => (portNameA > portNameB ? 1 : -1)
-    );
 
     let portY = portStartY;
-    for (const [portName, portItem] of sortedOutPorts) {
-      if (!portItem) {
-        console.warn(`No label for ${portName}`);
-        continue;
-      }
-
+    for (const portItem of this.#outPortsSortedByName) {
       const { port, label, nodePort } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
