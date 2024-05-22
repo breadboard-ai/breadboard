@@ -15,28 +15,26 @@ This library's design emphasizes two key properties:
 :one: **Ease and flexibility of wiring**. Make wiring prototypes easy and fun.
 
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
+
 ## [](https://www.npmjs.com/package/@google-labs/breadboard#table-of-contents) Table of Contents
-- <a href="#breadboard">Breadboard</a>
-	- <a href="#installation">Installation</a>
-	- <a href="#usage">Usage</a>
-    	- <a href="#Breadboard Board Schema">Breadboard Schema</a>
-    	- <a href="#Breadboard Web">Breadboard Web</a>
-    	- <a href="#Using Breadboard Web">Using Breadboard Web</a>
-	- <a href="#concepts">Concepts</a>
-	- <a href="#additional-info">Additional Info</a>
+
+- <a href="#breadboard">Breadboard</a> - <a href="#installation">Installation</a> - <a href="#usage">Usage</a> - <a href="#Breadboard Board Schema">Breadboard Schema</a> - <a href="#Breadboard Web">Breadboard Web</a> - <a href="#Using Breadboard Web">Using Breadboard Web</a> - <a href="#concepts">Concepts</a> - <a href="#additional-info">Additional Info</a>
 <h2 id="installation">Installation</h2>
 
 Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
+
 - Check what version of node you're running with `node -v`.
 - In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
 
 To install Breadboard with [npm](https://www.npmjs.com/), then run:
+
 ```shell
 npm install @google-labs/breadboard
 ```
 
-If you want to use [TypeScript](https://www.typescriptlang.org/), you will need to [install the package](https://www.npmjs.com/package/typescript). 
-- You can use npm to download TypeScript into your project using `npm install typescript --save-dev`. 
+If you want to use [TypeScript](https://www.typescriptlang.org/), you will need to [install the package](https://www.npmjs.com/package/typescript).
+
+- You can use npm to download TypeScript into your project using `npm install typescript --save-dev`.
 - You can then initialize the Typescript project and create a `tsconfig.json` file using `npx tsc --init`.
 
 ### Useful packages (optional)
@@ -51,11 +49,12 @@ You can find many other helpful [Breadboard packages](https://github.com/breadbo
 <h2 id="usage">Usage</h2>
 
 ### Making your first board
+
 ```typescript
 import { board } from "@google-labs/breadboard";
 
-const echo = board<{ say: string; }>(({ say }, { output }) => {
-	return output({ hear: say })
+const echo = board<{ say: string }>(({ say }, { output }) => {
+  return output({ hear: say });
 });
 
 console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
@@ -65,79 +64,91 @@ This simple example demonstrates a board with an input port named `say` that get
 
 ```typescript
 const echo = board<{
-	 say: string; // Input string to be echoed
-	}>(({ 
-		say // Input port for string
-	}, { 
-		output // Output port for result
-	}) => {
-	return output({ hear: say }); // Echo the input string as 'hear' property
-});
+  say: string; // Input string to be echoed
+}>(
+  (
+    {
+      say, // Input port for string
+    },
+    {
+      output, // Output port for result
+    }
+  ) => {
+    return output({ hear: say }); // Echo the input string as 'hear' property
+  }
+);
 ```
 
 Similarly, this can be achieved through chaining the nodes.
+
 ```typescript
-const echo = board<{ say: string; }>(({ say }, { output }) => {
-	return say.as("hear").to(output());
+const echo = board<{ say: string }>(({ say }, { output }) => {
+  return say.as("hear").to(output());
 });
 ```
 
 In this example, `say` is renamed to `hear` using `.as(...)`, which is then sent to the output using `.to(...)`.
 
 Alternatively, we can use `base` to create input and output nodes.
+
 ```typescript
 import { base, board } from "@google-labs/breadboard";
 
 const echo = board(() => {
-	const input = base.input();
-	const output = base.output();
-	input.say.as("hear").to(output);
-	return output;
+  const input = base.input();
+  const output = base.output();
+  input.say.as("hear").to(output);
+  return output;
 });
 
 console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
 
 ### Creating `code` nodes
+
 The `code` function helps us create a new type of node, of type `code`. The result of calling code is a special function -- let's call it a "node factory". A node factory can be used to create many instances of the node.
+
 ```typescript
 import { base, board, code } from "@google-labs/breadboard";
 
 const calculator = board(() => {
-	const input = base.input();
-	const output = base.output();
+  const input = base.input();
+  const output = base.output();
 
-	const calculate = code(({ x, y }) => {
-		if (typeof x !== "number" || typeof y !== "number") return {}
+  const calculate = code(({ x, y }) => {
+    if (typeof x !== "number" || typeof y !== "number") return {};
 
-		const sum = x + y;
-		const diff = x - y;
-		const prod = x * y;
-		const quo = x / y;
+    const sum = x + y;
+    const diff = x - y;
+    const prod = x * y;
+    const quo = x / y;
 
-		return { results: { sum, diff, prod, quo } }
-	})();
+    return { results: { sum, diff, prod, quo } };
+  })();
 
-	input.to(calculate);
-	calculate.results.to(output);
+  input.to(calculate);
+  calculate.results.to(output);
 
-	return output;
+  return output;
 });
 
 console.log(await calculator({ x: 1, y: 2 })); // { results: { sum: 3, diff: -1, prod: 2, quo: 0.5 } }
 ```
+
 In this example, the `code` simply takes two properties, `x` and `y`, and checks that they are numbers before performing arithmetic operations using the values, and then returning each of the calculations as properties of `results`. If either input is not of the `number` type, then an empty object gets returned.
 
 These nodes can be created inside or outside the board. They can also be used when creating custom kits.
 
 > **Important**: `code` uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit).
-> 
+>
 > If a board using `code` is serialized, then a runtime instance of the Core Kit must be passed into the board.
 
 ### Kits
+
 Kits are collections of ready-made node factory functions for all types of nodes.
 
 #### Using kits
+
 Kits are an easy way to add functionality to your board without writing it yourself, and you can think of them as purpose-built third-party libraries you'd add to your web application.
 
 For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`. The npm package, which contains the kit, must be installed before they can be imported.
@@ -148,41 +159,49 @@ import TemplateKit from "@google-labs/template-kit";
 
 const templateKit = addKit(TemplateKit);
 
-const myBoard = board<{ template: string, name: string; }>(({ template, name }, { output }) => {
-	const promptTemplate = templateKit.promptTemplate({
-		template: template,
-		name: name
-	});
+const myBoard = board<{ template: string; name: string }>(
+  ({ template, name }, { output }) => {
+    const promptTemplate = templateKit.promptTemplate({
+      template: template,
+      name: name,
+    });
 
-	return output({ prompt: promptTemplate.prompt });
-});
+    return output({ prompt: promptTemplate.prompt });
+  }
+);
 
-console.log(await myBoard({ template: "Hi, my name is {{name}}!", name: "Bob" })); // { prompt: 'Hi, my name is Bob!' }
+console.log(
+  await myBoard({ template: "Hi, my name is {{name}}!", name: "Bob" })
+); // { prompt: 'Hi, my name is Bob!' }
 ```
+
 Here, `addKit` creates an instance of the Template Kit, which is used to create a `promptTemplate` node within the board. We pass in `template`, which has a placeholder expecting a property called `name` to be supplied, along with the `name` itself. The `promptTemplate` node populates the placeholder in our template with the corresponding inputted value. The value of `prompt`, and a key with the same name, gets passed as an object to the output.
 
 There's a variety of pre-made kits readily available: you can find [a non-exhaustive list of kits here](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages).
 
 #### Creating custom kits
+
 Custom kits can be created using the `KitBuilder`.
 
 ```typescript
 const stringManipulationKit = new KitBuilder({
-	url: ".",
+  url: ".",
 }).build({
-	joiner: async (inputs) => ({
-		result: (Object.values(inputs)).join(" "),
-	}),
-	splitter: async (inputs) => ({
-		result: Object.entries(inputs).map(([key, value]) => ({
-			[key]: value?.toString().split("")
-		}))
-	})
+  joiner: async (inputs) => ({
+    result: Object.values(inputs).join(" "),
+  }),
+  splitter: async (inputs) => ({
+    result: Object.entries(inputs).map(([key, value]) => ({
+      [key]: value?.toString().split(""),
+    })),
+  }),
 });
 ```
+
 This kit has two different nodes: `joiner` which joins together all the values from the `inputs` object into a single string separated by spaces, and `splitter` which also takes `inputs` as an argument and converts each value into a character array that is paired with their respective keys.
 
 The `code` node can also be used when creating custom kits: let's move the logic for `joiner` into a `code` node and use it when building the kit.
+
 ```typescript
 const joiner = code((inputs) => {
 	const output = (Object.values(inputs)).join(" ")
@@ -202,20 +221,24 @@ const stringManipulationKit = new KitBuilder({
 > **Important**: All kits used in a board must be passed in, as runtime kits, when running a board that has been serialized/de-serialized.
 
 ### Serializing boards
+
 Boards can be serialized into Breadboard Graph Language (BGL). BGL is the common format that Breadboard uses to represent boards. BGL is useful to have a unified language, so you can have boards that call into other boards.
 
 #### Serialization
+
 ```typescript
 export default await board(({ say }, { output }) => {
-	return output({ hear: say });
+  return output({ hear: say });
 }).serialize({
-    url: ".",
-    title: "Echo board",
-    description: "Say something to the board and it'll echo back!",
-    version: "0.0.1"
+  url: ".",
+  title: "Echo board",
+  description: "Say something to the board and it'll echo back!",
+  version: "0.0.1",
 });
 ```
+
 The `serialize` function is called on the result of the board invocation, which is serialized as [JavaScript Object Notation (JSON)](https://www.json.org/json-en.html).
+
 ```json
 {
   "url":".",
@@ -231,7 +254,9 @@ The `serialize` function is called on the result of the board invocation, which 
   "graphs": {}
 }
 ```
+
 The `serialize` function is also takes a single argument: a metadata object that describes the board.
+
 <table style='font-family:"Courier New", Courier, monospace; font-size:80%;'>
 	<td><b>Name</b></td>
     <td><b>Type</b></td>
@@ -259,74 +284,88 @@ The `serialize` function is also takes a single argument: a metadata object that
 </table>
 
 #### Deserialization
+
 To get a runnable board instance, we can pass our serialized board into the `BoardRunner` with `fromGraphDescriptor`.
 
 ```typescript
 import { BoardRunner } from "@google-labs/breadboard";
-import Serialized from "./board/board.js"
+import Serialized from "./board/board.js";
 
 const runner = await BoardRunner.fromGraphDescriptor(Serialized);
 console.log(await runner.runOnce({ say: "Hello World!" })); // { hear: 'Hello World!' }
 ```
 
 > **Important**: Any kits used by the board will need to be passed in when running a board that's been serialized.
-> 
+>
 > The `code` node requires the `invoke` node from the `core-kit`.
 
 When running a serialized board that uses kits or `code`, then all the kits it uses must be passed in as runtime kits. The `code` function uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit), which would also need to be passed in.
 
-Each of the kits must be wrapped with `asRuntimeKit` and passed in together in an array. 
+Each of the kits must be wrapped with `asRuntimeKit` and passed in together in an array.
 
 ```typescript
-import { addKit, asRuntimeKit, board, BoardRunner, code } from "@google-labs/breadboard";
+import {
+  addKit,
+  asRuntimeKit,
+  board,
+  BoardRunner,
+  code,
+} from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import TemplateKit from "@google-labs/template-kit";
 
 const templateKit = addKit(TemplateKit);
 const helloWorld = await board(({ name }, { output }) => {
-	const template = code(() => {
-		return { greeting: "Hello {{name}}!" };
-	})();
+  const template = code(() => {
+    return { greeting: "Hello {{name}}!" };
+  })();
 
-	return output({
-		response: templateKit.promptTemplate({ template: template.greeting, name }).text,
-	}); // Output `response` object containing `text` property from `promptTemplate`
+  return output({
+    response: templateKit.promptTemplate({ template: template.greeting, name })
+      .text,
+  }); // Output `response` object containing `text` property from `promptTemplate`
 }).serialize();
 const runner = await BoardRunner.fromGraphDescriptor(helloWorld);
 const result = await runner.runOnce(
-	{ name: "World" },
-	{ kits: [asRuntimeKit(Core), asRuntimeKit(TemplateKit)] } // Array of `asRuntimeKit` wrapped kits
+  { name: "World" },
+  { kits: [asRuntimeKit(Core), asRuntimeKit(TemplateKit)] } // Array of `asRuntimeKit` wrapped kits
 );
 console.log(result); // { response: 'Hello World!' }
 ```
+
 This board simply takes a `name` property and inserts the value into a template using the `promptTemplate` node, from the `TemplateKit`, which returns the value of `text` as `response` in the object returned to the output.
 
 ### Running boards
+
 Boards are programs which can be executed by Breadboard runtimes, and they can have multiple input and output nodes which can visited more than once.
 In most real-world scenarios, boards will need to run continuously, sometimes stopping to receive inputs or provide outputs, but a simple board might just run once and return a single output.
 
 For the following examples, we will use a simple board which just takes a property called `say` from the input object and passes it, as a property called `hear`, to the output node.
+
 ```typescript
 import { base, board } from "@google-labs/breadboard";
 
 export default board(({ say }) => {
-    return say.as("hear").to(base.output());
+  return say.as("hear").to(base.output());
 });
 ```
 
 `board` instances can be invoked, which initiates a single run (equivalent to the `BoardRunner` using `runOnce(...)`).
+
 ```typescript
 import myBoard from "./board/board.js";
 
 console.log(await myBoard({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
 ```
+
 Whereas `BoardRunner` can create runnable boards from serialized graphs: it can run boards continuously or initiate a single run. `BoardRunner` has two ways of running a board:
+
 - `runOnce(...)`: A simplified version of `run` that runs the board until the board provides an output, and returns that output.
-	```typescript
-	console.log(await runner.runOnce({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
-	```
+  ```typescript
+  console.log(await runner.runOnce({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
+  ```
 - `run(...)`: Runs the board continuously. This method is an [async generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator) that yields the results of each stage of the run.
-	```typescript
+  `typescript
 	...
 	for await (const stop of runner.run()) {
 		if (stop.type === "input") {
@@ -335,17 +374,20 @@ Whereas `BoardRunner` can create runnable boards from serialized graphs: it can 
         	console.log(stop.outputs) // { hear: 'Hello Breadboard!' }
 		}
 	}
-	```
-So far, our board only has outputs that are visited once, and we could simply invoke the `board` or use `runOnce` to run it entirely. Let's change our board to return from two different outputs instead of one.
+	`
+  So far, our board only has outputs that are visited once, and we could simply invoke the `board` or use `runOnce` to run it entirely. Let's change our board to return from two different outputs instead of one.
+
 ```typescript
 import { base, board } from "@google-labs/breadboard";
 
 export default board(({ say }) => {
-    say.as("firstHear").to(base.output({ $id: "outputOne" }));
-    return say.as("secondHear").to(base.output({ $id: "outputTwo" }));
+  say.as("firstHear").to(base.output({ $id: "outputOne" }));
+  return say.as("secondHear").to(base.output({ $id: "outputTwo" }));
 });
 ```
+
 This board takes the `say` property and passes it to the two different output nodes, which can be identified as `outputOne` and `outputTwo` using the `$id` property, as properties named `firstHear` and `secondHear` respectively. For beter clarity, we will change the runner outputs to be logged to the console separately, using the ids we added to the output nodes against the id of the currently iterated node in the runner.
+
 ```typescript
 else if (stop.type === "output") {
 	if (stop.node.id === "outputOne") {
@@ -359,6 +401,7 @@ else if (stop.type === "output") {
 If we were to use `runOnce`, or invoke the board, then we would only receive one output before the board stops running.
 
 ### Using a board within a board
+
 Using the [Breadboard Core Kit](https://www.npmjs.com/package/@google-labs/core-kit), boards can be invoked with `core` by passing its graph to the `invoke` function. **Important:** `invoke` runs as `runOnce`, so only the first output of an invoked board will be returned.
 
 ```typescript
@@ -367,45 +410,46 @@ import { core, Core } from "@google-labs/core-kit";
 import JoinerBoard from "./board/index.js";
 
 const myBoard = await board((inputs, { output }) => {
-	const invokedBoard = core.invoke({ graph: JoinerBoard });
-	
-	inputs.to(invokedBoard);
+  const invokedBoard = core.invoke({ graph: JoinerBoard });
 
-	return { response: output(invokedBoard)}
+  inputs.to(invokedBoard);
+
+  return { response: output(invokedBoard) };
 }).serialize();
 
 const runner = await BoardRunner.fromGraphDescriptor(myBoard);
 const result = await runner.runOnce(
-	{ greeting: "Hello", subject: "World" },
-	{ kits: [asRuntimeKit(Core)] }
+  { greeting: "Hello", subject: "World" },
+  { kits: [asRuntimeKit(Core)] }
 );
 console.log(result); // { joined: 'Hello World' }
 ```
+
 (show imported `JoinerBoard`)
+
 ```typescript
 import { board, code } from "@google-labs/breadboard";
 
 export default await board((inputs, { output }) => {
-	const message = inputs.to(
-		code((values) => {
-			const joined = Object.values(values).join(" ");
-			return { joined };
-		})()
-	);
+  const message = inputs.to(
+    code((values) => {
+      const joined = Object.values(values).join(" ");
+      return { joined };
+    })()
+  );
 
-	return { response: output(message) };
+  return { response: output(message) };
 }).serialize({
-	title: "Simple Joiner Board",
-	description: "Joins object values and separates with a space.",
+  title: "Simple Joiner Board",
+  description: "Joins object values and separates with a space.",
 });
-
 ```
 
 <h2 id="Breadboard Board Schema">Breadboard Board Schema</h2>
 
-Schemas are used to attach metadata to a board. This metadata provides useful information that can assist in a board's usage. Schemas can be used to define, describe and provide default values for a board's inputs. In the next section we will see schemas in action when running a board on Breadboard Web. 
+Schemas are used to attach metadata to a board. This metadata provides useful information that can assist in a board's usage. Schemas can be used to define, describe and provide default values for a board's inputs. In the next section we will see schemas in action when running a board on Breadboard Web.
 
-The following is an example of a board which concatenates two strings together and has a schema. 
+The following is an example of a board which concatenates two strings together and has a schema.
 
 ```Typescript
 import {base, board, code } from "@google-labs/breadboard";
@@ -462,34 +506,36 @@ export default await board(() => {
     description: "Board which concatenates two strings together"
 });
 ```
+
 The schema has 2 inputs `greeting` and `subject`, these are both of type string. Inputs can be assigned a `default` value, this is the input value that will be used if a user does not provide one. `Description` is the text that will appear in the input field on the Breadboard Web UI. `Title` is the text that will be labelled above the input field. `$id` will be the name of the node that can be seen on breadboard web.
 
-The properties can then be accessed similarly to accessing proterties of objects. 
-`inputs.greeting` will access the `greeting` property of the input, in our example this is the the greeting string. 
-Inputs can then be provided to as inputs to code nodes. 
+The properties can then be accessed similarly to accessing proterties of objects.
+`inputs.greeting` will access the `greeting` property of the input, in our example this is the the greeting string.
+Inputs can then be provided to as inputs to code nodes.
 
 We can also add metadata to input nodes without using the `base` input.
+
 ```typescript
 export default await board<{ greeting: string; subject: string }>(
-	({ greeting, subject }, { output }) => {
-		const greetNode = greeting
-			.title("My Greeting")
-			.default("Hello")
-			.description("The greeting")
-			.isString();
+  ({ greeting, subject }, { output }) => {
+    const greetNode = greeting
+      .title("My Greeting")
+      .default("Hello")
+      .description("The greeting")
+      .isString();
 
-		const subjectNode = subject
-			.title("Subject")
-			.default("World")
-			.description("The subject we are greeting")
-			.isString();
-		const result = concatStrings({
-			greeting: greetNode,
-			subject: subjectNode,
-		});
-		return result.to(output({ $id: "main" }));
-	}
-)
+    const subjectNode = subject
+      .title("Subject")
+      .default("World")
+      .description("The subject we are greeting")
+      .isString();
+    const result = concatStrings({
+      greeting: greetNode,
+      subject: subjectNode,
+    });
+    return result.to(output({ $id: "main" }));
+  }
+);
 ```
 
 <h2 id="Breadboard Web">Breadboard Web</h2>
@@ -557,13 +603,14 @@ export default await board(() => {
     description: "Board which concatenates two strings together"
 });
 ```
+
 We can then run `npm run dev` while in the boards directory. This deploys an instance of Breadboard Web accessible on http://localhost:5173/. Breadboard Web will automatically pick up this graph and allow the board to be selectable on the UI menu.
 
 Running Breadboard Web locally also features hot reloading which is handy if we are constantly making changes to our board. Simply save the file and it will automatically rebuild and deploy Breadboard web.
 
 2. Using Breadboard Web hosted by Google.
 
-We have already demonstrated how to serialize a board into a graph representation. We can store this graph representation as a JSON file. 
+We have already demonstrated how to serialize a board into a graph representation. We can store this graph representation as a JSON file.
 
 ```Typescript
 const serialized = await board(() => {
@@ -588,7 +635,6 @@ There are a number of boards available to use on Breadboard Web, below is a boar
 
 https://breadboard-ai.web.app/?board=%2Fgraphs%2Fjson-validator.json
 
-
 Local instances of Breadboard Web can also load boards via json file and the board request parameter. Option 2 is great if you would like to show off your boards to other people!
 
 <h2 id="Using Breadboard Web">Using Breadboard Web</h2>
@@ -599,11 +645,10 @@ When looking at the board on Breadboard Web we can see all the nodes this board 
 
 Clicking `run` on the UI will prompt the user to provide inputs to the board. One of the great features of Breadboard Web is that it is interactive, by clicking on the input node we can see more information about these inputs. As we can see, we have provided information about what the inputs are for. This is metadata that was attatched to the board by using a board schema. This is also where schema defaults come in handy. We can use these defaults if the user does not want to provide their own, as well as providing guidance on what kind of inputs are accepted.
 
-Once we have provided inputs and run the board, let's see what happens! 
+Once we have provided inputs and run the board, let's see what happens!
 (add screenshot of board output)
 
 After the board has finished executing we can see its output. And just like that, we were able to quickly load a board and run it in a web environment.
-
 
 <h2 id="concepts">Concepts</h2>
 
@@ -633,6 +678,3 @@ To learn more about Breadboard, here are a couple of resources:
   - [ReAct with slot](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/react-with-slot.md)
   - [Example of calling "ReAct with slot"](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/call-react-with-slot.md)
   - [Semantic retrieval](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/find-file-by-similarity.md)
-
-
-
