@@ -5,23 +5,25 @@
  */
 
 import { board, code } from "@google-labs/breadboard";
-import { LlmContent, FunctionCallPart } from "./context.js";
+import { LlmContent, FunctionCallPart, fun, TextPart } from "./context.js";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
-export const functionOrTextRouter = code(({ context }) => {
+export const functionOrTextRouterFunction = fun(({ context }) => {
   if (!context) throw new Error("Context is a required input");
   const item = context as LlmContent;
-  const part = item.parts[0];
-  console.warn(
-    item.parts.length === 1,
-    "Only one part is expected in Gemini response"
-  );
-  if ("text" in part) {
-    return { context, text: part.text };
+  const functionCallPart = item.parts.find(
+    (part) => "functionCall" in part
+  ) as FunctionCallPart;
+  if (!functionCallPart) {
+    const textPart = item.parts.find((part) => "text" in part) as TextPart;
+    if (!textPart) throw new Error("No text or function call found in context");
+    return { context, text: textPart.text };
   }
-  return { context, functionCall: part.functionCall };
+  return { context, functionCall: functionCallPart.functionCall };
 });
+
+export const functionOrTextRouter = code(functionOrTextRouterFunction);
 
 type URLMap = Record<string, string>;
 
