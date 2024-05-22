@@ -99,6 +99,9 @@ export class Editor extends LitElement {
   @property({ reflect: true })
   invertZoomScrollDirection = false;
 
+  @property()
+  showNodeTypeDescriptions = true;
+
   #graph = new Graph();
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
@@ -388,6 +391,7 @@ export class Editor extends LitElement {
       }
     }
 
+    this.#graph.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
     this.#graph.collapseNodesByDefault = this.collapseNodesByDefault;
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
@@ -484,6 +488,7 @@ export class Editor extends LitElement {
           kits: Kit[];
           mode: EditorMode;
           collapseNodesByDefault: boolean;
+          showNodeTypeDescriptions: boolean;
         }>
       | Map<PropertyKey, unknown>
   ): void {
@@ -492,7 +497,8 @@ export class Editor extends LitElement {
       changedProperties.has("kits") ||
       changedProperties.has("subGraphId") ||
       changedProperties.has("mode") ||
-      changedProperties.has("collapseNodesByDefault");
+      changedProperties.has("collapseNodesByDefault") ||
+      changedProperties.has("showNodeTypeDescriptions");
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
       this.#processGraph();

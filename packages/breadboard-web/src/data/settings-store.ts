@@ -71,7 +71,7 @@ export class SettingsStore {
             name: "Show Node Shortcuts",
             description:
               "Toggles the visibility of common nodes next to the node selector",
-            value: false,
+            value: true,
           },
         ],
         [
@@ -79,8 +79,8 @@ export class SettingsStore {
           {
             name: "Show Node Type Descriptions",
             description:
-              "Toggles the visibility of node type descriptions in the properties panel",
-            value: true,
+              "Toggles the visibility of node type descriptions in graph nodes",
+            value: false,
           },
         ],
         [
