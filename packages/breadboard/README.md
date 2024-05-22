@@ -22,6 +22,7 @@ This library's design emphasizes two key properties:
   - [Useful packages (optional)](#useful-packages-optional)
 - [Usage](#usage)
   - [Making your first board](#making-your-first-board)
+  - [Wiring directions](#wiring-directions)
   - [Creating `code` nodes](#creating-code-nodes)
   - [Kits](#kits)
     - [Using kits](#using-kits)
@@ -124,6 +125,24 @@ const echo = board(() => {
 });
 
 console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadboard!' }
+```
+
+### Wiring direction
+
+Attributes can be passed between nodes by wiring them together.
+
+Using `to`, attributes can be wired from left-to-right.
+```typescript
+board<{ message: string }>(({ message }, { output }) => {
+	return message.as("response").to(output());
+});
+```
+
+Alternatively, `in` can be used to pass attributes from right-to-left.
+```typescript
+board<{ message: string }>(({ message }, { output }) => {
+	return output().in(message.as("response"))
+});
 ```
 
 ### Creating `code` nodes
