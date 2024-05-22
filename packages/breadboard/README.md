@@ -309,13 +309,7 @@ When running a serialized board that uses kits or `code`, all the kits it uses m
 Each of the kits must be wrapped with `asRuntimeKit` and passed in together in an array.
 
 ```typescript
-import {
-  addKit,
-  asRuntimeKit,
-  board,
-  BoardRunner,
-  code,
-} from "@google-labs/breadboard";
+import { addKit, asRuntimeKit, board, BoardRunner, code } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import TemplateKit from "@google-labs/template-kit";
 
