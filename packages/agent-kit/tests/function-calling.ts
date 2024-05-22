@@ -5,10 +5,16 @@
  */
 
 import test, { describe } from "node:test";
-import { functionOrTextRouterFunction } from "../src/function-calling.js";
+import {
+  functionOrTextRouterFunction,
+  functionSignatureFromBoardFunction,
+} from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { GraphDescriptor } from "@google-labs/breadboard";
 
-describe("function-calling", () => {
+describe("function-calling/functionOrTextRouterFunction", () => {
   test("functionOrTextRouterFunction throws when no context is supplied", () => {
     throws(() => {
       functionOrTextRouterFunction({});
@@ -126,5 +132,103 @@ describe("function-calling", () => {
         },
       });
     }
+  });
+});
+
+const loadBoard = async (name: string) => {
+  const board = await readFile(
+    resolve(
+      new URL(import.meta.url).pathname,
+      `../../../tests/boards/${name}.json`
+    ),
+    "utf8"
+  );
+  return JSON.parse(board);
+};
+
+describe("function-calling/functionSignatureFromBoardFunction", () => {
+  test("functionSignatureFromBoardFunction throws when no board is supplied", () => {
+    throws(() => {
+      functionSignatureFromBoardFunction({});
+    });
+  });
+  test("functionSignatureFromBoardFunction throws when no inputs are found", () => {
+    const board = {};
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
+      });
+    });
+  });
+  test("functionSignatureFromBoardFunction throws when no outputs are found", () => {
+    const board = {
+      nodes: [
+        {
+          id: "node-1",
+          type: "input",
+        },
+      ],
+      edges: [],
+    } satisfies GraphDescriptor;
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
+      });
+    });
+  });
+  test("functionSignatureFromBoardFunction throws when no input schema is found", () => {
+    const board = {
+      nodes: [
+        {
+          id: "node-1",
+          type: "input",
+          configuration: {},
+        },
+        {
+          id: "node-1",
+          type: "output",
+          configuration: {},
+        },
+      ],
+      edges: [],
+    } satisfies GraphDescriptor;
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
+      });
+    });
+  });
+
+  test("functionSignatureFromBoardFunction returns function signature and return values", async () => {
+    const board = await loadBoard("next-public-holiday");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    });
+    deepStrictEqual(result, {
+      function: {
+        name: "Nager_Date_Next_Public_Holiday",
+        description: "Get the next public holiday for a given country",
+        parameters: {
+          type: "object",
+          properties: {
+            countryCode: {
+              type: "string",
+              description: "Two-letter country code",
+            },
+          },
+        },
+      },
+      returns: {
+        type: "object",
+        properties: {
+          holidays: {
+            description: "A list of public holidays for the given country",
+            title: "Holidays",
+            type: ["array", "boolean", "null", "number", "object", "string"],
+          },
+        },
+        required: ["holidays"],
+      },
+    });
   });
 });

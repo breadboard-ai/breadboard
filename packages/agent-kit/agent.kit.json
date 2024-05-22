@@ -1067,7 +1067,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
             "name": "router",
             "raw": true
           },
@@ -1276,7 +1276,7 @@
           "description": "Use this board to convert specified boards into function-calling signatures",
           "edges": [
             {
-              "from": "getFunctionSignature",
+              "from": "fn-4",
               "to": "output-2",
               "out": "function",
               "in": "function"
@@ -1295,9 +1295,9 @@
             },
             {
               "from": "curry-3",
-              "to": "getFunctionSignature",
+              "to": "fn-4",
               "out": "board",
-              "in": "json"
+              "in": "board"
             }
           ],
           "nodes": [
@@ -1309,14 +1309,7 @@
                   "type": "object",
                   "properties": {
                     "function": {
-                      "type": [
-                        "array",
-                        "boolean",
-                        "null",
-                        "number",
-                        "object",
-                        "string"
-                      ],
+                      "type": "string",
                       "title": "function"
                     },
                     "boardURL": {
@@ -1328,11 +1321,15 @@
               }
             },
             {
-              "id": "getFunctionSignature",
-              "type": "jsonata",
+              "id": "fn-4",
+              "type": "runJavascript",
               "configuration": {
-                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const type=property.type==\"object\"||property.type==\"array\"?\"string\":property.type;properties[key]={type,description:property.description}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema}};",
+                "name": "fn_4",
                 "raw": true
+              },
+              "metadata": {
+                "title": "Get Function Signature from board"
               }
             },
             {
@@ -1581,7 +1578,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
             "name": "router",
             "raw": true
           },
@@ -1793,7 +1790,7 @@
           "description": "Use this board to convert specified boards into function-calling signatures",
           "edges": [
             {
-              "from": "getFunctionSignature",
+              "from": "fn-4",
               "to": "output-2",
               "out": "function",
               "in": "function"
@@ -1812,9 +1809,9 @@
             },
             {
               "from": "curry-3",
-              "to": "getFunctionSignature",
+              "to": "fn-4",
               "out": "board",
-              "in": "json"
+              "in": "board"
             }
           ],
           "nodes": [
@@ -1826,14 +1823,7 @@
                   "type": "object",
                   "properties": {
                     "function": {
-                      "type": [
-                        "array",
-                        "boolean",
-                        "null",
-                        "number",
-                        "object",
-                        "string"
-                      ],
+                      "type": "string",
                       "title": "function"
                     },
                     "boardURL": {
@@ -1845,11 +1835,15 @@
               }
             },
             {
-              "id": "getFunctionSignature",
-              "type": "jsonata",
+              "id": "fn-4",
+              "type": "runJavascript",
               "configuration": {
-                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const type=property.type==\"object\"||property.type==\"array\"?\"string\":property.type;properties[key]={type,description:property.description}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema}};",
+                "name": "fn_4",
                 "raw": true
+              },
+              "metadata": {
+                "title": "Get Function Signature from board"
               }
             },
             {

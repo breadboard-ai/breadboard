@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, code } from "@google-labs/breadboard";
+import { GraphDescriptor, Schema, board, code } from "@google-labs/breadboard";
 import { LlmContent, FunctionCallPart, fun, TextPart } from "./context.js";
 import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
 
 export const functionOrTextRouterFunction = fun(({ context }) => {
   if (!context) throw new Error("Context is a required input");
@@ -69,6 +68,51 @@ export const functionResponseFormatter = code(
   }
 );
 
+export const functionSignatureFromBoardFunction = fun(({ board }) => {
+  const b = board as GraphDescriptor;
+  const inputs = b.nodes.filter((node) => node.type === "input");
+  if (inputs.length === 0) {
+    throw new Error("No inputs found");
+  }
+  const outputs = b.nodes.filter((node) => node.type === "output");
+  if (outputs.length === 0) {
+    throw new Error("No outputs found");
+  }
+  // For now, only support one input/output.
+  // TODO: Implement support for multiple inputs/outputs.
+  const inputSchema = inputs[0].configuration?.schema as Schema;
+  if (!inputSchema) {
+    throw new Error("No input schema found");
+  }
+  const outputSchema = outputs[0].configuration?.schema as Schema;
+  if (!outputSchema) {
+    throw new Error("No output schema found");
+  }
+  const properties: Record<string, Schema> = {};
+  for (const key in inputSchema.properties) {
+    const property = inputSchema.properties[key];
+    const type =
+      property.type == "object" || property.type == "array"
+        ? "string"
+        : property.type;
+    properties[key] = {
+      type,
+      description: property.description,
+    };
+  }
+  const name = b.title?.replace(/\W/g, "_");
+  const description = b.description;
+  const parameters = {
+    type: "object",
+    properties,
+  };
+  return { function: { name, description, parameters }, returns: outputSchema };
+});
+
+export const functionSignatureFromBoard = code(
+  functionSignatureFromBoardFunction
+);
+
 export const boardToFunction = await board(({ item }) => {
   const url = item.isString();
 
@@ -76,34 +120,9 @@ export const boardToFunction = await board(({ item }) => {
     $board: url,
   });
 
-  // TODO: Convert to `code`.
-  const getFunctionSignature = json.jsonata({
-    $id: "getFunctionSignature",
-    expression: `
-      (
-        $adjustType := function ($type) {
-            $type = "object" or $type = "array" ? "string" : $type
-        };
-
-        {
-        "function": {
-            "name": $replace(title, /\\W/, "_"),
-            "description": description,
-            "parameters": {
-                "type": "object",
-                "properties": nodes[type="input"][0].configuration.schema.properties ~> $each(function($v, $k) {
-                { $k: {
-                    "type": $v.type ~> $adjustType,
-                    "description": $v.description
-                } }
-                }) ~> $merge
-            }
-        },
-        "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
-        }
-    )`,
-    json: importBoard.board,
-    raw: true,
+  const getFunctionSignature = functionSignatureFromBoard({
+    $metadata: { title: "Get Function Signature from board" },
+    board: importBoard.board,
   });
 
   return { function: getFunctionSignature.function, boardURL: url };
