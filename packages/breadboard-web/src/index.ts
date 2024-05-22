@@ -321,17 +321,6 @@ export class Main extends LitElement {
       flex-direction: column;
     }
 
-    #reload {
-      height: 32px;
-      width: 100px;
-      margin: calc(var(--bb-grid-size) * 2);
-      align-self: flex-end;
-      background: #fff var(--bb-icon-frame-reload) 9px 3px no-repeat;
-      border-radius: calc(var(--bb-grid-size) * 4);
-      border: 1px solid rgb(204, 204, 204);
-      padding: 0 8px 0 32px;
-    }
-
     iframe {
       grid-row: 1 / 3;
       grid-column: 1 / 3;

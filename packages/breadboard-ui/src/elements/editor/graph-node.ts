@@ -23,7 +23,7 @@ const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const outputNodeColor = getGlobalColor("--bb-boards-200");
 
 const DBL_CLICK_DELTA = 450;
-const ICON_SCALE = 0.75;
+const ICON_SCALE = 0.42;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
