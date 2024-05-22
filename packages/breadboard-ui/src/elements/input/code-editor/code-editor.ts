@@ -73,6 +73,21 @@ export class CodeEditor extends LitElement {
         javascript(),
         closeBrackets(),
         keymap.of([indentWithTab]),
+        EditorView.updateListener.of((update) => {
+          const isDeletion =
+            update.changes.desc.newLength < update.changes.desc.length;
+          if (!isDeletion) {
+            return;
+          }
+
+          this.dispatchEvent(
+            new InputEvent("input", {
+              bubbles: true,
+              composed: true,
+              cancelable: true,
+            })
+          );
+        }),
       ],
       parent: this.#content.value,
     });
