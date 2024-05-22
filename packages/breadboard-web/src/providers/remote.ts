@@ -138,7 +138,7 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async restore() {
-    const response = await fetch(`${this.origin}/list`);
+    const response = await fetch(`${this.origin}/boards`);
     const files = await response.json();
 
     this.#store.items.clear();
