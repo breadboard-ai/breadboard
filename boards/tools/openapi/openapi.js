@@ -173,7 +173,7 @@ const generateAPISpecs = code(({ json, context, builderPath }) => {
             operationId,
             url: baseUrl.replace(/\/$/, "") + key,
             method: method.toUpperCase(),
-            description: `${data.description || ""} + ${data.summary || ""}`,
+            description: `${data.name}: ${data.summary || ""} ${data.description || ""}`,
             summary: data.summary,
             parameters,
             requestBody,
