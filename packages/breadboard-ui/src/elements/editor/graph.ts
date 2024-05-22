@@ -709,7 +709,6 @@ export class Graph extends PIXI.Container {
   }
 
   #setNodesCollapseState() {
-    console.log("Updating node collapse state");
     for (const child of this.children) {
       if (!(child instanceof GraphNode)) {
         continue;
