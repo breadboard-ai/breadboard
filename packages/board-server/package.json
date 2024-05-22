@@ -1,0 +1,82 @@
+{
+  "name": "@breadboard-ai/board-server",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "private": true,
+  "version": "0.0.1",
+  "description": "Board Server",
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "test": "wireit",
+    "serve": "wireit",
+    "dev": "npm run serve --watch"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc",
+        "../breadboard:build"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "dependencies": [
+        "../breadboard:build:tsc"
+      ],
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "serve": {
+      "service": true,
+      "command": "node .",
+      "dependencies": [
+        "build"
+      ]
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    }
+  },
+  "repository": {
+    "directory": "packages/board-server",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

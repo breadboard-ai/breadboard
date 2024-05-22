@@ -11,6 +11,9 @@
     "build": "wireit",
     "lint": "wireit",
     "ci": "npm ci",
+    "s": "(cd packages/board-server && npm run dev) # Starts the board server",
+    "d": "(cd packages/website && npm run dev) # Starts the docs website",
+    "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "generate:docs": "wireit",
@@ -51,6 +54,7 @@
         "./packages/pinecone-kit:build",
         "./packages/website:build",
         "./packages/schema:build",
+        "./packages/board-server:build",
         "./packages/team-kit:build"
       ]
     },
