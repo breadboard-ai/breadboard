@@ -97,7 +97,7 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
         : property.type;
     properties[key] = {
       type,
-      description: property.description,
+      description: property.description || property.title || "text",
     };
   }
   const name = b.title?.replace(/\W/g, "_");

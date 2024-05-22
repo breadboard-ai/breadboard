@@ -9,7 +9,7 @@ import {
   functionOrTextRouterFunction,
   functionSignatureFromBoardFunction,
 } from "../src/function-calling.js";
-import { deepStrictEqual, throws } from "node:assert";
+import { deepStrictEqual, strictEqual, throws } from "node:assert";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { GraphDescriptor } from "@google-labs/breadboard";
@@ -147,12 +147,12 @@ const loadBoard = async (name: string) => {
 };
 
 describe("function-calling/functionSignatureFromBoardFunction", () => {
-  test("functionSignatureFromBoardFunction throws when no board is supplied", () => {
+  test("throws when no board is supplied", () => {
     throws(() => {
       functionSignatureFromBoardFunction({});
     });
   });
-  test("functionSignatureFromBoardFunction throws when no inputs are found", () => {
+  test("throws when no inputs are found", () => {
     const board = {};
     throws(() => {
       functionSignatureFromBoardFunction({
@@ -160,7 +160,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       });
     });
   });
-  test("functionSignatureFromBoardFunction throws when no outputs are found", () => {
+  test("throws when no outputs are found", () => {
     const board = {
       nodes: [
         {
@@ -176,7 +176,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       });
     });
   });
-  test("functionSignatureFromBoardFunction throws when no input schema is found", () => {
+  test("throws when no input schema is found", () => {
     const board = {
       nodes: [
         {
@@ -199,7 +199,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     });
   });
 
-  test("functionSignatureFromBoardFunction returns function signature and return values", async () => {
+  test("returns function signature and return values", async () => {
     const board = await loadBoard("next-public-holiday");
     const result = functionSignatureFromBoardFunction({
       board,
@@ -230,5 +230,21 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
         required: ["holidays"],
       },
     });
+  });
+});
+
+test("substitutes property title for description when description is missing", async () => {
+  const board = await loadBoard("no-descriptions");
+  const result = functionSignatureFromBoardFunction({
+    board,
+  }) as { function: Record<string, unknown> };
+  deepStrictEqual(result.function.parameters, {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        description: "text",
+      },
+    },
   });
 });
