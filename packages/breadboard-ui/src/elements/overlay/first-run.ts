@@ -18,6 +18,9 @@ export class FirstRunOverlay extends LitElement {
   @property()
   settings: Settings | null = null;
 
+  @property()
+  boardServerUrl: string | null = null;
+
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
@@ -182,6 +185,18 @@ export class FirstRunOverlay extends LitElement {
               : { name: "GEMINI_KEY", value: geminiKey };
 
             settings[SETTINGS_TYPE.SECRETS].items.set("GEMINI_KEY", setting);
+          }
+
+          if (this.boardServerUrl && URL.canParse(this.boardServerUrl)) {
+            const serverUrlId = window.crypto.randomUUID();
+            const key = `Server-${serverUrlId}`;
+
+            let setting = settings[SETTINGS_TYPE.BOARD_SERVERS].items.get(key);
+            setting = setting
+              ? { ...setting, value: this.boardServerUrl }
+              : { name: key, value: this.boardServerUrl };
+
+            settings[SETTINGS_TYPE.BOARD_SERVERS].items.set(key, setting);
           }
 
           const defaultToTrue = [
