@@ -23,7 +23,10 @@ export class RemoteGraphProvider implements GraphProvider {
 
   constructor(public readonly origin: string) {
     const url = new URL(origin);
-    const port = url.port !== "80" && url.port !== "443" ? `:${url.port}` : "";
+    const port =
+      url.port !== "80" && url.port !== "443" && url.port !== ""
+        ? `:${url.port}`
+        : "";
     this.#name = `${url.hostname}${port}`;
     this.#store = {
       permission: "granted",

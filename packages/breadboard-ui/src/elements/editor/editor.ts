@@ -483,6 +483,7 @@ export class Editor extends LitElement {
           subGraphId: string | null;
           kits: Kit[];
           mode: EditorMode;
+          collapseNodesByDefault: boolean;
         }>
       | Map<PropertyKey, unknown>
   ): void {
@@ -490,7 +491,8 @@ export class Editor extends LitElement {
       changedProperties.has("graph") ||
       changedProperties.has("kits") ||
       changedProperties.has("subGraphId") ||
-      changedProperties.has("mode");
+      changedProperties.has("mode") ||
+      changedProperties.has("collapseNodesByDefault");
 
     if (shouldProcessGraph && this.graph && this.kits.length > 0) {
       this.#processGraph();

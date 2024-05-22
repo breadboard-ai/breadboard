@@ -42,7 +42,7 @@ export class Graph extends PIXI.Container {
   #editable = false;
   #autoSelect = new Set<string>();
 
-  collapseNodesByDefault = false;
+  #collapseNodesByDefault = false;
   layoutRect: DOMRectReadOnly | null = null;
 
   constructor() {
@@ -708,6 +708,29 @@ export class Graph extends PIXI.Container {
     this.#drawEdges();
   }
 
+  #setNodesCollapseState() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.collapsed = this.collapseNodesByDefault;
+    }
+  }
+
+  set collapseNodesByDefault(collapseNodesByDefault: boolean) {
+    if (collapseNodesByDefault !== this.#collapseNodesByDefault) {
+      this.#isDirty = true;
+    }
+
+    this.#collapseNodesByDefault = collapseNodesByDefault;
+    this.#setNodesCollapseState();
+  }
+
+  get collapseNodesByDefault() {
+    return this.#collapseNodesByDefault;
+  }
+
   set editable(editable: boolean) {
     const nodes = this.children;
     for (const node of nodes) {
@@ -1009,7 +1032,6 @@ export class Graph extends PIXI.Container {
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
-        graphNode.collapsed = this.collapseNodesByDefault;
 
         this.#graphNodeById.set(id, graphNode);
       }
@@ -1100,6 +1122,8 @@ export class Graph extends PIXI.Container {
         this.#layout.delete(id);
       }
     }
+
+    this.#setNodesCollapseState();
   }
 
   // TODO: Merge this with below.
