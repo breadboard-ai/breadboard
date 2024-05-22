@@ -16,10 +16,31 @@ This library's design emphasizes two key properties:
 
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
 
-## [](https://www.npmjs.com/package/@google-labs/breadboard#table-of-contents) Table of Contents
+## Table of Contents
 
-- <a href="#breadboard">Breadboard</a> - <a href="#installation">Installation</a> - <a href="#usage">Usage</a> - <a href="#Breadboard Board Schema">Breadboard Schema</a> - <a href="#Breadboard Web">Breadboard Web</a> - <a href="#Using Breadboard Web">Using Breadboard Web</a> - <a href="#concepts">Concepts</a> - <a href="#additional-info">Additional Info</a>
-<h2 id="installation">Installation</h2>
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+	- [Useful packages (optional)](#useful-packages-optional)
+- [Usage](#usage)
+	- [Making your first board](#making-your-first-board)
+	- [Creating `code` nodes](#creating-code-nodes)
+	- [Kits](#kits)
+		- [Using kits](#using-kits)
+		- [Creating custom kits](#creating-custom-kits)
+	- [Serializing boards](#serializing-boards)
+		- [Serialization](#serialization)
+		- [Deserialization](#deserialization)
+	- [Running boards](#running-boards)
+	- [Using a board within a board](#using-a-board-within-a-board)
+- [Breadboard Board Schema](#breadboard-board-schema)
+- [Breadboard Web](#breadboard-web)
+	- [1. Running Breadboard Web locally.](#1-running-breadboard-web-locally)
+	- [2. Using Breadboard Web hosted by Google.](#2-using-breadboard-web-hosted-by-google)
+	- [Using Breadboard Web](#using-breadboard-web)
+- [Concepts](#concepts)
+- [Additional Info](#additional-info)
+
+## Installation
 
 Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
 
@@ -46,7 +67,7 @@ If you want to use [TypeScript](https://www.typescriptlang.org/), you will need 
 
 You can find many other helpful [Breadboard packages](https://github.com/breadboard-ai/breadboard/blob/main/README.md#packages) available.
 
-<h2 id="usage">Usage</h2>
+## Usage
 
 ### Making your first board
 
@@ -366,15 +387,15 @@ Whereas `BoardRunner` can create runnable boards from serialized graphs: it can 
   ```
 - `run(...)`: Runs the board continuously. This method is an [async generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator) that yields the results of each stage of the run.
   `typescript
-	...
-	for await (const stop of runner.run()) {
-		if (stop.type === "input") {
-			stop.inputs = { say: "Hello Breadboard!" };
-		} else if (stop.type === "output") {
-        	console.log(stop.outputs) // { hear: 'Hello Breadboard!' }
-		}
+...
+for await (const stop of runner.run()) {
+	if (stop.type === "input") {
+		stop.inputs = { say: "Hello Breadboard!" };
+	} else if (stop.type === "output") {
+      	console.log(stop.outputs) // { hear: 'Hello Breadboard!' }
 	}
-	`
+}
+`
   So far, our board only has outputs that are visited once, and we could simply invoke the `board` or use `runOnce` to run it entirely. Let's change our board to return from two different outputs instead of one.
 
 ```typescript
@@ -445,7 +466,7 @@ export default await board((inputs, { output }) => {
 });
 ```
 
-<h2 id="Breadboard Board Schema">Breadboard Board Schema</h2>
+## Breadboard Board Schema
 
 Schemas are used to attach metadata to a board. This metadata provides useful information that can assist in a board's usage. Schemas can be used to define, describe and provide default values for a board's inputs. In the next section we will see schemas in action when running a board on Breadboard Web.
 
@@ -538,13 +559,13 @@ export default await board<{ greeting: string; subject: string }>(
 );
 ```
 
-<h2 id="Breadboard Web">Breadboard Web</h2>
+## Breadboard Web
 
 Breadboard web is a package that can run Breadboard applications on a web browser.
 
 There are two ways to run a board using Breadboard Web:
 
-1. Running Breadboard Web locally.
+### 1. Running Breadboard Web locally.
 
 We can run our own instance of Breadboard Web. This requires us to work in the Breadboard Monorepo https://github.com/breadboard-ai/breadboard. We can add our board into `packages/breadboard-web/src/boards`.
 
@@ -608,7 +629,7 @@ We can then run `npm run dev` while in the boards directory. This deploys an ins
 
 Running Breadboard Web locally also features hot reloading which is handy if we are constantly making changes to our board. Simply save the file and it will automatically rebuild and deploy Breadboard web.
 
-2. Using Breadboard Web hosted by Google.
+### 2. Using Breadboard Web hosted by Google.
 
 We have already demonstrated how to serialize a board into a graph representation. We can store this graph representation as a JSON file.
 
@@ -637,7 +658,7 @@ https://breadboard-ai.web.app/?board=%2Fgraphs%2Fjson-validator.json
 
 Local instances of Breadboard Web can also load boards via json file and the board request parameter. Option 2 is great if you would like to show off your boards to other people!
 
-<h2 id="Using Breadboard Web">Using Breadboard Web</h2>
+### Using Breadboard Web
 
 Now we have described how to run a board on Breadboard Web, let's discuss how to use it.
 
@@ -650,7 +671,7 @@ Once we have provided inputs and run the board, let's see what happens!
 
 After the board has finished executing we can see its output. And just like that, we were able to quickly load a board and run it in a web environment.
 
-<h2 id="concepts">Concepts</h2>
+## Concepts
 
 | Concept                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -664,7 +685,8 @@ After the board has finished executing we can see its output. And just like that
 | Runtimes                        | A runtime is a system that executes boards. Current runtimes include: Node and Web.                                                                                                                                                                                                                                                                                                                                                            |
 | Frontends                       | A frontend is a system that generates boards. Current frontends include the `@google-labs/breadboard` API for Node, a Python library (coming soon!), and the Breadboard Visual Playground. Boards can also be written by hand directly as JSON, but using a frontend is typically easier. **Note that frontends are never coupled to a specific runtime.** Boards generated by the Node API can be executed by any runtime.                    |
 
-<h2 id="additional-info">Additional Info</h2>
+## Additional Info
+
 To learn more about Breadboard, here are a couple of resources:
 
 - [Breadboard Tutorial](https://breadboard-ai.github.io/breadboard/docs/happy-path/) -- learn how to use breadboard step-by-step, from easy to more complex.
