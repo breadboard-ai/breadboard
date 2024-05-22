@@ -528,7 +528,7 @@ export default await board(() => {
 });
 ```
 
-The schema has 2 inputs `greeting` and `subject`, these are both of type string. Inputs can be assigned a `default` value, this is the input value that will be used if a user does not provide one. `Description` is the text that will appear in the input field on the Breadboard Web UI. `Title` is the text that will be labelled above the input field. `$id` will be the name of the node that can be seen on breadboard web.
+The schema has 2 inputs `greeting` and `subject`, these are both of type string. Inputs can be assigned a `default` value, this is the input value that will be used if a user does not provide one. `Description` is the text that will appear in the input field on the Breadboard Web UI. `Title` is the text that will be labeled above the input field. `$id` will be the name of the node that can be seen on breadboard web.
 
 The properties can then be accessed similarly to accessing properties of objects.
 `inputs.greeting` will access the `greeting` property of the input, in our example this is the greeting string.
