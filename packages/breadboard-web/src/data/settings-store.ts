@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 4;
+const SETTINGS_VERSION = 5;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -124,9 +124,10 @@ export class SettingsStore {
     [BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS]: {
       configuration: {
         extensible: true,
-        description: "Put the URL of the board server in the field.",
-        nameEditable: false,
-        nameVisible: false,
+        description:
+          "Put the URL of the board server in the field as first value and your access key as the second value.",
+        nameEditable: true,
+        nameVisible: true,
       },
       items: new Map(),
     },

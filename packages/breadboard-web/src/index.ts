@@ -446,7 +446,7 @@ export class Main extends LitElement {
             continue;
           }
 
-          if (provider.origin === server.value) {
+          if (provider.origin === server.name) {
             providerExists = true;
             break existingProviders;
           }
@@ -456,7 +456,10 @@ export class Main extends LitElement {
           continue;
         }
 
-        const remoteGraphProvider = new RemoteGraphProvider(server.value);
+        const remoteGraphProvider = new RemoteGraphProvider(
+          server.name,
+          server.value
+        );
         await remoteGraphProvider.restore();
         this.#providers.unshift(remoteGraphProvider);
       }
@@ -474,7 +477,7 @@ export class Main extends LitElement {
             continue;
           }
 
-          if (provider.origin === server.value) {
+          if (provider.origin === server.name) {
             retain = true;
             break;
           }

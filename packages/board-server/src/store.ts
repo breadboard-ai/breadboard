@@ -15,29 +15,34 @@ export class Store {
     });
   }
 
-  async list(userKey: string) {
-    const docs = await this.#database
-      .collection(`workspaces/${userKey}/boards`)
+  async list() {
+    const allStores = await this.#database
+      .collection("workspaces")
       .listDocuments();
-    return docs.map((doc) => doc.id);
+    const boards = [];
+    for (const store of allStores) {
+      const storeBoards = await store.collection("boards").listDocuments();
+      boards.push(...storeBoards.map((doc) => `${store.id}/${doc.id}`));
+    }
+    return boards;
   }
 
-  async get(userKey: string, boardName: string) {
+  async get(userStore: string, boardName: string) {
     const doc = await this.#database
-      .doc(`workspaces/${userKey}/boards/${boardName}`)
+      .doc(`workspaces/${userStore}/boards/${boardName}`)
       .get();
     return doc.get("graph");
   }
 
-  async create(userKey: string, boardName: string, graph: string) {
+  async create(userStore: string, boardName: string, graph: string) {
     await this.#database
-      .doc(`workspaces/${userKey}/boards/${boardName}`)
+      .doc(`workspaces/${userStore}/boards/${boardName}`)
       .set({ graph: JSON.stringify(graph), published: true });
   }
 
-  async delete(userKey: string, boardName: string) {
+  async delete(userStore: string, boardName: string) {
     await this.#database
-      .doc(`workspaces/${userKey}/boards/${boardName}`)
+      .doc(`workspaces/${userStore}/boards/${boardName}`)
       .delete();
   }
 }

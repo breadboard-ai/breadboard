@@ -12,6 +12,7 @@ import get from "./api/get.js";
 import post from "./api/post.js";
 import del from "./api/delete.js";
 import { cors } from "./cors.js";
+import { getUserKey } from "./auth.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";

@@ -21,7 +21,10 @@ export class RemoteGraphProvider implements GraphProvider {
   #store: GraphProviderStore<void>;
   #stores: Map<string, GraphProviderStore<void>>;
 
-  constructor(public readonly origin: string) {
+  constructor(
+    public readonly origin: string,
+    public readonly userKey: string
+  ) {
     const url = new URL(origin);
     const port =
       url.port !== "80" && url.port !== "443" && url.port !== ""
@@ -40,7 +43,10 @@ export class RemoteGraphProvider implements GraphProvider {
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(descriptor, null, 2),
-      headers: new Headers([["Content-Type", "application/json"]]),
+      headers: new Headers([
+        ["Authorization", `Bearer ${this.userKey}`],
+        ["Content-Type", "application/json"],
+      ]),
     });
     return await response.json();
   }
@@ -55,7 +61,9 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async load(url: URL) {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+    });
     const graph = await response.json();
 
     return graph;
@@ -84,7 +92,10 @@ export class RemoteGraphProvider implements GraphProvider {
     }
 
     try {
-      const response = await fetch(url, { method: "DELETE" });
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+      });
       const data = await response.json();
       await this.refresh();
 
@@ -141,7 +152,9 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async restore() {
-    const response = await fetch(`${this.origin}/boards`);
+    const response = await fetch(`${this.origin}/boards`, {
+      headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+    });
     const files = await response.json();
 
     this.#store.items.clear();
