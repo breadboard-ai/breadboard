@@ -499,9 +499,9 @@ const subjectSchema = {
 export default await board(() => {
     // attach schema properties to base input
     const inputs = base.input({
-        $id: "String concatination Inputs",
+        $id: "String concatenation Inputs",
         schema: {
-            title: "Inputs for string concatination",
+            title: "Inputs for string concatenation",
             properties: {
                 greeting: greetingSchema,
                 subject: subjectSchema
@@ -597,9 +597,9 @@ const subjectSchema = {
 
 export default await board(() => {
     const inputs = base.input({
-        $id: "String concatination Inputs",
+        $id: "String concatenation Inputs",
         schema: {
-            title: "Inputs for string concatination",
+            title: "Inputs for string concatenation",
             properties: {
                 greeting: greetingSchema,
                 subject: subjectSchema
