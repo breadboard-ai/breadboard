@@ -296,7 +296,6 @@ const createSpecBoard = board((apiSpec) => {
     const { item, graph } = input;
 
     const toAPIInputs = code((item) => {
-      debugger;
       console.log("API Inputs", item);
       return { api_inputs: item };
     });
@@ -307,12 +306,11 @@ const createSpecBoard = board((apiSpec) => {
         $board: item.builderPath,
         context: item.context,
         text: item.context,
-        theSchema: item.requestBody["application/json"].schema,
+        theSchema: item.requestBody["application/json"]?.schema,
       };
     });
 
     const createRequestBody = code(({ text, input }) => {
-      debugger;
       return { requestBody: text, input };
     });
 
@@ -350,8 +348,6 @@ const createSpecBoard = board((apiSpec) => {
 
     const createFetchParameters = code(({ item, api_inputs }) => {
       const { method, parameters, secrets, requestBody } = item;
-      debugger;
-      console.log("API Inputs", item);
 
       let { url } = item;
 

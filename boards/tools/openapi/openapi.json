@@ -1,7 +1,7 @@
 {
   "title": "Create a board from an Open API spec",
   "description": "Converts an Open API spec to a board.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {
@@ -185,10 +185,7 @@
                         "title": "builderPath"
                       }
                     },
-                    "required": [
-                      "item",
-                      "builderPath"
-                    ]
+                    "required": ["item", "builderPath"]
                   }
                 }
               },
@@ -312,10 +309,7 @@
                                 "api_json_response": {
                                   "title": "response",
                                   "description": "The response from the fetch request",
-                                  "type": [
-                                    "string",
-                                    "object"
-                                  ]
+                                  "type": ["string", "object"]
                                 }
                               }
                             }
@@ -330,7 +324,7 @@
                           "id": "createFetchParameters",
                           "type": "runJavascript",
                           "configuration": {
-                            "code": "const createFetchParameters = ({ item, api_inputs }) => {\n      const { method, parameters, secrets, requestBody } = item;\n      debugger;\n      console.log(\"API Inputs\", item);\n\n      let { url } = item;\n\n      const queryStringParameters = {};\n\n      if (typeof api_inputs == \"string\") {\n        api_inputs = JSON.parse(api_inputs);\n      }\n\n      if (\n        parameters != undefined &&\n        parameters.length > 0 &&\n        api_inputs == undefined\n      ) {\n        throw new Error(\n          `Missing input for parameters ${JSON.stringify(parameters)}`\n        );\n      }\n\n      for (const param of parameters) {\n        if (api_inputs && param.name in api_inputs == false && param.required) {\n          throw new Error(`Missing required parameter ${param.name}`);\n        }\n\n        if (api_inputs && param.name in api_inputs == false) {\n          // Parameter is not required and not in input, so we can skip it.\n          continue;\n        }\n\n        if (param.in == \"path\") {\n          // Replace the path parameter with the value from the input.\n          url = url.replace(`{${param.name}}`, api_inputs[param.name]);\n        }\n\n        if (param.in == \"query\") {\n          queryStringParameters[param.name] = api_inputs[param.name];\n        }\n      }\n\n      // If the method is POST or PUT, then we need to add the requestBody to the body.\n\n      // We are going to want to add in the secret somehow\n      const headers = {};\n\n      // Create the query string\n      const queryString = Object.entries(queryStringParameters)\n        .map(([key, value]) => {\n          return `${key}=${value}`;\n        })\n        .join(\"&\");\n\n      if (queryString.length > 0) {\n        url = `${url}?${queryString}`;\n      }\n\n      // Many APIs will require an authentication token but they don't define it in the Open API spec.\n      if (secrets != undefined && secrets[1].scheme == \"bearer\") {\n        const envKey = `${item.info.title\n          .replace(/[^a-zA-Z0-9]+/g, \"_\")\n          .toUpperCase()}_KEY`;\n        const envValue = api_inputs[envKey];\n\n        headers[\"Authorization\"] = `Bearer ${envValue}`;\n      }\n\n      let body = undefined;\n\n      if (requestBody) {\n        // We know the method needs a request Body.\n        // Find the first input that matches the valid required schema of the API.\n        let requestContentType;\n\n        // We can only handle JSON\n        if (\"requestBody\" in api_inputs) {\n          body =\n            typeof api_inputs[\"requestBody\"] == \"string\"\n              ? JSON.parse(api_inputs[\"requestBody\"])\n              : api_inputs[\"requestBody\"];\n          requestContentType = \"application/json\";\n        }\n\n        if (body == undefined) {\n          throw new Error(\n            `Missing required request body for ${JSON.stringify(requestBody)}`\n          );\n        }\n\n        headers[\"Content-Type\"] = requestContentType;\n      }\n      return { url, method, headers, body, queryString };\n    };",
+                            "code": "const createFetchParameters = ({ item, api_inputs }) => {\n      const { method, parameters, secrets, requestBody } = item;\n\n      let { url } = item;\n\n      const queryStringParameters = {};\n\n      if (typeof api_inputs == \"string\") {\n        api_inputs = JSON.parse(api_inputs);\n      }\n\n      if (\n        parameters != undefined &&\n        parameters.length > 0 &&\n        api_inputs == undefined\n      ) {\n        throw new Error(\n          `Missing input for parameters ${JSON.stringify(parameters)}`\n        );\n      }\n\n      for (const param of parameters) {\n        if (api_inputs && param.name in api_inputs == false && param.required) {\n          throw new Error(`Missing required parameter ${param.name}`);\n        }\n\n        if (api_inputs && param.name in api_inputs == false) {\n          // Parameter is not required and not in input, so we can skip it.\n          continue;\n        }\n\n        if (param.in == \"path\") {\n          // Replace the path parameter with the value from the input.\n          url = url.replace(`{${param.name}}`, api_inputs[param.name]);\n        }\n\n        if (param.in == \"query\") {\n          queryStringParameters[param.name] = api_inputs[param.name];\n        }\n      }\n\n      // If the method is POST or PUT, then we need to add the requestBody to the body.\n\n      // We are going to want to add in the secret somehow\n      const headers = {};\n\n      // Create the query string\n      const queryString = Object.entries(queryStringParameters)\n        .map(([key, value]) => {\n          return `${key}=${value}`;\n        })\n        .join(\"&\");\n\n      if (queryString.length > 0) {\n        url = `${url}?${queryString}`;\n      }\n\n      // Many APIs will require an authentication token but they don't define it in the Open API spec.\n      if (secrets != undefined && secrets[1].scheme == \"bearer\") {\n        const envKey = `${item.info.title\n          .replace(/[^a-zA-Z0-9]+/g, \"_\")\n          .toUpperCase()}_KEY`;\n        const envValue = api_inputs[envKey];\n\n        headers[\"Authorization\"] = `Bearer ${envValue}`;\n      }\n\n      let body = undefined;\n\n      if (requestBody) {\n        // We know the method needs a request Body.\n        // Find the first input that matches the valid required schema of the API.\n        let requestContentType;\n\n        // We can only handle JSON\n        if (\"requestBody\" in api_inputs) {\n          body =\n            typeof api_inputs[\"requestBody\"] == \"string\"\n              ? JSON.parse(api_inputs[\"requestBody\"])\n              : api_inputs[\"requestBody\"];\n          requestContentType = \"application/json\";\n        }\n\n        if (body == undefined) {\n          throw new Error(\n            `Missing required request body for ${JSON.stringify(requestBody)}`\n          );\n        }\n\n        headers[\"Content-Type\"] = requestContentType;\n      }\n      return { url, method, headers, body, queryString };\n    };",
                             "name": "createFetchParameters",
                             "raw": true
                           }
@@ -355,10 +349,7 @@
                                   "title": "input"
                                 }
                               },
-                              "required": [
-                                "item",
-                                "graph"
-                              ]
+                              "required": ["item", "graph"]
                             }
                           }
                         },
@@ -371,7 +362,7 @@
                           "id": "getBuilderPath",
                           "type": "runJavascript",
                           "configuration": {
-                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema: item.requestBody[\"application/json\"].schema,\n      };\n    };",
+                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema: item.requestBody[\"application/json\"]?.schema,\n      };\n    };",
                             "name": "getBuilderPath",
                             "raw": true
                           }
@@ -380,7 +371,7 @@
                           "id": "createRequestBody",
                           "type": "runJavascript",
                           "configuration": {
-                            "code": "const createRequestBody = ({ text, input }) => {\n      debugger;\n      return { requestBody: text, input };\n    };",
+                            "code": "const createRequestBody = ({ text, input }) => {\n      return { requestBody: text, input };\n    };",
                             "name": "createRequestBody",
                             "raw": true
                           }
@@ -420,7 +411,7 @@
                                     "id": "fn-3",
                                     "type": "runJavascript",
                                     "configuration": {
-                                      "code": "const fn_3 = (item) => {\n      debugger;\n      console.log(\"API Inputs\", item);\n      return { api_inputs: item };\n    };",
+                                      "code": "const fn_3 = (item) => {\n      console.log(\"API Inputs\", item);\n      return { api_inputs: item };\n    };",
                                       "name": "fn_3",
                                       "raw": true
                                     }
@@ -484,11 +475,7 @@
               "type": "string"
             }
           },
-          "required": [
-            "url",
-            "context",
-            "builderPath"
-          ]
+          "required": ["url", "context", "builderPath"]
         }
       }
     },
