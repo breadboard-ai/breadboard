@@ -27,8 +27,7 @@ const getApiPath = (path: string) => {
 };
 
 const server = createServer(async (req, res) => {
-  const corsHeaders = cors(req, res);
-  if (!corsHeaders) {
+  if (!cors(req, res)) {
     return;
   }
 
