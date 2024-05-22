@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, input, output, unsafeCast } from "@breadboard-ai/build";
+import {
+  annotate,
+  board,
+  input,
+  object,
+  output,
+  unsafeCast,
+} from "@breadboard-ai/build";
 import { invoke, runJavascript } from "@google-labs/core-kit";
 import { prompt, promptPlaceholder } from "@google-labs/template-kit";
 
@@ -18,8 +25,11 @@ const question = input({
 const generator = input({
   $id: "math-question",
   title: "Generator",
+  type: annotate(object({}), {
+    behavior: ["board"],
+  }),
   description: "The URL of the generator to call",
-  default: "text-generator.json",
+  default: { kind: "board", path: "text-generator.json" },
 });
 
 const instructions =

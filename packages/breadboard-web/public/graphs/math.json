@@ -43,10 +43,16 @@
           "type": "object",
           "properties": {
             "generator": {
-              "type": "string",
+              "type": "object",
+              "behavior": [
+                "board"
+              ],
               "title": "Generator",
               "description": "The URL of the generator to call",
-              "default": "text-generator.json"
+              "default": "{\n  \"kind\": \"board\",\n  \"path\": \"text-generator.json\"\n}",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
             },
             "question": {
               "type": "string",

@@ -480,6 +480,9 @@
               "properties": {
                 "worker": {
                   "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": false,
                   "title": "Worker",
                   "description": "Worker to repeat",
                   "behavior": [
@@ -1067,7 +1070,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
             "name": "router",
             "raw": true
           },
@@ -1581,7 +1584,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const part=item.parts[0];console.warn(item.parts.length===1,\"Only one part is expected in Gemini response\");if(\"text\"in part){return{context,text:part.text}}return{context,functionCall:part.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
             "name": "router",
             "raw": true
           },
