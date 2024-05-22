@@ -13,6 +13,5 @@
   ],
   "inputs": { "text": "foo" },
   "outputs": [],
-  "sequence": [],
-  "throws": true
+  "sequence": ["input-1"]
 }

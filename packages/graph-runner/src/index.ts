@@ -6,7 +6,7 @@
 
 export type {
   Edge,
-  GraphMetadata,
+  GraphInlineMetadata,
   GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,

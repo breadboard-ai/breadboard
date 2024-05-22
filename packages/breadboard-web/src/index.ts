@@ -11,11 +11,11 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
-  Board,
+  blank,
   BoardRunner,
   createLoader,
   edit,
-  EditResult,
+  EditableGraph,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -23,71 +23,33 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
+import BuildExampleKit from "./build-example-kit";
+import { SettingsStore } from "./data/settings-store";
+import { inputsFromSettings } from "./data/inputs";
+import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
+import { RemoteGraphProvider } from "./providers/remote";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
+  settings?: SettingsStore;
 };
-
-const getBoardInfo = async (
-  loader: GraphLoader,
-  url: string
-): Promise<BreadboardUI.Types.LoadArgs> => {
-  const base = new URL(window.location.href);
-  const graph = await loader.load(url, { base });
-  if (!graph) {
-    // TODO: Better error handling, maybe a toast?
-    throw new Error(`Unable to load graph: ${url}`);
-  }
-  const runner = await BoardRunner.fromGraphDescriptor(graph);
-
-  const { title, description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
-  const nodes = runner.nodes;
-  const graphDescriptor: GraphDescriptor = runner;
-
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
-};
-
-const getBoardFromDescriptor = async (
-  url: string,
-  descriptor: GraphDescriptor
-): Promise<BreadboardUI.Types.LoadArgs> => {
-  const runner = await Board.fromGraphDescriptor(descriptor);
-
-  const { title, description, version } = runner;
-  const diagram = runner.mermaid("TD", true, true);
-  const nodes = runner.nodes;
-  const graphDescriptor: GraphDescriptor = runner;
-  graphDescriptor.url = url;
-
-  return { title, description, version, diagram, url, graphDescriptor, nodes };
-};
-
-const enum MODE {
-  BUILD = "build",
-  PREVIEW = "preview",
-}
-
-// TODO: Remove once all elements are Lit-based.
-BreadboardUI.register();
 
 @customElement("bb-main")
 export class Main extends LitElement {
   @property({ reflect: true })
   url: string | null = null;
 
-  @property({ reflect: false })
-  descriptor: GraphDescriptor | null = null;
+  @state()
+  graph: GraphDescriptor | null = null;
 
-  @property({ reflect: false })
-  loadInfo: BreadboardUI.Types.LoadArgs | null = null;
+  @property()
+  subGraphId: string | null = null;
 
   @state()
   kits: Kit[] = [];
@@ -96,16 +58,27 @@ export class Main extends LitElement {
   runs: InspectableRun[] | null = null;
 
   @state()
-  mode = MODE.BUILD;
-
-  @state()
   embed = false;
 
   @state()
   showNav = false;
 
   @state()
-  showOverlay = false;
+  showPreviewOverlay = false;
+
+  @state()
+  showHistory = false;
+
+  @state()
+  boardEditOverlayInfo: {
+    title?: string;
+    version?: string;
+    description?: string;
+    subGraphId?: string | null;
+  } | null = null;
+
+  @state()
+  showSettingsOverlay = false;
 
   @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
@@ -113,17 +86,22 @@ export class Main extends LitElement {
   @state()
   providerOps = 0;
 
+  #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
-  #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #lastBoardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
+  #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
+  #settings: SettingsStore | null;
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #confirmUnloadWithUserFirstIfNeededBound =
+    this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
+  #failedGraphLoad = false;
 
   static styles = css`
     * {
@@ -137,7 +115,7 @@ export class Main extends LitElement {
     }
 
     bb-toast {
-      z-index: 100;
+      z-index: 2000;
     }
 
     :host > header {
@@ -169,11 +147,12 @@ export class Main extends LitElement {
       width: 20px;
       height: 20px;
       background: var(--bb-icon-edit) center center no-repeat;
-      background-size: 20px 20px;
-      border: none;
-      margin-left: calc(var(--bb-grid-size) * 3);
+      background-size: 16px 16px;
+      border: 2px solid transparent;
+      margin-left: calc(var(--bb-grid-size) * 2);
       opacity: 0.6;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      border-radius: 50%;
     }
 
     #edit-board-info:not([disabled]) {
@@ -183,27 +162,19 @@ export class Main extends LitElement {
     #edit-board-info:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
+      background-color: var(--bb-neutral-300);
+      border: 2px solid var(--bb-neutral-300);
     }
 
     #new-board {
       font-size: var(--bb-text-nano);
     }
 
-    #header-bar {
-      background: var(--bb-output-600);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-50);
-      border-bottom: 1px solid var(--bb-neutral-300);
-      z-index: 1;
-      height: calc(var(--bb-grid-size) * 12);
-      padding: calc(var(--bb-grid-size) * 2);
-    }
-
     #save-board,
     #get-log,
     #get-board,
-    #toggle-preview {
+    #toggle-preview,
+    #toggle-settings {
       color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
@@ -211,7 +182,7 @@ export class Main extends LitElement {
       cursor: pointer;
       background: 12px center var(--bb-icon-download);
       background-repeat: no-repeat;
-      height: 100%;
+      height: calc(100% - var(--bb-grid-size) * 4);
       display: flex;
       align-items: center;
       text-decoration: none;
@@ -222,7 +193,8 @@ export class Main extends LitElement {
     #save-board:hover,
     #get-log:hover,
     #get-board:hover,
-    #toggle-preview:hover {
+    #toggle-preview:hover,
+    #toggle-settings:hover {
       background-color: rgba(0, 0, 0, 0.1);
     }
 
@@ -232,13 +204,25 @@ export class Main extends LitElement {
     }
 
     #toggle-preview {
-      margin-right: 0;
       background: 12px center var(--bb-icon-preview);
       background-repeat: no-repeat;
     }
 
     #toggle-preview.active {
-      background-color: var(--bb-output-800);
+      background-color: var(--bb-ui-800);
+    }
+
+    #toggle-settings {
+      padding: 8px;
+      font-size: 0;
+      margin-right: 0;
+      background: 4px center var(--bb-icon-settings);
+      background-repeat: no-repeat;
+      width: 32px;
+    }
+
+    #toggle-settings.active {
+      background-color: var(--bb-ui-800);
     }
 
     #new-board {
@@ -250,36 +234,86 @@ export class Main extends LitElement {
       color: rgb(90, 64, 119);
     }
 
+    #save-board[disabled],
+    #get-log[disabled],
+    #get-board[disabled],
+    #toggle-preview[disabled],
+    #save-board[disabled]:hover,
+    #get-log[disabled]:hover,
+    #get-board[disabled]:hover,
+    #toggle-preview[disabled]:hover {
+      opacity: 0.5;
+      background-color: rgba(0, 0, 0, 0);
+      pointer-events: none;
+      cursor: auto;
+    }
+
     bb-board-list {
       grid-column: 1 / 3;
     }
 
-    #header-bar a#back {
-      font-size: 0;
-      display: block;
-      width: 16px;
-      height: 16px;
-      background: var(--bb-icon-arrow-back) center center no-repeat;
-      margin: 0 calc(var(--bb-grid-size) * 3);
+    #header-bar {
+      background: var(--bb-ui-600);
+      display: flex;
+      align-items: center;
+      color: var(--bb-neutral-50);
+      z-index: 1;
+      height: calc(var(--bb-grid-size) * 12);
+      padding: 0 calc(var(--bb-grid-size) * 2);
     }
 
-    #header-bar h1 {
-      font-size: var(--bb-text-default);
-      font-weight: normal;
+    #header-bar #tab-container {
       flex: 1;
+      display: flex;
+      align-items: flex-end;
+      margin: 0;
+      height: 100%;
+    }
+
+    #tab-container h1 {
+      font-size: var(--bb-label-medium);
+      font-weight: normal;
+      background: var(--bb-neutral-0);
+      color: var(--bb-neutral-800);
+      margin: 0;
+      height: calc(100% - var(--bb-grid-size) * 2);
+      border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
+        0 0;
+      padding: 0 calc(var(--bb-grid-size) * 4);
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+
+    #tab-container #back-to-main-board {
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--bb-neutral-800);
+    }
+
+    #tab-container #back-to-main-board:disabled {
+      cursor: auto;
+      color: var(--bb-neutral-800);
+    }
+
+    #tab-container .subgraph-name {
       display: flex;
       align-items: center;
     }
 
-    #title {
-      font: var(--bb-text-baseline) var(--bb-font-family-header);
-      color: rgb(90, 64, 119);
-      margin: 0;
-      display: inline;
+    #tab-container .subgraph-name::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-next) center center no-repeat;
+      background-size: 12px 12px;
     }
 
     #content {
-      height: calc(100vh - var(--bb-grid-size) * 12);
+      max-height: calc(100svh - var(--bb-grid-size) * 12);
       display: flex;
       flex-direction: column;
     }
@@ -303,6 +337,12 @@ export class Main extends LitElement {
       width: 100%;
       height: 100%;
       display: block;
+    }
+
+    bb-overlay iframe {
+      width: 80vw;
+      height: 80vh;
+      border-radius: 8px;
     }
 
     #embed {
@@ -329,58 +369,52 @@ export class Main extends LitElement {
     super();
 
     this.#providers = config.providers || [];
+    this.#settings = config.settings || null;
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
-    const modeFromUrl = currentUrl.searchParams.get("mode");
     const embedFromUrl = currentUrl.searchParams.get("embed");
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
-    if (modeFromUrl) {
-      switch (modeFromUrl) {
-        case "preview":
-          this.mode = MODE.PREVIEW;
-          break;
-
-        default:
-          this.mode = MODE.BUILD;
-          break;
-      }
-    }
-
     Promise.all([
-      loadKits([GeminiKit]),
+      loadKits([
+        GeminiKit,
+        // TODO(aomarks) This is presumably not the right way to do this. How do
+        // I get something into this.#providers?
+        BuildExampleKit,
+      ]),
       ...this.#providers.map((provider) => provider.restore()),
-    ]).then(([kits]) => {
-      this.kits = kits;
+      this.#settings?.restore(),
+    ])
+      .then(([kits]) => {
+        this.kits = kits;
 
-      this.#providers.map((provider) => {
-        if (provider.extendedCapabilities().watch) {
-          provider.watch((change) => {
-            console.log("🌻 change event", change);
-            window.location.reload();
-          });
+        return this.#setRemoteServersFromSettings();
+      })
+      .then(() => {
+        this.#providers.map((provider) => {
+          if (provider.extendedCapabilities().watch) {
+            provider.watch((change) => {
+              const currentUrl = new URL(window.location.href);
+              const boardFromUrl = currentUrl.searchParams.get("board");
+              if (boardFromUrl?.endsWith(change.filename)) {
+                this.#onStartBoard(
+                  new BreadboardUI.Events.StartEvent(change.filename)
+                );
+              }
+            });
+          }
+        });
+
+        if (boardFromUrl) {
+          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+          return;
         }
+
+        this.#startFromProviderDefault();
       });
-
-      if (boardFromUrl) {
-        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-        return;
-      }
-
-      let startingURL;
-      for (const provider of this.#providers) {
-        startingURL = provider.startingURL();
-        if (startingURL) {
-          this.#onStartBoard(
-            new BreadboardUI.Events.StartEvent(startingURL.href)
-          );
-          break;
-        }
-      }
-    });
   }
 
   connectedCallback(): void {
@@ -394,6 +428,100 @@ export class Main extends LitElement {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  async #setRemoteServersFromSettings() {
+    const remoteServers = this.#settings?.getSection(
+      BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS
+    );
+
+    if (remoteServers && remoteServers.items) {
+      for (const server of remoteServers.items.values()) {
+        if (typeof server.value !== "string") {
+          continue;
+        }
+
+        let providerExists = false;
+
+        existingProviders: for (const provider of this.#providers) {
+          if (!(provider instanceof RemoteGraphProvider)) {
+            continue;
+          }
+
+          if (provider.origin === server.value) {
+            providerExists = true;
+            break existingProviders;
+          }
+        }
+
+        if (providerExists) {
+          continue;
+        }
+
+        const remoteGraphProvider = new RemoteGraphProvider(server.value);
+        await remoteGraphProvider.restore();
+        this.#providers.unshift(remoteGraphProvider);
+      }
+
+      // Now clean any providers that should not be there.
+      for (let p = this.#providers.length; p >= 0; p--) {
+        const provider = this.#providers[p];
+        if (!(provider instanceof RemoteGraphProvider)) {
+          continue;
+        }
+
+        let retain = false;
+        for (const server of remoteServers.items.values()) {
+          if (typeof server.value !== "string") {
+            continue;
+          }
+
+          if (provider.origin === server.value) {
+            retain = true;
+            break;
+          }
+        }
+
+        if (retain) {
+          continue;
+        }
+
+        console.log("Removing ", provider.origin);
+        this.#providers.splice(p, 1);
+      }
+    }
+  }
+
+  #setBoardPendingSaveState(boardPendingSave: boolean) {
+    if (boardPendingSave === this.#boardPendingSave) {
+      return;
+    }
+
+    this.#boardPendingSave = boardPendingSave;
+    if (this.#boardPendingSave) {
+      window.addEventListener(
+        "beforeunload",
+        this.#confirmUnloadWithUserFirstIfNeededBound
+      );
+    } else {
+      window.removeEventListener(
+        "beforeunload",
+        this.#confirmUnloadWithUserFirstIfNeededBound
+      );
+    }
+  }
+
+  #startFromProviderDefault() {
+    let startingURL;
+    for (const provider of this.#providers) {
+      startingURL = provider.startingURL();
+      if (startingURL) {
+        this.#onStartBoard(
+          new BreadboardUI.Events.StartEvent(startingURL.href)
+        );
+        break;
+      }
+    }
   }
 
   #checkForPossibleEmbed() {
@@ -416,18 +544,68 @@ export class Main extends LitElement {
     if (evt.key === "s" && evt.metaKey) {
       evt.preventDefault();
       this.#attemptBoardSave();
+      return;
+    }
+
+    if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+      const isFocusedOnRenderer = evt
+        .composedPath()
+        .find(
+          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
+        );
+      if (!isFocusedOnRenderer) {
+        return;
+      }
+
+      this.showHistory = !this.showHistory;
+    }
+
+    if (evt.key === "z" && evt.metaKey) {
+      const isFocusedOnRenderer = evt
+        .composedPath()
+        .find(
+          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
+        );
+
+      if (!isFocusedOnRenderer) {
+        return;
+      }
+
+      const editor = this.#getEditor();
+      if (!editor) {
+        return;
+      }
+
+      const history = editor.history();
+
+      // TODO: Make this not a console-only thing.
+      const printHistory = (label: string) => {
+        const labels = history.entries().map((entry) => entry.label);
+        console.group(`History: ${label}`);
+        labels.forEach((label, index) => {
+          const current = index === history.index() ? ">" : " ";
+          console.log(`${index}:${current} ${label}`);
+        });
+        console.groupEnd();
+      };
+
+      if (evt.shiftKey) {
+        history.redo();
+        printHistory("Redo");
+        return;
+      }
+
+      history.undo();
+      printHistory("Undo");
+      return;
     }
   }
 
   async #attemptBoardSave() {
-    if (
-      !this.loadInfo ||
-      !this.loadInfo.graphDescriptor ||
-      !this.loadInfo.url
-    ) {
+    if (!this.graph || !this.graph.url) {
       return;
     }
-    const boardUrl = new URL(this.loadInfo.url);
+    const boardUrl = new URL(this.graph.url);
     const provider = this.#getProviderForURL(boardUrl);
     if (!provider) {
       this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
@@ -438,15 +616,12 @@ export class Main extends LitElement {
     if (!capabilities || !capabilities.save) {
       return;
     }
-    const { result } = await provider.save(
-      boardUrl,
-      this.loadInfo.graphDescriptor
-    );
+    const { result } = await provider.save(boardUrl, this.graph);
     if (!result) {
       return;
     }
 
-    this.#boardPendingSave = false;
+    this.#setBoardPendingSaveState(false);
     this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
   }
 
@@ -463,20 +638,22 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setUrlParam("board", startEvent.url);
     this.url = startEvent.url;
-    this.descriptor = startEvent.descriptor;
+    this.subGraphId = null;
+
+    if (startEvent.descriptor) {
+      this.graph = startEvent.descriptor;
+      // TODO: Figure out how to avoid needing to null this out.
+      this.#editor = null;
+    }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
-    this.#boardPendingSave = false;
+    this.#setBoardPendingSaveState(false);
 
     this.#checkForPossibleEmbed();
   }
 
-  protected async updated(changedProperties: Map<PropertyKey, unknown>) {
-    if (changedProperties.has("mode")) {
-      this.#setUrlParam("mode", this.mode);
-    }
-
-    if (!this.url && !this.descriptor) {
+  protected async updated() {
+    if (!this.url && !this.graph) {
       return;
     }
 
@@ -485,32 +662,73 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#failedGraphLoad = false;
     this.#lastBoardId = this.#boardId;
     if (this.url) {
       try {
-        this.loadInfo = await getBoardInfo(this.#loader, this.url);
+        const base = new URL(window.location.href);
+        const graph = await this.#loader.load(this.url, { base });
+        if (!graph) {
+          throw new Error(`Unable to load graph: ${this.url}`);
+        }
+        this.graph = graph;
+        this.#setPageTitle();
+        // TODO: Figure out how to avoid needing to null this out.
+        this.#editor = null;
       } catch (err) {
         this.url = null;
-        this.descriptor = null;
+        this.graph = null;
+        // TODO: Figure out how to avoid needing to null this out.
+
+        this.#editor = null;
+        this.#failedGraphLoad = true;
       }
-    } else if (this.descriptor) {
-      this.loadInfo = await getBoardFromDescriptor(
-        this.descriptor.url || window.location.href,
-        this.descriptor
-      );
+    } else if (this.graph) {
+      if (!this.graph.url) {
+        this.graph.url = window.location.href;
+      }
     } else {
       return;
     }
   }
 
+  #setPageTitle() {
+    const suffix = "Breadboard - Visual Editor";
+    if (this.graph && this.graph.title) {
+      window.document.title = `${this.graph.title} - ${suffix}`;
+      return;
+    }
+
+    window.document.title = suffix;
+  }
+
+  #getEditor() {
+    if (!this.graph) return null;
+    if (this.#editor) return this.#editor;
+
+    this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
+    this.#editor.addEventListener("graphchange", (evt) => {
+      this.graph = evt.graph;
+      this.#setBoardPendingSaveState(!evt.visualOnly);
+    });
+    this.#editor.addEventListener("graphchangereject", (evt) => {
+      this.graph = evt.graph;
+      const { reason } = evt;
+      if (reason.type === "error") {
+        this.toast(reason.error, BreadboardUI.Events.ToastType.ERROR);
+      }
+    });
+    return this.#editor;
+  }
+
   // TODO: Allow this to run boards directly.
   async #runBoard(runner: ReturnType<typeof run>) {
-    if (!(this.#uiRef.value && this.loadInfo)) {
+    if (!(this.#uiRef.value && this.graph)) {
       return;
     }
 
     const ui = this.#uiRef.value;
-    ui.load(this.loadInfo);
+    ui.graph = this.graph;
     ui.clearPosition();
 
     const currentBoardId = this.#boardId;
@@ -555,11 +773,7 @@ export class Main extends LitElement {
   }
 
   #getBoardJson(evt: Event) {
-    if (
-      !(evt.target instanceof HTMLAnchorElement) ||
-      !this.loadInfo ||
-      !this.loadInfo.graphDescriptor
-    ) {
+    if (!(evt.target instanceof HTMLAnchorElement) || !this.graph) {
       return;
     }
 
@@ -568,7 +782,7 @@ export class Main extends LitElement {
     }
 
     // Remove the URL from the descriptor as its not part of BGL's schema.
-    const board = structuredClone(this.loadInfo.graphDescriptor);
+    const board = structuredClone(this.graph);
     delete board["url"];
 
     const data = JSON.stringify(board, null, 2);
@@ -578,27 +792,45 @@ export class Main extends LitElement {
     );
   }
 
-  #updateLoadInfo(graphDescriptor: GraphDescriptor, boardPendingSave = true) {
-    this.#boardPendingSave = boardPendingSave;
-    this.loadInfo = {
-      ...this.loadInfo,
-      graphDescriptor,
-    };
-  }
-
   #getProviderByName(name: string) {
-    return (
-      this.#providers.find((provider) => provider.constructor.name === name) ||
-      null
-    );
+    return this.#providers.find((provider) => provider.name === name) || null;
   }
 
   #getProviderForURL(url: URL) {
     return this.#providers.find((provider) => provider.canProvide(url));
   }
 
+  #confirmUnloadWithUserFirstIfNeeded(evt: Event) {
+    if (!this.#boardPendingSave) {
+      return;
+    }
+
+    evt.returnValue = true;
+    return true;
+  }
+
   async #confirmSaveWithUserFirstIfNeeded() {
     if (!this.#boardPendingSave) {
+      return;
+    }
+
+    if (!this.graph || !this.graph.url) {
+      return;
+    }
+
+    try {
+      const url = new URL(this.graph.url, window.location.href);
+      const provider = this.#getProviderForURL(url);
+      if (!provider) {
+        return;
+      }
+
+      const capabilities = provider.canProvide(url);
+      if (!capabilities || !capabilities.save) {
+        return;
+      }
+    } catch (err) {
+      // Likely an error with the URL.
       return;
     }
 
@@ -609,6 +841,60 @@ export class Main extends LitElement {
     }
 
     return this.#attemptBoardSave();
+  }
+
+  #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
+    if (evt.subGraphId) {
+      const editableGraph = this.#getEditor();
+      if (!editableGraph) {
+        console.warn("Unable to update board information; no active graph");
+        return;
+      }
+
+      const subGraph = editableGraph.getGraph(evt.subGraphId);
+      if (!subGraph) {
+        console.warn("Unable to update board information; no active graph");
+        return;
+      }
+
+      const subGraphDescriptor = subGraph.raw();
+      subGraphDescriptor.title = evt.title;
+      subGraphDescriptor.version = evt.version;
+      subGraphDescriptor.description = evt.description;
+
+      editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
+    } else if (this.graph) {
+      this.graph.title = evt.title;
+      this.graph.version = evt.version;
+      this.graph.description = evt.description;
+    } else {
+      this.toast(
+        "Unable to update sub board information - board not found",
+        BreadboardUI.Events.ToastType.INFORMATION
+      );
+      return;
+    }
+  }
+
+  async #changeBoard(url: string) {
+    await this.#confirmSaveWithUserFirstIfNeeded();
+
+    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+      if (
+        !confirm("A board is currently running. Do you want to load this file?")
+      ) {
+        return;
+      }
+    }
+
+    try {
+      this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+    } catch (err) {
+      this.toast(
+        `Unable to load file: ${url}`,
+        BreadboardUI.Events.ToastType.ERROR
+      );
+    }
   }
 
   render() {
@@ -622,340 +908,13 @@ export class Main extends LitElement {
     })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
-    let content: HTMLTemplateResult | symbol = nothing;
-    const currentRun = this.#runObserver?.runs()[0];
-    switch (this.mode) {
-      case MODE.BUILD: {
-        content = html` <bb-ui-controller
-          ${ref(this.#uiRef)}
-          .url=${this.url}
-          .loadInfo=${this.loadInfo}
-          .run=${currentRun}
-          .kits=${this.kits}
-          .loader=${this.#loader}
-          .status=${this.status}
-          .boardId=${this.#boardId}
-          @breadboardfiledrop=${async (
-            evt: BreadboardUI.Events.FileDropEvent
-          ) => {
-            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
-              this.toast(
-                "Unable to update; board is already running",
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
-
-            this.#onStartBoard(
-              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
-            );
-          }}
-          @breadboardrunboard=${async () => {
-            if (
-              !this.loadInfo?.graphDescriptor ||
-              !this.loadInfo.graphDescriptor.url
-            ) {
-              console.log(
-                "No graph descriptor url or something",
-                this.loadInfo
-              );
-              return;
-            }
-
-            const runner = await BoardRunner.fromGraphDescriptor(
-              this.loadInfo.graphDescriptor
-            );
-
-            this.#runBoard(
-              run({
-                url: this.loadInfo.graphDescriptor.url,
-                runner,
-                diagnostics: true,
-                kits: this.kits,
-                loader: this.#loader,
-              })
-            );
-          }}
-          @breadboardedgechange=${(
-            evt: BreadboardUI.Events.EdgeChangeEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-              loader: this.#loader,
-            });
-
-            let editResult: Promise<EditResult>;
-            switch (evt.changeType) {
-              case "add": {
-                editResult = editableGraph.addEdge(evt.from);
-                break;
-              }
-
-              case "remove": {
-                editResult = editableGraph.removeEdge(evt.from);
-                break;
-              }
-
-              case "move": {
-                if (!evt.to) {
-                  throw new Error("Unable to move edge - no `to` provided");
-                }
-
-                editResult = editableGraph.changeEdge(evt.from, evt.to);
-                break;
-              }
-            }
-
-            editResult.then((result) => {
-              if (!result.success) {
-                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn(
-                "Unable to update node metadata; no graph descriptor"
-              );
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-
-            const { id, x, y } = evt;
-            const existingNode = loadInfo.graphDescriptor.nodes.find(
-              (node) => node.id === id
-            );
-            const metadata = existingNode?.metadata || {};
-            let visual = metadata?.visual || {};
-            if (typeof visual !== "object") {
-              visual = {};
-            }
-
-            editableGraph
-              .changeMetadata(id, {
-                ...metadata,
-                visual: { ...visual, x, y },
-              })
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-                }
-
-                this.#updateLoadInfo(editableGraph.raw());
-              });
-          }}
-          @breadboardnodemultilayout=${(
-            evt: BreadboardUI.Events.NodeMultiLayoutEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn(
-                "Unable to update node metadata; no graph descriptor"
-              );
-              return;
-            }
-
-            const graphDescriptor = loadInfo.graphDescriptor;
-            const editableGraph = edit(graphDescriptor, {
-              kits: this.kits,
-            });
-
-            Promise.all(
-              [...evt.layout.entries()].map(([id, { x, y }]) => {
-                const existingNode = graphDescriptor.nodes.find(
-                  (node) => node.id === id
-                );
-
-                const metadata = existingNode?.metadata || {};
-                let visual = metadata?.visual || {};
-                if (typeof visual !== "object") {
-                  visual = {};
-                }
-
-                return editableGraph.changeMetadata(id, {
-                  ...metadata,
-                  visual: { ...visual, x, y },
-                });
-              })
-            ).then(() => {
-              this.#updateLoadInfo(editableGraph.raw(), false);
-            });
-          }}
-          @breadboardnodecreate=${(
-            evt: BreadboardUI.Events.NodeCreateEvent
-          ) => {
-            const { id, nodeType } = evt;
-            const newNode = {
-              id,
-              type: nodeType,
-            };
-
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-            editableGraph.addNode(newNode).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to create node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardnodeupdate=${(
-            evt: BreadboardUI.Events.NodeUpdateEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-
-            editableGraph
-              .changeConfiguration(evt.id, evt.configuration)
-              .then((result) => {
-                if (!result.success) {
-                  this.toast(
-                    "Unable to update configuration",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                }
-
-                this.#updateLoadInfo(editableGraph.raw());
-              });
-          }}
-          @breadboardnodedelete=${(
-            evt: BreadboardUI.Events.NodeDeleteEvent
-          ) => {
-            if (!this.loadInfo) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const loadInfo = this.loadInfo;
-            if (!loadInfo.graphDescriptor) {
-              console.warn("Unable to create node; no graph descriptor");
-              return;
-            }
-
-            const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.kits,
-            });
-            editableGraph.removeNode(evt.id).then((result) => {
-              if (!result.success) {
-                this.toast(
-                  `Unable to remove node: ${result.error}`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              this.#updateLoadInfo(editableGraph.raw());
-            });
-          }}
-          @breadboardmessagetraversal=${() => {
-            if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
-              return;
-            }
-
-            this.status = BreadboardUI.Types.STATUS.PAUSED;
-            this.toast(
-              "Board paused",
-              "information" as BreadboardUI.Events.ToastType
-            );
-          }}
-          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            if (!this.#uiRef.value) {
-              return;
-            }
-
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
-            this.#delay = delayEvent.duration;
-          }}
-        ></bb-ui-controller>`;
-        break;
-      }
-
-      case MODE.PREVIEW: {
-        // TODO: Do this with Service Workers.
-        content = html`<button
-            id="reload"
-            @click=${() => {
-              if (!this.#previewRef.value) {
-                return;
-              }
-
-              this.#previewRef.value.src = `/preview.html?board=${this.url}`;
-            }}
-          >
-            Reload
-          </button>
-          <iframe
-            ${ref(this.#previewRef)}
-            src="/preview.html?board=${this.url}"
-          ></iframe>`;
-        break;
-      }
-
-      default: {
-        return html`Unknown mode`;
-      }
-    }
-
+    const runs = this.#runObserver?.runs();
+    const currentRun = runs?.[0];
+    const inputsFromLastRun = runs?.[1]?.inputs() || null;
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.loadInfo && this.loadInfo.url) {
+    if (this.graph && this.graph.url) {
       try {
-        const url = new URL(this.loadInfo.url);
+        const url = new URL(this.graph.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {
@@ -972,7 +931,22 @@ export class Main extends LitElement {
       }
     }
 
-    tmpl = html`<div id="header-bar" ?inert=${this.showOverlay}>
+    const title = this.graph?.title;
+    let subGraphTitle: string | undefined | null = null;
+    if (this.graph && this.graph.graphs && this.subGraphId) {
+      subGraphTitle =
+        this.graph.graphs[this.subGraphId].title || "Untitled Subgraph";
+    }
+
+    const editor = this.#getEditor();
+    const history = editor?.history();
+
+    const settings = this.#settings ? this.#settings.values : null;
+    const showingOverlay =
+      this.boardEditOverlayInfo !== null ||
+      this.showPreviewOverlay ||
+      this.showSettingsOverlay;
+    tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -986,49 +960,458 @@ export class Main extends LitElement {
             );
           }}
         ></button>
-        <h1>
-          ${this.loadInfo?.title}
-          <button
-            @click=${() => {
-              this.showOverlay = true;
-            }}
-            ?disabled=${!this.loadInfo}
-            id="edit-board-info"
-            title="Edit Board Information"
-          >
-            Edit
-          </button>
-        </h1>
+        <div id="tab-container">
+          <h1>
+            <span
+              ><button
+                id="back-to-main-board"
+                @click=${() => {
+                  this.subGraphId = null;
+                }}
+                ?disabled=${this.subGraphId === null}
+              >
+                ${title}
+              </button></span
+            >${subGraphTitle
+              ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+              : nothing}
+            <button
+              @click=${() => {
+                let graph = this.graph;
+                if (graph && graph.graphs && this.subGraphId) {
+                  graph = graph.graphs[this.subGraphId];
+                }
+
+                this.boardEditOverlayInfo = {
+                  title: graph?.title,
+                  version: graph?.version,
+                  description: graph?.description,
+                  subGraphId: this.subGraphId,
+                };
+              }}
+              ?disabled=${this.graph === null}
+              id="edit-board-info"
+              title="Edit Board Information"
+            >
+              Edit
+            </button>
+          </h1>
+        </div>
         ${saveButton}
-        <a id="get-board" title="Export Board BGL" @click=${this.#getBoardJson}
+        <a
+          id="get-board"
+          title="Export Board BGL"
+          ?disabled=${this.graph === null}
+          @click=${this.#getBoardJson}
           >Export</a
         >
         <button
-          class=${classMap({ active: this.mode === MODE.PREVIEW })}
+          class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
           title="Toggle Board Preview"
-          @click=${async () => {
-            await this.#confirmSaveWithUserFirstIfNeeded();
-
-            this.mode = this.mode === MODE.BUILD ? MODE.PREVIEW : MODE.BUILD;
+          ?disabled=${this.graph === null}
+          @click=${() => {
+            this.showPreviewOverlay = !this.showPreviewOverlay;
           }}
         >
           Preview
         </button>
+        <button
+          class=${classMap({ active: this.showSettingsOverlay })}
+          id="toggle-settings"
+          title="Toggle Settings"
+          @click=${() => {
+            this.showSettingsOverlay = !this.showSettingsOverlay;
+          }}
+        >
+          Settings
+        </button>
       </div>
-      <div id="content" ?inert=${this.showOverlay} class="${this.mode}">
-        ${cache(content)}
+      <div id="content" ?inert=${showingOverlay}>
+        <bb-ui-controller
+          ${ref(this.#uiRef)}
+          .graph=${this.graph}
+          .subGraphId=${this.subGraphId}
+          .run=${currentRun}
+          .inputsFromLastRun=${inputsFromLastRun}
+          .kits=${this.kits}
+          .loader=${this.#loader}
+          .status=${this.status}
+          .boardId=${this.#boardId}
+          .failedToLoad=${this.#failedGraphLoad}
+          .settings=${settings}
+          .providers=${this.#providers}
+          .providerOps=${this.providerOps}
+          .history=${history}
+          @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
+            this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
+            return;
+          }}
+          @bbboardinfoupdate=${(
+            evt: BreadboardUI.Events.BoardInfoUpdateEvent
+          ) => {
+            this.#handleBoardInfoUpdate(evt);
+            this.requestUpdate();
+          }}
+          @bbboardinforequestupdate=${(
+            evt: BreadboardUI.Events.BoardInfoUpdateRequestEvent
+          ) => {
+            this.boardEditOverlayInfo = {
+              title: evt.title,
+              version: evt.version,
+              description: evt.description,
+              subGraphId: evt.subGraphId,
+            };
+          }}
+          @bbsubgraphcreate=${async (
+            evt: BreadboardUI.Events.SubGraphCreateEvent
+          ) => {
+            const editableGraph = this.#getEditor();
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const id = globalThis.crypto.randomUUID();
+            const board = blank();
+            board.title = evt.subGraphTitle;
+
+            const editResult = editableGraph.addGraph(id, board);
+            if (!editResult) {
+              this.toast(
+                "Unable to create sub board",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            this.subGraphId = id;
+            this.requestUpdate();
+          }}
+          @bbsubgraphdelete=${async (
+            evt: BreadboardUI.Events.SubGraphDeleteEvent
+          ) => {
+            const editableGraph = this.#getEditor();
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const editResult = editableGraph.removeGraph(evt.subGraphId);
+            if (!editResult.success) {
+              this.toast(
+                "Unable to create sub board",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            if (evt.subGraphId === this.subGraphId) {
+              this.subGraphId = null;
+            }
+            this.requestUpdate();
+          }}
+          @bbsubgraphchosen=${(
+            evt: BreadboardUI.Events.SubGraphChosenEvent
+          ) => {
+            this.subGraphId =
+              evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
+                ? evt.subGraphId
+                : null;
+            this.requestUpdate();
+          }}
+          @bbfiledrop=${async (evt: BreadboardUI.Events.FileDropEvent) => {
+            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
+              this.toast(
+                "Unable to update; board is already running",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+              return;
+            }
+
+            this.#onStartBoard(
+              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
+            );
+          }}
+          @bbrunboard=${async () => {
+            if (!this.graph?.url) {
+              return;
+            }
+
+            const runner = await BoardRunner.fromGraphDescriptor(this.graph);
+
+            this.#abortController = new AbortController();
+
+            this.#runBoard(
+              run(
+                addNodeProxyServerConfig(
+                  {
+                    url: this.graph.url,
+                    runner,
+                    diagnostics: true,
+                    kits: this.kits,
+                    loader: this.#loader,
+                    signal: this.#abortController?.signal,
+                    inputs: inputsFromSettings(this.#settings),
+                    interactiveSecrets: true,
+                  },
+                  this.#settings
+                )
+              )
+            );
+          }}
+          @bbstopboard=${() => {
+            if (!this.#abortController) {
+              return;
+            }
+
+            this.#abortController.abort("Stopped board");
+            this.requestUpdate();
+          }}
+          @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            switch (evt.changeType) {
+              case "add": {
+                editableGraph.edit(
+                  [{ type: "addedge", edge: evt.from, strict: false }],
+                  `Add edge between ${evt.from.from} and ${evt.from.to}`
+                );
+                break;
+              }
+
+              case "remove": {
+                editableGraph.edit(
+                  [{ type: "removeedge", edge: evt.from }],
+                  `Remove edge between ${evt.from.from} and ${evt.from.to}`
+                );
+                break;
+              }
+
+              case "move": {
+                if (!evt.to) {
+                  throw new Error("Unable to move edge - no `to` provided");
+                }
+
+                editableGraph.edit(
+                  [
+                    {
+                      type: "changeedge",
+                      from: evt.from,
+                      to: evt.to,
+                      strict: false,
+                    },
+                  ],
+                  `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
+                );
+                break;
+              }
+            }
+          }}
+          @bbnodemetadataupdate=${(
+            evt: BreadboardUI.Events.NodeMetadataUpdateEvent
+          ) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const inspectableGraph = editableGraph.inspect();
+            const { id, metadata } = evt;
+            const existingNode = inspectableGraph.nodeById(id);
+            const existingMetadata = existingNode?.metadata() || {};
+            const newMetadata = {
+              ...existingMetadata,
+              ...metadata,
+            };
+
+            editableGraph.edit(
+              [{ type: "changemetadata", id, metadata: newMetadata }],
+              `Change metadata for "${id}"`
+            );
+          }}
+          @bbnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to update node metadata; no active graph");
+              return;
+            }
+
+            const inspectableGraph = editableGraph.inspect();
+
+            const { id, x, y } = evt;
+            const existingNode = inspectableGraph.nodeById(id);
+            const metadata = existingNode?.metadata() || {};
+            let visual = metadata.visual || {};
+            if (typeof visual !== "object") {
+              visual = {};
+            }
+
+            editableGraph.edit(
+              [
+                {
+                  type: "changemetadata",
+                  id,
+                  metadata: { ...metadata, visual: { ...visual, x, y } },
+                },
+              ],
+              `Move node "${id}" to (${x}, ${y})`
+            );
+          }}
+          @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
+            const { edits, description, subGraphId } = evt;
+            let editableGraph = this.#getEditor();
+            if (editableGraph && subGraphId) {
+              editableGraph = editableGraph.getGraph(subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to multi-edit; no active graph");
+              return;
+            }
+
+            editableGraph.edit(edits, description);
+          }}
+          @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
+            const { id, nodeType, metadata, configuration } = evt;
+            const newNode = {
+              id,
+              type: nodeType,
+              metadata: metadata || undefined,
+              configuration: configuration || undefined,
+            };
+
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            editableGraph.edit(
+              [{ type: "addnode", node: newNode }],
+              `Add node ${id}`
+            );
+          }}
+          @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            editableGraph.edit(
+              [
+                {
+                  type: "changeconfiguration",
+                  id: evt.id,
+                  configuration: evt.configuration,
+                },
+              ],
+              `Change configuration for "${evt.id}"`
+            );
+          }}
+          @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
+            let editableGraph = this.#getEditor();
+            if (editableGraph && evt.subGraphId) {
+              editableGraph = editableGraph.getGraph(evt.subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            editableGraph.edit(
+              [{ type: "removenode", id: evt.id }],
+              `Remove node ${evt.id}`
+            );
+          }}
+          @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            if (!this.#uiRef.value) {
+              return;
+            }
+
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
+          @bbdelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
+            this.#delay = delayEvent.duration;
+          }}
+          @bbinputenter=${async (
+            event: BreadboardUI.Events.InputEnterEvent
+          ) => {
+            if (!this.#settings) {
+              return;
+            }
+
+            const isSecret = "secret" in event.data;
+            const shouldSaveSecrets =
+              this.#settings
+                .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                .items.get("Save Secrets")?.value || false;
+            if (!shouldSaveSecrets || !isSecret) {
+              return;
+            }
+
+            const name = event.id;
+            const value = event.data.secret as string;
+            const secrets = this.#settings.getSection(
+              BreadboardUI.Types.SETTINGS_TYPE.SECRETS
+            ).items;
+            let shouldSave = false;
+            if (secrets.has(event.id)) {
+              const secret = secrets.get(event.id);
+              if (secret && secret.value !== value) {
+                secret.value = value;
+                shouldSave = true;
+              }
+            } else {
+              secrets.set(name, { name, value });
+              shouldSave = true;
+            }
+
+            if (!shouldSave) {
+              return;
+            }
+            await this.#settings.save(this.#settings.values);
+            this.requestUpdate();
+          }}
+        ></bb-ui-controller>
       </div>
       <bb-nav
-        .providers=${this.#providers}
         .visible=${this.showNav}
         .url=${this.url}
+        .providers=${this.#providers}
         .providerOps=${this.providerOps}
-        ?inert=${this.showOverlay}
-        @pointerdown=${(evt: Event) => {
-          evt.stopImmediatePropagation();
-        }}
-        @graphproviderblankboard=${async (
+        ?inert=${showingOverlay}
+        @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
+        @bbgraphproviderblankboard=${async (
           evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
         ) => {
           const provider = this.#getProviderByName(evt.providerName);
@@ -1052,8 +1435,9 @@ export class Main extends LitElement {
 
           // Trigger a re-render.
           this.providerOps++;
+          this.#changeBoard(url.href);
         }}
-        @graphproviderdeleterequest=${async (
+        @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
         ) => {
           if (
@@ -1062,14 +1446,6 @@ export class Main extends LitElement {
             )
           ) {
             return;
-          }
-
-          // TODO: Improve handling of this case.
-          if (evt.isActive) {
-            this.url = null;
-            this.descriptor = null;
-            this.loadInfo = null;
-            this.#setUrlParam("board", null);
           }
 
           const provider = this.#getProviderByName(evt.providerName);
@@ -1089,10 +1465,14 @@ export class Main extends LitElement {
             );
           }
 
+          if (evt.isActive) {
+            this.#startFromProviderDefault();
+          }
+
           // Trigger a re-render.
           this.providerOps++;
         }}
-        @breadboardstart=${(evt: BreadboardUI.Events.StartEvent) => {
+        @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
           if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
             if (
               !confirm(
@@ -1105,7 +1485,7 @@ export class Main extends LitElement {
 
           this.#onStartBoard(evt);
         }}
-        @graphproviderrefresh=${async (
+        @bbgraphproviderrefresh=${async (
           evt: BreadboardUI.Events.GraphProviderRefreshEvent
         ) => {
           const provider = this.#getProviderByName(evt.providerName);
@@ -1129,7 +1509,7 @@ export class Main extends LitElement {
           // Trigger a re-render.
           this.providerOps++;
         }}
-        @graphproviderdisconnect=${async (
+        @bbgraphproviderdisconnect=${async (
           evt: BreadboardUI.Events.GraphProviderDisconnectEvent
         ) => {
           const provider = this.#getProviderByName(evt.providerName);
@@ -1142,7 +1522,7 @@ export class Main extends LitElement {
           // Trigger a re-render.
           this.providerOps++;
         }}
-        @graphproviderrenewaccesssrequest=${async (
+        @bbgraphproviderrenewaccesssrequest=${async (
           evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
         ) => {
           const provider = this.#getProviderByName(evt.providerName);
@@ -1155,31 +1535,12 @@ export class Main extends LitElement {
           // Trigger a re-render.
           this.providerOps++;
         }}
-        @graphproviderloadrequest=${async (
+        @bbgraphproviderloadrequest=${async (
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
-          await this.#confirmSaveWithUserFirstIfNeeded();
-
-          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-            if (
-              !confirm(
-                "A board is currently running. Do you want to load this file?"
-              )
-            ) {
-              return;
-            }
-          }
-
-          try {
-            this.#onStartBoard(new BreadboardUI.Events.StartEvent(evt.url));
-          } catch (err) {
-            this.toast(
-              `Unable to load file: ${evt.url}`,
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
+          this.#changeBoard(evt.url);
         }}
-        @graphproviderconnectrequest=${async (
+        @bbgraphproviderconnectrequest=${async (
           evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
         ) => {
           const provider = this.#getProviderByName(evt.providerName);
@@ -1203,43 +1564,105 @@ export class Main extends LitElement {
       ></iframe>`;
     }
 
-    let overlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showOverlay && this.loadInfo) {
-      overlay = html`<bb-board-edit-overlay
-        .boardTitle=${this.loadInfo.title}
-        .boardVersion=${this.loadInfo.version}
-        .boardDescription=${this.loadInfo.description}
-        @breadboardboardoverlaydismissed=${() => {
-          this.showOverlay = false;
+    let boardOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.boardEditOverlayInfo) {
+      boardOverlay = html`<bb-board-edit-overlay
+        .boardTitle=${this.boardEditOverlayInfo.title}
+        .boardVersion=${this.boardEditOverlayInfo.version}
+        .boardDescription=${this.boardEditOverlayInfo.description}
+        .subGraphId=${this.boardEditOverlayInfo.subGraphId}
+        @bboverlaydismissed=${() => {
+          this.boardEditOverlayInfo = null;
         }}
-        @breadboardboardinfoupdate=${(
+        @bbboardinfoupdate=${(
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
-          if (!this.loadInfo) {
-            return;
-          }
-
-          this.loadInfo.title = evt.title;
-          this.loadInfo.version = evt.version;
-          this.loadInfo.description = evt.description;
-
-          if (this.loadInfo.graphDescriptor) {
-            this.loadInfo.graphDescriptor.title = evt.title;
-            this.loadInfo.graphDescriptor.version = evt.version;
-            this.loadInfo.graphDescriptor.description = evt.description;
-          }
-
+          this.#handleBoardInfoUpdate(evt);
           this.toast(
             "Board information updated",
             BreadboardUI.Events.ToastType.INFORMATION
           );
 
-          this.showOverlay = false;
+          this.boardEditOverlayInfo = null;
           this.requestUpdate();
         }}
       ></bb-board-edit-overlay>`;
     }
 
-    return html`${tmpl} ${overlay} ${toasts} `;
+    let previewOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showPreviewOverlay) {
+      previewOverlay = html`<bb-overlay
+        class="board-preview"
+        @bboverlaydismissed=${() => {
+          this.showPreviewOverlay = false;
+        }}
+        ><iframe src="/preview.html?board=${this.url}"></iframe
+      ></bb-overlay>`;
+    }
+
+    let settingsOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showSettingsOverlay) {
+      settingsOverlay = html`<bb-settings-edit-overlay
+        class="settings"
+        .settings=${this.#settings?.values || null}
+        @bbsettingsupdate=${async (
+          evt: BreadboardUI.Events.SettingsUpdateEvent
+        ) => {
+          if (!this.#settings) {
+            return;
+          }
+
+          try {
+            await this.#settings.save(evt.settings);
+            await this.#setRemoteServersFromSettings();
+            this.toast(
+              "Saved settings",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+          } catch (err) {
+            console.warn(err);
+            this.toast(
+              "Unable to save settings",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+
+          this.requestUpdate();
+        }}
+        @bboverlaydismissed=${() => {
+          this.showSettingsOverlay = false;
+        }}
+      ></bb-settings-edit-overlay>`;
+    }
+
+    let historyOverlay: HTMLTemplateResult | symbol = nothing;
+    if (history && this.showHistory) {
+      historyOverlay = html`<bb-graph-history
+        .entries=${history.entries()}
+        .canRedo=${history.canRedo()}
+        .canUndo=${history.canUndo()}
+        .count=${history.entries().length}
+        .idx=${history.index()}
+        @bbundo=${() => {
+          if (!history.canUndo()) {
+            return;
+          }
+
+          history.undo();
+          this.requestUpdate();
+        }}
+        @bbredo=${() => {
+          if (!history.canRedo()) {
+            return;
+          }
+
+          history.redo();
+          this.requestUpdate();
+        }}
+      ></bb-graph-history>`;
+    }
+
+    return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
+    ${historyOverlay} ${toasts} `;
   }
 }

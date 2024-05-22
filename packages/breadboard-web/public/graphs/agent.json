@@ -23,30 +23,71 @@
     },
     {
       "from": "input-1",
+      "to": "assemble",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
       "to": "generate",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "generator",
+      "in": "$board"
     },
     {
       "from": "input-1",
       "to": "generate",
       "out": "stopSequences",
       "in": "stopSequences"
-    },
-    {
-      "from": "input-1",
-      "to": "generate",
-      "out": "generator",
-      "in": "path"
-    },
-    {
-      "from": "input-1",
-      "to": "assemble",
-      "out": "context",
-      "in": "context"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
+              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              }
+            },
+            "generator": {
+              "type": "string",
+              "behavior": [
+                "board"
+              ],
+              "title": "Generator",
+              "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
+              "default": "gemini-generator.json"
+            },
+            "stopSequences": {
+              "type": "array",
+              "title": "Stop Sequences",
+              "default": "[]"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -55,13 +96,13 @@
           "type": "object",
           "properties": {
             "context": {
+              "type": "object",
               "title": "Context",
-              "description": "Agent context after generation",
-              "type": "object"
+              "description": "Agent context after generation"
             },
             "text": {
-              "title": "Output",
               "type": "string",
+              "title": "Output",
               "description": "Agent's output"
             }
           }
@@ -81,40 +122,6 @@
       "configuration": {
         "text": "unused"
       }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "format": "multiline",
-              "examples": [
-                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
-              ]
-            },
-            "stopSequences": {
-              "title": "Stop Sequences",
-              "type": "array",
-              "default": "[]"
-            },
-            "generator": {
-              "title": "Generator",
-              "description": "The path to the board to invoke.",
-              "type": "string",
-              "default": "gemini-generator.json"
-            }
-          },
-          "required": [
-            "context"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

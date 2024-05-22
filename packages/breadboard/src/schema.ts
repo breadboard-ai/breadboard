@@ -56,9 +56,9 @@ export class SchemaBuilder {
     return this;
   }
 
-  setAdditionalProperties(additionalProperties?: boolean) {
+  setAdditionalProperties(additionalProperties?: Schema | boolean) {
     if (additionalProperties !== undefined) {
-      this.additionalProperties = additionalProperties;
+      this.additionalProperties = !!additionalProperties;
     }
     return this;
   }
@@ -105,7 +105,7 @@ export class SchemaBuilder {
 
 /**
  * Combines multiple schemas into a single schema. This is lossy, since
- * the same-named properties will be overriden (last one wins). However,
+ * the same-named properties will be overridden (last one wins). However,
  * it's good enough to communicate the overall shape of the combined schema.
  * @param schemas - the schemas to combine
  * @returns - the combined schema
@@ -127,11 +127,67 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
         result.additionalProperties = schema.additionalProperties;
       }
     }
+    if (schema.behavior) {
+      result.behavior ??= [];
+      result.behavior.push(...schema.behavior);
+    }
   });
   result.type = "object";
   if (result.required) {
     result.required = [...new Set(result.required)];
     result.required?.sort();
   }
+  return result;
+};
+
+/**
+ * Removes a property from a schema (assumes it to be type = object).
+ *
+ * @param schema -- Schema to remove the property from
+ * @param property -- the property to remove
+ * @returns -- a new Schema instance with removed property.
+ */
+export const removeProperty = (schema: Schema, property: string): Schema => {
+  const entries = Object.entries(schema.properties || {});
+  if (entries.length == 0) {
+    return schema;
+  }
+  const index = entries.findIndex(([name]) => {
+    return name === property;
+  });
+  if (index == -1) {
+    return schema;
+  }
+  entries.splice(index, 1);
+  return {
+    ...schema,
+    properties: Object.fromEntries(entries),
+  };
+};
+
+export const filterBySchema = <T extends Record<string, unknown>>(
+  values: T,
+  schema?: Schema
+): T => {
+  const names = Object.keys(schema?.properties || {});
+  return Object.fromEntries(
+    Object.entries(values).filter(([name]) => names.includes(name))
+  ) as T;
+};
+
+export const filterProperties = (
+  schema: Schema,
+  filterFunction: (property: Schema) => boolean
+): Schema => {
+  const entries = Object.entries(schema.properties || {});
+  if (entries.length == 0) {
+    return schema;
+  }
+  const result = structuredClone(schema);
+  result.properties = Object.fromEntries(
+    entries.filter(([, schema]) => {
+      return filterFunction(schema);
+    })
+  );
   return result;
 };

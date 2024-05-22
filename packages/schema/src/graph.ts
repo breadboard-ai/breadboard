@@ -169,17 +169,17 @@ export type KitDescriptor = KitReference & {
 export type KitManifest = KitDescriptor & {
   /**
    * A map of nodes. Each key in this object is the node that is provided by
-   * the kit. Each value is the URL (string) pointing to the graph or the
-   * `GraphDescriptor` containing the graph. This graph will be run (runOnce)
-   * when the `invoke` of the node's `NodeHandler` is called.
+   * the kit. Each value the `GraphDescriptor` containing the graph. This
+   * graph will be run (runOnce) when the `invoke` of the node's `NodeHandler`
+   * is called.
    */
-  nodes: Record<NodeIdentifier, string | GraphDescriptor>;
+  nodes: Record<NodeIdentifier, GraphDescriptor>;
 };
 
 /**
- * Represents graph metadata.
+ * Represents graph metadata that is stored inline in the GraphDescriptor.
  */
-export type GraphMetadata = {
+export type GraphInlineMetadata = {
   /**
    * The schema of the graph.
    */
@@ -205,6 +205,17 @@ export type GraphMetadata = {
    * [semver](https://semver.org/) format is encouraged.
    */
   version?: string;
+};
+
+/**
+ * Represents graph metadata.
+ */
+export type GraphMetadata = {
+  /**
+   * The icon that identifies the graph. Can be a URL or a Material Design id.
+   */
+  icon?: string;
+  [name: string]: NodeValue;
 };
 
 /**
@@ -271,7 +282,11 @@ type TestProperties = {
 /**
  * Represents a graph.
  */
-export type GraphDescriptor = GraphMetadata & {
+export type GraphDescriptor = GraphInlineMetadata & {
+  /**
+   * Metadata associated with the graph.
+   */
+  metadata?: GraphMetadata;
   /**
    * The collection of all edges in the graph.
    */
@@ -293,7 +308,7 @@ export type GraphDescriptor = GraphMetadata & {
   graphs?: SubGraphs;
 
   /**
-   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   * Arguments that are passed to the graph, useful to bind values to graphs.
    */
   args?: InputValues;
 } & TestProperties;

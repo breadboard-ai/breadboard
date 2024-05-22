@@ -15,6 +15,9 @@ import repeater from "./boards/repeater.js";
 import structuredWorker from "./boards/structured-worker.js";
 import toolWorker from "./boards/tool-worker.js";
 import { writeFile } from "fs/promises";
+import specialist from "./boards/specialist.js";
+import looper from "./boards/looper.js";
+import joiner from "./boards/joiner.js";
 
 const MANIFEST_NAME = "agent.kit.json";
 
@@ -31,8 +34,11 @@ const manifest: KitManifest = {
     human,
     repeater,
     structuredWorker,
+    specialist,
     toolWorker,
     worker,
+    looper,
+    joiner,
   },
 };
 

@@ -6,8 +6,7 @@
 
 import test from "ava";
 
-import {
-  computeInputSchema,
+import promptTemplate, {
   parametersFromTemplate,
   stringify,
   substitute,
@@ -15,6 +14,10 @@ import {
 
 test("parametersFromTemplate returns an empty array when there are no parameters", (t) => {
   t.deepEqual(parametersFromTemplate("foo"), []);
+});
+
+test("parametersFromTemplate returns an empty array when there's no template", (t) => {
+  t.deepEqual(parametersFromTemplate(undefined), []);
 });
 
 test("parametersFromTemplate returns an array of parameters", (t) => {
@@ -93,9 +96,9 @@ test("substitute replaces parameters with stringified values", (t) => {
   );
 });
 
-test("`generateInputSchema` correctly generates schema for a template with no parameters", (t) => {
+test("`generateInputSchema` correctly generates schema for a template with no parameters", async (t) => {
   const inputs = { template: "foo" };
-  const result = computeInputSchema(inputs);
+  const result = (await promptTemplate.describe(inputs)).inputSchema;
   t.deepEqual(result, {
     type: "object",
     properties: {
@@ -103,34 +106,38 @@ test("`generateInputSchema` correctly generates schema for a template with no pa
         title: "template",
         description: "The template with placeholders to fill in.",
         type: "string",
+        format: "multiline",
       },
     },
     required: ["template"],
+    additionalProperties: false,
   });
 });
 
-test("`generateInputSchema` correctly generates schema for a template with parameters", (t) => {
+test("`generateInputSchema` correctly generates schema for a template with parameters", async (t) => {
   const inputs = { template: "{{foo}} {{bar}}" };
-  const result = computeInputSchema(inputs);
+  const result = (await promptTemplate.describe(inputs)).inputSchema;
   t.deepEqual(result, {
     type: "object",
     properties: {
       foo: {
         title: "foo",
         description: 'The value to substitute for the parameter "foo"',
-        type: ["string", "object"],
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
       bar: {
         title: "bar",
         description: 'The value to substitute for the parameter "bar"',
-        type: ["string", "object"],
+        type: ["array", "boolean", "null", "number", "object", "string"],
       },
       template: {
         title: "template",
         description: "The template with placeholders to fill in.",
         type: "string",
+        format: "multiline",
       },
     },
-    required: ["template", "foo", "bar"],
+    required: ["bar", "foo", "template"],
+    additionalProperties: false,
   });
 });

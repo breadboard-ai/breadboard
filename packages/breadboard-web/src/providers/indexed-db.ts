@@ -8,10 +8,10 @@ import * as idb from "idb";
 import {
   GraphProvider,
   GraphProviderCapabilities,
+  blank,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphDescriptor } from "../../../schema/dist/graph";
-import { BLANK_BOARD } from "./blank-board";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
 interface GraphDBStore {
@@ -42,6 +42,7 @@ const DEFAULT_STORE: GraphDBStore = {
   version: 1,
   title: "Board Store",
 };
+const PREFIX = IDB_PROTOCOL + "//";
 
 export class IDBGraphProvider implements GraphProvider {
   static #instance: IDBGraphProvider;
@@ -62,6 +63,8 @@ export class IDBGraphProvider implements GraphProvider {
     }
   >();
 
+  name = "IDBGraphProvider";
+
   private constructor() {}
 
   isSupported() {
@@ -72,10 +75,12 @@ export class IDBGraphProvider implements GraphProvider {
     if (url.protocol !== IDB_PROTOCOL) {
       throw new Error("Unsupported protocol");
     }
-    const pathName = url.pathname.substring(2);
+    const pathName = url.href.replace(new RegExp(`^${PREFIX}`, "gim"), "");
     const [location, fileName] = pathName.split("/");
     if (!location || !fileName) {
-      throw new Error("Invalid path");
+      throw new Error(
+        `Invalid path: ${url.href} ${pathName} ${location} ${fileName}`
+      );
     }
 
     return { location, fileName };
@@ -154,7 +159,7 @@ export class IDBGraphProvider implements GraphProvider {
       return { result: false, error: "Unable to create: board already exists" };
     }
 
-    return this.save(url, BLANK_BOARD);
+    return this.save(url, blank());
   }
 
   async save(
@@ -243,8 +248,9 @@ export class IDBGraphProvider implements GraphProvider {
 
     let graphs = await db.getAll("graphs");
     if (graphs.length === 0 && store.name === DEFAULT_STORE.name) {
-      BLANK_BOARD.url = this.createURL(DEFAULT_STORE.name, "blank.json");
-      await db.put("graphs", BLANK_BOARD);
+      const blankBoard = blank();
+      blankBoard.url = this.createURL(DEFAULT_STORE.name, "blank.json");
+      await db.put("graphs", blankBoard);
       graphs = await db.getAll("graphs");
     }
 

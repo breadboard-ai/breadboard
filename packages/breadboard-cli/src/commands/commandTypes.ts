@@ -15,7 +15,9 @@ export type DebugOptions = Options & {
 export type ImportOptions = Options & {
   api?: string; // API URL for import
 };
-export type MakeOptions = Options;
+export type MakeOptions = Options & {
+  format?: boolean;
+};
 export type MermaidOptions = Options;
 export type ProxyOptions = Options & {
   config?: string;

@@ -16,42 +16,19 @@
       "in": "text"
     },
     {
-      "from": "parameters",
-      "to": "fn-3",
-      "out": "*",
-      "in": ""
-    },
-    {
       "from": "mockModelStream",
       "to": "streamOutput",
       "out": "stream",
       "in": "stream"
+    },
+    {
+      "from": "parameters",
+      "to": "fn-3",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "fn-3",
-      "type": "invoke",
-      "configuration": {
-        "$board": "#fn-3"
-      }
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -78,11 +55,6 @@
       }
     },
     {
-      "id": "mockModelStream",
-      "type": "listToStream",
-      "configuration": {}
-    },
-    {
       "id": "streamOutput",
       "type": "output",
       "configuration": {
@@ -98,43 +70,36 @@
           }
         }
       }
-    }
-  ],
-  "graphs": {
-    "fn-3": {
-      "edges": [
-        {
-          "from": "fn-3-input",
-          "to": "fn-3-run",
-          "out": "*"
-        },
-        {
-          "from": "fn-3-run",
-          "to": "fn-3-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "fn-3-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "fn-3-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
-            "name": "fn_3",
-            "raw": true
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
           }
-        },
-        {
-          "id": "fn-3-output",
-          "type": "output",
-          "configuration": {}
         }
-      ]
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({text,useStreaming})=>{text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "mockModelStream",
+      "type": "listToStream",
+      "configuration": {}
     }
-  }
+  ]
 }

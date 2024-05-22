@@ -13,7 +13,7 @@ import type {
   GraphDescriptor,
   LambdaNodeOutputs,
 } from "@google-labs/breadboard";
-import { loadBoardFromPath } from "../load-board.js";
+import { loadGraphFromPath } from "../utils.js";
 
 export type ImportNodeInputs = InputValues & {
   path?: string;
@@ -22,6 +22,9 @@ export type ImportNodeInputs = InputValues & {
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: async (inputs?: InputValues) => {
     return {
       inputSchema: new SchemaBuilder()
@@ -60,7 +63,7 @@ export default {
         ? ({ ...graph } as BoardRunner)
         : await BoardRunner.fromGraphDescriptor(graph)
       : path
-        ? await loadBoardFromPath(path, context)
+        ? await loadGraphFromPath(path, context)
         : undefined;
     if (!board) throw Error("No board provided");
     board.args = args;

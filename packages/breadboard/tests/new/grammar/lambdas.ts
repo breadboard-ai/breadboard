@@ -14,7 +14,7 @@ import {
   OutputValues,
   BoardRunner,
   asRuntimeKit,
-  BreadboardCapability,
+  GraphDescriptorBoardCapability,
 } from "../../../src/index.js";
 
 import { TestKit, testKit } from "../../helpers/_test-kit.js";
@@ -121,7 +121,7 @@ test("serialize closure lambda", async (t) => {
   t.deepEqual(
     (
       serialized?.nodes?.find((node) => node.type === "lambda")?.configuration
-        ?.board as BreadboardCapability
+        ?.board as GraphDescriptorBoardCapability
     )?.board,
     { kits: [], ...serialized2 }
   );

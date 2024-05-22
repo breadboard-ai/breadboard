@@ -141,6 +141,9 @@ export const generateTextDescriber: NodeDescriberFunction = async () => {
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: generateTextDescriber,
   invoke: async (inputs: InputValues) => {
     return await prepareResponse(await fetch(prepareRequest(inputs)));

@@ -23,14 +23,14 @@ export class Navigation extends LitElement {
   @property()
   providers: GraphProvider[] = [];
 
+  @property()
+  providerOps = 0;
+
   @property({ reflect: true })
   visible = false;
 
   @property()
   url: string | null = null;
-
-  @property()
-  providerOps = 0;
 
   static styles = css`
     * {
@@ -112,6 +112,7 @@ export class Navigation extends LitElement {
       overflow-y: scroll;
       overflow-x: hidden;
       scrollbar-gutter: stable;
+      flex: 1;
     }
 
     details {
@@ -318,7 +319,7 @@ export class Navigation extends LitElement {
     location: string,
     { permission, items, title }: GraphProviderStore
   ) {
-    const providerName = provider.constructor.name;
+    const providerName = provider.name;
     const createBlankBoard = html`<button
       @click=${() => {
         const fileName = prompt(
@@ -420,8 +421,7 @@ export class Navigation extends LitElement {
     const supportsFileSystem =
       this.providers.find((provider) => {
         return (
-          provider.constructor.name === "FileSystemGraphProvider" &&
-          provider.isSupported()
+          provider.name === "FileSystemGraphProvider" && provider.isSupported()
         );
       }) !== undefined;
 

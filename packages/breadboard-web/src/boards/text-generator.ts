@@ -89,7 +89,7 @@ export default await board(() => {
 
   const invoke = core.invoke({
     $id: "invoke",
-    path: switchModel.path,
+    $board: switchModel.path,
   });
   parameters.to(invoke);
   invoke.text.to(textOutput);

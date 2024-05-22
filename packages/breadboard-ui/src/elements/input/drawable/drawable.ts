@@ -7,7 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { CanvasData } from "../../../types/types.js";
+import { LLMContent } from "../../../types/types.js";
 
 @customElement("bb-drawable-input")
 export class DrawableInput extends LitElement {
@@ -33,6 +33,7 @@ export class DrawableInput extends LitElement {
         0 2px 3px 0 rgba(0, 0, 0, 0.23);
       --default-bb-border-radius: 8px;
       --default-bb-input-background-color: #fff;
+      --default-bb-outline: transparent;
 
       position: relative;
       display: block;
@@ -44,6 +45,7 @@ export class DrawableInput extends LitElement {
       box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
       border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
       aspect-ratio: 4/3;
+      outline: 1px solid var(--bb-outline, var(--default-bb-outline));
     }
 
     canvas {
@@ -287,20 +289,21 @@ export class DrawableInput extends LitElement {
     this.#lastPosition.y = y;
   }
 
-  get value() {
-    const value = { inline_data: { data: "", mime_type: this.type } };
-    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80);
-    if (!inlineData) {
-      return value;
-    }
-
+  get value(): LLMContent {
+    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
-    value.inline_data.data = inlineData.substring(preamble.length);
-    return value;
-  }
 
-  set value(_v: CanvasData) {
-    console.warn("Value set on drawable, but values are not supported");
+    return {
+      role: "user",
+      parts: [
+        {
+          inlineData: {
+            data: inlineData.substring(preamble.length),
+            mimeType: this.type,
+          },
+        },
+      ],
+    };
   }
 
   render() {

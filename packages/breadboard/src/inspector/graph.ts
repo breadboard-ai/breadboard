@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { handlersFromKits } from "../handler.js";
 import { createLoader } from "../loader/index.js";
-import { combineSchemas } from "../schema.js";
+import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
@@ -14,10 +15,11 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
+  Schema,
 } from "../types.js";
-import { InspectableEdgeCache } from "./edge.js";
+import { EdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
-import { InspectableNodeCache } from "./node.js";
+import { NodeCache } from "./node.js";
 import {
   EdgeType,
   describeInput,
@@ -26,11 +28,14 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
+  MutableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
   InspectableNode,
+  InspectableSubgraphs,
   NodeTypeDescriberOptions,
+  InspectableNodeType,
 } from "./types.js";
 
 export const inspectableGraph = (
@@ -52,26 +57,33 @@ const maybeURL = (url?: string): URL | undefined => {
 class Graph implements InspectableGraphWithStore {
   #url?: URL;
   #kits?: InspectableKit[];
+  #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-  #nodes: InspectableNodeCache;
-  #edges: InspectableEdgeCache;
+  #cache: MutableGraph;
+  #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    this.#edges = new InspectableEdgeCache(this);
-    this.#nodes = new InspectableNodeCache(this);
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
   }
 
   raw() {
     return this.#graph;
   }
 
+  metadata(): GraphMetadata | undefined {
+    return this.#graph.metadata;
+  }
+
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.#nodes.byType(type);
+    return this.#cache.nodes.byType(type);
   }
 
   async describeType(
@@ -93,7 +105,7 @@ class Graph implements InspectableGraphWithStore {
       inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
-    if (!handler || typeof handler === "function" || !handler.describe) {
+    if (!handler || !("describe" in handler) || !handler.describe) {
       return asWired;
     }
     const loader = this.#options.loader || createLoader();
@@ -118,39 +130,55 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
-    return this.#nodes.get(id);
+    return this.#cache.nodes.get(id);
   }
 
   nodes(): InspectableNode[] {
-    return this.#nodes.nodes();
+    return this.#cache.nodes.nodes();
   }
 
   edges(): InspectableEdge[] {
-    return this.#edges.edges();
+    return this.#cache.edges.edges();
   }
 
   hasEdge(edge: Edge): boolean {
-    return this.#edges.hasByValue(edge);
+    return this.#cache.edges.hasByValue(edge);
   }
 
   kits(): InspectableKit[] {
     return (this.#kits ??= collectKits(this.#options.kits || []));
   }
 
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
+    const node = this.nodeById(id);
+    if (!node) {
+      return undefined;
+    }
+    return this.typeById(node.descriptor.type);
+  }
+
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    const kits = this.kits();
+    this.#nodeTypes ??= new Map(
+      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
+    );
+    return this.#nodeTypes.get(id);
+  }
+
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
   entries(): InspectableNode[] {
-    return this.#nodes.nodes().filter((node) => node.isEntry());
+    return this.#cache.nodes.nodes().filter((node) => node.isEntry());
   }
 
   async describe(): Promise<NodeDescriberResult> {
@@ -168,19 +196,57 @@ class Graph implements InspectableGraphWithStore {
           .filter((n) => n.isExit())
           .map((output) => output.describe())
       )
-    ).map((result) => result.inputSchema);
+    )
+      .map((result) =>
+        result.inputSchema.behavior?.includes("bubble")
+          ? null
+          : result.inputSchema
+      )
+      .filter(Boolean) as Schema[];
 
-    return {
-      inputSchema: combineSchemas(inputSchemas),
-      outputSchema: combineSchemas(outputSchemas),
-    };
+    const inputSchema = combineSchemas(inputSchemas);
+    const outputSchema = removeProperty(
+      combineSchemas(outputSchemas),
+      "schema"
+    );
+
+    console.groupEnd();
+
+    return { inputSchema, outputSchema };
   }
 
   get nodeStore() {
-    return this.#nodes;
+    return this.#cache.nodes;
   }
 
   get edgeStore() {
-    return this.#edges;
+    return this.#cache.edges;
+  }
+
+  updateGraph(graph: GraphDescriptor): void {
+    this.#graph = graph;
+  }
+
+  resetGraph(graph: GraphDescriptor): void {
+    this.#graph = graph;
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
+    this.#graphs = null;
+  }
+
+  #populateSubgraphs(): InspectableSubgraphs {
+    const subgraphs = this.#graph.graphs;
+    if (!subgraphs) return {};
+    return Object.fromEntries(
+      Object.entries(subgraphs).map(([id, descriptor]) => {
+        return [id, new Graph(descriptor, this.#options)];
+      })
+    );
+  }
+
+  graphs(): InspectableSubgraphs {
+    return (this.#graphs ??= this.#populateSubgraphs());
   }
 }

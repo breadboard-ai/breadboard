@@ -2,10 +2,10 @@
   "title": "Math, imperative style graph",
   "edges": [
     {
-      "from": "runJavascript-6",
-      "to": "output-2",
-      "out": "result",
-      "in": "result"
+      "from": "input-1",
+      "to": "promptTemplate-3",
+      "out": "question",
+      "in": "question"
     },
     {
       "from": "palm-generateText-5",
@@ -20,19 +20,37 @@
       "in": "text"
     },
     {
+      "from": "runJavascript-6",
+      "to": "output-2",
+      "out": "result",
+      "in": "result"
+    },
+    {
       "from": "secrets-4",
       "to": "palm-generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
-    },
-    {
-      "from": "input-1",
-      "to": "promptTemplate-3",
-      "out": "question",
-      "in": "question"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "question"
+          ],
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "Query: What is your math question?"
+            }
+          }
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -52,11 +70,6 @@
       }
     },
     {
-      "id": "runJavascript-6",
-      "type": "runJavascript",
-      "configuration": {}
-    },
-    {
       "id": "palm-generateText-5",
       "type": "palm-generateText",
       "configuration": {}
@@ -69,6 +82,11 @@
       }
     },
     {
+      "id": "runJavascript-6",
+      "type": "runJavascript",
+      "configuration": {}
+    },
+    {
       "id": "secrets-4",
       "type": "secrets",
       "configuration": {
@@ -76,25 +94,6 @@
           "PALM_KEY"
         ]
       }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "required": [
-            "question"
-          ],
-          "properties": {
-            "question": {
-              "type": "string",
-              "description": "Query: What is your math question?"
-            }
-          }
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

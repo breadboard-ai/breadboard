@@ -1,3 +1,4 @@
+import { SerializableBoard, serialize } from "@breadboard-ai/build";
 import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import { pathToFileURL } from "url";
 
@@ -21,6 +22,11 @@ export abstract class Loader {
 
     if (board == undefined)
       throw new Error(`Board ${file} does not have a default export`);
+
+    if ("inputs" in board && "outputs" in board) {
+      // TODO(aomarks) Not a great way to detect build boards.
+      board = serialize(board as SerializableBoard);
+    }
 
     if (boardLike(board)) {
       // A graph descriptor has been exported.. Possibly a lambda.

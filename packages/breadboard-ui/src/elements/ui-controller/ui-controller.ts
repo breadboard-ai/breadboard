@@ -6,26 +6,38 @@
 
 import { LitElement, PropertyValueMap, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { LoadArgs, STATUS } from "../../types/types.js";
+import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
 import {
+  GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
   InputEnterEvent,
   NodeDeleteEvent,
   RunEvent,
+  StopEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { GraphLoader, InspectableRun, Kit } from "@google-labs/breadboard";
+import {
+  EditHistory,
+  GraphDescriptor,
+  GraphLoader,
+  GraphProvider,
+  InspectableRun,
+  InspectableRunEvent,
+  InspectableRunInputs,
+  Kit,
+  NodeIdentifier,
+} from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { JSONTree } from "../elements.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { EditorMode } from "../../utils/mode.js";
+import { guard } from "lit/directives/guard.js";
+import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
-
-type UIConfig = {
-  showNarrowTimeline: boolean;
-};
 
 /**
  * Breadboard UI controller element.
@@ -34,17 +46,19 @@ type UIConfig = {
  * @class UI
  * @extends {LitElement}
  *
- * @property {LoadArgs | null} loadInfo
+ * @property {GraphDescriptor | null} graph
  * @property {Kit[]} kits - an array of kits to use by a board
  * @property {string | null} url
  * @property {STATUS}
  * @property {Board[]}
- * @property {"mermaid" | "editor"} - the type of visualizer to use
  **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
-  loadInfo: LoadArgs | null = null;
+  graph: GraphDescriptor | null = null;
+
+  @property()
+  subGraphId: string | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -59,22 +73,40 @@ export class UI extends LitElement {
   run: InspectableRun | null = null;
 
   @property()
+  inputsFromLastRun: InspectableRunInputs | null = null;
+
+  @property({ reflect: true })
+  failedToLoad = false;
+
+  @property()
   boardId = -1;
 
-  @state()
-  config: UIConfig = {
-    showNarrowTimeline: false,
-  };
+  @property()
+  settings: Settings | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
 
   @state()
-  selectedNodeId: string | null = null;
+  selectedNodeIds: string[] = [];
 
   @state()
   isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
+  @state()
+  debugEvent: InspectableRunEvent | null = null;
+
+  @state()
+  history: EditHistory | null = null;
+
+  #nodeSchemaUpdateCount = -1;
+  #lastEdgeCount = -1;
   #lastBoardId = -1;
-  #autoSwitchSidePanel: number | null = null;
   #detailsRef: Ref<HTMLElement> = createRef();
+  #controlsActivityRef: Ref<HTMLDivElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #messagePosition = 0;
   #resizeObserver = new ResizeObserver(() => {
@@ -82,18 +114,6 @@ export class UI extends LitElement {
   });
 
   static styles = uiControllerStyles;
-
-  constructor() {
-    super();
-
-    this.addEventListener("pointerdown", () => {
-      if (!this.#detailsRef.value) {
-        return;
-      }
-
-      this.#detailsRef.value.classList.remove("active");
-    });
-  }
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -107,10 +127,6 @@ export class UI extends LitElement {
 
   clearPosition() {
     this.#messagePosition = 0;
-  }
-
-  async load(loadInfo: LoadArgs) {
-    this.loadInfo = loadInfo;
   }
 
   /**
@@ -178,8 +194,7 @@ export class UI extends LitElement {
     message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     if (this.status === STATUS.RUNNING) {
-      const messages = this.run?.messages || [];
-      this.#messagePosition = messages.length - 1;
+      this.#messagePosition = (this.run?.events?.length || 0) - 1;
     }
     this.requestUpdate();
 
@@ -207,9 +222,20 @@ export class UI extends LitElement {
     }
   }
 
+  /**
+   * Called when a user stops a board.
+   */
+  #callAllPendingInputHandlers() {
+    for (const handlers of this.#handlers.values()) {
+      for (const handler of handlers) {
+        handler.call(null, {});
+      }
+    }
+  }
+
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ boardId: number }>
+      | PropertyValueMap<{ boardId: number; subGraphId: string | null }>
       | Map<PropertyKey, unknown>
   ): void {
     if (changedProperties.has("boardId")) {
@@ -218,174 +244,375 @@ export class UI extends LitElement {
       }
 
       this.#handlers.clear();
+      this.selectedNodeIds.length = 0;
+    }
+
+    if (changedProperties.has("subGraphId")) {
+      this.selectedNodeIds.length = 0;
     }
   }
 
-  protected updated(): void {
-    this.#autoSwitchSidePanel = null;
-  }
-
+  #lastHistoryLocation = -1;
   render() {
-    const messages = this.run?.messages || [];
-    const nodeId = this.run?.currentNode(this.#messagePosition) || "";
+    const currentNode = (): NodeIdentifier | null => {
+      if (this.status === STATUS.STOPPED) return null;
+
+      if (!this.run) return null;
+
+      const currentNodeEvent = this.run.stack()[0];
+
+      if (!currentNodeEvent) return null;
+
+      if (this.subGraphId) return null;
+
+      return currentNodeEvent.node.descriptor.id;
+    };
+
+    let boardTitle = this.graph?.title;
+    let boardVersion = this.graph?.version;
+    let boardDescription = this.graph?.description;
+    if (this.subGraphId && this.graph && this.graph.graphs) {
+      const subGraph = this.graph.graphs[this.subGraphId];
+      if (subGraph) {
+        boardTitle = subGraph.title;
+        boardVersion = subGraph.version;
+        boardDescription = subGraph.description;
+      }
+    }
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
+    const nodeId = currentNode();
+    const collapseNodesByDefault = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Collapse Nodes by Default"
+        )?.value
+      : false;
+
+    const showNodeTypeDescriptions = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Show Node Type Descriptions"
+        )?.value
+      : true;
+
+    const hideSubboardSelectorWhenEmpty = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Embedded Board Selector When Empty"
+        )?.value
+      : false;
+
+    const hideAdvancedPortsOnNodes = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Hide Advanced Ports on Nodes"
+        )?.value
+      : false;
+
+    const invertZoomScrollDirection = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Invert Zoom Scroll Direction"
+        )?.value
+      : false;
+
+    const editorMode = hideAdvancedPortsOnNodes
+      ? EditorMode.MINIMAL
+      : EditorMode.ADVANCED;
+
+    const showNodeShortcuts = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Node Shortcuts")
+          ?.value
+      : false;
 
     /**
      * Create all the elements we need.
      */
     const editor = html`<bb-editor
       .editable=${true}
-      .loadInfo=${this.loadInfo}
+      .graph=${this.graph}
+      .subGraphId=${this.subGraphId}
       .kits=${this.kits}
       .loader=${this.loader}
       .highlightedNodeId=${nodeId}
       .boardId=${this.boardId}
-      @breadboardnodedelete=${(evt: NodeDeleteEvent) => {
-        if (evt.id !== this.selectedNodeId) {
+      .collapseNodesByDefault=${collapseNodesByDefault}
+      .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
+      .mode=${editorMode}
+      .showNodeShortcuts=${showNodeShortcuts}
+      .invertZoomScrollDirection=${invertZoomScrollDirection}
+      @bbnodedelete=${(evt: NodeDeleteEvent) => {
+        if (!this.selectedNodeIds) {
           return;
         }
 
-        this.selectedNodeId = null;
+        const idx = this.selectedNodeIds.indexOf(evt.id);
+        if (idx === -1) {
+          return;
+        }
+
+        this.selectedNodeIds = this.selectedNodeIds.filter(
+          (id) => id !== evt.id
+        );
       }}
-      @breadboardgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
-        this.selectedNodeId = evt.id;
-        this.#autoSwitchSidePanel = 1;
+      @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+        if (!this.selectedNodeIds) {
+          this.selectedNodeIds = [];
+        }
+
+        if (!evt.id) {
+          return;
+        }
+
+        const idx = this.selectedNodeIds.indexOf(evt.id);
+        if (idx !== -1) {
+          return;
+        }
+
+        this.selectedNodeIds = [...this.selectedNodeIds, evt.id];
+        this.requestUpdate();
+      }}
+      @bbgraphnodedeselected=${(evt: GraphNodeDeselectedEvent) => {
+        if (!this.selectedNodeIds) {
+          return;
+        }
+
+        if (!evt.id) {
+          return;
+        }
+
+        this.selectedNodeIds = this.selectedNodeIds.filter(
+          (id) => id !== evt.id
+        );
+        this.requestUpdate();
+      }}
+      @bbgraphnodedeselectedall=${() => {
+        this.selectedNodeIds = [];
         this.requestUpdate();
       }}
     ></bb-editor>`;
 
-    const sidePanel = html`
-      <bb-switcher
-        slots="2"
-        .selected=${this.#autoSwitchSidePanel !== null
-          ? this.#autoSwitchSidePanel
-          : nothing}
-      >
-        <bb-activity-log
-          .loadInfo=${this.loadInfo}
-          .events=${events}
-          .eventPosition=${eventPosition}
-          .showExtendedInfo=${true}
-          .showLogDownload=${true}
-          @breadboardinputrequested=${() => {
-            this.#autoSwitchSidePanel = 0;
-            this.requestUpdate();
-          }}
-          @pointerdown=${(evt: PointerEvent) => {
-            if (!this.#detailsRef.value) {
-              return;
-            }
+    const nodeMetaDetails = guard(
+      [
+        this.boardId,
+        this.selectedNodeIds,
+        showNodeTypeDescriptions,
+        this.graph,
+      ],
+      () => {
+        return html`<bb-node-meta-details
+          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
+          .selectedNodeIds=${this.selectedNodeIds}
+          .subGraphId=${this.subGraphId}
+          .graph=${this.graph}
+          .kits=${this.kits}
+          .loader=${this.loader}
+        ></bb-node-meta-details>`;
+      }
+    );
 
-            const [top] = evt.composedPath();
-            if (!(top instanceof HTMLElement) || !top.dataset.messageIdx) {
-              return;
-            }
-
-            const idx = Number.parseInt(top.dataset.messageIdx);
-            if (Number.isNaN(idx)) {
-              return;
-            }
-
-            evt.stopImmediatePropagation();
-
-            const event = events[idx];
-            if (event.type !== "node") {
-              return;
-            }
-
-            const bounds = top.getBoundingClientRect();
-            const details = this.#detailsRef.value;
-            details.classList.toggle("active");
-
-            if (!details.classList.contains("active")) {
-              return;
-            }
-
-            details.style.setProperty("--left", `${bounds.left}px`);
-            details.style.setProperty("--top", `${bounds.top + 20}px`);
-
-            const tree = details.querySelector("bb-json-tree") as JSONTree;
-            tree.json = event as unknown as Record<string, string>;
-            tree.autoExpand = true;
-          }}
-          @breadboardinputenter=${(event: InputEnterEvent) => {
-            // Notify any pending handlers that the input has arrived.
-            if (this.#messagePosition < messages.length - 1) {
-              // The user has attempted to provide input for a stale
-              // request.
-              // TODO: Enable resuming from this point.
-              this.dispatchEvent(
-                new ToastEvent(
-                  "Unable to submit: board evaluation has already passed this point",
-                  ToastType.ERROR
-                )
-              );
-              return;
-            }
-
-            const data = event.data;
-            const handlers = this.#handlers.get(event.id) || [];
-            if (handlers.length === 0) {
-              console.warn(
-                `Received event for input(id="${event.id}") but no handlers were found`
-              );
-            }
-            for (const handler of handlers) {
-              handler.call(null, data);
-            }
-          }}
-          name="Board"
-          slot="slot-0"
-        ></bb-activity-log>
-        <bb-node-info
-          .selectedNodeId=${this.selectedNodeId}
-          .loadInfo=${this.loadInfo}
+    // Track the number of edges; if it changes we need to inform the node info
+    // element, and force it to re-render.
+    this.#lastEdgeCount = this.graph?.edges.length || -1;
+    const nodeConfiguration = guard(
+      [
+        this.boardId,
+        this.selectedNodeIds,
+        this.#lastEdgeCount,
+        this.#nodeSchemaUpdateCount,
+        this.graph,
+      ],
+      () => {
+        return html`<bb-node-configuration
+          .selectedNodeIds=${this.selectedNodeIds}
+          .subGraphId=${this.subGraphId}
+          .graph=${this.graph}
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
+          .providers=${this.providers}
+          .providerOps=${this.providerOps}
           name="Selected Node"
-          slot="slot-1"
-        ></bb-node-info>
-      </bb-switcher>
+          @bbschemachange=${() => {
+            this.#nodeSchemaUpdateCount++;
+          }}
+          @bbgraphnodedeselectedall=${() => {
+            this.selectedNodeIds = [];
+            this.requestUpdate();
+          }}
+        ></bb-node-configuration>`;
+      }
+    );
 
-      <div
-        id="details"
-        ${ref(this.#detailsRef)}
-        @pointerdown=${(evt: PointerEvent) => {
-          evt.stopImmediatePropagation();
+    const boardDetails = guard(
+      [
+        this.boardId,
+        this.graph,
+        this.subGraphId,
+        boardTitle,
+        boardVersion,
+        boardDescription,
+      ],
+      () => {
+        return html`<bb-board-details
+          .boardTitle=${boardTitle}
+          .boardVersion=${boardVersion}
+          .boardDescription=${boardDescription}
+          .subGraphId=${this.subGraphId}
+        >
+        </bb-board-details>`;
+      }
+    );
+
+    const activityLog = guard([this.run?.events], () => {
+      return html`<bb-activity-log
+        .run=${this.run}
+        .inputsFromLastRun=${this.inputsFromLastRun}
+        .events=${events}
+        .eventPosition=${eventPosition}
+        .showExtendedInfo=${true}
+        .settings=${this.settings}
+        .logTitle=${"Activity"}
+        @bbinputrequested=${() => {
+          this.selectedNodeIds.length = 0;
+          this.requestUpdate();
         }}
-      >
-        <bb-json-tree></bb-json-tree>
-      </div>
-    `;
+        @pointerdown=${(evt: PointerEvent) => {
+          if (!this.#controlsActivityRef.value) {
+            return;
+          }
+
+          const [top] = evt.composedPath();
+          if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+            return;
+          }
+
+          evt.stopImmediatePropagation();
+
+          const id = top.dataset.messageId;
+          const event = this.run?.getEventById(id);
+
+          if (!event) {
+            // TODO: Offer the user more information.
+            console.warn(`Unable to find event with ID "${id}"`);
+            return;
+          }
+
+          if (event.type !== "node") {
+            return;
+          }
+
+          this.debugEvent = event;
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          // Notify any pending handlers that the input has arrived.
+          if (this.#messagePosition < events.length - 1) {
+            // The user has attempted to provide input for a stale
+            // request.
+            // TODO: Enable resuming from this point.
+            this.dispatchEvent(
+              new ToastEvent(
+                "Unable to submit: board evaluation has already passed this point",
+                ToastType.ERROR
+              )
+            );
+            return;
+          }
+
+          const data = event.data;
+          const handlers = this.#handlers.get(event.id) || [];
+          if (handlers.length === 0) {
+            console.warn(
+              `Received event for input(id="${event.id}") but no handlers were found`
+            );
+          }
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+        name="Board"
+      ></bb-activity-log>`;
+    });
+
+    const entryDetails = this.debugEvent
+      ? html`<div
+          id="details"
+          class=${classMap({ portrait: this.isPortrait })}
+          ${ref(this.#detailsRef)}
+          @pointerdown=${(evt: PointerEvent) => {
+            evt.stopImmediatePropagation();
+          }}
+        >
+          <bb-event-details .event=${this.debugEvent}></bb-event-details>
+        </div>`
+      : nothing;
+
+    if (this.debugEvent) {
+      this.addEventListener(
+        "pointerdown",
+        () => {
+          this.debugEvent = null;
+        },
+        { once: true }
+      );
+    }
+
+    const sidePanel = cache(
+      this.selectedNodeIds.length
+        ? html`${nodeMetaDetails}${nodeConfiguration}`
+        : html`${boardDetails}${activityLog}`
+    );
+
+    const breadcrumbs = [MAIN_BOARD_ID];
+    if (this.subGraphId) {
+      breadcrumbs.push(this.subGraphId);
+    }
 
     return html`<bb-splitter
       direction=${this.isPortrait ? "vertical" : "horizontal"}
       name="layout-main"
       split="[0.75, 0.25]"
+      .showQuickExpandCollapse=${true}
     >
       <section id="diagram" slot="slot-0">
-        <div id="breadcrumbs"></div>
-        ${editor}
+        ${this.graph === null && this.failedToLoad
+          ? html`<div class="failed-to-load">
+              <h1>Unable to load board</h1>
+              <p>Please try again, or load a different board</p>
+            </div>`
+          : editor}
+        ${entryDetails}
       </section>
 
-      <section id="controls-activity" slot="slot-1">
+      <section
+        ${ref(this.#controlsActivityRef)}
+        id="controls-activity"
+        slot="slot-1"
+      >
+        <div id="controls-activity-content">${sidePanel}</div>
+
         <div id="controls">
           <button
             id="run"
-            ?disabled=${this.status !== STATUS.STOPPED}
+            title="Run this board"
+            ?disabled=${this.status !== STATUS.STOPPED || this.failedToLoad}
             @click=${() => {
-              this.#autoSwitchSidePanel = 0;
+              this.selectedNodeIds.length = 0;
               this.dispatchEvent(new RunEvent());
             }}
           >
             Run
           </button>
+          <button
+            id="stop"
+            title="Stop this board"
+            ?disabled=${this.status === STATUS.STOPPED || this.failedToLoad}
+            @click=${() => {
+              this.selectedNodeIds.length = 0;
+              this.dispatchEvent(new StopEvent());
+              this.#callAllPendingInputHandlers();
+            }}
+          >
+            Stop
+          </button>
         </div>
-
-        ${sidePanel}
       </section>
     </bb-splitter>`;
   }

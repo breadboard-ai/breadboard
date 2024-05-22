@@ -4,11 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { test } from "node:test";
-import { board, defineNodeType } from "@breadboard-ai/build";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
-const testNode = defineNodeType(
-  {
+import { defineNodeType } from "@breadboard-ai/build";
+import { test } from "node:test";
+import { board } from "../internal/board/board.js";
+import assert from "node:assert/strict";
+
+const testNode = defineNodeType({
+  name: "example",
+  inputs: {
     inStr: {
       type: "string",
     },
@@ -16,7 +21,7 @@ const testNode = defineNodeType(
       type: "number",
     },
   },
-  {
+  outputs: {
     outNum: {
       type: "number",
     },
@@ -24,62 +29,62 @@ const testNode = defineNodeType(
       type: "string",
     },
   },
-  () => {
+  invoke: () => {
     return {
       outNum: 123,
       outStr: "foo",
     };
-  }
-)({ inStr: "foo", inNum: 123 });
+  },
+})({ inStr: "foo", inNum: 123 });
 const { inStr, inNum } = testNode.inputs;
 const { outNum, outStr } = testNode.outputs;
 
 test("expect type: 0 in, 0 out", () => {
   // $ExpectType BoardDefinition<{}, {}>
-  const definition = board({}, {});
+  const definition = board({ inputs: {}, outputs: {} });
   // $ExpectType BoardInstance<{}, {}>
   definition({});
   // $ExpectType BoardInstance<{}, {}>
   const instance = definition({});
-  // $ExpectType InputPorts<ExtractPortConfigs<{}>>
+  // $ExpectType {}
   instance.inputs;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{}>>
+  // $ExpectType {}
   instance.outputs;
 });
 
 test("expect type: 1 in, 1 out", () => {
-  // $ExpectType BoardDefinition<{ inStr: InputPort<{ type: "string"; }>; }, { outNum: OutputPort<{ type: "number"; }>; }>
-  const definition = board({ inStr }, { outNum });
-  // NodeInstance<BoardPortConfig<{ inStr: InputPort<{ type: "string"; }>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
+  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  const definition = board({ inputs: { inStr }, outputs: { outNum } });
+  // NodeInstance<BoardPortConfig<{ inStr: InputPort<string>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
   const instance = definition({ inStr: "inStr" });
-  // $ExpectType InputPorts<ExtractPortConfigs<{ inStr: InputPort<{ type: "string"; }>; }>>
+  // $ExpectType { inStr: InputPort<string>; }
   instance.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instance.inputs.inStr;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{ outNum: OutputPort<{ type: "number"; }>; }>>
+  // $ExpectType { outNum: OutputPort<number>; }
   instance.outputs;
-  // $ExpectType OutputPort<{ type: "number"; }>
+  // $ExpectType OutputPort<number>
   instance.outputs.outNum;
 });
 
 test("expect type: nested boards", () => {
-  const defA = board({ inNum }, { outStr });
-  const defB = board({ inStr }, { outNum });
+  const defA = board({ inputs: { inNum }, outputs: { outStr } });
+  const defB = board({ inputs: { inStr }, outputs: { outNum } });
   const instanceA = defA({ inNum: 123 });
-  // $ExpectType BoardInstance<{ inStr: InputPort<{ type: "string"; }>; }, { outNum: OutputPort<{ type: "number"; }>; }>
+  // $ExpectType BoardInstance<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
   const instanceB = defB({ inStr: instanceA.outputs.outStr });
-  // $ExpectType InputPorts<ExtractPortConfigs<{ inStr: InputPort<{ type: "string"; }>; }>>
+  // $ExpectType { inStr: InputPort<string>; }
   instanceB.inputs;
-  // $ExpectType InputPort<{ type: "string"; }>
+  // $ExpectType InputPort<string>
   instanceB.inputs.inStr;
-  // $ExpectType OutputPorts<ExtractPortConfigs<{ outNum: OutputPort<{ type: "number"; }>; }>>
+  // $ExpectType { outNum: OutputPort<number>; }
   instanceB.outputs;
-  // $ExpectType OutputPort<{ type: "number"; }>
+  // $ExpectType OutputPort<number>
   instanceB.outputs.outNum;
 });
 
 test("expect type error: missing instantiate param", () => {
-  const definition = board({ inStr, inNum }, { outNum });
+  const definition = board({ inputs: { inStr, inNum }, outputs: { outNum } });
   // @ts-expect-error missing both
   definition();
   // @ts-expect-error missing both
@@ -90,8 +95,46 @@ test("expect type error: missing instantiate param", () => {
   definition({ inStr: "inStr" });
 });
 
+test("expect type error: board input/output types", () => {
+  const noPrimary = defineNodeType({
+    name: "noPrimary",
+    inputs: {
+      in: { type: "string" },
+    },
+    outputs: {
+      out: { type: "string" },
+    },
+    invoke: () => ({ out: "foo" }),
+  });
+
+  assert.throws(() =>
+    board({
+      inputs: {
+        // @ts-expect-error
+        in1: undefined,
+        // @ts-expect-error
+        in2: null,
+        // @ts-expect-error
+        in3: "foo",
+        // @ts-expect-error
+        in4: noPrimary({}),
+      },
+      outputs: {
+        // @ts-expect-error
+        out1: undefined,
+        // @ts-expect-error
+        out2: null,
+        // @ts-expect-error
+        out3: "foo",
+        // @ts-expect-error
+        out4: noPrimary({}),
+      },
+    })
+  );
+});
+
 test("expect type error: incorrect make instance param type", () => {
-  const definition = board({ inStr, inNum }, {});
+  const definition = board({ inputs: { inStr, inNum }, outputs: {} });
   definition({
     inStr: "foo",
     // @ts-expect-error inNum should be number, not string
@@ -99,9 +142,20 @@ test("expect type error: incorrect make instance param type", () => {
   });
 });
 
+test("allow setting title, description, version", () => {
+  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  board({
+    title: "My Title",
+    description: "My Description",
+    version: "1.0.0",
+    inputs: { inStr },
+    outputs: { outNum },
+  });
+});
+
 {
-  const boardA = board({}, { outNum, outStr });
-  const boardB = board({ inStr, inNum }, {});
+  const boardA = board({ inputs: {}, outputs: { outNum, outStr } });
+  const boardB = board({ inputs: { inStr, inNum }, outputs: {} });
   const instanceA = boardA({});
   const instanceB = boardB({ inStr: "foo", inNum: 123 });
 

@@ -70,6 +70,10 @@ export type GraphProviderExtendedCapabilities = {
  */
 export type GraphProvider = {
   /**
+   * The name of the provider.
+   */
+  name: string;
+  /**
    * Whether the provider is supported or not in the current environment.
    */
   isSupported(): boolean;

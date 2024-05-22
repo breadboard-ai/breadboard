@@ -72,7 +72,7 @@ The wire spec usually describes how properties are passed between two nodes.
 a.wire("foo->bar", b);
 ```
 
-The spec above contains both direction and properties that are being passed. The right arrow (`->`) betwen `foo` and `bar` specifies the direction: `a` to `b`.
+The spec above contains both direction and properties that are being passed. The right arrow (`->`) between `foo` and `bar` specifies the direction: `a` to `b`.
 
 The `foo` and `bar` specify how the properties from one node are being passed to another. This wire spec describes the following: take the `foo` property from the output of node `a` and pass it as `bar` property as input of node `b`.
 

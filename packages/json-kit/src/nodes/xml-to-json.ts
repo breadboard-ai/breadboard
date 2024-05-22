@@ -71,6 +71,10 @@ const toAltJson = (
 };
 
 export default {
+  metadata: {
+    title: "XML to JSON",
+    description: "Creates a JSON representation of a given XML input.",
+  },
   describe: async () => {
     return {
       inputSchema: {

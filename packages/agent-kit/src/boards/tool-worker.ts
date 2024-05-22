@@ -4,17 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NewNodeFactory, base, board, code } from "@google-labs/breadboard";
+import { NewNodeFactory, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
 
-import { contextAssembler, contextBuilder } from "../context.js";
+import {
+  contextAssembler,
+  contextBuilderWithoutSystemInstruction,
+} from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
 import {
   boardInvokeAssembler,
   boardResponseExtractor,
-  functionCallOrText,
+  functionOrTextRouter,
   functionResponseFormatter,
+  boardToFunction,
+  functionDeclarationsFormatter,
 } from "../function-calling.js";
 
 export type ToolWorkerType = NewNodeFactory<
@@ -49,87 +53,146 @@ export type ToolWorkerType = NewNodeFactory<
 
 const sampleContext = "What is the square root of e?";
 
-const sampleInstruction = `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.`;
+const sampleInstruction = `You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.
+
+In situations where the tool use is not necessary, just carry the conversation with the user.`;
 
 const sampleTools = JSON.stringify([
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json",
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json",
+  {
+    title: "The Calculator Board",
+    description:
+      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+    version: "0.0.2",
+    edges: [
+      {
+        from: "compute",
+        to: "answer",
+        out: "*",
+        in: "",
+      },
+      {
+        from: "generator",
+        to: "compute",
+        out: "text",
+        in: "code",
+      },
+      {
+        from: "math-question",
+        to: "math-function",
+        out: "question",
+        in: "question",
+      },
+      {
+        from: "math-question",
+        to: "generator",
+        out: "generator",
+        in: "path",
+      },
+      {
+        from: "math-function",
+        to: "generator",
+        out: "prompt",
+        in: "text",
+      },
+    ],
+    nodes: [
+      {
+        id: "answer",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              result: {
+                type: "string",
+                title: "Answer",
+                description: "The answer to the math problem",
+              },
+            },
+            required: ["text"],
+          },
+        },
+      },
+      {
+        id: "compute",
+        type: "runJavascript",
+        configuration: {
+          name: "compute",
+        },
+      },
+      {
+        id: "generator",
+        type: "invoke",
+        configuration: {},
+      },
+      {
+        id: "math-question",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              question: {
+                type: "string",
+                title: "Math problem",
+                description: "Ask a math question",
+                examples: ["What is the square root of pi?"],
+              },
+              generator: {
+                type: "string",
+                title: "Generator",
+                description: "The URL of the generator to call",
+                default: "text-generator.json",
+              },
+            },
+            required: ["text"],
+          },
+        },
+      },
+      {
+        id: "math-function",
+        type: "promptTemplate",
+        configuration: {
+          template:
+            "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem.\n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:",
+        },
+      },
+    ],
+    graphs: {},
+  },
 ]);
 
-type FunctionSignatureItem = {
-  function: { name: string };
-  boardURL: string;
-};
-
-const formatResults = code(({ list }) => {
-  const tools: unknown[] = [];
-  const urlMap: Record<string, string> = {};
-  (list as FunctionSignatureItem[]).forEach((item) => {
-    tools.push(item.function);
-    urlMap[item.function.name] = item.boardURL;
-  });
-  return { tools, urlMap };
-});
-
-const boardToFunction = board(({ item }) => {
-  const url = item.isString();
-  const getBoard = core.fetch({
-    url,
-  });
-
-  // TODO: Convert to `code`.
-  const getFunctionSignature = json.jsonata({
-    $id: "getFunctionSignature",
-    expression: `
-      (
-        $adjustType := function ($type) {
-            $type = "object" or $type = "array" ? "string" : $type
-        };
-
-        {
-        "function": {
-            "name": $replace(title, /\\W/, "_"),
-            "description": description,
-            "parameters": {
-                "type": "object",
-                "properties": nodes[type="input"][0].configuration.schema.properties ~> $each(function($v, $k) {
-                { $k: {
-                    "type": $v.type ~> $adjustType,
-                    "description": $v.description
-                } }
-                }) ~> $merge
-            }
-        },
-        "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
-        }
-    )`,
-    json: getBoard.response,
-    raw: true,
-  });
-
-  return { function: getFunctionSignature.function, boardURL: url };
-});
-
-export default await board(({ context, instruction, tools }) => {
+const toolWorker = await board(({ context, instruction, tools, retry }) => {
   context
-    .title("Context")
+    .title("Context In")
     .isArray()
     .behavior("llm-content")
     .optional()
     .default(sampleContext);
   instruction
     .title("Instruction")
+    .description(
+      "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action."
+    )
     .format("multiline")
     .examples(sampleInstruction);
   tools
     .title("Tools")
+    .description("The boards to use as tools")
     .isArray()
     .behavior("board")
     .optional()
     .examples(sampleTools)
     .default("[]");
+  retry
+    .title("Retry Count")
+    .description("How many times to retry in case of LLM error")
+    .isNumber()
+    .optional()
+    .default("5");
 
-  const buildContext = contextBuilder({
+  const buildContext = contextBuilderWithoutSystemInstruction({
     $id: "buildContext",
     $metadata: {
       title: "Build Context",
@@ -146,11 +209,11 @@ export default await board(({ context, instruction, tools }) => {
       title: "Turn Boards into Functions",
       description: "Turning provided boards into functions",
     },
-    board: boardToFunction,
+    board: "#boardToFunction",
     list: tools.isArray(),
   });
 
-  const formatFunctionDeclarations = formatResults({
+  const formatFunctionDeclarations = functionDeclarationsFormatter({
     $id: "formatFunctionDeclarations",
     $metadata: {
       title: "Format Function Declarations",
@@ -164,10 +227,10 @@ export default await board(({ context, instruction, tools }) => {
     $metadata: { title: "Do Work", description: "Using Gemini to do the work" },
     tools: formatFunctionDeclarations.tools,
     context: buildContext.context,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
+    systemInstruction: instruction,
   });
 
-  const router = functionCallOrText({
+  const router = functionOrTextRouter({
     $id: "router",
     $metadata: {
       title: "Router",
@@ -222,7 +285,7 @@ export default await board(({ context, instruction, tools }) => {
     },
     tools: formatFunctionDeclarations.tools,
     context: formatFunctionResponse.context,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
+    retry,
   });
 
   const assembleContext = contextAssembler({
@@ -245,12 +308,30 @@ export default await board(({ context, instruction, tools }) => {
     text: replyToFunction.text,
   });
 
+  const assembleNonFunctionCallContext = contextAssembler({
+    $metadata: {
+      title: "Assemble Non-function call Context",
+      description: "Assembling the final context for the output",
+    },
+    generated: router.context,
+    context: buildContext.context,
+  });
+
   return {
-    context: router.context,
+    context: assembleNonFunctionCallContext.context,
     text: router.text,
   };
 }).serialize({
   title: "Tool Worker",
   description: "A worker that can use tools to accomplish tasks.",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });
+
+toolWorker.graphs = {
+  boardToFunction: boardToFunction,
+};
+
+export default toolWorker;

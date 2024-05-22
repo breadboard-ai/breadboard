@@ -6,9 +6,8 @@
 
 import test from "ava";
 
-import {
+import urlTemplate, {
   getUrlTemplateParameters,
-  urlTemplateDescriber,
 } from "../../src/nodes/url-template.js";
 
 test("getUrlTemplateParameters produces valid results", (t) => {
@@ -57,7 +56,7 @@ test("getUrlTemplateParameters produces valid results", (t) => {
 
 test("`urlTemplateDescriber` produces valid results", async (t) => {
   {
-    const description = await urlTemplateDescriber({
+    const description = await urlTemplate.describe({
       template: "https://example.com/{path}",
     });
     t.like(description, {
@@ -79,7 +78,7 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
     });
   }
   {
-    const description = await urlTemplateDescriber({
+    const description = await urlTemplate.describe({
       template: "https://example.com/{/path}",
     });
     t.like(description, {

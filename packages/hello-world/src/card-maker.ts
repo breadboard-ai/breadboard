@@ -42,7 +42,7 @@ export default await board(({ drawing }) => {
   // Ask Gemini Pro Vision to describe the picture.
   const describePicture = core.invoke({
     $id: "describePicture",
-    path: webcamBoard,
+    $board: webcamBoard,
     picture: drawing,
     prompt:
       "Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try to come up with as many details as possible. Improvise if necessary.",

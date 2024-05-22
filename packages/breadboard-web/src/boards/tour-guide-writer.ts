@@ -41,6 +41,7 @@ const outputSchema = {
       type: "string",
       title: "Guide",
       description: "The tour guide for the specified location",
+      format: "markdown",
     },
   },
 } satisfies Schema;
@@ -100,7 +101,7 @@ const graph = board(() => {
   const travelItineraryGenerator = core.invoke({
     $id: "travelItineraryGenerator",
     stopSequences: ["\n[Place]"],
-    path: parameters.generator as V<string>,
+    $board: parameters.generator as V<string>,
     useStreaming: false,
   });
 
@@ -146,17 +147,24 @@ const graph = board(() => {
     const guideGenerator = core.invoke({
       $id: "guideGenerator",
       stopSequences: ["\n[City]"],
-      path: generator as V<string>,
+      $board: generator as V<string>,
       useStreaming: false,
     });
 
     guideTemplate.prompt.as("text").to(guideGenerator);
     return guideGenerator.text.as("guide").to(base.output({}));
-  }).in({ location: parameters.location, generator: parameters.generator });
+  });
+
+  const guideWithParameters = core.curry({
+    $metadata: { title: "Curry Params into Guide" },
+    $board: createGuide,
+    location: parameters.location,
+    generator: parameters.generator,
+  });
 
   const createGuides = core.map({
     $id: "createGuides",
-    board: createGuide,
+    board: guideWithParameters.board,
     list: splitItinerary.list,
   });
 

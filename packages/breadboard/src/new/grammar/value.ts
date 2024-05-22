@@ -38,6 +38,20 @@ export function isValue<T extends NodeValue = NodeValue>(
   );
 }
 
+const isSchema = (o: Schema | Schema[]): o is Schema => {
+  return !Array.isArray(o);
+};
+
+const getItemSchema = (schema: Schema) => {
+  if (schema.type === "array") {
+    schema.items ??= {};
+    const itemSchema = isSchema(schema.items) ? schema.items : schema.items[0];
+    itemSchema.type ??= "object";
+    return itemSchema;
+  }
+  return schema;
+};
+
 export class Value<T extends NodeValue = NodeValue>
   extends AbstractValue<T>
   implements PromiseLike<T | undefined>
@@ -226,11 +240,6 @@ export class Value<T extends NodeValue = NodeValue>
     return this as unknown as AbstractValue<NodeValue[]>;
   }
 
-  isImage(mimeType = "image/png"): AbstractValue<unknown> {
-    this.#schema.type = mimeType;
-    return this;
-  }
-
   isObject(): AbstractValue<{ [key: string]: NodeValue }> {
     this.#schema.type = "object";
     return this as unknown as AbstractValue<{
@@ -249,7 +258,8 @@ export class Value<T extends NodeValue = NodeValue>
   }
 
   format(format: string): AbstractValue<T> {
-    this.#schema.format = format;
+    const schema = getItemSchema(this.#schema);
+    schema.format = format;
     return this;
   }
 
@@ -269,7 +279,7 @@ export class Value<T extends NodeValue = NodeValue>
   }
 
   behavior(...tags: BehaviorSchema[]): AbstractValue<T> {
-    const schema = this.#schema;
+    const schema = getItemSchema(this.#schema);
     schema.behavior ??= [];
     schema.behavior.push(...tags);
     return this;

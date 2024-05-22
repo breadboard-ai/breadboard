@@ -245,6 +245,17 @@ We can get the [JSON schema](https://json-schema.org/) of the port:
 const schema = firstInputPort.schema;
 ```
 
+If we want to check whether a given port can connect to another port, we can use the `type` property:
+
+```ts
+// Returns an `InspectablePortType` instance.
+const type = outputPort.type;
+// Returns true if `outputPort` can connect to the `inputPort`.
+const canConnect = type.canConnect(firstInputPort.type);
+```
+
+The `canConnect` method will examine the schema of both ports and return `true` when the schemas are compatible and `false` when they are not.
+
 We can check if this is the "star port".
 
 ```ts
@@ -290,6 +301,8 @@ The port status can be one of the following values:
 
 ## Subgraphs
 
+### Nodes that invoke graphs
+
 Some nodes may represent entire subgraphs. For instance, `core.invoke` node takes a `board` as its argument, and invokes that graph, passing its own inputs to this subgraph and returning its results as own outputs.
 
 > [!TIP]
@@ -301,3 +314,22 @@ Some nodes may represent entire subgraphs. For instance, `core.invoke` node take
 It is the responsibility of the respective nodes to provide an accurate description of their input and output ports.
 
 For instance, when `core.invoke` is asked to describe itself -- and provided it has all the necessary information, and the BGL document has a valid `url` property, -- it will show the invoked graph's inputs and outputs as its own ports.
+
+### Embedded subgraphs
+
+Similar in spirit, but different in quality are **embedded subgraphs**. Every BGL document may have zero or more subgraphs embedded into it. These subgraphs are miniature BGL documents in themselves.
+
+Each embedded subgraph has an identifier that is unique within this BGL document. This identifier is can be used to address the subgraph in a URL with a fragment identifier (commonly known as 'hash'). For example, if the BGL file at `http://example.com/foo.bgl.json` has an embedded subgraph with the ide of `bar`, this subgraph's URL is `http://example.com/foo.bgl.json#bar`.
+
+To find out whether or not a given BGL document has such graphs, use the `graphs` property:
+
+```ts
+// Returns an object with keys as subgraph identifiers
+// and values as `InspectableGraph` instances
+const subgraphs = graph.graphs();
+// it can be null.
+if (subgraphs !== null) {
+  // Returns an `InspectableGraph` instance
+  const foo = subgraphs["foo"];
+}
+```

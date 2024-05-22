@@ -5,10 +5,12 @@
  */
 
 // import { GraphDescriptor } from "@google-labs/breadboard";
+import { SerializableBoard, serialize } from "@breadboard-ai/build";
 import { Dirent } from "fs";
 import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { formatGraphDescriptor } from "@google-labs/breadboard";
 // import { execSync } from "child_process";
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
@@ -54,9 +56,9 @@ async function findTsFiles(dir: string): Promise<string[]> {
 
 async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
   try {
-    const board = await import(filePath);
+    const module = await import(filePath);
 
-    if (!board.default) {
+    if (!module.default) {
       // This is probably not a board or a board that doesn't want to be in the
       // manifest.
       return;
@@ -71,18 +73,41 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
     // Make sure the directories exist
     await mkdir(graphDir, { recursive: true });
 
-    const manifestEntry: ManifestItem = {
-      title: board.default.title ?? "Untitled",
-      url: `/graphs/${relativePath.replace(".ts", ".json")}`,
-      version: board.default.version ?? undefined,
-    };
-
-    await writeFile(
-      path.join(graphDir, jsonFile),
-      JSON.stringify(board.default, null, 2)
-    );
-    return manifestEntry;
+    const url = `/graphs/${relativePath.replace(".ts", ".json")}`;
+    if ("inputs" in module.default && "outputs" in module.default) {
+      // TODO(aomarks) Not a great way to detect build boards.
+      const board = module.default as SerializableBoard;
+      const manifest: ManifestItem = {
+        title: module.default.title ?? "Untitled (build API)",
+        url,
+        version: module.default.version ?? "",
+      };
+      await writeFile(
+        path.join(graphDir, jsonFile),
+        JSON.stringify(serialize(board), null, 2)
+      );
+      return manifest;
+    } else {
+      const board = module.default as SerializableBoard;
+      const manifest: ManifestItem = {
+        title: module.default.title ?? "Untitled",
+        url,
+        version: module.default.version ?? undefined,
+      };
+      await writeFile(
+        path.join(graphDir, jsonFile),
+        JSON.stringify(
+          formatGraphDescriptor(JSON.parse(JSON.stringify(board))),
+          null,
+          2
+        )
+      );
+      return manifest;
+    }
   } catch (e) {
+    if (e instanceof Error) {
+      console.error(e.stack);
+    }
     throw new Error(`Error loading ${filePath}: ${e}`);
   }
 }

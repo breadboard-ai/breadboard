@@ -5,7 +5,7 @@
  */
 
 import {
-  type GraphMetadata,
+  type GraphInlineMetadata,
   type InputValues,
   BoardRunner,
   RunResult,
@@ -51,7 +51,7 @@ export async function runResultLoop(
 }
 
 export const handleNonPostRequest = (
-  { url, title, description, version }: GraphMetadata,
+  { url, title, description, version }: GraphInlineMetadata,
   req: ServerRequest,
   res: ServerResponse
 ): boolean => {

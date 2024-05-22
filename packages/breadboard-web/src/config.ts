@@ -14,21 +14,13 @@ import {
 import GeminiKit from "@google-labs/gemini-kit";
 import { loadKits } from "./utils/kit-loader";
 
-const PROXY_NODES = [
-  "palm-generateText",
-  "palm-embedText",
-  "secrets",
-  "fetch",
-  // TODO: These are only meaningful when proxying to main thread,
-  //       not anywhere else. Need to figure out what to do here.
-  // "credentials",
-  // "driveList",
-];
+const PROXY_NODES = ["secrets", "fetch"];
 
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 
 const HARNESS_SWITCH_KEY = "bb-harness";
+const PROXY_SERVER_URL_KEY = "bb-node-proxy-server";
 
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const WORKER_HARNESS_VALUE = "worker";
@@ -47,11 +39,17 @@ export const createRunConfig = async (url: string): Promise<RunConfig> => {
 
   const proxy: HarnessProxyConfig[] = [];
   if (harness === PROXY_SERVER_HARNESS_VALUE) {
-    proxy.push({
-      location: "http",
-      url: PROXY_SERVER_URL,
-      nodes: PROXY_NODES,
-    });
+    // try to find node proxy server in local storage:
+    const proxyServerURL =
+      globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY) ?? PROXY_SERVER_URL;
+    if (proxyServerURL) {
+      console.log("🚀 Using proxy server:", proxyServerURL);
+      proxy.push({
+        location: "http",
+        url: proxyServerURL,
+        nodes: PROXY_NODES,
+      });
+    }
   } else if (harness === WORKER_HARNESS_VALUE) {
     proxy.push({ location: "main", nodes: PROXY_NODES });
   }

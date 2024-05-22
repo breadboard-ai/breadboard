@@ -1,24 +1,42 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
 import { PortStatus } from "@google-labs/breadboard";
+import { getGlobalColor } from "./utils.js";
+
+const connectedColor = getGlobalColor("--bb-inputs-300");
+const danglingColor = getGlobalColor("--bb-warning-400");
+const indeterminateColor = getGlobalColor("--bb-neutral-400");
+const missingColor = getGlobalColor("--bb-warning-300");
+const readyColor = getGlobalColor("--bb-neutral-200");
+const configuredColor = getGlobalColor("--bb-boards-500");
+
+const connectedBorderColor = getGlobalColor("--bb-inputs-700");
+const danglingBorderColor = getGlobalColor("--bb-warning-800");
+const indeterminateBorderColor = getGlobalColor("--bb-neutral-800");
+const missingBorderColor = getGlobalColor("--bb-warning-700");
+const readyBorderColor = getGlobalColor("--bb-neutral-700");
+const configuredBorderColor = getGlobalColor("--bb-boards-700");
 
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
   #radius = 3;
   #status: PortStatus = PortStatus.Indeterminate;
-  #colors: { [K in PortStatus]: number } = {
-    [PortStatus.Connected]: 0xaced8f,
-    [PortStatus.Dangling]: 0xdf4646,
-    [PortStatus.Indeterminate]: 0xcccccc,
-    [PortStatus.Missing]: 0xdf4646,
-    [PortStatus.Ready]: 0xeeeeee,
+  #configured = false;
+  #colors: { [K in PortStatus]: number } & { configured: number } = {
+    [PortStatus.Connected]: connectedColor,
+    [PortStatus.Dangling]: danglingColor,
+    [PortStatus.Indeterminate]: indeterminateColor,
+    [PortStatus.Missing]: missingColor,
+    [PortStatus.Ready]: readyColor,
+    configured: configuredColor,
   };
-  #borderColors: { [K in PortStatus]: number } = {
-    [PortStatus.Connected]: 0x475d3f,
-    [PortStatus.Dangling]: 0x990808,
-    [PortStatus.Indeterminate]: 0xbbbbbb,
-    [PortStatus.Missing]: 0x990808,
-    [PortStatus.Ready]: 0xaaaaaa,
+  #borderColors: { [K in PortStatus]: number } & { configured: number } = {
+    [PortStatus.Connected]: connectedBorderColor,
+    [PortStatus.Dangling]: danglingBorderColor,
+    [PortStatus.Indeterminate]: indeterminateBorderColor,
+    [PortStatus.Missing]: missingBorderColor,
+    [PortStatus.Ready]: readyBorderColor,
+    configured: configuredBorderColor,
   };
   #editable = false;
   #overrideStatus: PortStatus | null = null;
@@ -28,22 +46,14 @@ export class GraphNodePort extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
-  }
-
-  set connectedColor(color: number) {
-    this.#colors.connected = color;
-  }
-
-  get connectedColor() {
-    return this.#colors.connected;
-  }
-
-  set connectedBorderColor(color: number) {
-    this.#borderColors.connected = color;
-  }
-
-  get connectedBorderColor() {
-    return this.#borderColors.connected;
+    this.onRender = () => {
+      if (!this.#isDirty) {
+        return;
+      }
+      this.#isDirty = false;
+      this.clear();
+      this.#draw();
+    };
   }
 
   set editable(editable: boolean) {
@@ -55,6 +65,10 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   set radius(radius: number) {
+    if (radius === this.#radius) {
+      return;
+    }
+
     this.#radius = radius;
     this.#isDirty = true;
   }
@@ -63,7 +77,24 @@ export class GraphNodePort extends PIXI.Graphics {
     return this.#radius;
   }
 
+  set configured(configured: boolean) {
+    if (configured === this.#configured) {
+      return;
+    }
+
+    this.#configured = configured;
+    this.#isDirty = true;
+  }
+
+  get configured() {
+    return this.#configured;
+  }
+
   set overrideStatus(overrideStatus: PortStatus | null) {
+    if (overrideStatus === this.#overrideStatus) {
+      return;
+    }
+
     this.#overrideStatus = overrideStatus;
     this.#isDirty = true;
   }
@@ -73,20 +104,16 @@ export class GraphNodePort extends PIXI.Graphics {
   }
 
   set status(status: PortStatus) {
+    if (status === this.#status) {
+      return;
+    }
+
     this.#status = status;
     this.#isDirty = true;
   }
 
   get status() {
     return this.#status;
-  }
-
-  render(renderer: PIXI.Renderer): void {
-    if (this.#isDirty) {
-      this.#isDirty = false;
-      this.#draw();
-    }
-    super.render(renderer);
   }
 
   #draw() {
@@ -99,13 +126,21 @@ export class GraphNodePort extends PIXI.Graphics {
     );
 
     const status = this.#overrideStatus ?? this.#status;
-
-    this.lineStyle({
-      color: this.#borderColors[status],
+    this.setStrokeStyle({
+      color: this.#configured
+        ? this.#borderColors["configured"]
+        : this.#borderColors[status],
       width: 1,
     });
-    this.beginFill(this.#colors[status]);
-    this.drawCircle(0, 0, this.#radius);
-    this.endFill();
+
+    this.beginPath();
+    this.circle(0, 0, this.#radius);
+    this.fill({
+      color: this.#configured
+        ? this.#colors["configured"]
+        : this.#colors[status],
+    });
+    this.stroke();
+    this.closePath();
   }
 }

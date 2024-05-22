@@ -18,7 +18,7 @@ export default await board(({ text, n }) => {
 
   const { best, list, rank } = core.invoke({
     $id: "bestOfN",
-    path: "best-of-n.json",
+    $board: "best-of-n.json",
     agent: "ad-writer.json",
     context: [],
     n,

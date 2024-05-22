@@ -1,0 +1,232 @@
+{
+  "title": "Open Alex Entity Search Results",
+  "description": "Query the OpenAlex API for a list entities",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "entity",
+      "in": "entity"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "page",
+      "in": "page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "per_page",
+      "in": "per_page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "search",
+      "in": "search"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "select",
+      "in": "select"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "group_by",
+      "in": "group_by"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "meta",
+      "in": "meta"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "response",
+      "out": "results",
+      "in": "results"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "response",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "OpenAlex Search",
+          "properties": {
+            "entity": {
+              "type": "string",
+              "title": "Entity",
+              "description": "Entity type to search for",
+              "default": "works",
+              "enum": [
+                "works",
+                "authors",
+                "sources",
+                "institutions",
+                "topics",
+                "publishers",
+                "funders",
+                "concepts"
+              ]
+            },
+            "page": {
+              "type": "integer",
+              "title": "Page number",
+              "description": "Page number to return",
+              "default": "1"
+            },
+            "per_page": {
+              "type": "integer",
+              "title": "Results per page",
+              "description": "Number of results to return per page",
+              "default": "5"
+            },
+            "search": {
+              "type": "string",
+              "title": "Search term",
+              "description": "Search term to search for, double quotes for exact match",
+              "default": "Artificial Intelligence"
+            },
+            "select": {
+              "type": "string",
+              "title": "Select",
+              "description": "Comma-separated list of fields to return",
+              "default": "id,display_name,title,relevance_score"
+            }
+          },
+          "type": "object",
+          "required": [
+            "search"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "response",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "group_by": {
+              "type": "array",
+              "items": {}
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "db_response_time_ms": {
+                  "type": "integer"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "groups_count": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "count",
+                "db_response_time_ms",
+                "page",
+                "per_page",
+                "groups_count"
+              ]
+            },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "relevance_score": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "url": {
+              "type": "string",
+              "title": "URL",
+              "description": "URL to fetch"
+            }
+          },
+          "required": [
+            "group_by",
+            "meta",
+            "results",
+            "url"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}"
+      }
+    }
+  ]
+}

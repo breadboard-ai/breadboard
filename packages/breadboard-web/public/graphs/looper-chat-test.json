@@ -1,0 +1,111 @@
+{
+  "title": "Looper Chat Testing Grounds",
+  "description": "A board where we teach the Looper Node facilitate conversations.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "human-6",
+      "to": "looper-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-4",
+      "to": "output-2",
+      "out": "done",
+      "in": "context"
+    },
+    {
+      "from": "looper-4",
+      "to": "specialist-5",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "passthrough-3",
+      "to": "looper-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "specialist-5",
+      "to": "human-6",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context out",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "human-6",
+      "type": "human",
+      "configuration": {},
+      "metadata": {
+        "title": "User",
+        "description": "Giving control back to the user"
+      }
+    },
+    {
+      "id": "looper-4",
+      "type": "looper",
+      "configuration": {
+        "task": {
+          "parts": [
+            {
+              "text": "Chat until \"##DONE##\"."
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Looper"
+      }
+    },
+    {
+      "id": "passthrough-3",
+      "type": "passthrough",
+      "configuration": {
+        "context": []
+      },
+      "metadata": {
+        "title": "Start"
+      }
+    },
+    {
+      "id": "specialist-5",
+      "type": "specialist",
+      "configuration": {
+        "persona": {
+          "parts": [
+            {
+              "text": "You are a friendly chat bot. You typically start conversation with a warm greeting, and then get to work.\n  \n  Your job is to collect the name, the location, and the instagram account of the customer's business.\n\n  When you have this information, reply with a brief summary of the information you've collected in a neat bulleted list, then conclude the conversation by saying \"OK, hold on one moment while I look that up. I'll be with you in just a couple of minutes. Stand by. ##DONE##\""
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Chat Bot"
+      }
+    }
+  ]
+}
