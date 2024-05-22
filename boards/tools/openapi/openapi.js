@@ -173,7 +173,7 @@ const generateAPISpecs = code(({ json, context, builderPath }) => {
             operationId,
             url: baseUrl.replace(/\/$/, "") + key,
             method: method.toUpperCase(),
-            description: data.description,
+            description: data.description + data.summary || "",
             summary: data.summary,
             parameters,
             requestBody,
@@ -211,7 +211,8 @@ const createSpecBoard = board((apiSpec) => {
           properties: parameters.reduce((params, param) => {
             const schema = { ...param.schema };
             schema.title = param.name;
-            schema.description = param.description || param.schema.title;
+            schema.description =
+              param.description || param.summary || param.name;
 
             if (param.required) {
               if ("default" in param == false) {
