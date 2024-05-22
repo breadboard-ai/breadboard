@@ -57,6 +57,8 @@ If you want to use [TypeScript](https://www.typescriptlang.org/), you will need 
 - You can use npm to download TypeScript into your project using `npm install typescript --save-dev`.
 - You can then initialize the TypeScript project and create a `tsconfig.json` file using `npx tsc --init`.
 
+> **For Windows Users**: For compatability, [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) are recommended for ease of use.
+
 ### Useful packages (optional)
 
 | Name                                                                                            | Description                                                                                                                                    | Install                                   |
