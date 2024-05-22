@@ -306,7 +306,10 @@ const createSpecBoard = board((apiSpec) => {
         $board: item.builderPath,
         context: item.context,
         text: item.context,
-        theSchema: item.requestBody["application/json"]?.schema,
+        theSchema:
+          item.requestBody != undefined
+            ? item.requestBody["application/json"].schema
+            : undefined,
       };
     });
 
