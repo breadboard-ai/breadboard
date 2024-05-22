@@ -400,7 +400,7 @@ export class Main extends LitElement {
       .then(([kits]) => {
         this.kits = kits;
 
-        return this.#setRemoteServersFromSettings();
+        return this.#setBoardServersFromSettings();
       })
       .then(() => {
         this.#providers.map((provider) => {
@@ -439,7 +439,7 @@ export class Main extends LitElement {
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
-  async #setRemoteServersFromSettings() {
+  async #setBoardServersFromSettings() {
     const remoteServers = this.#settings?.getSection(
       BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS
     );
@@ -1623,7 +1623,7 @@ export class Main extends LitElement {
 
           try {
             await this.#settings.save(evt.settings);
-            await this.#setRemoteServersFromSettings();
+            await this.#setBoardServersFromSettings();
             this.toast(
               "Saved settings",
               BreadboardUI.Events.ToastType.INFORMATION
@@ -1646,9 +1646,13 @@ export class Main extends LitElement {
 
     let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showFirstRun) {
+      const currentUrl = new URL(window.location.href);
+      const boardServerUrl = currentUrl.searchParams.get("boardserver");
+
       firstRunOverlay = html`<bb-first-run-overlay
         class="settings"
         .settings=${this.#settings?.values || null}
+        .boardServerUrl=${boardServerUrl}
         @bbsettingsupdate=${async (
           evt: BreadboardUI.Events.SettingsUpdateEvent
         ) => {
@@ -1658,7 +1662,7 @@ export class Main extends LitElement {
 
           try {
             await this.#settings.save(evt.settings);
-            await this.#setRemoteServersFromSettings();
+            await this.#setBoardServersFromSettings();
             this.toast(
               "Welcome to Breadboard!",
               BreadboardUI.Events.ToastType.INFORMATION
@@ -1672,11 +1676,15 @@ export class Main extends LitElement {
           }
 
           this.#setUrlParam("firstrun", null);
+          this.#setUrlParam("boardserver", null);
           this.showFirstRun = false;
+          this.#setBoardServersFromSettings();
           this.requestUpdate();
         }}
         @bboverlaydismissed=${() => {
           this.#setUrlParam("firstrun", null);
+          this.#setUrlParam("boardserver", null);
+          this.#setBoardServersFromSettings();
           this.showFirstRun = false;
         }}
       ></bb-first-run-overlay>`;
