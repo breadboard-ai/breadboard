@@ -362,7 +362,7 @@
                           "id": "getBuilderPath",
                           "type": "runJavascript",
                           "configuration": {
-                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema:\n          item.requestBody != undefined\n            ? item.requestBody[\"application/json\"].schema\n            : undefined,\n      };\n    };",
+                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema:\n          item.requestBody != '{ \"type\": \"null\" }'\n            ? item.requestBody[\"application/json\"].schema\n            : undefined,\n      };\n    };",
                             "name": "getBuilderPath",
                             "raw": true
                           }
