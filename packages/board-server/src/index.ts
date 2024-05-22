@@ -40,33 +40,33 @@ const server = createServer(async (req, res) => {
     ? new URL(url, HOSTNAME)
     : null;
   if (!resolvedURL) {
-    serverError(res, corsHeaders, `Invalid URL: ${url}`);
+    serverError(res, `Invalid URL: ${url}`);
     return;
   }
 
   const pathname = resolvedURL.pathname;
   if (!pathname.startsWith(API_ENTRY)) {
-    serverError(res, corsHeaders, `Not found: ${url}`);
+    serverError(res, `Not found: ${url}`);
     return;
   }
   const apiPath = getApiPath(pathname);
   try {
     if (apiPath.length === 0) {
-      if (await list(apiPath, corsHeaders, req, res)) return true;
+      if (await list(apiPath, req, res)) return true;
     } else {
       if (req.method === "GET") {
-        if (await get(apiPath, corsHeaders, req, res)) return true;
+        if (await get(apiPath, req, res)) return true;
       } else if (req.method === "POST") {
-        if (await post(apiPath, corsHeaders, req, res)) return true;
+        if (await post(apiPath, req, res)) return true;
       } else if (req.method === "DELETE") {
-        if (await del(apiPath, corsHeaders, req, res)) return true;
+        if (await del(apiPath, req, res)) return true;
       } else {
-        serverError(res, corsHeaders, `Method not allowed: ${req.method}`);
+        serverError(res, `Method not allowed: ${req.method}`);
         return;
       }
     }
   } catch (e) {
-    serverError(res, corsHeaders, `API Error: ${e}`);
+    serverError(res, `API Error: ${e}`);
     return;
   }
 });

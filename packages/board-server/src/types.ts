@@ -8,7 +8,6 @@ import type { IncomingMessage, ServerResponse } from "http";
 
 export type ApiHandler = (
   path: string,
-  headers: Record<string, string | number>,
   req: IncomingMessage,
   res: ServerResponse
 ) => Promise<boolean>;

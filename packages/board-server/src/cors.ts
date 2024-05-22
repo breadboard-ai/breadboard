@@ -6,7 +6,7 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 
-const headers = {
+const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE",
   "Access-Control-Allow-Headers":
@@ -16,17 +16,20 @@ const headers = {
 
 export const cors = (req: IncomingMessage, res: ServerResponse) => {
   if (req.method === "OPTIONS") {
-    res.writeHead(204, headers);
+    res.writeHead(204, CORS_HEADERS);
     res.end();
     return null;
   }
 
   const method = req.method || "GET";
   if (["GET", "POST", "DELETE"].indexOf(method) > -1) {
-    return structuredClone(headers);
+    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
+    return true;
   }
 
-  res.writeHead(405, headers);
+  res.writeHead(405, CORS_HEADERS);
   res.end(`${req.method} is not allowed for the request.`);
-  return null;
+  return false;
 };
