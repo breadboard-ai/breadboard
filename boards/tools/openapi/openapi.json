@@ -185,7 +185,10 @@
                         "title": "builderPath"
                       }
                     },
-                    "required": ["item", "builderPath"]
+                    "required": [
+                      "item",
+                      "builderPath"
+                    ]
                   }
                 }
               },
@@ -309,7 +312,10 @@
                                 "api_json_response": {
                                   "title": "response",
                                   "description": "The response from the fetch request",
-                                  "type": ["string", "object"]
+                                  "type": [
+                                    "string",
+                                    "object"
+                                  ]
                                 }
                               }
                             }
@@ -349,7 +355,10 @@
                                   "title": "input"
                                 }
                               },
-                              "required": ["item", "graph"]
+                              "required": [
+                                "item",
+                                "graph"
+                              ]
                             }
                           }
                         },
@@ -362,7 +371,7 @@
                           "id": "getBuilderPath",
                           "type": "runJavascript",
                           "configuration": {
-                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema:\n          item.requestBody != '{ \"type\": \"null\" }'\n            ? item.requestBody[\"application/json\"].schema\n            : undefined,\n      };\n    };",
+                            "code": "const getBuilderPath = ({ item }) => {\n      return {\n        path: item.builderPath,\n        $board: item.builderPath,\n        context: item.context,\n        text: item.context,\n        theSchema:\n          item.requestBody != undefined\n            ? item.requestBody[\"application/json\"].schema\n            : '{ \"type\": \"null\" }',\n      };\n    };",
                             "name": "getBuilderPath",
                             "raw": true
                           }
@@ -475,7 +484,11 @@
               "type": "string"
             }
           },
-          "required": ["url", "context", "builderPath"]
+          "required": [
+            "url",
+            "context",
+            "builderPath"
+          ]
         }
       }
     },

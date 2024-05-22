@@ -307,9 +307,9 @@ const createSpecBoard = board((apiSpec) => {
         context: item.context,
         text: item.context,
         theSchema:
-          item.requestBody != '{ "type": "null" }'
+          item.requestBody != undefined
             ? item.requestBody["application/json"].schema
-            : undefined,
+            : '{ "type": "null" }',
       };
     });
 
