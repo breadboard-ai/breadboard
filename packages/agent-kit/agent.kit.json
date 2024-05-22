@@ -2341,6 +2341,12 @@
           "to": "fn-4",
           "out": "*",
           "in": ""
+        },
+        {
+          "from": "input-1",
+          "to": "fn-4",
+          "out": "merge",
+          "in": "merge"
         }
       ],
       "nodes": [
@@ -2373,7 +2379,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = inputs=>{const entries=Object.entries(inputs).sort();const context=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}return{context}};",
+            "code": "const fn_4 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
             "name": "fn_4",
             "raw": true
           },
@@ -2389,6 +2395,27 @@
           "metadata": {
             "title": "Input",
             "description": "Getting all the data"
+          }
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "merge": {
+                  "type": "boolean",
+                  "behavior": [
+                    "config"
+                  ],
+                  "title": "Merge Contexts",
+                  "default": "false",
+                  "description": "Merge the last items of all incoming conversation into one."
+                }
+              },
+              "required": []
+            }
           }
         }
       ],

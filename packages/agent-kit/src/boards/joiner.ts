@@ -21,7 +21,15 @@ export type JoinerType = NewNodeFactory<
   }
 >;
 
-export default await board(() => {
+export default await board(({ merge }) => {
+  merge
+    .isBoolean()
+    .behavior("config")
+    .title("Merge Contexts")
+    .optional()
+    .default("false")
+    .description("Merge the last items of all incoming conversation into one.");
+
   const input = base.input({
     $metadata: { title: "Input", description: "Getting all the data" },
   });
@@ -32,6 +40,7 @@ export default await board(() => {
       description: "Combining context into one",
     },
     ...input,
+    merge,
   });
 
   const output = base.output({

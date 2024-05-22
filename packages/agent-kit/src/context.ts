@@ -283,13 +283,31 @@ export const cleanUpMetadata = code(cleanUpMetadataFunction);
 /**
  * Given a bunch of context, combines them all into one.
  */
-export const combineContextsFunction = fun((inputs) => {
+export const combineContextsFunction = fun(({ merge, ...inputs }) => {
   const entries = Object.entries(inputs).sort();
+
   const context: Context[] = [];
-  for (const entry of entries) {
-    const input = entry[1];
-    const c = (Array.isArray(input) ? input : [input]) as Context[];
-    context.push(...c);
+  if (merge) {
+    const parts: LlmContent["parts"] = [];
+    for (const entry of entries) {
+      const input = entry[1];
+      const c = (Array.isArray(input) ? input : [input]) as Context[];
+      const last = c[c.length - 1];
+      if (last) {
+        if (last.role === "$metadata") {
+          continue;
+        }
+        parts.push(...last.parts);
+      }
+    }
+    context.push({ parts });
+  } else {
+    for (const entry of entries) {
+      const input = entry[1];
+
+      const c = (Array.isArray(input) ? input : [input]) as Context[];
+      context.push(...c);
+    }
   }
   return { context };
 });
