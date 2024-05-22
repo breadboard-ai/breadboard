@@ -832,9 +832,12 @@ export class GraphNode extends PIXI.Container {
   #drawInPorts(portStartY = 0) {
     this.#inPortLocations.clear();
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
+    const sortedInPorts = [...this.#inPortsData].sort(
+      ([portNameA], [portNameB]) => (portNameA > portNameB ? 1 : -1)
+    );
 
     let portY = portStartY;
-    for (const [portName, portItem] of this.#inPortsData) {
+    for (const [portName, portItem] of sortedInPorts) {
       if (!portItem) {
         console.warn(`No data for ${portName}`);
         continue;
@@ -865,9 +868,12 @@ export class GraphNode extends PIXI.Container {
   #drawOutPorts(portStartY = 0) {
     this.#outPortLocations.clear();
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
+    const sortedOutPorts = [...this.#outPortsData].sort(
+      ([portNameA], [portNameB]) => (portNameA > portNameB ? 1 : -1)
+    );
 
     let portY = portStartY;
-    for (const [portName, portItem] of this.#outPortsData) {
+    for (const [portName, portItem] of sortedOutPorts) {
       if (!portItem) {
         console.warn(`No label for ${portName}`);
         continue;
