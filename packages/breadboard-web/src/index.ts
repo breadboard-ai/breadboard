@@ -219,7 +219,7 @@ export class Main extends LitElement {
       padding: 8px;
       font-size: 0;
       margin-right: 0;
-      background: 4px center var(--bb-icon-settings);
+      background: center center var(--bb-icon-settings);
       background-repeat: no-repeat;
       width: 32px;
     }
