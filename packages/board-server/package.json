@@ -11,6 +11,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
+    "start": "node .",
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -21,15 +22,11 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc",
-        "../breadboard:build"
+        "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
-      "dependencies": [
-        "../breadboard:build:tsc"
-      ],
       "files": [
         "src/",
         "tsconfig.json",
@@ -71,12 +68,14 @@
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
-  "dependencies": {
-    "@google-labs/breadboard": "^0.20.0"
-  },
   "devDependencies": {
     "eslint": "^8.57.0",
     "@types/node": "^20.12.12",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "wireit": "^0.14.4"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-cloud/firestore": "^7.7.0"
   }
 }

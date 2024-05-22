@@ -11,6 +11,7 @@ import list from "./api/list.js";
 import get from "./api/get.js";
 import post from "./api/post.js";
 import del from "./api/delete.js";
+import { cors } from "./cors.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
@@ -26,6 +27,10 @@ const getApiPath = (path: string) => {
 };
 
 const server = createServer(async (req, res) => {
+  if (!cors(req, res)) {
+    return;
+  }
+
   const url = req.url;
   if (!url) {
     return;
