@@ -140,12 +140,12 @@ export class Navigation extends LitElement {
       content: "";
       width: 16px;
       height: 12px;
-      background: var(--bb-expand-arrow) 1px 2px no-repeat;
+      background: var(--bb-icon-expand) 0 0 / 16px 16px no-repeat;
       display: inline-block;
     }
 
     details[open] > summary::before {
-      background: var(--bb-collapse-arrow) 1px 2px no-repeat;
+      background: var(--bb-icon-collapse) 0 0 / 16px 16px no-repeat;
     }
 
     summary::-webkit-details-marker {

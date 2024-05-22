@@ -7,10 +7,10 @@
 import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
-  ["smart-toy", "/third_party/icons/smart-toy.svg"],
-  ["merge-type", "/third_party/icons/merge-type.svg"],
-  ["human", "/third_party/icons/human.svg"],
-  ["laps", "/third_party/icons/laps.svg"],
+  ["smart-toy", "/third_party/icons/smart-toy-48px.svg"],
+  ["merge-type", "/third_party/icons/merge-type-48px.svg"],
+  ["human", "/third_party/icons/human-48px.svg"],
+  ["laps", "/third_party/icons/laps-48px.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture>;

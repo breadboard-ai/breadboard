@@ -719,10 +719,11 @@ export class Graph extends PIXI.Container {
   }
 
   set collapseNodesByDefault(collapseNodesByDefault: boolean) {
-    if (collapseNodesByDefault !== this.#collapseNodesByDefault) {
-      this.#isDirty = true;
+    if (collapseNodesByDefault === this.#collapseNodesByDefault) {
+      return;
     }
 
+    this.#isDirty = true;
     this.#collapseNodesByDefault = collapseNodesByDefault;
     this.#setNodesCollapseState();
   }
@@ -1032,6 +1033,7 @@ export class Graph extends PIXI.Container {
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
+        graphNode.collapsed = this.collapseNodesByDefault;
 
         this.#graphNodeById.set(id, graphNode);
       }
@@ -1122,8 +1124,6 @@ export class Graph extends PIXI.Container {
         this.#layout.delete(id);
       }
     }
-
-    this.#setNodesCollapseState();
   }
 
   // TODO: Merge this with below.

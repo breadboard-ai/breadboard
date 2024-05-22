@@ -36,8 +36,8 @@ export class Toast extends LitElement {
         0 2px 3px 0 rgba(0, 0, 0, 0.13),
         0 7px 9px 0 rgba(0, 0, 0, 0.16);
       border-radius: calc(var(--bb-grid-size) * 8);
-      padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)
-        calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-5) var(--bb-grid-size-3)
+        var(--bb-grid-size-10);
 
       translate: 0 calc(var(--offset) * var(--bb-grid-size) * -8);
       transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -63,10 +63,10 @@ export class Toast extends LitElement {
     :host::before {
       content: "";
       position: absolute;
-      left: 16px;
-      top: 17px;
-      width: 24px;
-      height: 24px;
+      left: 12px;
+      top: 11px;
+      width: 20px;
+      height: 20px;
       background: var(--bb-toast-icon) center center no-repeat;
     }
 
