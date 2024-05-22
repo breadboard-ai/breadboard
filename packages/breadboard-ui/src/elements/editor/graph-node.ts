@@ -79,6 +79,7 @@ export class GraphNode extends PIXI.Container {
   #collapsed = false;
   #emitCollapseToggleEventOnNextDraw = false;
 
+  #showNodeTypeDescriptions = false;
   #overflowMenu = new GraphOverflowMenu();
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
   #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
@@ -277,6 +278,19 @@ export class GraphNode extends PIXI.Container {
     }
 
     this.#isDirty = true;
+  }
+
+  set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
+    if (this.#showNodeTypeDescriptions === showNodeTypeDescriptions) {
+      return;
+    }
+
+    this.#showNodeTypeDescriptions = showNodeTypeDescriptions;
+    this.#isDirty = true;
+  }
+
+  get showNodeTypeDescriptions() {
+    return this.#showNodeTypeDescriptions;
   }
 
   get selected() {
@@ -555,7 +569,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   #createTitleTextIfNeeded() {
-    const nodeTitle = `${this.#title} (${this.#type})`;
+    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#type})` : ""}`;
     if (this.#titleText) {
       if (this.#titleText.text !== nodeTitle) {
         this.#titleText.text = nodeTitle;

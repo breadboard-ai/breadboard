@@ -40,9 +40,6 @@ export class NodeMetaDetails extends LitElement {
   @state()
   expanded = false;
 
-  @property()
-  showNodeTypeDescriptions = true;
-
   #ignoreNextUpdate = false;
   #titleRef: Ref<HTMLSpanElement> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -310,17 +307,12 @@ export class NodeMetaDetails extends LitElement {
         const { node, metadata, kitNodeDescription } = data;
 
         return html`
-          ${this.showNodeTypeDescriptions
-            ? html`
-                <div id="overview">
-                  <h1 ${ref(this.#titleRef)}>
-                    ${metadata.title ?? node.descriptor.id}
-                    (${node.descriptor.type})
-                  </h1>
-                  <p>${kitNodeDescription ?? html`No description`}</p>
-                </div>
-              `
-            : nothing}
+          <div id="overview">
+            <h1 ${ref(this.#titleRef)}>
+              ${metadata.title ?? node.descriptor.id} (${node.descriptor.type})
+            </h1>
+            <p>${kitNodeDescription ?? html`No description`}</p>
+          </div>
           <h1>
             <button
               id="unfold"

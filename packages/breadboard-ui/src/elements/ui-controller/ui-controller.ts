@@ -293,7 +293,7 @@ export class UI extends LitElement {
       ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
           "Show Node Type Descriptions"
         )?.value
-      : true;
+      : false;
 
     const hideSubboardSelectorWhenEmpty = this.settings
       ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
@@ -337,6 +337,7 @@ export class UI extends LitElement {
       .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
       .mode=${editorMode}
       .showNodeShortcuts=${showNodeShortcuts}
+      .showNodeTypeDescriptions=${showNodeTypeDescriptions}
       .invertZoomScrollDirection=${invertZoomScrollDirection}
       @bbnodedelete=${(evt: NodeDeleteEvent) => {
         if (!this.selectedNodeIds) {

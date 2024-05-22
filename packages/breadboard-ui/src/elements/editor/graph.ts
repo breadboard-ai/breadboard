@@ -43,6 +43,7 @@ export class Graph extends PIXI.Container {
   #autoSelect = new Set<string>();
 
   #collapseNodesByDefault = false;
+  #showNodeTypeDescriptions = false;
   layoutRect: DOMRectReadOnly | null = null;
 
   constructor() {
@@ -718,6 +719,16 @@ export class Graph extends PIXI.Container {
     }
   }
 
+  #setNodesTypeDescriptions() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
+    }
+  }
+
   set collapseNodesByDefault(collapseNodesByDefault: boolean) {
     if (collapseNodesByDefault === this.#collapseNodesByDefault) {
       return;
@@ -730,6 +741,20 @@ export class Graph extends PIXI.Container {
 
   get collapseNodesByDefault() {
     return this.#collapseNodesByDefault;
+  }
+
+  set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
+    if (showNodeTypeDescriptions === this.#showNodeTypeDescriptions) {
+      return;
+    }
+
+    this.#isDirty = true;
+    this.#showNodeTypeDescriptions = showNodeTypeDescriptions;
+    this.#setNodesTypeDescriptions();
+  }
+
+  get showNodeTypeDescriptions() {
+    return this.#showNodeTypeDescriptions;
   }
 
   set editable(editable: boolean) {
@@ -1034,6 +1059,7 @@ export class Graph extends PIXI.Container {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
         graphNode.collapsed = this.collapseNodesByDefault;
+        graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
       }
