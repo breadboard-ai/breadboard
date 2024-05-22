@@ -490,10 +490,10 @@ export default await board(() => {
       required: ["greeting", "subject"],
     },
   });
-
+  
   const result = concatStrings({
-    greeting: inputs.greeting as unknown as string,
-    subject: inputs.subject as unknown as string,
+    greeting: inputs.greeting.isString(),
+    subject: inputs.subject.isString(),
   });
 
   const output = base.output({ $id: "main" });
