@@ -19,6 +19,7 @@ import { classMap } from "lit/directives/class-map.js";
 export class SettingsEditOverlay extends LitElement {
   @property()
   settings: Settings | null = null;
+
   #formRef: Ref<HTMLFormElement> = createRef();
   #selectNewestItemFor: string | null = null;
 

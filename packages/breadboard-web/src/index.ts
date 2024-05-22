@@ -70,6 +70,9 @@ export class Main extends LitElement {
   showHistory = false;
 
   @state()
+  showFirstRun = false;
+
+  @state()
   boardEditOverlayInfo: {
     title?: string;
     version?: string;
@@ -376,6 +379,12 @@ export class Main extends LitElement {
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
     const embedFromUrl = currentUrl.searchParams.get("embed");
+    const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
+
+    if (firstRunFromUrl && firstRunFromUrl === "true") {
+      this.showFirstRun = true;
+    }
+
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
     Promise.all([
@@ -1635,6 +1644,44 @@ export class Main extends LitElement {
       ></bb-settings-edit-overlay>`;
     }
 
+    let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showFirstRun) {
+      firstRunOverlay = html`<bb-first-run-overlay
+        class="settings"
+        .settings=${this.#settings?.values || null}
+        @bbsettingsupdate=${async (
+          evt: BreadboardUI.Events.SettingsUpdateEvent
+        ) => {
+          if (!this.#settings) {
+            return;
+          }
+
+          try {
+            await this.#settings.save(evt.settings);
+            await this.#setRemoteServersFromSettings();
+            this.toast(
+              "Welcome to Breadboard!",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+          } catch (err) {
+            console.warn(err);
+            this.toast(
+              "Unable to save settings",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+
+          this.#setUrlParam("firstrun", null);
+          this.showFirstRun = false;
+          this.requestUpdate();
+        }}
+        @bboverlaydismissed=${() => {
+          this.#setUrlParam("firstrun", null);
+          this.showFirstRun = false;
+        }}
+      ></bb-first-run-overlay>`;
+    }
+
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
     if (history && this.showHistory) {
       historyOverlay = html`<bb-graph-history
@@ -1663,6 +1710,6 @@ export class Main extends LitElement {
     }
 
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${historyOverlay} ${toasts} `;
+    ${firstRunOverlay} ${historyOverlay} ${toasts} `;
   }
 }
