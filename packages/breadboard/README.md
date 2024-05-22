@@ -1,4 +1,4 @@
-# [](https://www.npmjs.com/package/@google-labs/breadboard#breadboard)Breadboard
+# Breadboard
 
 [![Milestone](https://camo.githubusercontent.com/be3b7f4f41ae3718fcf8ea07682a052ad751377a3e1684de0833426e08a3428a/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d696c6573746f6e652d4d342d726564)](https://camo.githubusercontent.com/be3b7f4f41ae3718fcf8ea07682a052ad751377a3e1684de0833426e08a3428a/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d696c6573746f6e652d4d342d726564) [![Stability](https://camo.githubusercontent.com/d4d33b1521ccf68c37ac06099329a6d770e4ae60aa31b8770cfd80f0797a66c3/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f73746162696c6974792d7769702d677265656e)](https://camo.githubusercontent.com/d4d33b1521ccf68c37ac06099329a6d770e4ae60aa31b8770cfd80f0797a66c3/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f73746162696c6974792d7769702d677265656e) [![Discord](https://camo.githubusercontent.com/3789d541c135cbaec0a85a907aebed3d0d97296a6bad088aba54d783a563ec22/68747470733a2f2f696d672e736869656c64732e696f2f646973636f72642f313133383534363939393837323939393535363f6c6f676f3d646973636f7264)](https://discord.gg/breadboard)
 
@@ -239,7 +239,7 @@ const stringManipulationKit = new KitBuilder({
 });
 ```
 
-> **Important**: All kits used in a board must be passed in, as runtime kits, when running a board that has been serialized/de-serialized.
+> **Important**: All kits used in a board must be passed in, as runtime kits, when running a board that has been serialized/deserialized.
 
 ### Serializing boards
 
@@ -276,7 +276,7 @@ The `serialize` function is called on the result of the board invocation, which 
 }
 ```
 
-The `serialize` function is also takes a single argument: a metadata object that describes the board.
+The `serialize` function also takes a single argument: a metadata object that describes the board.
 
 <table style='font-family:"Courier New", Courier, monospace; font-size:80%;'>
 	<td><b>Name</b></td>
@@ -407,7 +407,7 @@ export default board(({ say }) => {
 });
 ```
 
-This board takes the `say` property and passes it to the two different output nodes, which can be identified as `outputOne` and `outputTwo` using the `$id` property, as properties named `firstHear` and `secondHear` respectively. For beter clarity, we will change the runner outputs to be logged to the console separately, using the ids we added to the output nodes against the id of the currently iterated node in the runner.
+This board takes the `say` property and passes it to the two different output nodes, which can be identified as `outputOne` and `outputTwo` using the `$id` property, as properties named `firstHear` and `secondHear` respectively. For better clarity, we will change the runner outputs to be logged to the console separately, using the IDs we added to the output nodes against the ID of the currently iterated node in the runner.
 
 ```typescript
 else if (stop.type === "output") {
@@ -530,8 +530,8 @@ export default await board(() => {
 
 The schema has 2 inputs `greeting` and `subject`, these are both of type string. Inputs can be assigned a `default` value, this is the input value that will be used if a user does not provide one. `Description` is the text that will appear in the input field on the Breadboard Web UI. `Title` is the text that will be labelled above the input field. `$id` will be the name of the node that can be seen on breadboard web.
 
-The properties can then be accessed similarly to accessing proterties of objects.
-`inputs.greeting` will access the `greeting` property of the input, in our example this is the the greeting string.
+The properties can then be accessed similarly to accessing properties of objects.
+`inputs.greeting` will access the `greeting` property of the input, in our example this is the greeting string.
 Inputs can then be provided to as inputs to code nodes.
 
 We can also add metadata to input nodes without using the `base` input.
@@ -625,9 +625,9 @@ export default await board(() => {
 });
 ```
 
-We can then run `npm run dev` while in the boards directory. This deploys an instance of Breadboard Web accessible on http://localhost:5173/. Breadboard Web will automatically pick up this graph and allow the board to be selectable on the UI menu.
+We can then run `npm run dev` while in the `boards` directory. This deploys an instance of Breadboard Web accessible on http://localhost:5173/. Breadboard Web will automatically pick up this graph and allow the board to be selectable on the UI menu.
 
-Running Breadboard Web locally also features hot reloading which is handy if we are constantly making changes to our board. Simply save the file and it will automatically rebuild and deploy Breadboard web.
+Running Breadboard Web locally also features hot reloading which is handy if we are constantly making changes to our board. Simply save the file, and it will automatically rebuild and deploy Breadboard web.
 
 ### 2. Using Breadboard Web hosted by Google.
 
@@ -650,13 +650,13 @@ fs.writeFileSync(
 
 ```
 
-This can then be stored as file on the internet. This works well with Github Gists or repository. The url of the file can then be provided as the board in the request parameter and loaded into Breadboard Web (https://breadboard-ai.web.app/?board={raw_github_link_to_file}).
+This can then be stored as file on the internet. This works well with GitHub Gists or repository. The URL of the file can then be provided as the board in the request parameter and loaded into Breadboard Web (https://breadboard-ai.web.app/?board={raw_github_link_to_file}).
 
 There are a number of boards available to use on Breadboard Web, below is a board which performs JSON validation.
 
 https://breadboard-ai.web.app/?board=%2Fgraphs%2Fjson-validator.json
 
-Local instances of Breadboard Web can also load boards via json file and the board request parameter. Option 2 is great if you would like to show off your boards to other people!
+Local instances of Breadboard Web can also load boards via JSON file and the board request parameter. Option 2 is great if you would like to show off your boards to other people!
 
 ### Using Breadboard Web
 
@@ -664,7 +664,7 @@ Now we have described how to run a board on Breadboard Web, let's discuss how to
 
 When looking at the board on Breadboard Web we can see all the nodes this board is composed of.
 
-Clicking `run` on the UI will prompt the user to provide inputs to the board. One of the great features of Breadboard Web is that it is interactive, by clicking on the input node we can see more information about these inputs. As we can see, we have provided information about what the inputs are for. This is metadata that was attatched to the board by using a board schema. This is also where schema defaults come in handy. We can use these defaults if the user does not want to provide their own, as well as providing guidance on what kind of inputs are accepted.
+Clicking `run` on the UI will prompt the user to provide inputs to the board. One of the great features of Breadboard Web is that it is interactive, by clicking on the input node we can see more information about these inputs. As we can see, we have provided information about what the inputs are for. This is metadata that was attached to the board by using a board schema. This is also where schema defaults come in handy. We can use these defaults if the user does not want to provide their own, as well as providing guidance on what kind of inputs are accepted.
 
 Once we have provided inputs and run the board, let's see what happens!
 (add screenshot of board output)
@@ -690,7 +690,7 @@ After the board has finished executing we can see its output. And just like that
 To learn more about Breadboard, here are a couple of resources:
 
 - [Breadboard Tutorial](https://breadboard-ai.github.io/breadboard/docs/happy-path/) -- learn how to use breadboard step-by-step, from easy to more complex.
-- Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the the link next to "Original:" heading to see the board code):
+- Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the link next to "Original:" heading to see the board code):
   - [Simple text completion](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/simplest.md)
   - [Google Search summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/search-summarize.md)
   - [Google News summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/google-news.md)
