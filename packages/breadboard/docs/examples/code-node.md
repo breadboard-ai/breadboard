@@ -33,7 +33,7 @@ export default board<{ message: string[] }>(({ message }, { output }) => {
 ```
 - The final node is **anonymous**, and it takes an input called `arr`, and either returns an empty object if the given input type is not an array or it returns the given array of strings concatenated into a single string.
 ```typescript
-const reverserBoard = board<{ message: string[] }>(
+export default board<{ message: string[] }>(
 	({ message }, { output }) => {
 		const concat = message.as("arr").to(
 			code(({ arr }) => {
