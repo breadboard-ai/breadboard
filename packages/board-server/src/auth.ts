@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 
 export const getUserKey = (req: IncomingMessage) => {
   const auth = req.headers.authorization;
@@ -18,4 +18,17 @@ export const getUserKey = (req: IncomingMessage) => {
   }
 
   return token;
+};
+
+export const authenticate = (
+  req: IncomingMessage,
+  res: ServerResponse
+): string | null => {
+  const userKey = getUserKey(req);
+  if (!userKey) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Unauthorized" }));
+    return null;
+  }
+  return userKey;
 };

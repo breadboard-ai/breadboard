@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getUserKey } from "../auth.js";
-import { serverError, unauthorized } from "../errors.js";
+import { serverError } from "../errors.js";
 import { Store } from "../store.js";
 import type { ApiHandler } from "../types.js";
 

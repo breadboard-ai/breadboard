@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getUserKey } from "../auth.js";
-import { unauthorized } from "../errors.js";
+import { authenticate } from "../auth.js";
 import { Store } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
@@ -18,14 +17,13 @@ const getBoardName = (path: string) => {
 };
 
 const post: ApiHandler = async (path, req, res) => {
-  const userKey = getUserKey(req);
+  const userKey = authenticate(req, res);
   if (!userKey) {
-    unauthorized(res, "No user key");
     return true;
   }
   const store = new Store("server-board");
 
-  let chunks: string[] = [];
+  const chunks: string[] = [];
 
   return new Promise<boolean>((resolve) => {
     req.on("data", (chunk) => {
