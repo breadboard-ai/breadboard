@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   inspect,
@@ -22,6 +22,7 @@ import {
 import {
   EdgeChangeEvent,
   FileDropEvent,
+  GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
@@ -38,7 +39,6 @@ import {
   SubGraphDeleteEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
-import { Graph } from "./graph.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
@@ -46,6 +46,7 @@ import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
 import type { NodeSelector } from "./node-selector.js";
 import { GraphEdge } from "./graph-edge.js";
 import { edgeToString } from "./utils.js";
+import { until } from "lit/directives/until.js";
 
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
@@ -102,7 +103,6 @@ export class Editor extends LitElement {
   @property()
   showNodeTypeDescriptions = true;
 
-  #graph = new Graph();
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
@@ -340,29 +340,12 @@ export class Editor extends LitElement {
     }
   `;
 
-  async #processGraph() {
+  async #processGraph(): Promise<GraphRenderer> {
     if (!this.graph) {
-      return;
+      return this.#graphRenderer;
     }
 
     this.#graphVersion++;
-
-    if (
-      this.graph &&
-      (this.#lastBoardId !== this.boardId ||
-        this.#lastSubGraphId !== this.subGraphId)
-    ) {
-      this.#graph.clearNodeLayoutPositions();
-      this.#graphRenderer.hideAllGraphs();
-      this.#graphRenderer.zoomToFit();
-
-      if (this.#lastSubGraphId !== this.subGraphId) {
-        // TODO: Need to figure out how to encode the subgraph/node id combo.
-        this.#graph.highlightedNodeId = null;
-      }
-    }
-    this.#lastBoardId = this.boardId;
-    this.#lastSubGraphId = this.subGraphId;
 
     let breadboardGraph = inspect(this.graph, {
       kits: this.kits,
@@ -378,6 +361,12 @@ export class Editor extends LitElement {
       }
     }
 
+    // Force a reset when the board changes.
+    if (this.boardId !== this.#lastBoardId) {
+      this.#graphRenderer.removeAllGraphs();
+      this.#lastBoardId = this.boardId;
+    }
+
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
@@ -387,15 +376,69 @@ export class Editor extends LitElement {
       );
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
-        return;
+        return this.#graphRenderer;
       }
     }
 
-    this.#graph.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
-    this.#graph.collapseNodesByDefault = this.collapseNodesByDefault;
-    this.#graph.ports = ports;
-    this.#graph.edges = breadboardGraph.edges();
-    this.#graph.nodes = breadboardGraph.nodes();
+    // Attempt to update the graph if it already exists.
+    const updated = this.#graphRenderer.updateGraphByUrl(
+      this.graph.url || "",
+      this.subGraphId,
+      {
+        showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+        collapseNodesByDefault: this.collapseNodesByDefault,
+        ports: ports,
+        edges: breadboardGraph.edges(),
+        nodes: breadboardGraph.nodes(),
+      }
+    );
+
+    if (updated) {
+      return this.#graphRenderer;
+    }
+
+    this.#graphRenderer.hideAllGraphs();
+    if (this.#lastSubGraphId !== this.subGraphId) {
+      // TODO: Need to figure out how to encode the subgraph/node id combo.
+      this.#graphRenderer.highlightedNodeId = null;
+    }
+
+    for (const graph of this.#graphRenderer.getGraphs()) {
+      this.#graphRenderer.removeGraph(graph);
+    }
+
+    this.#graphRenderer.createGraph({
+      url: this.graph.url || "",
+      subGraphId: this.subGraphId,
+      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      collapseNodesByDefault: this.collapseNodesByDefault,
+      ports: ports,
+      edges: breadboardGraph.edges(),
+      nodes: breadboardGraph.nodes(),
+      visible: false,
+    });
+
+    this.#graphRenderer.addEventListener(
+      GraphInitialDrawEvent.eventName,
+      () => {
+        this.#ignoreNextUpdate = true;
+        this.#graphRenderer.showAllGraphs();
+        this.#graphRenderer.zoomToFit();
+      },
+      { once: true }
+    );
+
+    return this.#graphRenderer;
+  }
+
+  #ignoreNextUpdate = false;
+  protected shouldUpdate(): boolean {
+    if (this.#ignoreNextUpdate) {
+      this.#ignoreNextUpdate = false;
+      return false;
+    }
+
+    return true;
   }
 
   connectedCallback(): void {
@@ -480,31 +523,6 @@ export class Editor extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected updated(
-    changedProperties:
-      | PropertyValueMap<{
-          graph: GraphDescriptor | null;
-          subGraphId: string | null;
-          kits: Kit[];
-          mode: EditorMode;
-          collapseNodesByDefault: boolean;
-          showNodeTypeDescriptions: boolean;
-        }>
-      | Map<PropertyKey, unknown>
-  ): void {
-    const shouldProcessGraph =
-      changedProperties.has("graph") ||
-      changedProperties.has("kits") ||
-      changedProperties.has("subGraphId") ||
-      changedProperties.has("mode") ||
-      changedProperties.has("collapseNodesByDefault") ||
-      changedProperties.has("showNodeTypeDescriptions");
-
-    if (shouldProcessGraph && this.graph && this.kits.length > 0) {
-      this.#processGraph();
-    }
-  }
-
   #onPointerMove(evt: PointerEvent) {
     this.#lastX = evt.pageX - this.#left + window.scrollX;
     this.#lastY = evt.pageY - this.#top - window.scrollY;
@@ -536,7 +554,7 @@ export class Editor extends LitElement {
           return;
         }
 
-        const selected = this.#graph.getSelectedChildren();
+        const selected = this.#graphRenderer.getSelectedChildren();
         if (!selected.length) {
           return;
         }
@@ -582,7 +600,7 @@ export class Editor extends LitElement {
           return;
         }
 
-        this.#graph.deselectAllChildren();
+        this.#graphRenderer.deselectAllChildren();
 
         try {
           this.#readingFromClipboard = true;
@@ -626,7 +644,7 @@ export class Editor extends LitElement {
             leftMostVisual = { x: 0, y: 0 };
           }
 
-          const leftMostNodeGlobalPosition = this.#graph.toGlobal({
+          const leftMostNodeGlobalPosition = this.#graphRenderer.toGlobal({
             x: leftMostVisual.x,
             y: leftMostVisual.y,
           });
@@ -661,7 +679,7 @@ export class Editor extends LitElement {
             delete node.metadata.visual["x"];
             delete node.metadata.visual["y"];
 
-            const globalPosition = this.#graph.toGlobal({ x, y });
+            const globalPosition = this.#graphRenderer.toGlobal({ x, y });
             const offset = {
               x: globalPosition.x - leftMostNodeGlobalPosition.x,
               y: globalPosition.y - leftMostNodeGlobalPosition.y,
@@ -672,12 +690,14 @@ export class Editor extends LitElement {
               y: this.#lastY + offset.y - PASTE_OFFSET,
             };
 
-            this.#graph.setNodeLayoutPosition(node.id, position, false);
-            this.#graph.addToAutoSelect(node.id);
+            this.#graphRenderer.setNodeLayoutPosition(node.id, position, false);
+            this.#graphRenderer.addToAutoSelect(node.id);
 
             // Ask the graph for the visual positioning because the graph accounts for
             // any transforms, whereas our base x & y values do not.
-            const layout = this.#graph.getNodeLayoutPosition(node.id) || {
+            const layout = this.#graphRenderer.getNodeLayoutPosition(
+              node.id
+            ) || {
               x: 0,
               y: 0,
             };
@@ -719,7 +739,7 @@ export class Editor extends LitElement {
               continue;
             }
 
-            this.#graph.addToAutoSelect(edgeToString(newEdge));
+            this.#graphRenderer.addToAutoSelect(edgeToString(newEdge));
             edits.push({ type: "addedge", edge: newEdge, strict: true });
           }
 
@@ -758,6 +778,7 @@ export class Editor extends LitElement {
 
   #onGraphNodeMove(evt: Event) {
     const { id, x, y } = evt as GraphNodeMoveEvent;
+    this.#ignoreNextUpdate = true;
     this.dispatchEvent(new NodeMoveEvent(id, x, y, this.subGraphId));
   }
 
@@ -772,10 +793,16 @@ export class Editor extends LitElement {
     }, "");
     const editsEvt = new MultiEditEvent(
       moveEvt.nodes.map((node) => {
+        const graphNode = this.graph?.nodes.find(
+          (graphNode) => graphNode.id === node.id
+        );
+        const metadata = (graphNode?.metadata || {}) as Record<string, unknown>;
+
         return {
           type: "changemetadata",
           id: node.id,
           metadata: {
+            ...metadata,
             visual: {
               x: node.x,
               y: node.y,
@@ -787,6 +814,7 @@ export class Editor extends LitElement {
       this.subGraphId
     );
 
+    this.#ignoreNextUpdate = true;
     this.dispatchEvent(editsEvt);
   }
 
@@ -880,7 +908,7 @@ export class Editor extends LitElement {
     }
 
     const data = evt.dataTransfer?.getData(DATA_TYPE);
-    if (!data || !this.#graph) {
+    if (!data || !this.#graphRenderer) {
       console.warn("No data in dropped node");
       return;
     }
@@ -889,14 +917,17 @@ export class Editor extends LitElement {
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
-    this.#graph.deselectAllChildren();
+    this.#graphRenderer.deselectAllChildren();
 
     // Store the middle of the node for later.
-    this.#graph.setNodeLayoutPosition(id, { x, y }, true);
+    this.#graphRenderer.setNodeLayoutPosition(id, { x, y }, true);
 
     // Ask the graph for the visual positioning because the graph accounts for
     // any transforms, whereas our base x & y values do not.
-    const layout = this.#graph.getNodeLayoutPosition(id) || { x: 0, y: 0 };
+    const layout = this.#graphRenderer.getNodeLayoutPosition(id) || {
+      x: 0,
+      y: 0,
+    };
     this.dispatchEvent(
       new NodeCreateEvent(id, data, this.subGraphId, undefined, {
         visual: { x: layout.x, y: layout.y },
@@ -930,13 +961,10 @@ export class Editor extends LitElement {
 
   firstUpdated(): void {
     this.#onResizeBound();
-    this.#graphRenderer.addGraph(this.#graph);
   }
 
   render() {
-    if (this.#graph) {
-      this.#graph.highlightedNodeId = this.highlightedNodeId;
-    }
+    this.#graphRenderer.highlightedNodeId = this.highlightedNodeId;
 
     if (this.#graphRenderer) {
       this.#graphRenderer.editable = this.editable;
@@ -955,7 +983,7 @@ export class Editor extends LitElement {
       showSubGraphSelector = false;
     }
 
-    return html`${this.#graphRenderer}
+    return html`${until(this.#processGraph())}
       <div id="nodes">
         <input
           ${ref(this.#addButtonRef)}
@@ -1001,7 +1029,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-specialist"
                 @dblclick=${() => {
                   const id = this.#createRandomID("specialist");
-                  this.#graph.deselectAllChildren();
+                  this.#graphRenderer.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "specialist"));
                 }}
                 @dragstart=${(evt: DragEvent) => {
@@ -1019,7 +1047,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-human"
                 @dblclick=${() => {
                   const id = this.#createRandomID("human");
-                  this.#graph.deselectAllChildren();
+                  this.#graphRenderer.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "human"));
                 }}
                 @dragstart=${(evt: DragEvent) => {
@@ -1037,7 +1065,7 @@ export class Editor extends LitElement {
                 id="shortcut-add-looper"
                 @dblclick=${() => {
                   const id = this.#createRandomID("looper");
-                  this.#graph.deselectAllChildren();
+                  this.#graphRenderer.deselectAllChildren();
                   this.dispatchEvent(new NodeCreateEvent(id, "looper"));
                 }}
                 @dragstart=${(evt: DragEvent) => {

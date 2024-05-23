@@ -476,6 +476,14 @@ export class GraphNodeDeselectedAllEvent extends Event {
   }
 }
 
+export class GraphInitialDrawEvent extends Event {
+  static eventName = "bbgraphinitialdraw";
+
+  constructor() {
+    super(GraphInitialDrawEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodeEdgeAttachEvent extends Event {
   static eventName = "bbgraphedgeattach";
 

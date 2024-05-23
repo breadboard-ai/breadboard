@@ -252,7 +252,6 @@ export class UI extends LitElement {
     }
   }
 
-  #lastHistoryLocation = -1;
   render() {
     const currentNode = (): NodeIdentifier | null => {
       if (this.status === STATUS.STOPPED) return null;
@@ -325,70 +324,87 @@ export class UI extends LitElement {
     /**
      * Create all the elements we need.
      */
-    const editor = html`<bb-editor
-      .editable=${true}
-      .graph=${this.graph}
-      .subGraphId=${this.subGraphId}
-      .kits=${this.kits}
-      .loader=${this.loader}
-      .highlightedNodeId=${nodeId}
-      .boardId=${this.boardId}
-      .collapseNodesByDefault=${collapseNodesByDefault}
-      .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
-      .mode=${editorMode}
-      .showNodeShortcuts=${showNodeShortcuts}
-      .showNodeTypeDescriptions=${showNodeTypeDescriptions}
-      .invertZoomScrollDirection=${invertZoomScrollDirection}
-      @bbnodedelete=${(evt: NodeDeleteEvent) => {
-        if (!this.selectedNodeIds) {
-          return;
-        }
+    const editor = guard(
+      [
+        this.graph,
+        this.subGraphId,
+        this.kits,
+        nodeId,
+        this.boardId,
+        collapseNodesByDefault,
+        hideSubboardSelectorWhenEmpty,
+        editorMode,
+        showNodeShortcuts,
+        showNodeTypeDescriptions,
+        invertZoomScrollDirection,
+      ],
+      () => {
+        return html`<bb-editor
+          .editable=${true}
+          .graph=${this.graph}
+          .subGraphId=${this.subGraphId}
+          .kits=${this.kits}
+          .loader=${this.loader}
+          .highlightedNodeId=${nodeId}
+          .boardId=${this.boardId}
+          .collapseNodesByDefault=${collapseNodesByDefault}
+          .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
+          .mode=${editorMode}
+          .showNodeShortcuts=${showNodeShortcuts}
+          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
+          .invertZoomScrollDirection=${invertZoomScrollDirection}
+          @bbnodedelete=${(evt: NodeDeleteEvent) => {
+            if (!this.selectedNodeIds) {
+              return;
+            }
 
-        const idx = this.selectedNodeIds.indexOf(evt.id);
-        if (idx === -1) {
-          return;
-        }
+            const idx = this.selectedNodeIds.indexOf(evt.id);
+            if (idx === -1) {
+              return;
+            }
 
-        this.selectedNodeIds = this.selectedNodeIds.filter(
-          (id) => id !== evt.id
-        );
-      }}
-      @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
-        if (!this.selectedNodeIds) {
-          this.selectedNodeIds = [];
-        }
+            this.selectedNodeIds = this.selectedNodeIds.filter(
+              (id) => id !== evt.id
+            );
+          }}
+          @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
+            if (!this.selectedNodeIds) {
+              this.selectedNodeIds = [];
+            }
 
-        if (!evt.id) {
-          return;
-        }
+            if (!evt.id) {
+              return;
+            }
 
-        const idx = this.selectedNodeIds.indexOf(evt.id);
-        if (idx !== -1) {
-          return;
-        }
+            const idx = this.selectedNodeIds.indexOf(evt.id);
+            if (idx !== -1) {
+              return;
+            }
 
-        this.selectedNodeIds = [...this.selectedNodeIds, evt.id];
-        this.requestUpdate();
-      }}
-      @bbgraphnodedeselected=${(evt: GraphNodeDeselectedEvent) => {
-        if (!this.selectedNodeIds) {
-          return;
-        }
+            this.selectedNodeIds = [...this.selectedNodeIds, evt.id];
+            this.requestUpdate();
+          }}
+          @bbgraphnodedeselected=${(evt: GraphNodeDeselectedEvent) => {
+            if (!this.selectedNodeIds) {
+              return;
+            }
 
-        if (!evt.id) {
-          return;
-        }
+            if (!evt.id) {
+              return;
+            }
 
-        this.selectedNodeIds = this.selectedNodeIds.filter(
-          (id) => id !== evt.id
-        );
-        this.requestUpdate();
-      }}
-      @bbgraphnodedeselectedall=${() => {
-        this.selectedNodeIds = [];
-        this.requestUpdate();
-      }}
-    ></bb-editor>`;
+            this.selectedNodeIds = this.selectedNodeIds.filter(
+              (id) => id !== evt.id
+            );
+            this.requestUpdate();
+          }}
+          @bbgraphnodedeselectedall=${() => {
+            this.selectedNodeIds = [];
+            this.requestUpdate();
+          }}
+        ></bb-editor>`;
+      }
+    );
 
     const nodeMetaDetails = guard(
       [
