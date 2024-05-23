@@ -140,7 +140,7 @@ export type GraphProvider = {
    * @param fileName -- the board file path.
    * @returns -- the provider-specific URL as a string.
    */
-  createURL: (location: string, fileName: string) => string;
+  createURL: (location: string, fileName: string) => Promise<string>;
   /**
    * Parses a provider-specific URL for a board.
    * @param url -- the location of the board.

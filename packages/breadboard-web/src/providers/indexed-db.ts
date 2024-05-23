@@ -86,7 +86,7 @@ export class IDBGraphProvider implements GraphProvider {
     return { location, fileName };
   }
 
-  createURL(location: string, fileName: string) {
+  async createURL(location: string, fileName: string) {
     return `${IDB_PROTOCOL}//${encodeURIComponent(location.toLocaleLowerCase())}/${encodeURIComponent(fileName.toLocaleLowerCase())}`;
   }
 
@@ -249,7 +249,7 @@ export class IDBGraphProvider implements GraphProvider {
     let graphs = await db.getAll("graphs");
     if (graphs.length === 0 && store.name === DEFAULT_STORE.name) {
       const blankBoard = blank();
-      blankBoard.url = this.createURL(DEFAULT_STORE.name, "blank.json");
+      blankBoard.url = await this.createURL(DEFAULT_STORE.name, "blank.json");
       await db.put("graphs", blankBoard);
       graphs = await db.getAll("graphs");
     }

@@ -51,7 +51,7 @@ export class RemoteGraphProvider implements GraphProvider {
     return await response.json();
   }
 
-  createURL(_location: string, fileName: string) {
+  async createURL(_location: string, fileName: string) {
     return `${this.origin}/boards/${fileName}`;
   }
 
@@ -167,8 +167,8 @@ export class RemoteGraphProvider implements GraphProvider {
     }
   }
 
-  createGraphURL(location: string, fileName: string) {
-    return this.createURL(location, fileName);
+  async createGraphURL(location: string, fileName: string) {
+    return await this.createURL(location, fileName);
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {

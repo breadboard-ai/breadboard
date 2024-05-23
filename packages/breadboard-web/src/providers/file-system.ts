@@ -88,7 +88,7 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   private constructor() {}
 
-  createURL(location: string, fileName: string) {
+  async createURL(location: string, fileName: string) {
     return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
   }
 
@@ -127,7 +127,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     const boardDataAsText = await data.text();
     try {
       const descriptor = JSON.parse(boardDataAsText) as GraphDescriptor;
-      descriptor.url = this.createURL(location, fileName);
+      descriptor.url = await this.createURL(location, fileName);
       return descriptor;
     } catch (err) {
       // Bad data.
@@ -317,7 +317,7 @@ export class FileSystemGraphProvider implements GraphProvider {
       entries.push([
         name.toLocaleLowerCase(),
         {
-          url: this.createURL(
+          url: await this.createURL(
             encodeURIComponent(handle.name.toLocaleLowerCase()),
             encodeURIComponent(name.toLocaleLowerCase())
           ),
@@ -395,8 +395,8 @@ export class FileSystemGraphProvider implements GraphProvider {
     return this.#refreshAllItems();
   }
 
-  createGraphURL(location: string, fileName: string) {
-    return this.createURL(location, fileName);
+  async createGraphURL(location: string, fileName: string) {
+    return await this.createURL(location, fileName);
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
