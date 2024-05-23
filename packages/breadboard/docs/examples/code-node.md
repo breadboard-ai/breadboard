@@ -4,7 +4,7 @@ A special type of node, of type `code`, can be created with the `code` function.
 They can be created inside or outside the scope of a board, and even created anonymously.
 
 The below `reverserBoard` board has 3 different `code` nodes:
-- The `split` node is created **outside** the board. This node takes an input called `toSplit`, and it either returns an empty object if the given input type is not a string or it returns the given input split, by each character, into an array of strings.
+- The `split` node is created **outside** the board. This node takes an input called `toSplit`, and it either returns an empty object if the given input type is not a string, or it returns the given input split, by each character, into an array of strings.
 ```typescript
 const split = code(({ toSplit }) => {
 	if (typeof toSplit !== "string") return {};
@@ -18,7 +18,7 @@ export default board<{ message: string }>(({ message }, { output }) => {
 	return splitNode.split.to(output());
 });
 ```
-- The `reverse` node is created **insde** the board. This node takes an input called `toReverse`, and it either returns an empty object if the given input type is not an array or it returns the given array of strings reversed.
+- The `reverse` node is created **inside** the board. This node takes an input called `toReverse`, and it either returns an empty object if the given input type is not an array, or it returns the given array of strings reversed.
 ```typescript
 export default board<{ message: string[] }>(({ message }, { output }) => {
 	const reverseNode = code(({ toReverse }) => {
@@ -31,7 +31,7 @@ export default board<{ message: string[] }>(({ message }, { output }) => {
 	return reverseNode.reversed.to(output());
 });
 ```
-- The final node is **anonymous**, and it takes an input called `arr`, and either returns an empty object if the given input type is not an array or it returns the given array of strings concatenated into a single string.
+- The final node is **anonymous**, and it takes an input called `arr`, and either returns an empty object if the given input type is not an array, or it returns the given array of strings concatenated into a single string.
 ```typescript
 export default board<{ message: string[] }>(
 	({ message }, { output }) => {
