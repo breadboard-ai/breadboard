@@ -5,7 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
-import { Store } from "../store.js";
+import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
 const getBoardName = (path: string) => {
@@ -21,7 +21,7 @@ const post: ApiHandler = async (path, req, res) => {
   if (!userKey) {
     return true;
   }
-  const store = new Store("server-board");
+  const store = getStore();
 
   const chunks: string[] = [];
 

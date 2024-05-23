@@ -5,11 +5,11 @@
  */
 
 import { serverError } from "../errors.js";
-import { Store } from "../store.js";
+import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
 const get: ApiHandler = async (path, req, res) => {
-  const store = new Store("server-board");
+  const store = getStore();
 
   const [userStore, boardId] = path.split("/");
   if (!userStore || !boardId) {

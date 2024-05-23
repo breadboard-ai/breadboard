@@ -6,7 +6,11 @@
 
 import { Firestore } from "@google-cloud/firestore";
 
-export class Store {
+export const getStore = () => {
+  return new Store("server-board");
+};
+
+class Store {
   #database;
 
   constructor(storeName: string) {

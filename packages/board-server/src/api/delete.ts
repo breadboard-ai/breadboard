@@ -5,7 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
-import { Store } from "../store.js";
+import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
 const getBoardName = (path: string) => {
@@ -22,7 +22,7 @@ const del: ApiHandler = async (path, req, res) => {
     return true;
   }
 
-  const store = new Store("server-board");
+  const store = getStore();
 
   await store.delete(userKey, getBoardName(path));
 
