@@ -98,7 +98,6 @@ test("simple inline code, declare and cast types w/o contradiction", async (t) =
 
   const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
   t.like(result, { result: 3 });
-  t.like(result, { schema: { properties: { result: { type: "number" } } } });
 });
 
 test("simple inline code, cast types and infer in TypeScript", async (t) => {
@@ -113,7 +112,6 @@ test("simple inline code, cast types and infer in TypeScript", async (t) => {
 
   const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
   t.like(result, { result: 3 });
-  t.like(result, { schema: { properties: { result: { type: "number" } } } });
 });
 
 test("simple inline code, single parameter", async (t) => {
@@ -247,19 +245,5 @@ test("nested inline action, with schema", async (t) => {
   );
 
   const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
-  t.deepEqual(result, {
-    result: 3,
-    schema: {
-      type: "object",
-      properties: {
-        result: {
-          type: "number",
-          title: "Sum",
-          description: "The sum of two numbers",
-        },
-      },
-      required: ["result"],
-      additionalProperties: false,
-    },
-  });
+  t.deepEqual(result, { result: 3 });
 });

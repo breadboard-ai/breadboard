@@ -13,7 +13,7 @@ export const extractError = (e: unknown) => {
     const { cause } = error as { cause: ErrorObject };
     message = cause;
   } else {
-    message = error.message;
+    message = { error };
   }
   return message;
 };

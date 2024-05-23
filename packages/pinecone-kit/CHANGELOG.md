@@ -1,5 +1,169 @@
 # @google-labs/pinecone-kit
 
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies [8097177]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [4957dc5]
+- Updated dependencies [cec6d54]
+- Updated dependencies [3397974]
+- Updated dependencies [af54870]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [a35406c]
+- Updated dependencies [477e6e6]
+- Updated dependencies [ee85b67]
+- Updated dependencies [1d29493]
+- Updated dependencies [f870bdd]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/core-kit@0.9.0
+
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/core-kit@0.8.1
+
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [cef20ca]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [fefd109]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [3d48482]
+- Updated dependencies [c117d4f]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [776f043]
+- Updated dependencies [c3587e1]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+  - @google-labs/core-kit@0.8.0
+
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/core-kit@0.7.0
+
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [ad9c233]
+- Updated dependencies [65d869b]
+- Updated dependencies [417cdf5]
+- Updated dependencies [cf0ee4f]
+- Updated dependencies [43cbed7]
+- Updated dependencies [ff6433c]
+- Updated dependencies [5382365]
+- Updated dependencies [0e7f106]
+- Updated dependencies [9ea6ba0]
+- Updated dependencies [ffd2a6c]
+- Updated dependencies [9d19852]
+  - @google-labs/breadboard@0.16.0
+  - @google-labs/core-kit@0.6.0
+
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [76da09d]
+- Updated dependencies [938015d]
+- Updated dependencies [182a546]
+  - @google-labs/breadboard@0.15.0
+  - @google-labs/core-kit@0.5.3
+
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/core-kit@0.5.2
+
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [f73c637]
+- Updated dependencies [99446b8]
+- Updated dependencies [866fc36]
+- Updated dependencies [a8bab08]
+- Updated dependencies [decfa29]
+- Updated dependencies [f005b3b]
+- Updated dependencies [49c25aa]
+- Updated dependencies [dcfdc37]
+- Updated dependencies [d971aad]
+- Updated dependencies [048e8ec]
+- Updated dependencies [dc35601]
+- Updated dependencies [9cda2ff]
+- Updated dependencies [60bd63c]
+- Updated dependencies [764ccda]
+- Updated dependencies [04d5420]
+- Updated dependencies [56b90a4]
+- Updated dependencies [1b48826]
+- Updated dependencies [e648f64]
+- Updated dependencies [ad5c1be]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [bac9bb1]
+- Updated dependencies [3e8cfcf]
+- Updated dependencies [986af39]
+- Updated dependencies [3c497b0]
+- Updated dependencies [eabd97b]
+- Updated dependencies [2008f69]
+- Updated dependencies [c0f785a]
+- Updated dependencies [a8fc3f3]
+- Updated dependencies [32cfbaf]
+- Updated dependencies [8dc4e00]
+- Updated dependencies [6438930]
+- Updated dependencies [dd2cce6]
+- Updated dependencies [cac4f4f]
+- Updated dependencies [b1fc53b]
+- Updated dependencies [ef05634]
+- Updated dependencies [c208cfc]
+  - @google-labs/core-kit@0.5.0
+  - @google-labs/breadboard@0.12.0
+
 ## 0.1.3
 
 ### Patch Changes

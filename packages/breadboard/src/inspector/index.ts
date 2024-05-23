@@ -7,7 +7,7 @@
 import { GraphDescriptor } from "../types.js";
 import { GraphStore } from "./graph-store.js";
 import { inspectableGraph } from "./graph.js";
-import { RunObserver } from "./run.js";
+import { RunObserver } from "./run/run.js";
 import {
   InspectableGraph,
   InspectableGraphOptions,

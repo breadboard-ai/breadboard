@@ -12,20 +12,33 @@ test("`code` works with sync arrow functions", async (t) => {
     return { value: 1 };
   })({ $id: "fn" }).serialize();
   t.like(fn, {
-    graphs: {
-      fn: {
-        nodes: [
-          { type: "input" },
-          {
-            configuration: {
-              code: `function fn() {
+    nodes: [
+      {
+        type: "runJavascript",
+        configuration: {
+          code: `const fn = () => {
         return { value: 1 };
-    }`,
-            },
-          },
-        ],
+    };`,
+        },
       },
-    },
+    ],
+  });
+});
+
+test("`code` works with sync arrow return-less functions", async (t) => {
+  // prettier-ignore
+  const fn = await code(({context}) => context ? { context } : { context: null })({
+    $id: "fn",
+  }).serialize();
+  t.like(fn, {
+    nodes: [
+      {
+        type: "runJavascript",
+        configuration: {
+          code: `const fn = ({ context }) => context ? { context } : { context: null };`,
+        },
+      },
+    ],
   });
 });
 
@@ -34,19 +47,15 @@ test("`code` works with async arrow functions", async (t) => {
     return { value: 1 };
   })({ $id: "fn" }).serialize();
   t.like(fn, {
-    graphs: {
-      fn: {
-        nodes: [
-          { type: "input" },
-          {
-            configuration: {
-              code: `async function fn() {
+    nodes: [
+      {
+        type: "runJavascript",
+        configuration: {
+          code: `const fn = async () => {
         return { value: 1 };
-    }`,
-            },
-          },
-        ],
+    };`,
+        },
       },
-    },
+    ],
   });
 });

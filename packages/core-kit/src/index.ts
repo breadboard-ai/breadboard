@@ -21,6 +21,13 @@ import fetch from "./nodes/fetch.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
 
+export { code } from "./nodes/code.js";
+export { default as fetch } from "./nodes/fetch.js";
+export { default as invoke } from "./nodes/invoke.js";
+export { default as passthrough } from "./nodes/passthrough.js";
+export { default as runJavascript } from "./nodes/run-javascript.js";
+export { secret, default as secrets } from "./nodes/secrets.js";
+
 const builder = new KitBuilder({
   title: "Core Kit",
   description: "A Breadboard kit that enables composition and reuse of boards",
@@ -160,10 +167,10 @@ export const Core = builder.build({
    * If the `accumulator` property is "string-ey" (that is, it's a `string`,
    * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
    * be appended as strings, formatted as
-   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
    *
    * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   * as array items, formatted as `{{property_name}}: {{property_value}}`.
    *
    * Otherwise, the `accumulator` property will be treated as an object and
    * the properties will be added as properties on this object.
@@ -183,6 +190,7 @@ export const Core = builder.build({
   fetch,
   runJavascript,
   secrets,
+  curry,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -202,6 +210,7 @@ import {
   NewOutputValues as OutputValues,
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
+import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
 
 export type CoreKitType = {
   passthrough: NodeFactory<InputValues, OutputValues>;
@@ -219,10 +228,10 @@ export type CoreKitType = {
    * If the `accumulator` property is "string-ey" (that is, it's a `string`,
    * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
    * be appended as strings, formatted as
-   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   * `{{property_name}}: {{property_value}}` and joined with "`\n`".
    *
    * If the `accumulator` property is an array, the properties will be appended
-   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   * as array items, formatted as `{{property_name}}: {{property_value}}`.
    *
    * Otherwise, the `accumulator` property will be treated as an object and
    * the properties will be added as properties on this object.
@@ -251,27 +260,13 @@ export type CoreKitType = {
    * and the output are the invoked board's outputs.
    */
   invoke: NodeFactory<
-    | {
-        /**
-         * The URL to the board to be invoked.
-         */
-        path: string;
-        [key: string]: NodeValue;
-      }
-    | {
-        /**
-         * A string of the serailized graph to be invoked.
-         */
-        graph: string;
-        [key: string]: NodeValue;
-      }
-    | {
-        /**
-         * A board to be invoked.
-         */
-        board: NodeValue;
-        [key: string]: NodeValue;
-      },
+    {
+      /**
+       * A board to be invoked.
+       */
+      $board: NodeValue;
+      [key: string]: NodeValue;
+    },
     { [key: string]: unknown }
   >;
   resolve: NodeFactory<{ [k: string]: string }, { [k: string]: string }>;
@@ -283,7 +278,22 @@ export type CoreKitType = {
     { list: NodeValue[] }
   >;
   reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
-  fetch: NodeFactory<{ url: string }, { response: string }>;
+  /**
+   * Combines a board with some arguments to create a new board (aka currying).
+   * The arguments in that board will run as part of board invocation as if
+   * they were supplied as inputs.
+   */
+  curry: NodeFactory<CurryInputs, CurryOutputs>;
+  fetch: NodeFactory<
+    { url: string },
+    {
+      response: string;
+      status: number;
+      statusText: string;
+      contentType?: string;
+      responseHeaders?: object;
+    }
+  >;
   runJavascript: NodeFactory<
     {
       code: string;

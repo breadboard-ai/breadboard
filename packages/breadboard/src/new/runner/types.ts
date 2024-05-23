@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphMetadata,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import {
   NodeDescriptor,
   GraphDescriptor,
-  GraphMetadata,
+  GraphInlineMetadata,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeValue as OriginalNodeValue,
@@ -22,6 +25,9 @@ import {
 export type NodeValue = OriginalNodeValue | PromiseLike<NodeValue> | unknown;
 export type NodeTypeIdentifier = string;
 
+export type GraphCombinedMetadata = GraphInlineMetadata & {
+  metadata?: GraphMetadata;
+};
 export type InputValues = { [key: string]: NodeValue };
 
 export type OutputValues = { [key: string]: NodeValue };
@@ -29,12 +35,12 @@ export type OutputValue<T> = Partial<{ [key: string]: T }>;
 
 export type NodeHandlerFunction<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > = (inputs: I, node: AbstractNode<I, O>) => O | PromiseLike<O>;
 
 export type NodeHandler<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > =
   | {
       invoke?: NodeHandlerFunction<I, O>;
@@ -50,7 +56,7 @@ export type NodeHandlers = Record<
 
 export interface Serializeable {
   serialize(
-    metadata?: GraphMetadata
+    metadata?: GraphCombinedMetadata
   ): Promise<GraphDescriptor> | GraphDescriptor;
 }
 
@@ -61,7 +67,7 @@ export interface EdgeInterface<
   FromI extends InputValues = InputValues,
   FromO extends OutputValues = OutputValues,
   ToI extends InputValues = InputValues,
-  ToO extends OutputValues = OutputValues
+  ToO extends OutputValues = OutputValues,
 > {
   from: AbstractNode<FromI, FromO>;
   to: AbstractNode<ToI, ToO>;
@@ -78,7 +84,7 @@ export type OptionalIdConfiguration = {
 
 export abstract class AbstractNode<
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 > implements Serializeable
 {
   abstract id: string;
@@ -103,7 +109,9 @@ export abstract class AbstractNode<
     outputSchema?: Schema
   ): Promise<NodeDescriberResult | undefined>;
 
-  abstract serialize(metadata?: GraphMetadata): Promise<GraphDescriptor>;
+  abstract serialize(
+    metadata?: GraphCombinedMetadata
+  ): Promise<GraphDescriptor>;
 
   abstract serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]>;
 }
@@ -195,7 +203,7 @@ export interface ScopeInterface {
    */
   getHandler<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >(
     name: string
   ): NodeHandler<I, O> | undefined;
@@ -220,7 +228,7 @@ export interface ScopeInterface {
    */
   pin<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >(
     node: AbstractNode<I, O>
   ): void;
@@ -280,7 +288,7 @@ export interface ScopeInterface {
    * @param node Node to serialize, or undefined to serialize all pinned nodes
    */
   serialize(
-    metadata?: GraphMetadata,
+    metadata?: GraphCombinedMetadata,
     node?: AbstractNode
   ): Promise<GraphDescriptor>;
 }

@@ -61,6 +61,11 @@ export type {
 export { asyncGen } from "./utils/async-gen.js";
 
 /**
+ * Helpers for handling BreadboardCapability.
+ */
+export { getGraphDescriptor } from "./capability.js";
+
+/**
  * The Inspector API.
  */
 export type * from "./inspector/types.js";
@@ -71,10 +76,12 @@ export { PortStatus } from "./inspector/types.js";
  * The Editor API.
  */
 export type * from "./editor/types.js";
-export { editGraph as edit } from "./editor/graph.js";
+export { editGraph as edit, blank } from "./editor/index.js";
 
 /**
  * The Loader API
  */
 export type * from "./loader/types.js";
 export { createLoader } from "./loader/index.js";
+
+export { formatGraphDescriptor } from "./formatter.js";

@@ -6,19 +6,20 @@
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import {
-  GraphMetadata,
+  GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
   NodeValue,
   OutputValues,
+  RunArguments,
   Schema,
   TraversalResult,
 } from "./types.js";
 
 export const createErrorMessage = (
   inputName: string,
-  metadata: GraphMetadata = {},
+  metadata: GraphInlineMetadata = {},
   required: boolean
 ): string => {
   const boardTitle = metadata.title ?? metadata?.url;
@@ -29,7 +30,7 @@ export const createErrorMessage = (
 };
 
 export const bubbleUpInputsIfNeeded = async (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
   descriptor: NodeDescriptor,
   result: TraversalResult,
@@ -47,7 +48,7 @@ export const bubbleUpInputsIfNeeded = async (
 };
 
 export const createBubbleHandler = (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
   descriptor: NodeDescriptor
 ) => {
@@ -122,8 +123,10 @@ export class RequestedInputsManager {
   #context: NodeHandlerContext;
   #cache: Map<string, NodeValue> = new Map();
 
-  constructor(context: NodeHandlerContext) {
+  constructor(args: RunArguments) {
+    const { inputs, ...context } = args;
     this.#context = context;
+    this.#cache = new Map(inputs ? Object.entries(inputs) : []);
   }
 
   createHandler(

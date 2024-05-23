@@ -7,7 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { CanvasData } from "../../../types/types.js";
+import { LLMContent } from "../../../types/types.js";
 
 @customElement("bb-webcam-input")
 export class WebcamInput extends LitElement {
@@ -23,6 +23,7 @@ export class WebcamInput extends LitElement {
         0 2px 3px 0 rgba(0, 0, 0, 0.23);
       --default-bb-border-radius: 8px;
       --default-bb-input-background-color: #fff;
+      --default-bb-outline: transparent;
 
       display: block;
       width: 100%;
@@ -33,6 +34,7 @@ export class WebcamInput extends LitElement {
       box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
       border-radius: var(--bb-grid-size);
       aspect-ratio: 4/3;
+      outline: 1px solid var(--bb-outline, var(--default-bb-outline));
     }
 
     canvas {
@@ -104,20 +106,21 @@ export class WebcamInput extends LitElement {
       );
   }
 
-  get value() {
-    const value = { inline_data: { data: "", mime_type: this.type } };
-    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80);
-    if (!inlineData) {
-      return value;
-    }
-
+  get value(): LLMContent {
+    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80) || "";
     const preamble = `data:${this.type};base64,`;
-    value.inline_data.data = inlineData.substring(preamble.length);
-    return value;
-  }
 
-  set value(_v: CanvasData) {
-    console.warn("Value set on webcam, but values are not supported");
+    return {
+      role: "user",
+      parts: [
+        {
+          inlineData: {
+            data: inlineData.substring(preamble.length),
+            mimeType: this.type,
+          },
+        },
+      ],
+    };
   }
 
   disconnectedCallback(): void {

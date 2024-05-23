@@ -1,7 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.6.0",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -21,6 +20,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./internal/*.js": {
+      "types": "./dist/internal/*.d.ts",
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
     }
   },
   "files": [
@@ -29,10 +40,12 @@
     "CHANGELOG.md"
   ],
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
     "test:only": "wireit",
+    "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
     "dev": "npm run test-and-lint --watch"
@@ -75,6 +88,16 @@
       "files": [],
       "output": []
     },
+    "coverage": {
+      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "lcov.info"
+      ]
+    },
     "lint": {
       "command": "eslint src/ --ext .ts",
       "files": [
@@ -92,12 +115,13 @@
     }
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.11.2"
+    "@google-labs/breadboard": "^0.20.0",
+    "@types/json-schema": "^7.0.15"
   },
   "devDependencies": {
-    "@types/node": "^20.11.25",
+    "@types/node": "^20.12.12",
     "eslint": "^8.57.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.5",
     "wireit": "^0.14.4"
   }
 }

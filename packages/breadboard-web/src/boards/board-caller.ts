@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
+import {
+  GraphInlineMetadata,
+  Schema,
+  V,
+  base,
+  board,
+} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -13,7 +19,7 @@ const metadata = {
   description:
     "Takes a tool-calling-capable generator and a list of board URLs, and helps generator call these boards as tools",
   version: "0.0.6",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const outputSchema = {
   type: "object",
@@ -91,7 +97,7 @@ export default await board(() => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",
-          path: "board-as-function.json",
+          $board: "board-as-function.json",
           boardURL: item,
         });
         return {
@@ -122,14 +128,14 @@ export default await board(() => {
     $id: "generate",
     useStreaming: false,
     ...parameters,
-    path: parameters.generator as V<string>,
+    $board: parameters.generator as V<string>,
     tools: formatFunctionDeclarations,
   });
 
   const getBoardArgs = json.jsonata({
     $id: "getBoardArgs",
     expression: `$merge([{
-        "path": $lookup(urlMap, toolCalls[0].name)
+        "$board": $lookup(urlMap, toolCalls[0].name)
       },
       toolCalls[0].args,
       { "generator": generator }

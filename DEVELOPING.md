@@ -298,14 +298,19 @@ package.
 3. Check what is planned to be published by looking at the latest commit which
    Changesets created in the previous step. Make sure it looks reasonable, and
    send a PR with the changes so that others can see what will be published.
-   Wait for the PR to pass CI.
 
    ```bash
    git show
-   gh pr create -f
+   gh pr create -f # or git push if you don't have the gh tools
    ```
 
-4. Generate a token for the Google NPM release proxy registry. Running the
+4. Sign in to NPM:
+
+   ```bash
+   npm adduser
+   ```
+
+5. Generate a token for the Google NPM release proxy registry. Running the
    command below will open a browser window. Select _24 hour temporary token_
    after which the command should exit by itself.
 
@@ -313,7 +318,9 @@ package.
    npm login --registry https://wombat-dressing-room.appspot.com
    ```
 
-5. Use the Changesets
+6. Wait for the PR from step 3 to pass CI.
+
+7. Use the Changesets
    [publish](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#publish)
    command to publish all changes and generate release tags (e.g.
    `@google-labs/breadboard@0.8.0`).
@@ -322,20 +329,20 @@ package.
    npx changeset publish
    ```
 
-6. Push the release tags added in step 5 to GitHub so that they are associated
+8. Push the release tags added in step 7 to GitHub so that they are associated
    with the commit from step 2.
 
    ```bash
    git push --follow-tags
    ```
 
-7. Merge the PR from step 3.
+9. Merge the PR from step 3.
 
-8. If one of the packages released was `hello-world`, please update the Replit project template:
+10. If one of the packages released was `hello-world`, please update the Replit project template:
 
-   - Go to [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) template.
-   - Run `npx degit breadboard-ai/breadboard/packages/hello-world --force`.
-   - Doing so will overwrite existing and add new files. Clean up deleted files.
+    - Go to [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) template.
+    - Run `npx degit breadboard-ai/breadboard/packages/hello-world --force`.
+    - Doing so will overwrite existing and add new files. Clean up deleted files.
 
 ## Updating Generated API Docs
 

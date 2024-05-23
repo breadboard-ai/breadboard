@@ -32,6 +32,10 @@ export class GraphRepresentation {
    */
   entries: NodeIdentifier[] = [];
 
+  #notInHeads(id: NodeIdentifier) {
+    return !this.heads.has(id) || this.heads.get(id)?.length === 0;
+  }
+
   constructor(descriptor: GraphDescriptor) {
     this.tails = descriptor.edges.reduce((acc, edge) => {
       const from = edge.from;
@@ -50,8 +54,8 @@ export class GraphRepresentation {
       return acc;
     }, new Map());
 
-    this.entries = Array.from(this.tails.keys()).filter(
-      (node) => !this.heads.has(node) || this.heads.get(node)?.length === 0
+    this.entries = Array.from(this.nodes.keys()).filter((node) =>
+      this.#notInHeads(node)
     );
   }
 }

@@ -127,3 +127,5 @@ packages/breadboard-web/build
 
 # User-specific configuration
 .vscode/settings.json
+
+lcov.info

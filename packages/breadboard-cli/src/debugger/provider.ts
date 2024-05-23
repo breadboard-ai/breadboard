@@ -42,6 +42,8 @@ const api = {
 };
 
 export class DebuggerGraphProvider implements GraphProvider {
+  name = "DebuggerGraphProvider";
+
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
 

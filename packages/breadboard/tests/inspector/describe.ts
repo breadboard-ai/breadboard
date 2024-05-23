@@ -7,7 +7,7 @@
 import test from "ava";
 
 import { inspectableGraph } from "../../src/inspector/graph.js";
-import { GraphDescriptor } from "../../src/types.js";
+import { GraphDescriptor, Schema } from "../../src/types.js";
 import { createLoader } from "../../src/loader/index.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
@@ -42,9 +42,9 @@ test("simple graph description works as expected", async (t) => {
       },
     },
     outputSchema: {
+      additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object" },
         text: { type: "string" },
       },
     },
@@ -67,10 +67,12 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       properties: {
         schema: {
           type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
         },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
         text: {
@@ -81,7 +83,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
         },
       },
       required: ["text"],
-    },
+    } satisfies Schema,
   });
 });
 
@@ -99,15 +101,17 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       type: "object",
       additionalProperties: false,
       properties: {
-        schema: { type: "object" },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
+      additionalProperties: true,
       type: "object",
-      properties: {
-        "*": { type: "string" },
-      },
-    },
+      properties: {},
+    } satisfies Schema,
   });
 });
 
@@ -125,9 +129,12 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
       additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: {
@@ -148,9 +155,14 @@ test("inspector API can describe the output in simplest.json", async (t) => {
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
-        schema: { type: "object" },
+        "*": { type: "string" },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         text: {
           type: "string",
           title: "Response",
@@ -158,12 +170,12 @@ test("inspector API can describe the output in simplest.json", async (t) => {
         },
       },
       required: ["text"],
-    },
+    } satisfies Schema,
     outputSchema: {
       additionalProperties: false,
       type: "object",
       properties: {},
-    },
+    } satisfies Schema,
   });
 });
 
@@ -178,17 +190,21 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: true,
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         "*": { type: "string" },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
       additionalProperties: false,
       type: "object",
       properties: {},
-    },
+    } satisfies Schema,
   });
 });
 
@@ -203,16 +219,20 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
 
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: false,
       type: "object",
       properties: {
-        schema: { type: "object" },
+        schema: {
+          type: "object",
+          behavior: ["json-schema", "ports-spec", "config"],
+        },
         text: { type: "string" },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
       additionalProperties: false,
       type: "object",
       properties: {},
-    },
+    } satisfies Schema,
   });
 });

@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#2E8BE8" />
   <link rel="stylesheet" href="/styles/global.css" />
   <link rel="icon" type="image/svg+xml" href="/images/u1f35e_u1f60e.svg" />
-  <title>Breadboard Playground</title>
+  <title>Breadboard - Visual Editor</title>
 </head>
 <body>
   <script type="module">
@@ -13,6 +13,7 @@
     import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
     import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
     import { ExamplesGraphProvider } from "./src/providers/examples.ts";
+    import { SettingsStore } from "./src/data/settings-store.ts";
 
     const localBoards = await (await fetch("/local-boards.json")).json();
 
@@ -49,11 +50,14 @@
 
     const config = {
       providers: [
-        IDBGraphProvider.instance(),
         FileSystemGraphProvider.instance(),
+        IDBGraphProvider.instance(),
         new ExamplesGraphProvider(boards),
       ],
+      settings: SettingsStore.instance(),
     };
+
+    window.oncontextmenu = (evt) => evt.preventDefault();
 
     const main = new Main(config);
     document.body.appendChild(main);

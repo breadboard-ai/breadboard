@@ -19,6 +19,8 @@ export type BoardInfo = {
 };
 
 export class ExamplesGraphProvider implements GraphProvider {
+  name = "ExamplesGraphProvider";
+
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
 

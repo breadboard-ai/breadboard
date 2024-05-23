@@ -75,6 +75,7 @@ program
   )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
+  .option("-f, --format", "Format the BGL file.")
   .action(makeGraph);
 
 program

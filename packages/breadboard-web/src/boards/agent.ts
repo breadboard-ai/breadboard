@@ -32,7 +32,7 @@ export default await board(({ generator, context, stopSequences }) => {
   context
     .title("Context")
     .isArray()
-    .format("multiline")
+    .behavior("llm-content")
     .examples(sampleContext);
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 
@@ -41,7 +41,7 @@ export default await board(({ generator, context, stopSequences }) => {
     context,
     stopSequences,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
-    path: generator.isString(),
+    $board: generator.isString(),
   });
 
   const { result } = json.jsonata({

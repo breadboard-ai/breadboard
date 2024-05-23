@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   BreadboardCapability,
   NodeDescriberFunction,
-  GraphMetadata,
+  GraphInlineMetadata,
   Schema,
   BehaviorSchema,
 } from "../../types.js";
@@ -21,6 +22,10 @@ import {
   AbstractNode,
   Serializeable,
 } from "../runner/types.js";
+
+export type GraphCombinedMetadata = GraphInlineMetadata & {
+  metadata?: GraphMetadata;
+};
 
 export type NodeValue =
   | BaseNodeValue
@@ -148,7 +153,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphMetadata
+    } & GraphCombinedMetadata
   ): Lambda<I, Required<O>>;
 
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
@@ -159,7 +164,7 @@ export interface BoardFactory {
       invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
-    } & GraphMetadata,
+    } & GraphCombinedMetadata,
     fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 }
@@ -268,7 +273,6 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
   abstract isBoolean(): AbstractValue<boolean>;
   abstract isArray(): AbstractValue<NodeValue[]>;
   abstract isObject(): AbstractValue<{ [key: string]: NodeValue }>;
-  abstract isImage(mimeType?: string): AbstractValue<unknown>;
 
   abstract title(title: string): AbstractValue<T>;
   abstract format(format: string): AbstractValue<T>;

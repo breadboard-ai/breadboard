@@ -6,11 +6,15 @@
 
 import {
   InputValues,
+  NodeHandler,
   OutputValues,
   StreamCapability,
 } from "@google-labs/breadboard";
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const { list } = inputs;
     if (!list) throw new Error("The `list` input is required");
@@ -27,4 +31,4 @@ export default {
     });
     return { stream: new StreamCapability(stream) };
   },
-};
+} satisfies NodeHandler;

@@ -11,7 +11,7 @@ import type {
   InputValues,
   GraphDescriptor,
   OutputValues,
-  GraphMetadata,
+  GraphInlineMetadata,
   SubGraphs,
   BreadboardRunner,
   BreadboardSlotSpec,
@@ -21,11 +21,11 @@ import type {
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
+  RunArguments,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
@@ -39,8 +39,16 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
-import { GraphProvider } from "./loader/types.js";
+import { GraphLoader, GraphProvider } from "./loader/types.js";
 import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
+import {
+  isBreadboardCapability,
+  isGraphDescriptorCapability,
+  isResolvedURLBoardCapability,
+  isUnresolvedPathBoardCapability,
+  resolveBoardCapabilities,
+  resolveBoardCapabilitiesInInputs,
+} from "./capability.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -72,7 +80,7 @@ export class BoardRunner implements BreadboardRunner {
    * to provide title, description, version, and URL for the board.
    */
   constructor(
-    { url, title, description, version, $schema }: GraphMetadata = {
+    { url, title, description, version, $schema }: GraphInlineMetadata = {
       $schema: breadboardSchema.$id,
     }
   ) {
@@ -121,9 +129,11 @@ export class BoardRunner implements BreadboardRunner {
    * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
-    context: NodeHandlerContext = {},
+    args: RunArguments = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { inputs, ...context } = args;
     const base = context.base || SENTINEL_BASE_URL;
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
@@ -133,7 +143,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const machine = new TraversalMachine(this, result?.state);
 
-      const requestedInputs = new RequestedInputsManager(context);
+      const requestedInputs = new RequestedInputsManager(args);
 
       const invocationPath = context.invocationPath || [];
 
@@ -149,6 +159,8 @@ export class BoardRunner implements BreadboardRunner {
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
+        context?.signal?.throwIfAborted();
+
         invocationId++;
         const { inputs, descriptor, missingInputs } = result;
 
@@ -197,7 +209,9 @@ export class BoardRunner implements BreadboardRunner {
             result,
             path()
           );
-          outputsPromise = result.outputsPromise;
+          outputsPromise = result.outputsPromise
+            ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
+            : undefined;
         } else if (descriptor.type === "output") {
           if (
             !(await bubbleUpOutputsIfNeeded(
@@ -232,7 +246,7 @@ export class BoardRunner implements BreadboardRunner {
 
           outputsPromise = callHandler(
             handler,
-            inputs,
+            resolveBoardCapabilitiesInInputs(inputs, context, this.url),
             newContext
           ) as Promise<OutputValues>;
         }
@@ -412,28 +426,47 @@ export class BoardRunner implements BreadboardRunner {
    * @returns {Board} A runnable board.
    */
   static async fromBreadboardCapability(
-    board: BreadboardCapability
+    capability: BreadboardCapability,
+    loader?: GraphLoader,
+    context?: NodeHandlerContext
   ): Promise<BoardRunner> {
-    if (board.kind !== "board" || !(board as BreadboardCapability).board) {
-      throw new Error(`Expected a "board" Capability, but got ${board}`);
-    }
-
-    // TODO: Use JSON schema to validate rather than this hack.
-    const boardish = (board as BreadboardCapability).board as GraphDescriptor;
-    if (!(boardish.edges && boardish.kits && boardish.nodes)) {
+    if (!isBreadboardCapability(capability)) {
       throw new Error(
-        'Supplied "board" Capability argument is not actually a board'
+        `Expected a "board" Capability, but got "${JSON.stringify(capability)}`
       );
     }
 
-    // If all we got is a GraphDescriptor, build a runnable board from it.
-    // TODO: Use JSON schema to validate rather than this hack.
-    let runnableBoard = (board as BreadboardCapability).board as BoardRunner;
-    if (!runnableBoard.runOnce) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(boardish);
+    // TODO: Deduplicate, replace with `getGraphDescriptor`.
+    if (isGraphDescriptorCapability(capability)) {
+      // If all we got is a GraphDescriptor, build a runnable board from it.
+      // TODO: Use JSON schema to validate rather than this hack.
+      const board = capability.board;
+      const runnableBoard = board as BoardRunner;
+      if (!runnableBoard.runOnce) {
+        return await BoardRunner.fromGraphDescriptor(board);
+      }
+      return runnableBoard;
+    } else if (isResolvedURLBoardCapability(capability)) {
+      if (!loader || !context) {
+        throw new Error(
+          `The "board" Capability is a URL, but no loader and/or context was supplied.`
+        );
+      }
+      const graph = await loader.load(capability.url, context);
+      if (!graph) {
+        throw new Error(
+          `Unable to load "board" Capability with the URL of ${capability.url}.`
+        );
+      }
+      return BoardRunner.fromGraphDescriptor(graph);
+    } else if (isUnresolvedPathBoardCapability(capability)) {
+      throw new Error(
+        `Integrity error: somehow, the unresolved path "board" Capability snuck through the processing of inputs`
+      );
     }
-
-    return runnableBoard;
+    throw new Error(
+      `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`
+    );
   }
 
   static async handlersFromBoard(
@@ -445,8 +478,6 @@ export class BoardRunner implements BreadboardRunner {
 
     return handlersFromKits(kits);
   }
-
-  static runRemote = runRemote;
 }
 
 // HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).

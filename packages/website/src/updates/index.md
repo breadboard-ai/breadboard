@@ -4,9 +4,9 @@ title: Breadboard Updates
 isIndex: true
 ---
 
-Intro
+These are our semi-regular updates about the state of the project. If you'd like
+to keep up with what's happening with Breadboard, this is the page to watch.
 
-<h2>Recent posts</h2>
 <ul>
 {%- for post in collections.update -%}
   <li><a href="/breadboard{{ post.url }}">{{ post.data.title }}</a></li>
