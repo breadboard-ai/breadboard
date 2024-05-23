@@ -52,7 +52,7 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async createURL(_location: string, fileName: string) {
-    return `${this.origin}/boards/${fileName}`;
+    return `${this.origin}/boards/${this.userKey}/${fileName}`;
   }
 
   parseURL(_url: URL) {
