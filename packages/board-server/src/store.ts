@@ -7,7 +7,7 @@
 import { Firestore } from "@google-cloud/firestore";
 
 export const getStore = () => {
-  return new Store("server-board");
+  return new Store("board-server");
 };
 
 class Store {
