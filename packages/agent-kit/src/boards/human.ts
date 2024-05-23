@@ -12,7 +12,13 @@ import {
   NewNodeFactory,
   NewNodeValue,
 } from "@google-labs/breadboard";
-import { LlmContent, Context, TextPart, skipIfDone } from "../context.js";
+import {
+  LlmContent,
+  Context,
+  TextPart,
+  skipIfDone,
+  userPartsAdder,
+} from "../context.js";
 
 const voteRequestContent = {
   adCampaign: {
@@ -84,8 +90,8 @@ const schema = code<SchemaInputs, SchemaOutputs>(
     const text: Schema = {
       title,
       description,
-      type: "string",
-      behavior: ["transient"],
+      type: "object",
+      behavior: ["transient", "llm-content"],
     };
     const schema: Schema = {
       type: "object",
@@ -98,21 +104,6 @@ const schema = code<SchemaInputs, SchemaOutputs>(
     }
 
     return { schema, context };
-  }
-);
-
-type AppenderInputs = { context: unknown[]; text: string };
-type AppenderOutputs = { context: unknown[] };
-
-/**
- * Appends user input to the context of the conversation.
- */
-export const contextAppender = code<AppenderInputs, AppenderOutputs>(
-  ({ context, text }) => {
-    if (!text) return { context };
-    return {
-      context: [...(context || []), { role: "user", parts: [{ text }] }],
-    };
   }
 );
 
@@ -309,14 +300,14 @@ export default await board(({ context, title, description }) => {
     again: recognizeAction.again.behavior("deprecated"),
   });
 
-  const appendContext = contextAppender({
+  const appendContext = userPartsAdder({
     $id: "appendContext",
     $metadata: {
       title: "Append Context",
       description: "Appending user input to the conversation context",
     },
-    context: recognizeAction.context.isArray(),
-    text: recognizeAction.text.isString(),
+    context: recognizeAction.context,
+    toAdd: recognizeAction.text,
   });
 
   return {
