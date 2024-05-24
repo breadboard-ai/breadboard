@@ -1246,7 +1246,7 @@
           "id": "fn-8",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({response})=>{const r=response;const result=[];for(const inputs of r){let contentDetected=false;for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";result.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs);result.push({parts:[{text}],role:\"tool\"})}}return{response:result}};",
+            "code": "const fn_8 = ({response})=>{const r=response;const result=[];for(const inputs of r){let contentDetected=false;if(!inputs.item){throw new Error(\"Invalid tool response\")}for(const key in inputs.item){const input=inputs.item[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";result.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs.item);result.push({parts:[{text}],role:\"tool\"})}}return{response:result}};",
             "name": "fn_8",
             "raw": true
           },

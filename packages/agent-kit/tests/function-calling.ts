@@ -205,57 +205,66 @@ describe("function-calling/boardInvocationAssembler", () => {
 });
 
 describe("function-calling/toolResponseFormatter", () => {
+  test("detects invalid response", () => {
+    throws(() => {
+      const response = [{ data: "foo" }];
+      toolResponseFormatterFunction({ response });
+    }, 'Must have "item"');
+  });
+
   test("correctly outputs LLMContent for simple outputs", () => {
     {
-      const response = [{ data: "foo" }];
+      const response = [{ item: { data: "foo" } }];
       const result = toolResponseFormatterFunction({ response });
       deepStrictEqual(result, {
         response: [
-          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
         ],
       });
     }
     {
-      const response = [{ data: null }];
+      const response = [{ item: { data: null } }];
       const result = toolResponseFormatterFunction({ response });
       deepStrictEqual(result, {
         response: [
-          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
         ],
       });
     }
     {
-      const response = [{ data: "foo" }, { bar: "baz" }];
+      const response = [{ item: { data: "foo" } }, { item: { bar: "baz" } }];
       const result = toolResponseFormatterFunction({ response });
       deepStrictEqual(result, {
         response: [
-          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
-          { parts: [{ text: JSON.stringify(response[1]) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[1].item) }], role: "tool" },
         ],
       });
     }
   });
   test("correctly detect LLMContent inside", () => {
     {
-      const response = [{ out: { content: "foo" } }];
+      const response = [{ item: { out: { content: "foo" } } }];
       const result = toolResponseFormatterFunction({ response });
       deepStrictEqual(result, {
         response: [
-          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
         ],
       });
     }
     {
       const response = [
         {
-          out: {
-            content: { parts: [{ text: "hello" }], role: "something" },
+          item: {
+            out: {
+              content: { parts: [{ text: "hello" }], role: "something" },
+            },
           },
         },
       ];
       const result = toolResponseFormatterFunction({ response });
       deepStrictEqual(result, {
-        response: [{ parts: response[0].out.content.parts, role: "tool" }],
+        response: [{ parts: response[0].item.out.content.parts, role: "tool" }],
       });
     }
   });
