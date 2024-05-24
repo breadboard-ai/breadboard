@@ -173,7 +173,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     },
     urlMap: formatFunctionDeclarations.urlMap,
     context: routeToFunctionsOrText.context,
-    functionCall: routeToFunctionsOrText.functionCall,
+    functionCalls: routeToFunctionsOrText.functionCalls,
   });
 
   const toolInvoker = core.invoke({

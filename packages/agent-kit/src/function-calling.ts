@@ -12,25 +12,29 @@ import { json } from "@google-labs/json-kit";
 export const functionOrTextRouterFunction = fun(({ context }) => {
   if (!context) throw new Error("Context is a required input");
   const item = context as LlmContent;
-  const functionCallPart = item.parts.find(
-    (part) => "functionCall" in part
-  ) as FunctionCallPart;
-  if (!functionCallPart) {
+  const functionCallParts = item.parts
+    .filter((part) => "functionCall" in part)
+    .map((part) => (part as FunctionCallPart).functionCall);
+  if (functionCallParts.length === 0) {
     const textPart = item.parts.find((part) => "text" in part) as TextPart;
     if (!textPart) throw new Error("No text or function call found in context");
     return { context, text: textPart.text };
   }
-  return { context, functionCall: functionCallPart.functionCall };
+  return { context, functionCalls: functionCallParts };
 });
 
 export const functionOrTextRouter = code(functionOrTextRouterFunction);
 
 type URLMap = Record<string, string>;
 
-export const boardInvokeAssembler = code(({ functionCall, urlMap }) => {
-  if (!functionCall) throw new Error("Function call is a required input");
+export const boardInvokeAssembler = code(({ functionCalls, urlMap }) => {
+  if (!functionCalls)
+    throw new Error("Function call array is a required input");
   if (!urlMap) throw new Error("URL map is a required input");
-  const call = functionCall as FunctionCallPart["functionCall"];
+  const calls = functionCalls as FunctionCallPart["functionCall"][];
+  if (calls.length === 0)
+    throw new Error("Function call array must not be empty.");
+  const call = calls[0];
   const $board = (urlMap as URLMap)[call.name];
   // This is a hack that is only needed because we currently invoke older-style
   // boards that ask for a generator URL (math and search-summarizer)

@@ -912,8 +912,8 @@
         {
           "from": "router",
           "to": "assembleBoardInvoke",
-          "out": "functionCall",
-          "in": "functionCall"
+          "out": "functionCalls",
+          "in": "functionCalls"
         },
         {
           "from": "router",
@@ -1070,7 +1070,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1117,7 +1117,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls)throw new Error(\"Function call array is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const calls=functionCalls;if(calls.length===0)throw new Error(\"Function call array must not be empty.\");const call=calls[0];const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1584,7 +1584,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1619,7 +1619,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls)throw new Error(\"Function call array is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const calls=functionCalls;if(calls.length===0)throw new Error(\"Function call array must not be empty.\");const call=calls[0];const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
