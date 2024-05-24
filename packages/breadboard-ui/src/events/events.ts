@@ -243,7 +243,10 @@ export class SubGraphCreateEvent extends Event {
 export class GraphProviderConnectRequestEvent extends Event {
   static eventName = "bbgraphproviderconnectrequest";
 
-  constructor(public readonly providerName: string) {
+  constructor(
+    public readonly providerName: string,
+    public readonly location?: string
+  ) {
     super(GraphProviderConnectRequestEvent.eventName, { ...eventInit });
   }
 }
@@ -313,6 +316,14 @@ export class GraphProviderRefreshEvent extends Event {
     public readonly location: string
   ) {
     super(GraphProviderRefreshEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphProviderAddEvent extends Event {
+  static eventName = "bbgraphprovideradd";
+
+  constructor() {
+    super(GraphProviderAddEvent.eventName, { ...eventInit });
   }
 }
 

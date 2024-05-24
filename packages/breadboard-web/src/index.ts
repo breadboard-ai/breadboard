@@ -6,6 +6,7 @@
 
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
@@ -32,7 +33,6 @@ import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
-import { RemoteGraphProvider } from "./providers/remote";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -62,6 +62,9 @@ export class Main extends LitElement {
 
   @state()
   showNav = false;
+
+  @state()
+  showProviderAddOverlay = false;
 
   @state()
   showPreviewOverlay = false;
@@ -357,6 +360,7 @@ export class Main extends LitElement {
     }
   `;
 
+  #load: Promise<void>;
   constructor(config: MainArguments) {
     super();
 
@@ -376,7 +380,7 @@ export class Main extends LitElement {
 
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
-    Promise.all([
+    this.#load = Promise.all([
       loadKits([
         GeminiKit,
         // TODO(aomarks) This is presumably not the right way to do this. How do
@@ -385,34 +389,29 @@ export class Main extends LitElement {
       ]),
       ...this.#providers.map((provider) => provider.restore()),
       this.#settings?.restore(),
-    ])
-      .then(([kits]) => {
-        this.kits = kits;
-
-        return this.#setBoardServersFromSettings();
-      })
-      .then(() => {
-        this.#providers.map((provider) => {
-          if (provider.extendedCapabilities().watch) {
-            provider.watch((change) => {
-              const currentUrl = new URL(window.location.href);
-              const boardFromUrl = currentUrl.searchParams.get("board");
-              if (boardFromUrl?.endsWith(change.filename)) {
-                this.#onStartBoard(
-                  new BreadboardUI.Events.StartEvent(change.filename)
-                );
-              }
-            });
-          }
-        });
-
-        if (boardFromUrl) {
-          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-          return;
+    ]).then(([kits]) => {
+      this.kits = kits;
+      this.#providers.map((provider) => {
+        if (provider.extendedCapabilities().watch) {
+          provider.watch((change) => {
+            const currentUrl = new URL(window.location.href);
+            const boardFromUrl = currentUrl.searchParams.get("board");
+            if (boardFromUrl?.endsWith(change.filename)) {
+              this.#onStartBoard(
+                new BreadboardUI.Events.StartEvent(change.filename)
+              );
+            }
+          });
         }
-
-        this.#startFromProviderDefault();
       });
+
+      if (boardFromUrl) {
+        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+        return;
+      }
+
+      this.#startFromProviderDefault();
+    });
   }
 
   connectedCallback(): void {
@@ -426,68 +425,6 @@ export class Main extends LitElement {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
-  }
-
-  async #setBoardServersFromSettings() {
-    const remoteServers = this.#settings?.getSection(
-      BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS
-    );
-
-    if (remoteServers && remoteServers.items) {
-      for (const server of remoteServers.items.values()) {
-        if (typeof server.value !== "string") {
-          continue;
-        }
-
-        let providerExists = false;
-
-        existingProviders: for (const provider of this.#providers) {
-          if (!(provider instanceof RemoteGraphProvider)) {
-            continue;
-          }
-
-          if (provider.origin === server.value) {
-            providerExists = true;
-            break existingProviders;
-          }
-        }
-
-        if (providerExists) {
-          continue;
-        }
-
-        const remoteGraphProvider = new RemoteGraphProvider(server.value);
-        await remoteGraphProvider.restore();
-        this.#providers.unshift(remoteGraphProvider);
-      }
-
-      // Now clean any providers that should not be there.
-      for (let p = this.#providers.length; p >= 0; p--) {
-        const provider = this.#providers[p];
-        if (!(provider instanceof RemoteGraphProvider)) {
-          continue;
-        }
-
-        let retain = false;
-        for (const server of remoteServers.items.values()) {
-          if (typeof server.value !== "string") {
-            continue;
-          }
-
-          if (provider.origin === server.value) {
-            retain = true;
-            break;
-          }
-        }
-
-        if (retain) {
-          continue;
-        }
-
-        console.log("Removing ", provider.origin);
-        this.#providers.splice(p, 1);
-      }
-    }
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -943,13 +880,159 @@ export class Main extends LitElement {
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
       this.showPreviewOverlay ||
-      this.showSettingsOverlay;
+      this.showSettingsOverlay ||
+      this.showFirstRun ||
+      this.showProviderAddOverlay;
+
+    const nav = this.#load.then(() => {
+      return html`<bb-nav
+        .visible=${this.showNav}
+        .url=${this.url}
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        ?inert=${showingOverlay}
+        @pointerdown=${(evt: Event) => evt.stopPropagation()}
+        @bbgraphprovideradd=${() => {
+          this.showProviderAddOverlay = true;
+        }}
+        @bbgraphproviderblankboard=${async (
+          evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            this.toast(
+              "Unable to find provider",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+          const url = new URL(provider.createURL(evt.location, evt.fileName));
+          const { result, error } = await provider.createBlank(url);
+
+          if (!result) {
+            this.toast(
+              error || "Unable to create blank board",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+
+          // Trigger a re-render.
+          this.providerOps++;
+          this.#changeBoard(url.href);
+        }}
+        @bbgraphproviderdeleterequest=${async (
+          evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
+        ) => {
+          if (
+            !confirm(
+              "Are you sure you want to delete this board? This cannot be undone"
+            )
+          ) {
+            return;
+          }
+
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            this.toast(
+              "Unable to delete file",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+
+          const { result, error } = await provider.delete(new URL(evt.url));
+          if (!result) {
+            this.toast(
+              error || "Unexpected error",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+
+          if (evt.isActive) {
+            this.#startFromProviderDefault();
+          }
+
+          // Trigger a re-render.
+          this.providerOps++;
+        }}
+        @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
+          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+            if (
+              !confirm(
+                "A board is currently running. Do you want to load this file?"
+              )
+            ) {
+              return;
+            }
+          }
+
+          this.#onStartBoard(evt);
+        }}
+        @bbgraphproviderrefresh=${async (
+          evt: BreadboardUI.Events.GraphProviderRefreshEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            return;
+          }
+
+          const refreshed = await provider.refresh(evt.location);
+          if (refreshed) {
+            this.toast(
+              "Source files refreshed",
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+          } else {
+            this.toast(
+              "Unable to refresh source files",
+              BreadboardUI.Events.ToastType.WARNING
+            );
+          }
+
+          // Trigger a re-render.
+          this.providerOps++;
+        }}
+        @bbgraphproviderdisconnect=${async (
+          evt: BreadboardUI.Events.GraphProviderDisconnectEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider) {
+            return;
+          }
+
+          await provider.disconnect(evt.location);
+
+          // Trigger a re-render.
+          this.providerOps++;
+        }}
+        @bbgraphproviderrenewaccesssrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!(provider instanceof FileSystemGraphProvider)) {
+            return;
+          }
+
+          await provider.renewAccessRequest(evt.location);
+
+          // Trigger a re-render.
+          this.providerOps++;
+        }}
+        @bbgraphproviderloadrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
+        ) => {
+          this.#changeBoard(evt.url);
+        }}
+      ></bb-nav> `;
+    });
+
     tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
             this.showNav = !this.showNav;
-            document.body.addEventListener(
+            window.addEventListener(
               "pointerdown",
               () => {
                 this.showNav = false;
@@ -1403,159 +1486,7 @@ export class Main extends LitElement {
           }}
         ></bb-ui-controller>
       </div>
-      <bb-nav
-        .visible=${this.showNav}
-        .url=${this.url}
-        .providers=${this.#providers}
-        .providerOps=${this.providerOps}
-        ?inert=${showingOverlay}
-        @pointerdown=${(evt: Event) => evt.stopImmediatePropagation()}
-        @bbgraphproviderblankboard=${async (
-          evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            this.toast(
-              "Unable to find provider",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-          const url = new URL(provider.createURL(evt.location, evt.fileName));
-          const { result, error } = await provider.createBlank(url);
-
-          if (!result) {
-            this.toast(
-              error || "Unable to create blank board",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-          this.#changeBoard(url.href);
-        }}
-        @bbgraphproviderdeleterequest=${async (
-          evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
-        ) => {
-          if (
-            !confirm(
-              "Are you sure you want to delete this board? This cannot be undone"
-            )
-          ) {
-            return;
-          }
-
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            this.toast(
-              "Unable to delete file",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          const { result, error } = await provider.delete(new URL(evt.url));
-          if (!result) {
-            this.toast(
-              error || "Unexpected error",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-
-          if (evt.isActive) {
-            this.#startFromProviderDefault();
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-        }}
-        @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-            if (
-              !confirm(
-                "A board is currently running. Do you want to load this file?"
-              )
-            ) {
-              return;
-            }
-          }
-
-          this.#onStartBoard(evt);
-        }}
-        @bbgraphproviderrefresh=${async (
-          evt: BreadboardUI.Events.GraphProviderRefreshEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            return;
-          }
-
-          const refreshed = await provider.refresh(evt.location);
-          if (refreshed) {
-            this.toast(
-              "Source files refreshed",
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-          } else {
-            this.toast(
-              "Unable to refresh source files",
-              BreadboardUI.Events.ToastType.WARNING
-            );
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-        }}
-        @bbgraphproviderdisconnect=${async (
-          evt: BreadboardUI.Events.GraphProviderDisconnectEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            return;
-          }
-
-          await provider.disconnect(evt.location);
-
-          // Trigger a re-render.
-          this.providerOps++;
-        }}
-        @bbgraphproviderrenewaccesssrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!(provider instanceof FileSystemGraphProvider)) {
-            return;
-          }
-
-          await provider.renewAccessRequest(evt.location);
-
-          // Trigger a re-render.
-          this.providerOps++;
-        }}
-        @bbgraphproviderloadrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
-        ) => {
-          this.#changeBoard(evt.url);
-        }}
-        @bbgraphproviderconnectrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!(provider instanceof FileSystemGraphProvider)) {
-            return;
-          }
-
-          const success = await provider.connect();
-          if (!success) {
-            return;
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-        }}
-      ></bb-nav> `;
+      ${until(nav)}`;
 
     if (this.embed) {
       tmpl = html`<iframe
@@ -1613,7 +1544,6 @@ export class Main extends LitElement {
 
           try {
             await this.#settings.save(evt.settings);
-            await this.#setBoardServersFromSettings();
             this.toast(
               "Saved settings",
               BreadboardUI.Events.ToastType.INFORMATION
@@ -1643,6 +1573,20 @@ export class Main extends LitElement {
         class="settings"
         .settings=${this.#settings?.values || null}
         .boardServerUrl=${boardServerUrl}
+        @bbgraphproviderconnectrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider || !provider.extendedCapabilities().connect) {
+            return;
+          }
+
+          try {
+            await provider.connect(evt.location);
+          } catch (err) {
+            return;
+          }
+        }}
         @bbsettingsupdate=${async (
           evt: BreadboardUI.Events.SettingsUpdateEvent
         ) => {
@@ -1652,7 +1596,6 @@ export class Main extends LitElement {
 
           try {
             await this.#settings.save(evt.settings);
-            await this.#setBoardServersFromSettings();
             this.toast(
               "Welcome to Breadboard!",
               BreadboardUI.Events.ToastType.INFORMATION
@@ -1668,16 +1611,51 @@ export class Main extends LitElement {
           this.#setUrlParam("firstrun", null);
           this.#setUrlParam("boardserver", null);
           this.showFirstRun = false;
-          this.#setBoardServersFromSettings();
           this.requestUpdate();
         }}
         @bboverlaydismissed=${() => {
           this.#setUrlParam("firstrun", null);
           this.#setUrlParam("boardserver", null);
-          this.#setBoardServersFromSettings();
           this.showFirstRun = false;
         }}
       ></bb-first-run-overlay>`;
+    }
+
+    let providerAddOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showProviderAddOverlay) {
+      providerAddOverlay = html`<bb-provider-overlay
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        @bboverlaydismissed=${() => {
+          this.showProviderAddOverlay = false;
+        }}
+        @bbgraphproviderconnectrequest=${async (
+          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+        ) => {
+          const provider = this.#getProviderByName(evt.providerName);
+          if (!provider || !provider.extendedCapabilities().connect) {
+            return;
+          }
+
+          let success = false;
+          try {
+            success = await provider.connect(evt.location);
+          } catch (err) {
+            this.toast(
+              "Unable to connect to provider",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+
+          if (!success) {
+            return;
+          }
+
+          // Trigger a re-render.
+          this.showProviderAddOverlay = false;
+          this.providerOps++;
+        }}
+      ></bb-provider-overlay>`;
     }
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
@@ -1708,6 +1686,6 @@ export class Main extends LitElement {
     }
 
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${firstRunOverlay} ${historyOverlay} ${toasts} `;
+    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay} ${toasts} `;
   }
 }

@@ -4,23 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import {
   GraphProviderConnectRequestEvent,
   OverlayDismissedEvent,
-  SettingsUpdateEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { GraphProvider } from "@google-labs/breadboard";
 
-@customElement("bb-first-run-overlay")
-export class FirstRunOverlay extends LitElement {
+@customElement("bb-provider-overlay")
+export class ProviderOverlay extends LitElement {
   @property()
-  settings: Settings | null = null;
+  providers: GraphProvider[] = [];
 
   @property()
-  boardServerUrl: string | null = null;
+  providerOps = 0;
+
+  @state()
+  providerType: "FileSystem" | "BoardServer" = "BoardServer";
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -74,7 +76,8 @@ export class FirstRunOverlay extends LitElement {
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       margin: var(--bb-grid-size) calc(var(--bb-grid-size) * 4)
         calc(var(--bb-grid-size) * 2);
       font-size: var(--bb-body-small);
@@ -85,6 +88,15 @@ export class FirstRunOverlay extends LitElement {
       border-radius: var(--bb-grid-size);
     }
 
+    input[type="text"],
+    input[type="url"],
+    select {
+      border-radius: var(--bb-grid-size);
+      background: var(--bb-neutral-0);
+      border: 1px solid var(--bb-neutral-300);
+      padding: var(--bb-grid-size-2);
+    }
+
     textarea {
       height: 140px;
     }
@@ -92,18 +104,8 @@ export class FirstRunOverlay extends LitElement {
     #controls {
       display: flex;
       justify-content: flex-end;
-      margin: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4);
-    }
-
-    p {
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      margin: 0 0 var(--bb-grid-size-4) 0;
-      padding: 0 var(--bb-grid-size-4);
-    }
-
-    p:first-of-type {
-      margin-top: var(--bb-grid-size-2);
+      margin: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4)
+        calc(var(--bb-grid-size) * 4);
     }
 
     .cancel {
@@ -129,6 +131,30 @@ export class FirstRunOverlay extends LitElement {
       padding: 0 16px 0 28px;
       margin: 0;
     }
+
+    #select-source-directory {
+      margin: var(--bb-grid-size) calc(var(--bb-grid-size) * 4)
+        calc(var(--bb-grid-size) * 2);
+      border-radius: 50px;
+      background: var(--bb-ui-500);
+      border: none;
+      color: var(--bb-neutral-0);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      padding-right: var(--bb-grid-size-4);
+      height: var(--bb-grid-size-7);
+    }
+
+    #select-source-directory::before {
+      content: "";
+      background: var(--bb-icon-add-inverted) center center / 20px 20px
+        no-repeat;
+      width: 20px;
+      height: 20px;
+      margin-right: var(--bb-grid-size);
+    }
   `;
 
   protected firstUpdated(): void {
@@ -150,6 +176,43 @@ export class FirstRunOverlay extends LitElement {
   }
 
   render() {
+    let fields: HTMLTemplateResult | symbol = nothing;
+    switch (this.providerType) {
+      case "FileSystem": {
+        fields = html` <div>
+          <button
+            id="select-source-directory"
+            @click=${() => {
+              this.dispatchEvent(
+                new GraphProviderConnectRequestEvent("FileSystemGraphProvider")
+              );
+            }}
+          >
+            Choose Directory
+          </button>
+        </div>`;
+        break;
+      }
+
+      case "BoardServer": {
+        fields = html`<label>URL</label>
+          <input
+            name="url"
+            type="url"
+            placeholder="Enter the Board Server URL"
+            required
+          />`;
+        break;
+      }
+    }
+
+    const supportsFileSystem =
+      this.providers.find((provider) => {
+        return (
+          provider.name === "FileSystemGraphProvider" && provider.isSupported()
+        );
+      }) !== undefined;
+
     return html`<bb-overlay>
       <form
         ${ref(this.#formRef)}
@@ -170,54 +233,33 @@ export class FirstRunOverlay extends LitElement {
             return;
           }
 
-          if (!this.settings) {
-            return null;
-          }
-
           const data = new FormData(evt.target);
-          const settings = structuredClone(this.settings);
-
-          const geminiKey = data.get("gemini-key");
-          if (geminiKey && typeof geminiKey === "string") {
-            let setting =
-              settings[SETTINGS_TYPE.SECRETS].items.get("GEMINI_KEY");
-            setting = setting
-              ? { ...setting, value: geminiKey }
-              : { name: "GEMINI_KEY", value: geminiKey };
-
-            settings[SETTINGS_TYPE.SECRETS].items.set("GEMINI_KEY", setting);
+          const type = data.get("type") as typeof this.providerType;
+          if (!type) {
+            return;
           }
 
-          if (this.boardServerUrl && URL.canParse(this.boardServerUrl)) {
-            this.dispatchEvent(
-              new GraphProviderConnectRequestEvent(
-                "RemoteGraphProvider",
-                this.boardServerUrl
-              )
-            );
+          switch (type) {
+            case "BoardServer": {
+              const url = data.get("url") as string;
+              if (!url) {
+                return;
+              }
+
+              this.dispatchEvent(
+                new GraphProviderConnectRequestEvent("RemoteGraphProvider", url)
+              );
+              break;
+            }
+
+            case "FileSystem": {
+              break;
+            }
           }
-
-          const defaultToTrue = [
-            "Collapse Nodes by Default",
-            "Hide Embedded Board Selector When Empty",
-            "Hide Advanced Ports on Nodes",
-            "Show Node Shortcuts",
-          ];
-
-          for (const name of defaultToTrue) {
-            let setting = settings[SETTINGS_TYPE.GENERAL].items.get(name);
-            setting = setting
-              ? { ...setting, value: true }
-              : { name, value: true };
-
-            settings[SETTINGS_TYPE.GENERAL].items.set(name, setting);
-          }
-
-          this.dispatchEvent(new SettingsUpdateEvent(settings));
         }}
       >
         <header>
-          <h1>Welcome to Breadboard!</h1>
+          <h1>Add new Provider</h1>
           <button
             @click=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
@@ -229,24 +271,34 @@ export class FirstRunOverlay extends LitElement {
           </button>
         </header>
 
-        <p>
-          To help you quickly prototype your next generative AI experience, you
-          can enter your Gemini key below. It's optional, but it will make
-          things a bit smoother for you.
-        </p>
+        <label>Type</label>
+        <select
+          name="type"
+          @input=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLSelectElement)) {
+              return;
+            }
 
-        <p>
-          Your key will be stored locally in your browser and can be changed or
-          removed at any time in the app's settings. If you're not sure what
-          this is, no worries, you can skip it for now.
-        </p>
+            this.providerType = evt.target.value as typeof this.providerType;
+          }}
+        >
+          <option
+            value="BoardServer"
+            ?selected=${this.providerType === "BoardServer"}
+          >
+            Board server
+          </option>
+          ${supportsFileSystem
+            ? html`<option
+                value="FileSystem"
+                ?selected=${this.providerType === "FileSystem"}
+              >
+                File System
+              </option>`
+            : nothing}
+        </select>
 
-        <input
-          name="gemini-key"
-          type="text"
-          required
-          placeholder="Enter your Gemini key here (optional)"
-        />
+        ${fields}
 
         <div id="controls">
           <button
@@ -256,9 +308,9 @@ export class FirstRunOverlay extends LitElement {
             class="cancel"
             type="button"
           >
-            Skip for now
+            Cancel
           </button>
-          <input type="submit" value="Let's Go!" />
+          <input type="submit" value="Save" />
         </div>
       </form>
     </bb-overlay>`;
