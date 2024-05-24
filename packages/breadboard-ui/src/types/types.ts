@@ -160,7 +160,18 @@ export type Settings = {
       description: string;
       nameEditable: boolean;
       nameVisible: boolean;
+      /**
+       * Render an instance of the custom element with this name, instead of
+       * generic setting entries. The element must match the
+       * {@link CustomSettingsElement} interface.
+       */
+      customElement?: string;
     };
     items: Map<SettingEntry["value"]["name"], SettingEntry["value"]>;
   };
+};
+
+export type CustomSettingsElement = HTMLElement & {
+  settingsType: SETTINGS_TYPE | undefined;
+  settingsItems: Settings[SETTINGS_TYPE]["items"] | undefined;
 };
