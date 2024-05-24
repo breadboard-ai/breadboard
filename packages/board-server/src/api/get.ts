@@ -5,18 +5,19 @@
  */
 
 import { serverError } from "../errors.js";
-import { getStore } from "../store.js";
+import { asInfo, getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
 const get: ApiHandler = async (path, req, res) => {
   const store = getStore();
 
-  const [userStore, boardId] = path.split("/");
-  if (!userStore || !boardId) {
+  const { userStore, boardName } = asInfo(path);
+  if (!userStore || !boardName) {
     serverError(res, "Invalid path");
     return true;
   }
-  const board = await store.get(userStore, boardId);
+
+  const board = await store.get(userStore, boardName);
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(board);

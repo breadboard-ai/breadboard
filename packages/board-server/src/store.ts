@@ -10,6 +10,17 @@ export const getStore = () => {
   return new Store("board-server");
 };
 
+export const asPath = (userStore: string, boardName: string) => {
+  return `@${userStore}/${boardName}`;
+};
+
+export const asInfo = (path: string) => {
+  const [userStore, boardName] = path.split("/");
+  if (!userStore || userStore[0] !== "@") {
+    return {};
+  }
+  return { userStore: userStore.slice(1), boardName };
+};
 class Store {
   #database;
 
@@ -26,7 +37,7 @@ class Store {
     const boards = [];
     for (const store of allStores) {
       const storeBoards = await store.collection("boards").listDocuments();
-      boards.push(...storeBoards.map((doc) => `${store.id}/${doc.id}`));
+      boards.push(...storeBoards.map((doc) => asPath(store.id, doc.id)));
     }
     return boards;
   }
@@ -38,7 +49,7 @@ class Store {
     return doc.get("graph");
   }
 
-  async create(userStore: string, boardName: string, graph: string) {
+  async update(userStore: string, boardName: string, graph: string) {
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
       .set({ graph: JSON.stringify(graph), published: true });
