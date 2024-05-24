@@ -7,11 +7,6 @@
 import { defineNodeType } from "@breadboard-ai/build";
 import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
-const embedTextHandler = (
-    text: string,
-    PALM_KEY: string
-)
-
 export default defineNodeType({
     name: "embedText",
     metadata: {
