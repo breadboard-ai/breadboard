@@ -199,13 +199,18 @@ export const functionDeclarationsFormatter = code(({ list }) => {
   return { tools, urlMap };
 });
 
+export type ToolResponse = { item: Record<string, unknown> };
+
 export const toolResponseFormatterFunction = fun(({ response }) => {
-  const r = response as Record<string, unknown>[];
+  const r = response as ToolResponse[];
   const result: LlmContent[] = [];
   for (const inputs of r) {
     let contentDetected = false;
-    for (const key in inputs) {
-      const input = inputs[key] as { content: LlmContent };
+    if (!inputs.item) {
+      throw new Error("Invalid tool response");
+    }
+    for (const key in inputs.item) {
+      const input = inputs.item[key] as { content: LlmContent };
       if (input !== null && typeof input === "object" && "content" in input) {
         // Presume that this is an LLMContent
         const content = input.content;
@@ -218,7 +223,7 @@ export const toolResponseFormatterFunction = fun(({ response }) => {
       }
     }
     if (!contentDetected) {
-      const text = JSON.stringify(inputs);
+      const text = JSON.stringify(inputs.item);
       result.push({ parts: [{ text }], role: "tool" } satisfies LlmContent);
     }
   }
