@@ -240,7 +240,9 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const canProvide = url.protocol === "http:" || url.protocol === "https:";
+    const canProvide =
+      this.#locations.find((store) => url.href.startsWith(store.url)) !==
+      undefined;
     return canProvide
       ? {
           load: canProvide,
