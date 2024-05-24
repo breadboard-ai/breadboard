@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType } from "@breadboard-ai/build";
+import {
+  array,
+  defineNodeType,
+  enumeration,
+  object,
+  optional,
+} from "@breadboard-ai/build";
+import { AdvancedBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import {
   ErrorCapability,
   InputValues,
@@ -87,6 +94,33 @@ export const prepareResponse = async (
     } as OutputValues;
 };
 
+export const SafetySettingThreshold = enumeration(
+  "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+  "BLOCK_LOW_AND_ABOVE",
+  "BLOCK_MEDIUM_AND_ABOVE",
+  "BLOCK_ONLY_HIGH"
+);
+
+export const SafetySettingCategory = enumeration(
+  "HARM_CATEGORY_UNSPECIFIED",
+  "HARM_CATEGORY_DEROGATORY",
+  "HARM_CATEGORY_TOXICITY",
+  "HARM_CATEGORY_VIOLENCE",
+  "HARM_CATEGORY_SEXUAL",
+  "HARM_CATEGORY_MEDICAL",
+  "HARM_CATEGORY_DANGEROUS"
+);
+
+export const NodeSafetySettings = {
+  type: array(
+    object({
+      category: optional(SafetySettingCategory),
+      threshold: optional(SafetySettingThreshold),
+    })
+  ),
+  description: "Safety settings",
+};
+
 export default defineNodeType({
   name: "generateText",
   metadata: {
@@ -102,29 +136,15 @@ export default defineNodeType({
       description: "The Google Cloud Platform API key",
     },
     stopSequences: {
-      type: "array",
+      type: array("string"),
       description: "Stop sequences",
-      items: {
-        type: "string",
-      },
     },
-    safetySettings: {
-      type: "array",
-      description: "Safety settings",
-      items: {
-        type: "object",
-        required: ["category", "threshold"],
-      },
-    },
+    safetySettings: NodeSafetySettings,
   },
   outputs: {
     completion: {
       type: "string",
       description: "The generated text completion of the supplied text input.",
-    },
-    $error: {
-      type: "object",
-      description: "Error information, if any.",
     },
   },
   invoke: async ({ text, PALM_KEY, stopSequences, safetySettings }) => {
