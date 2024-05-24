@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeValue,
-  OutputValues,
+import { defineNodeType } from "@breadboard-ai/build";
+import {
   ErrorCapability,
-  NodeDescriberFunction,
-  NodeHandler,
+  InputValues,
+  OutputValues,
 } from "@google-labs/breadboard";
 import {
   GenerateTextResponse,
@@ -23,7 +21,7 @@ export type GenerateTextOutputs = GenerateTextResponse & {
   completion: string;
 };
 
-export type GenerateTextInputs = NodeValue & {
+export type GenerateTextInputs = InputValues & {
   /**
    * Prompt for text completion.
    */
@@ -48,20 +46,23 @@ export type GenerateTextError = ErrorCapability & {
   safetyFeedback: GenerateTextResponse["safetyFeedback"];
 };
 
-export const prepareRequest = (inputs: InputValues) => {
-  const values = inputs as GenerateTextInputs;
-  if (!values.PALM_KEY)
-    throw new Error("Text completion requires `PALM_KEY` input");
-  if (!values.text) throw new Error("Text completion requires `text` input");
+export const prepareRequest = ({
+  text,
+  PALM_KEY,
+  stopSequences,
+  safetySettings,
+}: GenerateTextInputs) => {
+  if (!PALM_KEY) throw new Error("Text completion requires `PALM_KEY` input");
+  if (!text) throw new Error("Text completion requires `text` input");
 
-  const prompt = new Text().text(values.text);
-  const stopSequences = values.stopSequences || [];
+  const prompt = new Text().text(text);
+  stopSequences = stopSequences || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));
-  const safetySettings = values.safetySettings || [];
+  safetySettings = safetySettings || [];
   safetySettings.forEach((safetySetting) =>
     prompt.addSafetySetting(safetySetting.category, safetySetting.threshold)
   );
-  return palm(values.PALM_KEY).text(prompt);
+  return palm(PALM_KEY).text(prompt);
 };
 
 export const prepareResponse = async (
@@ -86,66 +87,51 @@ export const prepareResponse = async (
     } as OutputValues;
 };
 
-export const generateTextDescriber: NodeDescriberFunction = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        text: {
-          title: "text",
-          description: "Prompt for text completion.",
-          type: "string",
-        },
-        PALM_KEY: {
-          title: "PALM_KEY",
-          description: "The Google Cloud Platform API key",
-          type: "string",
-        },
-        stopSequences: {
-          title: "stopSequences",
-          description: "Stop sequences",
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-        safetySettings: {
-          title: "safetySettings",
-          description: "Safety settings",
-          type: "array",
-          items: {
-            type: "object",
-            required: ["category", "threshold"],
-          },
-        },
-      },
-      required: ["text", "PALM_KEY"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        completion: {
-          title: "completion",
-          description:
-            "The generated text completion of the supplied text input.",
-          type: "string",
-        },
-        $error: {
-          title: "$error",
-          description: "Error information, if any.",
-          type: "object",
-        },
-      },
-    },
-  };
-};
-
-export default {
+export default defineNodeType({
+  name: "generateText",
   metadata: {
-    deprecated: true,
+    deprecated: true, // TODO(Tina): Should this still be here?
   },
-  describe: generateTextDescriber,
-  invoke: async (inputs: InputValues) => {
-    return await prepareResponse(await fetch(prepareRequest(inputs)));
+  inputs: {
+    text: {
+      type: "string",
+      description: "Prompt for text completion.",
+    },
+    PALM_KEY: {
+      type: "string",
+      description: "The Google Cloud Platform API key",
+    },
+    stopSequences: {
+      type: "array",
+      description: "Stop sequences",
+      items: {
+        type: "string",
+      },
+    },
+    safetySettings: {
+      type: "array",
+      description: "Safety settings",
+      items: {
+        type: "object",
+        required: ["category", "threshold"],
+      },
+    },
   },
-} satisfies NodeHandler;
+  outputs: {
+    completion: {
+      type: "string",
+      description: "The generated text completion of the supplied text input.",
+    },
+    $error: {
+      type: "object",
+      description: "Error information, if any.",
+    },
+  },
+  invoke: async ({ text, PALM_KEY, stopSequences, safetySettings }) => {
+    return await prepareResponse(
+      await fetch(
+        prepareRequest({ text, PALM_KEY, stopSequences, safetySettings })
+      )
+    );
+  },
+});
