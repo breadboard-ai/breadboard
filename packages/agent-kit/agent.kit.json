@@ -154,7 +154,7 @@
           "id": "appendContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "const appendContext = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const appendContext = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "appendContext",
             "raw": true
           },
@@ -886,7 +886,7 @@
       "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
       "edges": [
         {
-          "from": "fn-10",
+          "from": "fn-11",
           "to": "output-2",
           "out": "context",
           "in": "out"
@@ -899,7 +899,7 @@
         },
         {
           "from": "fn-5",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "context",
           "in": "context"
         },
@@ -912,18 +912,18 @@
         {
           "from": "router",
           "to": "assembleBoardInvoke",
-          "out": "functionCall",
-          "in": "functionCall"
+          "out": "functionCalls",
+          "in": "functionCalls"
         },
         {
           "from": "router",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "context",
           "in": "generated"
         },
         {
           "from": "router",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "text",
           "in": "text"
         },
@@ -935,7 +935,7 @@
         },
         {
           "from": "fn-3",
-          "to": "fn-8",
+          "to": "fn-9",
           "out": "context",
           "in": "context"
         },
@@ -953,9 +953,9 @@
         },
         {
           "from": "assembleBoardInvoke",
-          "to": "invokeBoard",
-          "out": "*",
-          "in": ""
+          "to": "map-7",
+          "out": "list",
+          "in": "list"
         },
         {
           "from": "input-1",
@@ -988,8 +988,8 @@
           "in": "systemInstruction"
         },
         {
-          "from": "fn-8",
-          "to": "output-9",
+          "from": "fn-9",
+          "to": "output-10",
           "out": "context",
           "in": "out"
         },
@@ -1006,10 +1006,10 @@
           "in": "urlMap"
         },
         {
-          "from": "invokeBoard",
-          "to": "fn-7",
-          "out": "*",
-          "in": ""
+          "from": "map-7",
+          "to": "fn-8",
+          "out": "list",
+          "in": "response"
         },
         {
           "from": "turnBoardsToFunctions",
@@ -1018,8 +1018,8 @@
           "in": "list"
         },
         {
-          "from": "fn-7",
-          "to": "fn-8",
+          "from": "fn-8",
+          "to": "fn-9",
           "out": "response",
           "in": "toAdd"
         }
@@ -1041,11 +1041,11 @@
           }
         },
         {
-          "id": "fn-10",
+          "id": "fn-11",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_10 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
-            "name": "fn_10",
+            "code": "const fn_11 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
+            "name": "fn_11",
             "raw": true
           },
           "metadata": {
@@ -1070,7 +1070,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1083,7 +1083,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1117,7 +1117,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const $board=urlMap[call.name];list.push({$board,...call.args})}return{list}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1195,11 +1195,11 @@
           }
         },
         {
-          "id": "fn-8",
+          "id": "fn-9",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
-            "name": "fn_8",
+            "code": "const fn_9 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
+            "name": "fn_9",
             "raw": true
           },
           "metadata": {
@@ -1221,12 +1221,14 @@
           }
         },
         {
-          "id": "invokeBoard",
-          "type": "invoke",
-          "configuration": {},
+          "id": "map-7",
+          "type": "map",
+          "configuration": {
+            "board": "#invokeBoardWithArgs"
+          },
           "metadata": {
-            "title": "Invoke Tool",
-            "description": "Invoking the board"
+            "title": "Invoke Tools in Parallel",
+            "description": "Invoking tools in parallel"
           }
         },
         {
@@ -1241,11 +1243,11 @@
           }
         },
         {
-          "id": "fn-7",
+          "id": "fn-8",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = inputs=>{for(const key in inputs){const input=inputs[key];if(\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";return{response:content}}}}const text=JSON.stringify(inputs);return{response:{parts:[{text}],role:\"tool\"}}};",
-            "name": "fn_7",
+            "code": "const fn_8 = ({response})=>{const r=response;const result=[];for(const inputs of r){let contentDetected=false;for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";result.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs);result.push({parts:[{text}],role:\"tool\"})}}return{response:result}};",
+            "name": "fn_8",
             "raw": true
           },
           "metadata": {
@@ -1254,7 +1256,7 @@
           }
         },
         {
-          "id": "output-9",
+          "id": "output-10",
           "type": "output",
           "configuration": {
             "schema": {
@@ -1364,6 +1366,108 @@
               "id": "curry-3",
               "type": "curry",
               "configuration": {}
+            }
+          ],
+          "graphs": {}
+        },
+        "invokeBoardWithArgs": {
+          "title": "Invoke Board With Args",
+          "description": "Takes one item of `boardInvocationAssembler` output and invokes it as a board with arguments.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "fn-5",
+              "to": "output-2",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "invoke-4",
+              "to": "fn-5",
+              "out": "*",
+              "in": ""
+            },
+            {
+              "from": "fn-3",
+              "to": "invoke-4",
+              "out": "*",
+              "in": ""
+            },
+            {
+              "from": "input-1",
+              "to": "fn-3",
+              "out": "item",
+              "in": "item"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "output-2",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "string",
+                      "title": "item"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "fn-5",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_5 = result=>{return{item:result}};",
+                "name": "fn_5",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Pack results",
+                "description": "Packing results"
+              }
+            },
+            {
+              "id": "invoke-4",
+              "type": "invoke",
+              "configuration": {},
+              "metadata": {
+                "title": "Invoke board",
+                "description": "Invoking the board with unpacked arguments"
+              }
+            },
+            {
+              "id": "fn-3",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_3 = ({item})=>{const result=item;return result};",
+                "name": "fn_3",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Unpack args",
+                "description": "Unpacking board arguments"
+              }
+            },
+            {
+              "id": "input-1",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "string",
+                      "title": "item"
+                    }
+                  },
+                  "required": [
+                    "item"
+                  ]
+                }
+              }
             }
           ],
           "graphs": {}
@@ -1584,7 +1688,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1619,7 +1723,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls)throw new Error(\"Function call array is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const calls=functionCalls;if(calls.length===0)throw new Error(\"Function call array must not be empty.\");const call=calls[0];const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -2270,7 +2374,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_4 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_4",
             "raw": true
           },

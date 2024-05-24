@@ -14,6 +14,7 @@ import {
   LlmContent,
   LlmContentRole,
   checkAreWeDone,
+  combineContexts,
   looperTaskAdder,
   progressReader,
   userPartsAdder,
@@ -21,10 +22,11 @@ import {
 import { gemini } from "@google-labs/gemini-kit";
 import { core } from "@google-labs/core-kit";
 import {
-  boardInvokeAssembler,
+  boardInvocationAssembler,
   boardToFunction,
   functionDeclarationsFormatter,
   functionOrTextRouter,
+  invokeBoardWithArgs,
   toolResponseFormatter,
 } from "../function-calling.js";
 
@@ -165,7 +167,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     context: generator.context,
   });
 
-  const toolInvocationAssembler = boardInvokeAssembler({
+  const assembleInvocations = boardInvocationAssembler({
     $id: "assembleBoardInvoke",
     $metadata: {
       title: "Assemble Tool Invoke",
@@ -173,13 +175,16 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     },
     urlMap: formatFunctionDeclarations.urlMap,
     context: routeToFunctionsOrText.context,
-    functionCall: routeToFunctionsOrText.functionCall,
+    functionCalls: routeToFunctionsOrText.functionCalls,
   });
 
-  const toolInvoker = core.invoke({
-    $id: "invokeBoard",
-    $metadata: { title: "Invoke Tool", description: "Invoking the board" },
-    ...toolInvocationAssembler,
+  const mapInvocations = core.map({
+    $metadata: {
+      title: "Invoke Tools in Parallel",
+      description: "Invoking tools in parallel",
+    },
+    list: assembleInvocations.list.isArray(),
+    board: "#invokeBoardWithArgs",
   });
 
   const formatToolResponse = toolResponseFormatter({
@@ -187,10 +192,10 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Format Tool Response",
       description: "Formatting tool response",
     },
-    ...toolInvoker,
+    response: mapInvocations.list,
   });
 
-  const addToolResponseToContext = userPartsAdder({
+  const addToolResponseToContext = combineContexts({
     $metadata: {
       title: "Add Tool Response",
       description: "Adding tool response to context",
@@ -227,6 +232,6 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
 });
 
-specialist.graphs = { boardToFunction };
+specialist.graphs = { boardToFunction, invokeBoardWithArgs };
 
 export default specialist;

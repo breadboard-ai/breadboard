@@ -9,6 +9,39 @@ import { LlmContent, combineContextsFunction } from "../src/context.js";
 import { deepStrictEqual } from "node:assert";
 
 describe("combineContexts", () => {
+  test("works fine when `merge` isn't specified", () => {
+    const a1 = { text: "Before" };
+    const a2 = { text: "Hello" };
+    const b1 = { text: "In a" };
+    const b2 = { text: "world" };
+    const result = combineContextsFunction({
+      contextA: [
+        {
+          parts: [a1],
+        },
+        {
+          parts: [a2],
+        },
+      ] satisfies LlmContent[],
+      contextB: [
+        {
+          parts: [b1],
+        },
+        {
+          parts: [b2],
+        },
+      ] satisfies LlmContent[],
+    });
+
+    deepStrictEqual(result, {
+      context: [
+        { parts: [a1] },
+        { parts: [a2] },
+        { parts: [b1] },
+        { parts: [b2] },
+      ],
+    });
+  });
   test("merges contexts when asked", () => {
     const a1 = { text: "Before" };
     const a2 = { text: "Hello" };

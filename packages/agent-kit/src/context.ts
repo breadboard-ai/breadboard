@@ -40,7 +40,7 @@ export const fun = (
 export const userPartsAdder = code(({ context, toAdd }) => {
   if (!context) throw new Error("Context is required");
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
-  const incoming = structuredClone(toAdd) as LlmContent;
+  const incoming = toAdd as LlmContent;
   if (!incoming.parts) {
     const containsUserRole =
       existing.filter(
