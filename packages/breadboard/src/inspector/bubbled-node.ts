@@ -11,6 +11,7 @@ import {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
+  InspectableNodeType,
   InspectablePortList,
 } from "./types.js";
 import {
@@ -69,6 +70,10 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.isExit();
   }
 
+  type(): InspectableNodeType {
+    return this.#actual.type();
+  }
+
   configuration(): NodeConfiguration {
     return this.#actual.configuration();
   }
@@ -104,6 +109,7 @@ export class BubbledInspectableNode implements InspectableNode {
           this.incoming(),
           described.inputSchema,
           false,
+          true,
           inputValues
         ),
       };
@@ -113,6 +119,7 @@ export class BubbledInspectableNode implements InspectableNode {
           EdgeType.Out,
           [],
           described.outputSchema,
+          false,
           false,
           bubbledValues
         ),

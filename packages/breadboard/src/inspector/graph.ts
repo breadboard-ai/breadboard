@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { handlersFromKits } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
@@ -34,6 +35,7 @@ import {
   InspectableNode,
   InspectableSubgraphs,
   NodeTypeDescriberOptions,
+  InspectableNodeType,
 } from "./types.js";
 
 export const inspectableGraph = (
@@ -55,6 +57,7 @@ const maybeURL = (url?: string): URL | undefined => {
 class Graph implements InspectableGraphWithStore {
   #url?: URL;
   #kits?: InspectableKit[];
+  #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
@@ -73,6 +76,10 @@ class Graph implements InspectableGraphWithStore {
 
   raw() {
     return this.#graph;
+  }
+
+  metadata(): GraphMetadata | undefined {
+    return this.#graph.metadata;
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
@@ -142,6 +149,22 @@ class Graph implements InspectableGraphWithStore {
     return (this.#kits ??= collectKits(this.#options.kits || []));
   }
 
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
+    const node = this.nodeById(id);
+    if (!node) {
+      return undefined;
+    }
+    return this.typeById(node.descriptor.type);
+  }
+
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    const kits = this.kits();
+    this.#nodeTypes ??= new Map(
+      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
+    );
+    return this.#nodeTypes.get(id);
+  }
+
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
@@ -202,6 +225,15 @@ class Graph implements InspectableGraphWithStore {
 
   updateGraph(graph: GraphDescriptor): void {
     this.#graph = graph;
+  }
+
+  resetGraph(graph: GraphDescriptor): void {
+    this.#graph = graph;
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    edges.populate(graph);
+    this.#cache = { edges, nodes };
+    this.#graphs = null;
   }
 
   #populateSubgraphs(): InspectableSubgraphs {

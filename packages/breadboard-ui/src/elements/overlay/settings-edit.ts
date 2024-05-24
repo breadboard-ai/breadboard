@@ -7,17 +7,19 @@
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
-  BreadboardOverlayDismissedEvent,
+  OverlayDismissedEvent,
   SettingsUpdateEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
 import { Settings } from "../../types/types.js";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-settings-edit-overlay")
 export class SettingsEditOverlay extends LitElement {
   @property()
   settings: Settings | null = null;
+
   #formRef: Ref<HTMLFormElement> = createRef();
   #selectNewestItemFor: string | null = null;
 
@@ -80,8 +82,8 @@ export class SettingsEditOverlay extends LitElement {
     }
 
     input[type="radio"]:checked ~ label {
-      background: var(--bb-output-100);
-      color: var(--bb-output-700);
+      background: var(--bb-ui-100);
+      color: var(--bb-ui-700);
       cursor: auto;
     }
 
@@ -191,6 +193,15 @@ export class SettingsEditOverlay extends LitElement {
     .setting-description {
       font-size: var(--bb-body-x-small);
       line-height: var(--bb-body-line-height-x-small);
+    }
+
+    .setting-name.hidden {
+      display: none;
+    }
+
+    .setting-name.double,
+    .setting-value.double {
+      grid-column: 1 / 3;
     }
 
     ul {
@@ -518,7 +529,7 @@ export class SettingsEditOverlay extends LitElement {
           <h1>Settings</h1>
           <button
             @click=${() => {
-              this.dispatchEvent(new BreadboardOverlayDismissedEvent());
+              this.dispatchEvent(new OverlayDismissedEvent());
             }}
             class="close"
             type="button"
@@ -533,7 +544,7 @@ export class SettingsEditOverlay extends LitElement {
                 ${map(
                   Object.entries(this.settings),
                   ([name, { configuration, items }], idx) => {
-                    const id = name.toLocaleLowerCase().replace(/\s/, "-");
+                    const id = name.toLocaleLowerCase().replace(/\s/g, "_");
                     let addNewItem: HTMLTemplateResult | symbol = nothing;
                     if (configuration.extensible) {
                       addNewItem = html`<button
@@ -551,7 +562,7 @@ export class SettingsEditOverlay extends LitElement {
                       <li>
                         <input
                           type="radio"
-                          id="${name}"
+                          id="${id}"
                           name="setting"
                           ?checked=${idx === 0}
                           .value=${name}
@@ -582,7 +593,7 @@ export class SettingsEditOverlay extends LitElement {
                             });
                           }}
                         />
-                        <label for="${name}">${name}</label>
+                        <label for="${id}">${name}</label>
                         <section class="settings-group-items" id="items-${id}">
                           <p class="description">
                             ${configuration.description}
@@ -613,7 +624,9 @@ export class SettingsEditOverlay extends LitElement {
                                           type="hidden"
                                           name="setting-${id}-name-${idx}"
                                           .value=${item.name}
-                                        />${item.name}`}
+                                        />${configuration.nameVisible
+                                          ? item.name
+                                          : ""}`}
                                   ${item.description
                                     ? html`<div class="setting-description">
                                         ${item.description}
@@ -668,13 +681,33 @@ export class SettingsEditOverlay extends LitElement {
                                     </button>`
                                   : nothing;
 
+                                const double =
+                                  typeof item.value === "boolean" &&
+                                  !configuration.extensible;
                                 return html` <input
                                     type="hidden"
                                     name="setting-${id}-section-${idx}"
                                     .value=${name}
                                   />
-                                  <div>${inName}</div>
-                                  <div>${inValue}</div>
+
+                                  <div
+                                    class=${classMap({
+                                      "setting-name": true,
+                                      double,
+                                      hidden: !configuration.nameVisible,
+                                    })}
+                                  >
+                                    ${inName}
+                                  </div>
+
+                                  <div
+                                    class=${classMap({
+                                      "setting-value": true,
+                                      double: !configuration.nameVisible,
+                                    })}
+                                  >
+                                    ${inValue}
+                                  </div>
                                   <div>${deleteButton}</div>`;
                               })
                             : html`<div class="no-entries">
@@ -692,7 +725,7 @@ export class SettingsEditOverlay extends LitElement {
         <div id="controls">
           <button
             @click=${() => {
-              this.dispatchEvent(new BreadboardOverlayDismissedEvent());
+              this.dispatchEvent(new OverlayDismissedEvent());
             }}
             class="cancel"
             type="button"

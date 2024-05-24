@@ -22,37 +22,64 @@ import { edit } from "google-labs/breadboard";
 const graph = edit(bgl);
 ```
 
-The editor contains a few methods that are paired together: there's one method that performs an edit and the second method that tells us whether we can perform this edit. Both methods return the same value: an `EditResult` promise.
+The editor API provides one method for applying edits to the graph: `edit`. This method takes three members (two required):
 
-The first method usually has a name like `doStuff` and the second one looks like `canDoStuff`.
+- an array of objects, also called "Editor Specs";
 
-This pairing enables checking whether an edit would be valid without actually making an edit. The method that performs an edit calls the method to check whether an edit is valid first, so it is not necessary to call them in succession.
+- a string label for the edit;
 
-For example we can add nodes to the graph using the `addNode` method:
+- an optional `dryRun` boolean.
 
 ```ts
+// Adds a node with id = "foo" and type = "type".
 // Returns `Promise<EditResult>`.
-const result = await graph.addNode({ id "foo", type: "bar" });
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  `Create Node "foo"`
+);
 if (!result.success) {
   console.warn("Adding node failed with this error", result.error);
 }
 ```
 
-And we can use its sidekick `canAddNode` to simply check if adding this node is possible:
+The string label plays an important role. It groups the edit operations for the purpose of collecting history. See more about how to use it in the [Graph history management (undo/redo)](#graph-history-management-undoredo) section.
+
+When `dryRun` is set to `true`, the method will not perform the actual edit, but report the result as if the edit as applied. This is useful if we want to check whether an edit would be valid without actually making an edit.
 
 ```ts
+// Does not actually add node with id = "foo" and type = "type",
+// just checks to see if such a node could be added.
 // Returns `Promise<EditResult>`.
-const result = await graph.canAddNode({ id: "foo", type: "bar" });
-if (result.success) {
-  console.log("Yay, we can add this node, proceed forth");
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  "Adding Node (dry run)",
+  true
+);
+if (!result.success) {
+  console.warn("Adding node will fail with this error", result.error);
 } else {
-  console.warn("Can't add this node", result.error);
+  console.log("Yay, we can add this node, proceed forth");
+}
+```
+
+Multiple changes to the graph are performed as one atomic unit when specified in the same method:
+
+```ts
+// Adds a node with id = "foo" and type = "type" ...
+// .. and a node with id = "bar" and type = "type" as one atomic operation.
+// Returns `Promise<EditResult>`.
+const result = await graph.edit([
+  { type: "addnode", node: { id: "foo", type: "type" } },
+  { type: "addnode", node: { id: "bar", type: "type" } },
+]);
+if (!result.success) {
+  console.warn("Adding node failed with this error", result.error);
 }
 ```
 
 ## Kits
 
-To ensure that `canDoStuff` methods tell us useful things, we need to supply the editor a list of kits. Kits are collections of functions that are invoked during running the graph. We can provide kits as `kits` property on the second, optional `EditableGraphOptions` argument of the `edit` method:
+To ensure that `edit` method does not jeopardize the integrity of the graph, we need to supply the editor a list of kits. Kits are collections of functions that are invoked during running the graph. We can provide kits as `kits` property on the second, optional `EditableGraphOptions` argument of the `edit` method:
 
 ```ts
 import Core from "@google-labs/core-kit";
@@ -63,19 +90,21 @@ const graph = edit(bgl, { kits: [asRuntime(Core), asRunTime(JSONKit)] });
 
 ## Editing a graph
 
-There are five edit operations that we can perform on the graph:
+There are the six edit operations that we can perform on the graph:
 
-- `addNode` -- adds a new node to the graph (or check if we can do so with `canAddNode`)
+- `addnode` -- add a new node to the graph
 
-- `removeNode` -- remove a node from the graph (with `canRemoveNode` companion)
+- `remove` -- remove a node from the graph
 
-- `addEdge` -- add an edge to the graph (`canAddEdge` to check if that's possible)
+- `addedge` -- add an edge to the graph
 
-- `removeEdge` -- remove an edge from the graph (`canRemoveEdge` to check only)
+- `removeedge` -- remove an edge from the graph
 
-- `changeConfiguration` -- change configuration of a node (`canChangeConfiguration` to check only).
+- `changeconfiguration` -- change configuration of a node
 
-- `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
+- `changemetadata` -- change metadata (title, description, etc.) of a node
+
+- `changegraphmetadata` - change graph metadata.
 
 ### Editing `star` edges and alternatives
 
@@ -83,7 +112,9 @@ Connecting a `star` port and a named port results in an invalid graph topology a
 
 ```ts
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
-const result = await graph.canAddEdge(edgeSpec);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: false },
+]);
 ```
 
 We will get a result signifying a failure:
@@ -112,15 +143,19 @@ By default, the `addEdge` method will use this alternative to add an edge, assum
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
 // Will add alternative edge:
 // { from: "node-1", out: "text", to: "node-2", in: "text" }
-const result = await graph.addEdge(edgeSpec);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: true },
+]);
 ```
 
-In cases when we don't want the Editor API to make this assumption, we need to supply the optional boolean argument in the `addEdge` method. When `true` the `addEdge` will be more strict about making assumptions and as a result, will fail to add such an edge:
+In cases when we don't want the Editor API to make this assumption, we need to set the `strict` boolean argument in the `addEdge` method to `true`. When `true`, the `addedge` will be more strict about making assumptions and as a result, will fail to add such an edge:
 
 ```ts
 const edgeSpec = { from: "node-1", out: "text", to: "node-2", in: "*" };
 // Will not add an alternative edge.
-const result = await graph.addEdge(edgeSpec, false);
+const result = await graph.edit([
+  { type: "addedge", edge: edgeSpec, strict: true },
+]);
 ```
 
 The same optional argument also works for the `changeEdge` method.
@@ -164,6 +199,75 @@ const graph = edit(bgl, {
   kits: [asRuntime(Core), asRunTime(JSONKit)],
   version,
 });
+```
+
+## Graph history management (undo/redo)
+
+In addition to simple versioning, the Editor API tracks history of the graph to enable undo/redo capability. The `history()` method on an `EditableGraph` instance provides a few handy helpers for that:
+
+- the `undo()` method undoes the last change. If there's nothing to undo, calling it does nothing.
+
+- the `redo()` method redoes the change that was previously undone, or does nothing if there are no more changes to redo.
+
+- the `canUndo()` method reports whether an undo operation is possible at a given moment. It returns `false` when we're at the beginning of graph edit history, and `true` otherwise.
+
+- the `canRedo()` method returns whether a redo operation is possible, returning `false` when we're at the end of graph edit history and `true` otherwise.
+
+- the `entries()` method returns the list of all entries in the graph edit history.
+
+- the `index()` method returns the index of the current entry in the graph edit history.
+
+```ts
+// Returns an `EditHistory` instance.
+const history = graph.history();
+if (history.canUndo()) {
+  history.undo();
+}
+history.redo();
+
+// Prints out a list of history entries with a ">" marker next
+// to the current history entry.
+const labels = history.entries().map((entry) => entry.label);
+console.group("History:");
+labels.forEach((label, index) => {
+  const current = index === history.index() ? ">" : " ";
+  console.log(`${index}:${current} ${label}`);
+});
+console.groupEnd();
+```
+
+The string label that was supplied for an `edit` operation allows the user of the API to group multiple edit operations into a single history entry.
+
+Each `edit` call that has the same label as the previous `edit` call will be grouped with that previous call: no new history entry will be created for it.
+
+When the `edit` call has a label that's different from the previous call, a new history entry will be created.
+
+```ts
+// Creates a new history entry.
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  `Create Node "foo"`
+);
+// Different label, creates another history entry.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "F" } }],
+  `Editing metadata for node "foo"`
+);
+// Label is the same as the previous call, no new entry created.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "Fo" } }],
+  `Editing metadata for node "foo"`
+);
+// Label is the same as the previous call, no new entry created.
+const result = await graph.edit(
+  [{ type: "changemetadata", id: "foo", metadata: { title: "Foo" } }],
+  `Editing metadata for node "foo"`
+);
+// Different label, creates another history entry.
+const result = await graph.edit(
+  [{ type: "addnode", node: { id: "bar", type: "type" } }],
+  `Create Node "bar"`
+);
 ```
 
 ## Editing subgraphs
@@ -250,4 +354,14 @@ In term of lifecycle, the `InspectableGraph` changes more frequently than the `E
 
 The `EditableGraph` instance also the `addEventListener` method, which works pretty much like any [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) -- we can subscribe to listen to events that are dispatched by this instance. Currently the following events are supported:
 
-- `graphchange` -- dispatched on every change of a graph or any of the subgraphs. The event object provides two useful properties: `graph` and `version`. The `graph` property contains the updated `GraphDescriptor` instance and the `version` has the version of this instance.
+- `graphchange` -- dispatched on every change of a graph or any of the subgraphs. The event object provides these useful properties:
+
+  - `graph`, which contains the updated `GraphDescriptor` instance
+
+  - `version`, which has the version of the updated instance
+
+  - `visualOnly`, which is set to `true` when the changes only affected the `visual` section of node metadata within the graph.
+
+  - `changeType`, which is `edit` when the change occurred due to a call to the `edit` method or `history` when the event was triggered by one of the history-manipulating methods.
+
+- `graphchangereject` -- dispatched when a proposed change is rejected. This may happen because the change is redundant or because the graph integrity would be jeopardized by the change. The event provides access to these properties: `graph`, which is the `GraphDescriptor` instance on which the change was attempted, and `reason`. The `reason` property itself has a `type` property, which can be either `"nochange"` or `"error`". The `"nochange"` indicates that the change was redundant, and `"error"` signals that the proposed changed would have resulted in an invalid graph. In the latter case, the `reason.error` property will contain the same error that would have been returned by the various `can*` methods from above.

@@ -250,23 +250,27 @@ export class FileSystemGraphProvider implements GraphProvider {
     this.#items.clear();
 
     for (const [name, handle] of this.#locations) {
-      const permission = await handle.queryPermission({ mode: "readwrite" });
+      try {
+        const permission = await handle.queryPermission({ mode: "readwrite" });
 
-      let files = this.#items.get(name);
-      if (!files) {
-        files = {
-          permission,
-          items: new Map(),
-          title: handle.name,
-        };
-        this.#items.set(name, files);
+        let files = this.#items.get(name);
+        if (!files) {
+          files = {
+            permission,
+            items: new Map(),
+            title: handle.name,
+          };
+          this.#items.set(name, files);
+        }
+
+        if (permission !== "granted") {
+          continue;
+        }
+
+        files.items = await this.#getFiles(handle);
+      } catch (e) {
+        console.warn(e, "This is likely a result of directory being moved.");
       }
-
-      if (permission !== "granted") {
-        continue;
-      }
-
-      files.items = await this.#getFiles(handle);
     }
   }
 

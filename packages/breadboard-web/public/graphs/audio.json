@@ -1,0 +1,88 @@
+{
+  "title": "Audio",
+  "description": "An example of using Gemini Kit's vision(?) node with audio",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "contextify",
+      "to": "describeAudio",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "describeAudio",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "contextify",
+      "out": "audio",
+      "in": "audio"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "audio": {
+              "type": "object",
+              "behavior": [
+                "llm-content"
+              ],
+              "title": "Audio",
+              "format": "audio-microphone"
+            }
+          },
+          "required": [
+            "audio"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text",
+              "format": "markdown"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "contextify",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const contextify = ({audio})=>{return{context:[audio]}};",
+        "name": "contextify",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Wrap audio",
+        "description": "Wraps the audio in a context object for Gemini"
+      }
+    },
+    {
+      "id": "describeAudio",
+      "type": "text",
+      "configuration": {
+        "model": "gemini-1.5-pro-latest",
+        "systemInstruction": "Describe what you hear in the audio. Please respond in markdown",
+        "text": "unused"
+      }
+    }
+  ]
+}

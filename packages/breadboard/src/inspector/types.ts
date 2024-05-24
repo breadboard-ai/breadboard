@@ -6,11 +6,13 @@
 
 import {
   GraphIdentifier,
+  GraphMetadata,
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {
+  BehaviorSchema,
   Edge,
   ErrorResponse,
   GraphDescriptor,
@@ -20,6 +22,7 @@ import {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeHandlerMetadata,
   NodeIdentifier,
   NodeTypeIdentifier,
   NodeValue,
@@ -68,6 +71,10 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns the `InspectableNodeType` instance for the node.
+   */
+  type(): InspectableNodeType;
 
   /**
    * Returns the API of the node.
@@ -171,6 +178,10 @@ export type InspectableGraph = {
    */
   raw(): GraphDescriptor;
   /**
+   * Returns this graph's metadata, if exists.
+   */
+  metadata(): GraphMetadata | undefined;
+  /**
    * Returns the node with the given id, or undefined if no such node exists.
    * @param id id of the node to find
    */
@@ -196,6 +207,16 @@ export type InspectableGraph = {
    * @param type type of the nodes to find
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
+  /**
+   * Returns the `InspectableNodeType` for a given node or undefined if the
+   * node does not exist.
+   */
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
+  /**
+   * Returns the `InspectableNodeType` for a given type or undefined if the type
+   * does not exist.
+   */
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
   /**
    * Describe a given type of the node
    */
@@ -335,6 +356,29 @@ export type InspectablePort = {
    * Returns the edges connected to this port.
    */
   edges: InspectableEdge[];
+
+  /**
+   * Returns a representation of the port's type.
+   */
+  type: InspectablePortType;
+};
+
+export type InspectablePortType = {
+  /**
+   * Returns port schema as defined by the node.
+   */
+  schema: Schema;
+  /**
+   * Returns `true` if this port has specified behavior
+   */
+  hasBehavior(behavior: BehaviorSchema): boolean;
+  /**
+   * Returns `true` if the outgoing port of this type can connect to an
+   * incoming port of the specified type.
+   *
+   * @param to the incoming port type to which to connect.
+   */
+  canConnect(to: InspectablePortType): boolean;
 };
 
 /**
@@ -389,6 +433,10 @@ export type InspectableKit = {
 
 export type InspectableNodeType = {
   /**
+   * Returns the metadata, associated with this node type.
+   */
+  metadata(): NodeHandlerMetadata;
+  /**
    * Returns the type of the node.
    */
   type(): NodeTypeIdentifier;
@@ -407,6 +455,9 @@ export type GraphStoreMutator = {
   // TODO: This is probably wrong. A new version of the graph should likely
   // create a new instance of an `InspectableGraph`.
   updateGraph(graph: GraphDescriptor): void;
+  // Destroys all caches.
+  // TODO: Maybe too much machinery here? Just get a new instance of inspector?
+  resetGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };
@@ -688,6 +739,11 @@ export type InspectableRunSecretEvent = {
 export type EventIdentifier = string;
 
 /**
+ * Values that were submitted as inputs during a run.
+ */
+export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
+
+/**
  * Represent all events that can be inspected during a run.
  */
 export type InspectableRunEvent =
@@ -729,6 +785,15 @@ export type InspectableRun = {
    */
   currentNodeEvent(): InspectableRunNodeEvent | null;
   /**
+   * Returns the current run stack as a list of `InspectableRunNodeEvent`
+   * instances.
+   * The first item in the list represents the node in the top-level
+   * graph that is currently being run.
+   * The last item is the actual node that is being run, which may be in a
+   * graph that is nested within the top-level graph.
+   */
+  stack(): InspectableRunNodeEvent[];
+  /**
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
@@ -738,6 +803,11 @@ export type InspectableRun = {
    * null if not found.
    */
   getEventById(id: EventIdentifier): InspectableRunEvent | null;
+  /**
+   * Creates a map of all inputs that were submitted during the run or `null`
+   * if no inputs were submitted.
+   */
+  inputs(): InspectableRunInputs | null;
 };
 
 /**

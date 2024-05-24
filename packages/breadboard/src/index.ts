@@ -83,3 +83,5 @@ export { editGraph as edit, blank } from "./editor/index.js";
  */
 export type * from "./loader/types.js";
 export { createLoader } from "./loader/index.js";
+
+export { formatGraphDescriptor } from "./formatter.js";

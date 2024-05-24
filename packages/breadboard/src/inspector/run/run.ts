@@ -21,8 +21,18 @@ import {
   SerializedRun,
   SerializedRunLoadingOptions,
   InspectableRunNodeEvent,
+  InspectableRunInputs,
 } from "../types.js";
 
+const isInput = (
+  event: InspectableRunEvent
+): event is InspectableRunNodeEvent => {
+  return (
+    event.type === "node" &&
+    event.node.descriptor.type === "input" &&
+    event.end !== null
+  );
+};
 export class RunObserver implements InspectableRunObserver {
   #store: GraphDescriptorStore;
   #options: RunObserverOptions;
@@ -101,6 +111,21 @@ export class Run implements InspectableRun {
     return this.#events.currentEvent();
   }
 
+  stack(): InspectableRunNodeEvent[] {
+    // TODO: Implement full stack. For now, just return the top-level item.
+    const getLastNodeEVent = () => {
+      const events = this.#events.events;
+      for (let i = events.length - 1; i >= 0; i--) {
+        const maybeNodeEvent = events[i];
+        if (maybeNodeEvent.type === "node" && !maybeNodeEvent.bubbled)
+          return maybeNodeEvent;
+      }
+      return null;
+    };
+    const lastNodeEvent = getLastNodeEVent();
+    return lastNodeEvent ? [lastNodeEvent] : [];
+  }
+
   addResult(result: HarnessRunResult) {
     this.#events.add(result);
   }
@@ -111,5 +136,21 @@ export class Run implements InspectableRun {
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {
     return this.#events.getEventById(id);
+  }
+
+  inputs(): InspectableRunInputs | null {
+    const result: InspectableRunInputs = new Map();
+    this.#events.events.forEach((event) => {
+      if (!isInput(event)) return;
+      const id = event.node.descriptor.id;
+      let inputList = result.get(id);
+      if (!inputList) {
+        inputList = [];
+        result.set(id, inputList);
+      }
+      inputList.push(event.outputs || {});
+    });
+
+    return result.size > 0 ? result : null;
   }
 }

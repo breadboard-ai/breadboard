@@ -9,6 +9,7 @@ import { Board } from "../src/board.js";
 import type {
   GraphDescriptor,
   GraphDescriptorBoardCapability,
+  InputValues,
 } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
@@ -30,7 +31,7 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
     .wire(
       "hello->",
       kit
-        .include({ graph: nestedBoard as GraphDescriptor })
+        .include({ graph: nestedBoard as GraphDescriptor } as InputValues)
         .wire("hello->", board.output())
     );
 
@@ -75,7 +76,7 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
     .wire(
       "hello->",
       kit
-        .include({ graph: nestedBoard as GraphDescriptor })
+        .include({ graph: nestedBoard as GraphDescriptor } as InputValues)
         .wire("hello->", board.output())
     );
 

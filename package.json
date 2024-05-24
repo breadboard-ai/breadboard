@@ -11,6 +11,9 @@
     "build": "wireit",
     "lint": "wireit",
     "ci": "npm ci",
+    "s": "(cd packages/board-server && npm run dev) # Starts the board server",
+    "d": "(cd packages/website && npm run dev) # Starts the docs website",
+    "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "generate:docs": "wireit",
@@ -51,6 +54,7 @@
         "./packages/pinecone-kit:build",
         "./packages/website:build",
         "./packages/schema:build",
+        "./packages/board-server:build",
         "./packages/team-kit:build"
       ]
     },
@@ -172,19 +176,20 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@changesets/cli": "^2.27.1",
+    "@changesets/cli": "^2.27.3",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.12.7",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
+    "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
-    "rimraf": "^5.0.5",
-    "rollup": "^4.14.1",
-    "syncpack": "^12.3.0",
-    "typescript": "^5.3.3",
+    "rimraf": "^5.0.7",
+    "rollup": "^4.18.0",
+    "syncpack": "^12.3.2",
+    "typescript": "^5.4.5",
     "wireit": "^0.14.4"
   },
   "workspaces": [
@@ -193,8 +198,8 @@
     "./packages/node-proxy-server/functions"
   ],
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.13.2",
-    "@rollup/rollup-linux-x64-gnu": "^4.13.1"
+    "@rollup/rollup-darwin-arm64": "^4.16.4",
+    "@rollup/rollup-linux-x64-gnu": "^4.17.1"
   },
   "dependencies": {
     "litegraph.js": "^0.7.18",

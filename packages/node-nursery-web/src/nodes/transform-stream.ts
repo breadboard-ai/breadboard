@@ -9,6 +9,7 @@ import {
   BreadboardCapability,
   InputValues,
   NodeHandlerContext,
+  NodeHandlerObject,
   OutputValues,
   StreamCapability,
   StreamCapabilityType,
@@ -53,6 +54,9 @@ const getTransformer = async (
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   invoke: async (
     inputs: InputValues,
     context?: NodeHandlerContext
@@ -69,4 +73,4 @@ export default {
       .pipeThrough(new TransformStream(transformer));
     return { stream: new StreamCapability<object>(outputStream) };
   },
-};
+} satisfies NodeHandlerObject;

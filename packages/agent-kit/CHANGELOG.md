@@ -1,5 +1,45 @@
 # @google-labs/agent-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- c69f1c5: Teach Looper how to plan and add `responseMimeType` to Gemini API.
+- a297d10: Implement "Done" condition support for Looper.
+- 3f0ce31: Teach Human to display LLM Content.
+- e68c06d: Add a Joiner utility node.
+- 3397974: Add `InspectableNode.type()` and start using it.
+- 09d8288: Teach Super Worker to use tools.
+- 8170942: Teach Looper Node a bit more about planning.
+- 7b18cb2: Rename `Super Worker` to `Specialist`.
+- d66af7b: Deprecate the Tool Worker.
+
+### Patch Changes
+
+- f0409d1: Pass looper tasks to context in Specialist.
+- 40ce086: Start passing tasks via metadata.
+- 8838ba7: Clean up metadata after a looper run.
+- d10f568: Various bug fixes to help looper and specialist work better.
+- 74434ea: Teach Looper that step-by-step jobs and until-done jobs are mutually exclusive.
+
+## 0.6.0
+
+### Minor Changes
+
+- 79909eb: Introduce SuperWorker.
+
+### Patch Changes
+
+- fb3f870: Fix a problem with incorrect context appending.
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5d08172: Teach tool worker to properly accumulate context.
+
+## 0.5.0
+
+### Minor Changes
+
+- 407b726: Switch Tool Worker to use proper board loading (using `curry`).
+
 ## 0.4.0
 
 ### Minor Changes

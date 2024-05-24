@@ -26,6 +26,7 @@ import { InputEnterEvent } from "../../breadboard-ui/dist/src/events/events";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
 import { SettingsStore } from "./data/settings-store.js";
+import { inputsFromSettings } from "./data/inputs";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -48,9 +49,6 @@ export const getBoardInfo = async (url: string) => {
   const { title, description, version } = runner;
   return { title, description, version };
 };
-
-// TODO: Remove once all elements are Lit-based.
-BreadboardUI.register();
 
 @customElement("bb-preview-run")
 export class PreviewRun extends LitElement {
@@ -164,7 +162,7 @@ export class PreviewRun extends LitElement {
       flex: 1;
       width: 100%;
       max-width: 740px;
-      scrollbar-color: var(--bb-output-100) white;
+      scrollbar-color: var(--bb-ui-100) white;
     }
   `;
 
@@ -206,6 +204,8 @@ export class PreviewRun extends LitElement {
       kits: this.kits,
       diagnostics: true,
       loader: this.#loader,
+      interactiveSecrets: true,
+      inputs: inputsFromSettings(this.#settings),
     };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
@@ -326,7 +326,7 @@ export class PreviewRun extends LitElement {
         .settings=${this.#settings.values}
         .events=${events}
         .eventPosition=${eventPosition}
-        @breadboardinputenter=${async (event: InputEnterEvent) => {
+        @bbinputenter=${async (event: InputEnterEvent) => {
           const data = event.data;
           const handlers = this.#handlers.get(event.id) || [];
           if (handlers.length === 0) {

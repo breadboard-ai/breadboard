@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.6.0",
+  "version": "0.9.0",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -20,17 +20,19 @@
       "dependencies": [
         "../breadboard:build",
         "../template-kit:build",
+        "../build:build",
         "build:tsc"
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../template-kit:build:tsc"
+        "../template-kit:build:tsc",
+        "../build:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -64,6 +66,7 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
@@ -99,15 +102,16 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "@types/node": "^20.12.7",
-    "ava": "^5.2.0",
-    "typescript": "^5.3.3",
+    "@google-labs/template-kit": "^0.3.2",
     "@google-labs/tsconfig": "^0.0.1",
-    "@google-labs/template-kit": "^0.2.5"
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
+    "ava": "^5.2.0",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.16.0"
+    "@breadboard-ai/build": "^0.6.0",
+    "@google-labs/breadboard": "^0.20.0"
   }
 }

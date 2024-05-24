@@ -4,17 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { BehaviorSchema, Schema } from "@google-labs/breadboard";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValueMap,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { SchemaChangeEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import {
+  assertIsLLMContent,
+  resolveArrayType,
+  resolveBehaviorType,
+} from "../../utils/schema.js";
+import { LLMContent } from "../../types/types.js";
+import { createAllowListFromProperty } from "../../utils/llm-content.js";
 import { classMap } from "lit/directives/class-map.js";
-import { resolveArrayType, resolveBehaviorType } from "../../utils/schema.js";
+import { guard } from "lit/directives/guard.js";
+
+const STORAGE_PREFIX = "bb-schema-editor";
 
 @customElement("bb-schema-editor")
 export class SchemaEditor extends LitElement {
+  @property({ reflect: false })
+  nodeId: string | null = null;
+
   @property({ reflect: true })
   editable = false;
 
@@ -24,34 +43,46 @@ export class SchemaEditor extends LitElement {
   @property()
   schemaVersion = 0;
 
+  @state()
+  expanded = new Map<string, boolean>();
+
+  #formRef: Ref<HTMLFormElement> = createRef();
+
   static styles = css`
     :host {
       display: block;
     }
 
     #apply-changes[disabled],
-    #add-new-item[disabled] {
+    #create-new-port[disabled] {
       display: none;
     }
 
-    #add-new-item {
-      width: 24px;
-      height: 24px;
-      background: var(--bb-icon-add-circle) center center no-repeat;
+    #create-new-port {
+      display: flex;
+      align-items: center;
+      background: none;
       border: none;
       font-size: 0;
-      opacity: 0.5;
       cursor: pointer;
+      font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+        var(--bb-font-family);
+      color: var(--bb-neutral-900);
+      padding: 0;
+      opacity: 0.6;
     }
 
-    #add-new-item:hover {
+    #create-new-port::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-add-circle) center center / 20px 20px no-repeat;
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    #create-new-port:hover,
+    #create-new-port:focus {
       opacity: 1;
-    }
-
-    details {
-      border: 1px solid #cccccc;
-      border-radius: 4px;
-      margin: calc(var(--bb-grid-size) * 2) 0;
     }
 
     summary {
@@ -67,96 +98,460 @@ export class SchemaEditor extends LitElement {
       flex: 1;
     }
 
-    details .schema-item {
+    .schema-item {
       display: grid;
       align-items: center;
-      justify-content: stretch;
-      border-top: 1px solid #cccccc;
       grid-template-columns: 100px auto;
-      grid-auto-rows: minmax(calc(var(--bb-grid-size) * 5), auto);
       row-gap: var(--bb-grid-size);
       column-gap: var(--bb-grid-size);
-      font-size: var(--bb-text-nano);
-      padding: calc(var(--bb-grid-size) * 2);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-50);
+      border-radius: var(--bb-grid-size-2);
+      margin: var(--bb-grid-size-4) 0;
+      overflow-x: auto;
     }
 
-    details .schema-item label {
-      line-height: calc(var(--bb-grid-size) * 5);
-      align-self: start;
+    .schema-item label {
+      font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      align-self: center;
     }
 
-    details .schema-item input[type="checkbox"] {
+    .schema-item input[type="checkbox"] {
       justify-self: start;
     }
 
-    details .schema-item input,
-    details .schema-item select {
+    .schema-item input,
+    .schema-item select {
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
+      background: #fff;
       margin: 0;
-      padding: 0;
-      font-size: var(--bb-text-nano);
+      padding: var(--bb-grid-size) var(--bb-grid-size-2);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
 
-    details .schema-item textarea {
-      font-family: var(--bb-font-family);
-      font-size: var(--bb-body-small);
-      line-height: var(--bb-body-line-height-small);
-      resize: none;
+    .schema-item select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: #fff var(--bb-icon-expand) calc(100% - 5px) 4px / 16px 16px
+        no-repeat;
+    }
+
+    .schema-item select[multiple] {
+      resize: vertical;
+      background: #fff;
+    }
+
+    .schema-item select option {
+      padding: 0;
+    }
+
+    .schema-item textarea {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      resize: vertical;
       display: block;
       box-sizing: border-box;
       width: 100%;
       field-sizing: content;
       max-height: 300px;
+      min-height: var(--bb-grid-size-5);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
     }
 
     #controls {
       display: flex;
-      justify-content: flex-end;
-    }
-
-    .delete-schema-item {
-      background: #5e5e5e;
-      color: #fff;
-      font-size: var(--bb-text-nano);
-      border: none;
-      border-radius: 4px;
-      padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
-    }
-
-    .delete-schema-item {
-      background: #666;
     }
 
     button[disabled] {
       opacity: 0.5;
     }
+
+    .title-and-delete,
+    .type-and-required {
+      display: flex;
+    }
+
+    .title-and-delete input[type="text"],
+    .type-and-required select {
+      flex: 1;
+    }
+
+    .type-and-required input[type="checkbox"] {
+      margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
+    }
+
+    .title-and-delete .delete {
+      width: 24px;
+      height: 24px;
+      border: none;
+      font-size: 0;
+      background: transparent var(--bb-icon-delete) center center / 20px 20px
+        no-repeat;
+      margin-left: var(--bb-grid-size-2);
+    }
+
+    bb-llm-input {
+      margin-top: var(--bb-grid-size);
+      --bb-border-size: 1px;
+    }
+
+    .show-more,
+    .show-less {
+      grid-column: 1/3;
+      border: none;
+      background: transparent;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
+
+    .show-more {
+      display: block;
+      background: transparent var(--bb-icon-expand) calc(50% - 44px) center /
+        20px 20px no-repeat;
+    }
+
+    .show-less {
+      display: none;
+      background: transparent var(--bb-icon-collapse) calc(50% - 44px) center /
+        20px 20px no-repeat;
+    }
+
+    .expanded .show-more {
+      display: none;
+    }
+
+    .expanded .show-less {
+      display: block;
+    }
+
+    .more-info {
+      display: none;
+      align-items: center;
+      grid-template-columns: 100px auto;
+      row-gap: var(--bb-grid-size);
+      column-gap: var(--bb-grid-size);
+      grid-column: 1/3;
+    }
+
+    .expanded .more-info {
+      display: grid;
+    }
   `;
 
-  #formRef: Ref<HTMLFormElement> = createRef();
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.expanded.clear();
+  }
+
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ nodeId: string }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (!changedProperties.has("nodeId")) {
+      return;
+    }
+    const expandedData = globalThis.sessionStorage.getItem(
+      `${STORAGE_PREFIX}-${this.nodeId}-expanded`
+    );
+
+    if (!expandedData) {
+      return;
+    }
+
+    const expanded = JSON.parse(expandedData) as [string, boolean][];
+    this.expanded = new Map(expanded);
+  }
+
+  #toggleExpanded(key: string) {
+    if (!this.nodeId) {
+      return;
+    }
+
+    let val = this.expanded.get(key);
+    if (val === undefined) {
+      this.expanded.set(key, false);
+      val = false;
+    }
+
+    this.expanded.set(key, !val);
+    globalThis.sessionStorage.setItem(
+      `${STORAGE_PREFIX}-${this.nodeId}-expanded`,
+      JSON.stringify([...this.expanded.entries()])
+    );
+    this.requestUpdate();
+  }
 
   #convertPropertiesToForms(
     properties: Record<string, Schema>,
     required: string[]
   ) {
     return html`${map(Object.entries(properties), ([id, value]) => {
-      const defaultLabel = html` <label for="${id}-default">Default</label>`;
-      let defaultValue: HTMLTemplateResult | symbol = nothing;
-      let valueType = "string";
+      const enumerations = html`<label for="${id}-enum">User choices</label>
+        <bb-array-editor
+          id="${id}-enum"
+          name="${id}-enum"
+          ?readonly=${!this.editable}
+          .items=${value.enum || []}
+          .type=${"string"}
+        ></bb-array-editor>`;
+
+      let itemType: HTMLTemplateResult | symbol = nothing;
       switch (value.type) {
         case "array": {
-          valueType = "array";
+          const selectedItemType =
+            value.items && !Array.isArray(value.items) && value.items.type
+              ? value.items.type
+              : "none";
+          itemType = html`<label for="${id}-items">Array Item Type</label>
+            <select
+              name="${id}-items"
+              id="${id}-items"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No type</option>
+              <option ?selected=${selectedItemType === "object"} value="object">
+                Object
+              </option>
+              <option ?selected=${selectedItemType === "string"} value="string">
+                String
+              </option>
+              <option ?selected=${selectedItemType === "number"} value="number">
+                Number
+              </option>
+              <option
+                ?selected=${selectedItemType === "boolean"}
+                value="boolean"
+              >
+                Boolean
+              </option>
+            </select>`;
+          break;
+        }
+      }
+
+      let behavior: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "array":
+        case "object": {
+          // Only show the behavior for object array items.
+          let behaviorList = value.behavior || [];
+          if (
+            value.type === "array" &&
+            (!value.items ||
+              Array.isArray(value.items) ||
+              value.items.type !== "object")
+          ) {
+            break;
+          }
+
+          // If this is an array with behaviors set, set the list to search to
+          // be the items one.
+          if (
+            value.type === "array" &&
+            value.items &&
+            !Array.isArray(value.items) &&
+            value.items.behavior
+          ) {
+            behaviorList = value.items.behavior;
+          }
+
+          behavior = html`<label for="${id}-behavior">Behavior</label>
+            <select
+              name="${id}-behavior"
+              id="${id}-behavior"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No behavior</option>
+              <option
+                value="llm-content"
+                ?selected=${behaviorList.includes("llm-content")}
+              >
+                LLM Content
+              </option>
+              <option value="board" ?selected=${behaviorList.includes("board")}>
+                Board
+              </option>
+              <option
+                value="stream"
+                ?selected=${behaviorList.includes("stream")}
+              >
+                Stream
+              </option>
+              <option
+                value="json-schema"
+                ?selected=${behaviorList.includes("json-schema")}
+              >
+                JSON Schema
+              </option>
+              <option
+                value="ports-spec"
+                ?selected=${behaviorList.includes("ports-spec")}
+              >
+                Port Spec
+              </option>
+              <option value="code" ?selected=${behaviorList.includes("code")}>
+                Code
+              </option>
+            </select>`;
+          break;
+        }
+      }
+
+      let format: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "string": {
+          format = html`<label for="${id}-format">Format</label>
+            <select
+              name="${id}-format"
+              id="${id}-format"
+              type="text"
+              ?readonly=${!this.editable}
+            >
+              <option value="none">No format</option>
+              <option value="markdown" ?selected=${value.format === "markdown"}>
+                Markdown
+              </option>
+              <option
+                value="multiline"
+                ?selected=${value.format === "multiline"}
+              >
+                Multiline
+              </option>
+            </select>`;
+          break;
+        }
+
+        case "array":
+        case "object": {
+          const isLLMObject =
+            value.type === "object" && value.behavior?.includes("llm-content");
+          const isArrayOfLLMObjects =
+            value.type === "array" &&
+            value.items !== undefined &&
+            !Array.isArray(value.items) &&
+            value.items.type === "object" &&
+            value.items.behavior?.includes("llm-content");
+
+          if (isLLMObject || isArrayOfLLMObjects) {
+            let objectFormat = value.format ? [value.format] : [];
+            if (
+              isArrayOfLLMObjects &&
+              value.items &&
+              !Array.isArray(value.items)
+            ) {
+              objectFormat = value.items.format?.split(",") || [];
+            }
+
+            format = html`<label for="${id}-format">Format</label>
+              <select
+                name="${id}-format"
+                id="${id}-format"
+                multiple
+                ?readonly=${!this.editable}
+                @input=${(evt: InputEvent) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
+
+                  if (
+                    evt.target.selectedOptions.length === 0 ||
+                    evt.target.selectedOptions[0].value !== "none"
+                  ) {
+                    return;
+                  }
+
+                  for (let i = 1; i < evt.target.options.length; i++) {
+                    evt.target.options[i].selected = false;
+                  }
+                }}
+              >
+                <option value="none" ?selected=${objectFormat.length === 0}>
+                  Any
+                </option>
+                <option
+                  value="audio-file"
+                  ?selected=${objectFormat.includes("audio-file")}
+                >
+                  Audio (File)
+                </option>
+                <option
+                  value="audio-microphone"
+                  ?selected=${objectFormat.includes("audio-microphone")}
+                >
+                  Audio (Microphone)
+                </option>
+                <option
+                  value="video-file"
+                  ?selected=${objectFormat.includes("video-file")}
+                >
+                  Video (File)
+                </option>
+                <option
+                  value="video-webcam"
+                  ?selected=${objectFormat.includes("video-webcam")}
+                >
+                  Video (Webcam)
+                </option>
+                <option
+                  value="image-file"
+                  ?selected=${objectFormat.includes("image-file")}
+                >
+                  Image (File)
+                </option>
+                <option
+                  value="image-webcam"
+                  ?selected=${objectFormat.includes("image-webcam")}
+                >
+                  Image (Webcam)
+                </option>
+                <option
+                  value="image-drawable"
+                  ?selected=${objectFormat.includes("image-drawable")}
+                >
+                  Image (Drawable)
+                </option>
+                <option
+                  value="text-file"
+                  ?selected=${objectFormat.includes("text-file")}
+                >
+                  Text (File)
+                </option>
+                <option
+                  value="text-inline"
+                  ?selected=${objectFormat.includes("text-inline")}
+                >
+                  Text (Inline)
+                </option>
+              </select>`;
+          }
+          break;
+        }
+      }
+
+      const defaultLabel = html` <label for="${id}-default">Default</label>`;
+      let defaultValue: HTMLTemplateResult | symbol = nothing;
+      switch (value.type) {
+        case "array": {
           defaultValue = html`${defaultLabel}<bb-array-editor
               id="${id}-default"
               name="${id}-default"
               ?readonly=${!this.editable}
               .items=${JSON.parse(value.default || "null")}
               .type=${resolveArrayType(value)}
-              .behavior=${resolveBehaviorType(value)}
+              .behavior=${resolveBehaviorType(value.items)}
             ></bb-array-editor>`;
           break;
         }
 
         case "boolean": {
-          valueType = "boolean";
           defaultValue = html`${defaultLabel}<input
               type="checkbox"
               id="${id}-default"
@@ -168,7 +563,6 @@ export class SchemaEditor extends LitElement {
         }
 
         case "number": {
-          valueType = "number";
           defaultValue = html`${defaultLabel}<input
               type="number"
               id="${id}-default"
@@ -194,6 +588,27 @@ export class SchemaEditor extends LitElement {
                   </option>`;
                 })}
               </select>`;
+          } else if (value.behavior?.includes("llm-content")) {
+            let defaultValueContent: LLMContent | null = null;
+            try {
+              defaultValueContent = JSON.parse(value.default || "null");
+              assertIsLLMContent(defaultValueContent);
+            } catch (err) {
+              defaultValueContent = null;
+            }
+
+            const allow = createAllowListFromProperty(value);
+            defaultValue = html`${guard(
+              [this.nodeId],
+              () =>
+                html`${defaultLabel}<bb-llm-input
+                    id="${id}-default"
+                    name="${id}-default"
+                    .minimal=${true}
+                    .allow=${allow}
+                    .value=${defaultValueContent}
+                  ></bb-llm-input>`
+            )}`;
           } else {
             defaultValue = html`${defaultLabel}<input
                 type="text"
@@ -207,93 +622,31 @@ export class SchemaEditor extends LitElement {
         }
       }
 
-      const enumerations = html`<label for="${id}-enum">User choices</label>
-        <bb-array-editor
-          id="${id}-enum"
-          name="${id}-enum"
-          ?readonly=${!this.editable}
-          .items=${value.enum || []}
-          .type=${"string"}
-        ></bb-array-editor>`;
-
-      let format: HTMLTemplateResult | symbol = nothing;
-      switch (value.type) {
-        case "string":
-        case "array": {
-          format = html`<label for="${id}-format">Format</label>
-            <select
-              name="${id}-format"
-              id="${id}-format"
-              type="text"
-              ?readonly=${!this.editable}
-            >
-              <option value="none">No format</option>
-              <option value="markdown" ?selected=${value.format === "markdown"}>
-                Markdown
-              </option>
-              <option
-                value="multiline"
-                ?selected=${value.format === "multiline"}
-              >
-                Multiline
-              </option>
-            </select>`;
-          break;
-        }
-
-        case "image/png": {
-          format = html`<label for="${id}-format">Format</label>
-            <select
-              name="${id}-format"
-              id="${id}-format"
-              type="text"
-              ?readonly=${!this.editable}
-            >
-              <option value="webcam" ?selected=${value.format === "webcam"}>
-                Webcam
-              </option>
-              <option value="drawable" ?selected=${value.format === "drawable"}>
-                Drawable Canvas
-              </option>
-            </select>`;
-          break;
-        }
-      }
-
       const examples = html`<label for="${id}-examples">Examples</label>
         <bb-array-editor
           id="${id}-examples"
           name="${id}-examples"
           ?readonly=${!this.editable}
           .items=${value.examples || []}
-          .type=${"string"}
+          .type=${value.type}
         ></bb-array-editor>`;
 
-      return html`<details open class=${classMap({ [valueType]: true })}>
-        <summary>
-          <span>${value.title ?? id}</span>
-          <button
-            class="delete-schema-item"
-            type="button"
-            @click=${() => this.#deleteProperty(id)}
-            ?disabled=${!this.editable}
-          >
-            Delete
-          </button>
-        </summary>
-        <div class="schema-item">
-          <label for="${id}-id">ID</label>
-          <input
-            name="${id}-id"
-            id="${id}-id"
-            type="text"
-            pattern="^[\\$0-9A-Za-z\\-]+$"
-            value="${id}"
-            required="required"
-            ?readonly=${!this.editable}
-          />
+      return html`<div
+        class=${classMap({
+          ["schema-item"]: true,
+          expanded: this.expanded.get(id) || false,
+        })}
+      >
+        <input
+          name="${id}-id"
+          id="${id}-id"
+          type="hidden"
+          value="${id}"
+          required="required"
+        />
 
-          <label for="${id}-title">Title</label>
+        <label for="${id}-title">Title</label>
+        <div class="title-and-delete">
           <input
             name="${id}-title"
             id="${id}-title"
@@ -301,8 +654,18 @@ export class SchemaEditor extends LitElement {
             value="${value.title || ""}"
             ?readonly=${!this.editable}
           />
+          <button
+            class="delete"
+            type="button"
+            @click=${() => this.#deleteProperty(id)}
+            ?disabled=${!this.editable}
+          >
+            Delete
+          </button>
+        </div>
 
-          <label for="${id}-type">Type</label>
+        <label for="${id}-type">Type</label>
+        <div class="type-and-required">
           <select
             name="${id}-type"
             id="${id}-type"
@@ -327,13 +690,28 @@ export class SchemaEditor extends LitElement {
             <option ?selected=${value.type === "boolean"} value="boolean">
               Boolean
             </option>
-            <option ?selected=${value.type === "image/png"} value="image/png">
-              Image
-            </option>
           </select>
 
-          ${format} ${value.type === "string" ? enumerations : nothing}
-          ${value.type === "string" ? examples : nothing} ${defaultValue}
+          <input
+            name="${id}-required"
+            id="${id}-required"
+            type="checkbox"
+            ?checked=${required.includes(id)}
+            ?readonly=${!this.editable}
+          />
+          <label for="${id}-required">Required</label>
+        </div>
+
+        ${itemType} ${behavior} ${format}
+        <button class="show-more" @click=${() => this.#toggleExpanded(id)}>
+          Show more
+        </button>
+        <div class="more-info">
+          ${value.type === "string" ? enumerations : nothing}
+          ${value.type === "string" || value.type === "number"
+            ? examples
+            : nothing}
+          ${defaultValue}
 
           <label for="${id}-description">Description</label>
           <textarea
@@ -342,17 +720,11 @@ export class SchemaEditor extends LitElement {
             .value="${value.description || ""}"
             ?readonly=${!this.editable}
           ></textarea>
-
-          <label for="${id}-required">Required</label>
-          <input
-            name="${id}-required"
-            id="${id}-required"
-            type="checkbox"
-            ?checked=${required.includes(id)}
-            ?readonly=${!this.editable}
-          />
+          <button class="show-less" @click=${() => this.#toggleExpanded(id)}>
+            Show less
+          </button>
         </div>
-      </details> `;
+      </div>`;
     })}`;
   }
 
@@ -382,9 +754,15 @@ export class SchemaEditor extends LitElement {
         const inExamples = form.querySelector(
           `#${id}-examples`
         ) as HTMLInputElement | null;
+        const inItems = form.querySelector(
+          `#${id}-items`
+        ) as HTMLSelectElement | null;
+        const inBehavior = form.querySelector(
+          `#${id}-behavior`
+        ) as HTMLInputElement | null;
         const inFormat = form.querySelector(
           `#${id}-format`
-        ) as HTMLInputElement | null;
+        ) as HTMLSelectElement | null;
         const inEnum = form.querySelector(
           `#${id}-enum`
         ) as HTMLInputElement | null;
@@ -396,22 +774,95 @@ export class SchemaEditor extends LitElement {
         ) as HTMLInputElement | null;
 
         const oldType = property.type;
+        const oldBehavior = property.behavior;
 
         property.title = inTitle?.value || property.title;
         property.type = inType?.value || property.type;
         property.description = inDescription?.value || property.description;
         property.examples = JSON.parse(inExamples?.value || "[]") as string[];
+
         const userChoices = JSON.parse(inEnum?.value || "[]") as string[];
 
-        if (inFormat && inFormat.value !== "none") {
-          property.format = inFormat.value;
+        if (property.type === "string") {
+          if (inFormat && inFormat.value !== "none") {
+            property.format = inFormat.value;
+          }
+        }
+
+        if (property.type === "object") {
+          if (inBehavior && inBehavior.value !== "none") {
+            property.behavior = [inBehavior.value as BehaviorSchema];
+          } else {
+            delete property.behavior;
+          }
+
+          if (inFormat && inFormat.value !== "none") {
+            if (inFormat.multiple) {
+              property.format = [...inFormat.selectedOptions]
+                .map((opt) => opt.value)
+                .join(",");
+            } else {
+              property.format = inFormat.value;
+            }
+          } else {
+            delete property.format;
+          }
+        }
+
+        // Update Array Items.
+        if (property.type === "array" && inItems && inItems.value !== "none") {
+          if (
+            // Items does not exist
+            !property.items ||
+            // Items exist but the type value is different.
+            (!Array.isArray(property.items) &&
+              property.items.type !== inItems.value)
+          ) {
+            property.items = { type: inItems.value };
+          }
         } else {
-          delete property.format;
+          delete property.items;
+        }
+
+        // Update Array Item Behaviors & Formats
+        if (property.type === "array") {
+          if (property.items && !Array.isArray(property.items)) {
+            if (property.items.type === "object") {
+              // Set the behavior.
+              if (inBehavior && inBehavior.value !== "none") {
+                property.items.behavior = [inBehavior.value as BehaviorSchema];
+              } else {
+                delete property.items.behavior;
+              }
+
+              // If the behavior is llm-content acknowledge the format.
+              if (
+                property.items.behavior &&
+                property.items.behavior.includes("llm-content") &&
+                inFormat &&
+                inFormat.value !== "none"
+              ) {
+                if (inFormat.multiple) {
+                  property.items.format = [...inFormat.selectedOptions]
+                    .map((opt) => opt.value)
+                    .join(",");
+                } else {
+                  property.items.format = inFormat.value;
+                }
+              } else {
+                delete property.items.format;
+              }
+            } else {
+              delete property.items.behavior;
+            }
+          }
         }
 
         if (inDefault) {
           if (inDefault.type === "checkbox") {
             property.default = inDefault.checked.toString();
+          } else if (typeof inDefault.value === "object") {
+            property.default = JSON.stringify(inDefault.value);
           } else {
             property.default = inDefault.value ?? property.default;
           }
@@ -435,10 +886,43 @@ export class SchemaEditor extends LitElement {
           delete property.description;
         }
 
+        if (!property.examples) {
+          delete property.examples;
+        }
+
         // Going from boolean -> anything else with no default means removing
         // the value entirely.
         if (oldType === "boolean" && property.type !== oldType) {
           delete property.default;
+        }
+
+        if (oldType === "array" && property.type !== oldType) {
+          delete property.items;
+        }
+
+        if (oldType === "object" && property.type !== oldType) {
+          delete property.behavior;
+        }
+
+        // Moving to an array of objects means removing any top-level format.
+        if (
+          property.type === "array" &&
+          property.items &&
+          !Array.isArray(property.items) &&
+          property.items.type === "object"
+        ) {
+          delete property.format;
+        }
+
+        // Going from llm-content -> any other behavior means removing the
+        // format entirely.
+        if (
+          oldBehavior &&
+          oldBehavior.includes("llm-content") &&
+          property.behavior &&
+          !property.behavior.includes("llm-content")
+        ) {
+          delete property.format;
         }
 
         if (inID && inID.value && inID.value !== id) {
@@ -500,7 +984,7 @@ export class SchemaEditor extends LitElement {
     this.dispatchEvent(new SchemaChangeEvent());
   }
 
-  #createEmptyProperty() {
+  #createNewPort() {
     const schema: Schema = structuredClone(this.schema || {});
     schema.properties =
       typeof schema.properties === "object" ? schema.properties : {};
@@ -522,16 +1006,23 @@ export class SchemaEditor extends LitElement {
       this.schema?.required || []
     );
 
-    return html` <div id="controls">
+    return html` <form
+        @submit=${(evt: Event) => {
+          evt.preventDefault();
+        }}
+        ${ref(this.#formRef)}
+      >
+        ${properties}
+      </form>
+      <div id="controls">
         <button
-          id="add-new-item"
+          id="create-new-port"
           type="button"
           ?disabled=${!this.editable}
-          @click=${this.#createEmptyProperty}
+          @click=${this.#createNewPort}
         >
-          Add a new item
+          Add a port
         </button>
-      </div>
-      <form ${ref(this.#formRef)}>${properties}</form>`;
+      </div>`;
   }
 }

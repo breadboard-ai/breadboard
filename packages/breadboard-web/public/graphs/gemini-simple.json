@@ -4,19 +4,42 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "llm",
-      "to": "output-2",
+      "from": "input-1",
+      "to": "llm",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "llm",
+      "from": "llm",
+      "to": "output-2",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Prompt",
+              "description": "The text to generate",
+              "default": "",
+              "examples": [
+                "Write a rhyming poem about breadboards."
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -37,29 +60,6 @@
       "id": "llm",
       "type": "text",
       "configuration": {}
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Prompt",
-              "description": "The text to generate",
-              "examples": [
-                "Write a rhyming poem about breadboards."
-              ]
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

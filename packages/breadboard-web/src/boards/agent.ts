@@ -32,7 +32,7 @@ export default await board(({ generator, context, stopSequences }) => {
   context
     .title("Context")
     .isArray()
-    .format("multiline")
+    .behavior("llm-content")
     .examples(sampleContext);
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 

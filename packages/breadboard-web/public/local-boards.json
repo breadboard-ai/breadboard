@@ -30,6 +30,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Audio",
+    "url": "/graphs/audio.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Best of N",
     "url": "/graphs/best-of-n.json",
     "version": "0.0.2"
@@ -52,7 +57,7 @@
   {
     "title": "Example of @breadboard-ai/build",
     "url": "/graphs/build-example.json",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   {
     "title": "Chat bot 2.0",
@@ -134,6 +139,16 @@
     "version": "0.0.1"
   },
   {
+    "title": "Looper Chat Testing Grounds",
+    "url": "/graphs/looper-chat-test.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Looper Testing Grounds",
+    "url": "/graphs/looper-test.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Math, chain style graph",
     "url": "/graphs/math-chain.json"
   },
@@ -144,7 +159,7 @@
   {
     "title": "The Calculator Board",
     "url": "/graphs/math.json",
-    "version": "0.0.2"
+    "version": "0.0.4"
   },
   {
     "title": "Mock Text Generator",
@@ -174,6 +189,11 @@
   {
     "title": "Nager Date Next Public Holidays Worldwide API",
     "url": "/graphs/nager.date/next-holiday-worldwide.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Nager Date Next Public Holiday",
+    "url": "/graphs/nager.date/next-public-holiday.json",
     "version": "0.0.1"
   },
   {
@@ -234,6 +254,11 @@
   {
     "title": "Dense text summarizer",
     "url": "/graphs/summarizer.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Specialist Testing Grounds",
+    "url": "/graphs/super-worker-test.json",
     "version": "0.0.1"
   },
   {

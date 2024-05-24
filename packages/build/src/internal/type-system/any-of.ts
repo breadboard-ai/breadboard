@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { JSONSchema4TypeName } from "json-schema";
 import {
   toJSONSchema,
   type BreadboardType,
@@ -20,9 +21,14 @@ import {
 export function anyOf<
   T extends [BreadboardType, BreadboardType, ...BreadboardType[]],
 >(...members: T): AdvancedBreadboardType<ConvertBreadboardType<T[number]>> {
+  const types = members.map(toJSONSchema);
+  const allTypesAreBasic = types.every(
+    (member) =>
+      typeof member.type === "string" && Object.keys(member).length === 1
+  );
   return {
-    jsonSchema: {
-      anyOf: members.map(toJSONSchema),
-    },
+    jsonSchema: allTypesAreBasic
+      ? { type: types.map((member) => member.type as JSONSchema4TypeName) }
+      : { anyOf: types },
   };
 }

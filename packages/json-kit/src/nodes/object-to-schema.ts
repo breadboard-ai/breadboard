@@ -7,6 +7,7 @@
 import {
   InputValues,
   Lambda,
+  NodeHandlerObject,
   OutputValues,
   Schema,
   code,
@@ -97,6 +98,10 @@ export const describe = async () => {
 };
 
 export default {
+  metadata: {
+    title: "Object to Schema",
+    description: "Creates a JSON Schema from a given object",
+  },
   describe,
   invoke,
-};
+} as NodeHandlerObject;

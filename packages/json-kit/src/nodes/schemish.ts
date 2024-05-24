@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeHandlerObject,
   SchemaBuilder,
   type InputValues,
   type NodeValue,
@@ -89,6 +90,11 @@ const describe = async () => {
 };
 
 export default {
+  metadata: {
+    title: "Schemish",
+    description:
+      "Converts a JSON schema to Schemish (https://glazkov.com/2023/05/06/schemish/)",
+  },
   invoke,
   describe,
-};
+} as NodeHandlerObject;

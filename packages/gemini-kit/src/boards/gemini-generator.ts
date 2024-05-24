@@ -4,354 +4,610 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
-import { templates } from "@google-labs/template-kit";
-import { core } from "@google-labs/core-kit";
-import { json } from "@google-labs/json-kit";
-import { nursery } from "@google-labs/node-nursery-web";
+import {
+  annotate,
+  anyOf,
+  array,
+  board,
+  constant,
+  converge,
+  enumeration,
+  input,
+  loopback,
+  object,
+  optional,
+  output,
+  unsafeCast,
+  unsafeType,
+} from "@breadboard-ai/build";
+import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
+import { Schema } from "@google-labs/breadboard";
+import { code, fetch, passthrough, secret } from "@google-labs/core-kit";
+import { urlTemplate } from "@google-labs/template-kit";
 
-type TextPartType = {
-  text: string;
-};
+const textPartType = object({ text: "string" });
 
-type ImagePartType = {
-  inline_data: {
-    mime_type:
-      | "image/png"
-      | "image/jpeg"
-      | "image/heic"
-      | "image/heif"
-      | "image/webp";
-    data: string;
-  };
-};
+const imagePartType = object({
+  inlineData: object({
+    mimeType: enumeration(
+      "image/png",
+      "image/jpeg",
+      "image/heic",
+      "image/heif",
+      "image/webp"
+    ),
+    data: "string",
+  }),
+});
 
-type FunctionCallPartType = {
-  function_call: {
-    name: string;
-    args: Record<string, string>;
-  };
-};
+const functionCallPartType = object({
+  function_call: object({
+    name: "string",
+    args: object({}, "string"),
+  }),
+});
 
-type FunctionResponsePartType = {
-  function_response: {
-    name: string;
-    response: unknown;
-  };
-};
+const functionResponsePartType = object({
+  function_response: object({
+    name: "string",
+    response: "unknown",
+  }),
+});
 
-type PartType =
-  | TextPartType
-  | ImagePartType
-  | FunctionCallPartType
-  | FunctionResponsePartType;
+const partType = anyOf(
+  textPartType,
+  imagePartType,
+  functionCallPartType,
+  functionResponsePartType
+);
 
-type GenerateContentContentsType = {
-  role: "model" | "user" | "tool";
-  parts: PartType[];
-};
+const generateContentContentsType = object({
+  role: enumeration("model", "user", "tool", "$metadata"),
+  parts: array(partType),
+});
 
-type FunctionDeclaration = {
-  name: string;
-  description: string;
-  parameters?: Schema;
-};
+const functionDeclaration = object({
+  name: "string",
+  description: "string",
+  parameters: unsafeType<Schema>({ type: "object" }),
+});
 
-const metadata = {
-  title: "Gemini Pro Generator",
-  description: "The text generator board powered by the Gemini Pro model",
-  version: "0.0.2",
-} as GraphMetadata;
+const systemInstruction = input({
+  type: "string",
+  title: "System Instruction",
+  description:
+    "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
+  examples: [
+    "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
+  ],
+  default: "",
+});
 
-const toolsExample = [
-  {
-    name: "The_Calculator_Board",
-    description:
-      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-    parameters: {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          description: "Ask a math question",
+const text = input({
+  type: "string",
+  title: "Text",
+  description: "The text to generate",
+  examples: ["What is the square root of pi?"],
+  default: "",
+});
+
+const model = input({
+  title: "Model",
+  description: "The model to use for generation",
+  type: enumeration("gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"),
+  examples: ["gemini-1.5-pro-latest"],
+  optional: true,
+});
+
+const responseMimeType = input({
+  title: "Response MIME Type",
+  description: "Output response mimetype of the generated text.",
+  type: enumeration("text/plain", "application/json"),
+  examples: ["text/plain"],
+  default: "text/plain",
+});
+
+const tools = input({
+  type: array(
+    annotate(functionDeclaration, {
+      behavior: ["board"],
+    })
+  ),
+  title: "Tools",
+  description: "An array of functions to use for tool-calling",
+  default: [],
+  examples: [
+    [
+      {
+        name: "The_Calculator_Board",
+        description:
+          "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              description: "Ask a math question",
+            },
+          },
+          required: ["text"],
         },
       },
-      required: ["text"],
-    },
-  },
-  {
-    name: "The_Search_Summarizer_Board",
-    description:
-      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-    parameters: {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          description: "What would you like to search for?",
+      {
+        name: "The_Search_Summarizer_Board",
+        description:
+          "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              description: "What would you like to search for?",
+            },
+          },
+          required: ["text"],
         },
       },
-      required: ["text"],
-    },
-  },
-] satisfies FunctionDeclaration[];
+    ],
+  ],
+});
 
-const contextExample = [
-  {
-    role: "user",
-    parts: [
+const context = input({
+  type: array(
+    annotate(generateContentContentsType, {
+      behavior: ["llm-content"],
+    })
+  ),
+  title: "Context",
+  description: "An array of messages to use as conversation context",
+  default: [],
+  examples: [
+    [
       {
-        text: "You are a pirate. Please talk like a pirate.",
+        role: "user",
+        parts: [{ text: "You are a pirate. Please talk like a pirate." }],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Arr, matey!" }],
       },
     ],
+  ],
+});
+
+const useStreaming = input({
+  type: "boolean",
+  title: "Stream",
+  description: "Whether to stream the output",
+  default: false,
+});
+
+const retry = input({
+  type: "number",
+  title: "Retry Count",
+  description: "The number of times to retry the LLM call in case of failure",
+  default: 1,
+});
+
+const safetySettings = input({
+  type: array(
+    object({
+      category: "string",
+      threshold: "string",
+    })
+  ),
+  title: "Safety Settings",
+  description:
+    "The safety settings object (see https://ai.google.dev/api/rest/v1beta/SafetySetting for more information)",
+  default: [],
+});
+
+const stopSequences = input({
+  type: array("string"),
+  title: "Stop Sequences",
+  description: "An array of strings that will stop the output",
+  default: [],
+});
+
+const requestBodyType = object({
+  contents: "unknown",
+  systemInstruction: optional(
+    object({
+      parts: array("unknown"),
+    })
+  ),
+  safetySettings: optional(
+    array(
+      object({
+        category: "string",
+        threshold: "string",
+      })
+    )
+  ),
+  generationConfig: optional(
+    object({
+      stopSequences: optional(array("string")),
+      responseMimeType: optional(enumeration("text/plain", "application/json")),
+    })
+  ),
+  tools: optional(
+    object({
+      function_declarations: array(functionDeclaration),
+    })
+  ),
+});
+
+const { method, sseOption } = code(
+  {
+    $id: "choose-method",
+    useStreaming,
+    $metadata: {
+      title: "Choose Method",
+      description: "Choosing the right Gemini API method",
+    },
   },
   {
-    role: "model",
-    parts: [
-      {
-        text: "Arr, matey!",
-      },
-    ],
+    method: enumeration("streamGenerateContent", "generateContent"),
+    sseOption: "string",
   },
-] satisfies GenerateContentContentsType[];
-
-const parametersSchema = {
-  type: "object",
-  properties: {
-    systemInstruction: {
-      type: "string",
-      title: "System Instruction",
-      description:
-        "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
-      examples: [
-        "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
-      ],
-      default: "",
-    },
-    text: {
-      type: "string",
-      title: "Text",
-      description: "The text to generate",
-      examples: ["What is the square root of pi?"],
-    },
-    model: {
-      type: "string",
-      title: "Model",
-      description: "The model to use for generation",
-      enum: ["gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"],
-      examples: ["gemini-1.5-pro-latest"],
-    },
-    tools: {
-      type: "array",
-      title: "Tools",
-      description: "An array of functions to use for tool-calling",
-      items: {
-        type: "object",
-        behavior: ["board"],
-      },
-      default: "[]",
-      examples: [JSON.stringify(toolsExample, null, 2)],
-    },
-    context: {
-      type: "array",
-      title: "Context",
-      description: "An array of messages to use as conversation context",
-      items: {
-        type: "object",
-        behavior: ["llm-content"],
-      },
-      default: "[]",
-      examples: [JSON.stringify(contextExample, null, 2)],
-    },
-    useStreaming: {
-      type: "boolean",
-      title: "Stream",
-      description: "Whether to stream the output",
-      default: "false",
-    },
-    stopSequences: {
-      type: "array",
-      title: "Stop Sequences",
-      description: "An array of strings that will stop the output",
-      items: {
-        type: "string",
-      },
-      default: "[]",
-    },
-  },
-  // TODO: Make text not required when context ends with user turn
-  required: ["text"],
-} satisfies Schema;
-
-const textOutputSchema = {
-  type: "object",
-  properties: {
-    text: {
-      type: "string",
-      title: "Text",
-      description: "The generated text",
-    },
-    context: {
-      type: "array",
-      items: {
-        type: "object",
-        behavior: ["llm-content"],
-      },
-      title: "Context",
-      description: "The conversation context",
-    },
-  },
-} satisfies Schema;
-
-const toolCallOutputSchema = {
-  type: "object",
-  properties: {
-    toolCalls: {
-      type: "array",
-      items: {
-        type: "object",
-      },
-      title: "Tool Calls",
-      description: "The generated tool calls",
-    },
-    context: {
-      type: "array",
-      items: {
-        type: "object",
-        behavior: ["llm-content"],
-      },
-      title: "Context",
-      description: "The conversation context",
-    },
-  },
-} satisfies Schema;
-
-const streamOutputSchema = {
-  type: "object",
-  properties: {
-    stream: {
-      type: "object",
-      title: "Stream",
-      format: "stream",
-      description: "The generated text",
-    },
-  },
-} satisfies Schema;
-
-export default await board(() => {
-  const parameters = base.input({
-    $id: "parameters",
-    schema: parametersSchema,
-  });
-
-  function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
+  ({ useStreaming }) => {
     const method = useStreaming ? "streamGenerateContent" : "generateContent";
     const sseOption = useStreaming ? "&alt=sse" : "";
     return { method, sseOption };
   }
+).outputs;
 
-  const chooseMethod = core.runJavascript({
-    $id: "chooseMethod",
-    name: "chooseMethodFunction",
-    code: chooseMethodFunction.toString(),
-    raw: true,
-    useStreaming: parameters,
-  });
+const makeUrl = urlTemplate({
+  $id: "make-url",
+  $metadata: {
+    title: "Make URL",
+    description: "Creating the Gemini API URL",
+  },
+  template:
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
+  GEMINI_KEY: secret("GEMINI_KEY"),
+  model,
+  method,
+  sseOption,
+});
 
-  const makeUrl = templates.urlTemplate({
-    $id: "makeURL",
-    template:
-      "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
-    GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
-    model: parameters.model,
-    ...chooseMethod,
-  });
+const errorLoopback = loopback({
+  type: object({
+    error: optional(
+      object({
+        code: optional("number"),
+      })
+    ),
+  }),
+});
 
-  const makeBody = json.jsonata({
-    $id: "makeBody",
-    expression: `(
-      $context := $append(
-          context ? context, $not(context) or (context[-1].role!="user" and context[-1].role!="function") ? [
-              {
-                  "role": "user",
-                  "parts": [
-                      {
-                          "text": text
-                      }
-                  ]
-              }
-          ]);
-      text ? {
-          "contents": $context,
-          "system_instruction": systemInstruction ? {
-            "parts": [{
-              "text": systemInstruction
-            }]
-          },
-          "generationConfig": stopSequences ? {
-            "stopSequences": stopSequences
-          },
-          "tools": tools ? {
-            "function_declarations": tools
-          }
-      } : {
-          "$error": "\`text\` input is required"
+const retryLoopback = loopback({ type: "number" });
+
+const countRetries = code(
+  {
+    $id: "count-retries",
+    $metadata: {
+      title: "Check Retry Count",
+      description: "Making sure we can retry, if necessary.",
+    },
+    context: constant(context),
+    systemInstruction: constant(systemInstruction),
+    text: constant(text),
+    model: constant(model),
+    tools: constant(tools),
+    safetySettings: constant(safetySettings),
+    stopSequences: constant(stopSequences),
+    responseMimeType: constant(responseMimeType),
+    retry: converge(retry, retryLoopback),
+    error: converge({} as { error?: { code?: number } }, errorLoopback),
+  },
+  {
+    // TODO(aomarks) A better way to generate these types.
+    context: array(generateContentContentsType),
+    systemInstruction: anyOf("string", object({ parts: array(partType) })),
+    text: "string",
+    model: "string",
+    tools: array(functionDeclaration),
+    safetySettings: array(object({ category: "string", threshold: "string" })),
+    stopSequences: array("string"),
+    responseMimeType: enumeration("text/plain", "application/json"),
+    retry: "number",
+  },
+  ({ retry, error, ...rest }) => {
+    retry = retry || 0;
+    const errorCode = error?.error?.code;
+    if (errorCode) {
+      // Retry won't help with 404, 429 or 400, because these are either the
+      // caller's problem or in case of 429, retries are actually doing more harm
+      // than good.
+      const retryWontHelp =
+        errorCode == 400 || errorCode == 429 || errorCode == 404;
+      if (retryWontHelp) {
+        // TODO(aomarks) We don't have `code` in the general $error type, and we
+        // probably shouldn't since there are all kind of possible error shapes.
+        // There should probably be a way to set the schema for $error to any
+        // sub-type of the general one on a node-by-node basis. For now we just
+        // cast to pretend `code` isn't there.
+        return { $error: error as { message: string } };
       }
-    )`,
-    ...parameters,
-  });
+      // The "-1" value is something that responseFormatter sends when empty
+      // response is encountered.
+      if (errorCode == -1) {
+        return { $error: error as { message: string } };
+      }
+    }
+    if (retry < 0) {
+      return {
+        $error:
+          "Exceeded retry count, was unable to produce a useful response from the Gemini API.",
+      };
+    }
+    retry = retry - 1;
+    return { ...rest, retry };
+  }
+);
 
-  const fetch = core.fetch({
-    $id: "callGeminiAPI",
-    method: "POST",
-    stream: parameters.useStreaming,
-    url: makeUrl.url,
-    body: makeBody.result,
-  });
+const body = code(
+  {
+    $id: "make-body",
+    $metadata: { title: "Make Request Body" },
+    context: countRetries.outputs.context,
+    systemInstruction: countRetries.outputs.systemInstruction,
+    text: countRetries.outputs.text,
+    model: countRetries.outputs.model,
+    tools: countRetries.outputs.tools,
+    safetySettings: countRetries.outputs.safetySettings,
+    stopSequences: countRetries.outputs.stopSequences,
+    responseMimeType: countRetries.outputs.responseMimeType,
+  },
+  { result: requestBodyType },
+  ({
+    context,
+    systemInstruction,
+    responseMimeType,
+    text,
+    model,
+    tools,
+    safetySettings,
+    stopSequences,
+  }) => {
+    let contents = context;
+    const olderModel = model === "gemini-pro" || model === "gemini-ultra";
+    const turn = { role: "user" as const, parts: [{ text }] };
+    if (!contents || contents.length === 0) {
+      if (text) {
+        contents = [turn];
+      } else {
+        throw new Error("Either `text` or `context` parameter is required");
+      }
+    } else {
+      // Replace the "tool" role with "user".
+      contents = contents.map((item) =>
+        item.role === "tool" ? ((item.role = "user"), item) : item
+      );
+      const last = contents[contents.length - 1];
+      if (last.role === "model") {
+        contents.push(turn);
+      }
+    }
+    // Filter out the special "$metadata" role.
+    contents = contents.filter((item) => item.role !== "$metadata");
+    const result: ConvertBreadboardType<typeof requestBodyType> = { contents };
+    if (systemInstruction) {
+      let parts;
+      if (typeof systemInstruction === "string") {
+        parts = [{ text: systemInstruction }];
+      } else {
+        parts = systemInstruction.parts;
+        if (!parts) {
+          throw new Error(
+            `Malformed system instruction: ${JSON.stringify(systemInstruction)}`
+          );
+        }
+      }
+      if (olderModel) {
+        contents[contents.length - 1].parts.unshift(...parts);
+      } else {
+        result.systemInstruction = { parts };
+      }
+    }
+    if (safetySettings && !Object.keys(safetySettings).length) {
+      result.safetySettings = [
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_NONE",
+        },
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_NONE",
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_NONE",
+        },
+      ];
+    } else {
+      result.safetySettings = safetySettings;
+    }
+    const generationConfig: {
+      stopSequences?: string[];
+      responseMimeType?: "text/plain" | "application/json";
+    } = {};
+    if (stopSequences && stopSequences.length > 0) {
+      generationConfig.stopSequences = stopSequences;
+    }
+    if (responseMimeType) {
+      generationConfig.responseMimeType = responseMimeType;
+    }
+    if (Object.keys(generationConfig).length > 0) {
+      result.generationConfig = generationConfig;
+    }
+    if (tools && tools.length > 0) {
+      result.tools = { function_declarations: tools };
+    }
+    return { result };
+  }
+).outputs.result;
 
-  const formatResponse = json.jsonata({
-    $id: "formatResponse",
-    expression: `
-  response.candidates[0].content.parts.{
-    "text": text ? text,
-    "toolCalls": functionCall ? [ functionCall ],
-    "context": $append($$.context, %.$)
-  }`,
-    raw: true,
-    response: fetch,
-  });
+const responseContentType = object({
+  parts: array(
+    anyOf(
+      object({
+        text: "string",
+      }),
+      object({
+        functionCall: "unknown",
+      })
+    )
+  ),
+});
 
-  const streamTransform = nursery.transformStream({
-    $id: "streamTransform",
-    board: board(() => {
-      const transformChunk = json.jsonata({
-        $id: "transformChunk",
-        expression:
-          "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
-        json: base.input({}).chunk as V<string>,
-      });
-      return base.output({ chunk: transformChunk.result });
-    }),
-    stream: fetch,
-  });
+const responseType = object({
+  candidates: array(
+    object({
+      content: responseContentType,
+    })
+  ),
+});
 
-  base.output({
-    $id: "textOutput",
-    schema: textOutputSchema,
-    context: formatResponse,
-    text: formatResponse,
-  });
+const fetchResult = fetch({
+  $id: "fetch-gemini-api",
+  $metadata: { title: "Make API Call", description: "Calling Gemini API" },
+  method: "POST",
+  stream: constant(useStreaming),
+  url: constant(makeUrl),
+  body,
+});
 
-  base.output({
-    $id: "toolCallsOutput",
-    schema: toolCallOutputSchema,
-    context: formatResponse,
-    toolCalls: formatResponse,
-  });
+const response = unsafeCast(fetchResult.outputs.response, responseType);
 
-  return base.output({
-    $id: "streamOutput",
-    schema: streamOutputSchema,
-    stream: streamTransform,
-  });
-}).serialize(metadata);
+const formattedResponse = code(
+  {
+    $id: "format-response",
+    $metadata: {
+      title: "Format Response",
+      description: "Formatting Gemini API response",
+    },
+    response,
+  },
+  {
+    text: {
+      type: "string",
+      optional: true,
+    },
+    context: responseContentType,
+    toolCalls: {
+      type: array(object({}, "unknown")),
+      optional: true,
+    },
+  },
+  ({ response }) => {
+    const r = response;
+    const context = r?.candidates?.[0].content;
+    const firstPart = context?.parts?.[0];
+    if (!firstPart) {
+      return {
+        $error: `No parts in response "${JSON.stringify(response)}" found`,
+      };
+    }
+    if ("text" in firstPart) {
+      return { text: firstPart.text, context };
+    } else {
+      return { toolCalls: [], context };
+    }
+  }
+);
+
+const errorCollector = passthrough({
+  $id: "collect-errors",
+  $metadata: {
+    title: "Collect Errors",
+    description: "Collecting the error from Gemini API",
+  },
+  error: converge(fetchResult.outputs.$error, formattedResponse.outputs.$error),
+  retry: countRetries.outputs.retry,
+});
+
+retryLoopback.resolve(errorCollector.outputs.retry);
+errorLoopback.resolve(errorCollector.outputs.error);
+
+//   const streamTransform = nursery.transformStream({
+//     $metadata: {
+//       title: "Transform Stream",
+//       description: "Transforming the API output stream to be consumable",
+//     },
+//     board: board(() => {
+//       const transformChunk = json.jsonata({
+//         $id: "transformChunk",
+//         expression:
+//           "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
+//         json: base.input({}).chunk as V<string>,
+//       });
+//       return base.output({ chunk: transformChunk.result });
+//     }),
+//     stream: fetch,
+//   });
+
+//   return base.output({
+//     $metadata: { title: "Stream Output", description: "Outputting a stream" },
+//     schema: streamOutputSchema,
+//     stream: streamTransform,
+//   });
+// }).serialize(metadata);
+
+export default board({
+  title: "Gemini Pro Generator",
+  description: "The text generator board powered by the Gemini Pro model",
+  version: "0.1.0",
+  inputs: [
+    {
+      $id: "inputs",
+      $metadata: {
+        title: "Input Parameters",
+        description: "Collecting input parameters",
+      },
+      systemInstruction,
+      text,
+      model,
+      responseMimeType,
+      tools,
+      context,
+      useStreaming,
+      retry,
+      safetySettings,
+      stopSequences,
+    },
+  ],
+  outputs: [
+    {
+      $id: "content-output",
+      $metadata: {
+        title: "Content Output",
+        description: "Outputting content",
+      },
+      context: output(formattedResponse.outputs.context, {
+        title: "Context",
+        description: "The conversation context",
+      }),
+      text: output(formattedResponse.outputs.text, {
+        title: "Text",
+        description: "The generated text",
+      }),
+    },
+    {
+      $id: "tool-call-output",
+      $metadata: {
+        title: "Tool Call Output",
+        description: "Outputting a tool call",
+      },
+      context: output(formattedResponse.outputs.context, {
+        title: "Context",
+        description: "The conversation context",
+      }),
+      toolCalls: output(formattedResponse.outputs.toolCalls, {
+        title: "Tool Calls",
+        description: "The generated tool calls",
+      }),
+    },
+  ],
+});

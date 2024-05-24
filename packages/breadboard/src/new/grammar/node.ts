@@ -36,6 +36,7 @@ import { BuilderScope } from "./scope.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./board.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 const serializeFunction = (name: string, handlerFn: Function) => {
   let code = handlerFn.toString();
 
@@ -253,7 +254,11 @@ export class BuilderNode<
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
         const handlerFn =
-          typeof handler === "function" ? handler : handler?.invoke;
+          handler && "invoke" in handler && handler.invoke
+            ? handler.invoke
+            : typeof handler === "function"
+              ? handler
+              : undefined;
         if (handlerFn) {
           result = (await handlerFn(inputs, this)) as O;
         } else if (handler && typeof handler !== "function" && handler.graph) {
@@ -350,7 +355,11 @@ export class BuilderNode<
     } else {
       // Else, serialize the handler itself and return a runJavascript node.
       const handlerFn =
-        typeof handler === "function" ? handler : handler?.invoke;
+        handler && "invoke" in handler && handler.invoke
+          ? handler.invoke
+          : typeof handler === "function"
+            ? handler
+            : undefined;
       if (!handlerFn)
         throw new Error(`Handler for ${this.type} in ${this.id} not found`);
 

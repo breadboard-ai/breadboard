@@ -4,34 +4,55 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BehaviorSchema } from "@google-labs/breadboard";
+import {
+  BehaviorSchema,
+  GraphDescriptor,
+  GraphProvider,
+} from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { assertIsLLMContent } from "../../utils/schema.js";
+import { BoardSelector } from "./board-selector.js";
 
 enum TYPE {
   STRING = "string",
   OBJECT = "object",
+  NUMBER = "number",
 }
+
+type ArrayEditorType = string | number | object;
 
 @customElement("bb-array-editor")
 export class ArrayEditor extends LitElement {
-  #formRef: Ref<HTMLFormElement> = createRef();
-  #items: Array<string | object> | null = null;
-
   @property({ reflect: true })
   type = TYPE.STRING;
 
   @property({ reflect: true })
   behavior: BehaviorSchema | null = null;
 
+  @property()
+  subGraphId: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
+
+  @property()
+  graph: GraphDescriptor | null = null;
+
+  #formRef: Ref<HTMLFormElement> = createRef();
+  #items: ArrayEditorType[] | null = null;
   #appendNewItemOnNextRender = false;
 
   static styles = css`
     :host {
       display: block;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
     }
 
     ul {
@@ -113,7 +134,7 @@ export class ArrayEditor extends LitElement {
     }
   `;
 
-  set items(items: Array<string | object> | null) {
+  set items(items: ArrayEditorType[] | null) {
     this.#items = items;
 
     if (items && items.length > 0) {
@@ -121,6 +142,10 @@ export class ArrayEditor extends LitElement {
       switch (type) {
         case "string":
           this.type = TYPE.STRING;
+          break;
+
+        case "number":
+          this.type = TYPE.NUMBER;
           break;
 
         case "object":
@@ -182,6 +207,7 @@ export class ArrayEditor extends LitElement {
 
     this.#items.splice(idx, 1);
     this.#notify();
+    this.requestUpdate();
   }
 
   #unsetAll() {
@@ -216,16 +242,34 @@ export class ArrayEditor extends LitElement {
   }
 
   #onSubmit(evt: SubmitEvent) {
+    evt.preventDefault();
+
     if (!(evt.target instanceof HTMLFormElement)) {
       return;
     }
 
-    evt.preventDefault();
-
     const form = evt.target;
     const data = new FormData(form);
-    const items: Array<string | object> = [];
+    const items: ArrayEditorType[] = [];
+
+    for (const board of form.querySelectorAll<BoardSelector>(
+      "bb-board-selector"
+    )) {
+      if (board.value === null || board.value === "") {
+        continue;
+      }
+
+      data.set(board.id, board.value);
+    }
+
     for (const [id, value] of data) {
+      // Boards go through to the board selector, which will do its own
+      // validation, so we don't need to do anything here besides appending.
+      if (this.behavior === "board") {
+        items.push(value);
+        continue;
+      }
+
       const field = form.querySelector(`#${id}`) as HTMLObjectElement;
       if (!field) {
         console.warn(`Unable to find field ${id}`);
@@ -234,14 +278,30 @@ export class ArrayEditor extends LitElement {
 
       field.setCustomValidity("");
       const formValue = (value as string).trim();
-      if (formValue === "" && this.type === TYPE.STRING) {
+      if (
+        formValue === "" &&
+        (this.type === TYPE.STRING || this.type === TYPE.NUMBER)
+      ) {
         field.setCustomValidity("Field must not be empty");
         field.reportValidity();
         continue;
       }
 
-      if (this.type === TYPE.STRING) {
-        items.push(value);
+      if (
+        this.type === TYPE.NUMBER &&
+        Number.isNaN(Number.parseFloat(formValue))
+      ) {
+        field.setCustomValidity("Field must be a number");
+        field.reportValidity();
+        continue;
+      }
+
+      if (this.type === TYPE.STRING || this.type === TYPE.NUMBER) {
+        if (this.type === TYPE.NUMBER) {
+          items.push(Number.parseFloat(value as string));
+        } else {
+          items.push(value);
+        }
         continue;
       }
 
@@ -286,7 +346,13 @@ export class ArrayEditor extends LitElement {
       newItem.parts = [];
     }
 
-    this.#items.push(this.type === TYPE.STRING ? "" : newItem);
+    this.#items.push(
+      this.type === TYPE.STRING ||
+        this.type === TYPE.NUMBER ||
+        this.behavior === "board"
+        ? ""
+        : newItem
+    );
   }
 
   protected updated(): void {
@@ -308,7 +374,9 @@ export class ArrayEditor extends LitElement {
       return html`(Not set)
         <button
           id="create"
-          @click=${() => {
+          @click=${(evt: Event) => {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
             this.#addItem();
           }}
         >
@@ -326,34 +394,62 @@ export class ArrayEditor extends LitElement {
           ? map(this.items, (item, idx) => {
               const value =
                 typeof item === "string" ? item : JSON.stringify(item, null, 2);
+
+              const selector =
+                this.behavior === "board"
+                  ? html`<bb-board-selector
+                      name="item-${idx}"
+                      id="item-${idx}"
+                      .subGraphIds=${this.graph && this.graph.graphs
+                        ? Object.keys(this.graph.graphs)
+                        : []}
+                      .providers=${this.providers}
+                      .providerOps=${this.providerOps}
+                      .value=${value || ""}
+                      @input=${(evt: Event) => {
+                        evt.preventDefault();
+                        if (!this.#updateItems()) {
+                          return;
+                        }
+
+                        this.#notify();
+                      }}
+                    ></bb-board-selector>`
+                  : html`<textarea
+                      name="item-${idx}"
+                      id="item-${idx}"
+                      .value=${value}
+                      @input=${(evt: InputEvent) => {
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        if (!(evt.target instanceof HTMLTextAreaElement)) {
+                          return;
+                        }
+
+                        const target =
+                          evt.target as unknown as HTMLObjectElement;
+                        target.setCustomValidity("");
+                      }}
+                      @blur=${(evt: InputEvent) => {
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        if (!this.#updateItems()) {
+                          return;
+                        }
+
+                        this.#notify();
+                      }}
+                    ></textarea>`;
+
               return html`<li>
-                <textarea
-                  name="item-${idx}"
-                  id="item-${idx}"
-                  type="text"
-                  .value=${value}
-                  @input=${(evt: InputEvent) => {
-                    if (!(evt.target instanceof HTMLTextAreaElement)) {
-                      return;
-                    }
-
-                    const target = evt.target as unknown as HTMLObjectElement;
-                    target.setCustomValidity("");
-                  }}
-                  @blur=${() => {
-                    if (!this.#updateItems()) {
-                      return;
-                    }
-
-                    this.#notify();
-                  }}
-                ></textarea>
+                ${selector}
                 <button
                   class="delete"
                   id="del-${idx}"
                   data-idx=${idx}
                   @click=${this.#removeItem}
                   title="Delete this item"
+                  type="button"
                 >
                   Delete this item
                 </button>

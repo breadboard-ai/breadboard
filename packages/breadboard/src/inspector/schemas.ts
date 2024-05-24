@@ -19,7 +19,7 @@ export enum EdgeType {
 
 const SCHEMA_SCHEMA: Schema = {
   type: "object",
-  behavior: ["json-schema", "ports-spec"],
+  behavior: ["json-schema", "ports-spec", "config"],
 };
 
 export const DEFAULT_SCHEMA: Schema = { type: "string" };

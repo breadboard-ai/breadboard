@@ -1,5 +1,199 @@
 # @google-labs/breadboard-cli
 
+## 0.9.3
+
+### Patch Changes
+
+- a35406c: Add --format flag to make command which formats BGL in a deterministic way
+- Updated dependencies [8097177]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [29eda71]
+- Updated dependencies [4957dc5]
+- Updated dependencies [fe4c564]
+- Updated dependencies [4203076]
+- Updated dependencies [7d0b89c]
+- Updated dependencies [23b8acb]
+- Updated dependencies [f60cb06]
+- Updated dependencies [9212366]
+- Updated dependencies [04e892e]
+- Updated dependencies [cec6d54]
+- Updated dependencies [e337629]
+- Updated dependencies [c91fb1e]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [69b6e44]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [fe2066b]
+- Updated dependencies [c1acf24]
+- Updated dependencies [af54870]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [cc1a625]
+- Updated dependencies [ee85b67]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [1d29493]
+- Updated dependencies [b6f5644]
+- Updated dependencies [f870bdd]
+- Updated dependencies [42495d8]
+- Updated dependencies [a945fba]
+- Updated dependencies [94caed3]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/core-kit@0.9.0
+  - @breadboard-ai/build@0.6.0
+  - @google-labs/breadboard-web@1.9.0
+  - @breadboard-ai/import@0.1.3
+  - @google-labs/template-kit@0.3.2
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/breadboard-web@1.8.1
+  - @breadboard-ai/build@0.5.1
+  - @google-labs/core-kit@0.8.1
+  - @breadboard-ai/import@0.1.2
+  - @google-labs/template-kit@0.3.1
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies [dbd9267]
+- Updated dependencies [3f9507d]
+- Updated dependencies [39016d9]
+- Updated dependencies [cef20ca]
+- Updated dependencies [55a9647]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [18b9f34]
+- Updated dependencies [1adb24c]
+- Updated dependencies [1e86a87]
+- Updated dependencies [d7829a1]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [f03d11f]
+- Updated dependencies [fefd109]
+- Updated dependencies [c1dcb0a]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [1adb24c]
+- Updated dependencies [fefd109]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [1aa96c6]
+- Updated dependencies [d9ac358]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [cc47fe7]
+- Updated dependencies [f1883d1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [d8cb0c9]
+- Updated dependencies [e736f37]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [e6e0168]
+- Updated dependencies [3d48482]
+- Updated dependencies [24230c1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [c117d4f]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [5d601fb]
+- Updated dependencies [3f9507d]
+- Updated dependencies [626139b]
+- Updated dependencies [1adb24c]
+- Updated dependencies [3f9507d]
+- Updated dependencies [bd44e29]
+- Updated dependencies [c4ca6dc]
+- Updated dependencies [1adb24c]
+- Updated dependencies [6a2af3e]
+- Updated dependencies [cfbcdf2]
+- Updated dependencies [1d9cb16]
+- Updated dependencies [ad5f570]
+- Updated dependencies [49da151]
+- Updated dependencies [43da00a]
+- Updated dependencies [3f9507d]
+- Updated dependencies [dfd5ce2]
+- Updated dependencies [cfc0f15]
+- Updated dependencies [00ccb9d]
+- Updated dependencies [776f043]
+- Updated dependencies [08eabf4]
+- Updated dependencies [5369037]
+- Updated dependencies [12b825f]
+- Updated dependencies [c3587e1]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [99fcffe]
+- Updated dependencies [1e86a87]
+- Updated dependencies [4d6ce42]
+- Updated dependencies [3f9507d]
+- Updated dependencies [d9ac358]
+  - @google-labs/breadboard-web@1.8.0
+  - @breadboard-ai/build@0.5.0
+  - @google-labs/breadboard@0.18.0
+  - @google-labs/template-kit@0.3.0
+  - @google-labs/core-kit@0.8.0
+  - @breadboard-ai/import@0.1.1
+
+## 0.9.0
+
+### Minor Changes
+
+- 7e91ef0: CLI now uses OpenAPI import package
+
+### Patch Changes
+
+- be0a78e: Make settings work in debugger.
+- Updated dependencies [b244fba]
+- Updated dependencies [de524a4]
+- Updated dependencies [c3cb25f]
+- Updated dependencies [de524a4]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [de524a4]
+- Updated dependencies [276152e]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [8046c47]
+- Updated dependencies [de524a4]
+- Updated dependencies [3a31595]
+- Updated dependencies [634712b]
+- Updated dependencies [a5543eb]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [7e91ef0]
+- Updated dependencies [5a7bc86]
+- Updated dependencies [68c2ac4]
+- Updated dependencies [6498389]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [9a8bd0e]
+- Updated dependencies [12c1a72]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+- Updated dependencies [de524a4]
+  - @google-labs/template-kit@0.2.6
+  - @breadboard-ai/build@0.4.0
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/breadboard-web@1.7.0
+  - @google-labs/core-kit@0.7.0
+  - @breadboard-ai/import@0.1.0
+
 ## 0.8.2
 
 ### Patch Changes

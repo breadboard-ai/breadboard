@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.20.0
+
+### Minor Changes
+
+- 8097177: Allow output ports to be required in their schema without it turning output ports red when they are unwired
+- cec6d54: Introduce `InspectablePortType`.
+- 3397974: Add `InspectableNode.type()` and start using it.
+
+### Patch Changes
+
+- ab9a4ce: Remove `runRemote` method. It is old code that doesn't work and isn't used.
+- a35406c: Add formatGraphDescriptor function which formats BGL in a deterministic way
+- 477e6e6: Sort more schema fields for easier comparison across serializers
+
+## 0.19.0
+
+### Minor Changes
+
+- 63eb779: Add support for `interactiveSecrets` option on `RunConfig`.
+
+## 0.18.0
+
+### Minor Changes
+
+- cef20ca: Enable running edgeless graphs
+- 54baba8: Implement `AbortSignal` support.
+- cdc23bb: Make bubbled input values configurable.
+- a1fcaea: Introduce `code` behavior hint.
+- c3ed6a7: Introduce `InspectableRun.inputs`.
+- 3d48482: Change all multi-modal inputs to be a format of llm-content
+- 626139b: Support `icon` metadata on node types and graphs.
+- bd44e29: Support audio input
+- 43da00a: Introduce the concept of editor modes.
+- c3587e1: Introduce `GraphDescriptor.metadata`.
+
+### Patch Changes
+
+- fbf7a83: Apply `format` to array items.
+- 49c3aa1: Make `inputs` and `descriptor` optional for ErrorObject.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 3f9507d: Better compatibility with @breadboard-ai/build
+- Updated dependencies [416aed2]
+  - @google-labs/breadboard-schema@1.4.1
+
+## 0.17.0
+
+### Minor Changes
+
+- ae79e4a: Implement `InspectableRun.currentNodeEvent`.
+- 72c5c6b: Split run-time and build-time URL resolutions for loading graphs.
+- c5ba396: Introduce `InspectableRun.stack` method.
+- 51159c4: Introduce `InspectableEdge.type`.
+- 6f9ba52: Add support for control edges.
+
+### Patch Changes
+
+- c3cb25f: Make star edge fix up work in reverse, too.
+- dd810dd: Introduce `GraphChangeEvent.visualOnly` to indicate that only visual metadata was updated.
+- 7bafa40: Introduce `graphchangereject` event in Editor API.
+- 2932f4b: Remove `schema` from `output` ports.
+
 ## 0.16.0
 
 ### Minor Changes

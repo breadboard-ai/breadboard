@@ -1,7 +1,7 @@
 {
   "title": "Worker",
   "description": "The essential Agent building block",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -78,7 +78,7 @@
       "id": "assembleContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
+        "code": "const assembleContext = ({ context: context2, generated }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  return { context: [...context2, generated] };\n};",
         "name": "assembleContext",
         "raw": true
       },
@@ -102,7 +102,7 @@
       "id": "buildContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
+        "code": "const buildContext = ({ context: context2, instruction }) => {\n  if (typeof context2 === \"string\") {\n    context2 = [{ role: \"user\", parts: [{ text: context2 }] }];\n  }\n  const list = context2 || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n};",
         "name": "buildContext",
         "raw": true
       },
@@ -134,6 +134,9 @@
             "instruction": {
               "title": "Instruction",
               "format": "multiline",
+              "behavior": [
+                "config"
+              ],
               "examples": [
                 "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
               ],
@@ -143,10 +146,13 @@
               "type": "array",
               "title": "Stop Sequences",
               "description": "An array of strings that will stop the output",
+              "default": "[]",
               "items": {
-                "type": "string"
-              },
-              "default": "[]"
+                "type": "object",
+                "behavior": [
+                  "config"
+                ]
+              }
             }
           },
           "required": [

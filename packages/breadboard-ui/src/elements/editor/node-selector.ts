@@ -1,4 +1,15 @@
-import { GraphDescriptor, Kit, inspect } from "@google-labs/breadboard";
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+  GraphDescriptor,
+  Kit,
+  NodeHandlerMetadata,
+  inspect,
+} from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -19,6 +30,7 @@ export class NodeSelector extends LitElement {
   @state()
   filter: string | null = null;
 
+  #searchInputRef: Ref<HTMLInputElement> = createRef();
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
 
@@ -67,7 +79,7 @@ export class NodeSelector extends LitElement {
       color: #222;
       height: var(--height);
       position: relative;
-      width: min(80vw, 300px);
+      width: min(80vw, 360px);
     }
 
     #kit-list > li {
@@ -78,7 +90,6 @@ export class NodeSelector extends LitElement {
       display: none;
     }
 
-    li.kit-item,
     label {
       height: var(--kit-height);
       display: block;
@@ -93,6 +104,19 @@ export class NodeSelector extends LitElement {
       color: #1a1a1a;
     }
 
+    li.kit-item .node-id {
+      white-space: nowrap;
+      height: var(--kit-height);
+      line-height: var(--kit-height);
+      font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
+    li.kit-item .node-description {
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
+    }
+
     #kit-list li:hover label::before {
       content: "";
       background: #000;
@@ -101,7 +125,7 @@ export class NodeSelector extends LitElement {
       top: 1px;
       bottom: 1px;
       right: 8px;
-      border-radius: var(--border-radius);
+      border-radius: var(--bb-grid-size-12);
       z-index: 0;
       opacity: 0.1;
     }
@@ -166,25 +190,30 @@ export class NodeSelector extends LitElement {
     }
 
     li.kit-item {
-      margin: 0;
-      padding: 0 16px;
+      margin: var(--bb-grid-size) 0;
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
       width: 100%;
       border-radius: 12px;
       position: relative;
       background: #fff;
+      cursor: grab;
     }
 
     li.kit-item:hover::before {
       content: "";
       background: #000;
       position: absolute;
-      left: 6px;
+      left: var(--bb-grid-size-2);
       top: 1px;
       bottom: 1px;
-      right: 8px;
-      border-radius: var(--border-radius);
+      right: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size);
       z-index: 0;
       opacity: 0.05;
+    }
+
+    li.kit-item:active {
+      cursor: grabbing;
     }
 
     li.kit-item span {
@@ -192,6 +221,14 @@ export class NodeSelector extends LitElement {
       z-index: 1;
     }
   `;
+
+  selectSearchInput() {
+    if (!this.#searchInputRef.value) {
+      return;
+    }
+
+    this.#searchInputRef.value.select();
+  }
 
   updated() {
     if (!this.#listRef.value) {
@@ -230,7 +267,10 @@ export class NodeSelector extends LitElement {
     });
 
     const kits = graph.kits() || [];
-    const kitList = new Map<string, string[]>();
+    const kitList = new Map<
+      string,
+      { id: string; metadata: NodeHandlerMetadata }[]
+    >();
     kits.sort((kit1, kit2) =>
       (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
     );
@@ -242,6 +282,7 @@ export class NodeSelector extends LitElement {
 
       let kitNodes = kit.nodeTypes;
       kitNodes = kit.nodeTypes.filter((node) => {
+        if (node.metadata().deprecated) return false;
         if (!this.filter) {
           return true;
         }
@@ -255,7 +296,7 @@ export class NodeSelector extends LitElement {
 
       kitList.set(
         kit.descriptor.title,
-        kitNodes.map((node) => node.type())
+        kitNodes.map((node) => ({ id: node.type(), metadata: node.metadata() }))
       );
     }
 
@@ -269,6 +310,7 @@ export class NodeSelector extends LitElement {
         type="search"
         id="search"
         placeholder="Search nodes"
+        ${ref(this.#searchInputRef)}
         @input=${(evt: InputEvent) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -296,27 +338,34 @@ export class NodeSelector extends LitElement {
               /><label for="${kitId}"><span>${kitName}</span></label>
               <div class="kit-contents">
                 <ul>
-                  ${map(kitContents, (kitItemName) => {
-                    const kitItemId = kitItemName
+                  ${map(kitContents, (nodeTypeInfo) => {
+                    const className = nodeTypeInfo.id
                       .toLocaleLowerCase()
                       .replace(/\W/, "-");
+                    const id = nodeTypeInfo.id;
+                    const description = nodeTypeInfo.metadata.description;
                     return html`<li
                       class=${classMap({
-                        [kitItemId]: true,
+                        [className]: true,
                         ["kit-item"]: true,
                       })}
                       draggable="true"
                       @dblclick=${() => {
-                        this.dispatchEvent(new KitNodeChosenEvent(kitItemName));
+                        this.dispatchEvent(new KitNodeChosenEvent(id));
                       }}
                       @dragstart=${(evt: DragEvent) => {
                         if (!evt.dataTransfer) {
                           return;
                         }
-                        evt.dataTransfer.setData(DATA_TYPE, kitItemName);
+                        evt.dataTransfer.setData(DATA_TYPE, id);
                       }}
                     >
-                      <span>${kitItemName}</span>
+                      <div class="node-id">${id}</div>
+                      ${description
+                        ? html`<div class="node-description">
+                            ${description}
+                          </div>`
+                        : nothing}
                     </li>`;
                   })}
                 </ul>

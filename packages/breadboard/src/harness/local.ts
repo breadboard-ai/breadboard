@@ -113,6 +113,8 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         kits,
         loader,
         base: config.base,
+        signal: config.signal,
+        inputs: config.inputs,
       })) {
         await next(fromRunnerResult(data));
       }

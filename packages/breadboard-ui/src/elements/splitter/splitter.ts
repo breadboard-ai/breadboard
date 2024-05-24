@@ -6,24 +6,30 @@
 
 import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
-export enum DIRECTION {
+export enum Direction {
   HORIZONTAL = "horizontal",
   VERTICAL = "vertical",
 }
 
 const STORAGE_PREFIX = "bb-split";
+const AUTOMATED_MOVEMENT_DURATION = 300;
 
 @customElement("bb-splitter")
 export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true })
-  direction = DIRECTION.HORIZONTAL;
+  direction = Direction.HORIZONTAL;
 
   @property({ reflect: true, attribute: true })
   name = "";
 
   @property({ reflect: true, attribute: true, type: "number" })
-  minSize = 0.1;
+  minSegmentSizeHorizontal = 360;
+
+  @property({ reflect: true, attribute: true, type: "number" })
+  minSegmentSizeVertical = 200;
 
   @property({
     reflect: true,
@@ -44,20 +50,27 @@ export class Splitter extends LitElement {
   })
   split = [0.5, 0.5];
 
+  @property()
+  showQuickExpandCollapse = false;
+
+  #quickExpandRef: Ref<HTMLButtonElement> = createRef();
   #handleIdx: number | null = null;
   #bounds = new DOMRect(0, 0, 0, 0);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerUpBound = this.#onPointerUp.bind(this);
+  #isMovingAutomatically = false;
+  #minSizeNormalized = 0.1;
 
   static styles = css`
     :host {
       display: grid;
       overflow: auto;
       --handle-size: 16px;
+      position: relative;
     }
 
     .drag-handle {
-      z-index: 1;
+      z-index: 10;
       position: relative;
     }
 
@@ -80,7 +93,101 @@ export class Splitter extends LitElement {
       height: var(--handle-size);
       translate: 0 calc(var(--handle-size) * -0.5);
     }
+
+    #quick-expand {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      font-size: 0;
+      cursor: pointer;
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: 50% 0 0 50%;
+    }
+
+    #quick-expand.expand {
+      background: #fff var(--bb-icon-before) center center / 16px 16px no-repeat;
+    }
+
+    #quick-expand.collapse {
+      background: #fff var(--bb-icon-next) center center / 16px 16px no-repeat;
+    }
+
+    :host([direction="horizontal"]) #quick-expand {
+      right: calc(var(--handle-size) * 0.5);
+      top: 9px;
+    }
+
+    :host([direction="vertical"]) #quick-expand {
+      bottom: calc(var(--handle-size) * 0.5);
+      left: 50%;
+      transform: translateX(-50%) rotate(90deg);
+    }
   `;
+
+  #resizeObserver = new ResizeObserver((entries) => {
+    if (entries.length === 0) {
+      return;
+    }
+
+    const [entry] = entries;
+    if (this.direction === Direction.HORIZONTAL) {
+      this.#minSizeNormalized =
+        this.minSegmentSizeHorizontal / entry.contentRect.width;
+    } else {
+      this.#minSizeNormalized =
+        this.minSegmentSizeVertical / entry.contentRect.height;
+    }
+
+    this.#setAndStore();
+  });
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#resizeObserver.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#resizeObserver.disconnect();
+  }
+
+  #ease(v: number, pow = 3) {
+    return 1 - Math.pow(1 - v, pow);
+  }
+
+  #splitTo(target: number) {
+    if (this.split.length !== 2) {
+      return;
+    }
+
+    this.#isMovingAutomatically = true;
+    const startTime = window.performance.now();
+    const start = this.split[0];
+    const delta = target - this.split[0];
+
+    const update = () => {
+      const normalizedTickTime =
+        (window.performance.now() - startTime) / AUTOMATED_MOVEMENT_DURATION;
+      const tick = this.#clamp(normalizedTickTime, 0, 1);
+
+      this.split[0] = start + delta * this.#ease(tick);
+      this.split[1] = 1 - this.split[0];
+
+      if (tick === 1) {
+        this.split[0] = target;
+        this.split[1] = 1 - target;
+        this.#isMovingAutomatically = false;
+      } else {
+        requestAnimationFrame(update);
+      }
+
+      this.#setAndStore();
+    };
+
+    requestAnimationFrame(update);
+  }
 
   #setAndStore() {
     if (this.name) {
@@ -94,6 +201,10 @@ export class Splitter extends LitElement {
   }
 
   #onPointerDown(evt: PointerEvent) {
+    if (this.#isMovingAutomatically) {
+      return;
+    }
+
     const [handle] = evt.composedPath();
     if (!(handle instanceof HTMLElement)) {
       return;
@@ -140,15 +251,23 @@ export class Splitter extends LitElement {
 
     const total = this.split[this.#handleIdx] + this.split[this.#handleIdx + 1];
     switch (this.direction) {
-      case DIRECTION.HORIZONTAL: {
-        x = this.#clamp(x, this.minSize, 1 - this.minSize);
+      case Direction.HORIZONTAL: {
+        x = this.#clamp(
+          x,
+          this.#minSizeNormalized,
+          1 - this.#minSizeNormalized
+        );
         this.split[this.#handleIdx] = x * total;
         this.split[this.#handleIdx + 1] = (1 - x) * total;
         break;
       }
 
-      case DIRECTION.VERTICAL: {
-        y = this.#clamp(y, this.minSize, 1 - this.minSize);
+      case Direction.VERTICAL: {
+        y = this.#clamp(
+          y,
+          this.#minSizeNormalized,
+          1 - this.#minSizeNormalized
+        );
         this.split[this.#handleIdx] = y * total;
         this.split[this.#handleIdx + 1] = (1 - y) * total;
         break;
@@ -209,33 +328,91 @@ export class Splitter extends LitElement {
   }
 
   #updateStyles() {
-    const styles = this.split
-      .map((_, idx) => `var(--slot-${idx})`)
-      .join(` 0px `);
+    // Here we take a copy of the actual split values and we clamp them.
+    // We do so by stepping through each item in the split. We accumulate the
+    // delta for each item that is smaller than the minimum size, so that we
+    // know how much we'd need to "borrow" from the other segments to make it
+    // work. We then adjust each of the items that are too small up to the
+    // minimum size.
+    const split = [...this.split];
+    const borrowable: number[] = [];
+    let amountToBeBorrowed = 0;
+    for (let s = 0; s < split.length; s++) {
+      if (split[s] < this.#minSizeNormalized) {
+        amountToBeBorrowed += this.#minSizeNormalized - split[s];
+        split[s] = this.#minSizeNormalized;
+        continue;
+      }
 
+      borrowable.push(s);
+    }
+
+    if (amountToBeBorrowed > 0) {
+      // Now we go through all the other segments from which we determined that
+      // we could borrow. We reduce each one by a fractional amount of the total.
+      const totalBorrowable = borrowable.reduce(
+        (prev, curr) => prev + split[curr],
+        0
+      );
+      for (let s = 0; s < borrowable.length; s++) {
+        const proportion =
+          (split[borrowable[s]] / totalBorrowable) * amountToBeBorrowed;
+
+        // Now ensure that the borrowed item never dips below the min size,
+        // either. This could result in competition at very small spaces.
+        split[borrowable[s]] = this.#clamp(
+          this.split[borrowable[s]] - proportion,
+          this.#minSizeNormalized,
+          1
+        );
+      }
+    }
+
+    // Finally, we normalize the split to make sure it never exceeds 1.
+    const total = split.reduce((prev, curr) => prev + curr, 0);
+    for (let s = 0; s < split.length; s++) {
+      split[s] = split[s] / total;
+    }
+
+    // And apply.
+    const styles = split.map((_, idx) => `var(--slot-${idx})`).join(` 0px `);
     switch (this.direction) {
-      case DIRECTION.VERTICAL: {
+      case Direction.VERTICAL: {
         this.style.gridTemplateColumns = "";
         this.style.gridTemplateRows = styles;
         break;
       }
 
-      case DIRECTION.HORIZONTAL: {
+      case Direction.HORIZONTAL: {
         this.style.gridTemplateRows = "";
         this.style.gridTemplateColumns = styles;
         break;
       }
     }
 
-    for (let idx = 0; idx < this.split.length; idx++) {
-      const split = this.split[idx];
-      this.style.setProperty(`--slot-${idx}`, `${split}fr`);
+    for (let idx = 0; idx < split.length; idx++) {
+      const splitAmount = split[idx];
+      this.style.setProperty(`--slot-${idx}`, `${splitAmount}fr`);
     }
+
+    if (!this.#quickExpandRef.value) {
+      return;
+    }
+
+    const wouldCollapseIfClicked = split[0] < 1 - this.#minSizeNormalized;
+    this.#quickExpandRef.value.classList.toggle(
+      "collapse",
+      wouldCollapseIfClicked
+    );
+    this.#quickExpandRef.value.classList.toggle(
+      "expand",
+      !wouldCollapseIfClicked
+    );
   }
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ direction: DIRECTION }>
+      | PropertyValueMap<{ direction: Direction }>
       | Map<PropertyKey, unknown>
   ): void {
     if (!changedProperties.has("direction")) {
@@ -246,14 +423,35 @@ export class Splitter extends LitElement {
   }
 
   render() {
+    const quickExpandClass =
+      this.split[0] <= 1 - this.#minSizeNormalized ? "collapse" : "expand";
     return html`${this.split.map((_, idx) => {
+      const quickExpand =
+        idx < this.split.length - 1 && this.split.length === 2
+          ? html`<button
+              id="quick-expand"
+              ${ref(this.#quickExpandRef)}
+              class=${classMap({ [quickExpandClass]: true })}
+              @click=${() => {
+                if (this.split[0] < 1 - this.#minSizeNormalized) {
+                  this.#splitTo(1 - this.#minSizeNormalized);
+                } else {
+                  this.#splitTo(this.#minSizeNormalized);
+                }
+              }}
+            >
+              Quick expand
+            </button>`
+          : nothing;
       const handle =
         idx < this.split.length - 1
           ? html`<div
               @pointerdown=${this.#onPointerDown}
               class="drag-handle"
               data-idx="${idx}"
-            ></div>`
+            >
+              ${quickExpand}
+            </div>`
           : nothing;
       return html`<slot name="slot-${idx}"></slot>${handle}`;
     })}`;

@@ -4,19 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeValue, type Schema } from "@google-labs/breadboard";
+import { type Schema } from "@google-labs/breadboard";
 import {
-  createMultipartInput,
-  getMultipartValue,
-  isMultipart,
-} from "./input-multipart/input-multipart.js";
-import {
+  isMicrophoneAudio,
   isBoolean,
-  isDrawable,
-  isMultipartImage,
+  isDrawableImage,
   isMultiline,
   isSelect,
-  isWebcam,
+  isWebcamImage,
+  isLLMContent,
+  isLLMContentArray,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -24,6 +21,14 @@ import { InputEnterEvent, InputErrorEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { AudioInput } from "./audio/audio.js";
+import { LLMContent } from "../../types/types.js";
+import { LLMInput } from "./llm-input/llm-input.js";
+import {
+  createAllowListFromProperty,
+  getMinItemsFromProperty,
+} from "../../utils/llm-content.js";
+import { LLMInputArray } from "../elements.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -50,11 +55,16 @@ export class Input extends LitElement {
   @property({ reflect: false })
   secret = false;
 
-  @property({ reflect: false })
-  schema: Schema | null = null;
+  /**
+   * If true and `values` are provided, will automatically dispatch
+   * the `InputEvent` (currently used in secrets). Otherwise, will
+   * use `values` as initial input data.
+   */
+  @property()
+  autosubmit = false;
 
   @property({ reflect: false })
-  processedValues: Record<string, NodeValue> | null = null;
+  schema: Schema | null = null;
 
   @property({ reflect: false })
   values: InputData | null = null;
@@ -187,34 +197,68 @@ export class Input extends LitElement {
     const data: InputData = {};
 
     for (const [key, property] of Object.entries(properties)) {
-      if (isMultipart(property)) {
-        const values = await getMultipartValue(form, key);
-        data[key] = values.value;
+      const input = form[key];
+      if (input && input.value) {
+        try {
+          const parsedValue = parseValue(property.type, input);
+          data[key] = parsedValue;
+        } catch (e) {
+          const event = new InputErrorEvent(`${e}`);
+          this.dispatchEvent(event);
+        }
       } else {
-        const input = form[key];
-        if (input && input.value) {
-          try {
-            const parsedValue = parseValue(property.type, input);
-            data[key] = parsedValue;
-          } catch (e) {
-            const event = new InputErrorEvent(`${e}`);
+        // Custom elements don't look like form elements, so they need to be
+        // processed separately.
+        const element = form.querySelector(`#${key}`);
+        if (!element) {
+          console.warn(`Unable to find element for key ${key}`);
+          continue;
+        }
+
+        const isImage =
+          element instanceof WebcamInput || element instanceof DrawableInput;
+        const isAudio = element instanceof AudioInput;
+        if (isImage || isAudio) {
+          const value = element.value;
+          data[key] = value;
+        }
+
+        const isLLMContent = element instanceof LLMInput;
+        if (isLLMContent) {
+          // If there are any uncommitted parts, ask the LLM Input to handle
+          // them at this point.
+          await element.processAllOpenParts();
+          const value = element.value;
+          if (
+            !element.value ||
+            element.value.parts.length === 0 ||
+            !element.hasMinItems()
+          ) {
+            const event = new InputErrorEvent(
+              `Minimum number of LLM Content items not found`
+            );
             this.dispatchEvent(event);
-          }
-        } else {
-          // Custom elements don't look like form elements, so they need to be
-          // processed separately.
-          const element = form.querySelector(`#${key}`);
-          if (!element) {
-            console.warn(`Unable to find element for key ${key}`);
-            continue;
+            return;
           }
 
-          const isImage =
-            element instanceof WebcamInput || element instanceof DrawableInput;
-          if (isImage) {
-            const value = element.value;
-            data[key] = value;
+          data[key] = value;
+        }
+
+        const isLLMContentArray = element instanceof LLMInputArray;
+        if (isLLMContentArray) {
+          // If there are any uncommitted parts, ask the LLM Input to handle
+          // them at this point.
+          await element.processAllOpenParts();
+          const value = element.values;
+          if (!element.values || !element.hasMinItems()) {
+            const event = new InputErrorEvent(
+              `Minimum number of LLM Content items not found`
+            );
+            this.dispatchEvent(event);
+            return;
           }
+
+          data[key] = value;
         }
       }
     }
@@ -235,7 +279,7 @@ export class Input extends LitElement {
     // Special case for when we have – say – a secret stored. Here we neither
     // render the form, nor the retrieved value, but instead we just dispatch
     // the event with the value in and stop rendering.
-    if (this.values) {
+    if (this.values && this.autosubmit) {
       this.dispatchEvent(new InputEnterEvent(this.id, this.values));
       return;
     }
@@ -256,15 +300,71 @@ export class Input extends LitElement {
             >${property.title || key}</label
           >`;
           let input;
-          if (isMultipartImage(property)) {
-            // Webcam input.
-            if (isWebcam(property)) {
-              input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
-            } else if (isDrawable(property)) {
-              input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
-            } else {
-              input = html`Image type not supported yet.`;
+
+          if (isLLMContent(property)) {
+            let value: LLMContent | null = null;
+            value = values[key] as LLMContent | null;
+            if (!value) {
+              const unparsedValue =
+                property.examples && property.examples.length
+                  ? property.examples[0]
+                  : property.default;
+              value = unparsedValue ? JSON.parse(unparsedValue) : null;
             }
+
+            if (Array.isArray(value)) {
+              value = value[0] as LLMContent;
+              console.warn(
+                "Default value is an array where single value is expected - using first item"
+              );
+            }
+
+            const allow = createAllowListFromProperty(property);
+            const minItems = getMinItemsFromProperty(property);
+            input = html`<bb-llm-input
+              id="${key}"
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!(evt.key === "Enter" && evt.metaKey)) {
+                  return;
+                }
+
+                this.processInput();
+              }}
+              .description=${property.description}
+              .value=${value}
+              .allow=${allow}
+              .minItems=${minItems}
+            ></bb-llm-input>`;
+          } else if (isLLMContentArray(property)) {
+            let value: LLMContent[] | null = null;
+            value = values[key] as LLMContent[] | null;
+            if (!value) {
+              const unparsedValue = property.default;
+              value = unparsedValue ? JSON.parse(unparsedValue) : null;
+            }
+
+            const allow = createAllowListFromProperty(property);
+            const minItems = getMinItemsFromProperty(property);
+            input = html`<bb-llm-input-array
+              id="${key}"
+              @keydown=${(evt: KeyboardEvent) => {
+                if (!(evt.key === "Enter" && evt.metaKey)) {
+                  return;
+                }
+
+                this.processInput();
+              }}
+              .description=${property.description}
+              .values=${value}
+              .allow=${allow}
+              .minItems=${minItems}
+            ></bb-llm-input-array>`;
+          } else if (isMicrophoneAudio(property)) {
+            input = html`<bb-audio-input id="${key}"></bb-audio-input>`;
+          } else if (isWebcamImage(property)) {
+            input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
+          } else if (isDrawableImage(property)) {
+            input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
           } else if (isSelect(property)) {
             // Select input.
             const options = property.enum || [];
@@ -288,17 +388,15 @@ export class Input extends LitElement {
               type="checkbox"
               ?checked=${checked}
             />`;
-          } else if (isMultipart(property)) {
-            // Multi-part input.
-            const multipart = createMultipartInput(property, key);
-            input = html`${multipart}`;
           } else {
             // Text inputs: multi line and single line.
-            const value =
-              (values[key] as string) ??
-              property.examples ??
-              property.default ??
-              "";
+            const examples = property.examples?.[0];
+            let value =
+              (values[key] as string) ?? examples ?? property.default ?? "";
+            value =
+              typeof value === "string"
+                ? value
+                : JSON.stringify(value, null, 2);
             if (isMultiline(property)) {
               // Multi line input.
               input = html`<div class="multiline">

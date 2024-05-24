@@ -11,7 +11,7 @@ import type {
   InputValues,
   GraphDescriptor,
   OutputValues,
-  GraphMetadata,
+  GraphInlineMetadata,
   SubGraphs,
   BreadboardRunner,
   BreadboardSlotSpec,
@@ -21,11 +21,11 @@ import type {
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
+  RunArguments,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
@@ -80,7 +80,7 @@ export class BoardRunner implements BreadboardRunner {
    * to provide title, description, version, and URL for the board.
    */
   constructor(
-    { url, title, description, version, $schema }: GraphMetadata = {
+    { url, title, description, version, $schema }: GraphInlineMetadata = {
       $schema: breadboardSchema.$id,
     }
   ) {
@@ -129,9 +129,11 @@ export class BoardRunner implements BreadboardRunner {
    * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
-    context: NodeHandlerContext = {},
+    args: RunArguments = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { inputs, ...context } = args;
     const base = context.base || SENTINEL_BASE_URL;
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
@@ -141,7 +143,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const machine = new TraversalMachine(this, result?.state);
 
-      const requestedInputs = new RequestedInputsManager(context);
+      const requestedInputs = new RequestedInputsManager(args);
 
       const invocationPath = context.invocationPath || [];
 
@@ -157,6 +159,8 @@ export class BoardRunner implements BreadboardRunner {
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
+        context?.signal?.throwIfAborted();
+
         invocationId++;
         const { inputs, descriptor, missingInputs } = result;
 
@@ -474,8 +478,6 @@ export class BoardRunner implements BreadboardRunner {
 
     return handlersFromKits(kits);
   }
-
-  static runRemote = runRemote;
 }
 
 // HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).

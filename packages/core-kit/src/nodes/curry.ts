@@ -10,6 +10,8 @@ import {
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
+  NodeHandlerMetadata,
+  NodeValue,
   OutputValues,
   Schema,
   SchemaBuilder,
@@ -34,7 +36,7 @@ const invoke = async (
 
   const graph = await getGraphDescriptor($board, context);
 
-  return { board: { ...graph, args } };
+  return { board: { ...graph, args } as NodeValue };
 };
 
 const describe = async (
@@ -84,4 +86,10 @@ const describe = async (
   return { inputSchema, outputSchema };
 };
 
-export default { invoke, describe };
+const metadata = {
+  title: "Curry",
+  description:
+    "Takes a board and bakes in (curries) supplied arguments into it. Very useful when we want to invoke a board with the same arguments many times (like with `map`).",
+} satisfies NodeHandlerMetadata;
+
+export default { metadata, invoke, describe };

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
@@ -14,38 +14,94 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
   GraphNodeMoveEvent,
-  GraphNodePositionsCalculatedEvent,
+  InputErrorEvent,
+  GraphNodeDeselectedEvent,
+  GraphNodeDeselectedAllEvent,
+  GraphNodesMoveEvent,
+  GraphInitialDrawEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
-import { InspectableEdge } from "@google-labs/breadboard";
+import {
+  InspectableEdge,
+  InspectableNode,
+  InspectableNodePorts,
+  InspectablePort,
+} from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
+import { GraphAssets } from "./graph-assets.js";
+import { GraphEdge } from "./graph-edge.js";
+import { map } from "lit/directives/map.js";
+import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { getGlobalColor } from "./utils.js";
+
+const backgroundColor = getGlobalColor("--bb-ui-50");
+const selectionBoxBackgroundAlpha = 0.05;
+const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
+const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
+const ADHOC_EDGE_ERROR_MESSAGE =
+  "Ad-hoc port names must only contain lowercase alphanumeric characters and '-'";
+
+enum MODE {
+  MOVE = "move",
+  SELECT = "select",
+}
+
+interface GraphOpts {
+  url: string;
+  subGraphId: string | null;
+  showNodeTypeDescriptions: boolean;
+  collapseNodesByDefault: boolean;
+  ports: Map<string, InspectableNodePorts> | null;
+  edges: InspectableEdge[];
+  nodes: InspectableNode[];
+  visible: boolean;
+}
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   editable = false;
 
-  #app = new PIXI.Application({
-    background: "rgb(244, 247, 252)",
-    resizeTo: this,
-    antialias: true,
-    autoDensity: true,
-    resolution: Math.max(2, window.devicePixelRatio),
-    eventMode: "static",
-    eventFeatures: {
-      globalMove: true,
-      move: true,
-      click: true,
-      wheel: true,
-    },
-  });
+  @property({ reflect: true })
+  invertZoomScrollDirection = false;
+
+  #app = new PIXI.Application();
+  #appInitialized = false;
+
+  #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
+  #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
+  #overflowMenuRef: Ref<HTMLDivElement> = createRef();
+  #overflowMenuGraphNode: GraphNode | null = null;
+
+  #activeGraph: Graph | null = null;
+  #edgesForDisambiguation: InspectableEdge[] | null = null;
+  #menuLocation: PIXI.ObservablePoint | null = null;
+  #edgeSelectMenuRef: Ref<HTMLDivElement> = createRef();
+  #edgeCreateMenuRef: Ref<HTMLDivElement> = createRef();
+  #autoFocusSelf = false;
+  #newEdgeData: {
+    from: string;
+    to: string;
+    portsOut: InspectablePort[] | null;
+    portsIn: InspectablePort[] | null;
+  } | null = null;
+
+  #mode = MODE.SELECT;
   #padding = 50;
-  #container = new PIXI.Container();
+  #container = new PIXI.Container({
+    isRenderGroup: true,
+  });
+  #nodeSelection: PIXI.Graphics | null = null;
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
-    this.#app.resize();
+    if ("resize" in this.#app) {
+      this.#app.resize();
+    }
 
     if (entries.length < 1) {
       return;
@@ -68,21 +124,31 @@ export class GraphRenderer extends LitElement {
       child.layoutRect = contentRect;
 
       // Reposition it to retain its center.
-      child.position.x += delta.x;
-      child.position.y += delta.y;
+      const ratio = 1 / this.#container.scale.x;
+      child.position.x += delta.x * ratio;
+      child.position.y += delta.y * ratio;
     }
 
     this.#lastContentRect = contentRect;
   });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
 
   static styles = css`
+    * {
+      box-sizing: border-box;
+    }
+
     :host {
       display: block;
       position: relative;
       overflow: hidden;
+    }
+
+    :host(.moving) {
+      cursor: grabbing;
     }
 
     canvas {
@@ -90,52 +156,159 @@ export class GraphRenderer extends LitElement {
       touch-action: none;
     }
 
-    #controls {
-      position: absolute;
-      left: calc(var(--bb-grid-size) * 4);
-      bottom: calc(var(--bb-grid-size) * 4);
-      background: #fff;
-      border-radius: 40px;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+    #edge-create-disambiguation-menu,
+    #edge-select-disambiguation-menu,
+    #overflow-menu {
+      z-index: 1000;
+      display: none;
+      top: 0;
+      left: 0;
+      position: fixed;
+      box-shadow:
+        0px 4px 8px 3px rgba(0, 0, 0, 0.05),
+        0px 1px 3px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
       border: 1px solid var(--bb-neutral-300);
-      display: flex;
+      border-radius: var(--bb-grid-size-2);
+      overflow: auto;
+    }
+
+    #edge-select-disambiguation-menu.visible,
+    #overflow-menu.visible {
+      display: grid;
+      grid-template-rows: var(--bb-grid-size-11);
+    }
+
+    #edge-create-disambiguation-menu.visible {
+      display: grid;
+      padding: var(--bb-grid-size-2);
+      grid-template-columns: 1fr 16px 1fr;
       align-items: center;
     }
 
-    #controls button {
-      margin-left: calc(var(--bb-grid-size) * 2);
+    #edge-create-disambiguation-menu #edge-create-from,
+    #edge-create-disambiguation-menu #edge-create-to {
+      grid-template-rows: var(--bb-grid-size-11);
     }
 
-    #controls button:first-of-type {
-      margin-left: 0;
+    #edge-create-disambiguation-menu button,
+    #edge-select-disambiguation-menu button {
+      display: flex;
+      align-items: center;
+      background: none;
+      margin: 0;
+      padding: var(--bb-grid-size-3);
+      border: none;
+      border-bottom: 1px solid var(--bb-neutral-300);
+      text-align: left;
+      cursor: pointer;
     }
 
-    #reset-layout,
-    #zoom-to-fit {
-      width: 20px;
-      height: 20px;
+    #edge-create-disambiguation-menu button {
+      width: 100%;
+      border-bottom: none;
+      border-radius: var(--bb-grid-size-2);
+      text-align: center;
+    }
+
+    #edge-create-disambiguation-menu button:hover,
+    #edge-create-disambiguation-menu button:focus,
+    #edge-select-disambiguation-menu button:hover,
+    #edge-select-disambiguation-menu button:focus {
+      background: var(--bb-neutral-50);
+    }
+
+    #edge-create-disambiguation-menu button.selected,
+    #edge-create-disambiguation-menu button.selected:hover,
+    #edge-create-disambiguation-menu button.selected:focus {
+      background: var(--bb-ui-50);
+      color: var(--bb-ui-600);
+    }
+
+    #edge-create-disambiguation-menu button[disabled] {
+      cursor: auto;
+    }
+
+    #edge-create-disambiguation-menu .edge-arrow,
+    #edge-select-disambiguation-menu button .edge-arrow {
+      display: block;
+      margin: 0 var(--bb-grid-size-2);
+      width: 16px;
+      height: 16px;
+      background: var(--bb-icon-edge-connector) center center / 16px 16px
+        no-repeat;
+    }
+
+    #edge-create-disambiguation-menu .edge-arrow {
+      margin: 0;
+    }
+
+    #edge-create-disambiguation-menu input[type="text"] {
+      padding: var(--bb-grid-size);
+      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size);
+    }
+
+    #edge-create-disambiguation-menu #confirm {
+      background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px
+        16px no-repeat;
+      color: var(--bb-ui-700);
+      border-radius: var(--bb-grid-size-5);
+      border: none;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+      margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
+      width: auto;
+    }
+
+    #overflow-menu button {
+      display: flex;
+      align-items: center;
+      background: none;
+      margin: 0;
+      padding: var(--bb-grid-size-3);
+      border: none;
+      border-bottom: 1px solid var(--bb-neutral-300);
+      text-align: left;
       cursor: pointer;
-      background: center center no-repeat;
-      background-size: 20px 20px;
-      font-size: 0;
-      cursor: pointer;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.5;
+    }
+
+    #overflow-menu button:hover,
+    #overflow-menu button:focus {
+      background: var(--bb-neutral-50);
+    }
+
+    #overflow-menu button:last-of-type {
       border: none;
     }
 
-    #reset-layout {
-      background-image: var(--bb-icon-reset-nodes);
+    #overflow-menu button::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      margin-right: var(--bb-grid-size-3);
     }
 
-    #zoom-to-fit {
-      background-image: var(--bb-icon-fit);
+    #overflow-menu #min-max::before {
+      background: var(--bb-icon-minimize) center center / 20px 20px no-repeat;
     }
 
-    #reset-layout:hover,
-    #zoom-to-fit:hover {
-      transition-duration: 0.1s;
-      opacity: 1;
+    #overflow-menu #min-max.minimized::before {
+      background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
+    }
+
+    #overflow-menu #min-max::after {
+      content: "Minimize node";
+    }
+
+    #overflow-menu #min-max.minimized::after {
+      content: "Maximize node";
+    }
+
+    #overflow-menu #delete-node::before {
+      background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
     }
   `;
 
@@ -148,13 +321,72 @@ export class GraphRenderer extends LitElement {
 
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
-    this.#app.stop();
     this.tabIndex = 0;
 
-    let dragStart: PIXI.IPointData | null = null;
-    let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
-    let tilePosition: PIXI.ObservablePoint<unknown> | null = null;
-    this.#app.stage.addEventListener(
+    let dragStart: PIXI.PointData | null = null;
+    let originalPosition: PIXI.ObservablePoint | null = null;
+    let tilePosition: PIXI.ObservablePoint | null = null;
+
+    const onStageMove = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition) {
+        return;
+      }
+
+      this.classList.add("moving");
+
+      const dragPosition = this.#app.stage.toLocal(evt.global);
+      const dragDeltaX = dragPosition.x - dragStart.x;
+      const dragDeltaY = dragPosition.y - dragStart.y;
+
+      this.#container.x = Math.round(originalPosition.x + dragDeltaX);
+      this.#container.y = Math.round(originalPosition.y + dragDeltaY);
+
+      if (!this.#background || !tilePosition) {
+        return;
+      }
+      this.#background.tilePosition.x = tilePosition.x + dragDeltaX;
+      this.#background.tilePosition.y = tilePosition.y + dragDeltaY;
+    };
+
+    const onDragSelect = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition) {
+        return;
+      }
+
+      if (!this.#nodeSelection) {
+        this.#nodeSelection = new PIXI.Graphics();
+      }
+
+      const dragPosition = this.#app.stage.toLocal(evt.global);
+      const dragDeltaX = dragPosition.x - dragStart.x;
+      const dragDeltaY = dragPosition.y - dragStart.y;
+
+      const x = Math.min(dragStart.x, dragPosition.x);
+      const y = Math.min(dragStart.y, dragPosition.y);
+      const w = Math.abs(dragDeltaX);
+      const h = Math.abs(dragDeltaY);
+
+      this.#app.stage.addChild(this.#nodeSelection);
+      this.#nodeSelection.clear();
+      this.#nodeSelection.beginPath();
+      this.#nodeSelection.rect(x, y, w, h);
+      this.#nodeSelection.closePath();
+      this.#nodeSelection.stroke({ width: 1, color: selectionBoxBorderColor });
+      this.#nodeSelection.fill({
+        color: selectionBoxBackgroundColor,
+        alpha: selectionBoxBackgroundAlpha,
+      });
+
+      for (const graph of this.#container.children) {
+        if (!(graph instanceof Graph)) {
+          continue;
+        }
+
+        graph.selectInRect(new PIXI.Rectangle(x, y, w, h));
+      }
+    };
+
+    this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
         for (const graph of this.#container.children) {
@@ -175,25 +407,15 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    this.#app.stage.addEventListener(
+    this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!dragStart || !originalPosition) {
+        if (this.#mode === MODE.MOVE) {
+          onStageMove(evt);
           return;
         }
 
-        const dragPosition = this.#app.stage.toLocal(evt.global);
-        const dragDeltaX = dragPosition.x - dragStart.x;
-        const dragDeltaY = dragPosition.y - dragStart.y;
-
-        this.#container.x = Math.round(originalPosition.x + dragDeltaX);
-        this.#container.y = Math.round(originalPosition.y + dragDeltaY);
-
-        if (!this.#background || !tilePosition) {
-          return;
-        }
-        this.#background.tilePosition.x = tilePosition.x + dragDeltaX;
-        this.#background.tilePosition.y = tilePosition.y + dragDeltaY;
+        onDragSelect(evt);
       }
     );
 
@@ -201,33 +423,49 @@ export class GraphRenderer extends LitElement {
       dragStart = null;
       originalPosition = null;
       tilePosition = null;
+
+      this.classList.remove("moving");
+
+      if (this.#nodeSelection) {
+        this.#nodeSelection.removeFromParent();
+        this.#nodeSelection.destroy();
+        this.#nodeSelection = null;
+      }
     };
-    this.#app.stage.addEventListener("pointerup", onPointerUp);
-    this.#app.stage.addEventListener("pointerupoutside", onPointerUp);
+    this.#app.stage.addListener("pointerup", onPointerUp);
+    this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
     this.#app.stage.on(
       "wheel",
       function (this: GraphRenderer, evt) {
-        let delta = 1 + evt.deltaY / this.zoomFactor;
-        const newScale = this.#container.scale.x * delta;
-        if (newScale < this.minScale || newScale > this.maxScale) {
-          delta = 1;
+        if (evt.metaKey) {
+          let delta =
+            1 -
+            (evt.deltaY / this.zoomFactor) *
+              (this.invertZoomScrollDirection ? -1 : 1);
+          const newScale = this.#container.scale.x * delta;
+          if (newScale < this.minScale || newScale > this.maxScale) {
+            delta = 1;
+          }
+
+          const pivot = this.#app.stage.toLocal(evt.global);
+          const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+
+          if (!this.#background) {
+            return;
+          }
+
+          this.#background.tileTransform.setFromMatrix(matrix);
+        } else {
+          this.#container.x -= evt.deltaX;
+          this.#container.y -= evt.deltaY;
         }
-
-        const pivot = this.#app.stage.toLocal(evt.global);
-        const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-
-        if (!this.#background) {
-          return;
-        }
-
-        this.#background.tileTransform.setFromMatrix(matrix);
       },
       this
     );
   }
 
-  #scaleContainerAroundPoint(delta: number, pivot: PIXI.IPointData) {
+  #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
     const m = new PIXI.Matrix();
     m.identity()
       .scale(this.#container.scale.x, this.#container.scale.y)
@@ -243,8 +481,140 @@ export class GraphRenderer extends LitElement {
     m.ty = Math.round(m.ty);
 
     // Apply back to the container.
-    this.#container.transform.setFromMatrix(m);
+    this.#container.setFromMatrix(m);
     return m;
+  }
+
+  #notifyGraphOfEdgeSelection(edge: InspectableEdge) {
+    if (!this.#activeGraph) {
+      return;
+    }
+
+    this.#activeGraph.selectEdge(edge);
+    this.#activeGraph = null;
+  }
+
+  hideAllGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.visible = false;
+    }
+  }
+
+  showAllGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.visible = true;
+    }
+  }
+
+  set highlightedNodeId(highlightedNodeId: string | null) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.highlightedNodeId = highlightedNodeId;
+    }
+  }
+
+  get highlightedNodeId() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      return graph.highlightedNodeId;
+    }
+
+    return null;
+  }
+
+  createGraph(opts: GraphOpts) {
+    const graph = new Graph();
+    graph.label = this.#createUrl(opts.url, opts.subGraphId);
+
+    this.addGraph(graph);
+    this.updateGraphByUrl(opts.url, opts.subGraphId, opts);
+  }
+
+  updateGraphByUrl(
+    url: string,
+    subGraphId: string | null,
+    opts: Partial<GraphOpts>
+  ) {
+    const graph = this.#container.children.find(
+      (child) => child.label === this.#createUrl(url, subGraphId)
+    );
+
+    if (!(graph instanceof Graph)) {
+      return false;
+    }
+
+    if (opts.showNodeTypeDescriptions !== undefined) {
+      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.showNodeTypeDescriptions !== undefined) {
+      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.collapseNodesByDefault !== undefined) {
+      graph.collapseNodesByDefault = opts.collapseNodesByDefault;
+    }
+
+    if (opts.ports !== undefined) {
+      graph.ports = opts.ports;
+    }
+
+    if (opts.edges !== undefined) {
+      graph.edges = opts.edges;
+    }
+
+    if (opts.nodes !== undefined) {
+      graph.nodes = opts.nodes;
+    }
+
+    if (opts.visible !== undefined) {
+      graph.visible = opts.visible;
+    }
+
+    return true;
+  }
+
+  #createUrl(url: string, subGraphId: string | null) {
+    return url + (subGraphId ? `#${subGraphId}` : "");
+  }
+
+  getGraphs(): Graph[] {
+    return this.#container.children.filter(
+      (child) => child instanceof Graph
+    ) as Graph[];
+  }
+
+  #emitSelectionState() {
+    this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      const selectedChildren = graph.getSelectedChildren();
+      for (const child of selectedChildren) {
+        if (!(child instanceof GraphNode)) {
+          continue;
+        }
+
+        this.dispatchEvent(new GraphNodeSelectedEvent(child.label));
+      }
+    }
   }
 
   addGraph(graph: Graph) {
@@ -258,11 +628,23 @@ export class GraphRenderer extends LitElement {
     );
 
     graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
-      (id: string | null) => {
-        this.dispatchEvent(new GraphNodeSelectedEvent(id));
+      GRAPH_OPERATIONS.GRAPH_NODES_MOVED,
+      (nodes: Array<{ id: string; x: number; y: number }>) => {
+        this.dispatchEvent(new GraphNodesMoveEvent(nodes));
       }
     );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_SELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeSelectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeDeselectedEvent(id));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL, () => {
+      this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
       this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
@@ -279,13 +661,219 @@ export class GraphRenderer extends LitElement {
       }
     );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => this.zoomToFit());
+    graph.on(GRAPH_OPERATIONS.GRAPH_AUTOSELECTED_NODES, () => {
+      this.#emitSelectionState();
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+      this.dispatchEvent(new GraphInitialDrawEvent());
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
       graph.layout();
     });
 
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
+      (graphNode: GraphNode, location: PIXI.ObservablePoint) => {
+        if (!this.#overflowMenuRef.value) {
+          return;
+        }
+
+        const overflowMenu = this.#overflowMenuRef.value;
+        overflowMenu.classList.add("visible");
+        overflowMenu.style.translate = `${location.x}px ${location.y}px`;
+
+        if (this.#overflowMinMaxSingleNode.value) {
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "minimized",
+            graphNode.collapsed
+          );
+        }
+
+        this.#overflowMenuGraphNode = graphNode;
+
+        window.addEventListener(
+          "pointerdown",
+          (evt: Event) => {
+            if (!this.#overflowMenuGraphNode) {
+              return;
+            }
+
+            const [topItem] = evt.composedPath();
+            switch (topItem) {
+              case this.#overflowMinMaxSingleNode.value: {
+                this.#overflowMenuGraphNode.collapsed =
+                  !this.#overflowMenuGraphNode.collapsed;
+                break;
+              }
+
+              case this.#overflowDeleteNode.value: {
+                if (!this.#overflowMenuGraphNode.label) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeDeleteEvent(this.#overflowMenuGraphNode.label)
+                );
+                break;
+              }
+            }
+
+            overflowMenu.classList.remove("visible");
+            this.#overflowMenuGraphNode = null;
+          },
+          { once: true }
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED,
+      (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
+        this.#activeGraph = graph;
+        this.#edgesForDisambiguation = possibleEdges;
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[],
+        portsIn: InspectablePort[],
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeData = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[] | null,
+        portsIn: InspectablePort[] | null,
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeData = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
     this.#container.addChild(graph);
+  }
+
+  removeGraph(graph: Graph) {
+    graph.removeFromParent();
+    graph.destroy();
+  }
+
+  removeAllGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      this.removeGraph(graph);
+    }
+  }
+
+  getSelectedChildren() {
+    const selected: Array<GraphNode | GraphEdge> = [];
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      selected.push(...graph.getSelectedChildren());
+    }
+
+    return selected;
+  }
+
+  deselectAllChildren() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.deselectAllChildren();
+    }
+  }
+
+  toGlobal(point: PIXI.PointData) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      return graph.toGlobal(point);
+    }
+
+    return point;
+  }
+
+  setNodeLayoutPosition(
+    node: string,
+    position: PIXI.PointData,
+    justAdded: boolean
+  ) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      return graph.setNodeLayoutPosition(node, position, justAdded);
+    }
+
+    return null;
+  }
+
+  getNodeLayoutPosition(node: string) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      return graph.getNodeLayoutPosition(node);
+    }
+
+    return null;
+  }
+
+  addToAutoSelect(node: string) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      return graph.addToAutoSelect(node);
+    }
   }
 
   zoomToFit() {
@@ -325,13 +913,18 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
-
-      this.dispatchEvent(
-        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
-      );
-
+      this.#emitGraphNodePositions(graph);
       return;
     }
+  }
+
+  #emitGraphNodePositions(graph: Graph) {
+    const positions = graph.getNodeLayoutPositions();
+    const nodes = [...positions.entries()].map(([id, layout]) => {
+      return { id, x: layout.x, y: layout.y };
+    });
+
+    this.dispatchEvent(new GraphNodesMoveEvent(nodes));
   }
 
   resetGraphLayout() {
@@ -343,18 +936,35 @@ export class GraphRenderer extends LitElement {
       graph.clearNodeLayoutPositions();
       graph.layout();
 
-      this.dispatchEvent(
-        new GraphNodePositionsCalculatedEvent(graph.getNodeLayoutPositions())
-      );
+      this.#emitGraphNodePositions(graph);
     }
   }
 
-  removeGraph(graph: Graph) {
-    graph.removeFromParent();
-    graph.destroy();
+  selectAll() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.selectAll();
+    }
   }
 
   #onKeyDown(evt: KeyboardEvent) {
+    if (evt.code === "KeyA" && evt.metaKey) {
+      if (evt.composedPath()[0] !== this) {
+        return;
+      }
+
+      this.selectAll();
+      return;
+    }
+
+    if (evt.code === "Space") {
+      this.#mode = MODE.MOVE;
+      return;
+    }
+
     if (evt.code !== "Backspace") {
       return;
     }
@@ -369,13 +979,44 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      for (const child of graph.children) {
-        if (!(child instanceof GraphNode) || !child.name || !child.selected) {
-          continue;
-        }
-
-        this.dispatchEvent(new GraphNodeDeleteEvent(child.name));
+      const selectedChildren = graph.getSelectedChildren();
+      if (!selectedChildren.length) {
+        continue;
       }
+
+      const nodes = selectedChildren.filter(
+        (child) => child instanceof GraphNode
+      ) as GraphNode[];
+      const edges = selectedChildren.filter(
+        (child) => child instanceof GraphEdge
+      ) as GraphEdge[];
+
+      // Delete all edges first.
+      for (const graphEdge of edges) {
+        if (!graphEdge.edge) {
+          console.warn("Invalid edge - unable to delete");
+          return;
+        }
+        this.dispatchEvent(new GraphNodeEdgeDetachEvent(graphEdge.edge));
+      }
+
+      // Wait a frame and delete all nodes.
+      requestAnimationFrame(() => {
+        for (const graphNode of nodes) {
+          if (!graphNode.label) {
+            console.warn("Node has no name - unable to delete");
+            return;
+          }
+          this.dispatchEvent(new GraphNodeDeleteEvent(graphNode.label));
+        }
+      });
+    }
+  }
+
+  #onKeyUp(evt: KeyboardEvent) {
+    if (evt.code === "Space") {
+      this.#mode = MODE.SELECT;
+      return;
     }
   }
 
@@ -386,9 +1027,77 @@ export class GraphRenderer extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.#resizeObserver.observe(this);
+    window.addEventListener("keyup", this.#onKeyUpBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
-
     this.addEventListener("wheel", this.#onWheelBound, { passive: false });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    if ("stop" in this.#app) {
+      this.#app.stop();
+    }
+
+    this.#resizeObserver.disconnect();
+    window.removeEventListener("keyup", this.#onKeyUpBound);
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("wheel", this.#onWheelBound);
+  }
+
+  async loadTexturesAndRender() {
+    if (this.#appInitialized) {
+      return this.#app.canvas;
+    }
+
+    await Promise.all([
+      GraphAssets.instance().loaded,
+      this.#app.init({
+        webgpu: {
+          background: backgroundColor,
+          antialias: true,
+        },
+        webgl: {
+          background: backgroundColor,
+          antialias: true,
+        },
+        preference: "webgl",
+        resizeTo: this,
+        autoDensity: true,
+        resolution: Math.max(2, window.devicePixelRatio),
+        eventMode: "static",
+        eventFeatures: {
+          globalMove: true,
+          move: true,
+          click: true,
+          wheel: true,
+        },
+      }),
+    ]);
+
+    if (!this.#background) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        console.warn("Unable to create background texture");
+        return;
+      }
+      ctx.fillStyle = `#${backgroundColor.toString(16)}`;
+      ctx.fillRect(0, 0, 1, 1);
+
+      const texture = PIXI.Texture.from(canvas);
+
+      this.#background = new PIXI.TilingSprite(texture);
+      this.#background.width = this.#app.canvas.width;
+      this.#background.height = this.#app.canvas.height;
+
+      this.#app.stage.addChildAt(this.#background, 0);
+    } else {
+      this.#app.stage.addChildAt(this.#background, 0);
+    }
 
     this.#app.start();
     this.#app.resize();
@@ -401,59 +1110,312 @@ export class GraphRenderer extends LitElement {
       this.#background.height = this.#app.renderer.height;
     });
 
-    this.#resizeObserver.observe(this);
+    this.#appInitialized = true;
+    return this.#app.canvas;
+  }
 
-    if (!this.#background) {
-      const buffer = new Uint8Array([0xed, 0xed, 0xed]);
-      const texture = PIXI.Texture.fromBuffer(buffer, 1, 1, {
-        type: PIXI.TYPES.UNSIGNED_BYTE,
-        format: PIXI.FORMATS.RGB,
-        mipmap: PIXI.MIPMAP_MODES.OFF,
-        scaleMode: PIXI.SCALE_MODES.LINEAR,
+  protected updated(): void {
+    if (
+      (this.#edgesForDisambiguation && this.#edgeSelectMenuRef.value) ||
+      (this.#newEdgeData && this.#edgeCreateMenuRef.value)
+    ) {
+      window.addEventListener(
+        "pointerdown",
+        () => {
+          this.#edgesForDisambiguation = null;
+          this.#newEdgeData = null;
+          this.#autoFocusSelf = true;
+          this.requestUpdate();
+        },
+        { once: true }
+      );
+    }
+
+    if (this.#autoFocusSelf) {
+      this.#autoFocusSelf = false;
+      requestAnimationFrame(() => {
+        this.focus();
       });
-
-      this.#background = new PIXI.TilingSprite(texture);
-      this.#background.width = this.#app.renderer.width;
-      this.#background.height = this.#app.renderer.height;
-
-      this.#app.stage.addChildAt(this.#background, 0);
-    } else {
-      this.#app.stage.addChildAt(this.#background, 0);
     }
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
+  #createEdgeIfPossible() {
+    if (!this.#edgeCreateMenuRef.value) {
+      return false;
+    }
 
-    this.#app.stop();
-    this.#resizeObserver.disconnect();
-    window.removeEventListener("keydown", this.#onKeyDownBound);
-    this.removeEventListener("wheel", this.#onWheelBound);
+    if (!this.#newEdgeData) {
+      return false;
+    }
+
+    if (!this.#activeGraph) {
+      return false;
+    }
+
+    const menu = this.#edgeCreateMenuRef.value;
+    const lhsButton = menu.querySelector<HTMLButtonElement>(
+      "#edge-create-from .selected"
+    );
+    const lhsInput = menu.querySelector<HTMLInputElement>(
+      "#edge-create-from input"
+    );
+    const rhsButton = menu.querySelector<HTMLButtonElement>(
+      "#edge-create-to .selected"
+    );
+    const rhsInput = menu.querySelector<HTMLInputElement>(
+      "#edge-create-to input"
+    );
+
+    if (!(lhsButton || lhsInput) || !(rhsButton || rhsInput)) {
+      return false;
+    }
+
+    let inPortName: string | null = null;
+    let outPortName: string | null = null;
+    if (lhsButton) {
+      outPortName = lhsButton.dataset.portName || null;
+    } else if (lhsInput) {
+      if (lhsInput.value !== "" && !lhsInput.checkValidity()) {
+        const evt = new InputErrorEvent(ADHOC_EDGE_ERROR_MESSAGE);
+        this.dispatchEvent(evt);
+        return false;
+      }
+
+      outPortName = lhsInput.value || null;
+    }
+    if (rhsButton) {
+      inPortName = rhsButton.dataset.portName || null;
+    } else if (rhsInput) {
+      if (rhsInput.value !== "" && !rhsInput.checkValidity()) {
+        const evt = new InputErrorEvent(ADHOC_EDGE_ERROR_MESSAGE);
+        this.dispatchEvent(evt);
+        return false;
+      }
+
+      inPortName = rhsInput.value || null;
+    }
+
+    if (!(outPortName && inPortName)) {
+      return false;
+    }
+
+    const newEdgeDisambiguationInfo = this.#newEdgeData;
+    const existingEdge = this.#activeGraph.edges?.find((edge) => {
+      return (
+        edge.from.descriptor.id === newEdgeDisambiguationInfo.from &&
+        edge.to.descriptor.id === newEdgeDisambiguationInfo.to &&
+        edge.out === outPortName &&
+        edge.in === inPortName
+      );
+    });
+
+    if (existingEdge) {
+      return true;
+    }
+
+    // TODO: Support non-ordinary wires here?
+    const edge = {
+      from: { descriptor: { id: this.#newEdgeData.from } },
+      to: { descriptor: { id: this.#newEdgeData.to } },
+      out: outPortName,
+      in: inPortName,
+      type: "ordinary",
+    } as InspectableEdge;
+
+    this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
+
+    return true;
   }
 
   render() {
-    return html`${this.#app.view}
-      <div id="controls">
-        <button
-          title="Zoom to fit"
-          id="zoom-to-fit"
-          @click=${() => this.zoomToFit()}
-        >
-          Zoom to fit
-        </button>
-        <button
-          title="Reset Layout"
-          id="reset-layout"
-          @click=${() => {
-            if (!confirm("Are you sure you want to reset node positions?")) {
-              return;
-            }
+    const overflowMenu = html`<div
+      ${ref(this.#overflowMenuRef)}
+      id="overflow-menu"
+    >
+      <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
+      <button id="delete-node" ${ref(this.#overflowDeleteNode)}>
+        Delete node
+      </button>
+    </div>`;
 
-            this.resetGraphLayout();
-          }}
+    const edgeSelectDisambiguationMenuLocation: PIXI.Point =
+      this.#menuLocation || new PIXI.Point(0, 0);
+    const edgeSelectDisambiguationMenu = html`<div
+      ${ref(this.#edgeSelectMenuRef)}
+      id="edge-select-disambiguation-menu"
+      class=${classMap({ visible: this.#edgesForDisambiguation !== null })}
+      style=${styleMap({
+        translate: `${edgeSelectDisambiguationMenuLocation.x}px ${edgeSelectDisambiguationMenuLocation.y}px`,
+      })}
+    >
+      ${this.#edgesForDisambiguation
+        ? map(this.#edgesForDisambiguation, (edge) => {
+            const labelOut = edge.from.ports().then((portInfo) => {
+              const port = portInfo.outputs.ports.find(
+                (port) => port.name === edge.out
+              );
+              if (!port) {
+                return html`${edge.out}`;
+              }
+
+              return html`${port.title ?? port.name}`;
+            });
+
+            const labelIn = edge.to.ports().then((portInfo) => {
+              const port = portInfo.inputs.ports.find(
+                (port) => port.name === edge.in
+              );
+              if (!port) {
+                return html`${edge.out}`;
+              }
+
+              return html`${port.title ?? port.name}`;
+            });
+
+            return html`<button
+              @pointerdown=${() => {
+                this.#notifyGraphOfEdgeSelection(edge);
+              }}
+            >
+              ${until(labelOut, html`Out...`)}
+              <span class="edge-arrow"></span>
+              ${until(labelIn, html`In...`)}
+            </button>`;
+          })
+        : html`No edges require disambiguation`}
+    </div>`;
+
+    const menuLocation: PIXI.Point = this.#menuLocation || new PIXI.Point(0, 0);
+    const menuRequiresConfirmation =
+      this.#newEdgeData &&
+      (this.#newEdgeData.portsIn === null ||
+        this.#newEdgeData.portsOut === null);
+
+    const edgeMenu = this.#newEdgeData
+      ? html`<div
+          ${ref(this.#edgeCreateMenuRef)}
+          id="edge-create-disambiguation-menu"
+          class=${classMap({
+            visible: this.#newEdgeData !== null,
+          })}
+          style=${styleMap({
+            translate: `${menuLocation.x}px ${menuLocation.y}px`,
+          })}
         >
-          Reset Layout
-        </button>
-      </div>`;
+          <div id="edge-create-from">
+            ${this.#newEdgeData.portsOut && this.#newEdgeData.portsOut.length
+              ? this.#newEdgeData.portsOut.map((port, _idx, ports) => {
+                  return html`<button
+                    @pointerdown=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      evt.target.classList.toggle("selected");
+                      if (!this.#createEdgeIfPossible()) {
+                        evt.stopImmediatePropagation();
+                      }
+                    }}
+                    ?disabled=${ports.length === 1}
+                    class=${classMap({ selected: ports.length === 1 })}
+                    data-port-name="${port.name}"
+                  >
+                    ${port.title ?? port.name}
+                  </button>`;
+                })
+              : this.#newEdgeData.portsOut === null
+                ? html`<input
+                    @pointerdown=${(evt: Event) => {
+                      evt.stopImmediatePropagation();
+                    }}
+                    @keydown=${(evt: KeyboardEvent) => {
+                      evt.stopImmediatePropagation();
+                      if (evt.key !== "Enter") {
+                        return;
+                      }
+
+                      if (!this.#createEdgeIfPossible()) {
+                        return;
+                      }
+
+                      window.dispatchEvent(new Event("pointerdown"));
+                    }}
+                    type="text"
+                    placeholder="Enter port name"
+                    required
+                    pattern="^[a-z\\-]+$"
+                  />`
+                : html`No outgoing ports`}
+          </div>
+          <span class="edge-arrow"></span>
+          <div id="edge-create-to">
+            ${this.#newEdgeData.portsIn && this.#newEdgeData.portsIn.length
+              ? this.#newEdgeData.portsIn.map((port, _idx, ports) => {
+                  return html`<button
+                    @pointerdown=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLButtonElement)) {
+                        return;
+                      }
+
+                      evt.target.classList.toggle("selected");
+                      if (!this.#createEdgeIfPossible()) {
+                        evt.stopImmediatePropagation();
+                      }
+                    }}
+                    ?disabled=${ports.length === 1}
+                    class=${classMap({ selected: ports.length === 1 })}
+                    data-port-name="${port.name}"
+                  >
+                    ${port.title ?? port.name}
+                  </button>`;
+                })
+              : this.#newEdgeData.portsIn === null
+                ? html`<input
+                    @pointerdown=${(evt: Event) => {
+                      evt.stopImmediatePropagation();
+                    }}
+                    @keydown=${(evt: KeyboardEvent) => {
+                      evt.stopImmediatePropagation();
+                      if (evt.key !== "Enter") {
+                        return;
+                      }
+
+                      if (!this.#createEdgeIfPossible()) {
+                        return;
+                      }
+
+                      window.dispatchEvent(new Event("pointerdown"));
+                    }}
+                    type="text"
+                    placeholder="Enter port name"
+                    required
+                    pattern="^[a-z\\-]+$"
+                  />`
+                : html`No incoming ports`}
+          </div>
+          ${menuRequiresConfirmation
+            ? html`<div>
+                <button
+                  id="confirm"
+                  @pointerdown=${(evt: Event) => {
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
+                    }
+
+                    if (!this.#createEdgeIfPossible()) {
+                      evt.stopImmediatePropagation();
+                    }
+                  }}
+                >
+                  Confirm
+                </button>
+              </div>`
+            : nothing}
+        </div>`
+      : nothing;
+
+    return html`${until(
+      this.loadTexturesAndRender()
+    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeMenu}`;
   }
 }

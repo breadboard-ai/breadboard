@@ -4,18 +4,6 @@
   "version": "0.0.3",
   "edges": [
     {
-      "from": "structuredWorker",
-      "to": "output-2",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "structuredWorker",
-      "to": "output-2",
-      "out": "json",
-      "in": "json"
-    },
-    {
       "from": "input-1",
       "to": "structuredWorker",
       "out": "context",
@@ -32,9 +20,73 @@
       "to": "structuredWorker",
       "out": "schema",
       "in": "schema"
+    },
+    {
+      "from": "structuredWorker",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "structuredWorker",
+      "to": "output-2",
+      "out": "json",
+      "in": "json"
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "default": "[]",
+              "examples": [
+                "[]"
+              ],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              }
+            },
+            "instruction": {
+              "type": "string",
+              "behavior": [
+                "config"
+              ],
+              "title": "Instruction",
+              "examples": [
+                "You are building a team of skilled experts to create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. These experts can only read text and produce text. Creating melodies and producing music is not their responsibility. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
+              ],
+              "format": "multiline"
+            },
+            "schema": {
+              "type": "object",
+              "behavior": [
+                "json-schema"
+              ],
+              "title": "Schema",
+              "description": "The schema to convert to schemish.",
+              "default": "{}",
+              "examples": [
+                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+              ]
+            }
+          },
+          "required": [
+            "context",
+            "instruction"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -47,9 +99,9 @@
               "title": "context"
             },
             "json": {
+              "type": "string",
               "title": "json",
-              "description": "The validated JSON.",
-              "type": "string"
+              "description": "The validated JSON."
             }
           }
         }
@@ -59,56 +111,6 @@
       "id": "structuredWorker",
       "type": "structuredWorker",
       "configuration": {}
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[]",
-              "examples": [
-                "[]"
-              ]
-            },
-            "instruction": {
-              "title": "Instruction",
-              "format": "multiline",
-              "examples": [
-                "You are building a team of skilled experts to create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. These experts can only read text and produce text. Creating melodies and producing music is not their responsibility. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
-              ],
-              "type": "string"
-            },
-            "schema": {
-              "title": "Schema",
-              "description": "The schema to convert to schemish.",
-              "type": "object",
-              "examples": [
-                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
-              ],
-              "behavior": [
-                "json-schema"
-              ],
-              "default": "{}"
-            }
-          },
-          "required": [
-            "context",
-            "instruction"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

@@ -1,5 +1,91 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 7936d8b: Convert jsonata node to new API
+
+### Patch Changes
+
+- cdcbcdb: Update jsonata node for new $error behavior
+- Updated dependencies [8097177]
+- Updated dependencies [29eda71]
+- Updated dependencies [f60cb06]
+- Updated dependencies [cec6d54]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [c1acf24]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [b6f5644]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @breadboard-ai/build@0.6.0
+
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+
+## 0.2.1
+
+### Patch Changes
+
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- Updated dependencies [cef20ca]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [3d48482]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [c3587e1]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+
+## 0.2.0
+
+### Minor Changes
+
+- 914353c: validateJson node can now accept invalid schemas at the users discression
+
+### Patch Changes
+
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.1.5
 
 ### Patch Changes

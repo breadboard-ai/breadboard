@@ -1,5 +1,11 @@
 # @google-labs/breadboard-schema
 
+## 1.4.1
+
+### Patch Changes
+
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+
 ## 1.4.0
 
 ### Minor Changes

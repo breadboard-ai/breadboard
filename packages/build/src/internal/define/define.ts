@@ -4,19 +4,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PortConfigMap } from "../common/port.js";
-import type { CountUnion } from "../common/type-util.js";
-import {
-  defineMonomorphicNodeType,
-  type MonomorphicDefinition,
-  type MonomorphicInvokeFunction,
-} from "./definition-monomorphic.js";
-import {
-  definePolymorphicNodeType,
-  type PolymorphicDefinition,
-  type PolymorphicDescribeFunction,
-  type PolymorphicInvokeFunction,
-} from "./definition-polymorphic.js";
+/* eslint-disable @typescript-eslint/ban-types */
+
+import type {
+  NodeHandlerContext,
+  NodeHandlerMetadata,
+} from "@google-labs/breadboard";
+import type {
+  CountUnion,
+  Expand,
+  IsNever,
+  MaybePromise,
+} from "../common/type-util.js";
+import type {
+  ConvertBreadboardType,
+  JsonSerializable,
+} from "../type-system/type.js";
+import type {
+  DynamicInputPortConfig,
+  DynamicOutputPortConfig,
+  InputPortConfig,
+  OutputPortConfig,
+  PortConfig,
+  PortConfigs,
+  StaticInputPortConfig,
+  StaticOutputPortConfig,
+} from "./config.js";
+import { DefinitionImpl, type Definition } from "./definition.js";
+import type { LooseDescribeFn, StrictDescribeFn } from "./describe.js";
+import type { UnsafeSchema } from "./unsafe-schema.js";
 
 /**
  * Define a new Breadboard node type.
@@ -43,7 +59,7 @@ import {
  *     backwards: {
  *       type: "string",
  *       description: "The reversed string",
- *       // (Optional) Allow the node itself to act as a shortcut for
+ *       // (Optional) Allow the node itself to act`a shortcut for
  *       // this output port when wiring up this node in a board.
  *       primary: true
  *     }
@@ -112,125 +128,271 @@ import {
  * `board` for execution.
  */
 export function defineNodeType<
-  INPUTS extends PortConfigMap,
-  OUTPUTS extends PortConfigMap,
->(params: {
-  name: string;
-  inputs: INPUTS;
-  outputs: ForbidMultiplePrimaries<OUTPUTS>;
-  invoke: IsPolymorphic<INPUTS> extends true
-    ? PolymorphicInvokeFunction<
-        OmitDynamicPortConfig<INPUTS>,
-        ExtractDynamicPortConfig<INPUTS>,
-        OUTPUTS
-      >
-    : MonomorphicInvokeFunction<INPUTS, OUTPUTS>;
-  describe?: IsPolymorphic<INPUTS> extends true
-    ? PolymorphicDescribeFunction<
-        OmitDynamicPortConfig<INPUTS>,
-        ExtractDynamicPortConfig<INPUTS>
-      >
-    : never;
-}): NodeDefinition<INPUTS, OUTPUTS> {
-  const { name, inputs, outputs, invoke, describe } = params;
-  validateOutputs(outputs);
-  const def = isPolymorphic(inputs, invoke)
-    ? definePolymorphicNodeType(
-        name ?? "TODO_UNNAMED_POLY",
-        omitDynamicPort(inputs),
-        // TODO(aomarks) Remove !
-        inputs["*"]!,
-        outputs,
-        // TODO(aomarks) Remove cast
-        invoke as PolymorphicInvokeFunction<
-          OmitDynamicPortConfig<INPUTS>,
-          ExtractDynamicPortConfig<INPUTS>,
-          OUTPUTS
-        >,
-        describe
-      )
-    : defineMonomorphicNodeType(
-        name ?? "TODO_UNNAMED_MONO",
-        inputs,
-        outputs,
-        invoke
-      );
-  return def as NodeDefinition<INPUTS, OUTPUTS>;
-}
-
-function validateOutputs(outputs: PortConfigMap): void {
-  const primaryPortNames = Object.entries(outputs)
-    .filter(([, config]) => config.primary === true)
-    .map(([key]) => key);
-  if (primaryPortNames.length > 1) {
-    throw new Error(
-      "Node definition has more than one primary output port: " +
-        primaryPortNames.join(", ")
-    );
-  }
-}
-
-function isPolymorphic<
-  INPUTS extends PortConfigMap,
-  OUTPUTS extends PortConfigMap,
+  I extends Record<string, InputPortConfig>,
+  O extends Record<string, OutputPortConfig>,
+  F extends LooseInvokeFn<I>,
+  D extends VeryLooseDescribeFn,
 >(
-  inputs: INPUTS,
-  invoke:
-    | MonomorphicInvokeFunction<INPUTS, OUTPUTS>
-    | PolymorphicInvokeFunction<
-        OmitDynamicPortConfig<INPUTS>,
-        ExtractDynamicPortConfig<INPUTS>,
-        OUTPUTS
-      >
-): invoke is PolymorphicInvokeFunction<
-  OmitDynamicPortConfig<INPUTS>,
-  ExtractDynamicPortConfig<INPUTS>,
-  OUTPUTS
+  params: {
+    // Start with a loose type to help TypeScript bind the generics.
+    name: string;
+    inputs: I;
+    outputs: O;
+    invoke: F;
+    describe?: D;
+    metadata?: NodeHandlerMetadata;
+  } & {
+    // Then narrow down the types with further constraints. This 2-step
+    // approach lets us generate additional and more precise errors.
+    inputs: StrictInputs<I>;
+    outputs: StrictOutputs<O>;
+    invoke: StrictInvokeFn<I, O, F>;
+  } & StrictDescribeFn<I, O>
+): Definition<
+  Expand<GetStaticTypes<I>>,
+  Expand<GetStaticTypes<O>>,
+  GetDynamicTypes<I>,
+  GetDynamicTypes<O>,
+  GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
+  GetReflective<O>,
+  Expand<GetPrimary<I>>,
+  Expand<GetPrimary<O>>
 > {
-  return inputs["*"] !== undefined;
+  if (!params.name) {
+    throw new Error("params.name is required");
+  }
+  if (!params.inputs) {
+    throw new Error("params.inputs is required");
+  }
+  if (!params.outputs) {
+    throw new Error("params.outputs is required");
+  }
+  if (!params.invoke) {
+    throw new Error("params.invoke is required");
+  }
+  const impl = new DefinitionImpl<
+    Expand<GetStaticTypes<I>>,
+    Expand<GetStaticTypes<O>>,
+    GetDynamicTypes<I>,
+    GetDynamicTypes<O>,
+    GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
+    GetReflective<O>,
+    Expand<GetPrimary<I>>,
+    Expand<GetPrimary<O>>
+  >(
+    params.name,
+    omitDynamic(params.inputs),
+    omitDynamic(params.outputs),
+    params.inputs["*"],
+    params.outputs["*"],
+    primary(params.inputs),
+    primary(params.outputs),
+    params.invoke as Function as VeryLooseInvokeFn,
+    params.describe as LooseDescribeFn
+  );
+  return Object.assign(impl.instantiate.bind(impl), {
+    invoke: impl.invoke.bind(impl),
+    describe: impl.describe.bind(impl),
+    metadata: params.metadata || {},
+  });
 }
 
-function omitDynamicPort<SHAPE extends PortConfigMap>(
-  shape: SHAPE
-): OmitDynamicPortConfig<SHAPE> {
+function omitDynamic(configs: PortConfigs): PortConfigs {
   return Object.fromEntries(
-    Object.entries(shape).filter(([name]) => name !== "*")
-  ) as OmitDynamicPortConfig<SHAPE>;
+    Object.entries(configs).filter(([name]) => name !== "*")
+  );
 }
 
-type ExtractDynamicPortConfig<SHAPE extends PortConfigMap> = SHAPE["*"];
+function primary(configs: PortConfigs): keyof typeof configs | undefined {
+  const primaries = Object.entries(configs).filter(
+    ([, config]) => "primary" in config && config.primary
+  );
+  if (primaries.length > 1) {
+    throw new Error("Too many primaries");
+  }
+  return primaries[0]?.[0];
+}
 
-type OmitDynamicPortConfig<SHAPE extends PortConfigMap> = Omit<SHAPE, "*">;
+type StrictInputs<I extends Record<string, InputPortConfig>> = {
+  [K in keyof I]: K extends "$id" | "$metadata"
+    ? never
+    : K extends "*"
+      ? StrictMatch<I[K], DynamicInputPortConfig>
+      : StrictMatch<
+          I[K],
+          GetDefault<I[K]> extends JsonSerializable
+            ? StaticInputPortConfig & {
+                default: Convert<I[K]>;
+                optional: never;
+              }
+            : StaticInputPortConfig
+        >;
+} & ForbidMultiplePrimaries<I>;
 
-type NodeDefinition<
-  ISHAPE extends PortConfigMap,
-  OSHAPE extends PortConfigMap,
+type StrictOutputs<O extends Record<string, OutputPortConfig>> = {
+  [K in keyof O]: K extends "$error"
+    ? never
+    : K extends "*"
+      ? StrictMatch<O[K], DynamicOutputPortConfig>
+      : StrictMatch<O[K], StaticOutputPortConfig>;
+} & ForbidMultiplePrimaries<O>;
+
+type GetDefault<I extends PortConfig> = I extends StaticInputPortConfig
+  ? I["default"]
+  : undefined;
+
+/**
+ * Check that ACTUAL is assignable to EXPECTED and that there are no excess
+ * properties.
+ */
+type StrictMatch<ACTUAL, EXPECTED> = {
+  [K in keyof ACTUAL]: K extends keyof EXPECTED ? EXPECTED[K] : never;
+};
+
+type ForbidMultiplePrimaries<C extends Record<string, PortConfig>> =
+  CountUnion<PrimaryPortNames<C>> extends 0 | 1
+    ? C
+    : { [K in keyof C]: Omit<C[K], "primary"> & { primary: never } };
+
+type PrimaryPortNames<C extends Record<string, PortConfig>> = {
+  [K in keyof C]: C[K] extends StaticInputPortConfig | StaticOutputPortConfig
+    ? C[K]["primary"] extends true
+      ? K
+      : never
+    : never;
+}[keyof C];
+
+type LooseInvokeFn<I extends Record<string, InputPortConfig>> = Expand<
+  (
+    staticParams: Expand<StaticInvokeParams<I>>,
+    dynamicParams: Expand<DynamicInvokeParams<I>>
+  ) => MaybePromise<{ [K: string]: JsonSerializable }>
+>;
+
+export type VeryLooseInvokeFn = (
+  staticParams: Record<string, JsonSerializable>,
+  dynamicParams: Record<string, JsonSerializable>,
+  context: NodeHandlerContext
+) => { [K: string]: JsonSerializable | undefined };
+
+type StrictInvokeFn<
+  I extends Record<string, InputPortConfig>,
+  O extends Record<string, OutputPortConfig>,
+  F extends LooseInvokeFn<I>,
+> = (
+  staticInputs: Expand<StaticInvokeParams<I>>,
+  dynamicInputs: Expand<DynamicInvokeParams<I>>,
+  context: NodeHandlerContext
+) => MaybePromise<StrictInvokeFnReturn<I, O, F>>;
+
+type StrictInvokeFnReturn<
+  I extends Record<string, InputPortConfig>,
+  O extends Record<string, OutputPortConfig>,
+  F extends LooseInvokeFn<I>,
 > =
-  IsPolymorphic<ISHAPE> extends true
-    ? PolymorphicDefinition<
-        OmitDynamicPortConfig<ISHAPE>,
-        ExtractDynamicPortConfig<ISHAPE>,
-        OSHAPE
-      >
-    : MonomorphicDefinition<ISHAPE, OSHAPE>;
-
-type IsPolymorphic<ISHAPE extends PortConfigMap> = ISHAPE["*"] extends object
-  ? true
-  : false; // To get errors in the right place, we're going to test if there are multiple
-// primaries. If there are not, just return the type, everything is fine. If
-// there are, return a version of the type which disallows primary. That way,
-// the squiggly will appear on all the primaries.
-
-type ForbidMultiplePrimaries<M extends PortConfigMap> =
-  HasMultiplePrimaries<M> extends true
+  ReturnType<F extends (...args: unknown[]) => unknown ? F : never> extends {
+    $error: unknown;
+  }
     ? {
-        [K in keyof M]: Omit<M[K], "primary"> & { primary: false };
+        [K in keyof ReturnType<
+          F extends (...args: unknown[]) => unknown ? F : never
+        >]: K extends "$error"
+          ?
+              | string
+              | { message: string }
+              | { kind: string; error: { message: string } }
+          : never;
       }
-    : M;
+    : {
+        [K in keyof Omit<O, "*" | "$error">]: Convert<O[K]>;
+      } & {
+        [K in keyof ReturnType<
+          F extends (...args: unknown[]) => unknown ? F : never
+        >]: K extends keyof O
+          ? Convert<O[K]>
+          : O["*"] extends DynamicOutputPortConfig
+            ? Convert<O["*"]>
+            : never;
+      };
 
-type HasMultiplePrimaries<M extends PortConfigMap> =
-  CountUnion<PrimaryPortNames<M>> extends 0 | 1 ? false : true;
+export type StaticInvokeParams<I extends Record<string, InputPortConfig>> = {
+  [K in keyof Omit<I, "*">]: I[K] extends StaticInputPortConfig
+    ? I[K]["optional"] extends true
+      ? Convert<I[K]> | undefined
+      : Convert<I[K]>
+    : Convert<I[K]>;
+};
 
-type PrimaryPortNames<M extends PortConfigMap> = {
-  [K in keyof M]: M[K]["primary"] extends true ? K : never;
-}[keyof M];
+export type DynamicInvokeParams<I extends Record<string, InputPortConfig>> =
+  I["*"] extends DynamicInputPortConfig
+    ? { [K: string]: Convert<I["*"]> }
+    : // eslint-disable-next-line @typescript-eslint/ban-types
+      {};
+
+type GetStaticTypes<C extends Record<string, PortConfig>> = {
+  [K in Exclude<keyof C, "*">]: K extends "*" ? never : Convert<C[K]>;
+};
+
+type GetOptionalInputs<I extends Record<string, InputPortConfig>> = {
+  [K in keyof I]: I[K] extends StaticInputPortConfig
+    ? I[K]["optional"] extends true
+      ? K
+      : I[K]["default"] extends JsonSerializable
+        ? K
+        : never
+    : never;
+}[keyof I];
+
+type GetDynamicTypes<C extends Record<string, PortConfig>> =
+  C["*"] extends PortConfig ? Convert<C["*"]> : undefined;
+
+type GetPrimary<C extends Record<string, PortConfig>> = ReplaceNever<
+  Extract<
+    {
+      [K in keyof Omit<C, "*">]: C[K] extends
+        | StaticInputPortConfig
+        | StaticOutputPortConfig
+        ? C[K]["primary"] extends true
+          ? K
+          : false
+        : false;
+    }[keyof Omit<C, "*">],
+    string
+  >,
+  false
+>;
+
+type ReplaceNever<T, R> = IsNever<T> extends true ? R : T;
+
+type GetReflective<O extends Record<string, OutputPortConfig>> =
+  O["*"] extends DynamicOutputPortConfig
+    ? O["*"]["reflective"] extends true
+      ? true
+      : false
+    : false;
+
+type Convert<C extends PortConfig> = ConvertBreadboardType<C["type"]>;
+
+type VeryLooseDescribeFn = Function;
+
+export type CustomDescribePortManifest =
+  | string[]
+  | {
+      [K: string]:
+        | { description?: string }
+        // We include undefined here because TypeScript sometimes generates a
+        // type which would otherwise not match our constraint. For example,
+        // the expression:
+        //
+        //   outputFoo ? { foo: { description: "foo" } } : {}
+        //
+        // Gets assigned this type:
+        //
+        //   { foo: { description:"foo" } } | { foo?: undefined }
+        //
+        // Instead of:
+        //
+        //   { foo: { description:"foo" } } | {}
+        | undefined;
+    }
+  | UnsafeSchema;

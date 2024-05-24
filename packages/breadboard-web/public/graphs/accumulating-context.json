@@ -4,43 +4,6 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "userRequest",
-      "to": "assistant",
-      "out": "text",
-      "in": "question"
-    },
-    {
-      "from": "userRequest",
-      "to": "append-1",
-      "out": "text",
-      "in": "user"
-    },
-    {
-      "from": "parameters",
-      "to": "userRequest",
-      "out": "",
-      "in": ""
-    },
-    {
-      "from": "parameters",
-      "to": "generator",
-      "out": "generator",
-      "in": "$board",
-      "constant": true
-    },
-    {
-      "from": "output-2",
-      "to": "userRequest",
-      "out": "",
-      "in": ""
-    },
-    {
-      "from": "assistant",
-      "to": "generator",
-      "out": "prompt",
-      "in": "text"
-    },
-    {
       "from": "append-1",
       "to": "append-1",
       "out": "accumulator",
@@ -53,6 +16,12 @@
       "in": "context"
     },
     {
+      "from": "assistant",
+      "to": "generator",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
       "from": "generator",
       "to": "append-1",
       "out": "text",
@@ -63,29 +32,40 @@
       "to": "output-2",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "output-2",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "parameters",
+      "to": "generator",
+      "out": "generator",
+      "in": "$board",
+      "constant": true
+    },
+    {
+      "from": "parameters",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "userRequest",
+      "to": "append-1",
+      "out": "text",
+      "in": "user"
+    },
+    {
+      "from": "userRequest",
+      "to": "assistant",
+      "out": "text",
+      "in": "question"
     }
   ],
   "nodes": [
-    {
-      "id": "userRequest",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "description": "Type here to chat with the assistant",
-              "title": "User"
-            }
-          },
-          "required": [
-            "text"
-          ],
-          "additionalProperties": false
-        }
-      }
-    },
     {
       "id": "parameters",
       "type": "input",
@@ -95,11 +75,31 @@
           "properties": {
             "generator": {
               "type": "string",
+              "title": "Generator",
               "description": "Text generator to use",
-              "default": "text-generator.json",
-              "title": "Generator"
+              "default": "text-generator.json"
             }
           },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "userRequest",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "User",
+              "description": "Type here to chat with the assistant"
+            }
+          },
+          "required": [
+            "text"
+          ],
           "additionalProperties": false
         }
       }
@@ -113,8 +113,8 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "Assistant's response in the conversation with the user",
-              "title": "Assistant"
+              "title": "Assistant",
+              "description": "Assistant's response in the conversation with the user"
             }
           },
           "required": [
@@ -125,14 +125,6 @@
       }
     },
     {
-      "id": "assistant",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
-        "context": ""
-      }
-    },
-    {
       "id": "append-1",
       "type": "append",
       "configuration": {
@@ -140,10 +132,17 @@
       }
     },
     {
+      "id": "assistant",
+      "type": "promptTemplate",
+      "configuration": {
+        "context": "",
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:"
+      }
+    },
+    {
       "id": "generator",
       "type": "invoke",
       "configuration": {}
     }
-  ],
-  "graphs": {}
+  ]
 }

@@ -5,9 +5,9 @@
  */
 
 import { BehaviorSchema, Schema } from "@google-labs/breadboard";
-import { validate } from "jsonschema";
+import Ajv, { AnySchema } from "ajv";
 
-const LLMSchema = {
+const LLMContentSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   title: "LLM Content Schema",
   type: "object",
@@ -35,9 +35,9 @@ const LLMSchema = {
               inlineData: {
                 properties: {
                   data: { type: "string" },
-                  mime_type: { type: "string" },
+                  mimeType: { type: "string" },
                 },
-                required: ["data", "mime_type"],
+                required: ["data", "mimeType"],
                 additionalProperties: false,
               },
             },
@@ -88,17 +88,17 @@ export function resolveArrayType(value: Schema) {
     const valueItems = value.items as Items;
     if (valueItems.type) {
       return valueItems.type;
-    } else if (resolveBehaviorType(valueItems) === "llm-content") {
-      return "object";
     }
-  } else if (resolveBehaviorType(value) === "llm-content") {
-    return "object";
   }
 
   return "string";
 }
 
-export function resolveBehaviorType(value: Schema | Items) {
+export function resolveBehaviorType(value: Schema | Schema[] | undefined) {
+  if (!value || Array.isArray(value)) {
+    return null;
+  }
+
   if (value.behavior) {
     if (Array.isArray(value.behavior) && value.behavior.length > 0) {
       return value.behavior[0];
@@ -110,23 +110,41 @@ export function resolveBehaviorType(value: Schema | Items) {
   return null;
 }
 
+export const validate = (item: unknown, schema: unknown) => {
+  const validator = new Ajv.default({ strict: false });
+  let validate: Ajv.ValidateFunction;
+  try {
+    validate = validator.compile(schema as AnySchema);
+  } catch (e) {
+    return { valid: false, errors: (e as Error).message };
+  }
+
+  const valid = validate(item);
+
+  if (!valid) {
+    return { valid: false, errors: validator.errorsText(validate.errors) };
+  }
+
+  return { valid: validate(item) };
+};
+
+export function isLLMContent(item: unknown) {
+  if (typeof item !== "object" || item === null) {
+    return false;
+  }
+
+  return validate(item, LLMContentSchema).valid;
+}
+
 export function assertIsLLMContent(item: unknown) {
   if (typeof item !== "object" || item === null) {
     throw new Error("Not an object");
   }
 
-  const result = validate(item, LLMSchema);
+  const result = validate(item, LLMContentSchema);
   if (result.valid) {
     return;
   }
 
-  const msg = result.errors.reduce((prev, curr, idx) => {
-    return (
-      prev +
-      (idx > 0 ? "\n" : "") +
-      `${curr.path.join(".")} ${curr.message.split(",").join(", ")}`
-    );
-  }, "");
-
-  throw new Error(msg);
+  throw new Error(result.errors);
 }

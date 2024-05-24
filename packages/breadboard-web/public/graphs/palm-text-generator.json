@@ -30,27 +30,6 @@
   ],
   "nodes": [
     {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "generateText",
-      "type": "palm-generateText",
-      "configuration": {}
-    },
-    {
       "id": "parameters",
       "type": "input",
       "configuration": {
@@ -76,12 +55,19 @@
       }
     },
     {
-      "id": "secrets-4",
-      "type": "secrets",
+      "id": "textOutput",
+      "type": "output",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
       }
     },
     {
@@ -92,7 +78,20 @@
         "name": "fn_3",
         "raw": true
       }
+    },
+    {
+      "id": "generateText",
+      "type": "palm-generateText",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-4",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }

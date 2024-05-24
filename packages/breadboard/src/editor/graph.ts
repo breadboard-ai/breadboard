@@ -1,33 +1,55 @@
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
-import { fixUpStarEdge } from "../inspector/edge.js";
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
+import { GraphDescriptor, GraphIdentifier } from "../types.js";
 import {
-  GraphDescriptor,
-  GraphIdentifier,
-  NodeConfiguration,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-} from "../types.js";
-import {
-  EdgeEditResult,
-  EditResult,
-  EditableEdgeSpec,
+  SingleEditResult,
   EditableGraph,
   EditableGraphOptions,
-  EditableNodeSpec,
-  GraphChangeEvent,
+  RejectionReason,
+  EditSpec,
+  EditResult,
+  EditOperation,
+  EditOperationContext,
+  EditResultLogEntry,
+  EditHistory,
 } from "./types.js";
+import { ChangeEvent, ChangeRejectEvent } from "./events.js";
+import { AddEdge } from "./operations/add-edge.js";
+import { AddNode } from "./operations/add-node.js";
+import { RemoveNode } from "./operations/remove-node.js";
+import { RemoveEdge } from "./operations/remove-edge.js";
+import { ChangeEdge } from "./operations/change-edge.js";
+import { ChangeConfiguration } from "./operations/change-configuration.js";
+import { ChangeMetadata } from "./operations/change-metadata.js";
+import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
+import { GraphEditHistory } from "./history.js";
+
+const operations = new Map<EditSpec["type"], EditOperation>([
+  ["addnode", new AddNode()],
+  ["removenode", new RemoveNode()],
+  ["addedge", new AddEdge()],
+  ["removeedge", new RemoveEdge()],
+  ["changeedge", new ChangeEdge()],
+  ["changeconfiguration", new ChangeConfiguration()],
+  ["changemetadata", new ChangeMetadata()],
+  ["changegraphmetadata", new ChangeGraphMetadata()],
+]);
 
 export class Graph implements EditableGraph {
   #version = 0;
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
-  #validTypes?: Set<string>;
   #graph: GraphDescriptor;
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
+  #history: GraphEditHistory;
 
   constructor(
     graph: GraphDescriptor,
@@ -50,38 +72,28 @@ export class Graph implements EditableGraph {
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
     this.#inspector = inspectableGraph(this.#graph, options);
+    this.#history = new GraphEditHistory({
+      graph: () => {
+        return this.#graph;
+      },
+      version: () => {
+        return this.#version;
+      },
+      setGraph: (graph) => {
+        this.#graph = graph;
+        this.#version++;
+        this.#inspector.resetGraph(graph);
+        this.#eventTarget.dispatchEvent(
+          new ChangeEvent(this.#graph, this.#version, false, "history")
+        );
+      },
+    });
+    this.#history.add(graph, "Clean slate");
   }
 
   #makeIndependent() {
     this.#parent = null;
     this.#graphs = {};
-  }
-
-  #isValidType(type: NodeTypeIdentifier) {
-    return (this.#validTypes ??= new Set(
-      this.#inspector.kits().flatMap((kit) => {
-        return kit.nodeTypes.map((type) => {
-          return type.type();
-        });
-      })
-    )).has(type);
-  }
-
-  #findEdgeIndex(spec: EditableEdgeSpec) {
-    return this.#graph.edges.findIndex((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
-  }
-
-  #edgesEqual(a: EditableEdgeSpec, b: EditableEdgeSpec) {
-    return (
-      a.from === b.from && a.to === b.to && a.out === b.out && a.in === b.in
-    );
   }
 
   #updateGraph(visualOnly: boolean) {
@@ -109,8 +121,31 @@ export class Graph implements EditableGraph {
     }
     this.#inspector.updateGraph(this.#graph);
     this.#eventTarget.dispatchEvent(
-      new GraphChangeEvent(this.#graph, this.#version, visualOnly)
+      new ChangeEvent(this.#graph, this.#version, visualOnly, "edit")
     );
+  }
+
+  #rollbackGraph(checkpoint: GraphDescriptor, error: string) {
+    this.#graph = checkpoint;
+    // TODO: Handle subgraphs.
+    this.#inspector.resetGraph(this.#graph);
+    this.#dispatchNoChange(error);
+  }
+
+  #dispatchNoChange(error?: string) {
+    if (this.#parent) {
+      this.#parent.#dispatchNoChange(error);
+    }
+    this.#graph = { ...this.#graph };
+    const reason: RejectionReason = error
+      ? {
+          type: "error",
+          error,
+        }
+      : {
+          type: "nochange",
+        };
+    this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.#graph, reason));
   }
 
   addEventListener(eventName: string, listener: EventListener): void {
@@ -128,263 +163,81 @@ export class Graph implements EditableGraph {
     return this.#parent;
   }
 
-  async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
-    const duplicate = !!this.#inspector.nodeById(spec.id);
-    if (duplicate) {
+  async #singleEdit(
+    edit: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
+    const operation = operations.get(edit.type);
+    if (!operation) {
       return {
         success: false,
-        error: `Node with id "${spec.id}" already exists`,
+        error: "Unsupported edit type",
       };
     }
-
-    const validType = this.#isValidType(spec.type);
-    if (!validType) {
-      return {
-        success: false,
-        error: `Node type "${spec.type}" is not a known type`,
-      };
-    }
-
-    return { success: true };
+    return operation.do(edit, context);
   }
 
-  async addNode(spec: EditableNodeSpec): Promise<EditResult> {
-    const can = await this.canAddNode(spec);
-    if (!can.success) return can;
+  async edit(
+    edits: EditSpec[],
+    label: string,
+    dryRun = false
+  ): Promise<EditResult> {
+    let context: EditOperationContext;
 
-    this.#graph.nodes.push(spec);
-    this.#inspector.nodeStore.add(spec);
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canRemoveNode(id: NodeIdentifier): Promise<EditResult> {
-    const exists = !!this.#inspector.nodeById(id);
-    if (!exists) {
-      return {
-        success: false,
-        error: `Node with id "${id}" does not exist`,
+    const checkpoint = structuredClone(this.#graph);
+    if (dryRun) {
+      const graph = checkpoint;
+      const inspector = inspectableGraph(graph, this.#options);
+      context = {
+        graph,
+        inspector,
+        store: inspector,
+      };
+    } else {
+      context = {
+        graph: this.#graph,
+        inspector: this.#inspector,
+        store: this.#inspector,
       };
     }
-    return { success: true };
-  }
-
-  async removeNode(id: NodeIdentifier): Promise<EditResult> {
-    const can = await this.canRemoveNode(id);
-    if (!can.success) return can;
-
-    // Remove any edges that are connected to the removed node.
-    this.#graph.edges = this.#graph.edges.filter((edge) => {
-      const shouldRemove = edge.from === id || edge.to === id;
-      if (shouldRemove) {
-        this.#inspector.edgeStore.remove(edge);
-      }
-      return !shouldRemove;
-    });
-    // Remove the node from the graph.
-    this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
-    this.#inspector.nodeStore.remove(id);
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canAddEdge(spec: EditableEdgeSpec): Promise<EdgeEditResult> {
-    const inspector = this.#inspector;
-    if (inspector.hasEdge(spec)) {
-      return {
-        success: false,
-        error: `Edge from "${spec.from}" to "${spec.to}" already exists`,
-      };
-    }
-    const from = inspector.nodeById(spec.from);
-    if (!from) {
-      return {
-        success: false,
-        error: `Node with id "${spec.from}" does not exist, but is required as the "from" part of the edge`,
-      };
-    }
-    const to = inspector.nodeById(spec.to);
-    if (!to) {
-      return {
-        success: false,
-        error: `Node with id "${spec.to}" does not exist, but is required as the "to" part of the edge`,
-      };
-    }
-
+    const log: EditResultLogEntry[] = [];
     let error: string | null = null;
-    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
-      spec = { ...spec, out: spec.in };
-      error = `The "*" output port cannot be connected to a specific input port`;
-    } else if ((spec.in === "*" || spec.in === "") && !(spec.out === "*")) {
-      spec = { ...spec, in: spec.out };
-      error = `A specific input port cannot be connected to a "*" output port`;
-    }
-    const fromPorts = (await from.ports()).outputs;
-    if (fromPorts.fixed) {
-      const found = fromPorts.ports.find((port) => port.name === spec.out);
-      if (!found) {
-        error ??= `Node with id "${spec.from}" does not have an output port named "${spec.out}"`;
-        return {
-          success: false,
-          error,
-        };
+    // Presume that all edits will result in no changes.
+    let noChange = true;
+    // Presume that all edits will be visual only.
+    let visualOnly = true;
+    for (const edit of edits) {
+      const result = await this.#singleEdit(edit, context);
+      log.push({ edit: edit.type, result });
+      if (!result.success) {
+        error = result.error;
+        break;
       }
-    }
-    const toPorts = (await to.ports()).inputs;
-    if (toPorts.fixed) {
-      const found = toPorts.ports.find((port) => port.name === spec.in);
-      error ??= `Node with id "${spec.to}" does not have an input port named "${spec.in}"`;
-      if (!found) {
-        return {
-          success: false,
-          error,
-        };
+      if (!result.noChange) {
+        noChange = false;
+      }
+      if (!result.visualOnly) {
+        visualOnly = false;
       }
     }
     if (error) {
-      return { success: false, error, alternative: spec };
+      !dryRun && this.#rollbackGraph(checkpoint, error);
+      return { success: false, log, error };
     }
-    return { success: true };
+
+    if (noChange) {
+      !dryRun && this.#dispatchNoChange();
+      return { success: true, log };
+    }
+
+    this.#history.addEdit(this.#graph, checkpoint, label, this.#version);
+
+    !dryRun && this.#updateGraph(visualOnly);
+    return { success: true, log };
   }
 
-  async addEdge(
-    spec: EditableEdgeSpec,
-    strict: boolean = false
-  ): Promise<EdgeEditResult> {
-    const can = await this.canAddEdge(spec);
-    if (!can.success) {
-      if (!can.alternative || strict) return can;
-      spec = can.alternative;
-    }
-    spec = fixUpStarEdge(spec);
-    this.#graph.edges.push(spec);
-    this.#inspector.edgeStore.add(spec);
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult> {
-    if (!this.#inspector.hasEdge(spec)) {
-      return {
-        success: false,
-        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  async removeEdge(spec: EditableEdgeSpec): Promise<EditResult> {
-    const can = await this.canRemoveEdge(spec);
-    if (!can.success) return can;
-    spec = fixUpStarEdge(spec);
-    const edges = this.#graph.edges;
-    const index = this.#findEdgeIndex(spec);
-    const edge = edges.splice(index, 1)[0];
-    this.#inspector.edgeStore.remove(edge);
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canChangeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec
-  ): Promise<EdgeEditResult> {
-    if (this.#edgesEqual(from, to)) {
-      return { success: true };
-    }
-    const canRemove = await this.canRemoveEdge(from);
-    if (!canRemove.success) return canRemove;
-    const canAdd = await this.canAddEdge(to);
-    if (!canAdd.success) return canAdd;
-    return { success: true };
-  }
-
-  async changeEdge(
-    from: EditableEdgeSpec,
-    to: EditableEdgeSpec,
-    strict: boolean = false
-  ): Promise<EditResult> {
-    const can = await this.canChangeEdge(from, to);
-    if (!can.success) {
-      if (!can.alternative || strict) return can;
-      to = can.alternative;
-    }
-    if (this.#edgesEqual(from, to)) {
-      return { success: true };
-    }
-    const spec = fixUpStarEdge(from);
-    const edges = this.#graph.edges;
-    const index = this.#findEdgeIndex(spec);
-    const edge = edges[index];
-    edge.from = to.from;
-    edge.out = to.out;
-    edge.to = to.to;
-    edge.in = to.in;
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canChangeConfiguration(id: NodeIdentifier): Promise<EditResult> {
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      return {
-        success: false,
-        error: `Node with id "${id}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  async changeConfiguration(
-    id: NodeIdentifier,
-    configuration: NodeConfiguration
-  ): Promise<EditResult> {
-    const can = await this.canChangeConfiguration(id);
-    if (!can.success) return can;
-    const node = this.#inspector.nodeById(id);
-    if (node) {
-      node.descriptor.configuration = configuration;
-    }
-    this.#updateGraph(false);
-    return { success: true };
-  }
-
-  async canChangeMetadata(id: NodeIdentifier): Promise<EditResult> {
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      return {
-        success: false,
-        error: `Node with id "${id}" does not exist`,
-      };
-    }
-    return { success: true };
-  }
-
-  #isVisualOnly(incoming: NodeMetadata, existing: NodeMetadata): boolean {
-    return (
-      existing.title === incoming.title &&
-      existing.description === incoming.description &&
-      existing.logLevel === incoming.logLevel
-    );
-  }
-
-  async changeMetadata(
-    id: NodeIdentifier,
-    metadata: NodeMetadata
-  ): Promise<EditResult> {
-    const can = await this.canChangeMetadata(id);
-    if (!can.success) return can;
-    const node = this.#inspector.nodeById(id);
-    if (!node) {
-      return { success: false, error: `Unknown node with id "${id}"` };
-    }
-    const visualOnly = this.#isVisualOnly(
-      metadata,
-      node.descriptor.metadata || {}
-    );
-    node.descriptor.metadata = metadata;
-    this.#updateGraph(visualOnly);
-    return { success: true };
+  history(): EditHistory {
+    return this.#history;
   }
 
   getGraph(id: GraphIdentifier) {
@@ -410,15 +263,17 @@ export class Graph implements EditableGraph {
     return editable;
   }
 
-  removeGraph(id: GraphIdentifier): EditResult {
+  removeGraph(id: GraphIdentifier): SingleEditResult {
     if (!this.#graphs) {
       throw new Error("Embedded graphs can't contain subgraphs.");
     }
 
     if (!this.#graphs[id]) {
+      const error = `Subgraph with id "${id}" does not exist`;
+      this.#dispatchNoChange(error);
       return {
         success: false,
-        error: `Subgraph with id "${id}" does not exist`,
+        error,
       };
     }
     delete this.#graphs[id];

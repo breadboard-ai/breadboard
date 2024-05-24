@@ -1,5 +1,125 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [8097177]
+- Updated dependencies [29eda71]
+- Updated dependencies [f60cb06]
+- Updated dependencies [cec6d54]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [c1acf24]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [b6f5644]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @breadboard-ai/build@0.6.0
+
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @breadboard-ai/build@0.5.1
+
+## 0.3.0
+
+### Minor Changes
+
+- 18b9f34: Convert template-kit to new @breadboard-ai/build package. Should be a no-op.
+- 34d9c6d: prompt-template is now slightly more correct in its description (object vs any JSON value)
+- 4d6ce42: Expand the exports of template-kit to allow internal types to be referenced (but still prevent JS from actually being imported at runtime)
+
+### Patch Changes
+
+- d7829a1: Add a prompt`...` tagged template literal function to more safely/concisely instantiate promptTemplate nodes.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- 1aa96c6: Allow undefined template in describer.
+- Updated dependencies [3f9507d]
+- Updated dependencies [cef20ca]
+- Updated dependencies [55a9647]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [1adb24c]
+- Updated dependencies [1e86a87]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [fefd109]
+- Updated dependencies [c1dcb0a]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [1adb24c]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [d9ac358]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [f1883d1]
+- Updated dependencies [1adb24c]
+- Updated dependencies [d8cb0c9]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [e6e0168]
+- Updated dependencies [3d48482]
+- Updated dependencies [1adb24c]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [3f9507d]
+- Updated dependencies [626139b]
+- Updated dependencies [1adb24c]
+- Updated dependencies [3f9507d]
+- Updated dependencies [bd44e29]
+- Updated dependencies [c4ca6dc]
+- Updated dependencies [1adb24c]
+- Updated dependencies [cfbcdf2]
+- Updated dependencies [1d9cb16]
+- Updated dependencies [49da151]
+- Updated dependencies [43da00a]
+- Updated dependencies [3f9507d]
+- Updated dependencies [dfd5ce2]
+- Updated dependencies [cfc0f15]
+- Updated dependencies [00ccb9d]
+- Updated dependencies [08eabf4]
+- Updated dependencies [c3587e1]
+- Updated dependencies [99fcffe]
+- Updated dependencies [1e86a87]
+- Updated dependencies [3f9507d]
+- Updated dependencies [d9ac358]
+  - @breadboard-ai/build@0.5.0
+  - @google-labs/breadboard@0.18.0
+
+## 0.2.6
+
+### Patch Changes
+
+- b244fba: Minor polish in `promptTemplate`.
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.2.5
 
 ### Patch Changes

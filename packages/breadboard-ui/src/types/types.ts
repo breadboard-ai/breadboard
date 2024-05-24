@@ -41,13 +41,6 @@ export interface ImageHandler {
   stop(): void;
 }
 
-export interface CanvasData {
-  inline_data: {
-    data: string;
-    mime_type: string;
-  };
-}
-
 export type HistoryEntry = HarnessRunResult & {
   id: string;
   guid: string;
@@ -83,33 +76,57 @@ export type OutputArgs = {
   } & Record<string, unknown>;
 };
 
-type InlineData = {
-  inlineData: { data: string; mime_type: string };
+export type LLMInlineData = {
+  inlineData: { data: string; mimeType: string };
 };
 
-type FunctionCall = {
+export type LLMFunctionCall = {
   functionCall: {
     name: string;
     args: object;
   };
 };
 
-type FunctionResponse = {
+export type LLMFunctionResponse = {
   functionResponse: {
     name: string;
     response: object;
   };
 };
 
-type Part = InlineData | FunctionCall | FunctionResponse;
+export type LLMText = {
+  text: string;
+};
+
+export type LLMPart =
+  | LLMInlineData
+  | LLMFunctionCall
+  | LLMFunctionResponse
+  | LLMText;
 
 export type LLMContent = {
-  parts: Part[];
+  role?: string;
+  parts: LLMPart[];
 };
+
+export interface AllowedLLMContentTypes {
+  audioFile: boolean;
+  audioMicrophone: boolean;
+  videoFile: boolean;
+  videoWebcam: boolean;
+  imageFile: boolean;
+  imageWebcam: boolean;
+  imageDrawable: boolean;
+  textFile: boolean;
+  textInline: boolean;
+}
 
 export enum SETTINGS_TYPE {
   SECRETS = "Secrets",
   GENERAL = "General",
+  INPUTS = "Inputs",
+  NODE_PROXY_SERVERS = "Node Proxy Servers",
+  BOARD_SERVERS = "Board Servers",
 }
 
 export interface SettingEntry {
@@ -125,6 +142,9 @@ export interface SettingEntry {
 export interface SettingsList {
   [SETTINGS_TYPE.GENERAL]: SettingEntry;
   [SETTINGS_TYPE.SECRETS]: SettingEntry;
+  [SETTINGS_TYPE.INPUTS]: SettingEntry;
+  [SETTINGS_TYPE.NODE_PROXY_SERVERS]: SettingEntry;
+  [SETTINGS_TYPE.BOARD_SERVERS]: SettingEntry;
 }
 
 export type Settings = {
@@ -133,6 +153,7 @@ export type Settings = {
       extensible: boolean;
       description: string;
       nameEditable: boolean;
+      nameVisible: boolean;
     };
     items: Map<SettingEntry["value"]["name"], SettingEntry["value"]>;
   };

@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.16",
   "description": "Playing with graph structures",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -36,7 +36,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -96,6 +96,7 @@
         "src/**/*.ts",
         "wild/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
@@ -162,23 +163,23 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.12.7",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
     "ava": "^5.2.0",
     "typedoc": "^0.25.12",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@google-labs/breadboard": "^0.16.0",
-    "@google-labs/core-kit": "^0.6.0",
-    "@google-labs/graph-integrity": "^0.0.10",
-    "@google-labs/json-kit": "^0.1.5",
-    "@google-labs/node-nursery": "^0.0.11",
-    "@google-labs/palm-kit": "^0.0.10",
-    "@google-labs/pinecone-kit": "^0.1.8",
-    "@google-labs/template-kit": "^0.2.5",
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/core-kit": "^0.9.0",
+    "@google-labs/graph-integrity": "^0.0.14",
+    "@google-labs/json-kit": "^0.3.0",
+    "@google-labs/node-nursery": "^0.0.15",
+    "@google-labs/palm-kit": "^0.0.14",
+    "@google-labs/pinecone-kit": "^0.1.12",
+    "@google-labs/template-kit": "^0.3.2",
     "dotenv": "^16.4.5"
   },
   "engines": {

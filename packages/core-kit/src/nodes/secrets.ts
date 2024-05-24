@@ -4,17 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * A kind of input node that provides secret values, such as API keys.
- * Currently, it simply reads them from environment.
- */
-
-import type {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandler,
-  OutputValues,
-} from "@google-labs/breadboard";
+import { array, defineNodeType } from "@breadboard-ai/build";
 
 type Environment = "node" | "browser" | "worker";
 
@@ -34,7 +24,7 @@ export type SecretWorkerResponse = {
   data: string;
 };
 
-const getEnvironmentValue = async (key: string) => {
+const getEnvironmentValue = (key: string) => {
   const env = environment();
   if (env === "node") {
     return process.env[key];
@@ -59,7 +49,7 @@ export const requireNonEmpty = (key: string, value?: string | null) => {
 };
 
 const getKeys = (
-  inputs: InputValues = { keys: [] },
+  inputs: { keys: string[] } = { keys: [] },
   safe: boolean
 ): string[] => {
   const { keys } = inputs as SecretInputs;
@@ -79,50 +69,46 @@ const getKeys = (
   return keys;
 };
 
-export const secretsDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues
-) => {
-  const keys = getKeys(inputs, true);
-  const properties = keys
-    ? Object.fromEntries(
-        keys.map((key) => [
-          key,
-          {
-            title: key,
-          },
-        ])
-      )
-    : {};
-  return {
-    inputSchema: {
-      properties: {
-        keys: {
-          title: "secrets",
-          description: "The array of secrets to retrieve from the node.",
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-      },
-    },
-    outputSchema: {
-      properties,
-    },
-  };
-};
-
-export default {
-  describe: secretsDescriber,
-  invoke: async (inputs: InputValues) => {
-    const keys = getKeys(inputs, false);
-    return Object.fromEntries(
-      await Promise.all(
-        keys.map(async (key) => [
-          key,
-          requireNonEmpty(key, await getEnvironmentValue(key)),
-        ])
-      )
-    ) as OutputValues;
+const secrets = defineNodeType({
+  name: "secrets",
+  metadata: {
+    title: "Secrets",
+    description: "Retrieves secret values, such as API keys.",
   },
-} satisfies NodeHandler;
+  inputs: {
+    keys: {
+      title: "secrets",
+      description: "The array of secrets to retrieve from the node.",
+      type: array("string"),
+    },
+  },
+  outputs: {
+    "*": {
+      type: "string",
+    },
+  },
+  describe: (inputs) => ({
+    outputs: inputs.keys ?? [],
+  }),
+  invoke: (inputs) =>
+    Object.fromEntries(
+      getKeys(inputs, false).map((key) => [
+        key,
+        requireNonEmpty(key, getEnvironmentValue(key)),
+      ])
+    ),
+});
+export default secrets;
+
+/**
+ * Create and configure a {@link secrets} node for one secret, and return the
+ * corresponding output port.
+ */
+export function secret(name: string) {
+  // TODO(aomarks) Should we replace the `secrets` node with a `secret` node
+  // that is monomorphic? Seems simpler.
+  return secrets({
+    $id: `${name}-secret`,
+    keys: [name],
+  }).unsafeOutput(name);
+}

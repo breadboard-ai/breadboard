@@ -18,8 +18,7 @@ import {
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { MonomorphicDefinition } from "../internal/define/definition-monomorphic.js";
-import type { PolymorphicDefinition } from "../internal/define/definition-polymorphic.js";
+import type { Definition } from "../internal/define/definition.js";
 
 function setupKits<
   DEFS extends Record<
@@ -27,7 +26,7 @@ function setupKits<
     // TODO(aomarks) See TODO about `any` at {@link NodeFactoryFromDefinition}.
     //
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MonomorphicDefinition<any, any> | PolymorphicDefinition<any, any, any>
+    Definition<any, any, any, any, any, any, any, any>
   >,
 >(definitions: DEFS) {
   const ctr = new KitBuilder({ url: "N/A" }).build(definitions);
@@ -99,7 +98,7 @@ function setupKits<
         additionalProperties: false,
         properties: {
           boardLen: {
-            title: "boardLen",
+            title: "len",
             type: "number",
           },
         },
@@ -115,6 +114,7 @@ function setupKits<
     const descriptor = descriptors[0]!;
     assert.deepEqual(await descriptor.describe(), {
       inputSchema: {
+        type: "object",
         properties: {
           str: {
             title: "str",
@@ -122,17 +122,18 @@ function setupKits<
           },
         },
         required: ["str"],
-        type: "object",
+        additionalProperties: false,
       },
       outputSchema: {
+        type: "object",
         properties: {
           len: {
             title: "len",
             type: "number",
           },
         },
-        required: ["len"],
-        type: "object",
+        required: [],
+        additionalProperties: false,
       },
     });
   });
@@ -165,15 +166,15 @@ function setupKits<
   const { kit: adderKit, runtimeKit: adderRuntimeKit } = setupKits({
     adder,
   });
-  // $ExpectType { adder: NodeFactory<{ base: number; }, { sum: number; }>; }
+  // $ExpectType { adder: NodeFactory<{ [x: string]: unknown; base: number; }, { sum: number; }>; }
   adderKit;
   // $ExpectType Lambda<InputValues, Required<{ boardSum: number; }>>
   const adderBoard = await board(({ num1, num2, num3 }) => {
     const { sum } = adderKit.adder({
       base: 0,
-      num1,
-      num2,
-      num3,
+      num1: num1!.isNumber(),
+      num2: num2!.isNumber(),
+      num3: num3!.isNumber(),
     });
     // TODO(aomarks) Can we provide a type to sum automatically?
     return { boardSum: sum.isNumber() };
@@ -196,15 +197,15 @@ function setupKits<
         properties: {
           num1: {
             title: "num1",
-            type: "string",
+            type: "number",
           },
           num2: {
             title: "num2",
-            type: "string",
+            type: "number",
           },
           num3: {
             title: "num3",
-            type: "string",
+            type: "number",
           },
         },
         required: ["num1", "num2", "num3"],
@@ -214,7 +215,7 @@ function setupKits<
         additionalProperties: false,
         properties: {
           boardSum: {
-            title: "boardSum",
+            title: "sum",
             type: "number",
           },
         },
@@ -230,26 +231,67 @@ function setupKits<
     const descriptor = descriptors[0]!;
     assert.deepEqual(await descriptor.describe(), {
       inputSchema: {
+        type: "object",
         properties: {
           base: {
             title: "base",
             type: "number",
           },
-          // TODO(aomarks) Shouldn't num1, num2, num3 show up here?
+          num1: {
+            title: "num1",
+            // TODO(aomarks) I'm unsure why these and the next 3 are string. The
+            // describe function is receiving an inputSchema that sets them all
+            // to string. I wonder if this is an issue with the previous board
+            // API?
+            type: "string",
+          },
+          num2: {
+            title: "num2",
+            type: "string",
+          },
+          num3: {
+            title: "num3",
+            type: "string",
+          },
         },
         required: ["base"],
-        type: "object",
+        additionalProperties: { type: "number" },
       },
       outputSchema: {
+        type: "object",
         properties: {
           sum: {
             title: "sum",
             type: "number",
           },
         },
-        required: ["sum"],
-        type: "object",
+        required: [],
+        additionalProperties: false,
       },
     });
   });
 }
+
+test("defaults", () => {
+  const d = defineNodeType({
+    name: "example",
+    inputs: {
+      required: {
+        type: "number",
+      },
+      optional: {
+        type: "string",
+        default: "foo",
+      },
+    },
+    outputs: {
+      sum: {
+        type: "number",
+      },
+    },
+    invoke: () => ({ sum: 123 }),
+  });
+
+  // $ExpectType NodeFactory<{ required: number; optional?: string | undefined; }, { sum: number; }>
+  setupKits({ d }).kit.d;
+});

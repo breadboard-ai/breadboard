@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "assistant",
-      "to": "output-2",
+      "from": "askUser",
+      "to": "assistant",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "askUser",
-      "to": "assistant",
+      "from": "assistant",
+      "to": "output-2",
       "out": "context",
       "in": "context"
     },
@@ -23,6 +23,27 @@
     }
   ],
   "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [
+                "[]"
+              ]
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -39,42 +60,20 @@
       }
     },
     {
+      "id": "askUser",
+      "type": "invoke",
+      "configuration": {
+        "$board": "ask-user.json",
+        "description": "Type here to chat with the assistant",
+        "title": "User"
+      }
+    },
+    {
       "id": "assistant",
       "type": "invoke",
       "configuration": {
         "$board": "agent.json"
       }
-    },
-    {
-      "id": "askUser",
-      "type": "invoke",
-      "configuration": {
-        "$board": "ask-user.json",
-        "title": "User",
-        "description": "Type here to chat with the assistant"
-      }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "examples": [
-                "[]"
-              ]
-            }
-          },
-          "required": [
-            "context"
-          ]
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

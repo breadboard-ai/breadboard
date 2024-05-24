@@ -1,5 +1,131 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- f97a4d5: Rename "placeholder" to "loopback".
+
+### Patch Changes
+
+- 29eda71: Board outputs can now be an array of output node configurations
+- f60cb06: Set the "type" field when an enumeration is all of one type.
+- 87eb8fe: Stringify all defaults and examples
+- 60a18c5: Don't make input ports required if there is a default
+- b0ed6f3: Allow converge function to take raw values
+- 4957dc5: Improve handling of defaults in describe functions. Defaults are now always passed into the describe function, and types will be optional or not based on whether there is a default (default means it can never be undefined).
+- a209c51: Use actual schema when auto-computing input schema
+- 7368fdd: Allow inputs to be constant
+- c9c0e06: Allow declaring objects with optional properties
+- c1acf24: Add converge function which allows wiring multiple edges to the same input port
+- 3920805: Allow inputs to be optional
+- 3b2bb4a: Fix type system bug relating to primary input/output ports (it wasn't working quite right when there were more than one input or output ports).
+- 31cf016: Fix a bug in the @breadboard-ai/build type system that allowed node instances to be passed as board outputs even if they did not have a primary port.
+- ab43276: Fix bug where constant wouldn't always preserve type information
+- 477e6e6: Sort more schema fields for easier comparison across serializers
+- cdcbcdb: Node invoke functions can now return $error. All node instances now automatically have an outputs.$error. Throwing from an invoke function will now convert the exception to an $error result; the stack trace is logged to the server, but not shown to the end-user.
+- 791ec2a: Add `constant` function which can be used to annotate edges that should get the `constant` bit (also known as memoize).
+- c0293c9: New syntax for declaring multiple inputs along with metadata
+- b6f5644: Surface a stack trace when an exception is thrown
+- 43edef6: Add support for setting $metadata when instantiating a node
+- Updated dependencies [8097177]
+- Updated dependencies [cec6d54]
+- Updated dependencies [3397974]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [a35406c]
+- Updated dependencies [477e6e6]
+  - @google-labs/breadboard@0.20.0
+
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+
+## 0.5.0
+
+### Minor Changes
+
+- 55a9647: Rename assertOutput to unsafeOutput
+- 1adb24c: Replace multiline field with format, which can be multiline or javascript
+- d9ac358: Convert secrets node to use @breadboard-ai/build. No functional difference, but the JSON schema should be slightly stricter.
+- 1e86a87: Allow object types to have additional properties. Additional properties are now disabled by default.
+
+### Patch Changes
+
+- 3f9507d: The breadboard type expression object({}) is now more strictly constrained to plain objects (rather than anything).
+- 1e86a87: Add enumeration type
+- 3f9507d: Simpler JSON schema serialization for array
+- 1adb24c: additionalProperties is now set on generated port JSON schemas
+- 1e86a87: Add support for default values on static inputs
+- fefd109: JSON schema for outputs no longer sets any required properties
+- c1dcb0a: Make serialization order more similar to existing one
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- f1883d1: Add an output function for customizing a board's output node layout
+- 1adb24c: Inbound edges, even if they don't have a value, now inform the auto generated input schema
+- d8cb0c9: Add unsafeCast function as an escape hatch for when an output doesn't match a type but you're really really sure it's ok
+- 34d9c6d: Generated JSON schemas are now more explicit and verbose
+- e6e0168: Allow describe functions to be async
+- 1adb24c: Fix some incorrect type errors from certain describe functions.
+- 3f9507d: The describe function can now return objects with new descriptions
+- 1adb24c: Automatically detected input ports are no longer required. Only static ones.
+- 3f9507d: Add multiline option to port config
+- c4ca6dc: Allow setting node IDs
+- 1adb24c: Allow specifying behaviors
+- cfbcdf2: Pass NodeHandlerContext to invoke functions
+- 1d9cb16: Inputs can now have examples
+- 49da151: Allow setting id on inputs, which can be used to customize the input node id,
+  or to create multiple input nodes. If two input objects reference the same
+  id, then they will both be placed into a BGL input node with that ID. If no
+  id is specified, the usual "input-0" is used.
+- 3f9507d: Simpler JSON schema serialization for anyOf
+- dfd5ce2: Input ports can now be marked as optional.
+- cfc0f15: Add support for input titles
+- 00ccb9d: Add unsafeSchema function which allows returning raw arbitrary JSON schema from a describe function
+- 08eabf4: Title, description, and version are now included in BGL
+- 99fcffe: describe function now receives a NodeDescriberContext
+- d9ac358: Add ability to override default port title
+- Updated dependencies [cef20ca]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [3d48482]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [c3587e1]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+
+## 0.4.0
+
+### Minor Changes
+
+- de524a4: Change the describe function to return only the names of ports instead of full JSON schema, and be stricter about when it is required/optional/forbidden based on the port configurations.
+
+### Patch Changes
+
+- de524a4: Improved type-safety and type descriptions relating to node definitions.
+- de524a4: Add support for reflective nodes, where the inputs provided at instantiation automatically reflect to outputs.
+- de524a4: Add `assertOutput` method, for getting an output port in cases where it is not possible at compile-time to know what output ports will exist.
+- de524a4: Add support for polymorphic nodes with dynamic output ports.
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [6f9ba52]
+  - @google-labs/breadboard@0.17.0
+
 ## 0.3.1
 
 ### Patch Changes
