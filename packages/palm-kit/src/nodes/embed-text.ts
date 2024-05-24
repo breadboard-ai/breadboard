@@ -4,94 +4,67 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  NodeDescriberFunction,
-  type InputValues,
-  type NodeValue,
-  type OutputValues,
-  NodeHandler,
-} from "@google-labs/breadboard";
+import { defineNodeType } from "@breadboard-ai/build";
 import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
-export type EmbedTextInputs = NodeValue & {
-  /**
-   * Text to embed.
-   */
-  text: string;
-  /**
-   * The Google Cloud Platform API key
-   */
-  PALM_KEY: string;
-};
+const embedTextHandler = (
+    text: string,
+    PALM_KEY: string
+)
 
-export const embedTextDescriber: NodeDescriberFunction = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
+export default defineNodeType({
+    name: "embedText",
+    metadata: {
+        title: "Embed Text",
+        description:
+          "Uses `embedding-gecko-001` model to generate an embedding of a given text",
+      },
+      inputs: {
         text: {
-          title: "text",
-          description: "Prompt for text completion.",
-          type: "string",
-        },
-        PALM_KEY: {
-          title: "PALM_KEY",
-          description: "The Google Cloud Platform API key",
-          type: "string",
-        },
-      },
-      required: ["text", "PALM_KEY"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        embedding: {
-          title: "embedding",
-          description: "The embedding of the text.",
-          type: "array",
-          items: {
-            type: "number",
+            type: "string",
+            format: "multiline",
+            description: "Prompt for text completion.",
           },
-          minItems: 768,
-          maxItems: 768,
-        },
+          PALM_KEY: {
+            type: "string",
+            description: "The Google Cloud Platform API key",
+          },
       },
-      required: ["embedding"],
-    },
-  };
-};
-
-export default {
-  metadata: {
-    title: "Embed Text",
-    description:
-      "Uses `embedding-gecko-001` model to generate an embedding of a given text",
-  },
-  describe: embedTextDescriber,
-  invoke: async (inputs: InputValues): Promise<OutputValues> => {
-    const values = inputs as EmbedTextInputs;
-    if (!values.PALM_KEY)
-      throw new Error("Embedding requires `PALM_KEY` input");
-    if (!values.text) throw new Error("Embedding requires `text` input");
-
-    const query = { text: values.text };
-
-    let embedding: number[] | undefined;
-    // Because Embedding API is a bit flaky, we try a few times before giving up.
-    let tries = 3;
-    while (!embedding && tries-- > 0) {
-      try {
-        const request = palm(values.PALM_KEY).embedding(query);
-        const data = await fetch(request);
-        const response = (await data.json()) as EmbedTextResponse;
-        embedding = response?.embedding?.value;
-      } catch (e) {
-        // TODO: Implement proper error handling.
-      }
-    }
-    if (!embedding)
-      throw new Error(`No embedding returned for "${values.text}"`);
-
-    return { embedding } as OutputValues;
-  },
-} satisfies NodeHandler;
+      outputs: {
+        embedding: {
+            type: "array",
+            title: "embedding",
+            description: "The embedding of the text.",
+            items: {
+              type: "number",
+            },
+            minItems: 768,
+            maxItems: 768,
+          },
+      },
+      invoke: async ({ text, PALM_KEY }) => {
+        if (!PALM_KEY)
+          throw new Error("Embedding requires `PALM_KEY` input");
+        if (!text) throw new Error("Embedding requires `text` input");
+    
+        const query = { text };
+    
+        let embedding: number[] | undefined;
+        // Because Embedding API is a bit flaky, we try a few times before giving up.
+        let tries = 3;
+        while (!embedding && tries-- > 0) {
+          try {
+            const request = palm(PALM_KEY).embedding(query);
+            const data = await fetch(request);
+            const response = (await data.json()) as EmbedTextResponse;
+            embedding = response?.embedding?.value;
+          } catch (e) {
+            // TODO: Implement proper error handling.
+          }
+        }
+        if (!embedding)
+          throw new Error(`No embedding returned for "${text}"`);
+    
+        return { embedding };
+      },
+});
