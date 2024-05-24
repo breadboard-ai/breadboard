@@ -56,6 +56,7 @@
   --bb-easing-duration-out: 0.3s;
 
   --bb-icon-add: url(/third_party/icons/add.svg);
+  --bb-icon-add-inverted: url(/third_party/icons/add-inverted.svg);
   --bb-icon-add-audio: url(/third_party/icons/add-audio.svg);
   --bb-icon-add-circle: url(/third_party/icons/add-circle.svg);
   --bb-icon-add-drawable: url(/third_party/icons/add-drawable.svg);
@@ -71,6 +72,7 @@
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
+  --bb-icon-draft: url(/third_party/icons/draft.svg);
   --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
   --bb-icon-edit: url(/third_party/icons/edit.svg);
   --bb-icon-eject: url(/third_party/icons/eject.svg);
@@ -78,6 +80,7 @@
   --bb-icon-expand: url(/third_party/icons/expand.svg);
   --bb-icon-file-add: url(/third_party/icons/file-add.svg);
   --bb-icon-fit: url(/third_party/icons/fit.svg);
+  --bb-icon-folder-managed: url(/third_party/icons/folder-managed.svg);
   --bb-icon-human: url(/third_party/icons/human.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-laps: url(/third_party/icons/laps.svg);
