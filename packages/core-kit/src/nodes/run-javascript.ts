@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType } from "@breadboard-ai/build";
-import type { InputValues } from "@google-labs/breadboard";
+import { defineNodeType, object } from "@breadboard-ai/build";
+import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
+import type { InputValues, Schema } from "@google-labs/breadboard";
 
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>
@@ -93,6 +94,7 @@ export type RunJavascriptInputs = InputValues & {
   code?: string;
   name?: string;
   raw?: boolean;
+  schema?: JsonSerializable;
 };
 
 export function convertToNamedFunction({
@@ -150,7 +152,7 @@ export function convertToNamedFunction({
 
 const DEFAULT_FUNCTION_NAME = "run";
 export const runJavascriptHandler = async (
-  { code, name, raw }: RunJavascriptInputs,
+  { code, name, raw, schema }: RunJavascriptInputs,
   args: InputValues
 ) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
@@ -205,6 +207,13 @@ export default defineNodeType({
       type: "string",
       default: "run",
     },
+    schema: {
+      behavior: ["config"],
+      description:
+        "The schema of the output data. This is used to validate the output data before running the code.",
+      type: object({}, "unknown"),
+      optional: true,
+    },
     raw: {
       behavior: ["config"],
       description:
@@ -221,12 +230,35 @@ export default defineNodeType({
       type: "unknown",
     },
   },
-  describe: ({ raw }) => ({
-    outputs: raw
-      ? { "*": {} }
-      : {
-          result: { description: "The result of running the JavaScript code" },
+  describe: (inputs) => {
+    if (inputs.raw && inputs.schema && inputs.schema.properties) {
+      const schema: Schema = inputs.schema;
+
+      const outputEntries = Object.entries(schema.properties as object).map(
+        ([name, val]) => [
+          name,
+          {
+            type: val.type,
+            description: `output "${name}"`,
+          },
+        ]
+      );
+      return {
+        outputs: Object.fromEntries(outputEntries),
+      };
+    }
+
+    if (inputs.raw == false) {
+      return {
+        outputs: {
+          result: {
+            description: "The result of running the JavaScript code",
+          },
         },
-  }),
+      };
+    }
+
+    return { outputs: { "*": {} } };
+  },
   invoke: (config, args) => runJavascriptHandler(config, args),
 });
