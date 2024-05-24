@@ -5,8 +5,14 @@
  */
 
 import test, { describe } from "node:test";
-import { functionOrTextRouterFunction } from "../src/function-calling.js";
+import {
+  URLMap,
+  boardInvocationAssemblerFunction,
+  functionOrTextRouterFunction,
+  toolResponseFormatterFunction,
+} from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
+import { FunctionCallPart } from "../src/context.js";
 
 describe("function-calling/functionOrTextRouterFunction", () => {
   test("throws when no context is supplied", () => {
@@ -155,5 +161,102 @@ describe("function-calling/functionOrTextRouterFunction", () => {
       context,
       functionCalls: [functionCall1, functionCall2],
     });
+  });
+});
+
+describe("function-calling/boardInvocationAssembler", () => {
+  test("throws when the args are missing", () => {
+    throws(() => {
+      boardInvocationAssemblerFunction({});
+    }, 'Must have "functionCalls".');
+    throws(() => {
+      boardInvocationAssemblerFunction({ functionCalls: [] });
+    }, 'Must have "urlMap"');
+    throws(() => {
+      boardInvocationAssemblerFunction({ functionCalls: [], urlMap: {} });
+    }, "Function call array must not be empty");
+  });
+
+  test("correctly packs the invocation args", () => {
+    const functionCalls = [
+      {
+        name: "Get_Web_Page_Content",
+        args: { url: "https://example.com/" },
+      },
+      {
+        name: "Get_Next_Holiday",
+        args: {
+          country: "LT",
+        },
+      },
+    ] satisfies FunctionCallPart["functionCall"][];
+    const urlMap = {
+      Get_Web_Page_Content: "get/web/page",
+      Get_Next_Holiday: "get/next/holiday",
+    } satisfies URLMap;
+    const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
+    deepStrictEqual(result, {
+      list: [
+        { $board: "get/web/page", url: "https://example.com/" },
+        { $board: "get/next/holiday", country: "LT" },
+      ],
+    });
+  });
+});
+
+describe("function-calling/toolResponseFormatter", () => {
+  test("correctly outputs LLMContent for simple outputs", () => {
+    {
+      const response = [{ data: "foo" }];
+      const result = toolResponseFormatterFunction({ response });
+      deepStrictEqual(result, {
+        response: [
+          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+        ],
+      });
+    }
+    {
+      const response = [{ data: null }];
+      const result = toolResponseFormatterFunction({ response });
+      deepStrictEqual(result, {
+        response: [
+          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+        ],
+      });
+    }
+    {
+      const response = [{ data: "foo" }, { bar: "baz" }];
+      const result = toolResponseFormatterFunction({ response });
+      deepStrictEqual(result, {
+        response: [
+          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+          { parts: [{ text: JSON.stringify(response[1]) }], role: "tool" },
+        ],
+      });
+    }
+  });
+  test("correctly detect LLMContent inside", () => {
+    {
+      const response = [{ out: { content: "foo" } }];
+      const result = toolResponseFormatterFunction({ response });
+      deepStrictEqual(result, {
+        response: [
+          { parts: [{ text: JSON.stringify(response[0]) }], role: "tool" },
+        ],
+      });
+    }
+    {
+      const response = [
+        {
+          out: {
+            content: { parts: [{ text: "hello" }], role: "something" },
+          },
+        },
+      ];
+      const result = toolResponseFormatterFunction({ response });
+      deepStrictEqual(result, {
+        response: [{ parts: response[0].out.content.parts, role: "tool" }],
+      });
+    }
   });
 });

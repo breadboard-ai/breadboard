@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, code } from "@google-labs/breadboard";
+import { OutputValues, board, code } from "@google-labs/breadboard";
 import { LlmContent, FunctionCallPart, fun, TextPart } from "./context.js";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
@@ -25,8 +25,80 @@ export const functionOrTextRouterFunction = fun(({ context }) => {
 
 export const functionOrTextRouter = code(functionOrTextRouterFunction);
 
-type URLMap = Record<string, string>;
+export type URLMap = Record<string, string>;
 
+export type BoardInvocationArgs = {
+  $board: string;
+} & Record<string, unknown>;
+
+export const boardInvocationAssemblerFunction = fun(
+  ({ functionCalls, urlMap }) => {
+    if (!functionCalls) {
+      throw new Error("Function call array is a required input");
+    }
+    if (!urlMap) {
+      throw new Error("URL map is a required input");
+    }
+    const calls = functionCalls as FunctionCallPart["functionCall"][];
+    if (calls.length === 0) {
+      throw new Error("Function call array must not be empty.");
+    }
+    const list: BoardInvocationArgs[] = [];
+    for (const call of calls) {
+      const $board = (urlMap as URLMap)[call.name];
+      list.push({ $board, ...call.args });
+    }
+    return { list };
+  }
+);
+
+export type FunctionResponse = {
+  role: "function";
+  parts: { functionResponse: { name: string; response: unknown }[] }[];
+};
+export const boardInvocationAssembler = code(boardInvocationAssemblerFunction);
+
+const argsUnpacker = code(({ item }) => {
+  const result = item as OutputValues;
+  return result;
+});
+
+const resultPacker = code((result) => {
+  return { item: result };
+});
+
+export const invokeBoardWithArgs = await board(({ item }) => {
+  const unpackArgs = argsUnpacker({
+    $metadata: {
+      title: "Unpack args",
+      description: "Unpacking board arguments",
+    },
+    item,
+  });
+
+  const invoker = core.invoke({
+    $metadata: {
+      title: "Invoke board",
+      description: "Invoking the board with unpacked arguments",
+    },
+    ...unpackArgs,
+  });
+
+  const packResults = resultPacker({
+    $metadata: { title: "Pack results", description: "Packing results" },
+    ...invoker,
+  });
+
+  return { item: packResults.item };
+}).serialize({
+  title: "Invoke Board With Args",
+  description:
+    "Takes one item of `boardInvocationAssembler` output and invokes it as a board with arguments.",
+  version: "0.0.1",
+});
+
+// TODO: Deprecate this. Only used by toolWorker. Remove when removing
+// the toolWorker node.
 export const boardInvokeAssembler = code(({ functionCalls, urlMap }) => {
   if (!functionCalls)
     throw new Error("Function call array is a required input");
@@ -43,11 +115,6 @@ export const boardInvokeAssembler = code(({ functionCalls, urlMap }) => {
     "https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json";
   return { $board, generator, ...call.args };
 });
-
-export type FunctionResponse = {
-  role: "function";
-  parts: { functionResponse: { name: string; response: unknown }[] }[];
-};
 
 export const boardResponseExtractor = code((inputs) => {
   // Pluck out schema from inputs
@@ -132,19 +199,30 @@ export const functionDeclarationsFormatter = code(({ list }) => {
   return { tools, urlMap };
 });
 
-export const toolResponseFormatter = code((inputs) => {
-  for (const key in inputs) {
-    const input = inputs[key] as LlmContent;
-    if ("content" in input) {
-      // Presume that this is an LLMContent
-      const content = input.content as LlmContent;
-      // Let's double check...
-      if (content.parts && Array.isArray(content.parts)) {
-        content.role = "tool";
-        return { response: content };
+export const toolResponseFormatterFunction = fun(({ response }) => {
+  const r = response as Record<string, unknown>[];
+  const result: LlmContent[] = [];
+  for (const inputs of r) {
+    let contentDetected = false;
+    for (const key in inputs) {
+      const input = inputs[key] as { content: LlmContent };
+      if (input !== null && typeof input === "object" && "content" in input) {
+        // Presume that this is an LLMContent
+        const content = input.content;
+        // Let's double check...
+        if (content.parts && Array.isArray(content.parts)) {
+          content.role = "tool";
+          result.push(content);
+          contentDetected = true;
+        }
       }
     }
+    if (!contentDetected) {
+      const text = JSON.stringify(inputs);
+      result.push({ parts: [{ text }], role: "tool" } satisfies LlmContent);
+    }
   }
-  const text = JSON.stringify(inputs);
-  return { response: { parts: [{ text }], role: "tool" } satisfies LlmContent };
+  return { response: result };
 });
+
+export const toolResponseFormatter = code(toolResponseFormatterFunction);
