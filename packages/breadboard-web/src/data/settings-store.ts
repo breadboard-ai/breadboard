@@ -185,6 +185,10 @@ export class SettingsStore {
     for (const store of settingsDb.objectStoreNames) {
       const items = await settingsDb.getAll(store);
       for (const item of items) {
+        if (!this.#settings[store]) {
+          continue;
+        }
+
         this.#settings[store].items.set(item.name, item);
       }
     }
