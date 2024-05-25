@@ -9,10 +9,14 @@ import {
   URLMap,
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
+  functionSignatureFromBoardFunction,
   toolResponseFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
 import { FunctionCallPart } from "../src/context.js";
+import { GraphDescriptor } from "@google-labs/breadboard";
+import { readFile } from "node:fs/promises";
+import { resolve } from "path";
 
 describe("function-calling/functionOrTextRouterFunction", () => {
   test("throws when no context is supplied", () => {
