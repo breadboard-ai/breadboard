@@ -227,6 +227,10 @@
     "version": "0.0.1"
   },
   {
+    "title": "String Concatenation",
+    "url": "/graphs/string-concat.json"
+  },
+  {
     "title": "Dense text summarizer (single iteration)",
     "url": "/graphs/summarize-single-iteration.json",
     "version": "0.0.1"
