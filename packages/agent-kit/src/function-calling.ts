@@ -90,16 +90,34 @@ export const resultFormatterFunction = fun(({ result, flags }) => {
   let contentDetected = false;
   const inputs = result as OutputValues;
   const item: LlmContent[] = [];
-  for (const key in inputs) {
-    const input = inputs[key] as { content: LlmContent };
-    if (input !== null && typeof input === "object" && "content" in input) {
-      // Presume that this is an LLMContent
-      const content = input.content;
-      // Let's double check...
-      if (content.parts && Array.isArray(content.parts)) {
+  const f = flags as FunctionCallFlags;
+  if (f) {
+    if (f.outputLLMContent) {
+      const content = inputs[f.outputLLMContent] as LlmContent;
+      content.role = "tool";
+      item.push(content);
+      contentDetected = true;
+    } else if (f.outputLLMContentArray) {
+      const contentArray = inputs[f.outputLLMContentArray] as LlmContent[];
+      contentArray.forEach((content) => {
         content.role = "tool";
         item.push(content);
-        contentDetected = true;
+      });
+      contentDetected = true;
+    }
+  } else {
+    // TODO: Deprecate and remove.
+    for (const key in inputs) {
+      const input = inputs[key] as { content: LlmContent };
+      if (input !== null && typeof input === "object" && "content" in input) {
+        // Presume that this is an LLMContent
+        const content = input.content;
+        // Let's double check...
+        if (content.parts && Array.isArray(content.parts)) {
+          content.role = "tool";
+          item.push(content);
+          contentDetected = true;
+        }
       }
     }
   }
@@ -107,8 +125,6 @@ export const resultFormatterFunction = fun(({ result, flags }) => {
     const text = JSON.stringify(inputs);
     item.push({ parts: [{ text }], role: "tool" } satisfies LlmContent);
   }
-
-  console.log("Formatting results with flags", flags);
   return { item };
 });
 

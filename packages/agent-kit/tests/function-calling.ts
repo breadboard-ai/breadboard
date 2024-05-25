@@ -15,7 +15,7 @@ import {
   resultFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
-import { FunctionCallPart } from "../src/context.js";
+import { FunctionCallPart, LlmContent } from "../src/context.js";
 import { GraphDescriptor } from "@google-labs/breadboard";
 import { readFile } from "node:fs/promises";
 import { resolve } from "path";
@@ -227,7 +227,7 @@ describe("function-calling/resultFormatterFunction", () => {
       });
     }
   });
-  test("correctly detect LLMContent inside", () => {
+  test("correctly detect LLMContent inside (old way)", () => {
     {
       const result = { out: { content: "foo" } };
       const output = resultFormatterFunction({ result });
@@ -244,6 +244,36 @@ describe("function-calling/resultFormatterFunction", () => {
       const output = resultFormatterFunction({ result });
       deepStrictEqual(output, {
         item: [{ parts: result.out.content.parts, role: "tool" }],
+      });
+    }
+  });
+  test("correctly detect LLMContent inside using flags", () => {
+    {
+      const llmContent: LlmContent = { parts: [{ text: "hello" }] };
+      const result = { out: llmContent };
+      const output = resultFormatterFunction({
+        result,
+        flags: { outputLLMContent: "out" },
+      });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: "hello" }], role: "tool" }],
+      });
+    }
+    {
+      const llmContentArray: LlmContent[] = [
+        { parts: [{ text: "hello" }] },
+        { parts: [{ text: "world" }] },
+      ];
+      const result = { out: llmContentArray };
+      const output = resultFormatterFunction({
+        result,
+        flags: { outputLLMContentArray: "out" },
+      });
+      deepStrictEqual(output, {
+        item: [
+          { parts: [{ text: "hello" }], role: "tool" },
+          { parts: [{ text: "world" }], role: "tool" },
+        ],
       });
     }
   });

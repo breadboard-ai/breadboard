@@ -1445,7 +1445,7 @@
               "id": "fn-7",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_7 = ({result,flags})=>{let contentDetected=false;const inputs=result;const item=[];for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";item.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs);item.push({parts:[{text}],role:\"tool\"})}console.log(\"Formatting results with flags\",flags);return{item}};",
+                "code": "const fn_7 = ({result,flags})=>{let contentDetected=false;const inputs=result;const item=[];const f=flags;if(f){if(f.outputLLMContent){const content=inputs[f.outputLLMContent];content.role=\"tool\";item.push(content);contentDetected=true}else if(f.outputLLMContentArray){const contentArray=inputs[f.outputLLMContentArray];contentArray.forEach(content=>{content.role=\"tool\";item.push(content)});contentDetected=true}}else{for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";item.push(content);contentDetected=true}}}}if(!contentDetected){const text=JSON.stringify(inputs);item.push({parts:[{text}],role:\"tool\"})}return{item}};",
                 "name": "fn_7",
                 "raw": true
               },
