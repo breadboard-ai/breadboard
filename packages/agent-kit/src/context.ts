@@ -21,6 +21,7 @@ export type LlmContent = {
 
 export type Metadata = {
   role: "$metadata";
+  type: "looper";
   data: unknown;
 };
 
@@ -120,7 +121,7 @@ export const progressReader = code(({ context, forkOutputs }) => {
   // Gives us where we've been and where we're going.
   for (let i = existing.length - 1; i >= 0; i--) {
     const item = existing[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       progress.push(item.data as LooperPlan);
     }
   }
@@ -200,7 +201,7 @@ export const checkAreWeDoneFunction = fun(({ context, generated }) => {
   let doneMarker: string | null = null;
   for (let i = 0; i < c.length; ++i) {
     const item = c[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       const plan = item.data as LooperPlan;
       if (plan.doneMarker) {
         doneMarker = plan.doneMarker;
@@ -251,7 +252,7 @@ export const skipIfDoneFunction = fun(({ context }) => {
   let done = false;
   for (let i = 0; i < c.length; ++i) {
     const item = c[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       const plan = item.data as LooperPlan;
       if (plan.done) {
         done = true;
