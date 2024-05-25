@@ -21,9 +21,87 @@ export type LlmContent = {
 
 export type Metadata = {
   role: "$metadata";
-  type: "looper";
-  data: unknown;
+} & (LooperMetadata | SplitMetadata);
+
+/**
+ * Provides support for storing multiple parallel contexts within
+ * a single context.
+ *
+ * The split marker allows representing multiple parallel contexts
+ * as one sequence by separating them with split markers.
+ *
+ * The sequence begins with a split marker of type "start",
+ * followed by one or more split markers of type "separator",
+ * and ends with a split marker of type "end".
+ *
+ * To allow nesting of split markers, a unique identifier is
+ * assigned to all split markers that belong to the same split.
+ */
+export type SplitMetadata = {
+  type: "split";
+  data: SplitMarkerData;
 };
+
+/**
+ * Split Marker Data
+ */
+export type SplitMarkerData = {
+  /**
+   * There are three types of split markers:
+   * - start: the beginning of the split
+   * - next: the separator between the split parts
+   * - end: the end of the split
+   */
+  type: "start" | "next" | "end";
+  /**
+   * Unique identifier for the split.
+   */
+  id: string;
+};
+
+export type LooperMetadata = {
+  type: "looper";
+  data: LooperPlan;
+};
+
+export type LooperPlan = {
+  /**
+   * Maximum iterations to make. This can be used to create simple
+   * "repeat N times" loops.
+   */
+  max?: number;
+  /**
+   * Plan items. Each item represents one trip down the "Loop" output, and
+   * at the end of the list, the "Context Out".
+   */
+  todo?: {
+    task: string;
+  }[];
+  /**
+   * The marker that will be used by others to signal completion of the job.
+   */
+  doneMarker?: string;
+  /**
+   * Indicator that this job is done.
+   */
+  done?: boolean;
+  /**
+   * Whether to append only the last item in the loop to the context or all
+   * of them.
+   */
+  appendLast?: boolean;
+  /**
+   * Whether to return only last item from the context as the final product
+   * or all of them;
+   */
+  returnLast?: boolean;
+  /**
+   * The next task.
+   */
+  next?: string;
+};
+
+export type LooperProgress = LooperPlan & { next: string };
 
 export type Context = LlmContent | Metadata;
 
@@ -73,45 +151,6 @@ export const userPartsAdder = code(({ context, toAdd }) => {
     return { context: result };
   }
 });
-
-export type LooperPlan = {
-  /**
-   * Maximum iterations to make. This can be used to create simple
-   * "repeat N times" loops.
-   */
-  max?: number;
-  /**
-   * Plan items. Each item represents one trip down the "Loop" output, and
-   * at the end of the list, the "Context Out".
-   */
-  todo?: {
-    task: string;
-  }[];
-  /**
-   * The marker that will be used by others to signal completion of the job.
-   */
-  doneMarker?: string;
-  /**
-   * Indicator that this job is done.
-   */
-  done?: boolean;
-  /**
-   * Whether to append only the last item in the loop to the context or all
-   * of them.
-   */
-  appendLast?: boolean;
-  /**
-   * Whether to return only last item from the context as the final product
-   * or all of them;
-   */
-  returnLast?: boolean;
-  /**
-   * The next task.
-   */
-  next?: string;
-};
-
-export type LooperProgress = LooperPlan & { next: string };
 
 export const progressReader = code(({ context, forkOutputs }) => {
   const fork = forkOutputs as boolean;
@@ -229,13 +268,13 @@ export const checkAreWeDoneFunction = fun(({ context, generated }) => {
     return { context: [...c, g] };
   }
 
-  const metadata = {
+  const metadata: Metadata = {
     role: "$metadata",
+    type: "looper",
     data: {
-      type: "looper",
       done: true,
     },
-  } as Metadata;
+  };
   return { context: [...c, g, metadata] };
 });
 

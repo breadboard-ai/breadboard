@@ -221,7 +221,7 @@ export const planReaderFunction = fun(({ context, progress }) => {
       contents.push({
         role: "$metadata",
         type: "looper",
-        data: { type: "looper", doneMarker },
+        data: { doneMarker },
       });
       return { context: contents };
     } else if (max) {
@@ -232,7 +232,7 @@ export const planReaderFunction = fun(({ context, progress }) => {
       contents.push({
         role: "$metadata",
         type: "looper",
-        data: { type: "looper", max },
+        data: { max },
       });
       return { context: contents };
     }
