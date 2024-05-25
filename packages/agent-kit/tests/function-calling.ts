@@ -11,7 +11,6 @@ import {
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
   functionSignatureFromBoardFunction,
-  responseCollatorFunction,
   resultFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
