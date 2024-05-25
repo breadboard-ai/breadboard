@@ -30,7 +30,13 @@ export const functionOrTextRouterFunction = fun(({ context }) => {
 
 export const functionOrTextRouter = code(functionOrTextRouterFunction);
 
-export type URLMap = Record<string, string>;
+export type URLMap = Record<
+  string,
+  {
+    url: string;
+    flags: FunctionCallFlags;
+  }
+>;
 
 export type BoardInvocationArgs = {
   $board: string;
@@ -50,8 +56,10 @@ export const boardInvocationAssemblerFunction = fun(
     }
     const list: BoardInvocationArgs[] = [];
     for (const call of calls) {
-      const $board = (urlMap as URLMap)[call.name];
-      list.push({ $board, ...call.args });
+      const item = (urlMap as URLMap)[call.name];
+      const $board = item.url;
+      const $flags = item.flags;
+      list.push({ $board, ...call.args, $flags });
     }
     return { list };
   }
@@ -64,19 +72,61 @@ export type FunctionResponse = {
 export const boardInvocationAssembler = code(boardInvocationAssemblerFunction);
 
 const argsUnpacker = code(({ item }) => {
-  const result = item as OutputValues;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { $flags, ...result } = item as OutputValues;
   return result;
 });
 
 const resultPacker = code((result) => {
-  return { item: result };
+  return { result };
 });
+
+const flagGetter = code(({ item }) => {
+  const { $flags } = item as OutputValues;
+  return { flags: $flags };
+});
+
+export const resultFormatterFunction = fun(({ result, flags }) => {
+  let contentDetected = false;
+  const inputs = result as OutputValues;
+  const item: LlmContent[] = [];
+  for (const key in inputs) {
+    const input = inputs[key] as { content: LlmContent };
+    if (input !== null && typeof input === "object" && "content" in input) {
+      // Presume that this is an LLMContent
+      const content = input.content;
+      // Let's double check...
+      if (content.parts && Array.isArray(content.parts)) {
+        content.role = "tool";
+        item.push(content);
+        contentDetected = true;
+      }
+    }
+  }
+  if (!contentDetected) {
+    const text = JSON.stringify(inputs);
+    item.push({ parts: [{ text }], role: "tool" } satisfies LlmContent);
+  }
+
+  console.log("Formatting results with flags", flags);
+  return { item };
+});
+
+const resultFormatter = code(resultFormatterFunction);
 
 export const invokeBoardWithArgs = await board(({ item }) => {
   const unpackArgs = argsUnpacker({
     $metadata: {
       title: "Unpack args",
       description: "Unpacking board arguments",
+    },
+    item,
+  });
+
+  const getFlags = flagGetter({
+    $metadata: {
+      title: "Get flags",
+      description: "Getting flags for the board invocation",
     },
     item,
   });
@@ -94,7 +144,13 @@ export const invokeBoardWithArgs = await board(({ item }) => {
     ...invoker,
   });
 
-  return { item: packResults.item };
+  const formatResults = resultFormatter({
+    $metadata: { title: "Format results", description: "Formatting results" },
+    result: packResults.result,
+    flags: getFlags.flags,
+  });
+
+  return { item: formatResults.item };
 }).serialize({
   title: "Invoke Board With Args",
   description:
@@ -145,6 +201,13 @@ export const functionResponseFormatter = code(
   }
 );
 
+export type FunctionCallFlags = {
+  inputLLMContent?: string;
+  inputLLMContentArray?: string;
+  outputLLMContent?: string;
+  outputLLMContentArray?: string;
+};
+
 export const functionSignatureFromBoardFunction = fun(({ board }) => {
   const b = board as GraphDescriptor;
   const inputs = b.nodes.filter((node) => node.type === "input");
@@ -166,16 +229,37 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     throw new Error("No output schema found");
   }
   const properties: Record<string, Schema> = {};
+  const flags: FunctionCallFlags = {};
   for (const key in inputSchema.properties) {
     const property = inputSchema.properties[key];
-    const type =
-      property.type == "object" || property.type == "array"
-        ? "string"
-        : property.type;
+    const isObject = property.type === "object";
+    const isArray = property.type === "array";
+    const type = isObject || isArray ? "string" : property.type;
+    if (isObject && property.behavior?.includes("llm-content")) {
+      flags.inputLLMContent = key;
+    } else if (
+      isArray &&
+      (property.items as Schema)?.behavior?.includes("llm-content")
+    ) {
+      flags.inputLLMContentArray = key;
+    }
     properties[key] = {
       type,
       description: property.description || property.title || "text",
     };
+  }
+  for (const key in outputSchema.properties) {
+    const property = outputSchema.properties[key];
+    const isObject = property.type === "object";
+    const isArray = property.type === "array";
+    if (isObject && property.behavior?.includes("llm-content")) {
+      flags.outputLLMContent = key;
+    } else if (
+      isArray &&
+      (property.items as Schema)?.behavior?.includes("llm-content")
+    ) {
+      flags.outputLLMContentArray = key;
+    }
   }
   const name = b.title?.replace(/\W/g, "_");
   const description = b.description;
@@ -183,7 +267,11 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     type: "object",
     properties,
   };
-  return { function: { name, description, parameters }, returns: outputSchema };
+  return {
+    function: { name, description, parameters },
+    returns: outputSchema,
+    flags,
+  };
 });
 
 export const functionSignatureFromBoard = code(
@@ -202,7 +290,11 @@ export const boardToFunction = await board(({ item }) => {
     board: importBoard.board,
   });
 
-  return { function: getFunctionSignature.function, boardURL: url };
+  return {
+    function: getFunctionSignature.function,
+    boardURL: url,
+    flags: getFunctionSignature.flags,
+  };
 }).serialize({
   title: "Board to functions",
   description:
@@ -212,47 +304,26 @@ export const boardToFunction = await board(({ item }) => {
 type FunctionSignatureItem = {
   function: { name: string };
   boardURL: string;
+  flags: FunctionCallFlags;
 };
 
 export const functionDeclarationsFormatter = code(({ list }) => {
   const tools: unknown[] = [];
-  const urlMap: Record<string, string> = {};
+  const urlMap: URLMap = {};
   (list as FunctionSignatureItem[]).forEach((item) => {
     tools.push(item.function);
-    urlMap[item.function.name] = item.boardURL;
+    const flags = item.flags;
+    urlMap[item.function.name] = { url: item.boardURL, flags };
   });
   return { tools, urlMap };
 });
 
-export type ToolResponse = { item: Record<string, unknown> };
+export type ToolResponse = { item: LlmContent[] };
 
-export const toolResponseFormatterFunction = fun(({ response }) => {
+export const responseCollatorFunction = fun(({ response }) => {
   const r = response as ToolResponse[];
-  const result: LlmContent[] = [];
-  for (const inputs of r) {
-    let contentDetected = false;
-    if (!inputs.item) {
-      throw new Error("Invalid tool response");
-    }
-    for (const key in inputs.item) {
-      const input = inputs.item[key] as { content: LlmContent };
-      if (input !== null && typeof input === "object" && "content" in input) {
-        // Presume that this is an LLMContent
-        const content = input.content;
-        // Let's double check...
-        if (content.parts && Array.isArray(content.parts)) {
-          content.role = "tool";
-          result.push(content);
-          contentDetected = true;
-        }
-      }
-    }
-    if (!contentDetected) {
-      const text = JSON.stringify(inputs.item);
-      result.push({ parts: [{ text }], role: "tool" } satisfies LlmContent);
-    }
-  }
+  const result = r.flatMap((item) => item.item);
   return { response: result };
 });
 
-export const toolResponseFormatter = code(toolResponseFormatterFunction);
+export const responseCollator = code(responseCollatorFunction);

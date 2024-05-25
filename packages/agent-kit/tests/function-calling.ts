@@ -6,11 +6,13 @@
 
 import test, { describe } from "node:test";
 import {
+  FunctionCallFlags,
   URLMap,
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
   functionSignatureFromBoardFunction,
-  toolResponseFormatterFunction,
+  responseCollatorFunction,
+  resultFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
 import { FunctionCallPart } from "../src/context.js";
@@ -195,80 +197,53 @@ describe("function-calling/boardInvocationAssembler", () => {
       },
     ] satisfies FunctionCallPart["functionCall"][];
     const urlMap = {
-      Get_Web_Page_Content: "get/web/page",
-      Get_Next_Holiday: "get/next/holiday",
+      Get_Web_Page_Content: { url: "get/web/page", flags: {} },
+      Get_Next_Holiday: { url: "get/next/holiday", flags: {} },
     } satisfies URLMap;
     const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
     deepStrictEqual(result, {
       list: [
-        { $board: "get/web/page", url: "https://example.com/" },
-        { $board: "get/next/holiday", country: "LT" },
+        { $board: "get/web/page", url: "https://example.com/", $flags: {} },
+        { $board: "get/next/holiday", country: "LT", $flags: {} },
       ],
     });
   });
 });
 
-describe("function-calling/toolResponseFormatter", () => {
-  test("detects invalid response", () => {
-    throws(() => {
-      const response = [{ data: "foo" }];
-      toolResponseFormatterFunction({ response });
-    }, 'Must have "item"');
-  });
-
+describe("function-calling/resultFormatterFunction", () => {
   test("correctly outputs LLMContent for simple outputs", () => {
     {
-      const response = [{ item: { data: "foo" } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
+      const result = { data: "foo" };
+      const output = resultFormatterFunction({ result, flags: {} });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
       });
     }
     {
-      const response = [{ item: { data: null } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
-      });
-    }
-    {
-      const response = [{ item: { data: "foo" } }, { item: { bar: "baz" } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-          { parts: [{ text: JSON.stringify(response[1].item) }], role: "tool" },
-        ],
+      const result = { data: null };
+      const output = resultFormatterFunction({ result, flags: {} });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
       });
     }
   });
   test("correctly detect LLMContent inside", () => {
     {
-      const response = [{ item: { out: { content: "foo" } } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
+      const result = { out: { content: "foo" } };
+      const output = resultFormatterFunction({ result });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
       });
     }
     {
-      const response = [
-        {
-          item: {
-            out: {
-              content: { parts: [{ text: "hello" }], role: "something" },
-            },
-          },
+      const result = {
+        out: {
+          content: { parts: [{ text: "hello" }], role: "something" },
         },
-      ];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [{ parts: response[0].item.out.content.parts, role: "tool" }],
+      };
+      const output = resultFormatterFunction({ result });
+      deepStrictEqual(output, {
+        item: [{ parts: result.out.content.parts, role: "tool" }],
       });
     }
   });
@@ -368,22 +343,45 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
         },
         required: ["holidays"],
       },
+      flags: {},
     });
   });
-});
 
-test("substitutes property title for description when description is missing", async () => {
-  const board = await loadBoard("no-descriptions");
-  const result = functionSignatureFromBoardFunction({
-    board,
-  }) as { function: Record<string, unknown> };
-  deepStrictEqual(result.function.parameters, {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        description: "text",
+  test("recognizes and flags LLM content", async () => {
+    const board = await loadBoard("holiday-researcher");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { flags: FunctionCallFlags };
+    deepStrictEqual(result.flags, {
+      inputLLMContent: "text",
+      outputLLMContent: "text",
+    });
+  });
+
+  test("recognizes and flags LLM content arrays", async () => {
+    const board = await loadBoard("llm-content-array");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { flags: FunctionCallFlags };
+    deepStrictEqual(result.flags, {
+      inputLLMContentArray: "text",
+      outputLLMContentArray: "text",
+    });
+  });
+
+  test("substitutes property title for description when description is missing", async () => {
+    const board = await loadBoard("no-descriptions");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { function: Record<string, unknown> };
+    deepStrictEqual(result.function.parameters, {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "text",
+        },
       },
-    },
+    });
   });
 });

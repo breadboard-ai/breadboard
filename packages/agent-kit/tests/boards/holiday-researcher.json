@@ -83,8 +83,9 @@
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "text"
+              "type": "object",
+              "title": "text",
+              "behavior": ["llm-content"]
             }
           }
         }
