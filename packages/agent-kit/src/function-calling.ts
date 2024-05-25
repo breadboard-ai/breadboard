@@ -312,11 +312,12 @@ export const functionSignatureFromBoard = code(
   functionSignatureFromBoardFunction
 );
 
-export const boardToFunction = await board(({ item }) => {
+export const boardToFunction = await board(({ item, context }) => {
   const url = item.isString();
 
   const importBoard = core.curry({
     $board: url,
+    context,
   });
 
   const getFunctionSignature = functionSignatureFromBoard({
@@ -326,7 +327,7 @@ export const boardToFunction = await board(({ item }) => {
 
   return {
     function: getFunctionSignature.function,
-    boardURL: url,
+    boardURL: importBoard.board,
     flags: getFunctionSignature.flags,
   };
 }).serialize({

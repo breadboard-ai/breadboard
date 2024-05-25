@@ -129,13 +129,22 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     progress: readProgress.progress,
   });
 
+  const boardToFunctionWithContext = core.curry({
+    $metadata: {
+      title: "Add Context",
+      description: "Adding context to the board to function converter",
+    },
+    $board: "#boardToFunction",
+    context: addLooperTask.context,
+  });
+
   const turnBoardsToFunctions = core.map({
     $id: "turnBoardsToFunctions",
     $metadata: {
       title: "Turn Boards into Functions",
       description: "Turning provided boards into functions",
     },
-    board: "#boardToFunction",
+    board: boardToFunctionWithContext.board,
     list: tools.isArray(),
   });
 
