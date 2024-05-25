@@ -340,7 +340,9 @@ export class Input extends LitElement {
             value = values[key] as LLMContent[] | null;
             if (!value) {
               const unparsedValue = property.default;
-              value = unparsedValue ? JSON.parse(unparsedValue) : null;
+              value = unparsedValue
+                ? JSON.parse(unparsedValue)
+                : [{ parts: [], role: "user" }];
             }
 
             const allow = createAllowListFromProperty(property);
