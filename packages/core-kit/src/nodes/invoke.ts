@@ -13,7 +13,7 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
-import { defineNodeType, unsafeSchema } from "@breadboard-ai/build";
+import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -101,7 +101,7 @@ export default defineNodeType({
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",
       // TODO(aomarks) A better type.
-      type: "unknown",
+      type: object({}),
       optional: true,
     },
     "*": {

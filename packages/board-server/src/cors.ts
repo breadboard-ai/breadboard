@@ -18,7 +18,7 @@ export const cors = (req: IncomingMessage, res: ServerResponse) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS_HEADERS);
     res.end();
-    return null;
+    return false;
   }
 
   const method = req.method || "GET";

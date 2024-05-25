@@ -79,9 +79,12 @@ export class Overlay extends LitElement {
 
   render() {
     return html`
-    <div id="background" @pointerdown=${() => {
+    <div id="background" @pointerdown=${(evt: Event) => {
+      evt.stopImmediatePropagation();
       this.dispatchEvent(new OverlayDismissedEvent());
     }}></div>
-    <div id="content"><slot></div>`;
+    <div id="content" @pointerdown=${(evt: Event) => {
+      evt.stopImmediatePropagation();
+    }}><slot></div>`;
   }
 }

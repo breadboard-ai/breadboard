@@ -46,7 +46,7 @@
           "from": "fn-6",
           "to": "appendContext",
           "out": "text",
-          "in": "text"
+          "in": "toAdd"
         },
         {
           "from": "createSchema",
@@ -133,17 +133,13 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "title": "Context out"
                 },
                 "text": {
                   "title": "Text",
-                  "behavior": [
-                    "deprecated"
-                  ],
+                  "behavior": ["deprecated"],
                   "type": "string"
                 }
               }
@@ -154,7 +150,7 @@
           "id": "appendContext",
           "type": "runJavascript",
           "configuration": {
-            "code": "const appendContext = ({context,text})=>{if(!text)return{context};return{context:[...context||[],{role:\"user\",parts:[{text}]}]}};",
+            "code": "const appendContext = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "appendContext",
             "raw": true
           },
@@ -172,15 +168,11 @@
               "properties": {
                 "text": {
                   "title": "Text",
-                  "behavior": [
-                    "deprecated"
-                  ],
+                  "behavior": ["deprecated"],
                   "type": "string"
                 }
               },
-              "required": [
-                "text"
-              ]
+              "required": ["text"]
             }
           },
           "metadata": {
@@ -205,7 +197,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"string\",behavior:[\"transient\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}};",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}};",
             "name": "createSchema",
             "raw": true
           },
@@ -235,9 +227,7 @@
               "type": "object",
               "properties": {
                 "again": {
-                  "behavior": [
-                    "deprecated"
-                  ],
+                  "behavior": ["deprecated"],
                   "type": "string",
                   "title": "again"
                 }
@@ -262,9 +252,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "examples": [
                     "[{\"parts\":[{\"text\":\"{\\\"adCampaign\\\":{\\\"headlines\\\":[\\\"Breadboard: AI Playground\\\",\\\"Exp. AI Patterns\\\",\\\"Rapid Prototyping\\\",\\\"AI Power, Gemini\\\",\\\"Integrate AI Seamlessly\\\",\\\"Create Graphs, Prompts\\\",\\\"Accessible AI\\\",\\\"Breadboard: Dev's AI Kit\\\",\\\"Supercharge Dev, Breadboard\\\",\\\"Accelerate Innovation\\\",\\\"Revolutionize Dev, AI\\\",\\\"Breadboard: AI, Ingenuity\\\",\\\"Elevate Projects, Breadboard\\\",\\\"Unlock AI Power, Breadboard\\\"],\\\"descriptions\\\":[\\\"Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.\\\",\\\"Stunning graphs with prompts. Accessible AI for devs.\\\",\\\"Accelerate innovation with Breadboard. Experiment with AI risk-free.\\\",\\\"Elevate projects with Breadboard AI. Integrate AI seamlessly.\\\"]},\\\"voteRequest\\\":\\\"Does this ad campaign seem ok to you?\\\"}\"}],\"role\":\"model\"}]"
@@ -274,18 +262,14 @@
                 "title": {
                   "title": "Title",
                   "description": "The user label",
-                  "behavior": [
-                    "config"
-                  ],
+                  "behavior": ["config"],
                   "default": "User",
                   "type": "string"
                 },
                 "description": {
                   "title": "Description",
                   "description": "The user's input",
-                  "behavior": [
-                    "config"
-                  ],
+                  "behavior": ["config"],
                   "default": "A request or response",
                   "type": "string"
                 }
@@ -313,9 +297,7 @@
           "configuration": {
             "schema": {
               "type": "object",
-              "behavior": [
-                "bubble"
-              ],
+              "behavior": ["bubble"],
               "properties": {
                 "feedback": {
                   "type": "string",
@@ -336,15 +318,11 @@
           "configuration": {
             "schema": {
               "type": "object",
-              "behavior": [
-                "bubble"
-              ],
+              "behavior": ["bubble"],
               "properties": {
                 "output": {
                   "type": "object",
-                  "behavior": [
-                    "llm-content"
-                  ],
+                  "behavior": ["llm-content"],
                   "title": "Output",
                   "description": "The output to display"
                 }
@@ -480,11 +458,12 @@
               "properties": {
                 "worker": {
                   "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": false,
                   "title": "Worker",
                   "description": "Worker to repeat",
-                  "behavior": [
-                    "board"
-                  ]
+                  "behavior": ["board"]
                 },
                 "context": {
                   "title": "Context",
@@ -492,9 +471,7 @@
                   "items": {
                     "type": "object",
                     "format": "multiline",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "[]",
                   "description": "Initial conversation context"
@@ -504,14 +481,10 @@
                   "description": "The maximum number of repetitions to make (set to -1 to go infinitely)",
                   "type": "number",
                   "default": "-1",
-                  "examples": [
-                    "3"
-                  ]
+                  "examples": ["3"]
                 }
               },
-              "required": [
-                "worker"
-              ]
+              "required": ["worker"]
             }
           }
         },
@@ -742,10 +715,7 @@
                   "examples": [
                     "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"poems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"inspiration\": {\n            \"type\": \"string\",\n            \"description\": \"The inspiration behind the poem\"\n          },\n          \"poem\": {\n            \"type\": \"string\",\n            \"description\": \"The poem itself\"\n          }\n        }\n      }\n    }\n  }\n}"
                   ],
-                  "behavior": [
-                    "json-schema",
-                    "config"
-                  ],
+                  "behavior": ["json-schema", "config"],
                   "default": "{}"
                 },
                 "context": {
@@ -753,20 +723,14 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "[]",
-                  "examples": [
-                    "the universe within us"
-                  ]
+                  "examples": ["the universe within us"]
                 },
                 "instruction": {
                   "title": "Instruction",
-                  "behavior": [
-                    "config"
-                  ],
+                  "behavior": ["config"],
                   "format": "multiline",
                   "examples": [
                     "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up three two-line rhyming poems about it.\nLook at the topic below and do your magic"
@@ -774,9 +738,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "instruction"
-              ]
+              "required": ["instruction"]
             }
           }
         },
@@ -807,19 +769,14 @@
                   "properties": {
                     "kind": {
                       "type": "string",
-                      "enum": [
-                        "error"
-                      ]
+                      "enum": ["error"]
                     },
                     "error": {
                       "type": "object",
                       "properties": {
                         "type": {
                           "type": "string",
-                          "enum": [
-                            "parsing",
-                            "validation"
-                          ]
+                          "enum": ["parsing", "validation"]
                         },
                         "message": {
                           "type": "string"
@@ -883,7 +840,7 @@
       "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
       "edges": [
         {
-          "from": "fn-10",
+          "from": "fn-11",
           "to": "output-2",
           "out": "context",
           "in": "out"
@@ -896,7 +853,7 @@
         },
         {
           "from": "fn-5",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "context",
           "in": "context"
         },
@@ -909,18 +866,18 @@
         {
           "from": "router",
           "to": "assembleBoardInvoke",
-          "out": "functionCall",
-          "in": "functionCall"
+          "out": "functionCalls",
+          "in": "functionCalls"
         },
         {
           "from": "router",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "context",
           "in": "generated"
         },
         {
           "from": "router",
-          "to": "fn-10",
+          "to": "fn-11",
           "out": "text",
           "in": "text"
         },
@@ -932,7 +889,7 @@
         },
         {
           "from": "fn-3",
-          "to": "fn-8",
+          "to": "fn-9",
           "out": "context",
           "in": "context"
         },
@@ -950,9 +907,9 @@
         },
         {
           "from": "assembleBoardInvoke",
-          "to": "invokeBoard",
-          "out": "*",
-          "in": ""
+          "to": "map-7",
+          "out": "list",
+          "in": "list"
         },
         {
           "from": "input-1",
@@ -985,8 +942,8 @@
           "in": "systemInstruction"
         },
         {
-          "from": "fn-8",
-          "to": "output-9",
+          "from": "fn-9",
+          "to": "output-10",
           "out": "context",
           "in": "out"
         },
@@ -1003,10 +960,10 @@
           "in": "urlMap"
         },
         {
-          "from": "invokeBoard",
-          "to": "fn-7",
-          "out": "*",
-          "in": ""
+          "from": "map-7",
+          "to": "fn-8",
+          "out": "list",
+          "in": "response"
         },
         {
           "from": "turnBoardsToFunctions",
@@ -1015,8 +972,8 @@
           "in": "list"
         },
         {
-          "from": "fn-7",
-          "to": "fn-8",
+          "from": "fn-8",
+          "to": "fn-9",
           "out": "response",
           "in": "toAdd"
         }
@@ -1038,11 +995,11 @@
           }
         },
         {
-          "id": "fn-10",
+          "id": "fn-11",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_10 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
-            "name": "fn_10",
+            "code": "const fn_11 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
+            "name": "fn_11",
             "raw": true
           },
           "metadata": {
@@ -1067,7 +1024,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1080,7 +1037,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_3 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -1114,7 +1071,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const $board=urlMap[call.name];list.push({$board,...call.args})}return{list}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1136,9 +1093,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "examples": [
                     "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\nbook description: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
@@ -1149,10 +1104,7 @@
                   "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
                   "type": "object",
                   "default": "{}",
-                  "behavior": [
-                    "llm-content",
-                    "config"
-                  ],
+                  "behavior": ["llm-content", "config"],
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nWrite an outline for a novel, following the provided specs.\\n\"\n    }\n  ]\n}"
                   ]
@@ -1163,10 +1115,7 @@
                   "description": "(Optional) Add tools to this list for the worker to use when needed",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "board",
-                      "config"
-                    ]
+                    "behavior": ["board", "config"]
                   },
                   "default": "[]"
                 },
@@ -1178,25 +1127,19 @@
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
                   ],
-                  "behavior": [
-                    "llm-content",
-                    "config"
-                  ]
+                  "behavior": ["llm-content", "config"]
                 }
               },
-              "required": [
-                "in",
-                "persona"
-              ]
+              "required": ["in", "persona"]
             }
           }
         },
         {
-          "id": "fn-8",
+          "id": "fn-9",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
-            "name": "fn_8",
+            "code": "const fn_9 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
+            "name": "fn_9",
             "raw": true
           },
           "metadata": {
@@ -1218,12 +1161,14 @@
           }
         },
         {
-          "id": "invokeBoard",
-          "type": "invoke",
-          "configuration": {},
+          "id": "map-7",
+          "type": "map",
+          "configuration": {
+            "board": "#invokeBoardWithArgs"
+          },
           "metadata": {
-            "title": "Invoke Tool",
-            "description": "Invoking the board"
+            "title": "Invoke Tools in Parallel",
+            "description": "Invoking tools in parallel"
           }
         },
         {
@@ -1238,11 +1183,11 @@
           }
         },
         {
-          "id": "fn-7",
+          "id": "fn-8",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = inputs=>{for(const key in inputs){const input=inputs[key];if(\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";return{response:content}}}}const text=JSON.stringify(inputs);return{response:{parts:[{text}],role:\"tool\"}}};",
-            "name": "fn_7",
+            "code": "const fn_8 = ({response})=>{const r=response;const result=[];for(const inputs of r){let contentDetected=false;if(!inputs.item){throw new Error(\"Invalid tool response\")}for(const key in inputs.item){const input=inputs.item[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";result.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs.item);result.push({parts:[{text}],role:\"tool\"})}}return{response:result}};",
+            "name": "fn_8",
             "raw": true
           },
           "metadata": {
@@ -1251,7 +1196,7 @@
           }
         },
         {
-          "id": "output-9",
+          "id": "output-10",
           "type": "output",
           "configuration": {
             "schema": {
@@ -1341,16 +1286,12 @@
                   "properties": {
                     "item": {
                       "title": "board",
-                      "behavior": [
-                        "board"
-                      ],
+                      "behavior": ["board"],
                       "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "item"
-                  ]
+                  "required": ["item"]
                 }
               }
             },
@@ -1358,6 +1299,106 @@
               "id": "curry-3",
               "type": "curry",
               "configuration": {}
+            }
+          ],
+          "graphs": {}
+        },
+        "invokeBoardWithArgs": {
+          "title": "Invoke Board With Args",
+          "description": "Takes one item of `boardInvocationAssembler` output and invokes it as a board with arguments.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "fn-5",
+              "to": "output-2",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "invoke-4",
+              "to": "fn-5",
+              "out": "*",
+              "in": ""
+            },
+            {
+              "from": "fn-3",
+              "to": "invoke-4",
+              "out": "*",
+              "in": ""
+            },
+            {
+              "from": "input-1",
+              "to": "fn-3",
+              "out": "item",
+              "in": "item"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "output-2",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "string",
+                      "title": "item"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "fn-5",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_5 = result=>{return{item:result}};",
+                "name": "fn_5",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Pack results",
+                "description": "Packing results"
+              }
+            },
+            {
+              "id": "invoke-4",
+              "type": "invoke",
+              "configuration": {},
+              "metadata": {
+                "title": "Invoke board",
+                "description": "Invoking the board with unpacked arguments"
+              }
+            },
+            {
+              "id": "fn-3",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_3 = ({item})=>{const result=item;return result};",
+                "name": "fn_3",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Unpack args",
+                "description": "Unpacking board arguments"
+              }
+            },
+            {
+              "id": "input-1",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "string",
+                      "title": "item"
+                    }
+                  },
+                  "required": ["item"]
+                }
+              }
             }
           ],
           "graphs": {}
@@ -1578,7 +1619,7 @@
           "id": "router",
           "type": "runJavascript",
           "configuration": {
-            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallPart=item.parts.find(part=>\"functionCall\"in part);if(!functionCallPart){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCall:functionCallPart.functionCall}};",
+            "code": "const router = ({context})=>{if(!context)throw new Error(\"Context is a required input\");const item=context;const functionCallParts=item.parts.filter(part=>\"functionCall\"in part).map(part=>part.functionCall);if(functionCallParts.length===0){const textPart=item.parts.find(part=>\"text\"in part);if(!textPart)throw new Error(\"No text or function call found in context\");return{context,text:textPart.text}}return{context,functionCalls:functionCallParts}};",
             "name": "router",
             "raw": true
           },
@@ -1613,7 +1654,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCall,urlMap})=>{if(!functionCall)throw new Error(\"Function call is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const call=functionCall;const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls)throw new Error(\"Function call array is a required input\");if(!urlMap)throw new Error(\"URL map is a required input\");const calls=functionCalls;if(calls.length===0)throw new Error(\"Function call array must not be empty.\");const call=calls[0];const $board=urlMap[call.name];const generator=\"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";return{$board,generator,...call.args}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1647,9 +1688,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "What is the square root of e?"
                 },
@@ -1669,9 +1708,7 @@
                   "description": "The boards to use as tools",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "board"
-                    ]
+                    "behavior": ["board"]
                   },
                   "examples": [
                     "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
@@ -1685,9 +1722,7 @@
                   "default": "5"
                 }
               },
-              "required": [
-                "instruction"
-              ]
+              "required": ["instruction"]
             }
           }
         },
@@ -1855,16 +1890,12 @@
                   "properties": {
                     "item": {
                       "title": "board",
-                      "behavior": [
-                        "board"
-                      ],
+                      "behavior": ["board"],
                       "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "item"
-                  ]
+                  "required": ["item"]
                 }
               }
             },
@@ -2002,20 +2033,14 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
-                  "examples": [
-                    "the universe within us"
-                  ]
+                  "examples": ["the universe within us"]
                 },
                 "instruction": {
                   "title": "Instruction",
                   "format": "multiline",
-                  "behavior": [
-                    "config"
-                  ],
+                  "behavior": ["config"],
                   "examples": [
                     "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
                   ],
@@ -2028,16 +2053,11 @@
                   "default": "[]",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "config"
-                    ]
+                    "behavior": ["config"]
                   }
                 }
               },
-              "required": [
-                "context",
-                "instruction"
-              ]
+              "required": ["context", "instruction"]
             }
           }
         }
@@ -2131,9 +2151,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "title": "Loop"
                 }
@@ -2165,9 +2183,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "[]",
                   "examples": [
@@ -2180,10 +2196,7 @@
                   "default": "{}",
                   "description": "The task to be used for loop planning",
                   "type": "object",
-                  "behavior": [
-                    "llm-content",
-                    "config"
-                  ]
+                  "behavior": ["llm-content", "config"]
                 }
               },
               "required": []
@@ -2261,7 +2274,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=structuredClone(toAdd);if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+            "code": "const fn_4 = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
             "name": "fn_4",
             "raw": true
           },
@@ -2297,9 +2310,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "title": "Context out"
                 }
@@ -2332,6 +2343,12 @@
           "to": "fn-4",
           "out": "*",
           "in": ""
+        },
+        {
+          "from": "input-1",
+          "to": "fn-4",
+          "out": "merge",
+          "in": "merge"
         }
       ],
       "nodes": [
@@ -2346,9 +2363,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "title": "context"
                 }
@@ -2364,7 +2379,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = inputs=>{const entries=Object.entries(inputs).sort();const context=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}return{context}};",
+            "code": "const fn_4 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
             "name": "fn_4",
             "raw": true
           },
@@ -2380,6 +2395,25 @@
           "metadata": {
             "title": "Input",
             "description": "Getting all the data"
+          }
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "merge": {
+                  "type": "boolean",
+                  "behavior": ["config"],
+                  "title": "Merge Contexts",
+                  "default": "false",
+                  "description": "Merge the last items of all incoming conversation into one."
+                }
+              },
+              "required": []
+            }
           }
         }
       ],

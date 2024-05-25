@@ -221,14 +221,10 @@
                         "description": "The value to substitute for the parameter \"location\""
                       },
                       "generator": {
-                        "type": [
-                          "array",
-                          "boolean",
-                          "null",
-                          "number",
-                          "object",
-                          "string"
-                        ],
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false,
                         "title": "board",
                         "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "behavior": [

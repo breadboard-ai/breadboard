@@ -143,6 +143,25 @@ export type ErrorCapability = Capability & {
 };
 
 /**
+ * Represents an inline data capability, encoded as a base64 string.
+ */
+export type InlineDataCapabilityPart = {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+};
+
+/**
+ * A capability that represents a data value passed over the wire.
+ * This is useful for passing inline data (base64 encoded) over the wire, as
+ * well as references to external resources.
+ */
+export type DataCapability = {
+  kind: "data";
+} & InlineDataCapabilityPart;
+
+/**
  * The Map of queues of all outputs that were sent to a given node,
  * and a map of these for all nodes.
  */
