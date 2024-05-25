@@ -27,7 +27,7 @@ import {
   functionDeclarationsFormatter,
   functionOrTextRouter,
   invokeBoardWithArgs,
-  toolResponseFormatter,
+  responseCollator,
 } from "../function-calling.js";
 
 export type SpecialistType = NewNodeFactory<
@@ -187,7 +187,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     board: "#invokeBoardWithArgs",
   });
 
-  const formatToolResponse = toolResponseFormatter({
+  const formatToolResponse = responseCollator({
     $metadata: {
       title: "Format Tool Response",
       description: "Formatting tool response",

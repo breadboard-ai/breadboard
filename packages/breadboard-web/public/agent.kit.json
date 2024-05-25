@@ -1117,7 +1117,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const $board=urlMap[call.name];list.push({$board,...call.args})}return{list}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const item=urlMap[call.name];const $board=item.url;const $flags=item.flags;list.push({$board,...call.args,$flags})}return{list}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1211,7 +1211,7 @@
           "id": "formatFunctionDeclarations",
           "type": "runJavascript",
           "configuration": {
-            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}};",
+            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);const flags=item.flags;urlMap[item.function.name]={url:item.boardURL,flags}});return{tools,urlMap}};",
             "name": "formatFunctionDeclarations",
             "raw": true
           },
@@ -1246,7 +1246,7 @@
           "id": "fn-8",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({response})=>{const r=response;const result=[];for(const inputs of r){let contentDetected=false;if(!inputs.item){throw new Error(\"Invalid tool response\")}for(const key in inputs.item){const input=inputs.item[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";result.push(content);contentDetected=true}}}if(!contentDetected){const text=JSON.stringify(inputs.item);result.push({parts:[{text}],role:\"tool\"})}}return{response:result}};",
+            "code": "const fn_8 = ({response})=>{const r=response;const result=r.flatMap(item=>item.item);return{response:result}};",
             "name": "fn_8",
             "raw": true
           },
@@ -1281,10 +1281,16 @@
           "description": "Use this board to convert specified boards into function-calling signatures",
           "edges": [
             {
-              "from": "getFunctionSignature",
+              "from": "fn-4",
               "to": "output-2",
               "out": "function",
               "in": "function"
+            },
+            {
+              "from": "fn-4",
+              "to": "output-2",
+              "out": "flags",
+              "in": "flags"
             },
             {
               "from": "input-1",
@@ -1300,9 +1306,9 @@
             },
             {
               "from": "curry-3",
-              "to": "getFunctionSignature",
+              "to": "fn-4",
               "out": "board",
-              "in": "json"
+              "in": "board"
             }
           ],
           "nodes": [
@@ -1314,30 +1320,31 @@
                   "type": "object",
                   "properties": {
                     "function": {
-                      "type": [
-                        "array",
-                        "boolean",
-                        "null",
-                        "number",
-                        "object",
-                        "string"
-                      ],
+                      "type": "string",
                       "title": "function"
                     },
                     "boardURL": {
                       "type": "string",
                       "title": "boardURL"
+                    },
+                    "flags": {
+                      "type": "string",
+                      "title": "flags"
                     }
                   }
                 }
               }
             },
             {
-              "id": "getFunctionSignature",
-              "type": "jsonata",
+              "id": "fn-4",
+              "type": "runJavascript",
               "configuration": {
-                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}properties[key]={type,description:property.description||property.title||\"text\"}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
+                "name": "fn_4",
                 "raw": true
+              },
+              "metadata": {
+                "title": "Get Function Signature from board"
               }
             },
             {
@@ -1376,20 +1383,26 @@
           "version": "0.0.1",
           "edges": [
             {
-              "from": "fn-5",
+              "from": "fn-7",
               "to": "output-2",
               "out": "item",
               "in": "item"
             },
             {
-              "from": "invoke-4",
-              "to": "fn-5",
-              "out": "*",
-              "in": ""
+              "from": "fn-6",
+              "to": "fn-7",
+              "out": "result",
+              "in": "result"
             },
             {
-              "from": "fn-3",
-              "to": "invoke-4",
+              "from": "fn-4",
+              "to": "fn-7",
+              "out": "flags",
+              "in": "flags"
+            },
+            {
+              "from": "invoke-5",
+              "to": "fn-6",
               "out": "*",
               "in": ""
             },
@@ -1398,6 +1411,18 @@
               "to": "fn-3",
               "out": "item",
               "in": "item"
+            },
+            {
+              "from": "input-1",
+              "to": "fn-4",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "fn-3",
+              "to": "invoke-5",
+              "out": "*",
+              "in": ""
             }
           ],
           "nodes": [
@@ -1417,11 +1442,24 @@
               }
             },
             {
-              "id": "fn-5",
+              "id": "fn-7",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_5 = result=>{return{item:result}};",
-                "name": "fn_5",
+                "code": "const fn_7 = ({result,flags})=>{let contentDetected=false;const inputs=result;const item=[];const f=flags;if(f){if(f.outputLLMContent){const content=inputs[f.outputLLMContent];content.role=\"tool\";item.push(content);contentDetected=true}else if(f.outputLLMContentArray){const contentArray=inputs[f.outputLLMContentArray];contentArray.forEach(content=>{content.role=\"tool\";item.push(content)});contentDetected=true}}else{for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";item.push(content);contentDetected=true}}}}if(!contentDetected){const text=JSON.stringify(inputs);item.push({parts:[{text}],role:\"tool\"})}return{item}};",
+                "name": "fn_7",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Format results",
+                "description": "Formatting results"
+              }
+            },
+            {
+              "id": "fn-6",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_6 = result=>{return{result}};",
+                "name": "fn_6",
                 "raw": true
               },
               "metadata": {
@@ -1430,25 +1468,25 @@
               }
             },
             {
-              "id": "invoke-4",
+              "id": "fn-4",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_4 = ({item})=>{const{$flags}=item;return{flags:$flags}};",
+                "name": "fn_4",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Get flags",
+                "description": "Getting flags for the board invocation"
+              }
+            },
+            {
+              "id": "invoke-5",
               "type": "invoke",
               "configuration": {},
               "metadata": {
                 "title": "Invoke board",
                 "description": "Invoking the board with unpacked arguments"
-              }
-            },
-            {
-              "id": "fn-3",
-              "type": "runJavascript",
-              "configuration": {
-                "code": "const fn_3 = ({item})=>{const result=item;return result};",
-                "name": "fn_3",
-                "raw": true
-              },
-              "metadata": {
-                "title": "Unpack args",
-                "description": "Unpacking board arguments"
               }
             },
             {
@@ -1467,6 +1505,19 @@
                     "item"
                   ]
                 }
+              }
+            },
+            {
+              "id": "fn-3",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_3 = ({item})=>{const{$flags,...result}=item;return result};",
+                "name": "fn_3",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Unpack args",
+                "description": "Unpacking board arguments"
               }
             }
           ],
@@ -1805,7 +1856,7 @@
           "id": "formatFunctionDeclarations",
           "type": "runJavascript",
           "configuration": {
-            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);urlMap[item.function.name]=item.boardURL});return{tools,urlMap}};",
+            "code": "const formatFunctionDeclarations = ({list})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);const flags=item.flags;urlMap[item.function.name]={url:item.boardURL,flags}});return{tools,urlMap}};",
             "name": "formatFunctionDeclarations",
             "raw": true
           },
@@ -1900,10 +1951,16 @@
           "description": "Use this board to convert specified boards into function-calling signatures",
           "edges": [
             {
-              "from": "getFunctionSignature",
+              "from": "fn-4",
               "to": "output-2",
               "out": "function",
               "in": "function"
+            },
+            {
+              "from": "fn-4",
+              "to": "output-2",
+              "out": "flags",
+              "in": "flags"
             },
             {
               "from": "input-1",
@@ -1919,9 +1976,9 @@
             },
             {
               "from": "curry-3",
-              "to": "getFunctionSignature",
+              "to": "fn-4",
               "out": "board",
-              "in": "json"
+              "in": "board"
             }
           ],
           "nodes": [
@@ -1933,30 +1990,31 @@
                   "type": "object",
                   "properties": {
                     "function": {
-                      "type": [
-                        "array",
-                        "boolean",
-                        "null",
-                        "number",
-                        "object",
-                        "string"
-                      ],
+                      "type": "string",
                       "title": "function"
                     },
                     "boardURL": {
                       "type": "string",
                       "title": "boardURL"
+                    },
+                    "flags": {
+                      "type": "string",
+                      "title": "flags"
                     }
                   }
                 }
               }
             },
             {
-              "id": "getFunctionSignature",
-              "type": "jsonata",
+              "id": "fn-4",
+              "type": "runJavascript",
               "configuration": {
-                "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}properties[key]={type,description:property.description||property.title||\"text\"}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
+                "name": "fn_4",
                 "raw": true
+              },
+              "metadata": {
+                "title": "Get Function Signature from board"
               }
             },
             {

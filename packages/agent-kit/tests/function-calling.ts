@@ -6,13 +6,18 @@
 
 import test, { describe } from "node:test";
 import {
+  FunctionCallFlags,
   URLMap,
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
-  toolResponseFormatterFunction,
+  functionSignatureFromBoardFunction,
+  resultFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
-import { FunctionCallPart } from "../src/context.js";
+import { FunctionCallPart, LlmContent } from "../src/context.js";
+import { GraphDescriptor } from "@google-labs/breadboard";
+import { readFile } from "node:fs/promises";
+import { resolve } from "path";
 
 describe("function-calling/functionOrTextRouterFunction", () => {
   test("throws when no context is supplied", () => {
@@ -191,81 +196,221 @@ describe("function-calling/boardInvocationAssembler", () => {
       },
     ] satisfies FunctionCallPart["functionCall"][];
     const urlMap = {
-      Get_Web_Page_Content: "get/web/page",
-      Get_Next_Holiday: "get/next/holiday",
+      Get_Web_Page_Content: { url: "get/web/page", flags: {} },
+      Get_Next_Holiday: { url: "get/next/holiday", flags: {} },
     } satisfies URLMap;
     const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
     deepStrictEqual(result, {
       list: [
-        { $board: "get/web/page", url: "https://example.com/" },
-        { $board: "get/next/holiday", country: "LT" },
+        { $board: "get/web/page", url: "https://example.com/", $flags: {} },
+        { $board: "get/next/holiday", country: "LT", $flags: {} },
       ],
     });
   });
 });
 
-describe("function-calling/toolResponseFormatter", () => {
-  test("detects invalid response", () => {
-    throws(() => {
-      const response = [{ data: "foo" }];
-      toolResponseFormatterFunction({ response });
-    }, 'Must have "item"');
-  });
-
+describe("function-calling/resultFormatterFunction", () => {
   test("correctly outputs LLMContent for simple outputs", () => {
     {
-      const response = [{ item: { data: "foo" } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
+      const result = { data: "foo" };
+      const output = resultFormatterFunction({ result, flags: {} });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
       });
     }
     {
-      const response = [{ item: { data: null } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
+      const result = { data: null };
+      const output = resultFormatterFunction({ result, flags: {} });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
+      });
+    }
+  });
+  test("correctly detect LLMContent inside (old way)", () => {
+    {
+      const result = { out: { content: "foo" } };
+      const output = resultFormatterFunction({ result });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: JSON.stringify(result) }], role: "tool" }],
       });
     }
     {
-      const response = [{ item: { data: "foo" } }, { item: { bar: "baz" } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-          { parts: [{ text: JSON.stringify(response[1].item) }], role: "tool" },
+      const result = {
+        out: {
+          content: { parts: [{ text: "hello" }], role: "something" },
+        },
+      };
+      const output = resultFormatterFunction({ result });
+      deepStrictEqual(output, {
+        item: [{ parts: result.out.content.parts, role: "tool" }],
+      });
+    }
+  });
+  test("correctly detect LLMContent inside using flags", () => {
+    {
+      const llmContent: LlmContent = { parts: [{ text: "hello" }] };
+      const result = { out: llmContent };
+      const output = resultFormatterFunction({
+        result,
+        flags: { outputLLMContent: "out" },
+      });
+      deepStrictEqual(output, {
+        item: [{ parts: [{ text: "hello" }], role: "tool" }],
+      });
+    }
+    {
+      const llmContentArray: LlmContent[] = [
+        { parts: [{ text: "hello" }] },
+        { parts: [{ text: "world" }] },
+      ];
+      const result = { out: llmContentArray };
+      const output = resultFormatterFunction({
+        result,
+        flags: { outputLLMContentArray: "out" },
+      });
+      deepStrictEqual(output, {
+        item: [
+          { parts: [{ text: "hello" }], role: "tool" },
+          { parts: [{ text: "world" }], role: "tool" },
         ],
       });
     }
   });
-  test("correctly detect LLMContent inside", () => {
-    {
-      const response = [{ item: { out: { content: "foo" } } }];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [
-          { parts: [{ text: JSON.stringify(response[0].item) }], role: "tool" },
-        ],
+});
+
+const loadBoard = async (name: string) => {
+  const board = await readFile(
+    resolve(
+      new URL(import.meta.url).pathname,
+      `../../../tests/boards/${name}.json`
+    ),
+    "utf8"
+  );
+  return JSON.parse(board);
+};
+
+describe("function-calling/functionSignatureFromBoardFunction", () => {
+  test("throws when no board is supplied", () => {
+    throws(() => {
+      functionSignatureFromBoardFunction({});
+    });
+  });
+  test("throws when no inputs are found", () => {
+    const board = {};
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
       });
-    }
-    {
-      const response = [
+    });
+  });
+  test("throws when no outputs are found", () => {
+    const board = {
+      nodes: [
         {
-          item: {
-            out: {
-              content: { parts: [{ text: "hello" }], role: "something" },
+          id: "node-1",
+          type: "input",
+        },
+      ],
+      edges: [],
+    } satisfies GraphDescriptor;
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
+      });
+    });
+  });
+  test("throws when no input schema is found", () => {
+    const board = {
+      nodes: [
+        {
+          id: "node-1",
+          type: "input",
+          configuration: {},
+        },
+        {
+          id: "node-1",
+          type: "output",
+          configuration: {},
+        },
+      ],
+      edges: [],
+    } satisfies GraphDescriptor;
+    throws(() => {
+      functionSignatureFromBoardFunction({
+        board,
+      });
+    });
+  });
+
+  test("returns function signature and return values", async () => {
+    const board = await loadBoard("next-public-holiday");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    });
+    deepStrictEqual(result, {
+      function: {
+        name: "Nager_Date_Next_Public_Holiday",
+        description: "Get the next public holiday for a given country",
+        parameters: {
+          type: "object",
+          properties: {
+            countryCode: {
+              type: "string",
+              description: "Two-letter country code",
             },
           },
         },
-      ];
-      const result = toolResponseFormatterFunction({ response });
-      deepStrictEqual(result, {
-        response: [{ parts: response[0].item.out.content.parts, role: "tool" }],
-      });
-    }
+      },
+      returns: {
+        type: "object",
+        properties: {
+          holidays: {
+            description: "A list of public holidays for the given country",
+            title: "Holidays",
+            type: ["array", "boolean", "null", "number", "object", "string"],
+          },
+        },
+        required: ["holidays"],
+      },
+      flags: {},
+    });
+  });
+
+  test("recognizes and flags LLM content", async () => {
+    const board = await loadBoard("holiday-researcher");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { flags: FunctionCallFlags };
+    deepStrictEqual(result.flags, {
+      inputLLMContent: "text",
+      outputLLMContent: "text",
+    });
+  });
+
+  test("recognizes and flags LLM content arrays", async () => {
+    const board = await loadBoard("llm-content-array");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { flags: FunctionCallFlags };
+    deepStrictEqual(result.flags, {
+      inputLLMContentArray: "text",
+      outputLLMContentArray: "text",
+    });
+  });
+
+  test("substitutes property title for description when description is missing", async () => {
+    const board = await loadBoard("no-descriptions");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { function: Record<string, unknown> };
+    deepStrictEqual(result.function.parameters, {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "text",
+        },
+      },
+    });
   });
 });
