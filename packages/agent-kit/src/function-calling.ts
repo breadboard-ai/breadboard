@@ -106,7 +106,9 @@ export const resultFormatterFunction = fun(({ result, flags }) => {
       contentDetected = true;
     }
   } else {
-    // TODO: Deprecate and remove.
+    // TODO: Deprecate and remove. This is the old way of
+    // detecting LLMContent (before flags were introduced).
+    // There should only be a handful of tools that use this.
     for (const key in inputs) {
       const input = inputs[key] as { content: LlmContent };
       if (input !== null && typeof input === "object" && "content" in input) {
