@@ -207,6 +207,86 @@ describe("function-calling/boardInvocationAssembler", () => {
       ],
     });
   });
+
+  test("correctly packs the invocation args with flags", () => {
+    const functionCalls = [
+      {
+        name: "Get_Web_Page_Content",
+        args: { url: "https://example.com/" },
+      },
+      {
+        name: "Get_Next_Holiday",
+        args: {
+          country: "LT",
+        },
+      },
+    ] satisfies FunctionCallPart["functionCall"][];
+    const urlMap = {
+      Get_Web_Page_Content: {
+        url: "get/web/page",
+        flags: { inputLLMContent: "url" },
+      },
+      Get_Next_Holiday: {
+        url: "get/next/holiday",
+        flags: { outputLLMContent: "holidays" },
+      },
+    } satisfies URLMap;
+    const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
+    deepStrictEqual(result, {
+      list: [
+        {
+          $board: "get/web/page",
+          url: { parts: [{ text: "https://example.com/" }], role: "user" },
+          $flags: { inputLLMContent: "url" },
+        },
+        {
+          $board: "get/next/holiday",
+          country: "LT",
+          $flags: { outputLLMContent: "holidays" },
+        },
+      ],
+    });
+  });
+
+  test("correctly packs the invocation args with array input flag", () => {
+    const functionCalls = [
+      {
+        name: "Get_Web_Page_Content",
+        args: { url: "https://example.com/" },
+      },
+      {
+        name: "Get_Next_Holiday",
+        args: {
+          country: "LT",
+        },
+      },
+    ] satisfies FunctionCallPart["functionCall"][];
+    const urlMap = {
+      Get_Web_Page_Content: {
+        url: "get/web/page",
+        flags: { inputLLMContentArray: "url" },
+      },
+      Get_Next_Holiday: {
+        url: "get/next/holiday",
+        flags: { outputLLMContent: "holidays" },
+      },
+    } satisfies URLMap;
+    const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
+    deepStrictEqual(result, {
+      list: [
+        {
+          $board: "get/web/page",
+          url: [{ parts: [{ text: "https://example.com/" }], role: "user" }],
+          $flags: { inputLLMContentArray: "url" },
+        },
+        {
+          $board: "get/next/holiday",
+          country: "LT",
+          $flags: { outputLLMContent: "holidays" },
+        },
+      ],
+    });
+  });
 });
 
 describe("function-calling/resultFormatterFunction", () => {

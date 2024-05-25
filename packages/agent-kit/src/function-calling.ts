@@ -40,6 +40,7 @@ export type URLMap = Record<
 
 export type BoardInvocationArgs = {
   $board: string;
+  $flags: FunctionCallFlags;
 } & Record<string, unknown>;
 
 export const boardInvocationAssemblerFunction = fun(
@@ -59,7 +60,24 @@ export const boardInvocationAssemblerFunction = fun(
       const item = (urlMap as URLMap)[call.name];
       const $board = item.url;
       const $flags = item.flags;
-      list.push({ $board, ...call.args, $flags });
+      const llmContentProperty =
+        $flags.inputLLMContent || $flags.inputLLMContentArray;
+      let invokeArgs: BoardInvocationArgs = { $board, $flags };
+      if (llmContentProperty) {
+        // convert args into LLMContent.
+        const args = call.args as OutputValues;
+        const text = args[llmContentProperty] as string;
+        const parts = [{ text }];
+        const llmContent: LlmContent = { parts, role: "user" };
+        if ($flags.inputLLMContentArray) {
+          invokeArgs[llmContentProperty] = [llmContent];
+        } else {
+          invokeArgs[llmContentProperty] = llmContent;
+        }
+      } else {
+        invokeArgs = { ...invokeArgs, ...call.args };
+      }
+      list.push(invokeArgs);
     }
     return { list };
   }
@@ -261,10 +279,8 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     ) {
       flags.inputLLMContentArray = key;
     }
-    properties[key] = {
-      type,
-      description: property.description || property.title || "text",
-    };
+    const description = property.description || property.title || "text";
+    properties[key] = { type, description };
   }
   for (const key in outputSchema.properties) {
     const property = outputSchema.properties[key];
