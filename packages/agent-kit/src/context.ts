@@ -341,6 +341,8 @@ export const splitStartAdderFunction = fun(({ context }) => {
 
 export const splitStartAdder = code(splitStartAdderFunction);
 
+type SplitScanResult = [id: string, index: number];
+
 /**
  * Given a bunch of context, combines them all into one.
  */
@@ -349,9 +351,8 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
   const context: Context[] = [];
   if (merge) {
     const parts: LlmContent["parts"] = [];
-    for (const entry of entries) {
-      const input = entry[1];
-      const c = (Array.isArray(input) ? input : [input]) as Context[];
+    for (const [, input] of entries) {
+      const c = asContextArray(input);
       const last = c[c.length - 1];
       if (last) {
         if (last.role === "$metadata") {
@@ -362,44 +363,48 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
     }
     context.push({ parts });
   } else {
-    let splitCount = 0;
-    for (const entry of entries) {
-      const input = entry[1];
-      const c = (Array.isArray(input) ? input : [input]) as Context[];
-      const hasSplits = c.some(
-        (item: Context) => item.role === "$metadata" && item.type === "split"
-      );
-      if (hasSplits) splitCount++;
+    const preambleIndices: number[] = [];
+    for (const [, input] of entries) {
+      const c = asContextArray(input);
+      const hasOpenSplits = scanForSplits(c);
+      if (hasOpenSplits) {
+        preambleIndices.push(hasOpenSplits[1]);
+      }
     }
-    const shouldConcatenate = splitCount !== 0 && splitCount !== entries.length;
+    const preamblesAreDifferent = !preambleIndices.every(
+      (value) => value === preambleIndices[0]
+    );
+    const splitCount = preambleIndices.length;
+    const shouldConcatenate =
+      (splitCount !== 0 && splitCount !== entries.length) ||
+      preamblesAreDifferent;
     if (shouldConcatenate) {
-      for (const entry of entries) {
-        const input = entry[1];
-        const c = (Array.isArray(input) ? input : [input]) as Context[];
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
         context.push(...c);
       }
     } else {
-      let foundPreamble = false;
-      let splitId = Math.random().toString(36).substring(7);
-      for (const entry of entries) {
-        const input = entry[1];
-        const isArray = Array.isArray(input);
-        let c: Context[] = isArray ? input : [input];
-        for (const [i, item] of c.entries()) {
-          if (item.role === "$metadata" && item.type === "split") {
-            const split = item.data;
-            if (split.type === "start") {
-              if (!foundPreamble) {
-                // Clip the preamble from c, and add it to the context.
-                context.push(...c.slice(0, i + 1));
-                splitId = split.id;
-                foundPreamble = true;
-              }
-              const chunk = c.slice(i + 1);
-              c = chunk;
-              break;
-            }
-          }
+      let splitId: string;
+      let preambleIndex: number;
+      // If no markers were found, add a split "start" marker at the start.
+      if (splitCount === 0) {
+        splitId = Math.random().toString(36).substring(7);
+        preambleIndex = -1;
+        context.unshift({
+          role: "$metadata",
+          type: "split",
+          data: { type: "start", id: splitId },
+        });
+      } else {
+        preambleIndex = preambleIndices[0];
+        const preamble = entries[0][1].slice(0, preambleIndex + 1);
+        context.push(...preamble);
+        splitId = (preamble[preamble.length - 1] as SplitMetadata).data.id;
+      }
+      for (const [, input] of entries) {
+        let c = asContextArray(input);
+        if (preambleIndex >= 0) {
+          c = c.slice(preambleIndex + 1);
         }
         if (c.length) {
           context.push(...c);
@@ -410,14 +415,6 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
           });
         }
       }
-      // If no markers were found, add a split "start" marker at the start.
-      if (!foundPreamble) {
-        context.unshift({
-          role: "$metadata",
-          type: "split",
-          data: { type: "start", id: splitId },
-        });
-      }
       // Replace the last split "next" marker with a split "end" marker.
       const last = context[context.length - 1] as SplitMetadata;
       if (!last || !last.data || last.data.type !== "next") {
@@ -427,5 +424,33 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
     }
   }
   return { context };
+
+  function asContextArray(input: Context | Context[]): Context[] {
+    return Array.isArray(input) ? input : [input];
+  }
+
+  function scanForSplits(c: Context[]): SplitScanResult | null {
+    const stack: SplitScanResult[] = [];
+    for (const [i, item] of c.entries()) {
+      if (item.role !== "$metadata") continue;
+      if (item.type !== "split") continue;
+      if (item.data.type === "start") {
+        stack.push([item.data.id, i]);
+      }
+      if (item.data.type === "end") {
+        const [id] = stack.pop() || [];
+        if (id !== item.data.id) {
+          console.warn(
+            "Split integrity error: mismatched split start/end markers. Start:",
+            id,
+            "End:",
+            item.data.id
+          );
+          return null;
+        }
+      }
+    }
+    return stack.pop() || null;
+  }
 });
 export const combineContexts = code(combineContextsFunction);

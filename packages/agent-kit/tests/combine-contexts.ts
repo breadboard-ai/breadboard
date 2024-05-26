@@ -103,6 +103,45 @@ describe("combineContexts", () => {
     });
   });
 
+  test("Handles resolved split markers", () => {
+    const a1 = text("Before");
+    const a2 = text("Hello");
+    const a3 = text("hello!");
+    const b3 = text("where");
+    const result = combineContextsFunction({
+      contextA: [
+        a1,
+        split("start", "1"),
+        a2,
+        split("end", "1"),
+        split("start", "2"),
+        a3,
+      ] satisfies Context[],
+      contextB: [
+        a1,
+        split("start", "1"),
+        a2,
+        split("end", "1"),
+        split("start", "2"),
+        b3,
+      ] satisfies Context[],
+    }) as { context: Context[] };
+
+    deepStrictEqual(result, {
+      context: [
+        a1,
+        split("start", "1"),
+        a2,
+        split("end", "1"),
+        split("start", "2"),
+        a3,
+        split("next", "2"),
+        b3,
+        split("end", "2"),
+      ],
+    });
+  });
+
   test("merges contexts when asked", () => {
     const a1 = { text: "Before" };
     const a2 = { text: "Hello" };
