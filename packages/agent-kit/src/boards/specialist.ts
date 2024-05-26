@@ -212,6 +212,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     },
     context: addSplitStart.context,
     response: mapInvocations.list,
+    splitId: addSplitStart.id,
   });
 
   const addToolResponseToContext = combineContexts({

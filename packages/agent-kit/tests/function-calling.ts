@@ -526,6 +526,20 @@ describe("function-calling/responseCollator", () => {
       "context-1": [howdy, realm],
     });
   });
+  test("correctly adds context and id", () => {
+    const context: LlmContent[] = [hello, world];
+    const response = [{ item: [howdy, realm] }] satisfies ToolResponse[];
+    const result = responseCollatorFunction({
+      response,
+      context,
+      splitId: "foo",
+    });
+    deepStrictEqual(result, {
+      "context-0": [hello, world],
+      "context-1": [howdy, realm],
+      $splitId: "foo",
+    });
+  });
 });
 
 describe("function-calling/addSplitStart", () => {
