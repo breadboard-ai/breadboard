@@ -279,6 +279,15 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     ) {
       flags.inputLLMContentArray = key;
     }
+    if (
+      (flags.inputLLMContent || flags.inputLLMContentArray) &&
+      key === "context"
+    ) {
+      // Don't add the "context" property to the function
+      // signature, since the context is supplied at the time
+      // of invocation.
+      continue;
+    }
     const description = property.description || property.title || "text";
     properties[key] = { type, description };
   }
