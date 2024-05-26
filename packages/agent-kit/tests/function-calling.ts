@@ -499,6 +499,17 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       },
     });
   });
+
+  test("elides property named `context` from args", async () => {
+    const board = await loadBoard("context-arg");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { function: Record<string, unknown> };
+    deepStrictEqual(result.function.parameters, {
+      type: "object",
+      properties: {},
+    });
+  });
 });
 
 describe("function-calling/responseCollator", () => {
