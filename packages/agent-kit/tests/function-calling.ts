@@ -433,6 +433,8 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     const result = functionSignatureFromBoardFunction({
       board,
     });
+    deepStrictEqual(result.board, board);
+    delete result.board;
     deepStrictEqual(result, {
       function: {
         name: "Nager_Date_Next_Public_Holiday",

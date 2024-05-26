@@ -322,6 +322,7 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     function: { name, description, parameters },
     returns: outputSchema,
     flags,
+    board,
   };
 });
 
@@ -344,7 +345,7 @@ export const boardToFunction = await board(({ item, context }) => {
 
   return {
     function: getFunctionSignature.function,
-    boardURL: importBoard.board,
+    boardURL: getFunctionSignature.board,
     flags: getFunctionSignature.flags,
   };
 }).serialize({
