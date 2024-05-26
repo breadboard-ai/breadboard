@@ -103,43 +103,115 @@ describe("combineContexts", () => {
     });
   });
 
-  test("Handles resolved split markers", () => {
-    const a1 = text("Before");
-    const a2 = text("Hello");
-    const a3 = text("hello!");
-    const b3 = text("where");
-    const result = combineContextsFunction({
-      contextA: [
-        a1,
-        split("start", "1"),
-        a2,
-        split("end", "1"),
-        split("start", "2"),
-        a3,
-      ] satisfies Context[],
-      contextB: [
-        a1,
-        split("start", "1"),
-        a2,
-        split("end", "1"),
-        split("start", "2"),
-        b3,
-      ] satisfies Context[],
-    }) as { context: Context[] };
+  test("Handles resolved and nested split markers", () => {
+    const a1 = text("a1");
+    const a2 = text("a2");
+    const a3 = text("a3");
+    const b3 = text("b3");
+    {
+      const result = combineContextsFunction({
+        contextA: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          split("start", "2"),
+          a3,
+        ] satisfies Context[],
+        contextB: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          split("start", "2"),
+          b3,
+        ] satisfies Context[],
+      }) as { context: Context[] };
 
-    deepStrictEqual(result, {
-      context: [
-        a1,
-        split("start", "1"),
-        a2,
-        split("end", "1"),
-        split("start", "2"),
-        a3,
-        split("next", "2"),
-        b3,
-        split("end", "2"),
-      ],
-    });
+      deepStrictEqual(result, {
+        context: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          split("start", "2"),
+          a3,
+          split("next", "2"),
+          b3,
+          split("end", "2"),
+        ],
+      });
+    }
+    {
+      const result = combineContextsFunction({
+        contextA: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          a3,
+        ] satisfies Context[],
+        contextB: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          b3,
+        ] satisfies Context[],
+      }) as { context: Context[] };
+
+      // Fish out the split marker.
+      const marker = (result?.context[0] as SplitMetadata)?.data?.id;
+
+      deepStrictEqual(result, {
+        context: [
+          split("start", marker),
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          a3,
+          split("next", marker),
+          a1,
+          split("start", "1"),
+          a2,
+          split("end", "1"),
+          b3,
+          split("end", marker),
+        ],
+      });
+    }
+    {
+      const result = combineContextsFunction({
+        contextA: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("start", "2"),
+          a3,
+        ] satisfies Context[],
+        contextB: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("start", "2"),
+          b3,
+        ] satisfies Context[],
+      }) as { context: Context[] };
+
+      deepStrictEqual(result, {
+        context: [
+          a1,
+          split("start", "1"),
+          a2,
+          split("start", "2"),
+          a3,
+          split("next", "2"),
+          b3,
+          split("end", "2"),
+        ],
+      });
+    }
   });
 
   test("merges contexts when asked", () => {
