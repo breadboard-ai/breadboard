@@ -321,6 +321,27 @@ export const cleanUpMetadataFunction = fun(({ context }) => {
 export const cleanUpMetadata = code(cleanUpMetadataFunction);
 
 /**
+ * Given a context, adds a metadata block that contains the
+ * split start marker.
+ */
+export const splitStartAdderFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = context as Context[];
+  const id = Math.random().toString(36).substring(7);
+  const metadata: Metadata = {
+    role: "$metadata",
+    type: "split",
+    data: {
+      type: "start",
+      id,
+    },
+  };
+  return { context: [...c, metadata], id };
+});
+
+export const splitStartAdder = code(splitStartAdderFunction);
+
+/**
  * Given a bunch of context, combines them all into one.
  */
 export const combineContextsFunction = fun(({ merge, ...inputs }) => {

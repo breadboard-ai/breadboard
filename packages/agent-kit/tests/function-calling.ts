@@ -15,8 +15,12 @@ import {
   responseCollatorFunction,
   resultFormatterFunction,
 } from "../src/function-calling.js";
-import { deepStrictEqual, throws } from "node:assert";
-import { FunctionCallPart, LlmContent } from "../src/context.js";
+import { deepStrictEqual, ok, throws } from "node:assert";
+import {
+  FunctionCallPart,
+  LlmContent,
+  splitStartAdderFunction,
+} from "../src/context.js";
 import { GraphDescriptor } from "@google-labs/breadboard";
 import { readFile } from "node:fs/promises";
 import { resolve } from "path";
@@ -520,6 +524,28 @@ describe("function-calling/responseCollator", () => {
     deepStrictEqual(result, {
       "context-0": [hello, world],
       "context-1": [howdy, realm],
+    });
+  });
+});
+
+describe("function-calling/addSplitStart", () => {
+  test("correctly adds split start", () => {
+    const hello: LlmContent = { parts: [{ text: "Hello" }], role: "tool" };
+    const context: LlmContent[] = [hello];
+    const result = splitStartAdderFunction({
+      context,
+    });
+    const c = result.context as LlmContent[];
+    ok(c.length === 2);
+    ok(result.id !== null);
+    const id = result.id;
+    deepStrictEqual(c[1], {
+      role: "$metadata",
+      type: "split",
+      data: {
+        id,
+        type: "start",
+      },
     });
   });
 });

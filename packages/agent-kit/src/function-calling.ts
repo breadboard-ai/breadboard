@@ -11,7 +11,13 @@ import {
   board,
   code,
 } from "@google-labs/breadboard";
-import { LlmContent, FunctionCallPart, fun, TextPart } from "./context.js";
+import {
+  LlmContent,
+  FunctionCallPart,
+  fun,
+  TextPart,
+  Context,
+} from "./context.js";
 import { core } from "@google-labs/core-kit";
 
 export const functionOrTextRouterFunction = fun(({ context }) => {
@@ -107,18 +113,20 @@ const flagGetter = code(({ item }) => {
 export const resultFormatterFunction = fun(({ result, flags }) => {
   let contentDetected = false;
   const inputs = result as OutputValues;
-  const item: LlmContent[] = [];
+  const item: Context[] = [];
   const f = flags as FunctionCallFlags;
   if (f) {
     if (f.outputLLMContent) {
-      const content = inputs[f.outputLLMContent] as LlmContent;
+      const content = inputs[f.outputLLMContent] as Context;
       content.role = "tool";
       item.push(content);
       contentDetected = true;
     } else if (f.outputLLMContentArray) {
-      const contentArray = inputs[f.outputLLMContentArray] as LlmContent[];
+      const contentArray = inputs[f.outputLLMContentArray] as Context[];
       contentArray.forEach((content) => {
-        content.role = "tool";
+        if (content.role !== "$metadata") {
+          content.role = "tool";
+        }
         item.push(content);
       });
       contentDetected = true;
