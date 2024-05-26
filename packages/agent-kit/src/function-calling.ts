@@ -11,7 +11,13 @@ import {
   board,
   code,
 } from "@google-labs/breadboard";
-import { LlmContent, FunctionCallPart, fun, TextPart } from "./context.js";
+import {
+  LlmContent,
+  FunctionCallPart,
+  fun,
+  TextPart,
+  Context,
+} from "./context.js";
 import { core } from "@google-labs/core-kit";
 
 export const functionOrTextRouterFunction = fun(({ context }) => {
@@ -40,6 +46,7 @@ export type URLMap = Record<
 
 export type BoardInvocationArgs = {
   $board: string;
+  $flags: FunctionCallFlags;
 } & Record<string, unknown>;
 
 export const boardInvocationAssemblerFunction = fun(
@@ -59,7 +66,24 @@ export const boardInvocationAssemblerFunction = fun(
       const item = (urlMap as URLMap)[call.name];
       const $board = item.url;
       const $flags = item.flags;
-      list.push({ $board, ...call.args, $flags });
+      const llmContentProperty =
+        $flags.inputLLMContent || $flags.inputLLMContentArray;
+      let invokeArgs: BoardInvocationArgs = { $board, $flags };
+      if (llmContentProperty) {
+        // convert args into LLMContent.
+        const args = call.args as OutputValues;
+        const text = args[llmContentProperty] as string;
+        const parts = [{ text }];
+        const llmContent: LlmContent = { parts, role: "user" };
+        if ($flags.inputLLMContentArray) {
+          invokeArgs[llmContentProperty] = [llmContent];
+        } else {
+          invokeArgs[llmContentProperty] = llmContent;
+        }
+      } else {
+        invokeArgs = { ...invokeArgs, ...call.args };
+      }
+      list.push(invokeArgs);
     }
     return { list };
   }
@@ -89,18 +113,20 @@ const flagGetter = code(({ item }) => {
 export const resultFormatterFunction = fun(({ result, flags }) => {
   let contentDetected = false;
   const inputs = result as OutputValues;
-  const item: LlmContent[] = [];
+  const item: Context[] = [];
   const f = flags as FunctionCallFlags;
   if (f) {
     if (f.outputLLMContent) {
-      const content = inputs[f.outputLLMContent] as LlmContent;
+      const content = inputs[f.outputLLMContent] as Context;
       content.role = "tool";
       item.push(content);
       contentDetected = true;
     } else if (f.outputLLMContentArray) {
-      const contentArray = inputs[f.outputLLMContentArray] as LlmContent[];
+      const contentArray = inputs[f.outputLLMContentArray] as Context[];
       contentArray.forEach((content) => {
-        content.role = "tool";
+        if (content.role !== "$metadata") {
+          content.role = "tool";
+        }
         item.push(content);
       });
       contentDetected = true;
@@ -261,10 +287,17 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     ) {
       flags.inputLLMContentArray = key;
     }
-    properties[key] = {
-      type,
-      description: property.description || property.title || "text",
-    };
+    if (
+      (flags.inputLLMContent || flags.inputLLMContentArray) &&
+      key === "context"
+    ) {
+      // Don't add the "context" property to the function
+      // signature, since the context is supplied at the time
+      // of invocation.
+      continue;
+    }
+    const description = property.description || property.title || "text";
+    properties[key] = { type, description };
   }
   for (const key in outputSchema.properties) {
     const property = outputSchema.properties[key];
@@ -296,11 +329,12 @@ export const functionSignatureFromBoard = code(
   functionSignatureFromBoardFunction
 );
 
-export const boardToFunction = await board(({ item }) => {
+export const boardToFunction = await board(({ item, context }) => {
   const url = item.isString();
 
   const importBoard = core.curry({
     $board: url,
+    context,
   });
 
   const getFunctionSignature = functionSignatureFromBoard({
@@ -310,7 +344,7 @@ export const boardToFunction = await board(({ item }) => {
 
   return {
     function: getFunctionSignature.function,
-    boardURL: url,
+    boardURL: importBoard.board,
     flags: getFunctionSignature.flags,
   };
 }).serialize({
@@ -338,10 +372,16 @@ export const functionDeclarationsFormatter = code(({ list }) => {
 
 export type ToolResponse = { item: LlmContent[] };
 
-export const responseCollatorFunction = fun(({ response }) => {
+export const responseCollatorFunction = fun(({ response, context }) => {
   const r = response as ToolResponse[];
-  const result = r.flatMap((item) => item.item);
-  return { response: result };
+  const c = context as LlmContent[];
+  const result: Record<string, LlmContent[] | string> = Object.fromEntries(
+    r.map((item, i) => [`context-${i + 1}`, item.item])
+  );
+  if (c) {
+    result["context-0"] = c;
+  }
+  return result;
 });
 
 export const responseCollator = code(responseCollatorFunction);

@@ -298,7 +298,7 @@
           "id": "fn-3",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_3 = ({context})=>{if(!context)throw new Error(\"Context is required\");const c=context;let done=false;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.done){done=true;break}}}if(done){return{done:context}}else{return{context}}};",
+            "code": "const fn_3 = ({context})=>{if(!context)throw new Error(\"Context is required\");const c=context;let done=false;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){const plan=item.data;if(plan.done){done=true;break}}}if(done){return{done:context}}else{return{context}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -886,20 +886,26 @@
       "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
       "edges": [
         {
-          "from": "fn-11",
+          "from": "fn-13",
           "to": "output-2",
           "out": "context",
           "in": "out"
         },
         {
           "from": "fn-5",
-          "to": "text-6",
+          "to": "fn-6",
           "out": "context",
           "in": "context"
         },
         {
           "from": "fn-5",
-          "to": "fn-11",
+          "to": "text-8",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-5",
+          "to": "fn-13",
           "out": "context",
           "in": "context"
         },
@@ -917,13 +923,13 @@
         },
         {
           "from": "router",
-          "to": "fn-11",
+          "to": "fn-13",
           "out": "context",
           "in": "generated"
         },
         {
           "from": "router",
-          "to": "fn-11",
+          "to": "fn-13",
           "out": "text",
           "in": "text"
         },
@@ -934,26 +940,32 @@
           "in": "context"
         },
         {
-          "from": "fn-3",
-          "to": "fn-9",
-          "out": "context",
-          "in": "context"
-        },
-        {
           "from": "fn-4",
           "to": "fn-5",
           "out": "progress",
           "in": "progress"
         },
         {
-          "from": "text-6",
+          "from": "fn-6",
+          "to": "curry-7",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "fn-6",
+          "to": "fn-10",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "text-8",
           "to": "router",
           "out": "context",
           "in": "context"
         },
         {
           "from": "assembleBoardInvoke",
-          "to": "map-7",
+          "to": "map-9",
           "out": "list",
           "in": "list"
         },
@@ -983,19 +995,25 @@
         },
         {
           "from": "input-1",
-          "to": "text-6",
+          "to": "text-8",
           "out": "persona",
           "in": "systemInstruction"
         },
         {
-          "from": "fn-9",
-          "to": "output-10",
-          "out": "context",
-          "in": "out"
+          "from": "curry-7",
+          "to": "turnBoardsToFunctions",
+          "out": "board",
+          "in": "board"
+        },
+        {
+          "from": "fn-10",
+          "to": "fn-11",
+          "out": "*",
+          "in": ""
         },
         {
           "from": "formatFunctionDeclarations",
-          "to": "text-6",
+          "to": "text-8",
           "out": "tools",
           "in": "tools"
         },
@@ -1006,8 +1024,8 @@
           "in": "urlMap"
         },
         {
-          "from": "map-7",
-          "to": "fn-8",
+          "from": "map-9",
+          "to": "fn-10",
           "out": "list",
           "in": "response"
         },
@@ -1018,10 +1036,10 @@
           "in": "list"
         },
         {
-          "from": "fn-8",
-          "to": "fn-9",
-          "out": "response",
-          "in": "toAdd"
+          "from": "fn-11",
+          "to": "output-12",
+          "out": "context",
+          "in": "out"
         }
       ],
       "nodes": [
@@ -1041,11 +1059,11 @@
           }
         },
         {
-          "id": "fn-11",
+          "id": "fn-13",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_11 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",data:{type:\"looper\",done:true}};return{context:[...c,g,metadata]}};",
-            "name": "fn_11",
+            "code": "const fn_13 = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",type:\"looper\",data:{done:true}};return{context:[...c,g,metadata]}};",
+            "name": "fn_13",
             "raw": true
           },
           "metadata": {
@@ -1096,7 +1114,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({context,forkOutputs})=>{const fork=forkOutputs;const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){progress.push(item.data)}}if(fork){if(progress.length){return{progress}}else{return{context}}}else{return{context,progress}}};",
+            "code": "const fn_4 = ({context,forkOutputs})=>{const fork=forkOutputs;const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){progress.push(item.data)}}if(fork){if(progress.length){return{progress}}else{return{context}}}else{return{context,progress}}};",
             "name": "fn_4",
             "raw": true
           },
@@ -1105,7 +1123,20 @@
           }
         },
         {
-          "id": "text-6",
+          "id": "fn-6",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_6 = ({context})=>{if(!context)throw new Error(\"Context is required\");const c=context;const id=Math.random().toString(36).substring(7);const metadata={role:\"$metadata\",type:\"split\",data:{type:\"start\",id}};return{context:[...c,metadata],id}};",
+            "name": "fn_6",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Add Split Start",
+            "description": "Marking the start of parallel processing in the context"
+          }
+        },
+        {
+          "id": "text-8",
           "type": "text",
           "configuration": {},
           "metadata": {
@@ -1117,7 +1148,7 @@
           "id": "assembleBoardInvoke",
           "type": "runJavascript",
           "configuration": {
-            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const item=urlMap[call.name];const $board=item.url;const $flags=item.flags;list.push({$board,...call.args,$flags})}return{list}};",
+            "code": "const assembleBoardInvoke = ({functionCalls,urlMap})=>{if(!functionCalls){throw new Error(\"Function call array is a required input\")}if(!urlMap){throw new Error(\"URL map is a required input\")}const calls=functionCalls;if(calls.length===0){throw new Error(\"Function call array must not be empty.\")}const list=[];for(const call of calls){const item=urlMap[call.name];const $board=item.url;const $flags=item.flags;const llmContentProperty=$flags.inputLLMContent||$flags.inputLLMContentArray;let invokeArgs={$board,$flags};if(llmContentProperty){const args=call.args;const text=args[llmContentProperty];const parts=[{text}];const llmContent={parts,role:\"user\"};if($flags.inputLLMContentArray){invokeArgs[llmContentProperty]=[llmContent]}else{invokeArgs[llmContentProperty]=llmContent}}else{invokeArgs={...invokeArgs,...call.args}}list.push(invokeArgs)}return{list}};",
             "name": "assembleBoardInvoke",
             "raw": true
           },
@@ -1195,16 +1226,27 @@
           }
         },
         {
-          "id": "fn-9",
+          "id": "curry-7",
+          "type": "curry",
+          "configuration": {
+            "$board": "#boardToFunction"
+          },
+          "metadata": {
+            "title": "Add Context",
+            "description": "Adding context to the board to function converter"
+          }
+        },
+        {
+          "id": "fn-10",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_9 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
-            "name": "fn_9",
+            "code": "const fn_10 = ({response,context})=>{const r=response;const c=context;const result=Object.fromEntries(r.map((item,i)=>[`context-${i+1}`,item.item]));if(c){result[\"context-0\"]=c}return result};",
+            "name": "fn_10",
             "raw": true
           },
           "metadata": {
-            "title": "Add Tool Response",
-            "description": "Adding tool response to context"
+            "title": "Format Tool Response",
+            "description": "Formatting tool response"
           }
         },
         {
@@ -1221,7 +1263,7 @@
           }
         },
         {
-          "id": "map-7",
+          "id": "map-9",
           "type": "map",
           "configuration": {
             "board": "#invokeBoardWithArgs"
@@ -1234,29 +1276,27 @@
         {
           "id": "turnBoardsToFunctions",
           "type": "map",
-          "configuration": {
-            "board": "#boardToFunction"
-          },
+          "configuration": {},
           "metadata": {
             "title": "Turn Boards into Functions",
             "description": "Turning provided boards into functions"
           }
         },
         {
-          "id": "fn-8",
+          "id": "fn-11",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({response})=>{const r=response;const result=r.flatMap(item=>item.item);return{response:result}};",
-            "name": "fn_8",
+            "code": "const fn_11 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const[,input]of entries){const c=asContextArray(input);const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{const preambleIndices=[];for(const[,input]of entries){const c=asContextArray(input);const hasOpenSplits=scanForSplits(c);if(hasOpenSplits){preambleIndices.push(hasOpenSplits[1])}}const preamblesAreDifferent=!preambleIndices.every(value=>value===preambleIndices[0]);const splitCount=preambleIndices.length;const shouldConcatenate=splitCount!==0&&splitCount!==entries.length||preamblesAreDifferent;if(shouldConcatenate){for(const[,input]of entries){const c=asContextArray(input);context.push(...c)}}else{let splitId;let preambleIndex;if(splitCount===0){splitId=Math.random().toString(36).substring(7);preambleIndex=-1;context.unshift({role:\"$metadata\",type:\"split\",data:{type:\"start\",id:splitId}})}else{preambleIndex=preambleIndices[0];const preamble=entries[0][1].slice(0,preambleIndex+1);context.push(...preamble);splitId=preamble[preamble.length-1].data.id}for(const[,input]of entries){let c=asContextArray(input);if(preambleIndex>=0){c=c.slice(preambleIndex+1)}if(c.length){context.push(...c);context.push({role:\"$metadata\",type:\"split\",data:{type:\"next\",id:splitId}})}}const last=context[context.length-1];if(!last||!last.data||last.data.type!==\"next\"){throw new Error(\"Integrity error: no split 'next' marker found\")}last.data.type=\"end\"}}return{context};function asContextArray(input){return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function scanForSplits(c){const stack=[];for(const[i,item]of c.entries()){if(item.role!==\"$metadata\")continue;if(item.type!==\"split\")continue;if(item.data.type===\"start\"){stack.push([item.data.id,i])}if(item.data.type===\"end\"){const[id]=stack.pop()||[];if(id!==item.data.id){console.warn(\"Split integrity error: mismatched split start/end markers. Start:\",id,\"End:\",item.data.id);return null}}}return stack.pop()||null}__name(scanForSplits,\"scanForSplits\")};",
+            "name": "fn_11",
             "raw": true
           },
           "metadata": {
-            "title": "Format Tool Response",
-            "description": "Formatting tool response"
+            "title": "Add Tool Response",
+            "description": "Adding tool response to context"
           }
         },
         {
-          "id": "output-10",
+          "id": "output-12",
           "type": "output",
           "configuration": {
             "schema": {
@@ -1293,6 +1333,18 @@
               "in": "flags"
             },
             {
+              "from": "curry-3",
+              "to": "fn-4",
+              "out": "board",
+              "in": "board"
+            },
+            {
+              "from": "curry-3",
+              "to": "output-2",
+              "out": "board",
+              "in": "boardURL"
+            },
+            {
               "from": "input-1",
               "to": "curry-3",
               "out": "item",
@@ -1300,15 +1352,9 @@
             },
             {
               "from": "input-1",
-              "to": "output-2",
-              "out": "item",
-              "in": "boardURL"
-            },
-            {
-              "from": "curry-3",
-              "to": "fn-4",
-              "out": "board",
-              "in": "board"
+              "to": "curry-3",
+              "out": "context",
+              "in": "context"
             }
           ],
           "nodes": [
@@ -1324,8 +1370,12 @@
                       "title": "function"
                     },
                     "boardURL": {
-                      "type": "string",
-                      "title": "boardURL"
+                      "title": "board",
+                      "behavior": [
+                        "board"
+                      ],
+                      "description": "The curried board as a graph descriptor",
+                      "type": "object"
                     },
                     "flags": {
                       "type": "string",
@@ -1339,13 +1389,18 @@
               "id": "fn-4",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}properties[key]={type,description:property.description||property.title||\"text\"}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}if((flags.inputLLMContent||flags.inputLLMContentArray)&&key===\"context\"){continue}const description2=property.description||property.title||\"text\";properties[key]={type,description:description2}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
                 "name": "fn_4",
                 "raw": true
               },
               "metadata": {
                 "title": "Get Function Signature from board"
               }
+            },
+            {
+              "id": "curry-3",
+              "type": "curry",
+              "configuration": {}
             },
             {
               "id": "input-1",
@@ -1361,18 +1416,18 @@
                       ],
                       "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                       "type": "string"
+                    },
+                    "context": {
+                      "type": "string",
+                      "title": "context"
                     }
                   },
                   "required": [
-                    "item"
+                    "item",
+                    "context"
                   ]
                 }
               }
-            },
-            {
-              "id": "curry-3",
-              "type": "curry",
-              "configuration": {}
             }
           ],
           "graphs": {}
@@ -1445,7 +1500,7 @@
               "id": "fn-7",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_7 = ({result,flags})=>{let contentDetected=false;const inputs=result;const item=[];const f=flags;if(f){if(f.outputLLMContent){const content=inputs[f.outputLLMContent];content.role=\"tool\";item.push(content);contentDetected=true}else if(f.outputLLMContentArray){const contentArray=inputs[f.outputLLMContentArray];contentArray.forEach(content=>{content.role=\"tool\";item.push(content)});contentDetected=true}}else{for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";item.push(content);contentDetected=true}}}}if(!contentDetected){const text=JSON.stringify(inputs);item.push({parts:[{text}],role:\"tool\"})}return{item}};",
+                "code": "const fn_7 = ({result,flags})=>{let contentDetected=false;const inputs=result;const item=[];const f=flags;if(f){if(f.outputLLMContent){const content=inputs[f.outputLLMContent];content.role=\"tool\";item.push(content);contentDetected=true}else if(f.outputLLMContentArray){const contentArray=inputs[f.outputLLMContentArray];contentArray.forEach(content=>{if(content.role!==\"$metadata\"){content.role=\"tool\"}item.push(content)});contentDetected=true}}else{for(const key in inputs){const input=inputs[key];if(input!==null&&typeof input===\"object\"&&\"content\"in input){const content=input.content;if(content.parts&&Array.isArray(content.parts)){content.role=\"tool\";item.push(content);contentDetected=true}}}}if(!contentDetected){const text=JSON.stringify(inputs);item.push({parts:[{text}],role:\"tool\"})}return{item}};",
                 "name": "fn_7",
                 "raw": true
               },
@@ -1963,6 +2018,18 @@
               "in": "flags"
             },
             {
+              "from": "curry-3",
+              "to": "fn-4",
+              "out": "board",
+              "in": "board"
+            },
+            {
+              "from": "curry-3",
+              "to": "output-2",
+              "out": "board",
+              "in": "boardURL"
+            },
+            {
               "from": "input-1",
               "to": "curry-3",
               "out": "item",
@@ -1970,15 +2037,9 @@
             },
             {
               "from": "input-1",
-              "to": "output-2",
-              "out": "item",
-              "in": "boardURL"
-            },
-            {
-              "from": "curry-3",
-              "to": "fn-4",
-              "out": "board",
-              "in": "board"
+              "to": "curry-3",
+              "out": "context",
+              "in": "context"
             }
           ],
           "nodes": [
@@ -1994,8 +2055,12 @@
                       "title": "function"
                     },
                     "boardURL": {
-                      "type": "string",
-                      "title": "boardURL"
+                      "title": "board",
+                      "behavior": [
+                        "board"
+                      ],
+                      "description": "The curried board as a graph descriptor",
+                      "type": "object"
                     },
                     "flags": {
                       "type": "string",
@@ -2009,13 +2074,18 @@
               "id": "fn-4",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}properties[key]={type,description:property.description||property.title||\"text\"}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
+                "code": "const fn_4 = ({board:board2})=>{const b=board2;const inputs=b.nodes.filter(node=>node.type===\"input\");if(inputs.length===0){throw new Error(\"No inputs found\")}const outputs=b.nodes.filter(node=>node.type===\"output\");if(outputs.length===0){throw new Error(\"No outputs found\")}const inputSchema=inputs[0].configuration?.schema;if(!inputSchema){throw new Error(\"No input schema found\")}const outputSchema=outputs[0].configuration?.schema;if(!outputSchema){throw new Error(\"No output schema found\")}const properties={};const flags={};for(const key in inputSchema.properties){const property=inputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";const type=isObject||isArray?\"string\":property.type;if(isObject&&property.behavior?.includes(\"llm-content\")){flags.inputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.inputLLMContentArray=key}if((flags.inputLLMContent||flags.inputLLMContentArray)&&key===\"context\"){continue}const description2=property.description||property.title||\"text\";properties[key]={type,description:description2}}for(const key in outputSchema.properties){const property=outputSchema.properties[key];const isObject=property.type===\"object\";const isArray=property.type===\"array\";if(isObject&&property.behavior?.includes(\"llm-content\")){flags.outputLLMContent=key}else if(isArray&&property.items?.behavior?.includes(\"llm-content\")){flags.outputLLMContentArray=key}}const name=b.title?.replace(/\\W/g,\"_\");const description=b.description;const parameters={type:\"object\",properties};return{function:{name,description,parameters},returns:outputSchema,flags}};",
                 "name": "fn_4",
                 "raw": true
               },
               "metadata": {
                 "title": "Get Function Signature from board"
               }
+            },
+            {
+              "id": "curry-3",
+              "type": "curry",
+              "configuration": {}
             },
             {
               "id": "input-1",
@@ -2031,18 +2101,18 @@
                       ],
                       "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                       "type": "string"
+                    },
+                    "context": {
+                      "type": "string",
+                      "title": "context"
                     }
                   },
                   "required": [
-                    "item"
+                    "item",
+                    "context"
                   ]
                 }
               }
-            },
-            {
-              "id": "curry-3",
-              "type": "curry",
-              "configuration": {}
             }
           ],
           "graphs": {}
@@ -2316,7 +2386,7 @@
           "id": "fn-7",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];if(current.done){return{done:existing}}const originalPlan=plans[plans.length-1];let max=originalPlan.max;const doneMarker=originalPlan.doneMarker;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}delete current.doneMarker;contents.push({role:\"$metadata\",data:{...current,next:next.task}});return{context:contents}}else if(doneMarker){contents.push({role:\"$metadata\",data:{type:\"looper\",doneMarker}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",data:{type:\"looper\",max}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
+            "code": "const fn_7 = ({context,progress})=>{const plans=Array.isArray(progress)?progress:[progress];const existing=Array.isArray(context)?context:[context];if(!plans||!plans.length){throw new Error(\"Plan is required for Looper to function.\")}try{const current=plans[0];if(current.done){return{done:existing}}const originalPlan=plans[plans.length-1];let max=originalPlan.max;const doneMarker=originalPlan.doneMarker;if(!max){const planItems=originalPlan.todo?.length;if(planItems){max=planItems+1}else{max=Infinity}}const contents=structuredClone(existing);const count=plans.length;if(count>=max){return{done:existing}}if(current.todo&&Array.isArray(current.todo)){const next=current.todo?.shift();if(!next){return{done:existing}}delete current.doneMarker;contents.push({role:\"$metadata\",type:\"looper\",data:{...current,next:next.task}});return{context:contents}}else if(doneMarker){contents.push({role:\"$metadata\",type:\"looper\",data:{doneMarker}});return{context:contents}}else if(max){const count2=plans.length;if(count2>=max){return{done:existing}}contents.push({role:\"$metadata\",type:\"looper\",data:{max}});return{context:contents}}return{done:existing}}catch(e){const error=e;throw new Error(`Invalid plan, unable to proceed: ${error.message}`)}};",
             "name": "fn_7",
             "raw": true
           },
@@ -2366,7 +2436,7 @@
           "type": "runJavascript",
           "configuration": {
             "forkOutputs": true,
-            "code": "const fn_3 = ({context,forkOutputs})=>{const fork=forkOutputs;const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"){progress.push(item.data)}}if(fork){if(progress.length){return{progress}}else{return{context}}}else{return{context,progress}}};",
+            "code": "const fn_3 = ({context,forkOutputs})=>{const fork=forkOutputs;const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){progress.push(item.data)}}if(fork){if(progress.length){return{progress}}else{return{context}}}else{return{context,progress}}};",
             "name": "fn_3",
             "raw": true
           },
@@ -2541,7 +2611,7 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{for(const entry of entries){const input=entry[1];const c=Array.isArray(input)?input:[input];context.push(...c)}}return{context}};",
+            "code": "const fn_4 = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();const context=[];if(merge){const parts=[];for(const[,input]of entries){const c=asContextArray(input);const last=c[c.length-1];if(last){if(last.role===\"$metadata\"){continue}parts.push(...last.parts)}}context.push({parts})}else{const preambleIndices=[];for(const[,input]of entries){const c=asContextArray(input);const hasOpenSplits=scanForSplits(c);if(hasOpenSplits){preambleIndices.push(hasOpenSplits[1])}}const preamblesAreDifferent=!preambleIndices.every(value=>value===preambleIndices[0]);const splitCount=preambleIndices.length;const shouldConcatenate=splitCount!==0&&splitCount!==entries.length||preamblesAreDifferent;if(shouldConcatenate){for(const[,input]of entries){const c=asContextArray(input);context.push(...c)}}else{let splitId;let preambleIndex;if(splitCount===0){splitId=Math.random().toString(36).substring(7);preambleIndex=-1;context.unshift({role:\"$metadata\",type:\"split\",data:{type:\"start\",id:splitId}})}else{preambleIndex=preambleIndices[0];const preamble=entries[0][1].slice(0,preambleIndex+1);context.push(...preamble);splitId=preamble[preamble.length-1].data.id}for(const[,input]of entries){let c=asContextArray(input);if(preambleIndex>=0){c=c.slice(preambleIndex+1)}if(c.length){context.push(...c);context.push({role:\"$metadata\",type:\"split\",data:{type:\"next\",id:splitId}})}}const last=context[context.length-1];if(!last||!last.data||last.data.type!==\"next\"){throw new Error(\"Integrity error: no split 'next' marker found\")}last.data.type=\"end\"}}return{context};function asContextArray(input){return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function scanForSplits(c){const stack=[];for(const[i,item]of c.entries()){if(item.role!==\"$metadata\")continue;if(item.type!==\"split\")continue;if(item.data.type===\"start\"){stack.push([item.data.id,i])}if(item.data.type===\"end\"){const[id]=stack.pop()||[];if(id!==item.data.id){console.warn(\"Split integrity error: mismatched split start/end markers. Start:\",id,\"End:\",item.data.id);return null}}}return stack.pop()||null}__name(scanForSplits,\"scanForSplits\")};",
             "name": "fn_4",
             "raw": true
           },

@@ -101,6 +101,9 @@
           "properties": {
             "worker": {
               "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false,
               "title": "Worker",
               "description": "Worker to repeat",
               "behavior": [

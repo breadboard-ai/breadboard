@@ -17,6 +17,7 @@ import {
   combineContexts,
   looperTaskAdder,
   progressReader,
+  splitStartAdder,
   userPartsAdder,
 } from "../context.js";
 import { gemini } from "@google-labs/gemini-kit";
@@ -129,13 +130,30 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     progress: readProgress.progress,
   });
 
+  const addSplitStart = splitStartAdder({
+    $metadata: {
+      title: "Add Split Start",
+      description: "Marking the start of parallel processing in the context",
+    },
+    context: addLooperTask.context,
+  });
+
+  const boardToFunctionWithContext = core.curry({
+    $metadata: {
+      title: "Add Context",
+      description: "Adding context to the board to function converter",
+    },
+    $board: "#boardToFunction",
+    context: addSplitStart.context,
+  });
+
   const turnBoardsToFunctions = core.map({
     $id: "turnBoardsToFunctions",
     $metadata: {
       title: "Turn Boards into Functions",
       description: "Turning provided boards into functions",
     },
-    board: "#boardToFunction",
+    board: boardToFunctionWithContext.board,
     list: tools.isArray(),
   });
 
@@ -192,6 +210,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Format Tool Response",
       description: "Formatting tool response",
     },
+    context: addSplitStart.context,
     response: mapInvocations.list,
   });
 
@@ -200,8 +219,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Add Tool Response",
       description: "Adding tool response to context",
     },
-    context: addTask.context,
-    toAdd: formatToolResponse.response,
+    ...formatToolResponse,
   });
 
   base.output({

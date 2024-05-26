@@ -125,12 +125,12 @@
               "examples": [
                 "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
               ],
-              "description": "The source material for this worker."
+              "description": "Incoming conversation context"
             },
             "task": {
               "title": "Task",
               "default": "{}",
-              "description": "The task from which to create the plan for looping.",
+              "description": "The task to be used for loop planning",
               "type": "object",
               "behavior": [
                 "llm-content",
@@ -213,7 +213,7 @@
       "id": "fn-4",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_4 = ({ context: context2, toAdd }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  const existing = Array.isArray(context2) ? context2 : [context2];\n  const incoming = structuredClone(toAdd);\n  if (!incoming.parts) {\n    const containsUserRole = existing.filter(\n      (item) => item.role !== \"model\" && item.role !== \"$metadata\"\n    ).length > 0;\n    if (!containsUserRole) {\n      return {\n        context: [\n          ...existing,\n          { role: \"user\", parts: [{ text: \"Do your magic\" }] }\n        ]\n      };\n    }\n    return { context: existing };\n  }\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== incoming.role) {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
+        "code": "const fn_4 = ({ context: context2, toAdd }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  const existing = Array.isArray(context2) ? context2 : [context2];\n  const incoming = toAdd;\n  if (!incoming.parts) {\n    const containsUserRole = existing.filter(\n      (item) => item.role !== \"model\" && item.role !== \"$metadata\"\n    ).length > 0;\n    if (!containsUserRole) {\n      return {\n        context: [\n          ...existing,\n          { role: \"user\", parts: [{ text: \"Do your magic\" }] }\n        ]\n      };\n    }\n    return { context: existing };\n  }\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== incoming.role) {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
         "name": "fn_4",
         "raw": true
       },

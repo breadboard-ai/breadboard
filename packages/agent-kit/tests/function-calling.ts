@@ -7,14 +7,20 @@
 import test, { describe } from "node:test";
 import {
   FunctionCallFlags,
+  ToolResponse,
   URLMap,
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
   functionSignatureFromBoardFunction,
+  responseCollatorFunction,
   resultFormatterFunction,
 } from "../src/function-calling.js";
-import { deepStrictEqual, throws } from "node:assert";
-import { FunctionCallPart, LlmContent } from "../src/context.js";
+import { deepStrictEqual, ok, throws } from "node:assert";
+import {
+  FunctionCallPart,
+  LlmContent,
+  splitStartAdderFunction,
+} from "../src/context.js";
 import { GraphDescriptor } from "@google-labs/breadboard";
 import { readFile } from "node:fs/promises";
 import { resolve } from "path";
@@ -204,6 +210,86 @@ describe("function-calling/boardInvocationAssembler", () => {
       list: [
         { $board: "get/web/page", url: "https://example.com/", $flags: {} },
         { $board: "get/next/holiday", country: "LT", $flags: {} },
+      ],
+    });
+  });
+
+  test("correctly packs the invocation args with flags", () => {
+    const functionCalls = [
+      {
+        name: "Get_Web_Page_Content",
+        args: { url: "https://example.com/" },
+      },
+      {
+        name: "Get_Next_Holiday",
+        args: {
+          country: "LT",
+        },
+      },
+    ] satisfies FunctionCallPart["functionCall"][];
+    const urlMap = {
+      Get_Web_Page_Content: {
+        url: "get/web/page",
+        flags: { inputLLMContent: "url" },
+      },
+      Get_Next_Holiday: {
+        url: "get/next/holiday",
+        flags: { outputLLMContent: "holidays" },
+      },
+    } satisfies URLMap;
+    const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
+    deepStrictEqual(result, {
+      list: [
+        {
+          $board: "get/web/page",
+          url: { parts: [{ text: "https://example.com/" }], role: "user" },
+          $flags: { inputLLMContent: "url" },
+        },
+        {
+          $board: "get/next/holiday",
+          country: "LT",
+          $flags: { outputLLMContent: "holidays" },
+        },
+      ],
+    });
+  });
+
+  test("correctly packs the invocation args with array input flag", () => {
+    const functionCalls = [
+      {
+        name: "Get_Web_Page_Content",
+        args: { url: "https://example.com/" },
+      },
+      {
+        name: "Get_Next_Holiday",
+        args: {
+          country: "LT",
+        },
+      },
+    ] satisfies FunctionCallPart["functionCall"][];
+    const urlMap = {
+      Get_Web_Page_Content: {
+        url: "get/web/page",
+        flags: { inputLLMContentArray: "url" },
+      },
+      Get_Next_Holiday: {
+        url: "get/next/holiday",
+        flags: { outputLLMContent: "holidays" },
+      },
+    } satisfies URLMap;
+    const result = boardInvocationAssemblerFunction({ functionCalls, urlMap });
+    deepStrictEqual(result, {
+      list: [
+        {
+          $board: "get/web/page",
+          url: [{ parts: [{ text: "https://example.com/" }], role: "user" }],
+          $flags: { inputLLMContentArray: "url" },
+        },
+        {
+          $board: "get/next/holiday",
+          country: "LT",
+          $flags: { outputLLMContent: "holidays" },
+        },
       ],
     });
   });
@@ -410,6 +496,66 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
           type: "string",
           description: "text",
         },
+      },
+    });
+  });
+
+  test("elides property named `context` from args", async () => {
+    const board = await loadBoard("context-arg");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { function: Record<string, unknown> };
+    deepStrictEqual(result.function.parameters, {
+      type: "object",
+      properties: {},
+    });
+  });
+});
+
+describe("function-calling/responseCollator", () => {
+  const hello: LlmContent = { parts: [{ text: "Hello" }], role: "tool" };
+  const world: LlmContent = { parts: [{ text: "World" }], role: "tool" };
+  const howdy: LlmContent = { parts: [{ text: "Howdy" }], role: "tool" };
+  const realm: LlmContent = { parts: [{ text: "Realm" }], role: "tool" };
+  test("correctly collates responses", () => {
+    const response = [
+      { item: [hello, world] },
+      { item: [howdy, realm] },
+    ] satisfies ToolResponse[];
+    const result = responseCollatorFunction({ response });
+    deepStrictEqual(result, {
+      "context-1": [hello, world],
+      "context-2": [howdy, realm],
+    });
+  });
+  test("correctly adds context", () => {
+    const context: LlmContent[] = [hello, world];
+    const response = [{ item: [howdy, realm] }] satisfies ToolResponse[];
+    const result = responseCollatorFunction({ response, context });
+    deepStrictEqual(result, {
+      "context-0": [hello, world],
+      "context-1": [howdy, realm],
+    });
+  });
+});
+
+describe("function-calling/addSplitStart", () => {
+  test("correctly adds split start", () => {
+    const hello: LlmContent = { parts: [{ text: "Hello" }], role: "tool" };
+    const context: LlmContent[] = [hello];
+    const result = splitStartAdderFunction({
+      context,
+    });
+    const c = result.context as LlmContent[];
+    ok(c.length === 2);
+    ok(result.id !== null);
+    const id = result.id;
+    deepStrictEqual(c[1], {
+      role: "$metadata",
+      type: "split",
+      data: {
+        id,
+        type: "start",
       },
     });
   });

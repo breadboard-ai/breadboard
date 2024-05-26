@@ -210,7 +210,7 @@
       "id": "router",
       "type": "runJavascript",
       "configuration": {
-        "code": "const router = ({ context: context2 }) => {\n  if (!context2) throw new Error(\"Context is a required input\");\n  const item = context2;\n  const part = item.parts[0];\n  console.warn(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context: context2, text: part.text };\n  }\n  return { context: context2, functionCall: part.functionCall };\n};",
+        "code": "const router = ({ context: context2 }) => {\n  if (!context2) throw new Error(\"Context is a required input\");\n  const item = context2;\n  const functionCallParts = item.parts.filter((part) => \"functionCall\" in part).map((part) => part.functionCall);\n  if (functionCallParts.length === 0) {\n    const textPart = item.parts.find((part) => \"text\" in part);\n    if (!textPart) throw new Error(\"No text or function call found in context\");\n    return { context: context2, text: textPart.text };\n  }\n  return { context: context2, functionCalls: functionCallParts };\n};",
         "name": "router",
         "raw": true
       },
@@ -245,7 +245,7 @@
       "id": "assembleBoardInvoke",
       "type": "runJavascript",
       "configuration": {
-        "code": "const assembleBoardInvoke = ({ functionCall, urlMap }) => {\n  if (!functionCall) throw new Error(\"Function call is a required input\");\n  if (!urlMap) throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n};",
+        "code": "const assembleBoardInvoke = ({ functionCalls, urlMap }) => {\n  if (!functionCalls)\n    throw new Error(\"Function call array is a required input\");\n  if (!urlMap) throw new Error(\"URL map is a required input\");\n  const calls = functionCalls;\n  if (calls.length === 0)\n    throw new Error(\"Function call array must not be empty.\");\n  const call = calls[0];\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n};",
         "name": "assembleBoardInvoke",
         "raw": true
       },
@@ -327,7 +327,7 @@
       "id": "formatFunctionDeclarations",
       "type": "runJavascript",
       "configuration": {
-        "code": "const formatFunctionDeclarations = ({ list }) => {\n  const tools2 = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools2.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools: tools2, urlMap };\n};",
+        "code": "const formatFunctionDeclarations = ({ list }) => {\n  const tools2 = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools2.push(item.function);\n    const flags = item.flags;\n    urlMap[item.function.name] = { url: item.boardURL, flags };\n  });\n  return { tools: tools2, urlMap };\n};",
         "name": "formatFunctionDeclarations",
         "raw": true
       },
@@ -423,10 +423,16 @@
       "description": "Use this board to convert specified boards into function-calling signatures",
       "edges": [
         {
-          "from": "getFunctionSignature",
+          "from": "fn-4",
           "to": "output-2",
           "out": "function",
           "in": "function"
+        },
+        {
+          "from": "fn-4",
+          "to": "output-2",
+          "out": "flags",
+          "in": "flags"
         },
         {
           "from": "input-1",
@@ -442,9 +448,9 @@
         },
         {
           "from": "curry-3",
-          "to": "getFunctionSignature",
+          "to": "fn-4",
           "out": "board",
-          "in": "json"
+          "in": "board"
         }
       ],
       "nodes": [
@@ -456,30 +462,31 @@
               "type": "object",
               "properties": {
                 "function": {
-                  "type": [
-                    "array",
-                    "boolean",
-                    "null",
-                    "number",
-                    "object",
-                    "string"
-                  ],
+                  "type": "string",
                   "title": "function"
                 },
                 "boardURL": {
                   "type": "string",
                   "title": "boardURL"
+                },
+                "flags": {
+                  "type": "string",
+                  "title": "flags"
                 }
               }
             }
           }
         },
         {
-          "id": "getFunctionSignature",
-          "type": "jsonata",
+          "id": "fn-4",
+          "type": "runJavascript",
           "configuration": {
-            "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
+            "code": "const fn_4 = ({ board: board3 }) => {\n  const b = board3;\n  const inputs = b.nodes.filter((node) => node.type === \"input\");\n  if (inputs.length === 0) {\n    throw new Error(\"No inputs found\");\n  }\n  const outputs = b.nodes.filter((node) => node.type === \"output\");\n  if (outputs.length === 0) {\n    throw new Error(\"No outputs found\");\n  }\n  const inputSchema2 = inputs[0].configuration?.schema;\n  if (!inputSchema2) {\n    throw new Error(\"No input schema found\");\n  }\n  const outputSchema = outputs[0].configuration?.schema;\n  if (!outputSchema) {\n    throw new Error(\"No output schema found\");\n  }\n  const properties = {};\n  const flags = {};\n  for (const key in inputSchema2.properties) {\n    const property = inputSchema2.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    const type = isObject || isArray ? \"string\" : property.type;\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContentArray = key;\n    }\n    const description2 = property.description || property.title || \"text\";\n    properties[key] = { type, description: description2 };\n  }\n  for (const key in outputSchema.properties) {\n    const property = outputSchema.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContentArray = key;\n    }\n  }\n  const name = b.title?.replace(/\\W/g, \"_\");\n  const description = b.description;\n  const parameters = {\n    type: \"object\",\n    properties\n  };\n  return {\n    function: { name, description, parameters },\n    returns: outputSchema,\n    flags\n  };\n};",
+            "name": "fn_4",
             "raw": true
+          },
+          "metadata": {
+            "title": "Get Function Signature from board"
           }
         },
         {

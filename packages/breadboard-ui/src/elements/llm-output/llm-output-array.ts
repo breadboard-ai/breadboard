@@ -111,7 +111,10 @@ export class LLMOutputArray extends LitElement {
       return;
     }
 
-    this.selected = this.values.length - 1;
+    // @ts-expect-error - TS doesn't know about findLastIndex
+    this.selected = this.values.findLastIndex(
+      (item: LLMContent) => item.role !== "$metadata"
+    );
   }
 
   protected updated(): void {
@@ -146,6 +149,7 @@ export class LLMOutputArray extends LitElement {
               ? html`<h1>Role</h1>
                   <div id="role-buttons">
                     ${map(this.values, (item, idx) => {
+                      if (item.role === "$metadata") return nothing;
                       const roleClass = (item.role || "user")
                         .toLocaleLowerCase()
                         .replaceAll(/\s/gim, "-");
@@ -188,6 +192,7 @@ export class LLMOutputArray extends LitElement {
           <div ${ref(this.#containerRef)}>
             ${this.mode === "visual"
               ? map(this.values, (item, idx) => {
+                  if (item.role === "$metadata") return nothing;
                   return html`<bb-llm-output
                     ${idx === this.selected
                       ? ref(this.#activeLLMContentRef)
