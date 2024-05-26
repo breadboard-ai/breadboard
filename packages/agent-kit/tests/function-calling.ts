@@ -7,10 +7,12 @@
 import test, { describe } from "node:test";
 import {
   FunctionCallFlags,
+  ToolResponse,
   URLMap,
   boardInvocationAssemblerFunction,
   functionOrTextRouterFunction,
   functionSignatureFromBoardFunction,
+  responseCollatorFunction,
   resultFormatterFunction,
 } from "../src/function-calling.js";
 import { deepStrictEqual, throws } from "node:assert";
@@ -491,6 +493,33 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
           description: "text",
         },
       },
+    });
+  });
+});
+
+describe("function-calling/responseCollator", () => {
+  const hello: LlmContent = { parts: [{ text: "Hello" }], role: "tool" };
+  const world: LlmContent = { parts: [{ text: "World" }], role: "tool" };
+  const howdy: LlmContent = { parts: [{ text: "Howdy" }], role: "tool" };
+  const realm: LlmContent = { parts: [{ text: "Realm" }], role: "tool" };
+  test("correctly collates responses", () => {
+    const response = [
+      { item: [hello, world] },
+      { item: [howdy, realm] },
+    ] satisfies ToolResponse[];
+    const result = responseCollatorFunction({ response });
+    deepStrictEqual(result, {
+      "context-1": [hello, world],
+      "context-2": [howdy, realm],
+    });
+  });
+  test("correctly adds context", () => {
+    const context: LlmContent[] = [hello, world];
+    const response = [{ item: [howdy, realm] }] satisfies ToolResponse[];
+    const result = responseCollatorFunction({ response, context });
+    deepStrictEqual(result, {
+      "context-0": [hello, world],
+      "context-1": [howdy, realm],
     });
   });
 });

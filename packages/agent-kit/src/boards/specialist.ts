@@ -201,6 +201,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Format Tool Response",
       description: "Formatting tool response",
     },
+    context: addTask.context,
     response: mapInvocations.list,
   });
 
@@ -209,8 +210,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Add Tool Response",
       description: "Adding tool response to context",
     },
-    context: addTask.context,
-    toAdd: formatToolResponse.response,
+    ...formatToolResponse,
   });
 
   base.output({

@@ -355,10 +355,16 @@ export const functionDeclarationsFormatter = code(({ list }) => {
 
 export type ToolResponse = { item: LlmContent[] };
 
-export const responseCollatorFunction = fun(({ response }) => {
+export const responseCollatorFunction = fun(({ response, context }) => {
   const r = response as ToolResponse[];
-  const result = r.flatMap((item) => item.item);
-  return { response: result };
+  const c = context as LlmContent[];
+  const result = Object.fromEntries(
+    r.map((item, i) => [`context-${i + 1}`, item.item])
+  );
+  if (c) {
+    result["context-0"] = c;
+  }
+  return result;
 });
 
 export const responseCollator = code(responseCollatorFunction);
