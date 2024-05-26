@@ -345,8 +345,7 @@ export const splitStartAdder = code(splitStartAdderFunction);
  * Given a bunch of context, combines them all into one.
  */
 export const combineContextsFunction = fun(({ merge, ...inputs }) => {
-  const entries = Object.entries(inputs).sort();
-
+  const entries = Object.entries(inputs).sort() as [string, Context[]][];
   const context: Context[] = [];
   if (merge) {
     const parts: LlmContent["parts"] = [];
@@ -363,11 +362,68 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
     }
     context.push({ parts });
   } else {
+    let splitCount = 0;
     for (const entry of entries) {
       const input = entry[1];
-
       const c = (Array.isArray(input) ? input : [input]) as Context[];
-      context.push(...c);
+      const hasSplits = c.some(
+        (item: Context) => item.role === "$metadata" && item.type === "split"
+      );
+      if (hasSplits) splitCount++;
+    }
+    const shouldConcatenate = splitCount !== 0 && splitCount !== entries.length;
+    if (shouldConcatenate) {
+      for (const entry of entries) {
+        const input = entry[1];
+        const c = (Array.isArray(input) ? input : [input]) as Context[];
+        context.push(...c);
+      }
+    } else {
+      let foundPreamble = false;
+      let splitId = Math.random().toString(36).substring(7);
+      for (const entry of entries) {
+        const input = entry[1];
+        const isArray = Array.isArray(input);
+        let c: Context[] = isArray ? input : [input];
+        for (const [i, item] of c.entries()) {
+          if (item.role === "$metadata" && item.type === "split") {
+            const split = item.data;
+            if (split.type === "start") {
+              if (!foundPreamble) {
+                // Clip the preamble from c, and add it to the context.
+                context.push(...c.slice(0, i + 1));
+                splitId = split.id;
+                foundPreamble = true;
+              }
+              const chunk = c.slice(i + 1);
+              c = chunk;
+              break;
+            }
+          }
+        }
+        if (c.length) {
+          context.push(...c);
+          context.push({
+            role: "$metadata",
+            type: "split",
+            data: { type: "next", id: splitId },
+          });
+        }
+      }
+      // If no markers were found, add a split "start" marker at the start.
+      if (!foundPreamble) {
+        context.unshift({
+          role: "$metadata",
+          type: "split",
+          data: { type: "start", id: splitId },
+        });
+      }
+      // Replace the last split "next" marker with a split "end" marker.
+      const last = context[context.length - 1] as SplitMetadata;
+      if (!last || !last.data || last.data.type !== "next") {
+        throw new Error("Integrity error: no split 'next' marker found");
+      }
+      last.data.type = "end";
     }
   }
   return { context };
