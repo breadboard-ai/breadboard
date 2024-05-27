@@ -26,7 +26,10 @@ import {
   isStoredData,
   isText,
 } from "../../../utils/llm-content.js";
-import { createDataStore } from "@google-labs/breadboard";
+import { DataStore } from "@google-labs/breadboard";
+import { consume } from "@lit/context";
+import { dataStoreContext } from "../../../contexts/data-store.js";
+import { asBase64 } from "../../../utils/as-base-64.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -68,7 +71,9 @@ export class LLMInput extends LitElement {
 
   #partDataURLs = new Map<number, string>();
 
-  #dataStore = createDataStore();
+  @consume({ context: dataStoreContext })
+  @property({ attribute: false })
+  public dataStore?: DataStore;
 
   static styles = css`
     * {
@@ -525,18 +530,21 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
-    // if (!this.value.parts[partIdx]) {
-    //   this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
-    // }
+    if (this.dataStore) {
+      this.value.parts[partIdx] = await this.dataStore.store(files[0]);
+    } else {
+      if (!this.value.parts[partIdx]) {
+        this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
+      }
+      let part = this.value.parts[partIdx];
 
-    this.value.parts[partIdx] = await this.#dataStore.store(files[0]);
+      if (!isInlineData(part)) {
+        part = structuredClone(inlineDataTemplate);
+      }
 
-    // if (!isInlineData(part)) {
-    //   part = structuredClone(inlineDataTemplate);
-    // }
-
-    // part.inlineData.data = await asBase64(files[0]);
-    // part.inlineData.mimeType = files[0].type;
+      part.inlineData.data = await asBase64(files[0]);
+      part.inlineData.mimeType = files[0].type;
+    }
     this.#emitUpdate();
     this.requestUpdate();
   }
@@ -688,7 +696,10 @@ export class LLMInput extends LitElement {
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       getData = async () => {
-        const response = await this.#dataStore.retrieve(part);
+        const response = await this.dataStore?.retrieve(part);
+        if (!response) {
+          return "Unable to retrieve data";
+        }
         return atob(response.inlineData.data);
       };
     }
