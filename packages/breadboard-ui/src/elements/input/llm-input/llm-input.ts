@@ -687,28 +687,25 @@ export class LLMInput extends LitElement {
     isLastPart = false
   ) {
     let mimeType;
-    let data;
+    let getData: () => Promise<string>;
     let url;
-    console.log("🌻 getPartDataAsHTML", part);
     if (isInlineData(part)) {
       url = this.#partDataURLs.get(idx);
       mimeType = part.inlineData.mimeType;
-      data = part.inlineData.data;
+      getData = async () => atob(part.inlineData.data);
       if (!url && part.inlineData.data !== "") {
         const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         const response = await fetch(dataURL);
-        const data = await response.blob();
-
-        url = URL.createObjectURL(data);
+        url = URL.createObjectURL(await response.blob());
         this.#partDataURLs.set(idx, url);
       }
     } else {
-      console.log("🌻 I see stored part data!", part.storedData);
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
-      // This is definitely wrong
-      // TODO: Fix this.
-      data = part.storedData.handle;
+      getData = async () => {
+        const response = await fetch(part.storedData.handle);
+        return await response.text();
+      };
     }
 
     switch (mimeType) {
@@ -737,7 +734,7 @@ export class LLMInput extends LitElement {
 
       case "text/plain": {
         // prettier-ignore
-        return cache(html`<div class="plain-text">${atob(data)}</div>`);
+        return cache(html`<div class="plain-text">${await getData()}</div>`);
       }
 
       case "file": {

@@ -191,6 +191,10 @@ export class LLMOutput extends LitElement {
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
           } else if (isStoredData(part)) {
             const { handle: url, mimeType } = part.storedData;
+            const getData = async () => {
+              const response = await fetch(url);
+              return response.text();
+            };
             if (mimeType.startsWith("image")) {
               value = html`<img src="${url}" alt="LLM Image" />`;
             }
@@ -201,7 +205,7 @@ export class LLMOutput extends LitElement {
               return html`<video src="${url}" controls />`;
             }
             if (mimeType.startsWith("text")) {
-              return html`<div class="plain-text">${url}</div>`;
+              return html`<div class="plain-text">${until(getData())}</div>`;
             }
           } else {
             value = html`Unrecognized part`;
