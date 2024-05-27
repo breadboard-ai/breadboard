@@ -14,7 +14,6 @@ import {
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-// import { asBase64 } from "../../../utils/as-base-64.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
 import type { AudioInput } from "../audio/audio.js";
@@ -28,7 +27,6 @@ import {
   isText,
 } from "../../../utils/llm-content.js";
 import { createDataStore } from "@google-labs/breadboard";
-import { asBase64 } from "../../../utils/as-base-64.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
