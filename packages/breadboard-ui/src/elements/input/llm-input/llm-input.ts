@@ -27,11 +27,10 @@ import {
   isStoredData,
   isText,
 } from "../../../utils/llm-content.js";
+import { createDataStore } from "@google-labs/breadboard";
+import { asBase64 } from "../../../utils/as-base-64.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
-const storedDataTemplate: LLMStoredData = {
-  storedData: { handle: "", mimeType: "" },
-};
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -70,6 +69,8 @@ export class LLMInput extends LitElement {
   #containerRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
+
+  #dataStore = createDataStore();
 
   static styles = css`
     * {
@@ -526,25 +527,11 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
-    if (!this.value.parts[partIdx]) {
-      this.value.parts[partIdx] = structuredClone(storedDataTemplate);
-    } else if (!isStoredData(this.value.parts[partIdx])) {
-      this.value.parts[partIdx] = structuredClone(storedDataTemplate);
-    }
-
     // if (!this.value.parts[partIdx]) {
     //   this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
     // }
 
-    let part = this.value.parts[partIdx];
-    if (!isStoredData(part)) {
-      part = structuredClone(storedDataTemplate);
-    }
-    // This will leak for now.
-    // TODO: Use actual DataStore for this.
-    part.storedData.handle = URL.createObjectURL(files[0]);
-    part.storedData.mimeType = files[0].type;
-    console.log("🌻 I am done", this.value.parts[partIdx]);
+    this.value.parts[partIdx] = await this.#dataStore.store(files[0]);
 
     // if (!isInlineData(part)) {
     //   part = structuredClone(inlineDataTemplate);
@@ -703,8 +690,8 @@ export class LLMInput extends LitElement {
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       getData = async () => {
-        const response = await fetch(part.storedData.handle);
-        return await response.text();
+        const response = await this.#dataStore.retrieve(part);
+        return atob(response.inlineData.data);
       };
     }
 

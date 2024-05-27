@@ -17,6 +17,10 @@ import type {
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
+import {
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "./data/types.js";
 
 export type {
   Capability,
@@ -141,28 +145,6 @@ export type ErrorCapability = Capability & {
   readonly inputs?: InputValues;
   readonly descriptor?: NodeDescriptor;
 };
-
-/**
- * Represents inline data, encoded as a base64 string.
- */
-export type InlineDataCapabilityPart = {
-  inlineData: {
-    mimeType: string;
-    data: string;
-  };
-};
-
-/**
- * Represents data that is stored by a DataStoreProvider.
- */
-export type StoredDataCapabilityPart = {
-  storedData: {
-    handle: DataStoreHandle;
-    mimeType: string;
-  };
-};
-
-export type DataStoreHandle = string;
 
 /**
  * A capability that represents a data value passed over the wire.

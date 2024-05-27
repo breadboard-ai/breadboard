@@ -4,11 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  DataCapability,
-  InlineDataCapabilityPart,
-  StoredDataCapabilityPart,
-} from "./types.js";
+import { InlineDataCapabilityPart, StoredDataCapabilityPart } from "./types.js";
+import { DataCapability } from "../types.js";
 
 // Helpers for handling DataCapability objects.
 
@@ -35,7 +32,9 @@ export const asBlob = async (
   return data;
 };
 
-const isStoredData = (value: unknown): value is StoredDataCapabilityPart => {
+export const isStoredData = (
+  value: unknown
+): value is StoredDataCapabilityPart => {
   if (typeof value !== "object" || value === null) return false;
   const data = value as DataCapability;
   if (!("storedData" in data)) return false;
@@ -43,7 +42,7 @@ const isStoredData = (value: unknown): value is StoredDataCapabilityPart => {
   return true;
 };
 
-function asBase64(file: File | Blob): Promise<string> {
+export function asBase64(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
