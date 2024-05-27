@@ -12,11 +12,10 @@ import {
 } from "@breadboard-ai/build";
 import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import {
-  DataCapability,
   NodeHandlerContext,
-  StoredDataCapabilityPart,
   StreamCapability,
   asBlob,
+  inflateData,
   isDataCapability,
 } from "@google-labs/breadboard";
 
@@ -42,63 +41,6 @@ const serverSentEventTransform = () =>
       }
     },
   });
-
-const isStoredData = (value: unknown): value is StoredDataCapabilityPart => {
-  if (typeof value !== "object" || value === null) return false;
-  const data = value as DataCapability;
-  if (!("storedData" in data)) return false;
-  if (!data.storedData.handle) return false;
-  return true;
-};
-
-function asBase64(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject("Reader result is not a string");
-        return;
-      }
-
-      const [, content] = reader.result.split(",");
-      resolve(content);
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
-}
-
-const inflateData = async (data: unknown) => {
-  // Recursively descend into the data structure,
-  // replacing storedData with inlineData.
-  const descender = async (value: unknown): Promise<unknown> => {
-    if (isStoredData(value)) {
-      const { mimeType, handle } = value.storedData;
-      const blob = await (await fetch(handle)).blob();
-      const data = await asBase64(blob);
-      return { inlineData: { data, mimeType } };
-    }
-    if (Array.isArray(value)) {
-      const result = [];
-      for (const item of value) {
-        result.push(await descender(item));
-      }
-      return result;
-    }
-    if (typeof value === "object" && value !== null) {
-      const v = value as Record<string, unknown>;
-      const result: Record<string, unknown> = {};
-      for (const key in value) {
-        result[key] = await descender(v[key]);
-      }
-      return result;
-    }
-    return value;
-  };
-
-  const result = await descender(data);
-  return result;
-};
 
 const createBody = async (
   body: unknown,

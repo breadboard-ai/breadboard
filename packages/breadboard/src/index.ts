@@ -90,4 +90,4 @@ export { formatGraphDescriptor } from "./formatter.js";
  * DataCapability helpers.
  */
 
-export { isDataCapability, asBlob } from "./data.js";
+export { isDataCapability, asBlob, inflateData } from "./data.js";
