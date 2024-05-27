@@ -158,6 +158,7 @@ export type InlineDataCapabilityPart = {
 export type StoredDataCapabilityPart = {
   storedData: {
     handle: DataStoreHandle;
+    mimeType: string;
   };
 };
 
