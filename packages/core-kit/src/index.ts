@@ -191,6 +191,14 @@ export const Core = builder.build({
   runJavascript,
   secrets,
   curry,
+
+  /**
+   * Converts all inline data to stored data, saving memory.
+   * Useful when working with multimodal content. Safely passes
+   * data through if it's already stored or no inline data is
+   * present.
+   */
+  deflate,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -211,6 +219,7 @@ import {
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
 import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
+import deflate from "./nodes/deflate.js";
 
 export type CoreKitType = {
   passthrough: NodeFactory<InputValues, OutputValues>;

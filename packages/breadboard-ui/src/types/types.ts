@@ -98,8 +98,16 @@ export type LLMText = {
   text: string;
 };
 
+export type LLMStoredData = {
+  storedData: {
+    handle: string;
+    mimeType: string;
+  };
+};
+
 export type LLMPart =
   | LLMInlineData
+  | LLMStoredData
   | LLMFunctionCall
   | LLMFunctionResponse
   | LLMText;

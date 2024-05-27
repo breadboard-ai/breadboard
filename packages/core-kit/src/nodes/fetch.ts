@@ -15,6 +15,7 @@ import {
   NodeHandlerContext,
   StreamCapability,
   asBlob,
+  inflateData,
   isDataCapability,
 } from "@google-labs/breadboard";
 
@@ -46,9 +47,9 @@ const createBody = async (
   headers: Record<string, string | undefined>
 ) => {
   if (!body) return undefined;
-  const values = body as Record<string, JsonSerializable>;
   const contentType = headers["Content-Type"];
   if (contentType === "multipart/form-data") {
+    const values = body as Record<string, JsonSerializable>;
     // This is necessary to let fetch set its own content type.
     delete headers["Content-Type"];
     const formData = new FormData();
@@ -57,14 +58,18 @@ const createBody = async (
       if (typeof value === "string") {
         formData.append(key, value);
       } else if (isDataCapability(value)) {
-        formData.append(key, await asBlob(value));
+        if ("inlineData" in value) {
+          formData.append(key, await asBlob(value));
+        } else {
+          formData.append(key, await asBlob(value));
+        }
       } else {
         formData.append(key, JSON.stringify(value));
       }
     }
     return formData;
   }
-  return JSON.stringify(body);
+  return JSON.stringify(await inflateData(body));
 };
 
 export default defineNodeType({
