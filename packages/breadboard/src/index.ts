@@ -89,12 +89,11 @@ export { formatGraphDescriptor } from "./formatter.js";
 /**
  * DataCapability helpers.
  */
-
 export type * from "./data/types.js";
 export {
-  isDataCapability,
-  asBlob,
+  createDataStore,
   inflateData,
   deflateData,
-} from "./data/data.js";
-export { createDataStore } from "./data/index.js";
+  isDataCapability,
+  asBlob,
+} from "./data/index.js";
