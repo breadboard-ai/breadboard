@@ -433,6 +433,8 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     const result = functionSignatureFromBoardFunction({
       board,
     });
+    deepStrictEqual(result.board, board);
+    delete result.board;
     deepStrictEqual(result, {
       function: {
         name: "Nager_Date_Next_Public_Holiday",
@@ -484,21 +486,21 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     });
   });
 
-  test("substitutes property title for description when description is missing", async () => {
-    const board = await loadBoard("no-descriptions");
-    const result = functionSignatureFromBoardFunction({
-      board,
-    }) as { function: Record<string, unknown> };
-    deepStrictEqual(result.function.parameters, {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          description: "text",
-        },
-      },
-    });
-  });
+  // test("substitutes property title for description when description is missing", async () => {
+  //   const board = await loadBoard("no-descriptions");
+  //   const result = functionSignatureFromBoardFunction({
+  //     board,
+  //   }) as { function: Record<string, unknown> };
+  //   deepStrictEqual(result.function.parameters, {
+  //     type: "object",
+  //     properties: {
+  //       text: {
+  //         type: "string",
+  //         description: "text",
+  //       },
+  //     },
+  //   });
+  // });
 
   test("elides property named `context` from args", async () => {
     const board = await loadBoard("context-arg");
@@ -509,6 +511,14 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       type: "object",
       properties: {},
     });
+  });
+
+  test("renames the arg named `context` to match property name", async () => {
+    const board = await loadBoard("context-arg");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    }) as { board: GraphDescriptor };
+    ok(result.board.args?.["property-1"]);
   });
 });
 

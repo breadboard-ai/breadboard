@@ -286,18 +286,24 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
       (property.items as Schema)?.behavior?.includes("llm-content")
     ) {
       flags.inputLLMContentArray = key;
-    }
-    if (
-      (flags.inputLLMContent || flags.inputLLMContentArray) &&
-      key === "context"
-    ) {
-      // Don't add the "context" property to the function
-      // signature, since the context is supplied at the time
-      // of invocation.
       continue;
     }
     const description = property.description || property.title || "text";
     properties[key] = { type, description };
+  }
+  if (flags.inputLLMContentArray) {
+    // Change the name of `board.args` parameter from `context` to the one
+    // specified by the flag.
+    const c = b.args?.context;
+    if (c) {
+      b.args ??= {};
+      b.args[flags.inputLLMContentArray] = c;
+      delete b.args.context;
+    }
+  } else {
+    // Remove the `context` parameter from the board args.
+    // There's no property that corresponds to it.
+    delete b.args?.context;
   }
   for (const key in outputSchema.properties) {
     const property = outputSchema.properties[key];
@@ -322,6 +328,7 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
     function: { name, description, parameters },
     returns: outputSchema,
     flags,
+    board,
   };
 });
 
@@ -344,7 +351,7 @@ export const boardToFunction = await board(({ item, context }) => {
 
   return {
     function: getFunctionSignature.function,
-    boardURL: importBoard.board,
+    boardURL: getFunctionSignature.board,
     flags: getFunctionSignature.flags,
   };
 }).serialize({

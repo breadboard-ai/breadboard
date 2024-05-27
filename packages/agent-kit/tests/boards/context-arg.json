@@ -11,7 +11,7 @@
     {
       "from": "input-2ac00dd6",
       "to": "specialist-6c4f145f",
-      "out": "context",
+      "out": "property-1",
       "in": "in"
     }
   ],
@@ -79,7 +79,7 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
+            "property-1": {
               "type": "array",
               "title": "Context",
               "examples": [],
@@ -94,5 +94,8 @@
         }
       }
     }
-  ]
+  ],
+  "args": {
+    "context": "foo"
+  }
 }
