@@ -13,6 +13,8 @@ import {
 
 export class SimpleDataStore implements DataStore {
   async store(data: Blob): Promise<StoredDataCapabilityPart> {
+    // TODO: Figure out how to revoke the URLs when the data
+    // is no longer needed.
     const handle = URL.createObjectURL(data);
     const mimeType = data.type;
     return {
