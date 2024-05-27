@@ -9,11 +9,12 @@ import {
   AllowedLLMContentTypes,
   LLMContent,
   LLMInlineData,
+  LLMStoredData,
 } from "../../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { asBase64 } from "../../../utils/as-base-64.js";
+// import { asBase64 } from "../../../utils/as-base-64.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
 import type { AudioInput } from "../audio/audio.js";
@@ -23,10 +24,14 @@ import {
   isFunctionCall,
   isFunctionResponse,
   isInlineData,
+  isStoredData,
   isText,
 } from "../../../utils/llm-content.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
+const storedDataTemplate: LLMStoredData = {
+  storedData: { handle: "", mimeType: "" },
+};
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -522,16 +527,31 @@ export class LLMInput extends LitElement {
     }
 
     if (!this.value.parts[partIdx]) {
-      this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
+      this.value.parts[partIdx] = structuredClone(storedDataTemplate);
+    } else if (!isStoredData(this.value.parts[partIdx])) {
+      this.value.parts[partIdx] = structuredClone(storedDataTemplate);
     }
+
+    // if (!this.value.parts[partIdx]) {
+    //   this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
+    // }
 
     let part = this.value.parts[partIdx];
-    if (!isInlineData(part)) {
-      part = structuredClone(inlineDataTemplate);
+    if (!isStoredData(part)) {
+      part = structuredClone(storedDataTemplate);
     }
+    // This will leak for now.
+    // TODO: Use actual DataStore for this.
+    part.storedData.handle = URL.createObjectURL(files[0]);
+    part.storedData.mimeType = files[0].type;
+    console.log("🌻 I am done", this.value.parts[partIdx]);
 
-    part.inlineData.data = await asBase64(files[0]);
-    part.inlineData.mimeType = files[0].type;
+    // if (!isInlineData(part)) {
+    //   part = structuredClone(inlineDataTemplate);
+    // }
+
+    // part.inlineData.data = await asBase64(files[0]);
+    // part.inlineData.mimeType = files[0].type;
     this.#emitUpdate();
     this.requestUpdate();
   }
@@ -663,20 +683,35 @@ export class LLMInput extends LitElement {
 
   async #getPartDataAsHTML(
     idx: number,
-    part: LLMInlineData,
+    part: LLMInlineData | LLMStoredData,
     isLastPart = false
   ) {
-    let url = this.#partDataURLs.get(idx);
-    if (!url && part.inlineData.data !== "") {
-      const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-      const response = await fetch(dataURL);
-      const data = await response.blob();
+    let mimeType;
+    let data;
+    let url;
+    console.log("🌻 getPartDataAsHTML", part);
+    if (isInlineData(part)) {
+      url = this.#partDataURLs.get(idx);
+      mimeType = part.inlineData.mimeType;
+      data = part.inlineData.data;
+      if (!url && part.inlineData.data !== "") {
+        const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const response = await fetch(dataURL);
+        const data = await response.blob();
 
-      url = URL.createObjectURL(data);
-      this.#partDataURLs.set(idx, url);
+        url = URL.createObjectURL(data);
+        this.#partDataURLs.set(idx, url);
+      }
+    } else {
+      console.log("🌻 I see stored part data!", part.storedData);
+      url = part.storedData.handle;
+      mimeType = part.storedData.mimeType;
+      // This is definitely wrong
+      // TODO: Fix this.
+      data = part.storedData.handle;
     }
 
-    switch (part.inlineData.mimeType) {
+    switch (mimeType) {
       case "image/png":
       case "image/jpg":
       case "image/jpeg":
@@ -702,7 +737,7 @@ export class LLMInput extends LitElement {
 
       case "text/plain": {
         // prettier-ignore
-        return cache(html`<div class="plain-text">${atob(part.inlineData.data)}</div>`);
+        return cache(html`<div class="plain-text">${atob(data)}</div>`);
       }
 
       case "file": {
@@ -883,6 +918,15 @@ export class LLMInput extends LitElement {
                 partClass = "function-response";
                 value = html`${part.functionResponse.name}
                 ${JSON.stringify(part.functionResponse.response, null, 2)}`;
+              } else if (isStoredData(part)) {
+                console.log("🌻 I see stored part data!");
+                // Steal the inline data class for now
+                partClass = "inline-data";
+
+                value = html`${until(
+                  this.#getPartDataAsHTML(idx, part, isLastPart),
+                  "Loading..."
+                )}`;
               } else if (isInlineData(part)) {
                 partClass = "inline-data";
 

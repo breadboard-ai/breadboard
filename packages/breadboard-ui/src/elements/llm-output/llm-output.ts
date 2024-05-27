@@ -11,6 +11,7 @@ import {
   isFunctionCall,
   isFunctionResponse,
   isInlineData,
+  isStoredData,
   isText,
 } from "../../utils/llm-content.js";
 import { markdown } from "../../directives/markdown.js";
@@ -188,6 +189,20 @@ export class LLMOutput extends LitElement {
             value = html`${until(tmpl)}`;
           } else if (isFunctionCall(part) || isFunctionResponse(part)) {
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
+          } else if (isStoredData(part)) {
+            const { handle: url, mimeType } = part.storedData;
+            if (mimeType.startsWith("image")) {
+              value = html`<img src="${url}" alt="LLM Image" />`;
+            }
+            if (mimeType.startsWith("audio")) {
+              return html`<audio src="${url}" controls />`;
+            }
+            if (mimeType.startsWith("video")) {
+              return html`<video src="${url}" controls />`;
+            }
+            if (mimeType.startsWith("text")) {
+              return html`<div class="plain-text">${url}</div>`;
+            }
           } else {
             value = html`Unrecognized part`;
           }
