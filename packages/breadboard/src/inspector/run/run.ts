@@ -58,7 +58,12 @@ export class RunObserver implements InspectableRunObserver {
           result.data.graph,
           this.#options
         );
-        this.#runs = [run, ...this.#runs];
+        // For now, confine the `runs` array to two runs.
+        if (this.#runs.length === 0) {
+          this.#runs = [run];
+        } else {
+          this.#runs = [run, this.#runs[0]];
+        }
       }
     } else if (result.type === "graphend") {
       const { path, timestamp } = result.data;
