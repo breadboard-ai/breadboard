@@ -245,4 +245,24 @@ describe("combineContexts", () => {
       context: [{ parts: [a2, b2] }],
     });
   });
+
+  test("merges context with metadata", () => {
+    const a1 = { text: "a1" };
+    const a2 = { text: "a2" };
+    const b1 = { text: "b1" };
+    const b2 = { text: "b2" };
+    const result = combineContextsFunction({
+      contextA: [
+        { parts: [a1] },
+        { parts: [a2] },
+        split("end", "1"),
+      ] satisfies Context[],
+      contextB: [{ parts: [b1] }, { parts: [b2] }] satisfies LlmContent[],
+      merge: true,
+    });
+
+    deepStrictEqual(result, {
+      context: [{ parts: [a2, b2] }],
+    });
+  });
 });

@@ -38,26 +38,51 @@ The TypeScript build is configured to produce a `dist` directory in the root of 
 
 After cloning the repo:
 
-:one: Install all of the dependencies for all of the packages in the monorepo:
+Install all of the dependencies for all of the packages in the monorepo:
 
 ```bash
 npm i
 ```
 
-:two: build the project:
+To build the whole project:
 
 ```bash
-npx run build
+npm run build
 ```
 
-This project moves rather quickly, so most of the time, there will be changes that will require a full rebuild with installing new packages, etc.
-
-To make the process of syncing to the tip of tree more convenient, there's a `sync` command. It will run `npm install`, clear build artifacts, and rebuild from scratch.
-
-So every time you're back to hacking on the project after a little while, run:
+To run all tests:
 
 ```bash
-npm run sync
+npm run test
+```
+
+Most of the time, you will likely want to bring up the Breadboard Web UI. To do so, run the `w` command:
+
+```bash
+npm run w
+```
+
+To start a doc site server:
+
+```bash
+npm run d
+```
+
+To start a board server and a Breadboard Web UI:
+
+```bash
+npm run s
+```
+
+Occasionally, there will be changes that will require a full rebuild with installing new packages, etc.
+
+When you find your repo in a funky state, use the `clean` command. It will delete all build artifacts and bring the repo back to the pristine state, allowing you to restart with `npm i` and all those things.
+
+> [!CAUTION]
+> If you have any local files that you have saved in the tree, they will be deleted.
+
+```bash
+npm run clean
 
 ```
 
