@@ -205,6 +205,7 @@ export class LLMInputArray extends LitElement {
       <div ${ref(this.#containerRef)}>
         ${this.values
           ? map(this.values, (value, idx) => {
+              if (value.role === "$metadata") return nothing;
               return html`<bb-llm-input
                 class=${classMap({ visible: idx === this.selected })}
                 @input=${(evt: Event) => {

@@ -110,8 +110,11 @@ export type Context = LlmContent | Metadata;
  * @param f -- code function
  * @returns -- code function
  */
-export const fun = (
-  f: (inputs: Record<string, unknown>) => Record<string, unknown>
+export const fun = <
+  In = Record<string, unknown>,
+  Out = Record<string, unknown>,
+>(
+  f: (inputs: In) => Out
 ) => {
   return f;
 };
@@ -513,3 +516,41 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
   }
 });
 export const combineContexts = code(combineContextsFunction);
+
+/**
+ * Takes a single context and splits it into multiple contexts using the
+ * split markers.
+ */
+export const splitContextsFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = asContextArray(context);
+  const last = c[c.length - 1];
+  if (
+    last.role !== "$metadata" ||
+    last.type !== "split" ||
+    last.data.type !== "end"
+  ) {
+    return { context: c };
+  }
+  const contexts: Context[][] = [];
+  let current: Context[] = [];
+  for (const item of c) {
+    if (item.role === "$metadata" && item.type === "split") {
+      if (item.data.type === "start") {
+        current = [];
+      } else if (item.data.type === "end") {
+        contexts.push(current);
+      }
+    } else {
+      current.push(item);
+    }
+  }
+  const result: Record<string, Context[]> = Object.fromEntries(
+    contexts.map((c, i) => [`context-${i}`, c])
+  );
+  return result;
+
+  function asContextArray(input: unknown): Context[] {
+    return Array.isArray(input) ? input : [input];
+  }
+});
