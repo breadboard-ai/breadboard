@@ -196,7 +196,7 @@
     "@vscode/debugadapter": "^1.65.0",
     "@vscode/vsce": "^2.26.1",
     "dotenv": "^16.4.5",
-    "esbuild": "^0.21.3",
+    "esbuild": "^0.21.4",
     "mermaid": "^10.9.1",
     "rimraf": "^5.0.7",
     "typescript": "^5.4.5"
