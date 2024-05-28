@@ -147,11 +147,27 @@ export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
     } else if (mode === "inputOutput") {
       return { input: c, output: c };
     }
-    return { output: c, choose: c };
+    return { output: onlyChoices(c), choose: c };
 
     function asContextArray(context: unknown): Context[] {
       const input = context as Context | Context[];
       return Array.isArray(input) ? input : [input];
+    }
+
+    function onlyChoices(context: Context[]): Context[] {
+      const choices: Context[] = [];
+      const reversed = [...context].reverse();
+      for (const item of reversed) {
+        choices.push(item);
+        if (
+          item.role === "$metadata" &&
+          item.type === "split" &&
+          item.data.type === "start"
+        ) {
+          break;
+        }
+      }
+      return choices.reverse();
     }
 
     function computeMode(context: Context[]): HumanMode {
