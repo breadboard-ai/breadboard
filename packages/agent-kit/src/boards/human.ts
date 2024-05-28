@@ -104,47 +104,143 @@ const inputSchemaBuilder = code<SchemaInputs, SchemaOutputs>(
 export type ModeRouterIn = {
   context: unknown;
 };
-export type ModeRouterOut = {
-  context: unknown;
-  action: Action;
-  output?: Context;
-};
+export type ModeRouterOut =
+  | {
+      input: Context[];
+    }
+  | {
+      input: Context[];
+      output: Context[];
+    }
+  | {
+      output: Context[];
+      choose: Context[];
+    };
+
+export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
+
 /**
  * Four modes:
  * - "input" -- there is no pending model output to show, so we just
  *  show the user input.
- * - "input-output" -- there is a model output to show, so we show it
+ * - "inputOutput" -- there is a model output to show, so we show it
  * first, then ask for user input.
- * - "choose" -- the context contains a split output metadata, so we
+ * - "choose" -- the context contains split output metadata, so we
  * show the model output, and a choice-picker for the user and optionally, a
  * text box for the user to provide feedback.
- * - "choose-reject" -- the context contains a split output
+ * - "chooseReject" -- the context contains a split output
  * metadata, so we show the model output, and a choice-picker for the user
  * with an option to reject and try again, and optionally, a text box for the
  * user to provide feedback.
+ *
+ * Strategies for each mode, a different output:
+ * - "input" -- just the context.
+ * - "inputOutput" -- just the context.
+ * - "choose" -- the context and the `ChoicePicker` data structure.
  */
 export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
   ({ context }) => {
-    const action: Action = { action: "none" };
-    if (Array.isArray(context) && context.length > 0) {
-      let lastItem = context[context.length - 1] as Context;
-      if (lastItem.role === "$metadata") {
-        lastItem = context[context.length - 2];
-      }
-      if (lastItem && lastItem.role !== "user") {
-        const output = lastItem;
-        return { output, action, context };
-      }
+    const c = asContextArray(context);
+    const mode = computeMode(c);
+    if (mode === "input") {
+      return { input: c };
+    } else if (mode === "inputOutput") {
+      return { input: c, output: c };
     }
-    return { context, action };
+    return { output: c, choose: c };
+
+    function asContextArray(context: unknown): Context[] {
+      const input = context as Context | Context[];
+      return Array.isArray(input) ? input : [input];
+    }
+
+    function computeMode(context: Context[]): HumanMode {
+      const lastItem = context[context.length - 1];
+      if (lastItem.role === "user") {
+        return "input";
+      }
+      if (lastItem.role !== "$metadata") {
+        return "inputOutput";
+      }
+      if (lastItem.type === "split" && lastItem.data.type === "end") {
+        return "choose";
+      }
+      return "inputOutput";
+    }
   }
 );
-
 const modeRouter = code(modeRouterFunction);
 
-const actionRecognizer = code(({ text, context, action }) => {
-  return { text, context };
+export const chooseSchemaBuilderFunction = fun(
+  ({ context, title, description }) => {
+    const c = asContextArray(context).reverse();
+    const choices: string[] = [];
+    for (const item of c) {
+      if (item.role === "$metadata" && item.type === "split") {
+        const type = item.data.type;
+        if (type === "start") {
+          break;
+        } else {
+          choices.push(`Choice ${choices.length + 1}`);
+        }
+      }
+    }
+    const schema: Schema = {
+      type: "object",
+      properties: {
+        choice: {
+          title: title as string,
+          description: description as string,
+          type: "string",
+          enum: choices,
+        },
+      },
+    };
+    return { schema, total: choices.length };
+
+    function asContextArray(context: unknown): Context[] {
+      const input = context as Context | Context[];
+      return Array.isArray(input) ? input : [input];
+    }
+  }
+);
+const chooseSchemaBuilder = code(chooseSchemaBuilderFunction);
+
+export const choicePickerFunction = fun(({ context, choice, total }) => {
+  const chosenIndex =
+    (total as number) - parseInt((choice as string).split(" ")[1], 10);
+  const c = (context as Context[]).reverse();
+  const current: Context[] = [];
+  let found: "before" | "found" | "after" = "before";
+  let chunkIndex = 0;
+  let startIndex = 0;
+  for (const [i, item] of c.entries()) {
+    if (item.role === "$metadata" && item.type === "split") {
+      const type = item.data.type;
+      if (type === "start") {
+        startIndex = i;
+        break;
+      } else {
+        if (chunkIndex === chosenIndex) {
+          found = "found";
+        } else if (chunkIndex > chosenIndex) {
+          found = "after";
+        } else {
+          found = "before";
+        }
+        chunkIndex++;
+      }
+    } else if (found === "found") {
+      current.push(item);
+    }
+  }
+  const preamble = c.slice(startIndex + 1).reverse();
+  if (!found) {
+    throw new Error(`Integrity error: choice "${choice}" not found`);
+  }
+  return { context: [...preamble, ...current.reverse()] };
 });
+export const choicePicker = code(choicePickerFunction);
 
 export default await board(({ context, title, description }) => {
   context
@@ -175,26 +271,25 @@ export default await board(({ context, title, description }) => {
     .behavior("config")
     .default("A request or response");
 
-  const routeByMode = modeRouter({
-    $id: "maybeOutputRouter",
-    $metadata: {
-      title: "Maybe Output",
-      description: "Checking if the last message was from the model",
-    },
-    context,
-  });
-
   const areWeDoneChecker = skipIfDone({
     $metadata: {
       title: "Done Check",
       description: "Checking to see if we can skip work altogether",
     },
-    context: routeByMode.context,
+    context,
   });
 
   base.output({
     $metadata: { title: "Done", description: "Skipping because we're done" },
     context: areWeDoneChecker.done.title("Context out"),
+  });
+
+  const routeByMode = modeRouter({
+    $metadata: {
+      title: "Compute Mode",
+      description: "Determining the mode of operation",
+    },
+    context: areWeDoneChecker.context,
   });
 
   const createSchema = inputSchemaBuilder({
@@ -205,27 +300,47 @@ export default await board(({ context, title, description }) => {
     },
     title: title.isString(),
     description: description.isString(),
-    context: areWeDoneChecker.context,
-    action: routeByMode.action,
+    context: routeByMode.input,
+  });
+
+  const buildChooseSchema = chooseSchemaBuilder({
+    $metadata: {
+      title: "Choose Options",
+      description: "Creating the options to choose from",
+    },
+    title: title.isString(),
+    description: description.isString(),
+    context: routeByMode.choose,
+  });
+
+  const chooseInput = base.input({
+    $metadata: {
+      title: "Choose Input",
+      description: "Asking user to choose an option",
+    },
+  });
+
+  buildChooseSchema.schema.to(chooseInput);
+
+  const pickChoice = choicePicker({
+    $metadata: {
+      title: "Read Choice",
+      description: "Reading the user's choice",
+    },
+    context: routeByMode.choose,
+    choice: chooseInput.choice,
+    total: buildChooseSchema.total,
   });
 
   base.output({
     $metadata: {
-      title: "Feedback",
-      description: "Displaying the output to user with feedback",
+      title: "Choice Output",
+      description: "Outputting the user's choice",
     },
-    feedback: routeByMode.feedback,
-    schema: {
-      type: "object",
-      behavior: ["bubble"],
-      properties: {
-        feedback: {
-          type: "string",
-          title: "Feedback",
-          description: "The feedback to display",
-        },
-      },
-    } satisfies Schema,
+    context: pickChoice.context
+      .isArray()
+      .behavior("llm-content")
+      .title("Context out"),
   });
 
   base.output({
@@ -259,31 +374,14 @@ export default await board(({ context, title, description }) => {
 
   createSchema.schema.to(input);
 
-  const recognizeAction = actionRecognizer({
-    $metadata: {
-      title: "Action Recognizer",
-      description: "Recognizing the action that user has taken",
-    },
-    context: createSchema.context,
-    text: input.text,
-  });
-
-  base.output({
-    $metadata: {
-      title: "Rejection",
-      description: "Rejecting latest agent work per user action",
-    },
-    again: recognizeAction.again.behavior("deprecated"),
-  });
-
   const appendContext = userPartsAdder({
     $id: "appendContext",
     $metadata: {
       title: "Append Context",
       description: "Appending user input to the conversation context",
     },
-    context: recognizeAction.context,
-    toAdd: recognizeAction.text,
+    context: routeByMode.input,
+    toAdd: input.text,
   });
 
   return {
