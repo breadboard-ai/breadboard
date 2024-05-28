@@ -214,6 +214,22 @@ describe("combineContexts", () => {
     }
   });
 
+  test("handles `single` scenario", () => {
+    const a1 = text("a1");
+    const a2 = text("a2");
+    const b1 = text("b1");
+    const c1 = text("c1");
+    const start = split("start", "1");
+    const result = combineContextsFunction({
+      contextA: [a1, a2, start],
+      contextB: [b1],
+      contextC: [c1],
+    } satisfies Record<string, Context[]>) as { context: Context[] };
+    deepStrictEqual(result, {
+      context: [a1, a2, start, b1, split("next", "1"), c1, split("end", "1")],
+    });
+  });
+
   test("merges contexts when asked", () => {
     const a1 = { text: "Before" };
     const a2 = { text: "Hello" };
