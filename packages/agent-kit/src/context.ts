@@ -110,8 +110,11 @@ export type Context = LlmContent | Metadata;
  * @param f -- code function
  * @returns -- code function
  */
-export const fun = (
-  f: (inputs: Record<string, unknown>) => Record<string, unknown>
+export const fun = <
+  In = Record<string, unknown>,
+  Out = Record<string, unknown>,
+>(
+  f: (inputs: In) => Out
 ) => {
   return f;
 };

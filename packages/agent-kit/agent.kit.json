@@ -61,36 +61,6 @@
           "in": "context"
         },
         {
-          "from": "maybeOutputRouter",
-          "to": "fn-3",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "createSchema",
-          "out": "action",
-          "in": "action"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "output-5",
-          "out": "feedback",
-          "in": "feedback"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "output",
-          "out": "output",
-          "in": "output"
-        },
-        {
-          "from": "maybeOutputRouter",
-          "to": "fn-6",
-          "out": "action",
-          "in": "action"
-        },
-        {
           "from": "input-1",
           "to": "maybeOutputRouter",
           "out": "context",
@@ -119,6 +89,30 @@
           "to": "createSchema",
           "out": "context",
           "in": "context"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "fn-3",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "createSchema",
+          "out": "action",
+          "in": "action"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "output-5",
+          "out": "feedback",
+          "in": "feedback"
+        },
+        {
+          "from": "maybeOutputRouter",
+          "to": "output",
+          "out": "output",
+          "in": "output"
         }
       ],
       "nodes": [
@@ -192,7 +186,7 @@
           "id": "fn-6",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_6 = ({text,context,action})=>{const a=action;if(a?.action===\"vote\"){if(text===\"No\"){context.pop();return{text,again:context}}const c=structuredClone(context);const lastItem=c[c.length-1];const parts=lastItem.parts;const t=Array.isArray(parts)?parts.map(item=>item.text).join(\"/n\"):parts.text;const output=t;const data=JSON.parse(output);delete data[\"voteRequest\"];lastItem.parts=[{text:JSON.stringify(data)}];return{text:\"\",context:c}}return{text,context}};",
+            "code": "const fn_6 = ({text,context,action})=>{return{text,context}};",
             "name": "fn_6",
             "raw": true
           },
@@ -205,26 +199,13 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"]};const schema2={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema:schema2,context}};",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"]};const schema={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema,context}};",
             "name": "createSchema",
             "raw": true
           },
           "metadata": {
             "title": "Create Schema",
             "description": "Creating a schema for user input"
-          }
-        },
-        {
-          "id": "maybeOutputRouter",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "const maybeOutputRouter = ({context})=>{const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){let lastItem=context[context.length-1];if(lastItem.role===\"$metadata\"){lastItem=context[context.length-2]}if(lastItem&&lastItem.role!==\"user\"){const output=lastItem;try{if(\"parts\"in output&&\"text\"in output.parts[0]){const json=output.parts[0]?.text;const data=JSON.parse(json);if(data.voteRequest){const feedback=structuredClone(data);delete feedback[\"voteRequest\"];const action2={action:\"vote\",title:data.voteRequest};return{feedback,action:action2,context}}}}catch{}return{output,action,context}}}return{context,action}};",
-            "name": "maybeOutputRouter",
-            "raw": true
-          },
-          "metadata": {
-            "title": "Maybe Output",
-            "description": "Checking if the last message was from the model"
           }
         },
         {
@@ -308,6 +289,38 @@
           }
         },
         {
+          "id": "maybeOutputRouter",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const maybeOutputRouter = ({context})=>{const action={action:\"none\"};if(Array.isArray(context)&&context.length>0){let lastItem=context[context.length-1];if(lastItem.role===\"$metadata\"){lastItem=context[context.length-2]}if(lastItem&&lastItem.role!==\"user\"){const output=lastItem;return{output,action,context}}}return{context,action}};",
+            "name": "maybeOutputRouter",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Maybe Output",
+            "description": "Checking if the last message was from the model"
+          }
+        },
+        {
+          "id": "output-4",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "title": "Context out",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "title": "Done",
+            "description": "Skipping because we're done"
+          }
+        },
+        {
           "id": "output-5",
           "type": "output",
           "configuration": {
@@ -354,25 +367,6 @@
           "metadata": {
             "title": "Output",
             "description": "Displaying the output the user."
-          }
-        },
-        {
-          "id": "output-4",
-          "type": "output",
-          "configuration": {
-            "schema": {
-              "type": "object",
-              "properties": {
-                "context": {
-                  "title": "Context out",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "metadata": {
-            "title": "Done",
-            "description": "Skipping because we're done"
           }
         }
       ],

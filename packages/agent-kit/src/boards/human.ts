@@ -12,13 +12,7 @@ import {
   NewNodeFactory,
   NewNodeValue,
 } from "@google-labs/breadboard";
-import {
-  LlmContent,
-  Context,
-  TextPart,
-  skipIfDone,
-  userPartsAdder,
-} from "../context.js";
+import { Context, skipIfDone, userPartsAdder, fun } from "../context.js";
 
 const voteRequestContent = {
   adCampaign: {
@@ -72,7 +66,7 @@ type SchemaOutputs = { schema: unknown };
 /**
  * The action information to be presented to the user.
  */
-type Action =
+export type Action =
   | undefined
   | {
       action: "none";
@@ -85,7 +79,7 @@ type Action =
 /**
  * Creates custom input schema.
  */
-const schema = code<SchemaInputs, SchemaOutputs>(
+const inputSchemaBuilder = code<SchemaInputs, SchemaOutputs>(
   ({ title, action, description, context }) => {
     const text: Schema = {
       title,
@@ -107,61 +101,48 @@ const schema = code<SchemaInputs, SchemaOutputs>(
   }
 );
 
-type WithFeedback = Record<string, unknown> & { voteRequest?: string };
-
-const maybeOutput = code(({ context }) => {
-  const action: Action = { action: "none" };
-  if (Array.isArray(context) && context.length > 0) {
-    let lastItem = context[context.length - 1] as Context;
-    if (lastItem.role === "$metadata") {
-      lastItem = context[context.length - 2];
-    }
-    if (lastItem && lastItem.role !== "user") {
-      const output = lastItem;
-      try {
-        if ("parts" in output && "text" in output.parts[0]) {
-          const json = output.parts[0]?.text;
-          const data = JSON.parse(json) as WithFeedback;
-          if (data.voteRequest) {
-            const feedback = structuredClone(data);
-            delete feedback["voteRequest"];
-            const action: Action = { action: "vote", title: data.voteRequest };
-            return { feedback, action, context };
-          }
-        }
-      } catch {
-        // it's okay to fail here.
+export type ModeRouterIn = {
+  context: unknown;
+};
+export type ModeRouterOut = {
+  context: unknown;
+  action: Action;
+  output?: Context;
+};
+/**
+ * Four modes:
+ * - "input" -- there is no pending model output to show, so we just
+ *  show the user input.
+ * - "input-output" -- there is a model output to show, so we show it
+ * first, then ask for user input.
+ * - "choose" -- the context contains a split output metadata, so we
+ * show the model output, and a choice-picker for the user and optionally, a
+ * text box for the user to provide feedback.
+ * - "choose-reject" -- the context contains a split output
+ * metadata, so we show the model output, and a choice-picker for the user
+ * with an option to reject and try again, and optionally, a text box for the
+ * user to provide feedback.
+ */
+export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
+  ({ context }) => {
+    const action: Action = { action: "none" };
+    if (Array.isArray(context) && context.length > 0) {
+      let lastItem = context[context.length - 1] as Context;
+      if (lastItem.role === "$metadata") {
+        lastItem = context[context.length - 2];
       }
-      return { output, action, context };
+      if (lastItem && lastItem.role !== "user") {
+        const output = lastItem;
+        return { output, action, context };
+      }
     }
+    return { context, action };
   }
-  return { context, action };
-});
+);
+
+const modeRouter = code(modeRouterFunction);
 
 const actionRecognizer = code(({ text, context, action }) => {
-  const a = action as Action;
-
-  if (a?.action === "vote") {
-    if (text === "No") {
-      // Remove last item. We already know it comes from the model.
-      (context as Context[]).pop();
-      return { text, again: context };
-    }
-    // Clip out the `votingRequest`.
-    const c = structuredClone(context) as LlmContent[];
-    const lastItem = c[c.length - 1];
-    const parts = lastItem.parts;
-    const t = Array.isArray(parts)
-      ? (parts as TextPart[]).map((item) => item.text).join("/n")
-      : (parts as TextPart).text;
-    const output = t;
-    const data = JSON.parse(output) as WithFeedback;
-    delete data["voteRequest"];
-    lastItem.parts = [{ text: JSON.stringify(data) }];
-
-    // Don't pass text, it's superfluous with the voting action.
-    return { text: "", context: c };
-  }
   return { text, context };
 });
 
@@ -175,11 +156,7 @@ export default await board(({ context, title, description }) => {
     .examples(
       JSON.stringify([
         {
-          parts: [
-            {
-              text: JSON.stringify(voteRequestContent),
-            },
-          ],
+          parts: [{ text: JSON.stringify(voteRequestContent) }],
           role: "model",
         },
       ])
@@ -198,7 +175,7 @@ export default await board(({ context, title, description }) => {
     .behavior("config")
     .default("A request or response");
 
-  const maybeOutputRouter = maybeOutput({
+  const routeByMode = modeRouter({
     $id: "maybeOutputRouter",
     $metadata: {
       title: "Maybe Output",
@@ -212,7 +189,7 @@ export default await board(({ context, title, description }) => {
       title: "Done Check",
       description: "Checking to see if we can skip work altogether",
     },
-    context: maybeOutputRouter.context,
+    context: routeByMode.context,
   });
 
   base.output({
@@ -220,7 +197,7 @@ export default await board(({ context, title, description }) => {
     context: areWeDoneChecker.done.title("Context out"),
   });
 
-  const createSchema = schema({
+  const createSchema = inputSchemaBuilder({
     $id: "createSchema",
     $metadata: {
       title: "Create Schema",
@@ -229,7 +206,7 @@ export default await board(({ context, title, description }) => {
     title: title.isString(),
     description: description.isString(),
     context: areWeDoneChecker.context,
-    action: maybeOutputRouter.action,
+    action: routeByMode.action,
   });
 
   base.output({
@@ -237,7 +214,7 @@ export default await board(({ context, title, description }) => {
       title: "Feedback",
       description: "Displaying the output to user with feedback",
     },
-    feedback: maybeOutputRouter.feedback,
+    feedback: routeByMode.feedback,
     schema: {
       type: "object",
       behavior: ["bubble"],
@@ -257,7 +234,7 @@ export default await board(({ context, title, description }) => {
       title: "Output",
       description: "Displaying the output the user.",
     },
-    output: maybeOutputRouter.output,
+    output: routeByMode.output,
     schema: {
       type: "object",
       behavior: ["bubble"],
@@ -289,7 +266,6 @@ export default await board(({ context, title, description }) => {
     },
     context: createSchema.context,
     text: input.text,
-    action: maybeOutputRouter.action,
   });
 
   base.output({
