@@ -256,7 +256,7 @@
           "id": "fn-8",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_8 = ({context,choice,total})=>{const chosenIndex=total-parseInt(choice.split(\" \")[1],10);const c=context.reverse();const current=[];let found=false;let chunkIndex=0;for(const item of c){if(item.role===\"$metadata\"&&item.type===\"split\"){if(found)break;const type=item.data.type;if(type===\"start\"){break}else{if(chunkIndex===chosenIndex){found=true}chunkIndex++}}else if(found){current.push(item)}}if(!found){throw new Error(`Integrity error: choice \"${choice}\" not found`)}return{context:current}};",
+            "code": "const fn_8 = ({context,choice,total})=>{const chosenIndex=total-parseInt(choice.split(\" \")[1],10);const c=context.reverse();const current=[];let found=\"before\";let chunkIndex=0;let startIndex=0;for(const[i,item]of c.entries()){if(item.role===\"$metadata\"&&item.type===\"split\"){const type=item.data.type;if(type===\"start\"){startIndex=i;break}else{if(chunkIndex===chosenIndex){found=\"found\"}else if(chunkIndex>chosenIndex){found=\"after\"}else{found=\"before\"}chunkIndex++}}else if(found===\"found\"){current.push(item)}}const preamble=c.slice(startIndex+1).reverse();if(!found){throw new Error(`Integrity error: choice \"${choice}\" not found`)}return{context:[...preamble,...current.reverse()]}};",
             "name": "fn_8",
             "raw": true
           },
