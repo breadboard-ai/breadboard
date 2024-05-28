@@ -344,12 +344,36 @@ export const splitStartAdder = code(splitStartAdderFunction);
 type SplitScanResult = [id: string, index: number];
 
 /**
- * Given a bunch of context, combines them all into one.
+ * Given a bunch of contexts, combines them all into one.
+ * A couple of scenarios are supported:
+ * - "The single split start context". Happens when Specialist invokes one
+ * or more tools, but the tools don't emit any open split markers.
+ * In this situation, the first context ("context-0") will have a start marker,
+ * with no other context containing any open markers.
+ * - "First context as a preamble". Happens when Specialist invokes one or more
+ * tools, and all tools consume this context. In this situation, the first
+ * context ("context-0") will end at the split start marker, and all other
+ * context will contain this context as a preamble, followed by their own
+ * generated context.
+ * - "Ad hoc". Happens when Joiner is used to combine multiple
+ * contexts. In this situation, there are multiple open
+ * markers, but no matching preamble in the first context.
+ * - "Simple". Happens when Joiner combines multiple context with no open
+ * split markers.
+ *
+ * Strategies for each scenario:
+ * - "Single split start context". Add "next" split marker between each context
+ * and an "end" marker at the end.
+ * - "First context as a preamble". Slice contexts other than first at the
+ * preamble index and concatenate them, adding "next" and "end" markers.
+ * - "Ad hoc". Concatenate all contexts as-is, no markers.
+ * - "Simple". Concatenate all contexts as-is, adding "start", "next" and "end"
+ * markers.
  */
 export const combineContextsFunction = fun(({ merge, ...inputs }) => {
   const entries = Object.entries(inputs).sort() as [string, Context[]][];
-  const context: Context[] = [];
   if (merge) {
+    const context: Context[] = [];
     const parts: LlmContent["parts"] = [];
     for (const [, input] of entries) {
       const c = asContextArray(input);
@@ -362,45 +386,71 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
       }
     }
     context.push({ parts });
+    return { context };
   } else {
+    let mode: "single" | "preamble" | "adhoc" | "simple";
+    const [f, ...rest] = entries;
+    if (!f) {
+      return { context: [] };
+    }
+    const first = asContextArray(f[1]);
+    const firstOpenSplits = scanForSplits(first);
     const preambleIndices: number[] = [];
-    for (const [, input] of entries) {
+    for (const [, input] of rest) {
       const c = asContextArray(input);
       const hasOpenSplits = scanForSplits(c);
       if (hasOpenSplits) {
         preambleIndices.push(hasOpenSplits[1]);
       }
     }
-    const preamblesAreDifferent = !preambleIndices.every(
-      (value) => value === preambleIndices[0]
-    );
-    const splitCount = preambleIndices.length;
-    const shouldConcatenate =
-      (splitCount !== 0 && splitCount !== entries.length) ||
-      preamblesAreDifferent;
-    if (shouldConcatenate) {
+    if (!firstOpenSplits) {
+      if (preambleIndices.length === 0) {
+        mode = "simple";
+      } else {
+        mode = "adhoc";
+      }
+    } else {
+      const preamblesMatch =
+        preambleIndices.length > 0 &&
+        preambleIndices.every((value) => value === firstOpenSplits[1]);
+      if (preamblesMatch) {
+        mode = "preamble";
+      } else {
+        if (firstOpenSplits[1] === first.length - 1) {
+          mode = "single";
+        } else {
+          mode = "adhoc";
+        }
+      }
+    }
+    const context: Context[] = [];
+    if (mode === "adhoc") {
       for (const [, input] of entries) {
         const c = asContextArray(input);
         context.push(...c);
       }
-    } else {
-      let splitId: string;
-      let preambleIndex: number;
-      // If no markers were found, add a split "start" marker at the start.
-      if (splitCount === 0) {
-        splitId = Math.random().toString(36).substring(7);
-        preambleIndex = -1;
-        context.unshift({
+      return { context };
+    } else if (mode === "simple") {
+      const splitId = Math.random().toString(36).substring(7);
+      context.push({
+        role: "$metadata",
+        type: "split",
+        data: { type: "start", id: splitId },
+      });
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
+        context.push(...c);
+        context.push({
           role: "$metadata",
           type: "split",
-          data: { type: "start", id: splitId },
+          data: { type: "next", id: splitId },
         });
-      } else {
-        preambleIndex = preambleIndices[0];
-        const preamble = entries[0][1].slice(0, preambleIndex + 1);
-        context.push(...preamble);
-        splitId = (preamble[preamble.length - 1] as SplitMetadata).data.id;
       }
+    } else if (mode === "preamble") {
+      const preambleIndex = firstOpenSplits?.[1] || 0;
+      const preamble = entries[0][1].slice(0, preambleIndex + 1);
+      context.push(...preamble);
+      const splitId = (preamble[preamble.length - 1] as SplitMetadata).data.id;
       for (const [, input] of entries) {
         let c = asContextArray(input);
         if (preambleIndex >= 0) {
@@ -415,15 +465,23 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
           });
         }
       }
-      // Replace the last split "next" marker with a split "end" marker.
-      const last = context[context.length - 1] as SplitMetadata;
-      if (!last || !last.data || last.data.type !== "next") {
-        throw new Error("Integrity error: no split 'next' marker found");
+    } else if (mode === "single") {
+      const splitId = (first[first.length - 1] as SplitMetadata).data.id;
+      context.push(...first);
+      for (const [, input] of rest) {
+        const c = asContextArray(input);
+        context.push(...c);
+        context.push({
+          role: "$metadata",
+          type: "split",
+          data: { type: "next", id: splitId },
+        });
       }
-      last.data.type = "end";
     }
+    const last = context[context.length - 1] as SplitMetadata;
+    last.data.type = "end";
+    return { context };
   }
-  return { context };
 
   function asContextArray(input: Context | Context[]): Context[] {
     return Array.isArray(input) ? input : [input];
