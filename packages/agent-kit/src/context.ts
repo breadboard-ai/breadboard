@@ -377,12 +377,13 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
     const parts: LlmContent["parts"] = [];
     for (const [, input] of entries) {
       const c = asContextArray(input);
-      const last = c[c.length - 1];
+      let lastIndex = c.length - 1;
+      let last;
+      do {
+        last = c[lastIndex--];
+      } while (lastIndex >= 0 && last.role === "$metadata");
       if (last) {
-        if (last.role === "$metadata") {
-          continue;
-        }
-        parts.push(...last.parts);
+        parts.push(...(last as LlmContent).parts);
       }
     }
     context.push({ parts });
