@@ -315,7 +315,7 @@ export default await board(({ context, title, description }) => {
 
   const chooseInput = base.input({
     $metadata: {
-      title: "Choose Input",
+      title: "Look at the choices above and pick one",
       description: "Asking user to choose an option",
     },
   });
