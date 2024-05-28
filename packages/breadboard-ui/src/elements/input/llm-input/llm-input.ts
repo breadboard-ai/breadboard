@@ -912,7 +912,6 @@ export class LLMInput extends LitElement {
                 value = html`${part.functionResponse.name}
                 ${JSON.stringify(part.functionResponse.response, null, 2)}`;
               } else if (isStoredData(part)) {
-                console.log("🌻 I see stored part data!");
                 // Steal the inline data class for now
                 partClass = "inline-data";
 
