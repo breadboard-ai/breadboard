@@ -906,7 +906,9 @@ export class Main extends LitElement {
             );
             return;
           }
-          const url = new URL(provider.createURL(evt.location, evt.fileName));
+          const url = new URL(
+            await provider.createURL(evt.location, evt.fileName)
+          );
           const { result, error } = await provider.createBlank(url);
 
           if (!result) {

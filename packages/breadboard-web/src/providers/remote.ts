@@ -57,14 +57,14 @@ export class RemoteGraphProvider implements GraphProvider {
       method: "POST",
       body: JSON.stringify(descriptor, null, 2),
       headers: new Headers([
-        ["Authorization", `Bearer ${this.userKey}`],
+        // ["Authorization", `Bearer ${this.userKey}`],
         ["Content-Type", "application/json"],
       ]),
     });
     return await response.json();
   }
 
-  createURL(location: string, fileName: string) {
+  async createURL(location: string, fileName: string) {
     return `${location}/boards/${fileName}`;
   }
 
@@ -75,7 +75,7 @@ export class RemoteGraphProvider implements GraphProvider {
 
   async load(url: URL) {
     const response = await fetch(url, {
-      headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+      // headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
     });
     const graph = await response.json();
 
@@ -107,7 +107,7 @@ export class RemoteGraphProvider implements GraphProvider {
     try {
       const response = await fetch(url, {
         method: "DELETE",
-        headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+        // headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
       });
       const data = await response.json();
       await this.#refreshAllItems();

@@ -11,7 +11,6 @@ interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
 const SETTINGS_VERSION = 5;
-const SETTINGS_VERSION = 5;
 
 export class SettingsStore {
   static #instance: SettingsStore;
