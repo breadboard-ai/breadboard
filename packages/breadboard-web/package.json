@@ -214,7 +214,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.12.12",
-    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.10.0",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
