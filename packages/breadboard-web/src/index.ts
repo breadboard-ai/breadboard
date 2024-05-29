@@ -33,6 +33,11 @@ import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
+import { provide } from "@lit/context";
+import {
+  Environment,
+  environmentContext,
+} from "../../breadboard-ui/dist/src/contexts/environment";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -91,6 +96,15 @@ export class Main extends LitElement {
 
   @state()
   providerOps = 0;
+
+  @provide({ context: environmentContext })
+  environment: Environment = {
+    connectionServerUrl:
+      // TODO(aomarks) Read this from a global stamped into the HTML somehow.
+      new URL(window.location.href).origin === "http://localhost:5173"
+        ? "http://localhost:5555"
+        : undefined,
+  };
 
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();

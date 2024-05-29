@@ -12,7 +12,11 @@ import {
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { map } from "lit/directives/map.js";
-import { Settings } from "../../types/types.js";
+import {
+  CustomSettingsElement,
+  SETTINGS_TYPE,
+  Settings,
+} from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-settings-edit-overlay")
@@ -173,7 +177,8 @@ export class SettingsEditOverlay extends LitElement {
     }
 
     .settings-group-items .no-entries,
-    .settings-group-items .description {
+    .settings-group-items .description,
+    .settings-group-items .custom-panel {
       grid-column: 1 / 4;
     }
 
@@ -598,121 +603,127 @@ export class SettingsEditOverlay extends LitElement {
                           <p class="description">
                             ${configuration.description}
                           </p>
-                          ${items.size > 0
-                            ? map(items.entries(), ([itemId, item], idx) => {
-                                const inName = html`
-                                  ${configuration.nameEditable
-                                    ? html`<input
-                                        type="text"
-                                        name="setting-${id}-name-${idx}"
-                                        required
-                                        @input=${(evt: Event) => {
-                                          if (
-                                            !(
-                                              evt.target instanceof
-                                              HTMLInputElement
-                                            )
-                                          ) {
-                                            return;
-                                          }
-
-                                          evt.target.setCustomValidity("");
-                                        }}
-                                        .value=${item.name}
-                                      />`
-                                    : html`<input
-                                          type="hidden"
+                          ${configuration.customElement
+                            ? this.#renderCustomSettingsElement(
+                                configuration.customElement,
+                                name as SETTINGS_TYPE,
+                                items
+                              )
+                            : items.size > 0
+                              ? map(items.entries(), ([itemId, item], idx) => {
+                                  const inName = html`
+                                    ${configuration.nameEditable
+                                      ? html`<input
+                                          type="text"
                                           name="setting-${id}-name-${idx}"
+                                          required
+                                          @input=${(evt: Event) => {
+                                            if (
+                                              !(
+                                                evt.target instanceof
+                                                HTMLInputElement
+                                              )
+                                            ) {
+                                              return;
+                                            }
+
+                                            evt.target.setCustomValidity("");
+                                          }}
                                           .value=${item.name}
-                                        />${configuration.nameVisible
-                                          ? item.name
-                                          : ""}`}
-                                  ${item.description
-                                    ? html`<div class="setting-description">
-                                        ${item.description}
-                                      </div>`
-                                    : nothing}
-                                `;
-                                let inValue: HTMLTemplateResult | symbol =
-                                  nothing;
-                                switch (typeof item.value) {
-                                  case "boolean": {
-                                    inValue = html`<input
-                                      type="checkbox"
-                                      name="setting-${id}-value-${idx}"
-                                      .checked=${item.value}
-                                    />`;
-                                    break;
+                                        />`
+                                      : html`<input
+                                            type="hidden"
+                                            name="setting-${id}-name-${idx}"
+                                            .value=${item.name}
+                                          />${configuration.nameVisible
+                                            ? item.name
+                                            : ""}`}
+                                    ${item.description
+                                      ? html`<div class="setting-description">
+                                          ${item.description}
+                                        </div>`
+                                      : nothing}
+                                  `;
+                                  let inValue: HTMLTemplateResult | symbol =
+                                    nothing;
+                                  switch (typeof item.value) {
+                                    case "boolean": {
+                                      inValue = html`<input
+                                        type="checkbox"
+                                        name="setting-${id}-value-${idx}"
+                                        .checked=${item.value}
+                                      />`;
+                                      break;
+                                    }
+
+                                    case "number": {
+                                      inValue = html`<input
+                                        type="number"
+                                        name="setting-${id}-value-${idx}"
+                                        required
+                                        .value=${item.value}
+                                      />`;
+                                      break;
+                                    }
+
+                                    default: {
+                                      inValue = html`<input
+                                        type="text"
+                                        name="setting-${id}-value-${idx}"
+                                        required
+                                        .value=${item.value}
+                                      />`;
+                                      break;
+                                    }
                                   }
 
-                                  case "number": {
-                                    inValue = html`<input
-                                      type="number"
-                                      name="setting-${id}-value-${idx}"
-                                      required
-                                      .value=${item.value}
-                                    />`;
-                                    break;
-                                  }
+                                  const deleteButton = configuration.extensible
+                                    ? html`<button
+                                        class="delete"
+                                        type="button"
+                                        @click=${() => {
+                                          this.#deleteItem(
+                                            name as keyof Settings,
+                                            itemId
+                                          );
+                                        }}
+                                      >
+                                        Delete
+                                      </button>`
+                                    : nothing;
 
-                                  default: {
-                                    inValue = html`<input
-                                      type="text"
-                                      name="setting-${id}-value-${idx}"
-                                      required
-                                      .value=${item.value}
-                                    />`;
-                                    break;
-                                  }
-                                }
+                                  const double =
+                                    typeof item.value === "boolean" &&
+                                    !configuration.extensible;
+                                  return html` <input
+                                      type="hidden"
+                                      name="setting-${id}-section-${idx}"
+                                      .value=${name}
+                                    />
 
-                                const deleteButton = configuration.extensible
-                                  ? html`<button
-                                      class="delete"
-                                      type="button"
-                                      @click=${() => {
-                                        this.#deleteItem(
-                                          name as keyof Settings,
-                                          itemId
-                                        );
-                                      }}
+                                    <div
+                                      class=${classMap({
+                                        "setting-name": true,
+                                        double,
+                                        hidden: !configuration.nameVisible,
+                                      })}
                                     >
-                                      Delete
-                                    </button>`
-                                  : nothing;
+                                      ${inName}
+                                    </div>
 
-                                const double =
-                                  typeof item.value === "boolean" &&
-                                  !configuration.extensible;
-                                return html` <input
-                                    type="hidden"
-                                    name="setting-${id}-section-${idx}"
-                                    .value=${name}
-                                  />
-
-                                  <div
-                                    class=${classMap({
-                                      "setting-name": true,
-                                      double,
-                                      hidden: !configuration.nameVisible,
-                                    })}
-                                  >
-                                    ${inName}
-                                  </div>
-
-                                  <div
-                                    class=${classMap({
-                                      "setting-value": true,
-                                      double: !configuration.nameVisible,
-                                    })}
-                                  >
-                                    ${inValue}
-                                  </div>
-                                  <div>${deleteButton}</div>`;
-                              })
-                            : html`<div class="no-entries">
-                                There are currently no entries
-                              </div>`}
+                                    <div
+                                      class=${classMap({
+                                        "setting-value": true,
+                                        double: !configuration.nameVisible,
+                                      })}
+                                    >
+                                      ${inValue}
+                                    </div>
+                                    <div>${deleteButton}</div>`;
+                                })
+                              : html`<div class="no-entries">
+                                  There are currently no entries
+                                </div>`}
                           ${addNewItem}
                         </section>
                       </li>
@@ -736,5 +747,19 @@ export class SettingsEditOverlay extends LitElement {
         </div>
       </form>
     </bb-overlay>`;
+  }
+
+  #renderCustomSettingsElement(
+    elementName: string,
+    settingsType: SETTINGS_TYPE,
+    settingsItems: Settings[SETTINGS_TYPE]["items"]
+  ) {
+    const element = document.createElement(
+      elementName
+    ) as CustomSettingsElement;
+    element.classList.add("custom-panel");
+    element.settingsType = settingsType;
+    element.settingsItems = settingsItems;
+    return element;
   }
 }

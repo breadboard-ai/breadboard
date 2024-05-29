@@ -243,6 +243,7 @@
     "@google-labs/pinecone-kit": "^0.1.12",
     "@google-labs/team-kit": "^0.1.0",
     "@google-labs/template-kit": "^0.3.2",
+    "@lit/context": "^1.1.1",
     "codemirror": "^6.0.1",
     "idb": "^8.0.0",
     "idb-keyval": "^6.2.1",
