@@ -79,7 +79,10 @@ export class FileSystemGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; handle: FileSystemFileHandle }>;
+      items: Map<
+        string,
+        { url: string; readonly: boolean; handle: FileSystemFileHandle }
+      >;
     }
   >();
   #locations = new Map<string, FileSystemDirectoryHandle>();
@@ -301,9 +304,16 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   async #getFiles(
     handle: FileSystemDirectoryHandle
-  ): Promise<Map<string, { url: string; handle: FileSystemFileHandle }>> {
-    const entries: [string, { url: string; handle: FileSystemFileHandle }][] =
-      [];
+  ): Promise<
+    Map<
+      string,
+      { url: string; readonly: boolean; handle: FileSystemFileHandle }
+    >
+  > {
+    const entries: [
+      string,
+      { url: string; readonly: boolean; handle: FileSystemFileHandle },
+    ][] = [];
 
     for await (const [name, entry] of handle.entries()) {
       if (entry.kind === "directory") {
@@ -321,6 +331,7 @@ export class FileSystemGraphProvider implements GraphProvider {
             encodeURIComponent(handle.name.toLocaleLowerCase()),
             encodeURIComponent(name.toLocaleLowerCase())
           ),
+          readonly: false,
           handle: entry,
         },
       ]);
