@@ -135,6 +135,10 @@
         {
           "script": "copy-light-kits",
           "cascade": false
+        },
+        {
+          "script": "../connection-server:start",
+          "cascade": false
         }
       ],
       "files": [
