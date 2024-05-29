@@ -39,7 +39,12 @@ const post: ApiHandler = async (path, req, res) => {
 
     req.on("end", async () => {
       const graph = JSON.parse(chunks.join(""));
-      await store.update(userStore.store, getBoardName(path), graph);
+      const result = await store.update(userStore.store, path, graph);
+      if (!result.success) {
+        serverError(res, result.error);
+        resolve(true);
+        return;
+      }
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ created: path }));
