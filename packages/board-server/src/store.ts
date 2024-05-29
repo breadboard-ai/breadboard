@@ -23,7 +23,13 @@ export const asPath = (userStore: string, boardName: string) => {
 };
 
 export const sanitize = (name: string) => {
-  return name.replace(/[^a-zA-Z0-9]/g, "-");
+  if (name.endsWith(".bgl.json")) {
+    name = name.slice(0, -8);
+  } else if (name.endsWith(".json")) {
+    name = name.slice(0, -5);
+  }
+  name = name.replace(/[^a-zA-Z0-9]/g, "-");
+  return `${name}.bgl.json`;
 };
 
 export const asInfo = (path: string) => {
