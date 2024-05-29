@@ -4,6 +4,12 @@
   "version": "0.0.1",
   "edges": [
     {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
       "from": "main",
       "to": "output-2",
       "out": "output",
@@ -16,25 +22,41 @@
       "in": ""
     },
     {
-      "from": "fetch",
-      "to": "spreadResponse",
-      "out": "response",
-      "in": "object"
+      "from": "storyID",
+      "to": "urlTemplate",
+      "out": "storyID",
+      "in": "storyID"
     },
     {
       "from": "urlTemplate",
       "to": "fetch",
       "out": "url",
       "in": "url"
-    },
-    {
-      "from": "storyID",
-      "to": "urlTemplate",
-      "out": "storyID",
-      "in": "storyID"
     }
   ],
   "nodes": [
+    {
+      "id": "storyID",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story",
+          "properties": {
+            "storyID": {
+              "type": "string",
+              "title": "Story ID",
+              "description": "Hacker News Story ID to extract",
+              "default": "39788322"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -51,9 +73,11 @@
       }
     },
     {
-      "id": "main",
-      "type": "output",
-      "configuration": {}
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
     },
     {
       "id": "spreadResponse",
@@ -65,36 +89,11 @@
       }
     },
     {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
-      }
-    },
-    {
       "id": "urlTemplate",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://hn.algolia.com/api/v1/items/{storyID}"
       }
-    },
-    {
-      "id": "storyID",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "title": "Hacker News Story",
-          "properties": {
-            "storyID": {
-              "type": "string",
-              "title": "Story ID",
-              "default": "39788322",
-              "description": "Hacker News Story ID to extract"
-            }
-          }
-        }
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

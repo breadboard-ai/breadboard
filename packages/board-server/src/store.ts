@@ -10,6 +10,10 @@ export type GetUserStoreResult =
   | { success: true; store: string }
   | { success: false; error: string };
 
+export type OperationResult =
+  | { success: true }
+  | { success: false; error: string };
+
 export const getStore = () => {
   return new Store("board-server");
 };
@@ -19,7 +23,13 @@ export const asPath = (userStore: string, boardName: string) => {
 };
 
 export const sanitize = (name: string) => {
-  return name.replace(/[^a-zA-Z0-9]/g, "-");
+  if (name.endsWith(".bgl.json")) {
+    name = name.slice(0, -8);
+  } else if (name.endsWith(".json")) {
+    name = name.slice(0, -5);
+  }
+  name = name.replace(/[^a-zA-Z0-9]/g, "-");
+  return `${name}.bgl.json`;
 };
 
 export const asInfo = (path: string) => {
@@ -38,7 +48,10 @@ class Store {
     });
   }
 
-  async getUserStore(userKey: string): Promise<GetUserStoreResult> {
+  async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
+    if (!userKey) {
+      return { success: false, error: "No user key supplied" };
+    }
     const users = this.#database.collection(`users`);
     const key = await users.where("apiKey", "==", userKey).get();
     if (key.empty) {
@@ -51,14 +64,22 @@ class Store {
     return { success: true, store: doc.id };
   }
 
-  async list() {
+  async list(userKey: string | null) {
+    const userStoreResult = await this.getUserStore(userKey);
+    const userStore = userStoreResult.success ? userStoreResult.store : null;
+
     const allStores = await this.#database
       .collection("workspaces")
       .listDocuments();
     const boards = [];
     for (const store of allStores) {
       const storeBoards = await store.collection("boards").listDocuments();
-      boards.push(...storeBoards.map((doc) => asPath(store.id, doc.id)));
+      boards.push(
+        ...storeBoards.map((doc) => {
+          const readonly = userStore !== store.id;
+          return { path: asPath(store.id, doc.id), readonly };
+        })
+      );
     }
     return boards;
   }
@@ -70,10 +91,19 @@ class Store {
     return doc.get("graph");
   }
 
-  async update(userStore: string, boardName: string, graph: string) {
+  async update(
+    userStore: string,
+    path: string,
+    graph: string
+  ): Promise<OperationResult> {
+    const { userStore: pathUserStore, boardName } = asInfo(path);
+    if (pathUserStore !== userStore) {
+      return { success: false, error: "Unauthorized" };
+    }
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
       .set({ graph: JSON.stringify(graph), published: true });
+    return { success: true };
   }
 
   async create(userKey: string, name: string) {
@@ -83,13 +113,17 @@ class Store {
     }
     const boardName = sanitize(name);
     const path = asPath(userStore.store, boardName);
-    console.log("🌻 creating board at", path);
     return { success: true, path };
   }
 
-  async delete(userStore: string, boardName: string) {
+  async delete(userStore: string, path: string): Promise<OperationResult> {
+    const { userStore: pathUserStore, boardName } = asInfo(path);
+    if (pathUserStore !== userStore) {
+      return { success: false, error: "Unauthorized" };
+    }
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
       .delete();
+    return { success: true };
   }
 }

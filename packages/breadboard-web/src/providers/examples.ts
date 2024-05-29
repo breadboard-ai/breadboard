@@ -35,7 +35,10 @@ export class ExamplesGraphProvider implements GraphProvider {
       boards
         .sort((a, b) => a.title.localeCompare(b.title))
         .map((board) => {
-          return [board.title, { url: board.url, handle: undefined }];
+          return [
+            board.title,
+            { url: board.url, readonly: true, handle: undefined },
+          ];
         })
     );
     this.#items.set("examples", {

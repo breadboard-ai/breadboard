@@ -4,10 +4,10 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "main",
-      "to": "output-2",
-      "out": "output",
-      "in": "output"
+      "from": "fetch",
+      "to": "fn-3",
+      "out": "response",
+      "in": "list"
     },
     {
       "from": "fn-3",
@@ -16,19 +16,42 @@
       "in": ""
     },
     {
-      "from": "fetch",
-      "to": "fn-3",
-      "out": "response",
-      "in": "list"
-    },
-    {
       "from": "limit",
       "to": "fn-3",
       "out": "limit",
       "in": "limit"
+    },
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
     }
   ],
   "nodes": [
+    {
+      "id": "limit",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "title": "Story Limit",
+              "description": "The Number of Hacker News Story ID's to return",
+              "default": "1"
+            }
+          }
+        },
+        "type": "number"
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -45,9 +68,12 @@
       }
     },
     {
-      "id": "main",
-      "type": "output",
-      "configuration": {}
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json"
+      }
     },
     {
       "id": "fn-3",
@@ -57,33 +83,6 @@
         "name": "fn_3",
         "raw": true
       }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET",
-        "url": "https://hacker-news.firebaseio.com/v0/topstories.json"
-      }
-    },
-    {
-      "id": "limit",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "title": "Hacker News Story",
-          "properties": {
-            "limit": {
-              "type": "number",
-              "title": "Story Limit",
-              "default": "1",
-              "description": "The Number of Hacker News Story ID's to return"
-            }
-          }
-        },
-        "type": "number"
-      }
     }
-  ],
-  "graphs": {}
+  ]
 }

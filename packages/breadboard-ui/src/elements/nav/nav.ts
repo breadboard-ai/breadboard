@@ -487,7 +487,7 @@ export class Navigation extends LitElement {
           ${permission === "granted"
             ? html`${store.items.size > 0
                 ? html`<ul>
-                    ${map(store.items, ([name, { url }]) => {
+                    ${map(store.items, ([name, { url, readonly }]) => {
                       return html`<li>
                         <button
                           @click=${() => {
@@ -505,7 +505,7 @@ export class Navigation extends LitElement {
                         >
                           ${name}
                         </button>
-                        ${extendedCapabilities.modify
+                        ${extendedCapabilities.modify && !readonly
                           ? html`<button
                               class="delete"
                               @click=${() => {

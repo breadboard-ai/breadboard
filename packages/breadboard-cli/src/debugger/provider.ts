@@ -135,7 +135,10 @@ export class DebuggerGraphProvider implements GraphProvider {
     const boards = (await api.loadBoards()) as BoardInfo[];
     const boardMap = new Map(
       boards.map((board) => {
-        return [board.title, { url: board.url, handle: undefined }];
+        return [
+          board.title,
+          { url: board.url, readonly: false, handle: undefined },
+        ];
       })
     );
     this.#blank = new URL(boards[0].url, window.location.href);
