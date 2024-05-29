@@ -117,7 +117,7 @@ export class ExamplesGraphProvider implements GraphProvider {
     );
   }
 
-  createURL(_location: string, _fileName: string): string {
+  async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `ExamplesGraphProvider` should not be called to create URL."
     );

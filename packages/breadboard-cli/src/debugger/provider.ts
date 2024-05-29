@@ -119,7 +119,7 @@ export class DebuggerGraphProvider implements GraphProvider {
     );
   }
 
-  createURL(_location: string, _fileName: string): string {
+  async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `DebuggerGraphProvider` should not be called to create URL."
     );

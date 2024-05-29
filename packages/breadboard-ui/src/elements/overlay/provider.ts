@@ -201,6 +201,13 @@ export class ProviderOverlay extends LitElement {
             type="url"
             placeholder="Enter the Board Server URL"
             required
+          />
+          <label>API Key</label>
+          <input
+            name="apiKey"
+            type="text"
+            placeholder="Enter the API Key"
+            required
           />`;
         break;
       }
@@ -245,9 +252,17 @@ export class ProviderOverlay extends LitElement {
               if (!url) {
                 return;
               }
+              const apiKey = data.get("apiKey") as string;
+              if (!apiKey) {
+                return;
+              }
 
               this.dispatchEvent(
-                new GraphProviderConnectRequestEvent("RemoteGraphProvider", url)
+                new GraphProviderConnectRequestEvent(
+                  "RemoteGraphProvider",
+                  url,
+                  apiKey
+                )
               );
               break;
             }

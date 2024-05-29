@@ -119,9 +119,10 @@ export type GraphProvider = {
   /**
    * Connects to a given location if the Provider supports it.
    * @param location -- if supported, the location to connect to.
+   * @param auth -- if supported, the authentication material to use.
    * @returns -- nothing, but throws if connection fails.
    */
-  connect: (location?: string) => Promise<boolean>;
+  connect: (location?: string, auth?: unknown) => Promise<boolean>;
   /**
    * Disconnects to a given location if the Provider supports it.
    * @param url -- the location to save.
@@ -138,9 +139,9 @@ export type GraphProvider = {
    * Creates a provider-specific URL for a board.
    * @param location -- the location of the board.
    * @param fileName -- the board file path.
-   * @returns -- the provider-specific URL as a string.
+   * @returns -- the provider-specific URL as a string or null when the URL can't be created.
    */
-  createURL: (location: string, fileName: string) => string;
+  createURL: (location: string, fileName: string) => Promise<string | null>;
   /**
    * Parses a provider-specific URL for a board.
    * @param url -- the location of the board.
