@@ -13,6 +13,7 @@
     import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
     import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
     import { ExamplesGraphProvider } from "./src/providers/examples.ts";
+    import { RemoteGraphProvider } from "./src/providers/remote.ts";
     import { SettingsStore } from "./src/data/settings-store.ts";
 
     const localBoards = await (await fetch("/local-boards.json")).json();
@@ -52,6 +53,7 @@
       providers: [
         FileSystemGraphProvider.instance(),
         IDBGraphProvider.instance(),
+        RemoteGraphProvider.instance(),
         new ExamplesGraphProvider(boards),
       ],
       settings: SettingsStore.instance(),

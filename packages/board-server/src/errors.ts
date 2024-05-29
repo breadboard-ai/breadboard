@@ -15,3 +15,8 @@ export const notFound = (res: ServerResponse, error: string) => {
   res.writeHead(404, "Page not found");
   res.end(error);
 };
+
+export const unauthorized = (res: ServerResponse, error: string) => {
+  res.writeHead(401, "Unauthorized");
+  res.end(error);
+};

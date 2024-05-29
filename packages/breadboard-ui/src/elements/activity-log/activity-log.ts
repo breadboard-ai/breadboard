@@ -11,6 +11,7 @@ import {
   InspectableRunInputs,
   InspectableRunNodeEvent,
   OutputValues,
+  createDataStore,
 } from "@google-labs/breadboard";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -24,6 +25,8 @@ import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
 import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
+import { provide } from "@lit/context";
+import { dataStoreContext } from "../../contexts/data-store.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -47,6 +50,9 @@ export class ActivityLog extends LitElement {
 
   @property()
   settings: Settings | null = null;
+
+  @provide({ context: dataStoreContext })
+  dataStore = createDataStore();
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();

@@ -38,7 +38,7 @@
       "from": "fn-6",
       "to": "appendContext",
       "out": "text",
-      "in": "text"
+      "in": "toAdd"
     },
     {
       "from": "createSchema",
@@ -146,7 +146,7 @@
       "id": "appendContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const appendContext = ({ context, text }) => {\n    if (!text) return { context };\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  };",
+        "code": "const appendContext = ({ context, toAdd }) => {\n  if (!context) throw new Error(\"Context is required\");\n  const existing = Array.isArray(context) ? context : [context];\n  const incoming = toAdd;\n  if (!incoming.parts) {\n    const containsUserRole = existing.filter(\n      (item) => item.role !== \"model\" && item.role !== \"$metadata\"\n    ).length > 0;\n    if (!containsUserRole) {\n      return {\n        context: [\n          ...existing,\n          { role: \"user\", parts: [{ text: \"Do your magic\" }] }\n        ]\n      };\n    }\n    return { context: existing };\n  }\n  if (!incoming.role) {\n    incoming.role = \"user\";\n  }\n  const last = existing[existing.length - 1];\n  if (!last) {\n    return { context: [incoming] };\n  }\n  if (last.role !== incoming.role) {\n    return { context: [...existing, incoming] };\n  } else {\n    const result = structuredClone(existing);\n    const index = result.length - 1;\n    result[index].parts.push(...incoming.parts);\n    return { context: result };\n  }\n};",
         "name": "appendContext",
         "raw": true
       },
@@ -197,7 +197,7 @@
       "id": "createSchema",
       "type": "runJavascript",
       "configuration": {
-        "code": "const createSchema = ({ title: title2, action, description, context }) => {\n    const text = {\n      title: title2,\n      description,\n      type: \"string\",\n      behavior: [\"transient\"]\n    };\n    const schema2 = {\n      type: \"object\",\n      properties: { text }\n    };\n    if (action?.action == \"vote\") {\n      text.title = action.title;\n      text.enum = [\"Yes\", \"No\"];\n    }\n    return { schema: schema2, context };\n  };",
+        "code": "const createSchema = ({ title: title2, action, description, context }) => {\n    const text = {\n      title: title2,\n      description,\n      type: \"object\",\n      behavior: [\"transient\", \"llm-content\"]\n    };\n    const schema2 = {\n      type: \"object\",\n      properties: { text }\n    };\n    if (action?.action == \"vote\") {\n      text.title = action.title;\n      text.enum = [\"Yes\", \"No\"];\n    }\n    return { schema: schema2, context };\n  };",
         "name": "createSchema",
         "raw": true
       },
@@ -265,7 +265,7 @@
             },
             "title": {
               "title": "Title",
-              "description": "The title to ask",
+              "description": "The user label",
               "behavior": [
                 "config"
               ],
@@ -274,11 +274,11 @@
             },
             "description": {
               "title": "Description",
-              "description": "The description of what to ask",
+              "description": "The user's input",
               "behavior": [
                 "config"
               ],
-              "default": "User's question or request",
+              "default": "A request or response",
               "type": "string"
             }
           },
