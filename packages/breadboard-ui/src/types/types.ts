@@ -134,6 +134,7 @@ export enum SETTINGS_TYPE {
   GENERAL = "General",
   INPUTS = "Inputs",
   NODE_PROXY_SERVERS = "Node Proxy Servers",
+  CONNECTIONS = "Connections",
 }
 
 export interface SettingEntry {
@@ -151,6 +152,7 @@ export interface SettingsList {
   [SETTINGS_TYPE.SECRETS]: SettingEntry;
   [SETTINGS_TYPE.INPUTS]: SettingEntry;
   [SETTINGS_TYPE.NODE_PROXY_SERVERS]: SettingEntry;
+  [SETTINGS_TYPE.CONNECTIONS]: SettingEntry;
 }
 
 export type Settings = {

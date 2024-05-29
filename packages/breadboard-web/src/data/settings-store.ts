@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 5;
+const SETTINGS_VERSION = 6;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -118,6 +118,17 @@ export class SettingsStore {
           "Node proxy servers to use when running boards. Put the URL of the node proxy server in the first field and a comma-separated list of nodes to proxy in the second field.",
         nameEditable: true,
         nameVisible: true,
+      },
+      items: new Map([]),
+    },
+    [BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS]: {
+      configuration: {
+        extensible: false,
+        description:
+          "Third-party services boards can access. When you are signed into a service, any board can access and modify your data on that service.",
+        nameEditable: false,
+        nameVisible: false,
+        customElement: "bb-connection-settings",
       },
       items: new Map([]),
     },
