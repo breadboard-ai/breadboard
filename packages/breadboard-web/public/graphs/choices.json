@@ -65,8 +65,14 @@
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "Context out"
+              "type": "array",
+              "title": "Context out",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              }
             }
           }
         }

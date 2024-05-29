@@ -7,6 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
+  GraphProviderConnectRequestEvent,
   OverlayDismissedEvent,
   SettingsUpdateEvent,
 } from "../../events/events.js";
@@ -188,15 +189,12 @@ export class FirstRunOverlay extends LitElement {
           }
 
           if (this.boardServerUrl && URL.canParse(this.boardServerUrl)) {
-            const serverUrlId = window.crypto.randomUUID();
-            const key = `Server-${serverUrlId}`;
-
-            let setting = settings[SETTINGS_TYPE.BOARD_SERVERS].items.get(key);
-            setting = setting
-              ? { ...setting, value: this.boardServerUrl }
-              : { name: key, value: this.boardServerUrl };
-
-            settings[SETTINGS_TYPE.BOARD_SERVERS].items.set(key, setting);
+            this.dispatchEvent(
+              new GraphProviderConnectRequestEvent(
+                "RemoteGraphProvider",
+                this.boardServerUrl
+              )
+            );
           }
 
           const defaultToTrue = [

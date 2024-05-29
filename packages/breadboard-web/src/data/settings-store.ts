@@ -11,6 +11,7 @@ interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
 const SETTINGS_VERSION = 5;
+const SETTINGS_VERSION = 5;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -121,16 +122,6 @@ export class SettingsStore {
       },
       items: new Map([]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS]: {
-      configuration: {
-        extensible: true,
-        description:
-          "Put the URL of the board server in the field as first value and your access key as the second value.",
-        nameEditable: true,
-        nameVisible: true,
-      },
-      items: new Map(),
-    },
   };
 
   get values() {
@@ -195,6 +186,10 @@ export class SettingsStore {
     for (const store of settingsDb.objectStoreNames) {
       const items = await settingsDb.getAll(store);
       for (const item of items) {
+        if (!this.#settings[store]) {
+          continue;
+        }
+
         this.#settings[store].items.set(item.name, item);
       }
     }

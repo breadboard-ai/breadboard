@@ -12,6 +12,7 @@ import {
   LLMFunctionResponse,
   LLMInlineData,
   LLMPart,
+  LLMStoredData,
   LLMText,
 } from "../types/types.js";
 
@@ -29,6 +30,10 @@ export function isFunctionResponse(part: LLMPart): part is LLMFunctionResponse {
 
 export function isInlineData(part: LLMPart): part is LLMInlineData {
   return "inlineData" in part;
+}
+
+export function isStoredData(part: LLMPart): part is LLMStoredData {
+  return "storedData" in part;
 }
 
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {

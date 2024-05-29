@@ -33,12 +33,13 @@ describe("planReader", () => {
       context: [
         {
           role: "$metadata",
+          type: "looper",
           data: {
             todo: [{ task: "Task 2" }],
             next: "Task 1",
           } satisfies LooperPlan,
         },
-      ],
+      ] satisfies Context[],
     });
   });
 
@@ -54,12 +55,13 @@ describe("planReader", () => {
       context: [
         {
           role: "$metadata",
+          type: "looper",
           data: {
             todo: [{ task: "Task 2" }],
             next: "Task 1",
           } satisfies LooperPlan,
         },
-      ],
+      ] satisfies Context[],
     });
   });
 });

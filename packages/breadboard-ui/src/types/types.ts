@@ -98,8 +98,16 @@ export type LLMText = {
   text: string;
 };
 
+export type LLMStoredData = {
+  storedData: {
+    handle: string;
+    mimeType: string;
+  };
+};
+
 export type LLMPart =
   | LLMInlineData
+  | LLMStoredData
   | LLMFunctionCall
   | LLMFunctionResponse
   | LLMText;
@@ -126,7 +134,6 @@ export enum SETTINGS_TYPE {
   GENERAL = "General",
   INPUTS = "Inputs",
   NODE_PROXY_SERVERS = "Node Proxy Servers",
-  BOARD_SERVERS = "Board Servers",
 }
 
 export interface SettingEntry {
@@ -144,7 +151,6 @@ export interface SettingsList {
   [SETTINGS_TYPE.SECRETS]: SettingEntry;
   [SETTINGS_TYPE.INPUTS]: SettingEntry;
   [SETTINGS_TYPE.NODE_PROXY_SERVERS]: SettingEntry;
-  [SETTINGS_TYPE.BOARD_SERVERS]: SettingEntry;
 }
 
 export type Settings = {

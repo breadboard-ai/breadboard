@@ -213,13 +213,15 @@ export const planReaderFunction = fun(({ context, progress }) => {
       delete current.doneMarker;
       contents.push({
         role: "$metadata",
+        type: "looper",
         data: { ...current, next: next.task },
       });
       return { context: contents };
     } else if (doneMarker) {
       contents.push({
         role: "$metadata",
-        data: { type: "looper", doneMarker },
+        type: "looper",
+        data: { doneMarker },
       });
       return { context: contents };
     } else if (max) {
@@ -227,7 +229,11 @@ export const planReaderFunction = fun(({ context, progress }) => {
       if (count >= max) {
         return { done: existing };
       }
-      contents.push({ role: "$metadata", data: { type: "looper", max } });
+      contents.push({
+        role: "$metadata",
+        type: "looper",
+        data: { max },
+      });
       return { context: contents };
     }
     return { done: existing };
