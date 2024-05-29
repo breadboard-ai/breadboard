@@ -42,7 +42,10 @@ class Store {
     });
   }
 
-  async getUserStore(userKey: string): Promise<GetUserStoreResult> {
+  async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
+    if (!userKey) {
+      return { success: false, error: "No user key supplied" };
+    }
     const users = this.#database.collection(`users`);
     const key = await users.where("apiKey", "==", userKey).get();
     if (key.empty) {
@@ -55,14 +58,22 @@ class Store {
     return { success: true, store: doc.id };
   }
 
-  async list() {
+  async list(userKey: string | null) {
+    const userStoreResult = await this.getUserStore(userKey);
+    const userStore = userStoreResult.success ? userStoreResult.store : null;
+
     const allStores = await this.#database
       .collection("workspaces")
       .listDocuments();
     const boards = [];
     for (const store of allStores) {
       const storeBoards = await store.collection("boards").listDocuments();
-      boards.push(...storeBoards.map((doc) => asPath(store.id, doc.id)));
+      boards.push(
+        ...storeBoards.map((doc) => {
+          const readonly = userStore !== store.id;
+          return { path: asPath(store.id, doc.id), readonly };
+        })
+      );
     }
     return boards;
   }

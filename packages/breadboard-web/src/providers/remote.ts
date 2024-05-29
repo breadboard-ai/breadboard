@@ -53,7 +53,7 @@ export class RemoteGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; apiKey: string; handle: void }>;
+      items: Map<string, { url: string; readonly: boolean; handle: void }>;
     }
   >();
 
@@ -258,13 +258,28 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async #refreshItems(store: GraphDBStore) {
-    const response = await fetch(`${store.url}/boards`);
+    const response = await fetch(`${store.url}/boards`, {
+      headers: authHeader(store.apiKey),
+    });
     const files = await response.json();
 
-    const items = new Map<string, { url: string; handle: void }>();
-    for (const file of files) {
+    const items = new Map<
+      string,
+      { url: string; readonly: boolean; handle: void }
+    >();
+    for (const item of files) {
+      let file: string;
+      let readonly: boolean;
+      if (typeof item === "string") {
+        file = item;
+        readonly = false;
+      } else {
+        file = item.path;
+        readonly = item.readonly;
+      }
       items.set(file, {
         url: `${store.url}/boards/${file}`,
+        readonly,
         handle: void 0,
       });
     }
@@ -289,16 +304,26 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const canProvide =
-      this.#locations.find((store) => url.href.startsWith(store.url)) !==
-      undefined;
-    return canProvide
-      ? {
-          load: canProvide,
-          save: canProvide,
-          delete: canProvide,
-        }
-      : false;
+    const store = this.#locations.find((store) =>
+      url.href.startsWith(store.url)
+    );
+    if (store) {
+      const storeData = this.#stores.get(store.url);
+      const item = storeData?.items.get(url.href);
+      if (!item) {
+        return {
+          load: false,
+          save: true,
+          delete: false,
+        };
+      }
+      return {
+        load: true,
+        save: !item.readonly,
+        delete: !item.readonly,
+      };
+    }
+    return false;
   }
 
   extendedCapabilities(): GraphProviderExtendedCapabilities {
