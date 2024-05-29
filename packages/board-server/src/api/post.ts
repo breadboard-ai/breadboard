@@ -9,14 +9,6 @@ import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
-const getBoardName = (path: string) => {
-  const pathParts = path.split("/");
-  if (pathParts.length > 1) {
-    return pathParts[1] as string;
-  }
-  return path;
-};
-
 const post: ApiHandler = async (path, req, res) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
