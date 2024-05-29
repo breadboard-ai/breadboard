@@ -5,6 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
+import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
@@ -19,9 +20,15 @@ const getBoardName = (path: string) => {
 const post: ApiHandler = async (path, req, res) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
+    serverError(res, "Unauthorized");
     return true;
   }
   const store = getStore();
+  const userStore = await store.getUserStore(userKey);
+  if (!userStore.success) {
+    serverError(res, "Unauthorized");
+    return true;
+  }
 
   const chunks: string[] = [];
 
@@ -32,7 +39,7 @@ const post: ApiHandler = async (path, req, res) => {
 
     req.on("end", async () => {
       const graph = JSON.parse(chunks.join(""));
-      await store.update(userKey, getBoardName(path), graph);
+      await store.update(userStore.store, getBoardName(path), graph);
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ created: path }));

@@ -906,9 +906,18 @@ export class Main extends LitElement {
             );
             return;
           }
-          const url = new URL(
-            await provider.createURL(evt.location, evt.fileName)
+          const urlString = await provider.createURL(
+            evt.location,
+            evt.fileName
           );
+          if (!urlString) {
+            this.toast(
+              "Unable to create a new board",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+          const url = new URL(urlString);
           const { result, error } = await provider.createBlank(url);
 
           if (!result) {
@@ -1584,7 +1593,7 @@ export class Main extends LitElement {
           }
 
           try {
-            await provider.connect(evt.location);
+            await provider.connect(evt.location, evt.apiKey);
           } catch (err) {
             return;
           }
@@ -1641,7 +1650,7 @@ export class Main extends LitElement {
 
           let success = false;
           try {
-            success = await provider.connect(evt.location);
+            success = await provider.connect(evt.location, evt.apiKey);
           } catch (err) {
             this.toast(
               "Unable to connect to provider",

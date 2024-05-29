@@ -16,6 +16,7 @@ import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
 interface GraphDBStore {
   url: string;
+  apiKey: string;
 }
 
 interface GraphDBStoreList extends idb.DBSchema {
@@ -27,6 +28,12 @@ interface GraphDBStoreList extends idb.DBSchema {
 
 const STORE_LIST = "remote-store-list";
 const STORE_LIST_VERSION = 1;
+
+const authHeader = (apiKey: string, headers?: HeadersInit) => {
+  const h = new Headers(headers);
+  h.set("Authorization", `Bearer ${apiKey}`);
+  return h;
+};
 
 export class RemoteGraphProvider implements GraphProvider {
   static #instance: RemoteGraphProvider;
@@ -46,26 +53,48 @@ export class RemoteGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; handle: void }>;
+      items: Map<string, { url: string; apiKey: string; handle: void }>;
     }
   >();
 
   private constructor() {}
 
+  #getApiKey(location: string) {
+    const store = this.#locations.find((store) => store.url === location);
+    if (!store) {
+      return null;
+    }
+    return store.apiKey;
+  }
+
   async #sendToRemote(url: URL, descriptor: GraphDescriptor) {
+    const apiKey = this.#getApiKey(url.origin);
+    if (!apiKey) {
+      return { error: "No API Key" };
+    }
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(descriptor, null, 2),
-      headers: new Headers([
-        // ["Authorization", `Bearer ${this.userKey}`],
-        ["Content-Type", "application/json"],
-      ]),
+      headers: authHeader(apiKey, [["Content-Type", "application/json"]]),
     });
     return await response.json();
   }
 
   async createURL(location: string, fileName: string) {
-    return `${location}/boards/${fileName}`;
+    const apiKey = this.#getApiKey(location);
+    if (!apiKey) {
+      return null;
+    }
+    const response = await fetch(`${location}/boards`, {
+      method: "POST",
+      body: JSON.stringify({ name: fileName }),
+      headers: authHeader(apiKey),
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    return `${location}/boards/${data.path}`;
   }
 
   parseURL(_url: URL) {
@@ -74,9 +103,7 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async load(url: URL) {
-    const response = await fetch(url, {
-      // headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
-    });
+    const response = await fetch(url);
     const graph = await response.json();
 
     return graph;
@@ -104,10 +131,16 @@ export class RemoteGraphProvider implements GraphProvider {
       return { result: false };
     }
 
+    const location = url.origin;
+    const store = this.#locations.find((store) => store.url === location);
+    if (!store) {
+      return { result: false };
+    }
+
     try {
       const response = await fetch(url, {
         method: "DELETE",
-        // headers: new Headers([["Authorization", `Bearer ${this.userKey}`]]),
+        headers: authHeader(store.apiKey),
       });
       const data = await response.json();
       await this.#refreshAllItems();
@@ -121,12 +154,19 @@ export class RemoteGraphProvider implements GraphProvider {
     }
   }
 
-  async connect(location?: string) {
+  async connect(location?: string, auth?: unknown) {
     if (!location) {
       return false;
     }
+    if (!auth) {
+      // TODO: Support public servers. For now, Auth is required.
+      return false;
+    }
+    const apiKey = auth as string;
 
-    const response = await fetch(`${location}/boards`);
+    const response = await fetch(`${location}/boards`, {
+      headers: authHeader(apiKey),
+    });
     if (response.ok) {
       for (const storeLocation of this.#locations) {
         if (storeLocation.url === location) {
@@ -134,7 +174,7 @@ export class RemoteGraphProvider implements GraphProvider {
         }
       }
 
-      this.#locations.push({ url: location });
+      this.#locations.push({ url: location, apiKey });
       await this.#storeLocations();
       await this.#refreshAllItems();
       return true;
@@ -192,6 +232,7 @@ export class RemoteGraphProvider implements GraphProvider {
       STORE_LIST_VERSION,
       {
         upgrade(db) {
+          if (db.objectStoreNames.contains("stores")) return;
           db.createObjectStore("stores", {
             keyPath: "id",
             autoIncrement: true,

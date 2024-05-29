@@ -8,7 +8,7 @@ import { authenticate } from "../auth.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
-const put: ApiHandler = async (path, req, res) => {
+const create: ApiHandler = async (path, req, res) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
     return true;
@@ -23,8 +23,9 @@ const put: ApiHandler = async (path, req, res) => {
     });
 
     req.on("end", async () => {
-      const graph = JSON.parse(chunks.join(""));
-      const result = await store.create(userKey, path, graph);
+      const request = JSON.parse(chunks.join(""));
+      const name = request.name;
+      const result = await store.create(userKey, name);
 
       if (!result.success) {
         res.writeHead(400, { "Content-Type": "application/json" });
@@ -34,10 +35,10 @@ const put: ApiHandler = async (path, req, res) => {
       }
 
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ created: result.path }));
+      res.end(JSON.stringify({ path: result.path }));
       resolve(true);
     });
   });
 };
 
-export default put;
+export default create;

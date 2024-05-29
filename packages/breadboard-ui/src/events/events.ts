@@ -245,7 +245,8 @@ export class GraphProviderConnectRequestEvent extends Event {
 
   constructor(
     public readonly providerName: string,
-    public readonly location?: string
+    public readonly location?: string,
+    public readonly apiKey?: string
   ) {
     super(GraphProviderConnectRequestEvent.eventName, { ...eventInit });
   }

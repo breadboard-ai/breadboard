@@ -6,6 +6,10 @@
 
 import { Firestore } from "@google-cloud/firestore";
 
+export type GetUserStoreResult =
+  | { success: true; store: string }
+  | { success: false; error: string };
+
 export const getStore = () => {
   return new Store("board-server");
 };
@@ -34,7 +38,7 @@ class Store {
     });
   }
 
-  async getUserStore(userKey: string) {
+  async getUserStore(userKey: string): Promise<GetUserStoreResult> {
     const users = this.#database.collection(`users`);
     const key = await users.where("apiKey", "==", userKey).get();
     if (key.empty) {
@@ -44,7 +48,7 @@ class Store {
     if (!doc) {
       return { success: false, error: "User not found" };
     }
-    return doc.get("store");
+    return { success: true, store: doc.id };
   }
 
   async list() {
@@ -72,16 +76,15 @@ class Store {
       .set({ graph: JSON.stringify(graph), published: true });
   }
 
-  async create(userKey: string, name: string, graph: string) {
+  async create(userKey: string, name: string) {
     const userStore = await this.getUserStore(userKey);
     if (!userStore.success) {
-      return { error: userStore.error };
+      return { success: false, error: userStore.error };
     }
     const boardName = sanitize(name);
-    await this.#database
-      .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), published: false });
-    return { success: true, path: asPath(userStore, boardName) };
+    const path = asPath(userStore.store, boardName);
+    console.log("🌻 creating board at", path);
+    return { success: true, path };
   }
 
   async delete(userStore: string, boardName: string) {
