@@ -4,16 +4,10 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "urlTemplate",
-      "to": "fetch",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "urlTemplate",
-      "to": "output-2",
-      "out": "url",
-      "in": "url"
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
     },
     {
       "from": "fn-3",
@@ -23,9 +17,9 @@
     },
     {
       "from": "query",
-      "to": "urlTemplate",
-      "out": "query",
-      "in": "query"
+      "to": "fn-3",
+      "out": "limit",
+      "in": "limit"
     },
     {
       "from": "query",
@@ -36,29 +30,71 @@
     {
       "from": "query",
       "to": "urlTemplate",
-      "out": "tags",
-      "in": "tags"
+      "out": "query",
+      "in": "query"
     },
     {
       "from": "query",
-      "to": "fn-3",
-      "out": "limit",
-      "in": "limit"
-    },
-    {
-      "from": "fetch",
-      "to": "spreadResponse",
-      "out": "response",
-      "in": "object"
+      "to": "urlTemplate",
+      "out": "tags",
+      "in": "tags"
     },
     {
       "from": "spreadResponse",
       "to": "fn-3",
       "out": "hits",
       "in": "list"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "output-2",
+      "out": "url",
+      "in": "url"
     }
   ],
   "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Algolia Limit",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "title": "limit",
+              "description": "The limit",
+              "default": "1"
+            },
+            "page": {
+              "type": "string",
+              "title": "page",
+              "description": "the page",
+              "default": "2"
+            },
+            "query": {
+              "type": "string",
+              "title": "query",
+              "description": "The query",
+              "default": "JavaScript"
+            },
+            "tags": {
+              "type": "string",
+              "title": "tags",
+              "description": "The tags",
+              "default": "JavaScript"
+            }
+          }
+        },
+        "type": "string"
+      }
+    },
     {
       "id": "output-2",
       "type": "output",
@@ -66,24 +102,24 @@
         "schema": {
           "type": "object",
           "properties": {
-            "url": {
-              "title": "url",
-              "description": "The resulting URL that was produced by filling in the placeholders in the template",
-              "type": "string"
-            },
             "output": {
               "type": "string",
               "title": "output"
+            },
+            "url": {
+              "type": "string",
+              "title": "url",
+              "description": "The resulting URL that was produced by filling in the placeholders in the template"
             }
           }
         }
       }
     },
     {
-      "id": "urlTemplate",
-      "type": "urlTemplate",
+      "id": "fetch",
+      "type": "fetch",
       "configuration": {
-        "template": "https://hn.algolia.com/api/v1/search?query={query}&tags={tags}&page={page}"
+        "method": "GET"
       }
     },
     {
@@ -96,49 +132,6 @@
       }
     },
     {
-      "id": "query",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "title": "Algolia Limit",
-          "properties": {
-            "query": {
-              "type": "string",
-              "title": "query",
-              "default": "JavaScript",
-              "description": "The query"
-            },
-            "limit": {
-              "type": "number",
-              "title": "limit",
-              "default": "1",
-              "description": "The limit"
-            },
-            "tags": {
-              "type": "string",
-              "title": "tags",
-              "default": "JavaScript",
-              "description": "The tags"
-            },
-            "page": {
-              "type": "string",
-              "title": "page",
-              "default": "2",
-              "description": "the page"
-            }
-          }
-        },
-        "type": "string"
-      }
-    },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
-      }
-    },
-    {
       "id": "spreadResponse",
       "type": "runJavascript",
       "configuration": {
@@ -146,7 +139,13 @@
         "name": "spreadResponse",
         "raw": true
       }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/search?query={query}&tags={tags}&page={page}"
+      }
     }
-  ],
-  "graphs": {}
+  ]
 }
