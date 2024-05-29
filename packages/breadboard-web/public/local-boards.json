@@ -99,6 +99,26 @@
     "version": "0.0.1"
   },
   {
+    "title": "Hacker News Angolia search ",
+    "url": "/graphs/hacker_news_algolia_search.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Algolia API Story by ID",
+    "url": "/graphs/hacker_news_algolia_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Firebase API Story by ID",
+    "url": "/graphs/hacker_news_firebase_story_from_id.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Firebase API Story IDs",
+    "url": "/graphs/hacker_news_firebase_top_story_ids.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json",
     "version": "0.0.1"

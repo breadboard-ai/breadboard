@@ -1,0 +1,100 @@
+{
+  "title": "Hacker News Algolia API Story by ID",
+  "description": "Board which returns story contents using the Hacker News Algolia API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "storyID",
+      "to": "urlTemplate",
+      "out": "storyID",
+      "in": "storyID"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/items/{storyID}"
+      }
+    },
+    {
+      "id": "storyID",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story",
+          "properties": {
+            "storyID": {
+              "type": "string",
+              "title": "Story ID",
+              "default": "39788322",
+              "description": "Hacker News Story ID to extract"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

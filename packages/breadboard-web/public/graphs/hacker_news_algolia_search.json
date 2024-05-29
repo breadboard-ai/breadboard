@@ -1,0 +1,152 @@
+{
+  "title": "Hacker News Angolia search ",
+  "description": "Board which returns API results based on a query using the Hacker News Angolia API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "output-2",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "fn-3",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "query",
+      "in": "query"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "page",
+      "in": "page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "tags",
+      "in": "tags"
+    },
+    {
+      "from": "query",
+      "to": "fn-3",
+      "out": "limit",
+      "in": "limit"
+    },
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "fn-3",
+      "out": "hits",
+      "in": "list"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "title": "url",
+              "description": "The resulting URL that was produced by filling in the placeholders in the template",
+              "type": "string"
+            },
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/search?query={query}&tags={tags}&page={page}"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Algolia Limit",
+          "properties": {
+            "query": {
+              "type": "string",
+              "title": "query",
+              "default": "JavaScript",
+              "description": "The query"
+            },
+            "limit": {
+              "type": "number",
+              "title": "limit",
+              "default": "1",
+              "description": "The limit"
+            },
+            "tags": {
+              "type": "string",
+              "title": "tags",
+              "default": "JavaScript",
+              "description": "The tags"
+            },
+            "page": {
+              "type": "string",
+              "title": "page",
+              "default": "2",
+              "description": "the page"
+            }
+          }
+        },
+        "type": "string"
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    }
+  ],
+  "graphs": {}
+}
