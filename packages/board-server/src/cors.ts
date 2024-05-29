@@ -8,7 +8,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE",
+  "Access-Control-Allow-Methods": "OPTIONS, POST, PUT, GET, DELETE",
   "Access-Control-Allow-Headers":
     "Content-Type, Access-Control-Allow-Headers, Authorization",
   "Access-Control-Max-Age": 2592000, // 30 days

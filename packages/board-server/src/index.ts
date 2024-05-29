@@ -12,6 +12,7 @@ import get from "./api/get.js";
 import post from "./api/post.js";
 import del from "./api/delete.js";
 import { cors } from "./cors.js";
+import put from "./api/put.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
@@ -57,6 +58,8 @@ const server = createServer(async (req, res) => {
         if (await get(apiPath, req, res)) return true;
       } else if (req.method === "POST") {
         if (await post(apiPath, req, res)) return true;
+      } else if (req.method === "PUT") {
+        if (await put(apiPath, req, res)) return true;
       } else if (req.method === "DELETE") {
         if (await del(apiPath, req, res)) return true;
       } else {

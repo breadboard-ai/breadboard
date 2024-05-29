@@ -16,7 +16,6 @@ export const getUserKey = (req: IncomingMessage) => {
   if (type !== "Bearer") {
     return null;
   }
-
   return token;
 };
 
