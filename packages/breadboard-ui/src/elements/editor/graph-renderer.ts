@@ -72,6 +72,8 @@ export class GraphRenderer extends LitElement {
   #app = new PIXI.Application();
   #appInitialized = false;
 
+  #graphMask = new PIXI.Graphics();
+
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
@@ -500,7 +502,7 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      graph.visible = false;
+      graph.mask = this.#graphMask;
     }
   }
 
@@ -510,7 +512,7 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      graph.visible = true;
+      graph.mask = null;
     }
   }
 
@@ -582,7 +584,11 @@ export class GraphRenderer extends LitElement {
     }
 
     if (opts.visible !== undefined) {
-      graph.visible = opts.visible;
+      if (opts.visible) {
+        graph.mask = null;
+      } else {
+        graph.mask = this.#graphMask;
+      }
     }
 
     return true;
