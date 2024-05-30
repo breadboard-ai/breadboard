@@ -258,37 +258,44 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async #refreshItems(store: GraphDBStore) {
-    const response = await fetch(`${store.url}/boards`, {
-      headers: authHeader(store.apiKey),
-    });
-    const files = await response.json();
-
-    const items = new Map<
-      string,
-      { url: string; readonly: boolean; handle: void }
-    >();
-    for (const item of files) {
-      let file: string;
-      let readonly: boolean;
-      if (typeof item === "string") {
-        file = item;
-        readonly = false;
-      } else {
-        file = item.path;
-        readonly = item.readonly;
-      }
-      items.set(file, {
-        url: `${store.url}/boards/${file}`,
-        readonly,
-        handle: void 0,
+    try {
+      const response = await fetch(`${store.url}/boards`, {
+        headers: authHeader(store.apiKey),
       });
-    }
+      const files = await response.json();
 
-    this.#stores.set(store.url, {
-      permission: "granted",
-      title: store.url,
-      items,
-    });
+      const items = new Map<
+        string,
+        { url: string; readonly: boolean; handle: void }
+      >();
+      for (const item of files) {
+        let file: string;
+        let readonly: boolean;
+        if (typeof item === "string") {
+          file = item;
+          readonly = false;
+        } else {
+          file = item.path;
+          readonly = item.readonly;
+        }
+        items.set(file, {
+          url: `${store.url}/boards/${file}`,
+          readonly,
+          handle: void 0,
+        });
+      }
+
+      this.#stores.set(store.url, {
+        permission: "granted",
+        title: store.url,
+        items,
+      });
+    } catch (err) {
+      console.warn(
+        `[RemoteGraphProvider]: Unable to connet to ${store.url}`,
+        err
+      );
+    }
   }
 
   async #refreshAllItems() {
