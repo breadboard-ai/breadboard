@@ -892,6 +892,7 @@ export class Main extends LitElement {
           if (!this.#runObserver) {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
+              store: this.dataStore.instance!,
             });
           }
 

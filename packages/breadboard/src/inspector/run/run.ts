@@ -88,12 +88,23 @@ export class RunObserver implements InspectableRunObserver {
     return this.#runs;
   }
 
-  load(
+  async load(
     o: unknown,
     options?: SerializedRunLoadingOptions
   ): Promise<InspectableRunLoadResult> {
-    const loader = new RunLoader(o, options || {});
-    return loader.load(this);
+    if (!this.#options.store) {
+      throw new Error(
+        "No data store provided to RunObserver, unable to load runs"
+      );
+    }
+    const loader = new RunLoader(this.#options.store, o, options || {});
+    this.#options.store!.startGroup();
+    const result = await loader.load(this);
+    if (result.success) {
+      const dataStoreGroupId = this.#options.store!.endGroup();
+      this.#runs[this.#runs.length - 1].dataStoreGroupId = dataStoreGroupId;
+    }
+    return result;
   }
 }
 
