@@ -174,8 +174,8 @@ export type Settings = {
 };
 
 export type CustomSettingsElement = HTMLElement & {
-  settingsType: SETTINGS_TYPE | undefined;
-  settingsItems: Settings[SETTINGS_TYPE]["items"] | undefined;
+  settingsType?: SETTINGS_TYPE | undefined;
+  settingsItems?: Settings[SETTINGS_TYPE]["items"] | undefined;
 };
 
 /**

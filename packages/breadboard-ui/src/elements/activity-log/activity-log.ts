@@ -377,6 +377,13 @@ export class ActivityLog extends LitElement {
                 >
                   <h1 data-message-idx=${idx}>${event.type}</h1>
                   ${event.keys.map((id) => {
+                    if (id.startsWith("connection:")) {
+                      return html`<bb-connection-input
+                        id=${id}
+                        .connectionId=${id.replace(/^connection:/, "")}
+                      ></bb-connection-input>`;
+                    }
+
                     const configuration = {
                       schema: {
                         properties: {

@@ -171,7 +171,8 @@ export class InputEnterEvent extends Event {
 
   constructor(
     public readonly id: string,
-    public readonly data: Record<string, unknown>
+    public readonly data: Record<string, unknown>,
+    public readonly allowSavingIfSecret: boolean
   ) {
     super(InputEnterEvent.eventName, { ...eventInit });
   }
