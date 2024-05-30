@@ -67,7 +67,9 @@ export class RunLoader {
     } as HarnessRunResult;
   }
 
-  load(observer: InspectableRunObserver): InspectableRunLoadResult {
+  async load(
+    observer: InspectableRunObserver
+  ): Promise<InspectableRunLoadResult> {
     const run = this.#run;
     if (run.$schema !== "tbd") {
       return {

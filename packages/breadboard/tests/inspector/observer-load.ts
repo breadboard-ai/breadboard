@@ -95,7 +95,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     return;
   }
   const run1serialized = await run1.serialize({ keepSecrets: true });
-  const run1LoadResult = observer.load(run1serialized);
+  const run1LoadResult = await observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
     return;
@@ -161,8 +161,11 @@ test("run load/save: serialization produces consistent size", async (t) => {
   const s = JSON.stringify(serializedRun);
   t.is(s.length, 1167372);
   t.true(
-    observer.load(serializedRun, { secretReplacer: () => GEMINI_KEY_VALUE })
-      .success
+    (
+      await observer.load(serializedRun, {
+        secretReplacer: () => GEMINI_KEY_VALUE,
+      })
+    ).success
   );
   runsEqual(t, run, observer.runs()[0]);
 });

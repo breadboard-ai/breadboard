@@ -896,15 +896,16 @@ export class Main extends LitElement {
           }
 
           evt.preventDefault();
-          const load = this.#runObserver.load(runData);
-          if (load.success) {
-            this.requestUpdate();
-          } else {
-            this.toast(
-              "Unable to load run data",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
+          this.#runObserver.load(runData).then((load) => {
+            if (load.success) {
+              this.requestUpdate();
+            } else {
+              this.toast(
+                "Unable to load run data",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+            }
+          });
         } else {
           this.#onStartBoard(new BreadboardUI.Events.StartEvent(null, runData));
         }

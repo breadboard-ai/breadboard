@@ -593,7 +593,7 @@ export type InspectableRunObserver = {
   load(
     o: unknown,
     options?: SerializedRunLoadingOptions
-  ): InspectableRunLoadResult;
+  ): Promise<InspectableRunLoadResult>;
 };
 
 /**

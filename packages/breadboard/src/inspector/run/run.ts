@@ -91,7 +91,7 @@ export class RunObserver implements InspectableRunObserver {
   load(
     o: unknown,
     options?: SerializedRunLoadingOptions
-  ): InspectableRunLoadResult {
+  ): Promise<InspectableRunLoadResult> {
     const loader = new RunLoader(o, options || {});
     return loader.load(this);
   }
