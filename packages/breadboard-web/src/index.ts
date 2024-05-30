@@ -38,7 +38,7 @@ import { provide } from "@lit/context";
 import {
   Environment,
   environmentContext,
-} from "../../breadboard-ui/dist/src/contexts/environment";
+} from "@google-labs/breadboard-ui/contexts/environment.js";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -105,6 +105,7 @@ export class Main extends LitElement {
       new URL(window.location.href).origin === "http://localhost:5173"
         ? "http://localhost:5555"
         : undefined,
+    connectionRedirectUrl: "/oauth/",
   };
 
   #abortController: AbortController | null = null;

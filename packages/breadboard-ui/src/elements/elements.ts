@@ -12,6 +12,7 @@ export { BoardSelector } from "./node-info/board-selector.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
+export { ConnectionBroker } from "./connection/connection-broker.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
 export { EventDetails } from "./event-details/event-details.js";

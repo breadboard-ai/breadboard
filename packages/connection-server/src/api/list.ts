@@ -8,7 +8,6 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Config } from "../config.js";
 import { okJson } from "../responses.js";
 import type { OAuthClientSecretData } from "../secrets.js";
-import type { OurSpecialOAuthState } from "../state.js";
 
 // IMPORTANT: Keep in sync with
 // breadboard/packages/breadboard-ui/src/elements/connection/connection-server.ts
@@ -67,15 +66,5 @@ function makeAuthorizationEndpointUrl(
   params.set("access_type", "offline");
   // Force re-consent every time, because we always want a refresh token.
   params.set("prompt", "consent");
-  params.set("redirect_uri", "REPLACE_WITH_OAUTH_INTERSTITIAL_URL");
-  // We pack the connection ID into the "state" parameter (see
-  // https://datatracker.ietf.org/doc/html/rfc6749#section-4.2.1) so that we can
-  // figure out which connection we're dealing with later.
-  params.set(
-    "state",
-    JSON.stringify({
-      connection_id: connectionId,
-    } satisfies OurSpecialOAuthState)
-  );
   return url.href;
 }

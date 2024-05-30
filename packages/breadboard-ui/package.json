@@ -5,12 +5,23 @@
   },
   "version": "0.8.0",
   "description": "The UI components for @google-labs/breadboard",
-  "main": "./dist/src/index.js",
-  "exports": {
-    ".": "./dist/src/index.js"
-  },
-  "types": "dist/src/index.d.ts",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "scripts": {
     "prepack": "npm run build",
     "generate:docs": "wireit",
