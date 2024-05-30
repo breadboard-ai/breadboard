@@ -8,14 +8,24 @@ import { asBase64, isStoredData } from "./common.js";
 import {
   DataStore,
   InlineDataCapabilityPart,
+  SerializedDataStoreGroup,
   StoredDataCapabilityPart,
 } from "./types.js";
 
 export class SimpleDataStore implements DataStore {
+  #groupCount = 1;
+  #items = new Map<number, string[]>();
+
   async store(data: Blob): Promise<StoredDataCapabilityPart> {
     // TODO: Figure out how to revoke the URLs when the data
     // is no longer needed.
     const handle = URL.createObjectURL(data);
+    let groupHandles = this.#items.get(this.#groupCount);
+    if (!groupHandles) {
+      groupHandles = [];
+      this.#items.set(this.#groupCount, groupHandles);
+    }
+    groupHandles.push(handle);
     const mimeType = data.type;
     return {
       storedData: { handle, mimeType },
@@ -45,5 +55,43 @@ export class SimpleDataStore implements DataStore {
     }
     const { handle } = storedData.storedData;
     return handle;
+  }
+
+  startGroup(): void {
+    // TODO: Support nested groups.
+    this.#groupCount;
+  }
+
+  endGroup(): number {
+    return this.#groupCount++;
+  }
+
+  async serializeGroup(
+    group: number
+  ): Promise<SerializedDataStoreGroup | null> {
+    const handles = this.#items.get(group);
+    if (!handles) {
+      return null;
+    }
+
+    return Promise.all(
+      handles.map(async (handle) => {
+        return fetch(handle).then(async (response) => {
+          const blob = await response.blob();
+          const mimeType = blob.type;
+          const data = await asBase64(blob);
+          return { handle, inlineData: { mimeType, data } };
+        });
+      })
+    );
+  }
+
+  releaseGroup(group: number): void {
+    const handles = this.#items.get(group);
+    if (!handles) return;
+
+    for (const handle of handles) {
+      URL.revokeObjectURL(handle);
+    }
   }
 }

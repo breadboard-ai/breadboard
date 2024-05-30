@@ -23,6 +23,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunInputs,
 } from "../types.js";
+import { DataStore } from "../../data/types.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -51,6 +52,7 @@ export class RunObserver implements InspectableRunObserver {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
+        this.#options.store?.startGroup();
         // start a new run
         const run = new Run(
           timestamp,
@@ -62,6 +64,10 @@ export class RunObserver implements InspectableRunObserver {
         if (this.#runs.length === 0) {
           this.#runs = [run];
         } else {
+          if (this.#runs.length === 2) {
+            const removedRun = this.#runs.pop();
+            this.#options.store?.releaseGroup(removedRun!.dataStoreGroupId);
+          }
           this.#runs = [run, this.#runs[0]];
         }
       }
@@ -71,6 +77,10 @@ export class RunObserver implements InspectableRunObserver {
         // close out the run
         const run = this.#runs[0];
         run.end = timestamp;
+
+        const dataStoreGroupId = this.#options.store?.endGroup();
+        run.dataStoreGroupId =
+          dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
       }
     }
     const run = this.#runs[0];
@@ -78,12 +88,23 @@ export class RunObserver implements InspectableRunObserver {
     return this.#runs;
   }
 
-  load(
+  async load(
     o: unknown,
     options?: SerializedRunLoadingOptions
-  ): InspectableRunLoadResult {
-    const loader = new RunLoader(o, options || {});
-    return loader.load(this);
+  ): Promise<InspectableRunLoadResult> {
+    if (!this.#options.store) {
+      throw new Error(
+        "No data store provided to RunObserver, unable to load runs"
+      );
+    }
+    const loader = new RunLoader(this.#options.store, o, options || {});
+    this.#options.store!.startGroup();
+    const result = await loader.load(this);
+    if (result.success) {
+      const dataStoreGroupId = this.#options.store!.endGroup();
+      this.#runs[this.#runs.length - 1].dataStoreGroupId = dataStoreGroupId;
+    }
+    return result;
   }
 }
 
@@ -95,6 +116,8 @@ export class Run implements InspectableRun {
   end: number | null = null;
   graphVersion: number;
   messages: HarnessRunResult[] = [];
+  dataStoreGroupId: number = -1;
+  #dataStore: DataStore | null;
 
   constructor(
     timestamp: number,
@@ -103,6 +126,7 @@ export class Run implements InspectableRun {
     options: RunObserverOptions
   ) {
     this.#events = new EventManager(graphStore, options);
+    this.#dataStore = options.store || null;
     this.graphVersion = 0;
     this.start = timestamp;
     this.graphId = graphStore.add(graph, this.graphVersion).id;
@@ -135,8 +159,13 @@ export class Run implements InspectableRun {
     this.#events.add(result);
   }
 
-  serialize(options?: RunSerializationOptions): SerializedRun {
-    return this.#events.serialize(options || {});
+  async serialize(options?: RunSerializationOptions): Promise<SerializedRun> {
+    let data = null;
+    if (this.dataStoreGroupId !== -1 && this.#dataStore) {
+      data = await this.#dataStore.serializeGroup(this.dataStoreGroupId);
+    }
+
+    return this.#events.serialize(data, options || {});
   }
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {

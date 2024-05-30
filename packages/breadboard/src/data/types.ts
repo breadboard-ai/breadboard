@@ -30,6 +30,12 @@ export type StoredData = {
   asInline(): Promise<InlineDataCapabilityPart>;
 };
 
+export type SerializedStoredData = {
+  handle: DataStoreHandle;
+} & InlineDataCapabilityPart;
+
+export type SerializedDataStoreGroup = SerializedStoredData[];
+
 /**
  * A provider that handles storing and retrieving data.
  */
@@ -46,5 +52,9 @@ export type DataStore = {
     storedData: StoredDataCapabilityPart
   ): Promise<InlineDataCapabilityPart>;
   retrieveAsBlob(storedData: StoredDataCapabilityPart): Promise<Blob>;
+  startGroup(): void;
+  endGroup(): number;
+  releaseGroup(group: number): void;
+  serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
   retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
 };

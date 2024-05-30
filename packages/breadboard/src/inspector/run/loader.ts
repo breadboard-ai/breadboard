@@ -17,13 +17,21 @@ import {
   TimelineEntry,
 } from "../types.js";
 import { inspectableGraph } from "../graph.js";
+import { DataStore, SerializedDataStoreGroup } from "../../data/types.js";
+import { remapData } from "../../data/inflate-deflate.js";
 
 export class RunLoader {
   #run: SerializedRun;
+  #store: DataStore;
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
 
-  constructor(o: unknown, options: SerializedRunLoadingOptions) {
+  constructor(
+    store: DataStore,
+    o: unknown,
+    options: SerializedRunLoadingOptions
+  ) {
+    this.#store = store;
     this.#run = o as SerializedRun;
     this.#options = options;
   }
@@ -31,6 +39,23 @@ export class RunLoader {
   #asHarnessRunResult(entry: TimelineEntry): HarnessRunResult {
     const [type, data] = entry;
     return { type, data } as HarnessRunResult;
+  }
+
+  async #inflateData(
+    timeline: TimelineEntry[],
+    serializedData: SerializedDataStoreGroup
+  ): Promise<TimelineEntry[]> {
+    return await Promise.all(
+      timeline.map(async (entry) => {
+        const [, data] = entry;
+        entry[1] = (await remapData(
+          this.#store,
+          data,
+          serializedData
+        )) as Promise<TimelineEntry>;
+        return entry;
+      })
+    );
   }
 
   loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
@@ -67,7 +92,9 @@ export class RunLoader {
     } as HarnessRunResult;
   }
 
-  load(observer: InspectableRunObserver): InspectableRunLoadResult {
+  async load(
+    observer: InspectableRunObserver
+  ): Promise<InspectableRunLoadResult> {
     const run = this.#run;
     if (run.$schema !== "tbd") {
       return {
@@ -77,9 +104,12 @@ export class RunLoader {
     }
     try {
       const secretReplacer = this.#options?.secretReplacer;
-      const timeline = secretReplacer
+      let timeline = secretReplacer
         ? replaceSecrets(run, secretReplacer).timeline
         : run.timeline;
+      timeline = run.data
+        ? await this.#inflateData(timeline, run.data)
+        : timeline;
       for (const result of timeline) {
         const [type] = result;
         switch (type) {
@@ -96,6 +126,7 @@ export class RunLoader {
       return { success: true };
     } catch (e) {
       const error = e as Error;
+      console.error(error);
       return {
         success: false,
         error: `Loading run failed with the error ${error.message}`,

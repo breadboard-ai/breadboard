@@ -29,6 +29,7 @@ import {
 } from "../../types.js";
 import { idFromPath } from "./path-registry.js";
 import { SecretResult } from "../../harness/types.js";
+import { SerializedDataStoreGroup } from "../../data/types.js";
 
 export type SequenceEntry = [type: TimelineEntry[0], entry: PathRegistryEntry];
 
@@ -188,6 +189,7 @@ export class RunSerializer {
 
   serialize(
     sequence: Iterable<SequenceEntry>,
+    data: SerializedDataStoreGroup | null,
     options: RunSerializationOptions
   ) {
     const timeline: TimelineEntry[] = [];
@@ -232,6 +234,9 @@ export class RunSerializer {
       version: "0",
       timeline,
     };
+    if (data) {
+      serialized.data = data;
+    }
     if (options.keepSecrets) return serialized;
     return replaceSecrets(serialized, () => {
       return crypto.randomUUID();
@@ -305,5 +310,14 @@ export const replaceSecrets = (
 
   const secrets = serializeSecrets();
 
-  return { $schema: data.$schema, version: data.version, secrets, timeline };
+  const result: SerializedRun = {
+    $schema: data.$schema,
+    version: data.version,
+    secrets,
+    timeline,
+  };
+  if (data.data) {
+    result.data = data.data;
+  }
+  return result;
 };

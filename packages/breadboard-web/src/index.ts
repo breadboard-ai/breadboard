@@ -706,7 +706,9 @@ export class Main extends LitElement {
     if (!this.#runObserver)
       this.#runObserver = createRunObserver({
         logLevel: "debug",
+        store: this.dataStore.instance!,
       });
+
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
       this.runs = this.#runObserver.observe(result);
@@ -723,6 +725,7 @@ export class Main extends LitElement {
         await result.reply({ inputs: answer } as InputResolveRequest);
       }
     }
+
     this.status = BreadboardUI.Types.STATUS.STOPPED;
   }
 
@@ -889,19 +892,21 @@ export class Main extends LitElement {
           if (!this.#runObserver) {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
+              store: this.dataStore.instance!,
             });
           }
 
           evt.preventDefault();
-          const load = this.#runObserver.load(runData);
-          if (load.success) {
-            this.requestUpdate();
-          } else {
-            this.toast(
-              "Unable to load run data",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
+          this.#runObserver.load(runData).then((load) => {
+            if (load.success) {
+              this.requestUpdate();
+            } else {
+              this.toast(
+                "Unable to load run data",
+                BreadboardUI.Events.ToastType.ERROR
+              );
+            }
+          });
         } else {
           this.#onStartBoard(new BreadboardUI.Events.StartEvent(null, runData));
         }
