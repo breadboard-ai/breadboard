@@ -5,7 +5,7 @@
  */
 
 import { consume } from "@lit/context";
-import { LitElement, html } from "lit";
+import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   environmentContext,
@@ -20,6 +20,7 @@ import {
   fetchAvailableConnections as fetchAvailableConnectionsTask,
   type Connection,
 } from "./connection-server.js";
+import "./connection-signin.js";
 
 /**
  * Custom settings panel for signing in and out of connections to third party
@@ -48,6 +49,18 @@ export class ConnectionSettings
     () => this.environment
   );
 
+  static styles = css`
+    ul {
+      margin: 8px 0 0 0;
+      padding: 0;
+      width: 100%;
+    }
+    li {
+      list-style-type: none;
+      margin-bottom: 15px;
+    }
+  `;
+
   render() {
     const connectionServerUrl = this.environment?.connectionServerUrl;
     if (!connectionServerUrl) {
@@ -63,8 +76,11 @@ export class ConnectionSettings
         return html`<ul>
           ${connections.map(
             (connection) =>
-              // TODO(aomarks) Render a sign in/out widget.
-              html`<li>${connection.id}</li>`
+              html`<li>
+                <bb-connection-signin
+                  .connection=${connection}
+                ></bb-connection-signin>
+              </li>`
           )}
         </ul>`;
       },
