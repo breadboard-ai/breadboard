@@ -14,7 +14,9 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blank,
   BoardRunner,
+  createDataStore,
   createLoader,
+  DataStore,
   edit,
   EditableGraph,
   GraphDescriptor,
@@ -39,6 +41,7 @@ import {
   Environment,
   environmentContext,
 } from "@google-labs/breadboard-ui/contexts/environment.js";
+import { dataStoreContext } from "@google-labs/breadboard-ui/contexts/data-store.js";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -107,6 +110,9 @@ export class Main extends LitElement {
         : undefined,
     connectionRedirectUrl: "/oauth/",
   };
+
+  @provide({ context: dataStoreContext })
+  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
 
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();

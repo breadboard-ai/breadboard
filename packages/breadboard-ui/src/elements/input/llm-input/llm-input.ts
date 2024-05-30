@@ -73,7 +73,7 @@ export class LLMInput extends LitElement {
 
   @consume({ context: dataStoreContext })
   @property({ attribute: false })
-  public dataStore?: DataStore;
+  public dataStore?: { instance: DataStore | null };
 
   static styles = css`
     * {
@@ -530,8 +530,9 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
-    if (this.dataStore) {
-      this.value.parts[partIdx] = await this.dataStore.store(files[0]);
+    if (this.dataStore?.instance) {
+      const store = this.dataStore.instance;
+      this.value.parts[partIdx] = await store.store(files[0]);
     } else {
       if (!this.value.parts[partIdx]) {
         this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
@@ -696,7 +697,7 @@ export class LLMInput extends LitElement {
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       getData = async () => {
-        const response = await this.dataStore?.retrieve(part);
+        const response = await this.dataStore?.instance?.retrieve(part);
         if (!response) {
           return "Unable to retrieve data";
         }

@@ -1,4 +1,8 @@
 import { DataStore } from "@google-labs/breadboard";
 import { createContext } from "@lit/context";
 
-export const dataStoreContext = createContext<DataStore>("datastore");
+export type DataStoreContext = {
+  instance: DataStore | null;
+};
+
+export const dataStoreContext = createContext<DataStoreContext>("datastore");
