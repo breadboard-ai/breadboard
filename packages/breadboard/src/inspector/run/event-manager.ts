@@ -43,6 +43,7 @@ import {
   RunSerializationOptions,
   TimelineEntry,
 } from "../types.js";
+import { SerializedDataStoreGroup } from "../../data/types.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -256,8 +257,11 @@ export class EventManager {
     return this.#currentNodeEvent;
   }
 
-  serialize(options: RunSerializationOptions) {
-    return this.#serializer.serialize(this.#sequence, options);
+  serialize(
+    data: SerializedDataStoreGroup | null,
+    options: RunSerializationOptions
+  ) {
+    return this.#serializer.serialize(this.#sequence, data, options);
   }
 
   serializer() {

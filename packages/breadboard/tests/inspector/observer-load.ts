@@ -94,7 +94,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     t.fail("run1 should be serializable.");
     return;
   }
-  const run1serialized = run1.serialize({ keepSecrets: true });
+  const run1serialized = await run1.serialize({ keepSecrets: true });
   const run1LoadResult = observer.load(run1serialized);
   if (!run1LoadResult.success) {
     t.fail(run1LoadResult.error);
@@ -112,7 +112,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   }
 
   {
-    const run1withoutSecrets = run1.serialize();
+    const run1withoutSecrets = await run1.serialize();
     const sentinel = run1withoutSecrets.secrets?.["GEMINI_KEY"];
     t.not(sentinel, GEMINI_KEY_VALUE);
     const s = JSON.stringify(run1withoutSecrets);
@@ -122,7 +122,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   }
 
   {
-    const run1withSecrets = run1.serialize({ keepSecrets: true });
+    const run1withSecrets = await run1.serialize({ keepSecrets: true });
 
     // replace secrets with sentinel values.
     const elidedSecrets = replaceSecrets(run1withSecrets, (secret, value) => {
@@ -157,7 +157,7 @@ test("run load/save: serialization produces consistent size", async (t) => {
     t.fail("run1 should be serializable.");
     return;
   }
-  const serializedRun = run.serialize();
+  const serializedRun = await run.serialize();
   const s = JSON.stringify(serializedRun);
   t.is(s.length, 1167372);
   t.true(

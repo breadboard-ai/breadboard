@@ -8,6 +8,7 @@ import { asBase64, isStoredData } from "./common.js";
 import {
   DataStore,
   InlineDataCapabilityPart,
+  SerializedDataStoreGroup,
   StoredDataCapabilityPart,
 } from "./types.js";
 
@@ -63,6 +64,26 @@ export class SimpleDataStore implements DataStore {
 
   endGroup(): number {
     return this.#groupCount++;
+  }
+
+  async serializeGroup(
+    group: number
+  ): Promise<SerializedDataStoreGroup | null> {
+    const handles = this.#items.get(group);
+    if (!handles) {
+      return null;
+    }
+
+    return Promise.all(
+      handles.map(async (handle) => {
+        return fetch(handle).then(async (response) => {
+          const blob = await response.blob();
+          const mimeType = blob.type;
+          const data = await asBase64(blob);
+          return { handle, inlineData: { mimeType, data } };
+        });
+      })
+    );
   }
 
   releaseGroup(group: number): void {

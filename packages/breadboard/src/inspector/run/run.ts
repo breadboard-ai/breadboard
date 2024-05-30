@@ -23,6 +23,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunInputs,
 } from "../types.js";
+import { DataStore } from "../../data/types.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -105,6 +106,7 @@ export class Run implements InspectableRun {
   graphVersion: number;
   messages: HarnessRunResult[] = [];
   dataStoreGroupId: number = -1;
+  #dataStore: DataStore | null;
 
   constructor(
     timestamp: number,
@@ -113,6 +115,7 @@ export class Run implements InspectableRun {
     options: RunObserverOptions
   ) {
     this.#events = new EventManager(graphStore, options);
+    this.#dataStore = options.store || null;
     this.graphVersion = 0;
     this.start = timestamp;
     this.graphId = graphStore.add(graph, this.graphVersion).id;
@@ -145,8 +148,13 @@ export class Run implements InspectableRun {
     this.#events.add(result);
   }
 
-  serialize(options?: RunSerializationOptions): SerializedRun {
-    return this.#events.serialize(options || {});
+  async serialize(options?: RunSerializationOptions): Promise<SerializedRun> {
+    let data = null;
+    if (this.dataStoreGroupId !== -1 && this.#dataStore) {
+      data = await this.#dataStore.serializeGroup(this.dataStoreGroupId);
+    }
+
+    return this.#events.serialize(data, options || {});
   }
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {

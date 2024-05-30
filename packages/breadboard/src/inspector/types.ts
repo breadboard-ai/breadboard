@@ -29,7 +29,7 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
-import { DataStore } from "../data/types.js";
+import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -803,7 +803,7 @@ export type InspectableRun = {
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
-  serialize?(options?: RunSerializationOptions): SerializedRun;
+  serialize?(options?: RunSerializationOptions): Promise<SerializedRun>;
   /**
    * Given an `EventIdentifier`, returns an `InspectableRunEvent` instance or
    * null if not found.
@@ -929,4 +929,5 @@ export type SerializedRun = {
   version: "0";
   secrets?: Record<string, string>;
   timeline: TimelineEntry[];
+  data?: SerializedDataStoreGroup;
 };
