@@ -16,7 +16,7 @@ import {
   InputErrorEvent,
   GraphNodeDeselectedEvent,
   GraphNodeDeselectedAllEvent,
-  GraphNodesMoveEvent,
+  GraphNodesVisualUpdateEvent,
   GraphInitialDrawEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
@@ -625,17 +625,16 @@ export class GraphRenderer extends LitElement {
   addGraph(graph: Graph) {
     graph.editable = this.editable;
 
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
-      (id: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodesMoveEvent([{ id, x, y }]));
-      }
-    );
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
+      this.#emitGraphNodeVisualInformation(graph);
+    });
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODES_MOVED,
-      (nodes: Array<{ id: string; x: number; y: number }>) => {
-        this.dispatchEvent(new GraphNodesMoveEvent(nodes));
+      (
+        nodes: Array<{ id: string; x: number; y: number; collapsed: boolean }>
+      ) => {
+        this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
       }
     );
 
@@ -846,6 +845,7 @@ export class GraphRenderer extends LitElement {
   setNodeLayoutPosition(
     node: string,
     position: PIXI.PointData,
+    collapsed: boolean,
     justAdded: boolean
   ) {
     for (const graph of this.#container.children) {
@@ -853,7 +853,7 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      return graph.setNodeLayoutPosition(node, position, justAdded);
+      return graph.setNodeLayoutPosition(node, position, collapsed, justAdded);
     }
 
     return null;
@@ -918,18 +918,18 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
-      this.#emitGraphNodePositions(graph);
+      this.#emitGraphNodeVisualInformation(graph);
       return;
     }
   }
 
-  #emitGraphNodePositions(graph: Graph) {
+  #emitGraphNodeVisualInformation(graph: Graph) {
     const positions = graph.getNodeLayoutPositions();
     const nodes = [...positions.entries()].map(([id, layout]) => {
-      return { id, x: layout.x, y: layout.y };
+      return { id, x: layout.x, y: layout.y, collapsed: layout.collapsed };
     });
 
-    this.dispatchEvent(new GraphNodesMoveEvent(nodes));
+    this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
   }
 
   resetGraphLayout() {
@@ -941,7 +941,7 @@ export class GraphRenderer extends LitElement {
       graph.clearNodeLayoutPositions();
       graph.layout();
 
-      this.#emitGraphNodePositions(graph);
+      this.#emitGraphNodeVisualInformation(graph);
     }
   }
 

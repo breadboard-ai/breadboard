@@ -21,7 +21,12 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { inspectableEdgeToString, getGlobalColor } from "./utils.js";
 
-type LayoutInfo = { x: number; y: number; justAdded?: boolean };
+type LayoutInfo = {
+  x: number;
+  y: number;
+  collapsed: boolean;
+  justAdded?: boolean;
+};
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 
@@ -633,9 +638,10 @@ export class Graph extends PIXI.Container {
   setNodeLayoutPosition(
     node: string,
     position: PIXI.PointData,
+    collapsed: boolean,
     justAdded = false
   ) {
-    this.#layout.set(node, { ...this.toLocal(position), justAdded });
+    this.#layout.set(node, { ...this.toLocal(position), collapsed, justAdded });
   }
 
   layout() {
@@ -692,18 +698,20 @@ export class Graph extends PIXI.Container {
         this.#layout.set(id, {
           x: Math.round(x - width / 2),
           y: Math.round(y - height / 2),
+          collapsed: this.collapseNodesByDefault,
         });
       }
     }
 
     // Step through any Dagre-set and custom set locations.
-    for (const [id, position] of this.#layout) {
+    for (const [id, layout] of this.#layout) {
       const graphNode = this.#graphNodeById.get(id);
       if (!graphNode) {
         continue;
       }
 
-      graphNode.position.set(position.x, position.y);
+      graphNode.position.set(layout.x, layout.y);
+      graphNode.collapsed = layout.collapsed;
     }
 
     this.#drawEdges();
@@ -886,7 +894,8 @@ export class Graph extends PIXI.Container {
 
       this.graph.setNodeLayoutPosition(
         child.label,
-        this.graph.toGlobal(newPosition)
+        this.graph.toGlobal(newPosition),
+        child.collapsed
       );
 
       if (child.label === this.id) {
@@ -905,7 +914,12 @@ export class Graph extends PIXI.Container {
     }
 
     // Propagate the move event out to the graph renderer when the cursor is released.
-    const locations = [];
+    const locations: Array<{
+      id: string;
+      x: number;
+      y: number;
+      collapsed: boolean;
+    }> = [];
     for (const child of this.graph.getSelectedChildren()) {
       if (!(child instanceof GraphNode)) {
         continue;
@@ -915,6 +929,7 @@ export class Graph extends PIXI.Container {
         id: child.label,
         x: child.position.x,
         y: child.position.y,
+        collapsed: child.collapsed,
       });
     }
 
@@ -1031,6 +1046,8 @@ export class Graph extends PIXI.Container {
 
         this.graphNode.selected = true;
         this.graphNode.position.set(this.layout.x, this.layout.y);
+        this.graphNode.collapsed = this.layout.collapsed;
+
         this.graphNode.parent.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
           this.graphNode.label
@@ -1058,7 +1075,6 @@ export class Graph extends PIXI.Container {
       if (!graphNode) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
         graphNode.editable = this.editable;
-        graphNode.collapsed = this.collapseNodesByDefault;
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
@@ -1074,9 +1090,10 @@ export class Graph extends PIXI.Container {
       }
 
       if (node.descriptor.metadata?.visual) {
-        const { x, y } = node.descriptor.metadata.visual as {
+        const { x, y, collapsed } = node.descriptor.metadata.visual as {
           x: number;
           y: number;
+          collapsed: boolean;
         };
 
         // We may receive visual values for the node, but we may also have
@@ -1088,8 +1105,11 @@ export class Graph extends PIXI.Container {
         if (existingLayout) {
           justAdded = existingLayout.justAdded || false;
         }
+        const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
         const pos = this.toGlobal({ x, y });
-        this.setNodeLayoutPosition(id, pos, justAdded);
+        this.setNodeLayoutPosition(id, pos, nodeCollapsed, justAdded);
+
+        graphNode.collapsed = nodeCollapsed;
       }
 
       const portInfo = this.#ports.get(id);
@@ -1133,6 +1153,18 @@ export class Graph extends PIXI.Container {
       graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
         this.#redrawAllEdges();
         this.#drawNodeHighlight();
+
+        const layout = this.#layout.get(graphNode.label);
+        if (!layout) {
+          return;
+        }
+
+        if (layout.collapsed === graphNode.collapsed) {
+          return;
+        }
+
+        layout.collapsed = graphNode.collapsed;
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE);
       });
       this.addChild(graphNode);
     }
