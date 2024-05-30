@@ -706,9 +706,8 @@ export class Main extends LitElement {
     if (!this.#runObserver)
       this.#runObserver = createRunObserver({
         logLevel: "debug",
+        store: this.dataStore.instance!,
       });
-
-    this.dataStore.instance!.startGroup();
 
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
@@ -726,9 +725,6 @@ export class Main extends LitElement {
         await result.reply({ inputs: answer } as InputResolveRequest);
       }
     }
-
-    const dataStoreGroupId = this.dataStore.instance!.endGroup();
-    this.runs![this.runs!.length - 1].dataStoreGroupId = dataStoreGroupId;
 
     this.status = BreadboardUI.Types.STATUS.STOPPED;
   }

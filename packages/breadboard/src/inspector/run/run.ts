@@ -51,6 +51,7 @@ export class RunObserver implements InspectableRunObserver {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
+        this.#options.store?.startGroup();
         // start a new run
         const run = new Run(
           timestamp,
@@ -62,6 +63,10 @@ export class RunObserver implements InspectableRunObserver {
         if (this.#runs.length === 0) {
           this.#runs = [run];
         } else {
+          if (this.#runs.length === 2) {
+            const removedRun = this.#runs.pop();
+            this.#options.store?.releaseGroup(removedRun!.dataStoreGroupId);
+          }
           this.#runs = [run, this.#runs[0]];
         }
       }
@@ -71,6 +76,10 @@ export class RunObserver implements InspectableRunObserver {
         // close out the run
         const run = this.#runs[0];
         run.end = timestamp;
+
+        const dataStoreGroupId = this.#options.store?.endGroup();
+        run.dataStoreGroupId =
+          dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
       }
     }
     const run = this.#runs[0];

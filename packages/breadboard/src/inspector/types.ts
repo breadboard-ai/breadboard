@@ -29,6 +29,7 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
+import { DataStore } from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -881,6 +882,10 @@ export type RunObserverOptions = {
    * the ability to inspect graphs and nodes during the run.
    */
   kits?: Kit[];
+  /**
+   * The data store that will manage non-text data within the run.
+   */
+  store?: DataStore;
 };
 
 export type GraphstartTimelineEntry = [

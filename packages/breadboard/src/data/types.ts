@@ -48,5 +48,6 @@ export type DataStore = {
   retrieveAsBlob(storedData: StoredDataCapabilityPart): Promise<Blob>;
   startGroup(): void;
   endGroup(): number;
+  releaseGroup(group: number): void;
   retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
 };
