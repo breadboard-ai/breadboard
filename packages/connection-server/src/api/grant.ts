@@ -13,6 +13,8 @@ interface GrantRequest {
   code: string;
 }
 
+// IMPORTANT: Keep in sync with
+// breadboard/packages/breadboard-ui/src/elements/connection/connection-common.ts
 type GrantResponse =
   | { error: string }
   | {
