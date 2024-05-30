@@ -1135,6 +1135,11 @@ export class GraphRenderer extends LitElement {
         },
         { once: true }
       );
+
+      const input = this.#edgeCreateMenuRef.value?.querySelector("input");
+      if (input) {
+        input.focus();
+      }
     }
 
     if (this.#autoFocusSelf) {
@@ -1297,6 +1302,26 @@ export class GraphRenderer extends LitElement {
       (this.#newEdgeData.portsIn === null ||
         this.#newEdgeData.portsOut === null);
 
+    let suppliedPortInName: string | null = null;
+    let suppliedPortOutName: string | null = null;
+
+    if (this.#newEdgeData) {
+      const canSupplyInPortName =
+        this.#newEdgeData.portsOut !== null &&
+        this.#newEdgeData.portsOut.length === 1;
+      const canSupplyOutPortName =
+        this.#newEdgeData.portsIn !== null &&
+        this.#newEdgeData.portsIn.length === 1;
+
+      if (canSupplyInPortName && this.#newEdgeData.portsOut !== null) {
+        suppliedPortInName = this.#newEdgeData.portsOut[0].name;
+      }
+
+      if (canSupplyOutPortName && this.#newEdgeData.portsIn !== null) {
+        suppliedPortOutName = this.#newEdgeData.portsIn[0].name;
+      }
+    }
+
     const edgeMenu = this.#newEdgeData
       ? html`<div
           ${ref(this.#edgeCreateMenuRef)}
@@ -1346,6 +1371,7 @@ export class GraphRenderer extends LitElement {
 
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
+                    .value=${suppliedPortOutName}
                     type="text"
                     placeholder="Enter port name"
                     required
@@ -1392,6 +1418,7 @@ export class GraphRenderer extends LitElement {
 
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
+                    .value=${suppliedPortInName}
                     type="text"
                     placeholder="Enter port name"
                     required
