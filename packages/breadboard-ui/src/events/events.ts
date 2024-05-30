@@ -425,7 +425,7 @@ export class MultiEditEvent extends Event {
   }
 }
 
-export class GraphNodesMoveEvent extends Event {
+export class GraphNodesVisualUpdateEvent extends Event {
   static eventName = "bbgraphnodesmove";
 
   constructor(
@@ -433,9 +433,10 @@ export class GraphNodesMoveEvent extends Event {
       readonly id: string;
       readonly x: number;
       readonly y: number;
+      readonly collapsed: boolean;
     }>
   ) {
-    super(GraphNodesMoveEvent.eventName, { ...eventInit });
+    super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });
   }
 }
 

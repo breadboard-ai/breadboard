@@ -27,7 +27,7 @@ import {
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
-  GraphNodesMoveEvent,
+  GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
   NodeCreateEvent,
@@ -113,7 +113,7 @@ export class Editor extends LitElement {
   #onResizeBound = this.#onResize.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
-  #onGraphNodesMoveBound = this.#onGraphNodesMove.bind(this);
+  #onGraphNodesVisualUpdateBound = this.#onGraphNodesVisualUpdate.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
@@ -460,8 +460,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodesMoveEvent.eventName,
-      this.#onGraphNodesMoveBound
+      GraphNodesVisualUpdateEvent.eventName,
+      this.#onGraphNodesVisualUpdateBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -496,8 +496,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodesMoveEvent.eventName,
-      this.#onGraphNodesMoveBound
+      GraphNodesVisualUpdateEvent.eventName,
+      this.#onGraphNodesVisualUpdateBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -677,7 +677,12 @@ export class Editor extends LitElement {
               y: this.#lastY + offset.y - PASTE_OFFSET,
             };
 
-            this.#graphRenderer.setNodeLayoutPosition(node.id, position, false);
+            this.#graphRenderer.setNodeLayoutPosition(
+              node.id,
+              position,
+              this.collapseNodesByDefault,
+              false
+            );
             this.#graphRenderer.addToAutoSelect(node.id);
 
             // Ask the graph for the visual positioning because the graph accounts for
@@ -763,13 +768,13 @@ export class Editor extends LitElement {
     this.#addButtonRef.value.checked = false;
   }
 
-  #onGraphNodesMove(evt: Event) {
-    const moveEvt = evt as GraphNodesMoveEvent;
+  #onGraphNodesVisualUpdate(evt: Event) {
+    const moveEvt = evt as GraphNodesVisualUpdateEvent;
     const label = moveEvt.nodes.reduce((prev, curr, idx) => {
       return (
         prev +
         (idx > 0 ? ", " : "") +
-        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}})`
+        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.collapsed}})`
       );
     }, "");
     const editsEvt = new MultiEditEvent(
@@ -787,6 +792,7 @@ export class Editor extends LitElement {
             visual: {
               x: node.x,
               y: node.y,
+              collapsed: node.collapsed,
             },
           },
         };
@@ -901,7 +907,12 @@ export class Editor extends LitElement {
     this.#graphRenderer.deselectAllChildren();
 
     // Store the middle of the node for later.
-    this.#graphRenderer.setNodeLayoutPosition(id, { x, y }, true);
+    this.#graphRenderer.setNodeLayoutPosition(
+      id,
+      { x, y },
+      this.collapseNodesByDefault,
+      true
+    );
 
     // Ask the graph for the visual positioning because the graph accounts for
     // any transforms, whereas our base x & y values do not.
@@ -911,7 +922,11 @@ export class Editor extends LitElement {
     };
     this.dispatchEvent(
       new NodeCreateEvent(id, data, this.subGraphId, undefined, {
-        visual: { x: layout.x, y: layout.y },
+        visual: {
+          x: layout.x,
+          y: layout.y,
+          collapsed: this.collapseNodesByDefault,
+        },
       })
     );
   }
