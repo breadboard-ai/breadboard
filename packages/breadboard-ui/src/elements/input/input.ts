@@ -263,7 +263,9 @@ export class Input extends LitElement {
       }
     }
 
-    this.dispatchEvent(new InputEnterEvent(this.id, data));
+    this.dispatchEvent(
+      new InputEnterEvent(this.id, data, /* allowSavingIfSecret */ true)
+    );
   }
 
   render() {
@@ -280,7 +282,13 @@ export class Input extends LitElement {
     // render the form, nor the retrieved value, but instead we just dispatch
     // the event with the value in and stop rendering.
     if (this.values && this.autosubmit) {
-      this.dispatchEvent(new InputEnterEvent(this.id, this.values));
+      this.dispatchEvent(
+        new InputEnterEvent(
+          this.id,
+          this.values,
+          /* allowSavingIfSecret */ true
+        )
+      );
       return;
     }
 

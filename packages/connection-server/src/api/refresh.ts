@@ -8,6 +8,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Config } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 
+// IMPORTANT: Keep in sync with
+// breadboard/packages/breadboard-ui/src/elements/connection/connection-input.ts
 interface RefreshRequest {
   connection_id: string;
   refresh_token: string;
@@ -16,6 +18,7 @@ interface RefreshRequest {
 type RefreshResponse =
   | { error: string }
   | {
+      error?: string;
       access_token: string;
       expires_in: number;
     };

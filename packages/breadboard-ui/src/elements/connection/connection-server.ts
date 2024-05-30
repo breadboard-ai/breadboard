@@ -10,9 +10,11 @@ import type { Environment } from "../../contexts/environment.js";
 
 export function fetchAvailableConnections(
   host: ReactiveControllerHost,
-  environment: () => Environment | undefined
+  environment: () => Environment | undefined,
+  autoRun: boolean
 ): Task<readonly unknown[], Connection[]> {
   return new Task(host, {
+    autoRun,
     args: () => [environment()?.connectionServerUrl],
     task: async ([connectionServerUrl], { signal }) => {
       if (!connectionServerUrl) {
