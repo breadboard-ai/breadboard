@@ -21,7 +21,6 @@ import {
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
-  FileDropEvent,
   GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeAttachEvent,
@@ -874,26 +873,12 @@ export class Editor extends LitElement {
   }
 
   #onDrop(evt: DragEvent) {
-    evt.preventDefault();
-
     const [top] = evt.composedPath();
     if (!(top instanceof HTMLCanvasElement)) {
       return;
     }
 
-    if (evt.dataTransfer?.files && evt.dataTransfer.files.length) {
-      const fileDropped = evt.dataTransfer.files[0];
-      try {
-        fileDropped.text().then((data) => {
-          const descriptor = JSON.parse(data) as GraphDescriptor;
-          this.dispatchEvent(new FileDropEvent(fileDropped.name, descriptor));
-        });
-      } catch (err) {
-        console.warn(err);
-      }
-      return;
-    }
-
+    evt.preventDefault();
     const data = evt.dataTransfer?.getData(DATA_TYPE);
     if (!data || !this.#graphRenderer) {
       console.warn("No data in dropped node");

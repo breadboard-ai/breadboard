@@ -23,6 +23,7 @@ import {
   InspectableRun,
   InspectableRunObserver,
   Kit,
+  SerializedRun,
 } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
@@ -846,6 +847,52 @@ export class Main extends LitElement {
     }
   }
 
+  #attemptLoad(evt: DragEvent) {
+    if (
+      !evt.dataTransfer ||
+      !evt.dataTransfer.files ||
+      !evt.dataTransfer.files.length
+    ) {
+      return;
+    }
+
+    const isSerializedRun = (
+      data: SerializedRun | GraphDescriptor
+    ): data is SerializedRun => {
+      return "timeline" in data;
+    };
+
+    const fileDropped = evt.dataTransfer.files[0];
+    fileDropped.text().then((data) => {
+      try {
+        const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
+        if (isSerializedRun(runData)) {
+          if (!this.#runObserver) {
+            this.#runObserver = createRunObserver({
+              logLevel: "debug",
+            });
+          }
+
+          evt.preventDefault();
+          const load = this.#runObserver.load(runData);
+          if (load.success) {
+            this.requestUpdate();
+          } else {
+            this.toast(
+              "Unable to load run data",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        } else {
+          this.#onStartBoard(new BreadboardUI.Events.StartEvent(null, runData));
+        }
+      } catch (err) {
+        console.warn(err);
+        this.toast("Unable to load file", BreadboardUI.Events.ToastType.ERROR);
+      }
+    });
+  }
+
   render() {
     const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
       const offset = toasts.length - idx - 1;
@@ -1149,6 +1196,16 @@ export class Main extends LitElement {
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}
+          @dragstart=${(evt: DragEvent) => {
+            evt.preventDefault();
+          }}
+          @dragover=${(evt: DragEvent) => {
+            evt.preventDefault();
+          }}
+          @drop=${(evt: DragEvent) => {
+            evt.preventDefault();
+            this.#attemptLoad(evt);
+          }}
           @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
             this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
             return;
@@ -1227,19 +1284,6 @@ export class Main extends LitElement {
                 ? evt.subGraphId
                 : null;
             this.requestUpdate();
-          }}
-          @bbfiledrop=${async (evt: BreadboardUI.Events.FileDropEvent) => {
-            if (this.status === BreadboardUI.Types.STATUS.RUNNING) {
-              this.toast(
-                "Unable to update; board is already running",
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
-
-            this.#onStartBoard(
-              new BreadboardUI.Events.StartEvent(null, evt.descriptor)
-            );
           }}
           @bbrunboard=${async () => {
             if (!this.graph?.url) {

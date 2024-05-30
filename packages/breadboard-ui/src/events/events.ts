@@ -30,17 +30,6 @@ export enum ToastType {
  * Board Management
  */
 
-export class FileDropEvent extends Event {
-  static eventName = "bbfiledrop";
-
-  constructor(
-    public readonly url: string,
-    public readonly descriptor: GraphDescriptor
-  ) {
-    super(FileDropEvent.eventName, { ...eventInit });
-  }
-}
-
 export class StartEvent extends Event {
   static eventName = "bbstart";
 
