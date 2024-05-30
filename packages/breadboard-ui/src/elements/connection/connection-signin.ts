@@ -5,16 +5,19 @@
  */
 
 import { consume } from "@lit/context";
-import { LitElement, css, html } from "lit";
+import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   environmentContext,
   type Environment,
 } from "../../contexts/environment.js";
+import { settingsHelperContext } from "../../contexts/settings-helper.js";
+import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
 import {
-  GrantResponse,
-  OAuthStateParameter,
   oauthTokenBroadcastChannelName,
+  type GrantResponse,
+  type GrantSettingsValue,
+  type OAuthStateParameter,
 } from "./connection-common.js";
 import type { Connection } from "./connection-server.js";
 
@@ -28,6 +31,9 @@ export class ConnectionSignin extends LitElement {
 
   @consume({ context: environmentContext })
   environment?: Environment;
+
+  @consume({ context: settingsHelperContext })
+  settingsHelper?: SettingsHelper;
 
   @state()
   private _nonce = crypto.randomUUID();
@@ -104,7 +110,22 @@ export class ConnectionSignin extends LitElement {
     }
   `;
 
-  render() {
+  override updated(changes: PropertyValues<this>) {
+    if (
+      (changes.has("connection") || changes.has("settingsHelper")) &&
+      this.connection &&
+      this.settingsHelper &&
+      this._state !== "pending"
+    ) {
+      const setting = this.settingsHelper.get(
+        SETTINGS_TYPE.CONNECTIONS,
+        this.connection.id
+      );
+      this._state = setting === undefined ? "signedout" : "signedin";
+    }
+  }
+
+  override render() {
     if (!this.connection) {
       return "";
     }
@@ -127,7 +148,7 @@ export class ConnectionSignin extends LitElement {
   }
 
   #renderButton() {
-    if (!this.connection) {
+    if (!this.connection || !this.settingsHelper) {
       return "";
     }
 
@@ -189,6 +210,10 @@ export class ConnectionSignin extends LitElement {
   }
 
   async #onClickSignin() {
+    const now = Date.now();
+    if (!this.connection || !this.settingsHelper) {
+      return;
+    }
     this._state = "pending";
     const nonce = this._nonce;
     // Reset the nonce in case the user signs out and signs back in again, since
@@ -198,11 +223,10 @@ export class ConnectionSignin extends LitElement {
       () => (this._nonce = crypto.randomUUID()),
       500
     );
-    // The OAuth interstitial page will know to broadcast the token on this
-    // unique channel because it also knows the nonce (since we pack that in
-    // the OAuth "state" parameter).
+    // The OAuth broker page will know to broadcast the token on this unique
+    // channel because it also knows the nonce (since we pack that in the OAuth
+    // "state" parameter).
     const channelName = oauthTokenBroadcastChannelName(nonce);
-    console.log(`Listening on ${channelName}`);
     const channel = new BroadcastChannel(channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {
       channel.addEventListener("message", (m) => resolve(m.data), {
@@ -210,14 +234,30 @@ export class ConnectionSignin extends LitElement {
       });
     });
     channel.close();
-    // TODO(aomarks) Check for errors.
-    // TODO(aomarks) Write token to settings.
-    console.log("grant response", grantResponse);
+    if (grantResponse.error !== undefined) {
+      // TODO(aomarks) Show error info in the UI.
+      console.error(grantResponse.error);
+      this._state = "signedout";
+      return;
+    }
+    const settingsValue: GrantSettingsValue = {
+      access_token: grantResponse.access_token,
+      expires_in: grantResponse.expires_in,
+      refresh_token: grantResponse.refresh_token,
+      issue_time: now,
+    };
+    this.settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, this.connection.id, {
+      name: this.connection.id,
+      value: JSON.stringify(settingsValue),
+    });
     this._state = "signedin";
   }
 
   #onClickSignout() {
-    // TODO(aomarks) Delete token from settings.
+    if (!this.settingsHelper || !this.connection) {
+      return;
+    }
+    this.settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, this.connection.id);
     this._state = "signedout";
   }
 }

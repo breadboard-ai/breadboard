@@ -6,3 +6,4 @@
 
 export { dataStoreContext } from "./data-store.js";
 export { environmentContext } from "./environment.js";
+export { settingsHelperContext } from "./settings-helper.js";

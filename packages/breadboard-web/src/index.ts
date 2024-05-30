@@ -42,6 +42,12 @@ import {
   environmentContext,
 } from "@google-labs/breadboard-ui/contexts/environment.js";
 import { dataStoreContext } from "@google-labs/breadboard-ui/contexts/data-store.js";
+import { settingsHelperContext } from "@google-labs/breadboard-ui/contexts/settings-helper.js";
+import type {
+  SETTINGS_TYPE,
+  SettingEntry,
+  SettingsHelper,
+} from "@google-labs/breadboard-ui/types/types.js";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -113,6 +119,8 @@ export class Main extends LitElement {
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+  @provide({ context: settingsHelperContext })
+  settingsHelper!: SettingsHelperImpl;
 
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -388,6 +396,9 @@ export class Main extends LitElement {
 
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
+    if (this.#settings) {
+      this.settingsHelper = new SettingsHelperImpl(this.#settings);
+    }
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
 
@@ -1733,5 +1744,33 @@ export class Main extends LitElement {
 
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
     ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay} ${toasts} `;
+  }
+}
+
+class SettingsHelperImpl implements SettingsHelper {
+  #store: SettingsStore;
+
+  constructor(store: SettingsStore) {
+    this.#store = store;
+  }
+
+  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined {
+    return this.#store.values[section].items.get(name);
+  }
+
+  set(
+    section: SETTINGS_TYPE,
+    name: string,
+    value: SettingEntry["value"]
+  ): void {
+    const values = this.#store.values;
+    values[section].items.set(name, value);
+    this.#store.save(values);
+  }
+
+  delete(section: SETTINGS_TYPE, name: string): void {
+    const values = this.#store.values;
+    values[section].items.delete(name);
+    this.#store.save(values);
   }
 }

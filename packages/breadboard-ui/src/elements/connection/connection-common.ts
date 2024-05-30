@@ -18,7 +18,15 @@ export function oauthTokenBroadcastChannelName(nonce: string): string {
 export type GrantResponse =
   | { error: string }
   | {
+      error?: undefined;
       access_token: string;
       expires_in: number;
       refresh_token: string;
     };
+
+export interface GrantSettingsValue {
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+  issue_time: number;
+}
