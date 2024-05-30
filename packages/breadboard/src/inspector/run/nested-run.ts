@@ -23,6 +23,7 @@ export class NestedRun implements InspectableRun {
   end: number | null;
   graphVersion = 0;
   events: InspectableRunEvent[];
+  dataStoreGroupId: number = -1;
 
   constructor(entry: PathRegistryEntry) {
     this.graphId = entry.graphId as GraphUUID;

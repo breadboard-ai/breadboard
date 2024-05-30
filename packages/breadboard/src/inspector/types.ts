@@ -777,6 +777,11 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
+   * A way to associate data with the run.
+   * TODO: Revisit the approach once the evolutionary forces have settled.
+   */
+  dataStoreGroupId: number;
+  /**
    * Returns the current `InspectableRunNodeEvent` if any.
    * This is useful for tracking the latest node that is being run.
    *

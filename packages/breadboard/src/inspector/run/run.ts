@@ -95,6 +95,7 @@ export class Run implements InspectableRun {
   end: number | null = null;
   graphVersion: number;
   messages: HarnessRunResult[] = [];
+  dataStoreGroupId: number = -1;
 
   constructor(
     timestamp: number,

@@ -12,6 +12,8 @@ import {
 } from "./types.js";
 
 export class SimpleDataStore implements DataStore {
+  #groupCount = 0;
+
   async store(data: Blob): Promise<StoredDataCapabilityPart> {
     // TODO: Figure out how to revoke the URLs when the data
     // is no longer needed.
@@ -45,5 +47,14 @@ export class SimpleDataStore implements DataStore {
     }
     const { handle } = storedData.storedData;
     return handle;
+  }
+
+  startGroup(): void {
+    // TODO: Support nested groups.
+    this.#groupCount;
+  }
+
+  endGroup(): number {
+    return this.#groupCount++;
   }
 }
