@@ -177,7 +177,7 @@
     "@google-labs/graph-integrity": "^0.0.14",
     "@google-labs/json-kit": "^0.3.0",
     "@google-labs/node-nursery": "^0.0.15",
-    "@google-labs/palm-kit": "^0.0.14",
+    "@google-labs/gemini-kit": "^0.4.0",
     "@google-labs/pinecone-kit": "^0.1.12",
     "@google-labs/template-kit": "^0.3.2",
     "dotenv": "^16.4.5"

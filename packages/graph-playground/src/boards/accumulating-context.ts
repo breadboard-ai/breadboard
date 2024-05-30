@@ -1,11 +1,11 @@
 import { addKit, base } from "@google-labs/breadboard";
 import { Core, core } from "@google-labs/core-kit";
-import { PaLMKit } from "@google-labs/palm-kit";
 import TemplateKit from "@google-labs/template-kit";
+import GeminiKit from "@google-labs/gemini-kit";
 
 const templateKit = addKit(TemplateKit);
 const coreKit = addKit(Core);
-const palmKit = addKit(PaLMKit);
+const geminiKit = addKit(GeminiKit);
 
 const output = base.output({
   $id: "assistantResponse",
@@ -58,13 +58,13 @@ const conversationMemory = core.append({
 conversationMemory.accumulator.to(conversationMemory);
 
 const passthrough = coreKit.passthrough();
-passthrough.text.as("question").to(palmKit.generateText({ $id: "generator" }));
+passthrough.text.to(geminiKit.text({ $id: "generator" }));
 
 const generateText = passthrough.to(
   input.text.as("question").to(
     prompt.prompt.as("text").to(
-      palmKit
-        .generateText({ $id: "generator" })
+      geminiKit
+        .text({ $id: "generator" })
         .in(coreKit.secrets({ keys: ["PALM_KEY"] }).PALM_KEY)
         .completion.as("assistant")
         .to(
