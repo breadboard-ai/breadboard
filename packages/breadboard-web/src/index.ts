@@ -1311,6 +1311,7 @@ export class Main extends LitElement {
                     diagnostics: true,
                     kits: this.kits,
                     loader: this.#loader,
+                    store: this.dataStore.instance!,
                     signal: this.#abortController?.signal,
                     inputs: inputsFromSettings(this.#settings),
                     interactiveSecrets: true,
