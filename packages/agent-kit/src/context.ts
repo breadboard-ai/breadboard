@@ -179,15 +179,24 @@ export const progressReader = code(({ context, forkOutputs }) => {
 });
 
 export const looperTaskAdder = code(({ context, progress }) => {
-  const contents = (
-    Array.isArray(context) ? context : [context]
-  ) as LlmContent[];
+  const contents = (Array.isArray(context) ? context : [context]) as Context[];
   const plans = (
     Array.isArray(progress) ? progress : [progress]
   ) as LooperProgress[];
   const last = plans[0];
   if (!last || !last.next) {
     return { context };
+  }
+  // @ts-expect-error -- TS doesn't know findLastIndex exists
+  const lastLooperMarker = contents.findLastIndex(
+    (item: Context) => item.role === "$metadata" && item.type === "looper"
+  );
+  if (lastLooperMarker >= 0) {
+    const pastLooper = contents.slice(lastLooperMarker);
+    const hasModel = pastLooper.some((item) => item.role === "model");
+    if (hasModel) {
+      return { context: contents };
+    }
   }
   contents.push({ role: "user", parts: [{ text: last.next }] });
   return { context: contents };
