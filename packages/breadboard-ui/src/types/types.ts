@@ -177,3 +177,14 @@ export type CustomSettingsElement = HTMLElement & {
   settingsType: SETTINGS_TYPE | undefined;
   settingsItems: Settings[SETTINGS_TYPE]["items"] | undefined;
 };
+
+/**
+ * A simplified interface over {@link SettingsStore} that reads/writes
+ * immediately and can be consumed by elements using
+ * {@link settingsHelperContext}.
+ */
+export interface SettingsHelper {
+  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined;
+  set(section: SETTINGS_TYPE, name: string, value: SettingEntry["value"]): void;
+  delete(section: SETTINGS_TYPE, name: string): void;
+}
