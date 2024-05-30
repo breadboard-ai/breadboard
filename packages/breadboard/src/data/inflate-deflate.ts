@@ -5,6 +5,7 @@
  */
 
 import { asBase64, isInlineData, isStoredData } from "./common.js";
+import { DataStore } from "./types.js";
 
 /**
  * Recursively descends into the data object and inflates any
@@ -14,12 +15,12 @@ import { asBase64, isInlineData, isStoredData } from "./common.js";
  * @returns -- a new object with all `StoredDataCapabilityPart`
  * replaced with `InlineDataCapabilityPart`
  */
-export const inflateData = async (data: unknown) => {
+export const inflateData = async (store: DataStore, data: unknown) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
-      const { mimeType, handle } = value.storedData;
-      const blob = await (await fetch(handle)).blob();
+      const blob = await store.retrieveAsBlob(value);
       const data = await asBase64(blob);
+      const mimeType = blob.type;
       return { inlineData: { data, mimeType } };
     }
     if (Array.isArray(value)) {
@@ -52,20 +53,14 @@ export const inflateData = async (data: unknown) => {
  * @returns -- a new object with all `InlineDataCapabilityPart`
  * replaced with `StoredDataCapabilityPart`
  */
-export const deflateData = async (data: unknown) => {
+export const deflateData = async (store: DataStore, data: unknown) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isInlineData(value)) {
       const { mimeType, data } = value.inlineData;
       const blob = await fetch(`data:${mimeType};base64,${data}`).then((r) =>
         r.blob()
       );
-      const handle = URL.createObjectURL(blob);
-      return {
-        storedData: {
-          handle,
-          mimeType,
-        },
-      };
+      return await store.store(blob);
     }
     if (Array.isArray(value)) {
       const result = [];

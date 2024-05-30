@@ -5,7 +5,7 @@
  */
 
 import { defineNodeType, object } from "@breadboard-ai/build";
-import { deflateData } from "@google-labs/breadboard";
+import { NodeHandlerContext, deflateData } from "@google-labs/breadboard";
 
 export default defineNodeType({
   name: "deflate",
@@ -26,7 +26,12 @@ export default defineNodeType({
       description: "Deflated data.",
     },
   },
-  invoke: async ({ data }) => {
-    return { data: await deflateData(data) };
+  invoke: async ({ data }, _, { store }: NodeHandlerContext) => {
+    if (!store) {
+      throw new Error(
+        "Data store was not specified in run configuration, but is required for deflation."
+      );
+    }
+    return { data: await deflateData(store, data) };
   },
 });

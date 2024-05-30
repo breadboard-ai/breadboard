@@ -14,7 +14,9 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blank,
   BoardRunner,
+  createDataStore,
   createLoader,
+  DataStore,
   edit,
   EditableGraph,
   GraphDescriptor,
@@ -39,6 +41,7 @@ import {
   Environment,
   environmentContext,
 } from "@google-labs/breadboard-ui/contexts/environment.js";
+import { dataStoreContext } from "@google-labs/breadboard-ui/contexts/data-store.js";
 import { settingsHelperContext } from "@google-labs/breadboard-ui/contexts/settings-helper.js";
 import type {
   SETTINGS_TYPE,
@@ -114,6 +117,8 @@ export class Main extends LitElement {
     connectionRedirectUrl: "/oauth/",
   };
 
+  @provide({ context: dataStoreContext })
+  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
@@ -1317,6 +1322,7 @@ export class Main extends LitElement {
                     diagnostics: true,
                     kits: this.kits,
                     loader: this.#loader,
+                    store: this.dataStore.instance!,
                     signal: this.#abortController?.signal,
                     inputs: inputsFromSettings(this.#settings),
                     interactiveSecrets: true,

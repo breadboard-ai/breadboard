@@ -37,6 +37,8 @@ import { CodeEditor } from "../input/code-editor/code-editor.js";
 import { LLMInput } from "../input/llm-input/llm-input.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
+import { dataStoreContext } from "../../contexts/data-store.js";
+import { provide } from "@lit/context";
 
 function isLLMContent(port: InspectablePort) {
   return port.schema.behavior?.includes("llm-content") || false;
@@ -75,6 +77,9 @@ export class NodeConfigurationInfo extends LitElement {
 
   @state()
   inputsExpanded = true;
+
+  @provide({ context: dataStoreContext })
+  dataStore = { instance: null };
 
   #ignoreNextUpdate = false;
 

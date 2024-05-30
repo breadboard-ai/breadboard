@@ -18,6 +18,7 @@ import type {
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
 import {
+  DataStore,
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./data/types.js";
@@ -714,6 +715,10 @@ export interface NodeHandlerContext {
    * The `AbortSignal` that can be used to stop the board run.
    */
   readonly signal?: AbortSignal;
+  /**
+   * The data store that can be used to store data across nodes.
+   */
+  readonly store?: DataStore;
 }
 
 export type RunArguments = NodeHandlerContext & {

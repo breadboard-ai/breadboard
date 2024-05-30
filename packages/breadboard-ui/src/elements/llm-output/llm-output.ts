@@ -17,7 +17,9 @@ import {
 import { markdown } from "../../directives/markdown.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
-import { createDataStore } from "@google-labs/breadboard";
+import { DataStore } from "@google-labs/breadboard";
+import { consume } from "@lit/context";
+import { dataStoreContext } from "../../contexts/data-store.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -26,7 +28,8 @@ export class LLMOutput extends LitElement {
 
   #partDataURLs = new Map<number, string>();
 
-  #dataStore = createDataStore();
+  @consume({ context: dataStoreContext })
+  dataStore?: { instance: DataStore | null };
 
   static styles = css`
     :host {
@@ -193,27 +196,33 @@ export class LLMOutput extends LitElement {
           } else if (isFunctionCall(part) || isFunctionResponse(part)) {
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
           } else if (isStoredData(part)) {
-            const storedData = this.#dataStore.retrieveAsURL(part);
-            const tmpl = storedData.then((url) => {
-              const { mimeType } = part.storedData;
-              const getData = async () => {
-                const response = await fetch(url);
-                return response.text();
-              };
-              if (mimeType.startsWith("image")) {
-                return html`<img src="${url}" alt="LLM Image" />`;
-              }
-              if (mimeType.startsWith("audio")) {
-                return html`<audio src="${url}" controls />`;
-              }
-              if (mimeType.startsWith("video")) {
-                return html`<video src="${url}" controls />`;
-              }
-              if (mimeType.startsWith("text")) {
-                return html`<div class="plain-text">${until(getData())}</div>`;
-              }
-            });
-            value = html`${until(tmpl)}`;
+            const storedData = this.dataStore?.instance?.retrieveAsURL(part);
+            if (!storedData) {
+              value = html`<div>Failed to retrieve stored data</div>`;
+            } else {
+              const tmpl = storedData.then((url) => {
+                const { mimeType } = part.storedData;
+                const getData = async () => {
+                  const response = await fetch(url);
+                  return response.text();
+                };
+                if (mimeType.startsWith("image")) {
+                  return html`<img src="${url}" alt="LLM Image" />`;
+                }
+                if (mimeType.startsWith("audio")) {
+                  return html`<audio src="${url}" controls />`;
+                }
+                if (mimeType.startsWith("video")) {
+                  return html`<video src="${url}" controls />`;
+                }
+                if (mimeType.startsWith("text")) {
+                  return html`<div class="plain-text">
+                    ${until(getData())}
+                  </div>`;
+                }
+              });
+              value = html`${until(tmpl)}`;
+            }
           } else {
             value = html`Unrecognized part`;
           }

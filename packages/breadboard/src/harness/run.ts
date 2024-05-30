@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardRunner, InputValues, Kit, asyncGen } from "../index.js";
+import {
+  BreadboardRunner,
+  DataStore,
+  InputValues,
+  Kit,
+  asyncGen,
+} from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
@@ -97,6 +103,10 @@ export type RunConfig = {
    * the secrets on its own.
    */
   interactiveSecrets?: boolean;
+  /**
+   * The data store to use for storing data.
+   */
+  store?: DataStore;
 };
 
 const configureKits = (config: RunConfig) => {

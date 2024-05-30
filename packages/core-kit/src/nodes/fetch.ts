@@ -12,10 +12,10 @@ import {
 } from "@breadboard-ai/build";
 import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import {
+  DataStore,
   NodeHandlerContext,
   StreamCapability,
   asBlob,
-  createDataStore,
   inflateData,
   isDataCapability,
 } from "@google-labs/breadboard";
@@ -45,7 +45,8 @@ const serverSentEventTransform = () =>
 
 const createBody = async (
   body: unknown,
-  headers: Record<string, string | undefined>
+  headers: Record<string, string | undefined>,
+  store: DataStore
 ) => {
   if (!body) return undefined;
   const contentType = headers["Content-Type"];
@@ -70,7 +71,7 @@ const createBody = async (
     }
     return formData;
   }
-  return JSON.stringify(await inflateData(body));
+  return JSON.stringify(await inflateData(store, body));
 };
 
 export default defineNodeType({
@@ -136,13 +137,19 @@ export default defineNodeType({
   },
   invoke: async (
     { url, method, body, headers, raw, stream },
-    { signal }: NodeHandlerContext
+    _, // No dynamic inputs.
+    { signal, store }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = { method, headers, signal };
     // GET can not have a body.
     if (method !== "GET") {
-      init.body = await createBody(body, headers);
+      if (!store) {
+        throw new Error(
+          "No store provided in run configuration to store the request."
+        );
+      }
+      init.body = await createBody(body, headers, store);
     } else if (body) {
       throw new Error("GET requests can not have a body");
     }
@@ -192,8 +199,12 @@ export default defineNodeType({
         } else if (isText) {
           response = await data.text();
         } else {
+          if (!store) {
+            throw new Error(
+              "No store provided in run configuration to store the response."
+            );
+          }
           const blob = await data.blob();
-          const store = createDataStore();
           response = await store.store(blob);
         }
       }
