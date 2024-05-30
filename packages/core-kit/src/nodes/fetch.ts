@@ -10,7 +10,15 @@ import {
   enumeration,
   object,
 } from "@breadboard-ai/build";
-import { NodeHandlerContext, StreamCapability } from "@google-labs/breadboard";
+import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
+import {
+  NodeHandlerContext,
+  StreamCapability,
+  asBlob,
+  createDataStore,
+  inflateData,
+  isDataCapability,
+} from "@google-labs/breadboard";
 
 const serverSentEventTransform = () =>
   new TransformStream({
@@ -34,6 +42,36 @@ const serverSentEventTransform = () =>
       }
     },
   });
+
+const createBody = async (
+  body: unknown,
+  headers: Record<string, string | undefined>
+) => {
+  if (!body) return undefined;
+  const contentType = headers["Content-Type"];
+  if (contentType === "multipart/form-data") {
+    const values = body as Record<string, JsonSerializable>;
+    // This is necessary to let fetch set its own content type.
+    delete headers["Content-Type"];
+    const formData = new FormData();
+    for (const key in values) {
+      const value = values[key];
+      if (typeof value === "string") {
+        formData.append(key, value);
+      } else if (isDataCapability(value)) {
+        if ("inlineData" in value) {
+          formData.append(key, await asBlob(value));
+        } else {
+          formData.append(key, await asBlob(value));
+        }
+      } else {
+        formData.append(key, JSON.stringify(value));
+      }
+    }
+    return formData;
+  }
+  return JSON.stringify(await inflateData(body));
+};
 
 export default defineNodeType({
   name: "fetch",
@@ -101,14 +139,10 @@ export default defineNodeType({
     { signal }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
-    const init: RequestInit = {
-      method,
-      headers,
-      signal,
-    };
+    const init: RequestInit = { method, headers, signal };
     // GET can not have a body.
     if (method !== "GET") {
-      init.body = JSON.stringify(body);
+      init.body = await createBody(body, headers);
     } else if (body) {
       throw new Error("GET requests can not have a body");
     }
@@ -148,10 +182,20 @@ export default defineNodeType({
       } as any;
     } else {
       let response;
-      if (raw || !contentType || !contentType.includes("application/json")) {
+      if (!contentType) {
         response = await data.text();
       } else {
-        response = await data.json();
+        const isJson = contentType?.includes("application/json");
+        const isText = contentType?.includes("text/plain");
+        if (isJson) {
+          response = raw ? await data.text() : await data.json();
+        } else if (isText) {
+          response = await data.text();
+        } else {
+          const blob = await data.blob();
+          const store = createDataStore();
+          response = await store.store(blob);
+        }
       }
       return { response, status, statusText, contentType, responseHeaders };
     }

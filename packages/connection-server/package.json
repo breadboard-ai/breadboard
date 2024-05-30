@@ -1,0 +1,76 @@
+{
+  "name": "@breadboard-ai/connection-server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Breadboard Connection Server",
+  "license": "Apache-2.0",
+  "author": "Google Labs Team",
+  "repository": {
+    "directory": "packages/connection-server",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "files": [
+    "dist/"
+  ],
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "start": "wireit",
+    "dev": "npm start --watch",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "test": "echo \"no tests yet\"",
+    "lint": "wireit",
+    "prepack": "npm run build"
+  },
+  "wireit": {
+    "start": {
+      "command": "node --enable-source-maps dist/index.js",
+      "service": true,
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "secrets/"
+      ]
+    },
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "lint": {
+      "command": "eslint src/ --ext .ts",
+      "files": [
+        "src/**/*.ts",
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    }
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

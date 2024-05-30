@@ -17,6 +17,10 @@ import type {
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
+import {
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "./data/types.js";
 
 export type {
   Capability,
@@ -141,6 +145,15 @@ export type ErrorCapability = Capability & {
   readonly inputs?: InputValues;
   readonly descriptor?: NodeDescriptor;
 };
+
+/**
+ * A capability that represents a data value passed over the wire.
+ * This is useful for passing inline data (base64 encoded) over the wire, as
+ * well as references to external resources.
+ */
+export type DataCapability = {
+  kind: "data";
+} & (InlineDataCapabilityPart | StoredDataCapabilityPart);
 
 /**
  * The Map of queues of all outputs that were sent to a given node,

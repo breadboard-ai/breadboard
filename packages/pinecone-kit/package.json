@@ -115,7 +115,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/pinecone-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.10.0",
     "@types/node": "^20.12.12",
     "ava": "^5.2.0",

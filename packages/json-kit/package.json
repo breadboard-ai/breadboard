@@ -92,7 +92,7 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.12.12",
-    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.10.0",
     "c8": "^9.1.0",
     "ts-node": "^10.9.2",
@@ -103,7 +103,7 @@
     "@google-labs/breadboard": "^0.20.0",
     "@rgrove/parse-xml": "^4.1.0",
     "@types/json-schema": "^7.0.15",
-    "ajv": "^8.13.0",
+    "ajv": "^8.14.0",
     "jsonata": "^2.0.5",
     "jsonschema": "^1.4.1"
   }

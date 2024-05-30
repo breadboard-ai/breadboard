@@ -79,7 +79,10 @@ export class FileSystemGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; handle: FileSystemFileHandle }>;
+      items: Map<
+        string,
+        { url: string; readonly: boolean; handle: FileSystemFileHandle }
+      >;
     }
   >();
   #locations = new Map<string, FileSystemDirectoryHandle>();
@@ -88,7 +91,7 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   private constructor() {}
 
-  createURL(location: string, fileName: string) {
+  async createURL(location: string, fileName: string) {
     return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
   }
 
@@ -127,7 +130,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     const boardDataAsText = await data.text();
     try {
       const descriptor = JSON.parse(boardDataAsText) as GraphDescriptor;
-      descriptor.url = this.createURL(location, fileName);
+      descriptor.url = await this.createURL(location, fileName);
       return descriptor;
     } catch (err) {
       // Bad data.
@@ -301,9 +304,16 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   async #getFiles(
     handle: FileSystemDirectoryHandle
-  ): Promise<Map<string, { url: string; handle: FileSystemFileHandle }>> {
-    const entries: [string, { url: string; handle: FileSystemFileHandle }][] =
-      [];
+  ): Promise<
+    Map<
+      string,
+      { url: string; readonly: boolean; handle: FileSystemFileHandle }
+    >
+  > {
+    const entries: [
+      string,
+      { url: string; readonly: boolean; handle: FileSystemFileHandle },
+    ][] = [];
 
     for await (const [name, entry] of handle.entries()) {
       if (entry.kind === "directory") {
@@ -317,10 +327,11 @@ export class FileSystemGraphProvider implements GraphProvider {
       entries.push([
         name.toLocaleLowerCase(),
         {
-          url: this.createURL(
+          url: await this.createURL(
             encodeURIComponent(handle.name.toLocaleLowerCase()),
             encodeURIComponent(name.toLocaleLowerCase())
           ),
+          readonly: false,
           handle: entry,
         },
       ]);
@@ -395,8 +406,8 @@ export class FileSystemGraphProvider implements GraphProvider {
     return this.#refreshAllItems();
   }
 
-  createGraphURL(location: string, fileName: string) {
-    return this.createURL(location, fileName);
+  async createGraphURL(location: string, fileName: string) {
+    return await this.createURL(location, fileName);
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {

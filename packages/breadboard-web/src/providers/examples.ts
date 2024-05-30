@@ -35,7 +35,10 @@ export class ExamplesGraphProvider implements GraphProvider {
       boards
         .sort((a, b) => a.title.localeCompare(b.title))
         .map((board) => {
-          return [board.title, { url: board.url, handle: undefined }];
+          return [
+            board.title,
+            { url: board.url, readonly: true, handle: undefined },
+          ];
         })
     );
     this.#items.set("examples", {
@@ -117,7 +120,7 @@ export class ExamplesGraphProvider implements GraphProvider {
     );
   }
 
-  createURL(_location: string, _fileName: string): string {
+  async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `ExamplesGraphProvider` should not be called to create URL."
     );

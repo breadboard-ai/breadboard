@@ -85,3 +85,15 @@ export type * from "./loader/types.js";
 export { createLoader } from "./loader/index.js";
 
 export { formatGraphDescriptor } from "./formatter.js";
+
+/**
+ * DataCapability helpers.
+ */
+export type * from "./data/types.js";
+export {
+  createDataStore,
+  inflateData,
+  deflateData,
+  isDataCapability,
+  asBlob,
+} from "./data/index.js";

@@ -1,0 +1,88 @@
+{
+  "title": "Hacker News Firebase API Story IDs",
+  "description": "Board which returns the top story ID using the Hacker News Firebase API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "fn-3",
+      "out": "response",
+      "in": "list"
+    },
+    {
+      "from": "fn-3",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "limit",
+      "to": "fn-3",
+      "out": "limit",
+      "in": "limit"
+    },
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "limit",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "title": "Story Limit",
+              "description": "The Number of Hacker News Story ID's to return",
+              "default": "1"
+            }
+          }
+        },
+        "type": "number"
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    }
+  ]
+}

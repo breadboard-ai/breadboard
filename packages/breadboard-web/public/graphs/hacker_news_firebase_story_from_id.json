@@ -1,0 +1,100 @@
+{
+  "title": "Hacker News Firebase API Story by ID",
+  "description": "Board which returns story contents using the Hacker News Firebase API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "storyID",
+      "to": "urlTemplate",
+      "out": "storyID",
+      "in": "storyID"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "storyID",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Story ID",
+          "properties": {
+            "storyID": {
+              "type": "number",
+              "title": "Story ID",
+              "description": "Hacker News Story ID to extract",
+              "default": "39788322"
+            }
+          }
+        },
+        "type": "number"
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hacker-news.firebaseio.com/v0/item/{storyID}.json"
+      }
+    }
+  ]
+}

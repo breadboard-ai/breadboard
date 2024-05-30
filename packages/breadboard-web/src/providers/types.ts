@@ -7,5 +7,5 @@
 export type GraphProviderStore<T = unknown> = {
   permission: "unknown" | "prompt" | "granted";
   title: string;
-  items: Map<string, { url: string; handle: T }>;
+  items: Map<string, { url: string; readonly: boolean; handle: T }>;
 };

@@ -10,7 +10,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
-const SETTINGS_VERSION = 4;
+const SETTINGS_VERSION = 6;
 
 export class SettingsStore {
   static #instance: SettingsStore;
@@ -121,14 +121,16 @@ export class SettingsStore {
       },
       items: new Map([]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.BOARD_SERVERS]: {
+    [BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS]: {
       configuration: {
-        extensible: true,
-        description: "Put the URL of the board server in the field.",
+        extensible: false,
+        description:
+          "Third-party services boards can access. When you are signed into a service, any board can access and modify your data on that service.",
         nameEditable: false,
         nameVisible: false,
+        customElement: "bb-connection-settings",
       },
-      items: new Map(),
+      items: new Map([]),
     },
   };
 
@@ -194,6 +196,10 @@ export class SettingsStore {
     for (const store of settingsDb.objectStoreNames) {
       const items = await settingsDb.getAll(store);
       for (const item of items) {
+        if (!this.#settings[store]) {
+          continue;
+        }
+
         this.#settings[store].items.set(item.name, item);
       }
     }

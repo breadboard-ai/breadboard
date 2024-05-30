@@ -21,57 +21,48 @@ export type LlmContent = {
 
 export type Metadata = {
   role: "$metadata";
-  data: unknown;
-};
-
-export type Context = LlmContent | Metadata;
+} & (LooperMetadata | SplitMetadata);
 
 /**
- * Type helper for wrapping `code` functions.
- * @param f -- code function
- * @returns -- code function
+ * Provides support for storing multiple parallel contexts within
+ * a single context.
+ *
+ * The split marker allows representing multiple parallel contexts
+ * as one sequence by separating them with split markers.
+ *
+ * The sequence begins with a split marker of type "start",
+ * followed by one or more split markers of type "separator",
+ * and ends with a split marker of type "end".
+ *
+ * To allow nesting of split markers, a unique identifier is
+ * assigned to all split markers that belong to the same split.
  */
-export const fun = (
-  f: (inputs: Record<string, unknown>) => Record<string, unknown>
-) => {
-  return f;
+export type SplitMetadata = {
+  type: "split";
+  data: SplitMarkerData;
 };
 
-export const userPartsAdder = code(({ context, toAdd }) => {
-  if (!context) throw new Error("Context is required");
-  const existing = (Array.isArray(context) ? context : [context]) as Context[];
-  const incoming = toAdd as LlmContent;
-  if (!incoming.parts) {
-    const containsUserRole =
-      existing.filter(
-        (item) => item.role !== "model" && item.role !== "$metadata"
-      ).length > 0;
-    if (!containsUserRole) {
-      return {
-        context: [
-          ...existing,
-          { role: "user", parts: [{ text: "Do your magic" }] },
-        ],
-      };
-    }
-    return { context: existing };
-  }
-  if (!incoming.role) {
-    incoming.role = "user";
-  }
-  const last = existing[existing.length - 1];
-  if (!last) {
-    return { context: [incoming] };
-  }
-  if (last.role !== incoming.role) {
-    return { context: [...existing, incoming] };
-  } else {
-    const result = structuredClone(existing) as LlmContent[];
-    const index = result.length - 1;
-    result[index].parts.push(...incoming.parts);
-    return { context: result };
-  }
-});
+/**
+ * Split Marker Data
+ */
+export type SplitMarkerData = {
+  /**
+   * There are three types of split markers:
+   * - start: the beginning of the split
+   * - next: the separator between the split parts
+   * - end: the end of the split
+   */
+  type: "start" | "next" | "end";
+  /**
+   * Unique identifier for the split.
+   */
+  id: string;
+};
+
+export type LooperMetadata = {
+  type: "looper";
+  data: LooperPlan;
+};
 
 export type LooperPlan = {
   /**
@@ -112,6 +103,58 @@ export type LooperPlan = {
 
 export type LooperProgress = LooperPlan & { next: string };
 
+export type Context = LlmContent | Metadata;
+
+/**
+ * Type helper for wrapping `code` functions.
+ * @param f -- code function
+ * @returns -- code function
+ */
+export const fun = <
+  In = Record<string, unknown>,
+  Out = Record<string, unknown>,
+>(
+  f: (inputs: In) => Out
+) => {
+  return f;
+};
+
+export const userPartsAdder = code(({ context, toAdd }) => {
+  if (!context) throw new Error("Context is required");
+  const existing = (Array.isArray(context) ? context : [context]) as Context[];
+  const incoming = toAdd as LlmContent;
+  if (!incoming.parts) {
+    const containsUserRole =
+      existing.filter(
+        (item) => item.role !== "model" && item.role !== "$metadata"
+      ).length > 0;
+    if (!containsUserRole) {
+      return {
+        context: [
+          ...existing,
+          { role: "user", parts: [{ text: "Do your magic" }] },
+        ],
+      };
+    }
+    return { context: existing };
+  }
+  if (!incoming.role) {
+    incoming.role = "user";
+  }
+  const last = existing[existing.length - 1];
+  if (!last) {
+    return { context: [incoming] };
+  }
+  if (last.role !== incoming.role) {
+    return { context: [...existing, incoming] };
+  } else {
+    const result = structuredClone(existing) as LlmContent[];
+    const index = result.length - 1;
+    result[index].parts.push(...incoming.parts);
+    return { context: result };
+  }
+});
+
 export const progressReader = code(({ context, forkOutputs }) => {
   const fork = forkOutputs as boolean;
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
@@ -120,7 +163,7 @@ export const progressReader = code(({ context, forkOutputs }) => {
   // Gives us where we've been and where we're going.
   for (let i = existing.length - 1; i >= 0; i--) {
     const item = existing[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       progress.push(item.data as LooperPlan);
     }
   }
@@ -136,15 +179,24 @@ export const progressReader = code(({ context, forkOutputs }) => {
 });
 
 export const looperTaskAdder = code(({ context, progress }) => {
-  const contents = (
-    Array.isArray(context) ? context : [context]
-  ) as LlmContent[];
+  const contents = (Array.isArray(context) ? context : [context]) as Context[];
   const plans = (
     Array.isArray(progress) ? progress : [progress]
   ) as LooperProgress[];
   const last = plans[0];
   if (!last || !last.next) {
     return { context };
+  }
+  // @ts-expect-error -- TS doesn't know findLastIndex exists
+  const lastLooperMarker = contents.findLastIndex(
+    (item: Context) => item.role === "$metadata" && item.type === "looper"
+  );
+  if (lastLooperMarker >= 0) {
+    const pastLooper = contents.slice(lastLooperMarker);
+    const hasModel = pastLooper.some((item) => item.role === "model");
+    if (hasModel) {
+      return { context: contents };
+    }
   }
   contents.push({ role: "user", parts: [{ text: last.next }] });
   return { context: contents };
@@ -200,7 +252,7 @@ export const checkAreWeDoneFunction = fun(({ context, generated }) => {
   let doneMarker: string | null = null;
   for (let i = 0; i < c.length; ++i) {
     const item = c[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       const plan = item.data as LooperPlan;
       if (plan.doneMarker) {
         doneMarker = plan.doneMarker;
@@ -228,13 +280,13 @@ export const checkAreWeDoneFunction = fun(({ context, generated }) => {
     return { context: [...c, g] };
   }
 
-  const metadata = {
+  const metadata: Metadata = {
     role: "$metadata",
+    type: "looper",
     data: {
-      type: "looper",
       done: true,
     },
-  } as Metadata;
+  };
   return { context: [...c, g, metadata] };
 });
 
@@ -251,7 +303,7 @@ export const skipIfDoneFunction = fun(({ context }) => {
   let done = false;
   for (let i = 0; i < c.length; ++i) {
     const item = c[i];
-    if (item.role === "$metadata") {
+    if (item.role === "$metadata" && item.type === "looper") {
       const plan = item.data as LooperPlan;
       if (plan.done) {
         done = true;
@@ -281,34 +333,233 @@ export const cleanUpMetadataFunction = fun(({ context }) => {
 export const cleanUpMetadata = code(cleanUpMetadataFunction);
 
 /**
- * Given a bunch of context, combines them all into one.
+ * Given a context, adds a metadata block that contains the
+ * split start marker.
+ */
+export const splitStartAdderFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = context as Context[];
+  const id = Math.random().toString(36).substring(7);
+  const metadata: Metadata = {
+    role: "$metadata",
+    type: "split",
+    data: {
+      type: "start",
+      id,
+    },
+  };
+  return { context: [...c, metadata], id };
+});
+
+export const splitStartAdder = code(splitStartAdderFunction);
+
+type SplitScanResult = [id: string, index: number];
+
+/**
+ * Given a bunch of contexts, combines them all into one.
+ * A couple of scenarios are supported:
+ * - "The single split start context". Happens when Specialist invokes one
+ * or more tools, but the tools don't emit any open split markers.
+ * In this situation, the first context ("context-0") will have a start marker,
+ * with no other context containing any open markers.
+ * - "First context as a preamble". Happens when Specialist invokes one or more
+ * tools, and all tools consume this context. In this situation, the first
+ * context ("context-0") will end at the split start marker, and all other
+ * context will contain this context as a preamble, followed by their own
+ * generated context.
+ * - "Ad hoc". Happens when Joiner is used to combine multiple
+ * contexts. In this situation, there are multiple open
+ * markers, but no matching preamble in the first context.
+ * - "Simple". Happens when Joiner combines multiple context with no open
+ * split markers.
+ *
+ * Strategies for each scenario:
+ * - "Single split start context". Add "next" split marker between each context
+ * and an "end" marker at the end.
+ * - "First context as a preamble". Slice contexts other than first at the
+ * preamble index and concatenate them, adding "next" and "end" markers.
+ * - "Ad hoc". Concatenate all contexts as-is, no markers.
+ * - "Simple". Concatenate all contexts as-is, adding "start", "next" and "end"
+ * markers.
  */
 export const combineContextsFunction = fun(({ merge, ...inputs }) => {
-  const entries = Object.entries(inputs).sort();
-
-  const context: Context[] = [];
+  const entries = Object.entries(inputs).sort() as [string, Context[]][];
   if (merge) {
+    const context: Context[] = [];
     const parts: LlmContent["parts"] = [];
-    for (const entry of entries) {
-      const input = entry[1];
-      const c = (Array.isArray(input) ? input : [input]) as Context[];
-      const last = c[c.length - 1];
+    for (const [, input] of entries) {
+      const c = asContextArray(input);
+      let lastIndex = c.length - 1;
+      let last;
+      do {
+        last = c[lastIndex--];
+      } while (lastIndex >= 0 && last.role === "$metadata");
       if (last) {
-        if (last.role === "$metadata") {
-          continue;
-        }
-        parts.push(...last.parts);
+        parts.push(...(last as LlmContent).parts);
       }
     }
     context.push({ parts });
+    return { context };
   } else {
-    for (const entry of entries) {
-      const input = entry[1];
-
-      const c = (Array.isArray(input) ? input : [input]) as Context[];
-      context.push(...c);
+    let mode: "single" | "preamble" | "adhoc" | "simple";
+    const [f, ...rest] = entries;
+    if (!f) {
+      return { context: [] };
     }
+    const first = asContextArray(f[1]);
+    const firstOpenSplits = scanForSplits(first);
+    const preambleIndices: number[] = [];
+    for (const [, input] of rest) {
+      const c = asContextArray(input);
+      const hasOpenSplits = scanForSplits(c);
+      if (hasOpenSplits) {
+        preambleIndices.push(hasOpenSplits[1]);
+      }
+    }
+    if (!firstOpenSplits) {
+      if (preambleIndices.length === 0) {
+        mode = "simple";
+      } else {
+        mode = "adhoc";
+      }
+    } else {
+      const preamblesMatch =
+        preambleIndices.length > 0 &&
+        preambleIndices.every((value) => value === firstOpenSplits[1]);
+      if (preamblesMatch) {
+        mode = "preamble";
+      } else {
+        if (firstOpenSplits[1] === first.length - 1) {
+          mode = "single";
+        } else {
+          mode = "adhoc";
+        }
+      }
+    }
+    const context: Context[] = [];
+    if (mode === "adhoc") {
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
+        context.push(...c);
+      }
+      return { context };
+    } else if (mode === "simple") {
+      const splitId = Math.random().toString(36).substring(7);
+      context.push({
+        role: "$metadata",
+        type: "split",
+        data: { type: "start", id: splitId },
+      });
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
+        context.push(...c);
+        context.push({
+          role: "$metadata",
+          type: "split",
+          data: { type: "next", id: splitId },
+        });
+      }
+    } else if (mode === "preamble") {
+      const preambleIndex = firstOpenSplits?.[1] || 0;
+      const preamble = entries[0][1].slice(0, preambleIndex + 1);
+      context.push(...preamble);
+      const splitId = (preamble[preamble.length - 1] as SplitMetadata).data.id;
+      for (const [, input] of entries) {
+        let c = asContextArray(input);
+        if (preambleIndex >= 0) {
+          c = c.slice(preambleIndex + 1);
+        }
+        if (c.length) {
+          context.push(...c);
+          context.push({
+            role: "$metadata",
+            type: "split",
+            data: { type: "next", id: splitId },
+          });
+        }
+      }
+    } else if (mode === "single") {
+      const splitId = (first[first.length - 1] as SplitMetadata).data.id;
+      context.push(...first);
+      for (const [, input] of rest) {
+        const c = asContextArray(input);
+        context.push(...c);
+        context.push({
+          role: "$metadata",
+          type: "split",
+          data: { type: "next", id: splitId },
+        });
+      }
+    }
+    const last = context[context.length - 1] as SplitMetadata;
+    last.data.type = "end";
+    return { context };
   }
-  return { context };
+
+  function asContextArray(input: Context | Context[]): Context[] {
+    return Array.isArray(input) ? input : [input];
+  }
+
+  function scanForSplits(c: Context[]): SplitScanResult | null {
+    const stack: SplitScanResult[] = [];
+    for (const [i, item] of c.entries()) {
+      if (item.role !== "$metadata") continue;
+      if (item.type !== "split") continue;
+      if (item.data.type === "start") {
+        stack.push([item.data.id, i]);
+      }
+      if (item.data.type === "end") {
+        const [id] = stack.pop() || [];
+        if (id !== item.data.id) {
+          console.warn(
+            "Split integrity error: mismatched split start/end markers. Start:",
+            id,
+            "End:",
+            item.data.id
+          );
+          return null;
+        }
+      }
+    }
+    return stack.pop() || null;
+  }
 });
 export const combineContexts = code(combineContextsFunction);
+
+/**
+ * Takes a single context and splits it into multiple contexts using the
+ * split markers.
+ */
+export const splitContextsFunction = fun(({ context }) => {
+  if (!context) throw new Error("Context is required");
+  const c = asContextArray(context);
+  const last = c[c.length - 1];
+  if (
+    last.role !== "$metadata" ||
+    last.type !== "split" ||
+    last.data.type !== "end"
+  ) {
+    return { context: c };
+  }
+  const contexts: Context[][] = [];
+  let current: Context[] = [];
+  for (const item of c) {
+    if (item.role === "$metadata" && item.type === "split") {
+      if (item.data.type === "start") {
+        current = [];
+      } else if (item.data.type === "end") {
+        contexts.push(current);
+      }
+    } else {
+      current.push(item);
+    }
+  }
+  const result: Record<string, Context[]> = Object.fromEntries(
+    contexts.map((c, i) => [`context-${i}`, c])
+  );
+  return result;
+
+  function asContextArray(input: unknown): Context[] {
+    return Array.isArray(input) ? input : [input];
+  }
+});

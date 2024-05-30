@@ -80,6 +80,32 @@ test("runJavascript understands `raw` input", async (t) => {
   t.deepEqual(result, { hello: "world" });
 });
 
+test("describe outputs when raw = true and schema defined", async (t) => {
+  const result = (
+    await handler.describe({
+      raw: true,
+      schema: {
+        type: "object",
+        properties: {
+          hello: { type: "string" },
+        },
+      },
+    })
+  ).outputSchema;
+  t.deepEqual(result, {
+    type: "object",
+    properties: {
+      hello: {
+        type: "string",
+        title: "hello",
+        description: 'output "hello"',
+      },
+    },
+    required: [],
+    additionalProperties: false,
+  });
+});
+
 test("describe outputs when raw = true", async (t) => {
   const result = (await handler.describe({ raw: true })).outputSchema;
   t.deepEqual(result, {
@@ -145,6 +171,16 @@ test("describe inputs", async (t) => {
           "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
         title: "raw",
         type: "boolean",
+      },
+      schema: {
+        additionalProperties: true,
+        behavior: ["config"],
+        description:
+          "The schema of the output data. This is used to validate the output data before running the code.",
+        properties: {},
+        required: [],
+        title: "schema",
+        type: "object",
       },
       what: {
         title: "what",
