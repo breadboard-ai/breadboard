@@ -7,7 +7,8 @@
 import { createContext } from "@lit/context";
 
 export interface Environment {
-  connectionServerUrl?: string;
+  connectionServerUrl: string | undefined;
+  connectionRedirectUrl: string;
 }
 
 export const environmentContext = createContext<Environment>("bb-environment");
