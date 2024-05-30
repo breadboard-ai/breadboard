@@ -1371,7 +1371,7 @@ export class GraphRenderer extends LitElement {
 
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
-                    .value=${suppliedPortOutName ?? nothing}
+                    .value=${suppliedPortOutName}
                     type="text"
                     placeholder="Enter port name"
                     required
@@ -1418,7 +1418,7 @@ export class GraphRenderer extends LitElement {
 
                       window.dispatchEvent(new Event("pointerdown"));
                     }}
-                    .value=${suppliedPortInName ?? nothing}
+                    .value=${suppliedPortInName}
                     type="text"
                     placeholder="Enter port name"
                     required
