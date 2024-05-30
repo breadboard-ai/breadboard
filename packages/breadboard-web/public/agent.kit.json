@@ -1102,7 +1102,7 @@
           "id": "fn-5",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_5 = ({context,progress})=>{const contents=Array.isArray(context)?context:[context];const plans=Array.isArray(progress)?progress:[progress];const last=plans[0];if(!last||!last.next){return{context}}contents.push({role:\"user\",parts:[{text:last.next}]});return{context:contents}};",
+            "code": "const fn_5 = ({context,progress})=>{const contents=Array.isArray(context)?context:[context];const plans=Array.isArray(progress)?progress:[progress];const last=plans[0];if(!last||!last.next){return{context}}const lastLooperMarker=contents.findLastIndex(item=>item.role===\"$metadata\"&&item.type===\"looper\");if(lastLooperMarker>=0){const pastLooper=contents.slice(lastLooperMarker);const hasModel=pastLooper.some(item=>item.role===\"model\");if(hasModel){return{context:contents}}}contents.push({role:\"user\",parts:[{text:last.next}]});return{context:contents}};",
             "name": "fn_5",
             "raw": true
           },
