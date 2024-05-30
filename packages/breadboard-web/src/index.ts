@@ -1351,38 +1351,6 @@ export class Main extends LitElement {
               `Change metadata for "${id}"`
             );
           }}
-          @bbnodemove=${(evt: BreadboardUI.Events.NodeMoveEvent) => {
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
-
-            const inspectableGraph = editableGraph.inspect();
-
-            const { id, x, y } = evt;
-            const existingNode = inspectableGraph.nodeById(id);
-            const metadata = existingNode?.metadata() || {};
-            let visual = metadata.visual || {};
-            if (typeof visual !== "object") {
-              visual = {};
-            }
-
-            editableGraph.edit(
-              [
-                {
-                  type: "changemetadata",
-                  id,
-                  metadata: { ...metadata, visual: { ...visual, x, y } },
-                },
-              ],
-              `Move node "${id}" to (${x}, ${y})`
-            );
-          }}
           @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
             const { edits, description, subGraphId } = evt;
             let editableGraph = this.#getEditor();
