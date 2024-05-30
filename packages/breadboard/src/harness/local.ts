@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, asyncGen } from "../index.js";
+import { Board, asyncGen, createDataStore } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { timestamp } from "../timestamp.js";
 import {
@@ -100,6 +100,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
+    const store = config.store || createDataStore();
 
     try {
       const probe = config.diagnostics
@@ -112,6 +113,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         probe,
         kits,
         loader,
+        store,
         base: config.base,
         signal: config.signal,
         inputs: config.inputs,
