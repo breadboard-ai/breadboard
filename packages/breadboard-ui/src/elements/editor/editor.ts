@@ -415,7 +415,7 @@ export class Editor extends LitElement {
       ports: ports,
       edges: breadboardGraph.edges(),
       nodes: breadboardGraph.nodes(),
-      visible: true,
+      visible: false,
     });
 
     this.#graphRenderer.addEventListener(
