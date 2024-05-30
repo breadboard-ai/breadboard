@@ -637,10 +637,12 @@ export class SchemaEditor extends LitElement {
           expanded: this.expanded.get(id) || false,
         })}
       >
+        <label for="${id}-title">ID</label>
         <input
           name="${id}-id"
           id="${id}-id"
-          type="hidden"
+          type="text"
+          pattern="^[a-zA-Z0-9\\-]+$"
           value="${id}"
           required="required"
         />
