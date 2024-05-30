@@ -26,7 +26,7 @@ export default defineNodeType({
       description: "Deflated data.",
     },
   },
-  invoke: async ({ data }, { store }: NodeHandlerContext) => {
+  invoke: async ({ data }, _, { store }: NodeHandlerContext) => {
     if (!store) {
       throw new Error(
         "Data store was not specified in run configuration, but is required for deflation."

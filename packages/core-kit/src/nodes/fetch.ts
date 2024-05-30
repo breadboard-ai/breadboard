@@ -137,6 +137,7 @@ export default defineNodeType({
   },
   invoke: async (
     { url, method, body, headers, raw, stream },
+    _, // No dynamic inputs.
     { signal, store }: NodeHandlerContext
   ) => {
     if (!url) throw new Error("Fetch requires `url` input");
