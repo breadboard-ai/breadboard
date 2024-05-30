@@ -68,7 +68,7 @@ export const boardInvocationAssemblerFunction = fun(
       const $flags = item.flags;
       const llmContentProperty =
         $flags.inputLLMContent || $flags.inputLLMContentArray;
-      let invokeArgs: BoardInvocationArgs = { $board, $flags };
+      const invokeArgs: BoardInvocationArgs = { $board, $flags, ...call.args };
       if (llmContentProperty) {
         // convert args into LLMContent.
         const args = call.args as OutputValues;
@@ -80,8 +80,6 @@ export const boardInvocationAssemblerFunction = fun(
         } else {
           invokeArgs[llmContentProperty] = llmContent;
         }
-      } else {
-        invokeArgs = { ...invokeArgs, ...call.args };
       }
       list.push(invokeArgs);
     }
