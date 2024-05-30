@@ -414,19 +414,6 @@ export class EdgeChangeEvent extends Event {
   }
 }
 
-export class NodeMoveEvent extends Event {
-  static eventName = "bbnodemove";
-
-  constructor(
-    public readonly id: string,
-    public readonly x: number,
-    public readonly y: number,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(NodeMoveEvent.eventName, { ...eventInit });
-  }
-}
-
 export class MultiEditEvent extends Event {
   static eventName = "bbmultiedit";
   constructor(
@@ -435,18 +422,6 @@ export class MultiEditEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(MultiEditEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphNodeMoveEvent extends Event {
-  static eventName = "bbgraphnodemove";
-
-  constructor(
-    public readonly id: string,
-    public readonly x: number,
-    public readonly y: number
-  ) {
-    super(GraphNodeMoveEvent.eventName, { ...eventInit });
   }
 }
 

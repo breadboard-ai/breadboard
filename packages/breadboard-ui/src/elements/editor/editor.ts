@@ -27,13 +27,11 @@ import {
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
-  GraphNodeMoveEvent,
   GraphNodesMoveEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
-  NodeMoveEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
@@ -115,7 +113,6 @@ export class Editor extends LitElement {
   #onResizeBound = this.#onResize.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
-  #onGraphNodeMoveBound = this.#onGraphNodeMove.bind(this);
   #onGraphNodesMoveBound = this.#onGraphNodesMove.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
@@ -463,11 +460,6 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodeMoveEvent.eventName,
-      this.#onGraphNodeMoveBound
-    );
-
-    this.#graphRenderer.addEventListener(
       GraphNodesMoveEvent.eventName,
       this.#onGraphNodesMoveBound
     );
@@ -501,11 +493,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
-    );
-
-    this.#graphRenderer.removeEventListener(
-      GraphNodeMoveEvent.eventName,
-      this.#onGraphNodeMoveBound
     );
 
     this.#graphRenderer.removeEventListener(
@@ -774,12 +761,6 @@ export class Editor extends LitElement {
     }
 
     this.#addButtonRef.value.checked = false;
-  }
-
-  #onGraphNodeMove(evt: Event) {
-    const { id, x, y } = evt as GraphNodeMoveEvent;
-    this.#ignoreNextUpdate = true;
-    this.dispatchEvent(new NodeMoveEvent(id, x, y, this.subGraphId));
   }
 
   #onGraphNodesMove(evt: Event) {

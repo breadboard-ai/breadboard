@@ -13,7 +13,6 @@ import {
   GraphNodeEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEdgeDetachEvent,
-  GraphNodeMoveEvent,
   InputErrorEvent,
   GraphNodeDeselectedEvent,
   GraphNodeDeselectedAllEvent,
@@ -629,7 +628,7 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
       (id: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodeMoveEvent(id, x, y));
+        this.dispatchEvent(new GraphNodesMoveEvent([{ id, x, y }]));
       }
     );
 
