@@ -18,6 +18,7 @@ interface GrantRequest {
 type GrantResponse =
   | { error: string }
   | {
+      error?: undefined;
       access_token: string;
       expires_in: number;
       refresh_token: string;
