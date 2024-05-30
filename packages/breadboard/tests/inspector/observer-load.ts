@@ -12,7 +12,7 @@ import {
   InspectableRunEvent,
   InspectableRunObserver,
 } from "../../src/inspector/types.js";
-import { createRunObserver } from "../../src/index.js";
+import { createDataStore, createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 
@@ -88,7 +88,10 @@ test("run save/load: loadRawRun works as expected", async (t) => {
 });
 
 test("run save/load: observer.save -> run.load roundtrip", async (t) => {
-  const observer = createRunObserver({ logLevel: "debug" });
+  const observer = createRunObserver({
+    logLevel: "debug",
+    store: createDataStore(),
+  });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run1.serialize) {
     t.fail("run1 should be serializable.");
@@ -151,7 +154,10 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
 });
 
 test("run load/save: serialization produces consistent size", async (t) => {
-  const observer = createRunObserver({ logLevel: "debug" });
+  const observer = createRunObserver({
+    logLevel: "debug",
+    store: createDataStore(),
+  });
   const run = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run.serialize) {
     t.fail("run1 should be serializable.");
