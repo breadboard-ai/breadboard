@@ -431,8 +431,20 @@
         {
           "from": "fn-4",
           "to": "output-2",
+          "out": "board",
+          "in": "boardURL"
+        },
+        {
+          "from": "fn-4",
+          "to": "output-2",
           "out": "flags",
           "in": "flags"
+        },
+        {
+          "from": "curry-3",
+          "to": "fn-4",
+          "out": "board",
+          "in": "board"
         },
         {
           "from": "input-1",
@@ -442,15 +454,9 @@
         },
         {
           "from": "input-1",
-          "to": "output-2",
-          "out": "item",
-          "in": "boardURL"
-        },
-        {
-          "from": "curry-3",
-          "to": "fn-4",
-          "out": "board",
-          "in": "board"
+          "to": "curry-3",
+          "out": "context",
+          "in": "context"
         }
       ],
       "nodes": [
@@ -481,13 +487,18 @@
           "id": "fn-4",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_4 = ({ board: board3 }) => {\n  const b = board3;\n  const inputs = b.nodes.filter((node) => node.type === \"input\");\n  if (inputs.length === 0) {\n    throw new Error(\"No inputs found\");\n  }\n  const outputs = b.nodes.filter((node) => node.type === \"output\");\n  if (outputs.length === 0) {\n    throw new Error(\"No outputs found\");\n  }\n  const inputSchema2 = inputs[0].configuration?.schema;\n  if (!inputSchema2) {\n    throw new Error(\"No input schema found\");\n  }\n  const outputSchema = outputs[0].configuration?.schema;\n  if (!outputSchema) {\n    throw new Error(\"No output schema found\");\n  }\n  const properties = {};\n  const flags = {};\n  for (const key in inputSchema2.properties) {\n    const property = inputSchema2.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    const type = isObject || isArray ? \"string\" : property.type;\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContentArray = key;\n    }\n    const description2 = property.description || property.title || \"text\";\n    properties[key] = { type, description: description2 };\n  }\n  for (const key in outputSchema.properties) {\n    const property = outputSchema.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContentArray = key;\n    }\n  }\n  const name = b.title?.replace(/\\W/g, \"_\");\n  const description = b.description;\n  const parameters = {\n    type: \"object\",\n    properties\n  };\n  return {\n    function: { name, description, parameters },\n    returns: outputSchema,\n    flags\n  };\n};",
+            "code": "const fn_4 = ({ board: board3 }) => {\n  const b = board3;\n  const inputs = b.nodes.filter((node) => node.type === \"input\");\n  if (inputs.length === 0) {\n    throw new Error(\"No inputs found\");\n  }\n  const outputs = b.nodes.filter((node) => node.type === \"output\");\n  if (outputs.length === 0) {\n    throw new Error(\"No outputs found\");\n  }\n  const inputSchema2 = inputs[0].configuration?.schema;\n  if (!inputSchema2) {\n    throw new Error(\"No input schema found\");\n  }\n  const outputSchema = outputs[0].configuration?.schema;\n  if (!outputSchema) {\n    throw new Error(\"No output schema found\");\n  }\n  const properties = {};\n  const flags = {};\n  for (const key in inputSchema2.properties) {\n    const property = inputSchema2.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    const type = isObject || isArray ? \"string\" : property.type;\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContentArray = key;\n      continue;\n    }\n    const description2 = property.description || property.title || \"text\";\n    properties[key] = { type, description: description2 };\n  }\n  if (flags.inputLLMContentArray) {\n    const c = b.args?.context;\n    if (c) {\n      b.args ??= {};\n      b.args[flags.inputLLMContentArray] = c;\n      delete b.args.context;\n    }\n  } else {\n    delete b.args?.context;\n  }\n  for (const key in outputSchema.properties) {\n    const property = outputSchema.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContentArray = key;\n    }\n  }\n  const name = b.title?.replace(/\\W/g, \"_\");\n  const description = b.description;\n  const parameters = {\n    type: \"object\",\n    properties\n  };\n  return {\n    function: { name, description, parameters },\n    returns: outputSchema,\n    flags,\n    board: board3\n  };\n};",
             "name": "fn_4",
             "raw": true
           },
           "metadata": {
             "title": "Get Function Signature from board"
           }
+        },
+        {
+          "id": "curry-3",
+          "type": "curry",
+          "configuration": {}
         },
         {
           "id": "input-1",
@@ -503,18 +514,18 @@
                   ],
                   "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "title": "context"
                 }
               },
               "required": [
-                "item"
+                "item",
+                "context"
               ]
             }
           }
-        },
-        {
-          "id": "curry-3",
-          "type": "curry",
-          "configuration": {}
         }
       ],
       "graphs": {}
