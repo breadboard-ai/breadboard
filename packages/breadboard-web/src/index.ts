@@ -1505,9 +1505,11 @@ export class Main extends LitElement {
 
             const isSecret = "secret" in event.data;
             const shouldSaveSecrets =
-              this.#settings
-                .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-                .items.get("Save Secrets")?.value || false;
+              (event.allowSavingIfSecret &&
+                this.#settings
+                  .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                  .items.get("Save Secrets")?.value) ||
+              false;
             if (!shouldSaveSecrets || !isSecret) {
               return;
             }

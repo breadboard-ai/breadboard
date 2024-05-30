@@ -6,18 +6,14 @@
 
 import { consume } from "@lit/context";
 import { LitElement, css, html } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import {
   environmentContext,
   type Environment,
 } from "../../contexts/environment.js";
-import type {
-  CustomSettingsElement,
-  SETTINGS_TYPE,
-  Settings,
-} from "../../types/types.js";
+import type { CustomSettingsElement } from "../../types/types.js";
 import {
-  fetchAvailableConnections as fetchAvailableConnectionsTask,
+  fetchAvailableConnections,
   type Connection,
 } from "./connection-server.js";
 import "./connection-signin.js";
@@ -31,12 +27,6 @@ export class ConnectionSettings
   extends LitElement
   implements CustomSettingsElement
 {
-  @property({ attribute: false })
-  settingsType: SETTINGS_TYPE | undefined;
-
-  @property({ attribute: false })
-  settingsItems: Settings[SETTINGS_TYPE]["items"] | undefined;
-
   @consume({ context: environmentContext })
   environment?: Environment;
 
@@ -44,9 +34,10 @@ export class ConnectionSettings
    * The available connections vary across deployment environments, so we fetch
    * them from the Breadboard Connection Server dynamically.
    */
-  #availableConnections = fetchAvailableConnectionsTask(
+  #availableConnections = fetchAvailableConnections(
     this,
-    () => this.environment
+    () => this.environment,
+    /* autorun */ true
   );
 
   static styles = css`

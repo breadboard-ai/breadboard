@@ -38,7 +38,6 @@ export class ConnectionSignin extends LitElement {
   @state()
   private _nonce = crypto.randomUUID();
 
-  // TODO(aomarks) Read current state from settings.
   @state()
   private _state: "signedout" | "pending" | "signedin" = "signedout";
 
@@ -250,6 +249,7 @@ export class ConnectionSignin extends LitElement {
       name: this.connection.id,
       value: JSON.stringify(settingsValue),
     });
+    this.dispatchEvent(new TokenGrantedEvent(grantResponse.access_token));
     this._state = "signedin";
   }
 
@@ -259,5 +259,20 @@ export class ConnectionSignin extends LitElement {
     }
     this.settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, this.connection.id);
     this._state = "signedout";
+  }
+}
+
+class TokenGrantedEvent extends Event {
+  static eventName = "bbtokengranted" as const;
+  readonly token: string;
+  constructor(token: string) {
+    super(TokenGrantedEvent.eventName);
+    this.token = token;
+  }
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    [TokenGrantedEvent.eventName]: TokenGrantedEvent;
   }
 }
