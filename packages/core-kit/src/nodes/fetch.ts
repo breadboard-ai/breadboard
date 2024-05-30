@@ -15,6 +15,7 @@ import {
   NodeHandlerContext,
   StreamCapability,
   asBlob,
+  createDataStore,
   inflateData,
   isDataCapability,
 } from "@google-labs/breadboard";
@@ -181,10 +182,20 @@ export default defineNodeType({
       } as any;
     } else {
       let response;
-      if (raw || !contentType || !contentType.includes("application/json")) {
+      if (!contentType) {
         response = await data.text();
       } else {
-        response = await data.json();
+        const isJson = contentType?.includes("application/json");
+        const isText = contentType?.includes("text/plain");
+        if (isJson) {
+          response = raw ? await data.text() : await data.json();
+        } else if (isText) {
+          response = await data.text();
+        } else {
+          const blob = await data.blob();
+          const store = createDataStore();
+          response = await store.store(blob);
+        }
       }
       return { response, status, statusText, contentType, responseHeaders };
     }
