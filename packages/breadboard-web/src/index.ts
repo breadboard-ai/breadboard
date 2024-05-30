@@ -598,6 +598,7 @@ export class Main extends LitElement {
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
     this.#setBoardPendingSaveState(false);
+    this.#setPageTitle();
 
     this.#checkForPossibleEmbed();
   }
