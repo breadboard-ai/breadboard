@@ -637,16 +637,6 @@ export class SchemaEditor extends LitElement {
           expanded: this.expanded.get(id) || false,
         })}
       >
-        <label for="${id}-title">ID</label>
-        <input
-          name="${id}-id"
-          id="${id}-id"
-          type="text"
-          pattern="^[a-zA-Z0-9\\-]+$"
-          value="${id}"
-          required="required"
-        />
-
         <label for="${id}-title">Title</label>
         <div class="title-and-delete">
           <input
@@ -709,6 +699,15 @@ export class SchemaEditor extends LitElement {
           Show more
         </button>
         <div class="more-info">
+          <label for="${id}-title">ID</label>
+          <input
+            name="${id}-id"
+            id="${id}-id"
+            type="text"
+            pattern="^[a-zA-Z0-9\\-]+$"
+            value="${id}"
+            required="required"
+          />
           ${value.type === "string" ? enumerations : nothing}
           ${value.type === "string" || value.type === "number"
             ? examples
