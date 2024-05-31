@@ -791,10 +791,12 @@ export class SchemaEditor extends LitElement {
         }
 
         if (property.type === "object") {
-          if (inBehavior && inBehavior.value !== "none") {
-            property.behavior = [inBehavior.value as BehaviorSchema];
-          } else {
-            delete property.behavior;
+          if (inBehavior) {
+            if (inBehavior.value !== "none") {
+              property.behavior = [inBehavior.value as BehaviorSchema];
+            } else {
+              delete property.behavior;
+            }
           }
 
           if (inFormat && inFormat.value !== "none") {
@@ -920,10 +922,10 @@ export class SchemaEditor extends LitElement {
         if (
           oldBehavior &&
           oldBehavior.includes("llm-content") &&
-          property.behavior &&
-          !property.behavior.includes("llm-content")
+          (!property.behavior || !property.behavior.includes("llm-content"))
         ) {
           delete property.format;
+          delete property.default;
         }
 
         if (inID && inID.value && inID.value !== id) {
@@ -999,7 +1001,8 @@ export class SchemaEditor extends LitElement {
     const idx = Object.keys(schema.properties).length + 1;
     schema.properties = schema.properties || {};
     schema.properties[`property-${idx}`] = {
-      type: "string",
+      type: "object",
+      behavior: ["llm-content"],
       title: `Property ${idx}`,
     };
 
