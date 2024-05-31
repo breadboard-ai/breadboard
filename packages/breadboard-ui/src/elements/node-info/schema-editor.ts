@@ -958,6 +958,12 @@ export class SchemaEditor extends LitElement {
 
         schema.properties[to] = schema.properties[from];
         delete schema.properties[from];
+
+        const expandedState = this.expanded.get(from);
+        if (expandedState !== undefined) {
+          this.expanded.set(to, expandedState);
+          this.expanded.delete(from);
+        }
       }
     }
 
