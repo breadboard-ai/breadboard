@@ -257,7 +257,8 @@
                         "title": "board",
                         "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
                         "behavior": [
-                          "board"
+                          "board",
+                          "config"
                         ]
                       }
                     },
