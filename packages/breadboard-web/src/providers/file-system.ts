@@ -9,7 +9,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
-  blank,
+  blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
@@ -374,7 +374,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     await this.#refreshItems(location);
 
     // Now populate it.
-    await this.save(url, blank());
+    await this.save(url, blankLLMContent());
     return { result: true };
   }
 

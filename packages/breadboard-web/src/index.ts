@@ -12,7 +12,7 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
-  blank,
+  blankLLMContent,
   BoardRunner,
   createDataStore,
   createLoader,
@@ -1266,7 +1266,7 @@ export class Main extends LitElement {
             }
 
             const id = globalThis.crypto.randomUUID();
-            const board = blank();
+            const board = blankLLMContent();
             board.title = evt.subGraphTitle;
 
             const editResult = editableGraph.addGraph(id, board);
