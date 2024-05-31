@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "../types.js";
+import { GraphDescriptor, Schema } from "../types.js";
 
 const CONFIGURATION = {
   schema: {
@@ -18,6 +18,26 @@ const CONFIGURATION = {
   },
 };
 
+const llmContentConfig = (type: string) => ({
+  schema: {
+    properties: {
+      context: {
+        type: "array",
+        title: "Context",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        default:
+          type === "input" ? '[{"role":"user","parts":[{"text":""}]}]' : "null",
+      },
+    },
+    type: "object",
+    required: [],
+  } satisfies Schema,
+});
+
 const BLANK_GRAPH: GraphDescriptor = {
   title: "Blank board",
   description: "A blank board. Use it as a starting point for your creations.",
@@ -29,9 +49,28 @@ const BLANK_GRAPH: GraphDescriptor = {
   edges: [{ from: "input", out: "text", to: "output", in: "text" }],
 };
 
+const BLANK_LLM_CONTENT_GRAPH: GraphDescriptor = {
+  title: "Blank board",
+  description: "A blank board. Use it as a starting point for your creations.",
+  version: "0.0.1",
+  nodes: [
+    { type: "input", id: "input", configuration: llmContentConfig("input") },
+    { type: "output", id: "output", configuration: llmContentConfig("output") },
+  ],
+  edges: [{ from: "input", out: "context", to: "output", in: "context" }],
+};
+
 /**
  * Creates a `GraphDescriptor` of a blank graph.
  */
 export const blank = (): GraphDescriptor => {
   return structuredClone(BLANK_GRAPH);
+};
+
+/**
+ * Creates a `GraphDescriptor` of a blank graph with inputs/outputs pre-set
+ * to the LLM content array schema.
+ */
+export const blankLLMContent = (): GraphDescriptor => {
+  return structuredClone(BLANK_LLM_CONTENT_GRAPH);
 };

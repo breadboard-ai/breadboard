@@ -9,7 +9,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
-  blank,
+  blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
@@ -217,7 +217,7 @@ export class RemoteGraphProvider implements GraphProvider {
       return { result: false };
     }
 
-    const data = await this.#sendToRemote(url, blank());
+    const data = await this.#sendToRemote(url, blankLLMContent());
     if (data.error) {
       return { result: false };
     }
@@ -292,7 +292,7 @@ export class RemoteGraphProvider implements GraphProvider {
       });
     } catch (err) {
       console.warn(
-        `[RemoteGraphProvider]: Unable to connet to ${store.url}`,
+        `[RemoteGraphProvider]: Unable to connect to ${store.url}`,
         err
       );
     }
