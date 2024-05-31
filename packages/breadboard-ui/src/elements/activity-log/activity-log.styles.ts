@@ -312,7 +312,7 @@ export const styles = css`
     white-space: pre-line;
     border-radius: var(--bb-grid-size);
     padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-    user-select: text;
+    user-select: auto;
   }
 
   dt .value.markdown {
