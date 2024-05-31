@@ -462,19 +462,30 @@ export class GraphInitialDrawEvent extends Event {
   }
 }
 
-export class GraphNodeEdgeAttachEvent extends Event {
+export class GraphEdgeAttachEvent extends Event {
   static eventName = "bbgraphedgeattach";
 
   constructor(public readonly edge: InspectableEdge) {
-    super(GraphNodeEdgeAttachEvent.eventName, { ...eventInit });
+    super(GraphEdgeAttachEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphNodeEdgeDetachEvent extends Event {
+export class GraphEdgeDetachEvent extends Event {
   static eventName = "bbgraphedgedetach";
 
   constructor(public readonly edge: InspectableEdge) {
-    super(GraphNodeEdgeDetachEvent.eventName, { ...eventInit });
+    super(GraphEdgeDetachEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphEntityRemoveEvent extends Event {
+  static eventName = "bbgraphentityremove";
+
+  constructor(
+    public readonly nodes: string[],
+    public readonly edges: InspectableEdge[]
+  ) {
+    super(GraphEntityRemoveEvent.eventName, { ...eventInit });
   }
 }
 

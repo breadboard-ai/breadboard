@@ -23,9 +23,9 @@ import {
   EdgeChangeEvent,
   GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
-  GraphNodeEdgeAttachEvent,
+  GraphEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
-  GraphNodeEdgeDetachEvent,
+  GraphEdgeDetachEvent,
   GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
@@ -34,6 +34,7 @@ import {
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
+  GraphEntityRemoveEvent,
 } from "../../events/events.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -140,6 +141,7 @@ export class Editor extends LitElement {
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
+  #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -462,12 +464,12 @@ export class Editor extends LitElement {
 
   connectedCallback(): void {
     this.#graphRenderer.addEventListener(
-      GraphNodeEdgeAttachEvent.eventName,
+      GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodeEdgeDetachEvent.eventName,
+      GraphEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
@@ -484,6 +486,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphNodesVisualUpdateEvent.eventName,
       this.#onGraphNodesVisualUpdateBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphEntityRemoveEvent.eventName,
+      this.#onGraphEntityRemoveBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -498,12 +505,12 @@ export class Editor extends LitElement {
 
   disconnectedCallback(): void {
     this.#graphRenderer.removeEventListener(
-      GraphNodeEdgeAttachEvent.eventName,
+      GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodeEdgeDetachEvent.eventName,
+      GraphEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
@@ -520,6 +527,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodesVisualUpdateEvent.eventName,
       this.#onGraphNodesVisualUpdateBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphEntityRemoveEvent.eventName,
+      this.#onGraphEntityRemoveBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -828,7 +840,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeAttach(evt: Event) {
-    const { edge } = evt as GraphNodeEdgeAttachEvent;
+    const { edge } = evt as GraphEdgeAttachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "add",
@@ -846,7 +858,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeDetach(evt: Event) {
-    const { edge } = evt as GraphNodeEdgeDetachEvent;
+    const { edge } = evt as GraphEdgeDetachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "remove",
@@ -889,6 +901,51 @@ export class Editor extends LitElement {
   #onGraphNodeDelete(evt: Event) {
     const { id } = evt as GraphNodeDeleteEvent;
     this.dispatchEvent(new NodeDeleteEvent(id, this.subGraphId));
+  }
+
+  #onGraphEntityRemove(evt: Event) {
+    const { nodes, edges } = evt as GraphEntityRemoveEvent;
+    const edits: EditSpec[] = [];
+
+    for (const edge of edges) {
+      edits.push({
+        type: "removeedge",
+        edge: {
+          from: edge.from.descriptor.id,
+          to: edge.to.descriptor.id,
+          out: edge.out,
+          in: edge.in,
+        },
+      });
+    }
+
+    for (const id of nodes) {
+      edits.push({ type: "removenode", id });
+    }
+
+    const nodesLabel = nodes.length ? `#${nodes.join(", #")}` : "No nodes";
+    const edgesLabel = edges.length
+      ? edges.reduce((prev, curr, idx) => {
+          return (
+            prev +
+            (idx > 0 ? ", " : "") +
+            edgeToString({
+              from: curr.from.descriptor.id,
+              to: curr.to.descriptor.id,
+              out: curr.out,
+              in: curr.in,
+            })
+          );
+        }, "")
+      : "No edges";
+
+    this.dispatchEvent(
+      new MultiEditEvent(
+        edits,
+        `Delete (${nodesLabel}) (${edgesLabel})`,
+        this.subGraphId
+      )
+    );
   }
 
   #onDragOver(evt: DragEvent) {
