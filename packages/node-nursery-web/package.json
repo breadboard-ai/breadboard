@@ -105,7 +105,7 @@
     "@types/gapi": "^0.0.47",
     "@types/node": "^20.12.13",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
-    "@typescript-eslint/parser": "^7.10.0",
+    "@typescript-eslint/parser": "^7.11.0",
     "ava": "^5.2.0",
     "npm": "^10.8.1",
     "typescript": "^5.4.5"
