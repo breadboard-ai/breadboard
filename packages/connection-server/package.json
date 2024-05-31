@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "eslint": "^8.57.0",
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.12.13",
     "typescript": "^5.4.5"
   }
 }
