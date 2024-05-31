@@ -49,6 +49,8 @@ import type {
   SettingsHelper,
 } from "@google-labs/breadboard-ui/types/types.js";
 
+const REPLAY_DELAY_MS = 10;
+
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
@@ -903,7 +905,7 @@ export class Main extends LitElement {
               const run = result.run;
               for await (const result of run.replay()) {
                 this.runs = runObserver.observe(result);
-                await new Promise((r) => setTimeout(r, 300));
+                await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
                 this.requestUpdate();
               }
             } else {
