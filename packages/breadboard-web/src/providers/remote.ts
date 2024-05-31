@@ -316,18 +316,21 @@ export class RemoteGraphProvider implements GraphProvider {
     );
     if (store) {
       const storeData = this.#stores.get(store.url);
-      const item = storeData?.items.get(url.href);
-      if (!item) {
+      const itemName = url.pathname.replace(/^\/boards\//, "");
+      const item = storeData?.items.get(itemName);
+
+      if (item) {
         return {
-          load: false,
-          save: true,
-          delete: false,
+          load: true,
+          save: !item.readonly,
+          delete: !item.readonly,
         };
       }
+
       return {
-        load: true,
-        save: !item.readonly,
-        delete: !item.readonly,
+        load: false,
+        save: true,
+        delete: false,
       };
     }
     return false;
