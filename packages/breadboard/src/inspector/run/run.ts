@@ -187,4 +187,8 @@ export class Run implements InspectableRun {
 
     return result.size > 0 ? result : null;
   }
+
+  replay(): AsyncGenerator<HarnessRunResult> {
+    throw new Error("Runs can't yet be replayed.");
+  }
 }

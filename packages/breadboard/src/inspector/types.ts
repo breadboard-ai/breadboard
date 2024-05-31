@@ -814,6 +814,11 @@ export type InspectableRun = {
    * if no inputs were submitted.
    */
   inputs(): InspectableRunInputs | null;
+  /**
+   * Returns a HarnessRunResult asynchronous generator that allows replaying
+   * the run.
+   */
+  replay(): AsyncGenerator<HarnessRunResult>;
 };
 
 /**
