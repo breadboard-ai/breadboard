@@ -10,14 +10,15 @@ import * as PIXI from "pixi.js";
 import {
   GraphNodeSelectedEvent,
   GraphNodeDeleteEvent,
-  GraphNodeEdgeAttachEvent,
+  GraphEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
-  GraphNodeEdgeDetachEvent,
+  GraphEdgeDetachEvent,
   InputErrorEvent,
   GraphNodeDeselectedEvent,
   GraphNodeDeselectedAllEvent,
   GraphNodesVisualUpdateEvent,
   GraphInitialDrawEvent,
+  GraphEntityRemoveEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -651,11 +652,11 @@ export class GraphRenderer extends LitElement {
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
-      this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
+      this.dispatchEvent(new GraphEdgeAttachEvent(edge));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: InspectableEdge) => {
-      this.dispatchEvent(new GraphNodeEdgeDetachEvent(edge));
+      this.dispatchEvent(new GraphEdgeDetachEvent(edge));
     });
 
     graph.on(
@@ -989,32 +990,17 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      const nodes = selectedChildren.filter(
-        (child) => child instanceof GraphNode
-      ) as GraphNode[];
-      const edges = selectedChildren.filter(
-        (child) => child instanceof GraphEdge
-      ) as GraphEdge[];
-
-      // Delete all edges first.
-      for (const graphEdge of edges) {
-        if (!graphEdge.edge) {
-          console.warn("Invalid edge - unable to delete");
-          return;
+      const nodes: string[] = [];
+      const edges: InspectableEdge[] = [];
+      for (const child of selectedChildren) {
+        if (child instanceof GraphNode) {
+          nodes.push(child.label);
+        } else if (child instanceof GraphEdge && child.edge) {
+          edges.push(child.edge);
         }
-        this.dispatchEvent(new GraphNodeEdgeDetachEvent(graphEdge.edge));
       }
 
-      // Wait a frame and delete all nodes.
-      requestAnimationFrame(() => {
-        for (const graphNode of nodes) {
-          if (!graphNode.label) {
-            console.warn("Node has no name - unable to delete");
-            return;
-          }
-          this.dispatchEvent(new GraphNodeDeleteEvent(graphNode.label));
-        }
-      });
+      this.dispatchEvent(new GraphEntityRemoveEvent(nodes, edges));
     }
   }
 
@@ -1232,7 +1218,7 @@ export class GraphRenderer extends LitElement {
       type: "ordinary",
     } as InspectableEdge;
 
-    this.dispatchEvent(new GraphNodeEdgeAttachEvent(edge));
+    this.dispatchEvent(new GraphEdgeAttachEvent(edge));
 
     return true;
   }
