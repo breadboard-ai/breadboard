@@ -10,7 +10,6 @@ import {
   GraphstartTimelineEntry,
   InspectableGraph,
   InspectableRunLoadResult,
-  InspectableRunObserver,
   NodestartTimelineEntry,
   SerializedRun,
   SerializedRunLoadingOptions,
@@ -20,6 +19,7 @@ import { inspectableGraph } from "../graph.js";
 import { DataStore, SerializedDataStoreGroup } from "../../data/types.js";
 import { remapData } from "../../data/inflate-deflate.js";
 import { asyncGen } from "../../utils/async-gen.js";
+import { PastRun } from "./past-run.js";
 
 export const errorResult = (error: string): HarnessRunResult => {
   return {
@@ -140,9 +140,7 @@ export class RunLoader {
     });
   }
 
-  async load(
-    observer: InspectableRunObserver
-  ): Promise<InspectableRunLoadResult> {
+  async load(): Promise<InspectableRunLoadResult> {
     const run = this.#run;
     if (run.$schema !== "tbd") {
       return {
@@ -158,23 +156,9 @@ export class RunLoader {
       timeline = run.data
         ? await this.#inflateData(timeline, run.data)
         : timeline;
-      for (const result of timeline) {
-        const [type] = result;
-        switch (type) {
-          case "graphstart":
-            observer.observe(this.loadGraphStart(result));
-            continue;
-          case "nodestart":
-            observer.observe(this.loadNodestart(result));
-            continue;
-          default:
-            observer.observe(this.#asHarnessRunResult(result));
-        }
-      }
-      return { success: true };
+      return { success: true, run: new PastRun(timeline, this.#options) };
     } catch (e) {
       const error = e as Error;
-      console.error(error);
       return {
         success: false,
         error: `Loading run failed with the error ${error.message}`,

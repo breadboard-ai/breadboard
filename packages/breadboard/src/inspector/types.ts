@@ -567,6 +567,7 @@ export type InspectableRunLoadResult =
     }
   | {
       success: true;
+      run: InspectableRun;
     };
 
 /**

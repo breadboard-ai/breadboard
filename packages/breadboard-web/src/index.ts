@@ -897,9 +897,15 @@ export class Main extends LitElement {
           }
 
           evt.preventDefault();
-          this.#runObserver.load(runData).then((load) => {
-            if (load.success) {
-              this.requestUpdate();
+          const runObserver = this.#runObserver;
+          runObserver.load(runData).then(async (result) => {
+            if (result.success) {
+              const run = result.run;
+              for await (const result of run.replay()) {
+                this.runs = runObserver.observe(result);
+                await new Promise((r) => setTimeout(r, 300));
+                this.requestUpdate();
+              }
             } else {
               this.toast(
                 "Unable to load run data",
