@@ -45,7 +45,30 @@ describe("human/modeRouterFunction", () => {
     {
       const context: Context[] = [split("end", "1")];
       const result = modeRouterFunction({ context });
+      deepStrictEqual(result, { output: context, input: context });
+    }
+    {
+      const context: Context[] = [
+        split("start", "1"),
+        split("next", "1"),
+        split("end", "1"),
+      ];
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { output: context, choose: context });
+    }
+    {
+      const context: Context[] = [split("start", "1"), split("end", "1")];
+      const result = modeRouterFunction({ context });
+      deepStrictEqual(result, { output: context, input: context });
+    }
+    {
+      const context: Context[] = [
+        split("start", "2"),
+        split("next", "1"),
+        split("end", "1"),
+      ];
+      const result = modeRouterFunction({ context });
+      deepStrictEqual(result, { output: context, input: context });
     }
   });
 });

@@ -179,7 +179,24 @@ export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
         return "inputOutput";
       }
       if (lastItem.type === "split" && lastItem.data.type === "end") {
-        return "choose";
+        const splitId = lastItem.data.id;
+        let choiceCounter = 1;
+        for (let i = context.length - 2; i >= 0; i--) {
+          const item = context[i];
+          if (item.role === "$metadata" && item.type === "split") {
+            const { id, type } = item.data;
+            if (splitId !== id) {
+              return "inputOutput";
+            }
+            if (type === "start") {
+              break;
+            }
+            choiceCounter++;
+          }
+        }
+        if (choiceCounter > 1) {
+          return "choose";
+        }
       }
       return "inputOutput";
     }
