@@ -98,13 +98,7 @@ export class RunObserver implements InspectableRunObserver {
       );
     }
     const loader = new RunLoader(this.#options.store, o, options || {});
-    this.#options.store!.startGroup();
-    const result = await loader.load(this);
-    if (result.success) {
-      const dataStoreGroupId = this.#options.store!.endGroup();
-      this.#runs[this.#runs.length - 1].dataStoreGroupId = dataStoreGroupId;
-    }
-    return result;
+    return await loader.load();
   }
 }
 
@@ -186,5 +180,9 @@ export class Run implements InspectableRun {
     });
 
     return result.size > 0 ? result : null;
+  }
+
+  replay(): AsyncGenerator<HarnessRunResult> {
+    throw new Error("Runs can't yet be replayed.");
   }
 }

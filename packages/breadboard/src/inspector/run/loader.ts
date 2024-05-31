@@ -10,7 +10,6 @@ import {
   GraphstartTimelineEntry,
   InspectableGraph,
   InspectableRunLoadResult,
-  InspectableRunObserver,
   NodestartTimelineEntry,
   SerializedRun,
   SerializedRunLoadingOptions,
@@ -19,6 +18,21 @@ import {
 import { inspectableGraph } from "../graph.js";
 import { DataStore, SerializedDataStoreGroup } from "../../data/types.js";
 import { remapData } from "../../data/inflate-deflate.js";
+import { asyncGen } from "../../utils/async-gen.js";
+import { PastRun } from "./past-run.js";
+
+export const errorResult = (error: string): HarnessRunResult => {
+  return {
+    type: "error",
+    data: {
+      error,
+      timestamp: Date.now(),
+    },
+    reply: async () => {
+      // Do nothing
+    },
+  };
+};
 
 export class RunLoader {
   #run: SerializedRun;
@@ -92,9 +106,41 @@ export class RunLoader {
     } as HarnessRunResult;
   }
 
-  async load(
-    observer: InspectableRunObserver
-  ): Promise<InspectableRunLoadResult> {
+  async *replay() {
+    const run = this.#run;
+    if (run.$schema !== "tbd") {
+      yield errorResult(`Specified "$schema": "${run.$schema}" is not valid`);
+    }
+    yield* asyncGen<HarnessRunResult>(async (next) => {
+      try {
+        const secretReplacer = this.#options?.secretReplacer;
+        let timeline = secretReplacer
+          ? replaceSecrets(run, secretReplacer).timeline
+          : run.timeline;
+        timeline = run.data
+          ? await this.#inflateData(timeline, run.data)
+          : timeline;
+        for (const result of timeline) {
+          const [type] = result;
+          switch (type) {
+            case "graphstart":
+              await next(this.loadGraphStart(result));
+              continue;
+            case "nodestart":
+              await next(this.loadNodestart(result));
+              continue;
+            default:
+              await next(this.#asHarnessRunResult(result));
+          }
+        }
+      } catch (e) {
+        const error = e as Error;
+        next(errorResult(`Loading run failed with the error ${error.message}`));
+      }
+    });
+  }
+
+  async load(): Promise<InspectableRunLoadResult> {
     const run = this.#run;
     if (run.$schema !== "tbd") {
       return {
@@ -110,23 +156,9 @@ export class RunLoader {
       timeline = run.data
         ? await this.#inflateData(timeline, run.data)
         : timeline;
-      for (const result of timeline) {
-        const [type] = result;
-        switch (type) {
-          case "graphstart":
-            observer.observe(this.loadGraphStart(result));
-            continue;
-          case "nodestart":
-            observer.observe(this.loadNodestart(result));
-            continue;
-          default:
-            observer.observe(this.#asHarnessRunResult(result));
-        }
-      }
-      return { success: true };
+      return { success: true, run: new PastRun(timeline, this.#options) };
     } catch (e) {
       const error = e as Error;
-      console.error(error);
       return {
         success: false,
         error: `Loading run failed with the error ${error.message}`,
