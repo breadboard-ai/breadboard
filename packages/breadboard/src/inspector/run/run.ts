@@ -170,6 +170,7 @@ export class Run implements InspectableRun {
     const result: InspectableRunInputs = new Map();
     this.#events.events.forEach((event) => {
       if (!isInput(event)) return;
+      if (event.bubbled) return;
       const id = event.node.descriptor.id;
       let inputList = result.get(id);
       if (!inputList) {
