@@ -1226,9 +1226,6 @@ export class Main extends LitElement {
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}
-          @dragstart=${(evt: DragEvent) => {
-            evt.preventDefault();
-          }}
           @dragover=${(evt: DragEvent) => {
             evt.preventDefault();
           }}
