@@ -22,7 +22,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc"
+        "build:vite"
       ]
     },
     "build:vite": {
@@ -34,6 +34,9 @@
       ],
       "output": [
         "dist/client"
+      ],
+      "dependencies": [
+        "build:tsc"
       ],
       "clean": "if-file-deleted"
     },
