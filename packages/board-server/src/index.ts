@@ -5,6 +5,7 @@
  */
 
 import { createServer } from "http";
+import { createServer as createViteServer } from "vite";
 import { env } from "process";
 import { serverError } from "./errors.js";
 import { cors } from "./cors.js";
@@ -13,11 +14,19 @@ import get from "./api/get.js";
 import post from "./api/post.js";
 import del from "./api/delete.js";
 import create from "./api/create.js";
+import { serveFile } from "./common.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
 const HOSTNAME = `http://${HOST}:${PORT}`;
 const API_ENTRY = "/boards";
+const IS_PROD = env.NODE_ENV === "production";
+
+const vite = await createViteServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+  optimizeDeps: { esbuildOptions: { target: "esnext" } },
+});
 
 const getApiPath = (path: string) => {
   const maybePath = path.slice(API_ENTRY.length);
@@ -46,7 +55,15 @@ const server = createServer(async (req, res) => {
 
   const pathname = resolvedURL.pathname;
   if (!pathname.startsWith(API_ENTRY)) {
-    serverError(res, `Not found: ${url}`);
+    if (IS_PROD) {
+      serveFile(res, pathname);
+    } else {
+      vite.middlewares(req, res, async () => {
+        serveFile(res, "/", async (contents: string) => {
+          return await vite.transformIndexHtml("/index.html", contents);
+        });
+      });
+    }
     return;
   }
   const apiPath = getApiPath(pathname);
