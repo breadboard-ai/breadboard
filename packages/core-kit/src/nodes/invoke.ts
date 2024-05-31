@@ -97,7 +97,7 @@ export default defineNodeType({
     },
     $board: {
       title: "board",
-      behavior: ["board"],
+      behavior: ["board", "config"],
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",
       // TODO(aomarks) A better type.

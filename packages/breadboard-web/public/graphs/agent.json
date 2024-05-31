@@ -70,7 +70,8 @@
             "generator": {
               "type": "string",
               "behavior": [
-                "board"
+                "board",
+                "config"
               ],
               "title": "Generator",
               "description": "The board to invoke. Can be a BoardCapability, a graph or a URL",
