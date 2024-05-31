@@ -48,6 +48,29 @@ import { until } from "lit/directives/until.js";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
+function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
+  if (type !== "input" && type !== "output") {
+    return undefined;
+  }
+
+  return {
+    schema: {
+      properties: {
+        content: {
+          type: "object",
+          title: "Content",
+          examples: [],
+          behavior: ["llm-content"],
+          default:
+            type === "input" ? '{"role":"user","parts":[{"text":""}]}' : "null",
+        },
+      },
+      type: "object",
+      required: [],
+    },
+  };
+}
+
 type EditedNode = {
   editAction: "add" | "update";
   id: string;
@@ -879,13 +902,13 @@ export class Editor extends LitElement {
     }
 
     evt.preventDefault();
-    const data = evt.dataTransfer?.getData(DATA_TYPE);
-    if (!data || !this.#graphRenderer) {
+    const type = evt.dataTransfer?.getData(DATA_TYPE);
+    if (!type || !this.#graphRenderer) {
       console.warn("No data in dropped node");
       return;
     }
 
-    const id = this.#createRandomID(data);
+    const id = this.#createRandomID(type);
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
 
@@ -905,8 +928,10 @@ export class Editor extends LitElement {
       x: 0,
       y: 0,
     };
+
+    const configuration = getDefaultConfiguration(type);
     this.dispatchEvent(
-      new NodeCreateEvent(id, data, this.subGraphId, undefined, {
+      new NodeCreateEvent(id, type, this.subGraphId, configuration, {
         visual: {
           x: layout.x,
           y: layout.y,
