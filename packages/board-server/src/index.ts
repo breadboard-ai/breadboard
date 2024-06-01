@@ -22,11 +22,13 @@ const HOSTNAME = `http://${HOST}:${PORT}`;
 const API_ENTRY = "/boards";
 const IS_PROD = env.NODE_ENV === "production";
 
-const vite = await createViteServer({
-  server: { middlewareMode: true },
-  appType: "custom",
-  optimizeDeps: { esbuildOptions: { target: "esnext" } },
-});
+const vite = IS_PROD
+  ? null
+  : await createViteServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+      optimizeDeps: { esbuildOptions: { target: "esnext" } },
+    });
 
 const getApiPath = (path: string) => {
   const maybePath = path.slice(API_ENTRY.length);
@@ -55,7 +57,7 @@ const server = createServer(async (req, res) => {
 
   const pathname = resolvedURL.pathname;
   if (!pathname.startsWith(API_ENTRY)) {
-    if (IS_PROD) {
+    if (vite === null) {
       serveFile(res, pathname);
     } else {
       vite.middlewares(req, res, async () => {
