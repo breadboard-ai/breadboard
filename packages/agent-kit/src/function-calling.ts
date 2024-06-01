@@ -292,11 +292,13 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
   if (flags.inputLLMContentArray) {
     // Change the name of `board.args` parameter from `context` to the one
     // specified by the flag.
-    const c = b.args?.context;
-    if (c) {
-      b.args ??= {};
-      b.args[flags.inputLLMContentArray] = c;
-      delete b.args.context;
+    if (flags.inputLLMContentArray !== "context") {
+      const c = b.args?.context;
+      if (c) {
+        b.args ??= {};
+        b.args[flags.inputLLMContentArray] = c;
+        delete b.args.context;
+      }
     }
   } else {
     // Remove the `context` parameter from the board args.
