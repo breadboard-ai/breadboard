@@ -14,6 +14,7 @@
     "start": "node .",
     "prepack": "npm run build",
     "build": "wireit",
+    "add": "tsx scripts/create-account.ts",
     "build:tsc": "wireit",
     "test": "wireit",
     "serve": "wireit",
