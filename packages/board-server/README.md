@@ -6,10 +6,25 @@ You will need to get ADC going to make Firestore work:
 
 One-time setup:
 
+- Login
+
+````bash
+gcloud auth login
+```b
+
 ```bash
 gcloud auth application-default login
+````
+
+```bash
 gcloud config set project <project name>
 ```
+
+- Create App Engine App in Cloud Console
+
+- Enable Firestore API
+
+- Create Firestore database named "board-server"
 
 Then, to run locally, from the root of the repo:
 
