@@ -398,7 +398,7 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
         parts.push(...(last as LlmContent).parts);
       }
     }
-    context.push({ parts });
+    context.push({ parts, role: "user" });
     return { context };
   } else {
     let mode: "single" | "preamble" | "adhoc" | "simple";
