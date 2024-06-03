@@ -85,7 +85,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/node": "^20.12.13",
+    "@types/node": "^20.14.0",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "typescript": "^5.4.5",

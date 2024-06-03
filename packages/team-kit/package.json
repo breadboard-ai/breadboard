@@ -139,7 +139,7 @@
     "@google-labs/json-kit": "^0.3.0",
     "@google-labs/template-kit": "^0.3.2",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.12.13",
+    "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "ava": "^5.2.0",
