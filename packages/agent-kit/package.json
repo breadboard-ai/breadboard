@@ -151,7 +151,7 @@
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "ava": "^5.2.0",
-    "tsx": "^4.11.0",
+    "tsx": "^4.11.2",
     "typescript": "^5.4.5"
   }
 }
