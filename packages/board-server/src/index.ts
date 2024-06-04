@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createServer } from "http";
+import { IncomingMessage, ServerResponse, createServer } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
-import { serverError } from "./errors.js";
+import { notFound, serverError } from "./errors.js";
 import { cors } from "./cors.js";
 import list from "./api/list.js";
 import get from "./api/get.js";
@@ -38,6 +38,27 @@ const getApiPath = (path: string) => {
   return maybePath;
 };
 
+const serveFiles = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathname: string
+) => {
+  if (vite === null) {
+    serveFile(res, pathname);
+  } else {
+    vite.middlewares(req, res);
+  }
+};
+
+const serveIndex = async (res: ServerResponse) => {
+  if (vite === null) {
+    return serveFile(res, "/index.html");
+  }
+  serveFile(res, "/", async (contents: string) => {
+    return await vite.transformIndexHtml("/index.html", contents);
+  });
+};
+
 const server = createServer(async (req, res) => {
   if (!cors(req, res)) {
     return;
@@ -56,17 +77,14 @@ const server = createServer(async (req, res) => {
   }
 
   const pathname = resolvedURL.pathname;
-  if (!pathname.startsWith(API_ENTRY)) {
-    if (vite === null) {
-      serveFile(res, pathname);
-    } else {
-      vite.middlewares(req, res, async () => {
-        serveFile(res, "/", async (contents: string) => {
-          return await vite.transformIndexHtml("/index.html", contents);
-        });
-      });
-    }
-    return;
+  const isBoardServer = pathname.startsWith(API_ENTRY);
+  const isApp = pathname.endsWith(".app");
+  if (!isBoardServer) {
+    return serveFiles(req, res, pathname);
+  }
+  if (isApp) {
+    // Serve the index.html file for the app.
+    return serveIndex(res);
   }
   const apiPath = getApiPath(pathname);
   try {
