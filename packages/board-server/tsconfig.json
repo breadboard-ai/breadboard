@@ -18,7 +18,9 @@
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
-    "useUnknownInCatchVariables": true
+    "useUnknownInCatchVariables": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   },
   "include": ["src/**/*.ts"],
   "exclude": []

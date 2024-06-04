@@ -719,7 +719,8 @@ export class LLMInput extends LitElement {
       case "audio/x-m4a":
       case "audio/m4a":
       case "audio/webm":
-      case "audio/mp3": {
+      case "audio/mp3":
+      case "audio/mpeg": {
         return cache(html`<audio src="${url}" controls />`);
       }
 
