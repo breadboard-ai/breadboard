@@ -385,7 +385,7 @@ export class App extends LitElement {
     this.url = boardFromUrl;
   }
 
-  protected willUpdate(
+  protected override willUpdate(
     changedProperties:
       | PropertyValueMap<{ url: string }>
       | Map<PropertyKey, unknown>
