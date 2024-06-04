@@ -79,12 +79,16 @@ const server = createServer(async (req, res) => {
   const pathname = resolvedURL.pathname;
   const isBoardServer = pathname.startsWith(API_ENTRY);
   const isApp = pathname.endsWith(".app");
+  const isAPI = pathname.endsWith(".api");
   if (!isBoardServer) {
     return serveFiles(req, res, pathname);
   }
   if (isApp) {
     // Serve the index.html file for the app.
     return serveIndex(res);
+  }
+  if (isAPI) {
+    return serveFile(res, "/api.html");
   }
   const apiPath = getApiPath(pathname);
   try {
