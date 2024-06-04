@@ -103,7 +103,7 @@
     "@google-labs/template-kit": "^0.3.2",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/gapi": "^0.0.47",
-    "@types/node": "^20.14.0",
+    "@types/node": "^20.14.1",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.12.0",
     "ava": "^5.2.0",
