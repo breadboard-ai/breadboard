@@ -811,6 +811,9 @@ export class App extends LitElement {
 
           evt.preventDefault();
 
+          this.#runObserver = createRunObserver({
+            store: this.dataStore.instance!,
+          });
           this.#runObserver.load(runData).then(async (result) => {
             this.status = STATUS.STOPPED;
 
