@@ -800,6 +800,7 @@ export class App extends LitElement {
     }
 
     this.status = STATUS.LOADING;
+    this.#outputs.clear();
     requestAnimationFrame(() => {
       fileDropped.text().then((data) => {
         try {
