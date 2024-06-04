@@ -218,7 +218,7 @@ export class ApiExplorer extends LitElement {
     super.connectedCallback();
 
     const currentUrl = new URL(window.location.href);
-    const newPathname = currentUrl.pathname.replace(/\.app$/, ".json");
+    const newPathname = currentUrl.pathname.replace(/\.api$/, ".json");
     currentUrl.pathname = newPathname;
     this.url = currentUrl.href;
   }
