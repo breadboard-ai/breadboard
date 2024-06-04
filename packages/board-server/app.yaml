@@ -3,15 +3,12 @@ runtime: nodejs22
 instance_class: F2
 
 handlers:
-  # Serve all static files with urls ending with a file extension
-  - url: /(.*\..+)$
-    static_files: dist/client\1
-    upload: dist/client/(.*\..+)$
-
-  - url: /.*
-    secure: always
-    redirect_http_response_code: 301
+  - url: /boards.*
     script: auto
+
+  - url: /(.*\..+)$
+    static_files: dist/client/\1
+    upload: dist/client/(.*\..+)$
 
 build_env_variables:
   GOOGLE_NODE_RUN_SCRIPTS: ""
