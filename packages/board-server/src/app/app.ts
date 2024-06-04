@@ -387,12 +387,9 @@ export class App extends LitElement {
     super.connectedCallback();
 
     const currentUrl = new URL(window.location.href);
-    const boardFromUrl = currentUrl.searchParams.get("board");
-    if (!boardFromUrl || !boardFromUrl.startsWith("@")) {
-      return;
-    }
-
-    this.url = boardFromUrl;
+    const newPathname = currentUrl.pathname.replace(/\.app$/, ".json");
+    currentUrl.pathname = newPathname;
+    this.url = currentUrl.href;
   }
 
   protected willUpdate(
@@ -407,8 +404,6 @@ export class App extends LitElement {
     if (!this.url) {
       return;
     }
-
-    this.url = `https://breadboard.live/boards/${this.url}`;
 
     this.#load = this.#kitLoad.then(async (kits) => {
       this.#kits = kits;
