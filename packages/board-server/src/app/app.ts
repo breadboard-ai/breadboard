@@ -25,14 +25,17 @@ import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader.js";
 import {
   BoardRunner,
+  createDataStore,
   createLoader,
   createRunObserver,
+  type DataStore,
   type GraphProvider,
   type InputValues,
   type InspectableRun,
   type InspectableRunObserver,
   type Kit,
   type Schema,
+  type SerializedRun,
 } from "@google-labs/breadboard";
 import {
   run,
@@ -52,16 +55,18 @@ import { classMap } from "lit/directives/class-map.js";
 
 import "./elements/nav.js";
 import { messages } from "./utils/messages.js";
+import { provide } from "@lit/context";
+import { dataStoreContext } from "./contexts/data-store.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
 enum STATUS {
   RUNNING,
   STOPPED,
+  LOADING,
 }
 
 const SPLIT_TEXT_LINE_COUNT = 4;
-const formatter = new Intl.NumberFormat();
 
 @customElement("bb-app")
 export class App extends LitElement {
@@ -80,8 +85,13 @@ export class App extends LitElement {
   @state()
   showNav = false;
 
+  @provide({ context: dataStoreContext })
+  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+
   #kits: Kit[] = [];
-  #runObserver: InspectableRunObserver = createRunObserver();
+  #runObserver: InspectableRunObserver = createRunObserver({
+    store: this.dataStore.instance!,
+  });
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: GraphProvider[] = [];
   #kitLoad = loadKits([
@@ -217,8 +227,8 @@ export class App extends LitElement {
     }
 
     #progress.active {
-      background: url(/images/progress.svg) var(--bb-grid-size-4) 50% / 20px
-        20px no-repeat;
+      background: var(--bb-neutral-700) url(/images/progress.svg)
+        var(--bb-grid-size-4) 50% / 20px 20px no-repeat;
     }
 
     #content {
@@ -277,7 +287,7 @@ export class App extends LitElement {
       min-height: 54px;
     }
 
-    #content .text p:first-of-type {
+    #content .text .pre p:first-of-type {
       margin-top: 0;
     }
 
@@ -461,6 +471,7 @@ export class App extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
+      store: this.dataStore.instance!,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -743,6 +754,87 @@ export class App extends LitElement {
     </div>`;
   }
 
+  async #getRunLog(evt: Event) {
+    if (!(evt.target instanceof HTMLElement)) {
+      return;
+    }
+
+    if (!this.runs || this.runs.length === 0) {
+      return;
+    }
+
+    const run = this.runs[0];
+    if (!run || !run.serialize) {
+      return;
+    }
+
+    if (evt.target.dataset && evt.target.dataset.url) {
+      URL.revokeObjectURL(evt.target.dataset.url);
+    }
+
+    const serializedRun = await run.serialize();
+    const data = JSON.stringify(serializedRun, null, 2);
+    const url = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+
+    evt.target.dataset.url = url;
+
+    const fakeLink = document.createElement("a");
+    fakeLink.download = `run-${new Date().toISOString()}.json`;
+    fakeLink.href = url;
+    fakeLink.click();
+  }
+
+  async #attemptLoad(evt: DragEvent) {
+    if (
+      !evt.dataTransfer ||
+      !evt.dataTransfer.files ||
+      !evt.dataTransfer.files.length
+    ) {
+      return;
+    }
+
+    const isSerializedRun = (data: SerializedRun): data is SerializedRun => {
+      return "timeline" in data;
+    };
+
+    const fileDropped = evt.dataTransfer.files[0];
+    if (!fileDropped) {
+      return;
+    }
+
+    this.status = STATUS.LOADING;
+    requestAnimationFrame(() => {
+      fileDropped.text().then((data) => {
+        try {
+          const runData = JSON.parse(data) as SerializedRun;
+          if (!isSerializedRun(runData)) {
+            return;
+          }
+
+          evt.preventDefault();
+
+          this.#runObserver.load(runData).then(async (result) => {
+            this.status = STATUS.STOPPED;
+
+            if (!result.success) {
+              return;
+            }
+
+            const run = result.run;
+            for await (const result of run.replay()) {
+              this.runs = this.#runObserver.observe(result);
+              this.requestUpdate();
+            }
+          });
+        } catch (err) {
+          console.warn(err);
+        }
+      });
+    });
+  }
+
   #raceMessage() {
     return new Promise((resolve) => {
       const message = Math.floor(Math.random() * messages.length);
@@ -883,47 +975,55 @@ export class App extends LitElement {
 
       let content: HTMLTemplateResult | symbol = nothing;
 
-      if (!initialInputEnabled) {
-        if (topEvent?.type === "secret") {
-          content = html`<form @submit=${handleForm}>
-            <input type="hidden" name="id" .value=${topEvent.keys.join(",")} />
-            <input
-              type="password"
-              name="secret"
-              placeholder=${topEvent.keys.join(",")}
-            />
-            <input type="submit" />
-          </form>`;
-        }
-
-        if (topEvent?.type === "node" && !topEvent.hidden) {
-          const nodeType = topEvent.node.descriptor.type;
-          if (nodeType === "output") {
-            this.#outputs.set(topEvent.id, topEvent.inputs);
-          } else if (nodeType === "input") {
-            const configuration = topEvent.inputs;
-            const schema = configuration.schema as Schema;
-            if (schema) {
-              const properties = schema.properties as Record<string, Schema>;
-              content = html`<form @submit=${handleForm}>
-                <input
-                  type="hidden"
-                  name="id"
-                  .value=${topEvent.node.descriptor.id}
-                />
-                ${this.#createInput(properties)}
-                <input type="submit" />
-              </form>`;
-            } else {
-              content = html`No schema`;
-            }
-          } else {
-            content = html`Error: unexpected node`;
+      if (this.status === STATUS.LOADING) {
+        content = nothing;
+      } else {
+        if (!initialInputEnabled) {
+          if (topEvent?.type === "secret") {
+            content = html`<form @submit=${handleForm}>
+              <input
+                type="hidden"
+                name="id"
+                .value=${topEvent.keys.join(",")}
+              />
+              <input
+                type="password"
+                name="secret"
+                placeholder=${topEvent.keys.join(",")}
+              />
+              <input type="submit" />
+            </form>`;
           }
-        }
 
-        if (topEvent?.type === "error") {
-          content = html`Error: ${JSON.stringify(topEvent.error, null, 2)}`;
+          if (topEvent?.type === "node" && !topEvent.hidden) {
+            const nodeType = topEvent.node.descriptor.type;
+            if (nodeType === "output") {
+              this.#outputs.set(topEvent.id, topEvent.inputs);
+            } else if (nodeType === "input") {
+              const configuration = topEvent.inputs;
+              const schema = configuration.schema as Schema;
+              if (schema) {
+                const properties = schema.properties as Record<string, Schema>;
+                content = html`<form @submit=${handleForm}>
+                  <input
+                    type="hidden"
+                    name="id"
+                    .value=${topEvent.node.descriptor.id}
+                  />
+                  ${this.#createInput(properties)}
+                  <input type="submit" />
+                </form>`;
+              } else {
+                content = html`No schema`;
+              }
+            } else {
+              content = html`Error: unexpected node`;
+            }
+          }
+
+          if (topEvent?.type === "error") {
+            content = html`Error: ${JSON.stringify(topEvent.error, null, 2)}`;
+          }
         }
       }
 
@@ -931,8 +1031,18 @@ export class App extends LitElement {
         @pointerdown=${() => {
           this.showNav = false;
         }}
+        @dragover=${(evt: DragEvent) => {
+          evt.preventDefault();
+        }}
+        @drop=${(evt: DragEvent) => {
+          evt.preventDefault();
+          this.#attemptLoad(evt);
+        }}
       >
-        <app-nav .visible=${this.showNav}></app-nav>
+        <app-nav
+          .visible=${this.showNav}
+          @bbdownload=${this.#getRunLog}
+        ></app-nav>
         <header>
           <h1 id="board-title">
             <button
@@ -960,15 +1070,19 @@ export class App extends LitElement {
             <input type="submit" />
           </form>
         </header>
-        <section>
+        <section ?inert=${this.status === STATUS.LOADING}>
           <div
             id="progress"
             class=${classMap({
               start: isAtStart,
-              active: !isAtStart && this.status === STATUS.RUNNING,
+              active: !isAtStart && this.status !== STATUS.STOPPED,
             })}
           >
-            ${progressMessage ?? nothing}
+            ${this.status === STATUS.RUNNING
+              ? progressMessage
+              : this.status === STATUS.LOADING
+                ? html`Loading... Please wait...`
+                : null}
           </div>
           <div id="content" ${ref(this.#contentRef)}>
             ${content}
