@@ -5,6 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { DownloadRunEvent } from "../events/events.js";
 
 @customElement("app-nav")
 export class AppNav extends LitElement {
@@ -69,7 +70,7 @@ export class AppNav extends LitElement {
       border-bottom: none;
     }
 
-    #clear-secrets {
+    button {
       background: var(--bb-neutral-900);
       border: none;
       border-radius: var(--bb-grid-size-10);
@@ -77,6 +78,7 @@ export class AppNav extends LitElement {
       padding: var(--bb-grid-size) var(--bb-grid-size-3);
       font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
+      margin-bottom: var(--bb-grid-size-2);
     }
   `;
 
@@ -88,19 +90,31 @@ export class AppNav extends LitElement {
       }}
     >
       <section>
-        <h1>Settings</h1>
-        <button
-          id="clear-secrets"
-          @click=${() => {
-            if (!confirm("Are you sure?")) {
-              return;
-            }
+        <h1>Menu</h1>
+        <div>
+          <button
+            id="clear-secrets"
+            @click=${() => {
+              if (!confirm("Are you sure?")) {
+                return;
+              }
 
-            globalThis.localStorage.delete("secrets");
-          }}
-        >
-          Clear secrets
-        </button>
+              globalThis.localStorage.clear();
+            }}
+          >
+            Clear secrets
+          </button>
+        </div>
+        <div>
+          <button
+            id="download-run"
+            @click=${() => {
+              this.dispatchEvent(new DownloadRunEvent());
+            }}
+          >
+            Download run
+          </button>
+        </div>
       </section>
     </div>`;
   }
