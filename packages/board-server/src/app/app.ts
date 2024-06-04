@@ -462,7 +462,9 @@ export class App extends LitElement {
       diagnostics: true,
       loader: this.#loader,
       interactiveSecrets: true,
-      inputs: {},
+      inputs: {
+        model: "gemini-1.5-flash-latest",
+      },
     };
 
     this.status = STATUS.RUNNING;
