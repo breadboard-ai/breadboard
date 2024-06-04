@@ -14,8 +14,6 @@ import {
   NodeDeleteEvent,
   RunEvent,
   StopEvent,
-  ToastEvent,
-  ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
@@ -434,6 +432,8 @@ export class UI extends LitElement {
         this.selectedNodeIds,
         this.#lastEdgeCount,
         this.#nodeSchemaUpdateCount,
+        // TODO: Figure out a cleaner way of handling this without watching for
+        // all graph changes.
         this.graph,
       ],
       () => {
@@ -519,20 +519,6 @@ export class UI extends LitElement {
           this.debugEvent = event;
         }}
         @bbinputenter=${(event: InputEnterEvent) => {
-          // Notify any pending handlers that the input has arrived.
-          if (this.#messagePosition < events.length - 1) {
-            // The user has attempted to provide input for a stale
-            // request.
-            // TODO: Enable resuming from this point.
-            this.dispatchEvent(
-              new ToastEvent(
-                "Unable to submit: board evaluation has already passed this point",
-                ToastType.ERROR
-              )
-            );
-            return;
-          }
-
           const data = event.data;
           const handlers = this.#handlers.get(event.id) || [];
           if (handlers.length === 0) {

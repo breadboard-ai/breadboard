@@ -23,7 +23,11 @@
     "./local-boards.json": "./public/local-boards.json",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
-    "./embed.js": "./build/embed.js"
+    "./embed.js": "./build/embed.js",
+    "./palm-kit.js": "./build/palm-kit.js",
+    "./core-kit.js": "./build/core-kit.js",
+    "./json-kit.js": "./build/json-kit.js",
+    "./template-kit.js": "./build/template-kit.js"
   },
   "types": "build/index.d.ts",
   "type": "module",
