@@ -580,11 +580,23 @@ export class Editor extends LitElement {
           return;
         }
 
-        const nodes = this.graph.nodes.filter((node) => {
+        let breadboardGraph = this.graph;
+        if (this.subGraphId && this.graph.graphs) {
+          const subgraphs = this.graph.graphs;
+          if (subgraphs[this.subGraphId]) {
+            breadboardGraph = subgraphs[this.subGraphId];
+          } else {
+            console.warn(
+              `Unable to locate subgraph by name: ${this.subGraphId}`
+            );
+          }
+        }
+
+        const nodes = breadboardGraph.nodes.filter((node) => {
           return selected.find((item) => item.label === node.id);
         });
 
-        const edges = this.graph.edges.filter((edge) => {
+        const edges = breadboardGraph.edges.filter((edge) => {
           return selected.find((item) => {
             if (!(item instanceof GraphEdge)) {
               return false;
@@ -605,8 +617,8 @@ export class Editor extends LitElement {
         await navigator.clipboard.writeText(
           JSON.stringify(
             {
-              title: this.graph.title,
-              version: this.graph.version,
+              title: breadboardGraph.title,
+              version: breadboardGraph.version,
               edges,
               nodes,
             },
@@ -670,6 +682,23 @@ export class Editor extends LitElement {
             y: leftMostVisual.y,
           });
 
+          // Find the current graph.
+          let breadboardGraph = this.graph;
+          if (this.subGraphId && this.graph.graphs) {
+            const subgraphs = this.graph.graphs;
+            if (subgraphs[this.subGraphId]) {
+              breadboardGraph = subgraphs[this.subGraphId];
+            } else {
+              console.warn(
+                `Unable to locate subgraph by name: ${this.subGraphId}`
+              );
+            }
+          }
+
+          if (!breadboardGraph) {
+            return;
+          }
+
           const remappedNodeIds = new Map<string, string>();
           const edits: EditSpec[] = [];
           for (const node of graph.nodes) {
@@ -678,7 +707,7 @@ export class Editor extends LitElement {
             }
 
             // Update the node ID so it doesn't clash.
-            const existingNode = this.graph.nodes.find(
+            const existingNode = breadboardGraph.nodes.find(
               (graphNode) => graphNode.id === node.id
             );
             if (existingNode) {
@@ -733,11 +762,6 @@ export class Editor extends LitElement {
             edits.push({ type: "addnode", node });
           }
 
-          const currentGraph = this.graph;
-          if (!currentGraph) {
-            return;
-          }
-
           for (const edge of graph.edges) {
             if (!this.#isEdge(edge)) {
               continue;
@@ -750,7 +774,7 @@ export class Editor extends LitElement {
               out: edge.out ?? "MISSING_WIRE",
             };
 
-            const existingEdge = currentGraph.edges.find(
+            const existingEdge = breadboardGraph.edges.find(
               (graphEdge) =>
                 graphEdge.from === newEdge.from &&
                 graphEdge.to === newEdge.to &&
