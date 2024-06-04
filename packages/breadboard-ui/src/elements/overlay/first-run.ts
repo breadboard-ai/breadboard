@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   GraphProviderConnectRequestEvent,
@@ -188,11 +188,15 @@ export class FirstRunOverlay extends LitElement {
             settings[SETTINGS_TYPE.SECRETS].items.set("GEMINI_KEY", setting);
           }
 
+          const boardServerApiKey = data.get("board-server-api-key");
           if (this.boardServerUrl && URL.canParse(this.boardServerUrl)) {
             this.dispatchEvent(
               new GraphProviderConnectRequestEvent(
                 "RemoteGraphProvider",
-                this.boardServerUrl
+                this.boardServerUrl,
+                boardServerApiKey && typeof boardServerApiKey === "string"
+                  ? boardServerApiKey
+                  : undefined
               )
             );
           }
@@ -244,9 +248,16 @@ export class FirstRunOverlay extends LitElement {
         <input
           name="gemini-key"
           type="text"
-          required
           placeholder="Enter your Gemini key here (optional)"
         />
+
+        ${this.boardServerUrl
+          ? html`<input
+              name="board-server-api-key"
+              type="text"
+              placeholder="Enter your Board Server API key here (optional)"
+            />`
+          : nothing}
 
         <div id="controls">
           <button
