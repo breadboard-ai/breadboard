@@ -12,6 +12,7 @@ const prompt = input({
 });
 
 const { text } = code({ prompt }, { text: "string" }, async ({ prompt }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const session = await (globalThis as any).ai.createTextSession();
   const text = (await session.prompt(prompt)) as string;
   return { text };
