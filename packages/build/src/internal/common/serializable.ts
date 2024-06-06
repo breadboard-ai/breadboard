@@ -14,6 +14,7 @@ import type { Output } from "../board/output.js";
 import type { Loopback } from "../board/loopback.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type { DefaultValue, OutputPortGetter } from "./port.js";
+import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 export interface SerializableBoard {
   inputs: Record<
@@ -50,6 +51,7 @@ export interface SerializableBoard {
   title?: string;
   description?: string;
   version?: string;
+  metadata?: GraphMetadata;
 }
 
 export interface SerializableNode {

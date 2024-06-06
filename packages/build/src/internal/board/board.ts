@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   InputPort,
   OutputPort,
@@ -51,6 +52,7 @@ export function board<
   title,
   description,
   version,
+  metadata,
 }: BoardParameters<IPORTS, OPORTS>): BoardDefinition<
   FlattenMultiInputs<IPORTS>,
   FlattenMultiOutputs<OPORTS>
@@ -68,6 +70,7 @@ export function board<
     title,
     description,
     version,
+    metadata,
   });
 }
 
@@ -145,7 +148,9 @@ export interface BoardParameters<
   title?: string;
   description?: string;
   version?: string;
+  metadata?: GraphMetadata;
 }
+
 export type BoardInputShape =
   | BoardInputPorts
   | Array<BoardInputPortsWithUndefined>;
@@ -199,6 +204,7 @@ export type BoardDefinition<
   readonly title?: string;
   readonly description?: string;
   readonly version?: string;
+  readonly metadata?: GraphMetadata;
 };
 
 // TODO(aomarks) Fix this definition so that it doesn't need <any, any>.

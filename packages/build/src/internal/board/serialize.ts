@@ -279,6 +279,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     ...(board.title ? { title: board.title } : {}),
     ...(board.description ? { description: board.description } : {}),
     ...(board.version ? { version: board.version } : {}),
+    ...(board.metadata ? { metadata: board.metadata } : {}),
     // Sort the nodes and edges for deterministic BGL output.
     edges: edges.sort((a, b) => {
       if (a.from != b.from) {

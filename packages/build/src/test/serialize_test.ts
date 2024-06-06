@@ -1141,6 +1141,52 @@ test("board title, description, and version", () => {
   );
 });
 
+test("icon", () => {
+  const foo = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      foo: { type: "string", primary: true },
+    },
+    invoke: () => ({ foo: "foo" }),
+  })({});
+  checkSerialization(
+    board({
+      title: "Board Name",
+      description: "Board Description",
+      version: "1.2.3",
+      metadata: {
+        icon: "potato",
+      },
+      inputs: {},
+      outputs: { foo },
+    }),
+    {
+      title: "Board Name",
+      description: "Board Description",
+      version: "1.2.3",
+      metadata: {
+        icon: "potato",
+      },
+      edges: [{ from: "foo-0", to: "output-0", out: "foo", in: "foo" }],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { foo: { type: "string" } },
+              required: ["foo"],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
 test("node can have IDs", () => {
   const d1 = defineNodeType({
     name: "d1",
