@@ -60,7 +60,7 @@ const runInBrowser = async ({
     // call does not cause a runtime error.
     // See https://github.com/privatenumber/tsx/issues/113 and
     // https://github.com/evanw/esbuild/issues/1031 for more details.
-    return `${code}\nglobalThis.__name = () => {};\nself.onmessage = () => self.postMessage({ result: JSON.stringify(${functionName}(${args})) });self.onerror = (e) => self.postMessage({ error: e.message })`;
+    return `${code}\nglobalThis.__name = () => {};\nself.onmessage = async () => self.postMessage({ result: JSON.stringify((await ${functionName}(${args}))) });self.onerror = (e) => self.postMessage({ error: e.message })`;
   };
 
   const blob = new Blob([runner(code, functionName)], {
