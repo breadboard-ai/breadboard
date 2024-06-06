@@ -12,6 +12,7 @@ import {
   InputValues,
   Kit,
   NodeDescriberResult,
+  NodeHandler,
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
@@ -53,13 +54,14 @@ export class GraphToKitAdapter {
     this.runner = runner;
   }
 
-  handlerForNode(id: NodeIdentifier) {
+  handlerForNode(id: NodeIdentifier): NodeHandler {
     if (!this.graph) throw new Error(`Builder was not yet initialized.`);
     const { nodes } = this.graph;
     const node = nodes.find((node) => node.id === id);
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
+      metadata: node.configuration?.$metadata,
       describe: async (): Promise<NodeDescriberResult> => {
         const emptyResult: NodeDescriberResult = {
           inputSchema: { type: "object" },
@@ -105,7 +107,7 @@ export class GraphToKitAdapter {
           kits: [...(context.kits || []), ...board.kits],
         });
       },
-    };
+    } as NodeHandler;
   }
 
   static async create(graph: GraphDescriptor, url: string, kits: Kit[]) {

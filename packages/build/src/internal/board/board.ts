@@ -169,7 +169,7 @@ export type BoardInputPortsWithUndefined = Record<
   | { title?: string; description?: string }
 > & {
   $id?: string | undefined;
-  $metadata?: { title?: string; description?: string };
+  $metadata?: { title?: string; description?: string; icon?: string };
 };
 
 export type BoardOutputShape =
@@ -190,7 +190,7 @@ export type BoardOutputPortsWithUndefined = Record<
   | undefined
 > & {
   $id?: string | undefined;
-  $metadata?: { title?: string; description?: string };
+  $metadata?: { title?: string; description?: string; icon?: string };
 };
 
 export type BoardDefinition<

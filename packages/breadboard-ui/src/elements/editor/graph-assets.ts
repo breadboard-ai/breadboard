@@ -11,6 +11,7 @@ const ASSET_LIST = new Map([
   ["merge-type", "/third_party/icons/merge-type-48px.svg"],
   ["human", "/third_party/icons/human-48px.svg"],
   ["laps", "/third_party/icons/laps-48px.svg"],
+  ["nano", "/third_party/icons/nano-48px.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture>;

@@ -28,6 +28,7 @@ const builder = new KitBuilder(
 const GeminiKit = builder.build({
   text: adapter.handlerForNode("text"),
   vision: adapter.handlerForNode("vision"),
+  nano: adapter.handlerForNode("nano"),
 });
 
 export type GeminiKit = InstanceType<typeof GeminiKit>;
