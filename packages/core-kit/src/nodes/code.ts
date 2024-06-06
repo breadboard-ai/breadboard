@@ -69,6 +69,8 @@ export function code<
   ) =>
     | Expand<ConvertBreadboardTypes<O>>
     | { $error: string | { message: string } }
+    | Promise<Expand<ConvertBreadboardTypes<O>>>
+    | Promise<{ $error: string | { message: string } }>
 ): CodeNode<Expand<CodeNodeInputs<I>>, ConvertBreadboardTypes<O>> {
   // TODO(aomarks) Do we need any of this logic involving function names? Why
   // can't we just wrap the code in parens and invoke it like `(<fn>)()`.
