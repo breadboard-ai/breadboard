@@ -137,7 +137,7 @@ export class ArrayEditor extends LitElement {
   set items(items: ArrayEditorType[] | null) {
     this.#items = items;
 
-    if (items && items.length > 0) {
+    if (Array.isArray(items) && items.length > 0) {
       const type = typeof items[0];
       switch (type) {
         case "string":

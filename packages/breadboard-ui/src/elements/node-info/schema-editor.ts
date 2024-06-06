@@ -540,11 +540,18 @@ export class SchemaEditor extends LitElement {
       let defaultValue: HTMLTemplateResult | symbol = nothing;
       switch (value.type) {
         case "array": {
+          let items: Array<string | number | object> | null = null;
+          try {
+            items = JSON.parse(value.default || "null");
+          } catch (err) {
+            items = null;
+          }
+
           defaultValue = html`${defaultLabel}<bb-array-editor
               id="${id}-default"
               name="${id}-default"
               ?readonly=${!this.editable}
-              .items=${JSON.parse(value.default || "null")}
+              .items=${items}
               .type=${resolveArrayType(value)}
               .behavior=${resolveBehaviorType(value.items)}
             ></bb-array-editor>`;

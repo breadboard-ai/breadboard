@@ -888,12 +888,22 @@ export class NodeConfigurationInfo extends LitElement {
                                   if (typeof value !== "string") {
                                     renderableValue = JSON.stringify(value);
                                   }
+
+                                  let items: Array<
+                                    string | number | object
+                                  > | null = null;
+                                  try {
+                                    items = JSON.parse(
+                                      renderableValue as string
+                                    );
+                                  } catch (err) {
+                                    items = null;
+                                  }
+
                                   input = html`<bb-array-editor
                                     id="${name}"
                                     name="${name}"
-                                    .items=${JSON.parse(
-                                      (renderableValue as string) || "null"
-                                    )}
+                                    .items=${items}
                                     .type=${resolveArrayType(port.schema)}
                                     .behavior=${resolveBehaviorType(
                                       port.schema.items
