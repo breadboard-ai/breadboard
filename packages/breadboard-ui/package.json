@@ -154,7 +154,7 @@
   "dependencies": {
     "@dagrejs/dagre": "^1.1.2",
     "@google-labs/breadboard": "^0.20.0",
-    "@lit/context": "^1.1.1",
+    "@lit/context": "^1.1.2",
     "@lit/task": "^1.0.1",
     "ajv": "^8.16.0",
     "lit": "^3.1.4",
