@@ -1,0 +1,14 @@
+service: connections
+
+runtime: nodejs22
+
+instance_class: F1
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
+
+env_variables:
+  ALLOWED_ORIGINS: "https://breadboard-ai.googleplex.com https://test-dot-breadboard-ai.googleplex.com"
