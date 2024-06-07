@@ -34,6 +34,9 @@
     "start": {
       "command": "node --enable-source-maps dist/index.js",
       "service": true,
+      "env": {
+        "ALLOWED_ORIGINS": "http://localhost:5173"
+      },
       "dependencies": [
         "build"
       ],

@@ -17,7 +17,7 @@ export function makeRouter(config: Config) {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    if (!cors(req, res)) {
+    if (!cors(req, res, config.allowedOrigins)) {
       return;
     }
     try {
