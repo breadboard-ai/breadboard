@@ -568,7 +568,10 @@ export class Editor extends LitElement {
   }
 
   async #onKeyDown(evt: KeyboardEvent) {
-    if (evt.metaKey && this.graph) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (isCtrlCommand && this.graph) {
       // Copy.
       if (evt.key === "c") {
         if (this.#writingToClipboard) {
