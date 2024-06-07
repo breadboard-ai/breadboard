@@ -79,6 +79,10 @@ export class ConnectionBroker extends HTMLElement {
     const grantUrl = new URL("http://localhost:5555/grant");
     grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
+    grantUrl.searchParams.set(
+      "redirect_path",
+      new URL(window.location.href).pathname
+    );
     const response = await fetch(grantUrl);
     if (!response.ok) {
       const text = await response.text().catch((e) => `Text read error: ${e}`);

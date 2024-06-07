@@ -11,6 +11,7 @@ import { badRequestJson, internalServerError, okJson } from "../responses.js";
 interface GrantRequest {
   connection_id: string;
   code: string;
+  redirect_path: string;
 }
 
 // IMPORTANT: Keep in sync with
@@ -54,7 +55,7 @@ export async function grant(
   tokenUrl.searchParams.set("code", params.code);
   tokenUrl.searchParams.set(
     "redirect_uri",
-    secretData.web.redirect_uris?.[0] ?? ""
+    new URL(params.redirect_path, req.headers.origin).href
   );
   tokenUrl.searchParams.set("client_id", secretData.web.client_id);
   tokenUrl.searchParams.set("client_secret", secretData.web.client_secret);
