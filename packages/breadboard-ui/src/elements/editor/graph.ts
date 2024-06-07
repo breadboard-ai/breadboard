@@ -347,6 +347,12 @@ export class Graph extends PIXI.Container {
       const path = evt.composedPath();
       const topTarget = path[path.length - 1] as PIXI.Graphics;
 
+      // If the user has clicked on the node, but not dragged the wire anywhere,
+      // avoid creating a wire.
+      if (topTarget === nodePortBeingEdited) {
+        return;
+      }
+
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
       const targetEdge = edgeBeingEdited;
