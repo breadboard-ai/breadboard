@@ -8,4 +8,5 @@ import type { OAuthClientSecretData } from "./secrets.js";
 
 export interface Config {
   secrets: Map<string, OAuthClientSecretData>;
+  allowedOrigins: Set<string>;
 }

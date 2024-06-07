@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
 import { watchAndRun } from "vite-plugin-watch-and-run";
@@ -18,6 +24,7 @@ export default defineConfig((_) => {
           worker: "src/worker.ts",
           sample: "./index.html",
           preview: "./preview.html",
+          oauth: "./oauth/index.html",
           embed: "src/embed.ts",
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",

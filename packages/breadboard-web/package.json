@@ -118,7 +118,9 @@
       "files": [
         "vite.config.ts",
         ".env",
-        "index.html"
+        "*.html",
+        "oauth/",
+        "public/"
       ],
       "output": [
         "dist/"
@@ -141,7 +143,7 @@
           "cascade": false
         },
         {
-          "script": "../connection-server:start",
+          "script": "../connection-server:dev:nowatch",
           "cascade": false
         }
       ],

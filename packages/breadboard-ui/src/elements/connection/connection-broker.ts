@@ -76,10 +76,18 @@ export class ConnectionBroker extends HTMLElement {
     // TODO(aomarks) After we are stamping environment globals into our HTML, we
     // should read this URL from there. For now, we only support local
     // development.
-    const grantUrl = new URL("http://localhost:5555/grant");
+    const grantUrl = new URL(
+      new URL(window.location.href).origin === "http://localhost:5173"
+        ? "http://localhost:5555/grant"
+        : "https://connections-dot-breadboard-ai.googleplex.com/grant"
+    );
     grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
-    const response = await fetch(grantUrl);
+    grantUrl.searchParams.set(
+      "redirect_path",
+      new URL(window.location.href).pathname
+    );
+    const response = await fetch(grantUrl, { credentials: "include" });
     if (!response.ok) {
       const text = await response.text().catch((e) => `Text read error: ${e}`);
       shadow.innerHTML = `

@@ -1,3 +1,4 @@
+service: test
 runtime: python39
 handlers:
   - url: /

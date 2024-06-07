@@ -174,7 +174,7 @@ export class ConnectionInput extends LitElement {
     } satisfies RefreshRequest).toString();
 
     const now = Date.now();
-    const httpRes = await fetch(refreshUrl, { signal });
+    const httpRes = await fetch(refreshUrl, { signal, credentials: "include" });
     if (!httpRes.ok) {
       throw new Error(String(httpRes.status));
     }

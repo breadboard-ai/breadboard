@@ -115,7 +115,7 @@ export class Main extends LitElement {
       // TODO(aomarks) Read this from a global stamped into the HTML somehow.
       new URL(window.location.href).origin === "http://localhost:5173"
         ? "http://localhost:5555"
-        : undefined,
+        : "https://connections-dot-breadboard-ai.googleplex.com",
     connectionRedirectUrl: "/oauth/",
   };
 

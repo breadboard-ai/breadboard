@@ -22,8 +22,9 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "start": "wireit",
-    "dev": "npm start --watch",
+    "start": "node dist/index.js",
+    "dev": "npm run dev:nowatch --watch",
+    "dev:nowatch": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "echo \"no tests yet\"",
@@ -31,9 +32,12 @@
     "prepack": "npm run build"
   },
   "wireit": {
-    "start": {
+    "dev:nowatch": {
       "command": "node --enable-source-maps dist/index.js",
       "service": true,
+      "env": {
+        "ALLOWED_ORIGINS": "http://localhost:5173"
+      },
       "dependencies": [
         "build"
       ],
@@ -69,8 +73,9 @@
     }
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
     "@types/node": "^20.14.1",
-    "typescript": "^5.4.5"
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "wireit": "^0.14.4"
   }
 }

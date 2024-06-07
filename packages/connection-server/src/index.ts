@@ -14,6 +14,11 @@ import { loadSecretsFromDisk } from "./secrets.js";
 const secretsFolder = join(cwd(), "secrets/");
 const config: Config = {
   secrets: await loadSecretsFromDisk(secretsFolder),
+  allowedOrigins: new Set(
+    (process.env["ALLOWED_ORIGINS"] ?? "")
+      .split(/\s+/)
+      .filter((origin) => origin !== "")
+  ),
 };
 if (config.secrets.size === 0) {
   console.log(
@@ -33,7 +38,18 @@ if (config.secrets.size === 0) {
 `
   );
 }
-
+if (config.allowedOrigins.size === 0) {
+  console.log(
+    `
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Breadboard Connection Server                                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ No allowed origins were set. Place a space-delimited list of 1+ allowed │
+│ origins in the ALLOWED_ORIGINS environment variable and restart.        │
+└─────────────────────────────────────────────────────────────────────────┘
+`
+  );
+}
 const host = env.HOST || "localhost";
 const port = env.PORT ? Number(env.PORT) : 5555;
 const server = createServer(makeRouter(config));

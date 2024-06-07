@@ -22,6 +22,7 @@ export function fetchAvailableConnections(
       }
       const httpRes = await fetch(new URL("list", connectionServerUrl), {
         signal,
+        credentials: "include",
       });
       if (!httpRes.ok) {
         throw new Error(String(httpRes.status));
