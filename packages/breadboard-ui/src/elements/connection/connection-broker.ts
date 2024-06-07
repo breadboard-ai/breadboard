@@ -83,7 +83,7 @@ export class ConnectionBroker extends HTMLElement {
       "redirect_path",
       new URL(window.location.href).pathname
     );
-    const response = await fetch(grantUrl);
+    const response = await fetch(grantUrl, { credentials: "include" });
     if (!response.ok) {
       const text = await response.text().catch((e) => `Text read error: ${e}`);
       shadow.innerHTML = `
