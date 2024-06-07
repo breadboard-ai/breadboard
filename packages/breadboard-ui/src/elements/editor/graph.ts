@@ -347,6 +347,12 @@ export class Graph extends PIXI.Container {
       const path = evt.composedPath();
       const topTarget = path[path.length - 1] as PIXI.Graphics;
 
+      // If the pointer target is the same at pointerdown and pointerup, the
+      // user has clicked on a node port, and we should avoid creating a wire.
+      if (topTarget === nodePortBeingEdited) {
+        return;
+      }
+
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
       const targetEdge = edgeBeingEdited;
