@@ -28,8 +28,28 @@ kit.graphs = {
   nano: serialize(nanoGenerator),
 };
 
-core.invoke({ $id: "text", $board: "#text" });
-core.invoke({ $id: "vision", $board: "#vision" });
-core.invoke({ $id: "nano", $board: "#nano", $metadata: { icon: "nano" } });
+core.invoke({
+  $id: "text",
+  $metadata: {
+    title: "Gemini Generator",
+    description: "Generates text using the Gemini API.",
+  },
+  $board: "#text",
+});
+core.invoke({
+  $id: "vision",
+  $board: "#vision",
+  $metadata: { deprecated: true },
+});
+core.invoke({
+  $id: "nano",
+  $board: "#nano",
+  $metadata: {
+    title: "Gemini Nano (Preview)",
+    description:
+      "Generates text with the on-device Gemini Nano model (see https://developer.chrome.com/ for more details) ",
+    icon: "nano",
+  },
+});
 
 export default kit;

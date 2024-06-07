@@ -60,7 +60,7 @@ const runInBrowser = async ({
     // call does not cause a runtime error.
     // See https://github.com/privatenumber/tsx/issues/113 and
     // https://github.com/evanw/esbuild/issues/1031 for more details.
-    return `${code}\nglobalThis.__name = () => {};\nself.onmessage = async () => self.postMessage({ result: JSON.stringify((await ${functionName}(${args}))) });self.onerror = (e) => self.postMessage({ error: e.message })`;
+    return `${code}\nglobalThis.__name = () => {};\nself.onmessage = async () => {try { self.postMessage({ result: JSON.stringify((await ${functionName}(${args}))) }); } catch (e) { self.postMessage({ error: e.message })}};self.onerror = (e) => self.postMessage({ error: e.message })`;
   };
 
   const blob = new Blob([runner(code, functionName)], {
@@ -80,6 +80,7 @@ const runInBrowser = async ({
         resolve(data.result);
         return;
       } else if (data.error) {
+        console.log("Error in worker", data.error);
         reject(new Error(data.error));
       }
     };
