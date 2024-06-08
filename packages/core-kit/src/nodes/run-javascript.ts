@@ -14,24 +14,32 @@ const stripCodeBlock = (code: string) =>
 
 // Copied from "secrets.ts".
 // TODO: Clean this up, this feels like a util of some sort.
-type Environment = "node" | "browser" | "worker";
+type Environment = "node" | "browser" | "worker" | "serviceWorker";
 
-const environment = (): Environment =>
-  typeof globalThis.process !== "undefined"
-    ? "node"
-    : typeof globalThis.window !== "undefined"
-      ? "browser"
-      : "worker";
-
-const runInNode = async ({
-  code,
-  functionName,
-  args,
-}: {
+export type ScriptRunner = (args: {
   code: string;
   functionName: string;
   args: string;
-}): Promise<string> => {
+}) => Promise<string>;
+
+const environment = (): Environment => {
+  if (typeof globalThis.process !== "undefined") {
+    return "node";
+  }
+  if (typeof globalThis.window !== "undefined") {
+    return "browser";
+  }
+  if (
+    "ServiceWorkerGlobalScope" in globalThis &&
+    // @ts-expect-error -- ServiceWorkerGlobalScope is not defined.
+    globalThis instanceof ServiceWorkerGlobalScope
+  ) {
+    return "serviceWorker";
+  }
+  return "worker";
+};
+
+const runInNode: ScriptRunner = async ({ code, functionName, args }) => {
   let vm;
   if (typeof require === "function") {
     vm = require("node:vm");
@@ -42,6 +50,19 @@ const runInNode = async ({
   const context = vm.createContext({ console, structuredClone });
   const script = new vm.Script(codeToRun);
   const result = await script.runInNewContext(context);
+  return JSON.stringify(result);
+};
+
+const runInServiceWorker: ScriptRunner = async ({
+  code,
+  functionName,
+  args,
+}) => {
+  // @vite-ignore
+  const body = `return (async function() { \n${code};\nreturn await ${functionName}(${args}) })();`;
+  // Very very sorry.
+  const f = new Function(body);
+  const result = await f();
   return JSON.stringify(result);
 };
 
@@ -158,7 +179,7 @@ export function convertToNamedFunction({
 
 const DEFAULT_FUNCTION_NAME = "run";
 export const runJavascriptHandler = async (
-  { code, name, raw, schema }: RunJavascriptInputs,
+  { code, name, raw }: RunJavascriptInputs,
   args: InputValues
 ) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
@@ -168,13 +189,22 @@ export const runJavascriptHandler = async (
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
   const argsString = JSON.stringify(args);
-  const env = environment();
+  const env: Environment = environment();
+
+  let runner: ScriptRunner;
 
   try {
+    if (env === "node") {
+      runner = runInNode;
+    } else if (env === "browser") {
+      runner = runInBrowser;
+    } else if (env === "serviceWorker") {
+      runner = runInServiceWorker;
+    } else {
+      throw new Error(`Unsupported environment: ${env}`);
+    }
     const result = JSON.parse(
-      env === "node"
-        ? await runInNode({ code, functionName: name, args: argsString })
-        : await runInBrowser({ code, functionName: name, args: argsString })
+      await runner({ code, functionName: name, args: argsString })
     );
     return raw ? result : { result };
   } catch (e) {
