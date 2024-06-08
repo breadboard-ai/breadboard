@@ -7,13 +7,13 @@
 import { IncomingMessage, ServerResponse, createServer } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
-import { notFound, serverError } from "./server/errors.js";
+import { serverError } from "./server/errors.js";
 import { cors } from "./server/cors.js";
-import list from "./server/api/list.js";
-import get from "./server/api/get.js";
-import post from "./server/api/post.js";
-import del from "./server/api/delete.js";
-import create from "./server/api/create.js";
+import list from "./server/boards/list.js";
+import get from "./server/boards/get.js";
+import post from "./server/boards/post.js";
+import del from "./server/boards/delete.js";
+import create from "./server/boards/create.js";
 import { serveFile } from "./server/common.js";
 
 const PORT = env.PORT || 3000;
