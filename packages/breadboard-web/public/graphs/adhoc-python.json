@@ -1,0 +1,54 @@
+{
+  "title": "Testing Python adhoc boards",
+  "description": "Trying out making a board that uses a decorator.",
+  "version": "",
+  "graphs": {},
+  "nodes": [
+    {
+      "id": "output-node-1-1",
+      "type": "passthrough",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "field1": {
+              "default": "blaster",
+              "title": "Field1",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "output-1",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "output": {
+              "description": "All input smashed together.",
+              "title": "Output",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "output-node-1-1",
+      "to": "output-1",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "kits": []
+}

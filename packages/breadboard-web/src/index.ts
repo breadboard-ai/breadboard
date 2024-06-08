@@ -361,6 +361,7 @@ export class Main extends LitElement {
       align-items: center;
     }
   `;
+  proxyFromUrl: string | undefined;
 
   constructor(config: MainArguments) {
     super();
@@ -373,6 +374,12 @@ export class Main extends LitElement {
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
     const embedFromUrl = currentUrl.searchParams.get("embed");
+    const proxyFromUrl = currentUrl.searchParams.get("proxy_url");
+    if (proxyFromUrl) {
+      console.log("Got a proxyURL: %s", proxyFromUrl);
+      this.proxyFromUrl = proxyFromUrl;
+    }
+
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
     Promise.all([
@@ -533,6 +540,11 @@ export class Main extends LitElement {
         // TODO: Figure out how to avoid needing to null this out.
         this.#editor = null;
       } catch (err) {
+        console.log("KEX: failed to load board for some reason: %s", this.url);
+        console.error(err);
+        console.log(err);
+        const err1 = err as Error;
+        console.log(err1.stack);
         this.url = null;
         this.graph = null;
         // TODO: Figure out how to avoid needing to null this out.
@@ -741,6 +753,7 @@ export class Main extends LitElement {
             );
           }}
         ></button>
+        <div id="kex-testing"></div>
         <div id="tab-container">
           <h1>
             <span
@@ -918,15 +931,18 @@ export class Main extends LitElement {
 
             this.#runBoard(
               run(
-                addNodeProxyServerConfig({
-                  url: this.graph.url,
-                  runner,
-                  diagnostics: true,
-                  kits: this.kits,
-                  loader: this.#loader,
-                  signal: this.#abortController?.signal,
-                  inputs: inputsFromSettings(this.#settings),
-                })
+                addNodeProxyServerConfig(
+                  {
+                    url: this.graph.url,
+                    runner,
+                    diagnostics: true,
+                    kits: this.kits,
+                    loader: this.#loader,
+                    signal: this.#abortController?.signal,
+                    inputs: inputsFromSettings(this.#settings),
+                  },
+                  this.proxyFromUrl
+                )
               )
             );
           }}

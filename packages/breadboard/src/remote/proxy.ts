@@ -8,6 +8,7 @@ import { callHandler, handlersFromKits } from "../handler.js";
 import { streamsToAsyncIterable } from "../stream.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
+import { v4 as uuidv4 } from "uuid";
 import {
   InputValues,
   NodeDescriptor,
@@ -53,6 +54,7 @@ export class ProxyServer {
   }
 
   async serve(config: ProxyServerConfig) {
+    console.log("KEX: serve in proxy.ts");
     const { kits } = config;
     const stream = this.#transport.createServerStream();
     const tunnelKit = createTunnelKit(
@@ -140,6 +142,7 @@ export class ProxyClient {
     node: NodeDescriptor,
     inputs: InputValues
   ): Promise<OutputValues> {
+    console.log("KEX: proxy in proxy.ts");
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
     const reader = stream.readableResponses.getReader();
@@ -176,6 +179,7 @@ export class ProxyClient {
       if (typeof arg === "string") return arg;
       else return arg.node;
     });
+
     const proxiedNodes = Object.fromEntries(
       nodesToProxy.map((type) => {
         return [

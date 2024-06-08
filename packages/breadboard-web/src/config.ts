@@ -14,13 +14,8 @@ import {
 import GeminiKit from "@google-labs/gemini-kit";
 import { loadKits } from "./utils/kit-loader";
 
-const PROXY_NODES = [
-  "secrets",
-  "fetch",
-  "runPython",
-  "testing",
-  "prompt-template-python",
-];
+const PROXY_NODES = ["secrets", "fetch"];
+const PYTHON_NODES = ["runPython", "testing", "prompt-template-python"];
 
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
@@ -40,20 +35,28 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
 
 const kitConstructors = [GeminiKit];
 
-export const addNodeProxyServerConfig = (config: RunConfig) => {
+export const addNodeProxyServerConfig = (
+  config: RunConfig,
+  proxyUrl?: string | undefined
+) => {
   // try to find node proxy server in local storage:
   //const proxyServerURL = globalThis.localStorage.getItem(PROXY_SERVER_URL_KEY);
-  const proxyServerURL = PROXY_SERVER_URL;
-  if (!proxyServerURL) return config;
+  //const proxyServerURL = PROXY_SERVER_URL;
+  if (!proxyUrl) return config;
+  if (proxyUrl === "localhost") {
+    proxyUrl = PROXY_SERVER_URL;
+  }
 
-  console.log("🚀 Using proxy server:", proxyServerURL);
+  console.log("🚀 Using proxy server:", proxyUrl);
   config.proxy = [
-    { location: "http", url: proxyServerURL, nodes: PROXY_NODES },
+    //{ location: "http", url: proxyServerURL, nodes: PROXY_NODES },
+    { location: "python", url: proxyUrl, nodes: PYTHON_NODES },
   ];
   return config;
 };
 
 export const createRunConfig = async (url: string): Promise<RunConfig> => {
+  // KEX: This doesn't seem to be used at all yet?
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -69,6 +72,12 @@ export const createRunConfig = async (url: string): Promise<RunConfig> => {
         url: proxyServerURL,
         nodes: PROXY_NODES,
       });
+      proxy.push({
+        location: "python",
+        url: proxyServerURL,
+        nodes: PYTHON_NODES,
+      });
+      console.log(proxy);
     }
   } else if (harness === WORKER_HARNESS_VALUE) {
     proxy.push({ location: "main", nodes: PROXY_NODES });

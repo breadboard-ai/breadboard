@@ -190,6 +190,61 @@ const chunkRepairTransform = () => {
   });
 };
 
+function makeRequest(
+  method: string,
+  url: string,
+  p0: {
+    body: string;
+    cache?: RequestCache | undefined;
+    credentials?: RequestCredentials | undefined;
+    headers?: HeadersInit | undefined;
+    integrity?: string | undefined;
+    keepalive?: boolean | undefined;
+    method?: string | undefined;
+    mode?: RequestMode | undefined;
+    priority?: RequestPriority | undefined;
+    redirect?: RequestRedirect | undefined;
+    referrer?: string | undefined;
+    referrerPolicy?: ReferrerPolicy | undefined;
+    signal?: AbortSignal | null | undefined;
+    window?: null | undefined;
+    fetch?:
+      | {
+          (
+            input: URL | RequestInfo,
+            init?: RequestInit | undefined
+          ): Promise<Response>;
+          (
+            input: string | URL | Request,
+            init?: RequestInit | undefined
+          ): Promise<Response>;
+        }
+      | undefined;
+  }
+): Promise<string> {
+  return new Promise(function (resolve, reject) {
+    let xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    xhr.onload = function () {
+      if (this.status >= 200 && this.status < 300) {
+        resolve(xhr.response as string);
+      } else {
+        reject({
+          status: this.status,
+          statusText: xhr.statusText,
+        });
+      }
+    };
+    xhr.onerror = function () {
+      reject({
+        status: this.status,
+        statusText: xhr.statusText,
+      });
+    };
+    xhr.send();
+  });
+}
+
 export class HTTPClientTransport<Request, Response>
   implements ClientTransport<Request, Response>
 {
@@ -201,7 +256,7 @@ export class HTTPClientTransport<Request, Response>
     this.#url = url;
     this.#options = {
       ...options,
-      method: "POST",
+      method: "GET",
       headers: { "Content-Type": "application/json" },
     };
     this.#fetch = this.#options.fetch ?? globalThis.fetch.bind(globalThis);
@@ -246,15 +301,26 @@ export class HTTPClientTransport<Request, Response>
               "HTTPClientTransport supports only one write per stream instance."
             );
           }
-          const response = await that.#fetch(that.#url, {
+          console.log("KEX: what is url?");
+          console.log("url: %s", that.#url);
+          console.log(that.#options);
+          const response = await makeRequest("GET", that.#url, {
             ...that.#options,
             body: JSON.stringify(chunk),
           });
-          if (!response.ok) {
+          console.log(response);
+          /*const response = await makeRequest("POST", that.#url, {
+            ...that.#options,
+            body: JSON.stringify(chunk),
+          });*/
+          /*if (!response.ok) {
             controller.error(new Error(`HTTP error: ${response.status}`));
-          }
+          }*/
+          const responseBody = new Blob([response], {
+            type: "text/plain",
+          }).stream();
           responseResolve(
-            response.body
+            responseBody //response.body
               ?.pipeThrough(new TextDecoderStream())
               .pipeThrough(chunkRepairTransform())
               .pipeThrough(serverStreamEventDecoder())

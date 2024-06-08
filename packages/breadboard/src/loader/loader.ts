@@ -40,24 +40,34 @@ export class Loader implements GraphLoader {
   }
 
   async #loadWithProviders(url: URL): Promise<GraphDescriptor | null> {
+    console.log("KEX: running loadwithproviders");
     for (const provider of this.#graphProviders) {
+      console.log("KEX: iterating over providers");
       const capabilities = provider.canProvide(url);
       if (capabilities === false) {
         continue;
       }
       if (capabilities.load) {
+        console.log("KEX: And then some load?");
+        console.log(provider);
+        console.log(url);
         const graph = await provider.load(url);
+        console.log("KEX: Did the graph get retunred?");
         if (graph !== null) {
+          console.log("KEX: about to get something");
           graph.url = url.href;
+          console.log("KEX: got some graph that's not null?");
           return graph;
         }
       }
     }
     console.warn(`Unable to load graph from "${url.href}"`);
+    console.log("KEX: unable to load graph");
     return null;
   }
 
   async #loadOrWarn(url: URL): Promise<GraphDescriptor | null> {
+    console.log("KEX: try to loadOrWarn");
     const graph = await this.#loadWithProviders(url);
     if (!graph) {
       return null;
@@ -102,7 +112,9 @@ export class Loader implements GraphLoader {
       );
       if (!graph) {
         console.warn(`Unable to load graph from "${path}"`);
+        console.log(`Unable to load graph from "${path}"`);
       }
+      console.log("KEX: Returning from load for ephemeral");
       return graph;
     }
 
@@ -112,6 +124,7 @@ export class Loader implements GraphLoader {
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
+      console.log("KEX: no url hash");
       return await this.#loadOrWarn(url);
     }
 
@@ -131,8 +144,10 @@ export class Loader implements GraphLoader {
     // Otherwise, load the graph and then get its subgraph.
     const loadedSupergraph = await this.#loadOrWarn(removeHash(url));
     if (!loadedSupergraph) {
+      console.log("KEX: failed to load supergraph");
       return null;
     }
+    console.log("KEX: trying to return getSubgraph");
     return this.#getSubgraph(
       url,
       url.hash.substring(1),

@@ -13,8 +13,9 @@ import { createSecretAskingKit } from "./secrets.js";
 import { HarnessRunResult } from "./types.js";
 import { runInWorker } from "./worker.js";
 import { GraphLoader } from "../loader/types.js";
+import { ColabClientTransport } from "../remote/colab.js";
 
-export type ProxyLocation = "main" | "worker" | "http";
+export type ProxyLocation = "main" | "worker" | "http" | "python";
 
 export type HarnessProxyConfig = {
   location: ProxyLocation;
@@ -94,19 +95,42 @@ export type RunConfig = {
 
 const configureKits = (config: RunConfig) => {
   // If a proxy is configured, add the proxy kit to the list of kits.
-  const proxyConfig = config.proxy?.[0];
-  if (!proxyConfig) return config.kits;
-
-  if (proxyConfig.location !== "http") {
-    throw new Error("Only HTTP node proxy server is supported at this time.");
+  if (!config.proxy) return config.kits;
+  const kits: Kit[] = [];
+  console.log("KEX: ConfigureKits");
+  for (var proxyConfig of config.proxy) {
+    console.log("KEX: Checking proxyCOnfig in configureKits");
+    console.log(config.proxy);
+    switch (proxyConfig.location) {
+      case "http": {
+        if (!proxyConfig.url) {
+          throw new Error("No node proxy server URL provided.");
+        }
+        const proxyClient = new ProxyClient(
+          new HTTPClientTransport(proxyConfig.url)
+        );
+        kits.push(proxyClient.createProxyKit(proxyConfig.nodes));
+        break;
+      }
+      case "python": {
+        if (!proxyConfig.url) {
+          throw new Error("No node proxy server URL provided.");
+        }
+        console.log("Adding a python kit");
+        const proxyClient = new ProxyClient(
+          new HTTPClientTransport(proxyConfig.url)
+        );
+        kits.push(proxyClient.createProxyKit(proxyConfig.nodes));
+        break;
+      }
+      default: {
+        throw new Error(
+          "Only HTTP node proxy server is supported at this time."
+        );
+      }
+    }
   }
-
-  if (!proxyConfig.url) {
-    throw new Error("No node proxy server URL provided.");
-  }
-
-  const proxyClient = new ProxyClient(new HTTPClientTransport(proxyConfig.url));
-  return [proxyClient.createProxyKit(proxyConfig.nodes), ...config.kits];
+  return [...kits, ...config.kits];
 };
 
 export async function* run(config: RunConfig) {

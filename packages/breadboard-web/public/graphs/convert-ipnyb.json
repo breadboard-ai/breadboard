@@ -1,49 +1,87 @@
 {
-  "title": "Run Python Notebook",
-  "description": "Runs a graph converted from a colab notebook.",
-  "version": "0.0.1",
-  "edges": [
-    {
-      "from": "input-1",
-      "to": "output-2",
-      "out": "text",
-      "in": "text"
-    }
-  ],
+  "title": "Test Python Board on runtime",
+  "description": "Some simple board that's written in Python and runs on an IPython runtime.",
+  "version": "",
+  "graphs": {},
   "nodes": [
     {
-      "id": "output-2",
+      "id": "output-1",
       "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "runPython-1",
+      "type": "runPython",
       "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "text"
-            }
-          }
-        }
+        "code": "responses = {}\nservice = \"blade:google.ai.generativelanguage.v1main.generativeservice-autopush\"\n#service = \"localhost:9876\"\n#service = \"sdh.mtv.corp.google.com:9876\"\nfrom google3.labs.language.genai.scripts.multimodal import client\n\ncli = client.Client(service, api_key=API_KEY)\nfor i, r in enumerate(requests):\n  #print(f\"\\n---Index: {i}---\")\n  try:\n    response_string = cli.generate(r)\n    responses[i] = response_string[1].candidates[0]\n    print(response_string[1].candidates[0].content.parts[0])\n  except Exception as e:\n    responses[i] = e\n    print(e)\n    print(response_string)",
+        "pickle": null,
+        "python_version": "3"
+      }
+    },
+    {
+      "id": "runPython-2",
+      "type": "runPython",
+      "configuration": {
+        "code": "from google3.google.ai.generativelanguage.v1main import content_pb2\nfrom google3.google.ai.generativelanguage.v1main import generative_service_pb2\n\nfrom google3.labs.language.genai.scripts.multimodal import client",
+        "pickle": null,
+        "python_version": "3"
+      }
+    },
+    {
+      "id": "runPython-3",
+      "type": "runPython",
+      "configuration": {
+        "code": "from google3.google.ai.generativelanguage.v1main import content_pb2\nfrom google3.google.ai.generativelanguage.v1main import generative_service_pb2\nfrom google.protobuf import json_format\nimport json\n\ntarget = json_format.Parse(a, generative_service_pb2.GenerateContentRequest())\nrequests = [target]",
+        "pickle": null,
+        "python_version": "3"
+      }
+    },
+    {
+      "id": "runPython-4",
+      "type": "runPython",
+      "configuration": {
+        "code": "a = {\"model\": \"models/gemini-1.5-pro-eval-or-fc-patch-si-v1\", \"contents\": [{\"role\": \"model\", \"parts\": [{\"function_call\": {\"name\": \"book_tickets\", \"args\": {\"movie\": \"Mission Impossible Dead Reckoning Part 1\", \"theater\": \"Regal Edwards 14\", \"location\": \"Mountain View CA\", \"showtime\": \"7:30\", \"date\": \"today\", \"num_tix\": \"2\"}}}]}], \"tools\": [{\"function_declarations\": [{\"name\": \"find_movies\", \"description\": \"find movie titles currently playing in theaters based on any description, genre, title words, etc.\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"description\": {\"type\": \"STRING\", \"description\": \"Any kind of description including category or genre, title words, attributes, etc.\"}}, \"required\": [\"description\"]}}, {\"name\": \"find_theaters\", \"description\": \"find theaters based on location and optionally movie title which are is currently playing in theaters\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}}, \"required\": [\"location\"]}}, {\"name\": \"get_showtimes\", \"description\": \"Find the start times for movies playing in a specific theater\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the theater\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for requested showtime\"}}, \"required\": [\"location\", \"movie\", \"theater\", \"date\"]}}, {\"name\": \"get_attributes\", \"description\": \"Find the basic features of a movie, including the director, producer, runtime, rating (like G, PG, etc.), synopsis, release date, or studio\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"attribute\": {\"type\": \"STRING\", \"description\": \"Any attribute the user is looking for including the director, producer, runtime, rating (like G, PG, etc.), synopsis, release date, or studio\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}}, \"required\": [\"attribute\", \"movie\"]}}, {\"name\": \"get_movie_reviews\", \"description\": \"Gets the audience and/or critic reviews for a given movie\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"review_type\": {\"type\": \"STRING\", \"enum\": [\"audience\", \"critic\", \"both\"]}}, \"required\": [\"movie\", \"review_type\"]}}, {\"name\": \"book_tickets\", \"description\": \"Completes transaction to purchase tickets for a movie playing in a theater, assuming the user payment information is already on file\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the movie theater\"}, \"location\": {\"type\": \"STRING\", \"description\": \"City and state or zip code where the movie theater is located\"}, \"showtime\": {\"type\": \"STRING\", \"description\": \"Time the movie begins\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for the movie showing\"}, \"num_tix\": {\"type\": \"STRING\", \"description\": \"Number of tickets to be purchased\"}}, \"required\": [\"movie\", \"theater\", \"location\", \"showtime\", \"date\", \"num_tix\"]}}, {\"name\": \"check_ticket_availability\", \"description\": \"Checks that tickets for a particular movie, showtime, theater, time, and date are available\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the movie theater\"}, \"location\": {\"type\": \"STRING\", \"description\": \"City and state or zip code where the movie theater is located\"}, \"showtime\": {\"type\": \"STRING\", \"description\": \"Time the movie begins\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for the movie showing\"}, \"num_tix\": {\"type\": \"STRING\", \"description\": \"Number of tickets to be purchased\"}}, \"required\": [\"movie\", \"theater\", \"location\", \"showtime\", \"date\", \"num_tix\"]}}]}], \"generation_config\": {\"temperature\": 0.0}}\n",
+        "pickle": null,
+        "python_version": "3"
       }
     },
     {
       "id": "input-1",
       "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "text"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
+      "configuration": {}
     }
   ],
-  "graphs": {}
+  "edges": [
+    {
+      "from": "runPython-1",
+      "to": "output-1",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "runPython-2",
+      "to": "runPython-1",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "runPython-3",
+      "to": "runPython-2",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "runPython-4",
+      "to": "runPython-3",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "input-1",
+      "to": "runPython-4",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "kits": []
 }

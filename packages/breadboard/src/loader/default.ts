@@ -33,7 +33,9 @@ export const loadFromFile = async (path: string) => {
 };
 
 export const loadWithFetch = async (url: string | URL) => {
+  console.log("KEX: trying to load with fetch: %s", url);
   const response = await fetch(url);
+
   return await response.json();
 };
 
