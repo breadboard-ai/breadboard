@@ -38,7 +38,7 @@ const getApiPath = (path: string) => {
   return maybePath;
 };
 
-const serveFiles = async (req: IncomingMessage, res: ServerResponse) => {
+const serveWithVite = async (req: IncomingMessage, res: ServerResponse) => {
   const pathname = req.url || "/";
   if (vite === null) {
     serveFile(res, pathname);
@@ -115,7 +115,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (!(await serveBoardsAPI(req, res))) {
-    serveFiles(req, res);
+    serveWithVite(req, res);
   }
 });
 
