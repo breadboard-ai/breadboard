@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { IncomingMessage, ServerResponse, createServer } from "http";
-import { createServer as createViteServer, type ViteDevServer } from "vite";
+import { createServer } from "http";
+import { createServer as createViteServer } from "vite";
 import { env } from "process";
 import { cors } from "./server/cors.js";
-import { serveFile, serveWithVite } from "./server/common.js";
+import { serveWithVite } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 
 const PORT = env.PORT || 3000;
