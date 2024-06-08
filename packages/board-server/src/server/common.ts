@@ -1,11 +1,12 @@
 import { readFile } from "fs/promises";
-import type { ServerResponse } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { notFound } from "./errors.js";
+import type { ViteDevServer } from "vite";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = resolve(MODULE_PATH, "../");
+const ROOT_PATH = resolve(MODULE_PATH, "../..");
 const PROD_PATH = "/dist/client";
 
 const CONTENT_TYPE = new Map([
@@ -44,4 +45,29 @@ export const serveFile = async (
   } catch {
     notFound(res, "Static file not found");
   }
+};
+
+export const serveWithVite = async (
+  vite: ViteDevServer | null,
+  req: IncomingMessage,
+  res: ServerResponse
+) => {
+  const pathname = req.url || "/";
+  if (vite === null) {
+    serveFile(res, pathname);
+  } else {
+    vite.middlewares(req, res);
+  }
+};
+
+export const serveIndex = async (
+  vite: ViteDevServer | null,
+  res: ServerResponse
+) => {
+  if (vite === null) {
+    return serveFile(res, "/index.html");
+  }
+  serveFile(res, "/", async (contents: string) => {
+    return await vite.transformIndexHtml("/index.html", contents);
+  });
 };
