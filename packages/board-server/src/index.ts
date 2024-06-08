@@ -38,11 +38,8 @@ const getApiPath = (path: string) => {
   return maybePath;
 };
 
-const serveFiles = async (
-  req: IncomingMessage,
-  res: ServerResponse,
-  pathname: string
-) => {
+const serveFiles = async (req: IncomingMessage, res: ServerResponse) => {
+  const pathname = req.url || "/";
   if (vite === null) {
     serveFile(res, pathname);
   } else {
@@ -59,37 +56,33 @@ const serveIndex = async (res: ServerResponse) => {
   });
 };
 
-const server = createServer(async (req, res) => {
-  if (!cors(req, res)) {
-    return;
+const serveBoardsAPI = async (
+  req: IncomingMessage,
+  res: ServerResponse
+): Promise<boolean> => {
+  const pathname = req.url;
+  if (!pathname) {
+    serverError(res, "Empty url");
+    return true;
   }
 
-  const url = req.url;
-  if (!url) {
-    return;
-  }
-  const resolvedURL = URL.canParse(url, HOSTNAME)
-    ? new URL(url, HOSTNAME)
-    : null;
-  if (!resolvedURL) {
-    serverError(res, `Invalid URL: ${url}`);
-    return;
-  }
-
-  const pathname = resolvedURL.pathname;
   const isBoardServer = pathname.startsWith(API_ENTRY);
   const isApp = pathname.endsWith(".app");
   const isAPI = pathname.endsWith(".api");
+
   if (!isBoardServer) {
-    return serveFiles(req, res, pathname);
+    return false;
   }
   if (isApp) {
     // Serve the index.html file for the app.
-    return serveIndex(res);
+    serveIndex(res);
+    return true;
   }
   if (isAPI) {
-    return serveFile(res, "/api.html");
+    serveFile(res, "/api.html");
+    return true;
   }
+
   const apiPath = getApiPath(pathname);
   try {
     if (apiPath.length === 0) {
@@ -107,12 +100,22 @@ const server = createServer(async (req, res) => {
         if (await del(apiPath, req, res)) return true;
       } else {
         serverError(res, `Method not allowed: ${req.method}`);
-        return;
+        return true;
       }
     }
   } catch (e) {
     serverError(res, `API Error: ${e}`);
+  }
+  return true;
+};
+
+const server = createServer(async (req, res) => {
+  if (!cors(req, res)) {
     return;
+  }
+
+  if (!(await serveBoardsAPI(req, res))) {
+    serveFiles(req, res);
   }
 });
 

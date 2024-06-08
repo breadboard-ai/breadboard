@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { notFound } from "./errors.js";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = resolve(MODULE_PATH, "../");
+const ROOT_PATH = resolve(MODULE_PATH, "../..");
 const PROD_PATH = "/dist/client";
 
 const CONTENT_TYPE = new Map([
