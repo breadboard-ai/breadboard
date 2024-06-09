@@ -10,6 +10,7 @@ import { env } from "process";
 import { cors } from "./server/cors.js";
 import { serveWithVite } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
+import { serveProxyAPI } from "./server/proxy.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
@@ -30,7 +31,9 @@ const server = createServer(async (req, res) => {
   }
 
   if (!(await serveBoardsAPI(vite, req, res))) {
-    serveWithVite(vite, req, res);
+    if (!(await serveProxyAPI(req, res))) {
+      serveWithVite(vite, req, res);
+    }
   }
 });
 

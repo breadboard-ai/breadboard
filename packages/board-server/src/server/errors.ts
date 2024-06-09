@@ -11,6 +11,11 @@ export const serverError = (res: ServerResponse, error: string) => {
   res.end(error);
 };
 
+export const methodNotAllowed = (res: ServerResponse, error: string) => {
+  res.writeHead(405, "Method Not Allowed");
+  res.end(error);
+};
+
 export const notFound = (res: ServerResponse, error: string) => {
   res.writeHead(404, "Page not found");
   res.end(error);
