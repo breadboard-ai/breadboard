@@ -14,11 +14,42 @@ import {
   type ProxyServerConfig,
   hasOrigin,
 } from "@google-labs/breadboard/remote";
-import { asRuntimeKit } from "@google-labs/breadboard";
+import { asRuntimeKit, createDataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
+
+import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
+
+const secretManager = new SecretManagerServiceClient();
+
+const SECRET_NAMES = [
+  "GEMINI_KEY",
+  "SCRAPING_BEE_KEY",
+  "OPENAI_API_KEY",
+  "ELEVENLABS_API_KEY",
+];
+
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT;
+
+if (!PROJECT_ID) {
+  throw new Error("Missing GOOGLE_CLOUD_PROJECT");
+}
+
+SECRET_NAMES.forEach(async (name) => {
+  const path = secretManager.secretVersionPath(PROJECT_ID, name, "latest");
+  const [version] = await secretManager.accessSecretVersion({
+    name: path,
+  });
+  const payload = version?.payload?.data;
+  if (!payload) {
+    throw new Error(`Missing secret: ${name}`);
+  }
+  const secret = payload.toString();
+  process.env[name] = secret;
+});
 
 const config: ProxyServerConfig = {
   kits: [asRuntimeKit(Core)],
+  store: createDataStore(),
   proxy: [
     "fetch",
     {
@@ -33,7 +64,19 @@ const config: ProxyServerConfig = {
         SCRAPING_BEE_KEY: {
           to: "fetch",
           when: {
-            url: hasOrigin("https://app.scrapingbee.com/"),
+            url: hasOrigin("https://app.scrapingbee.com"),
+          },
+        },
+        OPENAI_API_KEY: {
+          to: "fetch",
+          when: {
+            url: hasOrigin("https://api.openai.com"),
+          },
+        },
+        ELEVENLABS_API_KEY: {
+          to: "fetch",
+          when: {
+            url: hasOrigin("https://api.elevenlabs.io"),
           },
         },
       },
