@@ -109,7 +109,6 @@ export class App extends LitElement {
     title: string | undefined;
     description: string | undefined;
   }> | null = null;
-  #partDataURLs = new Map<number, string>();
   #contentRef: Ref<HTMLDivElement> = createRef();
   #outputs = new Map<string, InputValues>();
   #secrets: Record<string, string> = {};
@@ -699,9 +698,7 @@ export class App extends LitElement {
             } else if (isInlineData(part)) {
               const key = idx;
               let partDataURL: Promise<string> = Promise.resolve("No source");
-              if (this.#partDataURLs.has(key)) {
-                partDataURL = Promise.resolve(this.#partDataURLs.get(key)!);
-              } else if (
+              if (
                 part.inlineData.data !== "" &&
                 !part.inlineData.mimeType.startsWith("text")
               ) {
@@ -710,7 +707,6 @@ export class App extends LitElement {
                   .then((response) => response.blob())
                   .then((data) => {
                     const url = URL.createObjectURL(data);
-                    this.#partDataURLs.set(key, url);
                     return url;
                   });
               }
