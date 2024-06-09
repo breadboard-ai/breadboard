@@ -30,7 +30,9 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (!(await serveBoardsAPI(vite, req, res))) {
+  const url = new URL(req.url || "", HOSTNAME);
+
+  if (!(await serveBoardsAPI(url, vite, req, res))) {
     if (!(await serveProxyAPI(req, res))) {
       serveWithVite(vite, req, res);
     }

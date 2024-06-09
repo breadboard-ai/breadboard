@@ -473,6 +473,14 @@ export class App extends LitElement {
       },
     };
 
+    const base = new URL(window.location.href);
+    if (base.searchParams.has("proxy")) {
+      config.proxy = [
+        { location: "http", url: "/proxy", nodes: ["fetch", "secrets"] },
+      ];
+      config.interactiveSecrets = false;
+    }
+
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
@@ -891,7 +899,12 @@ export class App extends LitElement {
           }
 
           const typeInfo = formData.get(`${key}-data-type`);
-          if (typeInfo && typeInfo === "object" && typeof value === "string") {
+          console.log("typeInfo", typeInfo, typeof value, value);
+          if (
+            typeInfo &&
+            (typeInfo === "object" || typeInfo === "array") &&
+            typeof value === "string"
+          ) {
             try {
               value = JSON.parse(value);
             } catch (err) {
