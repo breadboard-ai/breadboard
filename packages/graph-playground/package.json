@@ -181,8 +181,5 @@
     "@google-labs/pinecone-kit": "^0.1.12",
     "@google-labs/template-kit": "^0.3.2",
     "dotenv": "^16.4.5"
-  },
-  "engines": {
-    "node": ">=19.0.0"
   }
 }
