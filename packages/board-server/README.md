@@ -8,13 +8,13 @@ One-time setup:
 
 - Login
 
-````bash
+```bash
 gcloud auth login
-```b
+```
 
 ```bash
 gcloud auth application-default login
-````
+```
 
 ```bash
 gcloud config set project <project name>
@@ -34,3 +34,11 @@ npm run s
 
 This will bring up the board server at `http://localhost:3000` and
 a breadboard-web dev server at whatever port it launches (usually `http://localhost:5173/`).
+
+To deploy:
+
+```bash
+npm run deploy
+```
+
+This will build the project and deploy it to App Engine.
