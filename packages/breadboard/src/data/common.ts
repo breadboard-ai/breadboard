@@ -52,19 +52,24 @@ export const isInlineData = (
   return true;
 };
 
-export function asBase64(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject("Reader result is not a string");
-        return;
-      }
+export async function asBase64(file: File | Blob): Promise<string> {
+  if ("Buffer" in globalThis) {
+    // Node.js implementation, since Node.js doesn't have FileReader.
+    return Buffer.from(await file.arrayBuffer()).toString("base64");
+  } else {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== "string") {
+          reject("Reader result is not a string");
+          return;
+        }
 
-      const [, content] = reader.result.split(",");
-      resolve(content);
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
+        const [, content] = reader.result.split(",");
+        resolve(content);
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  }
 }

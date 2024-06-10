@@ -16,7 +16,7 @@
     "deploy": "npm run build && gcloud app deploy",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
-    "dev": "concurrently \"npm run serve --watch\" \"(cd ../breadboard-web && npm run dev)\""
+    "dev": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) &&concurrently \"npm run serve --watch\" \"(cd ../breadboard-web && npm run dev)\""
   },
   "wireit": {
     "build": {
@@ -95,6 +95,7 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.8.0",
+    "@google-cloud/secret-manager": "^5.6.0",
     "@google-labs/breadboard": "^0.20.0",
     "@google-labs/breadboard-web": "^1.9.0",
     "@lit/context": "^1.1.2",

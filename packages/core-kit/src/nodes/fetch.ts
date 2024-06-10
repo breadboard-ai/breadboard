@@ -46,7 +46,7 @@ const serverSentEventTransform = () =>
 const createBody = async (
   body: unknown,
   headers: Record<string, string | undefined>,
-  store: DataStore
+  store?: DataStore
 ) => {
   if (!body) return undefined;
   const contentType = headers["Content-Type"];
@@ -71,7 +71,8 @@ const createBody = async (
     }
     return formData;
   }
-  return JSON.stringify(await inflateData(store, body));
+  const data = store ? await inflateData(store, body) : body;
+  return JSON.stringify(data);
 };
 
 export default defineNodeType({
@@ -144,11 +145,6 @@ export default defineNodeType({
     const init: RequestInit = { method, headers, signal };
     // GET can not have a body.
     if (method !== "GET") {
-      if (!store) {
-        throw new Error(
-          "No store provided in run configuration to store the request."
-        );
-      }
       init.body = await createBody(body, headers, store);
     } else if (body) {
       throw new Error("GET requests can not have a body");

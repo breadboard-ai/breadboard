@@ -24,15 +24,12 @@ const getApiPath = (path: string) => {
 };
 
 export const serveBoardsAPI = async (
+  url: URL,
   vite: ViteDevServer | null,
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<boolean> => {
-  const pathname = req.url;
-  if (!pathname) {
-    serverError(res, "Empty url");
-    return true;
-  }
+  const { pathname } = url;
 
   const isBoardServer = pathname.startsWith(API_ENTRY);
   const isApp = pathname.endsWith(".app");

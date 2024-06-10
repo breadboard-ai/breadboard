@@ -109,7 +109,6 @@ export class App extends LitElement {
     title: string | undefined;
     description: string | undefined;
   }> | null = null;
-  #partDataURLs = new Map<number, string>();
   #contentRef: Ref<HTMLDivElement> = createRef();
   #outputs = new Map<string, InputValues>();
   #secrets: Record<string, string> = {};
@@ -473,6 +472,14 @@ export class App extends LitElement {
       },
     };
 
+    const base = new URL(window.location.href);
+    if (base.searchParams.has("proxy")) {
+      config.proxy = [
+        { location: "http", url: "/proxy", nodes: ["fetch", "secrets"] },
+      ];
+      config.interactiveSecrets = false;
+    }
+
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
@@ -691,9 +698,7 @@ export class App extends LitElement {
             } else if (isInlineData(part)) {
               const key = idx;
               let partDataURL: Promise<string> = Promise.resolve("No source");
-              if (this.#partDataURLs.has(key)) {
-                partDataURL = Promise.resolve(this.#partDataURLs.get(key)!);
-              } else if (
+              if (
                 part.inlineData.data !== "" &&
                 !part.inlineData.mimeType.startsWith("text")
               ) {
@@ -702,7 +707,6 @@ export class App extends LitElement {
                   .then((response) => response.blob())
                   .then((data) => {
                     const url = URL.createObjectURL(data);
-                    this.#partDataURLs.set(key, url);
                     return url;
                   });
               }
@@ -891,7 +895,11 @@ export class App extends LitElement {
           }
 
           const typeInfo = formData.get(`${key}-data-type`);
-          if (typeInfo && typeInfo === "object" && typeof value === "string") {
+          if (
+            typeInfo &&
+            (typeInfo === "object" || typeInfo === "array") &&
+            typeof value === "string"
+          ) {
             try {
               value = JSON.parse(value);
             } catch (err) {

@@ -47,7 +47,7 @@ export const serveFile = async (
   }
 };
 
-export const serveWithVite = async (
+export const serveContent = async (
   vite: ViteDevServer | null,
   req: IncomingMessage,
   res: ServerResponse

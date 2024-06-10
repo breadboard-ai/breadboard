@@ -23,6 +23,7 @@ import {
 } from "./protocol.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
+import { inflateData } from "../data/inflate-deflate.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -53,7 +54,7 @@ export class ProxyServer {
   }
 
   async serve(config: ProxyServerConfig) {
-    const { kits } = config;
+    const { kits, store } = config;
     const stream = this.#transport.createServerStream();
     const tunnelKit = createTunnelKit(
       readConfig(config),
@@ -97,6 +98,7 @@ export class ProxyServer {
       try {
         const result = await callHandler(handler, inputs, {
           descriptor: node,
+          store,
         });
 
         if (!result) {
@@ -106,7 +108,10 @@ export class ProxyServer {
           ]);
           continue;
         }
-        request.reply(["proxy", { outputs: result }]);
+        const outputs = store
+          ? ((await inflateData(store, result)) as OutputValues)
+          : result;
+        request.reply(["proxy", { outputs }]);
       } catch (e) {
         request.reply([
           "error",
