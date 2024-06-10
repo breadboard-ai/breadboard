@@ -8,7 +8,7 @@ import { createServer } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
 import { cors } from "./server/cors.js";
-import { serveWithVite } from "./server/common.js";
+import { serveContent } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
 
@@ -40,7 +40,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  serveWithVite(vite, req, res);
+  serveContent(vite, req, res);
 });
 
 server.listen(PORT, () => {
