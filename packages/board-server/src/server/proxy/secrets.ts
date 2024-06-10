@@ -39,7 +39,7 @@ const getKey = async (key: string) => {
 };
 
 /**
- * An simplest possible Kit that contains a "secrets" node that talks to the
+ * The simplest possible Kit that contains a "secrets" node that talks to the
  * Google Cloud Secret Manager.
  */
 export const secretsKit: Kit = {
