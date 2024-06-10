@@ -26,17 +26,21 @@ const vite = IS_PROD
     });
 
 const server = createServer(async (req, res) => {
+  const url = new URL(req.url || "", HOSTNAME);
+
+  if (await serveProxyAPI(req, res)) {
+    return;
+  }
+
   if (!cors(req, res)) {
     return;
   }
 
-  const url = new URL(req.url || "", HOSTNAME);
-
-  if (!(await serveBoardsAPI(url, vite, req, res))) {
-    if (!(await serveProxyAPI(req, res))) {
-      serveWithVite(vite, req, res);
-    }
+  if (await serveBoardsAPI(url, vite, req, res)) {
+    return;
   }
+
+  serveWithVite(vite, req, res);
 });
 
 server.listen(PORT, () => {
