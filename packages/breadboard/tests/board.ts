@@ -12,7 +12,7 @@ import type {
   InputValues,
 } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
-import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();

@@ -1,7 +1,7 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 
-import config from "./package.json" assert { type: "json" };
+import config from "./package.json" with { type: "json" };
 
 const makeAllTargets = Object.entries(config.exports).map(([name, input]) => {
   name = name === "." ? "index" : name;

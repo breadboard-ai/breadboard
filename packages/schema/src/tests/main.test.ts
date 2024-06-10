@@ -12,10 +12,10 @@ import * as path from "path";
 import { ascendToPackageDir } from "../scripts/util/ascend-to-package-dir.js";
 import { getBoardFiles } from "./util/get-board-files.js";
 
-let ajv = new Ajv();
+const ajv = new Ajv();
 let validate: ValidateFunction;
 
-import schema from "../../breadboard.schema.json" assert { type: "json" };
+import schema from "../../breadboard.schema.json" with { type: "json" };
 
 test.before(() => {
   validate = ajv.compile(schema);

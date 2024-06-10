@@ -38,7 +38,7 @@ import {
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
-import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 import { GraphLoader, GraphProvider } from "./loader/types.js";
 import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
 import {

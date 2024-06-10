@@ -5,11 +5,11 @@
  */
 
 import * as path from "path";
-import packageJson from "../../package.json" assert { type: "json" };
+import packageJson from "../../package.json" with { type: "json" };
 import { ascendToPackageDir } from "./util/ascend-to-package-dir.js";
 
 export function generateSchemaId() {
-  const PACKAGE_ROOT = ascendToPackageDir(packageJson.name)
+  const PACKAGE_ROOT = ascendToPackageDir(packageJson.name);
   const SCHEMA_PATH = path.relative(PACKAGE_ROOT, "breadboard.schema.json");
 
   const GITHUB_OWNER = "breadboard-ai";
