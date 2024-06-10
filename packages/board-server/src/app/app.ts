@@ -895,7 +895,6 @@ export class App extends LitElement {
           }
 
           const typeInfo = formData.get(`${key}-data-type`);
-          console.log("typeInfo", typeInfo, typeof value, value);
           if (
             typeInfo &&
             (typeInfo === "object" || typeInfo === "array") &&
