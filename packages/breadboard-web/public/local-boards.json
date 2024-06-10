@@ -99,6 +99,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Google Custom Search Engine Tool",
+    "url": "/graphs/google-custom-search-engingine.json",
+    "version": "0.1.0"
+  },
+  {
     "title": "Hacker News Angolia search ",
     "url": "/graphs/hacker_news_algolia_search.json",
     "version": "0.0.1"
