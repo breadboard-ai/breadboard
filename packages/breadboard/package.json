@@ -166,7 +166,7 @@
     "typescript": "^5.4.5"
   },
   "engines": {
-    "node": ">=19.0.0"
+    "node": ">=20.14.0"
   },
   "dependencies": {
     "@google-labs/breadboard-schema": "^1.4.1"

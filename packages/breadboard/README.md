@@ -42,7 +42,7 @@ This library's design emphasizes two key properties:
 
 ## Installation
 
-Breadboard requires [Node.js](https://nodejs.org/) version 19 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
+Breadboard requires [Node.js](https://nodejs.org/) version 20.14.0 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
 
 - Check what version of Node.js you're running with `node -v`.
 - In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
@@ -132,16 +132,18 @@ console.log(await echo({ say: "Hello Breadboard!" })); // { hear: 'Hello Breadbo
 Attributes can be passed between nodes by wiring them together.
 
 Using `to`, attributes can be wired from left-to-right.
+
 ```typescript
 board<{ message: string }>(({ message }, { output }) => {
-	return message.as("response").to(output());
+  return message.as("response").to(output());
 });
 ```
 
 Alternatively, `in` can be used to pass attributes from right-to-left.
+
 ```typescript
 board<{ message: string }>(({ message }, { output }) => {
-	return output().in(message.as("response"))
+  return output().in(message.as("response"));
 });
 ```
 
@@ -330,7 +332,13 @@ When running a serialized board that uses kits or `code`, all the kits it uses m
 Each of the kits must be wrapped with `asRuntimeKit` and passed in together in an array.
 
 ```typescript
-import { addKit, asRuntimeKit, board, BoardRunner, code } from "@google-labs/breadboard";
+import {
+  addKit,
+  asRuntimeKit,
+  board,
+  BoardRunner,
+  code,
+} from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import TemplateKit from "@google-labs/template-kit";
 
@@ -511,7 +519,7 @@ export default await board(() => {
       required: ["greeting", "subject"],
     },
   });
-  
+
   const result = concatStrings({
     greeting: inputs.greeting.isString(),
     subject: inputs.subject.isString(),

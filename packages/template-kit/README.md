@@ -6,7 +6,7 @@ The Template Kit is a collection of [Breadboard](https://github.com/breadboard-a
 
 ## Installing
 
-The Template Kit requires Node version >=v19.0.0. To install:
+The Template Kit requires Node version >= v20.14.0. To install:
 
 ```sh
 npm install @google-labs/template-kit

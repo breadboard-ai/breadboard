@@ -24,7 +24,7 @@ This is the monorepo for Breadboard. See [DEVELOPING.md](./DEVELOPING.md) for in
 
 ## Requirements
 
-Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
+Breadboard requires [Node](https://nodejs.org/) version >=v20.14.0.
 
 ## Packages
 

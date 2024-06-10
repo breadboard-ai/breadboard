@@ -22,7 +22,7 @@ Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-S
 
 Alternatively, you can install Breadboard locally:
 
-1. Install [Node.js >=v19](https://nodejs.org/en) if needed. Type `node -v` in your CLI to find out which node version you're currently using. If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
+1. Install [Node.js >=20.14.0](https://nodejs.org/en) if needed. Type `node -v` in your CLI to find out which node version you're currently using. If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
 2. Run the following command:
 

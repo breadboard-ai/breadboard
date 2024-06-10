@@ -9,9 +9,7 @@ If you're eager to start making boards with Breadboard as quickly as possible, h
 > Neither onboarding via Replit nor installing locally are ready yet. While they are baking, follow these steps for an in-tree setup:
 >
 > - Check out and set up the monorepo following steps in [DEVELOPING.md](https://github.com/breadboard-ai/breadboard/blob/main/DEVELOPING.md#getting-started)
->
 > - Navigate to `packages/breadboard-web` from the root of the repo
->
 > - Pick back up at "Set up the environment".
 
 There are two ways to get started with Breadboard: fork a Replit project or install Breadboard locally.
@@ -22,7 +20,7 @@ Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create r
 
 ### Install locally
 
-1. Install [Node.js >=v19](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
+1. Install [Node.js >=v20.14.0](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
 2. Run `npm init @google-labs/breadboard` to set up the project. (TODO: make sure this works)
 
@@ -81,15 +79,10 @@ export default await board(({ text }) => {
 > It might be worth going over this code to orient ourselves a little bit:
 >
 > - The `board` call is how we tell Breadboard to create a new board. It takes a function as an argument. This function (let's call it a "board function") is where we describe the board.
->
 > - The board function itself takes a single argument (let's call it "inputs") and returns a single argument, which we'll call "outputs". These arguments are the objects that describe the inputs and outputs of our new board.
->
 > - Both input and output are of the same shape: they are property bags that contain named properties. Each property is a "port" -- one value that the board takes in as input or passes as output. For example, the blank board has a single input port called `text` and a single output port called `text` -- and that input port is passed right through to the output port.
->
 > - The `serialize` function is then called on the result of the `board` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards.
->
 > - The `serialize` function also takes a single argument: some metadata that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
->
 > - Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and then renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window.
 
 In the debugger window, we can see that the board asks for the `text` input. If we enter something there, and hit "Run", we'll see that what we entered gets passed through to the output.
@@ -228,13 +221,9 @@ We will also need to update TypeScript imports in this file to include the `code
 > Just like before, we will go over this bit of code to orient ourselves:
 >
 > - the `code` function is how we ask Breadboard to create a new type of node.
->
 > - just like the `board` function, it takes a single input: the "node function" that describes what the node will do.
->
 > - The node function takes in the inputs bag of ports and returns the output ports. In our node, there's one input port named `text` and one output port named `reversed`.
->
 > - the one-liner that actually does the work reverses the value of the `text` port. Note that we need to typecast it as `string`. By default, the type ports are unknown.
->
 > - finally, we return the `reversed` value as part of the outputs.
 
 It looks like creating new node types is pretty straightforward. Let's see if we can add it to the board.

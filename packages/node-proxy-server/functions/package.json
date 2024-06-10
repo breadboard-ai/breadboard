@@ -71,9 +71,6 @@
       ]
     }
   },
-  "engines": {
-    "node": "20"
-  },
   "main": "lib/bundle.js",
   "dependencies": {
     "firebase-admin": "^12.1.1",

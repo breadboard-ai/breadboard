@@ -8,7 +8,7 @@ If you like learning by starting with simple examples that get more complex with
 Pre-requisites:
 
 - Familiarity with JavaScript and Node.
-- Node v19.0.0 or higher
+- Node v20.14.0 or higher
 - PaLM API key (go [here](https://developers.generativeai.google/tutorials/setup) to obtain one)
 - Spirit of adventure
 

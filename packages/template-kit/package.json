@@ -134,8 +134,5 @@
     "@breadboard-ai/build": "^0.6.0",
     "@google-labs/breadboard": "^0.20.0",
     "url-template": "^3.1.0"
-  },
-  "engines": {
-    "node": ">=19.0.0"
   }
 }
