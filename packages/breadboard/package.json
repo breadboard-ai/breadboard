@@ -165,6 +165,9 @@
     "typedoc-plugin-markdown": "^4.0.3",
     "typescript": "^5.4.5"
   },
+  "engines": {
+    "node": ">=20.14.0"
+  },
   "dependencies": {
     "@google-labs/breadboard-schema": "^1.4.1"
   }

@@ -20,7 +20,7 @@ Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create r
 
 ### Install locally
 
-1. Install [Node.js >=v22](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
+1. Install [Node.js >=v20.14.0](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
 2. Run `npm init @google-labs/breadboard` to set up the project. (TODO: make sure this works)
 

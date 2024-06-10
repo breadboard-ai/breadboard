@@ -42,7 +42,7 @@ This library's design emphasizes two key properties:
 
 ## Installation
 
-Breadboard requires [Node.js](https://nodejs.org/) version 22 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
+Breadboard requires [Node.js](https://nodejs.org/) version 20.14.0 or higher. Before installing, [download and install Node.js](https://nodejs.org/en/download/).
 
 - Check what version of Node.js you're running with `node -v`.
 - In your workspace, make sure to create a `package.json` first with the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
