@@ -56,6 +56,7 @@
         "../node-nursery-web:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
+        "../python-wasm:build",
         "../team-kit:build",
         "build:vite",
         "build:tsc",
@@ -75,6 +76,7 @@
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc",
+        "../python-wasm:build:tsc",
         "../team-kit:build:tsc"
       ],
       "files": [
@@ -239,6 +241,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.6.0",
+    "@breadboard-ai/python-wasm": "^0.1.0",
     "@codemirror/autocomplete": "^6.16.2",
     "@codemirror/commands": "^6.6.0",
     "@codemirror/lang-javascript": "^6.2.2",

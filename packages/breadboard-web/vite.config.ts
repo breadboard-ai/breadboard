@@ -30,6 +30,7 @@ export default defineConfig((_) => {
           "core-kit": "src/core-kit.ts",
           "json-kit": "src/json-kit.ts",
           "template-kit": "src/template-kit.ts",
+          "python-wasm-kit": "src/python-wasm-kit.ts",
           "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
         },
         name: "Breadboard Web Runtime",
@@ -56,5 +57,13 @@ export default defineConfig((_) => {
       ]),
       fullReload(["public/*.json"]),
     ],
+    optimizeDeps: {
+      exclude: [
+        // @breadboard-ai/python-wasm has dependency on pyodide (which is the
+        // Python WASM runtime), but it's not compatible with Vite
+        // optimizations.
+        "pyodide",
+      ],
+    },
   };
 });
