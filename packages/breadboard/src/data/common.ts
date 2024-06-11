@@ -12,7 +12,6 @@ import { DataCapability } from "../types.js";
 export const isDataCapability = (value: unknown): value is DataCapability => {
   if (typeof value !== "object" || value === null) return false;
   const data = value as DataCapability;
-  if (data.kind !== "data") return false;
   if ("inlineData" in data) return true;
   if ("storedData" in data) return true;
   return false;

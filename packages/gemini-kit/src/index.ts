@@ -27,6 +27,7 @@ const builder = new KitBuilder(
 
 const GeminiKit = builder.build({
   text: adapter.handlerForNode("text"),
+  file: adapter.handlerForNode("file"),
   vision: adapter.handlerForNode("vision"),
   nano: adapter.handlerForNode("nano"),
 });

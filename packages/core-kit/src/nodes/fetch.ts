@@ -70,6 +70,18 @@ const createBody = async (
       }
     }
     return formData;
+  } else if (contentType?.startsWith("multipart/related; boundary=")) {
+    const values = body as Record<string, JsonSerializable>;
+    const preMediaBlob = values.preMediaBlob;
+    const media = values.media;
+    const postMediaBlob = values.postMediaBlob;
+    if (isDataCapability(media)) {
+      return new Blob([
+        preMediaBlob as BlobPart,
+        await asBlob(media),
+        postMediaBlob as BlobPart,
+      ]);
+    }
   }
   return JSON.stringify(await inflateData(store, body));
 };

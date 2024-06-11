@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 
 import geminiGenerator from "./boards/gemini-generator.js";
+import geminiFile from "./boards/gemini-file.js";
 import geminiProVision from "./boards/gemini-pro-vision.js";
 import nanoGenerator from "./boards/nano-generator.js";
 
@@ -24,10 +25,12 @@ const core = kit.addKit(Core);
 
 kit.graphs = {
   text: serialize(geminiGenerator),
+  file: serialize(geminiFile),
   vision: geminiProVision,
   nano: serialize(nanoGenerator),
 };
 
+core.invoke({ $id: "file", $board: "#file" });
 core.invoke({ $id: "text", $board: "#text" });
 core.invoke({ $id: "vision", $board: "#vision" });
 core.invoke({ $id: "nano", $board: "#nano", $metadata: { icon: "nano" } });
