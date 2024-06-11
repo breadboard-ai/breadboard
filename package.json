@@ -53,6 +53,7 @@
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
         "./packages/pinecone-kit:build",
+        "./packages/python-wasm:build",
         "./packages/website:build",
         "./packages/schema:build",
         "./packages/board-server:build",
@@ -81,6 +82,7 @@
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
+        "./packages/python-wasm:test",
         "./packages/schema:test"
       ]
     },
@@ -109,7 +111,8 @@
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/pinecone-kit:lint"
+        "./packages/pinecone-kit:lint",
+        "./packages/python-wasm:lint"
       ]
     },
     "ci:local": {

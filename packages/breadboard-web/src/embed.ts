@@ -17,10 +17,17 @@ import TemplateKit from "@google-labs/template-kit";
 import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
+import PythonWasmKit from "@breadboard-ai/python-wasm";
 
-const kits = [TemplateKit, Core, PaLMKit, GeminiKit, JSONKit, AgentKit].map(
-  (kitConstructor) => asRuntimeKit(kitConstructor)
-);
+const kits = [
+  TemplateKit,
+  Core,
+  PaLMKit,
+  GeminiKit,
+  JSONKit,
+  AgentKit,
+  PythonWasmKit,
+].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
 @customElement("bb-embed")
 export class Embed extends LitElement {
