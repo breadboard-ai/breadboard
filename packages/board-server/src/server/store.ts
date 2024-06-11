@@ -39,6 +39,10 @@ export const asInfo = (path: string) => {
   }
   return { userStore: userStore.slice(1), boardName };
 };
+
+export type BoardServerCorsConfig = {
+  allow: string[];
+};
 class Store {
   #database;
 
@@ -46,6 +50,15 @@ class Store {
     this.#database = new Firestore({
       databaseId: storeName,
     });
+  }
+
+  async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {
+    const data = await this.#database
+      .collection("configuration")
+      .doc("board-server-cors")
+      .get();
+    const config = data.data() as BoardServerCorsConfig;
+    return config;
   }
 
   async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {

@@ -74,6 +74,7 @@ export class RemoteGraphProvider implements GraphProvider {
     }
     const response = await fetch(url, {
       method: "POST",
+      credentials: "include",
       body: JSON.stringify(descriptor, null, 2),
       headers: authHeader(apiKey, [["Content-Type", "application/json"]]),
     });
@@ -87,6 +88,7 @@ export class RemoteGraphProvider implements GraphProvider {
     }
     const response = await fetch(`${location}/boards`, {
       method: "POST",
+      credentials: "include",
       body: JSON.stringify({ name: fileName }),
       headers: authHeader(apiKey),
     });
@@ -103,7 +105,7 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async load(url: URL) {
-    const response = await fetch(url);
+    const response = await fetch(url, { credentials: "include" });
     const graph = await response.json();
 
     return graph;
@@ -141,6 +143,7 @@ export class RemoteGraphProvider implements GraphProvider {
       const response = await fetch(url, {
         method: "DELETE",
         headers: authHeader(store.apiKey),
+        credentials: "include",
       });
       const data = await response.json();
       await this.#refreshAllItems();
@@ -166,6 +169,7 @@ export class RemoteGraphProvider implements GraphProvider {
 
     const response = await fetch(`${location}/boards`, {
       headers: authHeader(apiKey),
+      credentials: "include",
     });
     if (response.ok) {
       for (const storeLocation of this.#locations) {
@@ -261,6 +265,7 @@ export class RemoteGraphProvider implements GraphProvider {
     try {
       const response = await fetch(`${store.url}/boards`, {
         headers: authHeader(store.apiKey),
+        credentials: "include",
       });
       const files = await response.json();
 
