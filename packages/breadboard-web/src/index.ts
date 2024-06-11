@@ -48,6 +48,7 @@ import type {
   SettingEntry,
   SettingsHelper,
 } from "@google-labs/breadboard-ui/types/types.js";
+import PythonWasmKit from "@breadboard-ai/python-wasm";
 
 const REPLAY_DELAY_MS = 10;
 
@@ -421,6 +422,7 @@ export class Main extends LitElement {
         // TODO(aomarks) This is presumably not the right way to do this. How do
         // I get something into this.#providers?
         BuildExampleKit,
+        PythonWasmKit,
       ]),
       ...this.#providers.map((provider) => provider.restore()),
       this.#settings?.restore(),

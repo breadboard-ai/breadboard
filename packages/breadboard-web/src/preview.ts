@@ -15,6 +15,7 @@ import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
+import PythonWasmKit from "@breadboard-ai/python-wasm";
 
 import { loadKits } from "./utils/kit-loader.js";
 const kits = await loadKits([
@@ -25,6 +26,7 @@ const kits = await loadKits([
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
+  PythonWasmKit,
 ]);
 
 @customElement("bb-preview")
