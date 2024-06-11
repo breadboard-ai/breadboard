@@ -9,7 +9,7 @@ import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
-const del: ApiHandler = async (path, req, res) => {
+const del: ApiHandler = async (path, req, res, body) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
     return true;
@@ -20,6 +20,17 @@ const del: ApiHandler = async (path, req, res) => {
   if (!userStore.success) {
     serverError(res, "Unauthorized");
     return true;
+  }
+
+  if (!body) {
+    serverError(res, "No body provided");
+    return true;
+  }
+
+  const maybeDelete = body as { delete: boolean };
+
+  if (maybeDelete.delete !== true) {
+    return false;
   }
 
   const result = await store.delete(userStore.store, path);

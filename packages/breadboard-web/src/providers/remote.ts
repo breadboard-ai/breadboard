@@ -29,10 +29,46 @@ interface GraphDBStoreList extends idb.DBSchema {
 const STORE_LIST = "remote-store-list";
 const STORE_LIST_VERSION = 1;
 
+/**
+ * For now, make a flag that controls whether to use simple requests or not.
+ * Simple requests use "API_KEY" query parameter for authentication.
+ */
+const USE_SIMPLE_REQUESTS = true;
+
+const CONTENT_TYPE = { "Content-Type": "application/json" };
+
 const authHeader = (apiKey: string, headers?: HeadersInit) => {
   const h = new Headers(headers);
   h.set("Authorization", `Bearer ${apiKey}`);
   return h;
+};
+
+const createRequest = (
+  url: URL | string,
+  apiKey: string | null,
+  method: string,
+  body?: unknown
+) => {
+  if (typeof url === "string") {
+    url = new URL(url, window.location.href);
+  }
+  if (USE_SIMPLE_REQUESTS) {
+    if (apiKey) {
+      url.searchParams.set("API_KEY", apiKey);
+    }
+    return new Request(url.href, {
+      method,
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+  }
+
+  return new Request(url, {
+    method,
+    credentials: "include",
+    headers: apiKey ? authHeader(apiKey, CONTENT_TYPE) : CONTENT_TYPE,
+    body: JSON.stringify(body),
+  });
 };
 
 export class RemoteGraphProvider implements GraphProvider {
@@ -72,11 +108,8 @@ export class RemoteGraphProvider implements GraphProvider {
     if (!apiKey) {
       return { error: "No API Key" };
     }
-    const response = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(descriptor, null, 2),
-      headers: authHeader(apiKey, [["Content-Type", "application/json"]]),
-    });
+    const request = createRequest(url, apiKey, "POST", descriptor);
+    const response = await fetch(request);
     return await response.json();
   }
 
@@ -85,11 +118,10 @@ export class RemoteGraphProvider implements GraphProvider {
     if (!apiKey) {
       return null;
     }
-    const response = await fetch(`${location}/boards`, {
-      method: "POST",
-      body: JSON.stringify({ name: fileName }),
-      headers: authHeader(apiKey),
+    const request = createRequest(`${location}/boards`, apiKey, "POST", {
+      name: fileName,
     });
+    const response = await fetch(request);
     if (!response.ok) {
       return null;
     }
@@ -103,9 +135,9 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async load(url: URL) {
-    const response = await fetch(url);
+    const request = createRequest(url, null, "GET");
+    const response = await fetch(request);
     const graph = await response.json();
-
     return graph;
   }
 
@@ -138,10 +170,10 @@ export class RemoteGraphProvider implements GraphProvider {
     }
 
     try {
-      const response = await fetch(url, {
-        method: "DELETE",
-        headers: authHeader(store.apiKey),
+      const request = createRequest(url, store.apiKey, "POST", {
+        delete: true,
       });
+      const response = await fetch(request);
       const data = await response.json();
       await this.#refreshAllItems();
 
@@ -164,9 +196,8 @@ export class RemoteGraphProvider implements GraphProvider {
     }
     const apiKey = auth as string;
 
-    const response = await fetch(`${location}/boards`, {
-      headers: authHeader(apiKey),
-    });
+    const request = createRequest(`${location}/boards`, apiKey, "GET");
+    const response = await fetch(request);
     if (response.ok) {
       for (const storeLocation of this.#locations) {
         if (storeLocation.url === location) {
@@ -259,9 +290,8 @@ export class RemoteGraphProvider implements GraphProvider {
 
   async #refreshItems(store: GraphDBStore) {
     try {
-      const response = await fetch(`${store.url}/boards`, {
-        headers: authHeader(store.apiKey),
-      });
+      const request = createRequest(`${store.url}/boards`, store.apiKey, "GET");
+      const response = await fetch(request);
       const files = await response.json();
 
       const items = new Map<

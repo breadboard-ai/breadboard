@@ -23,6 +23,20 @@ const getApiPath = (path: string) => {
   return maybePath;
 };
 
+const getBody = async (req: IncomingMessage): Promise<unknown> => {
+  const chunks: string[] = [];
+
+  return new Promise<unknown>((resolve) => {
+    req.on("data", (chunk) => {
+      chunks.push(chunk.toString());
+    });
+
+    req.on("end", () => {
+      resolve(JSON.parse(chunks.join("")));
+    });
+  });
+};
+
 export const serveBoardsAPI = async (
   url: URL,
   vite: ViteDevServer | null,
@@ -60,9 +74,9 @@ export const serveBoardsAPI = async (
       if (req.method === "GET") {
         if (await get(apiPath, req, res)) return true;
       } else if (req.method === "POST") {
-        if (await post(apiPath, req, res)) return true;
-      } else if (req.method === "DELETE") {
-        if (await del(apiPath, req, res)) return true;
+        const body = await getBody(req);
+        if (await post(apiPath, req, res, body)) return true;
+        if (await del(apiPath, req, res, body)) return true;
       } else {
         serverError(res, `Method not allowed: ${req.method}`);
         return true;

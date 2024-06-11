@@ -6,7 +6,18 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 
+/**
+ * For now, make a flag that controls whether to use simple requests or not.
+ * Simple requests use "API_KEY" query parameter for authentication. *
+ */
+const USE_SIMPLE_REQUESTS = true;
+
 export const getUserKey = (req: IncomingMessage) => {
+  if (USE_SIMPLE_REQUESTS) {
+    const url = new URL(req.url || "", "http://localhost");
+    return url.searchParams.get("API_KEY");
+  }
+
   const auth = req.headers.authorization;
   if (!auth) {
     return null;
