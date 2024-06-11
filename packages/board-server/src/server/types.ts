@@ -9,5 +9,6 @@ import type { IncomingMessage, ServerResponse } from "http";
 export type ApiHandler = (
   path: string,
   req: IncomingMessage,
-  res: ServerResponse
+  res: ServerResponse,
+  body?: unknown
 ) => Promise<boolean>;

@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphDescriptor } from "@google-labs/breadboard";
 import { authenticate } from "../auth.js";
 import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
-const post: ApiHandler = async (path, req, res) => {
+const post: ApiHandler = async (path, req, res, body) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
     serverError(res, "Unauthorized");
@@ -22,27 +23,25 @@ const post: ApiHandler = async (path, req, res) => {
     return true;
   }
 
-  const chunks: string[] = [];
+  if (!body) {
+    serverError(res, "No body provided");
+    return true;
+  }
 
-  return new Promise<boolean>((resolve) => {
-    req.on("data", (chunk) => {
-      chunks.push(chunk.toString());
-    });
+  const maybeGraph = body as GraphDescriptor;
+  if (!("nodes" in maybeGraph && "edges" in maybeGraph)) {
+    return false;
+  }
 
-    req.on("end", async () => {
-      const graph = JSON.parse(chunks.join(""));
-      const result = await store.update(userStore.store, path, graph);
-      if (!result.success) {
-        serverError(res, result.error);
-        resolve(true);
-        return;
-      }
+  const result = await store.update(userStore.store, path, body as string);
+  if (!result.success) {
+    serverError(res, result.error);
+    return true;
+  }
 
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ created: path }));
-      resolve(true);
-    });
-  });
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ created: path }));
+  return true;
 };
 
 export default post;
