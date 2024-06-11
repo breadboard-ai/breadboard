@@ -10,44 +10,32 @@ import {
   array,
   board,
   constant,
-  converge,
   enumeration,
   input,
   loopback,
-  defineNodeType,
   object,
   optional,
   output,
   unsafeCast,
-  unsafeType,
 } from "@breadboard-ai/build";
-import {
-  ConvertBreadboardType,
-  JsonSerializable,
-} from "@breadboard-ai/build/internal/type-system/type.js";
+import { DataCapability } from "@google-labs/breadboard";
+import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import { code, fetch, passthrough, secret } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import {
-  DataStore,
-  NodeHandlerContext,
-  StreamCapability,
-  asBlob,
-  inflateData,
-  isDataCapability,
-} from "@google-labs/breadboard";
 
 const textPartType = object({ text: "string" });
 
 const imagePartType = object({
   inlineData: object({
-    mimeType: enumeration(
-      "image/png",
-      "image/jpeg",
-      "image/heic",
-      "image/heif",
-      "image/webp"
-    ),
+    mimeType: "string",
     data: "string",
+  }),
+});
+
+const storedDataPartType = object({
+  storedData: object({
+    mimeType: "string",
+    handle: "string",
   }),
 });
 
@@ -75,6 +63,7 @@ const partType = anyOf(
   textPartType,
   imagePartType,
   filePartType,
+  storedDataPartType,
   functionCallPartType,
   functionResponsePartType
 );
@@ -113,46 +102,44 @@ const body = code(
   {
     result: object({
       preMediaBlob: "string",
-      media: imagePartType,
+      media: anyOf(imagePartType, storedDataPartType),
       postMediaBlob: "string",
     }),
   },
   ({ context }) => {
     const parts = context.at(0)?.parts;
     if (parts) {
-      const inlineParts = parts?.filter((part) => "inlineData" in part);
-      if (inlineParts && inlineParts.length > 0) {
+      const mediaParts = parts?.filter(
+        (part) => "inlineData" in part || "storedData" in part
+      );
+      if (mediaParts && mediaParts.length > 0) {
         // Just send the first for now
-        const first = inlineParts[0];
+        const boundary = "BOUNDARY";
+        const preMedia =
+          "--" +
+          boundary +
+          "\r\n" +
+          "Content-Type: application/json; charset=utf-8\r\n\r\n{}\r\n--" +
+          boundary +
+          "\r\n" +
+          "Content-Type: ";
+        const postMediaBlob = `\r\n--${boundary}--`;
+        const first = mediaParts[0];
+        if ("storedData" in first) {
+          const media: ConvertBreadboardType<typeof storedDataPartType> = first;
+          const mimeType = media.storedData.mimeType;
+          const preMediaBlob = `${preMedia}${mimeType}\r\n\r\n`;
+          return { result: { preMediaBlob, media, postMediaBlob } };
+        }
         if ("inlineData" in first) {
           const media: ConvertBreadboardType<typeof imagePartType> = first;
-          const boundary = "BOUNDARY";
-          const metadata = JSON.stringify({
-            file: { display_name: "test prober" },
-          });
-          const preMediaBlob =
-            "--" +
-            boundary +
-            "\r\n" +
-            "Content-Type: application/json; charset=utf-8\r\n\r\n" +
-            metadata +
-            "\r\n--" +
-            boundary +
-            "\r\n" +
-            "Content-Type: " +
-            media.inlineData.mimeType +
-            "\r\n\r\n";
-          const postMediaBlob = "\r\n--" + boundary + "--";
-          const result = {
-            preMediaBlob,
-            media,
-            postMediaBlob,
-          };
-          return { result };
+          const mimeType = media.inlineData.mimeType;
+          const preMediaBlob = `${preMedia}${mimeType}\r\n\r\n`;
+          return { result: { preMediaBlob, media, postMediaBlob } };
         }
       }
     }
-    throw new Error("No image specified");
+    throw new Error("No media file specified");
   }
 ).outputs.result;
 
