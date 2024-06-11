@@ -111,6 +111,7 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
+        "copy-pyoide-assets",
         {
           "script": "generate:graphs",
           "cascade": false
@@ -185,6 +186,17 @@
     },
     "copy-light-kits": {
       "command": "tsx src/copy-light-kits.ts",
+      "dependencies": [
+        "../agent-kit:build"
+      ],
+      "output": [
+        "public/*.kit.json"
+      ]
+    },
+    "copy-pyoide-assets": {
+      "command": "tsx src/copy-pyodide-assets.ts",
+      "files": [],
+      "output": [],
       "dependencies": [
         "../agent-kit:build"
       ],
