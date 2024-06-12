@@ -49,6 +49,7 @@
         "./packages/import:build",
         "./packages/json-kit:build",
         "./packages/template-kit:build",
+        "./packages/run-python-kit:build",
         "./packages/node-nursery:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
@@ -78,6 +79,7 @@
         "./packages/import:test",
         "./packages/json-kit:test",
         "./packages/template-kit:test",
+        "./packages/run-python-kit:test",
         "./packages/node-nursery:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
@@ -108,6 +110,7 @@
         "./packages/import:lint",
         "./packages/json-kit:lint",
         "./packages/template-kit:lint",
+        "./packages/run-python-kit:lint",
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
@@ -133,6 +136,7 @@
         "./packages/graph-playground:generate:docs",
         "./packages/graph-runner:generate:docs",
         "./packages/template-kit:generate:docs",
+        "./packages/run-python-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
     },

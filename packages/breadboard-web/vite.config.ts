@@ -31,6 +31,7 @@ export default defineConfig((_) => {
           "json-kit": "src/json-kit.ts",
           "template-kit": "src/template-kit.ts",
           "python-wasm-kit": "src/python-wasm-kit.ts",
+          "run-python-kit": "src/run-python-kit.ts",
           "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
         },
         name: "Breadboard Web Runtime",
