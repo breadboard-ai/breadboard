@@ -1,0 +1,132 @@
+{
+  "name": "@breadboard-ai/google-drive-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
+  "license": "Apache-2.0",
+  "author": "Google LLC",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/google-drive-kit#readme",
+  "repository": {
+    "directory": "packages/google-drive-kit",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/google-drive-kit.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./internal/*.js": {
+      "types": "./dist/internal/*.d.ts",
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "dist/**/*.{js,js.map,d.ts}",
+    "!dist/test/",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "test": "wireit",
+    "test:only": "wireit",
+    "coverage": "wireit",
+    "lint": "wireit",
+    "test-and-lint": "wireit",
+    "dev": "npm run test-and-lint --watch"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc",
+        "../build:build",
+        "../core-kit:build",
+        "../template-kit:build"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "dependencies": [
+        "../build:build:tsc",
+        "../core-kit:build:tsc",
+        "../template-kit:build:tsc"
+      ],
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --test-reporter spec dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:only": {
+      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "coverage": {
+      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "lcov.info"
+      ]
+    },
+    "lint": {
+      "command": "eslint src/ --ext .ts",
+      "files": [
+        "src/**/*.ts",
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    },
+    "test-and-lint": {
+      "dependencies": [
+        "test",
+        "lint"
+      ]
+    }
+  },
+  "dependencies": {
+    "@breadboard-ai/build": "^0.6.0",
+    "@google-labs/core-kit": "^0.9.0",
+    "@google-labs/template-kit": "^0.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "wireit": "^0.14.4"
+  }
+}
