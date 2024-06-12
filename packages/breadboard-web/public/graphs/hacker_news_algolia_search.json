@@ -76,7 +76,7 @@
               "type": "string",
               "title": "page",
               "description": "the page",
-              "default": "2"
+              "default": "1"
             },
             "query": {
               "type": "string",

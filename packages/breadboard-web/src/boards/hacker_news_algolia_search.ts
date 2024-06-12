@@ -89,7 +89,7 @@ const tagsSchema = {
 const pageSchema = {
   type: "string",
   title: "page",
-  default: "2",
+  default: "1",
   description: "the page",
 };
 

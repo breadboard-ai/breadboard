@@ -314,7 +314,7 @@
                     "page": {
                       "type": "string",
                       "title": "page",
-                      "default": "2",
+                      "default": "1",
                       "description": "the page"
                     }
                   }
