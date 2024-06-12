@@ -146,15 +146,41 @@ Once the tool is provided, the Specialist will invoke it whenever the task calls
 
 Let's see if we can build a simple team of Specialists that do something interesting for us.
 
+First, we'll create a blank board by opening the left side panel and clicking on the "New Board" button. We will be asked to name the board. Let's name it something like `my-first-board.json`. All boards are stored as JSON files in the common Breadboard Graph Language (BGL) format.
+
+![New Board](/breadboard/static/images/agent-kit/new-board.png)
+
+As our next step, let's add a Specialist to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
+
+![Adding a Specialist](/breadboard/static/images/agent-kit/add-specialist.png)
+
+Yay! We did it.
+
+Now, let's remove the existing edge connecting the `input` and `output` nodes. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
+
+With the old edge deleted, let's connect input and output to the Specialist. Click and drag from the input's "Context" port to the Specialist's "Context In" port and then from the Specialist's "Context Out" port to the output's "Context" port.
+
+![Wiring the Specialist](/breadboard/static/images/agent-kit/wire-specialist.png)
+
+Congrats! We built our first board with the Agent Kit. The only thing that's missing is something for Specialist to do. What purpose shall we give it?
+
+Hmm... I am always on the lookout for a good book, and it's not always easy to find what I am looking for. So maybe, let's build a Librarian: an agent that helps us find the right book.
+
+Let the education of the Specialist begin. First off, we will name it appropriately. Click on the node representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Node Details". Then Type in "Librarian" as the node's title. You will also see that the title changes in the visual editor as well.
+
+![Naming the Specialist](/breadboard/static/images/agent-kit/name-librarian.png)
+
+Moving on to the Persona, let's type in something like this:
+
+> You are an expert librarian. Given any topic, you can come up with a list of book recommendations.
+
+As a Task, let's put:
+
+> Come up with a list of 5-7 recommendations. Reply in markdown.
+
 TO DO:
 
-- Create a simple graph with one specialist
-
-- Create a blank graph
-
-- Naming the specialist
-
-- using input/output to specifying input type and output type
+- Run
 
 - Chain specialists together
 
