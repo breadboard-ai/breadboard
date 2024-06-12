@@ -24,7 +24,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["temp.json"],
+      "args": ["${fileDirname}/${fileBasenameNoExtension}.json"],
       "justMyCode": false
     },
     {
