@@ -1,4 +1,4 @@
-import { OutputValues, base, code } from "@google-labs/breadboard";
+import { OutputValues, Schema, base, code } from "@google-labs/breadboard";
 
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
@@ -137,16 +137,168 @@ const sliced = slice({
   limit: input.limit as unknown as number,
 });
 
+export const HackerNewsSearchResultsSchema: Schema = {
+  type: "object",
+  properties: {
+    output: {
+      title: "Hacker News Search Results",
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          _highlightResult: {
+            type: "object",
+            properties: {
+              author: {
+                type: "object",
+                properties: {
+                  matchLevel: {
+                    type: "string",
+                  },
+                  matchedWords: {
+                    type: "array",
+                    items: {},
+                  },
+                  value: {
+                    type: "string",
+                  },
+                },
+                required: ["matchLevel", "matchedWords", "value"],
+              },
+              title: {
+                type: "object",
+                properties: {
+                  fullyHighlighted: {
+                    type: "boolean",
+                  },
+                  matchLevel: {
+                    type: "string",
+                  },
+                  matchedWords: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  value: {
+                    type: "string",
+                  },
+                },
+                required: [
+                  "fullyHighlighted",
+                  "matchLevel",
+                  "matchedWords",
+                  "value",
+                ],
+              },
+              url: {
+                type: "object",
+                properties: {
+                  fullyHighlighted: {
+                    type: "boolean",
+                  },
+                  matchLevel: {
+                    type: "string",
+                  },
+                  matchedWords: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  value: {
+                    type: "string",
+                  },
+                },
+                required: [
+                  "fullyHighlighted",
+                  "matchLevel",
+                  "matchedWords",
+                  "value",
+                ],
+              },
+            },
+            required: ["author", "title", "url"],
+          },
+          _tags: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          author: {
+            type: "string",
+          },
+          children: {
+            type: "array",
+            items: {
+              type: "number",
+            },
+          },
+          created_at: {
+            type: "string",
+          },
+          created_at_i: {
+            type: "number",
+          },
+          num_comments: {
+            type: "number",
+          },
+          objectID: {
+            type: "string",
+          },
+          points: {
+            type: "number",
+          },
+          story_id: {
+            type: "number",
+          },
+          title: {
+            type: "string",
+          },
+          updated_at: {
+            type: "string",
+          },
+          url: {
+            type: "string",
+          },
+        },
+        required: [
+          "_highlightResult",
+          "_tags",
+          "author",
+          "children",
+          "created_at",
+          "created_at_i",
+          "num_comments",
+          "objectID",
+          "points",
+          "story_id",
+          "title",
+          "updated_at",
+          "url",
+        ],
+      },
+    },
+  },
+};
+
 const output = base.output({
-  url: urlTemplate.url,
-  output: sliced.output,
+  $metadata: {
+    title: "Output",
+  },
+  schema: HackerNewsSearchResultsSchema,
 });
 
-export const graph = output;
+urlTemplate.url.to(output);
+sliced.output.to(output);
 
-export default await output.serialize({
-  title: "Hacker News Angolia search ",
+const serialised = await input.serialize({
+  title: "Hacker News Angolia Search",
   description:
     "Board which returns API results based on a query using the Hacker News Angolia API",
   version: "0.0.1",
 });
+export { serialised as graph, input, output };
+
+export default serialised;
