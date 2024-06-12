@@ -35,6 +35,7 @@
     "prepack": "npm run build",
     "dev": "npm run serve --watch",
     "serve": "wireit",
+    "preview": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
@@ -128,6 +129,32 @@
       ],
       "output": [
         "dist/"
+      ]
+    },
+    "preview": {
+      "command": "vite preview",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        },
+        {
+          "script": "generate:graphs",
+          "cascade": false
+        },
+        {
+          "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "../connection-server:dev:nowatch",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts",
+        ".env"
       ]
     },
     "serve": {
