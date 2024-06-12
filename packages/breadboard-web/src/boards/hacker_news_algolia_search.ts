@@ -1,7 +1,7 @@
-import { board, base, code, OutputValues } from "@google-labs/breadboard";
+import { OutputValues, base, code } from "@google-labs/breadboard";
 
-import  { core } from "@google-labs/core-kit";
-import  { templates } from "@google-labs/template-kit";
+import { core } from "@google-labs/core-kit";
+import { templates } from "@google-labs/template-kit";
 
 export type PostItem = {
     author: string;
@@ -94,51 +94,52 @@ const pageSchema = {
     description: "the page"
 }
 
-export default await board(() => {
-    const input = base.input({
-        $id: "query",
-        schema: {
-            title: "Algolia Limit",
-            properties: {
-                query: querySchema,
-                limit: limitInputSchema,
-                tags: tagsSchema,
-                page: pageSchema,
-            },
+const input = base.input({
+    $id: "query",
+    schema: {
+        title: "Algolia Limit",
+        properties: {
+            query: querySchema,
+            limit: limitInputSchema,
+            tags: tagsSchema,
+            page: pageSchema,
         },
-        type: "string",
-    })
+    },
+    type: "string",
+})
 
-    let baseURL = "https://hn.algolia.com/api/v1/search?query={query}"
+let baseURL = "https://hn.algolia.com/api/v1/search?query={query}"
 
-    if (input.tags != undefined) {
-        baseURL = baseURL + "&tags={tags}"
-    }
+if (input.tags != undefined) {
+    baseURL = baseURL + "&tags={tags}"
+}
 
-    if (input.page != undefined) {
-        baseURL = baseURL + "&page={page}"
-    }
+if (input.page != undefined) {
+    baseURL = baseURL + "&page={page}"
+}
 
-    const urlTemplate = templates.urlTemplate({
-        $id: "urlTemplate",
-        template: baseURL,
-        query:input.query,
-        page:input.page,
-        tags:input.tags,
+const urlTemplate = templates.urlTemplate({
+    $id: "urlTemplate",
+    template: baseURL,
+    query:input.query,
+    page:input.page,
+    tags:input.tags,
 
-    });
+});
 
-    const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url });
-    const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
+const fetchUrl = core.fetch({ $id: "fetch", method: "GET", url: urlTemplate.url });
+const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
 
-    const sliced = slice({ list: response.hits as unknown as PostItem[], limit: input.limit as unknown as number })
+const sliced = slice({ list: response.hits as unknown as PostItem[], limit: input.limit as unknown as number })
 
-    return {
-        url: urlTemplate.url,
-        output: sliced
-    }
+const output = base.output({
+    url:urlTemplate.url,
+    output: sliced.output,
+})
 
-}).serialize({
+export const graph = output
+
+export default await output.serialize({
     title: "Hacker News Angolia search ",
     description: "Board which returns API results based on a query using the Hacker News Angolia API",
     version: "0.0.1",
