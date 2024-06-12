@@ -129,6 +129,30 @@
     "version": "0.0.1"
   },
   {
+    "title": "Hugging Face Fill Mask",
+    "url": "/graphs/hugging-face-fill-mask.json"
+  },
+  {
+    "title": "Hugging Face Labelling Board",
+    "url": "/graphs/hugging-face-labelling.json"
+  },
+  {
+    "title": "Hugging Face Question Answering Board",
+    "url": "/graphs/hugging-face-question-answering.json"
+  },
+  {
+    "title": "Hugging Face Translation Russian to English Board",
+    "url": "/graphs/hugging-face-russian-english-translation.json"
+  },
+  {
+    "title": "Hugging Face Summarization Board",
+    "url": "/graphs/hugging-face-summarization.json"
+  },
+  {
+    "title": "Hugging Face Text Classification",
+    "url": "/graphs/hugging-face-text-classification.json"
+  },
+  {
     "title": "JSON Agent",
     "url": "/graphs/json-agent.json",
     "version": "0.0.3"

@@ -1,0 +1,162 @@
+{
+  "title": "Hugging Face Labelling Board",
+  "description": "Board which calls the Hugging Face Labelling Endpoint",
+  "edges": [
+    {
+      "from": "fetch-5",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fn-3",
+      "to": "fetch-5",
+      "out": "auth",
+      "in": "headers"
+    },
+    {
+      "from": "fn-4",
+      "to": "fetch-5",
+      "out": "payload",
+      "in": "body"
+    },
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "query",
+      "to": "fn-3",
+      "out": "apiKey",
+      "in": "key"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "candidate_labels",
+      "in": "candidate_labels"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "inputs",
+      "in": "inputs"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "multi_label",
+      "in": "multi_label"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "use_cache",
+      "in": "use_cache"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "wait_for_model",
+      "in": "wait_for_model"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hugging Face Schema For text labelling",
+          "properties": {
+            "apiKey": {
+              "type": "string",
+              "title": "apiKey",
+              "description": "The hugging face api key",
+              "default": "myKey"
+            },
+            "candidate_labels": {
+              "type": "list",
+              "title": "candidate_lebels",
+              "description": "The labels to mark the input",
+              "default": "[refund, legal, faq]"
+            },
+            "inputs": {
+              "type": "string",
+              "title": "inputs",
+              "description": "The data to send to the hugging face api labelling endpoint",
+              "default": "Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!"
+            },
+            "multi_label": {
+              "type": "boolean",
+              "title": "multi_label",
+              "description": "Flag to indicate if multi labels are allowed",
+              "default": "true"
+            },
+            "use_cache": {
+              "type": "boolean",
+              "title": "use_cache",
+              "description": "Boolean. There is a cache layer on the inference API to speedup requests we have already seen. Most models can use those results as is as models are deterministic (meaning the results will be the same anyway). However if you use a non deterministic model, you can set this parameter to prevent the caching mechanism from being used resulting in a real new query",
+              "default": "true"
+            },
+            "wait_for_model": {
+              "type": "boolean",
+              "title": "wait_for_model",
+              "description": " Boolean. If the model is not ready, wait for it instead of receiving 503. It limits the number of requests required to get your inference done. It is advised to only set this flag to true after receiving a 503 error as it will limit hanging in your application to known places",
+              "default": "false"
+            }
+          }
+        },
+        "type": "string"
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch-5",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST",
+        "url": "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = inputs=>{const key=inputs.key;const auth={Authorization:`Bearer ${key}`};return{auth}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_4 = input=>{const{inputs,candidate_labels,multi_label,use_cache,wait_for_model}=input;const payload={inputs,parameters:{candidate_labels,multi_label,options:{use_cache,wait_for_model}}};return{payload}};",
+        "name": "fn_4",
+        "raw": true
+      }
+    }
+  ]
+}

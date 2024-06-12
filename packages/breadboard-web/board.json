@@ -1,0 +1,127 @@
+{
+	"title": "Hugging Face Question Answering Board",
+	"description": "Board which calls the Hugging Face Question Answering Endpoint",
+	"edges": [
+		{
+			"from": "main",
+			"to": "output-2",
+			"out": "output",
+			"in": "output"
+		},
+		{
+			"from": "fetch-5",
+			"to": "main",
+			"out": "*",
+			"in": ""
+		},
+		{
+			"from": "fn-3",
+			"to": "fetch-5",
+			"out": "auth",
+			"in": "headers"
+		},
+		{
+			"from": "fn-4",
+			"to": "fetch-5",
+			"out": "payload",
+			"in": "body"
+		},
+		{
+			"from": "query",
+			"to": "fn-3",
+			"out": "apiKey",
+			"in": "key"
+		},
+		{
+			"from": "query",
+			"to": "fn-4",
+			"out": "question",
+			"in": "question"
+		},
+		{
+			"from": "query",
+			"to": "fn-4",
+			"out": "context",
+			"in": "context"
+		}
+	],
+	"nodes": [
+		{
+			"id": "output-2",
+			"type": "output",
+			"configuration": {
+				"schema": {
+					"type": "object",
+					"properties": {
+						"output": {
+							"type": "string",
+							"title": "output"
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "main",
+			"type": "output",
+			"configuration": {}
+		},
+		{
+			"id": "fetch-5",
+			"type": "fetch",
+			"configuration": {
+				"method": "POST",
+				"url": "https://api-inference.huggingface.co/models/deepset/roberta-base-squad2"
+			}
+		},
+		{
+			"id": "fn-3",
+			"type": "runJavascript",
+			"configuration": {
+				"code": "const fn_3 = inputs=>{const key=inputs.key;const auth={Authorization:`Bearer ${key}`};return{auth}};",
+				"name": "fn_3",
+				"raw": true
+			}
+		},
+		{
+			"id": "fn-4",
+			"type": "runJavascript",
+			"configuration": {
+				"code": "const fn_4 = input=>{const{question,context}=input;const payload={\"inputs\":{question,context}};return{payload}};",
+				"name": "fn_4",
+				"raw": true
+			}
+		},
+		{
+			"id": "query",
+			"type": "input",
+			"configuration": {
+				"schema": {
+					"title": "Hugging Face Schema For Question Answering",
+					"properties": {
+						"question": {
+							"type": "string",
+							"title": "question",
+							"default": "What is my name?",
+							"description": "The data to send to the hugging face api question answering endpoint"
+						},
+						"apiKey": {
+							"type": "string",
+							"title": "apiKey",
+							"default": "myKey",
+							"description": "The hugging face api key"
+						},
+						"context": {
+							"type": "string",
+							"title": "context",
+							"default": "My name is Clara and I live in Berkeley.",
+							"description": "context for the question being asked"
+						}
+					}
+				},
+				"type": "string"
+			}
+		}
+	],
+	"graphs": {}
+}
