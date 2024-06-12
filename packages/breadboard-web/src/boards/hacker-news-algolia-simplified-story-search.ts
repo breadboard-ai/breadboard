@@ -7,7 +7,7 @@
  * see: https://hn.algolia.com/api
  */
 
-import { base } from "@google-labs/breadboard";
+import { base} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import {
   HackerNewsSearchResultsSchema,

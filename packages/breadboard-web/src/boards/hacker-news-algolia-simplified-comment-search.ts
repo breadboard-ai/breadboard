@@ -10,7 +10,6 @@
 import { base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import {
-  HackerNewsSearchResultsSchema,
   graph as search,
   searchQuerySchema,
 } from "./hacker_news_algolia_search";
@@ -34,7 +33,6 @@ const invocation = core.invoke({
 
 const output = base.output({
   $metadata: { title: "Output" },
-  schema: HackerNewsSearchResultsSchema,
 });
 
 invocation.output.to(output);

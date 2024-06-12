@@ -101,8 +101,6 @@ export const searchTagsSchema: Schema = {
     "show_hn",
     "ask_hn",
     "front_page",
-    // "author_:{USERNAME}",
-    // "story_:{ID}",
   ],
 };
 
