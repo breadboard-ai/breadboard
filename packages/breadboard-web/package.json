@@ -51,6 +51,7 @@
         "../build:build",
         "../core-kit:build",
         "../gemini-kit:build",
+        "../google-drive-kit:build",
         "../json-kit:build",
         "../template-kit:build",
         "../node-nursery-web:build",
@@ -71,6 +72,7 @@
         "../build:build:tsc",
         "../core-kit:build:tsc",
         "../gemini-kit:build:tsc",
+        "../google-drive-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
@@ -241,6 +243,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.6.0",
+    "@breadboard-ai/google-drive-kit": "^0.1.0",
     "@breadboard-ai/python-wasm": "^0.1.0",
     "@codemirror/autocomplete": "^6.16.2",
     "@codemirror/commands": "^6.6.0",

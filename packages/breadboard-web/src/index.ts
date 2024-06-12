@@ -49,6 +49,7 @@ import type {
   SettingsHelper,
 } from "@google-labs/breadboard-ui/types/types.js";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
+import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
 const REPLAY_DELAY_MS = 10;
 
@@ -423,6 +424,7 @@ export class Main extends LitElement {
         // I get something into this.#providers?
         BuildExampleKit,
         PythonWasmKit,
+        GoogleDriveKit,
       ]),
       ...this.#providers.map((provider) => provider.restore()),
       this.#settings?.restore(),
