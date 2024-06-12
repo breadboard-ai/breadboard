@@ -14,9 +14,9 @@ import { templates } from "@google-labs/template-kit";
 export type PostItem = {
   author: string;
   created_at: string;
-  created_at_i: number;
+  created_at_i?: number;
   id: number;
-  children: Comment[];
+  children?: Comment[];
   story_id: number;
   type: string;
 };

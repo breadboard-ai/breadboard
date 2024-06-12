@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "edges": [
     {
+      "from": "fn-42",
+      "to": "output-41",
+      "out": "output",
+      "in": "output"
+    },
+    {
       "from": "input-39",
       "to": "invoke-40",
       "out": "query",
@@ -10,9 +16,9 @@
     },
     {
       "from": "invoke-40",
-      "to": "output-41",
+      "to": "fn-42",
       "out": "output",
-      "in": "output"
+      "in": "list"
     }
   ],
   "nodes": [
@@ -201,6 +207,15 @@
       },
       "metadata": {
         "title": "Output"
+      }
+    },
+    {
+      "id": "fn-42",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_42 = ({list})=>{list.forEach(item=>{delete item[\"created_at_i\"];delete item[\"children\"];delete item[\"_tags\"];delete item[\"_highlightResult\"];delete item[\"num_comments\"]});return{output:list}};",
+        "name": "fn_42",
+        "raw": true
       }
     },
     {
