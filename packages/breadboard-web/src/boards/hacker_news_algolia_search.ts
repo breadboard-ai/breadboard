@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * see: https://hn.algolia.com/api
+ */
+
 import { OutputValues, Schema, base, code } from "@google-labs/breadboard";
 
 import { core } from "@google-labs/core-kit";
@@ -65,46 +73,60 @@ const slice = code<{ list: PostItem[]; limit: number }>(({ list, limit }) => {
   return { output: list.slice(0, limit) };
 });
 
-const limitInputSchema = {
+const searchLimitSchema: Schema = {
   type: "number",
   title: "limit",
   default: "1",
-  description: "The limit",
+  description: "Limit the number of results returned by the search",
 };
 
-const querySchema = {
+export const searchQuerySchema: Schema = {
   type: "string",
-  title: "query",
-  default: "JavaScript",
-  description: "The query",
+  title: "Query",
+  description: "The term to search for",
+  default: "Artificial Intelligence",
+  examples: ["Artificial Intelligence", "Machine Learning", "Deep Learning"],
 };
 
-const tagsSchema = {
+export const searchTagsSchema: Schema = {
   type: "string",
-  title: "tags",
-  default: "JavaScript",
-  description: "The tags",
+  title: "Tags",
+  default: undefined,
+  description: "Filter on a specific tag",
+  enum: [
+    "story",
+    "comment",
+    "poll",
+    "pollopt",
+    "show_hn",
+    "ask_hn",
+    "front_page",
+    // "author_:{USERNAME}",
+    // "story_:{ID}",
+  ],
 };
 
-const pageSchema = {
-  type: "string",
-  title: "page",
+export const searchPageSchema: Schema = {
+  type: "number",
+  title: "Page",
   default: "1",
-  description: "the page",
+  description: "The page number of the search results to return",
+};
+
+export const algoliaSearchSchema: Schema = {
+  title: "Hacker News Algolia Search Parameters",
+  type: "object",
+  properties: {
+    query: searchQuerySchema,
+    limit: searchLimitSchema,
+    tags: searchTagsSchema,
+    page: searchPageSchema,
+  },
 };
 
 const input = base.input({
   $id: "query",
-  schema: {
-    title: "Algolia Limit",
-    properties: {
-      query: querySchema,
-      limit: limitInputSchema,
-      tags: tagsSchema,
-      page: pageSchema,
-    },
-  },
-  type: "string",
+  schema: algoliaSearchSchema,
 });
 
 let baseURL = "https://hn.algolia.com/api/v1/search?query={query}";
@@ -130,6 +152,7 @@ const fetchUrl = core.fetch({
   method: "GET",
   url: urlTemplate.url,
 });
+
 const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
 
 const sliced = slice({

@@ -12,37 +12,16 @@ import { core } from "@google-labs/core-kit";
 import {
   HackerNewsSearchResultsSchema,
   graph as search,
+  searchQuerySchema,
+  searchTagsSchema,
 } from "./hacker_news_algolia_search";
 
 const input = base.input({
   schema: {
     type: "object",
     properties: {
-      query: {
-        type: "string",
-        title: "Query",
-        default: "Artificial Intelligence",
-        examples: [
-          "Artificial Intelligence",
-          "Machine Learning",
-          "Deep Learning",
-        ],
-      },
-      tags: {
-        type: "string",
-        title: "Tags",
-        enum: [
-          "story",
-          "comment",
-          "poll",
-          "pollopt",
-          "show_hn",
-          "ask_hn",
-          "front_page",
-          // "author_:{USERNAME}",
-          // "story_:{ID}",
-        ],
-      },
+      query: searchQuerySchema,
+      tags: searchTagsSchema,
     },
   },
   $metadata: { title: "Input" },
@@ -60,7 +39,7 @@ const output = base.output({
   schema: HackerNewsSearchResultsSchema,
 });
 
-invocation.to(output);
+invocation.output.to(output);
 
 const serialised = await output.serialize({
   title: "Hacker News Simplified Algolia Search",

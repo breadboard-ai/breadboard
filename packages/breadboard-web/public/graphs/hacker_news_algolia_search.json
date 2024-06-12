@@ -64,35 +64,48 @@
       "type": "input",
       "configuration": {
         "schema": {
-          "title": "Algolia Limit",
+          "title": "Hacker News Algolia Search Parameters",
+          "type": "object",
           "properties": {
             "limit": {
               "type": "number",
               "title": "limit",
-              "description": "The limit",
+              "description": "Limit the number of results returned by the search",
               "default": "1"
             },
             "page": {
-              "type": "string",
-              "title": "page",
-              "description": "the page",
+              "type": "number",
+              "title": "Page",
+              "description": "The page number of the search results to return",
               "default": "1"
             },
             "query": {
               "type": "string",
-              "title": "query",
-              "description": "The query",
-              "default": "JavaScript"
+              "title": "Query",
+              "description": "The term to search for",
+              "default": "Artificial Intelligence",
+              "examples": [
+                "Artificial Intelligence",
+                "Machine Learning",
+                "Deep Learning"
+              ]
             },
             "tags": {
               "type": "string",
-              "title": "tags",
-              "description": "The tags",
-              "default": "JavaScript"
+              "title": "Tags",
+              "description": "Filter on a specific tag",
+              "enum": [
+                "story",
+                "comment",
+                "poll",
+                "pollopt",
+                "show_hn",
+                "ask_hn",
+                "front_page"
+              ]
             }
           }
-        },
-        "type": "string"
+        }
       }
     },
     {

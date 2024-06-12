@@ -17,8 +17,8 @@
     {
       "from": "invoke-37",
       "to": "output-38",
-      "out": "*",
-      "in": ""
+      "out": "output",
+      "in": "output"
     }
   ],
   "nodes": [
@@ -32,6 +32,7 @@
             "query": {
               "type": "string",
               "title": "Query",
+              "description": "The term to search for",
               "default": "Artificial Intelligence",
               "examples": [
                 "Artificial Intelligence",
@@ -42,6 +43,7 @@
             "tags": {
               "type": "string",
               "title": "Tags",
+              "description": "Filter on a specific tag",
               "enum": [
                 "story",
                 "comment",
@@ -291,35 +293,48 @@
               "type": "input",
               "configuration": {
                 "schema": {
-                  "title": "Algolia Limit",
+                  "title": "Hacker News Algolia Search Parameters",
+                  "type": "object",
                   "properties": {
                     "query": {
                       "type": "string",
-                      "title": "query",
-                      "default": "JavaScript",
-                      "description": "The query"
+                      "title": "Query",
+                      "description": "The term to search for",
+                      "default": "Artificial Intelligence",
+                      "examples": [
+                        "Artificial Intelligence",
+                        "Machine Learning",
+                        "Deep Learning"
+                      ]
                     },
                     "limit": {
                       "type": "number",
                       "title": "limit",
                       "default": "1",
-                      "description": "The limit"
+                      "description": "Limit the number of results returned by the search"
                     },
                     "tags": {
                       "type": "string",
-                      "title": "tags",
-                      "default": "JavaScript",
-                      "description": "The tags"
+                      "title": "Tags",
+                      "description": "Filter on a specific tag",
+                      "enum": [
+                        "story",
+                        "comment",
+                        "poll",
+                        "pollopt",
+                        "show_hn",
+                        "ask_hn",
+                        "front_page"
+                      ]
                     },
                     "page": {
-                      "type": "string",
-                      "title": "page",
+                      "type": "number",
+                      "title": "Page",
                       "default": "1",
-                      "description": "the page"
+                      "description": "The page number of the search results to return"
                     }
                   }
-                },
-                "type": "string"
+                }
               }
             },
             {
