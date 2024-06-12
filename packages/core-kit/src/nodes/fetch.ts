@@ -189,7 +189,7 @@ export default defineNodeType({
         response = await data.text();
       } else {
         const isJson = contentType?.includes("application/json");
-        const isText = contentType?.includes("text/plain");
+        const isText = contentType?.startsWith("text/");
         if (isJson) {
           response = raw ? await data.text() : await data.json();
         } else if (isText) {

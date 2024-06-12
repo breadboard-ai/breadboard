@@ -1,17 +1,18 @@
 {
-  "name": "@breadboard-ai/build",
-  "version": "0.6.0",
-  "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
+  "name": "@breadboard-ai/google-drive-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   "license": "Apache-2.0",
   "author": "Google LLC",
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/build#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/google-drive-kit#readme",
   "repository": {
-    "directory": "packages/build",
+    "directory": "packages/google-drive-kit",
     "type": "git",
-    "url": "git+https://github.com/breadboard-ai/build.git"
+    "url": "git+https://github.com/breadboard-ai/google-drive-kit.git"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -54,13 +55,17 @@
     "build": {
       "dependencies": [
         "build:tsc",
-        "../breadboard:build"
+        "../build:build",
+        "../core-kit:build",
+        "../template-kit:build"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../build:build:tsc",
+        "../core-kit:build:tsc",
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/",
@@ -73,7 +78,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "node --test --test-reporter spec dist/test/*_test.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -115,11 +120,11 @@
     }
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.20.0",
-    "@types/json-schema": "^7.0.15"
+    "@breadboard-ai/build": "^0.6.0",
+    "@google-labs/core-kit": "^0.9.0",
+    "@google-labs/template-kit": "^0.3.2"
   },
   "devDependencies": {
-    "@types/node": "^20.14.2",
     "eslint": "^8.57.0",
     "typescript": "^5.4.5",
     "wireit": "^0.14.4"
