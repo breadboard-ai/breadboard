@@ -104,6 +104,16 @@
     "version": "0.1.0"
   },
   {
+    "title": "Hacker News Algolia Simplified Comment Search",
+    "url": "/graphs/hacker-news-algolia-simplified-comment-search.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Algolia Simplified Story Search",
+    "url": "/graphs/hacker-news-algolia-simplified-story-search.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Hacker News Simplified Algolia Search",
     "url": "/graphs/hacker-news-simplified-algolia-search.json",
     "version": "0.0.1"
@@ -252,11 +262,6 @@
     "version": "0.0.3"
   },
   {
-    "title": "Simplified Hacker News Angolia search ",
-    "url": "/graphs/simplied-hacker-news-algolia-search.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Single turn",
     "url": "/graphs/single-turn.json",
     "version": "0.0.1"
@@ -295,10 +300,5 @@
     "title": "Webcam",
     "url": "/graphs/webcam.json",
     "version": "0.0.2"
-  },
-  {
-    "title": "WRAPPED TEST",
-    "url": "/graphs/wrapped-test.json",
-    "version": "0.0.1"
   }
 ]

@@ -1,29 +1,23 @@
 {
-  "title": "Hacker News Simplified Algolia Search",
+  "title": "Hacker News Algolia Simplified Comment Search",
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-42",
-      "to": "invoke-43",
+      "from": "input-36",
+      "to": "invoke-37",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "input-42",
-      "to": "invoke-43",
-      "out": "tags",
-      "in": "tags"
-    },
-    {
-      "from": "invoke-43",
-      "to": "output-44",
+      "from": "invoke-37",
+      "to": "output-38",
       "out": "output",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-42",
+      "id": "input-36",
       "type": "input",
       "configuration": {
         "schema": {
@@ -39,20 +33,6 @@
                 "Machine Learning",
                 "Deep Learning"
               ]
-            },
-            "tags": {
-              "type": "string",
-              "title": "Tags",
-              "description": "Filter on a specific tag",
-              "enum": [
-                "story",
-                "comment",
-                "poll",
-                "pollopt",
-                "show_hn",
-                "ask_hn",
-                "front_page"
-              ]
             }
           }
         }
@@ -62,7 +42,7 @@
       }
     },
     {
-      "id": "output-44",
+      "id": "output-38",
       "type": "output",
       "configuration": {
         "schema": {
@@ -224,7 +204,7 @@
       }
     },
     {
-      "id": "invoke-43",
+      "id": "invoke-37",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -533,7 +513,8 @@
             }
           ],
           "graphs": {}
-        }
+        },
+        "tags": "comment"
       },
       "metadata": {
         "title": "Invoke Full Search"
