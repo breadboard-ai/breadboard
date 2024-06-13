@@ -222,6 +222,10 @@
     "version": "0.0.1"
   },
   {
+    "title": "Object Manipulator",
+    "url": "/graphs/object-manipulator.json"
+  },
+  {
     "title": "Open Alex Entity Search Results",
     "url": "/graphs/open-alex-entity-search-list.json",
     "version": "0.0.1"
