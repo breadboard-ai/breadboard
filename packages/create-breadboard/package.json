@@ -69,7 +69,7 @@
     "@types/node": "^20.14.2",
     "@types/semver": "^7.5.8",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
-    "@typescript-eslint/parser": "^7.12.0",
+    "@typescript-eslint/parser": "^7.13.0",
     "typescript": "^5.4.5"
   },
   "types": "./dist/src/index.d.ts",
