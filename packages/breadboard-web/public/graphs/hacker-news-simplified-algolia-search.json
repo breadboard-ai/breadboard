@@ -3,27 +3,27 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-47",
-      "to": "invoke-48",
+      "from": "input-49",
+      "to": "invoke-50",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "input-47",
-      "to": "invoke-48",
+      "from": "input-49",
+      "to": "invoke-50",
       "out": "tags",
       "in": "tags"
     },
     {
-      "from": "invoke-48",
-      "to": "output-49",
+      "from": "invoke-50",
+      "to": "output-51",
       "out": "output",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-47",
+      "id": "input-49",
       "type": "input",
       "configuration": {
         "schema": {
@@ -62,7 +62,7 @@
       }
     },
     {
-      "id": "output-49",
+      "id": "output-51",
       "type": "output",
       "configuration": {
         "schema": {
@@ -224,7 +224,7 @@
       }
     },
     {
-      "id": "invoke-48",
+      "id": "invoke-50",
       "type": "invoke",
       "configuration": {
         "$board": {

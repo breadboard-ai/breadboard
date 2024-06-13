@@ -124,18 +124,18 @@
     "version": "0.0.1"
   },
   {
-    "title": "Hacker News Simplified Algolia Search",
-    "url": "/graphs/hacker-news-simplified-algolia-search.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Hacker News Firebase API Story by ID",
-    "url": "/graphs/hacker_news_firebase_story_from_id.json",
+    "url": "/graphs/hacker-news-firebase-story-from-id.json",
     "version": "0.0.1"
   },
   {
     "title": "Hacker News Firebase API Story IDs",
-    "url": "/graphs/hacker_news_firebase_top_story_ids.json",
+    "url": "/graphs/hacker-news-firebase-top-story-ids.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Simplified Algolia Search",
+    "url": "/graphs/hacker-news-simplified-algolia-search.json",
     "version": "0.0.1"
   },
   {
