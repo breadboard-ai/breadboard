@@ -43,3 +43,5 @@ See https://developers.google.com/drive/api/reference/rest/v3/files/export#respo
     }),
   },
 });
+
+export default exportFile;
