@@ -118,6 +118,7 @@ export default defineNodeType({
     response: {
       description: "The response from the fetch request",
       type: "unknown",
+      primary: true,
     },
     status: {
       description: "The HTTP status code of the response",
