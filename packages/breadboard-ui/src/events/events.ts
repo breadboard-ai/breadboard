@@ -322,6 +322,18 @@ export class GraphProviderAddEvent extends Event {
  * Graph Management - UI
  */
 
+export class CommentUpdateEvent extends Event {
+  static eventName = "bbcommentupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly text: string,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(CommentUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class SchemaChangeEvent extends Event {
   static eventName = "bbschemachange";
 
@@ -421,6 +433,7 @@ export class GraphNodesVisualUpdateEvent extends Event {
   constructor(
     public readonly nodes: Array<{
       readonly id: string;
+      readonly type: "node" | "comment";
       readonly x: number;
       readonly y: number;
       readonly collapsed: boolean;
@@ -483,7 +496,8 @@ export class GraphEntityRemoveEvent extends Event {
 
   constructor(
     public readonly nodes: string[],
-    public readonly edges: InspectableEdge[]
+    public readonly edges: InspectableEdge[],
+    public readonly comments: string[]
   ) {
     super(GraphEntityRemoveEvent.eventName, { ...eventInit });
   }
