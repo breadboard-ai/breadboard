@@ -20,7 +20,7 @@ await Promise.all(
   ].map((filename) =>
     copyFile(
       join(pyodideDir, filename),
-      join(import.meta.dirname, "..", "dist", filename)
+      join(import.meta.dirname, "..", "public", filename)
     )
   )
 );
