@@ -45,34 +45,9 @@
     "version": "0.0.1"
   },
   {
-    "title": "Board as Function",
-    "url": "/graphs/board-as-function.json",
-    "version": "0.0.2"
-  },
-  {
-    "title": "Board Caller",
-    "url": "/graphs/board-caller.json",
-    "version": "0.0.6"
-  },
-  {
-    "title": "Example of @breadboard-ai/build",
-    "url": "/graphs/build-example.json",
-    "version": "1.1.0"
-  },
-  {
     "title": "Chat bot 2.0",
     "url": "/graphs/chat-bot-2.json",
     "version": "0.0.1"
-  },
-  {
-    "title": "Human Feedback Test Bench",
-    "url": "/graphs/choices.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Data Board",
-    "url": "/graphs/data-board.json",
-    "version": "0.0.3"
   },
   {
     "title": "Drawable",
@@ -86,11 +61,6 @@
   {
     "title": "Gemini Pro Generator",
     "url": "/graphs/gemini-generator.json",
-    "version": "0.0.2"
-  },
-  {
-    "title": "Gemini Pro Vision",
-    "url": "/graphs/gemini-pro-vision.json",
     "version": "0.0.2"
   },
   {
@@ -154,22 +124,9 @@
     "version": "0.0.1"
   },
   {
-    "title": "Math, chain style graph",
-    "url": "/graphs/math-chain.json"
-  },
-  {
-    "title": "Math, imperative style graph",
-    "url": "/graphs/math-imperative.json"
-  },
-  {
     "title": "The Calculator Board",
     "url": "/graphs/math.json",
     "version": "0.0.4"
-  },
-  {
-    "title": "Mock Text Generator",
-    "url": "/graphs/mock-text-generator.json",
-    "version": "0.0.2"
   },
   {
     "title": "Nager Date Available Countries API",
@@ -225,16 +182,6 @@
     "title": "OpenAI GPT 4 Vision Preview",
     "url": "/graphs/openai-gpt-4-vision.json",
     "version": "0.0.2"
-  },
-  {
-    "title": "PaLM Text Generator",
-    "url": "/graphs/palm-text-generator.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Retry",
-    "url": "/graphs/retry.json",
-    "version": "0.0.1"
   },
   {
     "title": "The Search Summarizer Board",
