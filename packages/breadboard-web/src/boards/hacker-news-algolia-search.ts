@@ -76,7 +76,7 @@ const slice = code<{ list: PostItem[]; limit: number }>(({ list, limit }) => {
 const searchLimitSchema: Schema = {
   type: "number",
   title: "limit",
-  default: "1",
+  default: "5",
   description: "Limit the number of results returned by the search",
 };
 

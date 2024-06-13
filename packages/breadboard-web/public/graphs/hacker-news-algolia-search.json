@@ -71,7 +71,7 @@
               "type": "number",
               "title": "limit",
               "description": "Limit the number of results returned by the search",
-              "default": "1"
+              "default": "5"
             },
             "page": {
               "type": "number",
