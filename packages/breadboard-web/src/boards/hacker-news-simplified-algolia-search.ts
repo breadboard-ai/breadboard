@@ -14,7 +14,7 @@ import {
   graph as search,
   searchQuerySchema,
   searchTagsSchema,
-} from "./hacker_news_algolia_search";
+} from "./hacker-news-algolia-search";
 
 const input = base.input({
   schema: {

@@ -7,13 +7,13 @@
  * see: https://hn.algolia.com/api
  */
 
-import { base, code} from "@google-labs/breadboard";
+import { base, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import {
   HackerNewsSearchResultsSchema,
   graph as search,
   searchQuerySchema,
-} from "./hacker_news_algolia_search";
+} from "./hacker-news-algolia-search";
 
 const input = base.input({
   schema: {

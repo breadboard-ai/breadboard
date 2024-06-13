@@ -109,6 +109,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Hacker News Angolia Search",
+    "url": "/graphs/hacker-news-algolia-search.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Hacker News Algolia Simplified Comment Search",
     "url": "/graphs/hacker-news-algolia-simplified-comment-search.json",
     "version": "0.0.1"
@@ -121,11 +126,6 @@
   {
     "title": "Hacker News Simplified Algolia Search",
     "url": "/graphs/hacker-news-simplified-algolia-search.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Hacker News Angolia Search",
-    "url": "/graphs/hacker_news_algolia_search.json",
     "version": "0.0.1"
   },
   {

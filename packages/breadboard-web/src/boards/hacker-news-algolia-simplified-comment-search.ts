@@ -12,7 +12,7 @@ import { core } from "@google-labs/core-kit";
 import {
   graph as search,
   searchQuerySchema,
-} from "./hacker_news_algolia_search";
+} from "./hacker-news-algolia-search";
 
 const input = base.input({
   schema: {
@@ -31,7 +31,7 @@ const HackerNewsCommentResultsSchema : Schema = {
       title: "Hacker News Comment Results",
       type: "array",
       items: {
-        
+
       }
     }
   }
