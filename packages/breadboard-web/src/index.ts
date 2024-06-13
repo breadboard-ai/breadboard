@@ -1462,9 +1462,64 @@ export class Main extends LitElement {
               return;
             }
 
+            // Comment nodes are stored in the metadata for the graph
+            if (nodeType === "comment") {
+              const inspectableGraph = editableGraph.inspect();
+              const { id, metadata } = evt;
+
+              if (!metadata) {
+                return;
+              }
+
+              const graphMetadata = inspectableGraph.metadata() || {};
+              graphMetadata.comments = graphMetadata.comments || [];
+              graphMetadata.comments.push({
+                id,
+                text: "",
+                metadata,
+              });
+
+              editableGraph.edit(
+                [{ type: "changegraphmetadata", metadata: graphMetadata }],
+                `Change metadata for graph - add comment "${id}"`
+              );
+              return;
+            }
+
             editableGraph.edit(
               [{ type: "addnode", node: newNode }],
               `Add node ${id}`
+            );
+          }}
+          @bbcommentupdate=${(evt: BreadboardUI.Events.CommentUpdateEvent) => {
+            const { id, text, subGraphId } = evt;
+
+            let editableGraph = this.#getEditor();
+            if (editableGraph && subGraphId) {
+              editableGraph = editableGraph.getGraph(subGraphId);
+            }
+
+            if (!editableGraph) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const inspectableGraph = editableGraph.inspect();
+            const graphMetadata = inspectableGraph.metadata() || {};
+            graphMetadata.comments ??= [];
+
+            const comment = graphMetadata.comments.find(
+              (comment) => comment.id === id
+            );
+            if (!comment) {
+              console.warn("Unable to update comment; not found");
+              return;
+            }
+
+            comment.text = text;
+            editableGraph.edit(
+              [{ type: "changegraphmetadata", metadata: graphMetadata }],
+              `Change metadata for graph - add comment "${id}"`
             );
           }}
           @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {

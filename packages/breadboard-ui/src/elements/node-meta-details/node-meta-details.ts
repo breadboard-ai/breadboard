@@ -15,10 +15,26 @@ import {
   Kit,
   inspect,
 } from "@google-labs/breadboard";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  CommentNode,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const STORAGE_PREFIX = "bb-node-meta-details";
+
+type NodeMetaDetailsInfo = {
+  type: "node";
+  node: InspectableNode;
+  metadata: NodeMetadata;
+  kitNodeDescription: string | null;
+};
+
+type CommentMetaDetailsInfo = {
+  type: "comment";
+  node: CommentNode;
+  metadata: NodeMetadata | null;
+};
 
 @customElement("bb-node-meta-details")
 export class NodeMetaDetails extends LitElement {
@@ -77,23 +93,45 @@ export class NodeMetaDetails extends LitElement {
         }
       }
 
-      const node = breadboardGraph.nodeById(nodeId);
-      if (!node) {
-        throw new Error("Unable to load node");
-      }
-
+      let type: "node" | "comment" = "node";
+      let node: InspectableNode | CommentNode | undefined =
+        breadboardGraph.nodeById(nodeId);
       let kitNodeDescription: string | null = null;
-      for (const kit of breadboardGraph.kits()) {
-        for (const nodeType of kit.nodeTypes) {
-          if (nodeType.type() === node.descriptor.type) {
-            kitNodeDescription = nodeType.metadata().description || null;
-            break;
+      let metadata: NodeMetadata | null = null;
+
+      // Node is an InspectableNode.
+      if (node) {
+        console.log(node);
+        for (const kit of breadboardGraph.kits()) {
+          for (const nodeType of kit.nodeTypes) {
+            if (nodeType.type() === node.descriptor.type) {
+              kitNodeDescription = nodeType.metadata().description || null;
+              break;
+            }
           }
         }
-      }
+        metadata = node.metadata();
 
-      const metadata = node.metadata();
-      return { node, metadata, kitNodeDescription };
+        return {
+          type,
+          node,
+          metadata,
+          kitNodeDescription,
+        } as NodeMetaDetailsInfo;
+      } else {
+        // Node is a CommentNode.
+        node = breadboardGraph
+          .metadata()
+          ?.comments?.find((comment) => comment.id === nodeId);
+
+        if (!node) {
+          throw new Error("Unable to load node");
+        }
+
+        metadata = node.metadata || null;
+        type = "comment";
+        return { type, node, metadata } as CommentMetaDetailsInfo;
+      }
     },
     onError: (err) => {
       console.warn(err);
@@ -122,6 +160,10 @@ export class NodeMetaDetails extends LitElement {
     #overview {
       border-bottom: 1px solid var(--bb-neutral-300);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+    }
+
+    #overview.no-border {
+      border-bottom: none;
     }
 
     #overview h1 {
@@ -293,90 +335,102 @@ export class NodeMetaDetails extends LitElement {
 
     return this.#formTask.render({
       pending: () => html`Loading...`,
-      complete: (
-        data: {
-          node: InspectableNode;
-          metadata: NodeMetadata;
-          kitNodeDescription: string | null;
-        } | null
-      ) => {
+      complete: (data: NodeMetaDetailsInfo | CommentMetaDetailsInfo | null) => {
         if (!data) {
           return nothing;
         }
 
-        const { node, metadata, kitNodeDescription } = data;
+        return data.type === "node"
+          ? html`
+              <div id="overview">
+                <h1 ${ref(this.#titleRef)}>
+                  ${data.metadata.title ?? data.node.descriptor.id}
+                  (${data.node.descriptor.type})
+                </h1>
+                <p>${data.kitNodeDescription ?? html`No description`}</p>
+              </div>
+              <h1>
+                <button
+                  id="unfold"
+                  class=${classMap({ visible: this.expanded })}
+                  @click=${() => {
+                    this.expanded = !this.expanded;
 
-        return html`
-          <div id="overview">
-            <h1 ${ref(this.#titleRef)}>
-              ${metadata.title ?? node.descriptor.id} (${node.descriptor.type})
-            </h1>
-            <p>${kitNodeDescription ?? html`No description`}</p>
-          </div>
-          <h1>
-            <button
-              id="unfold"
-              class=${classMap({ visible: this.expanded })}
-              @click=${() => {
-                this.expanded = !this.expanded;
+                    globalThis.sessionStorage.setItem(
+                      `${STORAGE_PREFIX}-expanded`,
+                      this.expanded.toString()
+                    );
+                  }}
+                >
+                  Node details
+                </button>
+              </h1>
+              <form
+                ${ref(this.#formRef)}
+                class=${classMap({ visible: this.expanded })}
+                @input=${(evt: Event) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                globalThis.sessionStorage.setItem(
-                  `${STORAGE_PREFIX}-expanded`,
-                  this.expanded.toString()
-                );
-              }}
-            >
-              Node details
-            </button>
-          </h1>
-          <form
-            ${ref(this.#formRef)}
-            class=${classMap({ visible: this.expanded })}
-            @input=${(evt: Event) => {
-              evt.preventDefault();
-              evt.stopImmediatePropagation();
+                  this.#emitUpdatedInfo();
+                }}
+                @keydown=${(evt: KeyboardEvent) => {
+                  if (evt.key !== "Enter") {
+                    return;
+                  }
 
-              this.#emitUpdatedInfo();
-            }}
-            @keydown=${(evt: KeyboardEvent) => {
-              if (evt.key !== "Enter") {
-                return;
-              }
+                  this.#emitUpdatedInfo();
+                }}
+                @submit=${(evt: Event) => {
+                  evt.preventDefault();
+                }}
+              >
+                <input
+                  type="hidden"
+                  name="id"
+                  .value=${data.node.descriptor.id}
+                />
+                <input
+                  type="hidden"
+                  name="type"
+                  .value=${data.node.descriptor.type}
+                />
+                <label>Title</label>
+                <input
+                  name="title"
+                  type="text"
+                  placeholder="Enter the title for this node"
+                  .value=${data.metadata.title || ""}
+                />
 
-              this.#emitUpdatedInfo();
-            }}
-            @submit=${(evt: Event) => {
-              evt.preventDefault();
-            }}
-          >
-            <input type="hidden" name="id" .value=${node.descriptor.id} />
-            <input type="hidden" name="type" .value=${node.descriptor.type} />
-            <label>Title</label>
-            <input
-              name="title"
-              type="text"
-              placeholder="Enter the title for this node"
-              .value=${metadata.title || ""}
-            />
+                <label>Log Level</label>
+                <select type="text" id="log-level" name="log-level">
+                  <option
+                    value="debug"
+                    ?selected=${data.metadata.logLevel === "debug"}
+                  >
+                    Debug
+                  </option>
+                  <option
+                    value="info"
+                    ?selected=${data.metadata.logLevel === "info"}
+                  >
+                    Information
+                  </option>
+                </select>
 
-            <label>Log Level</label>
-            <select type="text" id="log-level" name="log-level">
-              <option value="debug" ?selected=${metadata.logLevel === "debug"}>
-                Debug
-              </option>
-              <option value="info" ?selected=${metadata.logLevel === "info"}>
-                Information
-              </option>
-            </select>
-
-            <label>Description</label>
-            <textarea
-              name="description"
-              placeholder="Enter the description for this node"
-              .value=${metadata.description || ""}
-            ></textarea>
-          </form>
-        `;
+                <label>Description</label>
+                <textarea
+                  name="description"
+                  placeholder="Enter the description for this node"
+                  .value=${data.metadata.description || ""}
+                ></textarea>
+              </form>
+            `
+          : html`<div id="overview" class="no-border">
+              <h1>Comment</h1>
+              <p>Enter your comment below</p>
+            </div>`;
       },
     });
   }
