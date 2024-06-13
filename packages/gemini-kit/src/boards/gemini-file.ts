@@ -1,229 +1,293 @@
 /**
  * @license
- * Copyright 2024 Google LLC
+ * Copyright 2023 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import {
-  annotate,
-  anyOf,
-  array,
+  GraphInlineMetadata,
+  Schema,
+  base,
   board,
-  constant,
-  enumeration,
-  input,
-  loopback,
-  object,
-  optional,
-  output,
-  unsafeCast,
-} from "@breadboard-ai/build";
-import { DataCapability } from "@google-labs/breadboard";
-import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
-import { code, fetch, passthrough, secret } from "@google-labs/core-kit";
-import { urlTemplate } from "@google-labs/template-kit";
+  code,
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
+import { templates } from "@google-labs/template-kit";
+import { create } from "domain";
 
-const textPartType = object({ text: "string" });
+type TextPartType = {
+  text: string;
+};
 
-const imagePartType = object({
-  inlineData: object({
-    mimeType: "string",
-    data: "string",
-  }),
-});
+type ImagePartType = {
+  inlineData: {
+    mimeType:
+      | "image/png"
+      | "image/jpeg"
+      | "image/heic"
+      | "image/heif"
+      | "image/webp";
+    data: string;
+  };
+};
 
-const storedDataPartType = object({
-  storedData: object({
-    mimeType: "string",
-    handle: "string",
-  }),
-});
+type StoredPartType = {
+  storedData: {
+    mimeType: string;
+    handle: string;
+  };
+};
 
-const filePartType = object({
-  fileData: object({
-    fileUri: "string",
-  }),
-});
+type FileDataPartType = {
+  fileData: {
+    mimeType: string;
+    file_uri: string;
+  };
+};
 
-const functionCallPartType = object({
-  function_call: object({
-    name: "string",
-    args: object({}, "string"),
-  }),
-});
+type PartType = TextPartType | ImagePartType | StoredPartType;
 
-const functionResponsePartType = object({
-  function_response: object({
-    name: "string",
-    response: "unknown",
-  }),
-});
+type MediaPartType = {
+  contentIndex: number;
+  partIndex: number;
+  part: ImagePartType | StoredPartType | FileDataPartType;
+};
 
-const partType = anyOf(
-  textPartType,
-  imagePartType,
-  filePartType,
-  storedDataPartType,
-  functionCallPartType,
-  functionResponsePartType
-);
+type GenerateContentContentsType = {
+  role: "model" | "user" | "$metadata";
+  parts: PartType[];
+};
 
-const generateContentContentsType = object({
-  role: enumeration("model", "user", "tool", "$metadata"),
-  parts: array(partType),
-});
+const metadata = {
+  title: "Gemini File Generator",
+  description: "The board powered by the Gemini File API",
+  version: "0.0.2",
+} as GraphInlineMetadata;
 
-const context = input({
-  type: array(
-    annotate(generateContentContentsType, {
-      behavior: ["llm-content"],
-    })
-  ),
-});
-
-const makeUrl = urlTemplate({
-  $id: "make-file-api-url",
-  $metadata: {
-    title: "Make URL",
-    description: "Creating the Gemini File API URL",
-  },
-  template:
-    "https://generativelanguage.googleapis.com/upload/v1beta/files?key={GEMINI_KEY}",
-  GEMINI_KEY: secret("GEMINI_KEY"),
-  method: "POST",
-});
-
-const body = code(
+const contextExample = [
   {
-    $id: "make-body",
-    $metadata: { title: "Make Request Body" },
-    context: context,
+    role: "user",
+    parts: [
+      {
+        text: "You are a pirate. Please talk like a pirate.",
+      },
+    ],
   },
   {
-    result: object({
-      preMediaBlob: "string",
-      media: anyOf(imagePartType, storedDataPartType),
-      postMediaBlob: "string",
-    }),
+    role: "model",
+    parts: [
+      {
+        text: "Arr, matey!",
+      },
+    ],
   },
-  ({ context }) => {
-    const parts = context.at(0)?.parts;
-    if (parts) {
-      const mediaParts = parts?.filter(
-        (part) => "inlineData" in part || "storedData" in part
-      );
-      if (mediaParts && mediaParts.length > 0) {
-        // Just send the first for now
-        const boundary = "BOUNDARY";
-        const preMedia =
-          "--" +
-          boundary +
-          "\r\n" +
-          "Content-Type: application/json; charset=utf-8\r\n\r\n{}\r\n--" +
-          boundary +
-          "\r\n" +
-          "Content-Type: ";
-        const postMediaBlob = `\r\n--${boundary}--`;
-        const first = mediaParts[0];
-        if ("storedData" in first) {
-          const media: ConvertBreadboardType<typeof storedDataPartType> = first;
-          const mimeType = media.storedData.mimeType;
-          const preMediaBlob = `${preMedia}${mimeType}\r\n\r\n`;
-          return { result: { preMediaBlob, media, postMediaBlob } };
-        }
-        if ("inlineData" in first) {
-          const media: ConvertBreadboardType<typeof imagePartType> = first;
-          const mimeType = media.inlineData.mimeType;
-          const preMediaBlob = `${preMedia}${mimeType}\r\n\r\n`;
-          return { result: { preMediaBlob, media, postMediaBlob } };
-        }
+] satisfies GenerateContentContentsType[];
+
+const parametersSchema = {
+  type: "object",
+  properties: {
+    context: {
+      type: "array",
+      title: "Context",
+      description: "An array of messages to use as conversation context",
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
+      default: "[]",
+      examples: [JSON.stringify(contextExample, null, 2)],
+    },
+  },
+} satisfies Schema;
+
+const textOutputSchema = {
+  type: "object",
+  properties: {
+    context: {
+      type: "array",
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
+      title: "Context",
+      description: "The conversation context",
+    },
+  },
+} satisfies Schema;
+
+const createFileBodyBuilder = code(({ context }) => {
+  const mediaPart = context as MediaPartType;
+  if (mediaPart) {
+    const boundary = "BOUNDARY";
+    const preMediaFormat =
+      "--" +
+      boundary +
+      "\r\n" +
+      "Content-Type: application/json; charset=utf-8\r\n\r\n{}\r\n--" +
+      boundary +
+      "\r\n" +
+      "Content-Type: ";
+    const postMediaBlob = `\r\n--${boundary}--`;
+    if ("storedData" in mediaPart.part) {
+      const media = mediaPart.part as StoredDataCapabilityPart;
+      const mimeType = media.storedData.mimeType;
+      const preMediaBlob = `${preMediaFormat}${mimeType}\r\n\r\n`;
+      return { result: { preMediaBlob, media, postMediaBlob } };
+    }
+    if ("inlineData" in mediaPart.part) {
+      const media = mediaPart.part as InlineDataCapabilityPart;
+      const mimeType = media.inlineData.mimeType;
+      const preMediaBlob = `${preMediaFormat}${mimeType}\r\n\r\n`;
+      return { result: { preMediaBlob, media, postMediaBlob } };
+    }
+  }
+  const result: Record<string, unknown> = { mediaPart };
+
+  return { result };
+});
+
+const fileResponseFormatter = code(({ inputPart, response }) => {
+  type Response = { file: { uri: string; mimeType: string } } | undefined;
+  const fileResponse = response as Response;
+  const mediaPart = inputPart as MediaPartType;
+  if (fileResponse && "file" in fileResponse) {
+    const formattedPart = {
+      part: {
+        fileData: {
+          file_uri: fileResponse.file.uri,
+          mimeType: fileResponse.file.mimeType,
+        },
+      },
+      contentIndex: mediaPart.contentIndex,
+      partIndex: mediaPart.partIndex,
+    } as MediaPartType;
+    return { formattedPart };
+  }
+  throw new Error("Failed to get response from Gemini File API");
+});
+
+const fileBoardResponseFormatter = code(({ context, response }) => {
+  type Content = { role?: string; parts: PartType[] };
+  type FileResponseType = { part: MediaPartType };
+  const responseParts = response as FileResponseType[];
+  const contents = context as Content[];
+  for (const part of responseParts) {
+    const mediaPart = part.part as MediaPartType;
+    contents[mediaPart.contentIndex].parts[mediaPart.partIndex] =
+      mediaPart.part as PartType;
+  }
+  return { contents };
+});
+
+const filterMediaParts = code(({ context }) => {
+  type Content = { role?: string; parts: PartType[] };
+  let contents = context as Content[];
+  const filteredParts = [];
+  for (let cIdx = 0; cIdx < contents.length; cIdx++) {
+    const parts = contents[cIdx].parts as PartType[];
+    for (let pIdx = 0; pIdx < parts.length; pIdx++) {
+      if ("inlineData" in parts[pIdx] || "storedData" in parts[pIdx]) {
+        const part = parts[pIdx] as ImagePartType | StoredPartType;
+        const mediaPart = { contentIndex: cIdx, partIndex: pIdx, part };
+        filteredParts.push(mediaPart);
       }
     }
-    throw new Error("No media file specified");
   }
-).outputs.result;
-
-const fetchResult = fetch({
-  $id: "fetch-gemini-api",
-  $metadata: { title: "Make API Call", description: "Calling Gemini File API" },
-  method: "POST",
-  url: constant(makeUrl),
-  body,
-  headers: {
-    "Content-Type": "multipart/related; boundary=BOUNDARY",
-    "X-Goog-Upload-Protocol": "multipart",
-  },
+  return { filteredParts };
 });
 
-const responseType = object({
-  file: object({
-    uri: "string",
-    name: "string",
-  }),
-});
+const createFileBoard = board(({ item }) => {
+  const makeBody = createFileBodyBuilder({
+    $id: "make-create-body",
+    $metadata: { title: "Make CreateFile Request Body" },
+    context: item,
+  });
 
-const response = unsafeCast(fetchResult.outputs.response, responseType);
-
-const errorCollector = passthrough({
-  $id: "collect-errors",
-  $metadata: {
-    title: "Collect Errors",
-    description: "Collecting the error from Gemini API",
-  },
-  error: fetchResult.outputs.$error,
-});
-
-const errorLoopback = loopback({
-  type: object({
-    error: optional(
-      object({
-        code: optional("number"),
-      })
-    ),
-  }),
-});
-errorLoopback.resolve(errorCollector.outputs.error);
-
-const formattedResponse = code(
-  {
-    $id: "format-response",
+  const makeUrl = templates.urlTemplate({
+    $id: "make-create-file-url",
     $metadata: {
-      title: "Format Response",
-      description: "Formatting Gemini API response",
+      title: "Make File URL",
+      description: "Creating the Gemini File API URL",
     },
-    response,
-  },
-  {
-    uri: {
-      type: "string",
-    },
-  },
-  ({ response }) => {
-    const file = response;
-    if (!file) {
-      return {
-        $error: `No file in response "${JSON.stringify(response)}" found`,
-      };
-    }
-    console.log(response.file.uri);
-    if ("uri" in response.file) {
-      return { uri: response.file.uri };
-    }
-    return {
-      $error: `No file in response "${JSON.stringify(response)}" found`,
-    };
-  }
-);
-
-export default board({
-  title: "Gemini File API",
-  description:
-    "Updates the context from with uploaded files to Gemini File API",
-  inputs: { context },
-  outputs: {
-    text: output(formattedResponse.outputs.uri, {
-      title: "File URI",
-      description: "The uploaded File URI",
+    template:
+      "https://generativelanguage.googleapis.com/upload/v1beta/files?key={GEMINI_KEY}",
+    GEMINI_KEY: core.secrets({
+      $id: "GEMINI_KEY-secret",
+      keys: ["GEMINI_KEY"],
     }),
-  },
+    method: "POST",
+  });
+
+  const fetch = core.fetch({
+    $id: "fetch-create-file-api",
+    $metadata: { title: "Call API", description: "Calling Create File API" },
+    method: "POST",
+    url: makeUrl.url.memoize(),
+    body: makeBody.result,
+    headers: {
+      "Content-Type": "multipart/related; boundary=BOUNDARY",
+      "X-Goog-Upload-Protocol": "multipart",
+    },
+  });
+
+  const formatFileResponse = fileResponseFormatter({
+    $id: "format-file-response",
+    $metadata: {
+      title: "Format File Response",
+      description: "Formatting Gemini File API response",
+    },
+    inputPart: item,
+    response: fetch.response,
+  });
+
+  return formatFileResponse.formattedPart.as("part").to(base.output({}));
 });
+
+export default await board(() => {
+  const parameters = base.input({
+    $id: "inputs",
+    $metadata: {
+      title: "Input Parameters",
+      description: "Collecting input parameters",
+    },
+    schema: parametersSchema,
+  });
+
+  const filteredParts = filterMediaParts({
+    $id: "filter-context",
+    $metadata: {
+      title: "Filter context for files to upload, if necessary",
+      description: "Filtering context for files",
+    },
+    context: parameters,
+  });
+
+  const createFiles = core.map({
+    $id: "create-files",
+    $metadata: {
+      title: "Upload the necessary files to Gemini File API",
+      description: "Upload files",
+    },
+    list: filteredParts.filteredParts,
+    board: createFileBoard,
+  });
+
+  const updatedContext = fileBoardResponseFormatter({
+    $id: "combine-response",
+    $metadata: {
+      title: "Combine the response from uplaoded files",
+      description: "Combine response from files",
+    },
+    context: parameters,
+    response: createFiles.list,
+  });
+
+  return base.output({
+    $id: "content-output",
+    $metadata: { title: "Content Output", description: "Outputting content" },
+    schema: textOutputSchema,
+    context: updatedContext.contents,
+  });
+}).serialize(metadata);
