@@ -4,33 +4,33 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "fetch-42",
+      "from": "fetch-43",
       "to": "spreadResponse",
       "out": "response",
       "in": "object"
     },
     {
-      "from": "input-40",
-      "to": "urlTemplate-41",
+      "from": "input-41",
+      "to": "urlTemplate-42",
       "out": "OBJECT_ID",
       "in": "OBJECT_ID"
     },
     {
       "from": "spreadResponse",
-      "to": "output-43",
+      "to": "output-44",
       "out": "*",
       "in": ""
     },
     {
-      "from": "urlTemplate-41",
-      "to": "fetch-42",
+      "from": "urlTemplate-42",
+      "to": "fetch-43",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "input-40",
+      "id": "input-41",
       "type": "input",
       "configuration": {
         "schema": {
@@ -51,7 +51,7 @@
       }
     },
     {
-      "id": "output-43",
+      "id": "output-44",
       "type": "output",
       "configuration": {
         "schema": {
@@ -121,7 +121,7 @@
       }
     },
     {
-      "id": "fetch-42",
+      "id": "fetch-43",
       "type": "fetch",
       "configuration": {
         "method": "GET"
@@ -143,7 +143,7 @@
       }
     },
     {
-      "id": "urlTemplate-41",
+      "id": "urlTemplate-42",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://hn.algolia.com/api/v1/items/{OBJECT_ID}"

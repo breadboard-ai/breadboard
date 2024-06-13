@@ -3,27 +3,27 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "fn-52",
-      "to": "output-51",
+      "from": "fn-53",
+      "to": "output-52",
       "out": "output",
       "in": "output"
     },
     {
-      "from": "input-49",
-      "to": "invoke-50",
+      "from": "input-50",
+      "to": "invoke-51",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "invoke-50",
-      "to": "fn-52",
+      "from": "invoke-51",
+      "to": "fn-53",
       "out": "output",
       "in": "list"
     }
   ],
   "nodes": [
     {
-      "id": "input-49",
+      "id": "input-50",
       "type": "input",
       "configuration": {
         "schema": {
@@ -48,7 +48,7 @@
       }
     },
     {
-      "id": "output-51",
+      "id": "output-52",
       "type": "output",
       "configuration": {
         "schema": {
@@ -210,16 +210,16 @@
       }
     },
     {
-      "id": "fn-52",
+      "id": "fn-53",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_52 = ({list})=>{list.forEach(item=>{delete item[\"created_at_i\"];delete item[\"children\"];delete item[\"_tags\"];delete item[\"_highlightResult\"];delete item[\"num_comments\"]});return{output:list}};",
-        "name": "fn_52",
+        "code": "const fn_53 = ({list})=>{list.forEach(item=>{delete item[\"created_at_i\"];delete item[\"children\"];delete item[\"_tags\"];delete item[\"_highlightResult\"];delete item[\"num_comments\"]});return{output:list}};",
+        "name": "fn_53",
         "raw": true
       }
     },
     {
-      "id": "invoke-50",
+      "id": "invoke-51",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -247,7 +247,7 @@
             },
             {
               "from": "query",
-              "to": "fn-44",
+              "to": "fn-45",
               "out": "limit",
               "in": "limit"
             },
@@ -259,13 +259,13 @@
             },
             {
               "from": "urlTemplate",
-              "to": "output-45",
+              "to": "output-46",
               "out": "url",
               "in": "url"
             },
             {
-              "from": "fn-44",
-              "to": "output-45",
+              "from": "fn-45",
+              "to": "output-46",
               "out": "output",
               "in": "output"
             },
@@ -277,7 +277,7 @@
             },
             {
               "from": "spreadResponse",
-              "to": "fn-44",
+              "to": "fn-45",
               "out": "hits",
               "in": "list"
             }
@@ -340,11 +340,11 @@
               }
             },
             {
-              "id": "fn-44",
+              "id": "fn-45",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_44 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-                "name": "fn_44",
+                "code": "const fn_45 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+                "name": "fn_45",
                 "raw": true
               }
             },
@@ -356,7 +356,7 @@
               }
             },
             {
-              "id": "output-45",
+              "id": "output-46",
               "type": "output",
               "configuration": {
                 "schema": {

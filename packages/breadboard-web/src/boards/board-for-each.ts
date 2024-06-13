@@ -22,7 +22,11 @@ const demoBoard = await board<
     item: string;
   }
 >(() => {
-  const input = base.input({});
+  const input = base.input({
+    $metadata: {
+      title: "Input",
+    },
+  });
 
   const reverse = code<{ item: string }, { item: string }>((inputs) => {
     const { item } = inputs;
@@ -48,8 +52,18 @@ const input = base.input({
   },
 });
 
+const passthrough = core.passthrough({
+  $metadata: {
+    title: "Passthrough",
+  },
+  board: input.board,
+});
+passthrough.board.to(passthrough);
+
 const invocation = core.invoke({
-  $board: input.board,
+  // $board: input.board,
+  item: passthrough.item,
+  $board: passthrough.board,
   $metadata: {
     title: "Invoke",
   },
@@ -69,7 +83,7 @@ const popItem = pop({
 });
 
 popItem.array.to(popItem);
-popItem.item.to(invocation);
+popItem.item.to(passthrough);
 
 type AccumulatorInput<T> = {
   item: T;
@@ -111,7 +125,12 @@ const accumulate = accumulator({
   },
 });
 
-accumulate.array.to(accumulate);
+accumulate.to(accumulate);
+// accumulate.array.to(core.passthrough({
+//   $metadata: {
+//     title: "Passthrough Accumulated Array",
+//   },
+// })).to(accumulate);
 accumulate.array.to(output);
 
 const serialised = await output.serialize({
