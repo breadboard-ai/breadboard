@@ -20,6 +20,7 @@ import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
+import { unnestNode } from "./nodes/unnest.js";
 
 export { code } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
@@ -27,6 +28,7 @@ export { default as invoke } from "./nodes/invoke.js";
 export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
+export { unnest, unnestNode } from "./nodes/unnest.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -199,6 +201,8 @@ export const Core = builder.build({
    * present.
    */
   deflate,
+
+  unnest: unnestNode,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -220,6 +224,7 @@ import {
 } from "@google-labs/breadboard";
 import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
 import deflate from "./nodes/deflate.js";
+import { NodeFactoryFromDefinition } from "@breadboard-ai/build";
 
 export type CoreKitType = {
   passthrough: NodeFactory<InputValues, OutputValues>;
@@ -313,6 +318,7 @@ export type CoreKitType = {
     { result: unknown; [k: string]: unknown }
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
+  unnest: NodeFactoryFromDefinition<typeof unnestNode>;
   // TODO: Other Core nodes.
 };
 
