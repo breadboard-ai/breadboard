@@ -263,7 +263,7 @@
     "typedoc": "^0.25.12",
     "typedoc-plugin-markdown": "^4.0.3",
     "typescript": "^5.4.5",
-    "vite": "^5.2.13",
+    "vite": "^5.3.0",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.7.0",
     "vitest": "^1.6.0"
