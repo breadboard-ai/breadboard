@@ -162,7 +162,7 @@ With the old edge deleted, let's connect input and output to the Specialist. Cli
 
 ![Wiring the Specialist](/breadboard/static/images/agent-kit/wire-specialist.png)
 
-Congrats! We built our first board with the Agent Kit. The only thing that's missing is something for Specialist to do. What purpose shall we give it?
+Congrats! We just made our first board with the Agent Kit. The only thing that's missing is something for Specialist to do. What purpose shall we give it?
 
 Hmm... I am always on the lookout for a good book, and it's not always easy to find what I am looking for. So maybe, let's build a Librarian: an agent that helps us find the right book.
 
@@ -178,13 +178,58 @@ As a Task, let's put:
 
 > Come up with a list of 5-7 recommendations. Reply in markdown.
 
-TO DO:
+At this point, our first board is complete. Let's give it a whirl.
 
-- Run
+To start the board, click "Run" in the Activity panel. The Activity panel will show the progress of the board's run, and the first thing we'll see is the request for input. This is exactly what we would expect, since the first node in the board is the "input". Let's type some subject that we're interested in. I love systems thinking and utopian sci fi, so that's what I'll enter.
 
-- Chain specialists together
+![First Run Input](/breadboard/static/images/agent-kit/first-run-input.png)
 
-- Tool-calling: create a specialist that does something useful with a tool
+After entering the text, click the "Continue" button. This will result in a flurry of activity in the Activity panel, and after a few seconds, the board will deliver our first output.
+
+![First Run Output](/breadboard/static/images/agent-kit/first-run-output.png)
+
+Cooool. We made a Librarian board. High fives all around. The results are good and the choices are classic.
+
+Except...
+
+After running this board with a few different inputs (it's easy -- just click "Run" again), we notice that the book recommendations are kind of meh. True, they are good books, but for an avid reader such as myself, it looks as if the board just cycles through "the usual suspects".
+
+And that's understandable. Our current design relies on the Gemini's (the large language model that is behind the Specialist) parametric knowledge, and as such, is unlikely to produce fresh results or dig up forgotten gems for us.
+
+To do that, we need to improve on our board design.
+
+Let's add another Specialist. We will name this Specialist the "Researcher" and give it a Persona of:
+
+> You are a library researcher. Based on the provided topic, formulate the query to call the Google Books API to search for the right book for the user.
+
+![Researcher persona](/breadboard/static/images/agent-kit/researcher-persona.png)
+
+Alright! To get better results, we will give this Specialist the ability to call Google Books API.
+
+To do so, click on "Create array" button under Tools, then select "Custom URL" from the dropdown and paste this URL into the box that pops up under the dropdown menu:
+
+> https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json
+
+As we've learned earlier, boards are tools and this particular board calls the Google Books API with a specified query and returns a bunch of results.
+
+> [!NOTE]
+> Because boards are stored in the BGL format (which is just JSON), they are very easy to share and refer to. Just publish their BGL and give it a [stable URL](https://www.w3.org/Provider/Style/URI).
+
+![Researcher persona](/breadboard/static/images/agent-kit/researcher-tools.png)
+
+Now, let's wire them up. Delete the wire connecting the input to Librarian, and instead connect the input to the Researcher, and then wire Researcher to the Librarian. We just built our first workflow.
+
+Both Specialists do only one task, and pass their work results along.
+
+Speaking of which -- let's also teach the Librarian to look over the Researcher's work and consider it when providing recommendations. To do that, we'll tweak the Librarian's Persona as follows:
+
+> You are an expert librarian. Given any topic, and the raw book search results, you can come up with a list of book recommendations.
+
+If we try to run this board now, we'll find that it gives much more interesting results. It does particularly well with narrow or unusual topics. For instance, here's a result of running with the query of "educational books for children about butterfly migration". Where the lone Librarian would fall back onto "The Very Hungry Caterpillar" or hallucinate book titles, working together with Researcher, it produces genuinely useful results.
+
+![Run result with Researcher](/breadboard/static/images/agent-kit/butterflies.png)
+
+This is what makes Specialists so powerful. By themselves, they are pretty good, single mindedly focused on their particular task. When organized together and armed with tools, they become a lot more useful.
 
 ### Human
 
