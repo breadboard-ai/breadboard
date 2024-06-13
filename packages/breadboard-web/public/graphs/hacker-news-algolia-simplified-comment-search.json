@@ -3,21 +3,21 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-40",
-      "to": "invoke-41",
+      "from": "input-46",
+      "to": "invoke-47",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "invoke-41",
-      "to": "output-42",
+      "from": "invoke-47",
+      "to": "output-48",
       "out": "output",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-40",
+      "id": "input-46",
       "type": "input",
       "configuration": {
         "schema": {
@@ -42,7 +42,7 @@
       }
     },
     {
-      "id": "output-42",
+      "id": "output-48",
       "type": "output",
       "configuration": {
         "schema": {
@@ -60,7 +60,7 @@
       }
     },
     {
-      "id": "invoke-41",
+      "id": "invoke-47",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -88,7 +88,7 @@
             },
             {
               "from": "query",
-              "to": "fn-38",
+              "to": "fn-44",
               "out": "limit",
               "in": "limit"
             },
@@ -100,13 +100,13 @@
             },
             {
               "from": "urlTemplate",
-              "to": "output-39",
+              "to": "output-45",
               "out": "url",
               "in": "url"
             },
             {
-              "from": "fn-38",
-              "to": "output-39",
+              "from": "fn-44",
+              "to": "output-45",
               "out": "output",
               "in": "output"
             },
@@ -118,7 +118,7 @@
             },
             {
               "from": "spreadResponse",
-              "to": "fn-38",
+              "to": "fn-44",
               "out": "hits",
               "in": "list"
             }
@@ -181,11 +181,11 @@
               }
             },
             {
-              "id": "fn-38",
+              "id": "fn-44",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_38 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-                "name": "fn_38",
+                "code": "const fn_44 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+                "name": "fn_44",
                 "raw": true
               }
             },
@@ -197,7 +197,7 @@
               }
             },
             {
-              "id": "output-39",
+              "id": "output-45",
               "type": "output",
               "configuration": {
                 "schema": {

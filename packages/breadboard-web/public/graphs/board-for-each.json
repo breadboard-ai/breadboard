@@ -1,0 +1,122 @@
+{
+  "title": "Board For Each",
+  "description": "Iterate over an array and run a subgraph for each item in the array.",
+  "edges": [
+    {
+      "from": "fn-30",
+      "to": "fn-30",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "fn-30",
+      "to": "invoke-28",
+      "out": "item",
+      "in": "item"
+    },
+    {
+      "from": "fn-31",
+      "to": "fn-31",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "fn-31",
+      "to": "output-29",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "input-27",
+      "to": "fn-30",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "input-27",
+      "to": "invoke-28",
+      "out": "board",
+      "in": "$board"
+    },
+    {
+      "from": "invoke-28",
+      "to": "fn-31",
+      "out": "item",
+      "in": "item"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-27",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "array": {
+              "type": "array",
+              "examples": [
+                "[\"The\",\"quick\",\"brown\",\"fox\"]"
+              ]
+            },
+            "board": {
+              "examples": [
+                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").reverse().join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}}}],\"graphs\":{}}"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-29",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "array": {
+              "type": "string",
+              "title": "array"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Output"
+      }
+    },
+    {
+      "id": "fn-30",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_30 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
+        "name": "fn_30",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Pop item"
+      }
+    },
+    {
+      "id": "fn-31",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_31 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
+        "name": "fn_31",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Accumulate"
+      }
+    },
+    {
+      "id": "invoke-28",
+      "type": "invoke",
+      "configuration": {},
+      "metadata": {
+        "title": "Invoke"
+      }
+    }
+  ]
+}

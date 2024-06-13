@@ -3,27 +3,27 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-49",
-      "to": "invoke-50",
+      "from": "input-55",
+      "to": "invoke-56",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "input-49",
-      "to": "invoke-50",
+      "from": "input-55",
+      "to": "invoke-56",
       "out": "tags",
       "in": "tags"
     },
     {
-      "from": "invoke-50",
-      "to": "output-51",
+      "from": "invoke-56",
+      "to": "output-57",
       "out": "output",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-49",
+      "id": "input-55",
       "type": "input",
       "configuration": {
         "schema": {
@@ -62,7 +62,7 @@
       }
     },
     {
-      "id": "output-51",
+      "id": "output-57",
       "type": "output",
       "configuration": {
         "schema": {
@@ -224,7 +224,7 @@
       }
     },
     {
-      "id": "invoke-50",
+      "id": "invoke-56",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -252,7 +252,7 @@
             },
             {
               "from": "query",
-              "to": "fn-38",
+              "to": "fn-44",
               "out": "limit",
               "in": "limit"
             },
@@ -264,13 +264,13 @@
             },
             {
               "from": "urlTemplate",
-              "to": "output-39",
+              "to": "output-45",
               "out": "url",
               "in": "url"
             },
             {
-              "from": "fn-38",
-              "to": "output-39",
+              "from": "fn-44",
+              "to": "output-45",
               "out": "output",
               "in": "output"
             },
@@ -282,7 +282,7 @@
             },
             {
               "from": "spreadResponse",
-              "to": "fn-38",
+              "to": "fn-44",
               "out": "hits",
               "in": "list"
             }
@@ -345,11 +345,11 @@
               }
             },
             {
-              "id": "fn-38",
+              "id": "fn-44",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_38 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-                "name": "fn_38",
+                "code": "const fn_44 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+                "name": "fn_44",
                 "raw": true
               }
             },
@@ -361,7 +361,7 @@
               }
             },
             {
-              "id": "output-39",
+              "id": "output-45",
               "type": "output",
               "configuration": {
                 "schema": {
