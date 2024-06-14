@@ -7,7 +7,7 @@
  * see: https://hn.algolia.com/api
  */
 
-import { base, board, code } from "@google-labs/breadboard";
+import { Schema, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { graph as forEach } from "./board-for-each";
 import {
@@ -35,61 +35,69 @@ const invocation = core.invoke({
   tags: input.tags,
 });
 
+export const HackerNewsSimplifiedAlogliaSearchResult: Schema = {
+  type: "array",
+  title: "Results",
+  items: {
+    type: "object",
+    properties: {
+      author: {
+        type: "string",
+      },
+      created_at: {
+        type: "string",
+      },
+      num_comments: {
+        type: "number",
+      },
+      objectID: {
+        type: "string",
+      },
+      points: {
+        type: "number",
+      },
+      story_id: {
+        type: "number",
+      },
+      title: {
+        type: "string",
+      },
+      updated_at: {
+        type: "string",
+      },
+      url: {
+        type: "string",
+      },
+      type: {
+        type: "string",
+      },
+    },
+    required: [
+      "author",
+      "created_at",
+      "num_comments",
+      "objectID",
+      "points",
+      "story_id",
+      "title",
+      "updated_at",
+      "url",
+      "objectType",
+    ],
+  },
+};
+
 const output = base.output({
   $metadata: { title: "Output" },
   schema: {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        author: {
-          type: "string",
-        },
-        created_at: {
-          type: "string",
-        },
-        num_comments: {
-          type: "number",
-        },
-        objectID: {
-          type: "string",
-        },
-        points: {
-          type: "number",
-        },
-        story_id: {
-          type: "number",
-        },
-        title: {
-          type: "string",
-        },
-        updated_at: {
-          type: "string",
-        },
-        url: {
-          type: "string",
-        },
-        type: {
-          type: "string",
-        },
-      },
-      required: [
-        "author",
-        "created_at",
-        "num_comments",
-        "objectID",
-        "points",
-        "story_id",
-        "title",
-        "updated_at",
-        "url",
-        "objectType",
-      ],
+    type: "object",
+    properties: {
+      output: HackerNewsSimplifiedAlogliaSearchResult,
     },
   },
 });
 
-export interface SearchResult {
+export interface VerboseSearchResult {
   _highlightResult: HighlightResult;
   _tags: string[];
   author: string;
@@ -156,14 +164,16 @@ const invokeForEach = core.invoke({
         "objectType",
       ],
     });
-    const convertTagsToType = code(({ item }: { item: SearchResult }) => {
-      return {
-        item: {
-          ...item,
-          objectType: item["_tags"][0],
-        },
-      };
-    });
+    const convertTagsToType = code(
+      ({ item }: { item: VerboseSearchResult }) => {
+        return {
+          item: {
+            ...item,
+            objectType: item["_tags"][0],
+          },
+        };
+      }
+    );
 
     input.item.to(convertTagsToType({})).item.as("object").to(manipulate);
 

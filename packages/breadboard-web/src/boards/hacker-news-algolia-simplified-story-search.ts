@@ -1,19 +1,19 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  *
  * @title Hacker News Simplified Algolia Search
  * see: https://hn.algolia.com/api
  */
 
-import { base, code } from "@google-labs/breadboard";
+import { base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
+import { searchQuerySchema } from "./hacker-news-algolia-search";
 import {
-  HackerNewsSearchResultsSchema,
+  HackerNewsSimplifiedAlogliaSearchResult,
   graph as search,
-  searchQuerySchema,
-} from "./hacker-news-algolia-search";
+} from "./hacker-news-simplified-algolia-search";
 
 const input = base.input({
   schema: {
@@ -25,36 +25,26 @@ const input = base.input({
   $metadata: { title: "Input" },
 });
 
-const trimResponse = code<{ list: [] }>(({ list}) => {
-  list.forEach((item) => {
-      delete item["created_at_i"]
-      delete item["children"]
-      delete item["_tags"]
-      delete item["_highlightResult"]
-      delete item["num_comments"]
-  })
-
-  return { output: list }
-})
-
 const invocation = core.invoke({
   $metadata: { title: "Invoke Full Search" },
   $board: search,
   query: input.query,
-  tags: "story"
+  tags: "story",
 });
 
 const output = base.output({
   $metadata: { title: "Output" },
-  schema: HackerNewsSearchResultsSchema,
+  schema: {
+    type: "object",
+    properties: {
+      output: HackerNewsSimplifiedAlogliaSearchResult,
+    },
+  },
+  output: invocation.output,
 });
 
-const res = trimResponse({list: invocation.output as unknown as []})
-
-res.output.to(output);
-
 const serialised = await output.serialize({
-  title: "Hacker News Algolia Simplified Story Search",
+  title: "Hacker News Simplified Algolia Story Search",
   version: "0.0.1",
 });
 
