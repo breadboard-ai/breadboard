@@ -11,8 +11,7 @@ export default defineNodeType({
   name: "inflate",
   metadata: {
     title: "Inflate",
-    description:
-      "Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.",
+    description: "Converts stored data to base64.",
   },
   inputs: {
     data: {
