@@ -28,6 +28,27 @@
     "dev": "npm run serve --watch"
   },
   "wireit": {
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../agent-kit:build:tsc",
+        "../breadboard:build:tsc",
+        "../breadboard-ui:build:tsc",
+        "../build:build:tsc",
+        "../core-kit:build:tsc",
+        "../gemini-kit:build:tsc",
+        "../google-drive-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../team-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
     "build": {
       "dependencies": [
         "build:prod"
@@ -38,8 +59,7 @@
       "dependencies": [
         "build:eleventy",
         "build:esbuild",
-        "../breadboard-ui:build:tsc",
-        "../breadboard-ui:build"
+        "typescript-files-and-deps"
       ],
       "files": [
         "src/static"
