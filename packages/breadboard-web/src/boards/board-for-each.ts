@@ -30,14 +30,26 @@ const demoBoard = await board<
 
   const reverse = code<{ item: string }, { item: string }>((inputs) => {
     const { item } = inputs;
-    return { item: item.split("").reverse().join("") };
+    return {
+      item: item
+        .split("")
+        .map((c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()))
+        .join(""),
+    };
   })(input.item);
 
-  const output = base.output({});
+  const output = base.output({
+    $metadata: {
+      title: "Output",
+    },
+  });
   reverse.to(output);
   return output;
 }).serialize();
 const input = base.input({
+  $metadata: {
+    title: "Input",
+  },
   schema: {
     type: "object",
     properties: {
@@ -126,15 +138,44 @@ const accumulate = accumulator({
 });
 
 accumulate.to(accumulate);
-// accumulate.array.to(core.passthrough({
-//   $metadata: {
-//     title: "Passthrough Accumulated Array",
-//   },
-// })).to(accumulate);
-accumulate.array.to(output);
 
-const serialised = await output.serialize({
-  title: "Board For Each",
+function emitter<T>(
+  args: any
+): NodeProxy<
+  { a?: T[] | undefined; b?: T[] | undefined },
+  Required<{ emit?: T[] | undefined }>
+> {
+  return code<
+    { a?: T[]; b?: T[] },
+    {
+      emit?: T[];
+    }
+  >(
+    (
+      inputs
+    ): { emit: T[] | undefined; a: T[] | undefined; b: T[] | undefined } => {
+      let emit = undefined;
+      if (!inputs.a || inputs.a.length === 0) {
+        emit = inputs.b;
+      }
+
+      return { emit: emit, a: inputs.a, b: inputs.b };
+    }
+  )(args);
+}
+
+emitter({
+  a: popItem.array,
+  b: accumulate.array,
+  $metadata: {
+    title: "Emitter",
+  },
+})
+  .emit.as("array")
+  .to(output);
+
+const serialised = await input.serialize({
+  title: "Board for Each",
   description:
     "Iterate over an array and run a subgraph for each item in the array.",
 });
