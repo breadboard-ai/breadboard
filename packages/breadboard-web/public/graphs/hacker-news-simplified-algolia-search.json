@@ -1,35 +1,34 @@
 {
   "title": "Hacker News Simplified Algolia Search",
-  "version": "0.0.1",
   "edges": [
     {
-      "from": "input-60",
-      "to": "invoke-61",
+      "from": "input-53",
+      "to": "invoke-54",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "input-60",
-      "to": "invoke-61",
+      "from": "input-53",
+      "to": "invoke-54",
       "out": "tags",
       "in": "tags"
     },
     {
-      "from": "invoke-61",
-      "to": "invoke-63",
+      "from": "invoke-54",
+      "to": "invoke-56",
       "out": "output",
       "in": "array"
     },
     {
-      "from": "invoke-63",
-      "to": "output-62",
+      "from": "invoke-56",
+      "to": "output-55",
       "out": "array",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-60",
+      "id": "input-53",
       "type": "input",
       "configuration": {
         "schema": {
@@ -68,57 +67,63 @@
       }
     },
     {
-      "id": "output-62",
+      "id": "output-55",
       "type": "output",
       "configuration": {
         "schema": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "author": {
-                "type": "string"
-              },
-              "created_at": {
-                "type": "string"
-              },
-              "num_comments": {
-                "type": "number"
-              },
-              "objectID": {
-                "type": "string"
-              },
-              "points": {
-                "type": "number"
-              },
-              "story_id": {
-                "type": "number"
-              },
-              "title": {
-                "type": "string"
-              },
-              "updated_at": {
-                "type": "string"
-              },
-              "url": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string"
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "array",
+              "title": "Results",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "author": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "num_comments": {
+                    "type": "number"
+                  },
+                  "objectID": {
+                    "type": "string"
+                  },
+                  "points": {
+                    "type": "number"
+                  },
+                  "story_id": {
+                    "type": "number"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "updated_at": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "author",
+                  "created_at",
+                  "num_comments",
+                  "objectID",
+                  "points",
+                  "story_id",
+                  "title",
+                  "updated_at",
+                  "url",
+                  "objectType"
+                ]
               }
-            },
-            "required": [
-              "author",
-              "created_at",
-              "num_comments",
-              "objectID",
-              "points",
-              "story_id",
-              "title",
-              "updated_at",
-              "url",
-              "objectType"
-            ]
+            }
           }
         }
       },
@@ -127,7 +132,7 @@
       }
     },
     {
-      "id": "invoke-61",
+      "id": "invoke-54",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -443,7 +448,7 @@
       }
     },
     {
-      "id": "invoke-63",
+      "id": "invoke-56",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -671,39 +676,39 @@
                     "description": "Manipulate an object by picking or omitting keys",
                     "edges": [
                       {
-                        "from": "fn-58",
-                        "to": "output-59",
+                        "from": "fn-51",
+                        "to": "output-52",
                         "out": "object",
                         "in": "object"
                       },
                       {
-                        "from": "input-57",
-                        "to": "fn-58",
+                        "from": "input-50",
+                        "to": "fn-51",
                         "out": "object",
                         "in": "object"
                       },
                       {
-                        "from": "input-57",
-                        "to": "fn-58",
+                        "from": "input-50",
+                        "to": "fn-51",
                         "out": "keys",
                         "in": "keys"
                       },
                       {
-                        "from": "input-57",
-                        "to": "fn-58",
+                        "from": "input-50",
+                        "to": "fn-51",
                         "out": "mode",
                         "in": "mode"
                       },
                       {
-                        "from": "input-57",
-                        "to": "fn-58",
+                        "from": "input-50",
+                        "to": "fn-51",
                         "out": "strict",
                         "in": "strict"
                       }
                     ],
                     "nodes": [
                       {
-                        "id": "output-59",
+                        "id": "output-52",
                         "type": "output",
                         "configuration": {
                           "schema": {
@@ -715,11 +720,11 @@
                         }
                       },
                       {
-                        "id": "fn-58",
+                        "id": "fn-51",
                         "type": "runJavascript",
                         "configuration": {
-                          "code": "const fn_58 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
-                          "name": "fn_58",
+                          "code": "const fn_51 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
+                          "name": "fn_51",
                           "raw": true
                         },
                         "metadata": {
@@ -727,7 +732,7 @@
                         }
                       },
                       {
-                        "id": "input-57",
+                        "id": "input-50",
                         "type": "input",
                         "configuration": {
                           "schema": {

@@ -118,16 +118,6 @@
     "version": "0.0.1"
   },
   {
-    "title": "Hacker News Algolia Simplified Comment Search",
-    "url": "/graphs/hacker-news-algolia-simplified-comment-search.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Hacker News Algolia Simplified Story Search",
-    "url": "/graphs/hacker-news-algolia-simplified-story-search.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Hacker News Firebase API Story by ID",
     "url": "/graphs/hacker-news-firebase-story-from-id.json",
     "version": "0.0.1"
@@ -138,9 +128,16 @@
     "version": "0.0.1"
   },
   {
+    "title": "Hacker News Simplified Algolia Comment Search",
+    "url": "/graphs/hacker-news-simplified-algolia-comment-search.json"
+  },
+  {
     "title": "Hacker News Simplified Algolia Search",
-    "url": "/graphs/hacker-news-simplified-algolia-search.json",
-    "version": "0.0.1"
+    "url": "/graphs/hacker-news-simplified-algolia-search.json"
+  },
+  {
+    "title": "Hacker News Simplified Algolia Story Search",
+    "url": "/graphs/hacker-news-simplified-algolia-story-search.json"
   },
   {
     "title": "Healer",
