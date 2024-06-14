@@ -109,8 +109,7 @@
   },
   {
     "title": "Hacker News Algolia Items",
-    "url": "/graphs/hacker-news-algolia-items.json",
-    "version": "0.0.1"
+    "url": "/graphs/hacker-news-algolia-items.json"
   },
   {
     "title": "Hacker News Angolia Search",

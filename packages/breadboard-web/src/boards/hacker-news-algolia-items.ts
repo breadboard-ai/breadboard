@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * see: https://hn.algolia.com/api
+ */
+
 import { Schema, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
@@ -117,7 +125,6 @@ response.to(output);
 const serialised = await input.serialize({
   title: "Hacker News Algolia Items",
   description: "Fetch a single item from the Hacker News Algolia API",
-  version: "0.0.1",
 });
 export { serialised as graph, input, output };
 export default serialised;

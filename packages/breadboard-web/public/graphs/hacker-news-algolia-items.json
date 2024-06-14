@@ -1,7 +1,6 @@
 {
   "title": "Hacker News Algolia Items",
   "description": "Fetch a single item from the Hacker News Algolia API",
-  "version": "0.0.1",
   "edges": [
     {
       "from": "fetch-44",
