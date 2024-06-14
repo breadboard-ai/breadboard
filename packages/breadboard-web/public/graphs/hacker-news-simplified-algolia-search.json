@@ -3,27 +3,33 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-57",
-      "to": "invoke-58",
+      "from": "input-60",
+      "to": "invoke-61",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "input-57",
-      "to": "invoke-58",
+      "from": "input-60",
+      "to": "invoke-61",
       "out": "tags",
       "in": "tags"
     },
     {
-      "from": "invoke-58",
-      "to": "output-59",
+      "from": "invoke-61",
+      "to": "invoke-63",
       "out": "output",
+      "in": "array"
+    },
+    {
+      "from": "invoke-63",
+      "to": "output-62",
+      "out": "array",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-57",
+      "id": "input-60",
       "type": "input",
       "configuration": {
         "schema": {
@@ -62,160 +68,57 @@
       }
     },
     {
-      "id": "output-59",
+      "id": "output-62",
       "type": "output",
       "configuration": {
         "schema": {
-          "type": "object",
-          "properties": {
-            "output": {
-              "type": "array",
-              "title": "Hacker News Search Results",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "_highlightResult": {
-                    "type": "object",
-                    "properties": {
-                      "author": {
-                        "type": "object",
-                        "properties": {
-                          "matchLevel": {
-                            "type": "string"
-                          },
-                          "matchedWords": {
-                            "type": "array",
-                            "items": {}
-                          },
-                          "value": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "matchLevel",
-                          "matchedWords",
-                          "value"
-                        ]
-                      },
-                      "title": {
-                        "type": "object",
-                        "properties": {
-                          "fullyHighlighted": {
-                            "type": "boolean"
-                          },
-                          "matchLevel": {
-                            "type": "string"
-                          },
-                          "matchedWords": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "value": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "fullyHighlighted",
-                          "matchLevel",
-                          "matchedWords",
-                          "value"
-                        ]
-                      },
-                      "url": {
-                        "type": "object",
-                        "properties": {
-                          "fullyHighlighted": {
-                            "type": "boolean"
-                          },
-                          "matchLevel": {
-                            "type": "string"
-                          },
-                          "matchedWords": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "value": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "fullyHighlighted",
-                          "matchLevel",
-                          "matchedWords",
-                          "value"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "author",
-                      "title",
-                      "url"
-                    ]
-                  },
-                  "_tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "author": {
-                    "type": "string"
-                  },
-                  "children": {
-                    "type": "array",
-                    "items": {
-                      "type": "number"
-                    }
-                  },
-                  "created_at": {
-                    "type": "string"
-                  },
-                  "created_at_i": {
-                    "type": "number"
-                  },
-                  "num_comments": {
-                    "type": "number"
-                  },
-                  "objectID": {
-                    "type": "string"
-                  },
-                  "points": {
-                    "type": "number"
-                  },
-                  "story_id": {
-                    "type": "number"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "updated_at": {
-                    "type": "string"
-                  },
-                  "url": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "_highlightResult",
-                  "_tags",
-                  "author",
-                  "children",
-                  "created_at",
-                  "created_at_i",
-                  "num_comments",
-                  "objectID",
-                  "points",
-                  "story_id",
-                  "title",
-                  "updated_at",
-                  "url"
-                ]
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "author": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "num_comments": {
+                "type": "number"
+              },
+              "objectID": {
+                "type": "string"
+              },
+              "points": {
+                "type": "number"
+              },
+              "story_id": {
+                "type": "number"
+              },
+              "title": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
               }
-            }
+            },
+            "required": [
+              "author",
+              "created_at",
+              "num_comments",
+              "objectID",
+              "points",
+              "story_id",
+              "title",
+              "updated_at",
+              "url",
+              "objectType"
+            ]
           }
         }
       },
@@ -224,7 +127,7 @@
       }
     },
     {
-      "id": "invoke-58",
+      "id": "invoke-61",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -537,6 +440,432 @@
       },
       "metadata": {
         "title": "Invoke Full Search"
+      }
+    },
+    {
+      "id": "invoke-63",
+      "type": "invoke",
+      "configuration": {
+        "$board": {
+          "title": "Board for Each",
+          "description": "Iterate over an array and run a subgraph for each item in the array.",
+          "edges": [
+            {
+              "from": "input-27",
+              "to": "passthrough-28",
+              "out": "board",
+              "in": "board"
+            },
+            {
+              "from": "input-27",
+              "to": "fn-31",
+              "out": "array",
+              "in": "array"
+            },
+            {
+              "from": "passthrough-28",
+              "to": "passthrough-28",
+              "out": "board",
+              "in": "board"
+            },
+            {
+              "from": "passthrough-28",
+              "to": "invoke-29",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "passthrough-28",
+              "to": "invoke-29",
+              "out": "board",
+              "in": "$board"
+            },
+            {
+              "from": "fn-31",
+              "to": "fn-31",
+              "out": "array",
+              "in": "array"
+            },
+            {
+              "from": "fn-31",
+              "to": "passthrough-28",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "fn-31",
+              "to": "fn-33",
+              "out": "array",
+              "in": "a"
+            },
+            {
+              "from": "invoke-29",
+              "to": "fn-32",
+              "out": "item",
+              "in": "item"
+            },
+            {
+              "from": "fn-33",
+              "to": "output-30",
+              "out": "emit",
+              "in": "array"
+            },
+            {
+              "from": "fn-32",
+              "to": "fn-32",
+              "out": "*",
+              "in": ""
+            },
+            {
+              "from": "fn-32",
+              "to": "fn-33",
+              "out": "array",
+              "in": "b"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "input-27",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "board": {
+                      "examples": [
+                        "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{},\"metadata\":{\"title\":\"Output\"}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
+                      ]
+                    },
+                    "array": {
+                      "type": "array",
+                      "examples": [
+                        "[\"The\",\"quick\",\"brown\",\"fox\"]"
+                      ]
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "title": "Input"
+              }
+            },
+            {
+              "id": "passthrough-28",
+              "type": "passthrough",
+              "configuration": {},
+              "metadata": {
+                "title": "Passthrough"
+              }
+            },
+            {
+              "id": "fn-31",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_31 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
+                "name": "fn_31",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Pop item"
+              }
+            },
+            {
+              "id": "invoke-29",
+              "type": "invoke",
+              "configuration": {},
+              "metadata": {
+                "title": "Invoke"
+              }
+            },
+            {
+              "id": "fn-33",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_33 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
+                "name": "fn_33",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Emitter"
+              }
+            },
+            {
+              "id": "fn-32",
+              "type": "runJavascript",
+              "configuration": {
+                "code": "const fn_32 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
+                "name": "fn_32",
+                "raw": true
+              },
+              "metadata": {
+                "title": "Accumulate"
+              }
+            },
+            {
+              "id": "output-30",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "array": {
+                      "type": "string",
+                      "title": "array"
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "title": "Output"
+              }
+            }
+          ],
+          "graphs": {}
+        },
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "invoke-5",
+                "to": "output-4",
+                "out": "object",
+                "in": "item"
+              },
+              {
+                "from": "fn-6",
+                "to": "invoke-5",
+                "out": "item",
+                "in": "object"
+              },
+              {
+                "from": "input-3",
+                "to": "fn-6",
+                "out": "item",
+                "in": "item"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-4",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "invoke-5",
+                "type": "invoke",
+                "configuration": {
+                  "$board": {
+                    "title": "Object Manipulator",
+                    "description": "Manipulate an object by picking or omitting keys",
+                    "edges": [
+                      {
+                        "from": "fn-58",
+                        "to": "output-59",
+                        "out": "object",
+                        "in": "object"
+                      },
+                      {
+                        "from": "input-57",
+                        "to": "fn-58",
+                        "out": "object",
+                        "in": "object"
+                      },
+                      {
+                        "from": "input-57",
+                        "to": "fn-58",
+                        "out": "keys",
+                        "in": "keys"
+                      },
+                      {
+                        "from": "input-57",
+                        "to": "fn-58",
+                        "out": "mode",
+                        "in": "mode"
+                      },
+                      {
+                        "from": "input-57",
+                        "to": "fn-58",
+                        "out": "strict",
+                        "in": "strict"
+                      }
+                    ],
+                    "nodes": [
+                      {
+                        "id": "output-59",
+                        "type": "output",
+                        "configuration": {
+                          "schema": {
+                            "type": "object"
+                          }
+                        },
+                        "metadata": {
+                          "title": "Output"
+                        }
+                      },
+                      {
+                        "id": "fn-58",
+                        "type": "runJavascript",
+                        "configuration": {
+                          "code": "const fn_58 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
+                          "name": "fn_58",
+                          "raw": true
+                        },
+                        "metadata": {
+                          "title": "Manipulation"
+                        }
+                      },
+                      {
+                        "id": "input-57",
+                        "type": "input",
+                        "configuration": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "object": {
+                                "type": "object",
+                                "examples": [
+                                  "{\"forename\":\"John\",\"surname\":\"Smith\",\"age\":30,\"city\":\"New York\",\"dateOfBirth\":\"1990-01-01T00:00:00.000Z\"}"
+                                ]
+                              },
+                              "keys": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "examples": [
+                                  "[\"forename\",\"surname\"]"
+                                ]
+                              },
+                              "mode": {
+                                "type": "string",
+                                "enum": [
+                                  "pick",
+                                  "omit"
+                                ],
+                                "default": "pick"
+                              },
+                              "strict": {
+                                "type": "boolean",
+                                "default": "false",
+                                "description": "If true and a key is not found, an error will be thrown"
+                              }
+                            }
+                          },
+                          "examples": [
+                            {
+                              "object": {
+                                "forename": "John",
+                                "surname": "Smith",
+                                "age": 30,
+                                "city": "New York",
+                                "dateOfBirth": "1990-01-01T00:00:00.000Z"
+                              },
+                              "keys": [
+                                "forename",
+                                "surname"
+                              ],
+                              "mode": "pick",
+                              "strict": false
+                            },
+                            {
+                              "object": {
+                                "forename": "John",
+                                "surname": "Smith",
+                                "age": 30,
+                                "city": "New York",
+                                "dateOfBirth": "1990-01-01T00:00:00.000Z"
+                              },
+                              "keys": [
+                                "forename",
+                                "surname"
+                              ],
+                              "mode": "omit",
+                              "strict": false
+                            },
+                            {
+                              "object": {
+                                "name": "John Smith",
+                                "age": 30,
+                                "location": "New York",
+                                "dob": "1990-01-01T00:00:00.000Z"
+                              },
+                              "keys": [
+                                "forename",
+                                "surname"
+                              ],
+                              "mode": "pick",
+                              "strict": true
+                            }
+                          ]
+                        },
+                        "metadata": {
+                          "title": "Input"
+                        }
+                      }
+                    ],
+                    "graphs": {}
+                  },
+                  "mode": "pick",
+                  "keys": [
+                    "author",
+                    "created_at",
+                    "num_comments",
+                    "objectID",
+                    "points",
+                    "story_id",
+                    "title",
+                    "updated_at",
+                    "url",
+                    "objectType"
+                  ]
+                }
+              },
+              {
+                "id": "fn-6",
+                "type": "runJavascript",
+                "configuration": {
+                  "code": "const fn_6 = ({item})=>{return{item:{...item,objectType:item[\"_tags\"][0]}}};",
+                  "name": "fn_6",
+                  "raw": true
+                }
+              },
+              {
+                "id": "input-3",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      },
+      "metadata": {
+        "title": "Manipulate elements"
       }
     }
   ]
