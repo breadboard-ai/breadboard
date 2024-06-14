@@ -45,7 +45,6 @@ const output = base.output({
 
 const serialised = await output.serialize({
   title: "Hacker News Simplified Algolia Story Search",
-  version: "0.0.1",
 });
 
 export { serialised as graph, input, output };

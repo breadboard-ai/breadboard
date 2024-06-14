@@ -189,7 +189,6 @@ invokeForEach.array.as("output").to(output);
 
 const serialised = await output.serialize({
   title: "Hacker News Simplified Algolia Search",
-  version: "0.0.1",
 });
 
 export { serialised as graph, input, output };

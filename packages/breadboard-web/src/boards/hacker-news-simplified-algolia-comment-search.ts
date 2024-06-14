@@ -7,12 +7,15 @@
  * see: https://hn.algolia.com/api
  */
 
-import { Schema, base } from "@google-labs/breadboard";
+import { base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import {
-  graph as search,
   searchQuerySchema,
 } from "./hacker-news-algolia-search";
+import {
+  HackerNewsSimplifiedAlogliaSearchResult,
+  graph as search,
+} from "./hacker-news-simplified-algolia-search";
 
 const input = base.input({
   schema: {
@@ -24,19 +27,6 @@ const input = base.input({
   $metadata: { title: "Input" },
 });
 
-const HackerNewsCommentResultsSchema : Schema = {
-  type: "object",
-  properties: {
-    output:{
-      title: "Hacker News Comment Results",
-      type: "array",
-      items: {
-
-      }
-    }
-  }
-}
-
 const invocation = core.invoke({
   $metadata: { title: "Invoke Full Search" },
   $board: search,
@@ -46,13 +36,18 @@ const invocation = core.invoke({
 
 const output = base.output({
   $metadata: { title: "Output" },
+  schema: {
+    type: "object",
+    properties: {
+      output: HackerNewsSimplifiedAlogliaSearchResult,
+    },
+  },
 });
 
 invocation.output.to(output);
 
 const serialised = await output.serialize({
-  title: "Hacker News Algolia Simplified Comment Search",
-  version: "0.0.1",
+  title: "Hacker News Simplified Algolia Comment Search",
 });
 
 export { serialised as graph, input, output };
