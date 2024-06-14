@@ -37,6 +37,8 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { GraphComment } from "./graph-comment.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -58,6 +60,7 @@ interface GraphOpts {
   ports: Map<string, InspectableNodePorts> | null;
   edges: InspectableEdge[];
   nodes: InspectableNode[];
+  metadata: GraphMetadata;
   visible: boolean;
 }
 
@@ -583,6 +586,10 @@ export class GraphRenderer extends LitElement {
       graph.nodes = opts.nodes;
     }
 
+    if (opts.metadata !== undefined) {
+      graph.comments = opts.metadata.comments || null;
+    }
+
     if (opts.visible !== undefined) {
       if (opts.visible) {
         graph.mask = null;
@@ -614,7 +621,7 @@ export class GraphRenderer extends LitElement {
 
       const selectedChildren = graph.getSelectedChildren();
       for (const child of selectedChildren) {
-        if (!(child instanceof GraphNode)) {
+        if (!(child instanceof GraphNode || child instanceof GraphComment)) {
           continue;
         }
 
@@ -633,7 +640,13 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODES_MOVED,
       (
-        nodes: Array<{ id: string; x: number; y: number; collapsed: boolean }>
+        nodes: Array<{
+          id: string;
+          type: "node" | "comment";
+          x: number;
+          y: number;
+          collapsed: boolean;
+        }>
       ) => {
         this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
       }
@@ -808,7 +821,7 @@ export class GraphRenderer extends LitElement {
   }
 
   getSelectedChildren() {
-    const selected: Array<GraphNode | GraphEdge> = [];
+    const selected: Array<GraphNode | GraphComment | GraphEdge> = [];
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
@@ -845,6 +858,7 @@ export class GraphRenderer extends LitElement {
 
   setNodeLayoutPosition(
     node: string,
+    type: "comment" | "node",
     position: PIXI.PointData,
     collapsed: boolean,
     justAdded: boolean
@@ -854,7 +868,13 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      return graph.setNodeLayoutPosition(node, position, collapsed, justAdded);
+      return graph.setNodeLayoutPosition(
+        node,
+        type,
+        position,
+        collapsed,
+        justAdded
+      );
     }
 
     return null;
@@ -927,7 +947,13 @@ export class GraphRenderer extends LitElement {
   #emitGraphNodeVisualInformation(graph: Graph) {
     const positions = graph.getNodeLayoutPositions();
     const nodes = [...positions.entries()].map(([id, layout]) => {
-      return { id, x: layout.x, y: layout.y, collapsed: layout.collapsed };
+      return {
+        id,
+        type: layout.type,
+        x: layout.x,
+        y: layout.y,
+        collapsed: layout.collapsed,
+      };
     });
 
     this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
@@ -992,15 +1018,18 @@ export class GraphRenderer extends LitElement {
 
       const nodes: string[] = [];
       const edges: InspectableEdge[] = [];
+      const comments: string[] = [];
       for (const child of selectedChildren) {
         if (child instanceof GraphNode) {
           nodes.push(child.label);
+        } else if (child instanceof GraphComment) {
+          comments.push(child.label);
         } else if (child instanceof GraphEdge && child.edge) {
           edges.push(child.edge);
         }
       }
 
-      this.dispatchEvent(new GraphEntityRemoveEvent(nodes, edges));
+      this.dispatchEvent(new GraphEntityRemoveEvent(nodes, edges, comments));
     }
   }
 

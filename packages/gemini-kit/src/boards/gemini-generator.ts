@@ -94,8 +94,8 @@ const text = input({
 const model = input({
   title: "Model",
   description: "The model to use for generation",
-  type: enumeration("gemini-pro", "gemini-ultra", "gemini-1.5-pro-latest"),
-  examples: ["gemini-1.5-pro-latest"],
+  type: enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+  examples: ["gemini-1.5-flash-latest"],
   optional: true,
 });
 

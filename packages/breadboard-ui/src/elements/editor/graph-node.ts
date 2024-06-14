@@ -10,7 +10,7 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
-import { getGlobalColor } from "./utils.js";
+import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -22,7 +22,6 @@ const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const outputNodeColor = getGlobalColor("--bb-boards-200");
 
-const DBL_CLICK_DELTA = 450;
 const ICON_SCALE = 0.42;
 
 export class GraphNode extends PIXI.Container {

@@ -39,3 +39,5 @@ export function edgeToString(edge: {
   } as InspectableEdge;
   return inspectableEdgeToString(fakeEdge);
 }
+
+export const DBL_CLICK_DELTA = 450;

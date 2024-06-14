@@ -2,21 +2,21 @@
   "title": "Hacker News Simplified Algolia Comment Search",
   "edges": [
     {
-      "from": "input-58",
-      "to": "invoke-59",
+      "from": "input-51",
+      "to": "invoke-52",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "invoke-59",
-      "to": "output-60",
+      "from": "invoke-52",
+      "to": "output-53",
       "out": "output",
       "in": "output"
     }
   ],
   "nodes": [
     {
-      "id": "input-58",
+      "id": "input-51",
       "type": "input",
       "configuration": {
         "schema": {
@@ -41,7 +41,7 @@
       }
     },
     {
-      "id": "output-60",
+      "id": "output-53",
       "type": "output",
       "configuration": {
         "schema": {
@@ -106,40 +106,40 @@
       }
     },
     {
-      "id": "invoke-59",
+      "id": "invoke-52",
       "type": "invoke",
       "configuration": {
         "$board": {
           "title": "Hacker News Simplified Algolia Search",
           "edges": [
             {
-              "from": "invoke-56",
-              "to": "output-55",
+              "from": "invoke-49",
+              "to": "output-48",
               "out": "array",
               "in": "output"
             },
             {
-              "from": "invoke-54",
-              "to": "invoke-56",
+              "from": "invoke-47",
+              "to": "invoke-49",
               "out": "output",
               "in": "array"
             },
             {
-              "from": "input-53",
-              "to": "invoke-54",
+              "from": "input-46",
+              "to": "invoke-47",
               "out": "query",
               "in": "query"
             },
             {
-              "from": "input-53",
-              "to": "invoke-54",
+              "from": "input-46",
+              "to": "invoke-47",
               "out": "tags",
               "in": "tags"
             }
           ],
           "nodes": [
             {
-              "id": "output-55",
+              "id": "output-48",
               "type": "output",
               "configuration": {
                 "schema": {
@@ -204,7 +204,7 @@
               }
             },
             {
-              "id": "invoke-56",
+              "id": "invoke-49",
               "type": "invoke",
               "configuration": {
                 "$board": {
@@ -212,81 +212,81 @@
                   "description": "Iterate over an array and run a subgraph for each item in the array.",
                   "edges": [
                     {
-                      "from": "input-27",
-                      "to": "passthrough-28",
+                      "from": "input-23",
+                      "to": "passthrough-24",
                       "out": "board",
                       "in": "board"
                     },
                     {
-                      "from": "input-27",
-                      "to": "fn-31",
+                      "from": "input-23",
+                      "to": "fn-27",
                       "out": "array",
                       "in": "array"
                     },
                     {
-                      "from": "passthrough-28",
-                      "to": "passthrough-28",
+                      "from": "passthrough-24",
+                      "to": "passthrough-24",
                       "out": "board",
                       "in": "board"
                     },
                     {
-                      "from": "passthrough-28",
-                      "to": "invoke-29",
+                      "from": "passthrough-24",
+                      "to": "invoke-25",
                       "out": "item",
                       "in": "item"
                     },
                     {
-                      "from": "passthrough-28",
-                      "to": "invoke-29",
+                      "from": "passthrough-24",
+                      "to": "invoke-25",
                       "out": "board",
                       "in": "$board"
                     },
                     {
-                      "from": "fn-31",
-                      "to": "fn-31",
+                      "from": "fn-27",
+                      "to": "fn-27",
                       "out": "array",
                       "in": "array"
                     },
                     {
-                      "from": "fn-31",
-                      "to": "passthrough-28",
+                      "from": "fn-27",
+                      "to": "passthrough-24",
                       "out": "item",
                       "in": "item"
                     },
                     {
-                      "from": "fn-31",
-                      "to": "fn-33",
+                      "from": "fn-27",
+                      "to": "fn-29",
                       "out": "array",
                       "in": "a"
                     },
                     {
-                      "from": "invoke-29",
-                      "to": "fn-32",
+                      "from": "invoke-25",
+                      "to": "fn-28",
                       "out": "item",
                       "in": "item"
                     },
                     {
-                      "from": "fn-33",
-                      "to": "output-30",
+                      "from": "fn-29",
+                      "to": "output-26",
                       "out": "emit",
                       "in": "array"
                     },
                     {
-                      "from": "fn-32",
-                      "to": "fn-32",
+                      "from": "fn-28",
+                      "to": "fn-28",
                       "out": "*",
                       "in": ""
                     },
                     {
-                      "from": "fn-32",
-                      "to": "fn-33",
+                      "from": "fn-28",
+                      "to": "fn-29",
                       "out": "array",
                       "in": "b"
                     }
                   ],
                   "nodes": [
                     {
-                      "id": "input-27",
+                      "id": "input-23",
                       "type": "input",
                       "configuration": {
                         "schema": {
@@ -311,7 +311,7 @@
                       }
                     },
                     {
-                      "id": "passthrough-28",
+                      "id": "passthrough-24",
                       "type": "passthrough",
                       "configuration": {},
                       "metadata": {
@@ -319,11 +319,11 @@
                       }
                     },
                     {
-                      "id": "fn-31",
+                      "id": "fn-27",
                       "type": "runJavascript",
                       "configuration": {
-                        "code": "const fn_31 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
-                        "name": "fn_31",
+                        "code": "const fn_27 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
+                        "name": "fn_27",
                         "raw": true
                       },
                       "metadata": {
@@ -331,7 +331,7 @@
                       }
                     },
                     {
-                      "id": "invoke-29",
+                      "id": "invoke-25",
                       "type": "invoke",
                       "configuration": {},
                       "metadata": {
@@ -339,11 +339,11 @@
                       }
                     },
                     {
-                      "id": "fn-33",
+                      "id": "fn-29",
                       "type": "runJavascript",
                       "configuration": {
-                        "code": "const fn_33 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
-                        "name": "fn_33",
+                        "code": "const fn_29 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
+                        "name": "fn_29",
                         "raw": true
                       },
                       "metadata": {
@@ -351,11 +351,11 @@
                       }
                     },
                     {
-                      "id": "fn-32",
+                      "id": "fn-28",
                       "type": "runJavascript",
                       "configuration": {
-                        "code": "const fn_32 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
-                        "name": "fn_32",
+                        "code": "const fn_28 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
+                        "name": "fn_28",
                         "raw": true
                       },
                       "metadata": {
@@ -363,7 +363,7 @@
                       }
                     },
                     {
-                      "id": "output-30",
+                      "id": "output-26",
                       "type": "output",
                       "configuration": {
                         "schema": {
@@ -432,39 +432,39 @@
                             "description": "Manipulate an object by picking or omitting keys",
                             "edges": [
                               {
-                                "from": "fn-51",
-                                "to": "output-52",
+                                "from": "fn-44",
+                                "to": "output-45",
                                 "out": "object",
                                 "in": "object"
                               },
                               {
-                                "from": "input-50",
-                                "to": "fn-51",
+                                "from": "input-43",
+                                "to": "fn-44",
                                 "out": "object",
                                 "in": "object"
                               },
                               {
-                                "from": "input-50",
-                                "to": "fn-51",
+                                "from": "input-43",
+                                "to": "fn-44",
                                 "out": "keys",
                                 "in": "keys"
                               },
                               {
-                                "from": "input-50",
-                                "to": "fn-51",
+                                "from": "input-43",
+                                "to": "fn-44",
                                 "out": "mode",
                                 "in": "mode"
                               },
                               {
-                                "from": "input-50",
-                                "to": "fn-51",
+                                "from": "input-43",
+                                "to": "fn-44",
                                 "out": "strict",
                                 "in": "strict"
                               }
                             ],
                             "nodes": [
                               {
-                                "id": "output-52",
+                                "id": "output-45",
                                 "type": "output",
                                 "configuration": {
                                   "schema": {
@@ -476,11 +476,11 @@
                                 }
                               },
                               {
-                                "id": "fn-51",
+                                "id": "fn-44",
                                 "type": "runJavascript",
                                 "configuration": {
-                                  "code": "const fn_51 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
-                                  "name": "fn_51",
+                                  "code": "const fn_44 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
+                                  "name": "fn_44",
                                   "raw": true
                                 },
                                 "metadata": {
@@ -488,7 +488,7 @@
                                 }
                               },
                               {
-                                "id": "input-50",
+                                "id": "input-43",
                                 "type": "input",
                                 "configuration": {
                                   "schema": {
@@ -630,7 +630,7 @@
               }
             },
             {
-              "id": "invoke-54",
+              "id": "invoke-47",
               "type": "invoke",
               "configuration": {
                 "$board": {
@@ -658,7 +658,7 @@
                     },
                     {
                       "from": "query",
-                      "to": "fn-46",
+                      "to": "fn-39",
                       "out": "limit",
                       "in": "limit"
                     },
@@ -670,13 +670,13 @@
                     },
                     {
                       "from": "urlTemplate",
-                      "to": "output-47",
+                      "to": "output-40",
                       "out": "url",
                       "in": "url"
                     },
                     {
-                      "from": "fn-46",
-                      "to": "output-47",
+                      "from": "fn-39",
+                      "to": "output-40",
                       "out": "output",
                       "in": "output"
                     },
@@ -688,7 +688,7 @@
                     },
                     {
                       "from": "spreadResponse",
-                      "to": "fn-46",
+                      "to": "fn-39",
                       "out": "hits",
                       "in": "list"
                     }
@@ -751,11 +751,11 @@
                       }
                     },
                     {
-                      "id": "fn-46",
+                      "id": "fn-39",
                       "type": "runJavascript",
                       "configuration": {
-                        "code": "const fn_46 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-                        "name": "fn_46",
+                        "code": "const fn_39 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+                        "name": "fn_39",
                         "raw": true
                       }
                     },
@@ -767,7 +767,7 @@
                       }
                     },
                     {
-                      "id": "output-47",
+                      "id": "output-40",
                       "type": "output",
                       "configuration": {
                         "schema": {
@@ -946,7 +946,7 @@
               }
             },
             {
-              "id": "input-53",
+              "id": "input-46",
               "type": "input",
               "configuration": {
                 "schema": {

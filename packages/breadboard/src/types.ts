@@ -25,6 +25,7 @@ import {
 
 export type {
   Capability,
+  CommentNode,
   Edge,
   GraphDescriptor,
   GraphIdentifier,

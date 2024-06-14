@@ -502,7 +502,7 @@
   #happy-path-pre,
   #happy-path-post {
     content: "";
-    background: no-repeat 100% 30% url(./images/happy-path-wire.svg);
+    background: no-repeat 100% 30% url(./images/happy-path/happy-path-wire.svg);
     position: relative;
     mask-image: linear-gradient(
       to right,

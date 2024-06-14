@@ -67,6 +67,24 @@ export type NodeDescriptor = {
   metadata?: NodeMetadata;
 };
 
+export type CommentNode = {
+  /**
+   * Unique id of the comment node in graph metadata.
+   */
+  id: NodeIdentifier;
+
+  /**
+   * The text content of the comment.
+   */
+  text: string;
+
+  /**
+   * The metadata of the comment node.
+   * Use this to provide additional information about the comment node.
+   */
+  metadata?: NodeMetadata;
+};
+
 /**
  * Represents an edge in a graph.
  */
@@ -216,6 +234,7 @@ export type GraphMetadata = {
    */
   icon?: string;
   [name: string]: NodeValue;
+  comments?: CommentNode[];
 };
 
 /**

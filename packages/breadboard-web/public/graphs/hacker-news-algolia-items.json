@@ -3,33 +3,33 @@
   "description": "Fetch a single item from the Hacker News Algolia API",
   "edges": [
     {
-      "from": "fetch-44",
+      "from": "fetch-37",
       "to": "spreadResponse",
       "out": "response",
       "in": "object"
     },
     {
-      "from": "input-42",
-      "to": "urlTemplate-43",
+      "from": "input-35",
+      "to": "urlTemplate-36",
       "out": "OBJECT_ID",
       "in": "OBJECT_ID"
     },
     {
       "from": "spreadResponse",
-      "to": "output-45",
+      "to": "output-38",
       "out": "*",
       "in": ""
     },
     {
-      "from": "urlTemplate-43",
-      "to": "fetch-44",
+      "from": "urlTemplate-36",
+      "to": "fetch-37",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "input-42",
+      "id": "input-35",
       "type": "input",
       "configuration": {
         "schema": {
@@ -50,7 +50,7 @@
       }
     },
     {
-      "id": "output-45",
+      "id": "output-38",
       "type": "output",
       "configuration": {
         "schema": {
@@ -120,7 +120,7 @@
       }
     },
     {
-      "id": "fetch-44",
+      "id": "fetch-37",
       "type": "fetch",
       "configuration": {
         "method": "GET"
@@ -142,7 +142,7 @@
       }
     },
     {
-      "id": "urlTemplate-43",
+      "id": "urlTemplate-36",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://hn.algolia.com/api/v1/items/{OBJECT_ID}"

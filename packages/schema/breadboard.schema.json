@@ -195,12 +195,95 @@
 				"icon": {
 					"type": "string",
 					"description": "The icon that identifies the graph. Can be a URL or a Material Design id."
+				},
+				"comments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/CommentNode"
+					}
 				}
 			},
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
 			"description": "Represents graph metadata."
+		},
+		"CommentNode": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "Unique id of the comment node in graph metadata."
+				},
+				"text": {
+					"type": "string",
+					"description": "The text content of the comment."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the comment node. Use this to provide additional information about the comment node."
+				}
+			},
+			"required": [
+				"id",
+				"text"
+			],
+			"additionalProperties": false
+		},
+		"NodeMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "The title of the node."
+				},
+				"description": {
+					"type": "string",
+					"description": "A more detailed description of the node."
+				},
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					],
+					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
+				},
+				"logLevel": {
+					"type": "string",
+					"enum": [
+						"debug",
+						"info"
+					],
+					"description": "Logging level."
+				}
+			},
+			"additionalProperties": false,
+			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
 		},
 		"Edge": {
 			"type": "object",
@@ -282,61 +365,6 @@
 				"$ref": "#/definitions/NodeValue"
 			},
 			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
-		},
-		"NodeMetadata": {
-			"type": "object",
-			"properties": {
-				"title": {
-					"type": "string",
-					"description": "The title of the node."
-				},
-				"description": {
-					"type": "string",
-					"description": "A more detailed description of the node."
-				},
-				"visual": {
-					"anyOf": [
-						{
-							"type": "string"
-						},
-						{
-							"type": "number"
-						},
-						{
-							"type": "boolean"
-						},
-						{
-							"type": "null"
-						},
-						{
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/NodeValue"
-							}
-						},
-						{
-							"$ref": "#/definitions/Capability"
-						},
-						{
-							"type": "object",
-							"additionalProperties": {
-								"$ref": "#/definitions/NodeValue"
-							}
-						}
-					],
-					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
-				},
-				"logLevel": {
-					"type": "string",
-					"enum": [
-						"debug",
-						"info"
-					],
-					"description": "Logging level."
-				}
-			},
-			"additionalProperties": false,
-			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
 		},
 		"KitDescriptor": {
 			"type": "object",

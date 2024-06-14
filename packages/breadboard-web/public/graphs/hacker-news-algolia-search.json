@@ -10,14 +10,14 @@
       "in": "object"
     },
     {
-      "from": "fn-46",
-      "to": "output-47",
+      "from": "fn-39",
+      "to": "output-40",
       "out": "output",
       "in": "output"
     },
     {
       "from": "query",
-      "to": "fn-46",
+      "to": "fn-39",
       "out": "limit",
       "in": "limit"
     },
@@ -41,7 +41,7 @@
     },
     {
       "from": "spreadResponse",
-      "to": "fn-46",
+      "to": "fn-39",
       "out": "hits",
       "in": "list"
     },
@@ -53,7 +53,7 @@
     },
     {
       "from": "urlTemplate",
-      "to": "output-47",
+      "to": "output-40",
       "out": "url",
       "in": "url"
     }
@@ -109,7 +109,7 @@
       }
     },
     {
-      "id": "output-47",
+      "id": "output-40",
       "type": "output",
       "configuration": {
         "schema": {
@@ -278,11 +278,11 @@
       }
     },
     {
-      "id": "fn-46",
+      "id": "fn-39",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_46 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-        "name": "fn_46",
+        "code": "const fn_39 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+        "name": "fn_39",
         "raw": true
       }
     },

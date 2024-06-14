@@ -18,6 +18,7 @@ import {
   NodeValue,
   Edge,
   EditSpec,
+  CommentNode,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -194,6 +195,7 @@ export class Editor extends LitElement {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
     }
 
+    #shortcut-add-comment,
     #shortcut-add-specialist,
     #shortcut-add-human,
     #shortcut-add-looper {
@@ -218,6 +220,11 @@ export class Editor extends LitElement {
 
     #shortcut-add-looper {
       background: var(--bb-neutral-0) var(--bb-icon-laps) center center / 20px
+        20px no-repeat;
+    }
+
+    #shortcut-add-comment {
+      background: var(--bb-neutral-0) var(--bb-icon-edit) center center / 20px
         20px no-repeat;
     }
 
@@ -411,6 +418,7 @@ export class Editor extends LitElement {
         ports: ports,
         edges: breadboardGraph.edges(),
         nodes: breadboardGraph.nodes(),
+        metadata: breadboardGraph.metadata(),
       }
     );
 
@@ -436,6 +444,7 @@ export class Editor extends LitElement {
       ports: ports,
       edges: breadboardGraph.edges(),
       nodes: breadboardGraph.nodes(),
+      metadata: breadboardGraph.metadata() || {},
       visible: false,
     });
 
@@ -616,12 +625,22 @@ export class Editor extends LitElement {
           });
         });
 
+        breadboardGraph.metadata ??= {};
+        breadboardGraph.metadata.comments ??= [];
+        const metadataComments = breadboardGraph.metadata.comments;
+        const comments = metadataComments.filter((node) => {
+          return selected.find((item) => item.label === node.id);
+        });
+
+        const metadata = { ...breadboardGraph.metadata, comments };
+
         this.#writingToClipboard = true;
         await navigator.clipboard.writeText(
           JSON.stringify(
             {
               title: breadboardGraph.title,
               version: breadboardGraph.version,
+              metadata,
               edges,
               nodes,
             },
@@ -650,29 +669,36 @@ export class Editor extends LitElement {
             return;
           }
 
-          graph.nodes.sort((nodeA: NodeDescriptor, nodeB: NodeDescriptor) => {
-            if (nodeA.metadata?.visual && nodeB.metadata?.visual) {
-              const visualA = nodeA.metadata.visual as Record<string, number>;
-              const visualB = nodeB.metadata.visual as Record<string, number>;
-              return visualA.x - visualB.x;
+          const comments = graph.metadata?.comments ?? [];
+          const nodesAndComments = [...graph.nodes, ...comments];
+          nodesAndComments.sort(
+            (
+              nodeA: NodeDescriptor | CommentNode,
+              nodeB: NodeDescriptor | CommentNode
+            ) => {
+              if (nodeA.metadata?.visual && nodeB.metadata?.visual) {
+                const visualA = nodeA.metadata.visual as Record<string, number>;
+                const visualB = nodeB.metadata.visual as Record<string, number>;
+                return visualA.x - visualB.x;
+              }
+
+              if (nodeA.metadata?.visual && !nodeB.metadata?.visual) {
+                return -1;
+              }
+
+              if (!nodeA.metadata?.visual && nodeB.metadata?.visual) {
+                return 1;
+              }
+
+              return 0;
             }
+          );
 
-            if (nodeA.metadata?.visual && !nodeB.metadata?.visual) {
-              return -1;
-            }
-
-            if (!nodeA.metadata?.visual && nodeB.metadata?.visual) {
-              return 1;
-            }
-
-            return 0;
-          });
-
-          if (!graph.nodes.length) {
+          if (!nodesAndComments.length) {
             return;
           }
 
-          const leftMostNode = graph.nodes[0];
+          const leftMostNode = nodesAndComments[0];
           let leftMostVisual = structuredClone(
             leftMostNode.metadata?.visual
           ) as Record<string, number>;
@@ -745,6 +771,7 @@ export class Editor extends LitElement {
 
             this.#graphRenderer.setNodeLayoutPosition(
               node.id,
+              "node",
               position,
               this.collapseNodesByDefault,
               false
@@ -796,6 +823,78 @@ export class Editor extends LitElement {
             edits.push({ type: "addedge", edge: newEdge, strict: true });
           }
 
+          if (graph.metadata && graph.metadata.comments) {
+            breadboardGraph.metadata ??= {};
+            breadboardGraph.metadata.comments ??= [];
+
+            const newComments: CommentNode[] = [];
+            for (const comment of graph.metadata.comments) {
+              // Update the node ID so it doesn't clash.
+              const existingNode = breadboardGraph.metadata.comments.find(
+                (graphNode) => graphNode.id === comment.id
+              );
+
+              if (existingNode) {
+                comment.id = this.#createRandomID("comment");
+              }
+
+              // Grab the x & y coordinates, delete them, and use them to instruct
+              // the graph where to place the node when it's added.
+              comment.metadata ??= {};
+              comment.metadata.visual ??= {};
+
+              const visual = comment.metadata.visual as Record<string, number>;
+              const x = (visual["x"] as number) ?? 0;
+              const y = (visual["y"] as number) ?? 0;
+
+              delete visual["x"];
+              delete visual["y"];
+
+              const globalPosition = this.#graphRenderer.toGlobal({ x, y });
+              const offset = {
+                x: globalPosition.x - leftMostNodeGlobalPosition.x,
+                y: globalPosition.y - leftMostNodeGlobalPosition.y,
+              };
+
+              const position = {
+                x: this.#lastX + offset.x - PASTE_OFFSET,
+                y: this.#lastY + offset.y - PASTE_OFFSET,
+              };
+
+              this.#graphRenderer.setNodeLayoutPosition(
+                comment.id,
+                "comment",
+                position,
+                this.collapseNodesByDefault,
+                false
+              );
+              this.#graphRenderer.addToAutoSelect(comment.id);
+
+              // Ask the graph for the visual positioning because the graph accounts for
+              // any transforms, whereas our base x & y values do not.
+              const layout = this.#graphRenderer.getNodeLayoutPosition(
+                comment.id
+              ) || {
+                x: 0,
+                y: 0,
+              };
+
+              visual.x = layout.x;
+              visual.y = layout.y;
+
+              newComments.push(comment);
+            }
+
+            breadboardGraph.metadata.comments = [
+              ...breadboardGraph.metadata.comments,
+              ...newComments,
+            ];
+            edits.push({
+              type: "changegraphmetadata",
+              metadata: breadboardGraph.metadata,
+            });
+          }
+
           this.dispatchEvent(
             new MultiEditEvent(
               edits,
@@ -840,23 +939,57 @@ export class Editor extends LitElement {
     }, "");
     const editsEvt = new MultiEditEvent(
       moveEvt.nodes.map((node) => {
-        const graphNode = this.graph?.nodes.find(
-          (graphNode) => graphNode.id === node.id
-        );
-        const metadata = (graphNode?.metadata || {}) as Record<string, unknown>;
+        switch (node.type) {
+          case "node": {
+            const graphNode = this.graph?.nodes.find(
+              (graphNode) => graphNode.id === node.id
+            );
+            const metadata = (graphNode?.metadata || {}) as Record<
+              string,
+              unknown
+            >;
 
-        return {
-          type: "changemetadata",
-          id: node.id,
-          metadata: {
-            ...metadata,
-            visual: {
-              x: node.x,
-              y: node.y,
-              collapsed: node.collapsed,
-            },
-          },
-        };
+            return {
+              type: "changemetadata",
+              id: node.id,
+              metadata: {
+                ...metadata,
+                visual: {
+                  x: node.x,
+                  y: node.y,
+                  collapsed: node.collapsed,
+                },
+              },
+            };
+          }
+
+          case "comment": {
+            if (!this.graph) {
+              throw new Error("No active graph - unable to update");
+            }
+
+            this.graph.metadata ??= {};
+            this.graph.metadata.comments ??= [];
+
+            const metadata = this.graph.metadata;
+            const commentNode = metadata.comments?.find(
+              (commentNode) => commentNode.id === node.id
+            );
+
+            if (commentNode && commentNode.metadata) {
+              commentNode.metadata.visual = {
+                x: node.x,
+                y: node.y,
+                collapsed: node.collapsed,
+              };
+            }
+
+            return {
+              type: "changegraphmetadata",
+              metadata,
+            };
+          }
+        }
       }),
       `Node multimove: ${label}`,
       this.subGraphId
@@ -931,9 +1064,15 @@ export class Editor extends LitElement {
   }
 
   #onGraphEntityRemove(evt: Event) {
-    const { nodes, edges } = evt as GraphEntityRemoveEvent;
+    const { nodes, edges, comments } = evt as GraphEntityRemoveEvent;
     const edits: EditSpec[] = [];
 
+    // Remove nodes.
+    for (const id of nodes) {
+      edits.push({ type: "removenode", id });
+    }
+
+    // Remove edges.
     for (const edge of edges) {
       edits.push({
         type: "removeedge",
@@ -946,10 +1085,19 @@ export class Editor extends LitElement {
       });
     }
 
-    for (const id of nodes) {
-      edits.push({ type: "removenode", id });
+    // Remove comments.
+    if (this.graph && this.graph.metadata) {
+      this.graph.metadata.comments ??= [];
+      this.graph.metadata.comments = this.graph.metadata.comments.filter(
+        (comment) => !comments.includes(comment.id)
+      );
+      edits.push({
+        type: "changegraphmetadata",
+        metadata: this.graph.metadata,
+      });
     }
 
+    // Create some comments for bookkeeping.
     const nodesLabel = nodes.length ? `#${nodes.join(", #")}` : "No nodes";
     const edgesLabel = edges.length
       ? edges.reduce((prev, curr, idx) => {
@@ -965,11 +1113,14 @@ export class Editor extends LitElement {
           );
         }, "")
       : "No edges";
+    const commentsLabel = comments.length
+      ? `#${comments.join(", #")}`
+      : "No comments";
 
     this.dispatchEvent(
       new MultiEditEvent(
         edits,
-        `Delete (${nodesLabel}) (${edgesLabel})`,
+        `Delete (${nodesLabel}) (${edgesLabel}) (${commentsLabel})`,
         this.subGraphId
       )
     );
@@ -1001,6 +1152,7 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graphRenderer.setNodeLayoutPosition(
       id,
+      type === "comment" ? "comment" : "node",
       { x, y },
       this.collapseNodesByDefault,
       true
@@ -1163,6 +1315,24 @@ export class Editor extends LitElement {
                     return;
                   }
                   evt.dataTransfer.setData(DATA_TYPE, "looper");
+                }}
+              >
+                Add Human
+              </button>
+              <button
+                draggable="true"
+                title="Add comment"
+                id="shortcut-add-comment"
+                @dblclick=${() => {
+                  const id = this.#createRandomID("comment");
+                  this.#graphRenderer.deselectAllChildren();
+                  this.dispatchEvent(new NodeCreateEvent(id, "comment"));
+                }}
+                @dragstart=${(evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "comment");
                 }}
               >
                 Add Human
