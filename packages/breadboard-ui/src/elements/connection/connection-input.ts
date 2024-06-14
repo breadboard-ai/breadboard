@@ -193,7 +193,7 @@ export class ConnectionInput extends LitElement {
       name: connectionId,
       value: JSON.stringify(updatedGrant),
     });
-    this.#broadcastSecret(grant.access_token);
+    this.#broadcastSecret(updatedGrant.access_token);
   }
 
   #broadcastSecret(secret: string) {
