@@ -7,6 +7,7 @@
 import { serialize } from "@breadboard-ai/build";
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
+import { getFileContent } from "./get-file-content.js";
 import { exportFile } from "./export-file.js";
 import { listFiles } from "./list-files.js";
 
@@ -19,9 +20,20 @@ export const kit = new Board({
 const core = kit.addKit(Core);
 
 kit.graphs = {
+  getFileContent: serialize(getFileContent),
   exportFile: serialize(exportFile),
   listFiles: serialize(listFiles),
 };
+
+core.invoke({
+  $id: "getFileContent",
+  $board: "#getFileContent",
+  $metadata: {
+    title: "Get File Content",
+    description: "Get the content of a file in Google Drive",
+    icon: "google-drive",
+  },
+});
 
 core.invoke({
   $id: "exportFile",

@@ -20,6 +20,7 @@ const builder = new KitBuilder(
 );
 
 const GooogleDriveKit = builder.build({
+  getFileContent: adapter.handlerForNode("getFileContent"),
   exportFile: adapter.handlerForNode("exportFile"),
   listFiles: adapter.handlerForNode("listFiles"),
 });
@@ -27,6 +28,9 @@ const GooogleDriveKit = builder.build({
 export type GooogleDriveKit = InstanceType<typeof GooogleDriveKit>;
 
 export type GooogleDriveKitType = {
+  getFile: NewNodeFactory<{
+    // TODO(aomarks) Generate this?
+  }>;
   exportFile: NewNodeFactory<{
     // TODO(aomarks) Generate this?
   }>;
