@@ -74,9 +74,9 @@ export class CodeEditor extends LitElement {
         closeBrackets(),
         keymap.of([indentWithTab]),
         EditorView.updateListener.of((update) => {
-          const isDeletion =
-            update.changes.desc.newLength < update.changes.desc.length;
-          if (!isDeletion) {
+          const isChange =
+            update.changes.desc.newLength !== update.changes.desc.length;
+          if (!isChange) {
             return;
           }
 
