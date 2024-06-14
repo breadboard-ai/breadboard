@@ -1,5 +1,5 @@
 {
-  "title": "Board For Each",
+  "title": "Board for Each",
   "description": "Iterate over an array and run a subgraph for each item in the array.",
   "edges": [
     {
@@ -7,6 +7,12 @@
       "to": "fn-31",
       "out": "array",
       "in": "array"
+    },
+    {
+      "from": "fn-31",
+      "to": "fn-33",
+      "out": "array",
+      "in": "a"
     },
     {
       "from": "fn-31",
@@ -22,8 +28,14 @@
     },
     {
       "from": "fn-32",
-      "to": "output-30",
+      "to": "fn-33",
       "out": "array",
+      "in": "b"
+    },
+    {
+      "from": "fn-33",
+      "to": "output-30",
+      "out": "emit",
       "in": "array"
     },
     {
@@ -79,11 +91,14 @@
             },
             "board": {
               "examples": [
-                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").reverse().join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
+                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{},\"metadata\":{\"title\":\"Output\"}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
               ]
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Input"
       }
     },
     {
@@ -126,6 +141,18 @@
       },
       "metadata": {
         "title": "Accumulate"
+      }
+    },
+    {
+      "id": "fn-33",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_33 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
+        "name": "fn_33",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Emitter"
       }
     },
     {
