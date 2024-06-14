@@ -25,7 +25,8 @@ export class Toast extends LitElement {
       align-items: center;
       background: rgb(255, 255, 255);
       border: 1px solid #ccc;
-      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.13),
+      box-shadow:
+        0 2px 3px 0 rgba(0, 0, 0, 0.13),
         0 7px 9px 0 rgba(0, 0, 0, 0.16);
       border-radius: 8px;
       padding: 8px 16px 8px 12px;
@@ -129,7 +130,7 @@ export class BreadboardSiteClipboardCopy extends LitElement {
       border: none;
       cursor: pointer;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.5;
+      opacity: 0.3;
       position: absolute;
       border-radius: 50%;
     }
