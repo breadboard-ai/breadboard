@@ -11,9 +11,9 @@ import { Schema, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { graph as forEach } from "./board-for-each";
 import {
-  graph as search,
-  searchQuerySchema,
-  searchTagsSchema,
+    graph as search,
+    searchQuerySchema,
+    searchTagsSchema,
 } from "./hacker-news-algolia-search";
 import { graph as manipulator } from "./object-manipulator";
 
@@ -35,7 +35,7 @@ const invocation = core.invoke({
   tags: input.tags,
 });
 
-export const HackerNewsSimplifiedAlogliaSearchResult: Schema = {
+export const HackerNewsSimplifiedAlgoliaSearchResult: Schema = {
   type: "array",
   title: "Results",
   items: {
@@ -92,7 +92,7 @@ const output = base.output({
   schema: {
     type: "object",
     properties: {
-      output: HackerNewsSimplifiedAlogliaSearchResult,
+      output: HackerNewsSimplifiedAlgoliaSearchResult,
     },
   },
 });

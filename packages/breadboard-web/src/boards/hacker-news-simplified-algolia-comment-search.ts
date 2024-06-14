@@ -13,7 +13,7 @@ import {
   searchQuerySchema,
 } from "./hacker-news-algolia-search";
 import {
-  HackerNewsSimplifiedAlogliaSearchResult,
+  HackerNewsSimplifiedAlgoliaSearchResult,
   graph as search,
 } from "./hacker-news-simplified-algolia-search";
 
@@ -39,7 +39,7 @@ const output = base.output({
   schema: {
     type: "object",
     properties: {
-      output: HackerNewsSimplifiedAlogliaSearchResult,
+      output: HackerNewsSimplifiedAlgoliaSearchResult,
     },
   },
 });
