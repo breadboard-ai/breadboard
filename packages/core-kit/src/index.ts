@@ -201,6 +201,7 @@ export const Core = builder.build({
    * present.
    */
   deflate,
+  inflate,
 
   unnest: unnestNode,
 });
@@ -224,6 +225,7 @@ import {
 } from "@google-labs/breadboard";
 import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
 import deflate from "./nodes/deflate.js";
+import inflate from "./nodes/inflate.js";
 import { NodeFactoryFromDefinition } from "@breadboard-ai/build";
 
 export type CoreKitType = {
