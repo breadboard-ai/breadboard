@@ -20,16 +20,6 @@
     "version": "0.0.2"
   },
   {
-    "title": "Agent",
-    "url": "/graphs/agent.json",
-    "version": "0.0.3"
-  },
-  {
-    "title": "Ask User",
-    "url": "/graphs/ask-user.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "Audio",
     "url": "/graphs/audio.json",
     "version": "0.0.1"
@@ -91,26 +81,6 @@
   {
     "title": "Hacker News Firebase API Story IDs",
     "url": "/graphs/hacker_news_firebase_top_story_ids.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "Healer",
-    "url": "/graphs/healer.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "JSON Agent",
-    "url": "/graphs/json-agent.json",
-    "version": "0.0.3"
-  },
-  {
-    "title": "JSON Generator",
-    "url": "/graphs/json-generator.json",
-    "version": "0.0.1"
-  },
-  {
-    "title": "JSON Validator",
-    "url": "/graphs/json-validator.json",
     "version": "0.0.1"
   },
   {
@@ -192,11 +162,6 @@
     "title": "The simplest LLM-based board",
     "url": "/graphs/simplest.json",
     "version": "0.0.3"
-  },
-  {
-    "title": "Single turn",
-    "url": "/graphs/single-turn.json",
-    "version": "0.0.1"
   },
   {
     "title": "Dense text summarizer (single iteration)",
