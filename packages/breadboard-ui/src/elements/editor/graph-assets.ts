@@ -18,6 +18,7 @@ const ASSET_LIST = new Map([
 type AssetMap = Map<string, PIXI.Texture>;
 
 export class GraphAssets {
+  static assetPrefix = "";
   static #instance: GraphAssets;
   static instance() {
     if (!this.#instance) {
@@ -33,7 +34,9 @@ export class GraphAssets {
   private constructor() {
     const loadedAssets = [...ASSET_LIST.entries()].map(
       async ([name, path]): Promise<[string, PIXI.Texture]> => {
-        const texture = await PIXI.Assets.load<PIXI.Texture>(path);
+        const texture = await PIXI.Assets.load<PIXI.Texture>(
+          `${GraphAssets.assetPrefix}${path}`
+        );
         return [name, texture];
       }
     );

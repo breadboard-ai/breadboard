@@ -28,6 +28,7 @@
     { "path": "packages/pinecone-kit" },
     { "path": "packages/schema" },
     { "path": "packages/team-kit" },
-    { "path": "packages/template-kit" }
+    { "path": "packages/template-kit" },
+    { "path": "packages/website" }
   ]
 }

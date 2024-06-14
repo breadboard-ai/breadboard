@@ -1258,9 +1258,11 @@ export class GraphRenderer extends LitElement {
       id="overflow-menu"
     >
       <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
-      <button id="delete-node" ${ref(this.#overflowDeleteNode)}>
-        Delete node
-      </button>
+      ${this.editable
+        ? html`<button id="delete-node" ${ref(this.#overflowDeleteNode)}>
+            Delete node
+          </button>`
+        : nothing}
     </div>`;
 
     const edgeSelectDisambiguationMenuLocation: PIXI.Point =

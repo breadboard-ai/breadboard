@@ -11,11 +11,14 @@ const markdownItGitHubAlerts = require("markdown-it-github-alerts");
 const markdownItGitHubHeadings = require("markdown-it-github-headings");
 const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
 const pluginRss = require("@11ty/eleventy-plugin-rss");
+const youtube = require("eleventy-plugin-youtube-embed");
 
 module.exports = function (eleventyConfig) {
-  eleventyConfig.addFilter("toc", require("./filter-toc.cjs"));
+  eleventyConfig.addFilter("toc", require("./filters/filter-toc.cjs"));
+  eleventyConfig.addFilter("board", require("./filters/filter-board.cjs"));
   eleventyConfig.addPlugin(syntaxHighlight);
-	eleventyConfig.addPlugin(pluginRss);
+  eleventyConfig.addPlugin(pluginRss);
+  eleventyConfig.addPlugin(youtube);
 
   eleventyConfig.amendLibrary("md", (mdLib) => {
     mdLib.use(markdownItGitHubAlerts, { icons: "" });

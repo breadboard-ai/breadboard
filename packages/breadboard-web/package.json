@@ -196,7 +196,6 @@
     "copy-pyoide-assets": {
       "command": "tsx src/copy-pyodide-assets.ts",
       "files": [],
-      "output": [],
       "dependencies": [
         "../agent-kit:build"
       ],

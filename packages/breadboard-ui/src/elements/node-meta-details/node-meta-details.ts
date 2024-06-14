@@ -101,7 +101,6 @@ export class NodeMetaDetails extends LitElement {
 
       // Node is an InspectableNode.
       if (node) {
-        console.log(node);
         for (const kit of breadboardGraph.kits()) {
           for (const nodeType of kit.nodeTypes) {
             if (nodeType.type() === node.descriptor.type) {

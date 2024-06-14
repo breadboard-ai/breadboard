@@ -1314,7 +1314,6 @@ export class Graph extends PIXI.Container {
       });
 
       graphComment.once(GRAPH_OPERATIONS.GRAPH_COMMENT_DRAWN, () => {
-        console.log("Set up");
         const layout = this.getNodeLayoutPosition(id);
 
         if (!layout || !layout.justAdded) {
