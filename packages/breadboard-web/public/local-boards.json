@@ -35,6 +35,14 @@
     "version": "0.0.1"
   },
   {
+    "title": "Business Review Replier Demo",
+    "url": "/graphs/business-review-replier-demo.json"
+  },
+  {
+    "title": "Bussiness Review Reply Generator",
+    "url": "/graphs/business-review-replier.json"
+  },
+  {
     "title": "Chat bot 2.0",
     "url": "/graphs/chat-bot-2.json",
     "version": "0.0.1"
