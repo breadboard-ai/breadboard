@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  addKit,
-  type NewNodeFactory,
-  type NewNodeValue,
-} from "@google-labs/breadboard";
+import { addKit, type NewNodeFactory } from "@google-labs/breadboard";
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 import { kit } from "./kit.js";
 
@@ -24,15 +20,22 @@ const builder = new KitBuilder(
 );
 
 const GooogleDriveKit = builder.build({
+  getFileContent: adapter.handlerForNode("getFileContent"),
   exportFile: adapter.handlerForNode("exportFile"),
+  listFiles: adapter.handlerForNode("listFiles"),
 });
 
 export type GooogleDriveKit = InstanceType<typeof GooogleDriveKit>;
 
 export type GooogleDriveKitType = {
+  getFile: NewNodeFactory<{
+    // TODO(aomarks) Generate this?
+  }>;
   exportFile: NewNodeFactory<{
     // TODO(aomarks) Generate this?
-    content: NewNodeValue;
+  }>;
+  listFiles: NewNodeFactory<{
+    // TODO(aomarks) Generate this?
   }>;
 };
 

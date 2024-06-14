@@ -10,7 +10,7 @@ import { core } from "@google-labs/core-kit";
 const metadata = {
   title: "Text Generator",
   description:
-    "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google Gemini Pro, Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model.",
+    "This is a text generator. It can generate text using various LLMs. Currently, it supports the following models: Google Gemini Pro and OpenAI GPT-3.5 Turbo.",
   version: "0.0.2",
 };
 
@@ -32,7 +32,7 @@ const inputSchema = {
       type: "string",
       title: "Model",
       description: "The model to use for generation",
-      enum: ["Gemini Pro", "GPT 3.5 Turbo", "PaLM", "mock"],
+      enum: ["Gemini Pro", "GPT 3.5 Turbo"],
       examples: ["Gemini Pro"],
     },
   },
@@ -78,8 +78,6 @@ export default await board(() => {
   const switchModel = code(({ MODEL }: { MODEL: string }) => {
     const models: Record<string, string> = {
       "Gemini Pro": "gemini-generator.json",
-      PaLM: "palm-text-generator.json",
-      mock: "mock-text-generator.json",
       "GPT 3.5 Turbo": "openai-gpt-35-turbo.json",
     };
     const path = models[MODEL];

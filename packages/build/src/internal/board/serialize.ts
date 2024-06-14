@@ -11,11 +11,7 @@ import type {
   NodeValue,
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
-import {
-  DefaultValue,
-  OutputPortGetter,
-  type OutputPortReference,
-} from "../common/port.js";
+import { DefaultValue, OutputPortGetter } from "../common/port.js";
 import type {
   SerializableBoard,
   SerializableInputPort,
@@ -27,6 +23,7 @@ import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
 import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
+import { isOptional, OptionalVersionOf } from "./optional.js";
 import type { Output } from "./output.js";
 
 /**
@@ -244,16 +241,19 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         }
       }
       outputNode.configuration.schema.properties[name] = schema;
-      outputNode.configuration.schema.required.push(name);
+      const isOpt = isSpecialOutput(output)
+        ? isOptional(output.port)
+        : isOptional(output);
+      if (!isOpt) {
+        outputNode.configuration.schema.required.push(name);
+      }
       addEdge(
         visitNodeAndReturnItsId(port.node),
         port.name,
         outputNodeId,
         name,
-        isConstant(
-          // TODO(aomarks) Should not need this cast.
-          output as OutputPortReference<JsonSerializable>
-        )
+        isConstant(output),
+        isOpt
       );
     }
   }
@@ -342,6 +342,13 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           wasConstant = true;
         }
 
+        let wasOptional = false;
+        if (isOptional(value)) {
+          // TODO(aomarks) The way optional works is kind of hacky.
+          value = value[OptionalVersionOf];
+          wasOptional = true;
+        }
+
         if (isLoopback(value)) {
           value = value.value;
           if (value === undefined) {
@@ -360,7 +367,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
               inputNodeInfo.portName,
               thisNodeId,
               portName,
-              wasConstant
+              wasConstant,
+              wasOptional
             );
           } else {
             // TODO(aomarks) Does it actually make sense in some cases to wire up
@@ -380,7 +388,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             wiredOutputPort.name,
             thisNodeId,
             portName,
-            wasConstant
+            wasConstant,
+            wasOptional
           );
         } else if (value === DefaultValue) {
           // Omit the value.
@@ -423,11 +432,15 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     fromPort: string,
     to: string,
     toPort: string,
-    constant: boolean
+    constant: boolean,
+    optional: boolean
   ) {
     const edge: Edge = { from, to, out: fromPort, in: toPort };
     if (constant) {
       edge.constant = true;
+    }
+    if (optional) {
+      edge.optional = true;
     }
     edges.push(edge);
   }
@@ -470,6 +483,7 @@ type Edge = {
   to: string;
   in: string;
   constant?: true;
+  optional?: true;
 };
 
 type InputOrOutputNodeDescriptor = NodeDescriptor & {

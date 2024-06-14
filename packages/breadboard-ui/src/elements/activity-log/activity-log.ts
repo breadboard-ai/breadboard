@@ -299,7 +299,7 @@ export class ActivityLog extends LitElement {
           ) {
             renderableValue = html`${markdown(nodeValue)}`;
           } else {
-            renderableValue = html`${nodeValue
+            renderableValue = html`${nodeValue !== undefined
               ? nodeValue
               : "No value provided"}`;
           }
