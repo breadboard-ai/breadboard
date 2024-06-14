@@ -58,8 +58,7 @@
       "command": "mkdir -p dist/prod && cp -R dist/eleventy/ dist/prod/breadboard && cp -R src/static/ dist/prod/breadboard/static/ && cp -R dist/esbuild/ dist/prod/breadboard/js",
       "dependencies": [
         "build:eleventy",
-        "build:esbuild",
-        "typescript-files-and-deps"
+        "build:esbuild"
       ],
       "files": [
         "src/static"
@@ -99,7 +98,7 @@
     "build:esbuild": {
       "command": "./esbuild.mjs",
       "dependencies": [
-        "../breadboard-ui:build"
+        "typescript-files-and-deps"
       ],
       "files": [
         "src/**/*.ts"
