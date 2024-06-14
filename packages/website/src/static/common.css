@@ -8,6 +8,98 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bb-grid-size: 4px;
+  --bb-grid-size-2: calc(var(--bb-grid-size) * 2);
+  --bb-grid-size-3: calc(var(--bb-grid-size) * 3);
+  --bb-grid-size-4: calc(var(--bb-grid-size) * 4);
+  --bb-grid-size-5: calc(var(--bb-grid-size) * 5);
+  --bb-grid-size-6: calc(var(--bb-grid-size) * 6);
+  --bb-grid-size-7: calc(var(--bb-grid-size) * 7);
+  --bb-grid-size-8: calc(var(--bb-grid-size) * 8);
+  --bb-grid-size-9: calc(var(--bb-grid-size) * 9);
+  --bb-grid-size-10: calc(var(--bb-grid-size) * 10);
+  --bb-grid-size-11: calc(var(--bb-grid-size) * 11);
+  --bb-grid-size-12: calc(var(--bb-grid-size) * 12);
+  --bb-grid-size-13: calc(var(--bb-grid-size) * 13);
+  --bb-grid-size-14: calc(var(--bb-grid-size) * 14);
+  --bb-grid-size-15: calc(var(--bb-grid-size) * 15);
+  --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
+
+  --bb-icon-fit: url(/breadboard/static/third_party/icons/fit.svg);
+  --bb-icon-minimize: url(/breadboard/static/third_party/icons/minimize.svg);
+  --bb-icon-maximize: url(/breadboard/static/third_party/icons/maximize.svg);
+  --bb-icon-reset-nodes: url(/breadboard/static/third_party/icons/reset-nodes.svg);
+
+  --bb-warning-50: #ffffff;
+  --bb-warning-100: #ffcccc;
+  --bb-warning-200: #ff9999;
+  --bb-warning-300: #ff6666;
+  --bb-warning-400: #ff3333;
+  --bb-warning-500: #ff0000;
+  --bb-warning-600: #cc0000;
+  --bb-warning-700: #990000;
+  --bb-warning-800: #660000;
+  --bb-warning-900: #330000;
+
+  --bb-inputs-50: #eaf7e7;
+  --bb-inputs-100: #bbe7b0;
+  --bb-inputs-200: #9adc8a;
+  --bb-inputs-300: #6ccb55;
+  --bb-inputs-400: #4fc134;
+  --bb-inputs-500: #24b202;
+  --bb-inputs-600: #20a202;
+  --bb-inputs-700: #1a7e01;
+  --bb-inputs-800: #136202;
+  --bb-inputs-900: #0f4b00;
+
+  --bb-nodes-50: #fff9e6;
+  --bb-nodes-100: #ffebb0;
+  --bb-nodes-200: #ffe28b;
+  --bb-nodes-300: #ffd454;
+  --bb-nodes-400: #ffcc33;
+  --bb-nodes-500: #ffbf00;
+  --bb-nodes-600: #e8af02;
+  --bb-nodes-700: #b68902;
+  --bb-nodes-800: #8c6900;
+  --bb-nodes-900: #6b5000;
+
+  --bb-boards-50: #fff4eb;
+  --bb-boards-100: #ffdfc0;
+  --bb-boards-200: #ffcea1;
+  --bb-boards-300: #feb876;
+  --bb-boards-400: #feab5c;
+  --bb-boards-500: #fe9533;
+  --bb-boards-600: #e7882e;
+  --bb-boards-700: #b46b24;
+  --bb-boards-800: #8c521b;
+  --bb-boards-900: #6b3f15;
+
+  --bb-ui-50: #ecf5ff;
+  --bb-ui-100: #c0dfff;
+  --bb-ui-200: #a1d0ff;
+  --bb-ui-300: #77bbff;
+  --bb-ui-400: #5cadff;
+  --bb-ui-500: #3399ff;
+  --bb-ui-600: #2e8be8;
+  --bb-ui-700: #246db5;
+  --bb-ui-800: #1b548c;
+  --bb-ui-900: #1b548c;
+
+  --bb-neutral-0: #ffffff;
+  --bb-neutral-10: #fafafa;
+  --bb-neutral-50: #f6f6f6;
+  --bb-neutral-100: #ededed;
+  --bb-neutral-200: #e3e3e3;
+  --bb-neutral-300: #d9d9d9;
+  --bb-neutral-400: #c2c2c2;
+  --bb-neutral-500: #9c9c9c;
+  --bb-neutral-600: #7a7a7a;
+  --bb-neutral-700: #595959;
+  --bb-neutral-800: #333333;
+  --bb-neutral-900: #1a1a1a;
+}
+
 @font-face {
   font-family: "FiraCode";
   font-weight: 100;
@@ -142,7 +234,8 @@ body {
   left: 0;
   top: calc(var(--bb-grid-size) * 10.5);
   height: calc(80% - var(--bb-grid-size) * 10.5);
-  box-shadow: 0px 25px 13.1px rgba(0, 0, 0, 0.05),
+  box-shadow:
+    0px 25px 13.1px rgba(0, 0, 0, 0.05),
     0px 45px 50px rgba(0, 0, 0, 0.15);
   overflow: auto;
   padding-bottom: 24px;
@@ -199,6 +292,43 @@ body {
   #navigation .inline-list {
     display: flex;
   }
+}
+
+.eleventy-plugin-youtube-embed {
+  display: block;
+  margin: 40px auto 80px auto;
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  box-shadow:
+    0px 25px 13.1px rgba(0, 0, 0, 0.05),
+    0px 45px 50px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+bb-board-embed {
+  display: flex;
+  height: 480px;
+  width: 100%;
+}
+
+bb-board-embed:not(:defined) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0 40px 0;
+  background: var(--bb-ui-50);
+  border-radius: 8px;
+  box-shadow:
+    0px 25px 13.1px rgba(0, 0, 0, 0.05),
+    0px 45px 50px rgba(0, 0, 0, 0.15);
+}
+
+bb-board-embed:not(:defined)::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background: url(/breadboard/static/images/ui/progress.svg) center center /
+    20px 20px no-repeat;
 }
 
 footer {

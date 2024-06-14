@@ -11,7 +11,7 @@ import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
   InputEnterEvent,
-  NodeDeleteEvent,
+  MultiEditEvent,
   RunEvent,
   StopEvent,
 } from "../../events/events.js";
@@ -26,6 +26,7 @@ import {
   InspectableRunInputs,
   Kit,
   NodeIdentifier,
+  RemoveNodeSpec,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
@@ -351,19 +352,29 @@ export class UI extends LitElement {
           .showNodeShortcuts=${showNodeShortcuts}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
-          @bbnodedelete=${(evt: NodeDeleteEvent) => {
-            if (!this.selectedNodeIds) {
+          @bbmultiedit=${(evt: MultiEditEvent) => {
+            const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
+              (edit) => edit.type === "removenode"
+            ) as RemoveNodeSpec[];
+            if (deletedNodes.length === 0) {
               return;
             }
 
-            const idx = this.selectedNodeIds.indexOf(evt.id);
-            if (idx === -1) {
+            const selectedPrior = this.selectedNodeIds.length;
+            for (const deletedNode of deletedNodes) {
+              const idx = this.selectedNodeIds.indexOf(deletedNode.id);
+              if (idx === -1) {
+                continue;
+              }
+
+              this.selectedNodeIds.splice(idx, 1);
+            }
+            const selectedPost = this.selectedNodeIds.length;
+            if (selectedPrior === selectedPost) {
               return;
             }
 
-            this.selectedNodeIds = this.selectedNodeIds.filter(
-              (id) => id !== evt.id
-            );
+            this.selectedNodeIds = [...this.selectedNodeIds];
           }}
           @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
             if (!this.selectedNodeIds) {

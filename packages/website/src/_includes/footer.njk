@@ -1,3 +1,15 @@
+{% raw %}
+<script type="module">
+  import { attachCopy } from '/breadboard/js/code-clipboard.js';
+  attachCopy();
+
+  async function loadBoardEmbed() {
+    await import('/breadboard/js/board-embed.js');
+  }
+  loadBoardEmbed();
+</script>
+{% endraw %}
+
 <footer>
   Copyright 2024 Google LLC. Code licensed under <a id="github" href="https://github.com/breadboard-ai/breadboard/blob/main/LICENSE"> Apache License 2.0</a>
-</header>
+</footer>

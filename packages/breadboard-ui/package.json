@@ -20,6 +20,10 @@
     "./*.js": {
       "types": "./dist/src/*.d.ts",
       "default": "./dist/src/*.js"
+    },
+    "./editor": {
+      "types": "./dist/src/elements/editor/editor.d.ts",
+      "default": "./dist/src/elements/editor/editor.js"
     }
   },
   "scripts": {
