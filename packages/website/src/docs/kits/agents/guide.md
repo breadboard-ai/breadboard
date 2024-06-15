@@ -324,6 +324,40 @@ In the Task above, we don't even tell it exact steps. We trust Looper and delega
 
 As long as there's a hint at formulating a plan with steps in the Task, Loopers will recognize the "step-by-step job" kind and act accordingly.
 
+#### Looper and other workers
+
+Because Looper does the planning, workers inside the body loop only see one step of the plan at each iteration. They aren't aware of the big picture. Doing so allows them to focus on their task at hand.
+
+For simple repetition jobs, it's fairly straightforward. We just treat the workers as if they are doing only one step of the iteration.
+
+For step-by-step jobs, we need to add a bit more flexibility to the workers. We need to expect that Looper might send varying kinds of tasks to them.
+
+For instance, when creating a Persona for a Specialist inside of the loop body, we craft it in a way that helps Specialist perform any of the potential tasks within the loop. A good practice is to tell the Specialist that it can wear many hats. Here's a sketch for a Specialist persona that matches the lyrics-crafting task above (some details of the prompt elided for brevity):
+
+```prompt
+You are a multi-talented writer. You can wear many hats.
+You are also famous for collaborating, so when asked
+to do a particular task, you do just that task,
+and leave space for others to do their jobs.
+
+When asked to develop a theme for a song,
+you know exactly what to do.
+(remind LLM how to develop song themes)
+
+When asked to write copy, you are set.
+You are a brilliant copywriter.
+(remind LLM how to be a great copy writer)
+
+When asked to work on hooks, you've got it
+(remind LLM how the best hooks are made)
+
+When asked to write the song lyrics,
+(remind LLM how to write the best song lyrics)
+
+...
+
+```
+
 TO DO:
 
 - Create a simple looper with the specialist
