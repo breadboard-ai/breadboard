@@ -1,0 +1,175 @@
+{
+  "title": "Board for Each",
+  "description": "Iterate over an array and run a subgraph for each item in the array.",
+  "edges": [
+    {
+      "from": "fn-27",
+      "to": "fn-27",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "fn-27",
+      "to": "fn-29",
+      "out": "array",
+      "in": "a"
+    },
+    {
+      "from": "fn-27",
+      "to": "passthrough-24",
+      "out": "item",
+      "in": "item"
+    },
+    {
+      "from": "fn-28",
+      "to": "fn-28",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fn-28",
+      "to": "fn-29",
+      "out": "array",
+      "in": "b"
+    },
+    {
+      "from": "fn-29",
+      "to": "output-26",
+      "out": "emit",
+      "in": "array"
+    },
+    {
+      "from": "input-23",
+      "to": "fn-27",
+      "out": "array",
+      "in": "array"
+    },
+    {
+      "from": "input-23",
+      "to": "passthrough-24",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "invoke-25",
+      "to": "fn-28",
+      "out": "item",
+      "in": "item"
+    },
+    {
+      "from": "passthrough-24",
+      "to": "invoke-25",
+      "out": "board",
+      "in": "$board"
+    },
+    {
+      "from": "passthrough-24",
+      "to": "invoke-25",
+      "out": "item",
+      "in": "item"
+    },
+    {
+      "from": "passthrough-24",
+      "to": "passthrough-24",
+      "out": "board",
+      "in": "board"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-23",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "array": {
+              "type": "array",
+              "examples": [
+                "[\"The\",\"quick\",\"brown\",\"fox\"]"
+              ]
+            },
+            "board": {
+              "examples": [
+                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{},\"metadata\":{\"title\":\"Output\"}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
+              ]
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "output-26",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "array": {
+              "type": "string",
+              "title": "array"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Output"
+      }
+    },
+    {
+      "id": "fn-27",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_27 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
+        "name": "fn_27",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Pop item"
+      }
+    },
+    {
+      "id": "fn-28",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_28 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
+        "name": "fn_28",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Accumulate"
+      }
+    },
+    {
+      "id": "fn-29",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_29 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
+        "name": "fn_29",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Emitter"
+      }
+    },
+    {
+      "id": "invoke-25",
+      "type": "invoke",
+      "configuration": {},
+      "metadata": {
+        "title": "Invoke"
+      }
+    },
+    {
+      "id": "passthrough-24",
+      "type": "passthrough",
+      "configuration": {},
+      "metadata": {
+        "title": "Passthrough"
+      }
+    }
+  ]
+}
