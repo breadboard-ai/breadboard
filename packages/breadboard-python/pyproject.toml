@@ -8,7 +8,6 @@ authors = [
   {name = "Kevin Xiao", email = "xiaok10003@gmail.com"},
 ]
 keywords = ["breadboard"]
-license = {file = "LICENSE"}
 
 
 dependencies = [
@@ -17,4 +16,5 @@ dependencies = [
   "jsonref",
   "json_fix",
   "prettydiff",
+  "cloudpickle",
 ]

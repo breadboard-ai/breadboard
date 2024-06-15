@@ -290,6 +290,7 @@ def get_field_name(field: FieldInfo, blob):
     return field._attributes_set["name"]
   raise Exception(f"Can't find {field}")
   
+BOARD_NAMES = {}
 
 # input schema is either a modelmetaclass or dict
 SchemaType = Union[SchemaObject, Dict]
@@ -310,6 +311,8 @@ class Board(Generic[T, S]):
   components = {}
   input_board: Optional[Self] = None
   output_board: Optional[Self] = None
+  _is_node: bool = False
+  _package_name = None
 
   # This is only used within the context of the parent of this Board, if there is one.
   # If there is no parent, this identifier is not used.
@@ -318,6 +321,8 @@ class Board(Generic[T, S]):
   # Id should be unique for all components in a parent Board.
   id: Optional[str]
 
+  def is_leaf(self) -> bool:
+    return self._is_node
 
   def _get_schema(self) -> Tuple[SchemaType, SchemaType]:
     # Get input/output schema from typing
@@ -336,7 +341,7 @@ class Board(Generic[T, S]):
     return input_schema, output_schema
 
 
-  def __init__(self, **kwargs) -> None:
+  def __init__(self, *args, **kwargs) -> None:
     self.input_schema, self.output_schema = self._get_schema()
     self.components = {}
     # For the highest level Board, inputs will always just be the input schemas.
@@ -347,9 +352,10 @@ class Board(Generic[T, S]):
     self.set_inputs: Dict[str, Any] = {"*": []}
     self.id = None
     self.loaded = False
-    self.input_board = None
-    self.output_board = None
+    self._input_board = None
+    self._output_board = None
 
+    """
     for k, v in kwargs.items():
       if k == "id":
         self.id = v
@@ -370,22 +376,31 @@ class Board(Generic[T, S]):
         if k not in self.inputs:
           self.inputs[k] = v
           # If k is already populated in the input, no need to populate it now.
+    """
+
+    self.__call__(*args, **kwargs)
+
 
     self.output = AttrDict()
     if self.output_schema and isinstance(self.output_schema, ModelMetaclass):
       for k, v in self.output_schema.model_fields.items():
         if isinstance(v, FieldInfo):
+          # populate name into fieldinfo if it doesn't exist.
+          #if not hasattr(v, "name"):
+          if "name" not in v._attributes_set and (not v.json_schema_extra or "name" not in v.json_schema_extra):
+            v = FieldInfo.merge_field_infos(FieldInfo(name=k), v, name=k)
           v = FieldContext(v, self)
         else:
           raise Exception("Unexpected model_field. No FieldInfo")
         self.output[k] = v
       #self.output = AttrDict(self.output_schema.model_fields)
+    
 
   def __setattr__(self, name, value):
     super().__setattr__(name, value)
     if hasattr(self, "components") and name in self.components:
       self.components.pop(name)
-    if isinstance(value, Board):
+    if isinstance(value, Board) and name not in ["_input_board", "_output_board"]:
       self.components[name] = value
     
     super().__setattr__("loaded", False)
@@ -428,37 +443,41 @@ class Board(Generic[T, S]):
     return config
   
   def get_or_assign_id(self, default_name = None, required=False):
+    # TODO: make a unique name registry.
     if self.id is not None:
       return self.id
     if required:
       raise Exception(f"Id should be assigned but is not: {self}")
-    if default_name is not None:
-      self.id = default_name
-    else:
+    base_name = self.type if default_name is None else default_name
+    if True:
       # TODO: Fix shared incrementer. It should be tracked based on context.
-      if self.type not in __class__.SHARED_INDEX:
-        __class__.SHARED_INDEX[self.type] = 1
-      self.id = f"{self.type}-{__class__.SHARED_INDEX[self.type]}"
-      __class__.SHARED_INDEX[self.type] += 1
+      if base_name not in __class__.SHARED_INDEX:
+        __class__.SHARED_INDEX[base_name] = 1
+      self.id = f"{base_name}-{__class__.SHARED_INDEX[base_name]}"
+      __class__.SHARED_INDEX[base_name] += 1
     return self.id
   
-  def get_or_create_input_output_nodes(self) -> Tuple[Self, Self]:
-    if self.input_board is not None:
-      return self.input_board, self.output_board
+  def get_or_create_input_output_nodes(self, is_root: bool = False) -> Tuple[Self, Self]:
+    if self._input_board is not None:
+      return self._input_board, self._output_board
     
     # Populate input node.
     class InputBoard(Board[self.input_schema, self.input_schema]):
-      type = "input"
+      type = "input" if is_root else "passthrough"
+      _is_node = True
     
-    self.input_board = InputBoard()
-    self.input_board.get_or_assign_id("input")
+    self._input_board = InputBoard()
+    assigned_id = "input" if is_root else f"input-{self.get_or_assign_id()}"
+    self._input_board.get_or_assign_id(assigned_id)
     class OutputBoard(Board[self.output_schema, Any]):
-      type = "output"
+      type = "output" if is_root else "passthrough"
+      _is_node = True
 
-    self.output_board = OutputBoard()
-    self.output_board.get_or_assign_id("output")
+    self._output_board = OutputBoard()
+    assigned_id = "output" if is_root else f"output-{self.get_or_assign_id()}"
+    self._output_board.get_or_assign_id(assigned_id)
 
-    return self.input_board, self.output_board
+    return self._input_board, self._output_board
   
   def get_all_components(self) -> List[Self]:
     # This can only be ran after describe is called.
@@ -516,13 +535,49 @@ class Board(Generic[T, S]):
     output["nodes"] = []
 
     # When constructing the graph, two adhoc Boards are added, representing input and output.
-    input_board, output_board = self.get_or_create_input_output_nodes()
+    input_board, output_board = self.get_or_create_input_output_nodes(is_root=True)
     self.describe(input_board, output_board)
 
     kits = set()
-    all_nodes = []
+    replace_mapping = {}
 
-    all_nodes = self.get_all_components()
+
+
+    def expand_boards(parent):
+      current_nodes = parent.get_all_components()
+      initial_all_nodes = [x for x in current_nodes]
+      #current_nodes = set(current_nodes)
+      result = []
+
+      for each_component in initial_all_nodes:
+        # for each component, if they can be expanded, get their input/output nodes.
+        if each_component.is_leaf():
+          if each_component not in result:
+            result.append(each_component)
+          continue
+        i_node, o_node = each_component.get_or_create_input_output_nodes()
+        each_component.describe(i_node, o_node)
+        for x in expand_boards(each_component):
+          if x not in result:
+            result.append(x)
+        replace_mapping[each_component] = o_node
+
+        # These inputs need to be added after all boards are expanded. Otherwise board expansion will leak out of the context.
+        # are these inputs needed when describing?
+        # probably not? I don't think inputs should override.
+        for k, vs in each_component.set_inputs.items():
+          if not k in i_node.set_inputs:
+            i_node.set_inputs[k] = []
+          i_node.set_inputs[k].extend(vs)
+        #i_node.set_inputs.update(each_component.set_inputs)
+        i_node.inputs.update(each_component.inputs)
+      return result
+
+    all_nodes = expand_boards(self)
+
+    if self.is_leaf():
+      self.get_or_assign_id("some-leaf")
+      all_nodes = [self]
 
     # Generate nodes
     for component in all_nodes:
@@ -541,11 +596,8 @@ class Board(Generic[T, S]):
         kits.add(package_name)
 
 
-    replace_mapping = {}
-    """
-    initial_all_nodes = [x for x in all_nodes]
-    all_nodes = set(all_nodes)
-    for each_component in initial_all_nodes:
+
+      """
       class InputBoard(Board[each_component.input_schema, each_component.input_schema]):
         type = "input"
       
@@ -561,7 +613,7 @@ class Board(Generic[T, S]):
       replace_mapping[each_component] = output_component
       if each_component in all_nodes:
         all_nodes.remove(each_component)
-    """
+      """
 
     # Populate Edges
     output["edges"] = []
@@ -634,14 +686,34 @@ class Board(Generic[T, S]):
 
     for k, v in kwargs.items():
       if k in self.inputs and not isinstance(v, FieldContext):
-        raise Exception(f"Already got an input field")
-      if not isinstance(v, FieldContext) and not isinstance(v, Board):
-        raise Exception(f"Only edges can be passed into __call__: {v}")
+        raise Exception(f"Already got an input field: {k}")
     
+    """
     for k, v in kwargs.items():
       if k not in self.set_inputs:
         self.set_inputs[k] = []
       self.set_inputs[k].append(v)
+    """
+    for k, v in kwargs.items():
+      if k == "id":
+        self.id = v
+        continue
+      if isinstance(v, FieldInfo) or isinstance(v, Board) or isinstance(v, AttrDict): # If it's not static
+        if k not in self.set_inputs:
+          self.set_inputs[k] = []
+        self.set_inputs[k].append(v)
+      else:
+        self.inputs[k] = v
+
+    if self.input_schema and isinstance(self.input_schema, ModelMetaclass):
+      for k, v in self.input_schema.model_fields.items():
+        if isinstance(v, FieldInfo):
+          v = FieldContext(v, self)
+        else:
+          raise Exception("Unexpected model_field. No FieldInfo")
+        if k not in self.inputs:
+          self.inputs[k] = v
+          # If k is already populated in the input, no need to populate it now.
     # Arg should be treated as dicts
     # TODO: When passed in a whole arg, it should be wildcarded.
         
@@ -654,7 +726,7 @@ class Board(Generic[T, S]):
       elif isinstance(arg, Board):
         self.set_inputs["*"].append(arg)
       else:
-        raise Exception("Unexpected type for arg")
+        raise Exception(f"Unexpected type for arg: {arg}")
     
     self.loaded = False
     return self

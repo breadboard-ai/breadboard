@@ -1,0 +1,89 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "last_runtime": {
+        "build_target": "",
+        "kind": "local"
+      }
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "a = {\"model\": \"models/gemini-1.0-pro\", \"contents\": [{\"role\": \"user\", \"parts\": [{\"text\": \"So I need tickets to Mission Impossible in Mountain View tonight.\"}]}, {\"role\": \"model\", \"parts\": [{\"function_call\": {\"name\": \"find_theaters\", \"args\": {\"location\": \"Mountain View, CA\", \"movie\": \"Mission Impossible\"}}}]}, {\"role\": \"user\", \"parts\": [{\"function_response\": {\"name\": \"find_theaters\", \"response\": {\"movie\": \"Mission Impossible Dead Reckoning Part 1\", \"theaters\": [{\"name\": \"AMC Mountain View 16\", \"address\": \"2000 W El Camino Real, Mountain View, CA 94040\", \"showtimes\": [{\"time\": \"10:00 AM\", \"date\": \"2023-07-20\"}, {\"time\": \"12:00 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"2:00 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"4:00 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"6:00 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"8:00 PM\", \"date\": \"2023-07-20\"}]}, {\"name\": \"Regal Edwards 14\", \"address\": \"245 Castro St, Mountain View, CA 94040\", \"showtimes\": [{\"time\": \"4:30 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"7:30 PM\", \"date\": \"2023-07-20\"}, {\"time\": \"10:30 PM\", \"date\": \"2023-07-20\"}]}]}}}]}, {\"role\": \"model\", \"parts\": [{\"text\": \"OK. Mission Impossible, Dead reckoning Part 1 is playing at the AMC Mountain View 16 and the Regal Edwards 14. Do you have a preference?\"}]}, {\"role\": \"user\", \"parts\": [{\"text\": \"Yeah let's go with regal edwards.\"}]}, {\"role\": \"model\", \"parts\": [{\"text\": \"Sure. At the Regal Edwards 14, remaining showtimes are 4:30 and 7:30. Which would you like?\"}]}, {\"role\": \"user\", \"parts\": [{\"text\": \"How about two tickets for the 7:30 show.\"}]}, {\"role\": \"model\", \"parts\": [{\"function_call\": {\"name\": \"check_ticket_availability\", \"args\": {\"movie\": \"Mission impossible Dead Reckoning Part 1\", \"theater\": \"Regal Edwards 14\", \"location\": \"Mountain View CA\", \"showtime\": \"7:30\", \"date\": \"today\", \"num_tix\": \"2\"}}}]}, {\"role\": \"user\", \"parts\": [{\"function_response\": {\"name\": \"check_ticket_availability\", \"response\": {\"status\": \"available\", \"tickets_left\": \"28\"}}}]}, {\"role\": \"model\", \"parts\": [{\"text\": \"OK, let me confirm you'd like to purchase two tickets to Mission Impossible Dead Reckoning Part 1 tonight at the Regal Edwards 14 in Mountain View CA. Please confirm that's correct and I'll go ahead with the purchase.\"}]}, {\"role\": \"user\", \"parts\": [{\"text\": \"That's right.\"}]}], \"tools\": [{\"function_declarations\": [{\"name\": \"find_movies\", \"description\": \"find movie titles currently playing in theaters based on any description, genre, title words, etc.\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"description\": {\"type\": \"STRING\", \"description\": \"Any kind of description including category or genre, title words, attributes, etc.\"}}, \"required\": [\"description\"]}}, {\"name\": \"find_theaters\", \"description\": \"find theaters based on location and optionally movie title which are is currently playing in theaters\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}}, \"required\": [\"location\"]}}, {\"name\": \"get_showtimes\", \"description\": \"Find the start times for movies playing in a specific theater\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"location\": {\"type\": \"STRING\", \"description\": \"The city and state, e.g. San Francisco, CA or a zip code e.g. 95616\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the theater\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for requested showtime\"}}, \"required\": [\"location\", \"movie\", \"theater\", \"date\"]}}, {\"name\": \"get_attributes\", \"description\": \"Find the basic features of a movie, including the director, producer, runtime, rating (like G, PG, etc.), synopsis, release date, or studio\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"attribute\": {\"type\": \"STRING\", \"description\": \"Any attribute the user is looking for including the director, producer, runtime, rating (like G, PG, etc.), synopsis, release date, or studio\"}, \"movie\": {\"type\": \"STRING\", \"description\": \"Any movie title\"}}, \"required\": [\"attribute\", \"movie\"]}}, {\"name\": \"get_movie_reviews\", \"description\": \"Gets the audience and/or critic reviews for a given movie\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"review_type\": {\"type\": \"STRING\", \"enum\": [\"audience\", \"critic\", \"both\"]}}, \"required\": [\"movie\", \"review_type\"]}}, {\"name\": \"book_tickets\", \"description\": \"Completes transaction to purchase tickets for a movie playing in a theater, assuming the user payment information is already on file\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the movie theater\"}, \"location\": {\"type\": \"STRING\", \"description\": \"City and state or zip code where the movie theater is located\"}, \"showtime\": {\"type\": \"STRING\", \"description\": \"Time the movie begins\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for the movie showing\"}, \"num_tix\": {\"type\": \"STRING\", \"description\": \"Number of tickets to be purchased\"}}, \"required\": [\"movie\", \"theater\", \"location\", \"showtime\", \"date\", \"num_tix\"]}}, {\"name\": \"check_ticket_availability\", \"description\": \"Checks that tickets for a particular movie, showtime, theater, time, and date are available\", \"parameters\": {\"type\": \"OBJECT\", \"properties\": {\"movie\": {\"type\": \"STRING\", \"description\": \"Any movie playing in theaters.\"}, \"theater\": {\"type\": \"STRING\", \"description\": \"Name of the movie theater\"}, \"location\": {\"type\": \"STRING\", \"description\": \"City and state or zip code where the movie theater is located\"}, \"showtime\": {\"type\": \"STRING\", \"description\": \"Time the movie begins\"}, \"date\": {\"type\": \"STRING\", \"description\": \"Date for the movie showing\"}, \"num_tix\": {\"type\": \"STRING\", \"description\": \"Number of tickets to be purchased\"}}, \"required\": [\"movie\", \"theater\", \"location\", \"showtime\", \"date\", \"num_tix\"]}}]}], \"generation_config\": {\"temperature\": 0.0}}\n"
+      ],
+      "metadata": {
+        "id": "oGbcqt7-dw4t"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google3.google.ai.generativelanguage.v1main import content_pb2\n",
+        "from google3.google.ai.generativelanguage.v1main import generative_service_pb2\n",
+        "from google.protobuf import json_format\n",
+        "import json\n",
+        "\n",
+        "target = json_format.Parse(json.dumps(a), generative_service_pb2.GenerateContentRequest())\n",
+        "requests = [target]"
+      ],
+      "metadata": {
+        "id": "CejfznD5dw4v"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google3.google.ai.generativelanguage.v1main import content_pb2\n",
+        "from google3.google.ai.generativelanguage.v1main import generative_service_pb2\n",
+        "\n",
+        "from google3.labs.language.genai.scripts.multimodal import client"
+      ],
+      "metadata": {
+        "id": "BfIs6vd6dw4v"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "responses = {}\n",
+        "service = \"blade:google.ai.generativelanguage.v1main.generativeservice-autopush\"\n",
+        "from google3.labs.language.genai.scripts.multimodal import client\n",
+        "\n",
+        "cli = client.Client(service, api_key=API_KEY)\n",
+        "for i, r in enumerate(requests):\n",
+        "  #print(f\"\\n---Index: {i}---\")\n",
+        "  try:\n",
+        "    response_string = cli.generate(r)\n",
+        "    responses[i] = response_string[1].candidates[0]\n",
+        "    print(response_string[1].candidates[0].content.parts[0])\n",
+        "  except Exception as e:\n",
+        "    responses[i] = e\n",
+        "    print(e)\n",
+        "    print(response_string)"
+      ],
+      "metadata": {
+        "id": "WliWCSTHdw4v"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
