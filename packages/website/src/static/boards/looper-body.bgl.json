@@ -1,0 +1,213 @@
+{
+  "title": "Looper Body Example",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-00bc0a22",
+        "text": "The body of the looper starts here ...",
+        "metadata": {
+          "visual": {
+            "x": -152,
+            "y": -47,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-3ee4d4ce",
+        "text": "... and ends here.",
+        "metadata": {
+          "visual": {
+            "x": 385,
+            "y": -66,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-1105ac90",
+        "text": "< back to the Looper",
+        "metadata": {
+          "visual": {
+            "x": 92,
+            "y": -123,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-d509c2ff",
+        "text": "Loop exit",
+        "metadata": {
+          "visual": {
+            "x": 274,
+            "y": -231,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b6d7f447",
+        "text": "Loop entrance",
+        "metadata": {
+          "visual": {
+            "x": -51,
+            "y": -231,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "input",
+      "to": "looper-d6299794",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-d6299794",
+      "to": "output",
+      "out": "done",
+      "in": "context"
+    },
+    {
+      "from": "looper-d6299794",
+      "to": "specialist-66b55c24",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "specialist-66b55c24",
+      "to": "specialist-e7ada536",
+      "out": "out",
+      "in": "in"
+    },
+    {
+      "from": "specialist-e7ada536",
+      "to": "human-7d986ace",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "human-7d986ace",
+      "to": "looper-d6299794",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -195,
+          "y": -245,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 412,
+          "y": -245,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "looper-d6299794",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": 76,
+          "y": -245,
+          "collapsed": false
+        },
+        "title": "Looper",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-66b55c24",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -140,
+          "y": 7,
+          "collapsed": false
+        },
+        "title": "Writer",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-e7ada536",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 78,
+          "y": -16,
+          "collapsed": false
+        },
+        "title": "Critic",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "human-7d986ace",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": 292,
+          "y": -29,
+          "collapsed": false
+        },
+        "title": "Reviewer",
+        "logLevel": "debug"
+      }
+    }
+  ]
+}
