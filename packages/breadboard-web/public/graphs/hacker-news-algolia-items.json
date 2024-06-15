@@ -1,0 +1,155 @@
+{
+  "title": "Hacker News Algolia Items",
+  "description": "Fetch a single item from the Hacker News Algolia API",
+  "edges": [
+    {
+      "from": "fetch-37",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "input-35",
+      "to": "urlTemplate-36",
+      "out": "OBJECT_ID",
+      "in": "OBJECT_ID"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-38",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "urlTemplate-36",
+      "to": "fetch-37",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-35",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "OBJECT_ID": {
+              "type": "string",
+              "title": "Object ID",
+              "description": "ID of object to fetch from Hacker News Algolia API",
+              "examples": [
+                "39788322"
+              ]
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "output-38",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "created_at_i": {
+              "type": "number"
+            },
+            "id": {
+              "type": "number"
+            },
+            "options": {
+              "type": "array",
+              "items": {}
+            },
+            "parent_id": {
+              "type": "number"
+            },
+            "points": {
+              "type": "number"
+            },
+            "story_id": {
+              "type": "number"
+            },
+            "text": {},
+            "title": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "children",
+            "created_at",
+            "created_at_i",
+            "id",
+            "options",
+            "parent_id",
+            "points",
+            "story_id",
+            "text",
+            "title",
+            "type",
+            "url"
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Output"
+      }
+    },
+    {
+      "id": "fetch-37",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      },
+      "metadata": {
+        "title": "Fetch"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Spread Response"
+      }
+    },
+    {
+      "id": "urlTemplate-36",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/items/{OBJECT_ID}"
+      },
+      "metadata": {
+        "title": "URL Template "
+      }
+    }
+  ]
+}

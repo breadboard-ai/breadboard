@@ -35,6 +35,10 @@
     "version": "0.0.1"
   },
   {
+    "title": "Board for Each",
+    "url": "/graphs/board-for-each.json"
+  },
+  {
     "title": "Chat bot 2.0",
     "url": "/graphs/chat-bot-2.json",
     "version": "0.0.1"
@@ -64,24 +68,35 @@
     "version": "0.1.0"
   },
   {
-    "title": "Hacker News Angolia search ",
-    "url": "/graphs/hacker_news_algolia_search.json",
-    "version": "0.0.1"
+    "title": "Hacker News Algolia Items",
+    "url": "/graphs/hacker-news-algolia-items.json"
   },
   {
-    "title": "Hacker News Algolia API Story by ID",
-    "url": "/graphs/hacker_news_algolia_story_from_id.json",
+    "title": "Hacker News Angolia Search",
+    "url": "/graphs/hacker-news-algolia-search.json",
     "version": "0.0.1"
   },
   {
     "title": "Hacker News Firebase API Story by ID",
-    "url": "/graphs/hacker_news_firebase_story_from_id.json",
+    "url": "/graphs/hacker-news-firebase-story-from-id.json",
     "version": "0.0.1"
   },
   {
     "title": "Hacker News Firebase API Story IDs",
-    "url": "/graphs/hacker_news_firebase_top_story_ids.json",
+    "url": "/graphs/hacker-news-firebase-top-story-ids.json",
     "version": "0.0.1"
+  },
+  {
+    "title": "Hacker News Simplified Algolia Comment Search",
+    "url": "/graphs/hacker-news-simplified-algolia-comment-search.json"
+  },
+  {
+    "title": "Hacker News Simplified Algolia Search",
+    "url": "/graphs/hacker-news-simplified-algolia-search.json"
+  },
+  {
+    "title": "Hacker News Simplified Algolia Story Search",
+    "url": "/graphs/hacker-news-simplified-algolia-story-search.json"
   },
   {
     "title": "Looper Chat Testing Grounds",
@@ -132,6 +147,10 @@
     "title": "Nager Date Public Holidays API",
     "url": "/graphs/nager.date/public-holidays.json",
     "version": "0.0.1"
+  },
+  {
+    "title": "Object Manipulator",
+    "url": "/graphs/object-manipulator.json"
   },
   {
     "title": "Open Alex Entity Search Results",

@@ -1,0 +1,306 @@
+{
+  "title": "Hacker News Angolia Search",
+  "description": "Board which returns API results based on a query using the Hacker News Angolia API",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "fetch",
+      "to": "spreadResponse",
+      "out": "response",
+      "in": "object"
+    },
+    {
+      "from": "fn-39",
+      "to": "output-40",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "query",
+      "to": "fn-39",
+      "out": "limit",
+      "in": "limit"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "page",
+      "in": "page"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "query",
+      "in": "query"
+    },
+    {
+      "from": "query",
+      "to": "urlTemplate",
+      "out": "tags",
+      "in": "tags"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "fn-39",
+      "out": "hits",
+      "in": "list"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "output-40",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hacker News Algolia Search Parameters",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "title": "limit",
+              "description": "Limit the number of results returned by the search",
+              "default": "5"
+            },
+            "page": {
+              "type": "number",
+              "title": "Page",
+              "description": "The page number of the search results to return",
+              "default": "1"
+            },
+            "query": {
+              "type": "string",
+              "title": "Query",
+              "description": "The term to search for",
+              "default": "Artificial Intelligence",
+              "examples": [
+                "Artificial Intelligence",
+                "Machine Learning",
+                "Deep Learning"
+              ]
+            },
+            "tags": {
+              "type": "string",
+              "title": "Tags",
+              "description": "Filter on a specific tag",
+              "enum": [
+                "story",
+                "comment",
+                "poll",
+                "pollopt",
+                "show_hn",
+                "ask_hn",
+                "front_page"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-40",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "array",
+              "title": "Hacker News Search Results",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "_highlightResult": {
+                    "type": "object",
+                    "properties": {
+                      "author": {
+                        "type": "object",
+                        "properties": {
+                          "matchLevel": {
+                            "type": "string"
+                          },
+                          "matchedWords": {
+                            "type": "array",
+                            "items": {}
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "matchLevel",
+                          "matchedWords",
+                          "value"
+                        ]
+                      },
+                      "title": {
+                        "type": "object",
+                        "properties": {
+                          "fullyHighlighted": {
+                            "type": "boolean"
+                          },
+                          "matchLevel": {
+                            "type": "string"
+                          },
+                          "matchedWords": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fullyHighlighted",
+                          "matchLevel",
+                          "matchedWords",
+                          "value"
+                        ]
+                      },
+                      "url": {
+                        "type": "object",
+                        "properties": {
+                          "fullyHighlighted": {
+                            "type": "boolean"
+                          },
+                          "matchLevel": {
+                            "type": "string"
+                          },
+                          "matchedWords": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fullyHighlighted",
+                          "matchLevel",
+                          "matchedWords",
+                          "value"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "author",
+                      "title",
+                      "url"
+                    ]
+                  },
+                  "_tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "author": {
+                    "type": "string"
+                  },
+                  "children": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "created_at_i": {
+                    "type": "number"
+                  },
+                  "num_comments": {
+                    "type": "number"
+                  },
+                  "objectID": {
+                    "type": "string"
+                  },
+                  "points": {
+                    "type": "number"
+                  },
+                  "story_id": {
+                    "type": "number"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "updated_at": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "_highlightResult",
+                  "_tags",
+                  "author",
+                  "children",
+                  "created_at",
+                  "created_at_i",
+                  "num_comments",
+                  "objectID",
+                  "points",
+                  "story_id",
+                  "title",
+                  "updated_at",
+                  "url"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Output"
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "fn-39",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_39 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
+        "name": "fn_39",
+        "raw": true
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "name": "spreadResponse",
+        "raw": true
+      }
+    },
+    {
+      "id": "urlTemplate",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://hn.algolia.com/api/v1/search?query={query}&tags={tags}&page={page}"
+      }
+    }
+  ]
+}
