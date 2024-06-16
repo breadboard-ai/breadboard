@@ -104,13 +104,22 @@ export class SchemaBuilder {
 }
 
 /**
+ * Provides a way to manually handle schema merging.
+ * Currently only invoked to handle the `additionalProperties` property.
+ */
+export type ReducerFunction = (result: Schema, schema: Schema) => void;
+
+/**
  * Combines multiple schemas into a single schema. This is lossy, since
  * the same-named properties will be overridden (last one wins). However,
  * it's good enough to communicate the overall shape of the combined schema.
  * @param schemas - the schemas to combine
  * @returns - the combined schema
  */
-export const combineSchemas = (schemas: Schema[]): Schema => {
+export const combineSchemas = (
+  schemas: Schema[],
+  reducer?: ReducerFunction
+): Schema => {
   const result: Schema = {};
   schemas.forEach((schema) => {
     if (schema.type === "object") {
@@ -123,8 +132,12 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
           ...(schema.required ?? []),
         ];
       }
-      if (schema.additionalProperties !== undefined) {
-        result.additionalProperties = schema.additionalProperties;
+      if (reducer) {
+        reducer(result, schema);
+      } else {
+        if (schema.additionalProperties !== undefined) {
+          result.additionalProperties = schema.additionalProperties;
+        }
       }
     }
     if (schema.behavior) {

@@ -281,6 +281,11 @@ export type NodeTypeDescriberOptions = {
    * Optional, the outgoing edges from the node.
    */
   outgoing?: InspectableEdge[];
+  /**
+   * Optional, describe the the type for type description purposes, rather
+   * than for inspection.
+   */
+  asType?: boolean;
 };
 
 /**

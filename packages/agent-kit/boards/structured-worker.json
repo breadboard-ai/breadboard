@@ -169,7 +169,7 @@
       "id": "buildContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const buildContext = ({ context: context2, format, instruction }) => {\n  if (!Array.isArray(context2)) {\n    const text2 = typeof context2 === \"string\" ? context2 : JSON.stringify(context2);\n    context2 = [{ role: \"user\", parts: [{ text: text2 }] }];\n  }\n  const list = context2 || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift(\n        { text: instruction },\n        { text: format }\n      );\n      return { context: list };\n    }\n  }\n  return {\n    context: [\n      ...list,\n      { role: \"user\", parts: [{ text: instruction }, { text: format }] }\n    ]\n  };\n};",
+        "code": "const buildContext = ({ context: context2, format, instruction }) => {\n  if (!Array.isArray(context2)) {\n    const text3 = typeof context2 === \"string\" ? context2 : JSON.stringify(context2);\n    context2 = [{ role: \"user\", parts: [{ text: text3 }] }];\n  }\n  const list = context2 || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift(\n        { text: instruction },\n        { text: format }\n      );\n      return { context: list };\n    }\n  }\n  return {\n    context: [\n      ...list,\n      { role: \"user\", parts: [{ text: instruction }, { text: format }] }\n    ]\n  };\n};",
         "name": "buildContext",
         "raw": true
       },

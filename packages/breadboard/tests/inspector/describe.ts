@@ -36,6 +36,7 @@ test("simple graph description works as expected", async (t) => {
   const api = await inspectable.describe();
   t.deepEqual(api, {
     inputSchema: {
+      additionalProperties: false,
       type: "object",
       properties: {
         text: { type: "string" },
@@ -72,7 +73,6 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       },
     } satisfies Schema,
     outputSchema: {
-      additionalProperties: true,
       type: "object",
       properties: {
         text: {
@@ -108,7 +108,6 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       },
     } satisfies Schema,
     outputSchema: {
-      additionalProperties: true,
       type: "object",
       properties: {},
     } satisfies Schema,

@@ -85,6 +85,7 @@ function setupKits<
     const inspectable = inspect(strLenSerialized, { kits: [strLenRuntimeKit] });
     assert.deepEqual(await inspectable.describe(), {
       inputSchema: {
+        additionalProperties: false,
         properties: {
           str: {
             title: "str",
@@ -194,6 +195,7 @@ function setupKits<
     const inspectable = inspect(adderSerialized, { kits: [adderRuntimeKit] });
     assert.deepEqual(await inspectable.describe(), {
       inputSchema: {
+        additionalProperties: false,
         properties: {
           num1: {
             title: "num1",
