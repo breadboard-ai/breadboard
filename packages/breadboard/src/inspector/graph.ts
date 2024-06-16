@@ -186,7 +186,14 @@ class Graph implements InspectableGraphWithStore {
       await Promise.all(
         this.nodesByType("input")
           .filter((n) => n.isEntry())
-          .map((input) => input.describe())
+          .map((input) =>
+            describeInput({
+              inputs: input.configuration(),
+              incoming: input.incoming(),
+              outgoing: input.outgoing(),
+              asType: true,
+            })
+          )
       )
     ).map((result) => result.outputSchema);
 
@@ -204,13 +211,17 @@ class Graph implements InspectableGraphWithStore {
       )
       .filter(Boolean) as Schema[];
 
-    const inputSchema = combineSchemas(inputSchemas);
+    const inputSchema = combineSchemas(inputSchemas, (result, schema) => {
+      if (schema.additionalProperties !== false) {
+        result.additionalProperties = true;
+      } else if (!("additionalProperties" in result)) {
+        result.additionalProperties = false;
+      }
+    });
     const outputSchema = removeProperty(
       combineSchemas(outputSchemas),
       "schema"
     );
-
-    console.groupEnd();
 
     return { inputSchema, outputSchema };
   }

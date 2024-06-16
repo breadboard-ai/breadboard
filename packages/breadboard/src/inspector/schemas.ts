@@ -87,8 +87,10 @@ export const describeInput = (
     edgesToSchema(EdgeType.Out, outgoing, true),
     schema,
   ]);
-  if (hasStarEdge) {
-    outputSchema.additionalProperties = true;
+  if (options.asType) {
+    if (!hasStarEdge) {
+      outputSchema.additionalProperties = false;
+    }
   }
   return { inputSchema, outputSchema };
 };

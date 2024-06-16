@@ -166,6 +166,7 @@ test("describe with context.base and valid $board", async (t) => {
     {
       inputSchema: {
         type: "object",
+        additionalProperties: false,
         properties: {
           $board: {
             behavior: ["board", "config"],
