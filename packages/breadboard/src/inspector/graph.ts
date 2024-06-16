@@ -201,7 +201,14 @@ class Graph implements InspectableGraphWithStore {
       await Promise.all(
         this.nodesByType("output")
           .filter((n) => n.isExit())
-          .map((output) => output.describe())
+          .map((output) =>
+            describeOutput({
+              inputs: output.configuration(),
+              incoming: output.incoming(),
+              outgoing: output.outgoing(),
+              asType: true,
+            })
+          )
       )
     )
       .map((result) =>
