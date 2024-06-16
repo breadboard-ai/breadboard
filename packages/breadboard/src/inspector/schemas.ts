@@ -114,12 +114,15 @@ export const describeOutput = (
   const inputSchema = combineSchemas([
     inputSchemaBuilder
       .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
+      .setAdditionalProperties(true)
       .build(),
     schema,
   ]);
-  // If the output has star edge incoming, make sure to communicate that
-  // this output can have many actual ports: set additionalProperties to true.
-  const hasStarEdge = !!options.incoming?.find((edge) => edge.out === "*");
-  if (hasStarEdge) inputSchema.additionalProperties = true;
+  if (options.asType) {
+    // If the output has star edge incoming, make sure to communicate that
+    // this output can have many actual ports: set additionalProperties to true.
+    const hasStarEdge = !!options.incoming?.find((edge) => edge.out === "*");
+    if (!hasStarEdge) inputSchema.additionalProperties = false;
+  }
   return { inputSchema, outputSchema };
 };
