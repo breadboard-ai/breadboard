@@ -1,0 +1,155 @@
+{
+  "title": "Human Example",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-78a11565",
+        "text": "Show Writer's work to the user.",
+        "metadata": {
+          "visual": {
+            "x": -199,
+            "y": 22,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-a5096294",
+        "text": "Let the user provide a review and send it to the Editor.",
+        "metadata": {
+          "visual": {
+            "x": 123,
+            "y": -75,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "input",
+      "to": "specialist-a09dfcc5",
+      "out": "context",
+      "in": "in"
+    },
+    {
+      "from": "specialist-a09dfcc5",
+      "to": "human-c0db6893",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "human-c0db6893",
+      "to": "specialist-38855186",
+      "out": "context",
+      "in": "in"
+    },
+    {
+      "from": "specialist-38855186",
+      "to": "output",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -173,
+          "y": -217,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 149,
+          "y": 132,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-a09dfcc5",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -20,
+          "y": -256,
+          "collapsed": false
+        },
+        "title": "Writer",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "human-c0db6893",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": -58,
+          "y": -41,
+          "collapsed": false
+        },
+        "title": "Reviewer",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-38855186",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -121,
+          "y": 147,
+          "collapsed": false
+        },
+        "title": "Editor",
+        "logLevel": "debug"
+      }
+    }
+  ]
+}
