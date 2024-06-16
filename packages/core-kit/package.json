@@ -46,6 +46,12 @@
       "clean": "if-file-deleted"
     },
     "test": {
+      "dependencies": [
+        "test:ava",
+        "test:node"
+      ]
+    },
+    "test:ava": {
       "command": "ava",
       "env": {
         "FORCE_COLOR": "1"
@@ -54,7 +60,19 @@
         "build:tsc"
       ],
       "files": [
-        "tests/**/*.json"
+        "tests/**/*.json",
+        "!tests/node/**/*.ts"
+      ],
+      "output": []
+    },
+    "test:node": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/node/*.ts",
+        "tests/boards/*.json"
       ],
       "output": []
     },
@@ -83,7 +101,8 @@
   "ava": {
     "timeout": "30s",
     "files": [
-      "tests/**/*.ts"
+      "tests/**/*.ts",
+      "!tests/node/**/*.ts"
     ],
     "workerThreads": false,
     "typescript": {
