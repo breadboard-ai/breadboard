@@ -154,7 +154,6 @@ test("inspector API can describe the output in simplest.json", async (t) => {
 
   t.deepEqual(api, {
     inputSchema: {
-      additionalProperties: true,
       type: "object",
       properties: {
         "*": { type: "string" },
@@ -189,7 +188,6 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
 
   t.deepEqual(api, {
     inputSchema: {
-      additionalProperties: true,
       type: "object",
       properties: {
         schema: {
@@ -218,7 +216,6 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
 
   t.deepEqual(api, {
     inputSchema: {
-      additionalProperties: false,
       type: "object",
       properties: {
         schema: {
