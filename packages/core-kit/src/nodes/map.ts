@@ -82,7 +82,17 @@ const invoke = async (
       return outputs;
     })
   );
-  return { list: result };
+
+  const errors = result.filter((r) => r.$error);
+  if (errors.length === 0) {
+    // Easy case, no errors. Just return the list.
+    return { list: result };
+  }
+  // Return first error.
+  // TODO: Implement showing multiple errors.
+  // TODO: Consider returning the list of results, with errors in place.
+  //       This would allow the user to see the results of the successful runs.
+  return { $error: errors[0].$error };
 };
 
 const describe = async () => {
