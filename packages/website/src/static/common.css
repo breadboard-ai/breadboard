@@ -98,6 +98,36 @@
   --bb-neutral-700: #595959;
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
+
+  --bb-title-large: 22px;
+  --bb-title-line-height-large: 28px;
+
+  --bb-title-medium: 16px;
+  --bb-title-line-height-medium: 24px;
+
+  --bb-title-small: 14px;
+  --bb-title-line-height-small: 20px;
+
+  --bb-label-large: 14px;
+  --bb-label-line-height-large: 20px;
+
+  --bb-label-medium: 12px;
+  --bb-label-line-height-medium: 16px;
+
+  --bb-label-small: 11px;
+  --bb-label-line-height-small: 16px;
+
+  --bb-body-large: 16px;
+  --bb-body-line-height-large: 24px;
+
+  --bb-body-medium: 14px;
+  --bb-body-line-height-medium: 20px;
+
+  --bb-body-small: 12px;
+  --bb-body-line-height-small: 16px;
+
+  --bb-body-x-small: 10px;
+  --bb-body-line-height-x-small: 13px;
 }
 
 @font-face {

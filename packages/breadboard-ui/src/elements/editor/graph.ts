@@ -92,6 +92,10 @@ export class Graph extends PIXI.Container {
     };
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
+      if (!evt.isPrimary) {
+        return;
+      }
+
       evt.stopPropagation();
 
       if (
@@ -228,7 +232,12 @@ export class Graph extends PIXI.Container {
     });
 
     this.addListener("globalpointermove", (evt: PIXI.FederatedPointerEvent) => {
-      if (!edgeBeingEdited || !nodeBeingEdited || !originalEdgeDescriptor) {
+      if (
+        !edgeBeingEdited ||
+        !nodeBeingEdited ||
+        !originalEdgeDescriptor ||
+        !evt.isPrimary
+      ) {
         return;
       }
 

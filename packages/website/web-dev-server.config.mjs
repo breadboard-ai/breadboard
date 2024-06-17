@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import cors from "@koa/cors";
+
 const PORT = 8000;
 
 console.log(`=========================================`);
@@ -16,4 +18,5 @@ export default {
   nodeResolve: true,
   rootDir: "dist/prod/",
   esbuildTarget: "auto",
+  middleware: [cors()],
 };
