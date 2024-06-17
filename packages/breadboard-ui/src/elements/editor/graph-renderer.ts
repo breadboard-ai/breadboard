@@ -72,6 +72,9 @@ export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   invertZoomScrollDirection = false;
 
+  @property({ reflect: true })
+  readOnly = false;
+
   #app = new PIXI.Application();
   #appInitialized = false;
 
@@ -158,7 +161,6 @@ export class GraphRenderer extends LitElement {
 
     canvas {
       display: block;
-      touch-action: none;
     }
 
     #edge-create-disambiguation-menu,
@@ -394,6 +396,10 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
+        if (!evt.isPrimary || this.readOnly) {
+          return;
+        }
+
         for (const graph of this.#container.children) {
           if (!(graph instanceof Graph)) {
             continue;
@@ -415,6 +421,10 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
+        if (!evt.isPrimary || this.readOnly) {
+          return;
+        }
+
         if (this.#mode === MODE.MOVE) {
           onStageMove(evt);
           return;
@@ -443,7 +453,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on(
       "wheel",
       function (this: GraphRenderer, evt) {
-        if (evt.metaKey) {
+        if (evt.metaKey || evt.ctrlKey) {
           let delta =
             1 -
             (evt.deltaY / this.zoomFactor) *
@@ -596,6 +606,12 @@ export class GraphRenderer extends LitElement {
       } else {
         graph.mask = this.#graphMask;
       }
+    }
+
+    if (this.readOnly) {
+      graph.eventMode = "none";
+      graph.interactive = false;
+      graph.interactiveChildren = false;
     }
 
     return true;
@@ -992,7 +1008,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    if (evt.code === "Space") {
+    if (evt.code === "Space" && !this.readOnly) {
       this.#mode = MODE.MOVE;
       return;
     }
@@ -1034,7 +1050,7 @@ export class GraphRenderer extends LitElement {
   }
 
   #onKeyUp(evt: KeyboardEvent) {
-    if (evt.code === "Space") {
+    if (evt.code === "Space" && !this.readOnly) {
       this.#mode = MODE.SELECT;
       return;
     }
