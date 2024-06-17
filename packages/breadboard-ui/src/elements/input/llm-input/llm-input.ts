@@ -393,6 +393,18 @@ export class LLMInput extends LitElement {
         var(--bb-font-family);
     }
 
+    #no-parts .add-text {
+      background: var(--bb-continue-color);
+      color: var(--bb-ui-700);
+      border-radius: var(--bb-grid-size-5);
+      border: none;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-4);
+      margin: 0;
+      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+    }
+
     .confirm {
       background: var(--bb-continue-color) var(--bb-icon-confirm-blue) 8px 4px /
         16px 16px no-repeat;
@@ -970,7 +982,16 @@ export class LLMInput extends LitElement {
                 </div>
               </div>`;
             })
-          : html`<div id="no-parts">No parts yet - please add one</div>`}
+          : html`<div id="no-parts">
+              No parts set.
+              <button
+                title="Add text field"
+                class="add-text"
+                @click=${this.#addTextPart}
+              >
+                Add a text part
+              </button>
+            </div>`}
       </div>`;
   }
 }
