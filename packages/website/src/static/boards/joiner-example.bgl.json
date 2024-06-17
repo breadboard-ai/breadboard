@@ -1,0 +1,208 @@
+{
+  "title": "Card Maker",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-571ff92f",
+        "text": "Writes contents of \na game card",
+        "metadata": {
+          "visual": {
+            "x": -129,
+            "y": 70,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-6ce6abeb",
+        "text": "Uses the contents to craft a prompt and create picture.",
+        "metadata": {
+          "visual": {
+            "x": -77,
+            "y": -175,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b99d3821",
+        "text": "Narrates the text \nof the card",
+        "metadata": {
+          "visual": {
+            "x": 50,
+            "y": -29,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-6907d9cd",
+        "text": "Joins picture, voice, and text into one card.",
+        "metadata": {
+          "visual": {
+            "x": 268,
+            "y": 113,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "input",
+      "to": "specialist-42832612",
+      "out": "context",
+      "in": "in"
+    },
+    {
+      "from": "specialist-42832612",
+      "to": "specialist-5b7a9d43",
+      "out": "out",
+      "in": "in"
+    },
+    {
+      "from": "specialist-42832612",
+      "to": "specialist-6a61c0b5",
+      "out": "out",
+      "in": "in"
+    },
+    {
+      "from": "specialist-42832612",
+      "to": "joiner-22b013c9",
+      "out": "out",
+      "in": "c-text"
+    },
+    {
+      "from": "specialist-5b7a9d43",
+      "to": "joiner-22b013c9",
+      "out": "out",
+      "in": "a-picture"
+    },
+    {
+      "from": "specialist-6a61c0b5",
+      "to": "joiner-22b013c9",
+      "out": "out",
+      "in": "b-voice"
+    },
+    {
+      "from": "joiner-22b013c9",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -213,
+          "y": -127,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 369,
+          "y": -148,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-42832612",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -167,
+          "y": 126,
+          "collapsed": false
+        },
+        "title": "Writer",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-5b7a9d43",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 45,
+          "y": -123,
+          "collapsed": false
+        },
+        "title": "Illustrator",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-6a61c0b5",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 90,
+          "y": 24,
+          "collapsed": false
+        },
+        "title": "Narrator",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "joiner-22b013c9",
+      "type": "joiner",
+      "metadata": {
+        "visual": {
+          "x": 354,
+          "y": 2,
+          "collapsed": false
+        },
+        "title": "Card Maker",
+        "logLevel": "debug"
+      }
+    }
+  ]
+}
