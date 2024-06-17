@@ -1,0 +1,45 @@
+{
+  "author": "Google Labs Team",
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "ts-json-schema-generator": "^2.3.0",
+    "tsx": "^4.15.5",
+    "typescript": "^5.4.5"
+  },
+  "files": [
+    "./bbm.schema.json",
+    "./dist/**/*",
+    "!./dist/scripts/**/*"
+  ],
+  "license": "Apache-2.0",
+  "name": "@google-labs/breadboard-manifest",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "repository": {
+    "directory": "packages/manifest",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "scripts": {
+    "build": "wireit",
+    "build:schema": "wireit",
+    "build:ts": "wireit"
+  },
+  "type": "module",
+  "version": "0.0.0",
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:schema",
+        "build:ts"
+      ]
+    },
+    "build:schema": {
+      "command": "tsx --no-cache ./src/scripts/generate.ts"
+    },
+    "build:ts": {
+      "command": "tsc"
+    }
+  }
+}

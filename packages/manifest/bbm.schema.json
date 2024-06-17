@@ -1,0 +1,66 @@
+{
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/manifest@0.0.0/packages/manifest/bbm.schema.json",
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$ref": "#/definitions/BreadboardManifest",
+	"definitions": {
+		"BreadboardManifest": {
+			"type": "object",
+			"properties": {
+				"$schema": {
+					"type": "string"
+				},
+				"boards": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Board"
+					}
+				},
+				"manifests": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NestedManifest"
+					}
+				}
+			},
+			"required": [
+				"boards",
+				"manifests"
+			],
+			"additionalProperties": false,
+			"title": "Breadboard Manifest"
+		},
+		"Board": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string"
+				},
+				"url": {
+					"type": "string"
+				},
+				"version": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"url"
+			],
+			"additionalProperties": false
+		},
+		"NestedManifest": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string"
+				},
+				"url": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"url"
+			],
+			"additionalProperties": false
+		}
+	}
+}
