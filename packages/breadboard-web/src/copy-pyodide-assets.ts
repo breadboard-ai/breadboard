@@ -19,8 +19,8 @@ await Promise.all(
     "pyodide-lock.json",
   ].map((filename) =>
     copyFile(
-      join(pyodideDir, filename),
-      join(import.meta.dirname, "..", "public", filename)
+      decodeURI(join(pyodideDir, filename)),
+      decodeURI(join(import.meta.dirname, "..", "public", filename))
     )
   )
 );
