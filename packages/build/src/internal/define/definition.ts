@@ -51,6 +51,7 @@ import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
 import type { Convergence } from "../board/converge.js";
+import type { BoardDefinition } from "../board/board.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -61,9 +62,10 @@ export interface Definition<
   /* Reflective?     */ R extends boolean,
   /* Primary Input   */ PI extends string | false,
   /* Primary Output  */ PO extends string | false,
+  /* Input Metadata  */ IM extends { [K: string]: InputMetadata },
 > extends StrictNodeHandler {
   <A extends LooseInstantiateArgs>(
-    args: A & StrictInstantiateArgs<SI, OI, DI, A>
+    args: A & StrictInstantiateArgs<SI, OI, DI, A, IM>
   ): Instance<
     InstanceInputs<SI, DI, A>,
     InstanceOutputs<SI, SO, DO, R, A>,
@@ -83,6 +85,7 @@ export class DefinitionImpl<
   /* Reflective?     */ R extends boolean,
   /* Primary Input   */ PI extends string | false,
   /* Primary Output  */ PO extends string | false,
+  /* Input Metadata  */ IM extends { [K: string]: InputMetadata },
 > implements StrictNodeHandler
 {
   readonly #name: string;
@@ -135,7 +138,7 @@ export class DefinitionImpl<
   }
 
   instantiate<A extends LooseInstantiateArgs>(
-    args: A & StrictInstantiateArgs<SI, OI, DI, A>
+    args: A & StrictInstantiateArgs<SI, OI, DI, A, IM>
   ): Instance<
     InstanceInputs<SI, DI, A>,
     InstanceOutputs<SI, SO, DO, R, A>,
@@ -396,6 +399,14 @@ export class DefinitionImpl<
   }
 }
 
+/**
+ * Extra data about inputs. This is here to stop growing the number of
+ * parameters on Definition.
+ */
+export type InputMetadata = {
+  board: boolean;
+};
+
 function parseDynamicPorts(
   ports: Exclude<CustomDescribePortManifest, UnsafeSchema>,
   base: DynamicInputPortConfig | DynamicOutputPortConfig
@@ -426,6 +437,7 @@ type StrictInstantiateArgs<
   OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
+  IM extends { [K: string]: InputMetadata },
 > = {
   $id?: string;
   $metadata?: {
@@ -433,7 +445,12 @@ type StrictInstantiateArgs<
     description?: string;
   };
 } & {
-  [K in keyof Omit<SI, OI | "$id" | "$metadata">]: InstantiateArg<SI[K]>;
+  [K in keyof Omit<SI, OI | "$id" | "$metadata">]: IM[K extends keyof IM
+    ? K
+    : never]["board"] extends true
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      InstantiateArg<SI[K]> | BoardDefinition<any, any>
+    : InstantiateArg<SI[K]>;
 } & {
   [K in OI]?:
     | InstantiateArg<SI[K]>
