@@ -5,16 +5,16 @@
  */
 
 // export type { BoardPath } from "./boardPath";
-export type * from "./breadboardManifest";
+export type * from "./breadboard-manifest";
 // export type { default as BoardPath } from "./boardPath";
 
-export type * from "./breadboardManifest";
+export type * from "./breadboard-manifest";
 // export type { default as BreadboardManifest } from "./breadboardManifest";
 
-export type * from "./manifestReference.ts";
+export type * from "./manifest-reference";
 // export type { default as ManifestPath } from "./manifestPath";
 
-export type { BoardEntry } from "./boardEntry";
-export type { BreadboardManifest } from "./breadboardManifest";
-export type { ManifestReference as ManifestEntry } from "./manifestReference.ts";
+export type { BoardEntry } from "./board-entry";
+export type { BreadboardManifest } from "./breadboard-manifest";
+export type { ManifestReference as ManifestEntry } from "./manifest-reference";
 

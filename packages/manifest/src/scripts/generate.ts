@@ -15,7 +15,7 @@ import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { fileURLToPath } from "url";
 import { inspect } from "util";
 import packageJson from "../../package.json" with { type: "json" };
-import { ascendToPackageDir } from "../util/ascendToPackageDir";
+import { ascendToPackageDir } from "../util/ascend-to-package-dir";
 
 export function generateSchemaId() {
   const PACKAGE_ROOT = ascendToPackageDir(packageJson.name);

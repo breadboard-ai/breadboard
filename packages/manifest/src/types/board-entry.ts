@@ -5,7 +5,7 @@
  *
  */
 
-import { UriReference } from "./uriReference";
+import { UriReference } from "./uri-reference";
 
 /**
  * Reference to a Breadboard board file.

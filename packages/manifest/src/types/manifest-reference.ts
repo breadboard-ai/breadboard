@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UriReference } from "./uriReference";
+import { UriReference } from "./uri-reference";
 
 /**
  * Reference to another manifest file.

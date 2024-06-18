@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import BoardEntry from "./boardEntry";
-import { ManifestItem } from "./manifestItem";
-import { UriReference } from "./uriReference";
+import BoardEntry from "./board-entry";
+import { ManifestItem } from "./manifest-item";
+import { UriReference } from "./uri-reference";
 
 /**
  * A Breadboard Manifest.
