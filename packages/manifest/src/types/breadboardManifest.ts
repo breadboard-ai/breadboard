@@ -5,7 +5,7 @@
  */
 
 import BoardEntry from "./boardEntry";
-import ManifestEntry from "./manifestEntry";
+import { ManifestItem } from "./manifestItem";
 import { UriReference } from "./uriReference";
 
 /**
@@ -61,9 +61,14 @@ interface BreadboardManifest {
   /**
    * An array of references to Breadboard Board Manifests.
    *
-   * @see {ManifestEntry}
+   * @see {ManifestReference}
    */
-  manifests?: ManifestEntry[];
+  manifests?: ManifestItem[];
+
+  /**
+   * URL is dissallowed because this is a manifest object not a reference to a manifest.
+   */
+  url?: never;
 }
 
 export type { BreadboardManifest };

@@ -24,7 +24,7 @@
 				"manifests": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/ManifestEntry"
+						"$ref": "#/definitions/ManifestItem"
 					},
 					"description": "An array of references to Breadboard Board Manifests."
 				}
@@ -103,7 +103,17 @@
 				}
 			]
 		},
-		"ManifestEntry": {
+		"ManifestItem": {
+			"anyOf": [
+				{
+					"$ref": "#/definitions/ManifestReference"
+				},
+				{
+					"$ref": "#/definitions/BreadboardManifest"
+				}
+			]
+		},
+		"ManifestReference": {
 			"type": "object",
 			"properties": {
 				"title": {

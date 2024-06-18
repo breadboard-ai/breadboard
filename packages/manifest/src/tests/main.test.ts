@@ -52,7 +52,7 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "htstps:////gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
         version: "1.0.0",
       },
       {
@@ -75,7 +75,7 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "htstps:////gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
         version: "1.0.0",
       },
       {
@@ -87,6 +87,37 @@ const fixtures: BreadboardManifest[] = [
       {
         title: "Gist Manifest",
         url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+      },
+    ],
+  },
+  {
+    title: "Nested manifest",
+    manifests: [
+      {
+        title: "Gist Manifest",
+        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+      },
+      {
+        title: "Nested Nested Manifest",
+        boards: [
+          {
+            title: "My First Board",
+            url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+            version: "1.0.0",
+          },
+        ],
+        manifests: [
+          {
+            title: "Nested Nested Nested Manifest",
+            boards: [
+              {
+                title: "My First Board",
+                url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+                version: "1.0.0",
+              },
+            ],
+          },
+        ],
       },
     ],
   },

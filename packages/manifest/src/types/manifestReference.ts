@@ -17,7 +17,7 @@ import { UriReference } from "./uriReference";
  * }
  * ]
  */
-interface ManifestEntry {
+interface ManifestReference {
   /**
    * Breadboard Board Manifest Name
    *
@@ -36,7 +36,17 @@ interface ManifestEntry {
    * ]
    */
   url: UriReference;
+
+  /**
+   * This field is dissallowed becuase this is a reference to another manifest.
+   */
+  boards?: never;
+
+  /**
+   * This field is dissallowed becuase this is a reference to another manifest.
+   */
+  manifests?: never;
 }
 
-export type { ManifestEntry };
-export default ManifestEntry;
+export type { ManifestReference };
+export default ManifestReference;

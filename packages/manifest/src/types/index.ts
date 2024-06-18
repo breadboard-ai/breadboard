@@ -11,10 +11,10 @@ export type * from "./breadboardManifest";
 export type * from "./breadboardManifest";
 // export type { default as BreadboardManifest } from "./breadboardManifest";
 
-export type * from "./manifestEntry";
+export type * from "./manifestReference.ts";
 // export type { default as ManifestPath } from "./manifestPath";
 
 export type { BoardEntry } from "./boardEntry";
 export type { BreadboardManifest } from "./breadboardManifest";
-export type { ManifestEntry } from "./manifestEntry";
+export type { ManifestReference as ManifestEntry } from "./manifestReference.ts";
 
