@@ -235,6 +235,10 @@ export type GraphMetadata = {
   icon?: string;
   [name: string]: NodeValue;
   comments?: CommentNode[];
+  /**
+   * Tags associated with the graph. At this moment, free-form strings.
+   */
+  tags?: string[];
 };
 
 /**

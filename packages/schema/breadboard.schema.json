@@ -201,6 +201,13 @@
 					"items": {
 						"$ref": "#/definitions/CommentNode"
 					}
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "Tags associated with the graph. At this moment, free-form strings."
 				}
 			},
 			"additionalProperties": {
