@@ -728,6 +728,9 @@ export class NodeConfigurationInfo extends LitElement {
                 @submit=${(evt: Event) => evt.preventDefault()}
                 @paste=${this.#saveCurrentNodeState}
                 @input=${this.#saveCurrentNodeState}
+                @bbcodechange=${(evt: Event) => {
+                  this.#saveCurrentNodeState(evt);
+                }}
               >
                 <div class="fields">
                   <input
