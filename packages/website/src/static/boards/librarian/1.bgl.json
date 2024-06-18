@@ -1,6 +1,10 @@
 {
-  "title": "Blank board",
+  "title": "My Librarian",
+  "description": "A simple agent that helps me find interesting books.",
   "version": "0.0.1",
+  "metadata": {
+    "comments": []
+  },
   "nodes": [
     {
       "type": "input",
