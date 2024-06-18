@@ -217,6 +217,15 @@ export class FirstRunOverlay extends LitElement {
             settings[SETTINGS_TYPE.GENERAL].items.set(name, setting);
           }
 
+          const modelSetting =
+            settings[SETTINGS_TYPE.INPUTS].items.get("model");
+          if (!modelSetting) {
+            settings[SETTINGS_TYPE.INPUTS].items.set("model", {
+              name: "model",
+              value: "gemini-1.5-flash-latest",
+            });
+          }
+
           this.dispatchEvent(new SettingsUpdateEvent(settings));
         }}
       >
