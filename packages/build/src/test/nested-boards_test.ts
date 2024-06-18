@@ -17,6 +17,7 @@ import {
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+// $ExpectType Definition<{ board: string | { [x: string]: JsonSerializable; }; }, { result: JsonSerializable; }, undefined, undefined, never, false, false, false, { board: { board: true; }; }>
 const nodeThatTakesBoard = defineNodeType({
   name: "boardnode",
   inputs: {
