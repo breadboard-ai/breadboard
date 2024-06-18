@@ -193,7 +193,7 @@ export class GraphNode extends PIXI.Container {
     });
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!(evt.target instanceof GraphNode)) {
+      if (!(evt.target instanceof GraphNode) || !evt.isPrimary) {
         return;
       }
 
@@ -205,7 +205,7 @@ export class GraphNode extends PIXI.Container {
     this.addEventListener(
       "globalpointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!dragStart || !originalPosition) {
+        if (!dragStart || !originalPosition || !evt.isPrimary) {
           return;
         }
 

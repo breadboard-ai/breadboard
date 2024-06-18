@@ -26,7 +26,7 @@ function setupKits<
     // TODO(aomarks) See TODO about `any` at {@link NodeFactoryFromDefinition}.
     //
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Definition<any, any, any, any, any, any, any, any>
+    Definition<any, any, any, any, any, any, any, any, any>
   >,
 >(definitions: DEFS) {
   const ctr = new KitBuilder({ url: "N/A" }).build(definitions);

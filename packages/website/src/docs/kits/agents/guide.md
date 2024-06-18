@@ -95,7 +95,7 @@ After entering the text, click the "Continue" button. This will result in a flur
 
 ![First Run Output](/breadboard/static/images/agent-kit/first-run-output.png)
 
-Cooool. We made a Librarian board. High fives all around. The results are good and the choices are classic.
+Cool! We made a Librarian board. High fives all around. The results are good and the choices are classic.
 
 Except...
 

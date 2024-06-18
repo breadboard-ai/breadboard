@@ -17,6 +17,9 @@ The CLI tools are designed to help you create and debug your breadboard files di
 
 `npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI and the UI will be automatically refreshed.
 
+`PORT=1234 npx breadboard debug` - Brings up the web debug server on port 1234 (the default port is
+3000).
+
 Note: By default this command will convert any `ts` or `js` board files to `json` and save them along side the original file (this differs from other commands which will use the `-o` flag). If you do not want the boards to be saved, use the `--no-save` flag.
 
 ### Import

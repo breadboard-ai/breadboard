@@ -18,7 +18,8 @@ import { Loaders } from "./loaders/index.js";
 import { MakeOptions } from "../commandTypes.js";
 import { formatGraphDescriptor } from "@google-labs/breadboard";
 
-export const SERVER_URL = "http://localhost:3000";
+export const SERVER_PORT = parseInt(process.env.PORT || '') || 3000;
+export const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
 export const defaultKits = [
   "@google-labs/palm-kit",

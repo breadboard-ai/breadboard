@@ -232,8 +232,25 @@ When placed into the flow of work, Human shows the intermediate output and asks 
 
 ## Joiner
 
-TO DO:
+While not powered by an LLM or representing a real person, Joiner is an essential part of any team of workers. Depending on how it is configured, Joiner acts a helper that, respectively, joins or merges conversation contexts.
 
-- Describe how joiner works
+{{ "/breadboard/static/boards/joiner-example.bgl.json" | board }}
 
-- Create a graph that joins contexts.
+When the flow of work splits across multiple workers, we can rely on Joiner to bring it all together.
+
+When first added to the board, Joiner has no incoming ports: we have to explicitly inform it about all the context we'd like to join. To do so, use the "ad hoc" wiring technique in Breadboard. Drag a wire from each outgoing port we want to be joined into the center of the Joiner, then release. A small dialog box will pop up asking to name the port. Give it an informative name (can only contain lowercase alphanumeric characters, dashes, or numbers) and the wire will appear.
+
+{{ "/breadboard/static/boards/new-joiner-port.bgl.json" | board }}
+
+Joiner has one configuration option, a checkbox on whether or not to merge the last items of all incoming context into one.
+
+![Joiner Merge option](/breadboard/static/images/agent-kit/joiner-merge.png)
+
+When that checkbox is not checked, joiner will take all of the incoming conversation contexts and just string them together into one mega conversation context.
+
+When the checkbox is checked, it will only take the last item of each conversation context and turn them into a new conversation context that contains only one item, merging them as parts of that item.
+
+In either case, the order of items (or contexts) is determined by the alphabetical sort of the incoming ports for the Joiner.
+
+> [!TIP]
+> It's a good practice to name ports in a way that makes the order evident. Like in the example above, the ports are named "a-picture", "b-voice", and "c-text" to ensure that the picture goes first, followed by voice and then text.

@@ -18,7 +18,7 @@ import type { Expand } from "../common/type-util.js";
  * for use with {@link KitBuilder}.
  */
 export type NodeFactoryFromDefinition<
-  D extends Definition<any, any, any, any, any, any, any, any>,
+  D extends Definition<any, any, any, any, any, any, any, any, any>,
 > =
   D extends Definition<
     infer SI,
@@ -26,6 +26,7 @@ export type NodeFactoryFromDefinition<
     infer DI,
     infer DO,
     infer OI,
+    any,
     any,
     any,
     any

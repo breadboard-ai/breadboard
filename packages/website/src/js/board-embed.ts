@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, TemplateResult } from "lit";
+import { LitElement, html, css, TemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import Core from "@google-labs/core-kit";
@@ -50,12 +50,26 @@ export class BoardEmbed extends LitElement {
       box-shadow:
         0px 25px 13.1px rgba(0, 0, 0, 0.05),
         0px 45px 50px rgba(0, 0, 0, 0.15);
+      position: relative;
     }
 
     bb-editor {
       border-radius: 8px;
       aspect-ratio: 4/3;
       display: block;
+    }
+
+    #see-in-ve {
+      position: absolute;
+      bottom: var(--bb-grid-size-2);
+      left: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-8);
+      background: var(--bb-neutral-0);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-700);
+      z-index: 100;
     }
   `;
 
@@ -83,17 +97,27 @@ export class BoardEmbed extends LitElement {
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
 
     return html`<bb-editor
-      .loader=${createLoader([])}
-      .kits=${kits}
-      .assetPrefix=${"/breadboard/static"}
-      .graph=${graph}
-      .boardId=${1}
-      .editable=${false}
-      .showControls=${false}
-      .mode=${"minimal"}
-      .collapseNodesByDefault=${collapseNodesByDefault}
-      .hideSubboardSelectorWhenEmpty=${true}
-    ></bb-editor>`;
+        .loader=${createLoader([])}
+        .kits=${kits}
+        .assetPrefix=${"/breadboard/static"}
+        .graph=${graph}
+        .boardId=${1}
+        .editable=${false}
+        .showControls=${false}
+        .mode=${"minimal"}
+        .collapseNodesByDefault=${collapseNodesByDefault}
+        .hideSubboardSelectorWhenEmpty=${true}
+        .readOnly=${true}
+      ></bb-editor>
+      ${this.url
+        ? html`<a
+            id="see-in-ve"
+            href="http://breadboard-ai.web.app/?board=${encodeURIComponent(
+              `${location.origin}${this.url}`
+            )}&embed=false"
+            >See in Visual Editor</a
+          >`
+        : nothing} `;
   }
 
   render() {

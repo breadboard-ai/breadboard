@@ -1,0 +1,59 @@
+{
+  "title": "Wiring Joiner ",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-f59dbc67",
+        "text": "Drag a wire from \"Context Out\" ...",
+        "metadata": {
+          "visual": {
+            "x": 19,
+            "y": -46,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-58b1c17b",
+        "text": "... to the center of Joiner and then let go. You will then be asked to name the incoming port for this wire.",
+        "metadata": {
+          "visual": {
+            "x": 259,
+            "y": -1,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [],
+  "nodes": [
+    {
+      "id": "specialist-be4d952e",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -39,
+          "y": 8,
+          "collapsed": false
+        },
+        "title": "Illustrator",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "joiner-ddb55d72",
+      "type": "joiner",
+      "metadata": {
+        "visual": {
+          "x": 221,
+          "y": -71,
+          "collapsed": false
+        },
+        "title": "Card Maker",
+        "logLevel": "debug"
+      }
+    }
+  ]
+}

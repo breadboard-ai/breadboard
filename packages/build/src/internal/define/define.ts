@@ -156,7 +156,8 @@ export function defineNodeType<
   GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
   GetReflective<O>,
   Expand<GetPrimary<I>>,
-  Expand<GetPrimary<O>>
+  Expand<GetPrimary<O>>,
+  Expand<ExtractInputMetadata<I>>
 > {
   if (!params.name) {
     throw new Error("params.name is required");
@@ -178,7 +179,8 @@ export function defineNodeType<
     GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
     GetReflective<O>,
     Expand<GetPrimary<I>>,
-    Expand<GetPrimary<O>>
+    Expand<GetPrimary<O>>,
+    Expand<ExtractInputMetadata<I>>
   >(
     params.name,
     omitDynamic(params.inputs),
@@ -194,8 +196,29 @@ export function defineNodeType<
     invoke: impl.invoke.bind(impl),
     describe: impl.describe.bind(impl),
     metadata: params.metadata || {},
-  });
+    // TODO(aomarks) Should not need cast.
+  }) as Definition<
+    Expand<GetStaticTypes<I>>,
+    Expand<GetStaticTypes<O>>,
+    GetDynamicTypes<I>,
+    GetDynamicTypes<O>,
+    GetOptionalInputs<I> & keyof Expand<GetStaticTypes<I>>,
+    GetReflective<O>,
+    Expand<GetPrimary<I>>,
+    Expand<GetPrimary<O>>,
+    Expand<ExtractInputMetadata<I>>
+  >;
 }
+
+type ExtractInputMetadata<I extends Record<string, InputPortConfig>> = {
+  [K in keyof I as K extends "*" ? never : K]: {
+    board: I[K]["behavior"] extends Array<unknown>
+      ? "board" extends I[K]["behavior"][number]
+        ? true
+        : false
+      : false;
+  };
+};
 
 function omitDynamic(configs: PortConfigs): PortConfigs {
   return Object.fromEntries(
