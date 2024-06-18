@@ -1,15 +1,22 @@
 {
   "author": "Google Labs Team",
   "devDependencies": {
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.14.5",
+    "ajv": "^8.16.0",
+    "ajv-formats": "^3.0.1",
+    "ajv-keywords": "^5.1.0",
     "ts-json-schema-generator": "^2.3.0",
-    "tsx": "^4.15.5",
+    "tsx": "^4.15.6",
     "typescript": "^5.4.5"
+  },
+  "exports": {
+    "./bbm.schema.json": "./bbm.schema.json"
   },
   "files": [
     "./bbm.schema.json",
     "./dist/**/*",
-    "!./dist/scripts/**/*"
+    "!./dist/scripts/**/*",
+    "./src/**/*.ts"
   ],
   "license": "Apache-2.0",
   "name": "@google-labs/breadboard-manifest",
@@ -24,7 +31,8 @@
   "scripts": {
     "build": "wireit",
     "build:schema": "wireit",
-    "build:ts": "wireit"
+    "build:ts": "wireit",
+    "test": "wireit"
   },
   "type": "module",
   "version": "0.0.0",
@@ -36,10 +44,28 @@
       ]
     },
     "build:schema": {
-      "command": "tsx --no-cache ./src/scripts/generate.ts"
+      "command": "tsx --no-cache ./src/scripts/generate.ts",
+      "output": [
+        "./bbm.schema.json"
+      ]
     },
     "build:ts": {
-      "command": "tsc"
+      "command": "tsc",
+      "dependencies": [
+        "build:schema"
+      ],
+      "output": [
+        "./dist"
+      ]
+    },
+    "test": {
+      "command": "node --import tsx --test src/tests/main.test.ts",
+      "dependencies": [
+        "build"
+      ],
+      "env": {
+        "FORCE_COLOR": "1"
+      }
     }
   }
 }

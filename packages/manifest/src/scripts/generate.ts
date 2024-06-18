@@ -11,26 +11,11 @@
 
 import fs from "fs";
 import path, { dirname } from "path";
-import { createGenerator, type Config } from "ts-json-schema-generator";
+import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { fileURLToPath } from "url";
 import { inspect } from "util";
 import packageJson from "../../package.json" with { type: "json" };
-
-export function ascendToPackageDir(packageName: string = "breadboard-ai") {
-  let directory = import.meta.dirname;
-  // let directory = process.cwd();
-  while (directory !== "/") {
-    const packageJsonPath = path.join(directory, "package.json");
-    if (fs.existsSync(packageJsonPath)) {
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-      if (packageJson.name === packageName) {
-        return directory;
-      }
-    }
-    directory = path.dirname(directory);
-  }
-  throw new Error("Could not find breadboard-ai directory.");
-}
+import { ascendToPackageDir } from "../util/ascendToPackageDir";
 
 export function generateSchemaId() {
   const PACKAGE_ROOT = ascendToPackageDir(packageJson.name);
@@ -66,28 +51,72 @@ function main() {
     throw new Error(`File not found: ${tsconfigPath}`);
   }
 
-  const config: Config = {
-    additionalProperties: false,
-    expose: "export",
-    path: filePath,
-    schemaId: generateSchemaId(),
-    sortProps: true,
-    topRef: true,
-    tsconfig: tsconfigPath,
+  const baseConfig: Partial<Config> = {
     type: "BreadboardManifest",
+    path: filePath,
+    tsconfig: tsconfigPath,
+  };
+
+  // Running with skipTypeCheck: true is necessary to generate the initial unchecked schema file. Otherwise, the script will fail with a type error.
+  generateSchemaFile({
+    ...baseConfig,
+    skipTypeCheck: true,
+  });
+
+  const result = generateSchemaFile(
+    {
+      ...baseConfig,
+      skipTypeCheck: false,
+    },
+    // (schema: any): Schema => {
+    //   /**
+    //    * The generator currently does not support uri-ference format.
+    //    * @see {BoardEntry.url}
+    //    */
+    //   // schema.definitions.BoardEntry.properties.url.format = "uri-reference";
+    //   return schema;
+    // }
+  );
+
+  console.log(inspect(result, { showHidden: true, depth: null, colors: true }));
+}
+
+const DEFAULT_CONFIG: Partial<Config> = {
+  additionalProperties: false,
+  expose: "all",
+  // schemaId: generateSchemaId(),
+  sortProps: true,
+  topRef: true,
+  jsDoc: "extended",
+};
+
+function generateSchemaFile(
+  conf: Partial<Config> = {},
+  postProcessor: (schema: Schema) => Schema = (schema: Schema): Schema => schema
+) {
+  console.debug(
+    "Generating schema with config:",
+    inspect(conf, { showHidden: false, depth: null, colors: true })
+  );
+
+  const mergedConfig: Config = {
+    ...DEFAULT_CONFIG,
+    ...conf,
   };
 
   const outputPath = path.resolve("bbm.schema.json");
 
-  const schema = createGenerator(config).createSchema(config.type);
-
-  console.log(
-    inspect({ schema }, { showHidden: false, depth: null, colors: true })
+  const schema: Schema = postProcessor(
+    createGenerator(mergedConfig).createSchema(mergedConfig.type)
   );
 
   const schemaString = JSON.stringify(schema, null, "\t");
   fs.writeFileSync(outputPath, schemaString);
-  console.log(`Schema written to: ${outputPath}`);
+
+  return {
+    destination: outputPath,
+    schema,
+  };
 }
 
 main();
