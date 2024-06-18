@@ -44,7 +44,7 @@ export class SettingsStore {
             name: "Collapse Nodes by Default",
             description:
               "Whether you wish to have nodes in the graph collapsed by default",
-            value: false,
+            value: true,
           },
         ],
         [
@@ -53,7 +53,7 @@ export class SettingsStore {
             name: "Hide Embedded Board Selector When Empty",
             description:
               "If there are no embedded boards in the current one, hide the selector",
-            value: false,
+            value: true,
           },
         ],
         [
@@ -62,7 +62,7 @@ export class SettingsStore {
             name: "Hide Advanced Ports on Nodes",
             description:
               "Toggles the visibility of $error, star (*), and control ports on nodes (unless connected)",
-            value: false,
+            value: true,
           },
         ],
         [
