@@ -67,15 +67,7 @@ function main() {
     {
       ...baseConfig,
       skipTypeCheck: false,
-    },
-    // (schema: any): Schema => {
-    //   /**
-    //    * The generator currently does not support uri-ference format.
-    //    * @see {BoardEntry.url}
-    //    */
-    //   // schema.definitions.BoardEntry.properties.url.format = "uri-reference";
-    //   return schema;
-    // }
+    }
   );
 
   console.log(inspect(result, { showHidden: true, depth: null, colors: true }));

@@ -17,4 +17,3 @@
  * ]
  */
 export type UriReference = string;
-// export type UriReference = string | URL;
