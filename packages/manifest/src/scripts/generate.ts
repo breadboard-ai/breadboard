@@ -84,7 +84,7 @@ function main() {
 const DEFAULT_CONFIG: Partial<Config> = {
   additionalProperties: false,
   expose: "all",
-  // schemaId: generateSchemaId(),
+  schemaId: generateSchemaId(),
   sortProps: true,
   topRef: true,
   jsDoc: "extended",
