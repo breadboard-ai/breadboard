@@ -201,6 +201,13 @@
 					"items": {
 						"$ref": "#/definitions/CommentNode"
 					}
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/GraphTag"
+					},
+					"description": "Tags associated with the graph. At this moment, free-form strings."
 				}
 			},
 			"additionalProperties": {
@@ -284,6 +291,14 @@
 			},
 			"additionalProperties": false,
 			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
+		},
+		"GraphTag": {
+			"type": "string",
+			"enum": [
+				"published",
+				"tool"
+			],
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool."
 		},
 		"Edge": {
 			"type": "object",
