@@ -663,6 +663,7 @@ export class Editor extends LitElement {
           JSON.stringify(
             {
               title: breadboardGraph.title,
+              description: breadboardGraph.description,
               version: breadboardGraph.version,
               metadata,
               edges,
