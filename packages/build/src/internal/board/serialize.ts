@@ -23,8 +23,9 @@ import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
 import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
-import { isOptional, OptionalVersionOf } from "./optional.js";
+import { OptionalVersionOf, isOptional } from "./optional.js";
 import type { Output } from "./output.js";
+import { isBoard, type GenericBoardDefinition } from "./board.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -33,8 +34,10 @@ import type { Output } from "./output.js";
 export function serialize(board: SerializableBoard): GraphDescriptor {
   const nodes = new Map<object, NodeDescriptor>();
   const edges: Edge[] = [];
+  const graphs = new Map<string, GraphDescriptor>();
   const errors: string[] = [];
   const typeCounts = new Map<string, number>();
+  let nextEmbeddedGraphId = 0;
 
   // Prepare our main input and output nodes. They represent the overall
   // signature of the board.
@@ -275,7 +278,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
   }
 
-  return {
+  const bgl: GraphDescriptor = {
     ...(board.title ? { title: board.title } : {}),
     ...(board.description ? { description: board.description } : {}),
     ...(board.version ? { version: board.version } : {}),
@@ -302,6 +305,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       ...[...nodes.values()].sort((a, b) => a.id.localeCompare(b.id)),
     ],
   };
+  if (graphs.size > 0) {
+    bgl.graphs = Object.fromEntries([...graphs]);
+  }
+  return bgl;
 
   function visitNodeAndReturnItsId(node: SerializableNode): string {
     let descriptor = nodes.get(node);
@@ -409,6 +416,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           throw new Error(
             `Internal error: value was a symbol (${String(value)}) for a ${inputPort.node.type}:${inputPort.name} port.`
           );
+        } else if (isBoard(value)) {
+          configurationEntries.push([
+            portName,
+            {
+              kind: "board",
+              path: `#${embedBoardAndReturnItsId(value)}`,
+            },
+          ]);
         } else {
           configurationEntries.push([
             portName,
@@ -449,6 +464,13 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     const count = typeCounts.get(type) ?? 0;
     typeCounts.set(type, count + 1);
     return `${type}-${count}`;
+  }
+
+  function embedBoardAndReturnItsId(board: GenericBoardDefinition): string {
+    const id = `subgraph-${nextEmbeddedGraphId}`;
+    nextEmbeddedGraphId++;
+    graphs.set(id, serialize(board));
+    return id;
   }
 }
 

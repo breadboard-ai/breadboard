@@ -100,7 +100,7 @@ test("serialization", (t) => {
   const str = input();
   const num = input({ type: "number" });
 
-  // $ExpectType Definition<{ num: number; }, { halfNum: number; }, undefined, undefined, never, false, false, false>
+  // $ExpectType Definition<{ num: number; }, { halfNum: number; }, undefined, undefined, never, false, false, false, { num: { board: false; }; }>
   const otherNodeDef = defineNodeType({
     name: "other",
     inputs: {
