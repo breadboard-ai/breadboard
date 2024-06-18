@@ -122,10 +122,13 @@ class Store {
     if (pathUserStore !== userStore) {
       return { success: false, error: "Unauthorized" };
     }
-    const { title } = graph;
+    const { title: maybeTitle, metadata } = graph;
+    const published = metadata?.tags?.includes("published") || false;
+    const title = maybeTitle || boardName;
+
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), published: true, title });
+      .set({ graph: JSON.stringify(graph), published, title });
     return { success: true };
   }
 
