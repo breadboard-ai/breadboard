@@ -12,12 +12,15 @@ import { keymap } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
+import { CodeChangeEvent } from "../../../events/events.js";
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
   #editor: EditorView | null = null;
-  #content: Ref<HTMLTextAreaElement> = createRef();
+  #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
+
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     :host {
@@ -61,10 +64,6 @@ export class CodeEditor extends LitElement {
   }
 
   get value() {
-    if (this.#content.value) {
-      return this.#content.value.value;
-    }
-
     if (!this.#editor) {
       return null;
     }
@@ -87,29 +86,12 @@ export class CodeEditor extends LitElement {
   }
 
   protected firstUpdated(): void {
-    return;
-
     this.#editor = new EditorView({
       extensions: [
         minimalSetup,
         javascript(),
         closeBrackets(),
         keymap.of([indentWithTab]),
-        EditorView.updateListener.of((update) => {
-          const isChange =
-            update.changes.desc.newLength !== update.changes.desc.length;
-          if (!isChange) {
-            return;
-          }
-
-          this.dispatchEvent(
-            new InputEvent("input", {
-              bubbles: true,
-              composed: true,
-              cancelable: true,
-            })
-          );
-        }),
       ],
       parent: this.#content.value,
     });
@@ -117,7 +99,30 @@ export class CodeEditor extends LitElement {
     this.#attemptEditorUpdate();
   }
 
+  #onKeyDown() {
+    this.dispatchEvent(new CodeChangeEvent());
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+
+    if (!this.#editor) {
+      return;
+    }
+
+    this.#editor.destroy();
+    this.#editor = null;
+  }
+
   render() {
-    return html`<textarea ${ref(this.#content)}>${this.#value}</textarea>`;
+    return html`<div ${ref(this.#content)}></div>`;
   }
 }
