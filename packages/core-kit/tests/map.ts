@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import map, { MapInputs } from "../src/nodes/map.js";
+import map from "../src/nodes/map.js";
 import { Capability, InputValues, Board } from "@google-labs/breadboard";
 import TemplateKit from "@google-labs/template-kit";
 import { Core } from "../src/index.js";
@@ -15,7 +15,7 @@ import { asRuntimeKit } from "@google-labs/breadboard";
 test("map with no board just outputs list", async (t) => {
   const inputs = {
     list: [1, 2, 3],
-  } as MapInputs;
+  };
   const outputs = await map.invoke(inputs, {});
   t.deepEqual(outputs, { list: [1, 2, 3] });
 });
@@ -34,7 +34,7 @@ test("map with board", async (t) => {
         },
       },
     },
-  } as MapInputs;
+  };
   const outputs = await map.invoke(inputs, {});
   t.deepEqual(outputs, {
     list: [
