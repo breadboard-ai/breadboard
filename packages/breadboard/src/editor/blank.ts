@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
 import { GraphDescriptor, Schema } from "../types.js";
 
 const CONFIGURATION = {
@@ -71,6 +72,10 @@ export const blank = (): GraphDescriptor => {
  * Creates a `GraphDescriptor` of a blank graph with inputs/outputs pre-set
  * to the LLM content array schema.
  */
-export const blankLLMContent = (): GraphDescriptor => {
-  return structuredClone(BLANK_LLM_CONTENT_GRAPH);
+export const blankLLMContent = (...tags: GraphTag[]): GraphDescriptor => {
+  const graph = structuredClone(BLANK_LLM_CONTENT_GRAPH);
+  if (tags.length) {
+    graph.metadata = { tags };
+  }
+  return graph;
 };

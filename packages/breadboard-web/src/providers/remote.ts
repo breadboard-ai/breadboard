@@ -248,7 +248,9 @@ export class RemoteGraphProvider implements GraphProvider {
       return { result: false };
     }
 
-    const data = await this.#sendToRemote(url, blankLLMContent());
+    // TODO: Remove "published" by default once we have UI to flip the
+    // "published" / "draft" flag.
+    const data = await this.#sendToRemote(url, blankLLMContent("published"));
     if (data.error) {
       return { result: false };
     }
