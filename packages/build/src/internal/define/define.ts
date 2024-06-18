@@ -211,7 +211,7 @@ export function defineNodeType<
 }
 
 type ExtractInputMetadata<I extends Record<string, InputPortConfig>> = {
-  [K in keyof I]: {
+  [K in keyof I as K extends "*" ? never : K]: {
     board: I[K]["behavior"] extends Array<unknown>
       ? "board" extends I[K]["behavior"][number]
         ? true

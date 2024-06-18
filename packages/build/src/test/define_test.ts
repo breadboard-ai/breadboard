@@ -19,7 +19,7 @@ import type { BreadboardError } from "../internal/common/error.js";
 test("mono/mono", async () => {
   const values = { si1: "foo", si2: 123 };
 
-  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, never, false, false, false>
+  // $ExpectType Definition<{ si1: string; si2: number; }, { so1: boolean; so2: null; }, undefined, undefined, never, false, false, false, { si1: { board: false; }; si2: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -139,7 +139,7 @@ test("mono/mono", async () => {
 test("poly/mono", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, never, false, false, false>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, undefined, never, false, false, false, { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -287,7 +287,7 @@ test("poly/mono", async () => {
 test("mono/poly", async () => {
   const values = { si1: "si1" };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, never, false, false, false>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, undefined, number, never, false, false, false, { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -390,7 +390,7 @@ test("mono/poly", async () => {
 test("poly/poly", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, never, false, false, false>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, number, never, false, false, false, { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -573,7 +573,7 @@ test("async invoke function", async () => {
 test("reflective", async () => {
   const values = { si1: "si1", di1: 1, di2: 2 };
 
-  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, never, true, false, false>
+  // $ExpectType Definition<{ si1: string; }, { so1: boolean; }, number, string, never, true, false, false, { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -708,7 +708,7 @@ test("reflective", async () => {
 test("primary input with no other inputs", () => {
   const values = { si1: 123 };
 
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false>
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false, { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -772,7 +772,7 @@ test("primary input with no other inputs", () => {
 test("primary input with another input", () => {
   const values = { si1: 123, si2: true };
 
-  // $ExpectType Definition<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false>
+  // $ExpectType Definition<{ si1: number; si2: boolean; }, { so1: boolean; }, undefined, undefined, never, false, "si1", false, { si1: { board: false; }; si2: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -835,7 +835,7 @@ test("primary input with another input", () => {
 });
 
 test("primary output with no other outputs", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, false, "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, false, "so1", { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -897,7 +897,7 @@ test("primary output with no other outputs", () => {
 });
 
 test("primary output with other outputs", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; so2: number; }, undefined, undefined, never, false, false, "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; so2: number; }, undefined, undefined, never, false, false, "so1", { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
@@ -961,7 +961,7 @@ test("primary output with other outputs", () => {
 });
 
 test("primary input + output", () => {
-  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", "so1">
+  // $ExpectType Definition<{ si1: number; }, { so1: boolean; }, undefined, undefined, never, false, "si1", "so1", { si1: { board: false; }; }>
   const d = defineNodeType({
     name: "foo",
     inputs: {
