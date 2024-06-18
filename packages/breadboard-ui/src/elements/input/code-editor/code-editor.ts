@@ -16,7 +16,7 @@ import { indentWithTab } from "@codemirror/commands";
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
   #editor: EditorView | null = null;
-  #content: Ref<HTMLDivElement> = createRef();
+  #content: Ref<HTMLTextAreaElement> = createRef();
   #value: string | null = null;
 
   static styles = css`
@@ -37,6 +37,22 @@ export class CodeEditor extends LitElement {
       border: 1px solid var(--bb-ui-700);
       box-shadow: inset 0 0 0 1px var(--bb-ui-700);
     }
+
+    textarea {
+      background: rgb(255, 255, 255);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid rgb(209, 209, 209);
+      box-sizing: border-box;
+      display: block;
+      field-sizing: content;
+      font-family: var(--bb-font-family-mono);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
+      max-height: 300px;
+      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+      resize: none;
+      width: 100%;
+    }
   `;
 
   set value(value: string | null) {
@@ -45,6 +61,10 @@ export class CodeEditor extends LitElement {
   }
 
   get value() {
+    if (this.#content.value) {
+      return this.#content.value.value;
+    }
+
     if (!this.#editor) {
       return null;
     }
@@ -67,6 +87,8 @@ export class CodeEditor extends LitElement {
   }
 
   protected firstUpdated(): void {
+    return;
+
     this.#editor = new EditorView({
       extensions: [
         minimalSetup,
@@ -96,6 +118,6 @@ export class CodeEditor extends LitElement {
   }
 
   render() {
-    return html`<div ${ref(this.#content)}></div>`;
+    return html`<textarea ${ref(this.#content)}>${this.#value}</textarea>`;
   }
 }
