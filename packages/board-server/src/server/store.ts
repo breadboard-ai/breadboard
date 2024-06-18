@@ -5,6 +5,7 @@
  */
 
 import { Firestore } from "@google-cloud/firestore";
+import type { GraphDescriptor } from "@google-labs/breadboard";
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -87,12 +88,20 @@ class Store {
     const boards = [];
     for (const store of allStores) {
       const storeBoards = await store.collection("boards").listDocuments();
-      boards.push(
-        ...storeBoards.map((doc) => {
+      const boardData = await Promise.all(
+        storeBoards.map(async (doc) => {
+          const data = await doc.get();
+          const title = data.get("title");
+          const published = data.get("published");
           const readonly = userStore !== store.id;
-          return { path: asPath(store.id, doc.id), readonly };
+          const mine = userStore === store.id;
+          if (!published && !mine) {
+            return null;
+          }
+          return { path: asPath(store.id, doc.id), readonly, mine, title };
         })
       );
+      boards.push(...boardData.filter(Boolean));
     }
     return boards;
   }
@@ -107,15 +116,16 @@ class Store {
   async update(
     userStore: string,
     path: string,
-    graph: string
+    graph: GraphDescriptor
   ): Promise<OperationResult> {
     const { userStore: pathUserStore, boardName } = asInfo(path);
     if (pathUserStore !== userStore) {
       return { success: false, error: "Unauthorized" };
     }
+    const { title } = graph;
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), published: true });
+      .set({ graph: JSON.stringify(graph), published: true, title });
     return { success: true };
   }
 
