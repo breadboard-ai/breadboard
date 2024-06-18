@@ -71,6 +71,7 @@ export function board<
     description,
     version,
     metadata,
+    isBoard: true,
   });
 }
 
@@ -264,3 +265,9 @@ type ExtractPortTypes<PORTS extends BoardInputPorts | BoardOutputPorts> = {
     ? TYPE
     : never;
 };
+
+export function isBoard(value: unknown): value is GenericBoardDefinition {
+  return (
+    typeof value === "function" && "isBoard" in value && value.isBoard === true
+  );
+}

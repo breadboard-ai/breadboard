@@ -4,17 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type { GenericBoardDefinition } from "../board/board.js";
 import type { Convergence } from "../board/converge.js";
 import type {
   GenericSpecialInput,
   Input,
   InputWithDefault,
 } from "../board/input.js";
-import type { Output } from "../board/output.js";
 import type { Loopback } from "../board/loopback.js";
+import type { Output } from "../board/output.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type { DefaultValue, OutputPortGetter } from "./port.js";
-import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 export interface SerializableBoard {
   inputs: Record<
@@ -71,6 +72,7 @@ export interface SerializableInputPort {
     | GenericSpecialInput
     | Loopback<JsonSerializable>
     | Convergence<JsonSerializable>
+    | GenericBoardDefinition
     | typeof DefaultValue;
 }
 
