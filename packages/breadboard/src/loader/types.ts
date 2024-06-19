@@ -9,7 +9,10 @@ import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 export type GraphProviderStore = {
   permission: "unknown" | "prompt" | "granted";
   title: string;
-  items: Map<string, { url: string; readonly: boolean; handle: unknown }>;
+  items: Map<
+    string,
+    { url: string; mine: boolean; readonly: boolean; handle: unknown }
+  >;
 };
 
 export type GraphProviderChange = {

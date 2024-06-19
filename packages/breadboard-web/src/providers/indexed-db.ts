@@ -59,7 +59,10 @@ export class IDBGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; readonly: boolean; handle: void }>;
+      items: Map<
+        string,
+        { url: string; mine: boolean; readonly: boolean; handle: void }
+      >;
     }
   >();
 
@@ -257,16 +260,21 @@ export class IDBGraphProvider implements GraphProvider {
     const itemsByUrl = graphs.map(
       (
         descriptor
-      ): [string, { url: string; readonly: boolean; handle: void }] => {
+      ): [
+        string,
+        { url: string; mine: boolean; readonly: boolean; handle: void },
+      ] => {
         const url = descriptor.url || "";
         const { fileName } = this.parseURL(new URL(url));
 
-        return [fileName, { url, readonly: false, handle: void 0 }];
+        return [fileName, { url, mine: true, readonly: false, handle: void 0 }];
       }
     );
 
-    const items: Map<string, { url: string; readonly: boolean; handle: void }> =
-      new Map(itemsByUrl);
+    const items: Map<
+      string,
+      { url: string; mine: boolean; readonly: boolean; handle: void }
+    > = new Map(itemsByUrl);
 
     this.#stores.set(store.name, {
       permission: "granted",

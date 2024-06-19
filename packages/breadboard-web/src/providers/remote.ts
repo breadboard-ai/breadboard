@@ -26,6 +26,12 @@ interface GraphDBStoreList extends idb.DBSchema {
   };
 }
 
+interface RemoteFileListing {
+  mine: boolean;
+  path: string;
+  readonly: boolean;
+}
+
 const STORE_LIST = "remote-store-list";
 const STORE_LIST_VERSION = 1;
 
@@ -89,7 +95,10 @@ export class RemoteGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<string, { url: string; readonly: boolean; handle: void }>;
+      items: Map<
+        string,
+        { url: string; mine: boolean; readonly: boolean; handle: void }
+      >;
     }
   >();
 
@@ -294,25 +303,29 @@ export class RemoteGraphProvider implements GraphProvider {
     try {
       const request = createRequest(`${store.url}/boards`, store.apiKey, "GET");
       const response = await fetch(request);
-      const files = await response.json();
+      const files: RemoteFileListing[] = await response.json();
 
       const items = new Map<
         string,
-        { url: string; readonly: boolean; handle: void }
+        { url: string; mine: boolean; readonly: boolean; handle: void }
       >();
       for (const item of files) {
         let file: string;
         let readonly: boolean;
+        let mine: boolean;
         if (typeof item === "string") {
           file = item;
           readonly = false;
+          mine = false;
         } else {
           file = item.path;
           readonly = item.readonly;
+          mine = item.mine;
         }
         items.set(file, {
           url: `${store.url}/boards/${file}`,
           readonly,
+          mine,
           handle: void 0,
         });
       }

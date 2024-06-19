@@ -172,12 +172,46 @@ export class Navigation extends LitElement {
       flex: 0 0 auto;
     }
 
-    #provider ul {
-      padding: 0 var(--bb-grid-size-4);
+    #provider .boards {
+      padding: 0;
       list-style: none;
       flex: 1;
       overflow: auto;
       margin: var(--bb-grid-size-4) 0;
+    }
+
+    #provider summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #provider summary {
+      list-style: none;
+    }
+
+    #provider summary {
+      color: var(--bb-neutral-600);
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      margin-bottom: var(--bb-grid-size-2);
+    }
+
+    #provider summary::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-arrow-right) -1px 6px / 20px 20px no-repeat;
+      display: inline-block;
+      margin: 0;
+    }
+
+    #provider details[open] > summary::before {
+      background: var(--bb-icon-arrow-drop-down) -1px 6px / 20px 20px no-repeat;
+    }
+
+    #provider ul {
+      padding: 0 var(--bb-grid-size-4);
+      list-style: none;
+      margin: 0 0 var(--bb-grid-size-3) 0;
     }
 
     #provider ul li {
@@ -191,7 +225,7 @@ export class Navigation extends LitElement {
       background: transparent var(--bb-icon-draft) var(--bb-grid-size)
         var(--bb-grid-size) / 20px 20px no-repeat;
       border: none;
-      color: var(--bb-neutral-600);
+      color: var(--bb-neutral-900);
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       cursor: pointer;
@@ -428,6 +462,90 @@ export class Navigation extends LitElement {
       this.selectedLocation
     );
 
+    // Divide the items into two buckets: those that belong to the user and
+    // other published boards.
+    const items = [...store.items];
+    const myItems: typeof items = [];
+    const otherItems: typeof items = [];
+    for (const item of items) {
+      const [, data] = item;
+      if (data.mine) {
+        myItems.push(item);
+        continue;
+      }
+
+      otherItems.push(item);
+    }
+
+    type BoardInfo = (typeof items)[0];
+    const renderBoards = ([name, { url, readonly, mine }]: BoardInfo) => {
+      return html`<li
+        class=${classMap({
+          mine,
+        })}
+      >
+        <button
+          @click=${() => {
+            this.dispatchEvent(
+              new GraphProviderLoadRequestEvent(provider.name, url)
+            );
+          }}
+          class=${classMap({
+            board: true,
+            selected: url === this.url,
+          })}
+        >
+          ${name}
+        </button>
+        ${extendedCapabilities.modify && !readonly
+          ? html`<button
+              class="delete"
+              @click=${() => {
+                this.dispatchEvent(
+                  new GraphProviderDeleteRequestEvent(
+                    this.selectedProvider,
+                    url,
+                    url === this.url
+                  )
+                );
+              }}
+            >
+              Delete
+            </button>`
+          : nothing}
+      </li>`;
+    };
+
+    const myBoards = html`<ul class="mine">
+      ${map(myItems, renderBoards)}
+    </ul>`;
+
+    const otherBoards = html`<ul class="other-boards">
+      ${map(otherItems, renderBoards)}
+    </ul>`;
+
+    let boardListing;
+    if (myItems.length > 0 && otherItems.length > 0) {
+      boardListing = html`<div class="boards">
+        <details open>
+          <summary>Your boards</summary>
+          ${myBoards}
+        </details>
+        <details open>
+          <summary>Other people's boards</summary>
+          ${otherBoards}
+        </details>
+      </div>`;
+    } else if (myItems.length > 0 && otherItems.length === 0) {
+      boardListing = html`<div class="boards">${myBoards}</div>`;
+    } else if (myItems.length === 0 && otherItems.length > 0) {
+      boardListing = html`<div class="boards">${otherBoards}</div>`;
+    } else {
+      boardListing = html`<div id="empty-provider">
+        No boards in this provider
+      </div>`;
+    }
+
     return html`<nav id="menu">
         <header>
           <h1>Breadboard</h1>
@@ -501,48 +619,7 @@ export class Navigation extends LitElement {
             </div>
           </header>
           ${permission === "granted"
-            ? html`${store.items.size > 0
-                ? html`<ul>
-                    ${map(store.items, ([name, { url, readonly }]) => {
-                      return html`<li>
-                        <button
-                          @click=${() => {
-                            this.dispatchEvent(
-                              new GraphProviderLoadRequestEvent(
-                                provider.name,
-                                url
-                              )
-                            );
-                          }}
-                          class=${classMap({
-                            board: true,
-                            selected: url === this.url,
-                          })}
-                        >
-                          ${name}
-                        </button>
-                        ${extendedCapabilities.modify && !readonly
-                          ? html`<button
-                              class="delete"
-                              @click=${() => {
-                                this.dispatchEvent(
-                                  new GraphProviderDeleteRequestEvent(
-                                    this.selectedProvider,
-                                    url,
-                                    url === this.url
-                                  )
-                                );
-                              }}
-                            >
-                              Delete
-                            </button>`
-                          : nothing}
-                      </li>`;
-                    })}
-                  </ul>`
-                : html`<div id="empty-provider">
-                    No boards in this provider
-                  </div>`}`
+            ? boardListing
             : html`<div id="renew-access">
                 <span>Access has expired for this source</span>
                 <button

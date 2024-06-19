@@ -137,7 +137,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       boards.map((board) => {
         return [
           board.title,
-          { url: board.url, readonly: false, handle: undefined },
+          { url: board.url, mine: true, readonly: false, handle: undefined },
         ];
       })
     );
