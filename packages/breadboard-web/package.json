@@ -283,7 +283,7 @@
     "@breadboard-ai/build": "^0.6.0",
     "@breadboard-ai/google-drive-kit": "^0.1.0",
     "@breadboard-ai/python-wasm": "^0.1.0",
-    "@codemirror/autocomplete": "^6.16.2",
+    "@codemirror/autocomplete": "^6.16.3",
     "@codemirror/commands": "^6.6.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@google-labs/agent-kit": "^0.7.0",
