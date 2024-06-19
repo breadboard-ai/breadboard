@@ -404,6 +404,36 @@ export class NodeConfigurationInfo extends LitElement {
     }
   }
 
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{
+          graph: GraphDescriptor | null;
+          subGraphId: number;
+          selectedNodeIds: string[];
+        }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (
+      changedProperties.has("graph") ||
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("selectedNodeIds")
+    ) {
+      if (!this.#nodeConfigurationFormRef.value) {
+        return;
+      }
+
+      // Here we must unhook the editor *before* it is removed from the DOM,
+      // otherwise CodeMirror will hold onto focus if it has it.
+      const editors =
+        this.#nodeConfigurationFormRef.value.querySelectorAll<CodeEditor>(
+          "bb-code-editor"
+        );
+      for (const editor of editors) {
+        editor.unhookSafely();
+      }
+    }
+  }
+
   #assertIsValidBehavior(
     behavior: string | undefined
   ): behavior is BehaviorSchema {

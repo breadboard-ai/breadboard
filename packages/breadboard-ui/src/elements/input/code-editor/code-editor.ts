@@ -113,16 +113,18 @@ export class CodeEditor extends LitElement {
     super.disconnectedCallback();
 
     this.removeEventListener("keydown", this.#onKeyDownBound);
+  }
 
+  render() {
+    return html`<div ${ref(this.#content)}></div>`;
+  }
+
+  unhookSafely() {
     if (!this.#editor) {
       return;
     }
 
     this.#editor.destroy();
     this.#editor = null;
-  }
-
-  render() {
-    return html`<div ${ref(this.#content)}></div>`;
   }
 }
