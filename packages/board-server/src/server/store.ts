@@ -25,7 +25,7 @@ export type BoardListEntry = {
   username: string;
   readonly: boolean;
   mine: boolean;
-  published: boolean;
+  tags: string[];
 };
 
 export const asPath = (userStore: string, boardName: string) => {
@@ -101,21 +101,15 @@ class Store {
       docs.forEach((doc) => {
         const path = asPath(store.id, doc.id);
         const title = doc.get("title") || path;
-        const published = doc.get("published");
+        const tags = (doc.get("tags") as string[]) || ["published"];
+        const published = tags.includes("published");
         const readonly = userStore !== store.id;
         const mine = userStore === store.id;
         const username = store.id;
         if (!published && !mine) {
           return;
         }
-        storeBoards.push({
-          title,
-          path,
-          username,
-          readonly,
-          mine,
-          published,
-        });
+        storeBoards.push({ title, path, username, readonly, mine, tags });
       });
       boards.push(...storeBoards);
     }
@@ -139,12 +133,12 @@ class Store {
       return { success: false, error: "Unauthorized" };
     }
     const { title: maybeTitle, metadata } = graph;
-    const published = metadata?.tags?.includes("published") || false;
+    const tags = metadata?.tags || [];
     const title = maybeTitle || boardName;
 
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), published, title });
+      .set({ graph: JSON.stringify(graph), tags, title });
     return { success: true };
   }
 
