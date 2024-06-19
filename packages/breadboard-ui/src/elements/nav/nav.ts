@@ -43,6 +43,9 @@ export class Navigation extends LitElement {
   selectedLocation = "default";
 
   @state()
+  filter: string | null = null;
+
+  @state()
   showProviderOverflowMenu = false;
 
   #hideProviderOverflowMenuBound = this.#hideProviderOverflowMenu.bind(this);
@@ -103,6 +106,18 @@ export class Navigation extends LitElement {
       padding: 0;
       font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
+    }
+
+    #menu > header > #search {
+      padding: var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
+      grid-column: 1/3;
+    }
+
+    #menu > header > #search:placeholder-shown {
+      background: var(--bb-icon-search) calc(100% - 8px) center / 20px 20px
+        no-repeat;
     }
 
     #new-board {
@@ -464,7 +479,13 @@ export class Navigation extends LitElement {
 
     // Divide the items into two buckets: those that belong to the user and
     // other published boards.
-    const items = [...store.items];
+    const items = [...store.items].filter(([name]) => {
+      if (!this.filter) {
+        return true;
+      }
+      const filter = new RegExp(this.filter, "gim");
+      return filter.test(name);
+    });
     const myItems: typeof items = [];
     const otherItems: typeof items = [];
     for (const item of items) {
@@ -574,6 +595,18 @@ export class Navigation extends LitElement {
                 New board
               </button>`
             : nothing}
+          <input
+            type="search"
+            id="search"
+            placeholder="Search boards"
+            @input=${(evt: InputEvent) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
+
+              this.filter = evt.target.value;
+            }}
+          />
         </header>
         <section id="provider">
           <header>
