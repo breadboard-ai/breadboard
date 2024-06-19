@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import BoardEntry from "./board-entry";
+import { BoardEntry } from "./board-entry";
 import { ManifestItem } from "./manifest-item";
 import { UriReference } from "./uri-reference";
 
@@ -40,7 +40,7 @@ import { UriReference } from "./uri-reference";
  *  }
  * ]
  */
-interface BreadboardManifest {
+export interface BreadboardManifest {
   /**
    * JSON schema
    */
@@ -70,6 +70,3 @@ interface BreadboardManifest {
    */
   url?: never;
 }
-
-export type { BreadboardManifest };
-export default BreadboardManifest;

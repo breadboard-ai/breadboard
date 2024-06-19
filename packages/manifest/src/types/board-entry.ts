@@ -18,7 +18,7 @@ import { UriReference } from "./uri-reference";
  *  },
  * ]
  */
-interface BoardEntry {
+export interface BoardEntry {
   /**
    * @examples [ "My Board" ]
    */
@@ -44,6 +44,3 @@ interface BoardEntry {
   // Allow additional properties without allowing it on all other types.
   [x: string | number | symbol]: unknown;
 }
-
-export type { BoardEntry };
-export default BoardEntry;

@@ -17,7 +17,7 @@ import { UriReference } from "./uri-reference";
  * }
  * ]
  */
-interface ManifestReference {
+export interface ManifestReference {
   /**
    * Breadboard Board Manifest Name
    *
@@ -47,6 +47,3 @@ interface ManifestReference {
    */
   manifests?: never;
 }
-
-export type { ManifestReference };
-export default ManifestReference;
