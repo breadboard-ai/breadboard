@@ -19,6 +19,15 @@ export const getStore = () => {
   return new Store("board-server");
 };
 
+export type BoardListEntry = {
+  title: string;
+  path: string;
+  username: string;
+  readonly: boolean;
+  mine: boolean;
+  published: boolean;
+};
+
 export const asPath = (userStore: string, boardName: string) => {
   return `@${userStore}/${boardName}`;
 };
@@ -78,7 +87,7 @@ class Store {
     return { success: true, store: doc.id };
   }
 
-  async list(userKey: string | null) {
+  async list(userKey: string | null): Promise<BoardListEntry[]> {
     const userStoreResult = await this.getUserStore(userKey);
     const userStore = userStoreResult.success ? userStoreResult.store : null;
 
@@ -87,21 +96,28 @@ class Store {
       .listDocuments();
     const boards = [];
     for (const store of allStores) {
-      const storeBoards = await store.collection("boards").listDocuments();
-      const boardData = await Promise.all(
-        storeBoards.map(async (doc) => {
-          const data = await doc.get();
-          const title = data.get("title");
-          const published = data.get("published");
-          const readonly = userStore !== store.id;
-          const mine = userStore === store.id;
-          if (!published && !mine) {
-            return null;
-          }
-          return { path: asPath(store.id, doc.id), readonly, mine, title };
-        })
-      );
-      boards.push(...boardData.filter(Boolean));
+      const docs = await store.collection("boards").get();
+      const storeBoards: BoardListEntry[] = [];
+      docs.forEach((doc) => {
+        const path = asPath(store.id, doc.id);
+        const title = doc.get("title") || path;
+        const published = doc.get("published");
+        const readonly = userStore !== store.id;
+        const mine = userStore === store.id;
+        const username = store.id;
+        if (!published && !mine) {
+          return;
+        }
+        storeBoards.push({
+          title,
+          path,
+          username,
+          readonly,
+          mine,
+          published,
+        });
+      });
+      boards.push(...storeBoards);
     }
     return boards;
   }
