@@ -58,7 +58,8 @@
         "./packages/website:build",
         "./packages/schema:build",
         "./packages/board-server:build",
-        "./packages/team-kit:build"
+        "./packages/team-kit:build",
+        "./packages/manifest:build"
       ]
     },
     "test": {
@@ -85,7 +86,8 @@
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
         "./packages/python-wasm:test",
-        "./packages/schema:test"
+        "./packages/schema:test",
+        "./packages/manifest:test"
       ]
     },
     "lint": {
