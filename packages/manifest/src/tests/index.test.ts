@@ -25,7 +25,6 @@ import { isRemoteUri } from "../functions/is-remote-uri";
 import { isResourceReference } from "../functions/is-resource-reference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
 import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
-import { ResourceReference } from "../types/resource";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -61,26 +60,6 @@ const dereferencedBoard: DereferencedBoard = {
 const dereferencedManifest: DereferencedManifest = {
   boards: [],
   manifests: [],
-};
-
-const referencedResource: ResourceReference = {
-  url: "https://bgl.new/manifest.bbm.json",
-};
-
-const boardReference: ReferencedBoard = {
-  url: "https://bgl.new/board.bgl.json",
-};
-
-const manifestReference: ReferencedManifest = {
-  url: "https://bgl.new/manifest.bbm.json",
-};
-
-const remoteResource: ResourceReference = {
-  url: "https://example.com",
-};
-
-const localResource: ResourceReference = {
-  url: path.resolve(import.meta.dirname, "file.json"),
 };
 
 const localBoardReference: ReferencedBoard = {
@@ -188,6 +167,37 @@ const fixtures: BreadboardManifest[] = [
       },
     ],
   },
+  {
+    boards: [dereferencedBoard],
+  },
+  {
+    boards: [localBoardReference],
+  },
+  {
+    boards: [remoteBoardReference],
+  },
+  {
+    boards: [dereferencedBoard, localBoardReference, remoteBoardReference],
+  },
+  dereferencedManifest,
+  localManifestReference,
+  remoteManifestReference,
+  {
+    manifests: [dereferencedManifest],
+  },
+  {
+    manifests: [localManifestReference],
+  },
+  {
+    manifests: [remoteBoardReference],
+  },
+  {
+    manifests: [
+      dereferencedManifest,
+      localManifestReference,
+      remoteManifestReference,
+    ],
+  },
 ];
 
 for (const manifest of fixtures) {
@@ -202,15 +212,6 @@ for (const manifest of fixtures) {
     }
   );
   console.debug();
-}
-
-function fetchData(url: string): Promise<any> {
-  return fetch(url).then((res) => {
-    if (!res.ok) {
-      throw new Error("Network response was not ok");
-    }
-    return res.json();
-  });
 }
 
 describe("BreadboardManifest", () => {
@@ -260,34 +261,61 @@ describe("BreadboardManifest", () => {
   });
 
   describe("isResourceReference", () => {
-    test("should return true for a ResourceReference object", () =>
-      assert.ok(isResourceReference(referencedResource)));
+    test("local manifest reference", () =>
+      assert.ok(isResourceReference(localManifestReference)));
+    test("remote manifest reference", () =>
+      assert.ok(isResourceReference(remoteManifestReference)));
+    test("local board reference", () =>
+      assert.ok(isResourceReference(localBoardReference)));
+    test("remote board reference", () =>
+      assert.ok(isResourceReference(remoteBoardReference)));
 
-    test("should return false for a DereferencedManifest object", () =>
+    test("dereferenced manifest", () =>
+      assert.ok(!isResourceReference(dereferencedManifest)));
+
+    test("dereferenced board", () =>
       assert.ok(!isResourceReference(dereferencedBoard)));
   });
 
   describe("isRemoteResource", () => {
-    test("should return true for a remote Resource object", () =>
-      assert.ok(isRemoteResource(remoteResource)));
+    test("local manifest reference", () =>
+      assert.ok(!isRemoteResource(localManifestReference)));
 
-    test("should return false for a local Resource object", () =>
+    test("remote manifest reference", () =>
+      assert.ok(isRemoteResource(remoteManifestReference)));
+
+    test("local board reference", () =>
+      assert.ok(!isRemoteResource(localBoardReference)));
+
+    test("remote board reference", () =>
+      assert.ok(isRemoteResource(remoteBoardReference)));
+
+    test("dereferenced manifest", () =>
+      assert.ok(!isRemoteResource(dereferencedManifest)));
+
+    test("dereferenced board", () =>
       assert.ok(!isRemoteResource(dereferencedBoard)));
   });
 
   describe("isLocalResource", () => {
-    test("should return true for a local Resource object", () =>
-      assert.ok(isLocalResource(localResource)));
+    test("local manifest reference", () =>
+      assert.ok(isLocalResource(localManifestReference)));
 
-    test("should return false for a remote Resource object", () =>
-      assert.ok(!isLocalResource(remoteResource)));
+    test("remote manifest reference", () =>
+      assert.ok(!isLocalResource(remoteManifestReference)));
+
+    test("dereferenced manifest", () =>
+      assert.ok(!isLocalResource(dereferencedManifest)));
+
+    test("dereferenced board", () =>
+      assert.ok(!isLocalResource(dereferencedBoard)));
   });
 
   describe("isDereferencedBoard", () => {
-    test("should return true for a DereferencedBoard object", () =>
+    test("dereferenced board", () =>
       assert.ok(isDereferencedBoard(dereferencedBoard)));
 
-    test("should return false for a non-DereferencedBoard object", () =>
+    test("dereferenced manifest", () =>
       assert.ok(!isDereferencedBoard(dereferencedManifest)));
   });
 
@@ -295,7 +323,7 @@ describe("BreadboardManifest", () => {
     describe("manifest", () => {
       test("remote manifest reference", async () => {
         mockFetchResponse(dereferencedManifest);
-        const dereferenced = await dereference(referencedResource);
+        const dereferenced = await dereference(remoteManifestReference);
         assert.ok(dereferenced);
         assert.deepEqual(dereferenced, dereferencedManifest);
         mock.reset();
@@ -303,16 +331,16 @@ describe("BreadboardManifest", () => {
 
       test("local manifest reference", async (t) => {
         fs.writeFileSync(
-          localResource.url,
+          localManifestReference.url,
           JSON.stringify(dereferencedManifest)
         );
         mockFetchResponse(dereferencedManifest);
-        const dereferenced = await dereference(localResource);
+        const dereferenced = await dereference(localManifestReference);
         assert.ok(dereferenced);
         assert.deepEqual(dereferenced, dereferencedManifest);
         mock.reset();
 
-        fs.unlinkSync(localResource.url);
+        fs.unlinkSync(localManifestReference.url);
       });
 
       test("manifest object", async () => {
@@ -333,7 +361,10 @@ describe("BreadboardManifest", () => {
       });
 
       test("local board reference", async () => {
-        fs.writeFileSync(localBoardReference.url, JSON.stringify(dereferencedBoard));
+        fs.writeFileSync(
+          localBoardReference.url,
+          JSON.stringify(dereferencedBoard)
+        );
         mockFetchResponse(dereferencedBoard);
         const dereferenced = await dereference(localBoardReference);
         assert.ok(dereferenced);
@@ -354,7 +385,7 @@ describe("BreadboardManifest", () => {
 
     test("should return a DereferencedManifest object", async () => {
       mockFetchResponse(dereferencedManifest);
-      const dereferenced = await dereference(referencedResource);
+      const dereferenced = await dereference(remoteManifestReference);
       assert.ok(isDereferencedManifest(dereferenced));
       assert.deepEqual(dereferenced, dereferencedManifest);
       mock.reset();
@@ -363,7 +394,7 @@ describe("BreadboardManifest", () => {
   describe("dereferenceBoard", (t) => {
     test("should return a DereferencedBoard object", async () => {
       mockFetchResponse(dereferencedBoard);
-      const dereferenced = await dereferenceBoard(boardReference);
+      const dereferenced = await dereferenceBoard(remoteBoardReference);
       assert.ok(isDereferencedBoard(dereferenced));
       assert.deepEqual(dereferenced, dereferencedBoard);
       mock.reset();
@@ -372,7 +403,7 @@ describe("BreadboardManifest", () => {
   describe("dereferenceManifest", (t) => {
     test("should return a DereferencedManifest object", async () => {
       mockFetchResponse(dereferencedManifest);
-      const dereferenced = await dereferenceManifest(manifestReference);
+      const dereferenced = await dereferenceManifest(remoteManifestReference);
       assert.ok(isDereferencedManifest(dereferenced));
       assert.deepEqual(dereferenced, dereferencedManifest);
       mock.reset();
