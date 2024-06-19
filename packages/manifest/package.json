@@ -32,7 +32,8 @@
     "build": "wireit",
     "build:schema": "wireit",
     "build:ts": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "test:verbose": "WIREIT_LOGGER=metrics npm run test"
   },
   "type": "module",
   "version": "0.0.0",
