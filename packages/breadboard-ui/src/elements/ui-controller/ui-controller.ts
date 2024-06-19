@@ -271,6 +271,8 @@ export class UI extends LitElement {
     let boardDescription = this.graph?.description;
     let boardPublished: boolean | null =
       this.graph?.metadata?.tags?.includes("published") ?? false;
+    let boardIsTool: boolean | null =
+      this.graph?.metadata?.tags?.includes("tool") ?? false;
     if (this.subGraphId && this.graph && this.graph.graphs) {
       const subGraph = this.graph.graphs[this.subGraphId];
       if (subGraph) {
@@ -278,6 +280,7 @@ export class UI extends LitElement {
         boardVersion = subGraph.version;
         boardDescription = subGraph.description;
         boardPublished = null;
+        boardIsTool = subGraph.metadata?.tags?.includes("tool") ?? false;
       }
     }
 
@@ -481,6 +484,7 @@ export class UI extends LitElement {
         boardVersion,
         boardDescription,
         boardPublished,
+        boardIsTool,
       ],
       () => {
         return html`<bb-board-details
@@ -488,6 +492,7 @@ export class UI extends LitElement {
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}
           .boardPublished=${boardPublished}
+          .boardIsTool=${boardIsTool}
           .subGraphId=${this.subGraphId}
         >
         </bb-board-details>`;

@@ -100,6 +100,7 @@ export class Main extends LitElement {
     version: string;
     description: string;
     published: boolean | null;
+    isTool: boolean | null;
     subGraphId: string | null;
   } | null = null;
 
@@ -841,6 +842,20 @@ export class Main extends LitElement {
       subGraphDescriptor.version = evt.version;
       subGraphDescriptor.description = evt.description;
 
+      if (evt.isTool !== null) {
+        subGraphDescriptor.metadata ??= {};
+        subGraphDescriptor.metadata.tags ??= [];
+
+        if (evt.isTool) {
+          if (!subGraphDescriptor.metadata.tags.includes("tool")) {
+            subGraphDescriptor.metadata.tags.push("tool");
+          }
+        } else {
+          subGraphDescriptor.metadata.tags =
+            subGraphDescriptor.metadata.tags.filter((tag) => tag !== "tool");
+        }
+      }
+
       editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
     } else if (this.graph) {
       this.graph.title = evt.title;
@@ -865,6 +880,21 @@ export class Main extends LitElement {
             );
             break;
           }
+        }
+      }
+
+      if (evt.isTool !== null) {
+        this.graph.metadata ??= {};
+        this.graph.metadata.tags ??= [];
+
+        if (evt.isTool) {
+          if (!this.graph.metadata.tags.includes("tool")) {
+            this.graph.metadata.tags.push("tool");
+          }
+        } else {
+          this.graph.metadata.tags = this.graph.metadata.tags.filter(
+            (tag) => tag !== "tool"
+          );
         }
       }
     } else {
@@ -1197,8 +1227,10 @@ export class Main extends LitElement {
                   title: graph?.title ?? "No Title",
                   version: graph?.version ?? "0.0.1",
                   description: graph?.description ?? "No Description",
-                  published:
-                    graph?.metadata?.tags?.includes("published") ?? false,
+                  published: this.subGraphId
+                    ? null
+                    : graph?.metadata?.tags?.includes("published") ?? false,
+                  isTool: graph?.metadata?.tags?.includes("tool") ?? false,
                   subGraphId: this.subGraphId,
                 };
               }}
@@ -1272,17 +1304,6 @@ export class Main extends LitElement {
           ) => {
             this.#handleBoardInfoUpdate(evt);
             this.requestUpdate();
-          }}
-          @bbboardinforequestupdate=${(
-            evt: BreadboardUI.Events.BoardInfoUpdateRequestEvent
-          ) => {
-            this.boardEditOverlayInfo = {
-              title: evt.title ?? "No Title",
-              version: evt.version ?? "0.0.1",
-              description: evt.description ?? "No description",
-              published: null,
-              subGraphId: evt.subGraphId,
-            };
           }}
           @bbsubgraphcreate=${async (
             evt: BreadboardUI.Events.SubGraphCreateEvent
@@ -1654,6 +1675,7 @@ export class Main extends LitElement {
         .boardVersion=${this.boardEditOverlayInfo.version}
         .boardDescription=${this.boardEditOverlayInfo.description}
         .boardPublished=${this.boardEditOverlayInfo.published}
+        .boardIsTool=${this.boardEditOverlayInfo.isTool}
         .subGraphId=${this.boardEditOverlayInfo.subGraphId}
         @bboverlaydismissed=${() => {
           this.boardEditOverlayInfo = null;
@@ -1662,11 +1684,6 @@ export class Main extends LitElement {
           evt: BreadboardUI.Events.BoardInfoUpdateEvent
         ) => {
           this.#handleBoardInfoUpdate(evt);
-          this.toast(
-            "Board information updated",
-            BreadboardUI.Events.ToastType.INFORMATION
-          );
-
           this.boardEditOverlayInfo = null;
           this.requestUpdate();
         }}

@@ -35,7 +35,6 @@ export { ProviderOverlay } from "./overlay/provider.js";
 export { SchemaEditor } from "./node-info/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { Splitter } from "./splitter/splitter.js";
-export { SubBoardSelector } from "./subboard-selector/subboard-selector.js";
 export { Switcher } from "./switcher/switcher.js";
 export { Toast } from "./toast/toast.js";
 export { UI } from "./ui-controller/ui-controller.js";

@@ -9,6 +9,7 @@
 </head>
 <body>
   <script type="module">
+    import * as pkg from "./package.json";
     import { Main } from "./src/index.ts";
     import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
     import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
@@ -63,5 +64,7 @@
 
     const main = new Main(config);
     document.body.appendChild(main);
+
+    console.log(`[Breadboard Visual Editor: Version ${pkg.version}]`);
   </script>
 </body>
