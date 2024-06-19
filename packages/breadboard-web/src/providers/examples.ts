@@ -37,7 +37,7 @@ export class ExamplesGraphProvider implements GraphProvider {
         .map((board) => {
           return [
             board.title,
-            { url: board.url, readonly: true, handle: undefined },
+            { url: board.url, readonly: true, mine: false, handle: undefined },
           ];
         })
     );
