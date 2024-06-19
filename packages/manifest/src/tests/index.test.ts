@@ -26,6 +26,7 @@ import { isResourceReference } from "../functions/is-resource-reference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
 import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
 import { Resource, ResourceReference } from "../types/resource";
+import { inspect } from "util";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -211,7 +212,7 @@ const testManifestValidation = (
       const valid = validate(manifest);
       const errors = validate.errors;
       if (errors) {
-        console.error(t.name, { errors });
+        throw new Error(inspect(errors, { depth: null, colors: true }))
       }
       assert.ok(!errors);
       assert.ok(valid);
