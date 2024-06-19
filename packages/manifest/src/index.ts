@@ -5,11 +5,19 @@
  */
 
 import BreadboardManifestJsonSchema from "../bbm.schema.json" assert { type: "json" };
+import { BoardResource } from "./types/boards";
+import { DereferencedManifest, ManifestResource } from "./types/manifest";
 
 export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
 
-export type { BoardReference } from "./types/board-reference";
-export  { BreadboardManifest } from "./types/breadboard-manifest";
-export type { ManifestItem } from "./types/manifest-item";
-export type { ManifestReference } from "./types/manifest-reference";
+export class BreadboardManifest implements DereferencedManifest {
+  title?: string;
+  boards?: BoardResource[];
+  manifests?: ManifestResource[];
 
+  constructor(args: DereferencedManifest = {}) {
+    this.title = args.title;
+    this.boards = args.boards || [];
+    this.manifests = args.manifests || [];
+  }
+}

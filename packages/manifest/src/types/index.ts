@@ -1,11 +1,6 @@
 /**
- * @license
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+ * Allow additional properties.
  */
-
-export type { BoardReference } from "./board-reference";
-export { BreadboardManifest } from "./breadboard-manifest";
-export type { ManifestItem } from "./manifest-item";
-export type { ManifestReference } from "./manifest-reference";
-
+export type AdditionalProperties = {
+  [x: string | number | symbol]: unknown;
+};

@@ -5,6 +5,7 @@
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
     "ajv-keywords": "^5.1.0",
+    "c8": "^10.1.2",
     "ts-json-schema-generator": "^2.3.0",
     "tsx": "^4.15.6",
     "typescript": "^5.4.5"
@@ -62,7 +63,7 @@
       ]
     },
     "test": {
-      "command": "node --import tsx --test src/tests/main.test.ts",
+      "command": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
       "dependencies": [
         "build"
       ],
@@ -70,5 +71,9 @@
         "FORCE_COLOR": "1"
       }
     }
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/breadboard-schema": "^1.4.1"
   }
 }
