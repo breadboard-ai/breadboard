@@ -18,6 +18,10 @@ export enum EditorMode {
 
 const removeHardPort = (...names: string[]) => {
   return (port: InspectablePort) => {
+    if (port.edges.length > 0) {
+      return true;
+    }
+
     if (
       (port.status === PortStatus.Connected ||
         port.status === PortStatus.Dangling) &&

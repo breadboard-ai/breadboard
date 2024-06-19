@@ -29,6 +29,7 @@ export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
+export { default as mapNode, map } from "./nodes/map.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",

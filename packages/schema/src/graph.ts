@@ -226,6 +226,14 @@ export type GraphInlineMetadata = {
 };
 
 /**
+ * A tag that can be associated with a graph.
+ * - `published`: The graph is published (as opposed to a draft). It may be
+ *    used in production and shared with others.
+ * - `tool`: The graph is intended to be a tool.
+ */
+export type GraphTag = "published" | "tool";
+
+/**
  * Represents graph metadata.
  */
 export type GraphMetadata = {
@@ -235,6 +243,10 @@ export type GraphMetadata = {
   icon?: string;
   [name: string]: NodeValue;
   comments?: CommentNode[];
+  /**
+   * Tags associated with the graph. At this moment, free-form strings.
+   */
+  tags?: GraphTag[];
 };
 
 /**

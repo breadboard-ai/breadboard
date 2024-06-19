@@ -85,7 +85,13 @@
             "prompts": {
               "type": "array",
               "title": "List",
-              "description": "The list of outputs from the board."
+              "description": "The list of outputs from the board.",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
             }
           }
         }

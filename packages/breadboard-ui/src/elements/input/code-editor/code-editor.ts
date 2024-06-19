@@ -12,12 +12,15 @@ import { keymap } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
+import { CodeChangeEvent } from "../../../events/events.js";
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
   #editor: EditorView | null = null;
   #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
+
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     :host {
@@ -36,6 +39,22 @@ export class CodeEditor extends LitElement {
       outline: none;
       border: 1px solid var(--bb-ui-700);
       box-shadow: inset 0 0 0 1px var(--bb-ui-700);
+    }
+
+    textarea {
+      background: rgb(255, 255, 255);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid rgb(209, 209, 209);
+      box-sizing: border-box;
+      display: block;
+      field-sizing: content;
+      font-family: var(--bb-font-family-mono);
+      font-size: var(--bb-body-small);
+      line-height: var(--bb-body-line-height-small);
+      max-height: 300px;
+      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+      resize: none;
+      width: 100%;
     }
   `;
 
@@ -73,26 +92,34 @@ export class CodeEditor extends LitElement {
         javascript(),
         closeBrackets(),
         keymap.of([indentWithTab]),
-        EditorView.updateListener.of((update) => {
-          const isChange =
-            update.changes.desc.newLength !== update.changes.desc.length;
-          if (!isChange) {
-            return;
-          }
-
-          this.dispatchEvent(
-            new InputEvent("input", {
-              bubbles: true,
-              composed: true,
-              cancelable: true,
-            })
-          );
-        }),
       ],
       parent: this.#content.value,
     });
 
     this.#attemptEditorUpdate();
+  }
+
+  #onKeyDown() {
+    this.dispatchEvent(new CodeChangeEvent());
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+
+    if (!this.#editor) {
+      return;
+    }
+
+    this.#editor.destroy();
+    this.#editor = null;
   }
 
   render() {

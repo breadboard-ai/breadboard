@@ -7,7 +7,9 @@
 import * as PIXI from "pixi.js";
 import { getGlobalColor } from "./utils.js";
 import { GRAPH_OPERATIONS } from "./types.js";
+import MarkdownIt from "markdown-it";
 
+const markdown = MarkdownIt();
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const emptyTextColor = getGlobalColor("--bb-neutral-600");
 const textColor = getGlobalColor("--bb-neutral-800");
@@ -22,7 +24,7 @@ export class GraphComment extends PIXI.Container {
   #borderRadius = 8;
   #padding = 12;
   #text: string | null = null;
-  #textLabel = new PIXI.Text({
+  #textLabel = new PIXI.HTMLText({
     text: "",
     style: {
       fontSize: 12,
@@ -155,7 +157,7 @@ export class GraphComment extends PIXI.Container {
       return;
     }
 
-    this.#textLabel.text = text;
+    this.#textLabel.text = markdown.renderInline(text);
     this.#textLabel.style.fill = textColor;
     this.#textLabel.style.fontStyle = "normal";
   }

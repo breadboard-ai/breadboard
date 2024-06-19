@@ -33,7 +33,7 @@ export const loadFromFile = async (path: string) => {
 };
 
 export const loadWithFetch = async (url: string | URL) => {
-  const response = await fetch(url);
+  const response = await fetch(url, { credentials: "include" });
   return await response.json();
 };
 

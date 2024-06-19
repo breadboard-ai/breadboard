@@ -342,6 +342,14 @@ export class SchemaChangeEvent extends Event {
   }
 }
 
+export class CodeChangeEvent extends Event {
+  static eventName = "bbcodechange";
+
+  constructor() {
+    super(CodeChangeEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeCreateEvent extends Event {
   static eventName = "bbnodecreate";
 

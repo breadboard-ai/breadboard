@@ -1,6 +1,5 @@
 {
   "title": "Blank board",
-  "description": "A blank board. Use it as a starting point for your creations.",
   "version": "0.0.1",
   "nodes": [
     {
@@ -27,7 +26,8 @@
       "metadata": {
         "visual": {
           "x": 0,
-          "y": 0
+          "y": 0,
+          "collapsed": false
         }
       }
     },
@@ -55,7 +55,8 @@
       "metadata": {
         "visual": {
           "x": 173,
-          "y": 0
+          "y": 0,
+          "collapsed": false
         }
       }
     }
