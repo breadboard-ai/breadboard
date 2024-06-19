@@ -96,10 +96,11 @@ export class Main extends LitElement {
 
   @state()
   boardEditOverlayInfo: {
-    title?: string;
-    version?: string;
-    description?: string;
-    subGraphId?: string | null;
+    title: string;
+    version: string;
+    description: string;
+    published: boolean | null;
+    subGraphId: string | null;
   } | null = null;
 
   @state()
@@ -845,6 +846,27 @@ export class Main extends LitElement {
       this.graph.title = evt.title;
       this.graph.version = evt.version;
       this.graph.description = evt.description;
+
+      if (evt.status) {
+        this.graph.metadata ??= {};
+        this.graph.metadata.tags ??= [];
+
+        switch (evt.status) {
+          case "published": {
+            if (!this.graph.metadata.tags.includes("published")) {
+              this.graph.metadata.tags.push("published");
+            }
+            break;
+          }
+
+          case "draft": {
+            this.graph.metadata.tags = this.graph.metadata.tags.filter(
+              (tag) => tag !== "published"
+            );
+            break;
+          }
+        }
+      }
     } else {
       this.toast(
         "Unable to update sub board information - board not found",
@@ -1172,9 +1194,11 @@ export class Main extends LitElement {
                 }
 
                 this.boardEditOverlayInfo = {
-                  title: graph?.title,
-                  version: graph?.version,
-                  description: graph?.description,
+                  title: graph?.title ?? "No Title",
+                  version: graph?.version ?? "0.0.1",
+                  description: graph?.description ?? "No Description",
+                  published:
+                    graph?.metadata?.tags?.includes("published") ?? false,
                   subGraphId: this.subGraphId,
                 };
               }}
@@ -1253,9 +1277,10 @@ export class Main extends LitElement {
             evt: BreadboardUI.Events.BoardInfoUpdateRequestEvent
           ) => {
             this.boardEditOverlayInfo = {
-              title: evt.title,
-              version: evt.version,
-              description: evt.description,
+              title: evt.title ?? "No Title",
+              version: evt.version ?? "0.0.1",
+              description: evt.description ?? "No description",
+              published: null,
               subGraphId: evt.subGraphId,
             };
           }}
@@ -1628,6 +1653,7 @@ export class Main extends LitElement {
         .boardTitle=${this.boardEditOverlayInfo.title}
         .boardVersion=${this.boardEditOverlayInfo.version}
         .boardDescription=${this.boardEditOverlayInfo.description}
+        .boardPublished=${this.boardEditOverlayInfo.published}
         .subGraphId=${this.boardEditOverlayInfo.subGraphId}
         @bboverlaydismissed=${() => {
           this.boardEditOverlayInfo = null;

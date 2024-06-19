@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   BoardInfoUpdateEvent,
@@ -22,6 +22,9 @@ export class BoardEditOverlay extends LitElement {
 
   @property()
   boardDescription: string | null = null;
+
+  @property()
+  boardPublished: boolean | null = null;
 
   @property()
   subGraphId: string | null = null;
@@ -78,7 +81,8 @@ export class BoardEditOverlay extends LitElement {
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       margin: var(--bb-grid-size) calc(var(--bb-grid-size) * 4)
         calc(var(--bb-grid-size) * 2);
       font-size: var(--bb-body-small);
@@ -170,6 +174,7 @@ export class BoardEditOverlay extends LitElement {
               data.get("title") as string,
               data.get("version") as string,
               data.get("description") as string,
+              data.get("status") as "published" | "draft" | null,
               this.subGraphId
             )
           );
@@ -213,6 +218,38 @@ export class BoardEditOverlay extends LitElement {
           name="description"
           .value=${this.boardDescription || ""}
         ></textarea>
+
+        ${this.boardPublished !== null
+          ? html`
+              <label>Status</label>
+              <select
+                @input=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
+
+                  if (this.boardPublished && evt.target.value !== "published") {
+                    if (
+                      !confirm(
+                        "This board was published. Unpublishing it may break other boards. Are you sure?"
+                      )
+                    ) {
+                      evt.preventDefault();
+                      evt.target.value = "published";
+                    }
+                  }
+                }}
+                name="status"
+              >
+                <option value="draft" ?selected=${!this.boardPublished}>
+                  Draft
+                </option>
+                <option value="published" ?selected=${this.boardPublished}>
+                  Published
+                </option>
+              </select>
+            `
+          : nothing}
 
         <div id="controls">
           <button
