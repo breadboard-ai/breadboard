@@ -19,6 +19,15 @@ export const getStore = () => {
   return new Store("board-server");
 };
 
+export type BoardListEntry = {
+  title: string;
+  path: string;
+  username: string;
+  readonly: boolean;
+  mine: boolean;
+  tags: string[];
+};
+
 export const asPath = (userStore: string, boardName: string) => {
   return `@${userStore}/${boardName}`;
 };
@@ -78,7 +87,7 @@ class Store {
     return { success: true, store: doc.id };
   }
 
-  async list(userKey: string | null) {
+  async list(userKey: string | null): Promise<BoardListEntry[]> {
     const userStoreResult = await this.getUserStore(userKey);
     const userStore = userStoreResult.success ? userStoreResult.store : null;
 
@@ -87,21 +96,22 @@ class Store {
       .listDocuments();
     const boards = [];
     for (const store of allStores) {
-      const storeBoards = await store.collection("boards").listDocuments();
-      const boardData = await Promise.all(
-        storeBoards.map(async (doc) => {
-          const data = await doc.get();
-          const title = data.get("title");
-          const published = data.get("published");
-          const readonly = userStore !== store.id;
-          const mine = userStore === store.id;
-          if (!published && !mine) {
-            return null;
-          }
-          return { path: asPath(store.id, doc.id), readonly, mine, title };
-        })
-      );
-      boards.push(...boardData.filter(Boolean));
+      const docs = await store.collection("boards").get();
+      const storeBoards: BoardListEntry[] = [];
+      docs.forEach((doc) => {
+        const path = asPath(store.id, doc.id);
+        const title = doc.get("title") || path;
+        const tags = (doc.get("tags") as string[]) || ["published"];
+        const published = tags.includes("published");
+        const readonly = userStore !== store.id;
+        const mine = userStore === store.id;
+        const username = store.id;
+        if (!published && !mine) {
+          return;
+        }
+        storeBoards.push({ title, path, username, readonly, mine, tags });
+      });
+      boards.push(...storeBoards);
     }
     return boards;
   }
@@ -123,12 +133,12 @@ class Store {
       return { success: false, error: "Unauthorized" };
     }
     const { title: maybeTitle, metadata } = graph;
-    const published = metadata?.tags?.includes("published") || false;
+    const tags = metadata?.tags || [];
     const title = maybeTitle || boardName;
 
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), published, title });
+      .set({ graph: JSON.stringify(graph), tags, title });
     return { success: true };
   }
 
