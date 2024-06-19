@@ -17,7 +17,7 @@
 				"boards": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/BoardEntry"
+						"$ref": "#/definitions/BoardReference"
 					},
 					"description": "An array of references to Breadboard Board files."
 				},
@@ -66,7 +66,7 @@
 				"./file.json"
 			]
 		},
-		"BoardEntry": {
+		"BoardReference": {
 			"type": "object",
 			"properties": {
 				"title": {

@@ -18,7 +18,7 @@ import { UriReference } from "./uri-reference";
  *  },
  * ]
  */
-export interface BoardEntry {
+export interface BoardReference {
   /**
    * @examples [ "My Board" ]
    */
