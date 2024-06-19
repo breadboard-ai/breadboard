@@ -10,6 +10,8 @@
     "typescript": "^5.4.5"
   },
   "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*",
     "./bbm.schema.json": "./bbm.schema.json"
   },
   "files": [
@@ -36,7 +38,7 @@
     "test:verbose": "WIREIT_LOGGER=metrics npm run test"
   },
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "wireit": {
     "build": {
       "dependencies": [
