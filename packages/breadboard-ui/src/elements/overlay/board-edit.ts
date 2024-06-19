@@ -27,6 +27,9 @@ export class BoardEditOverlay extends LitElement {
   boardPublished: boolean | null = null;
 
   @property()
+  boardIsTool: boolean | null = null;
+
+  @property()
   subGraphId: string | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -80,7 +83,7 @@ export class BoardEditOverlay extends LitElement {
       color: var(--bb-ui-600);
     }
 
-    input,
+    input[type="text"],
     textarea,
     select {
       margin: var(--bb-grid-size) calc(var(--bb-grid-size) * 4)
@@ -125,6 +128,28 @@ export class BoardEditOverlay extends LitElement {
       border: none;
       height: 24px;
       padding: 0 16px 0 28px;
+      margin: 0;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: var(--bb-grid-size-2);
+      align-items: center;
+    }
+
+    .split div {
+      display: flex;
+      align-items: center;
+    }
+
+    .split label {
+      margin-right: var(--bb-grid-size);
+    }
+
+    .split select,
+    .split input,
+    .split textarea {
       margin: 0;
     }
   `;
@@ -175,6 +200,7 @@ export class BoardEditOverlay extends LitElement {
               data.get("version") as string,
               data.get("description") as string,
               data.get("status") as "published" | "draft" | null,
+              data.get("tool") === "on",
               this.subGraphId
             )
           );
@@ -219,37 +245,58 @@ export class BoardEditOverlay extends LitElement {
           .value=${this.boardDescription || ""}
         ></textarea>
 
-        ${this.boardPublished !== null
-          ? html`
-              <label>Status</label>
-              <select
-                @input=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLSelectElement)) {
-                    return;
-                  }
+        <div class="split">
+          ${this.boardPublished !== null
+            ? html`
+                <div>
+                  <label>Status</label>
+                  <select
+                    @input=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLSelectElement)) {
+                        return;
+                      }
 
-                  if (this.boardPublished && evt.target.value !== "published") {
-                    if (
-                      !confirm(
-                        "This board was published. Unpublishing it may break other boards. Are you sure?"
-                      )
-                    ) {
-                      evt.preventDefault();
-                      evt.target.value = "published";
-                    }
-                  }
-                }}
-                name="status"
-              >
-                <option value="draft" ?selected=${!this.boardPublished}>
-                  Draft
-                </option>
-                <option value="published" ?selected=${this.boardPublished}>
-                  Published
-                </option>
-              </select>
-            `
-          : nothing}
+                      if (
+                        this.boardPublished &&
+                        evt.target.value !== "published"
+                      ) {
+                        if (
+                          !confirm(
+                            "This board was published. Unpublishing it may break other boards. Are you sure?"
+                          )
+                        ) {
+                          evt.preventDefault();
+                          evt.target.value = "published";
+                        }
+                      }
+                    }}
+                    name="status"
+                    .value=${this.boardPublished ? "published" : "draft"}
+                  >
+                    <option value="draft" ?selected=${!this.boardPublished}>
+                      Draft
+                    </option>
+                    <option value="published" ?selected=${this.boardPublished}>
+                      Published
+                    </option>
+                  </select>
+                </div>
+              `
+            : nothing}
+          ${this.boardIsTool !== null
+            ? html`
+                <div>
+                  <label>Tool</label>
+                  <input
+                    name="tool"
+                    type="checkbox"
+                    .value="on"
+                    ?checked=${this.boardIsTool}
+                  />
+                </div>
+              `
+            : nothing}
+        </div>
 
         <div id="controls">
           <button

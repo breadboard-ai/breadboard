@@ -108,9 +108,11 @@
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
+  --bb-icon-tool: url(/third_party/icons/tool.svg);
   --bb-icon-undo-inverted: url(/third_party/icons/undo-inverted.svg);
   --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
+  --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
 
   --bb-warning-50: #ffffff;

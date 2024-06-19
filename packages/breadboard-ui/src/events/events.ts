@@ -69,19 +69,6 @@ export class StopEvent extends Event {
   }
 }
 
-export class BoardInfoUpdateRequestEvent extends Event {
-  static eventName = "bbboardinforequestupdate";
-
-  constructor(
-    public readonly title: string | undefined,
-    public readonly version: string | undefined,
-    public readonly description: string | undefined,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(BoardInfoUpdateRequestEvent.eventName, { ...eventInit });
-  }
-}
-
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
@@ -90,6 +77,7 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly version: string,
     public readonly description: string,
     public readonly status: "published" | "draft" | null = null,
+    public readonly isTool: boolean | null = null,
     public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });
