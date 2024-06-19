@@ -89,6 +89,7 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly title: string,
     public readonly version: string,
     public readonly description: string,
+    public readonly status: "published" | "draft" | null = null,
     public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });

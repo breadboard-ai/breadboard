@@ -269,12 +269,15 @@ export class UI extends LitElement {
     let boardTitle = this.graph?.title;
     let boardVersion = this.graph?.version;
     let boardDescription = this.graph?.description;
+    let boardPublished: boolean | null =
+      this.graph?.metadata?.tags?.includes("published") ?? false;
     if (this.subGraphId && this.graph && this.graph.graphs) {
       const subGraph = this.graph.graphs[this.subGraphId];
       if (subGraph) {
         boardTitle = subGraph.title;
         boardVersion = subGraph.version;
         boardDescription = subGraph.description;
+        boardPublished = null;
       }
     }
 
@@ -477,12 +480,14 @@ export class UI extends LitElement {
         boardTitle,
         boardVersion,
         boardDescription,
+        boardPublished,
       ],
       () => {
         return html`<bb-board-details
           .boardTitle=${boardTitle}
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}
+          .boardPublished=${boardPublished}
           .subGraphId=${this.subGraphId}
         >
         </bb-board-details>`;

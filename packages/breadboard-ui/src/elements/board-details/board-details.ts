@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { BoardInfoUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -24,6 +24,9 @@ export class BoardDetails extends LitElement {
 
   @property()
   boardDescription: string | null = null;
+
+  @property()
+  boardPublished: boolean | null = null;
 
   @property()
   subGraphId: string | null = null;
@@ -89,7 +92,8 @@ export class BoardDetails extends LitElement {
     }
 
     input[type="text"],
-    textarea {
+    textarea,
+    select {
       padding: var(--bb-grid-size);
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -142,6 +146,7 @@ export class BoardDetails extends LitElement {
         data.get("title") as string,
         data.get("version") as string,
         data.get("description") as string,
+        data.get("status") as "published" | "draft" | null,
         this.subGraphId
       )
     );
@@ -210,6 +215,38 @@ export class BoardDetails extends LitElement {
           placeholder="The description for this board"
           .value=${this.boardDescription || ""}
         ></textarea>
+
+        ${this.boardPublished !== null
+          ? html`
+              <label>Status</label>
+              <select
+                @input=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
+
+                  if (this.boardPublished && evt.target.value !== "published") {
+                    if (
+                      !confirm(
+                        "This board was published. Unpublishing it may break other boards. Are you sure?"
+                      )
+                    ) {
+                      evt.preventDefault();
+                      evt.target.value = "published";
+                    }
+                  }
+                }}
+                name="status"
+              >
+                <option value="draft" ?selected=${!this.boardPublished}>
+                  Draft
+                </option>
+                <option value="published" ?selected=${this.boardPublished}>
+                  Published
+                </option>
+              </select>
+            `
+          : nothing}
       </form> `;
   }
 }
