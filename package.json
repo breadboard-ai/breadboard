@@ -58,7 +58,8 @@
         "./packages/website:build",
         "./packages/schema:build",
         "./packages/board-server:build",
-        "./packages/team-kit:build"
+        "./packages/team-kit:build",
+        "./packages/manifest:build"
       ]
     },
     "test": {
@@ -85,7 +86,8 @@
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
         "./packages/python-wasm:test",
-        "./packages/schema:test"
+        "./packages/schema:test",
+        "./packages/manifest:test"
       ]
     },
     "lint": {
@@ -189,7 +191,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.14.5",
-    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.0",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
