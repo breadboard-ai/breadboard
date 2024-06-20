@@ -9,6 +9,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
+  GraphProviderItem,
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
@@ -81,10 +82,7 @@ export class FileSystemGraphProvider implements GraphProvider {
       title: string;
       items: Map<
         string,
-        {
-          url: string;
-          readonly: boolean;
-          mine: boolean;
+        GraphProviderItem & {
           handle: FileSystemFileHandle;
         }
       >;

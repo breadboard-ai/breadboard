@@ -9,6 +9,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
+  GraphProviderItem,
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
@@ -30,6 +31,9 @@ interface RemoteFileListing {
   mine: boolean;
   path: string;
   readonly: boolean;
+  username?: string;
+  title?: string;
+  tags?: string[];
 }
 
 const STORE_LIST = "remote-store-list";
@@ -95,10 +99,7 @@ export class RemoteGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void }
-      >;
+      items: Map<string, GraphProviderItem & { handle: void }>;
     }
   >();
 
@@ -312,14 +313,14 @@ export class RemoteGraphProvider implements GraphProvider {
       const response = await fetch(request);
       const files: RemoteFileListing[] = await response.json();
 
-      const items = new Map<
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void }
-      >();
+      const items = new Map<string, GraphProviderItem & { handle: void }>();
       for (const item of files) {
         let file: string;
         let readonly: boolean;
         let mine: boolean;
+        let tags: string[] | undefined;
+        let username: string | undefined;
+        let title: string | undefined;
         if (typeof item === "string") {
           file = item;
           readonly = false;
@@ -328,11 +329,17 @@ export class RemoteGraphProvider implements GraphProvider {
           file = item.path;
           readonly = item.readonly;
           mine = item.mine;
+          tags = item.tags;
+          username = item.username;
+          title = item.title;
         }
         items.set(file, {
           url: `${store.url}/boards/${file}`,
           readonly,
           mine,
+          username,
+          title,
+          tags,
           handle: void 0,
         });
       }

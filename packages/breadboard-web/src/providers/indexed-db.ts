@@ -8,6 +8,7 @@ import * as idb from "idb";
 import {
   GraphProvider,
   GraphProviderCapabilities,
+  GraphProviderItem,
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
@@ -59,10 +60,7 @@ export class IDBGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void }
-      >;
+      items: Map<string, GraphProviderItem & { handle: void }>;
     }
   >();
 
@@ -265,16 +263,20 @@ export class IDBGraphProvider implements GraphProvider {
     }
 
     const itemsByUrl = graphs.map(
-      (
-        descriptor
-      ): [
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void },
-      ] => {
+      (descriptor): [string, GraphProviderItem & { handle: void }] => {
         const url = descriptor.url || "";
         const { fileName } = this.parseURL(new URL(url));
 
-        return [fileName, { url, mine: true, readonly: false, handle: void 0 }];
+        return [
+          fileName,
+          {
+            url,
+            tags: descriptor.metadata?.tags,
+            mine: true,
+            readonly: false,
+            handle: void 0,
+          },
+        ];
       }
     );
 
