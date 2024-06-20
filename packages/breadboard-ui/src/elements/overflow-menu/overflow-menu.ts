@@ -81,6 +81,10 @@ export class OverflowMenu extends LitElement {
     button.save-as {
       background-image: var(--bb-icon-save-as);
     }
+
+    button.settings {
+      background-image: var(--bb-icon-settings);
+    }
   `;
 
   connectedCallback(): void {
