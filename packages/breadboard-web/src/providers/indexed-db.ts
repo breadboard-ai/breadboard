@@ -41,7 +41,7 @@ const IDB_PROTOCOL = "idb:";
 const DEFAULT_STORE: GraphDBStore = {
   name: "default",
   version: 1,
-  title: "Board Store",
+  title: "Browser Storage",
 };
 const PREFIX = IDB_PROTOCOL + "//";
 
