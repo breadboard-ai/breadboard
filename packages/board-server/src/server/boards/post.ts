@@ -33,7 +33,7 @@ const post: ApiHandler = async (path, req, res, body) => {
     return false;
   }
 
-  const result = await store.update(userStore.store, path, body as string);
+  const result = await store.update(userStore.store, path, maybeGraph);
   if (!result.success) {
     serverError(res, result.error);
     return true;
