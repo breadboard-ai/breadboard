@@ -6,9 +6,9 @@
 
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
+import { randomUUID } from "crypto";
 import fs from "fs";
 import * as assert from "node:assert";
-import { AssertionError } from "node:assert";
 import test, { after, before, describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
@@ -51,12 +51,14 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 let validate: ValidateFunction;
-
+let mockedResponses: Map<string, any>;
 before(() => {
   validate = ajv.compile(schema);
 });
 
 before(() => {
+  mockedResponses = new Map();
+
   mock.method(fs, "readFileSync", (path: string) =>
     getMockedResponse(path, getReadFileSyncResponse)
   );
@@ -73,50 +75,31 @@ test("Schema is valid.", async () => {
   assert.ok(validate);
 });
 
-async function assertThrowsAsynchronously(
-  test: { (): Promise<any> },
-  error: Error
-) {
-  try {
-    await test();
-  } catch (e) {
-    // if (!error || e instanceof Error) return "everything is fine";
-    throw new AssertionError({
-      message: "Unexpected error",
-      actual: e,
-      expected: error,
-    });
-  }
-  // throw new AssertionError({
-  //   message: "Missing rejection" + (error ? " with " + error.name : ""),
-  // });
-}
-
 // Declare the constants with types
-const dereferencedBoard: DereferencedBoard = { edges: [], nodes: [] };
-const dereferencedManifest: DereferencedManifest = {
+
+const dereferencedBoard = (): DereferencedBoard => ({ edges: [], nodes: [] });
+const dereferencedManifest = (): DereferencedManifest => ({
   title: "Dereferenced Manifest",
   boards: [],
   manifests: [],
-};
-const localBoardReference: ReferencedBoard = {
+});
+const localBoardReference = (): ReferencedBoard => ({
   title: "Local Board Reference",
-  url: encodeURI(path.resolve(import.meta.dirname, "board.bgl.json")),
-};
-const remoteBoardReference: ReferencedBoard = {
+  url: generateLocalFilePath(),
+});
+const remoteBoardReference = (): ReferencedBoard => ({
   title: "Remote Board Reference",
-  url: "https://example.com/board.bgl.json",
-};
-const localManifestReference: ReferencedManifest = {
+  url: generateGistURL(),
+});
+const localManifestReference = (): ReferencedManifest => ({
   title: "Local Manifest Reference",
-  url: encodeURI(path.resolve(import.meta.dirname, "manifest.bbm.json")),
-};
-const remoteManifestReference: ReferencedManifest = {
+  url: generateLocalFilePath(),
+});
+const remoteManifestReference = (): ReferencedManifest => ({
   title: "Remote Manifest Reference",
-  url: "https://example.com/manifest.bbm.json",
-};
-
-const fixtures: BreadboardManifest[] = [
+  url: generateGistURL(),
+});
+const fixtures = (): BreadboardManifest[] => [
   { title: "Manifest with an empty boards array", boards: [] },
   { title: "Manifest with an empty manifests array", manifests: [] },
   {
@@ -125,7 +108,7 @@ const fixtures: BreadboardManifest[] = [
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        url: generateGistURL(),
       },
     ],
   },
@@ -134,9 +117,12 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        url: generateGistURL(),
       },
-      { title: "My Second Board", url: "./boards/board.bgl.json" },
+      {
+        title: "My Second Board",
+        url: generateLocalFilePath("board.bgl.json"),
+      },
     ],
   },
   {
@@ -144,7 +130,7 @@ const fixtures: BreadboardManifest[] = [
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        url: generateGistURL("manifest.bbm.json"),
       },
     ],
   },
@@ -153,14 +139,17 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        url: generateGistURL(),
       },
-      { title: "My Second Board", url: "./boards/board.bgl.json" },
+      {
+        title: "My Second Board",
+        url: generateLocalFilePath("manifest.bbm.json"),
+      },
     ],
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        url: generateGistURL(),
       },
     ],
   },
@@ -169,14 +158,14 @@ const fixtures: BreadboardManifest[] = [
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        url: generateGistURL(),
       },
       {
         title: "Nested Nested Manifest",
         boards: [
           {
             title: "My First Board",
-            url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+            url: generateGistURL(),
           },
         ],
         manifests: [
@@ -185,7 +174,7 @@ const fixtures: BreadboardManifest[] = [
             boards: [
               {
                 title: "My First Board",
-                url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+                url: generateGistURL(),
               },
             ],
           },
@@ -195,63 +184,73 @@ const fixtures: BreadboardManifest[] = [
   },
   {
     title: "Manifest with a single dereferenced board",
-    boards: [dereferencedBoard],
+    boards: [dereferencedBoard()],
   },
   {
     title: "Manifest with a single local board reference",
-    boards: [localBoardReference],
+    boards: [localBoardReference()],
   },
   {
     title: "Manifest with a single remote board reference",
-    boards: [remoteBoardReference],
+    boards: [remoteBoardReference()],
   },
   {
     title: "Manifest with dereferenced, local, and remote boards",
-    boards: [dereferencedBoard, localBoardReference, remoteBoardReference],
+    boards: [
+      dereferencedBoard(),
+      localBoardReference(),
+      remoteBoardReference(),
+    ],
   },
   {
     title: "Manifest with a single dereferenced manifest",
-    manifests: [dereferencedManifest],
+    manifests: [dereferencedManifest()],
   },
   {
     title: "Manifest with a single local manifest reference",
-    manifests: [localManifestReference],
+    manifests: [localManifestReference()],
   },
   {
     title: "Manifest with a single remote manifest reference",
-    manifests: [remoteManifestReference],
+    manifests: [remoteManifestReference()],
   },
   {
     title: "Manifest with dereferenced, local, and remote manifests",
     manifests: [
-      dereferencedManifest,
-      localManifestReference,
-      remoteManifestReference,
+      dereferencedManifest(),
+      localManifestReference(),
+      remoteManifestReference(),
     ],
   },
 ];
 
-const nestedManifest: BreadboardManifest = {
+const nestedManifest = (): BreadboardManifest => ({
   manifests: [
     {
       manifests: [
-        dereferencedManifest,
-        localManifestReference,
-        remoteManifestReference,
+        dereferencedManifest(),
+        localManifestReference(),
+        remoteManifestReference(),
       ],
     },
-    { manifests: fixtures },
-    { boards: [localBoardReference, remoteBoardReference, dereferencedBoard] },
+    { manifests: fixtures() },
+    {
+      boards: [
+        localBoardReference(),
+        remoteBoardReference(),
+        dereferencedBoard(),
+      ],
+    },
   ],
-  boards: [localBoardReference, remoteBoardReference, dereferencedBoard],
-};
+  boards: [localBoardReference(), remoteBoardReference(), dereferencedBoard()],
+});
 
 const testManifestValidation = (
   manifest: BreadboardManifest,
   index: number
 ) => {
   test(
-    [`Manifest ${index + 1}/${fixtures.length}`, manifest.title]
+    [`Manifest ${index + 1}/${fixtures().length}`, manifest.title]
       .filter(Boolean)
       .join(": "),
     async (t) => {
@@ -266,7 +265,7 @@ const testManifestValidation = (
   );
 };
 
-for (const [index, manifest] of fixtures.entries()) {
+for (const [index, manifest] of fixtures().entries()) {
   testManifestValidation(manifest, index);
 }
 
@@ -282,8 +281,8 @@ describe("BreadboardManifest", () => {
       name: "isBglLike",
       method: isBglLike,
       cases: [
-        [dereferencedBoard, true],
-        [dereferencedManifest, false],
+        [dereferencedBoard(), true],
+        [dereferencedManifest(), false],
       ],
     },
     {
@@ -292,7 +291,7 @@ describe("BreadboardManifest", () => {
       cases: [
         [{ boards: [] }, true],
         [{ manifests: [] }, true],
-        [dereferencedBoard, false],
+        [dereferencedBoard(), false],
       ],
     },
     {
@@ -315,42 +314,42 @@ describe("BreadboardManifest", () => {
       name: "isResourceReference",
       method: isResourceReference,
       cases: [
-        [localManifestReference, true],
-        [remoteManifestReference, true],
-        [localBoardReference, true],
-        [remoteBoardReference, true],
-        [dereferencedManifest, false],
-        [dereferencedBoard, false],
+        [localManifestReference(), true],
+        [remoteManifestReference(), true],
+        [localBoardReference(), true],
+        [remoteBoardReference(), true],
+        [dereferencedManifest(), false],
+        [dereferencedBoard(), false],
       ],
     },
     {
       name: "isRemoteResource",
       method: isRemoteResource,
       cases: [
-        [localManifestReference, false],
-        [remoteManifestReference, true],
-        [localBoardReference, false],
-        [remoteBoardReference, true],
-        [dereferencedManifest, false],
-        [dereferencedBoard, false],
+        [localManifestReference(), false],
+        [remoteManifestReference(), true],
+        [localBoardReference(), false],
+        [remoteBoardReference(), true],
+        [dereferencedManifest(), false],
+        [dereferencedBoard(), false],
       ],
     },
     {
       name: "isLocalResource",
       method: isLocalResource,
       cases: [
-        [localManifestReference, true],
-        [remoteManifestReference, false],
-        [dereferencedManifest, false],
-        [dereferencedBoard, false],
+        [localManifestReference(), true],
+        [remoteManifestReference(), false],
+        [dereferencedManifest(), false],
+        [dereferencedBoard(), false],
       ],
     },
     {
       name: "isDereferencedBoard",
       method: isDereferencedBoard,
       cases: [
-        [dereferencedBoard, true],
-        [dereferencedManifest, false],
+        [dereferencedBoard(), true],
+        [dereferencedManifest(), false],
       ],
     },
   ];
@@ -374,33 +373,33 @@ describe("BreadboardManifest", () => {
   const dereferenceTests: TestDefinition[] = [
     {
       name: "remote manifest",
-      reference: remoteManifestReference,
-      expected: dereferencedManifest,
+      reference: remoteManifestReference(),
+      expected: dereferencedManifest(),
     },
     {
       name: "local manifest",
-      reference: localManifestReference,
-      expected: dereferencedManifest,
+      reference: localManifestReference(),
+      expected: dereferencedManifest(),
     },
     {
       name: "dereferenced manifest",
-      reference: dereferencedManifest,
-      expected: dereferencedManifest,
+      reference: dereferencedManifest(),
+      expected: dereferencedManifest(),
     },
     {
       name: "remote board",
-      reference: remoteBoardReference,
-      expected: dereferencedBoard,
+      reference: remoteBoardReference(),
+      expected: dereferencedBoard(),
     },
     {
       name: "local board",
-      reference: localBoardReference,
-      expected: dereferencedBoard,
+      reference: localBoardReference(),
+      expected: dereferencedBoard(),
     },
     {
       name: "dereferenced board",
-      reference: dereferencedBoard,
-      expected: dereferencedBoard,
+      reference: dereferencedBoard(),
+      expected: dereferencedBoard(),
     },
   ];
 
@@ -418,7 +417,7 @@ describe("BreadboardManifest", () => {
 
     test("should throw if dereferencing returns something other than a board or manifest", async () => {
       const nonBoardReference = {
-        url: path.resolve(import.meta.dirname, "non-board.json"),
+        url: path.resolve("non-board.json"),
       };
       const nonBoardData = {
         blah: "blah",
@@ -436,35 +435,43 @@ describe("BreadboardManifest", () => {
 
   describe("dereferenceBoard", () => {
     test("should return a DereferencedBoard object", async () => {
-      mockFetchResponse(dereferencedBoard);
-      const dereferenced = await dereferenceBoard(remoteBoardReference);
+      const expected = dereferencedBoard();
+      const reference = remoteBoardReference();
+      addResponseToMocked(reference, expected);
+      const dereferenced = await dereferenceBoard(reference);
       assert.ok(isDereferencedBoard(dereferenced));
-      assert.deepEqual(dereferenced, dereferencedBoard);
+      assert.deepEqual(dereferenced, expected);
     });
 
     test("should throw if dereferencing returns something other than a board", async () => {
-      mockFetchResponse(dereferencedManifest);
-      await assert.rejects(dereferenceBoard(remoteBoardReference));
+      const reference = remoteBoardReference();
+      const expected = dereferencedManifest();
+      addResponseToMocked(reference, expected);
+      await assert.rejects(dereferenceBoard(reference));
     });
   });
 
   describe("dereferenceManifest", () => {
     test("should return a DereferencedManifest object", async () => {
-      mockFetchResponse(dereferencedManifest);
-      const dereferenced = await dereferenceManifest(remoteManifestReference);
+      const expected = dereferencedManifest();
+      const reference = remoteManifestReference();
+      addResponseToMocked(reference, expected);
+      const dereferenced = await dereferenceManifest(reference);
       assert.ok(isDereferencedManifest(dereferenced));
-      assert.deepEqual(dereferenced, dereferencedManifest);
+      assert.deepEqual(dereferenced, expected);
     });
 
     test("should throw if dereferencing returns something other than a manifest", async () => {
-      mockFetchResponse(dereferencedBoard);
-      await assert.rejects(dereferenceManifest(remoteManifestReference));
+      const reference = remoteManifestReference();
+      const expected = dereferencedBoard();
+      addResponseToMocked(reference, expected);
+      await assert.rejects(dereferenceManifest(reference));
     });
   });
 
   describe("dereferenceManifestContents", () => {
     test("should dereference all boards and manifests contained in a manifest", async () => {
-      const fixture = nestedManifest;
+      const fixture = nestedManifest();
       mockManifestFetches(fixture);
 
       const dereferenced = await dereferenceManifestContents(fixture);
@@ -485,41 +492,30 @@ test("test mock fetch", async () => {
   assert.strictEqual(responseJson.key, "value");
 });
 
+function generateGistURL(extension: string = "file.json"): string {
+  return `https://gist.githubusercontent.com/user/${randomUUID()}/raw/${randomUUID()}.${extension}`;
+}
+
 function mockManifestFetches(fixture: BreadboardManifest) {
-  fixture.manifests?.forEach((manifest) => {
-    if (!isResourceReference(manifest)) {
-      addResponseToMocked(manifest, {
-        title: "Dereferenced Manifest",
-        boards: [],
-        manifests: [],
-      });
-    }
-    manifest.manifests?.forEach((nestedManifest) => {
-      mockManifestFetches(nestedManifest);
-    });
-  });
-  fixture.boards?.forEach((board) => {
+  for (const board of fixture.boards || []) {
     if (!isResourceReference(board)) {
       addResponseToMocked(board, {
         edges: [],
         nodes: [],
       });
     }
-  });
+  }
+  for (const manifest of fixture.manifests || []) {
+    if (isResourceReference(manifest)) {
+      addResponseToMocked(manifest, {
+        title: "Dereferenced Manifest",
+        boards: [],
+        manifests: [],
+      });
+    }
+    mockManifestFetches(manifest);
+  }
 }
-
-function writeManifestsToFile() {
-  fs.writeFileSync(
-    "manifests.json",
-    JSON.stringify(
-      { $schema: "./bbm.schema.json", manifests: fixtures },
-      null,
-      "\t"
-    )
-  );
-}
-
-const mockedResponses: Map<string, any> = new Map();
 
 function getMockedResponse(path: string, fn: (x: any) => any) {
   const fullyDecodedPath = fullyDecodeURI(path);
@@ -555,24 +551,14 @@ function addResponseToMocked(reference: Resource, expected: any) {
   if ("url" in reference) {
     // mockedResponses[reference.url!] = expected;
     const decodedUrl = fullyDecodeURI(reference.url!);
+    if (mockedResponses.has(decodedUrl)) {
+      throw new Error(`Mocked response already exists for ${decodedUrl}`);
+    }
     mockedResponses.set(decodedUrl, expected);
   }
 }
 
-function mockFetchResponse(obj: any) {
-  mock.method(global, "fetch", () => ({
-    then: () => obj,
-    status: 200,
-  }));
-}
-describe("test assert.throws", () => {
-  function shouldThrow(throwError: boolean) {
-    if (throwError) throw new Error("Exception Thrown");
-  }
-
-  assert.throws(() => {
-    shouldThrow(true);
-  }, Error);
-});
-
 after(() => mock.reset());
+function generateLocalFilePath(extension: string = "file.json"): string {
+  return encodeURI(path.resolve(`${randomUUID()}.${extension}`));
+}

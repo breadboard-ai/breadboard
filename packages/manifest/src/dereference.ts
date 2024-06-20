@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { inspect } from "util";
 import { BreadboardManifest } from "./index";
 import { BoardResource, DereferencedBoard } from "./types/boards";
@@ -10,7 +11,6 @@ import {
 } from "./types/guards/resource-reference";
 import { DereferencedManifest, ManifestResource } from "./types/manifest";
 import { Resource } from "./types/resource";
-
 export async function dereference(
   resource: Resource
 ): Promise<DereferencedBoard | DereferencedManifest> {
@@ -22,7 +22,7 @@ export async function dereference(
     } else {
       // data = await import(decodeURI(uri)).then((module) => module.default);
       data = await fs.promises
-        .readFile(fullyDecodeURI(uri), "utf-8")
+        .readFile(path.resolve(fullyDecodeURI(uri)), "utf-8")
         .then(JSON.parse);
     }
   }
@@ -41,7 +41,7 @@ export async function dereference(
 
 function makeDeepObjectError(message: string, data: any) {
   return new Error(
-    `${message} ${{ data: inspect(data, { showHidden: true, depth: null, colors: true }) }}`
+    `${message}: ${JSON.stringify({ data: inspect(data, { showHidden: true, depth: null, colors: false }) })}`
   );
 }
 
@@ -73,7 +73,9 @@ export async function dereferenceManifest(
   }
 }
 
-export async function dereferenceManifestContents(resource: BreadboardManifest): Promise<{
+export async function dereferenceManifestContents(
+  resource: BreadboardManifest
+): Promise<{
   title?: string;
   boards: DereferencedBoard[];
   manifests: DereferencedManifest[];
