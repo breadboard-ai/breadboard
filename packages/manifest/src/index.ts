@@ -56,8 +56,7 @@ export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
  * ]
  */
 export class BreadboardManifest implements DereferencedManifest {
-  // $schema?: string = BreadboardManifestJsonSchema.$schema;
-  $schema?: string = "./bbm.schema.json";
+  $schema?: string = BreadboardManifestJsonSchema.$schema;
   title?: string;
   boards?: BoardResource[];
   manifests?: ManifestResource[];
@@ -71,4 +70,3 @@ export class BreadboardManifest implements DereferencedManifest {
 
 export * from "./dereference";
 export * from "./types";
-

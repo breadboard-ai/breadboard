@@ -75,6 +75,16 @@
 				{
 					"$ref": "#/definitions/DereferencedBoard"
 				}
+			],
+			"description": "A board resource. Either referenced or dereferenced.",
+			"examples": [
+				{
+					"nodes": [],
+					"edges": []
+				},
+				{
+					"url": "https://breadboard.new/board.bgl.json"
+				}
 			]
 		},
 		"ReferencedBoard": {
@@ -88,15 +98,48 @@
 					"not": {}
 				},
 				"title": {
-					"type": "string"
+					"$ref": "#/definitions/Title"
 				},
 				"url": {
-					"type": "string",
-					"format": "uri-reference"
+					"$ref": "#/definitions/UriReference"
 				}
 			},
 			"required": [
 				"url"
+			],
+			"description": "A reference to a board resource.",
+			"examples": [
+				{
+					"title": "My Awesom Board",
+					"url": "https://breadboard.new/board.bgl.json"
+				},
+				{
+					"url": "board.bgl.json"
+				},
+				{
+					"url": "./boards/board.bgl.json"
+				}
+			]
+		},
+		"Title": {
+			"type": "string",
+			"examples": [
+				"My First Board",
+				"Gist Manifest"
+			]
+		},
+		"UriReference": {
+			"type": "string",
+			"format": "uri-reference",
+			"examples": [
+				"board.bgl.json",
+				"manifest.bbm.json",
+				"../boards/board.bgl.json",
+				"../manifests/manifest.bbm.json",
+				"./board.bgl.json",
+				"./manifest.bbm.json",
+				"https://example.com/board.bgl.json",
+				"https://example.com/manifest.bbm.json"
 			]
 		},
 		"DereferencedBoard": {
@@ -122,15 +165,24 @@
 				"nodes",
 				"edges"
 			],
-			"additionalProperties": false
+			"additionalProperties": false,
+			"description": "A dereferenced board with nodes and edges.",
+			"examples": [
+				{
+					"nodes": [],
+					"edges": []
+				}
+			]
 		},
 		"Node": {
 			"type": "object",
-			"properties": {}
+			"properties": {},
+			"description": "Minimal node type"
 		},
 		"Edge": {
 			"type": "object",
-			"properties": {}
+			"properties": {},
+			"description": "Minimal edge type"
 		},
 		"ManifestResource": {
 			"anyOf": [
@@ -140,7 +192,8 @@
 				{
 					"$ref": "#/definitions/DereferencedManifest"
 				}
-			]
+			],
+			"description": "A manifest resource. Either referenced or dereferenced."
 		},
 		"ReferencedManifest": {
 			"type": "object",
@@ -153,22 +206,32 @@
 					"not": {}
 				},
 				"title": {
-					"type": "string"
+					"$ref": "#/definitions/Title"
 				},
 				"url": {
-					"type": "string",
-					"format": "uri-reference"
+					"$ref": "#/definitions/UriReference"
 				}
 			},
 			"required": [
 				"url"
+			],
+			"description": "A reference to a manifest.",
+			"examples": [
+				{
+					"title": "Nested Manifest",
+					"boards": [],
+					"manifests": []
+				},
+				{
+					"url": "https://breadboard.new/manifest.bbm.json"
+				}
 			]
 		},
 		"DereferencedManifest": {
 			"type": "object",
 			"properties": {
 				"title": {
-					"type": "string"
+					"$ref": "#/definitions/Title"
 				},
 				"boards": {
 					"type": "array",
@@ -183,7 +246,36 @@
 					}
 				}
 			},
-			"additionalProperties": false
+			"additionalProperties": false,
+			"description": "A dereferenced manifest with board and manifest resources.",
+			"examples": [
+				{
+					"title": "My Awesome Manifest",
+					"boards": [],
+					"manifests": []
+				},
+				{
+					"boards": [
+						{
+							"nodes": [],
+							"edges": []
+						},
+						{
+							"url": "https://breadboard.new/board.bgl.json"
+						}
+					],
+					"manifests": [
+						{
+							"title": "Nested Manifest",
+							"boards": [],
+							"manifests": []
+						},
+						{
+							"url": "https://breadboard.new/manifest.bbm.json"
+						}
+					]
+				}
+			]
 		}
 	}
 }
