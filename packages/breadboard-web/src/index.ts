@@ -67,6 +67,8 @@ type SaveAsConfiguration = {
   isNewBoard: boolean;
 };
 
+const generatedUrls = new Set<string>();
+
 @customElement("bb-main")
 export class Main extends LitElement {
   @property({ reflect: true })
@@ -95,6 +97,9 @@ export class Main extends LitElement {
 
   @state()
   showPreviewOverlay = false;
+
+  @state()
+  showOverflowMenu = false;
 
   @state()
   showHistory = false;
@@ -242,7 +247,8 @@ export class Main extends LitElement {
     #get-log,
     #get-board,
     #toggle-preview,
-    #toggle-settings {
+    #toggle-settings,
+    #toggle-overflow-menu {
       color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
@@ -262,18 +268,34 @@ export class Main extends LitElement {
     #get-log:hover,
     #get-board:hover,
     #toggle-preview:hover,
-    #toggle-settings:hover {
+    #toggle-settings:hover,
+    #toggle-overflow-menu:hover,
+    #save-board:focus,
+    #get-log:focus,
+    #get-board:focus,
+    #toggle-preview:focus,
+    #toggle-settings:focus,
+    #toggle-overflow-menu:focus {
       background-color: rgba(0, 0, 0, 0.1);
     }
 
     #save-board {
-      background: 12px center var(--bb-icon-save);
+      background: 12px center var(--bb-icon-save-inverted);
       background-repeat: no-repeat;
     }
 
     #toggle-preview {
       background: 12px center var(--bb-icon-preview);
       background-repeat: no-repeat;
+    }
+
+    #toggle-overflow-menu {
+      padding: 8px;
+      font-size: 0;
+      margin-right: 0;
+      background: center center var(--bb-icon-more-vert-inverted);
+      background-repeat: no-repeat;
+      width: 32px;
     }
 
     #toggle-preview.active {
@@ -854,26 +876,6 @@ export class Main extends LitElement {
     return id;
   }
 
-  #getBoardJson(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement) || !this.graph) {
-      return;
-    }
-
-    if (evt.target.href) {
-      URL.revokeObjectURL(evt.target.href);
-    }
-
-    // Remove the URL from the descriptor as its not part of BGL's schema.
-    const board = structuredClone(this.graph);
-    delete board["url"];
-
-    const data = JSON.stringify(board, null, 2);
-    evt.target.download = `board-${new Date().toISOString()}.json`;
-    evt.target.href = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
-  }
-
   #getProviderByName(name: string) {
     return this.#providers.find((provider) => provider.name === name) || null;
   }
@@ -1158,7 +1160,8 @@ export class Main extends LitElement {
       this.showSettingsOverlay ||
       this.showFirstRun ||
       this.showProviderAddOverlay ||
-      this.showSaveAsDialog;
+      this.showSaveAsDialog ||
+      this.showOverflowMenu;
 
     const nav = this.#load.then(() => {
       return html`<bb-nav
@@ -1352,13 +1355,6 @@ export class Main extends LitElement {
           </h1>
         </div>
         ${saveButton}
-        <a
-          id="get-board"
-          title="Export Board BGL"
-          ?disabled=${this.graph === null}
-          @click=${this.#getBoardJson}
-          >Export</a
-        >
         <button
           class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
@@ -1371,14 +1367,14 @@ export class Main extends LitElement {
           Preview
         </button>
         <button
-          class=${classMap({ active: this.showSettingsOverlay })}
-          id="toggle-settings"
-          title="Toggle Settings"
+          class=${classMap({ active: this.showOverflowMenu })}
+          id="toggle-overflow-menu"
+          title="Toggle Overflow Menu"
           @click=${() => {
-            this.showSettingsOverlay = !this.showSettingsOverlay;
+            this.showOverflowMenu = !this.showOverflowMenu;
           }}
         >
-          Settings
+          Toggle Overflow Menu
         </button>
       </div>
       <div id="content" ?inert=${showingOverlay}>
@@ -1996,9 +1992,97 @@ export class Main extends LitElement {
       this.#saveAsState = null;
     }
 
+    let overflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showOverflowMenu) {
+      const actions = [
+        {
+          title: "Download board",
+          name: "download",
+          icon: "download",
+        },
+      ];
+
+      if (this.graph && this.graph.url) {
+        try {
+          const url = new URL(this.graph.url);
+          const provider = this.#getProviderForURL(url);
+          const capabilities = provider?.canProvide(url);
+          if (provider && capabilities && capabilities.save) {
+            actions.push({
+              title: "Save As...",
+              name: "save-as",
+              icon: "save-as",
+            });
+          }
+        } catch (err) {
+          // If there are any problems with the URL, etc, don't offer the save button.
+        }
+      }
+
+      overflowMenu = html`<bb-overflow-menu
+        .actions=${actions}
+        @bboverflowmenudismissed=${() => {
+          this.showOverflowMenu = false;
+        }}
+        @bboverflowmenuaction=${async (
+          evt: BreadboardUI.Events.OverflowMenuActionEvent
+        ) => {
+          switch (evt.action) {
+            case "download": {
+              if (!this.graph) {
+                break;
+              }
+              const board = structuredClone(this.graph);
+              delete board["url"];
+
+              const data = JSON.stringify(board, null, 2);
+              const url = URL.createObjectURL(
+                new Blob([data], { type: "application/json" })
+              );
+
+              for (const url of generatedUrls) {
+                try {
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.warn(err);
+                }
+              }
+
+              generatedUrls.clear();
+              generatedUrls.add(url);
+
+              const anchor = document.createElement("a");
+              anchor.download = `${board.title ?? "Untitled Board"}.json`;
+              anchor.href = url;
+              anchor.click();
+              break;
+            }
+
+            case "save": {
+              await this.#attemptBoardSave();
+              break;
+            }
+
+            case "save-as": {
+              this.showSaveAsDialog = true;
+              break;
+            }
+
+            default: {
+              this.toast(
+                "Unknown action",
+                BreadboardUI.Events.ToastType.WARNING
+              );
+              break;
+            }
+          }
+        }}
+      ></bb-overflow-menu>`;
+    }
+
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
     ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay}
-    ${saveAsDialogOverlay} ${toasts} `;
+    ${saveAsDialogOverlay} ${overflowMenu} ${toasts} `;
   }
 }
 
