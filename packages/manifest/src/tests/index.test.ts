@@ -6,14 +6,12 @@
 
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import { randomUUID } from "crypto";
 import fs from "fs";
 import * as assert from "node:assert";
 import test, { after, before, describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
 import { BreadboardManifest } from "..";
-import schema from "../../bbm.schema.json" with { type: "json" };
 import {
   dereference,
   dereferenceBoard,
@@ -22,7 +20,7 @@ import {
   fullyDecodeURI,
   isEncoded,
 } from "../dereference";
-import { DereferencedBoard, ReferencedBoard } from "../types/boards";
+import { DereferencedBoard } from "../types/boards";
 import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
 import { isDereferencedManifest } from "../types/guards/manifest-resource";
 import {
@@ -32,9 +30,21 @@ import {
   isRemoteUri,
   isResourceReference,
 } from "../types/guards/resource-reference";
-import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
+import { DereferencedManifest } from "../types/manifest";
 import { Resource } from "../types/resource";
-
+import {
+  dereferencedBoard,
+  dereferencedManifest,
+  localBoardReference,
+  localManifestReference,
+  manifestArray,
+  nestedManifest,
+  remoteBoardReference,
+  remoteManifestReference,
+} from "./data.test";
+import { getMockedAsyncReadFileResponse, getMockedFetchResponse, getReadFileSyncResponse } from "./helpers.test";
+// import schema from "../../bbm.schema.json" with {type: "json"};
+const schema = await import("../../bbm.schema.json" as any).then((module) => module.default);
 const ajv = new Ajv({
   // keywords: definitions({
   //   // defaultMeta: "draft-07",
@@ -51,8 +61,54 @@ const ajv = new Ajv({
 });
 addFormats(ajv);
 
+function addResponseToMocked(reference: Resource, expected: any) {
+  if ("url" in reference) {
+    const decodedUrl = fullyDecodeURI(reference.url!);
+    if (mockedResponses.has(decodedUrl)) {
+      throw new Error(`Mocked response already exists for ${decodedUrl}`);
+    }
+    mockedResponses.set(decodedUrl, expected);
+  }
+}
+
+export function getMockedResponse(path: string, fn: (x: any) => any) {
+  const fullyDecodedPath = fullyDecodeURI(path);
+  if (mockedResponses.has(fullyDecodedPath)) {
+    path = fullyDecodedPath;
+  }
+  if (mockedResponses.has(path)) {
+    const responseData = mockedResponses.get(path);
+    return fn(responseData);
+  } else {
+    throw new Error(`No mocked response for: ${path}`);
+  }
+}
+
+
+export function mockManifestFetches(fixture: BreadboardManifest) {
+  for (const board of fixture.boards || []) {
+    if (isResourceReference(board)) {
+      addResponseToMocked(board, {
+        edges: [],
+        nodes: [],
+      });
+    }
+  }
+  for (const manifest of fixture.manifests || []) {
+    if (isResourceReference(manifest)) {
+      addResponseToMocked(manifest, {
+        boards: [],
+        manifests: [],
+      });
+    }
+    mockManifestFetches(manifest);
+  }
+}
+
+
 let validate: ValidateFunction;
 let mockedResponses: Map<string, any>;
+
 before(() => {
   validate = ajv.compile(schema);
 });
@@ -76,198 +132,21 @@ test("Schema is valid.", async () => {
   assert.ok(validate);
 });
 
-// Declare the constants with types
-
-const dereferencedBoard = (): DereferencedBoard => ({ edges: [], nodes: [] });
-const dereferencedManifest = (): DereferencedManifest => ({
-  title: "Dereferenced Manifest",
-  boards: [],
-  manifests: [],
-});
-const localBoardReference = (): ReferencedBoard => ({
-  title: "Local Board Reference",
-  url: generateLocalFilePath(".bgl.json"),
-});
-const remoteBoardReference = (): ReferencedBoard => ({
-  title: "Remote Board Reference",
-  url: generateGistURL(),
-});
-const localManifestReference = (): ReferencedManifest => ({
-  title: "Local Manifest Reference",
-  url: generateLocalFilePath(".bbm.json"),
-});
-const remoteManifestReference = (): ReferencedManifest => ({
-  title: "Remote Manifest Reference",
-  url: generateGistURL(),
-});
-const fixtures = (): BreadboardManifest[] => [
-  { title: "Manifest with an empty boards array", boards: [] },
-  { title: "Manifest with an empty manifests array", manifests: [] },
-  {
-    title: "Manifest with empty boards and manifests arrays",
-    boards: [],
-    manifests: [
-      {
-        title: "Gist Manifest",
-        url: generateGistURL(),
-      },
-    ],
-  },
-  {
-    title: "Manifest with boards",
-    boards: [
-      {
-        title: "My First Board",
-        url: generateGistURL(),
-      },
-      {
-        title: "My Second Board",
-        url: generateLocalFilePath(".bgl.json"),
-      },
-    ],
-  },
-  {
-    title: "Manifest with manifests",
-    manifests: [
-      {
-        title: "Gist Manifest",
-        url: generateGistURL("manifest.bbm.json"),
-      },
-    ],
-  },
-  {
-    title: "Manifest with boards and manifests",
-    boards: [
-      {
-        title: "My First Board",
-        url: generateGistURL(),
-      },
-      {
-        title: "My Second Board",
-        url: generateLocalFilePath(".bbm.json"),
-      },
-    ],
-    manifests: [
-      {
-        title: "Gist Manifest",
-        url: generateGistURL(),
-      },
-    ],
-  },
-  {
-    title: "Nested manifest",
-    manifests: [
-      {
-        title: "Gist Manifest",
-        url: generateGistURL(),
-      },
-      {
-        title: "Nested Nested Manifest",
-        boards: [
-          {
-            title: "My First Board",
-            url: generateGistURL(),
-          },
-        ],
-        manifests: [
-          {
-            title: "Nested Nested Nested Manifest",
-            boards: [
-              {
-                title: "My First Board",
-                url: generateGistURL(),
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Manifest with a single dereferenced board",
-    boards: [dereferencedBoard()],
-  },
-  {
-    title: "Manifest with a single local board reference",
-    boards: [localBoardReference()],
-  },
-  {
-    title: "Manifest with a single remote board reference",
-    boards: [remoteBoardReference()],
-  },
-  {
-    title: "Manifest with dereferenced, local, and remote boards",
-    boards: [
-      dereferencedBoard(),
-      localBoardReference(),
-      remoteBoardReference(),
-    ],
-  },
-  {
-    title: "Manifest with a single dereferenced manifest",
-    manifests: [dereferencedManifest()],
-  },
-  {
-    title: "Manifest with a single local manifest reference",
-    manifests: [localManifestReference()],
-  },
-  {
-    title: "Manifest with a single remote manifest reference",
-    manifests: [remoteManifestReference()],
-  },
-  {
-    title: "Manifest with dereferenced, local, and remote manifests",
-    manifests: [
-      dereferencedManifest(),
-      localManifestReference(),
-      remoteManifestReference(),
-    ],
-  },
-];
-
-const nestedManifest = (): BreadboardManifest => ({
-  manifests: [
-    {
-      manifests: [
-        dereferencedManifest(),
-        localManifestReference(),
-        remoteManifestReference(),
-      ],
-    },
-    { manifests: fixtures() },
-    {
-      boards: [
-        localBoardReference(),
-        remoteBoardReference(),
-        dereferencedBoard(),
-      ],
-    },
-  ],
-  boards: [localBoardReference(), remoteBoardReference(), dereferencedBoard()],
-});
-
-const testManifestValidation = (
-  manifest: BreadboardManifest,
-  index: number
-) => {
+for (const [index, manifest] of manifestArray().entries()) {
   test(
-    [`Manifest ${index + 1}/${fixtures().length}`, manifest.title]
-      .filter(Boolean)
-      .join(": "),
-    async (t) => {
-      const valid = validate(manifest);
-      const errors = validate.errors;
-      if (errors) {
-        throw new Error(inspect(errors, { depth: null, colors: true }));
+      [`Manifest ${index + 1}/${manifestArray().length}`, manifest.title]
+          .filter(Boolean)
+          .join(": "),
+      async (t) => {
+        const valid = validate(manifest);
+        const errors = validate.errors;
+        if (errors) {
+          throw new Error(inspect(errors, {depth: null, colors: true}));
+        }
+        assert.ok(!errors);
+        assert.ok(valid);
       }
-      assert.ok(!errors);
-      assert.ok(valid);
-    }
   );
-};
-
-for (const [index, manifest] of fixtures().entries()) {
-  testManifestValidation(manifest, index);
 }
 
 describe("BreadboardManifest", () => {
@@ -493,73 +372,6 @@ test("test mock fetch", async () => {
   assert.strictEqual(responseJson.key, "value");
 });
 
-function generateGistURL(extension: string = "file.json"): string {
-  return `https://gist.githubusercontent.com/user/${randomUUID()}/raw/${randomUUID()}.${extension}`;
-}
-
-function mockManifestFetches(fixture: BreadboardManifest) {
-  for (const board of fixture.boards || []) {
-    if (isResourceReference(board)) {
-      addResponseToMocked(board, {
-        edges: [],
-        nodes: [],
-      });
-    }
-  }
-  for (const manifest of fixture.manifests || []) {
-    if (isResourceReference(manifest)) {
-      addResponseToMocked(manifest, {
-        boards: [],
-        manifests: [],
-      });
-    }
-    mockManifestFetches(manifest);
-  }
-}
-
-function getMockedResponse(path: string, fn: (x: any) => any) {
-  const fullyDecodedPath = fullyDecodeURI(path);
-  if (mockedResponses.has(fullyDecodedPath)) {
-    path = fullyDecodedPath;
-  }
-  if (mockedResponses.has(path)) {
-    const responseData = mockedResponses.get(path);
-    return fn(responseData);
-  } else {
-    throw new Error(`No mocked response for: ${path}`);
-  }
-}
-
-function getMockedFetchResponse(mockedResponse: any) {
-  return {
-    then: (cb: any) => cb({ json: () => Promise.resolve(mockedResponse) }),
-    status: 200,
-  };
-}
-
-function getMockedAsyncReadFileResponse(mockedResponse: any): {
-  then: (cb: any) => any;
-} {
-  return { then: (cb: any) => cb(JSON.stringify(mockedResponse)) };
-}
-
-function getReadFileSyncResponse(mockedResponse: any): string {
-  return JSON.stringify(mockedResponse);
-}
-
-function addResponseToMocked(reference: Resource, expected: any) {
-  if ("url" in reference) {
-    const decodedUrl = fullyDecodeURI(reference.url!);
-    if (mockedResponses.has(decodedUrl)) {
-      throw new Error(`Mocked response already exists for ${decodedUrl}`);
-    }
-    mockedResponses.set(decodedUrl, expected);
-  }
-}
-
-function generateLocalFilePath(extension: string = "file.json"): string {
-  return encodeURI(path.resolve(`${randomUUID()}.${extension}`));
-}
 
 describe("isEncoded", () => {
   test("should return true if the URI is encoded", () => {
@@ -573,4 +385,6 @@ describe("isEncoded", () => {
     assert.ok(!isEncoded(undefined as any));
   });
 });
+
+
 after(() => mock.reset());
