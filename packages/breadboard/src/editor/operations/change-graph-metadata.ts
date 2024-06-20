@@ -23,7 +23,8 @@ export class ChangeGraphMetadata implements EditOperation {
     }
     const { metadata } = spec;
     const { graph } = context;
+    const visualOnly = graph.metadata === metadata;
     graph.metadata = metadata;
-    return { success: true };
+    return { success: true, visualOnly };
   }
 }

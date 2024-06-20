@@ -9,8 +9,8 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   GraphProviderAddEvent,
   GraphProviderBlankBoardEvent,
+  GraphProviderSelectionChangeEvent,
   GraphProviderDeleteRequestEvent,
-  // GraphProviderDeleteRequestEvent,
   GraphProviderDisconnectEvent,
   GraphProviderLoadRequestEvent,
   GraphProviderRefreshEvent,
@@ -388,6 +388,10 @@ export class Navigation extends LitElement {
     this.selectedProvider = provider;
     this.selectedLocation = location;
 
+    this.dispatchEvent(
+      new GraphProviderSelectionChangeEvent(provider, location)
+    );
+
     window.addEventListener("keydown", this.#hideProviderOverflowMenuBound);
     window.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
     this.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
@@ -626,6 +630,10 @@ export class Navigation extends LitElement {
                     `${STORAGE_PREFIX}-provider`,
                     evt.target.value
                   );
+
+                  this.dispatchEvent(
+                    new GraphProviderSelectionChangeEvent(provider, location)
+                  );
                 }}
               >
                 ${map(this.providers, (provider) => {
@@ -634,7 +642,7 @@ export class Navigation extends LitElement {
                     const isSelectedOption = value === selected;
                     return html`<option
                       ?selected=${isSelectedOption}
-                      value=${value}
+                      .value=${value}
                     >
                       ${store.title}
                     </option>`;

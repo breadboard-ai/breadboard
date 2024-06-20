@@ -7,6 +7,7 @@
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
+import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
@@ -95,6 +96,9 @@ export class Main extends LitElement {
   showFirstRun = false;
 
   @state()
+  showSaveAsDialog = false;
+
+  @state()
   boardEditOverlayInfo: {
     title: string;
     version: string;
@@ -108,7 +112,14 @@ export class Main extends LitElement {
   showSettingsOverlay = false;
 
   @state()
-  toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
+  toasts = new Map<
+    string,
+    {
+      message: string;
+      type: BreadboardUI.Events.ToastType;
+      persistent: boolean;
+    }
+  >();
 
   @state()
   providerOps = 0;
@@ -125,6 +136,7 @@ export class Main extends LitElement {
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
@@ -138,6 +150,8 @@ export class Main extends LitElement {
   #runObserver: InspectableRunObserver | null = null;
   #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
+  #selectedProvider = "IDBGraphProvider";
+  #selectedLocation = "default";
   #settings: SettingsStore | null;
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
@@ -458,7 +472,6 @@ export class Main extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    this.#checkForPossibleEmbed();
     window.addEventListener("keydown", this.#onKeyDownBound);
   }
 
@@ -500,30 +513,23 @@ export class Main extends LitElement {
     }
   }
 
-  #checkForPossibleEmbed() {
-    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    const hasTouch = window.matchMedia("(any-pointer: coarse)").matches;
-    const currentUrl = new URL(window.location.href);
-    const embedIsNotSet = currentUrl.searchParams.get("embed") === null;
-
-    if (isPortrait && hasTouch && this.url && embedIsNotSet) {
-      this.embed = true;
-      this.#setUrlParam("embed", "true");
-
-      return true;
-    }
-
-    return false;
-  }
-
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key === "s" && evt.metaKey) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
+
+      if (evt.shiftKey) {
+        this.showSaveAsDialog = true;
+        return;
+      }
+
       this.#attemptBoardSave();
       return;
     }
 
-    if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+    if (evt.key === "h" && !isCtrlCommand && !evt.shiftKey) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
@@ -536,7 +542,7 @@ export class Main extends LitElement {
       this.showHistory = !this.showHistory;
     }
 
-    if (evt.key === "z" && evt.metaKey) {
+    if (evt.key === "z" && isCtrlCommand) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
@@ -592,13 +598,75 @@ export class Main extends LitElement {
     if (!capabilities || !capabilities.save) {
       return;
     }
+
+    const id = this.toast(
+      "Saving board...",
+      BreadboardUI.Events.ToastType.PENDING,
+      true
+    );
     const { result } = await provider.save(boardUrl, this.graph);
     if (!result) {
       return;
     }
 
     this.#setBoardPendingSaveState(false);
-    this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
+    this.toast(
+      "Board saved",
+      BreadboardUI.Events.ToastType.INFORMATION,
+      false,
+      id
+    );
+  }
+
+  async #attemptBoardSaveAs(
+    providerName: string,
+    location: string,
+    fileName: string,
+    graph: GraphDescriptor
+  ) {
+    const provider = this.#getProviderByName(providerName);
+    if (!provider) {
+      this.toast(
+        "Unable to find provider",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+    const urlString = await provider.createURL(location, fileName);
+    if (!urlString) {
+      this.toast(
+        "Unable to create a new board",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    const id = this.toast(
+      "Saving board...",
+      BreadboardUI.Events.ToastType.PENDING,
+      true
+    );
+
+    const url = new URL(urlString);
+    const { result, error } = await provider.create(url, graph);
+
+    if (!result) {
+      this.toast(
+        error || "Unable to create board",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    // Trigger a re-render.
+    this.providerOps++;
+    this.#changeBoard(url.href);
+    this.toast(
+      "Board saved",
+      BreadboardUI.Events.ToastType.INFORMATION,
+      false,
+      id
+    );
   }
 
   get status() {
@@ -613,7 +681,10 @@ export class Main extends LitElement {
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
     this.#boardId++;
     this.#setUrlParam("board", startEvent.url);
+
+    // Loading may take some time so reset the graph here.
     this.url = startEvent.url;
+    this.graph = null;
     this.subGraphId = null;
 
     if (startEvent.descriptor) {
@@ -625,8 +696,6 @@ export class Main extends LitElement {
     this.#runObserver = null;
     this.#setBoardPendingSaveState(false);
     this.#setPageTitle();
-
-    this.#checkForPossibleEmbed();
   }
 
   protected async updated() {
@@ -747,9 +816,16 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
-  toast(message: string, type: BreadboardUI.Events.ToastType) {
-    this.toasts.push({ message, type });
+  toast(
+    message: string,
+    type: BreadboardUI.Events.ToastType,
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    this.toasts.set(id, { message, type, persistent });
     this.requestUpdate();
+
+    return id;
   }
 
   #getBoardJson(evt: Event) {
@@ -982,14 +1058,18 @@ export class Main extends LitElement {
   }
 
   render() {
-    const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
-      const offset = toasts.length - idx - 1;
-      return html`<bb-toast
-        .offset=${offset}
-        .message=${message}
-        .type=${type}
-      ></bb-toast>`;
-    })}`;
+    const toasts = html`${map(
+      this.toasts,
+      ([, { message, type, persistent }], idx) => {
+        const offset = this.toasts.size - idx - 1;
+        return html`<bb-toast
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+        ></bb-toast>`;
+      }
+    )}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const runs = this.#runObserver?.runs();
@@ -1031,7 +1111,8 @@ export class Main extends LitElement {
       this.showPreviewOverlay ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
-      this.showProviderAddOverlay;
+      this.showProviderAddOverlay ||
+      this.showSaveAsDialog;
 
     const nav = this.#load.then(() => {
       return html`<bb-nav
@@ -1183,6 +1264,12 @@ export class Main extends LitElement {
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
           this.#changeBoard(evt.url);
+        }}
+        @bbgraphproviderselectionchange=${(
+          evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
+        ) => {
+          this.#selectedProvider = evt.selectedProvider;
+          this.#selectedLocation = evt.selectedLocation;
         }}
       ></bb-nav> `;
     });
@@ -1856,8 +1943,37 @@ export class Main extends LitElement {
       ></bb-graph-history>`;
     }
 
+    let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showSaveAsDialog) {
+      saveAsDialogOverlay = html`<bb-save-as-overlay
+        .panelTitle=${"Save As"}
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        .selectedProvider=${this.#selectedProvider}
+        .selectedLocation=${this.#selectedLocation}
+        .graph=${this.graph}
+        @bboverlaydismissed=${() => {
+          this.showSaveAsDialog = false;
+        }}
+        @bbgraphprovidersaveboard=${async (
+          evt: BreadboardUI.Events.GraphProviderSaveBoardEvent
+        ) => {
+          this.showSaveAsDialog = false;
+
+          const { providerName, location, fileName, graph } = evt;
+          await this.#attemptBoardSaveAs(
+            providerName,
+            location,
+            fileName,
+            graph
+          );
+        }}
+      ></bb-save-as-overlay>`;
+    }
+
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay} ${toasts} `;
+    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay}
+    ${saveAsDialogOverlay} ${toasts} `;
   }
 }
 

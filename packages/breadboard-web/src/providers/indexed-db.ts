@@ -157,12 +157,19 @@ export class IDBGraphProvider implements GraphProvider {
   }
 
   async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+    return this.create(url, blankLLMContent());
+  }
+
+  async create(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
     const existingBoard = await this.load(url);
     if (existingBoard) {
       return { result: false, error: "Unable to create: board already exists" };
     }
 
-    return this.save(url, blankLLMContent());
+    return this.save(url, descriptor);
   }
 
   async save(

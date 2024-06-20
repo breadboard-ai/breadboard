@@ -253,13 +253,20 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+    // TODO: Remove "published" by default once we have UI to flip the
+    // "published" / "draft" flag.
+    return this.create(url, blankLLMContent("published"));
+  }
+
+  async create(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
     if (!this.canProvide(url)) {
       return { result: false };
     }
 
-    // TODO: Remove "published" by default once we have UI to flip the
-    // "published" / "draft" flag.
-    const data = await this.#sendToRemote(url, blankLLMContent("published"));
+    const data = await this.#sendToRemote(new URL(url), descriptor);
     if (data.error) {
       return { result: false };
     }

@@ -32,6 +32,9 @@ export class BoardDetails extends LitElement {
   boardIsTool: boolean | null = null;
 
   @property()
+  active = true;
+
+  @property()
   subGraphId: string | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -108,6 +111,10 @@ export class BoardDetails extends LitElement {
 
     form.visible {
       display: grid;
+    }
+
+    form[disabled] > * {
+      opacity: 0.8;
     }
 
     input[type="text"],
@@ -220,6 +227,7 @@ export class BoardDetails extends LitElement {
           type="text"
           placeholder="The title for this board"
           required
+          ?disabled=${!this.active}
           .value=${this.boardTitle || ""}
         />
 
@@ -230,6 +238,7 @@ export class BoardDetails extends LitElement {
           type="text"
           placeholder="The semver version for this board, e.g. 0.0.1"
           required
+          ?disabled=${!this.active}
           .value=${this.boardVersion || ""}
         />
 
@@ -237,6 +246,7 @@ export class BoardDetails extends LitElement {
         <textarea
           name="description"
           placeholder="The description for this board"
+          ?disabled=${!this.active}
           .value=${this.boardDescription || ""}
         ></textarea>
 
@@ -267,6 +277,7 @@ export class BoardDetails extends LitElement {
                     }}
                     name="status"
                     .value=${this.boardPublished ? "published" : "draft"}
+                    ?disabled=${!this.active}
                   >
                     <option value="draft" ?selected=${!this.boardPublished}>
                       Draft
@@ -287,6 +298,7 @@ export class BoardDetails extends LitElement {
                     type="checkbox"
                     .value="on"
                     ?checked=${this.boardIsTool}
+                    ?disabled=${!this.active}
                   />
                 </div>
               `

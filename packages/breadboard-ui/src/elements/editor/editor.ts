@@ -391,6 +391,7 @@ export class Editor extends LitElement {
 
   async #processGraph(): Promise<GraphRenderer> {
     if (!this.graph) {
+      this.#graphRenderer.deleteGraphs();
       return this.#graphRenderer;
     }
 
@@ -428,6 +429,10 @@ export class Editor extends LitElement {
         // Another update has come in, bail out.
         return this.#graphRenderer;
       }
+    }
+
+    if (!this.graph) {
+      return this.#graphRenderer;
     }
 
     // Attempt to update the graph if it already exists.
