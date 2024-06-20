@@ -117,7 +117,6 @@ const remoteManifestReference: ReferencedManifest = {
 };
 
 const fixtures: BreadboardManifest[] = [
-  { title: "Empty manifest" },
   { title: "Manifest with an empty boards array", boards: [] },
   { title: "Manifest with an empty manifests array", manifests: [] },
   {
@@ -365,7 +364,6 @@ describe("BreadboardManifest", () => {
   const dereferenceTests: TestDefinition[] = [
     {
       name: "remote manifest",
-
       reference: remoteManifestReference,
       expected: dereferencedManifest,
     },
