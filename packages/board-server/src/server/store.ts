@@ -28,6 +28,22 @@ export type BoardListEntry = {
   tags: string[];
 };
 
+export type ServerCapabilityAccess = "open" | "key";
+
+export type ServerCapabilityInfo = {
+  path: string;
+  read: ServerCapabilityAccess;
+  write: ServerCapabilityAccess;
+};
+
+export type ServerCapability = "boards" | "proxy";
+
+export type ServerInfo = {
+  title?: string;
+  description?: string;
+  capabilities?: Partial<Record<ServerCapability, ServerCapabilityInfo>>;
+};
+
 export const asPath = (userStore: string, boardName: string) => {
   return `@${userStore}/${boardName}`;
 };
@@ -69,6 +85,14 @@ class Store {
       .get();
     const config = data.data() as BoardServerCorsConfig;
     return config;
+  }
+
+  async getServerInfo(): Promise<ServerInfo | undefined> {
+    const data = await this.#database
+      .collection("configuration")
+      .doc("metadata")
+      .get();
+    return data.data() as ServerInfo | undefined;
   }
 
   async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {

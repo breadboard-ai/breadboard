@@ -6,13 +6,20 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
+export type GraphProviderItem = {
+  url: string;
+  username?: string;
+  title?: string;
+  tags?: string[];
+  mine: boolean;
+  readonly: boolean;
+  handle: unknown;
+};
+
 export type GraphProviderStore = {
   permission: "unknown" | "prompt" | "granted";
   title: string;
-  items: Map<
-    string,
-    { url: string; mine: boolean; readonly: boolean; handle: unknown }
-  >;
+  items: Map<string, GraphProviderItem>;
 };
 
 export type GraphProviderChange = {
@@ -113,6 +120,16 @@ export type GraphProvider = {
    * @returns -- the result of creating the board, with an error if failed.
    */
   createBlank(url: URL): Promise<{ result: boolean; error?: string }>;
+  /**
+   * Creates a board at the given URL
+   * @param url -- the URL at which to create the blank board
+   * @param graph -- the descriptor to use
+   * @returns -- the result of creating the board, with an error if failed.
+   */
+  create(
+    url: URL,
+    graph: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }>;
   /**
    * Given a URL, deletes a `GraphDescriptor` instance at that URL.
    * @param url -- the URL to delete

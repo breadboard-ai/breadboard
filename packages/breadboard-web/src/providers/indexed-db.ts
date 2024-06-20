@@ -8,6 +8,7 @@ import * as idb from "idb";
 import {
   GraphProvider,
   GraphProviderCapabilities,
+  GraphProviderItem,
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
@@ -59,10 +60,7 @@ export class IDBGraphProvider implements GraphProvider {
     {
       permission: "unknown" | "prompt" | "granted";
       title: string;
-      items: Map<
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void }
-      >;
+      items: Map<string, GraphProviderItem & { handle: void }>;
     }
   >();
 
@@ -157,12 +155,19 @@ export class IDBGraphProvider implements GraphProvider {
   }
 
   async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+    return this.create(url, blankLLMContent());
+  }
+
+  async create(
+    url: URL,
+    descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
     const existingBoard = await this.load(url);
     if (existingBoard) {
       return { result: false, error: "Unable to create: board already exists" };
     }
 
-    return this.save(url, blankLLMContent());
+    return this.save(url, descriptor);
   }
 
   async save(
@@ -258,16 +263,20 @@ export class IDBGraphProvider implements GraphProvider {
     }
 
     const itemsByUrl = graphs.map(
-      (
-        descriptor
-      ): [
-        string,
-        { url: string; mine: boolean; readonly: boolean; handle: void },
-      ] => {
+      (descriptor): [string, GraphProviderItem & { handle: void }] => {
         const url = descriptor.url || "";
         const { fileName } = this.parseURL(new URL(url));
 
-        return [fileName, { url, mine: true, readonly: false, handle: void 0 }];
+        return [
+          fileName,
+          {
+            url,
+            tags: descriptor.metadata?.tags,
+            mine: true,
+            readonly: false,
+            handle: void 0,
+          },
+        ];
       }
     );
 

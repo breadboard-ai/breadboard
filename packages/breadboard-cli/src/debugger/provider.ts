@@ -93,6 +93,15 @@ export class DebuggerGraphProvider implements GraphProvider {
     );
   }
 
+  async create(
+    _url: URL,
+    _descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string | undefined }> {
+    throw new Error(
+      "The `DebuggerGraphProvider` should not be used to create graphs."
+    );
+  }
+
   async delete(
     _url: URL
   ): Promise<{ result: boolean; error?: string | undefined }> {

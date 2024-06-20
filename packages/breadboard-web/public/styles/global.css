@@ -92,10 +92,12 @@
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
   --bb-icon-menu: url(/third_party/icons/menu.svg);
   --bb-icon-model: url(/third_party/icons/model.svg);
+  --bb-icon-more-vert-inverted: url(/third_party/icons/more-vert-inverted.svg);
   --bb-icon-move-up: url(/third_party/icons/move-up.svg);
   --bb-icon-move-down: url(/third_party/icons/move-down.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
+  --bb-icon-public: url(/third_party/icons/public.svg);
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
   --bb-icon-redo-inverted: url(/third_party/icons/redo-inverted.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);
@@ -103,6 +105,8 @@
   --bb-icon-reset-nodes: url(/third_party/icons/reset-nodes.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
   --bb-icon-save: url(/third_party/icons/save.svg);
+  --bb-icon-save-as: url(/third_party/icons/save-as.svg);
+  --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-settings: url(/third_party/icons/settings.svg);
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);

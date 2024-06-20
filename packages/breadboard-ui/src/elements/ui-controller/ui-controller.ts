@@ -494,6 +494,7 @@ export class UI extends LitElement {
           .boardPublished=${boardPublished}
           .boardIsTool=${boardIsTool}
           .subGraphId=${this.subGraphId}
+          .active=${this.graph !== null}
         >
         </bb-board-details>`;
       }
@@ -616,7 +617,9 @@ export class UI extends LitElement {
           <button
             id="run"
             title="Run this board"
-            ?disabled=${this.status !== STATUS.STOPPED || this.failedToLoad}
+            ?disabled=${this.status !== STATUS.STOPPED ||
+            this.failedToLoad ||
+            !this.graph}
             @click=${() => {
               this.selectedNodeIds.length = 0;
               this.dispatchEvent(new RunEvent());
@@ -627,7 +630,9 @@ export class UI extends LitElement {
           <button
             id="stop"
             title="Stop this board"
-            ?disabled=${this.status === STATUS.STOPPED || this.failedToLoad}
+            ?disabled=${this.status === STATUS.STOPPED ||
+            this.failedToLoad ||
+            !this.graph}
             @click=${() => {
               this.selectedNodeIds.length = 0;
               this.dispatchEvent(new StopEvent());

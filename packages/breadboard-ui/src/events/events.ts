@@ -24,6 +24,7 @@ export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
   ERROR = "error",
+  PENDING = "pending",
 }
 
 /**
@@ -95,6 +96,22 @@ export class BoardUnloadEvent extends Event {
 /**
  * General UI
  */
+
+export class OverflowMenuActionEvent extends Event {
+  static eventName = "bboverflowmenuaction";
+
+  constructor(public readonly action: string) {
+    super(OverflowMenuActionEvent.eventName, { ...eventInit });
+  }
+}
+
+export class OverflowMenuDismissedEvent extends Event {
+  static eventName = "bboverflowmenudismissed";
+
+  constructor() {
+    super(OverflowMenuDismissedEvent.eventName, { ...eventInit });
+  }
+}
 
 export class UndoEvent extends Event {
   static eventName = "bbundo";
@@ -279,12 +296,21 @@ export class GraphProviderDisconnectEvent extends Event {
 export class GraphProviderBlankBoardEvent extends Event {
   static eventName = "bbgraphproviderblankboard";
 
+  constructor() {
+    super(GraphProviderBlankBoardEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphProviderSaveBoardEvent extends Event {
+  static eventName = "bbgraphprovidersaveboard";
+
   constructor(
     public readonly providerName: string,
     public readonly location: string,
-    public readonly fileName: string
+    public readonly fileName: string,
+    public readonly graph: GraphDescriptor
   ) {
-    super(GraphProviderBlankBoardEvent.eventName, { ...eventInit });
+    super(GraphProviderSaveBoardEvent.eventName, { ...eventInit });
   }
 }
 
@@ -304,6 +330,17 @@ export class GraphProviderAddEvent extends Event {
 
   constructor() {
     super(GraphProviderAddEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphProviderSelectionChangeEvent extends Event {
+  static eventName = "bbgraphproviderselectionchange";
+
+  constructor(
+    public readonly selectedProvider: string,
+    public readonly selectedLocation: string
+  ) {
+    super(GraphProviderSelectionChangeEvent.eventName, { ...eventInit });
   }
 }
 

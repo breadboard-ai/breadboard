@@ -10,17 +10,15 @@ import {
   GraphProviderAddEvent,
   GraphProviderBlankBoardEvent,
   GraphProviderDeleteRequestEvent,
-  // GraphProviderDeleteRequestEvent,
   GraphProviderDisconnectEvent,
   GraphProviderLoadRequestEvent,
   GraphProviderRefreshEvent,
   GraphProviderRenewAccessRequestEvent,
+  GraphProviderSelectionChangeEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { GraphProvider } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-
-const STORAGE_PREFIX = "bb-nav";
 
 @customElement("bb-nav")
 export class Navigation extends LitElement {
@@ -59,7 +57,7 @@ export class Navigation extends LitElement {
       position: fixed;
       top: 0;
       left: 0;
-      width: min(80vw, 340px);
+      width: min(80vw, 380px);
       height: 100%;
       overflow: hidden;
       z-index: 1000;
@@ -236,7 +234,7 @@ export class Navigation extends LitElement {
     }
 
     #provider ul li .board {
-      display: flex;
+      display: grid;
       background: transparent var(--bb-icon-draft) var(--bb-grid-size)
         var(--bb-grid-size) / 20px 20px no-repeat;
       border: none;
@@ -249,11 +247,41 @@ export class Navigation extends LitElement {
       min-height: var(--bb-grid-size-7);
       text-align: left;
       align-items: center;
+      width: 100%;
+      white-space: nowrap;
+      grid-template-columns: auto 1fr;
+    }
+
+    #provider ul li .board.tool {
+      background: transparent var(--bb-icon-tool) var(--bb-grid-size)
+        var(--bb-grid-size) / 20px 20px no-repeat;
     }
 
     #provider ul li .board.selected {
       color: var(--bb-neutral-900);
+    }
+
+    #provider ul li .board.selected .name {
       font-weight: 500;
+    }
+
+    #provider ul li .board .name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #provider ul li .board .username {
+      color: var(--bb-neutral-600);
+      white-space: no-wrap;
+      padding-left: var(--bb-grid-size-3);
+    }
+
+    #provider ul li .board.mine.published::after {
+      content: "";
+      width: calc(20px + var(--bb-grid-size-2));
+      height: 20px;
+      background: var(--bb-icon-public) right center / 20px 20px no-repeat;
     }
 
     #provider ul li .delete {
@@ -378,16 +406,6 @@ export class Navigation extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    const url = globalThis.sessionStorage.getItem(`${STORAGE_PREFIX}-provider`);
-
-    if (!url) {
-      return;
-    }
-
-    const [provider, location] = this.#parseUrl(url);
-    this.selectedProvider = provider;
-    this.selectedLocation = location;
-
     window.addEventListener("keydown", this.#hideProviderOverflowMenuBound);
     window.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
     this.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
@@ -451,6 +469,13 @@ export class Navigation extends LitElement {
         this.selectedLocation = providerNames[0] ?? "default";
       }
     }
+
+    this.dispatchEvent(
+      new GraphProviderSelectionChangeEvent(
+        this.selectedProvider,
+        this.selectedLocation
+      )
+    );
   }
 
   render() {
@@ -499,12 +524,11 @@ export class Navigation extends LitElement {
     }
 
     type BoardInfo = (typeof items)[0];
-    const renderBoards = ([name, { url, readonly, mine }]: BoardInfo) => {
-      return html`<li
-        class=${classMap({
-          mine,
-        })}
-      >
+    const renderBoards = ([
+      name,
+      { url, readonly, mine, tags, title, username },
+    ]: BoardInfo) => {
+      return html`<li>
         <button
           @click=${() => {
             this.dispatchEvent(
@@ -512,11 +536,17 @@ export class Navigation extends LitElement {
             );
           }}
           class=${classMap({
+            mine,
             board: true,
             selected: url === this.url,
+            tool: tags?.includes("tool") ?? false,
+            published: tags?.includes("published") ?? false,
           })}
         >
-          ${name}
+          <span class="name">${title ?? name}</span>
+          ${username && !mine
+            ? html`<span class="username">@${username}</span>`
+            : ""}
         </button>
         ${extendedCapabilities.modify && !readonly
           ? html`<button
@@ -570,31 +600,14 @@ export class Navigation extends LitElement {
     return html`<nav id="menu">
         <header>
           <h1>Breadboard</h1>
-          ${extendedCapabilities.modify
-            ? html` <button
-                id="new-board"
-                ?disabled=${permission === "prompt"}
-                @click=${() => {
-                  const fileName = prompt(
-                    "What would you like to name this file?",
-                    "new-board.json"
-                  );
-                  if (!fileName) {
-                    return;
-                  }
-
-                  this.dispatchEvent(
-                    new GraphProviderBlankBoardEvent(
-                      this.selectedProvider,
-                      this.selectedLocation,
-                      fileName
-                    )
-                  );
-                }}
-              >
-                New board
-              </button>`
-            : nothing}
+          <button
+            id="new-board"
+            @click=${() => {
+              this.dispatchEvent(new GraphProviderBlankBoardEvent());
+            }}
+          >
+            New board
+          </button>
           <input
             type="search"
             id="search"
@@ -622,9 +635,8 @@ export class Navigation extends LitElement {
                   this.selectedProvider = provider;
                   this.selectedLocation = location;
 
-                  globalThis.sessionStorage.setItem(
-                    `${STORAGE_PREFIX}-provider`,
-                    evt.target.value
+                  this.dispatchEvent(
+                    new GraphProviderSelectionChangeEvent(provider, location)
                   );
                 }}
               >
@@ -634,7 +646,7 @@ export class Navigation extends LitElement {
                     const isSelectedOption = value === selected;
                     return html`<option
                       ?selected=${isSelectedOption}
-                      value=${value}
+                      .value=${value}
                     >
                       ${store.title}
                     </option>`;

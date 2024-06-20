@@ -110,6 +110,13 @@ export class DefaultGraphProvider implements GraphProvider {
     throw new Error("Create Blank not implemented for DefaultGraphProvider");
   }
 
+  async create(
+    _url: URL,
+    _descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Create not implemented for DefaultGraphProvider");
+  }
+
   async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error("createURL not implemented for DefaultGraphProvider");
   }

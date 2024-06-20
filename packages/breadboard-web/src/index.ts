@@ -7,6 +7,7 @@
 import { run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
+import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
@@ -52,12 +53,21 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
 const REPLAY_DELAY_MS = 10;
+const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
   settings?: SettingsStore;
 };
+
+type SaveAsConfiguration = {
+  title: string;
+  graph: GraphDescriptor;
+  isNewBoard: boolean;
+};
+
+const generatedUrls = new Set<string>();
 
 @customElement("bb-main")
 export class Main extends LitElement {
@@ -89,10 +99,17 @@ export class Main extends LitElement {
   showPreviewOverlay = false;
 
   @state()
+  showOverflowMenu = false;
+
+  @state()
   showHistory = false;
 
   @state()
   showFirstRun = false;
+
+  @state()
+  showSaveAsDialog = false;
+  #saveAsState: SaveAsConfiguration | null = null;
 
   @state()
   boardEditOverlayInfo: {
@@ -108,7 +125,14 @@ export class Main extends LitElement {
   showSettingsOverlay = false;
 
   @state()
-  toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
+  toasts = new Map<
+    string,
+    {
+      message: string;
+      type: BreadboardUI.Events.ToastType;
+      persistent: boolean;
+    }
+  >();
 
   @state()
   providerOps = 0;
@@ -125,8 +149,15 @@ export class Main extends LitElement {
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
+
+  @state()
+  selectedProvider = "IDBGraphProvider";
+
+  @state()
+  selectedLocation = "default";
 
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -216,7 +247,8 @@ export class Main extends LitElement {
     #get-log,
     #get-board,
     #toggle-preview,
-    #toggle-settings {
+    #toggle-settings,
+    #toggle-overflow-menu {
       color: var(--bb-neutral-50);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
@@ -236,18 +268,34 @@ export class Main extends LitElement {
     #get-log:hover,
     #get-board:hover,
     #toggle-preview:hover,
-    #toggle-settings:hover {
+    #toggle-settings:hover,
+    #toggle-overflow-menu:hover,
+    #save-board:focus,
+    #get-log:focus,
+    #get-board:focus,
+    #toggle-preview:focus,
+    #toggle-settings:focus,
+    #toggle-overflow-menu:focus {
       background-color: rgba(0, 0, 0, 0.1);
     }
 
     #save-board {
-      background: 12px center var(--bb-icon-save);
+      background: 12px center var(--bb-icon-save-inverted);
       background-repeat: no-repeat;
     }
 
     #toggle-preview {
       background: 12px center var(--bb-icon-preview);
       background-repeat: no-repeat;
+    }
+
+    #toggle-overflow-menu {
+      padding: 8px;
+      font-size: 0;
+      margin-right: 0;
+      background: center center var(--bb-icon-more-vert-inverted);
+      background-repeat: no-repeat;
+      width: 32px;
     }
 
     #toggle-preview.active {
@@ -400,6 +448,18 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
+    const providerLocation = globalThis.sessionStorage.getItem(
+      `${STORAGE_PREFIX}-provider`
+    );
+    if (providerLocation) {
+      const [provider, location] = providerLocation.split("::");
+
+      if (provider && location) {
+        this.selectedProvider = provider;
+        this.selectedLocation = location;
+      }
+    }
+
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
     if (this.#settings) {
@@ -458,7 +518,6 @@ export class Main extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    this.#checkForPossibleEmbed();
     window.addEventListener("keydown", this.#onKeyDownBound);
   }
 
@@ -500,30 +559,23 @@ export class Main extends LitElement {
     }
   }
 
-  #checkForPossibleEmbed() {
-    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    const hasTouch = window.matchMedia("(any-pointer: coarse)").matches;
-    const currentUrl = new URL(window.location.href);
-    const embedIsNotSet = currentUrl.searchParams.get("embed") === null;
-
-    if (isPortrait && hasTouch && this.url && embedIsNotSet) {
-      this.embed = true;
-      this.#setUrlParam("embed", "true");
-
-      return true;
-    }
-
-    return false;
-  }
-
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key === "s" && evt.metaKey) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
+
+      if (evt.shiftKey) {
+        this.showSaveAsDialog = true;
+        return;
+      }
+
       this.#attemptBoardSave();
       return;
     }
 
-    if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+    if (evt.key === "h" && !isCtrlCommand && !evt.shiftKey) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
@@ -536,7 +588,7 @@ export class Main extends LitElement {
       this.showHistory = !this.showHistory;
     }
 
-    if (evt.key === "z" && evt.metaKey) {
+    if (evt.key === "z" && isCtrlCommand) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
@@ -592,13 +644,77 @@ export class Main extends LitElement {
     if (!capabilities || !capabilities.save) {
       return;
     }
+
+    const id = this.toast(
+      "Saving board...",
+      BreadboardUI.Events.ToastType.PENDING,
+      true
+    );
     const { result } = await provider.save(boardUrl, this.graph);
     if (!result) {
       return;
     }
 
     this.#setBoardPendingSaveState(false);
-    this.toast("Board saved", BreadboardUI.Events.ToastType.INFORMATION);
+    this.toast(
+      "Board saved",
+      BreadboardUI.Events.ToastType.INFORMATION,
+      false,
+      id
+    );
+  }
+
+  async #attemptBoardSaveAs(
+    providerName: string,
+    location: string,
+    fileName: string,
+    graph: GraphDescriptor
+  ) {
+    const provider = this.#getProviderByName(providerName);
+    if (!provider) {
+      this.toast(
+        "Unable to find provider",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+    const urlString = await provider.createURL(location, fileName);
+    if (!urlString) {
+      this.toast(
+        "Unable to create a new board",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    const id = this.toast(
+      "Saving board...",
+      BreadboardUI.Events.ToastType.PENDING,
+      true
+    );
+
+    const url = new URL(urlString);
+    const { result, error } = await provider.create(url, graph);
+
+    if (!result) {
+      this.toast(
+        error || "Unable to create board",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      return;
+    }
+
+    this.#persistProviderAndLocation(providerName, location);
+
+    // Trigger a re-render.
+    this.providerOps++;
+    this.#changeBoard(url.href);
+    this.toast(
+      "Board saved",
+      BreadboardUI.Events.ToastType.INFORMATION,
+      false,
+      id
+    );
   }
 
   get status() {
@@ -613,7 +729,10 @@ export class Main extends LitElement {
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
     this.#boardId++;
     this.#setUrlParam("board", startEvent.url);
+
+    // Loading may take some time so reset the graph here.
     this.url = startEvent.url;
+    this.graph = null;
     this.subGraphId = null;
 
     if (startEvent.descriptor) {
@@ -625,8 +744,6 @@ export class Main extends LitElement {
     this.#runObserver = null;
     this.#setBoardPendingSaveState(false);
     this.#setPageTitle();
-
-    this.#checkForPossibleEmbed();
   }
 
   protected async updated() {
@@ -747,29 +864,16 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
-  toast(message: string, type: BreadboardUI.Events.ToastType) {
-    this.toasts.push({ message, type });
+  toast(
+    message: string,
+    type: BreadboardUI.Events.ToastType,
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    this.toasts.set(id, { message, type, persistent });
     this.requestUpdate();
-  }
 
-  #getBoardJson(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement) || !this.graph) {
-      return;
-    }
-
-    if (evt.target.href) {
-      URL.revokeObjectURL(evt.target.href);
-    }
-
-    // Remove the URL from the descriptor as its not part of BGL's schema.
-    const board = structuredClone(this.graph);
-    delete board["url"];
-
-    const data = JSON.stringify(board, null, 2);
-    evt.target.download = `board-${new Date().toISOString()}.json`;
-    evt.target.href = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
+    return id;
   }
 
   #getProviderByName(name: string) {
@@ -927,6 +1031,16 @@ export class Main extends LitElement {
     }
   }
 
+  #persistProviderAndLocation(providerName: string, location: string) {
+    this.selectedProvider = providerName;
+    this.selectedLocation = location;
+
+    globalThis.sessionStorage.setItem(
+      `${STORAGE_PREFIX}-provider`,
+      `${providerName}::${location}`
+    );
+  }
+
   #attemptLoad(evt: DragEvent) {
     if (
       !evt.dataTransfer ||
@@ -982,14 +1096,18 @@ export class Main extends LitElement {
   }
 
   render() {
-    const toasts = html`${this.toasts.map(({ message, type }, idx, toasts) => {
-      const offset = toasts.length - idx - 1;
-      return html`<bb-toast
-        .offset=${offset}
-        .message=${message}
-        .type=${type}
-      ></bb-toast>`;
-    })}`;
+    const toasts = html`${map(
+      this.toasts,
+      ([, { message, type, persistent }], idx) => {
+        const offset = this.toasts.size - idx - 1;
+        return html`<bb-toast
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+        ></bb-toast>`;
+      }
+    )}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
     const runs = this.#runObserver?.runs();
@@ -1008,6 +1126,16 @@ export class Main extends LitElement {
             @click=${this.#attemptBoardSave}
           >
             Save
+          </button>`;
+        } else {
+          saveButton = html`<button
+            id="save-board"
+            title="Save Board BGL"
+            @click=${() => {
+              this.showSaveAsDialog = true;
+            }}
+          >
+            Save As...
           </button>`;
         }
       } catch (err) {
@@ -1031,12 +1159,16 @@ export class Main extends LitElement {
       this.showPreviewOverlay ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
-      this.showProviderAddOverlay;
+      this.showProviderAddOverlay ||
+      this.showSaveAsDialog ||
+      this.showOverflowMenu;
 
     const nav = this.#load.then(() => {
       return html`<bb-nav
         .visible=${this.showNav}
         .url=${this.url}
+        .selectedProvider=${this.selectedProvider}
+        .selectedLocation=${this.selectedLocation}
         .providers=${this.#providers}
         .providerOps=${this.providerOps}
         ?inert=${showingOverlay}
@@ -1044,42 +1176,14 @@ export class Main extends LitElement {
         @bbgraphprovideradd=${() => {
           this.showProviderAddOverlay = true;
         }}
-        @bbgraphproviderblankboard=${async (
-          evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            this.toast(
-              "Unable to find provider",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-          const urlString = await provider.createURL(
-            evt.location,
-            evt.fileName
-          );
-          if (!urlString) {
-            this.toast(
-              "Unable to create a new board",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-          const url = new URL(urlString);
-          const { result, error } = await provider.createBlank(url);
-
-          if (!result) {
-            this.toast(
-              error || "Unable to create blank board",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-          this.#changeBoard(url.href);
+        @bbgraphproviderblankboard=${() => {
+          const graph = blankLLMContent();
+          this.#saveAsState = {
+            title: "Create new board",
+            graph,
+            isNewBoard: true,
+          };
+          this.showSaveAsDialog = true;
         }}
         @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
@@ -1184,6 +1288,14 @@ export class Main extends LitElement {
         ) => {
           this.#changeBoard(evt.url);
         }}
+        @bbgraphproviderselectionchange=${(
+          evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
+        ) => {
+          this.#persistProviderAndLocation(
+            evt.selectedProvider,
+            evt.selectedLocation
+          );
+        }}
       ></bb-nav> `;
     });
 
@@ -1243,13 +1355,6 @@ export class Main extends LitElement {
           </h1>
         </div>
         ${saveButton}
-        <a
-          id="get-board"
-          title="Export Board BGL"
-          ?disabled=${this.graph === null}
-          @click=${this.#getBoardJson}
-          >Export</a
-        >
         <button
           class=${classMap({ active: this.showPreviewOverlay })}
           id="toggle-preview"
@@ -1262,14 +1367,14 @@ export class Main extends LitElement {
           Preview
         </button>
         <button
-          class=${classMap({ active: this.showSettingsOverlay })}
-          id="toggle-settings"
-          title="Toggle Settings"
+          class=${classMap({ active: this.showOverflowMenu })}
+          id="toggle-overflow-menu"
+          title="Toggle Overflow Menu"
           @click=${() => {
-            this.showSettingsOverlay = !this.showSettingsOverlay;
+            this.showOverflowMenu = !this.showOverflowMenu;
           }}
         >
-          Settings
+          Toggle Overflow Menu
         </button>
       </div>
       <div id="content" ?inert=${showingOverlay}>
@@ -1856,8 +1961,128 @@ export class Main extends LitElement {
       ></bb-graph-history>`;
     }
 
+    let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showSaveAsDialog) {
+      saveAsDialogOverlay = html`<bb-save-as-overlay
+        .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        .selectedProvider=${this.selectedProvider}
+        .selectedLocation=${this.selectedLocation}
+        .graph=${structuredClone(this.#saveAsState?.graph ?? this.graph)}
+        .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
+        @bboverlaydismissed=${() => {
+          this.showSaveAsDialog = false;
+        }}
+        @bbgraphprovidersaveboard=${async (
+          evt: BreadboardUI.Events.GraphProviderSaveBoardEvent
+        ) => {
+          this.showSaveAsDialog = false;
+
+          const { providerName, location, fileName, graph } = evt;
+          await this.#attemptBoardSaveAs(
+            providerName,
+            location,
+            fileName,
+            graph
+          );
+        }}
+      ></bb-save-as-overlay>`;
+
+      this.#saveAsState = null;
+    }
+
+    let overflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showOverflowMenu) {
+      const actions = [
+        {
+          title: "Download board",
+          name: "download",
+          icon: "download",
+        },
+      ];
+
+      if (this.graph && this.graph.url) {
+        try {
+          const url = new URL(this.graph.url);
+          const provider = this.#getProviderForURL(url);
+          const capabilities = provider?.canProvide(url);
+          if (provider && capabilities && capabilities.save) {
+            actions.push({
+              title: "Save As...",
+              name: "save-as",
+              icon: "save-as",
+            });
+          }
+        } catch (err) {
+          // If there are any problems with the URL, etc, don't offer the save button.
+        }
+      }
+
+      overflowMenu = html`<bb-overflow-menu
+        .actions=${actions}
+        @bboverflowmenudismissed=${() => {
+          this.showOverflowMenu = false;
+        }}
+        @bboverflowmenuaction=${async (
+          evt: BreadboardUI.Events.OverflowMenuActionEvent
+        ) => {
+          switch (evt.action) {
+            case "download": {
+              if (!this.graph) {
+                break;
+              }
+              const board = structuredClone(this.graph);
+              delete board["url"];
+
+              const data = JSON.stringify(board, null, 2);
+              const url = URL.createObjectURL(
+                new Blob([data], { type: "application/json" })
+              );
+
+              for (const url of generatedUrls) {
+                try {
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.warn(err);
+                }
+              }
+
+              generatedUrls.clear();
+              generatedUrls.add(url);
+
+              const anchor = document.createElement("a");
+              anchor.download = `${board.title ?? "Untitled Board"}.json`;
+              anchor.href = url;
+              anchor.click();
+              break;
+            }
+
+            case "save": {
+              await this.#attemptBoardSave();
+              break;
+            }
+
+            case "save-as": {
+              this.showSaveAsDialog = true;
+              break;
+            }
+
+            default: {
+              this.toast(
+                "Unknown action",
+                BreadboardUI.Events.ToastType.WARNING
+              );
+              break;
+            }
+          }
+        }}
+      ></bb-overflow-menu>`;
+    }
+
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay} ${toasts} `;
+    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay}
+    ${saveAsDialogOverlay} ${overflowMenu} ${toasts} `;
   }
 }
 
