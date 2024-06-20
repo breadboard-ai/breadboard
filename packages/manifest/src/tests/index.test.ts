@@ -85,7 +85,7 @@ const dereferencedManifest = (): DereferencedManifest => ({
 });
 const localBoardReference = (): ReferencedBoard => ({
   title: "Local Board Reference",
-  url: generateLocalFilePath(),
+  url: generateLocalFilePath(".bgl.json"),
 });
 const remoteBoardReference = (): ReferencedBoard => ({
   title: "Remote Board Reference",
@@ -93,7 +93,7 @@ const remoteBoardReference = (): ReferencedBoard => ({
 });
 const localManifestReference = (): ReferencedManifest => ({
   title: "Local Manifest Reference",
-  url: generateLocalFilePath(),
+  url: generateLocalFilePath(".bbm.json"),
 });
 const remoteManifestReference = (): ReferencedManifest => ({
   title: "Remote Manifest Reference",
@@ -121,7 +121,7 @@ const fixtures = (): BreadboardManifest[] => [
       },
       {
         title: "My Second Board",
-        url: generateLocalFilePath("board.bgl.json"),
+        url: generateLocalFilePath(".bgl.json"),
       },
     ],
   },
@@ -143,7 +143,7 @@ const fixtures = (): BreadboardManifest[] => [
       },
       {
         title: "My Second Board",
-        url: generateLocalFilePath("manifest.bbm.json"),
+        url: generateLocalFilePath(".bbm.json"),
       },
     ],
     manifests: [
@@ -508,7 +508,6 @@ function mockManifestFetches(fixture: BreadboardManifest) {
   for (const manifest of fixture.manifests || []) {
     if (isResourceReference(manifest)) {
       addResponseToMocked(manifest, {
-        title: "Dereferenced Manifest",
         boards: [],
         manifests: [],
       });
@@ -549,7 +548,6 @@ function getReadFileSyncResponse(mockedResponse: any): string {
 
 function addResponseToMocked(reference: Resource, expected: any) {
   if ("url" in reference) {
-    // mockedResponses[reference.url!] = expected;
     const decodedUrl = fullyDecodeURI(reference.url!);
     if (mockedResponses.has(decodedUrl)) {
       throw new Error(`Mocked response already exists for ${decodedUrl}`);
@@ -558,7 +556,8 @@ function addResponseToMocked(reference: Resource, expected: any) {
   }
 }
 
-after(() => mock.reset());
 function generateLocalFilePath(extension: string = "file.json"): string {
   return encodeURI(path.resolve(`${randomUUID()}.${extension}`));
 }
+
+after(() => mock.reset());
