@@ -232,7 +232,17 @@ const fixtures: BreadboardManifest[] = [
 ];
 
 const nestedManifest: BreadboardManifest = {
-  manifests: fixtures,
+  manifests: [
+    {
+      manifests: [
+        dereferencedManifest,
+        localManifestReference,
+        remoteManifestReference,
+      ],
+    },
+    { manifests: fixtures },
+    { boards: [localBoardReference, remoteBoardReference, dereferencedBoard] },
+  ],
   boards: [localBoardReference, remoteBoardReference, dereferencedBoard],
 };
 
@@ -520,7 +530,7 @@ function getMockedResponse(path: string, fn: (x: any) => any) {
     const responseData = mockedResponses.get(path);
     return fn(responseData);
   } else {
-    throw new Error("File not found.");
+    throw new Error(`No mocked response for: ${path}`);
   }
 }
 
