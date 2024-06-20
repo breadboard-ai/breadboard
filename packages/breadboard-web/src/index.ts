@@ -514,7 +514,10 @@ export class Main extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key === "s" && evt.metaKey) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
 
       if (evt.shiftKey) {
@@ -526,7 +529,7 @@ export class Main extends LitElement {
       return;
     }
 
-    if (evt.key === "h" && !evt.metaKey && !evt.shiftKey) {
+    if (evt.key === "h" && !isCtrlCommand && !evt.shiftKey) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
@@ -539,7 +542,7 @@ export class Main extends LitElement {
       this.showHistory = !this.showHistory;
     }
 
-    if (evt.key === "z" && evt.metaKey) {
+    if (evt.key === "z" && isCtrlCommand) {
       const isFocusedOnRenderer = evt
         .composedPath()
         .find(
