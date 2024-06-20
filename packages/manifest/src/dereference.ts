@@ -5,7 +5,6 @@
  */
 import fs from "fs";
 import path from "path";
-import { inspect } from "util";
 import { BoardResource, DereferencedBoard } from "./types/boards";
 import { isDereferencedBoard } from "./types/guards/board-resource";
 import { isDereferencedManifest } from "./types/guards/manifest-resource";
@@ -48,9 +47,7 @@ export async function dereference(
 }
 
 function makeDeepObjectError(message: string, data: any) {
-  return new Error(
-    `${message}: ${JSON.stringify({ data: inspect(data, { showHidden: true, depth: null, colors: false }) })}`
-  );
+  return new Error(`${message}: ${JSON.stringify({ data })})}`);
 }
 
 export async function dereferenceBoard(

@@ -10,7 +10,6 @@ import fs from "fs";
 import path, { dirname } from "path";
 import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { fileURLToPath } from "url";
-import { inspect } from "util";
 import packageJson from "../../package.json" with { type: "json" };
 import { ascendToPackageDir } from "./util/ascend-to-package-dir";
 
@@ -65,7 +64,7 @@ function main() {
     skipTypeCheck: false,
   });
 
-  console.log(inspect(result, { showHidden: true, depth: null, colors: true }));
+  console.log(JSON.stringify({ result }, null, 2));
 }
 
 const DEFAULT_CONFIG: Partial<Config> = {
@@ -83,7 +82,7 @@ function generateSchemaFile(
 ) {
   console.debug(
     "Generating schema with config:",
-    inspect(conf, { showHidden: false, depth: null, colors: true })
+    JSON.stringify(conf, null, 2)
   );
 
   const mergedConfig: Config = {

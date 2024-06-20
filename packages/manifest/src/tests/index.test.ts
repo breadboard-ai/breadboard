@@ -10,7 +10,6 @@ import fs from "fs";
 import * as assert from "node:assert";
 import test, { after, before, describe, mock } from "node:test";
 import path from "path";
-import { inspect } from "util";
 import {
   BreadboardManifest,
   DereferencedBoard,
@@ -127,7 +126,7 @@ describe("Validation Tests", () => {
       const valid = validate(manifest);
       const errors = validate.errors;
       if (errors) {
-        throw new Error(inspect(errors, { depth: null, colors: true }));
+        throw new Error(`errors: ${JSON.stringify(errors, null, 2)}`);
       }
       assert.ok(!errors);
       assert.ok(valid);
