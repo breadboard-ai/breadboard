@@ -57,7 +57,7 @@ export class Navigation extends LitElement {
       position: fixed;
       top: 0;
       left: 0;
-      width: min(80vw, 340px);
+      width: min(80vw, 380px);
       height: 100%;
       overflow: hidden;
       z-index: 1000;
@@ -234,7 +234,7 @@ export class Navigation extends LitElement {
     }
 
     #provider ul li .board {
-      display: flex;
+      display: grid;
       background: transparent var(--bb-icon-draft) var(--bb-grid-size)
         var(--bb-grid-size) / 20px 20px no-repeat;
       border: none;
@@ -247,11 +247,41 @@ export class Navigation extends LitElement {
       min-height: var(--bb-grid-size-7);
       text-align: left;
       align-items: center;
+      width: 100%;
+      white-space: nowrap;
+      grid-template-columns: auto 1fr;
+    }
+
+    #provider ul li .board.tool {
+      background: transparent var(--bb-icon-tool) var(--bb-grid-size)
+        var(--bb-grid-size) / 20px 20px no-repeat;
     }
 
     #provider ul li .board.selected {
       color: var(--bb-neutral-900);
+    }
+
+    #provider ul li .board.selected .name {
       font-weight: 500;
+    }
+
+    #provider ul li .board .name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #provider ul li .board .username {
+      color: var(--bb-neutral-600);
+      white-space: no-wrap;
+      padding-left: var(--bb-grid-size-3);
+    }
+
+    #provider ul li .board.mine.published::after {
+      content: "";
+      width: calc(20px + var(--bb-grid-size-2));
+      height: 20px;
+      background: var(--bb-icon-public) right center / 20px 20px no-repeat;
     }
 
     #provider ul li .delete {
@@ -494,12 +524,11 @@ export class Navigation extends LitElement {
     }
 
     type BoardInfo = (typeof items)[0];
-    const renderBoards = ([name, { url, readonly, mine }]: BoardInfo) => {
-      return html`<li
-        class=${classMap({
-          mine,
-        })}
-      >
+    const renderBoards = ([
+      name,
+      { url, readonly, mine, tags, title, username },
+    ]: BoardInfo) => {
+      return html`<li>
         <button
           @click=${() => {
             this.dispatchEvent(
@@ -507,11 +536,17 @@ export class Navigation extends LitElement {
             );
           }}
           class=${classMap({
+            mine,
             board: true,
             selected: url === this.url,
+            tool: tags?.includes("tool") ?? false,
+            published: tags?.includes("published") ?? false,
           })}
         >
-          ${name}
+          <span class="name">${title ?? name}</span>
+          ${username && !mine
+            ? html`<span class="username">@${username}</span>`
+            : ""}
         </button>
         ${extendedCapabilities.modify && !readonly
           ? html`<button
