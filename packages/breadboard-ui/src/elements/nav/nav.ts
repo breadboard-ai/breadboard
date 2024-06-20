@@ -9,18 +9,16 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   GraphProviderAddEvent,
   GraphProviderBlankBoardEvent,
-  GraphProviderSelectionChangeEvent,
   GraphProviderDeleteRequestEvent,
   GraphProviderDisconnectEvent,
   GraphProviderLoadRequestEvent,
   GraphProviderRefreshEvent,
   GraphProviderRenewAccessRequestEvent,
+  GraphProviderSelectionChangeEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { GraphProvider } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-
-const STORAGE_PREFIX = "bb-nav";
 
 @customElement("bb-nav")
 export class Navigation extends LitElement {
@@ -378,20 +376,6 @@ export class Navigation extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    const url = globalThis.sessionStorage.getItem(`${STORAGE_PREFIX}-provider`);
-
-    if (!url) {
-      return;
-    }
-
-    const [provider, location] = this.#parseUrl(url);
-    this.selectedProvider = provider;
-    this.selectedLocation = location;
-
-    this.dispatchEvent(
-      new GraphProviderSelectionChangeEvent(provider, location)
-    );
-
     window.addEventListener("keydown", this.#hideProviderOverflowMenuBound);
     window.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
     this.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
@@ -455,6 +439,13 @@ export class Navigation extends LitElement {
         this.selectedLocation = providerNames[0] ?? "default";
       }
     }
+
+    this.dispatchEvent(
+      new GraphProviderSelectionChangeEvent(
+        this.selectedProvider,
+        this.selectedLocation
+      )
+    );
   }
 
   render() {
@@ -574,31 +565,14 @@ export class Navigation extends LitElement {
     return html`<nav id="menu">
         <header>
           <h1>Breadboard</h1>
-          ${extendedCapabilities.modify
-            ? html` <button
-                id="new-board"
-                ?disabled=${permission === "prompt"}
-                @click=${() => {
-                  const fileName = prompt(
-                    "What would you like to name this file?",
-                    "new-board.json"
-                  );
-                  if (!fileName) {
-                    return;
-                  }
-
-                  this.dispatchEvent(
-                    new GraphProviderBlankBoardEvent(
-                      this.selectedProvider,
-                      this.selectedLocation,
-                      fileName
-                    )
-                  );
-                }}
-              >
-                New board
-              </button>`
-            : nothing}
+          <button
+            id="new-board"
+            @click=${() => {
+              this.dispatchEvent(new GraphProviderBlankBoardEvent());
+            }}
+          >
+            New board
+          </button>
           <input
             type="search"
             id="search"
@@ -625,11 +599,6 @@ export class Navigation extends LitElement {
                   const [provider, location] = this.#parseUrl(evt.target.value);
                   this.selectedProvider = provider;
                   this.selectedLocation = location;
-
-                  globalThis.sessionStorage.setItem(
-                    `${STORAGE_PREFIX}-provider`,
-                    evt.target.value
-                  );
 
                   this.dispatchEvent(
                     new GraphProviderSelectionChangeEvent(provider, location)

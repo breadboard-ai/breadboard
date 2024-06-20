@@ -53,11 +53,18 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
 const REPLAY_DELAY_MS = 10;
+const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
   settings?: SettingsStore;
+};
+
+type SaveAsConfiguration = {
+  title: string;
+  graph: GraphDescriptor;
+  isNewBoard: boolean;
 };
 
 @customElement("bb-main")
@@ -97,6 +104,7 @@ export class Main extends LitElement {
 
   @state()
   showSaveAsDialog = false;
+  #saveAsState: SaveAsConfiguration | null = null;
 
   @state()
   boardEditOverlayInfo: {
@@ -140,6 +148,12 @@ export class Main extends LitElement {
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
+  @state()
+  selectedProvider = "IDBGraphProvider";
+
+  @state()
+  selectedLocation = "default";
+
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
@@ -150,8 +164,6 @@ export class Main extends LitElement {
   #runObserver: InspectableRunObserver | null = null;
   #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
-  #selectedProvider = "IDBGraphProvider";
-  #selectedLocation = "default";
   #settings: SettingsStore | null;
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
@@ -414,6 +426,18 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
+    const providerLocation = globalThis.sessionStorage.getItem(
+      `${STORAGE_PREFIX}-provider`
+    );
+    if (providerLocation) {
+      const [provider, location] = providerLocation.split("::");
+
+      if (provider && location) {
+        this.selectedProvider = provider;
+        this.selectedLocation = location;
+      }
+    }
+
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
     if (this.#settings) {
@@ -657,6 +681,8 @@ export class Main extends LitElement {
       );
       return;
     }
+
+    this.#persistProviderAndLocation(providerName, location);
 
     // Trigger a re-render.
     this.providerOps++;
@@ -1003,6 +1029,16 @@ export class Main extends LitElement {
     }
   }
 
+  #persistProviderAndLocation(providerName: string, location: string) {
+    this.selectedProvider = providerName;
+    this.selectedLocation = location;
+
+    globalThis.sessionStorage.setItem(
+      `${STORAGE_PREFIX}-provider`,
+      `${providerName}::${location}`
+    );
+  }
+
   #attemptLoad(evt: DragEvent) {
     if (
       !evt.dataTransfer ||
@@ -1089,6 +1125,16 @@ export class Main extends LitElement {
           >
             Save
           </button>`;
+        } else {
+          saveButton = html`<button
+            id="save-board"
+            title="Save Board BGL"
+            @click=${() => {
+              this.showSaveAsDialog = true;
+            }}
+          >
+            Save As...
+          </button>`;
         }
       } catch (err) {
         // If there are any problems with the URL, etc, don't offer the save button.
@@ -1118,6 +1164,8 @@ export class Main extends LitElement {
       return html`<bb-nav
         .visible=${this.showNav}
         .url=${this.url}
+        .selectedProvider=${this.selectedProvider}
+        .selectedLocation=${this.selectedLocation}
         .providers=${this.#providers}
         .providerOps=${this.providerOps}
         ?inert=${showingOverlay}
@@ -1125,42 +1173,14 @@ export class Main extends LitElement {
         @bbgraphprovideradd=${() => {
           this.showProviderAddOverlay = true;
         }}
-        @bbgraphproviderblankboard=${async (
-          evt: BreadboardUI.Events.GraphProviderBlankBoardEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            this.toast(
-              "Unable to find provider",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-          const urlString = await provider.createURL(
-            evt.location,
-            evt.fileName
-          );
-          if (!urlString) {
-            this.toast(
-              "Unable to create a new board",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-          const url = new URL(urlString);
-          const { result, error } = await provider.createBlank(url);
-
-          if (!result) {
-            this.toast(
-              error || "Unable to create blank board",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
-          this.#changeBoard(url.href);
+        @bbgraphproviderblankboard=${() => {
+          const graph = blankLLMContent();
+          this.#saveAsState = {
+            title: "Create new board",
+            graph,
+            isNewBoard: true,
+          };
+          this.showSaveAsDialog = true;
         }}
         @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
@@ -1268,8 +1288,10 @@ export class Main extends LitElement {
         @bbgraphproviderselectionchange=${(
           evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
         ) => {
-          this.#selectedProvider = evt.selectedProvider;
-          this.#selectedLocation = evt.selectedLocation;
+          this.#persistProviderAndLocation(
+            evt.selectedProvider,
+            evt.selectedLocation
+          );
         }}
       ></bb-nav> `;
     });
@@ -1946,12 +1968,13 @@ export class Main extends LitElement {
     let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showSaveAsDialog) {
       saveAsDialogOverlay = html`<bb-save-as-overlay
-        .panelTitle=${"Save As"}
+        .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
         .providers=${this.#providers}
         .providerOps=${this.providerOps}
-        .selectedProvider=${this.#selectedProvider}
-        .selectedLocation=${this.#selectedLocation}
-        .graph=${this.graph}
+        .selectedProvider=${this.selectedProvider}
+        .selectedLocation=${this.selectedLocation}
+        .graph=${structuredClone(this.#saveAsState?.graph ?? this.graph)}
+        .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
         @bboverlaydismissed=${() => {
           this.showSaveAsDialog = false;
         }}
@@ -1969,6 +1992,8 @@ export class Main extends LitElement {
           );
         }}
       ></bb-save-as-overlay>`;
+
+      this.#saveAsState = null;
     }
 
     return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
