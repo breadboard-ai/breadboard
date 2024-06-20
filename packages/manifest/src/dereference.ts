@@ -1,3 +1,8 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import fs from "fs";
 import path from "path";
 import { inspect } from "util";

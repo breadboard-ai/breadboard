@@ -1,3 +1,8 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import { BoardResource } from "../boards";
 import { Resource, ResourceReference } from "../resource";
 import { isDereferencedBoard } from "./board-resource";
