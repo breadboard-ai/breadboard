@@ -6,7 +6,6 @@
 import fs from "fs";
 import path from "path";
 import { inspect } from "util";
-import { BreadboardManifest } from "./index";
 import { BoardResource, DereferencedBoard } from "./types/boards";
 import { isDereferencedBoard } from "./types/guards/board-resource";
 import { isDereferencedManifest } from "./types/guards/manifest-resource";
@@ -14,7 +13,11 @@ import {
   isRemoteUri,
   isResourceReference,
 } from "./types/guards/resource-reference";
-import { DereferencedManifest, ManifestResource } from "./types/manifest";
+import {
+  DereferencedManifest,
+  FullyDereferencedManifest,
+  ManifestResource,
+} from "./types/manifest";
 import { Resource } from "./types/resource";
 export async function dereference(
   resource: Resource
@@ -78,25 +81,21 @@ export async function dereferenceManifest(
   }
 }
 
-export async function dereferenceManifestContents(
-  resource: BreadboardManifest
-): Promise<{
-  title?: string;
-  boards: DereferencedBoard[];
-  manifests: DereferencedManifest[];
-}> {
+export async function fullyDereferenceManifest(
+  resource: ManifestResource
+): Promise<FullyDereferencedManifest> {
   let boards: DereferencedBoard[] = [];
 
   for await (const board of resource.boards || []) {
     boards.push(await dereferenceBoard(board));
   }
 
-  let manifests: DereferencedManifest[] = [];
+  let manifests: FullyDereferencedManifest[] = [];
   for await (const manifest of resource.manifests || []) {
-    manifests.push(await dereferenceManifestContents(manifest));
+    manifests.push(await fullyDereferenceManifest(manifest));
   }
 
-  const dereferencedResource = {
+  const dereferencedResource: FullyDereferencedManifest = {
     ...resource,
     boards,
     manifests,

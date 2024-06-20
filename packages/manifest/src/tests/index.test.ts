@@ -20,8 +20,8 @@ import {
   dereference,
   dereferenceBoard,
   dereferenceManifest,
-  dereferenceManifestContents,
   fullyDecodeURI,
+  fullyDereferenceManifest,
   isEncoded,
 } from "../dereference";
 import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
@@ -330,7 +330,7 @@ describe("BreadboardManifest", () => {
     test("should dereference all boards and manifests contained in a manifest", async () => {
       const fixture = nestedManifest();
       mockManifestFetches(fixture);
-      const dereferenced = await dereferenceManifestContents(fixture);
+      const dereferenced = await fullyDereferenceManifest(fixture);
       assert.ok(dereferenced);
     });
   });

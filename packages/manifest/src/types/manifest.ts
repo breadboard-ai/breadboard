@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { BoardResource } from "./boards";
+import { BoardResource, DereferencedBoard } from "./boards";
 import { ResourceReference, Title } from "./resource";
 
 /**
@@ -68,4 +68,13 @@ export type DereferencedManifest = {
 export type ReferencedManifest = ResourceReference & {
   boards?: undefined;
   manifests?: undefined;
+};
+
+/**
+ * A fully dereferenced manifest with board and manifest resources.
+ */
+export type FullyDereferencedManifest = {
+  title?: Title;
+  boards: DereferencedBoard[];
+  manifests: FullyDereferencedManifest[];
 };
