@@ -4,16 +4,15 @@ import { ResourceReference } from "./resource";
 export type Node = AdditionalProperties & {};
 export type Edge = AdditionalProperties & {};
 
-export type ReferencedBoard = AdditionalProperties &
-  ResourceReference & {
-    nodes?: never;
-    edges?: never;
-  };
+export type ReferencedBoard = ResourceReference & {
+  nodes?: undefined;
+  edges?: undefined;
+};
 
-export type BoardResource = DereferencedBoard | ReferencedBoard;
-
-export type DereferencedBoard = AdditionalProperties & {
-  url?: never;
+export type DereferencedBoard = {
+  url?: undefined;
   nodes: Node[];
   edges: Edge[];
 };
+
+export type BoardResource = ReferencedBoard | DereferencedBoard;

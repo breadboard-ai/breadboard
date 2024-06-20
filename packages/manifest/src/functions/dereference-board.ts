@@ -2,7 +2,6 @@ import { BoardResource, DereferencedBoard } from "../types/boards";
 import { dereference } from "./dereference";
 import { isDereferencedBoard } from "./is-dereferenced-board";
 
-
 export async function dereferenceBoard(
   resource: BoardResource
 ): Promise<DereferencedBoard> {

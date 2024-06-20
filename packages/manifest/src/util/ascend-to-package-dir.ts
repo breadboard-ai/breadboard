@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-
 export function ascendToPackageDir(packageName: string = "breadboard-ai") {
   let directory = import.meta.dirname;
   while (directory !== "/") {

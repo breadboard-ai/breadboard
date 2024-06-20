@@ -1,6 +1,5 @@
 import { DereferencedBoard } from "../types/boards";
 
-
 export function isBglLike(resource: any): resource is DereferencedBoard {
   return (
     typeof resource === "object" &&

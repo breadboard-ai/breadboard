@@ -4,7 +4,6 @@ import { DereferencedManifest } from "../types/manifest";
 import { dereferenceBoard } from "./dereference-board";
 import { dereferenceManifest } from "./dereference-manifest";
 
-
 export async function dereferenceAll(resource: BreadboardManifest): Promise<{
   title?: string;
   boards: DereferencedBoard[];

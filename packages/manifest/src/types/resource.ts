@@ -3,6 +3,7 @@ import { ManifestResource } from "./manifest";
 
 export type ResourceReference = {
   title?: string;
+
   /**
    * @format uri-reference
    */

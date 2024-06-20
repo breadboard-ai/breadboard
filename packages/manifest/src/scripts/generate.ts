@@ -63,12 +63,10 @@ function main() {
     skipTypeCheck: true,
   });
 
-  const result = generateSchemaFile(
-    {
-      ...baseConfig,
-      skipTypeCheck: false,
-    }
-  );
+  const result = generateSchemaFile({
+    ...baseConfig,
+    skipTypeCheck: false,
+  });
 
   console.log(inspect(result, { showHidden: true, depth: null, colors: true }));
 }

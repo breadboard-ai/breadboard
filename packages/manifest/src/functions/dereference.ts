@@ -6,17 +6,16 @@ import { isDereferencedManifest } from "./is-dereferenced-manifest";
 import { isRemoteUri } from "./is-remote-uri";
 import { isResourceReference } from "./is-resource-reference";
 
-
 export async function dereference(
   resource: Resource
 ): Promise<DereferencedBoard | DereferencedManifest> {
   let data = resource;
   if (isResourceReference(data)) {
-    const uri = data.url;
+    const uri = data.url.toString();
     if (isRemoteUri(uri)) {
       return await fetch(uri).then(async (res) => await res.json());
     } else {
-      return await import(uri).then((module) => module.default);
+      return await import(decodeURI(uri)).then((module) => module.default);
     }
   } else {
     if (isDereferencedBoard(data)) {

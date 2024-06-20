@@ -10,7 +10,54 @@ import { DereferencedManifest, ManifestResource } from "./types/manifest";
 
 export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
 
+/**
+ * A Breadboard Manifest.
+ *
+ * Contains a list of paths to board files and a list of paths to manifest files.
+ *
+ * @examples [
+ *   {
+ *     "title": "Empty Manifest"
+ *   },
+ *   {
+ *     "title": "Manifest with empty lists",
+ *     "boards": [],
+ *     "manifests": []
+ *   },
+ *   {
+ *     "boards": [
+ *       {
+ *         "title": "My First Board",
+ *         "url": "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+ *         "version": "1.0.0"
+ *       },
+ *       {
+ *         "title": "My Second Board",
+ *         "url": "./boards/board.bgl.json"
+ *       }
+ *     ],
+ *     "manifests": [
+ *       {
+ *         "title": "Gist Manifest",
+ *         "url": "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json"
+ *       }
+ *     ]
+ *   },
+ *   {
+ *     "title": "Manifest with concrete boards",
+ *     "boards": [
+ *       {
+ *         "title": "My First Board",
+ *         "nodes": [],
+ *         "edges": []
+ *       }
+ *     ]
+ *   }
+ * ]
+ */
 export class BreadboardManifest implements DereferencedManifest {
+  // $schema?: string = BreadboardManifestJsonSchema.$schema;
+  $schema?: string = "./bbm.schema.json";
   title?: string;
   boards?: BoardResource[];
   manifests?: ManifestResource[];

@@ -1,7 +1,7 @@
 import { BoardResource } from "./boards";
 import { ResourceReference } from "./resource";
 
-export type ManifestResource = DereferencedManifest | ReferencedManifest;
+export type ManifestResource = ReferencedManifest | DereferencedManifest;
 
 export type DereferencedManifest = {
   title?: string;
@@ -10,6 +10,6 @@ export type DereferencedManifest = {
 };
 
 export type ReferencedManifest = ResourceReference & {
-  boards?: never;
-  manifests?: never;
+  boards?: undefined;
+  manifests?: undefined;
 };

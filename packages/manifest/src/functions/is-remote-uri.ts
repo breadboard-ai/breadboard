@@ -1,4 +1,3 @@
-
 export function isRemoteUri(uri: string): boolean {
   try {
     new URL(uri);

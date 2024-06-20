@@ -10,6 +10,7 @@ import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe, mock } from "node:test";
 import path from "path";
+import { inspect } from "util";
 import { BreadboardManifest } from "..";
 import schema from "../../bbm.schema.json" with { type: "json" };
 import { dereference } from "../functions/dereference";
@@ -26,7 +27,6 @@ import { isResourceReference } from "../functions/is-resource-reference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
 import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
 import { Resource, ResourceReference } from "../types/resource";
-import { inspect } from "util";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -63,7 +63,7 @@ const dereferencedManifest: DereferencedManifest = {
 };
 const localBoardReference: ReferencedBoard = {
   title: "Local Board Reference",
-  url: path.resolve(import.meta.dirname, "board.bgl.json"),
+  url: encodeURI(path.resolve(import.meta.dirname, "board.bgl.json")),
 };
 const remoteBoardReference: ReferencedBoard = {
   title: "Remote Board Reference",
@@ -71,7 +71,7 @@ const remoteBoardReference: ReferencedBoard = {
 };
 const localManifestReference: ReferencedManifest = {
   title: "Local Manifest Reference",
-  url: path.resolve(import.meta.dirname, "manifest.bbm.json"),
+  url: encodeURI(path.resolve(import.meta.dirname, "manifest.bbm.json")),
 };
 const remoteManifestReference: ReferencedManifest = {
   title: "Remote Manifest Reference",
@@ -117,7 +117,6 @@ const fixtures: BreadboardManifest[] = [
       {
         title: "My First Board",
         url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-        version: "1.0.0",
       },
       { title: "My Second Board", url: "./boards/board.bgl.json" },
     ],
@@ -141,7 +140,6 @@ const fixtures: BreadboardManifest[] = [
           {
             title: "My First Board",
             url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-            version: "1.0.0",
           },
         ],
         manifests: [
@@ -151,7 +149,6 @@ const fixtures: BreadboardManifest[] = [
               {
                 title: "My First Board",
                 url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-                version: "1.0.0",
               },
             ],
           },
@@ -175,9 +172,6 @@ const fixtures: BreadboardManifest[] = [
     title: "Manifest with dereferenced, local, and remote boards",
     boards: [dereferencedBoard, localBoardReference, remoteBoardReference],
   },
-  dereferencedManifest,
-  localManifestReference,
-  remoteManifestReference,
   {
     title: "Manifest with a single dereferenced manifest",
     manifests: [dereferencedManifest],
@@ -212,7 +206,7 @@ const testManifestValidation = (
       const valid = validate(manifest);
       const errors = validate.errors;
       if (errors) {
-        throw new Error(inspect(errors, { depth: null, colors: true }))
+        throw new Error(inspect(errors, { depth: null, colors: true }));
       }
       assert.ok(!errors);
       assert.ok(valid);
@@ -414,6 +408,17 @@ test("test mock fetch", async () => {
   mock.reset();
 });
 
+function writeManifestsToFile() {
+  fs.writeFileSync(
+    "manifests.json",
+    JSON.stringify(
+      { $schema: "./bbm.schema.json", manifests: fixtures },
+      null,
+      "\t"
+    )
+  );
+}
+
 function mockResponse(
   type: string,
   expected: DereferencedBoard | DereferencedManifest,
@@ -423,7 +428,7 @@ function mockResponse(
     mockFetchResponse(expected);
   } else if (type === "local") {
     fs.writeFileSync(
-      (reference as ResourceReference).url,
+      decodeURI((reference as ResourceReference).url),
       JSON.stringify(expected)
     );
   }
@@ -438,7 +443,7 @@ function mockFetchResponse(obj: any) {
 
 function resetMocks(type: string, reference: Resource) {
   if (type === "local") {
-    fs.unlinkSync((reference as ResourceReference).url);
+    fs.unlinkSync(decodeURI((reference as ResourceReference).url));
   } else if (type === "remote") {
     mock.reset();
   }

@@ -20,23 +20,91 @@
 					"items": {
 						"$ref": "#/definitions/ManifestResource"
 					}
+				},
+				"$schema": {
+					"type": "string"
 				}
 			},
-			"additionalProperties": false
+			"additionalProperties": false,
+			"description": "A Breadboard Manifest.\n\nContains a list of paths to board files and a list of paths to manifest files.",
+			"examples": [
+				{
+					"title": "Empty Manifest"
+				},
+				{
+					"title": "Manifest with empty lists",
+					"boards": [],
+					"manifests": []
+				},
+				{
+					"boards": [
+						{
+							"title": "My First Board",
+							"url": "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+							"version": "1.0.0"
+						},
+						{
+							"title": "My Second Board",
+							"url": "./boards/board.bgl.json"
+						}
+					],
+					"manifests": [
+						{
+							"title": "Gist Manifest",
+							"url": "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json"
+						}
+					]
+				},
+				{
+					"title": "Manifest with concrete boards",
+					"boards": [
+						{
+							"title": "My First Board",
+							"nodes": [],
+							"edges": []
+						}
+					]
+				}
+			]
 		},
 		"BoardResource": {
 			"anyOf": [
 				{
-					"$ref": "#/definitions/DereferencedBoard"
+					"$ref": "#/definitions/ReferencedBoard"
 				},
 				{
-					"$ref": "#/definitions/ReferencedBoard"
+					"$ref": "#/definitions/DereferencedBoard"
 				}
+			]
+		},
+		"ReferencedBoard": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"nodes": {
+					"not": {}
+				},
+				"edges": {
+					"not": {}
+				},
+				"title": {
+					"type": "string"
+				},
+				"url": {
+					"type": "string",
+					"format": "uri-reference"
+				}
+			},
+			"required": [
+				"url"
 			]
 		},
 		"DereferencedBoard": {
 			"type": "object",
 			"properties": {
+				"url": {
+					"not": {}
+				},
 				"nodes": {
 					"type": "array",
 					"items": {
@@ -51,9 +119,10 @@
 				}
 			},
 			"required": [
-				"edges",
-				"nodes"
-			]
+				"nodes",
+				"edges"
+			],
+			"additionalProperties": false
 		},
 		"Node": {
 			"type": "object",
@@ -63,9 +132,26 @@
 			"type": "object",
 			"properties": {}
 		},
-		"ReferencedBoard": {
+		"ManifestResource": {
+			"anyOf": [
+				{
+					"$ref": "#/definitions/ReferencedManifest"
+				},
+				{
+					"$ref": "#/definitions/DereferencedManifest"
+				}
+			]
+		},
+		"ReferencedManifest": {
 			"type": "object",
+			"additionalProperties": false,
 			"properties": {
+				"boards": {
+					"not": {}
+				},
+				"manifests": {
+					"not": {}
+				},
 				"title": {
 					"type": "string"
 				},
@@ -76,16 +162,6 @@
 			},
 			"required": [
 				"url"
-			]
-		},
-		"ManifestResource": {
-			"anyOf": [
-				{
-					"$ref": "#/definitions/DereferencedManifest"
-				},
-				{
-					"$ref": "#/definitions/ReferencedManifest"
-				}
 			]
 		},
 		"DereferencedManifest": {
@@ -108,22 +184,6 @@
 				}
 			},
 			"additionalProperties": false
-		},
-		"ReferencedManifest": {
-			"type": "object",
-			"additionalProperties": false,
-			"properties": {
-				"title": {
-					"type": "string"
-				},
-				"url": {
-					"type": "string",
-					"format": "uri-reference"
-				}
-			},
-			"required": [
-				"url"
-			]
 		}
 	}
 }
