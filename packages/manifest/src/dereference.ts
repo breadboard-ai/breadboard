@@ -99,13 +99,13 @@ export async function dereferenceAll(resource: BreadboardManifest): Promise<{
   };
 }
 
-export function isEncoded(uri: string) {
+export function isEncoded(uri: string): boolean {
   uri = uri || "";
 
   return uri !== decodeURIComponent(uri);
 }
 
-export function fullyDecodeURI(uri: string) {
+export function fullyDecodeURI(uri: string): string {
   while (isEncoded(uri)) {
     uri = decodeURIComponent(uri);
   }
