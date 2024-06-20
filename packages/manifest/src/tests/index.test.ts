@@ -11,7 +11,11 @@ import * as assert from "node:assert";
 import test, { after, before, describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
-import { BreadboardManifest } from "..";
+import {
+  BreadboardManifest,
+  DereferencedBoard,
+  DereferencedManifest,
+} from "..";
 import {
   dereference,
   dereferenceBoard,
@@ -20,7 +24,6 @@ import {
   fullyDecodeURI,
   isEncoded,
 } from "../dereference";
-import { DereferencedBoard } from "../types/boards";
 import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
 import { isDereferencedManifest } from "../types/guards/manifest-resource";
 import {
@@ -30,7 +33,6 @@ import {
   isRemoteUri,
   isResourceReference,
 } from "../types/guards/resource-reference";
-import { DereferencedManifest } from "../types/manifest";
 import { Resource } from "../types/resource";
 import {
   dereferencedBoard,
@@ -42,20 +44,21 @@ import {
   remoteBoardReference,
   remoteManifestReference,
 } from "./data.test";
-import { getMockedAsyncReadFileResponse, getMockedFetchResponse, getReadFileSyncResponse } from "./helpers.test";
-// import schema from "../../bbm.schema.json" with {type: "json"};
-const schema = await import("../../bbm.schema.json" as any).then((module) => module.default);
+import {
+  getMockedAsyncReadFileResponse,
+  getMockedFetchResponse,
+  getReadFileSyncResponse,
+} from "./helpers.test";
+
+const schema = await import("../../bbm.schema.json" as any).then(
+  (module) => module.default
+);
+
 const ajv = new Ajv({
-  // keywords: definitions({
-  //   // defaultMeta: "draft-07",
-  // }),
   validateSchema: true,
   validateFormats: true,
   strictTypes: true,
   strict: true,
-  formats: {
-    // "uri-reference": require("ajv-formats/dist/formats").fullFormats["uri-reference"],
-  },
   verbose: true,
   allErrors: true,
 });
@@ -71,55 +74,40 @@ function addResponseToMocked(reference: Resource, expected: any) {
   }
 }
 
-export function getMockedResponse(path: string, fn: (x: any) => any) {
+function getMockedResponse(path: string, fn: (x: any) => any) {
   const fullyDecodedPath = fullyDecodeURI(path);
-  if (mockedResponses.has(fullyDecodedPath)) {
-    path = fullyDecodedPath;
-  }
-  if (mockedResponses.has(path)) {
-    const responseData = mockedResponses.get(path);
+  const responseData = mockedResponses.get(fullyDecodedPath || path);
+  if (responseData) {
     return fn(responseData);
   } else {
     throw new Error(`No mocked response for: ${path}`);
   }
 }
 
-
-export function mockManifestFetches(fixture: BreadboardManifest) {
+function mockManifestFetches(fixture: BreadboardManifest) {
   for (const board of fixture.boards || []) {
     if (isResourceReference(board)) {
-      addResponseToMocked(board, {
-        edges: [],
-        nodes: [],
-      });
+      addResponseToMocked(board, { edges: [], nodes: [] });
     }
   }
   for (const manifest of fixture.manifests || []) {
     if (isResourceReference(manifest)) {
-      addResponseToMocked(manifest, {
-        boards: [],
-        manifests: [],
-      });
+      addResponseToMocked(manifest, { boards: [], manifests: [] });
     }
     mockManifestFetches(manifest);
   }
 }
-
 
 let validate: ValidateFunction;
 let mockedResponses: Map<string, any>;
 
 before(() => {
   validate = ajv.compile(schema);
-});
-
-before(() => {
   mockedResponses = new Map();
 
   mock.method(fs, "readFileSync", (path: string) =>
     getMockedResponse(path, getReadFileSyncResponse)
   );
-
   mock.method(fs.promises, "readFile", (path: string) =>
     getMockedResponse(path, getMockedAsyncReadFileResponse)
   );
@@ -128,27 +116,26 @@ before(() => {
   );
 });
 
-test("Schema is valid.", async () => {
-  assert.ok(validate);
+// Validation Tests
+describe("Validation Tests", () => {
+  test("Schema is valid.", async () => {
+    assert.ok(validate);
+  });
+
+  manifestArray().forEach((manifest, index) => {
+    test(`Manifest ${index + 1}/${manifestArray().length}: ${manifest.title || ""}`, async () => {
+      const valid = validate(manifest);
+      const errors = validate.errors;
+      if (errors) {
+        throw new Error(inspect(errors, { depth: null, colors: true }));
+      }
+      assert.ok(!errors);
+      assert.ok(valid);
+    });
+  });
 });
 
-for (const [index, manifest] of manifestArray().entries()) {
-  test(
-      [`Manifest ${index + 1}/${manifestArray().length}`, manifest.title]
-          .filter(Boolean)
-          .join(": "),
-      async (t) => {
-        const valid = validate(manifest);
-        const errors = validate.errors;
-        if (errors) {
-          throw new Error(inspect(errors, {depth: null, colors: true}));
-        }
-        assert.ok(!errors);
-        assert.ok(valid);
-      }
-  );
-}
-
+// BreadboardManifest Tests
 describe("BreadboardManifest", () => {
   type TestCase<T> = [T, boolean];
 
@@ -244,13 +231,11 @@ describe("BreadboardManifest", () => {
     });
   });
 
-  type TestDefinition = {
+  const dereferenceTests: {
     name: string;
     reference: Resource;
     expected: DereferencedBoard | DereferencedManifest;
-  };
-
-  const dereferenceTests: TestDefinition[] = [
+  }[] = [
     {
       name: "remote manifest",
       reference: remoteManifestReference(),
@@ -284,32 +269,24 @@ describe("BreadboardManifest", () => {
   ];
 
   describe("dereference", () => {
-    dereferenceTests.forEach(
-      ({ name, reference, expected }: TestDefinition) => {
-        test(`${name} reference should be dereferenced correctly`, async () => {
-          addResponseToMocked(reference, expected);
-          const dereferenced = await dereference(reference);
-          assert.ok(dereferenced);
-          assert.deepEqual(dereferenced, expected);
-        });
-      }
-    );
+    dereferenceTests.forEach(({ name, reference, expected }) => {
+      test(`${name} reference should be dereferenced correctly`, async () => {
+        addResponseToMocked(reference, expected);
+        const dereferenced = await dereference(reference);
+        assert.ok(dereferenced);
+        assert.deepEqual(dereferenced, expected);
+      });
+    });
 
     test("should throw if dereferencing returns something other than a board or manifest", async () => {
-      const nonBoardReference = {
-        url: path.resolve("non-board.json"),
-      };
-      const nonBoardData = {
-        blah: "blah",
-      };
+      const nonBoardReference = { url: path.resolve("non-board.json") };
+      const nonBoardData = { blah: "blah" };
       addResponseToMocked(nonBoardReference, nonBoardData);
 
-      try {
-        const result = await dereference(nonBoardReference);
-        assert.fail("Expected an error to be thrown.");
-      } catch (e) {
+      await assert.rejects(dereference(nonBoardReference), (e) => {
         assert.ok(e instanceof Error);
-      }
+        return true;
+      });
     });
   });
 
@@ -353,38 +330,38 @@ describe("BreadboardManifest", () => {
     test("should dereference all boards and manifests contained in a manifest", async () => {
       const fixture = nestedManifest();
       mockManifestFetches(fixture);
-
       const dereferenced = await dereferenceManifestContents(fixture);
       assert.ok(dereferenced);
     });
   });
 });
 
-test("test mock fetch", async () => {
-  mock.method(global, "fetch", () => ({
-    json: () => ({ key: "value" }),
-    status: 200,
-  }));
-  const response = await fetch("foo");
-  assert.strictEqual(response.status, 200);
+// Utility Function Tests
+describe("Utility Functions", () => {
+  describe("isEncoded", () => {
+    test("should return true if the URI is encoded", () => {
+      assert.ok(isEncoded(encodeURI("./path with spaces/file.json")));
+    });
+    test("should return false if the URI is not encoded", () => {
+      assert.ok(!isEncoded("./path with spaces/file.json"));
+    });
+    test("should handle nullish values", () => {
+      assert.ok(!isEncoded(null as any));
+      assert.ok(!isEncoded(undefined as any));
+    });
+  });
 
-  const responseJson = await response.json();
-  assert.strictEqual(responseJson.key, "value");
+  test("test mock fetch", async () => {
+    mock.method(global, "fetch", () => ({
+      json: () => ({ key: "value" }),
+      status: 200,
+    }));
+    const response = await fetch("foo");
+    assert.strictEqual(response.status, 200);
+
+    const responseJson = await response.json();
+    assert.strictEqual(responseJson.key, "value");
+  });
 });
-
-
-describe("isEncoded", () => {
-  test("should return true if the URI is encoded", () => {
-    assert.ok(isEncoded(encodeURI("./path with spaces/file.json")));
-  });
-  test("should return false if the URI is not encoded", () => {
-    assert.ok(!isEncoded("./path with spaces/file.json"));
-  });
-  test("should handle nullish values", () => {
-    assert.ok(!isEncoded(null as any));
-    assert.ok(!isEncoded(undefined as any));
-  });
-});
-
 
 after(() => mock.reset());
