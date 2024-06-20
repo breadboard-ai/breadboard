@@ -381,6 +381,12 @@ describe("BreadboardManifest", () => {
       assert.deepEqual(dereferenced, dereferencedBoard);
       mock.reset();
     });
+
+    test("should throw if dereferencing returns something other than a board", async () => {
+      mockFetchResponse(dereferencedManifest);
+      await assert.rejects(dereferenceBoard(remoteBoardReference));
+      mock.reset();
+    });
   });
 
   describe("dereferenceManifest", () => {
@@ -389,6 +395,12 @@ describe("BreadboardManifest", () => {
       const dereferenced = await dereferenceManifest(remoteManifestReference);
       assert.ok(isDereferencedManifest(dereferenced));
       assert.deepEqual(dereferenced, dereferencedManifest);
+      mock.reset();
+    });
+
+    test("should throw if dereferencing returns something other than a manifest", async () => {
+      mockFetchResponse(dereferencedBoard);
+      await assert.rejects(dereferenceManifest(remoteManifestReference));
       mock.reset();
     });
   });
