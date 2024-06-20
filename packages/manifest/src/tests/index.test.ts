@@ -9,15 +9,17 @@ import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
 import { AssertionError } from "node:assert";
-import test, { after, describe, mock } from "node:test";
+import test, { after, before, describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
 import { BreadboardManifest } from "..";
 import schema from "../../bbm.schema.json" with { type: "json" };
 import {
   dereference,
+  dereferenceAll,
   dereferenceBoard,
   dereferenceManifest,
+  fullyDecodeURI,
 } from "../dereference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
 import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
@@ -50,8 +52,21 @@ addFormats(ajv);
 
 let validate: ValidateFunction;
 
-test.before(() => {
+before(() => {
   validate = ajv.compile(schema);
+});
+
+before(() => {
+  mock.method(fs, "readFileSync", (path: string) =>
+    getMockedResponse(path, getReadFileSyncResponse)
+  );
+
+  mock.method(fs.promises, "readFile", (path: string) =>
+    getMockedResponse(path, getMockedAsyncReadFileResponse)
+  );
+  mock.method(global, "fetch", (path: string) =>
+    getMockedResponse(path, getMockedFetchResponse)
+  );
 });
 
 test("Schema is valid.", async () => {
@@ -217,6 +232,11 @@ const fixtures: BreadboardManifest[] = [
   },
 ];
 
+const nestedManifest: BreadboardManifest = {
+  manifests: fixtures,
+  boards: [localBoardReference, remoteBoardReference, dereferencedBoard],
+};
+
 const testManifestValidation = (
   manifest: BreadboardManifest,
   index: number
@@ -340,13 +360,12 @@ describe("BreadboardManifest", () => {
     name: string;
     reference: Resource;
     expected: DereferencedBoard | DereferencedManifest;
-    type: "remote" | "local" | "dereferenced";
   };
 
   const dereferenceTests: TestDefinition[] = [
     {
       name: "remote manifest",
-      type: "remote",
+
       reference: remoteManifestReference,
       expected: dereferencedManifest,
     },
@@ -354,43 +373,37 @@ describe("BreadboardManifest", () => {
       name: "local manifest",
       reference: localManifestReference,
       expected: dereferencedManifest,
-      type: "local",
     },
     {
       name: "dereferenced manifest",
       reference: dereferencedManifest,
       expected: dereferencedManifest,
-      type: "dereferenced",
     },
     {
       name: "remote board",
       reference: remoteBoardReference,
       expected: dereferencedBoard,
-      type: "remote",
     },
     {
       name: "local board",
       reference: localBoardReference,
       expected: dereferencedBoard,
-      type: "local",
     },
     {
       name: "dereferenced board",
       reference: dereferencedBoard,
       expected: dereferencedBoard,
-      type: "dereferenced",
     },
   ];
 
   describe("dereference", () => {
     dereferenceTests.forEach(
-      ({ name, reference, expected, type }: TestDefinition) => {
+      ({ name, reference, expected }: TestDefinition) => {
         test(`${name} reference should be dereferenced correctly`, async () => {
-          mockResponse(type, expected, reference);
+          addResponseToMocked(reference, expected);
           const dereferenced = await dereference(reference);
           assert.ok(dereferenced);
           assert.deepEqual(dereferenced, expected);
-          resetMocks();
         });
       }
     );
@@ -402,7 +415,7 @@ describe("BreadboardManifest", () => {
       const nonBoardData = {
         blah: "blah",
       };
-      mockResponse("local", nonBoardData, nonBoardReference);
+      addResponseToMocked(nonBoardReference, nonBoardData);
 
       try {
         const result = await dereference(nonBoardReference);
@@ -410,7 +423,6 @@ describe("BreadboardManifest", () => {
       } catch (e) {
         assert.ok(e instanceof Error);
       }
-      resetMocks();
     });
   });
 
@@ -420,13 +432,11 @@ describe("BreadboardManifest", () => {
       const dereferenced = await dereferenceBoard(remoteBoardReference);
       assert.ok(isDereferencedBoard(dereferenced));
       assert.deepEqual(dereferenced, dereferencedBoard);
-      mock.reset();
     });
 
     test("should throw if dereferencing returns something other than a board", async () => {
       mockFetchResponse(dereferencedManifest);
       await assert.rejects(dereferenceBoard(remoteBoardReference));
-      mock.reset();
     });
   });
 
@@ -436,13 +446,20 @@ describe("BreadboardManifest", () => {
       const dereferenced = await dereferenceManifest(remoteManifestReference);
       assert.ok(isDereferencedManifest(dereferenced));
       assert.deepEqual(dereferenced, dereferencedManifest);
-      mock.reset();
     });
 
     test("should throw if dereferencing returns something other than a manifest", async () => {
       mockFetchResponse(dereferencedBoard);
       await assert.rejects(dereferenceManifest(remoteManifestReference));
-      mock.reset();
+    });
+  });
+
+  describe("dereferenceAll", () => {
+    test("should dereference all boards and manifests", async () => {
+      const fixture = nestedManifest;
+      mockManifestFetches(fixture);
+
+      const dereferenced = await dereferenceAll(fixture);
     });
   });
 });
@@ -457,9 +474,30 @@ test("test mock fetch", async () => {
 
   const responseJson = await response.json();
   assert.strictEqual(responseJson.key, "value");
-
-  mock.reset();
 });
+
+function mockManifestFetches(fixture: BreadboardManifest) {
+  fixture.manifests?.forEach((manifest) => {
+    if (!isResourceReference(manifest)) {
+      addResponseToMocked(manifest, {
+        title: "Dereferenced Manifest",
+        boards: [],
+        manifests: [],
+      });
+    }
+    manifest.manifests?.forEach((nestedManifest) => {
+      mockManifestFetches(nestedManifest);
+    });
+  });
+  fixture.boards?.forEach((board) => {
+    if (!isResourceReference(board)) {
+      addResponseToMocked(board, {
+        edges: [],
+        nodes: [],
+      });
+    }
+  });
+}
 
 function writeManifestsToFile() {
   fs.writeFileSync(
@@ -472,26 +510,43 @@ function writeManifestsToFile() {
   );
 }
 
-function mockResponse(type: string, expected: any, reference: Resource) {
-  if ("url" in reference) {
-    if (type === "remote") {
-      mockFetchResponse(expected);
-    } else if (type === "local") {
-      const stringified = JSON.stringify(expected);
-      mock.method(fs, "readFileSync", (path: string) => {
-        if (path === reference.url) {
-          return stringified;
-        }
-        throw new Error("File not found.");
-      });
-      mock.method(fs.promises, "readFile", (path: string) => {
-        if (path === reference.url) {
-          return { then: (cb: any) => cb(stringified) };
-        }
-        throw new Error("File not found.");
-      });
-    }
+const mockedResponses: Map<string, any> = new Map();
+
+function getMockedResponse(path: string, fn: (x: any) => any) {
+  const fullyDecodedPath = fullyDecodeURI(path);
+  if (mockedResponses.has(fullyDecodedPath)) {
+    path = fullyDecodedPath;
+  }
+  if (mockedResponses.has(path)) {
+    const responseData = mockedResponses.get(path);
+    return fn(responseData);
   } else {
+    throw new Error("File not found.");
+  }
+}
+
+function getMockedFetchResponse(mockedResponse: any) {
+  return {
+    then: (cb: any) => cb({ json: () => Promise.resolve(mockedResponse) }),
+    status: 200,
+  };
+}
+
+function getMockedAsyncReadFileResponse(mockedResponse: any): {
+  then: (cb: any) => any;
+} {
+  return { then: (cb: any) => cb(JSON.stringify(mockedResponse)) };
+}
+
+function getReadFileSyncResponse(mockedResponse: any): string {
+  return JSON.stringify(mockedResponse);
+}
+
+function addResponseToMocked(reference: Resource, expected: any) {
+  if ("url" in reference) {
+    // mockedResponses[reference.url!] = expected;
+    const decodedUrl = fullyDecodeURI(reference.url!);
+    mockedResponses.set(decodedUrl, expected);
   }
 }
 
@@ -501,10 +556,6 @@ function mockFetchResponse(obj: any) {
     status: 200,
   }));
 }
-function resetMocks() {
-  mock.reset();
-}
-
 describe("test assert.throws", () => {
   function shouldThrow(throwError: boolean) {
     if (throwError) throw new Error("Exception Thrown");
@@ -515,4 +566,4 @@ describe("test assert.throws", () => {
   }, Error);
 });
 
-after(() => resetMocks());
+after(() => mock.reset());
