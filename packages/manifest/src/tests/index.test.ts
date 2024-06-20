@@ -8,6 +8,7 @@ import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
+import { AssertionError } from "node:assert";
 import test, { describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
@@ -53,6 +54,25 @@ test.before(() => {
 test("Schema is valid.", async () => {
   assert.ok(validate);
 });
+
+async function assertThrowsAsynchronously(
+  test: { (): Promise<any> },
+  error: Error
+) {
+  try {
+    await test();
+  } catch (e) {
+    // if (!error || e instanceof Error) return "everything is fine";
+    throw new AssertionError({
+      message: "Unexpected error",
+      actual: e,
+      expected: error,
+    });
+  }
+  // throw new AssertionError({
+  //   message: "Missing rejection" + (error ? " with " + error.name : ""),
+  // });
+}
 
 // Declare the constants with types
 const dereferencedBoard: DereferencedBoard = { edges: [], nodes: [] };
@@ -371,6 +391,24 @@ describe("BreadboardManifest", () => {
         });
       }
     );
+
+    test("should throw if dereferencing returns something other than a board or manifest", async () => {
+      mockResponse(
+        "remote",
+        // {
+        //   url: 1234,
+        // },
+        "Invalid Dereferenced Object",
+        remoteBoardReference
+      );
+      assert.throws(() =>
+        assertThrowsAsynchronously(
+          () => dereference(remoteBoardReference),
+          new AssertionError()
+        )
+      );
+      mock.reset();
+    });
   });
 
   describe("dereferenceBoard", () => {
@@ -431,11 +469,7 @@ function writeManifestsToFile() {
   );
 }
 
-function mockResponse(
-  type: string,
-  expected: DereferencedBoard | DereferencedManifest,
-  reference: Resource
-) {
+function mockResponse(type: string, expected: any, reference: Resource) {
   if (type === "remote") {
     mockFetchResponse(expected);
   } else if (type === "local") {
@@ -460,3 +494,13 @@ function resetMocks(type: string, reference: Resource) {
     mock.reset();
   }
 }
+
+describe("test assert.throws", () => {
+  function shouldThrow(throwError: boolean) {
+    if (throwError) throw new Error("Exception Thrown");
+  }
+
+  assert.throws(() => {
+    shouldThrow(true);
+  }, Error);
+});
