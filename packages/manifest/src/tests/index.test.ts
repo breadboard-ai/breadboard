@@ -16,9 +16,9 @@ import { BreadboardManifest } from "..";
 import schema from "../../bbm.schema.json" with { type: "json" };
 import {
   dereference,
-  dereferenceAll,
   dereferenceBoard,
   dereferenceManifest,
+  dereferenceManifestContents,
   fullyDecodeURI,
 } from "../dereference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
@@ -452,12 +452,13 @@ describe("BreadboardManifest", () => {
     });
   });
 
-  describe("dereferenceAll", () => {
-    test("should dereference all boards and manifests", async () => {
+  describe("dereferenceManifestContents", () => {
+    test("should dereference all boards and manifests contained in a manifest", async () => {
       const fixture = nestedManifest;
       mockManifestFetches(fixture);
 
-      const dereferenced = await dereferenceAll(fixture);
+      const dereferenced = await dereferenceManifestContents(fixture);
+      assert.ok(dereferenced);
     });
   });
 });

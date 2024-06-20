@@ -73,7 +73,7 @@ export async function dereferenceManifest(
   }
 }
 
-export async function dereferenceAll(resource: BreadboardManifest): Promise<{
+export async function dereferenceManifestContents(resource: BreadboardManifest): Promise<{
   title?: string;
   boards: DereferencedBoard[];
   manifests: DereferencedManifest[];
@@ -86,17 +86,15 @@ export async function dereferenceAll(resource: BreadboardManifest): Promise<{
 
   let manifests: DereferencedManifest[] = [];
   for await (const manifest of resource.manifests || []) {
-    manifests.push(await dereferenceManifest(manifest));
+    manifests.push(await dereferenceManifestContents(manifest));
   }
 
-  resource.boards = boards;
-  resource.manifests = manifests;
-
-  return {
-    title: resource.title,
+  const dereferencedResource = {
+    ...resource,
     boards,
     manifests,
   };
+  return dereferencedResource;
 }
 
 export function isEncoded(uri: string): boolean {
