@@ -498,7 +498,7 @@ function generateGistURL(extension: string = "file.json"): string {
 
 function mockManifestFetches(fixture: BreadboardManifest) {
   for (const board of fixture.boards || []) {
-    if (!isResourceReference(board)) {
+    if (isResourceReference(board)) {
       addResponseToMocked(board, {
         edges: [],
         nodes: [],
