@@ -30,6 +30,7 @@ export { Navigation } from "./nav/nav.js";
 export { NodeMetaDetails } from "./node-meta-details/node-meta-details.js";
 export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeSelector } from "./editor/node-selector.js";
+export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ProviderOverlay } from "./overlay/provider.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";

@@ -97,6 +97,22 @@ export class BoardUnloadEvent extends Event {
  * General UI
  */
 
+export class OverflowMenuActionEvent extends Event {
+  static eventName = "bboverflowmenuaction";
+
+  constructor(public readonly action: string) {
+    super(OverflowMenuActionEvent.eventName, { ...eventInit });
+  }
+}
+
+export class OverflowMenuDismissedEvent extends Event {
+  static eventName = "bboverflowmenudismissed";
+
+  constructor() {
+    super(OverflowMenuDismissedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class UndoEvent extends Event {
   static eventName = "bbundo";
 
