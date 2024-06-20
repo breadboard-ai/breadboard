@@ -13,17 +13,17 @@ export async function dereference(
   if (isResourceReference(data)) {
     const uri = data.url.toString();
     if (isRemoteUri(uri)) {
-      return await fetch(uri).then(async (res) => await res.json());
+      data = await fetch(uri).then(async (res) => await res.json());
     } else {
-      return await import(decodeURI(uri)).then((module) => module.default);
+      data = await import(decodeURI(uri)).then((module) => module.default);
     }
+  }
+
+  if (isDereferencedBoard(data)) {
+    return data;
+  } else if (isDereferencedManifest(data)) {
+    return data;
   } else {
-    if (isDereferencedBoard(data)) {
-      return data;
-    } else if (isDereferencedManifest(data)) {
-      return data;
-    } else {
-      throw new Error("Expected a board or manifest, but got something else.");
-    }
+    throw new Error("Expected a board or manifest, but got something else.");
   }
 }
