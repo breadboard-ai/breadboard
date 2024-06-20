@@ -33,7 +33,6 @@ export type Title = string;
  */
 export type ResourceReference = {
   title?: Title;
-
   url: UriReference;
 };
 

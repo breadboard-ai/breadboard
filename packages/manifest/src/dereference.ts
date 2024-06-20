@@ -97,6 +97,7 @@ export async function fullyDereferenceManifest(
 
   const dereferencedResource: FullyDereferencedManifest = {
     ...resource,
+    title: resource.title || resource.url || "",
     boards,
     manifests,
   };

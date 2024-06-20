@@ -19,17 +19,14 @@
     "./*": "./dist/*",
     "./bbm.schema.json": "./bbm.schema.json"
   },
-  "files": [
-    "./bbm.schema.json",
-    "./dist/**/*",
-    "!./dist/scripts/**/*",
-    "./src/**/*.ts"
-  ],
   "license": "Apache-2.0",
   "name": "@google-labs/breadboard-manifest",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
+  "files": [
+    "**/*"
+  ],
   "repository": {
     "directory": "packages/manifest",
     "type": "git",

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { AdditionalProperties } from ".";
-import { ResourceReference } from "./resource";
+import { ResourceReference, Title, UriReference } from "./resource";
 
 /**
  * Minimal node type
@@ -39,7 +39,8 @@ export type ReferencedBoard = ResourceReference & {
  * @examples [{ "nodes": [], "edges": [] }]
  */
 export type DereferencedBoard = {
-  url?: undefined;
+  url?: UriReference;
+  title?: Title;
   nodes: Node[];
   edges: Edge[];
 };

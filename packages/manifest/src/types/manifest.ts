@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { BoardResource, DereferencedBoard } from "./boards";
-import { ResourceReference, Title } from "./resource";
+import { ResourceReference, Title, UriReference } from "./resource";
 
 /**
  * A manifest resource.
@@ -45,6 +45,7 @@ export type ManifestResource = ReferencedManifest | DereferencedManifest;
  * ]
  */
 export type DereferencedManifest = {
+  url?: UriReference;
   title?: Title;
   boards?: BoardResource[];
   manifests?: ManifestResource[];
@@ -66,6 +67,7 @@ export type DereferencedManifest = {
  *
  */
 export type ReferencedManifest = ResourceReference & {
+  url?: UriReference;
   boards?: undefined;
   manifests?: undefined;
 };
@@ -74,7 +76,8 @@ export type ReferencedManifest = ResourceReference & {
  * A fully dereferenced manifest with board and manifest resources.
  */
 export type FullyDereferencedManifest = {
-  title?: Title;
+  url?: UriReference;
+  title: Title;
   boards: DereferencedBoard[];
   manifests: FullyDereferencedManifest[];
 };

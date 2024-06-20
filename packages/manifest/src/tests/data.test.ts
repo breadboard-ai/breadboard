@@ -8,37 +8,43 @@ import { randomUUID } from "crypto";
 import path from "path";
 import { BreadboardManifest } from "../index";
 import {
-	DereferencedBoard,
-	DereferencedManifest,
-	ReferencedBoard,
-	ReferencedManifest,
+  DereferencedBoard,
+  DereferencedManifest,
+  ReferencedBoard,
+  ReferencedManifest,
 } from "../types";
 
 export const dereferencedBoard = (): DereferencedBoard => ({
   edges: [],
   nodes: [],
 });
+
 export const dereferencedManifest = (): DereferencedManifest => ({
   title: "Dereferenced Manifest",
   boards: [],
   manifests: [],
 });
+
 export const localBoardReference = (): ReferencedBoard => ({
   title: "Local Board Reference",
   url: generateLocalFilePath(".bgl.json"),
 });
+
 export const remoteBoardReference = (): ReferencedBoard => ({
   title: "Remote Board Reference",
   url: generateGistURL(),
 });
+
 export const localManifestReference = (): ReferencedManifest => ({
   title: "Local Manifest Reference",
   url: generateLocalFilePath(".bbm.json"),
 });
+
 export const remoteManifestReference = (): ReferencedManifest => ({
   title: "Remote Manifest Reference",
   url: generateGistURL(),
 });
+
 export const manifestArray = (): BreadboardManifest[] => [
   { title: "Manifest with an empty boards array", boards: [] },
   { title: "Manifest with an empty manifests array", manifests: [] },
@@ -163,6 +169,7 @@ export const manifestArray = (): BreadboardManifest[] => [
     ],
   },
 ];
+
 export const nestedManifest = (): BreadboardManifest => ({
   manifests: [
     {
