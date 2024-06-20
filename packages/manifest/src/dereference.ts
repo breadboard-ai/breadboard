@@ -1,4 +1,5 @@
 import fs from "fs";
+import { inspect } from "util";
 import { BreadboardManifest } from "./index";
 import { BoardResource, DereferencedBoard } from "./types/boards";
 import { isDereferencedBoard } from "./types/guards/board-resource";
@@ -31,8 +32,17 @@ export async function dereference(
   } else if (isDereferencedManifest(data)) {
     return data;
   } else {
-    throw new Error("Expected a board or manifest, but got something else.");
+    throw makeDeepObjectError(
+      "Expected a board or manifest, but got something else.",
+      data
+    );
   }
+}
+
+function makeDeepObjectError(message: string, data: any) {
+  return new Error(
+    `${message} ${{ data: inspect(data, { showHidden: true, depth: null, colors: true }) }}`
+  );
 }
 
 export async function dereferenceBoard(
@@ -42,7 +52,10 @@ export async function dereferenceBoard(
   if (isDereferencedBoard(data)) {
     return data;
   } else {
-    throw new Error("Expected a board, but got something else.");
+    throw makeDeepObjectError(
+      "Expected a board, but got something else.",
+      data
+    );
   }
 }
 
@@ -53,7 +66,10 @@ export async function dereferenceManifest(
   if (isDereferencedManifest(data)) {
     return data;
   } else {
-    throw new Error("Expected a manifest, but got something else.");
+    throw makeDeepObjectError(
+      "Expected a manifest, but got something else.",
+      data
+    );
   }
 }
 
