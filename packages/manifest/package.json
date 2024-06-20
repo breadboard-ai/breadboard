@@ -1,5 +1,9 @@
 {
   "author": "Google Labs Team",
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/breadboard-schema": "^1.4.1"
+  },
   "devDependencies": {
     "@types/node": "^20.14.5",
     "ajv": "^8.16.0",
@@ -71,9 +75,5 @@
         "FORCE_COLOR": "1"
       }
     }
-  },
-  "dependencies": {
-    "@google-labs/breadboard": "^0.20.0",
-    "@google-labs/breadboard-schema": "^1.4.1"
   }
 }

@@ -1,4 +1,4 @@
-import { DereferencedBoard } from "../types/boards";
+import { DereferencedBoard } from "../boards";
 
 export function isBglLike(resource: any): resource is DereferencedBoard {
   return (
@@ -8,4 +8,10 @@ export function isBglLike(resource: any): resource is DereferencedBoard {
     "edges" in resource &&
     Array.isArray(resource.edges)
   );
+}
+
+export function isDereferencedBoard(
+  resource: object
+): resource is DereferencedBoard {
+  return isBglLike(resource);
 }

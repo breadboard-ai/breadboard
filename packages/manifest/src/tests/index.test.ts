@@ -14,18 +14,21 @@ import path from "path";
 import { inspect } from "util";
 import { BreadboardManifest } from "..";
 import schema from "../../bbm.schema.json" with { type: "json" };
-import { dereference } from "../functions/dereference";
-import { dereferenceBoard } from "../functions/dereference-board";
-import { dereferenceManifest } from "../functions/dereference-manifest";
-import { isBglLike } from "../functions/is-bgl-like";
-import { isDereferencedBoard } from "../functions/is-dereferenced-board";
-import { isDereferencedManifest } from "../functions/is-dereferenced-manifest";
-import { isLocalResource } from "../functions/is-local-resource";
-import { isLocalUri } from "../functions/is-local-uri";
-import { isRemoteResource } from "../functions/is-remote-resource";
-import { isRemoteUri } from "../functions/is-remote-uri";
-import { isResourceReference } from "../functions/is-resource-reference";
+import {
+  dereference,
+  dereferenceBoard,
+  dereferenceManifest,
+} from "../dereference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
+import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
+import { isDereferencedManifest } from "../types/guards/manifest-resource";
+import {
+  isLocalResource,
+  isLocalUri,
+  isRemoteResource,
+  isRemoteUri,
+  isResourceReference,
+} from "../types/guards/resource-reference";
 import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
 import { Resource, ResourceReference } from "../types/resource";
 

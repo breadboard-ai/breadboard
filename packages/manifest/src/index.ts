@@ -68,3 +68,7 @@ export class BreadboardManifest implements DereferencedManifest {
     this.manifests = args.manifests || [];
   }
 }
+
+export * from "./dereference";
+export * from "./types";
+

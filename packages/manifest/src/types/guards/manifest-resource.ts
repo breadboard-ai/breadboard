@@ -1,4 +1,4 @@
-import { DereferencedManifest } from "../types/manifest";
+import { DereferencedManifest } from "../manifest";
 
 export function isDereferencedManifest(
   resource: object
@@ -8,6 +8,7 @@ export function isDereferencedManifest(
     (hasBoardsArray(resource) || hasManifestsArray(resource))
   );
 }
+
 function hasManifestsArray(resource: object): boolean {
   return "manifests" in resource && Array.isArray(resource.manifests);
 }
