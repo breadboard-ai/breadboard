@@ -2026,6 +2026,12 @@ export class Main extends LitElement {
         }
       }
 
+      actions.push({
+        title: "Settings",
+        name: "settings",
+        icon: "settings",
+      });
+
       overflowMenu = html`<bb-overflow-menu
         .actions=${actions}
         @bboverflowmenudismissed=${() => {
@@ -2075,6 +2081,11 @@ export class Main extends LitElement {
               break;
             }
 
+            case "settings": {
+              this.showSettingsOverlay = true;
+              break;
+            }
+
             default: {
               this.toast(
                 "Unknown action",
@@ -2083,6 +2094,8 @@ export class Main extends LitElement {
               break;
             }
           }
+
+          this.showOverflowMenu = false;
         }}
       ></bb-overflow-menu>`;
     }
