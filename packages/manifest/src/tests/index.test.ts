@@ -9,7 +9,7 @@ import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
 import { AssertionError } from "node:assert";
-import test, { describe, mock } from "node:test";
+import test, { after, describe, mock } from "node:test";
 import path from "path";
 import { inspect } from "util";
 import { BreadboardManifest } from "..";
@@ -30,7 +30,7 @@ import {
   isResourceReference,
 } from "../types/guards/resource-reference";
 import { DereferencedManifest, ReferencedManifest } from "../types/manifest";
-import { Resource, ResourceReference } from "../types/resource";
+import { Resource } from "../types/resource";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -390,27 +390,27 @@ describe("BreadboardManifest", () => {
           const dereferenced = await dereference(reference);
           assert.ok(dereferenced);
           assert.deepEqual(dereferenced, expected);
-          resetMocks(type, reference);
+          resetMocks();
         });
       }
     );
 
     test("should throw if dereferencing returns something other than a board or manifest", async () => {
-      mockResponse(
-        "remote",
-        // {
-        //   url: 1234,
-        // },
-        "Invalid Dereferenced Object",
-        remoteBoardReference
-      );
-      assert.throws(() =>
-        assertThrowsAsynchronously(
-          () => dereference(remoteBoardReference),
-          new AssertionError()
-        )
-      );
-      mock.reset();
+      const nonBoardReference = {
+        url: path.resolve(import.meta.dirname, "non-board.json"),
+      };
+      const nonBoardData = {
+        blah: "blah",
+      };
+      mockResponse("local", nonBoardData, nonBoardReference);
+
+      try {
+        const result = await dereference(nonBoardReference);
+        assert.fail("Expected an error to be thrown.");
+      } catch (e) {
+        assert.ok(e instanceof Error);
+      }
+      resetMocks();
     });
   });
 
@@ -473,13 +473,25 @@ function writeManifestsToFile() {
 }
 
 function mockResponse(type: string, expected: any, reference: Resource) {
-  if (type === "remote") {
-    mockFetchResponse(expected);
-  } else if (type === "local") {
-    fs.writeFileSync(
-      decodeURI((reference as ResourceReference).url),
-      JSON.stringify(expected)
-    );
+  if ("url" in reference) {
+    if (type === "remote") {
+      mockFetchResponse(expected);
+    } else if (type === "local") {
+      const stringified = JSON.stringify(expected);
+      mock.method(fs, "readFileSync", (path: string) => {
+        if (path === reference.url) {
+          return stringified;
+        }
+        throw new Error("File not found.");
+      });
+      mock.method(fs.promises, "readFile", (path: string) => {
+        if (path === reference.url) {
+          return { then: (cb: any) => cb(stringified) };
+        }
+        throw new Error("File not found.");
+      });
+    }
+  } else {
   }
 }
 
@@ -489,13 +501,8 @@ function mockFetchResponse(obj: any) {
     status: 200,
   }));
 }
-
-function resetMocks(type: string, reference: Resource) {
-  if (type === "local") {
-    fs.unlinkSync(decodeURI((reference as ResourceReference).url));
-  } else if (type === "remote") {
-    mock.reset();
-  }
+function resetMocks() {
+  mock.reset();
 }
 
 describe("test assert.throws", () => {
@@ -507,3 +514,5 @@ describe("test assert.throws", () => {
     shouldThrow(true);
   }, Error);
 });
+
+after(() => resetMocks());

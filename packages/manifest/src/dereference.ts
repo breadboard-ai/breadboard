@@ -1,3 +1,4 @@
+import fs from "fs";
 import { BreadboardManifest } from "./index";
 import { BoardResource, DereferencedBoard } from "./types/boards";
 import { isDereferencedBoard } from "./types/guards/board-resource";
@@ -18,7 +19,10 @@ export async function dereference(
     if (isRemoteUri(uri)) {
       data = await fetch(uri).then(async (res) => await res.json());
     } else {
-      data = await import(decodeURI(uri)).then((module) => module.default);
+      // data = await import(decodeURI(uri)).then((module) => module.default);
+      data = await fs.promises
+        .readFile(fullyDecodeURI(uri), "utf-8")
+        .then(JSON.parse);
     }
   }
 
@@ -60,7 +64,7 @@ export async function dereferenceAll(resource: BreadboardManifest): Promise<{
 }> {
   let boards: DereferencedBoard[] = [];
 
-  for (const board of resource.boards || []) {
+  for await (const board of resource.boards || []) {
     boards.push(await dereferenceBoard(board));
   }
 
@@ -77,4 +81,18 @@ export async function dereferenceAll(resource: BreadboardManifest): Promise<{
     boards,
     manifests,
   };
+}
+
+export function isEncoded(uri: string) {
+  uri = uri || "";
+
+  return uri !== decodeURIComponent(uri);
+}
+
+export function fullyDecodeURI(uri: string) {
+  while (isEncoded(uri)) {
+    uri = decodeURIComponent(uri);
+  }
+
+  return uri;
 }
