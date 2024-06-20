@@ -13,7 +13,8 @@
     "target": "ESNext"
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "./bbm.schema.json"
   ],
   "extends": "@google-labs/tsconfig/base.json",
 }
