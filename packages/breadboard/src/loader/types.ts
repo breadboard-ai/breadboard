@@ -114,6 +114,16 @@ export type GraphProvider = {
    */
   createBlank(url: URL): Promise<{ result: boolean; error?: string }>;
   /**
+   * Creates a board at the given URL
+   * @param url -- the URL at which to create the blank board
+   * @param graph -- the descriptor to use
+   * @returns -- the result of creating the board, with an error if failed.
+   */
+  create(
+    url: URL,
+    graph: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }>;
+  /**
    * Given a URL, deletes a `GraphDescriptor` instance at that URL.
    * @param url -- the URL to delete
    * @returns -- the result of deleting, with an error if saving failed.

@@ -5,8 +5,10 @@
  */
 
 import { ToastType } from "../../events/events.js";
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
+
+const DEFAULT_TIMEOUT = 8000;
 
 @customElement("bb-toast")
 export class Toast extends LitElement {
@@ -17,7 +19,7 @@ export class Toast extends LitElement {
   message = "";
 
   @property()
-  timeout = 8000;
+  timeout = DEFAULT_TIMEOUT;
 
   @property()
   offset = 0;
@@ -55,6 +57,10 @@ export class Toast extends LitElement {
       color: var(--bb-error-color);
     }
 
+    :host([type="pending"]) {
+      --bb-toast-icon: url(/images/progress-neutral.svg);
+    }
+
     :host(.toasted) {
       animation: slideOut var(--bb-easing-duration-out) var(--bb-easing)
         forwards;
@@ -67,7 +73,7 @@ export class Toast extends LitElement {
       top: 11px;
       width: 20px;
       height: 20px;
-      background: var(--bb-toast-icon) center center no-repeat;
+      background: var(--bb-toast-icon) center center / 20px 20px no-repeat;
     }
 
     @keyframes slideIn {
@@ -98,6 +104,30 @@ export class Toast extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.removeAfter(this.timeout);
+  }
+
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{ timeout: number }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (changedProperties.has("timeout")) {
+      if (!this.timeout) {
+        this.timeout = DEFAULT_TIMEOUT;
+      }
+
+      if (changedProperties.get("timeout") !== this.timeout) {
+        this.removeAfter(this.timeout);
+      }
+    }
+  }
+
+  removeAfter(timeout: number) {
+    if (timeout === 0) {
+      return;
+    }
+
     setTimeout(() => {
       this.addEventListener(
         "animationend",
@@ -108,7 +138,7 @@ export class Toast extends LitElement {
       );
 
       this.classList.add("toasted");
-    }, this.timeout);
+    }, timeout);
   }
 
   render() {

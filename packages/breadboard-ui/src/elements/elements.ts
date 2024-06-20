@@ -32,6 +32,7 @@ export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeSelector } from "./editor/node-selector.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ProviderOverlay } from "./overlay/provider.js";
+export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./node-info/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { Splitter } from "./splitter/splitter.js";

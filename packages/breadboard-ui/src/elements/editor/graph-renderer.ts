@@ -559,6 +559,17 @@ export class GraphRenderer extends LitElement {
     this.updateGraphByUrl(opts.url, opts.subGraphId, opts);
   }
 
+  deleteGraphs() {
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph)) {
+        return false;
+      }
+
+      child.removeFromParent();
+      child.destroy();
+    }
+  }
+
   updateGraphByUrl(
     url: string,
     subGraphId: string | null,

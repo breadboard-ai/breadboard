@@ -24,6 +24,7 @@ export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
   ERROR = "error",
+  PENDING = "pending",
 }
 
 /**
@@ -288,6 +289,19 @@ export class GraphProviderBlankBoardEvent extends Event {
   }
 }
 
+export class GraphProviderSaveBoardEvent extends Event {
+  static eventName = "bbgraphprovidersaveboard";
+
+  constructor(
+    public readonly providerName: string,
+    public readonly location: string,
+    public readonly fileName: string,
+    public readonly graph: GraphDescriptor
+  ) {
+    super(GraphProviderSaveBoardEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphProviderRefreshEvent extends Event {
   static eventName = "bbgraphproviderrefresh";
 
@@ -304,6 +318,17 @@ export class GraphProviderAddEvent extends Event {
 
   constructor() {
     super(GraphProviderAddEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphProviderSelectionChangeEvent extends Event {
+  static eventName = "bbgraphproviderselectionchange";
+
+  constructor(
+    public readonly selectedProvider: string,
+    public readonly selectedLocation: string
+  ) {
+    super(GraphProviderSelectionChangeEvent.eventName, { ...eventInit });
   }
 }
 
