@@ -20,6 +20,7 @@ import {
   dereferenceManifest,
   dereferenceManifestContents,
   fullyDecodeURI,
+  isEncoded,
 } from "../dereference";
 import { DereferencedBoard, ReferencedBoard } from "../types/boards";
 import { isBglLike, isDereferencedBoard } from "../types/guards/board-resource";
@@ -560,4 +561,16 @@ function generateLocalFilePath(extension: string = "file.json"): string {
   return encodeURI(path.resolve(`${randomUUID()}.${extension}`));
 }
 
+describe("isEncoded", () => {
+  test("should return true if the URI is encoded", () => {
+    assert.ok(isEncoded(encodeURI("./path with spaces/file.json")));
+  });
+  test("should return false if the URI is not encoded", () => {
+    assert.ok(!isEncoded("./path with spaces/file.json"));
+  });
+  test("should handle nullish values", () => {
+    assert.ok(!isEncoded(null as any));
+    assert.ok(!isEncoded(undefined as any));
+  });
+});
 after(() => mock.reset());
