@@ -21,7 +21,7 @@ import { map } from "lit/directives/map.js";
 @customElement("bb-save-as-overlay")
 export class SaveAsOverlay extends LitElement {
   @property()
-  panelTitle: string = "Create new board";
+  panelTitle: string = "Save As...";
 
   @property()
   graph: GraphDescriptor | null = null;
@@ -40,6 +40,9 @@ export class SaveAsOverlay extends LitElement {
 
   @property()
   providerOps = 0;
+
+  @property()
+  isNewBoard = false;
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #fileNameRef: Ref<HTMLInputElement> = createRef();
@@ -224,7 +227,7 @@ export class SaveAsOverlay extends LitElement {
 
     const title =
       this.graph && this.graph.title
-        ? `${this.graph.title} Copy`
+        ? `${this.graph.title}${this.isNewBoard ? "" : " Copy"}`
         : "Untitled Board";
 
     return html`<bb-overlay>
@@ -310,7 +313,6 @@ export class SaveAsOverlay extends LitElement {
           }
 
           graph.title = title;
-
           this.dispatchEvent(
             new GraphProviderSaveBoardEvent(
               providerName,

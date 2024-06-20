@@ -280,11 +280,7 @@ export class GraphProviderDisconnectEvent extends Event {
 export class GraphProviderBlankBoardEvent extends Event {
   static eventName = "bbgraphproviderblankboard";
 
-  constructor(
-    public readonly providerName: string,
-    public readonly location: string,
-    public readonly fileName: string
-  ) {
+  constructor() {
     super(GraphProviderBlankBoardEvent.eventName, { ...eventInit });
   }
 }
