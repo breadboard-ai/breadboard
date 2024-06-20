@@ -18,6 +18,7 @@ import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
+  ClientBidirectionalStream,
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
@@ -143,7 +144,8 @@ export class ProxyClient {
 
   async proxy(
     node: NodeDescriptor,
-    inputs: InputValues
+    inputs: InputValues,
+    _context: NodeHandlerContext
   ): Promise<OutputValues> {
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
@@ -186,7 +188,7 @@ export class ProxyClient {
             ) => {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const descriptor = context.descriptor!;
-              const result = await this.proxy(descriptor, inputs);
+              const result = await this.proxy(descriptor, inputs, context);
               return result;
             },
           },
@@ -194,5 +196,46 @@ export class ProxyClient {
       })
     );
     return asRuntimeKit(new KitBuilder({ url: "proxy" }).build(proxiedNodes));
+  }
+}
+
+class NullClientTransport<AnyProxyRequestMessage, AnyProxyResponseMessage>
+  implements ClientTransport<AnyProxyRequestMessage, AnyProxyResponseMessage>
+{
+  createClientStream(): ClientBidirectionalStream<
+    AnyProxyRequestMessage,
+    AnyProxyResponseMessage
+  > {
+    throw new Error("Method not implemented.");
+  }
+}
+
+export class SimplePythonProxyClient extends ProxyClient {
+  #url: string;
+
+  constructor(url: string) {
+    super(new NullClientTransport());
+    this.#url = url;
+  }
+
+  shutdownServer() {}
+
+  async proxy(
+    node: NodeDescriptor,
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const board_url = context.board!.url!;
+    const node_id = context.descriptor!.id!;
+    const res = await fetch(
+      this.#url +
+        "?" +
+        new URLSearchParams({
+          board_url: board_url,
+          node_id: node_id,
+        })
+    );
+
+    return res.json();
   }
 }

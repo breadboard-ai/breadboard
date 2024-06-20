@@ -443,6 +443,7 @@ export class Main extends LitElement {
       align-items: center;
     }
   `;
+  proxyFromUrl: string | undefined;
 
   #load: Promise<void>;
   constructor(config: MainArguments) {
@@ -475,6 +476,11 @@ export class Main extends LitElement {
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
       this.showFirstRun = true;
+    }
+    const proxyFromUrl = currentUrl.searchParams.get("python_proxy");
+    if (proxyFromUrl) {
+      console.log("Setting python_proxy: %s", proxyFromUrl);
+      this.proxyFromUrl = proxyFromUrl;
     }
 
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
@@ -1492,7 +1498,8 @@ export class Main extends LitElement {
                     inputs: inputsFromSettings(this.#settings),
                     interactiveSecrets: true,
                   },
-                  this.#settings
+                  this.#settings,
+                  this.proxyFromUrl
                 )
               )
             );

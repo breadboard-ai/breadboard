@@ -63,7 +63,8 @@ test("End-to-end proxy works with HTTP transports", async (t) => {
   );
   const result = await client.proxy(
     { id: "id", type: "reverser" },
-    { hello: "world" }
+    { hello: "world" },
+    {}
   );
   t.deepEqual(result, { hello: "dlrow" });
 });

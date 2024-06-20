@@ -7,6 +7,8 @@ type SettingEntry = {
   value: string | number | boolean;
 };
 
+const PYTHON_NODES = ["runPython"];
+
 const createNodeProxyConfig = (entry: SettingEntry) => {
   const url = entry.name;
   if (!url) return null;
@@ -21,22 +23,30 @@ const createNodeProxyConfig = (entry: SettingEntry) => {
 
 export const addNodeProxyServerConfig = (
   config: RunConfig,
-  settings: SettingsStore | null
+  settings: SettingsStore | null,
+  proxyUrl?: string | undefined
 ): RunConfig => {
-  if (!settings) return config;
+  // TODO: Consolidate proxyUrl into settings.
+  const proxy = [] as HarnessProxyConfig[];
+  if (proxyUrl) {
+    proxy.push({ location: "python", url: proxyUrl, nodes: PYTHON_NODES });
+  }
+  if (!settings) return {...config, proxy};
 
   const servers = settings.getSection(
     BreadboardUI.Types.SETTINGS_TYPE.NODE_PROXY_SERVERS
   );
   if (!servers) return config;
   const values = Array.from(servers.items.values());
-  if (!values.length) return config;
+  if (!values.length) return {...config, proxy};
 
-  const proxy = values
-    .map(createNodeProxyConfig)
-    .filter(Boolean) as HarnessProxyConfig[];
+  proxy.push(
+    ...(values
+      .map(createNodeProxyConfig)
+      .filter(Boolean) as HarnessProxyConfig[])
+  );
 
-  if (!proxy.length) return config;
+  if (!proxy.length) return {...config, proxy};
 
   console.log("🚀 Using proxy servers:", proxy);
   return { ...config, proxy };

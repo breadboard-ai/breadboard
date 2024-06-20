@@ -15,6 +15,7 @@ import GeminiKit from "@google-labs/gemini-kit";
 import { loadKits } from "./utils/kit-loader";
 
 const PROXY_NODES = ["secrets", "fetch"];
+const PYTHON_NODES = ["runPython"];
 
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
@@ -49,6 +50,12 @@ export const createRunConfig = async (url: string): Promise<RunConfig> => {
         url: proxyServerURL,
         nodes: PROXY_NODES,
       });
+      proxy.push({
+        location: "python",
+        url: proxyServerURL,
+        nodes: PYTHON_NODES,
+      });
+      console.log(proxy);
     }
   } else if (harness === WORKER_HARNESS_VALUE) {
     proxy.push({ location: "main", nodes: PROXY_NODES });
