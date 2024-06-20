@@ -15,8 +15,11 @@
     "typescript": "^5.4.5"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*",
+    ".": "./dist/src/index.js",
+    "./*": [
+      "./dist/*",
+      "./dist/src/*"
+    ],
     "./bbm.schema.json": "./bbm.schema.json"
   },
   "license": "Apache-2.0",
@@ -25,7 +28,12 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "files": [
-    "**/*"
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts.map",
+    "!dist/tests/**/*",
+    "./bbm.schema.json",
+    "./package.json"
   ],
   "repository": {
     "directory": "packages/manifest",
