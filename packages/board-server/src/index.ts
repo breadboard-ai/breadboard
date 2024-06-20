@@ -11,6 +11,7 @@ import { cors } from "./server/cors.js";
 import { serveContent } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
+import { serveInfoAPI } from "./server/info/index.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
@@ -33,6 +34,10 @@ const server = createServer(async (req, res) => {
   }
 
   if (!cors(req, res)) {
+    return;
+  }
+
+  if (await serveInfoAPI(req, res)) {
     return;
   }
 

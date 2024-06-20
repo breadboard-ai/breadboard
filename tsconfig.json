@@ -21,6 +21,7 @@
     { "path": "packages/graph-playground" },
     { "path": "packages/json-kit" },
     { "path": "packages/llm-starter" },
+    { "path": "packages/manifest" },
     { "path": "packages/node-nursery" },
     { "path": "packages/node-nursery-web" },
     { "path": "packages/node-proxy-server" },
