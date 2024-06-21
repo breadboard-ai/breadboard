@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { HarnessProxyConfig, RunConfig } from "@google-labs/breadboard/harness";
 import { SettingsStore } from "./settings-store";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
