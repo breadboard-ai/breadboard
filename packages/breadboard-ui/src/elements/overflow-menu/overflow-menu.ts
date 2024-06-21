@@ -23,6 +23,9 @@ export class OverflowMenu extends LitElement {
   @property()
   actions: Action[] = [];
 
+  @property()
+  disabled = true;
+
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
 
@@ -54,6 +57,7 @@ export class OverflowMenu extends LitElement {
       border: none;
       text-align: left;
       border-bottom: 1px solid var(--bb-neutral-300);
+      cursor: pointer;
     }
 
     button:first-of-type {
@@ -65,8 +69,13 @@ export class OverflowMenu extends LitElement {
       border-bottom: none;
     }
 
-    button:hover,
-    button:focus {
+    button[disabled] {
+      opacity: 0.5;
+      cursor: auto;
+    }
+
+    button:not([disabled]):hover,
+    button:not([disabled]):focus {
       background-color: var(--bb-neutral-50);
     }
 
@@ -84,6 +93,10 @@ export class OverflowMenu extends LitElement {
 
     button.settings {
       background-image: var(--bb-icon-settings);
+    }
+
+    button.delete {
+      background-image: var(--bb-icon-delete);
     }
   `;
 
@@ -126,6 +139,7 @@ export class OverflowMenu extends LitElement {
         @click=${() => {
           this.dispatchEvent(new OverflowMenuActionEvent(action.name));
         }}
+        ?disabled=${this.disabled}
       >
         ${action.title}
       </button>`;

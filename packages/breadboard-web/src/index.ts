@@ -649,12 +649,13 @@ export class Main extends LitElement {
     const boardUrl = new URL(this.graph.url);
     const provider = this.#getProviderForURL(boardUrl);
     if (!provider) {
-      this.toast("Unable to save board", BreadboardUI.Events.ToastType.ERROR);
+      this.showSaveAsDialog = true;
       return;
     }
 
     const capabilities = provider.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
+      this.showSaveAsDialog = true;
       return;
     }
 
@@ -717,6 +718,7 @@ export class Main extends LitElement {
       return;
     }
 
+    this.#setBoardPendingSaveState(false);
     this.#persistProviderAndLocation(providerName, location);
 
     // Trigger a re-render.
@@ -728,6 +730,55 @@ export class Main extends LitElement {
       false,
       id
     );
+  }
+
+  async #attemptBoardDelete(
+    providerName: string,
+    url: string,
+    isActive: boolean
+  ) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this board? This cannot be undone"
+      )
+    ) {
+      return;
+    }
+
+    const provider = this.#getProviderByName(providerName);
+    if (!provider) {
+      this.toast("Unable to delete file", BreadboardUI.Events.ToastType.ERROR);
+      return;
+    }
+
+    const id = this.toast(
+      "Deleting board...",
+      BreadboardUI.Events.ToastType.PENDING,
+      true
+    );
+
+    const { result, error } = await provider.delete(new URL(url));
+
+    this.toast(
+      "Board deleted",
+      BreadboardUI.Events.ToastType.INFORMATION,
+      false,
+      id
+    );
+
+    if (!result) {
+      this.toast(
+        error || "Unexpected error",
+        BreadboardUI.Events.ToastType.ERROR
+      );
+    }
+
+    if (isActive) {
+      this.#startFromProviderDefault();
+    }
+
+    // Trigger a re-render.
+    this.providerOps++;
   }
 
   get status() {
@@ -894,7 +945,7 @@ export class Main extends LitElement {
   }
 
   #getProviderForURL(url: URL) {
-    return this.#providers.find((provider) => provider.canProvide(url));
+    return this.#providers.find((provider) => provider.canProvide(url)) || null;
   }
 
   #confirmUnloadWithUserFirstIfNeeded(evt: Event) {
@@ -1201,37 +1252,7 @@ export class Main extends LitElement {
         @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
         ) => {
-          if (
-            !confirm(
-              "Are you sure you want to delete this board? This cannot be undone"
-            )
-          ) {
-            return;
-          }
-
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            this.toast(
-              "Unable to delete file",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          const { result, error } = await provider.delete(new URL(evt.url));
-          if (!result) {
-            this.toast(
-              error || "Unexpected error",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-
-          if (evt.isActive) {
-            this.#startFromProviderDefault();
-          }
-
-          // Trigger a re-render.
-          this.providerOps++;
+          this.#attemptBoardDelete(evt.providerName, evt.url, evt.isActive);
         }}
         @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
           if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
@@ -2011,7 +2032,7 @@ export class Main extends LitElement {
     if (this.showOverflowMenu) {
       const actions = [
         {
-          title: "Download board",
+          title: "Download Board",
           name: "download",
           icon: "download",
         },
@@ -2022,12 +2043,22 @@ export class Main extends LitElement {
           const url = new URL(this.graph.url);
           const provider = this.#getProviderForURL(url);
           const capabilities = provider?.canProvide(url);
-          if (provider && capabilities && capabilities.save) {
-            actions.push({
-              title: "Save As...",
-              name: "save-as",
-              icon: "save-as",
-            });
+          if (provider && capabilities) {
+            if (capabilities.save) {
+              actions.push({
+                title: "Save As...",
+                name: "save-as",
+                icon: "save-as",
+              });
+            }
+
+            if (capabilities.delete) {
+              actions.push({
+                title: "Delete Board",
+                name: "delete",
+                icon: "delete",
+              });
+            }
           }
         } catch (err) {
           // If there are any problems with the URL, etc, don't offer the save button.
@@ -2042,6 +2073,7 @@ export class Main extends LitElement {
 
       overflowMenu = html`<bb-overflow-menu
         .actions=${actions}
+        .disabled=${this.graph === null}
         @bboverflowmenudismissed=${() => {
           this.showOverflowMenu = false;
         }}
@@ -2081,6 +2113,20 @@ export class Main extends LitElement {
 
             case "save": {
               await this.#attemptBoardSave();
+              break;
+            }
+
+            case "delete": {
+              if (!this.graph || !this.graph.url) {
+                return;
+              }
+
+              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              if (!provider) {
+                return;
+              }
+
+              this.#attemptBoardDelete(provider.name, this.graph.url, true);
               break;
             }
 
