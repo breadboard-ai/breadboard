@@ -4,18 +4,14 @@
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- *
- * @title Hacker News Simplified Algolia Search
- * see: https://hn.algolia.com/api
  */
 
 import fs from "fs";
 import path, { dirname } from "path";
 import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { fileURLToPath } from "url";
-import { inspect } from "util";
 import packageJson from "../../package.json" with { type: "json" };
-import { ascendToPackageDir } from "../util/ascend-to-package-dir";
+import { ascendToPackageDir } from "./util/ascend-to-package-dir";
 
 export function generateSchemaId() {
   const PACKAGE_ROOT = ascendToPackageDir(packageJson.name);
@@ -63,14 +59,12 @@ function main() {
     skipTypeCheck: true,
   });
 
-  const result = generateSchemaFile(
-    {
-      ...baseConfig,
-      skipTypeCheck: false,
-    }
-  );
+  const result = generateSchemaFile({
+    ...baseConfig,
+    skipTypeCheck: false,
+  });
 
-  console.log(inspect(result, { showHidden: true, depth: null, colors: true }));
+  console.log(JSON.stringify({ result }, null, 2));
 }
 
 const DEFAULT_CONFIG: Partial<Config> = {
@@ -84,11 +78,11 @@ const DEFAULT_CONFIG: Partial<Config> = {
 
 function generateSchemaFile(
   conf: Partial<Config> = {},
-  postProcessor: (schema: Schema) => Schema = (schema: Schema): Schema => schema
+  postProcessor: (schema: Schema) => Schema = sortObject
 ) {
   console.debug(
     "Generating schema with config:",
-    inspect(conf, { showHidden: false, depth: null, colors: true })
+    JSON.stringify(conf, null, 2)
   );
 
   const mergedConfig: Config = {
@@ -109,6 +103,28 @@ function generateSchemaFile(
     destination: outputPath,
     schema,
   };
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return "[object Object]" === Object.prototype.toString.call(v);
+}
+
+function sortObject(obj: unknown): object {
+  if (Array.isArray(obj)) {
+    return obj.sort().map((value) => sortObject(value));
+  } else if (isObject(obj)) {
+    return Object.keys(obj)
+      .sort()
+      .reduce(
+        (acc, key) => {
+          acc[key] = sortObject(obj[key]);
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
+  } else {
+    return obj as object;
+  }
 }
 
 main();

@@ -1,6 +1,11 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import fs from "fs";
 import path from "path";
-
 
 export function ascendToPackageDir(packageName: string = "breadboard-ai") {
   let directory = import.meta.dirname;
