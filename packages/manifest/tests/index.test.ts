@@ -6,6 +6,7 @@
 
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
+import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe } from "node:test";
 import schema from "../bbm.schema.json" with { type: "json" };
@@ -144,3 +145,18 @@ describe("Schema Tests", () => {
     });
   });
 });
+
+function writeManifestJson() {
+  fs.writeFileSync(
+    "./manifest.bbm.json",
+    JSON.stringify(
+      {
+        $schema: "./bbm.schema.json",
+        title: "Manifest with boards and manifests",
+        manifests: manifestArray,
+      },
+      null,
+      2
+    )
+  );
+}
