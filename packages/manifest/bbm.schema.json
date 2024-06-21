@@ -1,40 +1,54 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/manifest@0.0.1/packages/manifest/bbm.schema.json",
-	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/manifest@0.1.0/packages/manifest/bbm.schema.json",
 	"$ref": "#/definitions/BreadboardManifest",
+	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
-		"BreadboardManifest": {
-			"type": "object",
+		"Board": {
+			"description": "A proxy for the  {@link  GraphDescriptor  }  type",
 			"properties": {
-				"$schema": {
-					"$ref": "#/definitions/UriReference",
-					"description": "JSON schema"
+				"edges": {
+					"items": {
+						"$ref": "#/definitions/Edge"
+					},
+					"type": "array"
+				},
+				"nodes": {
+					"items": {
+						"$ref": "#/definitions/Node"
+					},
+					"type": "array"
+				},
+				"reference": {
+					"$ref": "#/definitions/Reference"
 				},
 				"title": {
-					"type": "string",
-					"description": "Title of the manifest."
-				},
-				"boards": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/BoardReference"
-					},
-					"description": "An array of references to Breadboard Board files."
-				},
-				"manifests": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/ManifestItem"
-					},
-					"description": "An array of references to Breadboard Board Manifests."
+					"$ref": "#/definitions/Title"
 				}
 			},
+			"type": "object"
+		},
+		"BoardReference": {
+			"anyOf": [
+				{
+					"$ref": "#/definitions/ResourceReference"
+				},
+				{
+					"$ref": "#/definitions/Board"
+				}
+			],
+			"description": "Union of  {@link  ResourceReference }  and  {@link  Board }"
+		},
+		"BreadboardManifest": {
 			"additionalProperties": false,
-			"description": "A Breadboard Manifest.\n\nContains a list of paths to board files and a list of paths to manifest files.",
+			"description": "A Breadboard Manifest.\n\nContains references to boards and other manifests.",
 			"examples": [
 				{
+					"title": "Empty Manifest"
+				},
+				{
 					"boards": [],
-					"manifests": []
+					"manifests": [],
+					"title": "Manifest with empty lists"
 				},
 				{
 					"boards": [
@@ -54,95 +68,122 @@
 							"url": "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json"
 						}
 					]
-				}
-			]
-		},
-		"UriReference": {
-			"type": "string",
-			"description": "URI reference string that identifies a resource by its location. Can be an absolute URL or a relative path.",
-			"format": "uri-reference",
-			"examples": [
-				"https://gist.githubusercontent.com/user/SOME_ID/raw/something.json",
-				"./file.json"
-			]
-		},
-		"BoardReference": {
-			"type": "object",
-			"properties": {
-				"title": {
-					"type": "string",
-					"examples": [
-						"My Board"
-					]
 				},
-				"url": {
-					"$ref": "#/definitions/UriReference",
-					"examples": [
-						"https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-						"./boards/board.bgl.json"
-					]
-				},
-				"version": {
-					"type": "string",
-					"description": "Version of the board file.",
-					"examples": [
-						"1.0.0"
+				{
+					"boards": [
+						{
+							"edges": [],
+							"nodes": [],
+							"title": "My First Board"
+						}
 					],
-					"pattern": "^\\d+\\.\\d+\\.\\d+$"
+					"title": "Manifest with concrete boards"
+				}
+			],
+			"properties": {
+				"$schema": {
+					"$ref": "#/definitions/Reference"
+				},
+				"boards": {
+					"items": {
+						"$ref": "#/definitions/BoardReference"
+					},
+					"type": "array"
+				},
+				"manifests": {
+					"items": {
+						"$ref": "#/definitions/ManifestReference"
+					},
+					"type": "array"
+				},
+				"reference": {
+					"$ref": "#/definitions/Reference"
+				},
+				"title": {
+					"$ref": "#/definitions/Title"
 				}
 			},
-			"required": [
-				"url"
-			],
-			"additionalProperties": {},
-			"description": "Reference to a Breadboard board file.",
-			"examples": [
-				{
-					"title": "My First Board",
-					"url": "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json"
-				}
-			]
+			"type": "object"
 		},
-		"ManifestItem": {
+		"Edge": {
+			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphEdge  }  type",
+			"properties": {},
+			"type": "object"
+		},
+		"ManifestReference": {
 			"anyOf": [
 				{
-					"$ref": "#/definitions/ManifestReference"
+					"$ref": "#/definitions/ResourceReference"
 				},
 				{
 					"$ref": "#/definitions/BreadboardManifest"
 				}
-			]
+			],
+			"description": "Union of  {@link  ResourceReference }  and  {@link  BreadboardManifest }"
 		},
-		"ManifestReference": {
-			"type": "object",
-			"properties": {
-				"title": {
-					"type": "string",
-					"description": "Breadboard Board Manifest Name",
-					"examples": [
-						"Gist Manifest"
-					]
+		"Node": {
+			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphNode }  type",
+			"properties": {},
+			"type": "object"
+		},
+		"Reference": {
+			"anyOf": [
+				{
+					"$ref": "#/definitions/UriReference"
 				},
-				"url": {
-					"$ref": "#/definitions/UriReference",
-					"description": "URI reference to the manifest file.\n\nCan be an absolute URL or a relative path.",
-					"examples": [
-						"https://gist.githubusercontent.com/user/SOME_ID/raw/something.bbm.json",
-						"./manifests/manifest.bbm.json"
-					]
+				{
+					"$ref": "#/definitions/RelativeReference"
+				}
+			],
+			"description": "A reference to a resource."
+		},
+		"RelativeReference": {
+			"description": "A reference to a resource relative to the Uri of the parent resource.",
+			"examples": [
+				"../boards/board.bgl.json",
+				"../manifests/manifest.bbm.json",
+				"./board.bgl.json",
+				"./manifest.bbm.json",
+				"board.bgl.json",
+				"manifest.bbm.json"
+			],
+			"pattern": "^(\\.\\/|\\.\\.\\/|[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+$",
+			"type": "string"
+		},
+		"ResourceReference": {
+			"additionalProperties": false,
+			"description": "A resource that definitely has a reference.\n\nAlso has a title.",
+			"properties": {
+				"reference": {
+					"$ref": "#/definitions/Reference"
+				},
+				"title": {
+					"$ref": "#/definitions/Title"
 				}
 			},
 			"required": [
-				"url"
+				"reference"
 			],
-			"additionalProperties": false,
-			"description": "Reference to another manifest file.",
+			"type": "object"
+		},
+		"Title": {
 			"examples": [
-				{
-					"title": "Gist Breadboard Manifest",
-					"url": "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json"
-				}
-			]
+				"Gist Manifest",
+				"My First Board"
+			],
+			"type": "string"
+		},
+		"UriReference": {
+			"description": "A URI reference.",
+			"examples": [
+				"file:///path/to/board.bgl.json",
+				"file:///path/to/manifest.bbm.json",
+				"https://example.com/board.bgl.json",
+				"https://example.com/manifest.bbm.json",
+				"https://example.com/manifests/manifest.bbm.json"
+			],
+			"format": "uri-reference",
+			"type": "string"
 		}
 	}
 }

@@ -1,24 +1,33 @@
 {
   "author": "Google Labs Team",
+  "dependencies": {
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/breadboard-schema": "^1.4.1"
+  },
   "devDependencies": {
     "@types/node": "^20.14.5",
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
     "ajv-keywords": "^5.1.0",
+    "c8": "^10.1.2",
     "ts-json-schema-generator": "^2.3.0",
     "tsx": "^4.15.6",
     "typescript": "^5.4.5"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*",
+    ".": "./dist/src/index.js",
+    "./*": [
+      "./dist/*",
+      "./dist/src/*"
+    ],
     "./bbm.schema.json": "./bbm.schema.json"
   },
   "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts.map",
     "./bbm.schema.json",
-    "./dist/**/*",
-    "!./dist/scripts/**/*",
-    "./src/**/*.ts"
+    "./package.json"
   ],
   "license": "Apache-2.0",
   "name": "@google-labs/breadboard-manifest",
@@ -38,7 +47,7 @@
     "test:verbose": "WIREIT_LOGGER=metrics npm run test"
   },
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "wireit": {
     "build": {
       "dependencies": [
@@ -48,6 +57,10 @@
     },
     "build:schema": {
       "command": "tsx --no-cache ./src/scripts/generate.ts",
+      "dependencies": [
+        "../breadboard:build",
+        "../schema:build"
+      ],
       "output": [
         "./bbm.schema.json"
       ]
@@ -55,14 +68,16 @@
     "build:ts": {
       "command": "tsc",
       "dependencies": [
-        "build:schema"
+        "build:schema",
+        "../breadboard:build",
+        "../schema:build"
       ],
       "output": [
         "./dist"
       ]
     },
     "test": {
-      "command": "node --import tsx --test src/tests/main.test.ts",
+      "command": "c8 node --import tsx --test-reporter spec --test tests/index.test.ts ",
       "dependencies": [
         "build"
       ],
