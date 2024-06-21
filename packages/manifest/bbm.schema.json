@@ -139,12 +139,20 @@
 		},
 		"RelativeReference": {
 			"description": "A reference to a resource relative to the Uri of the parent resource.",
+			"examples": [
+				"../boards/board.bgl.json",
+				"../manifests/manifest.bbm.json",
+				"./board.bgl.json",
+				"./manifest.bbm.json",
+				"board.bgl.json",
+				"manifest.bbm.json"
+			],
 			"pattern": "^(\\.\\/|\\.\\.\\/|[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+$",
 			"type": "string"
 		},
 		"ResourceReference": {
 			"additionalProperties": false,
-			"description": "A resource that definitely has a reference. Also has a title.",
+			"description": "A resource that definitely has a reference.\n\nAlso has a title.",
 			"properties": {
 				"reference": {
 					"$ref": "#/definitions/Reference"
@@ -168,14 +176,11 @@
 		"UriReference": {
 			"description": "A URI reference.",
 			"examples": [
-				"../boards/board.bgl.json",
-				"../manifests/manifest.bbm.json",
-				"./board.bgl.json",
-				"./manifest.bbm.json",
-				"board.bgl.json",
+				"file:///path/to/board.bgl.json",
+				"file:///path/to/manifest.bbm.json",
 				"https://example.com/board.bgl.json",
 				"https://example.com/manifest.bbm.json",
-				"manifest.bbm.json"
+				"https://example.com/manifests/manifest.bbm.json"
 			],
 			"format": "uri-reference",
 			"type": "string"
