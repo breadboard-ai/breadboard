@@ -10,6 +10,7 @@ import {
   Node as GraphNode,
 } from "@google-labs/breadboard";
 import BreadboardManifestJsonSchema from "../bbm.schema.json" assert { type: "json" };
+import { generateSchemaId } from "./scripts/generate";
 export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
 
 /**
@@ -63,6 +64,11 @@ export interface BreadboardManifest extends Resource {
   boards?: BoardReference[];
   manifests?: ManifestReference[];
 }
+
+/**
+ * The schema ID for the Breadboard Manifest schema.
+ */
+export const $schema: string = generateSchemaId();
 
 /**
  * A URI reference.
