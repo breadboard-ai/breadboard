@@ -249,9 +249,9 @@ export class Main extends LitElement {
       font-size: var(--bb-text-nano);
     }
 
+    #undo,
+    #redo,
     #save-board,
-    #get-log,
-    #get-board,
     #toggle-preview,
     #toggle-settings,
     #toggle-overflow-menu {
@@ -270,18 +270,18 @@ export class Main extends LitElement {
       border: none;
     }
 
-    #save-board:hover,
-    #get-log:hover,
-    #get-board:hover,
-    #toggle-preview:hover,
-    #toggle-settings:hover,
-    #toggle-overflow-menu:hover,
-    #save-board:focus,
-    #get-log:focus,
-    #get-board:focus,
-    #toggle-preview:focus,
-    #toggle-settings:focus,
-    #toggle-overflow-menu:focus {
+    #undo:not([disabled]):hover,
+    #redo:not([disabled]):hover,
+    #undo:not([disabled]):focus,
+    #redo:not([disabled]):focus,
+    #save-board:not([disabled]):hover,
+    #toggle-preview:not([disabled]):hover,
+    #toggle-settings:not([disabled]):hover,
+    #toggle-overflow-menu:not([disabled]):hover,
+    #save-board:not([disabled]):focus,
+    #toggle-preview:not([disabled]):focus,
+    #toggle-settings:not([disabled]):focus,
+    #toggle-overflow-menu:not([disabled]):focus {
       background-color: rgba(0, 0, 0, 0.1);
     }
 
@@ -295,6 +295,8 @@ export class Main extends LitElement {
       background-repeat: no-repeat;
     }
 
+    #undo,
+    #redo,
     #toggle-overflow-menu {
       padding: 8px;
       font-size: 0;
@@ -302,6 +304,19 @@ export class Main extends LitElement {
       background: center center var(--bb-icon-more-vert-inverted);
       background-repeat: no-repeat;
       width: 32px;
+    }
+
+    #undo {
+      background-image: var(--bb-icon-undo-inverted);
+    }
+
+    #redo {
+      background-image: var(--bb-icon-redo-inverted);
+    }
+
+    #undo[disabled],
+    #redo[disabled] {
+      opacity: 0.5;
     }
 
     #toggle-preview.active {
@@ -1388,6 +1403,26 @@ export class Main extends LitElement {
             </button>
           </h1>
         </div>
+        <button
+          id="undo"
+          title="Undo last action"
+          ?disabled=${this.graph === null || (history && !history.canUndo())}
+          @click=${() => {
+            history?.undo();
+          }}
+        >
+          Preview
+        </button>
+        <button
+          id="redo"
+          title="Redo last action"
+          ?disabled=${this.graph === null || (history && !history.canRedo())}
+          @click=${() => {
+            history?.redo();
+          }}
+        >
+          Preview
+        </button>
         ${saveButton}
         <button
           class=${classMap({ active: this.showPreviewOverlay })}
