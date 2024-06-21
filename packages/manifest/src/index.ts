@@ -4,13 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  GraphDescriptor,
+  Edge as GraphEdge,
+  Node as GraphNode,
+} from "@google-labs/breadboard";
 import BreadboardManifestJsonSchema from "../bbm.schema.json" assert { type: "json" };
 export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
 
 /**
  * A Breadboard Manifest.
  *
- * Contains a list of paths to board files and a list of paths to manifest files.
+ * Contains references to boards and other manifests.
  *
  * @examples [
  *   {
@@ -53,6 +58,7 @@ export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
  * ]
  */
 export interface BreadboardManifest extends Resource {
+  $schema?: Reference;
   title?: Title;
   boards?: BoardReference[];
   manifests?: ManifestReference[];
@@ -62,22 +68,30 @@ export interface BreadboardManifest extends Resource {
  * A URI reference.
  *
  * @format uri-reference
+ *
  * @examples [
- * "board.bgl.json",
- * "manifest.bbm.json",
- * "../boards/board.bgl.json",
- * "../manifests/manifest.bbm.json",
- * "./board.bgl.json",
- * "./manifest.bbm.json",
  * "https://example.com/board.bgl.json",
- * "https://example.com/manifest.bbm.json"
+ * "https://example.com/manifest.bbm.json",
+ * "https://example.com/manifests/manifest.bbm.json",
+ * "file:///path/to/board.bgl.json",
+ * "file:///path/to/manifest.bbm.json"
  * ]
  */
 export type UriReference = string;
 
 /**
  * A reference to a resource relative to the Uri of the parent resource.
+ *
  * @pattern ^(\.\/|\.\.\/|[a-zA-Z0-9_.-]+\/)*[a-zA-Z0-9_.-]+$
+ *
+ * @examples [
+ * "board.bgl.json",
+ * "manifest.bbm.json",
+ * "../boards/board.bgl.json",
+ * "../manifests/manifest.bbm.json",
+ * "./board.bgl.json",
+ * "./manifest.bbm.json"
+ * ]
  */
 export type RelativeReference = string;
 
@@ -86,11 +100,19 @@ export type RelativeReference = string;
  */
 export type Reference = UriReference | RelativeReference;
 
-export interface ResourceReference {
+/**
+ * A resource that definitely has a reference.
+ *
+ * Also has a title.
+ */
+export interface ResourceReference extends Resource {
   readonly reference: Reference;
   readonly title?: Title;
 }
 
+/**
+ * A referenceable resource.
+ */
 export interface Resource {
   reference?: Reference;
 }
@@ -102,28 +124,49 @@ export type AdditionalProperties = {
   [x: string | number | symbol]: unknown;
 };
 
+/**
+ * A Resource that allows additional properties.
+ */
 export interface ResourceWithAdditionalProperties
   extends Resource,
     AdditionalProperties {}
 
-export type Node = {};
-export type Edge = {};
+/**
+ * A proxy for the {@link GraphDescriptor} {@link GraphNode} type
+ */
+export interface Node extends AdditionalProperties {}
 
+/**
+ * A proxy for the {@link GraphDescriptor} {@link GraphEdge} type
+ */
+export interface Edge extends AdditionalProperties {}
+
+/**
+ * A proxy for the {@link GraphDescriptor} type
+ */
 export interface Board extends ResourceWithAdditionalProperties {
   title?: Title;
   nodes?: Node[];
   edges?: Edge[];
 }
 
-// export interface BoardReference extends ResourceReference, Board {}
+/**
+ * Union of {@link ResourceReference} and {@link Board}
+ */
 export type BoardReference = ResourceReference | Board;
+// export interface BoardReference extends ResourceReference, Board {}
 
+/**
+ * Union of {@link ResourceReference} and {@link BreadboardManifest}
+ */
+export type ManifestReference = ResourceReference | BreadboardManifest;
 // export interface ManifestReference
 //   extends BreadboardManifest,
 //     ResourceReference {}
-export type ManifestReference = ResourceReference | BreadboardManifest;
 
 /**
+ *
+ *
  * @examples [
  * "My First Board",
  * "Gist Manifest"

@@ -4,6 +4,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"Board": {
+			"description": "A proxy for the  {@link  GraphDescriptor  }  type",
 			"properties": {
 				"edges": {
 					"items": {
@@ -34,11 +35,12 @@
 				{
 					"$ref": "#/definitions/Board"
 				}
-			]
+			],
+			"description": "Union of  {@link  ResourceReference }  and  {@link  Board }"
 		},
 		"BreadboardManifest": {
 			"additionalProperties": false,
-			"description": "A Breadboard Manifest.\n\nContains a list of paths to board files and a list of paths to manifest files.",
+			"description": "A Breadboard Manifest.\n\nContains references to boards and other manifests.",
 			"examples": [
 				{
 					"title": "Empty Manifest"
@@ -79,6 +81,9 @@
 				}
 			],
 			"properties": {
+				"$schema": {
+					"$ref": "#/definitions/Reference"
+				},
 				"boards": {
 					"items": {
 						"$ref": "#/definitions/BoardReference"
@@ -101,7 +106,8 @@
 			"type": "object"
 		},
 		"Edge": {
-			"additionalProperties": false,
+			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphEdge  }  type",
+			"properties": {},
 			"type": "object"
 		},
 		"ManifestReference": {
@@ -112,10 +118,12 @@
 				{
 					"$ref": "#/definitions/BreadboardManifest"
 				}
-			]
+			],
+			"description": "Union of  {@link  ResourceReference }  and  {@link  BreadboardManifest }"
 		},
 		"Node": {
-			"additionalProperties": false,
+			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphNode }  type",
+			"properties": {},
 			"type": "object"
 		},
 		"Reference": {
@@ -136,6 +144,7 @@
 		},
 		"ResourceReference": {
 			"additionalProperties": false,
+			"description": "A resource that definitely has a reference. Also has a title.",
 			"properties": {
 				"reference": {
 					"$ref": "#/definitions/Reference"
