@@ -7,9 +7,9 @@
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import * as assert from "node:assert";
-import test from "node:test";
-import schema from "../../bbm.schema.json" with { type: "json" };
-import { BreadboardManifest } from "../types";
+import test, { describe } from "node:test";
+import schema from "../bbm.schema.json" with { type: "json" };
+import { BreadboardManifest } from "../src";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -33,11 +33,7 @@ test.before(() => {
   validate = ajv.compile(schema);
 });
 
-test("Schema is valid.", async () => {
-  assert.ok(validate);
-});
-
-const fixtures: BreadboardManifest[] = [
+const manifestArray: BreadboardManifest[] = [
   {},
   { title: "Empty manifest" },
   { title: "Manifest with an empty boards array", boards: [] },
@@ -52,12 +48,13 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        reference:
+          "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
         version: "1.0.0",
       },
       {
         title: "My Second Board",
-        url: "./boards/board.bgl.json",
+        reference: "./boards/board.bgl.json",
       },
     ],
   },
@@ -66,7 +63,8 @@ const fixtures: BreadboardManifest[] = [
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        reference:
+          "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
       },
     ],
   },
@@ -75,18 +73,20 @@ const fixtures: BreadboardManifest[] = [
     boards: [
       {
         title: "My First Board",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+        reference:
+          "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
         version: "1.0.0",
       },
       {
         title: "My Second Board",
-        url: "./boards/board.bgl.json",
+        reference: "./boards/board.bgl.json",
       },
     ],
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        reference:
+          "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
       },
     ],
   },
@@ -95,14 +95,16 @@ const fixtures: BreadboardManifest[] = [
     manifests: [
       {
         title: "Gist Manifest",
-        url: "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
+        reference:
+          "https://gist.githubusercontent.com/user/SOME_ID/raw/manifest.bbm.json",
       },
       {
         title: "Nested Nested Manifest",
         boards: [
           {
             title: "My First Board",
-            url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+            reference:
+              "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
             version: "1.0.0",
           },
         ],
@@ -112,7 +114,8 @@ const fixtures: BreadboardManifest[] = [
             boards: [
               {
                 title: "My First Board",
-                url: "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
+                reference:
+                  "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
                 version: "1.0.0",
               },
             ],
@@ -123,16 +126,21 @@ const fixtures: BreadboardManifest[] = [
   },
 ];
 
-for (const manifest of fixtures) {
-  const index = fixtures.indexOf(manifest);
-  test(
-    [`Manifest ${index + 1}/${fixtures.length}`, manifest.title]
-      .filter(Boolean)
-      .join(": "),
-    async () => {
-      const valid = validate(manifest);
-      assert.ok(valid);
-    }
-  );
-  console.debug();
-}
+describe("Schema Tests", () => {
+  test("Schema is valid.", async () => {
+    assert.ok(validate);
+  });
+  describe("Validation Tests", () => {
+    manifestArray.forEach((manifest, index) => {
+      test(`Manifest ${index + 1}/${manifestArray.length}: ${manifest.title || ""}`, async () => {
+        const valid = validate(manifest);
+        const errors = validate.errors;
+        if (errors) {
+          throw new Error(`errors: ${JSON.stringify(errors, null, 2)}`);
+        }
+        assert.ok(!errors);
+        assert.ok(valid);
+      });
+    });
+  });
+});
