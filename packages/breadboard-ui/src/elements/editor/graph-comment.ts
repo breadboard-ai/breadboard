@@ -114,14 +114,6 @@ class GraphCommentProxy {
       console.warn(err);
     }
   }
-
-  check(x: number, y: number) {
-    if (!this.#linkProxy || !this.#linkProxy.contentDocument) {
-      return null;
-    }
-
-    return this.#linkProxy.contentDocument.elementFromPoint(x, y);
-  }
 }
 
 export class GraphComment extends PIXI.Container {
