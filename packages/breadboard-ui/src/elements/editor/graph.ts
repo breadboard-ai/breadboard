@@ -56,6 +56,8 @@ export class Graph extends PIXI.Container {
   #showNodeTypeDescriptions = false;
   layoutRect: DOMRectReadOnly | null = null;
 
+  readOnly = false;
+
   constructor() {
     super({
       isRenderGroup: true,
@@ -110,7 +112,7 @@ export class Graph extends PIXI.Container {
     });
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!evt.isPrimary) {
+      if (!evt.isPrimary || this.readOnly) {
         return;
       }
 
@@ -1196,6 +1198,7 @@ export class Graph extends PIXI.Container {
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
+      graphNode.readOnly = this.readOnly;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
@@ -1333,6 +1336,7 @@ export class Graph extends PIXI.Container {
 
       graphComment.label = id;
       graphComment.text = text;
+      graphComment.readOnly = this.readOnly;
       graphComment.removeAllListeners();
       graphComment.addPointerEventListeners();
       graphComment.on(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.#onChildMoved, {
@@ -1396,6 +1400,7 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.edge = edge;
+      edgeGraphic.readOnly = this.readOnly;
     }
 
     this.#removeStaleEdges();
