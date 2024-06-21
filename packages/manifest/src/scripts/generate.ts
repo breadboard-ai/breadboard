@@ -80,7 +80,7 @@ const DEFAULT_CONFIG: Partial<Config> = {
 
 function generateSchemaFile(
   conf: Partial<Config> = {},
-  postProcessor: (schema: Schema) => Schema = (schema: Schema): Schema => schema
+  postProcessor: (schema: Schema) => Schema = sortObject
 ) {
   console.debug(
     "Generating schema with config:",
@@ -105,6 +105,28 @@ function generateSchemaFile(
     destination: outputPath,
     schema,
   };
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return "[object Object]" === Object.prototype.toString.call(v);
+}
+
+function sortObject(obj: unknown): object {
+  if (Array.isArray(obj)) {
+    return obj.sort().map((value) => sortObject(value));
+  } else if (isObject(obj)) {
+    return Object.keys(obj)
+      .sort()
+      .reduce(
+        (acc, key) => {
+          acc[key] = sortObject(obj[key]);
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
+  } else {
+    return obj as object;
+  }
 }
 
 main();
