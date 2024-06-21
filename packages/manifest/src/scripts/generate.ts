@@ -4,9 +4,6 @@
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- *
- * @title Hacker News Simplified Algolia Search
- * see: https://hn.algolia.com/api
  */
 
 import fs from "fs";
