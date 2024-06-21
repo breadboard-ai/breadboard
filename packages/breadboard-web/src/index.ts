@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { run } from "@google-labs/breadboard/harness";
+import { HarnessProxyConfig, run } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
@@ -59,6 +59,7 @@ type MainArguments = {
   boards: BreadboardUI.Types.Board[];
   providers?: GraphProvider[];
   settings?: SettingsStore;
+  proxy?: HarnessProxyConfig[];
 };
 
 type SaveAsConfiguration = {
@@ -170,6 +171,11 @@ export class Main extends LitElement {
   #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
+  /**
+   * Optional proxy configuration for the board.
+   * This is used to provide additional proxied nodes.
+   */
+  #proxy: HarnessProxyConfig[];
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
@@ -463,6 +469,7 @@ export class Main extends LitElement {
 
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
+    this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
     }
@@ -1508,6 +1515,7 @@ export class Main extends LitElement {
             this.#runBoard(
               run(
                 addNodeProxyServerConfig(
+                  this.#proxy,
                   {
                     url: this.graph.url,
                     runner,

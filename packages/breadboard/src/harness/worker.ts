@@ -46,7 +46,11 @@ export async function* runInWorker(
 
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const kits = [createSecretAskingKit(next), ...config.kits];
-    const proxy = config.proxy?.[0]?.nodes;
+    const proxyConfig = config.proxy?.[0];
+    let proxy;
+    if (proxyConfig && typeof proxyConfig !== "function") {
+      proxy = proxyConfig.nodes;
+    }
     proxyServer.serve({ kits, proxy });
 
     for await (const data of runClient.run(state)) {

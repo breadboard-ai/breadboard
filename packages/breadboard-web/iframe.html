@@ -1,0 +1,40 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <meta name="theme-color" content="#2E8BE8" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="icon" type="image/svg+xml" href="/images/u1f35e_u1f60e.svg" />
+  <title>Breadboard Hosted in an Iframe</title>
+</head>
+<body>
+  <script type="module">
+    import * as pkg from "./package.json";
+    import { Main } from "./src/index.ts";
+    import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
+    import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
+    import { ExamplesGraphProvider } from "./src/providers/examples.ts";
+    import { RemoteGraphProvider } from "./src/providers/remote.ts";
+    import { SettingsStore } from "./src/data/settings-store.ts";
+    import { makeProxyConfig } from "./src/proxy/iframe.ts";
+
+    const proxy = await makeProxyConfig();
+
+    const config = {
+      providers: [
+        FileSystemGraphProvider.instance(),
+        IDBGraphProvider.instance(),
+        RemoteGraphProvider.instance(),
+      ],
+      settings: SettingsStore.instance(),
+      proxy,
+    };
+
+    window.oncontextmenu = (evt) => evt.preventDefault();
+
+    const main = new Main(config);
+    document.body.appendChild(main);
+
+    console.log(`[Breadboard Visual Editor: Version ${pkg.version}]`);
+  </script>
+</body>
