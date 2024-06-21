@@ -16,7 +16,9 @@
     import { ExamplesGraphProvider } from "./src/providers/examples.ts";
     import { RemoteGraphProvider } from "./src/providers/remote.ts";
     import { SettingsStore } from "./src/data/settings-store.ts";
-    import { iframeProxyConfig } from "./src/proxy/iframe.ts";
+    import { makeProxyConfig } from "./src/proxy/iframe.ts";
+
+    const proxy = await makeProxyConfig();
 
     const config = {
       providers: [
@@ -25,7 +27,7 @@
         RemoteGraphProvider.instance(),
       ],
       settings: SettingsStore.instance(),
-      proxy: [iframeProxyConfig],
+      proxy,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

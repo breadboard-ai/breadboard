@@ -119,6 +119,8 @@ const configureKits = async (config: RunConfig): Promise<Kit[]> => {
   const kits: Kit[] = [];
   for (const proxyConfig of config.proxy) {
     if (typeof proxyConfig === "function") {
+      const config = await proxyConfig();
+      if (!config) continue;
       kits.push(await proxyConfig());
     } else {
       switch (proxyConfig.location) {
