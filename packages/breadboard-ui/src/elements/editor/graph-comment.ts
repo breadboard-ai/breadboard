@@ -151,12 +151,12 @@ export class GraphComment extends PIXI.Container {
   #hitAreas = new PIXI.Container();
 
   collapsed = false;
+  readOnly = false;
 
   constructor() {
     super();
 
     this.eventMode = "static";
-    this.cursor = "grabbing";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
@@ -189,8 +189,16 @@ export class GraphComment extends PIXI.Container {
     let originalPosition: PIXI.ObservablePoint | null = null;
     let hasMoved = false;
 
+    this.addEventListener("pointerover", () => {
+      if (this.readOnly) {
+        return;
+      }
+
+      this.cursor = "grabbing";
+    });
+
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!(evt.target instanceof GraphComment)) {
+      if (!(evt.target instanceof GraphComment) || this.readOnly) {
         return;
       }
 

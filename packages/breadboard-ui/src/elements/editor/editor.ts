@@ -377,16 +377,6 @@ export class Editor extends LitElement {
       opacity: 0.3;
       cursor: auto;
     }
-
-    #readonly-overlay {
-      position: absolute;
-      z-index: 1;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-    }
   `;
 
   async #processGraph(): Promise<GraphRenderer> {
@@ -1461,8 +1451,6 @@ export class Editor extends LitElement {
               </div>`
           : nothing
       }
-      </div>
-
-      ${this.readOnly ? html`<div id="readonly-overlay"></div>` : nothing}`;
+      </div>`;
   }
 }

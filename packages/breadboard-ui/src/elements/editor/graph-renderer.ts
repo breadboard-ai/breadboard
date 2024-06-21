@@ -160,6 +160,10 @@ export class GraphRenderer extends LitElement {
       cursor: grabbing;
     }
 
+    :host([readonly="true"]) canvas {
+      touch-action: pan-y !important;
+    }
+
     canvas {
       display: block;
     }
@@ -451,34 +455,41 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
-    this.#app.stage.on(
-      "wheel",
-      function (this: GraphRenderer, evt) {
-        if (evt.metaKey || evt.ctrlKey) {
-          let delta =
-            1 -
-            (evt.deltaY / this.zoomFactor) *
-              (this.invertZoomScrollDirection ? -1 : 1);
-          const newScale = this.#container.scale.x * delta;
-          if (newScale < this.minScale || newScale > this.maxScale) {
-            delta = 1;
-          }
+    if (this.readOnly) {
+      return;
+    }
 
-          const pivot = this.#app.stage.toLocal(evt.global);
-          const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+    const onWheel = (evt: PIXI.FederatedWheelEvent) => {
+      if (this.readOnly) {
+        console.log("Removing wheel behavior");
+        this.#app.stage.off("wheel", onWheel);
+      }
 
-          if (!this.#background) {
-            return;
-          }
-
-          this.#background.tileTransform.setFromMatrix(matrix);
-        } else {
-          this.#container.x -= evt.deltaX;
-          this.#container.y -= evt.deltaY;
+      if (evt.metaKey || evt.ctrlKey) {
+        let delta =
+          1 -
+          (evt.deltaY / this.zoomFactor) *
+            (this.invertZoomScrollDirection ? -1 : 1);
+        const newScale = this.#container.scale.x * delta;
+        if (newScale < this.minScale || newScale > this.maxScale) {
+          delta = 1;
         }
-      },
-      this
-    );
+
+        const pivot = this.#app.stage.toLocal(evt.global);
+        const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+
+        if (!this.#background) {
+          return;
+        }
+
+        this.#background.tileTransform.setFromMatrix(matrix);
+      } else {
+        this.#container.x -= evt.deltaX;
+        this.#container.y -= evt.deltaY;
+      }
+    };
+
+    this.#app.stage.on("wheel", onWheel);
   }
 
   #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
@@ -620,11 +631,7 @@ export class GraphRenderer extends LitElement {
       }
     }
 
-    if (this.readOnly) {
-      graph.eventMode = "none";
-      graph.interactive = false;
-      graph.interactiveChildren = false;
-    }
+    graph.readOnly = this.readOnly;
 
     return true;
   }
@@ -1073,6 +1080,10 @@ export class GraphRenderer extends LitElement {
   }
 
   #onWheel(evt: WheelEvent) {
+    if (this.readOnly) {
+      return;
+    }
+
     evt.preventDefault();
   }
 
