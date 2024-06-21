@@ -86,13 +86,9 @@ export type RelativeReference = string;
  */
 export type Reference = UriReference | RelativeReference;
 
-export class ResourceReference {
+export interface ResourceReference {
   readonly reference: Reference;
   readonly title?: Title;
-  constructor(args: ResourceReference) {
-    this.reference = args.reference;
-    this.title = args.title;
-  }
 }
 
 export interface Resource {
