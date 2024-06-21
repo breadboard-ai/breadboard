@@ -25,6 +25,7 @@ export default defineConfig((_) => {
           sample: "./index.html",
           preview: "./preview.html",
           oauth: "./oauth/index.html",
+          iframe: "./iframe.html",
           embed: "src/embed.ts",
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",
