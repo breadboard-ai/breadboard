@@ -180,6 +180,7 @@ export const styles = css`
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    height: 100%;
   }
 
   .failed-to-load h1 {

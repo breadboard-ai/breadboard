@@ -254,9 +254,7 @@ export class RemoteGraphProvider implements GraphProvider {
   }
 
   async createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
-    // TODO: Remove "published" by default once we have UI to flip the
-    // "published" / "draft" flag.
-    return this.create(url, blankLLMContent("published"));
+    return this.create(url, blankLLMContent());
   }
 
   async create(
