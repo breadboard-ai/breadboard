@@ -19,6 +19,7 @@ import {
   GraphNodesVisualUpdateEvent,
   GraphInitialDrawEvent,
   GraphEntityRemoveEvent,
+  StartEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -828,6 +829,10 @@ export class GraphRenderer extends LitElement {
         this.requestUpdate();
       }
     );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, (board: string) => {
+      this.dispatchEvent(new StartEvent(board));
+    });
 
     this.#container.addChild(graph);
   }
