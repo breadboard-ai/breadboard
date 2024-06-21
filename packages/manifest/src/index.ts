@@ -60,9 +60,48 @@ export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
  */
 export interface BreadboardManifest extends Resource {
   $schema?: Reference;
-  title?: Title;
   boards?: BoardReference[];
   manifests?: ManifestReference[];
+  reference?: Reference;
+  title?: Title;
+}
+
+export class BreadboardManifestBuilder implements BreadboardManifest {
+  readonly $schema?: Reference;
+  boards?: BoardReference[];
+  readonly reference?: Reference;
+  manifests?: ManifestReference[];
+  title?: Title;
+
+  constructor(manifest: BreadboardManifest = {}) {
+    this.$schema = manifest.$schema;
+    this.boards = manifest.boards;
+    this.manifests = manifest.manifests;
+    this.reference = manifest.reference;
+    this.title = manifest.title;
+  }
+
+  addBoard(board: BoardReference): void {
+    if (!this.boards) {
+      this.boards = [];
+    }
+    this.boards.push(board);
+  }
+
+  addboards(boards: BoardReference[]): void {
+    boards.forEach(this.addBoard);
+  }
+
+  addManifest(manifest: ManifestReference): void {
+    if (!this.manifests) {
+      this.manifests = [];
+    }
+    this.manifests.push(manifest);
+  }
+
+  addManifests(manifests: ManifestReference[]): void {
+    manifests.forEach(this.addManifest);
+  }
 }
 
 /**
