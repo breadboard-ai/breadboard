@@ -13,29 +13,31 @@ const markdown = MarkdownIt();
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const emptyTextColor = getGlobalColor("--bb-neutral-600");
 const textColor = getGlobalColor("--bb-neutral-800");
-const linkColor = getGlobalColor("--bb-ui-400");
+const linkColor = getGlobalColor("--bb-ui-500");
 const defaultBorderColor = getGlobalColor("--bb-neutral-500");
 const selectedBorderColor = getGlobalColor("--bb-ui-600");
 
+type LinkData = {
+  url: string;
+  rects: DOMRectList;
+};
+
 /**
  * This class acts a link proxy. Under the hood Pixi.js uses a Foreign Object in
- * SVG to do the rendering for an HTMLText instance. We replicate that here so
- * that when a user clicks on a comment we can interrogate the proxy to see if
- * the click would have landed on an anchor.
+ * SVG to do the rendering for an HTMLText instance. We replicate that here to
+ * derive the rectangles for any elements.
  *
- * To implement this we create an iframe clipped to 0, 0, 0, 0 so it renders
- * but does not appear within the viewport. This iframe contains the SVG with
- * the same styles that Pixi used. When we get a click we call the iframe's
- * elementFromPoint with the local x & y coordinates, which should match the
- * iframe's relative coordinates for the SVG.
+ * To implement this we create a temporary iframe clipped so it renders but does
+ * not appear within the viewport. This iframe contains markup with the same
+ * styles that Pixi used. We then interrogate the anchor elements and their
+ * rects, providing that back to the main GraphComment class.
  */
 class GraphCommentProxy {
   #src: string | null = null;
   #linkProxy: HTMLIFrameElement | null = null;
+  readonly hitAreaData: Promise<LinkData[]> | null = null;
 
-  constructor(padding = 12, width = 500, html: string, styles: string) {
-    const height = width * 4;
-
+  constructor(padding: number, html: string, styles: string) {
     this.#linkProxy = document.createElement("iframe");
     this.#linkProxy.setAttribute("seamless", "seamless");
     this.#linkProxy.style["position"] = "fixed";
@@ -43,6 +45,7 @@ class GraphCommentProxy {
     this.#linkProxy.style["left"] = "0";
     this.#linkProxy.style["zIndex"] = "10000";
     this.#linkProxy.style["clipPath"] = "rect(0 0 0 0)";
+    this.#linkProxy.style["pointerEvents"] = "none";
     document.body.appendChild(this.#linkProxy);
 
     const proxyDoc = this.#linkProxy.contentDocument;
@@ -54,25 +57,46 @@ class GraphCommentProxy {
     this.#src = URL.createObjectURL(
       new Blob(
         [
-          `<style> html, body { margin: 0; padding: 0 }</style>
-          <svg width="${width}" viewBox="0 0 ${width} ${height}">
-            <style>
-              ${styles}
-
-              div {
-                padding: ${padding}px;
-              }
-            </style>
-            <foreignObject width="${width}" height="${height}">
-              <div>${html}</div>
-            </foreignObject>
-          </svg>`,
+          `<style> html, body { margin: 0; ${padding}px; }</style>
+          <style>
+            ${styles}
+          </style>
+          <div>${html}</div>`,
         ],
         { type: "text/html" }
       )
     );
 
     this.#linkProxy.src = this.#src;
+
+    this.hitAreaData = new Promise<LinkData[]>((resolve, reject) => {
+      if (!this.#linkProxy) {
+        reject("No link proxy");
+        return;
+      }
+
+      this.#linkProxy.onload = () => {
+        if (!this.#linkProxy || !this.#linkProxy.contentDocument) {
+          reject("No link proxy");
+          return;
+        }
+
+        const shapes: Array<{ url: string; rects: DOMRectList }> = [];
+        const links = [
+          ...this.#linkProxy.contentDocument.querySelectorAll("a"),
+        ];
+        for (const link of links) {
+          const linkData: LinkData = {
+            url: link.href,
+            rects: link.getClientRects(),
+          };
+
+          shapes.push(linkData);
+        }
+
+        resolve(shapes);
+      };
+    });
   }
 
   clean() {
@@ -101,7 +125,7 @@ class GraphCommentProxy {
 }
 
 export class GraphComment extends PIXI.Container {
-  #maxWidth = 180;
+  #maxWidth = 220;
   #isDirty = true;
   #lineWidth = 1;
   #selectedLineWidth = 2;
@@ -111,13 +135,13 @@ export class GraphComment extends PIXI.Container {
   #textLabel = new PIXI.HTMLText({
     text: "",
     style: {
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: "Arial",
       fill: emptyTextColor,
       wordWrap: true,
       breakWords: true,
       wordWrapWidth: this.#maxWidth - 2 * this.#padding,
-      lineHeight: 18,
+      lineHeight: 20,
       tagStyles: {
         a: {
           fill: linkColor,
@@ -131,7 +155,8 @@ export class GraphComment extends PIXI.Container {
   #background = new PIXI.Graphics();
   #defaultBorderColor = defaultBorderColor;
   #selectedBorderColor = selectedBorderColor;
-  #graphCommentProxy: GraphCommentProxy | null = null;
+  #hitAreaData: LinkData[] = [];
+  #hitAreas = new PIXI.Container();
 
   collapsed = false;
 
@@ -139,15 +164,18 @@ export class GraphComment extends PIXI.Container {
     super();
 
     this.eventMode = "static";
-    this.cursor = "pointer";
+    this.cursor = "grabbing";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
       }
       this.#isDirty = false;
       this.#background.clear();
-      this.#draw();
+      for (const child of this.#hitAreas.removeChildren()) {
+        child.destroy();
+      }
 
+      this.#draw();
       this.emit(GRAPH_OPERATIONS.GRAPH_COMMENT_DRAWN);
     };
 
@@ -156,21 +184,12 @@ export class GraphComment extends PIXI.Container {
 
     this.addChild(this.#background);
     this.addChild(this.#textLabel);
+    this.addChild(this.#hitAreas);
 
     this.#textLabel.x = this.#padding;
     this.#textLabel.y = this.#padding;
-
-    this.interactive = true;
-  }
-
-  override destroy(options?: PIXI.DestroyOptions | undefined): void {
-    super.destroy(options);
-
-    if (!this.#graphCommentProxy) {
-      return;
-    }
-
-    this.#graphCommentProxy.clean();
+    this.#hitAreas.x = this.#padding;
+    this.#hitAreas.y = this.#padding;
   }
 
   addPointerEventListeners() {
@@ -204,41 +223,18 @@ export class GraphComment extends PIXI.Container {
         this.y = Math.round(originalPosition.y + dragDeltaY);
         hasMoved = true;
 
-        this.cursor = "grabbing";
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
       }
     );
 
-    const onPointerUp = async (evt: PIXI.FederatedPointerEvent) => {
+    const onPointerUp = () => {
       dragStart = null;
       originalPosition = null;
       if (!hasMoved) {
-        if (this.#graphCommentProxy) {
-          const local = evt.getLocalPosition(this);
-          const hit = await this.#graphCommentProxy.check(local.x, local.y);
-
-          if (hit !== null && hit.getAttribute("href") !== null) {
-            const url = hit.getAttribute("href");
-            if (url) {
-              if (url.startsWith("board:")) {
-                this.emit(
-                  GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED,
-                  url.replace(/board:/, "")
-                );
-                return;
-              }
-
-              window.open(url, "_blank", "noopener");
-              return;
-            }
-          }
-        }
-
         return;
       }
 
       hasMoved = false;
-      this.cursor = "pointer";
       this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
     };
 
@@ -286,21 +282,23 @@ export class GraphComment extends PIXI.Container {
     this.#textLabel.style.fill = textColor;
     this.#textLabel.style.fontStyle = "normal";
 
-    if (this.#graphCommentProxy) {
-      this.#graphCommentProxy.clean();
-    }
-
     // Only create a proxy if the node looks to include links.
     if (!renderedText.includes('href="')) {
       return;
     }
 
-    this.#graphCommentProxy = new GraphCommentProxy(
+    const proxy = new GraphCommentProxy(
       this.#padding,
-      this.#maxWidth,
       renderedText,
       this.#textLabel.style.cssStyle
     );
+
+    proxy.hitAreaData?.then((hitAreas) => {
+      this.#hitAreaData = hitAreas;
+      this.#isDirty = true;
+
+      proxy.clean();
+    });
   }
 
   get text() {
@@ -323,5 +321,43 @@ export class GraphComment extends PIXI.Container {
     this.#background.stroke({ color: borderColor, width: borderWidth });
     this.#background.fill({ color: backgroundColor, alpha: 0.1 });
     this.#background.closePath();
+
+    this.#drawHitAreas();
+  }
+
+  #drawHitAreas() {
+    for (const hitAreaItem of this.#hitAreaData) {
+      const hitArea = new PIXI.Graphics();
+      hitArea.label = hitAreaItem.url;
+      hitArea.cursor = "pointer";
+
+      for (const rect of hitAreaItem.rects) {
+        hitArea.beginPath();
+        hitArea.rect(rect.x, rect.y, rect.width, rect.height);
+        hitArea.closePath();
+        hitArea.fill({ color: 0xff00ff, alpha: 0 });
+      }
+
+      hitArea.on("click", (evt: PIXI.FederatedPointerEvent) => {
+        const url = evt.target.label;
+        if (url.startsWith("board:")) {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED,
+            url.replace(/board:/, "")
+          );
+          return;
+        }
+
+        try {
+          const parsedUrl = new URL(url);
+          window.open(parsedUrl.href, "_blank", "noopener");
+        } catch (err) {
+          console.warn(`Unable to parse URL from comment: ${url}`);
+          console.warn(err);
+        }
+      });
+
+      this.#hitAreas.addChild(hitArea);
+    }
   }
 }
