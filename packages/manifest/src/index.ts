@@ -88,8 +88,10 @@ export type Reference = UriReference | RelativeReference;
 
 export class ResourceReference {
   readonly reference: Reference;
+  readonly title?: Title;
   constructor(args: ResourceReference) {
     this.reference = args.reference;
+    this.title = args.title;
   }
 }
 

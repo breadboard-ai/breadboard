@@ -139,6 +139,9 @@
 			"properties": {
 				"reference": {
 					"$ref": "#/definitions/Reference"
+				},
+				"title": {
+					"$ref": "#/definitions/Title"
 				}
 			},
 			"required": [
