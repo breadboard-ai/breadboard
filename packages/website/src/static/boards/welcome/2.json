@@ -73,5 +73,20 @@
       "to": "output",
       "in": "context"
     }
-  ]
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-c65fa8a0",
+        "text": "[Go back](board:1.json) to the beginning",
+        "metadata": {
+          "visual": {
+            "x": -152,
+            "y": -333,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
 }
