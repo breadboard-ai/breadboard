@@ -109,6 +109,21 @@ export class IDBGraphProvider implements GraphProvider {
     if (storeList.length === 0) {
       await storeDb.put("stores", DEFAULT_STORE);
       storeList = await storeDb.getAll("stores");
+    } else {
+      // TODO: Remove this eventually. For now, it's a useful way of updating
+      // the title of the default store when it's changed.
+      for (const store of storeList) {
+        if (
+          store.name === DEFAULT_STORE.name &&
+          store.title !== DEFAULT_STORE.title
+        ) {
+          console.warn(
+            `Updating "Board Store" title to ${DEFAULT_STORE.title}`
+          );
+          store.title = DEFAULT_STORE.title;
+          await storeDb.put("stores", store);
+        }
+      }
     }
 
     this.#storeLocations = storeList;
