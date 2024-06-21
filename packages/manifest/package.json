@@ -58,13 +58,17 @@
     "build:schema": {
       "command": "tsx --no-cache ./src/scripts/generate.ts",
       "output": [
-        "./bbm.schema.json"
+        "./bbm.schema.json",
+        "../breadboard:build",
+        "../schema:build"
       ]
     },
     "build:ts": {
       "command": "tsc",
       "dependencies": [
-        "build:schema"
+        "build:schema",
+        "../breadboard:build",
+        "../schema:build"
       ],
       "output": [
         "./dist"
