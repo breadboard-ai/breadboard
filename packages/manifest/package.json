@@ -57,10 +57,12 @@
     },
     "build:schema": {
       "command": "tsx --no-cache ./src/scripts/generate.ts",
-      "output": [
-        "./bbm.schema.json",
+      "dependencies": [
         "../breadboard:build",
         "../schema:build"
+      ],
+      "output": [
+        "./bbm.schema.json"
       ]
     },
     "build:ts": {
