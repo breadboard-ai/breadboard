@@ -1174,6 +1174,18 @@ export class Main extends LitElement {
     });
   }
 
+  #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
+    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+      if (
+        !confirm("A board is currently running. Do you want to load this file?")
+      ) {
+        return;
+      }
+    }
+
+    this.#onStartBoard(evt);
+  }
+
   render() {
     const toasts = html`${map(
       this.toasts,
@@ -1270,17 +1282,7 @@ export class Main extends LitElement {
           this.#attemptBoardDelete(evt.providerName, evt.url, evt.isActive);
         }}
         @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-            if (
-              !confirm(
-                "A board is currently running. Do you want to load this file?"
-              )
-            ) {
-              return;
-            }
-          }
-
-          this.#onStartBoard(evt);
+          this.#attemptBoardStart(evt);
         }}
         @bbgraphproviderrefresh=${async (
           evt: BreadboardUI.Events.GraphProviderRefreshEvent
@@ -1462,6 +1464,9 @@ export class Main extends LitElement {
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}
+          @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
+            this.#attemptBoardStart(evt);
+          }}
           @dragover=${(evt: DragEvent) => {
             evt.preventDefault();
           }}

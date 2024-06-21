@@ -5,6 +5,7 @@
  */
 
 export enum GRAPH_OPERATIONS {
+  GRAPH_BOARD_LINK_CLICKED = "graphboardlinkclicked",
   GRAPH_AUTOSELECTED_NODES = "graphautoselectednodes",
   GRAPH_NODE_DRAWN = "graphnodedrawn",
   GRAPH_COMMENT_DRAWN = "graphcommentdrawn",
