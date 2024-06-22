@@ -1,0 +1,226 @@
+{
+  "title": "Welcome to Breadboard",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "specialist-e0efa940",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 21,
+          "y": -120,
+          "collapsed": false
+        },
+        "title": "Hi, I am a Specialist",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a friendly tutor. You are ebullient and believe that everything around is a precious gift. You help the user orient, answering their question formatted in markdown as a paragraph in a tutorial.\n\nIf someone asks you about you and your surroundings, you are a component placed on a board in Breadboard Visual Editor. A board is a collection of components connected together with wires to create generative AI experiences. The Breadboard Visual Editor is place to quickly put together generative AI experiences and play with them. \n\nYour name is Specialist. You are powered by Gemini large language model.\n\nYou are wired from the \"Input\" component to the \"Output\" component. Your color is yellow. The input component is green. The output is orange. Your input port is named \"Context In\". It is connected with a wire from the \"Context\" output port of the \"Input\" component. Your output port is named \"Context Out\" and is connected with a wire to the \"Context\" input port of the \"Output\" component. "
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "input-1da6a4ee",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -139,
+          "y": -149.00000000000006,
+          "collapsed": false
+        },
+        "title": "Input",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "content": {
+              "type": "object",
+              "title": "Context",
+              "examples": [],
+              "behavior": ["llm-content"],
+              "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-e08e8aa0",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 331,
+          "y": -58,
+          "collapsed": false
+        },
+        "title": "Output",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "content": {
+              "type": "object",
+              "title": "Context",
+              "examples": [],
+              "behavior": ["llm-content"],
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input-1da6a4ee",
+      "to": "specialist-e0efa940",
+      "out": "content",
+      "in": "in"
+    },
+    {
+      "from": "specialist-e0efa940",
+      "to": "output-e08e8aa0",
+      "out": "out",
+      "in": "content"
+    }
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-6c39d302",
+        "text": "**Welcome to ✨✨✨✨✨\nBreadboard Visual Editor!**\nA place to quickly put together generative AI experiences and play with them.",
+        "metadata": {
+          "visual": {
+            "x": -10,
+            "y": -361,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-d7598c8a",
+        "text": "🔝 The top bar shows the current board you're editing, as well as the familiar controls to undo/redo changes, save, etc.",
+        "metadata": {
+          "visual": {
+            "x": -10,
+            "y": -482,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-72dfc25b",
+        "text": "💡The Breadboard project was inspired by [breadboards](https://en.wikipedia.org/wiki/Breadboard) used to prototype electronic circuits.",
+        "metadata": {
+          "visual": {
+            "x": -9,
+            "y": -222,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-eb327b44",
+        "text": "This Visual Editor is a place to create, connect, and run **boards**. Each board is a little composition of nodes and wires that does something interesting.",
+        "metadata": {
+          "visual": {
+            "x": -244,
+            "y": -324,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-ee182009",
+        "text": "This is a node. It represents an action of some sort. This type of node is called \"Specialist\". \n\nYou can spot a Specialist by the 🤖 icon in its title.",
+        "metadata": {
+          "visual": {
+            "x": -7,
+            "y": -28,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-846d2dc2",
+        "text": "The right sidebar * is where ➡\nyou can see board activity when it runs or, when a node is selected, view and edit node's configuration.",
+        "metadata": {
+          "visual": {
+            "x": 222.99999999999994,
+            "y": -482,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-984c921d",
+        "text": "⬇ The node selector is at the bottom-left corner. \n\nClick on \"➕ Nodes\" to open it. Then find the node you want to use and drag it onto the board (or double-click).",
+        "metadata": {
+          "visual": {
+            "x": -244,
+            "y": -48,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-a4a07ea4",
+        "text": "⬅ The board selector hides behind the three lines in the top-left corner. Click them to search for boards and choose (or add/remove) from various board providers. ",
+        "metadata": {
+          "visual": {
+            "x": -244,
+            "y": -482,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-84f6906f",
+        "text": "This is a functional board. Click the **Run** button at the bottom-right and ask it questions about itself. Like \"what is this green thing?\" or \"who are you?\"",
+        "metadata": {
+          "visual": {
+            "x": 223.99999999999994,
+            "y": -340,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-3102a140",
+        "text": "When you're ready to learn more about Breadboard Visual Editor,\n\n[🍞 Click here to continue](board:nodes-wires-ports.bgl.json).",
+        "metadata": {
+          "visual": {
+            "x": 223.99999999999994,
+            "y": -197.99999999999994,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-6b2d5bd3",
+        "text": "_* - if your window has portrait proportions, the activity sidebar will be at the bottom._",
+        "metadata": {
+          "visual": {
+            "x": 228,
+            "y": 32.999999999999886,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": ["published"]
+  }
+}

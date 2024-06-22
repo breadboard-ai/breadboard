@@ -1,0 +1,100 @@
+{
+  "title": "Nodes, Wires, and Ports",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 2.1316282072803006e-14,
+          "y": 8.526512829121202e-14,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 173,
+          "y": 8.526512829121202e-14,
+          "collapsed": false
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "out": "context",
+      "to": "output",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-c65fa8a0",
+        "text": "[Go back](board:welcome.bgl.json) to the beginning",
+        "metadata": {
+          "visual": {
+            "x": -184.00000000000003,
+            "y": -148.99999999999997,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-2df1bbcc",
+        "text": "Next: [Ad hoc wires](board:ad-hoc-wires.bgl.json)",
+        "metadata": {
+          "visual": {
+            "x": 198,
+            "y": 161,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  }
+}
