@@ -9,8 +9,8 @@ import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe } from "node:test";
-import schema from "../bbm.schema.json" with { type: "json" };
-import { BreadboardManifest } from "../src";
+import { BreadboardManifest } from "..";
+import schema from "../../bbm.schema.json" with { type: "json" };
 
 const ajv = new Ajv({
   // keywords: definitions({

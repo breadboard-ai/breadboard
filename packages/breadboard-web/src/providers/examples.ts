@@ -10,13 +10,8 @@ import {
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
 } from "@google-labs/breadboard";
+import { BreadboardManifest } from "@google-labs/breadboard-manifest";
 import { GraphProviderStore } from "./types";
-
-export type BoardInfo = {
-  title: string;
-  url: string;
-  version?: string;
-};
 
 export class ExamplesGraphProvider implements GraphProvider {
   name = "ExamplesGraphProvider";
@@ -24,22 +19,38 @@ export class ExamplesGraphProvider implements GraphProvider {
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
 
-  constructor(boards: BoardInfo[]) {
+  constructor(manifest: BreadboardManifest) {
+    const boards = manifest.boards || [];
     const blank = boards.find((board) => {
-      return board.url.endsWith("blank.json");
+      return board.reference?.endsWith("blank.json");
     });
-    if (blank?.url) {
-      this.#blank = new URL(blank.url, window.location.href);
+    if (blank?.reference) {
+      this.#blank = new URL(blank.reference, window.location.href);
     }
-    const boardMap = new Map(
+    const boardMap: Map<
+      string,
+      {
+        url: string;
+        readonly: boolean;
+        mine: boolean;
+        handle: undefined;
+      }
+    > = new Map(
       boards
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .map((board) => {
-          return [
-            board.title,
-            { url: board.url, readonly: true, mine: false, handle: undefined },
-          ];
-        })
+        .map((board) => ({
+          ...board,
+          title: board.title || board.reference || "",
+        }))
+        .sort((a, b) => a.title!.localeCompare(b.title!))
+        .map((board) => [
+          board.title,
+          {
+            url: board.reference!,
+            readonly: true,
+            mine: false,
+            handle: undefined,
+          },
+        ])
     );
     this.#items.set("examples", {
       permission: "granted",
