@@ -32,7 +32,7 @@ First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#cr
 
 ## Step 2: Add Summarizer
 
-As our next step, let's add a Summarizer [specialist](../#specialist) to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
+As our next step, let's add a Summarizer [Specialist](../#specialist) to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
 
 Now, let's remove the existing edge connecting the `input` and `output` nodes. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
 
@@ -80,7 +80,7 @@ And that's understandable. Our current design relies on the Gemini's (the large 
 
 To do that, we need to improve on our board design.
 
-## Step 3: Adding a Researcher
+## Step 3: Adding Researcher
 
 Let's add another Specialist. We will name this Specialist the "Researcher" and give it a Persona of:
 
@@ -123,21 +123,72 @@ If we try to run this board now, we'll find that it gives much more interesting 
 
 This is what makes Specialists so powerful. By themselves, they are pretty good, single mindedly focused on their particular task. When organized together and armed with tools, they become a helpful agent.
 
-TODO:
+## Step 4: Adding Interview Planner
 
-- Add Interview Planner (Looper)
+What we have is pretty good, but I feel like it's missing something. Often, I don't actually know exactly what I am looking for, and it sure would be helpful to have my Librarian ask me a few questions around the topic of my interest to really hone in on the right book.
+
+Let's add a brief interview process in front of the Researcher, and then give the interview results to it.
+
+To do this, we will need to create a loop in our board: a cycle in which the interviewer repeatedly asks us a series of questions. This loop is a very common pattern when working with the Agent Kit, and it has a special node called [Looper](/breadboard/docs/kits/agents/#looper) to make loops quickly.
+
+Looper has a distinctive "cycle" icon. Just like we did with the Specialists, let's drag a Looper into the board and name it "Interview Planner". The purpose of this particular Looper will be to plan and conduct the book interview described above.
 
 {{ "/breadboard/static/boards/librarian/add-interview-planner.bgl.json" | board }}
 
+First thing we'll notice is that, unlike Specialist, Looper has two output ports. The "Context Out" port sends the conversation context when the Looper completed all of the steps of its plan. The "Loop" port sends the context repeatedly for each step of the plan.
+
+Second difference will become evident when we click on the Looper to configure it. It has no Persona configuration field. Instead, there's only Task. This is because the Persona of the Looper is pre-defined, honed to create robust plans based on the tasks we give it. There's also no Tools configuration field. Looper is very focused on planning and the management of the plan. It has no time for tools.
+
+For our Interview Planner's Task, let's give it something like:
+
+```markdown
+Based on the initial topic, come up with the themes for
+a 3-5 question interview to collect just enough information
+to look for an interesting book in the library.
+```
+
+Then, let's wire it into the graph: insert it between the Input node and the Researcher Node, the same way we wired the Researcher earlier.
+
 {{ "/breadboard/static/boards/librarian/wire-interview-planner.bgl.json" | board }}
 
-- Add Interviewer (Specialist)
+## Step 5: Adding Interviewer
+
+Now that we have a Interview Planner to come up with an interview plan, we will add the Interviewer to the board. The Interviewer will be responsible for formulating the questions for the interview and reacting to user feedback. This is the job for -- you guessed it -- Specialist!
+
+Drag in another Specialist and name it "Interviewer". Here's the Persona for our Interviewer:
+
+```markdown
+You are an expert researcher, whose job it is to
+interview the user to collect information about
+the kind of book they want. Based on the theme
+provided and incorporating the history of the interview
+so far, offer a question that allows the user to
+easily pick or quickly type an answer.
+```
+
+We don't need to put anything into Task -- let's let the Interview Planner provide it. To do that, wire the "Loop" port of the Interview Planner into the "Context in" port of our Interviewer.
 
 {{ "/breadboard/static/boards/librarian/add-interviewer.bgl.json" | board }}
 
-- Add Interviewee (Human)
+## Step 6: Putting Human in the loop
+
+As our final node in this board, let's add Human. This node represents the user in the overall flow of the board.
+
+Human node serves as a way to yield control back to the user of the board. When Breadboard encounters it, it pauses execution, shows intermediate results to the user, and asks the user to react to them. This is exactly what we need in our interview: show the question and wait for the user to answer it.
+
+We'll name this node "Interviewee" and wire the "Context out" port of the Interviewer to its "Context in" port, and then close the loop by wiring Interviewee's "Context out" back into Interview Planner's "Context in".
 
 {{ "/breadboard/static/boards/librarian/add-interviewee.bgl.json" | board }}
+
+When we run this board, we'll see that its behavior has changed: instead of asking us just one question at the start, it keeps chatting with us, helping us zero in on the kind of book we're looking for -- and produces even more interesting results than before.
+
+## Step 7: Turning it up to eleven
+
+- Multiple API calls
+
+- Book pictures
+
+- Adding comments
 
 Final board:
 
