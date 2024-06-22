@@ -77,7 +77,7 @@
       ]
     },
     "test": {
-      "command": "c8 node --import tsx --test-reporter spec --test tests/index.test.ts ",
+      "command": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
       "dependencies": [
         "build"
       ],
