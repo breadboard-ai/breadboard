@@ -93,7 +93,7 @@ function generateSchemaFile(
     ...conf,
   };
 
-  const outputPath = path.resolve("bbm.schema.json");
+  const outputPath = path.join(ascendToPackageDir(packageJson.name), "bbm.schema.json");
 
   const schema: Schema = postProcessor(
     createGenerator(mergedConfig).createSchema(mergedConfig.type)
