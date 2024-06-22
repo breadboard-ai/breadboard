@@ -13,18 +13,24 @@ tags:
 
 At the end of this tutorial, we will have a simple agent that helps us find interesting books. Given a topic, the agent will chat with us a little bit, trying to get a few more details on what exactly we're looking for in a book, then use the Google Books API to find some choices, and finally present them to us in a nice outline.
 
+> [!TIP]
+> If this is your first time playing with Breadboard, this guide is a good starting point. It is intentionally a bit more verbose, written with the hope that a Breadboard novice can go through it and get a good sense of how to build boards.
+
 The finished board is here and you're welcome to play with it first. When you run it for the first time, it will ask you for the Gemini API Key. Get it at [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
+
+> [!NOTE]
+> You might have a reasonable question: "Why does Breadboard ask me for an API key?" One of the key tenets of this project is to allow makers quickly connect to various interesting models and other APIs. To do that, Breadboard has a pretty robust system for managing _secrets_: valuable pieces of data help you connect to them. To balance convenience with flexibility, Breadboard Visual Editor stores these keys in your local browser store.
 
 {{ "/breadboard/static/boards/librarian/final.bgl.json" | board }}
 
-This board uses the Agent Kit, a collection of components designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" components. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
+This board uses the Agent Kit, a collection of nodes designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" nodes. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
 
 To build this board, we will use the Breadboard Visual Editor, which is a tool for rapid prototyping AI systems. You can learn more about about all the different features and capabilities of Breadboard Visual Editor in the [Visual Editor Reference](/breadboard/docs/reference/visual-editor/).
 
 > [!TIP]
 > At any point in the tutorial, you can click "See in Visual Editor" link at the left bottom corner of the board diagram. This will open the Breadboard Visual Editor and load the board. So if you're not feeling like typing and doing all the dragging and dropping of nodes, you can just follow along by opening each link.
 
-## Step 1: Creating a Blank board
+## Step 1: Create a Blank board
 
 First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). Let's name it something like `my-librarian.bgl.json` and give it a proper title and description, like "My Librarian" and "A simple agent that helps me find interesting books".
 
@@ -42,7 +48,10 @@ With the old edge deleted, let's connect input and output to the Specialist. Cli
 
 {{ "/breadboard/static/boards/librarian/2.bgl.json" | board }}
 
-Finally, let's education our Specialist and imbue it with purpose.
+We will not invest a tiny bit of effort to educate our Specialist and imbue it with purpose.
+
+> [!NOTE]
+> With Visual Breadboard, it's super-easy to create and connect Specialists. We wanted to make sure that you can focus on the most interesting -- and challenging! -- part: teaching Specialists to do their work well.
 
 We'll start with naming it appropriately. Click on the node representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Node Details". Then Type in "Summarizer" as the node's title. You will also see that the title changes in the visual editor as well.
 
@@ -82,7 +91,7 @@ And that's understandable. Our current design relies on the Gemini's (the large 
 
 To do that, we need to improve on our board design.
 
-## Step 3: Adding Researcher
+## Step 3: Add Researcher
 
 Let's add another Specialist. We will name this Specialist the "Researcher" and give it a Persona of:
 
@@ -125,7 +134,7 @@ If we try to run this board now, we'll find that it gives much more interesting 
 
 This is what makes Specialists so powerful. By themselves, they are pretty good, single mindedly focused on their particular task. When organized together and armed with tools, they become a helpful agent.
 
-## Step 4: Adding Interview Planner
+## Step 4: Add Interview Planner
 
 What we have is pretty good, but I feel like it's missing something. Often, I don't actually know exactly what I am looking for, and it sure would be helpful to have my Librarian ask me a few questions around the topic of my interest to really hone in on the right book.
 
@@ -153,7 +162,7 @@ Then, let's wire it into the graph: insert it between the Input node and the Res
 
 {{ "/breadboard/static/boards/librarian/wire-interview-planner.bgl.json" | board }}
 
-## Step 5: Adding Interviewer
+## Step 5: Add Interviewer
 
 Now that we have a Interview Planner to come up with an interview plan, we will add the Interviewer to the board. The Interviewer will be responsible for formulating the questions for the interview and reacting to user feedback. This is the job for -- you guessed it -- Specialist!
 
@@ -172,7 +181,7 @@ We don't need to put anything into Task -- let's let the Interview Planner provi
 
 {{ "/breadboard/static/boards/librarian/add-interviewer.bgl.json" | board }}
 
-## Step 6: Putting Human in the loop
+## Step 6: Put Human in the loop
 
 As our final node in this board, let's add Human. This node represents the user in the overall flow of the board.
 
@@ -184,7 +193,12 @@ We'll name this node "Interviewee" and wire the "Context out" port of the Interv
 
 When we run this board, we'll see that its behavior has changed: instead of asking us just one question at the start, it keeps chatting with us, helping us zero in on the kind of book we're looking for -- and produces even more interesting results than before.
 
-## Step 7: Turning it up to eleven
+> [!NOTE]
+> This particular combination of Interview Planner / Interviewer / Interviewee is an [AI pattern](https://glazkov.com/2023/08/28/ai-patterns-and-breadboard/): it's a fairly reliable method to conduct a quick interview for any purpose. For instance, shown below another board, which chats with the user about a book idea and then creates a detailed outline from it. AI Patterns are the whole point and spirit of Breadboard: to give you space to joyfully uncover interesting AI patterns, as well as reuse, and remix existing ones.
+
+{{ "/breadboard/static/boards/librarian/book-outline-interviewer.bgl.json" | board }}
+
+## Step 7: Put on finishing touches
 
 - Multiple API calls
 
