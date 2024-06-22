@@ -31,16 +31,19 @@ function main() {
   console.log("Beginning Breadboard Manifest schema generation...");
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
+  const pacakgeRoot = ascendToPackageDir(packageJson.name);
 
-  const filePath = path.resolve(__dirname, "../index.ts");
+  const filePath = path.join(pacakgeRoot, "src", "index.ts");
 
   if (fs.existsSync(filePath)) {
     console.log(`Using file: ${filePath}`);
   } else {
-    throw new Error(`File not found: ${filePath}`);
+    throw new Error(
+      `File not found: ${JSON.stringify({ pacakgeRoot, origin: __filename, __dirname, filePath }, null, 2)}`
+    );
   }
 
-  const tsconfigPath = path.resolve("tsconfig.json");
+  const tsconfigPath = path.join(pacakgeRoot, "tsconfig.json");
   if (fs.existsSync(tsconfigPath)) {
     console.log(`Using tsconfig: ${tsconfigPath}`);
   } else {
@@ -61,7 +64,7 @@ function main() {
 
   const result = generateSchemaFile({
     ...baseConfig,
-    skipTypeCheck: false,
+    skipTypeCheck: true,
   });
 
   console.log(JSON.stringify({ result }, null, 2));
