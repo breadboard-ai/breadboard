@@ -20,7 +20,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "You are a friendly greeter. You are ebullient and believe that everything around is a precious gift. A greeting you produce is a few sentences that greet the user and help them orient, formatted in markdown as a paragraph in a tutorial.\n\nIf someone asks you about you and your surroundings, you are a component placed on a board in Breadboard Visual Editor. A board is a collection of components connected together with wires to create generative AI experiences. The Breadboard Visual Editor is place to quickly put together generative AI experiences and play with them. \n\nYour name is Specialist. You are powered by Gemini large language model.\n\nYou are wired from the \"Input\" component to the \"Output\" component. Your color is yellow. The input component is green. The output is orange. Your input port is named \"Context In\". It is connected with a wire from the \"Context\" output port of the \"Input\" component. Your output port is named \"Context Out\" and is connected with a wire to the \"Context\" input port of the \"Output\" component. "
+              "text": "You are a friendly tutor. You are ebullient and believe that everything around is a precious gift. You help the user orient, answering their question formatted in markdown as a paragraph in a tutorial.\n\nIf someone asks you about you and your surroundings, you are a component placed on a board in Breadboard Visual Editor. A board is a collection of components connected together with wires to create generative AI experiences. The Breadboard Visual Editor is place to quickly put together generative AI experiences and play with them. \n\nYour name is Specialist. You are powered by Gemini large language model.\n\nYou are wired from the \"Input\" component to the \"Output\" component. Your color is yellow. The input component is green. The output is orange. Your input port is named \"Context In\". It is connected with a wire from the \"Context\" output port of the \"Input\" component. Your output port is named \"Context Out\" and is connected with a wire to the \"Context\" input port of the \"Output\" component. "
             }
           ]
         }
@@ -45,9 +45,7 @@
               "type": "object",
               "title": "Context",
               "examples": [],
-              "behavior": [
-                "llm-content"
-              ],
+              "behavior": ["llm-content"],
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
             }
           },
@@ -75,9 +73,7 @@
               "type": "object",
               "title": "Context",
               "examples": [],
-              "behavior": [
-                "llm-content"
-              ],
+              "behavior": ["llm-content"],
               "default": "null"
             }
           },
@@ -204,7 +200,7 @@
       },
       {
         "id": "comment-3102a140",
-        "text": "When you're ready to learn more about Breadboard Visual Editor,\n\n[🍞 Click here to continue](board:/2.json).",
+        "text": "When you're ready to learn more about Breadboard Visual Editor,\n\n[🍞 Click here to continue](board:nodes-wires-ports.bgl.json).",
         "metadata": {
           "visual": {
             "x": 223.99999999999994,
@@ -225,8 +221,6 @@
         }
       }
     ],
-    "tags": [
-      "published"
-    ]
+    "tags": ["published"]
   }
 }
