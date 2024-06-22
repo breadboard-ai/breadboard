@@ -34,6 +34,8 @@ First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#cr
 
 As our next step, let's add a Summarizer [Specialist](../#specialist) to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
 
+![Breadboard Node Selector](/breadboard/static/images/agent-kit/node-selector.png)
+
 Now, let's remove the existing edge connecting the `input` and `output` nodes. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
 
 With the old edge deleted, let's connect input and output to the Specialist. Click and drag from the input's "Context" port to the Specialist's "Context In" port and then from the Specialist's "Context Out" port to the output's "Context" port.
