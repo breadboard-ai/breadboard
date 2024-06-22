@@ -39,7 +39,7 @@ export class ExamplesGraphProvider implements GraphProvider {
       boards
         .map((board) => ({
           ...board,
-          title: board.title || board.reference || hashOf(board),
+          title: board.title || board.reference || "",
         }))
         .sort((a, b) => a.title!.localeCompare(b.title!))
         .map((board) => [
@@ -163,16 +163,4 @@ export class ExamplesGraphProvider implements GraphProvider {
       "The `ExamplesGraphProvider` should not be called to watch."
     );
   }
-}
-/**
- *
- * @deprecated this works for title generation but in BB web when you click on the example it will throw an error
- */
-function hashOf(obj: object): string {
-  const stringified = JSON.stringify(obj);
-  const hash = stringified.split("").reduce((acc, char) => {
-    const charCode = char.charCodeAt(0);
-    return (acc << 5) - acc + charCode;
-  }, 0);
-  return hash.toString(16);
 }
