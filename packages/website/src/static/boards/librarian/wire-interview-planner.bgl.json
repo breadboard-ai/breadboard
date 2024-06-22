@@ -8,7 +8,7 @@
         "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
         "metadata": {
           "visual": {
-            "x": 244,
+            "x": 243.99999999999994,
             "y": -267,
             "collapsed": false
           }
@@ -50,7 +50,7 @@
       "metadata": {
         "visual": {
           "x": -153,
-          "y": -109,
+          "y": -109.00000000000001,
           "collapsed": false
         },
         "title": "Interview Planner",
@@ -93,7 +93,7 @@
       "metadata": {
         "visual": {
           "x": -341,
-          "y": -92,
+          "y": -92.00000000000001,
           "collapsed": false
         }
       }
@@ -123,8 +123,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 315.00000000000006,
-          "y": 186,
+          "x": 315,
+          "y": 185.99999999999997,
           "collapsed": false
         }
       }
@@ -135,7 +135,7 @@
       "metadata": {
         "visual": {
           "x": 165,
-          "y": 17.999999999999986,
+          "y": 17.99999999999997,
           "collapsed": false
         },
         "title": "Summarizer",
@@ -165,8 +165,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 119,
-          "y": -120,
+          "x": 118.99999999999999,
+          "y": -120.00000000000001,
           "collapsed": false
         },
         "title": "Researcher",
@@ -182,7 +182,7 @@
           ]
         },
         "tools": [
-          "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
         ]
       }
     }

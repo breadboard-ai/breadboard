@@ -88,7 +88,7 @@
       "metadata": {
         "visual": {
           "x": -78.99999999999991,
-          "y": -99.00000000000009,
+          "y": -99.0000000000001,
           "collapsed": false
         },
         "title": "Interview Planner",
@@ -111,7 +111,7 @@
       "metadata": {
         "visual": {
           "x": -55.99999999999992,
-          "y": 119.99999999999986,
+          "y": 119.99999999999983,
           "collapsed": false
         },
         "title": "Interviewer",
@@ -150,7 +150,7 @@
           ]
         },
         "tools": [
-          "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
         ],
         "task": {
           "role": "user",
@@ -168,7 +168,7 @@
       "metadata": {
         "visual": {
           "x": 178.99999999999994,
-          "y": 79.99999999999974,
+          "y": 79.99999999999972,
           "collapsed": false
         },
         "title": "Interviewee",
@@ -201,7 +201,7 @@
       "metadata": {
         "visual": {
           "x": 472.00000000000006,
-          "y": 12.999999999999773,
+          "y": 12.999999999999758,
           "collapsed": false
         }
       }

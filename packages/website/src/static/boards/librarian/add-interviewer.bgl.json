@@ -150,7 +150,7 @@
           ]
         },
         "tools": [
-          "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
         ],
         "task": {
           "role": "user",

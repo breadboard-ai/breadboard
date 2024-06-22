@@ -95,7 +95,7 @@ To get better results, we will give this Specialist the ability to call Google B
 To do so, click on "Create array" button under Tools, then select "Custom URL" from the dropdown and paste this URL into the box that pops up under the dropdown menu:
 
 ```text
-https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json
+https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json
 ```
 
 This particular board will call the Google Books API with a specified query and return a bunch of results.
