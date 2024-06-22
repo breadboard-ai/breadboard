@@ -59,6 +59,7 @@
         "../palm-kit:build",
         "../pinecone-kit:build",
         "../python-wasm:build",
+        "../manifest:build",
         "../team-kit:build",
         "build:vite",
         "build:tsc",
