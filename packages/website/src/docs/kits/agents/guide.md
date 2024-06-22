@@ -127,9 +127,17 @@ TODO:
 
 - Add Interview Planner (Looper)
 
+{{ "/breadboard/static/boards/librarian/add-interview-planner.bgl.json" | board }}
+
+{{ "/breadboard/static/boards/librarian/wire-interview-planner.bgl.json" | board }}
+
 - Add Interviewer (Specialist)
 
+{{ "/breadboard/static/boards/librarian/add-interviewer.bgl.json" | board }}
+
 - Add Interviewee (Human)
+
+{{ "/breadboard/static/boards/librarian/add-interviewee.bgl.json" | board }}
 
 Final board:
 
