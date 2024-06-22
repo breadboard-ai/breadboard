@@ -56,6 +56,8 @@ export class Graph extends PIXI.Container {
   #showNodeTypeDescriptions = false;
   layoutRect: DOMRectReadOnly | null = null;
 
+  readOnly = false;
+
   constructor() {
     super({
       isRenderGroup: true,
@@ -91,8 +93,26 @@ export class Graph extends PIXI.Container {
       }
     };
 
+    this.once("removed", () => {
+      // Clean all edges.
+      for (const edge of this.#edgeContainer.children) {
+        edge.removeFromParent();
+        edge.destroy();
+      }
+
+      // Clean all nodes.
+      for (const node of this.#graphNodeById.values()) {
+        node.removeFromParent();
+        node.destroy();
+      }
+
+      this.#edgeGraphics.clear();
+      this.#graphNodeById.clear();
+      this.#layout.clear();
+    });
+
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!evt.isPrimary) {
+      if (!evt.isPrimary || this.readOnly) {
         return;
       }
 
@@ -1178,6 +1198,7 @@ export class Graph extends PIXI.Container {
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
+      graphNode.readOnly = this.readOnly;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
@@ -1315,12 +1336,21 @@ export class Graph extends PIXI.Container {
 
       graphComment.label = id;
       graphComment.text = text;
+      graphComment.readOnly = this.readOnly;
       graphComment.removeAllListeners();
       graphComment.addPointerEventListeners();
       graphComment.on(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.#onChildMoved, {
         graph: this,
         id,
       });
+
+      graphComment.on(
+        GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED,
+        (board: string) => {
+          // Re-emit for the renderer to pick up.
+          this.emit(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, board);
+        }
+      );
 
       graphComment.once(GRAPH_OPERATIONS.GRAPH_COMMENT_DRAWN, () => {
         const layout = this.getNodeLayoutPosition(id);
@@ -1370,6 +1400,7 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.edge = edge;
+      edgeGraphic.readOnly = this.readOnly;
     }
 
     this.#removeStaleEdges();

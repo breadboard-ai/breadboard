@@ -106,6 +106,8 @@ export class GraphEdge extends PIXI.Graphics {
   #selected = false;
   #hitAreaSpacing = 6;
 
+  readOnly = false;
+
   constructor(
     public fromNode: GraphNode,
     public toNode: GraphNode,
@@ -114,7 +116,6 @@ export class GraphEdge extends PIXI.Graphics {
     super();
 
     this.eventMode = "static";
-    this.cursor = "pointer";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
@@ -123,6 +124,14 @@ export class GraphEdge extends PIXI.Graphics {
       this.#draw();
       this.#isDirty = false;
     };
+
+    this.addEventListener("pointerover", () => {
+      if (this.readOnly) {
+        return;
+      }
+
+      this.cursor = "pointer";
+    });
   }
 
   set edge(edge: InspectableEdge | null) {

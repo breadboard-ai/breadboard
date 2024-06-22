@@ -2,107 +2,7 @@
   "title": "My Librarian",
   "version": "0.0.1",
   "metadata": {
-    "comments": [
-      {
-        "id": "comment-62f8bec6",
-        "text": "Comes up with a plan for a short (3-5 question) interview based on the initial topic, then runs the loop through\nall steps of the plan.",
-        "metadata": {
-          "visual": {
-            "x": -125.99999999999994,
-            "y": -208,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-a4d85fb6",
-        "text": "Starts by asking\nfor the topic.",
-        "metadata": {
-          "visual": {
-            "x": -321.9999999999999,
-            "y": -146.00000000000003,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-b9f31568",
-        "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
-        "metadata": {
-          "visual": {
-            "x": -141.99999999999994,
-            "y": 189.9999999999996,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-850bcb3a",
-        "text": "Based on the interview results, formulates and makes 3 varying queries\nto Google Books API.",
-        "metadata": {
-          "visual": {
-            "x": 123.99999999999994,
-            "y": -218,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-4acc26c4",
-        "text": "Hands control over to the user, letting the user respond to the interview question.",
-        "metadata": {
-          "visual": {
-            "x": 276.99999999999994,
-            "y": 151.99999999999994,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-1b9968a5",
-        "text": "Summarizes the results and formats them nicely for final output.",
-        "metadata": {
-          "visual": {
-            "x": 367.99999999999994,
-            "y": -234.99999999999997,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-b01c469b",
-        "text": "Ends by presenting recommendations.",
-        "metadata": {
-          "visual": {
-            "x": 503.99999999999994,
-            "y": 82.00000000000006,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-83b726df",
-        "text": "📚 THE LIBRARIAN 📚\nHelps you find\nthe next book \nor your reading list.",
-        "metadata": {
-          "visual": {
-            "x": -302,
-            "y": 8.9999999999999,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-edeb1a7c",
-        "text": "< goes back to planner",
-        "metadata": {
-          "visual": {
-            "x": 216.00000000000006,
-            "y": 3.9999999999999574,
-            "collapsed": false
-          }
-        }
-      }
-    ],
+    "comments": [],
     "tags": []
   },
   "edges": [
@@ -177,7 +77,7 @@
       "metadata": {
         "visual": {
           "x": -281.9999999999998,
-          "y": -91.99999999999999,
+          "y": -92.00000000000009,
           "collapsed": false
         }
       }
@@ -187,8 +87,8 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999989,
-          "y": -99,
+          "x": -78.99999999999991,
+          "y": -99.0000000000001,
           "collapsed": false
         },
         "title": "Interview Planner",
@@ -210,8 +110,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999994,
-          "y": 119.99999999999997,
+          "x": -55.99999999999992,
+          "y": 119.99999999999983,
           "collapsed": false
         },
         "title": "Interviewer",
@@ -233,8 +133,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149.00000000000006,
-          "y": -117.99999999999999,
+          "x": 149,
+          "y": -118.00000000000007,
           "collapsed": false
         },
         "title": "Researcher",
@@ -267,8 +167,8 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 179.00000000000006,
-          "y": 79.99999999999983,
+          "x": 178.99999999999994,
+          "y": 79.99999999999972,
           "collapsed": false
         },
         "title": "Interviewee",
@@ -300,8 +200,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 471.99999999999994,
-          "y": 12.999999999999886,
+          "x": 472.00000000000006,
+          "y": 12.999999999999758,
           "collapsed": false
         }
       }
@@ -312,7 +212,7 @@
       "metadata": {
         "visual": {
           "x": 391.99999999999994,
-          "y": -157.99999999999994,
+          "y": -158.00000000000003,
           "collapsed": false
         },
         "title": "Summarizer",

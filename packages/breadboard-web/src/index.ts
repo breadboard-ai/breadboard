@@ -805,12 +805,28 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
+  #makeRelativeToCurrentBoard(boardUrl: string | null) {
+    if (boardUrl) {
+      if (this.url) {
+        try {
+          const base = new URL(this.url);
+          const newUrl = new URL(boardUrl, base);
+          return newUrl.href;
+        } catch (e) {
+          console.warn("Unable to parse URL from current board: ", this.url);
+        }
+      }
+    }
+    return boardUrl;
+  }
+
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
+    const url = this.#makeRelativeToCurrentBoard(startEvent.url);
     this.#boardId++;
-    this.#setUrlParam("board", startEvent.url);
+    this.#setUrlParam("board", url);
 
     // Loading may take some time so reset the graph here.
-    this.url = startEvent.url;
+    this.url = url;
     this.graph = null;
     this.subGraphId = null;
 
@@ -1174,6 +1190,18 @@ export class Main extends LitElement {
     });
   }
 
+  #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
+    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+      if (
+        !confirm("A board is currently running. Do you want to load this file?")
+      ) {
+        return;
+      }
+    }
+
+    this.#onStartBoard(evt);
+  }
+
   render() {
     const toasts = html`${map(
       this.toasts,
@@ -1270,17 +1298,7 @@ export class Main extends LitElement {
           this.#attemptBoardDelete(evt.providerName, evt.url, evt.isActive);
         }}
         @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-          if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-            if (
-              !confirm(
-                "A board is currently running. Do you want to load this file?"
-              )
-            ) {
-              return;
-            }
-          }
-
-          this.#onStartBoard(evt);
+          this.#attemptBoardStart(evt);
         }}
         @bbgraphproviderrefresh=${async (
           evt: BreadboardUI.Events.GraphProviderRefreshEvent
@@ -1462,6 +1480,9 @@ export class Main extends LitElement {
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}
+          @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
+            this.#attemptBoardStart(evt);
+          }}
           @dragover=${(evt: DragEvent) => {
             evt.preventDefault();
           }}

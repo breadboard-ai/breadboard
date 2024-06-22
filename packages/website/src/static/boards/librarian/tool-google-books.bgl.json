@@ -1,0 +1,86 @@
+{
+  "title": "Google Books Search API",
+  "description": "Given a query, searches for a book that best matches it. ",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "Query",
+              "examples": [],
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": { "visual": { "x": -302, "y": 9, "collapsed": false } }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": { "type": "string", "title": "Results", "examples": [] }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": { "visual": { "x": 597, "y": -56, "collapsed": false } }
+    },
+    {
+      "id": "urlTemplate-088efd32",
+      "type": "urlTemplate",
+      "metadata": { "visual": { "x": -126, "y": 10, "collapsed": false } },
+      "configuration": {
+        "template": "https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance"
+      }
+    },
+    {
+      "id": "fetch-273de1b8",
+      "type": "fetch",
+      "metadata": { "visual": { "x": 108, "y": -92, "collapsed": false } }
+    },
+    {
+      "id": "jsonata-d924a566",
+      "type": "jsonata",
+      "metadata": { "visual": { "x": 371, "y": -64, "collapsed": false } },
+      "configuration": { "expression": "items.volumeInfo" }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "urlTemplate-088efd32",
+      "out": "context",
+      "in": "query"
+    },
+    {
+      "from": "urlTemplate-088efd32",
+      "to": "fetch-273de1b8",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "fetch-273de1b8",
+      "to": "jsonata-d924a566",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-d924a566",
+      "to": "output",
+      "out": "result",
+      "in": "context"
+    }
+  ],
+  "url": "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+}
