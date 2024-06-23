@@ -5,13 +5,7 @@ tags:
   - guide
 ---
 
-> [!WARNING]
->
-> This doc is being refactored right now, becoming more of a guide. Please pardon our dust. If you're looking for the Agent Kit node reference, its new home is [here](../).
-
-## What we'll build
-
-At the end of this tutorial, we will have a simple agent that helps us find interesting books. Given a topic, the agent will chat with us a little bit, trying to get a few more details on what exactly we're looking for in a book, then use the Google Books API to find some choices, and finally present them to us in a nice outline.
+At the end of this guide, we will have a simple agent that helps us find interesting books. Given a topic, the agent will chat with us a little bit, trying to get a few more details on what exactly we're looking for in a book, then use the Google Books API to find some choices, and finally present them to us in a nice outline.
 
 > [!TIP]
 > If this is your first time playing with Breadboard, this guide is a good starting point. It is intentionally a bit more verbose, written with the hope that a Breadboard novice can go through it and get a good sense of how to build boards.
