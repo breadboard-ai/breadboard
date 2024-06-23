@@ -34,7 +34,7 @@ To build this board, we will use the Breadboard Visual Editor, which is a tool f
 
 First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). Let's name it something like `my-librarian.bgl.json` and give it a proper title and description, like "My Librarian" and "A simple agent that helps me find interesting books".
 
-{{ "/breadboard/static/boards/librarian/1.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/1-create-blank-board.bgl.json" | board }}
 
 ## Step 2: Add Summarizer
 
@@ -46,7 +46,7 @@ Now, let's remove the existing edge connecting the `input` and `output` nodes. W
 
 With the old edge deleted, let's connect input and output to the Specialist. Click and drag from the input's "Context" port to the Specialist's "Context In" port and then from the Specialist's "Context Out" port to the output's "Context" port.
 
-{{ "/breadboard/static/boards/librarian/2.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/2-add-summarizer-1.bgl.json" | board }}
 
 We will not invest a tiny bit of effort to educate our Specialist and imbue it with purpose.
 
@@ -69,7 +69,7 @@ Come up with a list of 5-7 recommendations.
 Reply in markdown.
 ```
 
-{{ "/breadboard/static/boards/librarian/2a.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/2-add-summarizer-2.bgl.json" | board }}
 
 Let's give our simple board a whirl.
 
@@ -126,7 +126,7 @@ and the raw book search results,
 you can come up with a list of book recommendations.
 ```
 
-{{ "/breadboard/static/boards/librarian/3.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/3-add-researcher.bgl.json" | board }}
 
 If we try to run this board now, we'll find that it gives much more interesting results. It does particularly well with narrow or unusual topics. For instance, here's a result of running with the query of "educational books for children about butterfly migration". Where the lone Librarian would fall back onto "The Very Hungry Caterpillar" or hallucinate book titles, working together with Researcher, it produces genuinely useful results.
 
@@ -144,7 +144,7 @@ To do this, we will need to create a loop in our board: a cycle in which the int
 
 Looper has a distinctive "cycle" icon. Just like we did with the Specialists, let's drag a Looper into the board and name it "Interview Planner". The purpose of this particular Looper will be to plan and conduct the book interview described above.
 
-{{ "/breadboard/static/boards/librarian/add-interview-planner.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/4-add-interview-planner.bgl.json" | board }}
 
 First thing we'll notice is that, unlike Specialist, Looper has two output ports. The "Context Out" port sends the conversation context when the Looper completed all of the steps of its plan. The "Loop" port sends the context repeatedly for each step of the plan.
 
@@ -152,7 +152,7 @@ Second difference will become evident when we click on the Looper to configure i
 
 For our Interview Planner's Task, let's give it something like:
 
-```markdown
+```prompt
 Based on the initial topic, come up with the themes for
 a 3-5 question interview to collect just enough information
 to look for an interesting book in the library.
@@ -160,7 +160,7 @@ to look for an interesting book in the library.
 
 Then, let's wire it into the graph: insert it between the Input node and the Researcher Node, the same way we wired the Researcher earlier.
 
-{{ "/breadboard/static/boards/librarian/wire-interview-planner.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/4-wire-interview-planner.bgl.json" | board }}
 
 ## Step 5: Add Interviewer
 
@@ -168,7 +168,7 @@ Now that we have a Interview Planner to come up with an interview plan, we will 
 
 Drag in another Specialist and name it "Interviewer". Here's the Persona for our Interviewer:
 
-```markdown
+```prompt
 You are an expert researcher, whose job it is to
 interview the user to collect information about
 the kind of book they want. Based on the theme
@@ -179,7 +179,7 @@ easily pick or quickly type an answer.
 
 We don't need to put anything into Task -- let's let the Interview Planner provide it. To do that, wire the "Loop" port of the Interview Planner into the "Context in" port of our Interviewer.
 
-{{ "/breadboard/static/boards/librarian/add-interviewer.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/5-add-interviewer.bgl.json" | board }}
 
 ## Step 6: Put Human in the loop
 
@@ -189,7 +189,27 @@ Human node serves as a way to yield control back to the user of the board. When 
 
 We'll name this node "Interviewee" and wire the "Context out" port of the Interviewer to its "Context in" port, and then close the loop by wiring Interviewee's "Context out" back into Interview Planner's "Context in".
 
-{{ "/breadboard/static/boards/librarian/add-interviewee.bgl.json" | board }}
+{{ "/breadboard/static/boards/librarian/6-add-interviewee.bgl.json" | board }}
+
+Now that we have results of the interview coming into Researcher and Librarian, let's make sure they are aware of what's happening. We'll tweak both Researcher and Summarizer persona to add an extra lines about information collected during the interview to the Persona.
+
+The Researcher's Persona will now look like this:
+
+```prompt
+You are a library researcher. Based on the provided topic,
+and the information collected during the interview,
+formulate the query to call the Google Books API
+to search for the right book for the user.
+```
+
+The Summarizer's Persona will now look like this.
+
+```prompt
+You are an expert librarian. Given any topic,
+the information collected during the interview and
+the raw book search results,
+you can come up with a list of book recommendations.
+```
 
 When we run this board, we'll see that its behavior has changed: instead of asking us just one question at the start, it keeps chatting with us, helping us zero in on the kind of book we're looking for -- and produces even more interesting results than before.
 
@@ -200,12 +220,69 @@ When we run this board, we'll see that its behavior has changed: instead of aski
 
 ## Step 7: Put on finishing touches
 
-- Multiple API calls
+Having built the basic structure, we can now apply a little bit of polish to make our Librarian even more effective.
 
-- Book pictures
+One thing we can do is give the Summarizer a bit more data to work on. Instead of calling the Google Books API once, let's change the Researcher to call the API a few times. Thankfully, Specialist knows how to do that -- we just need to tell it to do so.
 
-- Adding comments
+The new Researcher Persona:
 
-Final board:
+```prompt
+You are a library researcher. Based on the provided topic,
+and the information collected during the interview,
+formulate the queries (more than one if necessary)
+and call (in parallel) Google Books API
+to search for the right book for the user.
+```
+
+Now that we've taught the Researcher that it can do parallel calls, let's make it more concrete by specifying how many calls to make in its Task:
+
+```prompt
+Make up to three parallel tool calls to Google Books API
+using different unique phrases to get the best results.
+```
+
+> [!TIP]
+> There are two interesting patterns in here: first is the idea of calling an API with different queries based on the same topic. It's a bit like throwing semantic darts 🎯 -- it results in more variety of the outputs, and thus more interesting data for the subsequent Specialist to work with.
+>
+> The second pattern is the separation of the task and the persona. As we know from [how Specialist works](/breadboard/docs/kits/agents/#specialist), the Persona is part of the LLM system instruction, while the Task shows up in the conversation context. Putting how many times and which API we called is a neat trick to _inform_ the next Specialist about what this whole bunch of raw data is about and where it came from.
+
+Next, let's spruce up the output just a tiny bit. LLMs are pretty good at creating Markdown and in the Google Search API JSON output, we have useful properties. It also just so happens that LLMs are pretty good at reading JSON. Let's see if we can make it translate JSON to markdown.
+
+Looking over a [Google Search API JSON output](https://www.googleapis.com/books/v1/volumes?q=breadboards&orderBy=relevance), we spot two interesting fields:
+
+- the `smallThumbnail` gives us a picture of the book's cover, and
+
+- the `canonicalVolumeLink` gives us the link to the book.
+
+All we need to do is tell Summarizer to start using them. Like so:
+
+```prompt
+Come up with a list of 5-7 recommendations.
+Reply in markdown, making book titles hyperlinks
+to the book's canonicalVolumeLink and
+use smallThumbnail to display the book's thumbnail.
+```
+
+When we run our board, we'll see that it now shows links to the books and their covers!
+
+![Librarian results with pictures](/breadboard/static/images/librarian/books-with-pictures.png)
+
+Pretty cool, right?!
+
+As a final touch, let's add comments. Comments are nodes that don't do anything: they are just there to display text on the board. When playing with boards, they can be quite useful to both explain what happens on the board for others -- and for future selves.
+
+After all the comments have been added and emoji carefully selected, here's our final board:
 
 {{ "/breadboard/static/boards/librarian/final.bgl.json" | board }}
+
+Congrats! We've just built a Librarian. Here's what we've learned:
+
+- How to place nodes (like Specialist, Looper, Comments, etc.) on the board
+
+- How to give Specialist its purpose
+
+- How to create interesting repeating patterns with Looper
+
+- How to tweak and adjust the board over time, teaching it to be more and more useful.
+
+Armed with all this knowledge, it's time to play with Breadboard. The Librarian is just one board. Can you take the Librarian and remix it? Turn it into something different? Use Breadboard Visual Editor as your canvas. Let your creativity roam free on it 💖.

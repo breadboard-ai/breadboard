@@ -1,5 +1,5 @@
 {
-  "title": "My Librarian",
+  "title": "Step 5: Add Interviewer",
   "version": "0.0.1",
   "metadata": {
     "comments": [
@@ -8,8 +8,19 @@
         "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
         "metadata": {
           "visual": {
-            "x": 363.00000000000006,
+            "x": 363.0000000000001,
             "y": -290,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-f45636fe",
+        "text": "Step 5: **Add Interviewer**",
+        "metadata": {
+          "visual": {
+            "x": -280,
+            "y": -208,
             "collapsed": false
           }
         }
@@ -77,7 +88,7 @@
       "metadata": {
         "visual": {
           "x": -281.9999999999998,
-          "y": -91.99999999999999,
+          "y": -92,
           "collapsed": false
         }
       }
@@ -88,7 +99,7 @@
       "metadata": {
         "visual": {
           "x": -78.99999999999991,
-          "y": -98.99999999999999,
+          "y": -99.00000000000003,
           "collapsed": false
         },
         "title": "Interview Planner",
@@ -110,8 +121,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999993,
-          "y": 119.99999999999994,
+          "x": -55.99999999999994,
+          "y": 119.99999999999993,
           "collapsed": false
         },
         "title": "Interviewer",
@@ -134,7 +145,7 @@
       "metadata": {
         "visual": {
           "x": 149.00000000000006,
-          "y": -118.00000000000001,
+          "y": -118.00000000000003,
           "collapsed": false
         },
         "title": "Researcher",
@@ -145,21 +156,13 @@
           "role": "user",
           "parts": [
             {
-              "text": "You are a librarian. Based on the information collected from the interview, formulate the queries (more than one if necessary) and call (in parallel) Google Books API to search for the right book for the user."
+              "text": "You are a library researcher. Based on the provided topic,\nformulate the query to call the Google Books API\nto search for the right book for the user."
             }
           ]
         },
         "tools": [
           "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
-        ],
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Make up to three parallel tool calls to Google Books API using different unique phrases to get the best results."
-            }
-          ]
-        }
+        ]
       }
     },
     {
@@ -188,7 +191,7 @@
       "metadata": {
         "visual": {
           "x": 472,
-          "y": 12.999999999999886,
+          "y": 12.999999999999858,
           "collapsed": false
         }
       }
@@ -198,7 +201,7 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 392.00000000000006,
+          "x": 392.00000000000017,
           "y": -157.99999999999994,
           "collapsed": false
         },

@@ -1,28 +1,35 @@
 {
-  "title": "My Librarian",
+  "title": "Step 2: Add Summarizer",
   "description": "A simple agent that helps me find interesting books.",
   "version": "0.0.1",
   "metadata": {
-    "comments": []
+    "comments": [
+      {
+        "id": "comment-377d3029",
+        "text": "Step 2: **Add Summarizer**",
+        "metadata": {
+          "visual": {
+            "x": -122,
+            "y": -118,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
   },
   "edges": [
+    {
+      "from": "input",
+      "to": "specialist-deea1d32",
+      "out": "context",
+      "in": "in"
+    },
     {
       "from": "specialist-deea1d32",
       "to": "output",
       "out": "out",
       "in": "context"
-    },
-    {
-      "from": "input",
-      "to": "specialist-fefc7fd6",
-      "out": "context",
-      "in": "in"
-    },
-    {
-      "from": "specialist-fefc7fd6",
-      "to": "specialist-deea1d32",
-      "out": "out",
-      "in": "in"
     }
   ],
   "nodes": [
@@ -51,8 +58,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -110,
-          "y": -220,
+          "x": -123,
+          "y": -42,
           "collapsed": false
         }
       }
@@ -82,8 +89,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 140,
-          "y": 164,
+          "x": 312,
+          "y": -58,
           "collapsed": false
         }
       }
@@ -93,8 +100,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -10,
-          "y": -4,
+          "x": 61,
+          "y": -40,
           "collapsed": false
         },
         "title": "Summarizer",
@@ -105,7 +112,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "You are an expert librarian. Given any topic,\nand the raw book search results,\nyou can come up with a list of book recommendations."
+              "text": "You are an expert librarian. Given any topic,\nyou can come up with a list of book recommendations."
             }
           ]
         },
@@ -117,32 +124,6 @@
             }
           ]
         }
-      }
-    },
-    {
-      "id": "specialist-fefc7fd6",
-      "type": "specialist",
-      "metadata": {
-        "visual": {
-          "x": 70,
-          "y": -155,
-          "collapsed": false
-        },
-        "title": "Researcher",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "persona": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are a library researcher. Based on the provided topic,\nformulate the query to call the Google Books API\nto search for the right book for the user."
-            }
-          ]
-        },
-        "tools": [
-          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
-        ]
       }
     }
   ]

@@ -1,48 +1,26 @@
 {
-  "title": "My Librarian",
+  "title": "Step 4: Add Interview Planner",
   "version": "0.0.1",
   "metadata": {
     "comments": [
-      {
-        "id": "comment-9e108a16",
-        "text": "Looper has two output\nports 👇 ",
-        "metadata": {
-          "visual": {
-            "x": -218,
-            "y": -67.00000000000001,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-23347be5",
-        "text": "\"Context out\" for when \nall plan steps are  finished.",
-        "metadata": {
-          "visual": {
-            "x": -110,
-            "y": 18.99999999999997,
-            "collapsed": false
-          }
-        }
-      },
-      {
-        "id": "comment-cabc829a",
-        "text": "\"Loop\" to repeat\nfor each step in the plan.",
-        "metadata": {
-          "visual": {
-            "x": -107,
-            "y": 103.99999999999999,
-            "collapsed": false
-          }
-        }
-      },
       {
         "id": "comment-64142aa5",
         "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
         "metadata": {
           "visual": {
-            "x": 243.99999999999997,
+            "x": 243.99999999999991,
             "y": -267,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-377d3029",
+        "text": "Step 4: **Add Interview Planner**",
+        "metadata": {
+          "visual": {
+            "x": -335,
+            "y": 17,
             "collapsed": false
           }
         }
@@ -58,16 +36,22 @@
       "out": "out"
     },
     {
-      "from": "input",
-      "to": "specialist-fefc7fd6",
-      "in": "in",
-      "out": "context"
-    },
-    {
       "from": "specialist-fefc7fd6",
       "to": "specialist-deea1d32",
       "in": "in",
       "out": "out"
+    },
+    {
+      "from": "input",
+      "to": "looper-b381bf13",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-b381bf13",
+      "to": "specialist-fefc7fd6",
+      "out": "done",
+      "in": "in"
     }
   ],
   "nodes": [
@@ -76,8 +60,8 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -313,
-          "y": 32,
+          "x": -153,
+          "y": -109,
           "collapsed": false
         },
         "title": "Interview Planner",
@@ -119,8 +103,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 64.99999999999997,
-          "y": -198,
+          "x": -341,
+          "y": -92.00000000000003,
           "collapsed": false
         }
       }
@@ -150,7 +134,7 @@
       },
       "metadata": {
         "visual": {
-          "x": 315.0000000000001,
+          "x": 315,
           "y": 186,
           "collapsed": false
         }
@@ -162,7 +146,7 @@
       "metadata": {
         "visual": {
           "x": 164.99999999999997,
-          "y": 17.999999999999957,
+          "y": 17.999999999999964,
           "collapsed": false
         },
         "title": "Summarizer",
@@ -192,8 +176,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 245.00000000000003,
-          "y": -133,
+          "x": 118.99999999999997,
+          "y": -120.00000000000003,
           "collapsed": false
         },
         "title": "Researcher",
