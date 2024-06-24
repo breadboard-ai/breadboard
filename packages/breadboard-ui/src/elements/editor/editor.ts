@@ -840,7 +840,7 @@ export class Editor extends LitElement {
             }
 
             this.#graphRenderer.addToAutoSelect(edgeToString(newEdge));
-            edits.push({ type: "addedge", edge: newEdge, strict: true });
+            edits.push({ type: "addedge", edge: newEdge });
           }
 
           if (graph.metadata && graph.metadata.comments) {

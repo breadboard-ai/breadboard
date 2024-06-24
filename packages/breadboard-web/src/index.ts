@@ -1611,7 +1611,7 @@ export class Main extends LitElement {
             switch (evt.changeType) {
               case "add": {
                 editableGraph.edit(
-                  [{ type: "addedge", edge: evt.from, strict: false }],
+                  [{ type: "addedge", edge: evt.from }],
                   `Add edge between ${evt.from.from} and ${evt.from.to}`
                 );
                 break;
@@ -1636,7 +1636,6 @@ export class Main extends LitElement {
                       type: "changeedge",
                       from: evt.from,
                       to: evt.to,
-                      strict: false,
                     },
                   ],
                   `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
