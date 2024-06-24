@@ -8,7 +8,7 @@ tags:
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/json-kit/src/nodes/" %}
 
-This kit contains nodes that facilitate wrangling JSON objects. It contains the following nodes: **jsonata**, **objectToSchema**, **schemish**, **validateJson**, and **xmlToJson**.
+This kit contains nodes that facilitate wrangling JSON objects. It contains the following nodes: **jsonata**, **validateJson**, and **xmlToJson**.
 
 ## The `jsonata` node
 
@@ -67,10 +67,6 @@ Thought: I wonder how old planet Earth is?"
 ### Implementation
 
 - [jsonata.ts]({{src_url}}jsonata.ts)
-
-## schemish
-
-Converts a given JSON schema to [Schemish](https://glazkov.com/2023/05/06/schemish/)
 
 ## validateJson
 

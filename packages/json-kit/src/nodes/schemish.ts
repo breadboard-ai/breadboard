@@ -94,6 +94,7 @@ export default {
     title: "Schemish",
     description:
       "Converts a JSON schema to Schemish (https://glazkov.com/2023/05/06/schemish/)",
+    deprecated: true,
   },
   invoke,
   describe,
