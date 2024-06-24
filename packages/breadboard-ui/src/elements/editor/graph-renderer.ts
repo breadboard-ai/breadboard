@@ -161,7 +161,7 @@ export class GraphRenderer extends LitElement {
     }
 
     :host([readonly="true"]) canvas {
-      touch-action: pan-y !important;
+      touch-action: manipulation !important;
     }
 
     canvas {
@@ -461,7 +461,6 @@ export class GraphRenderer extends LitElement {
 
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
       if (this.readOnly) {
-        console.log("Removing wheel behavior");
         this.#app.stage.off("wheel", onWheel);
       }
 

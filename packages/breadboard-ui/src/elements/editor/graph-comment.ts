@@ -338,24 +338,27 @@ export class GraphComment extends PIXI.Container {
         hitArea.fill({ color: 0xff00ff, alpha: 0 });
       }
 
-      hitArea.on("click", (evt: PIXI.FederatedPointerEvent) => {
-        const url = evt.target.label;
-        if (url.startsWith("board:")) {
-          this.emit(
-            GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED,
-            url.replace(/board:/, "")
-          );
-          return;
-        }
+      hitArea.addEventListener(
+        "pointerup",
+        (evt: PIXI.FederatedPointerEvent) => {
+          const url = evt.target.label;
+          if (url.startsWith("board:")) {
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED,
+              url.replace(/board:/, "")
+            );
+            return;
+          }
 
-        try {
-          const parsedUrl = new URL(url);
-          window.open(parsedUrl.href, "_blank", "noopener");
-        } catch (err) {
-          console.warn(`Unable to parse URL from comment: ${url}`);
-          console.warn(err);
+          try {
+            const parsedUrl = new URL(url);
+            window.open(parsedUrl.href, "_blank", "noopener");
+          } catch (err) {
+            console.warn(`Unable to parse URL from comment: ${url}`);
+            console.warn(err);
+          }
         }
-      });
+      );
 
       this.#hitAreas.addChild(hitArea);
     }
