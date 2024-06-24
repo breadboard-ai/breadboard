@@ -63,6 +63,9 @@
         "../breadboard:build",
         "../schema:build",
         "validate"
+      ],
+      "output": [
+        "bbm.schema.json"
       ]
     },
     "build:ts": {
