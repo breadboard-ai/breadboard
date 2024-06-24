@@ -68,8 +68,6 @@ Thought: I wonder how old planet Earth is?"
 
 - [jsonata.ts]({{src_url}}jsonata.ts)
 
-## object to schema
-
 ## schemish
 
 Converts a given JSON schema to [Schemish](https://glazkov.com/2023/05/06/schemish/)
