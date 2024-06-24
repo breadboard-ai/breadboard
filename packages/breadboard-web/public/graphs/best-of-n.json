@@ -164,7 +164,7 @@
                 "object",
                 "string"
               ],
-              "title": "result",
+              "title": "Result",
               "description": "The result of the Jsonata expression"
             },
             "list": {
