@@ -380,6 +380,12 @@ export class Editor extends LitElement {
   `;
 
   async #processGraph(): Promise<GraphRenderer> {
+    if (GraphAssets.assetPrefix !== this.assetPrefix) {
+      GraphAssets.assetPrefix = this.assetPrefix;
+    }
+
+    await this.#graphRenderer.loadTexturesAndInitializeRenderer();
+
     if (!this.graph) {
       this.#graphRenderer.deleteGraphs();
       return this.#graphRenderer;
@@ -527,8 +533,6 @@ export class Editor extends LitElement {
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
-
-    GraphAssets.assetPrefix = this.assetPrefix;
   }
 
   disconnectedCallback(): void {
