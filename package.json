@@ -58,7 +58,6 @@
         "./packages/website:build",
         "./packages/schema:build",
         "./packages/board-server:build",
-        "./packages/team-kit:build",
         "./packages/manifest:build"
       ]
     },

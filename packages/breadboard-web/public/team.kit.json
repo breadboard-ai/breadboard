@@ -1,7 +1,0 @@
-{
-  "title": "Team Kit",
-  "description": "A Breadboard kit containing nodes to organize teams of synthetic workers",
-  "version": "0.0.1",
-  "url": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/team-kit/team.kit.json",
-  "nodes": {}
-}
