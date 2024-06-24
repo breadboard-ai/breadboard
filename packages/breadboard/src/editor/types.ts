@@ -65,7 +65,6 @@ export type RemoveNodeSpec = {
 export type AddEdgeSpec = {
   type: "addedge";
   edge: EditableEdgeSpec;
-  strict: boolean;
 };
 
 export type RemoveEdgeSpec = {
@@ -83,7 +82,6 @@ export type ChangeEdgeSpec = {
   type: "changeedge";
   from: EditableEdgeSpec;
   to: EditableEdgeSpec;
-  strict: boolean;
 };
 
 export type ChangeConfigurationSpec = {

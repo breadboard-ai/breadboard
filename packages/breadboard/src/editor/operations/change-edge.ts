@@ -45,27 +45,14 @@ export class ChangeEdge implements EditOperation {
       );
     }
     const from = spec.from;
-    let to = spec.to;
-    const strict = spec.strict;
+    const to = spec.to;
 
     const { graph, inspector } = context;
     const can = await this.can(from, to, inspector);
-    let alternativeChosen = false;
     if (!can.success) {
-      if (!can.alternative || strict) {
-        return can;
-      }
-      to = can.alternative;
-      alternativeChosen = true;
+      return can;
     }
     if (edgesEqual(from, to)) {
-      if (alternativeChosen) {
-        const error = `Edge from ${from.from}:${from.out}" to "${to.to}:${to.in}" already exists`;
-        return {
-          success: false,
-          error,
-        };
-      }
       return { success: true, noChange: true };
     }
     const fixedUpEdge = fixUpStarEdge(from);

@@ -42,20 +42,18 @@ export class AddEdge implements EditOperation {
 
     let error: string | null = null;
     if (edge.out === "*" && edge.in !== "*") {
-      if (edge.in !== "") {
-        edge = { ...edge, out: edge.in };
-      }
       error = `A "*" output port cannot be connected to a named or control input port`;
     } else if (edge.out === "" && edge.in !== "") {
       error = `A control input port cannot be connected to a named or "*" output part`;
     } else if (edge.in === "*" && edge.out !== "*") {
-      if (edge.out !== "") {
-        edge = { ...edge, in: edge.out };
-      }
       error = `A named input port cannot be connected to a "*" output port`;
     } else if (edge.in === "" && edge.out !== "") {
       error = `A named input port cannot be connected to a control output port`;
     }
+    if (error) {
+      return { success: false, error };
+    }
+
     const fromPorts = (await from.ports()).outputs;
     if (fromPorts.fixed) {
       const found = fromPorts.ports.find((port) => port.name === edge.out);
@@ -78,9 +76,6 @@ export class AddEdge implements EditOperation {
         };
       }
     }
-    if (error) {
-      return { success: false, error, alternative: edge };
-    }
     return { success: true };
   }
 
@@ -94,20 +89,10 @@ export class AddEdge implements EditOperation {
       );
     }
     let edge = spec.edge;
-    const strict = spec.strict;
     const { graph, inspector, store } = context;
     const can = await this.can(edge, inspector);
     if (!can.success) {
-      if (!can.alternative || strict) {
-        return can;
-      }
-      if (can.alternative) {
-        const canAlternative = await this.can(can.alternative, inspector);
-        if (!canAlternative.success) {
-          return canAlternative;
-        }
-        edge = can.alternative;
-      }
+      return can;
     }
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
