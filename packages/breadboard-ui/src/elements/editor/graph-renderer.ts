@@ -1108,7 +1108,7 @@ export class GraphRenderer extends LitElement {
     this.removeEventListener("wheel", this.#onWheelBound);
   }
 
-  async loadTexturesAndRender() {
+  async loadTexturesAndInitializeRenderer() {
     if (this.#appInitialized) {
       return this.#app.canvas;
     }
@@ -1506,7 +1506,7 @@ export class GraphRenderer extends LitElement {
       : nothing;
 
     return html`${until(
-      this.loadTexturesAndRender()
+      this.loadTexturesAndInitializeRenderer()
     )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeMenu}`;
   }
 }
