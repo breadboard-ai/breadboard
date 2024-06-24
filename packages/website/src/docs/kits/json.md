@@ -8,61 +8,79 @@ tags:
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/json-kit/src/nodes/" %}
 
-This kit contains the following nodes:
+This kit contains nodes that facilitate wrangling JSON objects. It contains the following nodes: **jsonata**, **validateJson**, and **xmlToJson**.
 
-## schemish
+## The `jsonata` node
 
-Converts a given JSON schema to [Schemish](https://glazkov.com/2023/05/06/schemish/)
+{{ "/breadboard/static/boards/kits/json-jsonata.bgl.json" | board }}
+
+Use this node to evaluate [JSONata](https://jsonata.org/) expressions in your board. JSONata is a versatile JSON query language (a kind of "SQL for JSON"). The node takes a JSON object, applies the JSONata expression to it, and returns the resulting object.
+See [https://jsonata.org/](https://jsonata.org/) for more details on the JSONata expression language.
+
+### Input ports
+
+![jsonata node input ports](/breadboard/static/images/json-kit/jsonata-inputs.png)
+
+The `jsonata` node has the following input ports:
+
+- `expression` -- required, a string that contains the JSONata expression to evaluate.
+
+- `raw` -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output port (`false`, default).
+
+- `json` -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the node will use all input ports (minus `expression` and `raw`) as the context.
+
+### Output ports
+
+- `result` -- the result of the expression, unless `raw` is `true`. In the latter case, the result is treated as the the collection of output ports.
+
+### Example
+
+If we send the set the `expression` to:
+
+```jsonata
+`$join(snippet, '\n')`
+```
+
+and then send the following JSON to the `json` port:
+
+```json
+[
+  {
+    "snippet": "Question: How old is planet Earth?"
+  },
+  {
+    "snippet": "Thought: I wonder how old planet Earth is?"
+  }
+]
+```
+
+We will get this output from the `result` port:
+
+```text
+Question: How old is planet Earth?
+Thought: I wonder how old planet Earth is?"
+```
+
+> [!TIP]
+> This example is captured in the board above.
+
+### Implementation
+
+- [jsonata.ts]({{src_url}}jsonata.ts)
 
 ## validateJson
 
 Validates given JSON against a given JSON Schema.
 
-## jsonata
+### Input ports
 
-Use this node to execute [JSONata](https://jsonata.org/) expressions. JSONata is a versatile JSON query language.
+### Output ports
 
 ### Example
 
-If we send the following inputs to `jsonata`:
+### Implementation
 
-```json
-{
-  "expression": "$join(items.snippet, '\n')",
-  "json": {
-    "items": [
-      {
-        "snippet": "Question: How old is planet Earth?"
-      },
-      {
-        "snippet": "Thought: I wonder how old planet Earth is?"
-      }
-    ]
-  }
-}
-```
-
-We will get this output:
-
-```json
-{
-  "result": "Question: How old is planet Earth?\nThought: I wonder how old planet Earth is?"
-}
-```
-
-### Inputs
-
-- `expression` -- required, a string that contains the JSONata expression to be executed.
-- `raw` -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output property (`false`, default).
-- `json` -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the node will use the input property bag (minus `expression` and `raw`) as the context.
-
-### Outputs:
-
-- `result` -- the result of the expression, unless `raw` is `true`. In the latter case, the result is passed as-is.
-
-### Implementation:
-
-- [jsonata.ts]({{src_url}}jsonata.ts)
+- [validateJson.ts]({{src_url}}validateJson.ts)
 
 ## The `xmlToJson` node
 

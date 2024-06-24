@@ -156,12 +156,14 @@ const describe: NodeDescriberFunction = async () => {
       title: "schema",
       description: "Optional schema to validate against.",
       type: "object",
+      behavior: ["config"],
     })
     .addProperty("strictSchema", {
       title: "strictSchema",
       description:
         "Optional boolean to enforce or turn off strict validation of the supplied schema.",
       type: "boolean",
+      behavior: ["config"],
     })
     .addRequired(["json"])
     .build();

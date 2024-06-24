@@ -1,0 +1,94 @@
+{
+  "title": "JSONata node example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "jsonata-fa4bd983",
+      "type": "jsonata",
+      "metadata": {
+        "visual": {
+          "x": 62,
+          "y": -8,
+          "collapsed": false
+        },
+        "title": "Snippet Joiner",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "expression": "$join(snippet, '\\n')"
+      }
+    },
+    {
+      "id": "input-1e81ce38",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -117,
+          "y": -10,
+          "collapsed": false
+        },
+        "title": "Input",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "json": {
+              "type": "object",
+              "title": "JSON",
+              "examples": [],
+              "default": "[{ \"snippet\": \"Question: How old is planet Earth?\"}, { \"snippet\": \"Thought: I wonder how old planet Earth is?\" }]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-3301bde0",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 286,
+          "y": 3,
+          "collapsed": false
+        },
+        "title": "Output",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "result": {
+              "type": "object",
+              "title": "Result",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input-1e81ce38",
+      "to": "jsonata-fa4bd983",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-fa4bd983",
+      "to": "output-3301bde0",
+      "out": "result",
+      "in": "result"
+    }
+  ],
+  "description": "A simple example of how to use JSONata node.",
+  "metadata": {
+    "tags": [],
+    "comments": []
+  }
+}

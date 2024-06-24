@@ -13,17 +13,17 @@ export default defineNodeType({
   metadata: {
     title: "JSONata",
     description:
-      "Uses JSONata (a kind of SQL for JSON) to transform incoming JSON object. See https://jsonata.org/ for details on the language.",
+      'Uses JSONata (a kind of "SQL for JSON") to transform incoming JSON object. See https://jsonata.org/ for details on the language.',
   },
   inputs: {
     expression: {
-      title: "expression",
+      title: "Expression",
       behavior: ["config"],
       description: "The Jsonata expression to evaluate",
       type: "string",
     },
     raw: {
-      title: "raw",
+      title: "Raw",
       behavior: ["config"],
       description:
         "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
@@ -31,7 +31,7 @@ export default defineNodeType({
       default: false,
     },
     json: {
-      title: "json",
+      title: "JSON",
       description:
         "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
       type: "unknown",
@@ -58,7 +58,12 @@ export default defineNodeType({
         { ...(await detectOutputProperties(expression, json, rest)), "*": {} }
       : // When not raw, the result goes to the result port, and there won't be
         // any other outputs.
-        { result: { description: "The result of the Jsonata expression" } },
+        {
+          result: {
+            title: "Result",
+            description: "The result of the Jsonata expression",
+          },
+        },
   }),
   invoke: async ({ expression, raw, json }, rest) => {
     if (!expression) {
