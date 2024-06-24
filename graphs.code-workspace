@@ -65,10 +65,6 @@
       "path": "packages/node-nursery",
     },
     {
-      "name": "coffee-bot-board",
-      "path": "packages/coffee-bot-board",
-    },
-    {
       "name": "cloud-function",
       "path": "packages/cloud-function",
     },
