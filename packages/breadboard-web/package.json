@@ -60,7 +60,6 @@
         "../pinecone-kit:build",
         "../python-wasm:build",
         "../manifest:build",
-        "../team-kit:build",
         "build:vite",
         "build:tsc",
         "generate:graphs"
@@ -81,7 +80,6 @@
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc",
         "../python-wasm:build:tsc",
-        "../team-kit:build:tsc",
         "../manifest:build"
       ],
       "files": [
@@ -298,7 +296,6 @@
     "@google-labs/node-nursery-web": "^1.1.3",
     "@google-labs/palm-kit": "^0.0.14",
     "@google-labs/pinecone-kit": "^0.1.12",
-    "@google-labs/team-kit": "^0.1.0",
     "@google-labs/template-kit": "^0.3.2",
     "@lit/context": "^1.1.2",
     "codemirror": "^6.0.1",

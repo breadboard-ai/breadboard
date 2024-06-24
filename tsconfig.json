@@ -11,7 +11,6 @@
     { "path": "packages/breadboard-web" },
     { "path": "packages/breadboard-ui" },
     { "path": "packages/breadbuddy" },
-    { "path": "packages/coffee-bot-board" },
     { "path": "packages/core-kit" },
     { "path": "packages/create-breadboard" },
     { "path": "packages/create-breadboard-kit" },
@@ -20,7 +19,6 @@
     { "path": "packages/graph-integrity" },
     { "path": "packages/graph-playground" },
     { "path": "packages/json-kit" },
-    { "path": "packages/llm-starter" },
     { "path": "packages/manifest" },
     { "path": "packages/node-nursery" },
     { "path": "packages/node-nursery-web" },
@@ -28,7 +26,6 @@
     { "path": "packages/palm-kit" },
     { "path": "packages/pinecone-kit" },
     { "path": "packages/schema" },
-    { "path": "packages/team-kit" },
     { "path": "packages/template-kit" },
     { "path": "packages/website" }
   ]
