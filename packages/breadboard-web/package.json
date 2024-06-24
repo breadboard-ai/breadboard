@@ -81,7 +81,8 @@
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc",
         "../python-wasm:build:tsc",
-        "../team-kit:build:tsc"
+        "../team-kit:build:tsc",
+        "../manifest:build"
       ],
       "files": [
         "src/**/*.ts",
