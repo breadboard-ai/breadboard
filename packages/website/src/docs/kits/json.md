@@ -72,6 +72,16 @@ Thought: I wonder how old planet Earth is?"
 
 Validates given JSON against a given JSON Schema.
 
+### Input ports
+
+### Output ports
+
+### Example
+
+### Implementation
+
+- [validateJson.ts]({{src_url}}validateJson.ts)
+
 ## The `xmlToJson` node
 
 Use this node to convert XML to JSON. Most nodes in the starter kit are designed to work with JSON, so this node is useful when you have XML data.
