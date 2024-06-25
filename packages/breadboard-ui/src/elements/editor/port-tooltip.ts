@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Schema } from "@google-labs/breadboard";
-import { LitElement, css, html } from "lit";
+import { type InspectablePort } from "@google-labs/breadboard";
+import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("pp-port-tooltip")
 export class PortTooltip extends LitElement {
   @property({ reflect: false, type: Object })
-  schema?: Schema;
+  port?: InspectablePort;
 
   static styles = css`
     pre {
@@ -23,7 +23,17 @@ export class PortTooltip extends LitElement {
   `;
 
   override render() {
+    if (!this.port) {
+      return nothing;
+    }
+    const info = {
+      name: this.port.name,
+      title: this.port.title,
+      status: this.port.status,
+      configured: this.port.configured,
+      schema: this.port.schema,
+    };
     // TODO(aomarks) Make a nicely styled version of this.
-    return html`<pre>${JSON.stringify(this.schema, null, 2)}</pre>`;
+    return html`<pre>${JSON.stringify(info, null, 2)}</pre>`;
   }
 }
