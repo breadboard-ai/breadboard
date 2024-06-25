@@ -56,6 +56,7 @@ export default defineNodeType({
   inputs: {
     template: {
       type: "string",
+      title: "Template",
       format: "multiline",
       description: "The URL template to use",
     },
@@ -66,6 +67,7 @@ export default defineNodeType({
   outputs: {
     url: {
       type: "string",
+      title: "URL",
       description:
         "The resulting URL that was produced by filling in the placeholders in the template",
       primary: true,

@@ -60,34 +60,36 @@ Thought: I wonder how old planet Earth is?
 
 ## The `urlTemplate` node
 
+{{ "/breadboard/static/boards/kits/template-url-template.bgl.json" | board }}
+
 Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
 
 ### Input ports
 
-- `template` -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
-- zero or more inputs that will be used to replace placeholders in the template.
+The `urlTemplate` node has a variable number of input ports.
+
+- **Template** (id: `template`) -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
+
+- **Placeholder input ports** -- zero or more inputs that will be used to replace placeholders in the template.
 
 ### Outputs ports
+
+The `urlTemplate` node has a single output port.
 
 - `url` a string that contains the result of replacing placeholders in the template with values from the inputs.
 
 ### Example
 
-If we send the following inputs to `urlTemplate`:
+If we set the **Template** to:
 
-```json
-{
-  "template": "https://example.com?question={question}",
-  "question": "How old is planet Earth?"
-}
+```url
+https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance
 ```
 
-We will get this output:
+And send "utopian sci-fi" to the **query** input, we will see this at the **URL** output:
 
-```json
-{
-  "url": "https://example.com?question=How%20old%20is%20planet%20Earth%3F"
-}
+```url
+https://www.googleapis.com/books/v1/volumes?q=utopian%20sci-fi&orderBy=relevance
 ```
 
 ### Implementation
