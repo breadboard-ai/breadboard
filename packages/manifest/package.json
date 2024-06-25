@@ -64,12 +64,27 @@
         "../schema:build",
         "validate"
       ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
       "output": [
         "bbm.schema.json"
       ]
     },
     "build:ts": {
-      "command": "tsc -b -v",
+      "command": "tsc -b -v --pretty",
+      "clean": "if-file-deleted",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/**",
+        "tsconfig.tsbuildinfo"
+      ],
       "dependencies": [
         "build:schema",
         "../breadboard:build",
@@ -81,6 +96,8 @@
       "dependencies": [
         "build"
       ],
+      "files": [],
+      "output": [],
       "env": {
         "FORCE_COLOR": "1"
       }
@@ -90,7 +107,13 @@
       "dependencies": [
         "../breadboard:build",
         "../schema:build"
-      ]
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": []
     }
   }
 }
