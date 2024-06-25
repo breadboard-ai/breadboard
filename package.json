@@ -186,7 +186,7 @@
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.7",
     "rollup": "^4.18.0",
-    "syncpack": "^12.3.2",
+    "syncpack": "^12.3.3",
     "typescript": "^5.4.5",
     "wireit": "^0.14.4"
   },
