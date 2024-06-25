@@ -1,0 +1,40 @@
+{
+  "title": "Input Node example 1",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "property-1": {
+              "type": "string",
+              "title": "Location",
+              "examples": []
+            },
+            "property-2": {
+              "type": "string",
+              "title": "Name",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 113,
+          "y": 36,
+          "collapsed": false
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "tags": []
+  }
+}
