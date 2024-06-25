@@ -25,6 +25,8 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_EXPAND_COLLAPSE = "graphnodeexpandcollapse",
   GRAPH_NODE_MENU_CLICKED = "graphnodemenuclicked",
   GRAPH_NODE_MENU_REQUESTED = "graphnodemenurequested",
+  GRAPH_NODE_PORT_MOUSEENTER = "graphnodeportmouseenter",
+  GRAPH_NODE_PORT_MOUSELEAVE = "graphnodeportmouseleave",
 }
 
 export enum GraphNodePortType {

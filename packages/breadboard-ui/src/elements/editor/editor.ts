@@ -136,6 +136,11 @@ export class Editor extends LitElement {
   @property()
   readOnly = false;
 
+  @property()
+  set showPortTooltips(value: boolean) {
+    this.#graphRenderer.showPortTooltips = value;
+  }
+
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.

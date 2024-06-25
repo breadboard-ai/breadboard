@@ -463,6 +463,21 @@ export class GraphNode extends PIXI.Container {
 
         portItem = { label, port, nodePort };
         this.#inPortsData.set(port.name, portItem);
+
+        nodePort.addEventListener("mouseover", (event) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+            port,
+            event.client
+          );
+        });
+        nodePort.addEventListener("mouseleave", (event) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
+            port,
+            event.client
+          );
+        });
       }
 
       if (portItem.label.text !== port.title) {
@@ -535,6 +550,21 @@ export class GraphNode extends PIXI.Container {
 
         portItem = { label, port, nodePort };
         this.#outPortsData.set(port.name, portItem);
+
+        nodePort.addEventListener("mouseover", (event) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+            port,
+            event.client
+          );
+        });
+        nodePort.addEventListener("mouseleave", (event) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
+            port,
+            event.client
+          );
+        });
       }
 
       if (portItem.label.text !== port.title) {

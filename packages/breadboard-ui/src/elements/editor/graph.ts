@@ -1244,6 +1244,18 @@ export class Graph extends PIXI.Container {
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE);
       });
 
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+        (...args: unknown[]) =>
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER, ...args)
+      );
+
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
+        (...args: unknown[]) =>
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, ...args)
+      );
+
       this.addChild(graphNode);
     }
 

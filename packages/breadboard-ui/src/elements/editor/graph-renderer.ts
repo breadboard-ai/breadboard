@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
   GraphNodeSelectedEvent,
@@ -75,6 +75,15 @@ export class GraphRenderer extends LitElement {
 
   @property({ reflect: true })
   readOnly = false;
+
+  @property()
+  showPortTooltips = false;
+
+  @state()
+  private _portTooltip?: {
+    location: PIXI.ObservablePoint;
+    port: InspectablePort;
+  } = undefined;
 
   #app = new PIXI.Application();
   #appInitialized = false;
@@ -170,7 +179,8 @@ export class GraphRenderer extends LitElement {
 
     #edge-create-disambiguation-menu,
     #edge-select-disambiguation-menu,
-    #overflow-menu {
+    #overflow-menu,
+    #port-tooltip {
       z-index: 1000;
       display: none;
       top: 0;
@@ -183,6 +193,10 @@ export class GraphRenderer extends LitElement {
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-2);
       overflow: auto;
+    }
+
+    #port-tooltip.visible {
+      display: block;
     }
 
     #edge-select-disambiguation-menu.visible,
@@ -838,6 +852,17 @@ export class GraphRenderer extends LitElement {
 
     graph.on(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, (board: string) => {
       this.dispatchEvent(new StartEvent(board));
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+      (port: InspectablePort, location: PIXI.ObservablePoint) => {
+        this._portTooltip = { port, location };
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, () => {
+      this._portTooltip = undefined;
     });
 
     this.#container.addChild(graph);
@@ -1505,8 +1530,27 @@ export class GraphRenderer extends LitElement {
         </div>`
       : nothing;
 
-    return html`${until(
-      this.loadTexturesAndInitializeRenderer()
-    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeMenu}`;
+    return [
+      until(this.loadTexturesAndInitializeRenderer()),
+      overflowMenu,
+      edgeSelectDisambiguationMenu,
+      edgeMenu,
+      this.#renderPortTooltip(),
+    ];
+  }
+
+  #renderPortTooltip() {
+    if (!this.showPortTooltips) {
+      return;
+    }
+    const { port, location } = this._portTooltip ?? {};
+    return html`<pp-port-tooltip
+      id="port-tooltip"
+      .schema=${port?.schema}
+      class=${classMap({ visible: port != null })}
+      style=${styleMap({
+        translate: `${location?.x ?? 0}px ${location?.y ?? 0}px`,
+      })}
+    ></pp-port-tooltip>`;
   }
 }
