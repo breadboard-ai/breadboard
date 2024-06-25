@@ -3,7 +3,6 @@ layout: docs.njk
 title: JSON Kit
 tags:
   - kits
-  - wip
 ---
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/json-kit/src/nodes/" %}
