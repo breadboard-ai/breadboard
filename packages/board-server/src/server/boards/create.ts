@@ -8,6 +8,11 @@ import { authenticate } from "../auth.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
+export type CreateRequest = {
+  name: string;
+  dryRun?: boolean;
+};
+
 const create: ApiHandler = async (path, req, res) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
@@ -23,9 +28,9 @@ const create: ApiHandler = async (path, req, res) => {
     });
 
     req.on("end", async () => {
-      const request = JSON.parse(chunks.join(""));
+      const request = JSON.parse(chunks.join("")) as CreateRequest;
       const name = request.name;
-      const result = await store.create(userKey, name);
+      const result = await store.create(userKey, name, !!request.dryRun);
 
       if (!result.success) {
         res.writeHead(400, { "Content-Type": "application/json" });
