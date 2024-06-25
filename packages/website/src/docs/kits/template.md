@@ -3,7 +3,6 @@ layout: docs.njk
 title: Template Kit
 tags:
   - kits
-  - wip
 ---
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit/src/nodes/" %}
