@@ -44,7 +44,6 @@
         "./packages/gemini-kit:build",
         "./packages/google-drive-kit:build",
         "./packages/graph-integrity:build",
-        "./packages/graph-playground:build",
         "./packages/import:build",
         "./packages/json-kit:build",
         "./packages/template-kit:build",
@@ -71,7 +70,6 @@
         "./packages/core-kit:test",
         "./packages/discovery-types:test",
         "./packages/graph-integrity:test",
-        "./packages/graph-playground:test",
         "./packages/google-drive-kit:test",
         "./packages/import:test",
         "./packages/json-kit:test",
@@ -101,7 +99,6 @@
         "./packages/discovery-types:lint",
         "./packages/gemini-kit:lint",
         "./packages/graph-integrity:lint",
-        "./packages/graph-playground:lint",
         "./packages/google-drive-kit:lint",
         "./packages/import:lint",
         "./packages/json-kit:lint",
@@ -127,7 +124,6 @@
         "./packages/breadboard-web:generate:docs",
         "./packages/discovery-types:generate:docs",
         "./packages/graph-integrity:generate:docs",
-        "./packages/graph-playground:generate:docs",
         "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]

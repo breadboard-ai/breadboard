@@ -11,4 +11,4 @@ gcloud functions deploy ${filename%.*} \
 --trigger-http \
 --allow-unauthenticated \
 --set-secrets PALM_KEY=PALM_KEY:latest,GOOGLE_CSE_ID=GOOGLE_CSE_ID:latest \
---update-env-vars BOARD_URL=https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/${filename}
+--update-env-vars BOARD_URL=https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/graphs/${filename}
