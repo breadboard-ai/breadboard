@@ -213,7 +213,9 @@ export class SaveAsOverlay extends LitElement {
 
     let fileName = title.toLocaleLowerCase().replace(/[^a-zA-Z0-9_-]/gim, "-");
     if (!fileName.endsWith(".json")) {
-      fileName += ".json";
+      fileName += ".bgl.json";
+    } else if (!fileName.endsWith(".bgl.json")) {
+      fileName = fileName.replace(".json", ".bgl.json");
     }
 
     return fileName;
@@ -380,7 +382,7 @@ export class SaveAsOverlay extends LitElement {
           name="filename"
           type="text"
           required
-          pattern="^[a-zA-Z0-9_\\-]+.json$"
+          pattern="^[a-zA-Z0-9_\\-]+.bgl.json$"
           @input=${(evt: Event) => {
             if (!(evt.target instanceof HTMLInputElement)) {
               return;
