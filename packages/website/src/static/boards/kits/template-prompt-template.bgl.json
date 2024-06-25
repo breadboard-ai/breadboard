@@ -136,7 +136,7 @@
       },
       {
         "id": "comment-bbd97505",
-        "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as {{inputName}} in the template.",
+        "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{{inputName}}` in the template.",
         "metadata": {
           "visual": {
             "x": 8,
