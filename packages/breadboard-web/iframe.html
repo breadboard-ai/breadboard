@@ -18,6 +18,7 @@
     import { SettingsStore } from "./src/data/settings-store.ts";
     import { makeProxyConfig } from "./src/proxy/iframe.ts";
 
+    const localBoards = await (await fetch("/local-boards.json")).json();
     const proxy = await makeProxyConfig();
 
     const config = {
@@ -25,6 +26,7 @@
         FileSystemGraphProvider.instance(),
         IDBGraphProvider.instance(),
         RemoteGraphProvider.instance(),
+        new ExamplesGraphProvider(localBoards),
       ],
       settings: SettingsStore.instance(),
       proxy,
