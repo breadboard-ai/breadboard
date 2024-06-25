@@ -1,5 +1,5 @@
 {
-  "title": "JSONata node example",
+  "title": "jsonata node example",
   "version": "0.0.1",
   "nodes": [
     {
@@ -23,8 +23,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -117,
-          "y": -10,
+          "x": -111,
+          "y": 13,
           "collapsed": false
         },
         "title": "Input",
@@ -37,7 +37,7 @@
               "type": "object",
               "title": "JSON",
               "examples": [],
-              "default": "[{ \"snippet\": \"Question: How old is planet Earth?\"}, { \"snippet\": \"Thought: I wonder how old planet Earth is?\" }]"
+              "default": "[   { \"snippet\": \"Question: How old is planet Earth?\" },   { \"snippet\": \"Thought: I wonder how old planet Earth is?\" } ]"
             }
           },
           "type": "object",
@@ -50,8 +50,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 286,
-          "y": 3,
+          "x": 271,
+          "y": 18,
           "collapsed": false
         },
         "title": "Output",
@@ -86,9 +86,43 @@
       "in": "result"
     }
   ],
-  "description": "A simple example of how to use JSONata node.",
+  "description": "A simple example of how to use jsonata node.",
   "metadata": {
     "tags": [],
-    "comments": []
+    "comments": [
+      {
+        "id": "comment-43a1927e",
+        "text": "Snippet Joiner takes \nthe JSON input and applies the\n `$join(snippet, '\\n')`\nJSONata expression to it, which joins all `snippet` properties in input into lines of text.",
+        "metadata": {
+          "visual": {
+            "x": 15,
+            "y": -163,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-999cf738",
+        "text": "Input asks for \na JSON object ",
+        "metadata": {
+          "visual": {
+            "x": -171,
+            "y": -50,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-58432cfe",
+        "text": "Output returns \nthe resulting string",
+        "metadata": {
+          "visual": {
+            "x": 315,
+            "y": -43,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }

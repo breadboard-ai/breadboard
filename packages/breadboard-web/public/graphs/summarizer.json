@@ -163,7 +163,7 @@
                       "title": "context"
                     },
                     "json": {
-                      "title": "json",
+                      "title": "JSON",
                       "description": "The validated JSON.",
                       "type": "string"
                     }

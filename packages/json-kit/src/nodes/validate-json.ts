@@ -148,18 +148,18 @@ const invoke = async (inputs: InputValues): Promise<OutputValues> => {
 const describe: NodeDescriberFunction = async () => {
   const inputSchema = new SchemaBuilder()
     .addProperty("json", {
-      title: "json",
+      title: "JSON string",
       description: "The string to validate as JSON.",
       type: "string",
     })
     .addProperty("schema", {
-      title: "schema",
+      title: "Schema",
       description: "Optional schema to validate against.",
       type: "object",
       behavior: ["config"],
     })
     .addProperty("strictSchema", {
-      title: "strictSchema",
+      title: "Strict",
       description:
         "Optional boolean to enforce or turn off strict validation of the supplied schema.",
       type: "boolean",
@@ -170,7 +170,7 @@ const describe: NodeDescriberFunction = async () => {
 
   const outputSchema = new SchemaBuilder()
     .addProperty("json", {
-      title: "json",
+      title: "JSON",
       description: "The validated JSON.",
     })
     .addProperty("$error", {

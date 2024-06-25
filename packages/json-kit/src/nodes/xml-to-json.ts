@@ -80,7 +80,7 @@ export default {
       inputSchema: {
         properties: {
           xml: {
-            title: "XML",
+            title: "XML String",
             type: "string",
             description: "Valid XML as a string",
           },

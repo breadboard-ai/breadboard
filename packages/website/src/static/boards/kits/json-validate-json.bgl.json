@@ -1,0 +1,194 @@
+{
+  "title": "validateJson node example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "input-1e81ce38",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -189,
+          "y": 25,
+          "collapsed": false
+        },
+        "title": "Input",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "json": {
+              "type": "string",
+              "title": "JSON string",
+              "examples": [
+                "Here's the output:\n\n```json\n\n[{ \"snippet\": \"Question: How old is planet Earth?\" },   { \"snippet\": \"Thought: I wonder how old planet Earth is?\" } ]\n\n```"
+              ],
+              "format": "multiline"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-3301bde0",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 314,
+          "y": 7,
+          "collapsed": false
+        },
+        "title": "Output",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "result": {
+              "type": "object",
+              "title": "Result",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "validateJson-84e1083c",
+      "type": "validateJson",
+      "metadata": {
+        "visual": {
+          "x": 16,
+          "y": -22,
+          "collapsed": false
+        },
+        "title": "Snippet Validator",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "snippet": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-5e1828b8",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 299,
+          "y": -152,
+          "collapsed": false
+        },
+        "title": "Error",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "content": {
+              "type": "object",
+              "title": "Message",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input-1e81ce38",
+      "to": "validateJson-84e1083c",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "validateJson-84e1083c",
+      "to": "output-3301bde0",
+      "out": "json",
+      "in": "result"
+    },
+    {
+      "from": "validateJson-84e1083c",
+      "to": "output-5e1828b8",
+      "out": "$error",
+      "in": "content"
+    }
+  ],
+  "description": "A simple example of how to use validateJson node.",
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-43a1927e",
+        "text": "Snippet Validator attempts to parse and validate the string using the schema, supplied in the configuration.\nIf successful, it outputs the validated JSON. If not successful, it outputs an error.",
+        "metadata": {
+          "visual": {
+            "x": -31,
+            "y": -181,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-999cf738",
+        "text": "Input asks for \na stringified JSON object.\nThis is very handy for processing LLM output (text) that contains JSON.",
+        "metadata": {
+          "visual": {
+            "x": -299,
+            "y": -97,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-58432cfe",
+        "text": "Output returns \nthe validated JSON",
+        "metadata": {
+          "visual": {
+            "x": 347,
+            "y": -55,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b72328e0",
+        "text": "If JSON is invalid,\nreturns the error message",
+        "metadata": {
+          "visual": {
+            "x": 357,
+            "y": -212,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-73d011e4",
+        "text": "💡 the **validateJson** will also know to only look inside the markdown JSON delimiters that commonly appear in LLM JSON output -- and ignore the rest of the string.",
+        "metadata": {
+          "visual": {
+            "x": 54,
+            "y": 73,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}
