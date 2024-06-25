@@ -143,40 +143,57 @@ We will see the following JSON object on the **JSON** output port:
 
 ## The `xmlToJson` node
 
-Use this node to convert XML to JSON. JSON is sort of a lingua franca in Breadboard, so this node is useful when starting with XML data.
+{{ "/breadboard/static/boards/kits/json-xml-to-json.bgl.json" | board }}
 
-This node takes one required `xml` property, which it treats as XML and converts to it to JSON as the `json` output property. The format of JSON follows the `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
+Use this node to convert XML to JSON. JSON is a sort of [lingua franca](https://en.wikipedia.org/wiki/Lingua_franca) in Breadboard, so this node is useful when starting with XML data.
+
+This node takes a string as its single input port. It then tries to parse it as XML. If successful, it then converts it to the `alt-json` format that is described in [here](https://developers.google.com/gdata/docs/json).
+
+### Input ports
+
+The `xmlToJson` node has a single input port:
+
+- **XML String** (id: `xml`) -- expects a valid stringified XML
+
+### Output Ports
+
+The `xmlToJson` node has a single output port:
+
+- **JSON** (id: `json`) -- provides a JSON object that represents the supplied XML.
 
 ### Example
 
-If we send the following inputs to `xml-to-json`:
+If we send the following string to **XML String** input port:
 
-```json
-{
-  "xml": "<root><question>How old is planet Earth?</question><thought>I wonder how old planet Earth is?</thought></root>"
-}
+```xml
+<snippets>
+  <snippet title="Snippet 1">Question: How old is planet Earth?</snippet>
+  <snippet title="Snippet 2">Thought: I wonder how old planet Earth is?</snippet>
+</snippets>
 ```
 
-We will get this output:
+We will get this value from **JSON** output port:
 
 ```json
-{
-  "json": {
-    "root": {
-      "question": { "$t": "How old is planet Earth?" },
-      "thought": { "$t": "I wonder how old planet Earth is?" }
+[
+  "$doc",
+  {
+    "snippets": {
+      "$t": ["  ", "  "],
+      "snippet": [
+        {
+          "$t": ["Question: How old is planet Earth?"],
+          "title": "Snippet 1"
+        },
+        {
+          "$t": ["Thought: I wonder how old planet Earth is?"],
+          "title": "Snippet 2"
+        }
+      ]
     }
   }
-}
+]
 ```
-
-### Inputs:
-
-- `xml` - required, must contain a string that represents XML.
-
-### Outputs:
-
-- `json` - the result of converting XML to JSON.
 
 ### Implementation:
 
