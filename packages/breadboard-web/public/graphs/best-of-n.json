@@ -173,7 +173,7 @@
             },
             "rank": {
               "type": "string",
-              "title": "json",
+              "title": "JSON",
               "description": "The validated JSON."
             }
           }

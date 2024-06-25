@@ -1,0 +1,82 @@
+{
+  "title": "json-xml-to-json",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "xml": {
+              "type": "object",
+              "title": "XML",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -157,
+          "y": -29,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "json": {
+              "type": "object",
+              "title": "JSON",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 277,
+          "y": -10,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "xmlToJson-7d6274e7",
+      "type": "xmlToJson",
+      "metadata": {
+        "visual": {
+          "x": -2,
+          "y": -137,
+          "collapsed": false
+        },
+        "title": "Convert XML to JSON",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "xmlToJson-7d6274e7",
+      "out": "xml",
+      "in": "xml"
+    },
+    {
+      "from": "xmlToJson-7d6274e7",
+      "to": "output",
+      "out": "json",
+      "in": "json"
+    }
+  ]
+}
