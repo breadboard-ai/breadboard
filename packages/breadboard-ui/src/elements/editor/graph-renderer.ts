@@ -1546,7 +1546,7 @@ export class GraphRenderer extends LitElement {
     const { port, location } = this._portTooltip ?? {};
     return html`<pp-port-tooltip
       id="port-tooltip"
-      .schema=${port?.schema}
+      .port=${port}
       class=${classMap({ visible: port != null })}
       style=${styleMap({
         translate: `${location?.x ?? 0}px ${location?.y ?? 0}px`,
