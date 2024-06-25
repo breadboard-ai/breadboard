@@ -53,10 +53,6 @@
       "path": "packages/pinecone-kit",
     },
     {
-      "name": "graph-playground",
-      "path": "packages/graph-playground",
-    },
-    {
       "name": "graph-integrity",
       "path": "packages/graph-integrity",
     },

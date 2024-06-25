@@ -32,7 +32,7 @@ npm run deploy ${graph}
 
 ```
 
-For now, `${graph}` value is limited to one of the filenames in the `graphs` directory of the `packages/graph-playground` package.
+For now, `${graph}` value is limited to one of the filenames in the `graphs` directory of the `packages/breadboard-web` package.
 
 For example, running:
 
