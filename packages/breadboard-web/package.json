@@ -189,6 +189,7 @@
       "dependencies": [
         "../agent-kit:build"
       ],
+      "files": [],
       "output": [
         "public/*.kit.json"
       ]
@@ -205,10 +206,9 @@
     },
     "generate:graphs": {
       "command": "tsx src/make-graphs.ts",
-      "dependencies": [
-        "typescript-files-and-deps"
+      "files": [
+        "src/boards/**/*.ts"
       ],
-      "files": [],
       "output": [
         "public/local-boards.json",
         "public/graphs/**/*.json",
