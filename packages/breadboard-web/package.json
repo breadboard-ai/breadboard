@@ -206,6 +206,9 @@
     },
     "generate:graphs": {
       "command": "tsx src/make-graphs.ts",
+      "dependencies": [
+        "../build:build:tsc"
+      ],
       "files": [
         "src/boards/**/*.ts"
       ],
