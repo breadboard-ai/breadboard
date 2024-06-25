@@ -467,14 +467,17 @@ export class GraphNode extends PIXI.Container {
         nodePort.addEventListener("mouseover", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
-            port,
+            // Port objects can change! The local `port` variable we have might
+            // get out of date, so we need to grab the latest version. (This
+            // pattern repeated a few times below).
+            this.#inPortsData.get(port.name)?.port,
             event.client
           );
         });
         nodePort.addEventListener("mouseleave", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
-            port,
+            this.#inPortsData.get(port.name)?.port,
             event.client
           );
         });
@@ -554,14 +557,14 @@ export class GraphNode extends PIXI.Container {
         nodePort.addEventListener("mouseover", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
-            port,
+            this.#outPortsData.get(port.name)?.port,
             event.client
           );
         });
         nodePort.addEventListener("mouseleave", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
-            port,
+            this.#outPortsData.get(port.name)?.port,
             event.client
           );
         });
