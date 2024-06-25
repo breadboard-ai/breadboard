@@ -11,21 +11,17 @@ import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
-import AgentKit from "@google-labs/agent-kit";
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
 import "@google-labs/breadboard-ui/editor";
 
 import {
-  type KitConstructor,
-  type Kit,
+  KitManifest,
   asRuntimeKit,
   createLoader,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
-
-export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
-  return kiConstructors.map((kitConstructor) => asRuntimeKit(kitConstructor));
-};
+import { fromManifest } from "@google-labs/breadboard/kits";
 
 const UPDATE_USER_TIMEOUT = 1_000;
 
@@ -109,13 +105,13 @@ export class BoardEmbed extends LitElement {
 
     const response = await fetch(this.url);
     const graph = await response.json();
-    const kits = await loadKits([
-      Core,
-      JSONKit,
-      TemplateKit,
-      GeminiKit,
-      AgentKit,
-    ]);
+    const kits = [
+      asRuntimeKit(Core),
+      asRuntimeKit(JSONKit),
+      asRuntimeKit(TemplateKit),
+      asRuntimeKit(GeminiKit),
+      fromManifest(AgentKit as KitManifest),
+    ];
 
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
 
