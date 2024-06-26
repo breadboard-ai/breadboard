@@ -53,10 +53,6 @@
       "path": "packages/pinecone-kit",
     },
     {
-      "name": "graph-integrity",
-      "path": "packages/graph-integrity",
-    },
-    {
       "name": "node-nursery",
       "path": "packages/node-nursery",
     },

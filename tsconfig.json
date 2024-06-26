@@ -16,7 +16,6 @@
     { "path": "packages/create-breadboard-kit" },
     { "path": "packages/discovery-types" },
     { "path": "packages/gemini-kit" },
-    { "path": "packages/graph-integrity" },
     { "path": "packages/json-kit" },
     { "path": "packages/manifest" },
     { "path": "packages/node-nursery" },
