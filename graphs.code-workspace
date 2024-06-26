@@ -49,10 +49,6 @@
       "path": "packages/breadbuddy",
     },
     {
-      "name": "pinecone-kit",
-      "path": "packages/pinecone-kit",
-    },
-    {
       "name": "cloud-function",
       "path": "packages/cloud-function",
     },

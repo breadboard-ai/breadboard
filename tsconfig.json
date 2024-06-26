@@ -21,7 +21,6 @@
     { "path": "packages/node-nursery-web" },
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
-    { "path": "packages/pinecone-kit" },
     { "path": "packages/schema" },
     { "path": "packages/template-kit" },
     { "path": "packages/website" }

@@ -59,7 +59,6 @@
         "../breadboard-web:generate:graphs",
         "../core-kit:build:tsc",
         "../import:build",
-        "../node-nursery:build:tsc",
         "../template-kit:build:tsc"
       ],
       "files": [
