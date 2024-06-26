@@ -165,7 +165,7 @@
     "rimraf": "^5.0.7",
     "rollup": "^4.18.0",
     "syncpack": "^12.3.3",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "wireit": "^0.14.4"
   },
   "workspaces": [
