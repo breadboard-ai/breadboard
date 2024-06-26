@@ -1,22 +1,17 @@
 {
-  "title": "Input Node example 1",
+  "title": "built-in-output",
   "description": "A blank board. Use it as a starting point for your creations.",
   "version": "0.0.1",
   "nodes": [
     {
-      "type": "input",
-      "id": "input",
+      "type": "output",
+      "id": "output",
       "configuration": {
         "schema": {
           "properties": {
-            "property-1": {
+            "story": {
               "type": "string",
-              "title": "Location",
-              "examples": []
-            },
-            "property-2": {
-              "type": "string",
-              "title": "Name",
+              "title": "News Story",
               "examples": []
             }
           },
@@ -26,8 +21,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 113,
-          "y": 36,
+          "x": 65,
+          "y": 37,
           "collapsed": false
         }
       }
@@ -35,26 +30,25 @@
   ],
   "edges": [],
   "metadata": {
-    "tags": [],
     "comments": [
       {
-        "id": "comment-2a2e29e8",
-        "text": "Requests the \"Location\" and \"Name\" values and provides them as outputs.",
+        "id": "comment-c234f8b1",
+        "text": "Takes the values from out of the board back to the user or another board.",
         "metadata": {
           "visual": {
-            "x": 52,
-            "y": -67,
+            "x": 38,
+            "y": -71,
             "collapsed": false
           }
         }
       },
       {
-        "id": "comment-a9eba97d",
-        "text": "The number, names, and types of the output ports is specified using **Schema** configuration port.",
+        "id": "comment-f37c57be",
+        "text": "The **Schema** configuration port defines the ports that will be used as board outputs.",
         "metadata": {
           "visual": {
-            "x": 61,
-            "y": 148,
+            "x": 30,
+            "y": 135,
             "collapsed": false
           }
         }

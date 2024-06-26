@@ -7,7 +7,7 @@ tags:
   - wip
 ---
 
-While most nodes in Breadboard come from various Kits, there are two nodes that are built-in: **input** and **output**. A good way to think about them is as if they are part of the "Built-in Kit": something that you always get, no matter what other kits you choose to employ.
+While most nodes in Breadboard come from various kits, there are two nodes that are built-in: **input** and **output**. A good way to think about them is as if they are part of the "Built-in kit": something that you always get, no matter what other kits you choose to employ.
 
 ## Why do we need these nodes?
 
@@ -24,15 +24,20 @@ By adding "input" and "output" nodes in our graph, we not only make it easy for 
 
 {{ "/breadboard/static/boards/kits/built-in-input.bgl.json" | board }}
 
-Use this node to specify the inputs for the board. The `input` node has a single fixed input port and a variable number of output port.
+Use this node to specify the inputs for the board. The `input` node has a single fixed input configuration port named **Schema** and a variable number of output ports.
 
-### Inputs
+The output ports of this node are supplied from outside of the board: either by the user when running the board directly or by another board when invoking this board from it.
+
+> [!TIP]
+> It usually takes a bit of getting used to the idea that the _inputs_ of a board show up as _outputs_ of the `input` node. One metaphor that might help is that the `input` node brings the data from outside of the board.
+
+### Input ports
 
 ![Input Schema editor](/breadboard/static/images/built-in-kit/input-schema.png)
 
-The single fixed input port is **Schema**, which allows us to specify the number, names, types, and even sample/default values of the inputs for our board.
+The single configuration input port is **Schema**, which allows us to specify the number, names, types, and even sample/default values of the inputs for our board.
 
-The **Schema** editor allows creating a list of input port definitions. Each definition has the following basic parameters:
+The Schema editor allows creating a list of input port definitions. Each definition has the following basic parameters:
 
 - **Title** -- the user-friendly title that will be shown by the Visual Editor.
 
@@ -92,6 +97,23 @@ Hidden behind the "Show more" in the Visual Editor, there are a few more paramet
 > [!NOTE]
 > In the scenario above, make sure that the **Required** checkbox is **not** checked. The **Default** value will only be used if the port is optional. When the **Required** is not checked and **Default** is not specified, Breadboard will "bubble up" the input: present it to the user to fill out.
 
-### Outputs
+### Output ports
 
-### Example
+The output ports of the `input` node are defined by **Schema**.
+
+## The `output` node
+
+{{ "/breadboard/static/boards/kits/built-in-output.bgl.json" | board }}
+
+The `output` node does the inverse of what `input` does: it takes the values out of the board, back to the user (if called directly) or to another board (if invoked by that board). It has a variable number of input ports, and no output ports.
+
+### Input ports
+
+Similar to the `input` node, there's pre-defined input port called **Schema**, whose purpose is identical to **Schema** in the `input` node, with one important distinction: it defines the rest of the input ports (as opposed to output ports in `input`).
+
+> [!WARNING]
+> Avoid defining a port with the id of `schema` in the Schema editor. It will result in the `output` node being confused, since that is the id used by **Schema**.
+
+### Output ports
+
+The `output` node does not have any output ports.
