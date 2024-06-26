@@ -86,11 +86,11 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "concurrently": "^8.2.2",
     "esbuild": "^0.21.5",
     "eslint": "^8.57.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "wireit": "^0.14.4"
   },
   "dependencies": {

@@ -16,7 +16,6 @@
     "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit",
     "syncpack:check": "wireit",
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
@@ -43,14 +42,11 @@
         "./packages/discovery-types:build",
         "./packages/gemini-kit:build",
         "./packages/google-drive-kit:build",
-        "./packages/graph-integrity:build",
         "./packages/import:build",
         "./packages/json-kit:build",
         "./packages/template-kit:build",
-        "./packages/node-nursery:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
-        "./packages/pinecone-kit:build",
         "./packages/python-wasm:build",
         "./packages/website:build",
         "./packages/schema:build",
@@ -69,15 +65,12 @@
         "./packages/connection-server:test",
         "./packages/core-kit:test",
         "./packages/discovery-types:test",
-        "./packages/graph-integrity:test",
         "./packages/google-drive-kit:test",
         "./packages/import:test",
         "./packages/json-kit:test",
         "./packages/template-kit:test",
-        "./packages/node-nursery:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
-        "./packages/pinecone-kit:test",
         "./packages/python-wasm:test",
         "./packages/schema:test",
         "./packages/manifest:test"
@@ -98,15 +91,12 @@
         "./packages/create-breadboard-kit:lint",
         "./packages/discovery-types:lint",
         "./packages/gemini-kit:lint",
-        "./packages/graph-integrity:lint",
         "./packages/google-drive-kit:lint",
         "./packages/import:lint",
         "./packages/json-kit:lint",
         "./packages/template-kit:lint",
-        "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/pinecone-kit:lint",
         "./packages/python-wasm:lint"
       ]
     },
@@ -114,18 +104,6 @@
       "dependencies": [
         "build",
         "check"
-      ]
-    },
-    "generate:docs": {
-      "dependencies": [
-        "./packages/breadboard:generate:docs",
-        "./packages/breadboard-server:generate:docs",
-        "./packages/breadboard-ui:generate:docs",
-        "./packages/breadboard-web:generate:docs",
-        "./packages/discovery-types:generate:docs",
-        "./packages/graph-integrity:generate:docs",
-        "./packages/template-kit:generate:docs",
-        "./packages/node-nursery:generate:docs"
       ]
     },
     "check": {
@@ -177,9 +155,9 @@
     "@changesets/cli": "^2.27.6",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
     "eslint-plugin-expect-type": "^0.4.0",
@@ -187,7 +165,7 @@
     "rimraf": "^5.0.7",
     "rollup": "^4.18.0",
     "syncpack": "^12.3.3",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "wireit": "^0.14.4"
   },
   "workspaces": [

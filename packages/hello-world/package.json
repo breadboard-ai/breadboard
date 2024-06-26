@@ -19,7 +19,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "tsx": "^4.15.7",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "dependencies": {
     "@google-labs/agent-kit": "^0.7.0",

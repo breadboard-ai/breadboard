@@ -127,7 +127,7 @@
     "@google-labs/template-kit": "^0.3.2",
     "eleventy-plugin-youtube-embed": "^1.10.2",
     "esbuild": "^0.21.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "devDependencies": {
     "@11ty/eleventy": "^2.0.1",

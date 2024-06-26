@@ -16,7 +16,6 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -102,20 +101,6 @@
       "output": [
         "docs/graphs/**/*.md"
       ]
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -151,19 +136,17 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@definitelytyped/dtslint": "^0.2.21",
+    "@definitelytyped/dtslint": "^0.2.22",
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.18.0",
-    "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^4.1.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "engines": {
     "node": ">=20.14.0"

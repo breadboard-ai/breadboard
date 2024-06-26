@@ -78,10 +78,10 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "@types/nunjucks": "^3.2.6",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "vite": "^5.3.1",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.7.0",

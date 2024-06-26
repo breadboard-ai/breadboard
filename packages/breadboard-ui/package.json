@@ -28,7 +28,6 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "generate:docs": "wireit",
     "dev": "wireit",
     "test": "wireit",
     "build": "wireit",
@@ -106,20 +105,6 @@
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -144,13 +129,11 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/markdown-it": "^14.1.1",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "rollup": "^4.18.0",
-    "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^4.1.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.2",
@@ -160,6 +143,6 @@
     "ajv": "^8.16.0",
     "lit": "^3.1.4",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.1.6"
+    "pixi.js": "^8.2.1"
   }
 }

@@ -38,12 +38,6 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `generateText` use `text` prompt (optionally `stopSequences`) to generate and return a `completion`
   - `embedText` use `text` to create and return an `embedding` (768-dimensional array of floating-point numbers)
 
-## Vector Database
-
-- [google-labs/pinecode-kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/pinecone-kit)
-  is an early stage prototype for an interaction with the [Pinecone](https://pinecone.io/) vector database.
-  See docs for usage.
-
 ## Session History
 
 - see the [tutorial](../tutorial/) for how to use the

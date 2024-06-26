@@ -123,11 +123,11 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/template-kit": "^0.3.2",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.13.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.6.0",
