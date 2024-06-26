@@ -40,8 +40,7 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "generate:graphs": "wireit",
-    "generate:docs": "wireit"
+    "generate:graphs": "wireit"
   },
   "wireit": {
     "build": {
@@ -224,20 +223,6 @@
         "public/graphs/**/*.json",
         "docs/graphs/**/*.md"
       ]
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:vite"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -281,8 +266,6 @@
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
     "tsx": "^4.15.7",
-    "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^4.1.0",
     "typescript": "^5.4.5",
     "vite": "^5.3.1",
     "vite-plugin-full-reload": "^1.1.0",

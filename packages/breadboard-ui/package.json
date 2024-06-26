@@ -28,7 +28,6 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "generate:docs": "wireit",
     "dev": "wireit",
     "test": "wireit",
     "build": "wireit",
@@ -106,20 +105,6 @@
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -148,8 +133,6 @@
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
     "rollup": "^4.18.0",
-    "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^4.1.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

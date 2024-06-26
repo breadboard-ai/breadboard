@@ -19,14 +19,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*", "tests/**/*.ts", "tsconfig.base.json"],
-  "extends": "./tsconfig.base.json",
-  "typedocOptions": {
-    "entryPoints": "./src/protocol.ts",
-    "out": "./docs/api",
-    "githubPages": false,
-    "readme": "none",
-    "sort": "source-order",
-    "excludeNotDocumented": true,
-    "hideInPageTOC": true
-  }
+  "extends": "./tsconfig.base.json"
 }

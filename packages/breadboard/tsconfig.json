@@ -6,10 +6,5 @@
     "esModuleInterop": true
   },
   "include": ["src/**/*", "tests/**/*"],
-  "extends": "@google-labs/tsconfig/base.json",
-  "typedocOptions": {
-    "entryPoints": "./src/index.ts",
-    "out": "./docs/api",
-    "githubPages": "false"
-  }
+  "extends": "@google-labs/tsconfig/base.json"
 }

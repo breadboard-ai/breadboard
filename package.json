@@ -16,7 +16,6 @@
     "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit",
     "syncpack:check": "wireit",
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
@@ -105,16 +104,6 @@
       "dependencies": [
         "build",
         "check"
-      ]
-    },
-    "generate:docs": {
-      "dependencies": [
-        "./packages/breadboard:generate:docs",
-        "./packages/breadboard-server:generate:docs",
-        "./packages/breadboard-ui:generate:docs",
-        "./packages/breadboard-web:generate:docs",
-        "./packages/discovery-types:generate:docs",
-        "./packages/template-kit:generate:docs"
       ]
     },
     "check": {

@@ -16,7 +16,6 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -102,20 +101,6 @@
       "output": [
         "docs/graphs/**/*.md"
       ]
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -161,8 +146,6 @@
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.18.0",
-    "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^4.1.0",
     "typescript": "^5.4.5"
   },
   "engines": {
