@@ -4,7 +4,6 @@ title: Built-in Kit
 tags:
   - reference
   - kits
-  - wip
 ---
 
 While most nodes in Breadboard come from various kits, there are two nodes that are built-in: **input** and **output**. A good way to think about them is as if they are part of the "Built-in kit": something that you always get, no matter what other kits you choose to employ.

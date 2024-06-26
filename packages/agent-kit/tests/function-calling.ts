@@ -381,14 +381,34 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       functionSignatureFromBoardFunction({});
     });
   });
-  test("throws when no inputs are found", () => {
-    const board = {};
-    throws(() => {
-      functionSignatureFromBoardFunction({
-        board,
-      });
+
+  test("handles boards with no inputs", async () => {
+    const board = await loadBoard("today");
+    const result = functionSignatureFromBoardFunction({
+      board,
+    });
+    deepStrictEqual(result.board, board);
+    delete result.board;
+    deepStrictEqual(result, {
+      function: {
+        name: "Get_Today",
+        description: "Return today's date",
+      },
+      returns: {
+        type: "object",
+        properties: {
+          today: {
+            title: "Today",
+            type: "string",
+            examples: [],
+          },
+        },
+        required: [],
+      },
+      flags: {},
     });
   });
+
   test("throws when no outputs are found", () => {
     const board = {
       nodes: [
@@ -507,10 +527,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     const result = functionSignatureFromBoardFunction({
       board,
     }) as { function: Record<string, unknown> };
-    deepStrictEqual(result.function.parameters, {
-      type: "object",
-      properties: {},
-    });
+    ok(!result.function.parameters);
   });
 
   test("renames the arg named `context` to match property name", async () => {

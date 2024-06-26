@@ -250,22 +250,22 @@ export type FunctionCallFlags = {
   outputLLMContentArray?: string;
 };
 
+export type FunctionDeclaration = {
+  name: string;
+  description?: string;
+  parameters?: Schema;
+};
+
 export const functionSignatureFromBoardFunction = fun(({ board }) => {
   const b = board as GraphDescriptor;
-  const inputs = b.nodes.filter((node) => node.type === "input");
-  if (inputs.length === 0) {
-    throw new Error("No inputs found");
-  }
+  const inputs = b.nodes.filter((node) => node.type === "input") || [];
   const outputs = b.nodes.filter((node) => node.type === "output");
   if (outputs.length === 0) {
     throw new Error("No outputs found");
   }
   // For now, only support one input/output.
   // TODO: Implement support for multiple inputs/outputs.
-  const inputSchema = inputs[0].configuration?.schema as Schema;
-  if (!inputSchema) {
-    throw new Error("No input schema found");
-  }
+  const inputSchema = (inputs[0]?.configuration?.schema || {}) as Schema;
   const outputSchema = outputs[0].configuration?.schema as Schema;
   if (!outputSchema) {
     throw new Error("No output schema found");
@@ -318,14 +318,22 @@ export const functionSignatureFromBoardFunction = fun(({ board }) => {
       flags.outputLLMContentArray = key;
     }
   }
-  const name = b.title?.replace(/\W/g, "_");
+  const name = b.title?.replace(/\W/g, "_") || "function";
   const description = b.description;
-  const parameters = {
-    type: "object",
-    properties,
-  };
+  const parameters =
+    Object.entries(properties).length > 0
+      ? {
+          type: "object",
+          properties,
+        }
+      : undefined;
+
+  const f: FunctionDeclaration = { name, description };
+  if (parameters) {
+    f.parameters = parameters;
+  }
   return {
-    function: { name, description, parameters },
+    function: f,
     returns: outputSchema,
     flags,
     board,
