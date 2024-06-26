@@ -53,10 +53,6 @@
       "path": "packages/pinecone-kit",
     },
     {
-      "name": "node-nursery",
-      "path": "packages/node-nursery",
-    },
-    {
       "name": "cloud-function",
       "path": "packages/cloud-function",
     },
