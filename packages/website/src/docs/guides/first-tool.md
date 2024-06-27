@@ -21,7 +21,7 @@ These boards are our **Tools**.
 
 The good news is that, within Breadboard, boards can call other boards! When there’s a task that we want our board to accomplish we don’t need to reinvent the wheel if there’s another one that already does the task admirably. The Specialist component (found in the [Agent Kit](../../kits/agents/)) can be handed an array of Tools to choose from to complete its task.
 
-Let's create the simplest possible Tool and ask a Specialist to make use of it.
+Let's create a Tool and ask a Specialist to make use of it.
 
 ## Step 1. Create the main board
 
