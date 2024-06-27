@@ -51,6 +51,7 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 8;
   #editable = false;
   #autoSelect = new Set<string>();
+  #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
@@ -1412,11 +1413,31 @@ export class Graph extends PIXI.Container {
 
       edgeGraphic.edge = edge;
       edgeGraphic.readOnly = this.readOnly;
+      this.#scheduleValidation(edge, edgeGraphic);
     }
 
     this.#removeStaleEdges();
 
     this.addChildAt(this.#edgeContainer, 0);
+  }
+
+  /**
+   * Validation is asynchronous because it relies on calling `describe` to get
+   * node descriptions, and `describe` functions are asynchronous.
+   */
+  async #scheduleValidation(edge: InspectableEdge, edgeGraphic: GraphEdge) {
+    // A unique symbol to act as a token representing this particular request.
+    const thisRequest = Symbol();
+    this.#latestPendingValidateRequest.set(edgeGraphic, thisRequest);
+    const result = await edge.validate();
+    if (this.#latestPendingValidateRequest.get(edgeGraphic) !== thisRequest) {
+      // Another validate request started before this one finished. Cancel this
+      // one, otherwise we might clobber a newer result with an older one, since
+      // the timing of validation is not guaranteed.
+      return;
+    }
+    this.#latestPendingValidateRequest.delete(edgeGraphic);
+    edgeGraphic.invalid = result.status === "invalid";
   }
 
   #removeStaleEdges() {
