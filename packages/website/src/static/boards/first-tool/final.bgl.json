@@ -1,6 +1,6 @@
 {
-  "title": "Blank board",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "title": "Rhyme of the Day",
+  "description": "Creates a poem based on today's date",
   "version": "0.0.1",
   "metadata": {
     "comments": []
