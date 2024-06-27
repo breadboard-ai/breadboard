@@ -4,7 +4,8 @@
 
 A library for prototyping generative AI applications.
 
-> Breadboard supports authoring in JavaScript/TypeScript and Python (coming soon).
+> [!NOTE]
+> Breadboard supports authoring in JavaScript/TypeScript, Python, and with Breadboard Visual Editor.
 
 This library was inspired by the hardware maker community and their boundless creativity. They make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all), just wiring things together and trying this and that until it works.
 
@@ -182,9 +183,8 @@ In this example, the `code` node takes two properties, `x` and `y`, checks that 
 
 These nodes can be created inside or outside the board. They can also be used when creating custom kits.
 
-> **Important**: `code` uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit).
->
-> If a board using `code` is serialized, then a runtime instance of the Core Kit must be passed into the board.
+> [!NOTE]
+> The `code` uses nodes from the [Core Kit](https://www.npmjs.com/package/@google-labs/core-kit). If a board using `code` is serialized, then a runtime instance of the Core Kit must be passed into the board.
 
 ### Kits
 
