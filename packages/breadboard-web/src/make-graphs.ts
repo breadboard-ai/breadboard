@@ -6,12 +6,15 @@
 
 // import { GraphDescriptor } from "@google-labs/breadboard";
 import { SerializableBoard, serialize } from "@breadboard-ai/build";
+import { formatGraphDescriptor } from "@google-labs/breadboard";
+import {
+  BoardReference,
+  BreadboardManifestBuilder,
+} from "@google-labs/breadboard-manifest";
 import { Dirent } from "fs";
 import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { formatGraphDescriptor } from "@google-labs/breadboard";
-// import { execSync } from "child_process";
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
 const PATH: string = path.join(MODULE_DIR, "boards");
@@ -19,12 +22,6 @@ const MANIFEST_PATH: string = path.join(MODULE_DIR, "../public");
 const GRAPH_PATH: string = path.join(MODULE_DIR, "../public/graphs");
 
 await mkdir(GRAPH_PATH, { recursive: true });
-
-type ManifestItem = {
-  title: string;
-  url: string;
-  version: string;
-};
 
 async function findTsFiles(dir: string): Promise<string[]> {
   const files: Dirent[] = await readdir(dir, { withFileTypes: true });
@@ -54,7 +51,9 @@ async function findTsFiles(dir: string): Promise<string[]> {
 //   return pyFiles;
 // }
 
-async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
+async function saveBoard(
+  filePath: string
+): Promise<BoardReference | undefined> {
   try {
     const module = await import(filePath);
 
@@ -77,9 +76,9 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
     if ("inputs" in module.default && "outputs" in module.default) {
       // TODO(aomarks) Not a great way to detect build boards.
       const board = module.default as SerializableBoard;
-      const manifest: ManifestItem = {
+      const manifest: BoardReference = {
         title: module.default.title ?? "Untitled (build API)",
-        url,
+        reference: url,
         version: module.default.version ?? "",
       };
       await writeFile(
@@ -89,9 +88,9 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
       return manifest;
     } else {
       const board = module.default as SerializableBoard;
-      const manifest: ManifestItem = {
+      const manifest: BoardReference = {
         title: module.default.title ?? "Untitled",
-        url,
+        reference: url,
         version: module.default.version ?? undefined,
       };
       await writeFile(
@@ -147,13 +146,15 @@ async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
 
 async function saveAllBoards(): Promise<void> {
   const tsFiles = await findTsFiles(PATH);
-  const manifest = [];
+  const manifest: BreadboardManifestBuilder = new BreadboardManifestBuilder();
+
   for (const file of tsFiles) {
     const manifestEntry = await saveBoard(file);
     if (!manifestEntry) continue;
     // Avoid adding .local.json files to the manifest
     if (!file.endsWith(".local.ts")) {
-      manifest.push(manifestEntry);
+      manifest.addBoard(manifestEntry);
+      // manifest.boards.push(manifestEntry);
     }
   }
   // TODO: Reenable.

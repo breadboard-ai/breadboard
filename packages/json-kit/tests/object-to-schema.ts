@@ -7,7 +7,10 @@
 import { Schema } from "ajv";
 import assert from "node:assert";
 import test, { describe } from "node:test";
-import { objectToSchema, objectToSchemaCode } from "../src/nodes/object-to-schema.js";
+import {
+  objectToSchema,
+  objectToSchemaCode,
+} from "../src/nodes/object-to-schema.js";
 
 describe("objectToSchema", () => {
   test("should convert an array to a schema", () => {
@@ -147,7 +150,7 @@ describe("objectToSchema", () => {
     };
     assert.deepStrictEqual(actual, expected);
   });
-  test("code node excutes as expected", async () => {
+  test("code node executes as expected", async () => {
     const input = { name: "John", age: 30 };
     const result = (await objectToSchemaCode().invoke({
       object: input,

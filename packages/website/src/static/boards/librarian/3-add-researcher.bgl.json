@@ -1,0 +1,162 @@
+{
+  "title": "Step 3: Add Researcher",
+  "description": "A simple agent that helps me find interesting books.",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-f8da06ce",
+        "text": "Step 3: **Add Researcher**",
+        "metadata": {
+          "visual": {
+            "x": -148,
+            "y": 143,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  },
+  "edges": [
+    {
+      "from": "specialist-deea1d32",
+      "to": "output",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "input",
+      "to": "specialist-fefc7fd6",
+      "out": "context",
+      "in": "in"
+    },
+    {
+      "from": "specialist-fefc7fd6",
+      "to": "specialist-deea1d32",
+      "out": "out",
+      "in": "in"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -110,
+          "y": -220,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 140,
+          "y": 164,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-deea1d32",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -10,
+          "y": -4,
+          "collapsed": false
+        },
+        "title": "Summarizer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert librarian. Given any topic,\nand the raw book search results,\nyou can come up with a list of book recommendations."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Come up with a list of 5-7 recommendations.\nReply in markdown."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-fefc7fd6",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 70,
+          "y": -155,
+          "collapsed": false
+        },
+        "title": "Researcher",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a library researcher. Based on the provided topic,\nformulate the query to call the Google Books API\nto search for the right book for the user."
+            }
+          ]
+        },
+        "tools": [
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
+        ]
+      }
+    }
+  ]
+}

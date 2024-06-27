@@ -164,7 +164,7 @@
                 "object",
                 "string"
               ],
-              "title": "result",
+              "title": "Result",
               "description": "The result of the Jsonata expression"
             },
             "list": {
@@ -173,7 +173,7 @@
             },
             "rank": {
               "type": "string",
-              "title": "json",
+              "title": "JSON",
               "description": "The validated JSON."
             }
           }

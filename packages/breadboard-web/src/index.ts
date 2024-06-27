@@ -805,12 +805,28 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
+  #makeRelativeToCurrentBoard(boardUrl: string | null) {
+    if (boardUrl) {
+      if (this.url) {
+        try {
+          const base = new URL(this.url);
+          const newUrl = new URL(boardUrl, base);
+          return newUrl.href;
+        } catch (e) {
+          console.warn("Unable to parse URL from current board: ", this.url);
+        }
+      }
+    }
+    return boardUrl;
+  }
+
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
+    const url = this.#makeRelativeToCurrentBoard(startEvent.url);
     this.#boardId++;
-    this.#setUrlParam("board", startEvent.url);
+    this.#setUrlParam("board", url);
 
     // Loading may take some time so reset the graph here.
-    this.url = startEvent.url;
+    this.url = url;
     this.graph = null;
     this.subGraphId = null;
 
@@ -1595,7 +1611,7 @@ export class Main extends LitElement {
             switch (evt.changeType) {
               case "add": {
                 editableGraph.edit(
-                  [{ type: "addedge", edge: evt.from, strict: false }],
+                  [{ type: "addedge", edge: evt.from }],
                   `Add edge between ${evt.from.from} and ${evt.from.to}`
                 );
                 break;
@@ -1620,7 +1636,6 @@ export class Main extends LitElement {
                       type: "changeedge",
                       from: evt.from,
                       to: evt.to,
-                      strict: false,
                     },
                   ],
                   `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`

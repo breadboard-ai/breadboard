@@ -10,12 +10,8 @@
     "moduleResolution": "Node",
     "outDir": "dist",
     "resolveJsonModule": true,
+    "rootDir": "src",
     "target": "ESNext"
   },
-  "extends": "@google-labs/tsconfig/base.json",
-  "include": [
-    "src/**/*",
-    "tests/**/*",
-    "bbm.schema.json"
-  ]
+  "extends": "@google-labs/tsconfig/base.json"
 }

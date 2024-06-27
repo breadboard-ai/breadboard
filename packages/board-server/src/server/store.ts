@@ -5,7 +5,7 @@
  */
 
 import { Firestore } from "@google-cloud/firestore";
-import type { GraphDescriptor } from "@google-labs/breadboard";
+import { blankLLMContent, type GraphDescriptor } from "@google-labs/breadboard";
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -55,7 +55,7 @@ export const sanitize = (name: string) => {
     name = name.slice(0, -5);
   }
   name = name.replace(/[^a-zA-Z0-9]/g, "-");
-  return `${name}.bgl.json`;
+  return name;
 };
 
 export const asInfo = (path: string) => {
@@ -166,13 +166,45 @@ class Store {
     return { success: true };
   }
 
-  async create(userKey: string, name: string) {
+  async create(userKey: string, name: string, dryRun = false) {
     const userStore = await this.getUserStore(userKey);
     if (!userStore.success) {
       return { success: false, error: userStore.error };
     }
-    const boardName = sanitize(name);
-    const path = asPath(userStore.store, boardName);
+    // The format for finding the unique name is {name}-copy[-number].
+    // We'll first start with the sanitized name, then move on to {name}-copy.
+    // If that's taken, we'll try {name}-copy-2, {name}-copy-3, etc.
+    // Start with a board name proposal based on the sanitized name.
+    let proposal = sanitize(name);
+    let copyNumber = 0;
+    for (;;) {
+      // Check if the proposed name is already taken.
+      const doc = await this.#database
+        .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
+        .get();
+      if (!doc.exists) {
+        break;
+      }
+      if (copyNumber === 0) {
+        // If the name is taken, add  "-copy" to the end and try again.
+        proposal = `${proposal}-copy`;
+      } else if (copyNumber === 1) {
+        proposal = `${proposal}-${copyNumber + 1}`;
+      } else {
+        // Slice off the "number" part of the name.
+        proposal = proposal.slice(0, -2);
+        // Add the next number to the end of the name.
+        proposal = `${proposal}-${copyNumber + 1}`;
+      }
+      copyNumber++;
+    }
+    if (!dryRun) {
+      // Create a blank board with the proposed name.
+      await this.#database
+        .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
+        .set({ graph: blankLLMContent() });
+    }
+    const path = asPath(userStore.store, `${proposal}.bgl.json`);
     return { success: true, path };
   }
 

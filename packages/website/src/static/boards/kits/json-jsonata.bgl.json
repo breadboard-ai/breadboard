@@ -1,0 +1,128 @@
+{
+  "title": "jsonata node example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "jsonata-fa4bd983",
+      "type": "jsonata",
+      "metadata": {
+        "visual": {
+          "x": 62,
+          "y": -8,
+          "collapsed": false
+        },
+        "title": "Snippet Joiner",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "expression": "$join(snippet, '\\n')"
+      }
+    },
+    {
+      "id": "input-1e81ce38",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -111,
+          "y": 13,
+          "collapsed": false
+        },
+        "title": "Input",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "json": {
+              "type": "object",
+              "title": "JSON",
+              "examples": [],
+              "default": "[   { \"snippet\": \"Question: How old is planet Earth?\" },   { \"snippet\": \"Thought: I wonder how old planet Earth is?\" } ]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-3301bde0",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 271,
+          "y": 18,
+          "collapsed": false
+        },
+        "title": "Output",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "result": {
+              "type": "object",
+              "title": "Result",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input-1e81ce38",
+      "to": "jsonata-fa4bd983",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-fa4bd983",
+      "to": "output-3301bde0",
+      "out": "result",
+      "in": "result"
+    }
+  ],
+  "description": "A simple example of how to use jsonata node.",
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-43a1927e",
+        "text": "Snippet Joiner takes \nthe JSON input and applies the\n `$join(snippet, '\\n')`\nJSONata expression to it, which joins all `snippet` properties in input into lines of text.",
+        "metadata": {
+          "visual": {
+            "x": 15,
+            "y": -163,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-999cf738",
+        "text": "Input asks for \na JSON object ",
+        "metadata": {
+          "visual": {
+            "x": -171,
+            "y": -50,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-58432cfe",
+        "text": "Output returns \nthe resulting string",
+        "metadata": {
+          "visual": {
+            "x": 315,
+            "y": -43,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

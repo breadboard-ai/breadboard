@@ -244,7 +244,7 @@ export default defineNodeType({
       default: "run",
     },
     schema: {
-      behavior: ["config"],
+      behavior: ["config", "ports-spec"],
       description:
         "The schema of the output data. This is used to validate the output data before running the code.",
       type: object({}, "unknown"),

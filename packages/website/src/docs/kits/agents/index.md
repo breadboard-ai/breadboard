@@ -32,7 +32,7 @@ A good way to think of context is as a job folio of sorts that collaborators pas
 ![Context in, context out](/breadboard/static/images/agent-kit/context-in-out.png)
 
 > [!TIP]
-> Here's metaphor for the conversation context. Back in the day, creative agencies had these large folders that contained all the project artifacts, and the name of the client printed on the front. If I had this folder on your desk, that meant that I am working on that project, looking through things that were done already, and adding my own work to it, and passing the folder along to the next person when I am done. Think of the context as such a folder.
+> Back in the day, creative agencies had these large folders that contained all the project artifacts, and the name of the client printed on the front. If I had this folder on your desk, that meant that I am working on that project, looking through things that were done already, and adding my own work to it, and passing the folder along to the next person when I am done. Think of the context as such a folder.
 
 If we trace the path that this job folio travels from one collaborator to another, we can capture the collaboration process as a graph.
 

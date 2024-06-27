@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
   GraphNodeSelectedEvent,
@@ -75,6 +75,15 @@ export class GraphRenderer extends LitElement {
 
   @property({ reflect: true })
   readOnly = false;
+
+  @property()
+  showPortTooltips = false;
+
+  @state()
+  private _portTooltip?: {
+    location: PIXI.ObservablePoint;
+    port: InspectablePort;
+  } = undefined;
 
   #app = new PIXI.Application();
   #appInitialized = false;
@@ -161,7 +170,7 @@ export class GraphRenderer extends LitElement {
     }
 
     :host([readonly="true"]) canvas {
-      touch-action: pan-y !important;
+      touch-action: manipulation !important;
     }
 
     canvas {
@@ -170,7 +179,8 @@ export class GraphRenderer extends LitElement {
 
     #edge-create-disambiguation-menu,
     #edge-select-disambiguation-menu,
-    #overflow-menu {
+    #overflow-menu,
+    #port-tooltip {
       z-index: 1000;
       display: none;
       top: 0;
@@ -183,6 +193,10 @@ export class GraphRenderer extends LitElement {
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-2);
       overflow: auto;
+    }
+
+    #port-tooltip.visible {
+      display: block;
     }
 
     #edge-select-disambiguation-menu.visible,
@@ -461,7 +475,6 @@ export class GraphRenderer extends LitElement {
 
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
       if (this.readOnly) {
-        console.log("Removing wheel behavior");
         this.#app.stage.off("wheel", onWheel);
       }
 
@@ -841,6 +854,17 @@ export class GraphRenderer extends LitElement {
       this.dispatchEvent(new StartEvent(board));
     });
 
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+      (port: InspectablePort, location: PIXI.ObservablePoint) => {
+        this._portTooltip = { port, location };
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, () => {
+      this._portTooltip = undefined;
+    });
+
     this.#container.addChild(graph);
   }
 
@@ -1109,7 +1133,7 @@ export class GraphRenderer extends LitElement {
     this.removeEventListener("wheel", this.#onWheelBound);
   }
 
-  async loadTexturesAndRender() {
+  async loadTexturesAndInitializeRenderer() {
     if (this.#appInitialized) {
       return this.#app.canvas;
     }
@@ -1506,8 +1530,27 @@ export class GraphRenderer extends LitElement {
         </div>`
       : nothing;
 
-    return html`${until(
-      this.loadTexturesAndRender()
-    )}${overflowMenu}${edgeSelectDisambiguationMenu}${edgeMenu}`;
+    return [
+      until(this.loadTexturesAndInitializeRenderer()),
+      overflowMenu,
+      edgeSelectDisambiguationMenu,
+      edgeMenu,
+      this.#renderPortTooltip(),
+    ];
+  }
+
+  #renderPortTooltip() {
+    if (!this.showPortTooltips) {
+      return;
+    }
+    const { port, location } = this._portTooltip ?? {};
+    return html`<pp-port-tooltip
+      id="port-tooltip"
+      .port=${port}
+      class=${classMap({ visible: port != null })}
+      style=${styleMap({
+        translate: `${location?.x ?? 0}px ${location?.y ?? 0}px`,
+      })}
+    ></pp-port-tooltip>`;
   }
 }

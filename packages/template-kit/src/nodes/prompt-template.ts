@@ -70,6 +70,7 @@ export default defineNodeType({
   inputs: {
     template: {
       type: "string",
+      title: "Template",
       format: "multiline",
       description: "The template with placeholders to fill in.",
     },

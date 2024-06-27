@@ -22,6 +22,7 @@ export { GraphHistory } from "./graph-history/graph-history.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
 export { Input } from "./input/input.js";
 export { JSONTree } from "./json-tree/json-tree.js";
+export { PortTooltip } from "./editor/port-tooltip.js";
 export { LLMInput } from "./input/llm-input/llm-input.js";
 export { LLMInputArray } from "./input/llm-input/llm-input-array.js";
 export { LLMOutput } from "./llm-output/llm-output.js";

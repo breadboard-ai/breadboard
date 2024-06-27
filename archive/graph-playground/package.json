@@ -1,0 +1,185 @@
+{
+  "name": "@google-labs/graph-playground",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "private": true,
+  "version": "0.0.16",
+  "description": "Playing with graph structures",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "generate:docs": "wireit",
+    "test": "wireit",
+    "prepare-graphs": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "dev": "wireit",
+    "ask": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../core-kit:build",
+        "../graph-integrity:build",
+        "../json-kit:build",
+        "../template-kit:build",
+        "../node-nursery:build",
+        "../palm-kit:build",
+        "../pinecone-kit:build",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc",
+        "../graph-integrity:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery:build:tsc",
+        "../palm-kit:build:tsc",
+        "../pinecone-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "wild/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "wild/**/*.ts",
+        "tests/**/*.ts",
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    },
+    "prepare-graphs": {
+      "command": "node scripts/prepare.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "scripts/prepare.js"
+      ],
+      "output": [
+        "docs/graphs/*.md",
+        "graphs/*.json"
+      ]
+    },
+    "dev": {
+      "command": "node --enable-source-maps .",
+      "dependencies": [
+        "build:tsc",
+        "prepare-graphs"
+      ],
+      "files": [],
+      "output": []
+    },
+    "ask": {
+      "command": "node --enable-source-maps .",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    }
+  },
+  "repository": {
+    "directory": "packages/graph-playground",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^20.14.8",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "ava": "^5.2.0",
+    "typedoc": "^0.25.12",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@google-labs/breadboard": "^0.20.0",
+    "@google-labs/core-kit": "^0.9.0",
+    "@google-labs/graph-integrity": "^0.0.14",
+    "@google-labs/json-kit": "^0.3.0",
+    "@google-labs/node-nursery": "^0.0.15",
+    "@google-labs/palm-kit": "^0.0.14",
+    "@google-labs/pinecone-kit": "^0.1.12",
+    "@google-labs/template-kit": "^0.3.2",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -103,7 +103,7 @@ test("`generateInputSchema` correctly generates schema for a template with no pa
     type: "object",
     properties: {
       template: {
-        title: "template",
+        title: "Template",
         description: "The template with placeholders to fill in.",
         type: "string",
         format: "multiline",
@@ -131,7 +131,7 @@ test("`generateInputSchema` correctly generates schema for a template with param
         type: ["array", "boolean", "null", "number", "object", "string"],
       },
       template: {
-        title: "template",
+        title: "Template",
         description: "The template with placeholders to fill in.",
         type: "string",
         format: "multiline",

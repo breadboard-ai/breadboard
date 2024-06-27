@@ -73,7 +73,7 @@
   },
   "main": "lib/bundle.js",
   "dependencies": {
-    "firebase-admin": "^12.1.1",
+    "firebase-admin": "^12.2.0",
     "firebase-functions": "^5.0.1"
   },
   "devDependencies": {
@@ -87,7 +87,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.3.0",
     "rollup": "^4.18.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "private": true,
   "version": ""

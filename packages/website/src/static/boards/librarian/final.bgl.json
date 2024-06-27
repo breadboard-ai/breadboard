@@ -1,5 +1,5 @@
 {
-  "title": "The Librarian",
+  "title": "My Librarian",
   "version": "0.0.1",
   "metadata": {
     "comments": [
@@ -19,8 +19,8 @@
         "text": "Starts by asking\nfor the topic.",
         "metadata": {
           "visual": {
-            "x": -321.99999999999994,
-            "y": -146,
+            "x": -321.9999999999999,
+            "y": -146.00000000000003,
             "collapsed": false
           }
         }
@@ -30,8 +30,8 @@
         "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
         "metadata": {
           "visual": {
-            "x": -141.99999999999997,
-            "y": 189.9999999999999,
+            "x": -141.99999999999994,
+            "y": 189.9999999999996,
             "collapsed": false
           }
         }
@@ -41,8 +41,8 @@
         "text": "Based on the interview results, formulates and makes 3 varying queries\nto Google Books API.",
         "metadata": {
           "visual": {
-            "x": 118,
-            "y": -210,
+            "x": 123.99999999999994,
+            "y": -218,
             "collapsed": false
           }
         }
@@ -52,8 +52,8 @@
         "text": "Hands control over to the user, letting the user respond to the interview question.",
         "metadata": {
           "visual": {
-            "x": 277,
-            "y": 152,
+            "x": 276.99999999999994,
+            "y": 151.99999999999994,
             "collapsed": false
           }
         }
@@ -63,8 +63,8 @@
         "text": "Summarizes the results and formats them nicely for final output.",
         "metadata": {
           "visual": {
-            "x": 326,
-            "y": -223.99999999999997,
+            "x": 367.99999999999994,
+            "y": -234.99999999999997,
             "collapsed": false
           }
         }
@@ -74,7 +74,7 @@
         "text": "Ends by presenting recommendations.",
         "metadata": {
           "visual": {
-            "x": 504,
+            "x": 503.99999999999994,
             "y": 82.00000000000006,
             "collapsed": false
           }
@@ -86,7 +86,7 @@
         "metadata": {
           "visual": {
             "x": -302,
-            "y": 8.999999999999943,
+            "y": 8.9999999999999,
             "collapsed": false
           }
         }
@@ -97,12 +97,13 @@
         "metadata": {
           "visual": {
             "x": 216.00000000000006,
-            "y": 4,
+            "y": 3.9999999999999574,
             "collapsed": false
           }
         }
       }
-    ]
+    ],
+    "tags": []
   },
   "edges": [
     {
@@ -161,7 +162,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
               "description": "What book are you looking for?"
@@ -173,8 +176,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -281.99999999999983,
-          "y": -92,
+          "x": -281.9999999999998,
+          "y": -91.99999999999999,
           "collapsed": false
         }
       }
@@ -184,7 +187,7 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999991,
+          "x": -78.99999999999989,
           "y": -99,
           "collapsed": false
         },
@@ -207,8 +210,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999997,
-          "y": 120,
+          "x": -55.99999999999994,
+          "y": 119.99999999999997,
           "collapsed": false
         },
         "title": "Interviewer",
@@ -230,8 +233,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149,
-          "y": -118,
+          "x": 149.00000000000006,
+          "y": -117.99999999999999,
           "collapsed": false
         },
         "title": "Researcher",
@@ -247,7 +250,7 @@
           ]
         },
         "tools": [
-          "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
         ],
         "task": {
           "role": "user",
@@ -264,8 +267,8 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 179,
-          "y": 79.99999999999989,
+          "x": 179.00000000000006,
+          "y": 79.99999999999983,
           "collapsed": false
         },
         "title": "Interviewee",
@@ -284,7 +287,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -295,8 +300,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 472,
-          "y": 12.999999999999943,
+          "x": 471.99999999999994,
+          "y": 12.999999999999886,
           "collapsed": false
         }
       }
@@ -306,8 +311,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 392,
-          "y": -157.99999999999997,
+          "x": 391.99999999999994,
+          "y": -157.99999999999994,
           "collapsed": false
         },
         "title": "Summarizer",
@@ -332,5 +337,6 @@
         }
       }
     }
-  ]
+  ],
+  "description": "A simple agent that helps me find interesting books."
 }

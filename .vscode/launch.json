@@ -28,29 +28,6 @@
       "justMyCode": false
     },
     {
-      "name": "Launch Program",
-      "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "program": "${workspaceFolder}/packages/graph-playground/src/index.ts",
-      "args": ["packages/graph-playground/graphs/math.json"],
-      "outFiles": ["${workspaceFolder}/**/*.js"],
-      "runtimeVersion": "20.4.0",
-      "type": "node"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/packages/graph-playground/src/index.ts",
-      "runtimeArgs": [
-        "packages/graph-playground/graphs/accumulating-context.json"
-      ],
-      "outFiles": ["${workspaceFolder}/**/*.js"]
-    },
-    {
       "type": "node",
       "request": "launch",
       "name": "Debug AVA test file",

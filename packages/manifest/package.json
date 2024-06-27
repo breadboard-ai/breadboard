@@ -5,24 +5,24 @@
     "@google-labs/breadboard-schema": "^1.4.1"
   },
   "devDependencies": {
-    "@types/node": "^20.14.5",
+    "@types/node": "^20.14.9",
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
     "ajv-keywords": "^5.1.0",
     "c8": "^10.1.2",
     "ts-json-schema-generator": "^2.3.0",
-    "tsx": "^4.15.6",
-    "typescript": "^5.4.5"
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2"
   },
   "exports": {
-    ".": "./dist/src/index.js",
+    ".": "./dist/index.js",
     "./*": [
-      "./dist/*",
-      "./dist/src/*"
+      "./dist/*"
     ],
     "./bbm.schema.json": "./bbm.schema.json"
   },
   "files": [
+    "**/*.ts",
     "dist/**/*.js",
     "dist/**/*.js.map",
     "dist/**/*.d.ts.map",
@@ -43,8 +43,10 @@
     "build": "wireit",
     "build:schema": "wireit",
     "build:ts": "wireit",
+    "build:verbose": "WIREIT_LOGGER=metrics npm run build",
     "test": "wireit",
-    "test:verbose": "WIREIT_LOGGER=metrics npm run test"
+    "test:verbose": "WIREIT_LOGGER=metrics npm run test",
+    "validate": "wireit"
   },
   "type": "module",
   "version": "0.1.0",
@@ -59,31 +61,59 @@
       "command": "tsx --no-cache ./src/scripts/generate.ts",
       "dependencies": [
         "../breadboard:build",
-        "../schema:build"
+        "../schema:build",
+        "validate"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
       ],
       "output": [
-        "./bbm.schema.json"
+        "bbm.schema.json"
       ]
     },
     "build:ts": {
-      "command": "tsc",
+      "command": "tsc -b -v --pretty",
+      "clean": "if-file-deleted",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/**",
+        "tsconfig.tsbuildinfo"
+      ],
       "dependencies": [
         "build:schema",
         "../breadboard:build",
         "../schema:build"
-      ],
-      "output": [
-        "./dist"
       ]
     },
     "test": {
-      "command": "c8 node --import tsx --test-reporter spec --test tests/index.test.ts ",
+      "command": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
       "dependencies": [
         "build"
       ],
+      "files": [],
+      "output": [],
       "env": {
         "FORCE_COLOR": "1"
       }
+    },
+    "validate": {
+      "command": "tsc --noEmit --skipLibCheck",
+      "dependencies": [
+        "../breadboard:build",
+        "../schema:build"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": []
     }
   }
 }

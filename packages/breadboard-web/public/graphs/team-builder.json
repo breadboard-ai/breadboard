@@ -79,7 +79,7 @@
           "properties": {
             "json": {
               "type": "string",
-              "title": "json",
+              "title": "JSON",
               "description": "The validated JSON."
             },
             "prompts": {
@@ -128,7 +128,7 @@
                     "type": "object",
                     "properties": {
                       "item": {
-                        "title": "json",
+                        "title": "JSON",
                         "description": "The validated JSON.",
                         "type": "string"
                       }

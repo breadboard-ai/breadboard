@@ -30,7 +30,6 @@ const resolvePath = (module: string, file: string) => {
 
 const LIGHT_KITS = [
   { module: "@google-labs/agent-kit", file: "agent.kit.json" },
-  { module: "@google-labs/team-kit", file: "team.kit.json" },
 ];
 
 export const copyLightKits = async () => {

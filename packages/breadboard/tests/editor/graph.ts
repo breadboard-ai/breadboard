@@ -213,7 +213,6 @@ test("editor API successfully tests for edge addition", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "node2", in: "in" },
-          strict: false,
         },
       ],
       "add edge",
@@ -228,7 +227,6 @@ test("editor API successfully tests for edge addition", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "node0", in: "in" },
-          strict: false,
         },
       ],
       "add edge",
@@ -243,7 +241,6 @@ test("editor API successfully tests for edge addition", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "node0", in: "baz" },
-          strict: false,
         },
       ],
       "add edge",
@@ -258,7 +255,6 @@ test("editor API successfully tests for edge addition", async (t) => {
         {
           type: "addedge",
           edge: { from: "unknown node", out: "out", to: "node2", in: "in" },
-          strict: false,
         },
       ],
       "add edge",
@@ -273,7 +269,6 @@ test("editor API successfully tests for edge addition", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "unknown node", in: "in" },
-          strict: false,
         },
       ],
       "add edge",
@@ -293,7 +288,6 @@ test("editor API successfully adds an edge", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "node2", in: "in" },
-          strict: false,
         },
       ],
       "add edge"
@@ -316,7 +310,6 @@ test("editor API successfully adds an edge", async (t) => {
         {
           type: "addedge",
           edge: { from: "node0", out: "out", to: "node2", in: "in" },
-          strict: false,
         },
       ],
       "add edge",
@@ -489,7 +482,6 @@ test("editor API allows changing edge", async (t) => {
         type: "changeedge",
         from: { from: "node0", out: "out", to: "node0", in: "in" },
         to: { from: "node0", out: "out", to: "node2", in: "in" },
-        strict: false,
       },
     ],
     "test"
@@ -512,7 +504,7 @@ test("editor API does not allow connecting a specific output port to a star port
 
   const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
   const result = await graph.edit(
-    [{ type: "addedge", edge: edgeSpec, strict: true }],
+    [{ type: "addedge", edge: edgeSpec }],
     "test",
     true
   );
@@ -558,65 +550,4 @@ test("editor API correctly allows adding, removing, replacing subgraphs", (t) =>
   t.is(graph.version(), 4);
 
   t.truthy(graph.raw().graphs);
-});
-
-test("editor API allows using 'star` ports as drop zones", async (t) => {
-  const edgeSpec = { from: "node0", out: "out", to: "node2", in: "*" };
-  {
-    const graph = testEditGraph();
-    const result = await graph.edit(
-      [{ type: "addedge", edge: edgeSpec, strict: true }],
-      "test",
-      true
-    );
-    if (result.success) {
-      t.fail();
-    } else {
-      const singleEdit = result.log[0].result;
-      if (singleEdit.success) {
-        t.fail();
-        return;
-      }
-      t.deepEqual(singleEdit.alternative, {
-        from: "node0",
-        out: "out",
-        to: "node2",
-        in: "out",
-      });
-    }
-  }
-  {
-    const graph = testEditGraph();
-    const result = await graph.edit(
-      [{ type: "addedge", edge: edgeSpec, strict: false }],
-      "test"
-    );
-    t.true(result.success);
-    t.true(
-      graph.inspect().hasEdge({
-        from: "node0",
-        out: "out",
-        to: "node2",
-        in: "out",
-      })
-    );
-    t.is(graph.version(), 1);
-  }
-  {
-    const graph = testEditGraph();
-    const result = await graph.edit(
-      [{ type: "addedge", edge: edgeSpec, strict: true }],
-      "test"
-    );
-    t.false(result.success);
-    t.false(
-      graph.inspect().hasEdge({
-        from: "node0",
-        out: "out",
-        to: "node2",
-        in: "out",
-      })
-    );
-    t.is(graph.version(), 0);
-  }
 });

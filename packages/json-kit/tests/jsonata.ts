@@ -16,13 +16,13 @@ describe("jsonata", () => {
         type: "object",
         properties: {
           expression: {
-            title: "expression",
+            title: "Expression",
             behavior: ["config"],
             description: "The Jsonata expression to evaluate",
             type: "string",
           },
           raw: {
-            title: "raw",
+            title: "Raw",
             behavior: ["config"],
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
@@ -30,7 +30,7 @@ describe("jsonata", () => {
             default: false,
           },
           json: {
-            title: "json",
+            title: "JSON",
             description:
               "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
             type: ["array", "boolean", "null", "number", "object", "string"],
@@ -43,7 +43,7 @@ describe("jsonata", () => {
         type: "object",
         properties: {
           result: {
-            title: "result",
+            title: "Result",
             description: "The result of the Jsonata expression",
             type: ["array", "boolean", "null", "number", "object", "string"],
           },
@@ -66,13 +66,13 @@ describe("jsonata", () => {
         type: "object",
         properties: {
           expression: {
-            title: "expression",
+            title: "Expression",
             behavior: ["config"],
             description: "The Jsonata expression to evaluate",
             type: "string",
           },
           raw: {
-            title: "raw",
+            title: "Raw",
             behavior: ["config"],
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
@@ -80,7 +80,7 @@ describe("jsonata", () => {
             default: false,
           },
           json: {
-            title: "json",
+            title: "JSON",
             description:
               "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
             type: ["array", "boolean", "null", "number", "object", "string"],
@@ -113,13 +113,13 @@ describe("jsonata", () => {
         type: "object",
         properties: {
           expression: {
-            title: "expression",
+            title: "Expression",
             behavior: ["config"],
             description: "The Jsonata expression to evaluate",
             type: "string",
           },
           raw: {
-            title: "raw",
+            title: "Raw",
             behavior: ["config"],
             description:
               "Whether or not to return use the evaluation result as raw output (true) or as a port called `result` (false). Default is false.",
@@ -127,7 +127,7 @@ describe("jsonata", () => {
             default: false,
           },
           json: {
-            title: "json",
+            title: "JSON",
             description:
               "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
             type: ["array", "boolean", "null", "number", "object", "string"],

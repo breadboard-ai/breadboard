@@ -1,0 +1,137 @@
+{
+  "title": "urlTemplate example",
+  "description": "A simple example for using the urlTemplate node.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "query": {
+              "type": "string",
+              "title": "Query",
+              "examples": [
+                "utopian sci-fi"
+              ]
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -138,
+          "y": -4,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "url": {
+              "type": "string",
+              "title": "URL",
+              "examples": [],
+              "format": "markdown"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 334,
+          "y": -68,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "urlTemplate-fad04cb5",
+      "type": "urlTemplate",
+      "metadata": {
+        "visual": {
+          "x": 20,
+          "y": -95,
+          "collapsed": false
+        },
+        "title": "Query Google Books API",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "template": "https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "urlTemplate-fad04cb5",
+      "out": "query",
+      "in": "query"
+    },
+    {
+      "from": "urlTemplate-fad04cb5",
+      "to": "output",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-cc1f9009",
+        "text": "Takes in \"query\" \nand passes it to \n\"Query Google \nBooks API\" \nto construct the URL.",
+        "metadata": {
+          "visual": {
+            "x": -202,
+            "y": -125,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-3a741076",
+        "text": "Outputs the URL.",
+        "metadata": {
+          "visual": {
+            "x": 387,
+            "y": -111,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-80c5b285",
+        "text": "Replaces placeholders (single braces!) in the **Template** with inputs.\n\nIn this particular case, it's just `{query}`.\n\nUses [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs.",
+        "metadata": {
+          "visual": {
+            "x": 74,
+            "y": -315,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-bbd97505",
+        "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{inputName}` in the template.",
+        "metadata": {
+          "visual": {
+            "x": 63,
+            "y": 1,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

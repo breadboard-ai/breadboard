@@ -326,6 +326,11 @@ export class UI extends LitElement {
           ?.value
       : false;
 
+    const showPortTooltips = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Port Tooltips")
+          ?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -342,6 +347,7 @@ export class UI extends LitElement {
         showNodeShortcuts,
         showNodeTypeDescriptions,
         invertZoomScrollDirection,
+        showPortTooltips,
       ],
       () => {
         return html`<bb-editor
@@ -358,6 +364,7 @@ export class UI extends LitElement {
           .showNodeShortcuts=${showNodeShortcuts}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
+          .showPortTooltips=${showPortTooltips}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"

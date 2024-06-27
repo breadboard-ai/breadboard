@@ -174,7 +174,7 @@ test("describe inputs", async (t) => {
       },
       schema: {
         additionalProperties: true,
-        behavior: ["config"],
+        behavior: ["config", "ports-spec"],
         description:
           "The schema of the output data. This is used to validate the output data before running the code.",
         properties: {},

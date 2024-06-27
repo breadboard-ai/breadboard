@@ -1,0 +1,58 @@
+{
+  "title": "built-in-output",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "story": {
+              "type": "string",
+              "title": "News Story",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 65,
+          "y": 37,
+          "collapsed": false
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-c234f8b1",
+        "text": "Takes the values from out of the board back to the user or another board.",
+        "metadata": {
+          "visual": {
+            "x": 38,
+            "y": -71,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-f37c57be",
+        "text": "The **Schema** configuration port defines the ports that will be used as board outputs.",
+        "metadata": {
+          "visual": {
+            "x": 30,
+            "y": 135,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

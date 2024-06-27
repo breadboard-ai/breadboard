@@ -1,6 +1,0 @@
-{{prologue}}
-
-Your response must be a valid JSON of the following format:
-{{schemish}}
-
-{{epilogue}}

@@ -5,26 +5,23 @@
  */
 import { LitElement, html, css, TemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { cache } from "lit/directives/cache.js";
 
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
-import AgentKit from "@google-labs/agent-kit";
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
 import "@google-labs/breadboard-ui/editor";
 
 import {
-  type KitConstructor,
-  type Kit,
+  KitManifest,
   asRuntimeKit,
   createLoader,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
-
-export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
-  return kiConstructors.map((kitConstructor) => asRuntimeKit(kitConstructor));
-};
+import { fromManifest } from "@google-labs/breadboard/kits";
 
 const UPDATE_USER_TIMEOUT = 1_000;
 
@@ -36,7 +33,22 @@ export class BoardEmbed extends LitElement {
   @property({ reflect: true })
   collapseNodesByDefault = "true";
 
+  @property({ reflect: true })
+  active = false;
+
   #data: Promise<TemplateResult> | null = null;
+  #observer = new IntersectionObserver(
+    (entries) => {
+      this.active = false;
+
+      if (entries.length === 0) {
+        return;
+      }
+
+      this.active = entries[0].isIntersecting;
+    },
+    { rootMargin: "80px", threshold: 0 }
+  );
 
   static styles = css`
     :host {
@@ -76,7 +88,14 @@ export class BoardEmbed extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.#observer.observe(this);
     this.#data = this.loadBoard();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#observer.unobserve(this);
   }
 
   async loadBoard() {
@@ -86,13 +105,13 @@ export class BoardEmbed extends LitElement {
 
     const response = await fetch(this.url);
     const graph = await response.json();
-    const kits = await loadKits([
-      Core,
-      JSONKit,
-      TemplateKit,
-      GeminiKit,
-      AgentKit,
-    ]);
+    const kits = [
+      asRuntimeKit(Core),
+      asRuntimeKit(JSONKit),
+      asRuntimeKit(TemplateKit),
+      asRuntimeKit(GeminiKit),
+      fromManifest(AgentKit as KitManifest),
+    ];
 
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
 
@@ -125,6 +144,8 @@ export class BoardEmbed extends LitElement {
       setTimeout(r, UPDATE_USER_TIMEOUT)
     ).then(() => html`🤖 Getting there... Hang on...`);
 
-    return html`${until(this.#data, updateUser)}`;
+    return this.active
+      ? cache(html`${until(this.#data, updateUser)}`)
+      : nothing;
   }
 }

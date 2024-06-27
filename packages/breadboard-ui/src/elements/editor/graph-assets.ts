@@ -27,7 +27,7 @@ export class GraphAssets {
     return this.#instance;
   }
 
-  #assets!: AssetMap;
+  #assets: AssetMap = new Map();
   #loaded: Promise<void>;
 
   // Not to be instantiated directly.

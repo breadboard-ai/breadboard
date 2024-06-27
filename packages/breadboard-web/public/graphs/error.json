@@ -32,7 +32,7 @@
                 "object",
                 "string"
               ],
-              "title": "json",
+              "title": "JSON",
               "description": "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
               "default": "Could you please throw an error?"
             }
@@ -59,7 +59,7 @@
                 "object",
                 "string"
               ],
-              "title": "result",
+              "title": "Result",
               "description": "The result of the Jsonata expression"
             }
           }

@@ -69,7 +69,7 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
             type: "string",
           },
           template: {
-            title: "template",
+            title: "Template",
             description: "The URL template to use",
             type: "string",
           },
@@ -91,7 +91,7 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
             type: "string",
           },
           template: {
-            title: "template",
+            title: "Template",
             description: "The URL template to use",
             type: "string",
           },

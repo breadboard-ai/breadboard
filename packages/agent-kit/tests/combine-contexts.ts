@@ -242,7 +242,7 @@ describe("combineContexts", () => {
     });
 
     deepStrictEqual(result, {
-      context: [{ parts: [a2, b2] }],
+      context: [{ parts: [a2, b2], role: "user" }],
     });
   });
 
@@ -262,7 +262,7 @@ describe("combineContexts", () => {
     });
 
     deepStrictEqual(result, {
-      context: [{ parts: [a2, b2] }],
+      context: [{ parts: [a2, b2], role: "user" }],
     });
   });
 });

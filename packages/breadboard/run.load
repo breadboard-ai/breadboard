@@ -1,7 +1,0 @@
-
-> @google-labs/breadboard@0.13.0 test
-> wireit -m "run save/load: observer.save - roundtrip*"
-
-
-  [31m✘ Couldn’t find any matching tests[39m
-
