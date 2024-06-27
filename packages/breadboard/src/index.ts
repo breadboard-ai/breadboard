@@ -68,7 +68,7 @@ export { getGraphDescriptor } from "./capability.js";
 /**
  * The Inspector API.
  */
-export type * from "./inspector/types.js";
+export * from "./inspector/types.js";
 export { inspect, createRunObserver } from "./inspector/index.js";
 export { PortStatus } from "./inspector/types.js";
 
