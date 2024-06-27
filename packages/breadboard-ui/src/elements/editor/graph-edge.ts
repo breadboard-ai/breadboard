@@ -15,6 +15,7 @@ const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
 const edgeColorConstant = getGlobalColor("--bb-ui-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
+const edgeColorInvalid = getGlobalColor("--bb-warning-500");
 
 /**
  * Calculates an [x,y] pair of points from start to end via the control point.
@@ -105,6 +106,7 @@ export class GraphEdge extends PIXI.Graphics {
   #overrideOutLocation: PIXI.ObservablePoint | null = null;
   #type: InspectableEdgeType | null = null;
   #selected = false;
+  #invalid = false;
   #hitAreaSpacing = 6;
 
   readOnly = false;
@@ -148,6 +150,15 @@ export class GraphEdge extends PIXI.Graphics {
 
   set selected(selected: boolean) {
     this.#selected = selected;
+    this.#isDirty = true;
+  }
+
+  get invalid() {
+    return this.#invalid;
+  }
+
+  set invalid(invalid: boolean) {
+    this.#invalid = invalid;
     this.#isDirty = true;
   }
 
@@ -258,6 +269,10 @@ export class GraphEdge extends PIXI.Graphics {
         edgeColor = edgeColorStar;
         break;
       }
+    }
+
+    if (this.invalid) {
+      edgeColor = edgeColorInvalid;
     }
 
     if (this.#overrideColor) {
