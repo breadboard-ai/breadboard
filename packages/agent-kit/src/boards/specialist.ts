@@ -105,7 +105,6 @@ const task = input({
   }),
   default: {},
   examples: [[JSON.stringify(sampleTask, null, 2)]],
-  // optional: true
 });
 
 const tools = input({
@@ -116,7 +115,6 @@ const tools = input({
   }),
   default: [],
   examples: [[JSON.stringify(sampleTask, null, 2)]],
-  // optional: true
 });
 
 const specialist = await oldBoard(({ in: context, persona, task, tools }) => {
