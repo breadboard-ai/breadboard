@@ -3,12 +3,17 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import {
+  annotate,
+  array,
+  input,
+  object,
+} from "@breadboard-ai/build";
 import {
   NewNodeFactory,
   NewNodeValue,
   base,
-  board,
+  board as oldBoard,
 } from "@google-labs/breadboard";
 import {
   LlmContent,
@@ -74,8 +79,47 @@ You are very creative and you pride yourself in adding interesting twists and un
 const sampleTask: LlmContent = contextFromText(`
 Write an outline for a novel, following the provided specs.
 `);
+const context = input({
+  title: "Context in",
+  description: "Incoming conversation context",
+  type: annotate(array("string"), {
+    behavior: ["llm-content"],
+  }),
+  examples: [[JSON.stringify(sampleContext, null, 2)]]
+});
 
-const specialist = await board(({ in: context, persona, task, tools }) => {
+const persona = input({
+  title: "Persona",
+  description: "Describe the worker's skills, capabilities, mindset, and thinking process",
+  type: annotate(object({}), {
+    behavior: ["llm-content", "config"],
+  }),
+  examples: [[JSON.stringify(samplePersona, null, 2)]]
+});
+
+const task = input({
+  title: "Task",
+  description: "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
+  type: annotate(object({}), {
+    behavior: ["llm-content", "config"],
+  }),
+  default: {},
+  examples: [[JSON.stringify(sampleTask, null, 2)]],
+  // optional: true
+});
+
+const tools = input({
+  title: "Tools",
+  description: "(Optional) Add tools to this list for the worker to use when needed",
+  type: annotate(array("string"), {
+    behavior: ["board", "config"],
+  }),
+  default: [],
+  examples: [[JSON.stringify(sampleTask, null, 2)]],
+  // optional: true
+});
+
+const specialist = await oldBoard(({ in: context, persona, task, tools }) => {
   context
     .title("Context in")
     .description("Incoming conversation context")

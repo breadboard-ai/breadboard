@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { code } from "@google-labs/breadboard";
+import { anyOf, array, enumeration, input, object, optional, unsafeType } from "@breadboard-ai/build";
+import { code as oldCode } from "@google-labs/breadboard";
+import { code } from "@google-labs/core-kit";
 
 export type TextPart = { text: string };
 
@@ -119,7 +121,74 @@ export const fun = <
   return f;
 };
 
-export const userPartsAdder = code(({ context, toAdd }) => {
+const llmContent = object({
+  role: optional(enumeration("user", "model", "tool")),
+  parts: array(
+    anyOf(
+      object({ text: "string" }),
+      object({
+        functionCall: object({
+          name: "string", args: unsafeType<{ args: "string"; }>({
+            type: "object",
+            properties: {
+              foo: {
+                type: "string",
+              },
+            },
+          })
+        })
+      }))
+  )
+});
+
+const metadataRole = {
+  role: enumeration("$metadata")
+};
+
+const looperMetadata = object({
+  ...metadataRole,
+  type: enumeration("looper"),
+  data: object({
+    max: optional("number"),
+    todo: optional(array(object({ task: "string" }))),
+    doneMarker: optional("string"),
+    done: optional("boolean"),
+    appendLast: optional("boolean"),
+    returnLast: optional("boolean"),
+    next: optional("boolean")
+  }),
+});
+
+const splitMetadata = object({
+  ...metadataRole,
+  type: enumeration("split"),
+  data: object({
+    type: enumeration("start", "next", "end"),
+    id: "string"
+  })
+});
+
+const metadata = anyOf(
+  looperMetadata,
+  splitMetadata
+);
+
+const context = input({
+  type: anyOf(
+    llmContent,
+    metadata
+  )
+});
+
+export const userPartsAdder2 = code(
+  { context },
+  { context: array(llmContent) },
+  ({ context, toAdd }) => {
+
+  }
+);
+
+export const userPartsAdder = oldCode(({ context, toAdd }) => {
   if (!context) throw new Error("Context is required");
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
   const incoming = toAdd as LlmContent;
@@ -155,7 +224,7 @@ export const userPartsAdder = code(({ context, toAdd }) => {
   }
 });
 
-export const progressReader = code(({ context, forkOutputs }) => {
+export const progressReader = oldCode(({ context, forkOutputs }) => {
   const fork = forkOutputs as boolean;
   const existing = (Array.isArray(context) ? context : [context]) as Context[];
   const progress: LooperPlan[] = [];
@@ -178,7 +247,7 @@ export const progressReader = code(({ context, forkOutputs }) => {
   }
 });
 
-export const looperTaskAdder = code(({ context, progress }) => {
+export const looperTaskAdder = oldCode(({ context, progress }) => {
   const contents = (Array.isArray(context) ? context : [context]) as Context[];
   const plans = (
     Array.isArray(progress) ? progress : [progress]
@@ -202,7 +271,7 @@ export const looperTaskAdder = code(({ context, progress }) => {
   return { context: contents };
 });
 
-export const contextBuilder = code(({ context, instruction }) => {
+export const contextBuilder = oldCode(({ context, instruction }) => {
   if (typeof context === "string") {
     // A clever trick. Let's see if this works
     // A user can supply context as either ContextItem[] or as a string.
@@ -226,7 +295,7 @@ export const contextBuilder = code(({ context, instruction }) => {
   };
 });
 
-export const contextBuilderWithoutSystemInstruction = code(({ context }) => {
+export const contextBuilderWithoutSystemInstruction = oldCode(({ context }) => {
   if (typeof context === "string") {
     // A clever trick. Let's see if this works
     // A user can supply context as either ContextItem[] or as a string.
@@ -238,7 +307,7 @@ export const contextBuilderWithoutSystemInstruction = code(({ context }) => {
   return { context: list };
 });
 
-export const contextAssembler = code(({ context, generated }) => {
+export const contextAssembler = oldCode(({ context, generated }) => {
   if (!context) throw new Error("Context is required");
   return { context: [...(context as LlmContent[]), generated as LlmContent] };
 });
@@ -290,7 +359,7 @@ export const checkAreWeDoneFunction = fun(({ context, generated }) => {
   return { context: [...c, g, metadata] };
 });
 
-export const checkAreWeDone = code(checkAreWeDoneFunction);
+export const checkAreWeDone = oldCode(checkAreWeDoneFunction);
 
 /**
  * Given a context, decides if we should skip our turn when the earlier
@@ -318,7 +387,7 @@ export const skipIfDoneFunction = fun(({ context }) => {
   }
 });
 
-export const skipIfDone = code(skipIfDoneFunction);
+export const skipIfDone = oldCode(skipIfDoneFunction);
 
 /**
  * Given a context, removes all metadata from it
@@ -330,7 +399,7 @@ export const cleanUpMetadataFunction = fun(({ context }) => {
   return { context: result };
 });
 
-export const cleanUpMetadata = code(cleanUpMetadataFunction);
+export const cleanUpMetadata = oldCode(cleanUpMetadataFunction);
 
 /**
  * Given a context, adds a metadata block that contains the
@@ -351,7 +420,7 @@ export const splitStartAdderFunction = fun(({ context }) => {
   return { context: [...c, metadata], id };
 });
 
-export const splitStartAdder = code(splitStartAdderFunction);
+export const splitStartAdder = oldCode(splitStartAdderFunction);
 
 type SplitScanResult = [id: string, index: number];
 
@@ -524,7 +593,7 @@ export const combineContextsFunction = fun(({ merge, ...inputs }) => {
     return stack.pop() || null;
   }
 });
-export const combineContexts = code(combineContextsFunction);
+export const combineContexts = oldCode(combineContextsFunction);
 
 /**
  * Takes a single context and splits it into multiple contexts using the
