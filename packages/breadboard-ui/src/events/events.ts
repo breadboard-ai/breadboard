@@ -7,11 +7,10 @@
 import type {
   EditSpec,
   GraphDescriptor,
-  InspectableEdge,
   NodeConfiguration,
   NodeDescriptor,
 } from "@google-labs/breadboard";
-import type { Settings } from "../types/types.js";
+import type { EdgeData, Settings } from "../types/types.js";
 import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const eventInit = {
@@ -512,7 +511,7 @@ export class GraphInitialDrawEvent extends Event {
 export class GraphEdgeAttachEvent extends Event {
   static eventName = "bbgraphedgeattach";
 
-  constructor(public readonly edge: InspectableEdge) {
+  constructor(public readonly edge: EdgeData) {
     super(GraphEdgeAttachEvent.eventName, { ...eventInit });
   }
 }
@@ -520,7 +519,7 @@ export class GraphEdgeAttachEvent extends Event {
 export class GraphEdgeDetachEvent extends Event {
   static eventName = "bbgraphedgedetach";
 
-  constructor(public readonly edge: InspectableEdge) {
+  constructor(public readonly edge: EdgeData) {
     super(GraphEdgeDetachEvent.eventName, { ...eventInit });
   }
 }
@@ -530,7 +529,7 @@ export class GraphEntityRemoveEvent extends Event {
 
   constructor(
     public readonly nodes: string[],
-    public readonly edges: InspectableEdge[],
+    public readonly edges: EdgeData[],
     public readonly comments: string[]
   ) {
     super(GraphEntityRemoveEvent.eventName, { ...eventInit });
@@ -541,8 +540,8 @@ export class GraphNodeEdgeChangeEvent extends Event {
   static eventName = "bbgraphedgechange";
 
   constructor(
-    public readonly fromEdge: InspectableEdge,
-    public readonly toEdge: InspectableEdge,
+    public readonly fromEdge: EdgeData,
+    public readonly toEdge: EdgeData,
     public readonly constant = false
   ) {
     super(GraphNodeEdgeChangeEvent.eventName, { ...eventInit });

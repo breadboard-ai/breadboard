@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdgeType } from "@google-labs/breadboard";
+import type { EdgeData } from "../../types/types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -13,7 +14,7 @@ export function getGlobalColor(name: string, defaultValue = "#333333") {
   return parseInt(value || defaultValue, 16);
 }
 
-export function inspectableEdgeToString(edge: InspectableEdge): string {
+export function inspectableEdgeToString(edge: EdgeData): string {
   return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
@@ -36,7 +37,8 @@ export function edgeToString(edge: {
     },
     out: edge.out,
     in: edge.in,
-  } as InspectableEdge;
+    type: InspectableEdgeType.Ordinary,
+  };
   return inspectableEdgeToString(fakeEdge);
 }
 

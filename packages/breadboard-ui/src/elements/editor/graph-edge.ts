@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge, InspectableEdgeType } from "@google-labs/breadboard";
+import { InspectableEdgeType } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
 import { getGlobalColor } from "./utils.js";
+import { EdgeData, cloneEdgeData } from "../../types/types.js";
 
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
@@ -96,7 +97,7 @@ function calculatePointsOnCubicBezierCurve(
 
 export class GraphEdge extends PIXI.Graphics {
   #isDirty = true;
-  #edge: InspectableEdge | null = null;
+  #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
   #loopBackPadding = 30;
   #loopBackCurveRadius = 10;
@@ -134,18 +135,10 @@ export class GraphEdge extends PIXI.Graphics {
     });
   }
 
-  set edge(edge: InspectableEdge | null) {
+  set edge(edge: EdgeData | null) {
     // Since the `edge` is a stable instance, make a copy of the edge to avoid
     // modifying the original.
-    this.#edge = edge
-      ? {
-          from: edge.from,
-          to: edge.to,
-          in: edge.in,
-          out: edge.out,
-          type: edge.type,
-        }
-      : null;
+    this.#edge = cloneEdgeData(edge);
     this.#isDirty = true;
   }
 
