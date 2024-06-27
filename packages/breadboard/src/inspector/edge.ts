@@ -9,6 +9,7 @@ import {
   InspectableEdge,
   InspectableEdgeType,
   InspectableNodeCache,
+  ValidateResult,
 } from "./types.js";
 
 /**
@@ -82,6 +83,31 @@ class Edge implements InspectableEdge {
     if (this.#edge.out === "") return InspectableEdgeType.Control;
     if (this.#edge.constant) return InspectableEdgeType.Constant;
     return InspectableEdgeType.Ordinary;
+  }
+
+  async validate(): Promise<ValidateResult> {
+    const [fromPorts, toPorts] = await Promise.all([
+      await this.from.ports(),
+      await this.to.ports(),
+    ]);
+    const outPort = fromPorts.outputs.ports.find(
+      (port) => port.name === this.out
+    );
+    const inPort = toPorts.inputs.ports.find((port) => port.name === this.in);
+    if (outPort === undefined || inPort === undefined) {
+      return { status: "unknown" };
+    }
+    if (!outPort.type.canConnect(inPort.type)) {
+      return {
+        status: "invalid",
+        errors: [
+          {
+            message: `The schema of "${this.in}" is not compatible with "${this.out}"`,
+          },
+        ],
+      };
+    }
+    return { status: "valid" };
   }
 }
 

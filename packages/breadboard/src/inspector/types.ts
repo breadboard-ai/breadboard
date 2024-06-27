@@ -168,7 +168,24 @@ export type InspectableEdge = {
    * The type of the edge.
    */
   type: InspectableEdgeType;
+
+  /**
+   * Check if the input and output schemas are compatible (meaning that the
+   * output port type is a subtype of the input port type).
+   */
+  validate(): Promise<ValidateResult>;
 };
+
+export type ValidateResult =
+  | { status: "unknown"; errors?: never }
+  | { status: "valid"; errors?: never }
+  | { status: "invalid"; errors: ValidateError[] };
+
+export interface ValidateError {
+  message: string;
+  // TODO(aomarks) Could add more data here in future, e.g. a path to the part
+  // of the schema which is invalid for fancy highlighting, etc.
+}
 
 export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;
 
