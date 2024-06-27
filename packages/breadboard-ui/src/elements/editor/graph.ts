@@ -293,13 +293,13 @@ export class Graph extends PIXI.Container {
           edgeBeingEdited.edge.in = topTarget.label || "";
           edgeBeingEdited.edge.to = {
             descriptor: { id: nodeBeingTargeted.label },
-          } as InspectableNode;
+          };
         } else {
           edgeBeingEdited.fromNode = nodeBeingTargeted;
           edgeBeingEdited.edge.out = topTarget.label || "";
           edgeBeingEdited.edge.from = {
             descriptor: { id: nodeBeingTargeted.label },
-          } as InspectableNode;
+          };
         }
 
         edgeBeingEdited.overrideColor = 0xffa500;

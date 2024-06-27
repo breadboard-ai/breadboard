@@ -8,7 +8,6 @@ import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
 import {
   InspectableEdge,
   InspectableEdgeType,
-  InspectableNode,
   InspectableNodeCache,
 } from "./types.js";
 
@@ -60,7 +59,7 @@ class Edge implements InspectableEdge {
   get from() {
     const from = this.#nodes.get(this.#edge.from);
     console.assert(from, "From node not found when getting from.");
-    return from as InspectableNode;
+    return from!;
   }
 
   get out() {
@@ -70,7 +69,7 @@ class Edge implements InspectableEdge {
   get to() {
     const to = this.#nodes.get(this.#edge.to);
     console.assert(to, "To node not found when getting to.");
-    return to as InspectableNode;
+    return to!;
   }
 
   get in() {
