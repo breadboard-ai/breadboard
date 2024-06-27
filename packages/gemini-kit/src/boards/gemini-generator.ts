@@ -275,13 +275,20 @@ const errorLoopback = loopback({
   type: object({
     error: optional(
       object({
-        code: optional("number"),
+        message: optional("string"),
       })
     ),
   }),
 });
 
 const retryLoopback = loopback({ type: "number" });
+
+export type ErrorResponse = {
+  error?: {
+    message?: string;
+    code?: number;
+  };
+};
 
 const countRetries = code(
   {
@@ -299,7 +306,7 @@ const countRetries = code(
     stopSequences: constant(stopSequences),
     responseMimeType: constant(responseMimeType),
     retry: converge(retry, retryLoopback),
-    error: converge({} as { error?: { code?: number } }, errorLoopback),
+    error: converge({} as { error?: { message?: string } }, errorLoopback),
   },
   {
     // TODO(aomarks) A better way to generate these types.
@@ -315,7 +322,13 @@ const countRetries = code(
   },
   ({ retry, error, ...rest }) => {
     retry = retry || 0;
-    const errorCode = error?.error?.code;
+    let errorResponse: ErrorResponse = {};
+    try {
+      errorResponse = JSON.parse(error?.error?.message || "null");
+    } catch (e) {
+      // Ignore the error
+    }
+    const errorCode = errorResponse?.error?.code;
     if (errorCode) {
       // Retry won't help with 404, 429 or 400, because these are either the
       // caller's problem or in case of 429, retries are actually doing more harm
