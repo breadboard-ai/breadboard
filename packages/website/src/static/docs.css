@@ -21,7 +21,8 @@ main {
   flex: 1;
 }
 
-main > ol li {
+main > ol li,
+main > ul li {
   margin-bottom: 1em;
   line-height: 160%;
 }

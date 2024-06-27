@@ -10,10 +10,7 @@ At the end of this guide, we will have a simple agent that helps us find interes
 > [!TIP]
 > If this is your first time playing with Breadboard, this guide is a good starting point. It is intentionally a bit more verbose, written with the hope that a Breadboard novice can go through it and get a good sense of how to build boards.
 
-The finished board is here and you're welcome to play with it first. When you run it for the first time, it will ask you for the Gemini API Key. Get it at [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
-
-> [!NOTE]
-> You might have a reasonable question: "Why does Breadboard ask me for an API key?" One of the key tenets of this project is to allow makers quickly connect to various interesting models and other APIs. To do that, Breadboard has a pretty robust system for managing _secrets_: valuable pieces of data help you connect to them. To balance convenience with flexibility, Breadboard Visual Editor stores these keys in your local browser store.
+{% include "disclaimer.njk" %}
 
 {{ "/breadboard/static/boards/librarian/final.bgl.json" | board }}
 
