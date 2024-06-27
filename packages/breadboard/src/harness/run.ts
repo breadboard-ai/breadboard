@@ -13,7 +13,7 @@ import {
 } from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
 import { HTTPClientTransport } from "../remote/http.js";
-import { ProxyClient, SimplePythonProxyClient } from "../remote/proxy.js";
+import { ProxyClient } from "../remote/proxy.js";
 import { runLocally } from "./local.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { HarnessRunResult } from "./types.js";
@@ -131,14 +131,6 @@ const configureKits = async (config: RunConfig): Promise<Kit[]> => {
           const proxyClient = new ProxyClient(
             new HTTPClientTransport(proxyConfig.url)
           );
-          kits.push(proxyClient.createProxyKit(proxyConfig.nodes));
-          break;
-        }
-        case "python": {
-          if (!proxyConfig.url) {
-            throw new Error("No node proxy server URL provided.");
-          }
-          const proxyClient = new SimplePythonProxyClient(proxyConfig.url);
           kits.push(proxyClient.createProxyKit(proxyConfig.nodes));
           break;
         }
