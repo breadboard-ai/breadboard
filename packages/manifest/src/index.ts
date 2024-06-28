@@ -9,9 +9,7 @@ import {
   Edge as GraphEdge,
   Node as GraphNode,
 } from "@google-labs/breadboard";
-import BreadboardManifestJsonSchema from "../bbm.schema.json" with { type: "json" };
 import { generateSchemaId } from "./scripts/generate";
-export const BreadboardManifestSchema = BreadboardManifestJsonSchema;
 
 /**
  * A Breadboard Manifest.

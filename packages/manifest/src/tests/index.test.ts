@@ -9,8 +9,9 @@ import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe } from "node:test";
+import path from "path";
 import { BreadboardManifest } from "..";
-import schema from "../../bbm.schema.json" with { type: "json" };
+import { ascendToPackageDir } from "../scripts/util/ascend-to-package-dir";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -29,9 +30,12 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 let validate: ValidateFunction;
-
 test.before(() => {
-  validate = ajv.compile(schema);
+  const packageRoot = ascendToPackageDir("@google-labs/breadboard-manifest");
+  const schemaPath = path.resolve(packageRoot, "bbm.schema.json");
+  const readSchemaFile = fs.readFileSync(schemaPath, "utf-8");
+  const parsedSchema = JSON.parse(readSchemaFile);
+  validate = ajv.compile(parsedSchema);
 });
 
 const manifestArray: BreadboardManifest[] = [
