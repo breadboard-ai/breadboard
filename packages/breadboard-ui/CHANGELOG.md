@@ -1,5 +1,121 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- 59dd0f5: Add support for "mine" property
+- 57e8714: Add basic support for board servers
+- 7af14cf: Add support for comment nodes
+- bcfba50: Add App View to Board Server
+- c4e0dc1: Tidy relationship between GraphRenderer and Graph
+- 778f7aa: Teach Breadboard to load runs with non-text content.
+- 808f5e2: Introduce graph edit history API.
+- a4b3d7c: Node metadata contains collapsed state
+- 14853d5: Add Gemini Nano node.
+- 431fa3d: Add support for website embeds of boards & YouTube videos
+- 8c90376: Add support for help
+- c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
+- 9491266: Implement `DataStore` and a simple implementation.
+- ff498e1: Teach editor about box selection; update controls
+- 914015f: Teach Visual Editor about multi-select
+- d1a9d8a: Update icons to match designs
+- 5b03d96: Start using multi-edit capability when pasting nodes.
+- f0d8d67: Remove the old "star port as ad-hoc port drop zone" machinery.
+- 225c7cc: Implement simple ACL for board server.
+- 546752d: Move Provider List to be nearer designs
+- 009e0ea: Add Welcome Panel
+- 7429050: Teach Visual Editor about copy-pasting nodes
+- 331d4b5: Add published/draft controls for boards
+
+### Patch Changes
+
+- f4c9d36: Add support for tool tagging
+- 7dd8fee: Fix various UX issues with multi-select
+- cc50932: Watch for deletions in the code editor
+- 583f813: Ensure textures have loaded before graph data is sent through
+- 81315de: Autoname dynamic ports if possible
+- 0ff2afd: Add basic markdown support to comments
+- 3d5ae56: Refactor app main bar to have overflow menu
+- e79d6c3: Use shallow array copy on ports to preserve methods.
+- cf7710c: Default new ports to LLM Content
+- 89dcc4f: Adds board server API key to first run
+- 0a9769b: Various small tweaks
+- 9c97650: Restore settings to menu
+- 608edac: Add support for links in comments
+- fea8967: Add basic "Save As..." support
+- 5498957: Fix initial render
+- 499eac0: Ensure Graph Renderer is only initialized once
+- 00746bb: Remove old multilayout event
+- 5ebd65f: Use masking instead of visible to hide graphs
+- 091fff2: Add board filter
+- 83ed3b5: Fall back to fetch and teach `GraphAssets` to be more loose about asset-loading.
+- 54b03b9: Update nav styling
+- 8bb2684: Minor UX fixes for mobile
+- 07a8642: Display falsey values. Only "undefined" means "no value".
+- d6ab0c5: Teach Visual Editor about select all
+- e0b3503: Convert node & edge deletion to multi-edit
+- 85f023d: Restore ID in port spec editor
+- 0d61879: Remove part deletion confirm prompt
+- 3352ec5: Copy board description along with title and other metadata.
+- 32a48a3: Expand ad hoc input pattern to include numbers.
+- cf17933: Add history overlay element (plus a few other minor fixes)
+- 4db3ab7: Teach Specialist to pass context to tools.
+- cd73b17: Switch to Nodejs v20.14.0 as the baseline.
+- 2e3f555: Fix missing icons
+- c692608: Make Code Editor emit input events for any change
+- 702cfe1: Unblock UI on Providers
+- a5898df: Retire the single node move event
+- 39789fd: Start with Graph being visible by default.
+- d3dec5f: Unhook CodeMirror before DOM removal
+- faca485: [Debugger] Fix store provider for nav
+- 08c999a: Add support for "Save As..." when save is unavailable
+- c03173d: Minor UI fixes for recent boards
+- d6867c0: Support drag and drop of run data
+- cd73e95: Fix copy-paste for embedded subgraphs
+- 69b04a0: Tweak the website graph view
+- 244e642: Set model as part of first run
+- 78510e3: Various tweaks to refine undo/redo
+- 98665dd: Add "quick add" to LLM Input
+- Updated dependencies [5a55b7d]
+- Updated dependencies [74ade20]
+- Updated dependencies [59dd0f5]
+- Updated dependencies [417323c]
+- Updated dependencies [b3aa884]
+- Updated dependencies [3d7b4a7]
+- Updated dependencies [7af14cf]
+- Updated dependencies [fea8967]
+- Updated dependencies [778f7aa]
+- Updated dependencies [808f5e2]
+- Updated dependencies [e0fdbc3]
+- Updated dependencies [54b03b9]
+- Updated dependencies [810d7fd]
+- Updated dependencies [14853d5]
+- Updated dependencies [8798514]
+- Updated dependencies [eb64b9a]
+- Updated dependencies [32a48a3]
+- Updated dependencies [cd73b17]
+- Updated dependencies [81d82fe]
+- Updated dependencies [2a7531b]
+- Updated dependencies [7c1b4cb]
+- Updated dependencies [702cfe1]
+- Updated dependencies [bebd96e]
+- Updated dependencies [91cb723]
+- Updated dependencies [3e10f0f]
+- Updated dependencies [c53ca01]
+- Updated dependencies [4c681cb]
+- Updated dependencies [fb2e584]
+- Updated dependencies [9491266]
+- Updated dependencies [2ace620]
+- Updated dependencies [fcef799]
+- Updated dependencies [37418d9]
+- Updated dependencies [083f69c]
+- Updated dependencies [5b03d96]
+- Updated dependencies [f0d8d67]
+- Updated dependencies [836389d]
+- Updated dependencies [225c7cc]
+  - @google-labs/breadboard@0.21.0
+
 ## 0.8.0
 
 ### Minor Changes

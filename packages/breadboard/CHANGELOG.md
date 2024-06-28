@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.21.0
+
+### Minor Changes
+
+- 74ade20: Confine the number of inspectable runs to two.
+- 59dd0f5: Add support for "mine" property
+- 417323c: Teach Board Server to use Node Proxy Server
+- b3aa884: Introduce undo/redo capability in Editor API.
+- 7af14cf: Add support for comment nodes
+- 778f7aa: Teach Breadboard to load runs with non-text content.
+- 808f5e2: Introduce graph edit history API.
+- e0fdbc3: Use LLMContent types in blank graphs.
+- 14853d5: Add Gemini Nano node.
+- 8798514: Combine several Editor API methods to one `edit`.
+- eb64b9a: Export enum values
+- 91cb723: Teach Editor API to properly roll back multiple graph changes.
+- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in `fetch`.
+- c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
+- 9491266: Implement `DataStore` and a simple implementation.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an iframe.
+- 083f69c: Add validate() method to InspectableEdge
+- 5b03d96: Start using multi-edit capability when pasting nodes.
+- f0d8d67: Remove the old "star port as ad-hoc port drop zone" machinery.
+- 836389d: Implement `InspectableRun.replay` for past runs.
+- 225c7cc: Implement simple ACL for board server.
+
+### Patch Changes
+
+- 5a55b7d: Don't prefill inputs from bubbled inputs.
+- 3d7b4a7: Introduce optional `help` metadata for graphs and kits.
+- fea8967: Add basic "Save As..." support
+- 54b03b9: Update nav styling
+- 810d7fd: Fix canGoBack check
+- 32a48a3: Teach `output` to be non-fixed by default.
+- cd73b17: Switch to Nodejs v20.14.0 as the baseline.
+- 81d82fe: Don't update events when looking up event data.
+- 2a7531b: Actually initialize `InspectablePort.type`.
+- 7c1b4cb: Temporarily mark new board server boards as published.
+- 702cfe1: Unblock UI on Providers
+- bebd96e: Move a bunch of docs over to archive.
+- 4c681cb: Switch to use edit operations machinery in Editor API internals.
+- fb2e584: Make metadata/configration changes incremental by default.
+- fcef799: Update `help` to have description and URL
+- Updated dependencies [3d7b4a7]
+- Updated dependencies [7af14cf]
+- Updated dependencies [511bd9b]
+- Updated dependencies [431fa3d]
+- Updated dependencies [cd73b17]
+- Updated dependencies [fcef799]
+  - @google-labs/breadboard-schema@1.5.0
+
 ## 0.20.0
 
 ### Minor Changes

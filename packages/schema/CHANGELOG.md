@@ -1,5 +1,19 @@
 # @google-labs/breadboard-schema
 
+## 1.5.0
+
+### Minor Changes
+
+- 7af14cf: Add support for comment nodes
+- 511bd9b: Add `tags` to `GraphMetadata`.
+- 431fa3d: Add support for website embeds of boards & YouTube videos
+
+### Patch Changes
+
+- 3d7b4a7: Introduce optional `help` metadata for graphs and kits.
+- cd73b17: Switch to Nodejs v20.14.0 as the baseline.
+- fcef799: Update `help` to have description and URL
+
 ## 1.4.1
 
 ### Patch Changes
