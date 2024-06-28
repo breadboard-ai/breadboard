@@ -1,5 +1,11 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.1.2
+
+### Patch Changes
+
+- 71d5696: Mark google-drive-kit as public.
+
 ## 0.1.1
 
 ### Patch Changes

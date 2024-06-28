@@ -1,7 +1,6 @@
 {
   "name": "@breadboard-ai/google-drive-kit",
-  "version": "0.1.1",
-  "private": true,
+  "version": "0.1.2",
   "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   "license": "Apache-2.0",
   "author": "Google LLC",
