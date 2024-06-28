@@ -4,9 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, PropertyValueMap, html, nothing } from "lit";
+import {
+  HTMLTemplateResult,
+  LitElement,
+  PropertyValueMap,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { SETTINGS_TYPE, STATUS, Settings } from "../../types/types.js";
+import {
+  RecentBoard,
+  SETTINGS_TYPE,
+  STATUS,
+  Settings,
+} from "../../types/types.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
@@ -79,6 +90,15 @@ export class UI extends LitElement {
 
   @property()
   boardId = -1;
+
+  @property()
+  showWelcomePanel = false;
+
+  @property()
+  version = "dev";
+
+  @property()
+  recentBoards: RecentBoard[] = [];
 
   @property()
   settings: Settings | null = null;
@@ -609,6 +629,14 @@ export class UI extends LitElement {
       breadcrumbs.push(this.subGraphId);
     }
 
+    let welcomePanel: HTMLTemplateResult | symbol = nothing;
+    if (this.showWelcomePanel) {
+      welcomePanel = html`<bb-welcome-panel
+        .version=${this.version}
+        .recentBoards=${this.recentBoards}
+      ></bb-welcome-panel>`;
+    }
+
     return html`<bb-splitter
       direction=${this.isPortrait ? "vertical" : "horizontal"}
       name="layout-main"
@@ -622,7 +650,7 @@ export class UI extends LitElement {
               <p>Please try again, or load a different board</p>
             </div>`
           : editor}
-        ${entryDetails}
+        ${entryDetails} ${welcomePanel}
       </section>
 
       <section

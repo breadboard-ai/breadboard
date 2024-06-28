@@ -15,6 +15,7 @@ import {
   GraphProviderRefreshEvent,
   GraphProviderRenewAccessRequestEvent,
   GraphProviderSelectionChangeEvent,
+  ResetEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { GraphProvider } from "@google-labs/breadboard";
@@ -103,8 +104,22 @@ export class Navigation extends LitElement {
     #menu > header > h1 {
       margin: 0;
       padding: 0;
+    }
+
+    #menu > header > h1 > button {
+      margin: 0;
+      padding: 0;
       font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--bb-neutral-600);
+    }
+
+    #menu > header > h1 > button:hover,
+    #menu > header > h1 > button:focus {
+      color: var(--bb-neutral-900);
     }
 
     #menu > header > #search {
@@ -625,7 +640,16 @@ export class Navigation extends LitElement {
 
     return html`<nav id="menu">
         <header>
-          <h1>Breadboard</h1>
+          <h1>
+            <button
+              id="reset"
+              @click=${() => {
+                this.dispatchEvent(new ResetEvent());
+              }}
+            >
+              Breadboard
+            </button>
+          </h1>
           <button
             id="new-board"
             @click=${() => {

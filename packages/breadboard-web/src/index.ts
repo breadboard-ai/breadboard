@@ -51,6 +51,7 @@ import type {
 } from "@google-labs/breadboard-ui/types/types.js";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+import { RecentBoardStore } from "./data/recent-boards";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -60,6 +61,7 @@ type MainArguments = {
   providers?: GraphProvider[];
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
+  version?: string;
 };
 
 type SaveAsConfiguration = {
@@ -107,6 +109,9 @@ export class Main extends LitElement {
 
   @state()
   showFirstRun = false;
+
+  @state()
+  showWelcomePanel = false;
 
   @state()
   showSaveAsDialog = false;
@@ -181,6 +186,9 @@ export class Main extends LitElement {
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
+  #version = "dev";
+  #recentBoardStore: RecentBoardStore;
+  #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
 
   static styles = css`
     * {
@@ -482,6 +490,8 @@ export class Main extends LitElement {
       }
     }
 
+    this.#recentBoardStore = RecentBoardStore.instance();
+    this.#version = config.version || "dev";
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
@@ -507,40 +517,51 @@ export class Main extends LitElement {
 
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
 
-    this.#load = Promise.all([
-      loadKits([
-        GeminiKit,
-        // TODO(aomarks) This is presumably not the right way to do this. How do
-        // I get something into this.#providers?
-        BuildExampleKit,
-        PythonWasmKit,
-        GoogleDriveKit,
-      ]),
-      ...this.#providers.map((provider) => provider.restore()),
-      this.#settings?.restore(),
-    ]).then(([kits]) => {
-      this.kits = kits;
-      this.#providers.map((provider) => {
-        if (provider.extendedCapabilities().watch) {
-          provider.watch((change) => {
-            const currentUrl = new URL(window.location.href);
-            const boardFromUrl = currentUrl.searchParams.get("board");
-            if (boardFromUrl?.endsWith(change.filename)) {
-              this.#onStartBoard(
-                new BreadboardUI.Events.StartEvent(change.filename)
-              );
-            }
-          });
+    // Load the Recent Boards.
+    this.#load = this.#recentBoardStore
+      .restore()
+      .then((boards) => {
+        this.#recentBoards = boards;
+
+        // Then Kits, Providers and Settings.
+        return Promise.all([
+          loadKits([
+            GeminiKit,
+            // TODO(aomarks) This is presumably not the right way to do this. How do
+            // I get something into this.#providers?
+            BuildExampleKit,
+            PythonWasmKit,
+            GoogleDriveKit,
+          ]),
+          ...this.#providers.map((provider) => provider.restore()),
+          this.#settings?.restore(),
+        ]);
+      })
+      .then(([kits]) => {
+        // Process all.
+        this.kits = kits;
+        this.#providers.map((provider) => {
+          if (provider.extendedCapabilities().watch) {
+            provider.watch((change) => {
+              const currentUrl = new URL(window.location.href);
+              const boardFromUrl = currentUrl.searchParams.get("board");
+              if (boardFromUrl?.endsWith(change.filename)) {
+                this.#onStartBoard(
+                  new BreadboardUI.Events.StartEvent(change.filename)
+                );
+              }
+            });
+          }
+        });
+
+        // Start the board or show the welcome panel.
+        if (boardFromUrl) {
+          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+          return;
         }
+
+        this.showWelcomePanel = true;
       });
-
-      if (boardFromUrl) {
-        this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
-        return;
-      }
-
-      this.#startFromProviderDefault();
-    });
   }
 
   connectedCallback(): void {
@@ -571,19 +592,6 @@ export class Main extends LitElement {
         "beforeunload",
         this.#confirmUnloadWithUserFirstIfNeededBound
       );
-    }
-  }
-
-  #startFromProviderDefault() {
-    let startingURL;
-    for (const provider of this.#providers) {
-      startingURL = provider.startingURL();
-      if (startingURL) {
-        this.#onStartBoard(
-          new BreadboardUI.Events.StartEvent(startingURL.href)
-        );
-        break;
-      }
     }
   }
 
@@ -789,7 +797,7 @@ export class Main extends LitElement {
     }
 
     if (isActive) {
-      this.#startFromProviderDefault();
+      this.showWelcomePanel = true;
     }
 
     // Trigger a re-render.
@@ -840,12 +848,18 @@ export class Main extends LitElement {
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
+    this.showWelcomePanel = false;
     this.#setBoardPendingSaveState(false);
     this.#setPageTitle();
   }
 
   protected async updated() {
     if (!this.url && !this.graph) {
+      if (!this.showWelcomePanel) {
+        requestAnimationFrame(() => {
+          this.showWelcomePanel = true;
+        });
+      }
       return;
     }
 
@@ -876,6 +890,7 @@ export class Main extends LitElement {
         }
         this.graph = graph;
         this.#setPageTitle();
+        await this.#trackRecentBoard();
         // TODO: Figure out how to avoid needing to null this out.
         this.#editor = null;
       } catch (err) {
@@ -903,6 +918,31 @@ export class Main extends LitElement {
     }
 
     window.document.title = suffix;
+  }
+
+  async #trackRecentBoard() {
+    if (!this.graph || !this.graph.url) {
+      return;
+    }
+
+    const currentIndex = this.#recentBoards.findIndex(
+      (board) => board.url === this.graph?.url
+    );
+    if (currentIndex === -1) {
+      this.#recentBoards.unshift({
+        title: this.graph.title ?? "Untitled Board",
+        url: this.graph.url,
+      });
+    } else {
+      const [item] = this.#recentBoards.splice(currentIndex, 1);
+      this.#recentBoards.unshift(item);
+    }
+
+    if (this.#recentBoards.length > 5) {
+      this.#recentBoards.length = 5;
+    }
+
+    await this.#recentBoardStore.store(this.#recentBoards);
   }
 
   #getEditor() {
@@ -1294,6 +1334,11 @@ export class Main extends LitElement {
         .providerOps=${this.providerOps}
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopPropagation()}
+        @bbreset=${() => {
+          this.#attemptBoardStart(
+            new BreadboardUI.Events.StartEvent(null, null)
+          );
+        }}
         @bbgraphprovideradd=${() => {
           this.showProviderAddOverlay = true;
         }}
@@ -1494,6 +1539,9 @@ export class Main extends LitElement {
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}
+          .version=${this.#version}
+          .showWelcomePanel=${this.showWelcomePanel}
+          .recentBoards=${this.#recentBoards}
           @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
             this.#attemptBoardStart(evt);
           }}
