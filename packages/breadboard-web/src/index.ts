@@ -931,7 +931,7 @@ export class Main extends LitElement {
     if (currentIndex === -1) {
       this.#recentBoards.unshift({
         title: this.graph.title ?? "Untitled Board",
-        url: this.graph.url,
+        url: this.graph.url.replace(window.location.origin, ""),
       });
     } else {
       const [item] = this.#recentBoards.splice(currentIndex, 1);
@@ -1440,45 +1440,47 @@ export class Main extends LitElement {
           }}
         ></button>
         <div id="tab-container">
-          <h1>
-            <span
-              ><button
-                id="back-to-main-board"
-                @click=${() => {
-                  this.subGraphId = null;
-                }}
-                ?disabled=${this.subGraphId === null}
-              >
-                ${title}
-              </button></span
-            >${subGraphTitle
-              ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-              : nothing}
-            <button
-              @click=${() => {
-                let graph = this.graph;
-                if (graph && graph.graphs && this.subGraphId) {
-                  graph = graph.graphs[this.subGraphId];
-                }
+          ${this.graph !== null
+            ? html`<h1>
+                <span
+                  ><button
+                    id="back-to-main-board"
+                    @click=${() => {
+                      this.subGraphId = null;
+                    }}
+                    ?disabled=${this.subGraphId === null}
+                  >
+                    ${title}
+                  </button></span
+                >${subGraphTitle
+                  ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+                  : nothing}
+                <button
+                  @click=${() => {
+                    let graph = this.graph;
+                    if (graph && graph.graphs && this.subGraphId) {
+                      graph = graph.graphs[this.subGraphId];
+                    }
 
-                this.boardEditOverlayInfo = {
-                  title: graph?.title ?? "No Title",
-                  version: graph?.version ?? "0.0.1",
-                  description: graph?.description ?? "No Description",
-                  published: this.subGraphId
-                    ? null
-                    : graph?.metadata?.tags?.includes("published") ?? false,
-                  isTool: graph?.metadata?.tags?.includes("tool") ?? false,
-                  subGraphId: this.subGraphId,
-                };
-              }}
-              ?disabled=${this.graph === null}
-              id="edit-board-info"
-              title="Edit Board Information"
-            >
-              Edit
-            </button>
-          </h1>
+                    this.boardEditOverlayInfo = {
+                      title: graph?.title ?? "No Title",
+                      version: graph?.version ?? "0.0.1",
+                      description: graph?.description ?? "No Description",
+                      published: this.subGraphId
+                        ? null
+                        : graph?.metadata?.tags?.includes("published") ?? false,
+                      isTool: graph?.metadata?.tags?.includes("tool") ?? false,
+                      subGraphId: this.subGraphId,
+                    };
+                  }}
+                  ?disabled=${this.graph === null}
+                  id="edit-board-info"
+                  title="Edit Board Information"
+                >
+                  Edit
+                </button>
+              </h1>`
+            : nothing}
         </div>
         <button
           id="undo"
