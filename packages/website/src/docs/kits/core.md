@@ -12,6 +12,8 @@ This is the kit that provides the most fundamental building blocks for Breadboar
 
 ## The `curry` node
 
+{{ "/breadboard/static/boards/kits/core-curry.bgl.json" | board }}
+
 Takes a board and bakes in (curries) supplied arguments into it. Very useful when we want to invoke a board with the same arguments many times (like with `map`).
 
 ### Input ports
@@ -26,6 +28,8 @@ Takes a board and bakes in (curries) supplied arguments into it. Very useful whe
 
 ## The `deflate` node
 
+{{ "/breadboard/static/boards/kits/core-deflate.bgl.json" | board }}
+
 Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
 
 ### Input ports
@@ -39,6 +43,8 @@ Converts all inline data to stored data, saving memory. Useful when working with
 - [deflate.ts]({{src_url}}deflate.ts)
 
 ## The `fetch` node
+
+{{ "/breadboard/static/boards/kits/core-fetch.bgl.json" | board }}
 
 Use this node to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
@@ -76,6 +82,8 @@ And receive this output:
 
 ## The `inflate` node
 
+{{ "/breadboard/static/boards/kits/core-inflate.bgl.json" | board }}
+
 Converts stored data to base64.
 
 ### Input ports
@@ -89,6 +97,8 @@ Converts stored data to base64.
 - [inflate.ts]({{src_url}}inflate.ts)
 
 ## The `invoke` node
+
+{{ "/breadboard/static/boards/kits/core-invoke.bgl.json" | board }}
 
 Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.
 
@@ -119,6 +129,8 @@ The outputs of the invoked board will be passed along as outputs of the `invoke`
 
 ## The `map` node
 
+{{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
+
 Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.
 
 ### Input ports
@@ -132,6 +144,8 @@ Given a list and a board, iterates over this list (just like your usual JavaScri
 - [map.ts]({{src_url}}map.ts)
 
 ## The `passthrough` node
+
+{{ "/breadboard/static/boards/kits/core-passthrough.bgl.json" | board }}
 
 This is a no-op node. It takes the input property bag and passes it along as output, unmodified. This node can be useful when the board needs an entry point, but the rest of the board forms a cycle.
 
@@ -169,6 +183,8 @@ See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboa
 
 ## The `reduce` node
 
+{{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
+
 Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.
 
 ### Input ports
@@ -182,6 +198,8 @@ Given a list, an initial accumulator value, and a board, invokes a board (runOnc
 - [reduce.ts]({{src_url}}reduce.ts)
 
 ## The `runJavascript` node
+
+{{ "/breadboard/static/boards/kits/core-run-javascript.bgl.json" | board }}
 
 Use this node to execute JavaScript code. The node recognizes a required `code` input property, which is a string that contains the code to be executed. It also recognizes a `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
 
@@ -242,6 +260,8 @@ We will get:
 
 ## The `secrets` node
 
+{{ "/breadboard/static/boards/kits/core-secrets.bgl.json" | board }}
+
 Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
 
 ### The input ports
@@ -275,6 +295,8 @@ Will produce this output:
 - [secrets.ts]({{src_url}}secrets.ts)
 
 ## The `unnest` node
+
+{{ "/breadboard/static/boards/kits/core-unnest.bgl.json" | board }}
 
 ### Input ports
 
