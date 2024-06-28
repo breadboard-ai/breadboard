@@ -806,7 +806,10 @@ export class Main extends LitElement {
   }
 
   #makeRelativeToCurrentBoard(boardUrl: string | null) {
-    if (boardUrl) {
+    // An inability to parse the URL below likely means it's an example board,
+    // which doesn't carry a protocol, etc. In such cases we just return the
+    // URL as-is.
+    if (boardUrl && URL.canParse(boardUrl)) {
       if (this.url) {
         try {
           const base = new URL(this.url);
@@ -856,14 +859,16 @@ export class Main extends LitElement {
     if (this.url) {
       try {
         const base = new URL(window.location.href);
-        const provider = this.#getProviderForURL(new URL(this.url));
-        if (!provider) {
-          throw new Error(`Unable to find provider: ${this.url}`);
-        }
+        if (URL.canParse(this.url)) {
+          const provider = this.#getProviderForURL(new URL(this.url));
+          if (!provider) {
+            throw new Error(`Unable to find provider: ${this.url}`);
+          }
 
-        // Ensure the the provider has actually loaded fully before requesting
-        // the graph file from it.
-        await provider.ready();
+          // Ensure the the provider has actually loaded fully before requesting
+          // the graph file from it.
+          await provider.ready();
+        }
 
         const graph = await this.#loader.load(this.url, { base });
         if (!graph) {

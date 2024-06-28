@@ -1550,13 +1550,13 @@ export class GraphRenderer extends LitElement {
       return;
     }
     const { port, location } = this._portTooltip ?? {};
-    return html`<pp-port-tooltip
+    return html`<bb-port-tooltip
       id="port-tooltip"
       .port=${port}
       class=${classMap({ visible: port != null })}
       style=${styleMap({
         translate: `${location?.x ?? 0}px ${location?.y ?? 0}px`,
       })}
-    ></pp-port-tooltip>`;
+    ></bb-port-tooltip>`;
   }
 }

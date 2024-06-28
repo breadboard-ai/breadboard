@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { BoardInfoUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { classMap } from "lit/directives/class-map.js";
+import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const STORAGE_PREFIX = "bb-board-details";
 
@@ -30,6 +31,9 @@ export class BoardDetails extends LitElement {
 
   @property()
   boardIsTool: boolean | null = null;
+
+  @property()
+  boardHelp: GraphMetadata["help"] | null = null;
 
   @property()
   active = true;
@@ -140,6 +144,27 @@ export class BoardDetails extends LitElement {
     label {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
+    }
+
+    .help {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-7);
+      background: var(--bb-neutral-100) var(--bb-icon-help) 4px center / 20px
+        20px no-repeat;
+      display: inline-flex;
+      border-radius: 50px;
+      height: 24px;
+      align-items: center;
+      text-decoration: none;
+      color: var(--bb-neutral-800);
+      margin: 0 var(--bb-grid-size-4) var(--bb-grid-size-4)
+        var(--bb-grid-size-4);
+    }
+
+    .help:hover,
+    .help:focus {
+      background-color: var(--bb-neutral-300);
     }
   `;
 
@@ -304,6 +329,12 @@ export class BoardDetails extends LitElement {
               `
             : nothing}
         </div>
-      </form> `;
+      </form>
+
+      ${this.boardHelp
+        ? html` <a class="help" href="${this.boardHelp.url}"
+            >${this.boardHelp.description ?? "Read more"}</a
+          >`
+        : nothing} `;
   }
 }

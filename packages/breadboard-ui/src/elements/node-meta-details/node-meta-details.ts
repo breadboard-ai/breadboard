@@ -13,6 +13,7 @@ import {
   GraphLoader,
   InspectableNode,
   Kit,
+  NodeHandlerMetadata,
   inspect,
 } from "@google-labs/breadboard";
 import {
@@ -27,7 +28,8 @@ type NodeMetaDetailsInfo = {
   type: "node";
   node: InspectableNode;
   metadata: NodeMetadata;
-  kitNodeDescription: string | null;
+  kitNodeHelp: NodeHandlerMetadata["help"] | null;
+  kitNodeDescription: NodeHandlerMetadata["description"] | null;
 };
 
 type CommentMetaDetailsInfo = {
@@ -96,7 +98,8 @@ export class NodeMetaDetails extends LitElement {
       let type: "node" | "comment" = "node";
       let node: InspectableNode | CommentNode | undefined =
         breadboardGraph.nodeById(nodeId);
-      let kitNodeDescription: string | null = null;
+      let kitNodeDescription: NodeHandlerMetadata["description"] | null = null;
+      let kitNodeHelp: NodeHandlerMetadata["help"] | null = null;
       let metadata: NodeMetadata | null = null;
 
       // Node is an InspectableNode.
@@ -105,6 +108,7 @@ export class NodeMetaDetails extends LitElement {
           for (const nodeType of kit.nodeTypes) {
             if (nodeType.type() === node.descriptor.type) {
               kitNodeDescription = nodeType.metadata().description || null;
+              kitNodeHelp = nodeType.metadata().help || null;
               break;
             }
           }
@@ -116,6 +120,7 @@ export class NodeMetaDetails extends LitElement {
           node,
           metadata,
           kitNodeDescription,
+          kitNodeHelp,
         } as NodeMetaDetailsInfo;
       } else {
         // Node is a CommentNode.
@@ -187,6 +192,25 @@ export class NodeMetaDetails extends LitElement {
         var(--bb-font-family);
       padding: 0;
       margin: 0 0 var(--bb-grid-size-2) 0;
+    }
+
+    #overview .help {
+      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-7);
+      background: var(--bb-neutral-100) var(--bb-icon-help) 4px center / 20px
+        20px no-repeat;
+      display: inline-flex;
+      border-radius: 50px;
+      height: 24px;
+      align-items: center;
+      text-decoration: none;
+      color: var(--bb-neutral-800);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
+
+    #overview .help:hover,
+    #overview .help:focus {
+      background-color: var(--bb-neutral-300);
     }
 
     #unfold {
@@ -347,6 +371,13 @@ export class NodeMetaDetails extends LitElement {
                   (${data.node.descriptor.type})
                 </h1>
                 <p>${data.kitNodeDescription ?? html`No description`}</p>
+                ${data.kitNodeHelp
+                  ? html`<p>
+                      <a class="help" href="${data.kitNodeHelp.url}"
+                        >${data.kitNodeHelp.description ?? "Read more"}</a
+                      >
+                    </p>`
+                  : nothing}
               </div>
               <h1>
                 <button

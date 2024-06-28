@@ -8,7 +8,7 @@ import { type InspectablePort } from "@google-labs/breadboard";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-@customElement("pp-port-tooltip")
+@customElement("bb-port-tooltip")
 export class PortTooltip extends LitElement {
   @property({ reflect: false, type: Object })
   port?: InspectablePort;

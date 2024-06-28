@@ -144,6 +144,10 @@ export class Editor extends LitElement {
     this.#graphRenderer.showPortTooltips = value;
   }
 
+  get showPortTooltips() {
+    return this.#graphRenderer.showPortTooltips;
+  }
+
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
