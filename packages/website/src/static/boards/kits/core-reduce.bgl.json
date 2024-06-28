@@ -1,5 +1,5 @@
 {
-  "title": "Blank board",
+  "title": "reduce node example",
   "version": "0.0.1",
   "nodes": [
     {
@@ -14,7 +14,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -43,7 +45,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -59,6 +63,17 @@
           "collapsed": false
         }
       }
+    },
+    {
+      "id": "reduce-67cd5cbb",
+      "type": "reduce",
+      "metadata": {
+        "visual": {
+          "x": 55,
+          "y": -160,
+          "collapsed": false
+        }
+      }
     }
   ],
   "edges": [
@@ -68,5 +83,9 @@
       "to": "output",
       "in": "context"
     }
-  ]
+  ],
+  "description": "No Description",
+  "metadata": {
+    "tags": []
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "title": "Blank board",
+  "title": "unnest node examples",
   "version": "0.0.1",
   "nodes": [
     {
@@ -14,7 +14,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -43,7 +45,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -59,6 +63,17 @@
           "collapsed": false
         }
       }
+    },
+    {
+      "id": "unnest-90d805db",
+      "type": "unnest",
+      "metadata": {
+        "visual": {
+          "x": 49,
+          "y": -143,
+          "collapsed": false
+        }
+      }
     }
   ],
   "edges": [
@@ -68,5 +83,9 @@
       "to": "output",
       "in": "context"
     }
-  ]
+  ],
+  "description": "No Description",
+  "metadata": {
+    "tags": []
+  }
 }
