@@ -122,7 +122,7 @@ export class GraphRenderer extends LitElement {
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
-    if ("resize" in this.#app) {
+    if (this.#appInitialized && "resize" in this.#app) {
       this.#app.resize();
     }
 
@@ -158,6 +158,8 @@ export class GraphRenderer extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
+
+  ready = this.#loadTexturesAndInitializeRenderer();
 
   static styles = css`
     * {
@@ -1139,7 +1141,7 @@ export class GraphRenderer extends LitElement {
     this.removeEventListener("wheel", this.#onWheelBound);
   }
 
-  async loadTexturesAndInitializeRenderer() {
+  async #loadTexturesAndInitializeRenderer() {
     if (this.#appInitialized) {
       return this.#app.canvas;
     }
@@ -1147,10 +1149,6 @@ export class GraphRenderer extends LitElement {
     await Promise.all([
       GraphAssets.instance().loaded,
       this.#app.init({
-        webgpu: {
-          background: backgroundColor,
-          antialias: true,
-        },
         webgl: {
           background: backgroundColor,
           antialias: true,
@@ -1537,7 +1535,7 @@ export class GraphRenderer extends LitElement {
       : nothing;
 
     return [
-      until(this.loadTexturesAndInitializeRenderer()),
+      until(this.ready),
       overflowMenu,
       edgeSelectDisambiguationMenu,
       edgeMenu,

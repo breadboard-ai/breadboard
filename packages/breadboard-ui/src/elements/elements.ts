@@ -42,3 +42,4 @@ export { Switcher } from "./switcher/switcher.js";
 export { Toast } from "./toast/toast.js";
 export { UI } from "./ui-controller/ui-controller.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
+export { WelcomePanel } from "./welcome-panel/welcome-panel.js";

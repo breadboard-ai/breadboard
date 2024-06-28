@@ -39,12 +39,6 @@ export class StartEvent extends Event {
   ) {
     super(StartEvent.eventName, { ...eventInit });
 
-    if (!url && !descriptor) {
-      throw new Error(
-        "You must provide either a URL or descriptor; none provided"
-      );
-    }
-
     if (url && descriptor) {
       throw new Error(
         "You must provide either a URL or descriptor, but not both"
@@ -95,6 +89,13 @@ export class BoardUnloadEvent extends Event {
 /**
  * General UI
  */
+
+export class ResetEvent extends Event {
+  static eventName = "bbreset";
+  constructor() {
+    super(ResetEvent.eventName, { ...eventInit });
+  }
+}
 
 export class OverflowMenuActionEvent extends Event {
   static eventName = "bboverflowmenuaction";

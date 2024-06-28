@@ -396,7 +396,7 @@ export class Editor extends LitElement {
       GraphAssets.assetPrefix = this.assetPrefix;
     }
 
-    await this.#graphRenderer.loadTexturesAndInitializeRenderer();
+    await this.#graphRenderer.ready;
 
     if (!this.graph) {
       this.#graphRenderer.deleteGraphs();
@@ -1264,7 +1264,7 @@ export class Editor extends LitElement {
 
     return html`${until(this.#processGraph())}
       ${
-        this.showControls
+        this.showControls && this.graph !== null
           ? html` <div id="controls">
                 <button
                   title="Zoom to fit"
@@ -1349,123 +1349,131 @@ export class Editor extends LitElement {
                 </button>
               </div>
 
-              <div id="nodes">
-                <input
-                  ${ref(this.#addButtonRef)}
-                  name="add-node"
-                  id="add-node"
-                  type="checkbox"
-                  @input=${(evt: InputEvent) => {
-                    if (!(evt.target instanceof HTMLInputElement)) {
-                      return;
-                    }
+              ${this.graph !== null
+                ? html` <div id="nodes">
+                    <input
+                      ${ref(this.#addButtonRef)}
+                      name="add-node"
+                      id="add-node"
+                      type="checkbox"
+                      @input=${(evt: InputEvent) => {
+                        if (!(evt.target instanceof HTMLInputElement)) {
+                          return;
+                        }
 
-                    if (!this.#nodeSelectorRef.value) {
-                      return;
-                    }
+                        if (!this.#nodeSelectorRef.value) {
+                          return;
+                        }
 
-                    const nodeSelector = this.#nodeSelectorRef.value;
-                    nodeSelector.inert = !evt.target.checked;
+                        const nodeSelector = this.#nodeSelectorRef.value;
+                        nodeSelector.inert = !evt.target.checked;
 
-                    if (!evt.target.checked) {
-                      return;
-                    }
-                    nodeSelector.selectSearchInput();
-                  }}
-                />
-                <label for="add-node">Nodes</label>
+                        if (!evt.target.checked) {
+                          return;
+                        }
+                        nodeSelector.selectSearchInput();
+                      }}
+                    />
+                    <label for="add-node">Nodes</label>
 
-                <bb-node-selector
-                  ${ref(this.#nodeSelectorRef)}
-                  inert
-                  .graph=${this.graph}
-                  .kits=${this.kits}
-                  @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-                    const id = this.#createRandomID(evt.nodeType);
-                    this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
-                  }}
-                ></bb-node-selector>
+                    <bb-node-selector
+                      ${ref(this.#nodeSelectorRef)}
+                      inert
+                      .graph=${this.graph}
+                      .kits=${this.kits}
+                      @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
+                        const id = this.#createRandomID(evt.nodeType);
+                        this.dispatchEvent(
+                          new NodeCreateEvent(id, evt.nodeType)
+                        );
+                      }}
+                    ></bb-node-selector>
 
-                ${this.showNodeShortcuts
-                  ? html`<div class="divider"></div>
-                      <button
-                        draggable="true"
-                        title="Add Specialist"
-                        id="shortcut-add-specialist"
-                        @dblclick=${() => {
-                          const id = this.#createRandomID("specialist");
-                          this.#graphRenderer.deselectAllChildren();
-                          this.dispatchEvent(
-                            new NodeCreateEvent(id, "specialist")
-                          );
-                        }}
-                        @dragstart=${(evt: DragEvent) => {
-                          if (!evt.dataTransfer) {
-                            return;
-                          }
-                          evt.dataTransfer.setData(DATA_TYPE, "specialist");
-                        }}
-                      >
-                        Add Specialist
-                      </button>
-                      <button
-                        draggable="true"
-                        title="Add human"
-                        id="shortcut-add-human"
-                        @dblclick=${() => {
-                          const id = this.#createRandomID("human");
-                          this.#graphRenderer.deselectAllChildren();
-                          this.dispatchEvent(new NodeCreateEvent(id, "human"));
-                        }}
-                        @dragstart=${(evt: DragEvent) => {
-                          if (!evt.dataTransfer) {
-                            return;
-                          }
-                          evt.dataTransfer.setData(DATA_TYPE, "human");
-                        }}
-                      >
-                        Add Human
-                      </button>
-                      <button
-                        draggable="true"
-                        title="Add looper"
-                        id="shortcut-add-looper"
-                        @dblclick=${() => {
-                          const id = this.#createRandomID("looper");
-                          this.#graphRenderer.deselectAllChildren();
-                          this.dispatchEvent(new NodeCreateEvent(id, "looper"));
-                        }}
-                        @dragstart=${(evt: DragEvent) => {
-                          if (!evt.dataTransfer) {
-                            return;
-                          }
-                          evt.dataTransfer.setData(DATA_TYPE, "looper");
-                        }}
-                      >
-                        Add Human
-                      </button>
-                      <button
-                        draggable="true"
-                        title="Add comment"
-                        id="shortcut-add-comment"
-                        @dblclick=${() => {
-                          const id = this.#createRandomID("comment");
-                          this.#graphRenderer.deselectAllChildren();
-                          this.dispatchEvent(
-                            new NodeCreateEvent(id, "comment")
-                          );
-                        }}
-                        @dragstart=${(evt: DragEvent) => {
-                          if (!evt.dataTransfer) {
-                            return;
-                          }
-                          evt.dataTransfer.setData(DATA_TYPE, "comment");
-                        }}
-                      >
-                        Add Human
-                      </button>`
-                  : nothing}
-              </div>`
+                    ${this.showNodeShortcuts
+                      ? html`<div class="divider"></div>
+                          <button
+                            draggable="true"
+                            title="Add Specialist"
+                            id="shortcut-add-specialist"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("specialist");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "specialist")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "specialist");
+                            }}
+                          >
+                            Add Specialist
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add human"
+                            id="shortcut-add-human"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("human");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "human")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "human");
+                            }}
+                          >
+                            Add Human
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add looper"
+                            id="shortcut-add-looper"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("looper");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "looper")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "looper");
+                            }}
+                          >
+                            Add Human
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add comment"
+                            id="shortcut-add-comment"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("comment");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "comment")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "comment");
+                            }}
+                          >
+                            Add Human
+                          </button>`
+                      : nothing}
+                  </div>`
+                : nothing}`
           : nothing
       }
       </div>`;
