@@ -558,9 +558,9 @@ export class Main extends LitElement {
         if (boardFromUrl) {
           this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
           return;
+        } else {
+          this.showWelcomePanel = true;
         }
-
-        this.showWelcomePanel = true;
       });
   }
 
@@ -851,15 +851,14 @@ export class Main extends LitElement {
     this.showWelcomePanel = false;
     this.#setBoardPendingSaveState(false);
     this.#setPageTitle();
+
+    if (startEvent.url === null && startEvent.descriptor === null) {
+      this.showWelcomePanel = true;
+    }
   }
 
   protected async updated() {
     if (!this.url && !this.graph) {
-      if (!this.showWelcomePanel) {
-        requestAnimationFrame(() => {
-          this.showWelcomePanel = true;
-        });
-      }
       return;
     }
 
@@ -925,13 +924,14 @@ export class Main extends LitElement {
       return;
     }
 
+    const url = this.graph.url.replace(window.location.origin, "");
     const currentIndex = this.#recentBoards.findIndex(
-      (board) => board.url === this.graph?.url
+      (board) => board.url === url
     );
     if (currentIndex === -1) {
       this.#recentBoards.unshift({
         title: this.graph.title ?? "Untitled Board",
-        url: this.graph.url.replace(window.location.origin, ""),
+        url,
       });
     } else {
       const [item] = this.#recentBoards.splice(currentIndex, 1);
