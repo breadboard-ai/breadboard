@@ -874,13 +874,11 @@ export class Main extends LitElement {
         const base = new URL(window.location.href);
         if (URL.canParse(this.url)) {
           const provider = this.#getProviderForURL(new URL(this.url));
-          if (!provider) {
-            throw new Error(`Unable to find provider: ${this.url}`);
+          if (provider) {
+            // Ensure the the provider has actually loaded fully before
+            // requesting the graph file from it.
+            await provider.ready();
           }
-
-          // Ensure the the provider has actually loaded fully before requesting
-          // the graph file from it.
-          await provider.ready();
         }
 
         const graph = await this.#loader.load(this.url, { base });
