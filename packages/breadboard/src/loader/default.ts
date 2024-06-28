@@ -40,6 +40,11 @@ export const loadWithFetch = async (url: string | URL) => {
 export class DefaultGraphProvider implements GraphProvider {
   name = "DefaultGraphProvider";
 
+  #ready = Promise.resolve();
+  ready() {
+    return this.#ready;
+  }
+
   isSupported(): boolean {
     return true;
   }

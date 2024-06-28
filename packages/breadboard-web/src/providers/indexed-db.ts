@@ -54,6 +54,7 @@ export class IDBGraphProvider implements GraphProvider {
     return this.#instance;
   }
 
+  #ready = Promise.resolve();
   #storeLocations: GraphDBStore[] = [];
   #stores: Map<string, GraphProviderStore<void>> = new Map<
     string,
@@ -67,6 +68,10 @@ export class IDBGraphProvider implements GraphProvider {
   name = "IDBGraphProvider";
 
   private constructor() {}
+
+  ready() {
+    return this.#ready;
+  }
 
   isSupported() {
     return "IDBOpenDBRequest" in window;
@@ -127,7 +132,7 @@ export class IDBGraphProvider implements GraphProvider {
     }
 
     this.#storeLocations = storeList;
-    return this.#refreshAllItems();
+    this.#ready = this.#refreshAllItems();
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {

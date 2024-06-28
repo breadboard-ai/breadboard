@@ -46,6 +46,11 @@ export class DebuggerGraphProvider implements GraphProvider {
 
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
+  #ready = Promise.resolve();
+
+  ready() {
+    return this.#ready;
+  }
 
   items(): Map<string, GraphProviderStore> {
     return this.#items;

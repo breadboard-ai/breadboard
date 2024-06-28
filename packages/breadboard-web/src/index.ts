@@ -856,6 +856,15 @@ export class Main extends LitElement {
     if (this.url) {
       try {
         const base = new URL(window.location.href);
+        const provider = this.#getProviderForURL(new URL(this.url));
+        if (!provider) {
+          throw new Error(`Unable to find provider: ${this.url}`);
+        }
+
+        // Ensure the the provider has actually loaded fully before requesting
+        // the graph file from it.
+        await provider.ready();
+
         const graph = await this.#loader.load(this.url, { base });
         if (!graph) {
           throw new Error(`Unable to load graph: ${this.url}`);

@@ -84,6 +84,10 @@ export type GraphProvider = {
    */
   name: string;
   /**
+   * An indicator that the Provider is ready to serve graphs.
+   */
+  ready(): Promise<void>;
+  /**
    * Whether the provider is supported or not in the current environment.
    */
   isSupported(): boolean;
