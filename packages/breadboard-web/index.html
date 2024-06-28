@@ -27,6 +27,7 @@
         new ExamplesGraphProvider(localBoards),
       ],
       settings: SettingsStore.instance(),
+      version: pkg.version,
     };
 
     window.oncontextmenu = (evt) => evt.preventDefault();

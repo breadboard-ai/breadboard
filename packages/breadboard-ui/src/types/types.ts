@@ -226,3 +226,8 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
         }
   ) as T;
 }
+
+export interface RecentBoard {
+  title: string;
+  url: string;
+}
