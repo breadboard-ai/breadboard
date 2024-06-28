@@ -59,6 +59,7 @@ export class Graph extends PIXI.Container {
   layoutRect: DOMRectReadOnly | null = null;
 
   readOnly = false;
+  highlightInvalidWires = false;
 
   constructor() {
     super({
@@ -1413,7 +1414,11 @@ export class Graph extends PIXI.Container {
 
       edgeGraphic.edge = edge;
       edgeGraphic.readOnly = this.readOnly;
-      this.#scheduleValidation(edge, edgeGraphic);
+      if (this.highlightInvalidWires) {
+        this.#scheduleValidation(edge, edgeGraphic);
+      } else {
+        edgeGraphic.invalid = false;
+      }
     }
 
     this.#removeStaleEdges();
