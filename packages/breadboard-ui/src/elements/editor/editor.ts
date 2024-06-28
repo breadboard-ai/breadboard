@@ -396,7 +396,7 @@ export class Editor extends LitElement {
       GraphAssets.assetPrefix = this.assetPrefix;
     }
 
-    await this.#graphRenderer.loadTexturesAndInitializeRenderer();
+    await this.#graphRenderer.ready;
 
     if (!this.graph) {
       this.#graphRenderer.deleteGraphs();
