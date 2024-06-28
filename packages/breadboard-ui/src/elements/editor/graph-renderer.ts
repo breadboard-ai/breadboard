@@ -122,7 +122,7 @@ export class GraphRenderer extends LitElement {
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
-    if ("resize" in this.#app) {
+    if (this.#appInitialized && "resize" in this.#app) {
       this.#app.resize();
     }
 
