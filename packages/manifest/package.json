@@ -54,7 +54,8 @@
     "build": {
       "dependencies": [
         "build:schema",
-        "build:ts"
+        "build:ts",
+        "test"
       ]
     },
     "build:schema": {
@@ -94,7 +95,7 @@
     "test": {
       "command": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
       "dependencies": [
-        "build"
+        "build:schema"
       ],
       "files": [],
       "output": [],
