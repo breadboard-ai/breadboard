@@ -30,7 +30,7 @@
     "./package.json"
   ],
   "license": "Apache-2.0",
-  "name": "@google-labs/breadboard-manifest",
+  "name": "@breadboard-ai/manifest",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
