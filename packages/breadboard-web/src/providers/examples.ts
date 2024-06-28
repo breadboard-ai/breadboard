@@ -19,6 +19,11 @@ export class ExamplesGraphProvider implements GraphProvider {
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
 
+  #ready = Promise.resolve();
+  ready() {
+    return this.#ready;
+  }
+
   constructor(manifest: BreadboardManifest) {
     const boards = manifest.boards || [];
     const blank = boards.find((board) => {

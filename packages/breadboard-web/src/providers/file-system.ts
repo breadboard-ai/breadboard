@@ -89,6 +89,7 @@ export class FileSystemGraphProvider implements GraphProvider {
     }
   >();
   #locations = new Map<string, FileSystemDirectoryHandle>();
+  #ready = Promise.resolve();
 
   name = "FileSystemGraphProvider";
 
@@ -96,6 +97,10 @@ export class FileSystemGraphProvider implements GraphProvider {
 
   async createURL(location: string, fileName: string) {
     return `${FILE_SYSTEM_PROTOCOL}//${FILE_SYSTEM_HOST_PREFIX}~${location}/${fileName}`;
+  }
+
+  ready() {
+    return this.#ready;
   }
 
   parseURL(url: URL) {
@@ -422,7 +427,7 @@ export class FileSystemGraphProvider implements GraphProvider {
 
     const entries = await KeyVal.entries<string, FileSystemDirectoryHandle>();
     this.#locations = new Map(entries);
-    return this.#refreshAllItems();
+    this.#ready = this.#refreshAllItems();
   }
 
   async createGraphURL(location: string, fileName: string) {

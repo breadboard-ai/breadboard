@@ -93,6 +93,7 @@ export class RemoteGraphProvider implements GraphProvider {
   readonly name = "RemoteGraphProvider";
   title = "Remote";
 
+  #ready = Promise.resolve();
   #locations: GraphDBStore[] = [];
   #stores: Map<string, GraphProviderStore<void>> = new Map<
     string,
@@ -104,6 +105,10 @@ export class RemoteGraphProvider implements GraphProvider {
   >();
 
   private constructor() {}
+
+  ready() {
+    return this.#ready;
+  }
 
   #getApiKey(location: string) {
     const store = this.#locations.find((store) => store.url === location);
@@ -290,7 +295,7 @@ export class RemoteGraphProvider implements GraphProvider {
     );
 
     this.#locations = await storeDb.getAll("stores");
-    return this.#refreshAllItems();
+    this.#ready = this.#refreshAllItems();
   }
 
   async #storeLocations() {
