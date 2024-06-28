@@ -276,9 +276,12 @@ export type NodeHandlerMetadata = {
    */
   deprecated?: boolean;
   /**
-   * The URL pointing at the location of the documentation for the node.
+   * The documentation for the graph, expressed as a URL and optional description.
    */
-  help?: string;
+  help?: {
+    description?: string;
+    url: string;
+  };
 };
 
 export type NodeHandlerObject = {
