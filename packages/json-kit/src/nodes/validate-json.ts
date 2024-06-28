@@ -201,6 +201,7 @@ export default {
     title: "Validate JSON",
     description:
       "Validates given text as JSON, trying its best to parse it first.",
+    help: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#validatejson",
   },
   invoke,
   describe,

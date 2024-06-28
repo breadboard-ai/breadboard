@@ -14,6 +14,7 @@ export default defineNodeType({
     title: "JSONata",
     description:
       'Uses JSONata (a kind of "SQL for JSON") to transform incoming JSON object. See https://jsonata.org/ for details on the language.',
+    help: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#the-jsonata-node",
   },
   inputs: {
     expression: {
