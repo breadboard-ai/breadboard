@@ -31,11 +31,13 @@ const createBuiltInKit = (): InspectableKit => {
       new BuiltInNodeType("input", describeInput, {
         title: "Input",
         description: "The input node. Use it to request inputs for your board.",
+        help: "https://breadboard-ai.github.io/breadboard/docs/reference/kits/built-in/#the-input-node",
       }),
       new BuiltInNodeType("output", describeOutput, {
         title: "Output",
         description:
           "The output node. Use it to provide outputs from your board.",
+        help: "https://breadboard-ai.github.io/breadboard/docs/reference/kits/built-in/#the-output-node",
       }),
     ],
   };

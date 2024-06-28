@@ -247,6 +247,10 @@ export type GraphMetadata = {
    * Tags associated with the graph. At this moment, free-form strings.
    */
   tags?: GraphTag[];
+  /**
+   * URL pointing at the location of the documentation for the graph.
+   */
+  help?: string;
 };
 
 /**

@@ -275,6 +275,10 @@ export type NodeHandlerMetadata = {
    * Whether or not the node is deprecated.
    */
   deprecated?: boolean;
+  /**
+   * The URL pointing at the location of the documentation for the node.
+   */
+  help?: string;
 };
 
 export type NodeHandlerObject = {
