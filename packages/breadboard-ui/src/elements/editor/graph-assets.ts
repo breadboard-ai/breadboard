@@ -28,22 +28,33 @@ export class GraphAssets {
   }
 
   #assets: AssetMap = new Map();
-  #loaded: Promise<void>;
+  #loaded: Promise<void> = Promise.resolve();
 
-  // Not to be instantiated directly.
-  private constructor() {
+  loadAssets(assetPrefix: string) {
+    GraphAssets.assetPrefix = assetPrefix;
     const loadedAssets = [...ASSET_LIST.entries()].map(
-      async ([name, path]): Promise<[string, PIXI.Texture]> => {
-        const texture = await PIXI.Assets.load<PIXI.Texture>(
-          `${GraphAssets.assetPrefix}${path}`
-        );
-        return [name, texture];
+      async ([name, path]): Promise<[string, PIXI.Texture | null]> => {
+        try {
+          const texture = await PIXI.Assets.load<PIXI.Texture>(
+            `${GraphAssets.assetPrefix}${path}`
+          );
+          return [name, texture];
+        } catch (e) {
+          return [name, null];
+        }
       }
     );
 
     this.#loaded = Promise.all(loadedAssets).then((vals) => {
-      this.#assets = new Map(vals);
+      this.#assets = new Map(
+        vals.filter((v) => v[1] !== null) as [string, PIXI.Texture][]
+      );
     });
+  }
+
+  // Not to be instantiated directly.
+  private constructor() {
+    this.loadAssets("");
   }
 
   get loaded() {

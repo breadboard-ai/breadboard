@@ -393,7 +393,7 @@ export class Editor extends LitElement {
 
   async #processGraph(): Promise<GraphRenderer> {
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
-      GraphAssets.assetPrefix = this.assetPrefix;
+      GraphAssets.instance().loadAssets(this.assetPrefix);
     }
 
     await this.#graphRenderer.ready;
