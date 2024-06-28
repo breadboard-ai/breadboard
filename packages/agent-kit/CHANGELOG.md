@@ -1,5 +1,34 @@
 # @google-labs/agent-kit
 
+## 0.8.0
+
+### Minor Changes
+
+- bac5642: Teach Specialist a bit more about joining multiple tool contexts (the "single" mode).
+- 16e50fb: Teach Joiner to merge contexts.
+- f0b68d0: Teach Human about multimodal inputs.
+- b44de19: Teach Specialist to receive LLM Content as tool output.
+- 9226f7c: Introduce "Pick One" mode for Human.
+- d131307: No longer require property to be named `context`.
+- e0eac55: Only show choices when Human is in "choice" mode.
+- b7dab90: Teach Specialist about parallel function calls.
+- c52e81d: Skip over metadata when merging contexts.
+- 4db3ab7: Teach Specialist to pass context to tools.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+
+### Patch Changes
+
+- f62d4da: Account for `item` in the multiple function-calling results.
+- 7840ff9: Don't delete `context` in function calling
+- d9b76bd: Pass function args even if there's LLM Content.
+- dfc6054: Teach Specialist about boards with no inputs.
+- 9bbdfc7: Only add Looper task to the first Specialist after it.
+- 5a55b7d: Only ask to choose when there are more than one choices.
+- 14cf52b: Update helper text for Agent Kit nodes.
+- 295b767: Teach Joiner to assign a role when merging.
+- faca485: [Debugger] Fix store provider for nav
+- 8e2c44d: Teach Specialist about multi-part functionCalls.
+
 ## 0.7.0
 
 ### Minor Changes
