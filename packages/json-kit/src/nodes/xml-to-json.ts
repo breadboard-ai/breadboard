@@ -74,7 +74,9 @@ export default {
   metadata: {
     title: "XML to JSON",
     description: "Creates a JSON representation of a given XML input.",
-    help: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#the-xmltojson-node",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#the-xmltojson-node",
+    },
   },
   describe: async () => {
     return {

@@ -248,9 +248,12 @@ export type GraphMetadata = {
    */
   tags?: GraphTag[];
   /**
-   * URL pointing at the location of the documentation for the graph.
+   * The documentation for the graph, expressed as a URL and optional description.
    */
-  help?: string;
+  help?: {
+    description?: string;
+    url: string;
+  };
 };
 
 /**

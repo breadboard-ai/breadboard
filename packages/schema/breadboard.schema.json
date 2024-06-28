@@ -210,8 +210,20 @@
 					"description": "Tags associated with the graph. At this moment, free-form strings."
 				},
 				"help": {
-					"type": "string",
-					"description": "URL pointing at the location of the documentation for the graph."
+					"type": "object",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"url"
+					],
+					"additionalProperties": false,
+					"description": "The documentation for the graph, expressed as a URL and optional description."
 				}
 			},
 			"additionalProperties": {

@@ -52,7 +52,9 @@ export default defineNodeType({
     title: "URL Template",
     description:
       "Use this node to safely construct URLs. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.",
-    help: "https://breadboard-ai.github.io/breadboard/docs/kits/template/#the-urltemplate-node",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/template/#the-urltemplate-node",
+    },
   },
   inputs: {
     template: {
