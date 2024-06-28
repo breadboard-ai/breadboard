@@ -22,6 +22,7 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { inspectableEdgeToString, getGlobalColor } from "./utils.js";
 import { GraphComment } from "./graph-comment.js";
+import { EdgeData, cloneEdgeData } from "../../types/types.js";
 
 type LayoutInfo = {
   x: number;
@@ -73,7 +74,7 @@ export class Graph extends PIXI.Container {
     let nodePortType: GraphNodePortType | null = null;
     let nodeBeingEdited: GraphNode | null = null;
     let edgeBeingEdited: GraphEdge | null = null;
-    let originalEdgeDescriptor: InspectableEdge | null = null;
+    let originalEdgeDescriptor: EdgeData | null = null;
     let visibleOnNextMove = false;
     let creatingAdHocEdge = false;
 
@@ -193,7 +194,8 @@ export class Graph extends PIXI.Container {
               to: { descriptor: { id: nodeBeingEdited.label } },
               out: nodePortBeingEdited.label,
               in: "*",
-            } as InspectableEdge;
+              type: InspectableEdgeType.Ordinary,
+            };
 
             edgeBeingEdited = this.#createTemporaryEdge(originalEdgeDescriptor);
             if (!edgeBeingEdited) {
@@ -222,7 +224,8 @@ export class Graph extends PIXI.Container {
                 to: { descriptor: { id: nodeBeingEdited.label } },
                 out: "*",
                 in: nodePortBeingEdited.label,
-              } as InspectableEdge;
+                type: InspectableEdgeType.Ordinary,
+              };
 
               edgeBeingEdited = this.#createTemporaryEdge(
                 originalEdgeDescriptor
@@ -236,7 +239,7 @@ export class Graph extends PIXI.Container {
               nodePortType = GraphNodePortType.OUT;
             }
 
-            originalEdgeDescriptor = structuredClone(edgeBeingEdited.edge);
+            originalEdgeDescriptor = cloneEdgeData(edgeBeingEdited.edge);
             break;
           }
         }
@@ -290,13 +293,13 @@ export class Graph extends PIXI.Container {
           edgeBeingEdited.edge.in = topTarget.label || "";
           edgeBeingEdited.edge.to = {
             descriptor: { id: nodeBeingTargeted.label },
-          } as InspectableNode;
+          };
         } else {
           edgeBeingEdited.fromNode = nodeBeingTargeted;
           edgeBeingEdited.edge.out = topTarget.label || "";
           edgeBeingEdited.edge.from = {
             descriptor: { id: nodeBeingTargeted.label },
-          } as InspectableNode;
+          };
         }
 
         edgeBeingEdited.overrideColor = 0xffa500;
@@ -398,9 +401,7 @@ export class Graph extends PIXI.Container {
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
       const targetEdge = edgeBeingEdited;
-      const targetEdgeDescriptor = structuredClone(
-        targetEdge.edge
-      ) as InspectableEdge;
+      const targetEdgeDescriptor = cloneEdgeData(targetEdge.edge)!;
       const targetHoverNodeForAdHoc = lastHoverNode;
 
       // Clean all the variables.
@@ -511,8 +512,7 @@ export class Graph extends PIXI.Container {
           }
 
           if (evt.metaKey) {
-            targetEdgeDescriptor.type =
-              "constant" as InspectableEdgeType.Constant;
+            targetEdgeDescriptor.type = InspectableEdgeType.Constant;
           }
           this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, targetEdgeDescriptor);
           break;
@@ -527,8 +527,7 @@ export class Graph extends PIXI.Container {
           }
 
           if (evt.metaKey) {
-            targetEdgeDescriptor.type =
-              "constant" as InspectableEdgeType.Constant;
+            targetEdgeDescriptor.type = InspectableEdgeType.Constant;
           }
           this.emit(
             GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
@@ -897,7 +896,7 @@ export class Graph extends PIXI.Container {
     return this.#highlightedNodeId;
   }
 
-  selectEdge(edge: InspectableEdge) {
+  selectEdge(edge: EdgeData) {
     const edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
     if (!edgeGraphic) {
       return;
@@ -1263,7 +1262,7 @@ export class Graph extends PIXI.Container {
   }
 
   // TODO: Merge this with below.
-  #createTemporaryEdge(edge: InspectableEdge): GraphEdge | null {
+  #createTemporaryEdge(edge: EdgeData): GraphEdge | null {
     const fromNode = this.#graphNodeById.get(edge.from.descriptor.id);
     const toNode = this.#graphNodeById.get(edge.to.descriptor.id);
 

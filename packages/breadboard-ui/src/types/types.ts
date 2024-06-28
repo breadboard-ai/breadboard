@@ -9,6 +9,8 @@ import {
   NodeEndResponse,
   NodeStartResponse,
   Schema,
+  InspectableEdgeType,
+  InspectableEdge,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 
@@ -187,4 +189,40 @@ export interface SettingsHelper {
   get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined;
   set(section: SETTINGS_TYPE, name: string, value: SettingEntry["value"]): void;
   delete(section: SETTINGS_TYPE, name: string): void;
+}
+
+/**
+ * A POJO version of {@link InspectableEdge} with only what we need for
+ * rendering. An {@link InspectableEdge} should be assignable to this, but not
+ * vice-versa.
+ *
+ * This type was created to distinguish when we have an actual
+ * {@link InspectableEdge} with methods and full inspectable nodes, vs a plain
+ * object that just has the basic string data.
+ *
+ * Note that it's not safe to `structuredClone` an {@link InspectableEdge}, so
+ * {@link cloneEdgeData} should be used for cloning.
+ */
+export interface EdgeData {
+  from: { descriptor: { id: string } };
+  to: { descriptor: { id: string } };
+  out: string;
+  in: string;
+  type: InspectableEdgeType;
+}
+
+({}) as InspectableEdge satisfies EdgeData;
+
+export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
+  return (
+    edge === null
+      ? null
+      : {
+          from: { descriptor: { id: edge.from.descriptor.id } },
+          to: { descriptor: { id: edge.to.descriptor.id } },
+          out: edge.out,
+          in: edge.in,
+          type: edge.type,
+        }
+  ) as T;
 }

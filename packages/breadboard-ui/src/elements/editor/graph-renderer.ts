@@ -25,6 +25,7 @@ import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
+  InspectableEdgeType,
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
@@ -40,6 +41,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
+import { EdgeData } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -525,7 +527,7 @@ export class GraphRenderer extends LitElement {
     return m;
   }
 
-  #notifyGraphOfEdgeSelection(edge: InspectableEdge) {
+  #notifyGraphOfEdgeSelection(edge: EdgeData) {
     if (!this.#activeGraph) {
       return;
     }
@@ -712,17 +714,17 @@ export class GraphRenderer extends LitElement {
       this.dispatchEvent(new GraphNodeDeselectedAllEvent());
     });
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: InspectableEdge) => {
+    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: EdgeData) => {
       this.dispatchEvent(new GraphEdgeAttachEvent(edge));
     });
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: InspectableEdge) => {
+    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: EdgeData) => {
       this.dispatchEvent(new GraphEdgeDetachEvent(edge));
     });
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
-      (from: InspectableEdge, to: InspectableEdge) => {
+      (from: EdgeData, to: EdgeData) => {
         this.dispatchEvent(new GraphNodeEdgeChangeEvent(from, to));
       }
     );
@@ -1080,7 +1082,7 @@ export class GraphRenderer extends LitElement {
       }
 
       const nodes: string[] = [];
-      const edges: InspectableEdge[] = [];
+      const edges: EdgeData[] = [];
       const comments: string[] = [];
       for (const child of selectedChildren) {
         if (child instanceof GraphNode) {
@@ -1311,8 +1313,8 @@ export class GraphRenderer extends LitElement {
       to: { descriptor: { id: this.#newEdgeData.to } },
       out: outPortName,
       in: inPortName,
-      type: "ordinary",
-    } as InspectableEdge;
+      type: InspectableEdgeType.Ordinary,
+    };
 
     this.dispatchEvent(new GraphEdgeAttachEvent(edge));
 
