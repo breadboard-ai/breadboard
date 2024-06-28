@@ -1,0 +1,97 @@
+{
+  "title": "passthrough node example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -54,
+          "y": 3,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 222,
+          "y": 0,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "passthrough-92eba430",
+      "type": "passthrough",
+      "metadata": {
+        "visual": {
+          "x": 6.5966796875,
+          "y": -116.6416015625,
+          "collapsed": false
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "passthrough-92eba430",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "passthrough-92eba430",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "description": "No Description",
+  "metadata": {
+    "tags": []
+  }
+}

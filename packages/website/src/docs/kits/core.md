@@ -10,82 +10,53 @@ tags:
 
 This is the kit that provides the most fundamental building blocks for Breadboard and contains the following nodes:
 
-## append
+## The `curry` node
 
-Use this node to accumulate local state, like context in a prompt.
+{{ "/breadboard/static/boards/kits/core-curry.bgl.json" | board }}
 
-The node looks for property called `accumulator` in its input. All other properties are appended to this property, and returned as `accumulator` output property.
+Takes a board and bakes in (curries) supplied arguments into it. Very useful when we want to invoke a board with the same arguments many times (like with `map`).
 
-The way the properties are appended depends on the type of the `accumulator` input property.
+### Input ports
 
-If the `accumulator` property is "string-ey" (that is, it's a `string`, `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will be appended as strings, formatted as `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
-
-If the `accumulator` property is an array, the properties will be appended as array items, formatted as `{{property_name}}: {{proprety_value}}`,
-
-Otherwise, the `accumulator` property will be treated as an object and the properties will be added as properties on this object.
+### Output ports
 
 ### Example
 
-If we send the `append` node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `\n`:
+### Implementation
 
-```json
-{
-  "accumulator": "\n",
-  "Question": "How old is planet Earth?"
-}
-```
+- [curry.ts]({{src_url}}curry.ts)
 
-We will see the following output:
+## The `deflate` node
 
-```json
-{
-  "accumulator": "\n\nQuestion: How old is planet Earth?"
-}
-```
+{{ "/breadboard/static/boards/kits/core-deflate.bgl.json" | board }}
 
-If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `[]`:
+Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
 
-```json
-{
-  "accumulator": [],
-  "Question": "How old is planet Earth?"
-}
-```
+### Input ports
 
-We will get the output:
+### Output ports
 
-```json
-{
-  "accumulator": ["Question: How old is planet Earth?"]
-}
-```
-
-If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `{}`:
-
-```json
-{
-  "accumulator": {},
-  "Question": "How old is planet Earth?"
-}
-```
-
-We'll get the output of:
-
-```json
-{
-  "accumulator": {
-    "Question": "How old is planet Earth?"
-  }
-}
-```
+### Example
 
 ### Implementation
 
-- [append.ts]({{src_url}}append.ts)
+- [deflate.ts]({{src_url}}deflate.ts)
 
-## fetch
+## The `fetch` node
+
+{{ "/breadboard/static/boards/kits/core-fetch.bgl.json" | board }}
 
 Use this node to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+
+### Input ports
+
+- `url` -- required, URL to fetch. For now, this node can only make a GET request.
+- `headers` -- object (optional), a set of headers to be passed to the request.
+- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+
+### Output ports
+
+- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
 
 ### Example
 
@@ -105,21 +76,130 @@ And receive this output:
 }
 ```
 
-### Inputs
-
-- `url` -- required, URL to fetch. For now, this node can only make a GET request.
-- `headers` -- object (optional), a set of headers to be passed to the request.
-- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
-
-### Outputs
-
-- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
-
 ### Implementation
 
 - [fetch.ts]({{src_url}}fetch.ts)
 
-## runJavascript
+## The `inflate` node
+
+{{ "/breadboard/static/boards/kits/core-inflate.bgl.json" | board }}
+
+Converts stored data to base64.
+
+### Input ports
+
+### Output ports
+
+### Example
+
+### Implementation
+
+- [inflate.ts]({{src_url}}inflate.ts)
+
+## The `invoke` node
+
+{{ "/breadboard/static/boards/kits/core-invoke.bgl.json" | board }}
+
+Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.
+
+Use this node to invoke another board from this board.
+
+It recognizes `path`, `graph`, and `board` properties that specify, respectively, a file path or URL to the serialized board, directly the serialized-as-JSON board, and a `BoardCapability` (returned by `lambda` or `import`).
+
+The rest of the inputs in the property bag are passed along to the invoked board as its inputs. If other inputs were bound to the board via wires into the `lambda` or `import` node, then those have precedence over inputs passed here.
+
+The outputs of the invoked board will be passed along as outputs of the `invoke` node.
+
+### Input ports
+
+- `path`, which specifes the file path or URL to the serialized board to be included.
+- `graph`, which is a serialized board
+- `board`, a `BoardCapability` representing a board, created by `lambda` or `import`.
+- any other properties are passed as inputs for the invoked board.
+
+### Output ports
+
+- the outputs of the invoked board
+
+### Example
+
+### Implementation
+
+- [invoke.ts]({{src_url}}invoke.ts)
+
+## The `map` node
+
+{{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
+
+Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.
+
+### Input ports
+
+### Output ports
+
+### Example
+
+### Implementation
+
+- [map.ts]({{src_url}}map.ts)
+
+## The `passthrough` node
+
+{{ "/breadboard/static/boards/kits/core-passthrough.bgl.json" | board }}
+
+This is a no-op node. It takes the input property bag and passes it along as output, unmodified. This node can be useful when the board needs an entry point, but the rest of the board forms a cycle.
+
+### Input ports
+
+- any properties
+
+### Output ports
+
+- the properties that were passed as inputs
+
+### Example
+
+```js
+board.input().wire("say->", board.passthrough().wire("say->", board.output()));
+
+board.runOnce({
+  say: "Hello, world!",
+});
+
+console.log("result", result);
+```
+
+Will produce this output:
+
+```sh
+result { say: 'Hello, world!' }
+```
+
+See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
+
+### Implementation
+
+- [passthrough.ts]({{src_url}}passthrough.ts)
+
+## The `reduce` node
+
+{{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
+
+Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.
+
+### Input ports
+
+### Output ports
+
+### Example
+
+### Implementation
+
+- [reduce.ts]({{src_url}}reduce.ts)
+
+## The `runJavascript` node
+
+{{ "/breadboard/static/boards/kits/core-run-javascript.bgl.json" | board }}
 
 Use this node to execute JavaScript code. The node recognizes a required `code` input property, which is a string that contains the code to be executed. It also recognizes a `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
 
@@ -129,7 +209,17 @@ The code is executed in a new V8 context in Node or a Web Worker in the browser,
 
 The node will pass the result of the execution as the `result` output property.
 
-### Example:
+### Input ports
+
+- `code` - required, must contain the code to execute
+- `name` - optional, must contain the name of the function to invoke (default: `run`)
+- zero or more inputs that will be passed as arguments to the function.
+
+### Output ports
+
+- `result` - the result of the execution
+
+### Example
 
 If we send the following inputs to `runJavascript`:
 
@@ -164,23 +254,23 @@ We will get:
 }
 ```
 
-### Inputs
-
-- `code` - required, must contain the code to execute
-- `name` - optional, must contain the name of the function to invoke (default: `run`)
-- zero or more inputs that will be passed as arguments to the function.
-
-### Outputs
-
-- `result` - the result of the execution
-
 ### Implementation
 
 - [run-javascript.ts]({{src_url}}run-javascript.ts)
 
-## secrets
+## The `secrets` node
+
+{{ "/breadboard/static/boards/kits/core-secrets.bgl.json" | board }}
 
 Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
+
+### The input ports
+
+- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
+
+### The output ports
+
+- one output for each key that was found in the environment.
 
 ### Example
 
@@ -200,134 +290,20 @@ Will produce this output:
 }
 ```
 
-### Inputs
-
-- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
-
-### Outputs
-
-- one output for each key that was found in the environment.
-
 ### Implementation
 
 - [secrets.ts]({{src_url}}secrets.ts)
 
-## passthrough
+## The `unnest` node
 
-This is a no-op node. It takes the input property bag and passes it along as output, unmodified. This node can be useful when the board needs an entry point, but the rest of the board forms a cycle.
+{{ "/breadboard/static/boards/kits/core-unnest.bgl.json" | board }}
 
-### Example
+### Input ports
 
-```js
-board.input().wire("say->", board.passthrough().wire("say->", board.output()));
-
-board.runOnce({
-  say: "Hello, world!",
-});
-
-console.log("result", result);
-```
-
-Will produce this output:
-
-```sh
-result { say: 'Hello, world!' }
-```
-
-See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
-
-### Inputs
-
-- any properties
-
-### Outputs
-
-- the properties that were passed as inputs
-
-### Implementation
-
-- [passthrough.ts]({{src_url}}passthrough.ts)
-
-## invoke
-
-Use this node to invoke another board from this board.
-
-It recognizes `path`, `graph`, and `board` properties that specify, respectively, a file path or URL to the serialized board, directly the serialized-as-JSON board, and a `BoardCapability` (returned by `lambda` or `import`).
-
-The rest of the inputs in the property bag are passed along to the invoked board as its inputs. If other inputs were bound to the board via wires into the `lambda` or `import` node, then those have precedence over inputs passed here.
-
-The outputs of the invoked board will be passed along as outputs of the `invoke` node.
-
-### Inputs
-
-- `path`, which specifes the file path or URL to the serialized board to be included.
-- `graph`, which is a serialized board
-- `board`, a `BoardCapability` representing a board, created by `lambda` or `import`.
-- any other properties are passed as inputs for the invoked board.
-
-### Outputs
-
-- the outputs of the invoked board
-
-### Implementation
-
-- [invoke.ts]({{src_url}}invoke.ts)
-
-## import
-
-Creates a lambda board from a pre-existing board, either loaded from `path` or passed as JSON via `graph`. All other inputs are bound to the board, which is returned as `board`.
-
-### Inputs
-
-- `path`, which specifes the file path or URL to the serialized board to be included.
-- `graph`, which is a serialized board
-- all other inputs are bound to the board
-
-### Outputs
-
-- `board`, a `BoardCapability`, which can be passed to `invoke` and other nodes that can invoke boards.
-
-### Implementation
-
-- [import.ts]({{src_url}}import.ts)
-
-## reflect
-
-This node is used to reflect the board itself. It has no required inputs and provides a JSON representation of the board as a `graph` output property. This node can be used for getting information that might be stored in the structure of the board.
+### Output ports
 
 ### Example
 
-```js
-import { Board } from "@google-labs/breadboard";
-
-const board = new Board();
-
-board.input().wire("", board.reflect().wire("graph->", board.output()));
-
-const result = await board.runOnce({});
-console.log("result", result);
-```
-
-will print:
-
-```sh
-result {
-  graph: {
-    edges: [ [Object], [Object] ],
-    nodes: [ [Object], [Object], [Object] ],
-    kits: []
-  }
-}
-```
-
-### Inputs
-
-- ignored
-
-### Outputs
-
-- `graph` -- JSON representation of the board
-
 ### Implementation
 
-- [reflect.ts]({{src_url}}reflect.ts)
+- [unnest.ts]({{src_url}}unnest.ts)
