@@ -204,6 +204,7 @@
     "generate:graphs": {
       "command": "tsx src/make-graphs.ts",
       "dependencies": [
+        "../agent-kit:build",
         "../breadboard:build:tsc",
         "../build:build:tsc",
         "../core-kit:build",
