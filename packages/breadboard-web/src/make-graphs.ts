@@ -6,11 +6,11 @@
 
 // import { GraphDescriptor } from "@google-labs/breadboard";
 import { SerializableBoard, serialize } from "@breadboard-ai/build";
-import { formatGraphDescriptor } from "@google-labs/breadboard";
 import {
-  BoardReference,
-  BreadboardManifestBuilder,
-} from "@google-labs/breadboard-manifest";
+    BoardReference,
+    BreadboardManifestBuilder,
+} from "@breadboard-ai/manifest";
+import { formatGraphDescriptor } from "@google-labs/breadboard";
 import { Dirent } from "fs";
 import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";

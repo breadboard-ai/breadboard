@@ -9,7 +9,7 @@ import {
   Edge as GraphEdge,
   Node as GraphNode,
 } from "@google-labs/breadboard";
-import { generateSchemaId } from "./scripts/generate";
+import { generateSchemaId } from "./scripts/util/generate-schema-id";
 
 /**
  * A Breadboard Manifest.

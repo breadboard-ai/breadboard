@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { BreadboardManifest } from "@breadboard-ai/manifest";
 import {
   GraphDescriptor,
   GraphProvider,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
 } from "@google-labs/breadboard";
-import { BreadboardManifest } from "@google-labs/breadboard-manifest";
 import { GraphProviderStore } from "./types";
 
 export class ExamplesGraphProvider implements GraphProvider {

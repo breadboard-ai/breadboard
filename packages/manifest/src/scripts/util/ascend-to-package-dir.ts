@@ -7,7 +7,7 @@
 import fs from "fs";
 import path from "path";
 
-export function ascendToPackageDir(packageName: string = "breadboard-ai") {
+export function ascendToPackageDir(packageName: string) {
   let directory = import.meta.dirname;
   while (directory !== "/") {
     const packageJsonPath = path.join(directory, "package.json");
