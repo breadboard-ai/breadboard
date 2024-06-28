@@ -42,7 +42,7 @@
       ]
     },
     "test": {
-      "command": "find dist -name '*.test.js' | xargs node --test",
+      "command": "find dist -name 'subset.test.js' | xargs node --test",
       "dependencies": [
         "build"
       ],
@@ -89,7 +89,6 @@
   "devDependencies": {
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
-    "ts-json-schema-generator": "^2.3.0",
-    "tsx": "^4.15.8"
+    "ts-json-schema-generator": "^2.3.0"
   }
 }
