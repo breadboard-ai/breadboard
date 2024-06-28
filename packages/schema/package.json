@@ -42,7 +42,7 @@
       ]
     },
     "test": {
-      "command": "find dist -name 'subset.test.js' | xargs node --test",
+      "command": "find dist -name 'subset.test.js' | xargs node --enable-source-maps --test --test-reporter spec --inspect",
       "dependencies": [
         "build"
       ],
@@ -90,5 +90,8 @@
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
     "ts-json-schema-generator": "^2.3.0"
+  },
+  "dependencies": {
+    "@types/json-schema": "^7.0.15"
   }
 }
