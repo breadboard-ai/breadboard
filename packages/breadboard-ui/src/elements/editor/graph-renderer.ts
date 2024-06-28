@@ -78,6 +78,9 @@ export class GraphRenderer extends LitElement {
   @property({ reflect: true })
   readOnly = false;
 
+  @property({ reflect: true })
+  highlightInvalidWires = false;
+
   @property()
   showPortTooltips = false;
 
@@ -647,6 +650,7 @@ export class GraphRenderer extends LitElement {
     }
 
     graph.readOnly = this.readOnly;
+    graph.highlightInvalidWires = this.highlightInvalidWires;
 
     return true;
   }

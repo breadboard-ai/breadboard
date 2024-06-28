@@ -93,6 +93,15 @@ export class SettingsStore {
           },
         ],
         [
+          "Highlight Invalid Wires",
+          {
+            name: "Highlight Invalid Wires",
+            description:
+              "Toggles whether wires that have incompatible schema will be shown in red.",
+            value: false,
+          },
+        ],
+        [
           "Invert Zoom Scroll Direction",
           {
             name: "Invert Zoom Scroll Direction",

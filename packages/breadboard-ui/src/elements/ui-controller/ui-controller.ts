@@ -331,6 +331,12 @@ export class UI extends LitElement {
           ?.value
       : false;
 
+    const highlightInvalidWires = this.settings
+      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
+          "Highlight Invalid Wires"
+        )?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -348,6 +354,7 @@ export class UI extends LitElement {
         showNodeTypeDescriptions,
         invertZoomScrollDirection,
         showPortTooltips,
+        highlightInvalidWires,
       ],
       () => {
         return html`<bb-editor
@@ -365,6 +372,7 @@ export class UI extends LitElement {
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .showPortTooltips=${showPortTooltips}
+          .highlightInvalidWires=${highlightInvalidWires}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"

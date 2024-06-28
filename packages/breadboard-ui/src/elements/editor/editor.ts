@@ -137,6 +137,9 @@ export class Editor extends LitElement {
   readOnly = false;
 
   @property()
+  highlightInvalidWires = false;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -398,6 +401,7 @@ export class Editor extends LitElement {
 
     this.#graphVersion++;
     this.#graphRenderer.readOnly = this.readOnly;
+    this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
 
     let breadboardGraph = inspect(this.graph, {
       kits: this.kits,
