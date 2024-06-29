@@ -116,7 +116,7 @@
     "typescript": "^5.5.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.7.0",
+    "@breadboard-ai/build": "0.7.0",
     "@google-labs/breadboard": "^0.21.0",
     "url-template": "^3.1.0"
   }

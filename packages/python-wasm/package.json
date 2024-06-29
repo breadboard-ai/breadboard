@@ -115,7 +115,7 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.7.0",
+    "@breadboard-ai/build": "0.7.0",
     "pyodide": "^0.26.1"
   },
   "devDependencies": {
