@@ -29,11 +29,11 @@ const vite = IS_PROD
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "", HOSTNAME);
 
-  if (await serveProxyAPI(req, res)) {
+  if (!cors(req, res)) {
     return;
   }
 
-  if (!cors(req, res)) {
+  if (await serveProxyAPI(req, res)) {
     return;
   }
 
