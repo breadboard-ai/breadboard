@@ -16,7 +16,7 @@ This library's design emphasizes two key properties:
 
 ## Documentation
 
-The documentation is a bit of a work in progress. The best place to start is the [this guide](https://breadboard-ai.github.io/breadboard/docs/happy-path/), although it is still incomplete. Please bear with us as we bring our words up to speed with our thoughts/actions.
+The documentation is a bit of a work in progress. The best place to start is the [this guide](https://breadboard-ai.github.io/breadboard/docs/guides/librarian/), hosted on the nascent [docs site](https://breadboard-ai.github.io/breadboard/). Please bear with us as we bring our words up to speed with our thoughts/actions.
 
 ## Monorepo
 
