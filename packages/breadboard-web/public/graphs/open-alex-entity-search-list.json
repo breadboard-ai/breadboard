@@ -7,54 +7,42 @@
       "from": "fetch",
       "to": "spreadResponse",
       "out": "response",
-      "in": "object"
+      "in": "obj"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "entity",
       "in": "entity"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "page",
       "in": "page"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "per_page",
       "in": "per_page"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "search",
       "in": "search"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "select",
       "in": "select"
     },
     {
       "from": "spreadResponse",
-      "to": "response",
-      "out": "group_by",
-      "in": "group_by"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
-      "out": "meta",
-      "in": "meta"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
-      "out": "results",
+      "to": "output-0",
+      "out": "spread",
       "in": "results"
     },
     {
@@ -62,21 +50,15 @@
       "to": "fetch",
       "out": "url",
       "in": "url"
-    },
-    {
-      "from": "urlTemplate",
-      "to": "response",
-      "out": "url",
-      "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
-          "title": "OpenAlex Search",
+          "type": "object",
           "properties": {
             "entity": {
               "type": "string",
@@ -95,13 +77,13 @@
               ]
             },
             "page": {
-              "type": "integer",
-              "title": "Page number",
-              "description": "Page number to return",
-              "default": "1"
+              "type": "string",
+              "title": "Results per page",
+              "description": "Number of results to return per page",
+              "default": "5"
             },
             "per_page": {
-              "type": "integer",
+              "type": "string",
               "title": "Results per page",
               "description": "Number of results to return per page",
               "default": "5"
@@ -119,89 +101,31 @@
               "default": "id,display_name,title,relevance_score"
             }
           },
-          "type": "object",
-          "required": [
-            "search"
-          ],
-          "additionalProperties": false
+          "required": []
         }
       }
     },
     {
-      "id": "response",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "group_by": {
-              "type": "array",
-              "items": {}
-            },
-            "meta": {
-              "type": "object",
-              "properties": {
-                "count": {
-                  "type": "integer"
-                },
-                "db_response_time_ms": {
-                  "type": "integer"
-                },
-                "page": {
-                  "type": "integer"
-                },
-                "per_page": {
-                  "type": "integer"
-                },
-                "groups_count": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "count",
-                "db_response_time_ms",
-                "page",
-                "per_page",
-                "groups_count"
-              ]
-            },
             "results": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "display_name": {
-                    "type": "string"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "relevance_score": {
-                    "type": "number"
-                  }
-                },
-                "additionalProperties": true
-              }
-            },
-            "url": {
-              "type": "string",
-              "title": "URL",
-              "description": "URL to fetch"
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Entity Search Results",
+              "description": "A list of entities from the search results "
             }
           },
           "required": [
-            "group_by",
-            "meta",
-            "results",
-            "url"
-          ],
-          "additionalProperties": false
+            "results"
+          ]
         }
       }
     },
@@ -216,9 +140,13 @@
       "id": "spreadResponse",
       "type": "runJavascript",
       "configuration": {
-        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "code": "const spreadResponse = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}const spread2={...obj};return{spread:spread2}};",
         "name": "spreadResponse",
         "raw": true
+      },
+      "metadata": {
+        "title": "Spread",
+        "description": "Spread the properties of an object into a new object"
       }
     },
     {

@@ -4,177 +4,108 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, board, code } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
+import {
+  board,
+  enumeration,
+  input,
+  object,
+  output,
+} from "@breadboard-ai/build";
+import { fetch, code } from "@google-labs/core-kit";
 
-import { templates } from "@google-labs/template-kit";
+import { urlTemplate } from "@google-labs/template-kit";
 
-const spread = code<{ object: object }>((inputs) => {
-  const object = inputs.object;
-  if (typeof object !== "object") {
-    throw new Error(`object is of type ${typeof object} not object`);
-  }
-  return { ...object };
-});
-
-const openAlexEntities: Schema = {
+const entity = input({
   description: "Entity type to search for",
-  type: "string",
-  default: "works",
-  enum: [
-    "works",
+  type: enumeration("works",
     "authors",
     "sources",
     "institutions",
     "topics",
     "publishers",
     "funders",
-    "concepts",
-  ],
+    "concepts"),
+  default: "works",
   title: "Entity",
-};
+});
 
-const pageInputSchema: Schema = {
-  type: "integer",
-  default: "1",
-  title: "Page number",
-  description: "Page number to return",
-};
-
-const perPageInputSchema: Schema = {
-  type: "integer",
+const page = input({
   default: "5",
   title: "Results per page",
   description: "Number of results to return per page",
-};
+});
 
-const selectInputSchema: Schema = {
-  type: "string",
-  title: "Select",
-  default: "id,display_name,title,relevance_score",
-  description: "Comma-separated list of fields to return",
-};
+const per_page = input({
+  default: "5",
+  title: "Results per page",
+  description: "Number of results to return per page",
+});
 
-const searchInputSchema = {
+const search = input({
   type: "string",
   title: "Search term",
   default: "Artificial Intelligence",
   description: "Search term to search for, double quotes for exact match",
-};
-
-const graph = board(() => {
-  const input = base.input({
-    $id: "query",
-    schema: {
-      title: "OpenAlex Search",
-      properties: {
-        search: searchInputSchema,
-        page: pageInputSchema,
-        per_page: perPageInputSchema,
-        entity: openAlexEntities,
-        select: selectInputSchema,
-      },
-      type: "object",
-      required: ["search"],
-      additionalProperties: false,
-    },
-  });
-
-  const urlTemplate = templates.urlTemplate({
-    $id: "urlTemplate",
-    template:
-      "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}",
-    entity: input.entity,
-    page: input.page,
-    per_page: input.per_page,
-    search: input.search,
-    select: input.select,
-  });
-
-  const fetchUrl = core.fetch({
-    $id: "fetch",
-    method: "GET",
-    url: urlTemplate.url,
-  });
-
-  const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
-
-  const output = base.output({
-    schema: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "URL to fetch",
-          title: "URL",
-        },
-        meta: {
-          type: "object",
-          properties: {
-            count: {
-              type: "integer",
-            },
-            db_response_time_ms: {
-              type: "integer",
-            },
-            page: {
-              type: "integer",
-            },
-            per_page: {
-              type: "integer",
-            },
-            groups_count: {
-              type: ["integer", "null"],
-            },
-          },
-          required: [
-            "count",
-            "db_response_time_ms",
-            "page",
-            "per_page",
-            "groups_count",
-          ],
-        },
-        results: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-              },
-              display_name: {
-                type: "string",
-              },
-              title: {
-                type: "string",
-              },
-              relevance_score: {
-                type: "number",
-              },
-            },
-            additionalProperties: true,
-          },
-        },
-        group_by: {
-          type: "array",
-          items: {},
-        },
-      },
-      required: ["url", "meta", "results", "group_by"],
-      additionalProperties: false,
-    },
-    $id: "response",
-    url: urlTemplate.url,
-    meta: response.meta,
-    results: response.results,
-    group_by: response.group_by,
-  });
-  return output;
 });
 
-export default await graph.serialize({
+const select = input({
+  type: "string",
+  title: "Select",
+  default: "id,display_name,title,relevance_score",
+  description: "Comma-separated list of fields to return",
+});
+
+const urlTemplater = urlTemplate({
+  $id: "urlTemplate",
+  template:
+    "https://api.openalex.org/{entity}?search={search}&page={page}&per_page={per_page}&select={select}",
+  entity: entity,
+  page: page,
+  per_page: per_page,
+  search: search,
+  select: select,
+});
+
+const fetcher = fetch({
+  $id: "fetch",
+  method: "GET",
+  url: urlTemplater.outputs.url,
+});
+
+const { spread } = code(
+  {
+    $id: "spreadResponse",
+    $metadata: {
+      title: "Spread",
+      description: "Spread the properties of an object into a new object",
+    },
+    obj: fetcher.outputs.response
+  },
+  { spread: object({}, "string") },
+  ({ obj }) => {
+    if (typeof obj !== "object") {
+      throw new Error(`object is of type ${typeof obj} not object`);
+    }
+    const spread = { ...obj }
+    return { spread };
+  }
+).outputs;
+
+const results = output(spread, {
+  title: "Entity Search Results",
+  description: "A list of entities from the search results ",
+});
+
+export default board({
   title: "Open Alex Entity Search Results",
   description: "Query the OpenAlex API for a list entities",
   version: "0.0.1",
+  inputs: {
+    entity,
+    page,
+    per_page,
+    search,
+    select
+  },
+  outputs: { results }
 });
