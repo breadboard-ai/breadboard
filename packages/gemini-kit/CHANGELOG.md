@@ -1,5 +1,15 @@
 # @google-labs/gemini-kit
 
+## 0.5.1
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+- Updated dependencies [29774aa]
+  - @google-labs/template-kit@0.3.4
+  - @google-labs/core-kit@0.10.1
+  - @google-labs/json-kit@0.3.2
+
 ## 0.5.0
 
 ### Minor Changes

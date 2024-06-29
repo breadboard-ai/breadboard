@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+
 ## 0.3.1
 
 ### Patch Changes

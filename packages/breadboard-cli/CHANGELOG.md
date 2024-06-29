@@ -1,5 +1,15 @@
 # @google-labs/breadboard-cli
 
+## 0.9.5
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+- Updated dependencies [29774aa]
+  - @google-labs/breadboard-web@1.10.1
+  - @google-labs/template-kit@0.3.4
+  - @google-labs/core-kit@0.10.1
+
 ## 0.9.4
 
 ### Patch Changes

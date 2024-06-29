@@ -1,5 +1,18 @@
 # @google-labs/breadboard-web
 
+## 1.10.1
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+- Updated dependencies [29774aa]
+  - @breadboard-ai/google-drive-kit@0.1.3
+  - @google-labs/template-kit@0.3.4
+  - @breadboard-ai/python-wasm@0.1.2
+  - @google-labs/gemini-kit@0.5.1
+  - @google-labs/core-kit@0.10.1
+  - @google-labs/json-kit@0.3.2
+
 ## 1.10.0
 
 ### Minor Changes
