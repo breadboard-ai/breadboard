@@ -1,5 +1,84 @@
 # Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+
+## 0.10.0
+
+### Minor Changes
+
+- c27c176: Actually commit the runJavascript change
+- 4e66406: Automatically handle errors in `map`.
+- 417323c: Teach Board Server to use Node Proxy Server
+- 4db3ab7: Teach `runJavascript` to be kind fo esbuild.
+- d9b76bd: Teach fetch to handle blob responses.
+- 14853d5: Add Gemini Nano node.
+- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in `fetch`.
+- c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
+- 0e76614: Fetch will now treat any text/\* MIME type as text
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 26556b6: Teachs runJavaScript to accept a schema
+- 5f09b1d: Teach runJavascript to report errors.
+- 510e198: Convert map to new build API
+- 9491266: Introduce `deflate` node.
+
+### Patch Changes
+
+- 85bbc00: Teach runJavascript to run in Service Workers.
+- 5a0afe4: Add inflate node
+- 6fdd89e: Add unnest node, for expanding an object value with N properties into a node with N output ports
+- c82138d: Allow code nodes to return promises
+- 0e54e55: Mark `$board` port as `config` on `invoke` node.
+- b75a43e: Change `invoke.$board` input to `object` type.
+- 6fdd89e: Mark "response" as the primary output of fetch
+- 9b1513a: Make sure `structuredClone` is available when running JS in Node.
+- Updated dependencies [5a55b7d]
+- Updated dependencies [74ade20]
+- Updated dependencies [59dd0f5]
+- Updated dependencies [417323c]
+- Updated dependencies [b3aa884]
+- Updated dependencies [00825d5]
+- Updated dependencies [3d7b4a7]
+- Updated dependencies [7af14cf]
+- Updated dependencies [fea8967]
+- Updated dependencies [778f7aa]
+- Updated dependencies [808f5e2]
+- Updated dependencies [e0fdbc3]
+- Updated dependencies [54b03b9]
+- Updated dependencies [810d7fd]
+- Updated dependencies [14853d5]
+- Updated dependencies [8798514]
+- Updated dependencies [eb64b9a]
+- Updated dependencies [32a48a3]
+- Updated dependencies [cd73b17]
+- Updated dependencies [81d82fe]
+- Updated dependencies [2a7531b]
+- Updated dependencies [7c1b4cb]
+- Updated dependencies [702cfe1]
+- Updated dependencies [bebd96e]
+- Updated dependencies [91cb723]
+- Updated dependencies [3e10f0f]
+- Updated dependencies [c53ca01]
+- Updated dependencies [6ada218]
+- Updated dependencies [4c681cb]
+- Updated dependencies [fb2e584]
+- Updated dependencies [9491266]
+- Updated dependencies [2ace620]
+- Updated dependencies [c5f8e4f]
+- Updated dependencies [fcef799]
+- Updated dependencies [37418d9]
+- Updated dependencies [083f69c]
+- Updated dependencies [5b03d96]
+- Updated dependencies [f0d8d67]
+- Updated dependencies [836389d]
+- Updated dependencies [225c7cc]
+- Updated dependencies [06c3f57]
+  - @google-labs/breadboard@0.21.0
+  - @breadboard-ai/build@0.7.0
+
 ## 0.9.0
 
 ### Minor Changes
