@@ -23,9 +23,14 @@ const CONFIG = await getStore().getBoardServerCorsConfig();
 export const cors = (req: IncomingMessage, res: ServerResponse) => {
   const origin = req.headers.origin || "";
   const isLocalhost = origin.includes("localhost");
+  const host = req.headers.host || "";
+  const sameOrigin = origin.includes(host);
   const headers = structuredClone(CORS_HEADERS);
   const isAllowed =
-    isLocalhost || origin.length === 0 || CONFIG?.allow?.includes(origin);
+    isLocalhost ||
+    sameOrigin ||
+    origin.length === 0 ||
+    CONFIG?.allow?.includes(origin);
   if (!isAllowed) {
     res.writeHead(403);
     res.end(`${origin} is not allowed for the request.`);
