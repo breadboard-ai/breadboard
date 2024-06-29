@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",

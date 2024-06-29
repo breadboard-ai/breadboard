@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
   "type": "module",
   "main": "./dist/src/index.js",

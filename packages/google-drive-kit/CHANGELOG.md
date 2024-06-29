@@ -1,5 +1,14 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.1.3
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+- Updated dependencies [29774aa]
+  - @google-labs/template-kit@0.3.4
+  - @google-labs/core-kit@0.10.1
+
 ## 0.1.2
 
 ### Patch Changes
