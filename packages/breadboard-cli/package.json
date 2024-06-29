@@ -156,8 +156,8 @@
     "typescript": "^5.5.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.7.0",
-    "@breadboard-ai/import": "^0.1.4",
+    "@breadboard-ai/build": "0.7.0",
+    "@breadboard-ai/import": "0.1.4",
     "@google-labs/breadboard": "^0.21.0",
     "@google-labs/breadboard-web": "^1.10.0",
     "@google-labs/core-kit": "^0.10.0",

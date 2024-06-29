@@ -274,9 +274,9 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.7.0",
-    "@breadboard-ai/google-drive-kit": "^0.1.1",
-    "@breadboard-ai/python-wasm": "^0.1.1",
+    "@breadboard-ai/build": "0.7.0",
+    "@breadboard-ai/google-drive-kit": "0.1.2",
+    "@breadboard-ai/python-wasm": "0.1.1",
     "@codemirror/autocomplete": "^6.16.3",
     "@codemirror/commands": "^6.6.0",
     "@codemirror/lang-javascript": "^6.2.2",
