@@ -189,5 +189,4 @@ for await (const schemaPath of schemaPaths) {
       }
     });
   });
-  // });
 }
