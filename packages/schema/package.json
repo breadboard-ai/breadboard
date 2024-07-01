@@ -25,7 +25,8 @@
         "types": "./dist/graph.d.ts",
         "default": "./dist/graph.js"
       }
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "wireit",
