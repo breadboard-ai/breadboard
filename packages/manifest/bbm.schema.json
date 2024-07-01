@@ -4,27 +4,8 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"Board": {
-			"description": "A proxy for the  {@link  GraphDescriptor  }  type",
-			"properties": {
-				"edges": {
-					"items": {
-						"$ref": "#/definitions/Edge"
-					},
-					"type": "array"
-				},
-				"nodes": {
-					"items": {
-						"$ref": "#/definitions/Node"
-					},
-					"type": "array"
-				},
-				"reference": {
-					"$ref": "#/definitions/Reference"
-				},
-				"title": {
-					"$ref": "#/definitions/Title"
-				}
-			},
+			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.5.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
+			"description": "A reference to the BGL schema GraphDescriptor type.",
 			"type": "object"
 		},
 		"BoardReference": {
@@ -105,11 +86,6 @@
 			},
 			"type": "object"
 		},
-		"Edge": {
-			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphEdge  }  type",
-			"properties": {},
-			"type": "object"
-		},
 		"ManifestReference": {
 			"anyOf": [
 				{
@@ -120,11 +96,6 @@
 				}
 			],
 			"description": "Union of  {@link  ResourceReference }  and  {@link  BreadboardManifest }"
-		},
-		"Node": {
-			"description": "A proxy for the  {@link  GraphDescriptor  }   {@link  GraphNode }  type",
-			"properties": {},
-			"type": "object"
 		},
 		"Reference": {
 			"anyOf": [

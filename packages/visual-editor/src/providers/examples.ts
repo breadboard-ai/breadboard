@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardManifest } from "@breadboard-ai/manifest";
+import { BreadboardManifest, isReference } from "@breadboard-ai/manifest";
 import {
   GraphDescriptor,
   GraphProvider,
@@ -26,9 +26,10 @@ export class ExamplesGraphProvider implements GraphProvider {
 
   constructor(manifest: BreadboardManifest) {
     const boards = manifest.boards || [];
-    const blank = boards.find((board) => {
-      return board.reference?.endsWith("blank.json");
-    });
+    const blank = boards
+      .filter(isReference)
+      .find((board) => board.reference?.endsWith("blank.json"));
+
     if (blank?.reference) {
       this.#blank = new URL(blank.reference, window.location.href);
     }
@@ -44,18 +45,23 @@ export class ExamplesGraphProvider implements GraphProvider {
       boards
         .map((board) => ({
           ...board,
-          title: board.title || board.reference || "",
+          title: board.title || (isReference(board) && board.reference) || "",
         }))
         .sort((a, b) => a.title!.localeCompare(b.title!))
-        .map((board) => [
-          board.title,
-          {
-            url: board.reference!,
-            readonly: true,
-            mine: false,
-            handle: undefined,
-          },
-        ])
+        .map((board) => {
+          if (!isReference(board)) {
+            throw new Error("Expected board to be a reference.");
+          }
+          return [
+            board.title,
+            {
+              url: board.reference!,
+              readonly: true,
+              mine: false,
+              handle: undefined,
+            },
+          ];
+        })
     );
     this.#items.set("examples", {
       permission: "granted",
