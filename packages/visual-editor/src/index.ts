@@ -801,6 +801,16 @@ export class Main extends LitElement {
     this.providerOps++;
   }
 
+  #attemptBoardCreate(graph: GraphDescriptor) {
+    this.#saveAsState = {
+      title: "Create new board",
+      graph,
+      isNewBoard: true,
+    };
+
+    this.showSaveAsDialog = true;
+  }
+
   get status() {
     return this.#status;
   }
@@ -1337,13 +1347,7 @@ export class Main extends LitElement {
           this.showProviderAddOverlay = true;
         }}
         @bbgraphproviderblankboard=${() => {
-          const graph = blankLLMContent();
-          this.#saveAsState = {
-            title: "Create new board",
-            graph,
-            isNewBoard: true,
-          };
-          this.showSaveAsDialog = true;
+          this.#attemptBoardCreate(blankLLMContent());
         }}
         @bbgraphproviderdeleterequest=${async (
           evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
@@ -1557,6 +1561,9 @@ export class Main extends LitElement {
           ) => {
             this.#handleBoardInfoUpdate(evt);
             this.requestUpdate();
+          }}
+          @bbgraphproviderblankboard=${() => {
+            this.#attemptBoardCreate(blankLLMContent());
           }}
           @bbsubgraphcreate=${async (
             evt: BreadboardUI.Events.SubGraphCreateEvent

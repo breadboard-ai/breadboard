@@ -7,7 +7,10 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { StartEvent } from "../../events/events.js";
+import {
+  GraphProviderBlankBoardEvent,
+  StartEvent,
+} from "../../events/events.js";
 import { RecentBoard } from "../../types/types.js";
 
 interface Guides {
@@ -59,16 +62,50 @@ export class WelcomePanel extends LitElement {
     }
 
     header {
+      display: flex;
+      align-items: center;
       padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
     }
 
     header h1 {
+      flex: 1;
       margin: 0;
       font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
         var(--bb-font-family);
       display: flex;
       align-items: center;
       color: var(--bb-neutral-900);
+    }
+
+    #new-board {
+      border-radius: 50px;
+      background: var(--bb-ui-500);
+      border: none;
+      color: var(--bb-neutral-0);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      height: 30px;
+      padding-right: var(--bb-grid-size-4);
+      opacity: 0.8;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #new-board::before {
+      content: "";
+      background: var(--bb-icon-add-inverted) center center / 20px 20px
+        no-repeat;
+      width: 20px;
+      height: 20px;
+      margin-right: var(--bb-grid-size);
+    }
+
+    #new-board:hover,
+    #new-board:focus {
+      opacity: 1;
+      transition-duration: 0.1s;
     }
 
     #contents {
@@ -264,7 +301,17 @@ export class WelcomePanel extends LitElement {
   `;
 
   render() {
-    return html` <header><h1>Breadboard Visual Editor</h1></header>
+    return html` <header>
+        <h1>Breadboard Visual Editor</h1>
+        <button
+          id="new-board"
+          @click=${() => {
+            this.dispatchEvent(new GraphProviderBlankBoardEvent());
+          }}
+        >
+          New board
+        </button>
+      </header>
       <div id="contents">
         <section id="recent-boards">
           <h1>Recent boards</h1>

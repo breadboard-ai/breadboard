@@ -391,7 +391,7 @@ export class Input extends LitElement {
             </div>`;
           } else if (isBoolean(property)) {
             // Checkbox / Boolean input.
-            const checked = !!values[key] ?? property.default ?? false;
+            const checked = !!values[key] || property.default || false;
             input = html`<input
               name="${key}"
               id="${key}"
