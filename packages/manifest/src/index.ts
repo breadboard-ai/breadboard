@@ -5,7 +5,6 @@
  */
 
 import { GraphDescriptor } from "@google-labs/breadboard";
-import { generateSchemaId } from "./scripts/util/generate-schema-id";
 
 /**
  * A Breadboard Manifest.
@@ -99,11 +98,6 @@ export class BreadboardManifestBuilder implements BreadboardManifest {
 }
 
 export { isReference } from "./isReference";
-
-/**
- * The schema ID for the Breadboard Manifest schema.
- */
-export const $schema: string = generateSchemaId();
 
 /**
  * A URI reference.
