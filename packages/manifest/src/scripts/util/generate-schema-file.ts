@@ -4,27 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { $id as boardSchemaId } from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 import fs from "fs";
 import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { DEFAULT_CONFIG } from "../generate";
 import { ABSOLUTE_SCHEMA_PATH } from "./constants";
 import { sortObject } from "./sort-objects";
+
 export function generateSchemaFile(
   conf: Partial<Config> = {},
-  postProcessor: (s: Schema) => Schema = (s: Schema): Schema => {
-
-    const graphDescriptorRef = `${boardSchemaId}#/definitions/GraphDescriptor`;
-
-    s.definitions!["Board"] = {
-      ...(s.definitions!["Board"] as Schema),
-      type: "object",
-      $ref: graphDescriptorRef,
-      // additionalProperties: false, // left to be applied once schema package is updated
-    } satisfies Schema;
-
-    return sortObject(s);
-  }
+  postProcessor: (schema: Schema) => Schema = sortObject
 ) {
   console.debug(
     "Generating schema with config:",
