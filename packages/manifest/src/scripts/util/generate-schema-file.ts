@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import fs from "fs";
 import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
 import { DEFAULT_CONFIG } from "../generate";
