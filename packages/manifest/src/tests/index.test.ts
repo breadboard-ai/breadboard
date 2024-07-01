@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { base } from "@google-labs/breadboard";
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import fs from "fs";
@@ -12,27 +13,32 @@ import test, { describe } from "node:test";
 import { BreadboardManifest } from "..";
 import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
 
-const ajv = new Ajv({
-  // keywords: definitions({
-  //   // defaultMeta: "draft-07",
-  // }),
-  validateSchema: true,
-  validateFormats: true,
-  strictTypes: true,
-  strict: true,
+const ajv: Ajv = new Ajv({
   formats: {
     // "uri-reference": require("ajv-formats/dist/formats").fullFormats["uri-reference"],
   },
+  strict: true,
   verbose: true,
   allErrors: true,
+  loadSchema: async (uri: string) => {
+    const response = await fetch(uri);
+    if (response.ok) {
+      const json = await response.json();
+      if (ajv.validateSchema(json)) {
+        return json;
+      }
+    }
+    throw new Error(`Loading error: ${response.status}`);
+  },
 });
+
 addFormats(ajv);
 
 let validate: ValidateFunction;
-test.before(() => {
+test.before(async () => {
   const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
   const parsedSchema = JSON.parse(readSchemaFile);
-  validate = ajv.compile(parsedSchema);
+  validate = await ajv.compileAsync(parsedSchema);
 });
 
 const manifestArray: BreadboardManifest[] = [
@@ -40,6 +46,38 @@ const manifestArray: BreadboardManifest[] = [
   { title: "Empty manifest" },
   { title: "Manifest with an empty boards array", boards: [] },
   { title: "Manifest with an empty manifests array", manifests: [] },
+  {
+    title: "Manifest with a had-coded board",
+    boards: [
+      // (await base.input().to(base.output()).serialize({})) as GraphDescriptor,
+      {
+        edges: [
+          {
+            from: "input-1",
+            to: "output-2",
+            out: "*",
+            in: "",
+          },
+        ],
+        nodes: [
+          {
+            id: "output-2",
+            type: "output",
+            configuration: {},
+          },
+          {
+            id: "input-1",
+            type: "input",
+            configuration: {},
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Manifest with a generated board",
+    boards: [await base.input().to(base.output()).serialize({})],
+  },
   {
     title: "Manifest with empty boards and manifests arrays",
     boards: [],
@@ -52,7 +90,6 @@ const manifestArray: BreadboardManifest[] = [
         title: "My First Board",
         reference:
           "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-        version: "1.0.0",
       },
       {
         title: "My Second Board",
@@ -77,7 +114,6 @@ const manifestArray: BreadboardManifest[] = [
         title: "My First Board",
         reference:
           "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-        version: "1.0.0",
       },
       {
         title: "My Second Board",
@@ -107,7 +143,6 @@ const manifestArray: BreadboardManifest[] = [
             title: "My First Board",
             reference:
               "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-            version: "1.0.0",
           },
         ],
         manifests: [
@@ -118,7 +153,6 @@ const manifestArray: BreadboardManifest[] = [
                 title: "My First Board",
                 reference:
                   "https://gist.githubusercontent.com/user/SOME_ID/raw/board.bgl.json",
-                version: "1.0.0",
               },
             ],
           },

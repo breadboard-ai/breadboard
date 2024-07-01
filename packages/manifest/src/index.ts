@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphDescriptor,
-  Edge as GraphEdge,
-  Node as GraphNode,
-} from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import { generateSchemaId } from "./scripts/util/generate-schema-id";
 
 /**
@@ -102,6 +98,8 @@ export class BreadboardManifestBuilder implements BreadboardManifest {
   }
 }
 
+export { isReference } from "./isReference";
+
 /**
  * The schema ID for the Breadboard Manifest schema.
  */
@@ -175,23 +173,9 @@ export interface ResourceWithAdditionalProperties
     AdditionalProperties {}
 
 /**
- * A proxy for the {@link GraphDescriptor} {@link GraphNode} type
+ * A reference to the BGL schema GraphDescriptor type.
  */
-export interface Node extends AdditionalProperties {}
-
-/**
- * A proxy for the {@link GraphDescriptor} {@link GraphEdge} type
- */
-export interface Edge extends AdditionalProperties {}
-
-/**
- * A proxy for the {@link GraphDescriptor} type
- */
-export interface Board extends ResourceWithAdditionalProperties {
-  title?: Title;
-  nodes?: Node[];
-  edges?: Edge[];
-}
+export type Board = GraphDescriptor;
 
 /**
  * Union of {@link ResourceReference} and {@link Board}
