@@ -10,36 +10,9 @@ import addFormats from "ajv-formats";
 import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe } from "node:test";
+import path from "path";
 import { BreadboardManifest } from "..";
 import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
-
-const ajv: Ajv = new Ajv({
-  allErrors: true,
-  strict: true,
-  strictTypes: true,
-  validateFormats: true,
-  validateSchema: true,
-  verbose: true,
-  loadSchema: async (uri: string) => {
-    const response = await fetch(uri);
-    if (response.ok) {
-      const json = await response.json();
-      if (ajv.validateSchema(json)) {
-        return json;
-      }
-    }
-    throw new Error(`Loading error: ${response.status}`);
-  },
-});
-
-addFormats(ajv);
-
-let validate: ValidateFunction;
-test.before(async () => {
-  const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
-  const parsedSchema = JSON.parse(readSchemaFile);
-  validate = await ajv.compileAsync(parsedSchema);
-});
 
 const manifestArray: BreadboardManifest[] = [
   {},
@@ -161,36 +134,60 @@ const manifestArray: BreadboardManifest[] = [
   },
 ];
 
-describe("Schema Tests", () => {
-  test("Schema is valid.", async () => {
-    assert.ok(validate);
-  });
-  describe("Validation Tests", () => {
-    manifestArray.forEach((manifest, index) => {
-      test(`Manifest ${index + 1}/${manifestArray.length}: ${manifest.title || ""}`, async () => {
-        const valid = validate(manifest);
-        const errors = validate.errors;
-        if (errors) {
-          throw new Error(`errors: ${JSON.stringify(errors, null, 2)}`);
+const schemaPaths = [
+  { path: ABSOLUTE_SCHEMA_PATH },
+  { path: "local.bbm.schema.json" },
+  { path: "head.bbm.schema.json" },
+];
+
+for await (const schemaPath of schemaPaths) {
+  const relativeSchemaPath = path.relative("./", schemaPath.path);
+  await describe(`Tests: ${relativeSchemaPath}`, async (t) => {
+    const ajv: Ajv = new Ajv({
+      allErrors: true,
+      strict: true,
+      strictTypes: true,
+      validateFormats: true,
+      validateSchema: true,
+      verbose: true,
+      loadSchema: async (uri: string) => {
+        const response = await fetch(uri);
+        if (response.ok) {
+          const json = await response.json();
+          if (ajv.validateSchema(json)) {
+            return json;
+          }
         }
+        throw new Error(`Loading error: ${response.status}`);
+      },
+    });
+    addFormats(ajv);
+    let validate: ValidateFunction;
+    const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
+    const parsedSchema = JSON.parse(readSchemaFile);
+    validate = await ajv.compileAsync(parsedSchema);
+
+    describe(`${relativeSchemaPath} Schema Tests`, (t) => {
+      test(`${relativeSchemaPath} schema is valid.`, (t) => {
+        assert.ok(validate);
+        const errors = validate.errors;
         assert.ok(!errors);
-        assert.ok(valid);
       });
     });
+    describe(`${relativeSchemaPath} Validation Tests`, (t) => {
+      for (const manifest of manifestArray) {
+        const index = manifestArray.indexOf(manifest);
+        test(`Manifest ${index + 1}/${manifestArray.length}: ${manifest.title || ""}`, (t) => {
+          const valid = validate(manifest);
+          const errors = validate.errors;
+          if (errors) {
+            throw new Error(`errors: ${JSON.stringify(errors, null, 2)}`);
+          }
+          assert.ok(!errors);
+          assert.ok(valid);
+        });
+      }
+    });
   });
-});
-
-function writeManifestJson() {
-  fs.writeFileSync(
-    "./manifest.bbm.json",
-    JSON.stringify(
-      {
-        $schema: "./bbm.schema.json",
-        title: "Manifest with boards and manifests",
-        manifests: manifestArray,
-      },
-      null,
-      2
-    )
-  );
+  // });
 }
