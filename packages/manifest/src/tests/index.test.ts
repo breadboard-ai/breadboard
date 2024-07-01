@@ -10,7 +10,7 @@ import fs from "fs";
 import * as assert from "node:assert";
 import test, { describe } from "node:test";
 import { BreadboardManifest } from "..";
-import schema from "../../bbm.schema.json" with { type: "json" };
+import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
 
 const ajv = new Ajv({
   // keywords: definitions({
@@ -29,9 +29,10 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 let validate: ValidateFunction;
-
 test.before(() => {
-  validate = ajv.compile(schema);
+  const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
+  const parsedSchema = JSON.parse(readSchemaFile);
+  validate = ajv.compile(parsedSchema);
 });
 
 const manifestArray: BreadboardManifest[] = [

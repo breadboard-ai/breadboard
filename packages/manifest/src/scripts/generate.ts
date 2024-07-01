@@ -8,42 +8,30 @@
 
 import fs from "fs";
 import path, { dirname } from "path";
-import { Schema, createGenerator, type Config } from "ts-json-schema-generator";
+import { type Config } from "ts-json-schema-generator";
 import { fileURLToPath } from "url";
-import packageJson from "../../package.json" with { type: "json" };
-import { ascendToPackageDir } from "./util/ascend-to-package-dir";
-
-export function generateSchemaId() {
-  const PACKAGE_ROOT = ascendToPackageDir(packageJson.name);
-  const SCHEMA_PATH = path.relative(PACKAGE_ROOT, "bbm.schema.json");
-
-  const GITHUB_OWNER = "breadboard-ai";
-  const GITHUB_REPO = "breadboard";
-  const GITHUB_REF = `@google-labs/manifest@${packageJson.version}`;
-
-  const PACKAGE_PATH = "packages/manifest";
-
-  const id = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_REF}/${PACKAGE_PATH}/${SCHEMA_PATH}`;
-  return id;
-}
+import {
+  ABSOLUTE_PACKAGE_ROOT
+} from "./util/constants";
+import { generateSchemaFile } from "./util/generate-schema-file";
+import { generateSchemaId } from "./util/generate-schema-id";
 
 function main() {
   console.log("Beginning Breadboard Manifest schema generation...");
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
-  const pacakgeRoot = ascendToPackageDir(packageJson.name);
 
-  const filePath = path.join(pacakgeRoot, "src", "index.ts");
+  const filePath = path.join(ABSOLUTE_PACKAGE_ROOT, "src", "index.ts");
 
   if (fs.existsSync(filePath)) {
     console.log(`Using file: ${filePath}`);
   } else {
     throw new Error(
-      `File not found: ${JSON.stringify({ pacakgeRoot, origin: __filename, __dirname, filePath }, null, 2)}`
+      `File not found: ${JSON.stringify({ ABSOLUTE_PACKAGE_ROOT, origin: __filename, __dirname, filePath }, null, 2)}`
     );
   }
 
-  const tsconfigPath = path.join(pacakgeRoot, "tsconfig.json");
+  const tsconfigPath = path.join(ABSOLUTE_PACKAGE_ROOT, "tsconfig.json");
   if (fs.existsSync(tsconfigPath)) {
     console.log(`Using tsconfig: ${tsconfigPath}`);
   } else {
@@ -70,64 +58,17 @@ function main() {
   console.log(JSON.stringify({ result }, null, 2));
 }
 
-const DEFAULT_CONFIG: Partial<Config> = {
+export const DEFAULT_CONFIG: Partial<Config> = {
   additionalProperties: false,
   expose: "all",
-  schemaId: generateSchemaId(),
+  schemaId: generateSchemaId("tag"),
   sortProps: true,
   topRef: true,
   jsDoc: "extended",
 };
 
-function generateSchemaFile(
-  conf: Partial<Config> = {},
-  postProcessor: (schema: Schema) => Schema = sortObject
-) {
-  console.debug(
-    "Generating schema with config:",
-    JSON.stringify(conf, null, 2)
-  );
-
-  const mergedConfig: Config = {
-    ...DEFAULT_CONFIG,
-    ...conf,
-  };
-
-  const outputPath = path.join(ascendToPackageDir(packageJson.name), "bbm.schema.json");
-
-  const schema: Schema = postProcessor(
-    createGenerator(mergedConfig).createSchema(mergedConfig.type)
-  );
-
-  const schemaString = JSON.stringify(schema, null, "\t");
-  fs.writeFileSync(outputPath, schemaString);
-
-  return {
-    destination: outputPath,
-    schema,
-  };
-}
-
-function isObject(v: unknown): v is Record<string, unknown> {
+export function isObject(v: unknown): v is Record<string, unknown> {
   return "[object Object]" === Object.prototype.toString.call(v);
-}
-
-function sortObject(obj: unknown): object {
-  if (Array.isArray(obj)) {
-    return obj.sort().map((value) => sortObject(value));
-  } else if (isObject(obj)) {
-    return Object.keys(obj)
-      .sort()
-      .reduce(
-        (acc, key) => {
-          acc[key] = sortObject(obj[key]);
-          return acc;
-        },
-        {} as Record<string, unknown>
-      );
-  } else {
-    return obj as object;
-  }
 }
 
 main();
