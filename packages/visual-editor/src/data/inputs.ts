@@ -5,7 +5,7 @@
  */
 
 import { SettingsStore } from "./settings-store";
-import * as BreadboardUI from "@google-labs/breadboard-ui";
+import * as BreadboardUI from "../ui";
 
 export const inputsFromSettings = (settings: SettingsStore | null) => {
   if (!settings) return undefined;

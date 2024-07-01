@@ -5,7 +5,7 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "@google-labs/breadboard-ui";
+import * as BreadboardUI from "../ui";
 
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 

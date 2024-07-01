@@ -3,6 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";

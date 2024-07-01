@@ -9,7 +9,7 @@ import type { Config } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 
 // IMPORTANT: Keep in sync with
-// breadboard/packages/breadboard-ui/src/elements/connection/connection-input.ts
+// breadboard/packages/visual-editor/src/elements/connection/connection-input.ts
 interface RefreshRequest {
   connection_id: string;
   refresh_token: string;
