@@ -14,9 +14,12 @@ import { BreadboardManifest } from "..";
 import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
 
 const ajv: Ajv = new Ajv({
-  strict: true,
-  verbose: true,
   allErrors: true,
+  strict: true,
+  strictTypes: true,
+  validateFormats: true,
+  validateSchema: true,
+  verbose: true,
   loadSchema: async (uri: string) => {
     const response = await fetch(uri);
     if (response.ok) {
