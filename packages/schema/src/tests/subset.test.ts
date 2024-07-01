@@ -551,3 +551,229 @@ describe("object", () => {
     );
   });
 });
+
+describe("enum", () => {
+  ok("[foo] vs [foo]", { enum: ["foo"] }, { enum: ["foo"] });
+  ok("[42] vs [42]", { enum: [42] }, { enum: [42] });
+  ok("[foo] vs [foo, 42]", { enum: ["foo"] }, { enum: ["foo", 42] });
+  ok("[] vs []", { enum: [] }, { enum: [] });
+  ok("[foo] vs missing", { enum: ["foo"] }, {});
+
+  notOk("[foo, 42] vs [42]", { enum: ["foo", 42] }, { enum: [42] });
+  notOk("[foo] vs [42]", { enum: ["foo"] }, { enum: [42] });
+  notOk("[foo] vs []", { enum: ["foo"] }, { enum: [] });
+  notOk("[] vs [foo]", { enum: [] }, { enum: ["foo"] });
+  notOk("missing vs [foo]", {}, { enum: ["foo"] });
+  notOk("['42'] vs [42]", { enum: ["42"] }, { enum: [42] });
+});
+
+describe("anyOf", () => {
+  describe("with / with", () => {
+    ok(
+      "[str, num, bool] vs [str, num, bool]",
+      { anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }] },
+      { anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }] }
+    );
+    ok(
+      "[str, num, bool] vs [bool, str, num]",
+      { anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }] },
+      { anyOf: [{ type: "boolean" }, { type: "string" }, { type: "number" }] }
+    );
+    ok(
+      "[str, num] vs [str, num, bool]",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      { anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }] }
+    );
+    ok(
+      "[str:email, str:uri]:3 vs [str:email, str:uri]:4",
+      {
+        maxLength: 3,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      {
+        maxLength: 4,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      }
+    );
+    ok(
+      "[str:email:3, str:uri:3] vs [str:email, str:uri]:4",
+      {
+        anyOf: [
+          { type: "string", format: "email", maxLength: 3 },
+          { type: "string", format: "uri", maxLength: 3 },
+        ],
+      },
+      {
+        maxLength: 4,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      }
+    );
+    ok(
+      "[] vs [str, num]",
+      { anyOf: [] },
+      { anyOf: [{ type: "string" }, { type: "number" }] }
+    );
+    ok(
+      "anyOf[str, num] vs type[str, num]",
+      {
+        anyOf: [{ type: "string" }, { type: "number" }],
+      },
+      {
+        type: ["string", "number"],
+      }
+    );
+
+    notOk(
+      "[str, num, bool] vs [str, num]",
+      { anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }] },
+      { anyOf: [{ type: "string" }, { type: "number" }] }
+    );
+    notOk(
+      "[str:email, str:uri]:4 vs [str:email, str:uri]:3",
+      {
+        maxLength: 4,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      {
+        maxLength: 3,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      }
+    );
+    notOk(
+      "[str, num] vs []",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      { anyOf: [] }
+    );
+    notOk(
+      "anyOf[str, bool] vs type[str, num]",
+      {
+        anyOf: [{ type: "string" }, { type: "boolean" }],
+      },
+      {
+        type: ["string", "number"],
+      }
+    );
+  });
+
+  describe("with / without", () => {
+    ok(
+      "[str:email, str:uri] vs str",
+      {
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      { type: "string" }
+    );
+    ok(
+      "[str, num] vs empty",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      {}
+    );
+    ok(
+      "[str:email, str:uri]:3 vs str:4",
+      {
+        maxLength: 3,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      { type: "string", maxLength: 4 }
+    );
+    notOk(
+      "[str, num] vs bool",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      { type: "boolean" }
+    );
+    notOk(
+      "[str, num] vs str",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      { type: "string" }
+    );
+    notOk(
+      "[str:email, str:uri] vs str:date",
+      {
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      { type: "string", format: "date" }
+    );
+    notOk(
+      "[str:email, str:uri]:4 vs str:3",
+      {
+        maxLength: 4,
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      },
+      { type: "string", maxLength: 3 }
+    );
+  });
+
+  describe("without / with", () => {
+    ok(
+      "str vs [str, num]",
+      { type: "string" },
+      { anyOf: [{ type: "string" }, { type: "number" }] }
+    );
+    ok(
+      "anyOf[str, num] vs type[str, num]",
+      { anyOf: [{ type: "string" }, { type: "number" }] },
+      { type: ["string", "number"] }
+    );
+
+    notOk(
+      "bool vs [str, num]",
+      { type: "boolean" },
+      { anyOf: [{ type: "string" }, { type: "number" }] }
+    );
+    notOk(
+      "str vs [str:email, str:uri]",
+      { type: "string" },
+      {
+        anyOf: [
+          { type: "string", format: "email" },
+          { type: "string", format: "uri" },
+        ],
+      }
+    );
+    notOk(
+      "empty vs [str, num]",
+      {},
+      { anyOf: [{ type: "string" }, { type: "number" }] }
+    );
+    notOk(
+      "string vs [str]:3",
+      { type: "string" },
+      {
+        maxLength: 3,
+        anyOf: [{ type: "string" }],
+      }
+    );
+    notOk(
+      "type[str, num] vs anyOf[str, bool]",
+      { type: ["string", "number"] },
+      { anyOf: [{ type: "string" }, { type: "boolean" }] }
+    );
+  });
+});

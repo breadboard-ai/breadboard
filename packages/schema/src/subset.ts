@@ -6,26 +6,42 @@
 
 import type { JSONSchema4, JSONSchema4TypeName } from "json-schema";
 
+const PASS_AND_SKIP_REMAINING_CHECKS = Symbol();
+
+type Checker = (
+  a: JSONSchema4,
+  b: JSONSchema4,
+  context: IsSubsetContext
+) => boolean | typeof PASS_AND_SKIP_REMAINING_CHECKS;
+
+const CHECKERS: Checker[] = [
+  // anyOf (must come first!)
+  isSubsetAnyOf,
+  // all
+  isSubsetType,
+  // string
+  isSubsetStringLength,
+  isSubsetStringPattern,
+  isSubsetStringFormat,
+  // number
+  isSubsetNumberRange,
+  // array
+  isSubsetArrayItems,
+  // object
+  isSubsetObjectProperties,
+  isSubsetObjectAdditionalProperties,
+  isSubsetObjectRequiredProperties,
+  // enum
+  isSubsetEnum,
+];
+
 export function isSubset(a: JSONSchema4, b: JSONSchema4): SubsetResult {
-  console.log(`isSubset<${JSON.stringify(a)}, ${JSON.stringify(b)}>`);
   const context: IsSubsetContext = { path: [] };
-  for (const checker of [
-    // all
-    isSubsetType,
-    // string
-    isSubsetStringLength,
-    isSubsetStringPattern,
-    isSubsetStringFormat,
-    // number
-    isSubsetNumberRange,
-    // array
-    isSubsetArrayItems,
-    // object
-    isSubsetObjectProperties,
-    isSubsetObjectAdditionalProperties,
-    isSubsetObjectRequiredProperties,
-  ]) {
+  for (const checker of CHECKERS) {
     const r = checker(a, b, context);
+    if (r === PASS_AND_SKIP_REMAINING_CHECKS) {
+      break;
+    }
     if (!r) {
       // TODO(aomarks) More detailed error messages.
       return { subset: false, errors: [] };
@@ -73,7 +89,6 @@ function isSubsetType(
 ): boolean {
   const aTypes = getNormalizedTypes(a);
   const bTypes = getNormalizedTypes(b);
-  // console.log(`isSubsetType<${JSON.stringify(a)}, ${JSON.stringify(b)}>`);
   if (aTypes.has("integer") && bTypes.has("number")) {
     // All integers are numbers, but not all numbers are integers. So, here is
     // special handling to allow the case where A is an integer and B is a
@@ -170,7 +185,6 @@ function isSubsetArrayItems(
   b: JSONSchema4,
   _context: IsSubsetContext
 ): boolean {
-  // console.log(`isSubsetArrayItems<${JSON.stringify(a)}, ${JSON.stringify(b)}>`);
   if (b.items === undefined) {
     return true;
   }
@@ -271,9 +285,6 @@ function isSubsetObjectAdditionalProperties(
   b: JSONSchema4,
   _context: IsSubsetContext
 ): boolean {
-  // console.log(
-  //   `isSubsetAdditionalProperties<${JSON.stringify(a)}, ${JSON.stringify(b)}>`
-  // );
   if (b.additionalProperties ?? true) {
     return true;
   }
@@ -305,7 +316,6 @@ function isSubsetObjectRequiredProperties(
   }
   const aRequired = new Set(a.required);
   const bRequired = new Set(b.required);
-  console.log("XXXXXXXXXX", { aRequired, bRequired });
   return isSubsetOf(bRequired, aRequired);
 }
 
@@ -337,4 +347,82 @@ function isSubsetOf(a: Set<unknown>, b: Set<unknown>): boolean {
     }
   }
   return true;
+}
+
+function isSubsetEnum(
+  a: JSONSchema4,
+  b: JSONSchema4,
+  _context: IsSubsetContext
+): boolean {
+  if (b.enum === undefined) {
+    return true;
+  }
+  if (a.enum === undefined) {
+    return false;
+  }
+  if (a.enum.length === 0 && b.enum.length > 0) {
+    return false;
+  }
+  return isSubsetOf(coerceSet(a.enum), coerceSet(b.enum));
+}
+
+function isSubsetAnyOf(
+  a: JSONSchema4,
+  b: JSONSchema4,
+  _context: IsSubsetContext
+): boolean | typeof PASS_AND_SKIP_REMAINING_CHECKS {
+  if (a.anyOf !== undefined) {
+    // ALL possibilities from A must satisfy B.
+    for (let subA of a.anyOf) {
+      subA = inheritParentConstraintsIntoAnyOfEntry(a, subA);
+      if (b.anyOf === undefined) {
+        if (!isSubset(subA, b).subset) {
+          return false;
+        }
+      } else {
+        // Both A and B have an `anyOf`. Ensure that ALL possibilities from A
+        // satisfies AT LEAST ONE posibility from B.
+        //
+        // WARNING: O(n^2) comparisons follow
+        let found = false;
+        for (const subB of b.anyOf) {
+          if (
+            isSubset(subA, inheritParentConstraintsIntoAnyOfEntry(b, subB))
+              .subset
+          ) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return false;
+        }
+      }
+    }
+    return PASS_AND_SKIP_REMAINING_CHECKS;
+  } else if (b.anyOf !== undefined) {
+    // Just B has an `anyOf`. Ensure that A satisfies AT LEAST ONE possibility
+    // from B.
+    for (const subB of b.anyOf) {
+      if (isSubset(a, inheritParentConstraintsIntoAnyOfEntry(b, subB)).subset) {
+        return PASS_AND_SKIP_REMAINING_CHECKS;
+      }
+    }
+    return false;
+  } else {
+    return true;
+  }
+}
+
+function inheritParentConstraintsIntoAnyOfEntry(
+  parent: JSONSchema4,
+  anyOfEntry: JSONSchema4
+): JSONSchema4 {
+  if (Object.keys(parent).length === 1) {
+    // We assume `parent` has `anyOf`, so if there's only 1 property, that must
+    // be it. That means there's no other data we need to copy into the `anyOf`
+    // item, so we can avoid a copy.
+    return anyOfEntry;
+  }
+  return { ...parent, anyOf: undefined, ...anyOfEntry };
 }
