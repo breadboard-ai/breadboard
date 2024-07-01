@@ -20,7 +20,7 @@ export function generateSchemaFile(
       ...(s.definitions!["Board"] as Schema),
       type: "object",
       $ref: graphDescriptorRef,
-      // additionalProperties: false,
+      // additionalProperties: false, // left to be applied once schema package is updated
     } satisfies Schema;
 
     return sortObject(s);

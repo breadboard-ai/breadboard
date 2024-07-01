@@ -14,9 +14,6 @@ import { BreadboardManifest } from "..";
 import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
 
 const ajv: Ajv = new Ajv({
-  formats: {
-    // "uri-reference": require("ajv-formats/dist/formats").fullFormats["uri-reference"],
-  },
   strict: true,
   verbose: true,
   allErrors: true,
@@ -49,7 +46,6 @@ const manifestArray: BreadboardManifest[] = [
   {
     title: "Manifest with a had-coded board",
     boards: [
-      // (await base.input().to(base.output()).serialize({})) as GraphDescriptor,
       {
         edges: [
           {

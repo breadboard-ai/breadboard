@@ -181,15 +181,11 @@ export type Board = GraphDescriptor;
  * Union of {@link ResourceReference} and {@link Board}
  */
 export type BoardReference = ResourceReference | Board;
-// export interface BoardReference extends ResourceReference, Board {}
 
 /**
  * Union of {@link ResourceReference} and {@link BreadboardManifest}
  */
 export type ManifestReference = ResourceReference | BreadboardManifest;
-// export interface ManifestReference
-//   extends BreadboardManifest,
-//     ResourceReference {}
 
 /**
  *
