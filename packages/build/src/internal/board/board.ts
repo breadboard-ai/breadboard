@@ -12,7 +12,7 @@ import {
   type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
-import type { GenericSpecialInput, Input } from "./input.js";
+import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
 import type { Output } from "./output.js";
 
 // TODO(aomarks) Support primary ports in boards.
@@ -179,7 +179,10 @@ export type BoardOutputShape =
 
 export type BoardOutputPorts = Record<
   string,
-  OutputPortReference<JsonSerializable> | Output<JsonSerializable>
+  | OutputPortReference<JsonSerializable>
+  | Output<JsonSerializable>
+  | Input<JsonSerializable>
+  | InputWithDefault<JsonSerializable>
 >;
 
 export type BoardOutputPortsWithUndefined = Record<

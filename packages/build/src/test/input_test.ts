@@ -12,6 +12,7 @@ import {
   board,
   defineNodeType,
   object,
+  output,
   serialize,
 } from "../index.js";
 import { input, type GenericSpecialInput } from "../internal/board/input.js";
@@ -388,6 +389,99 @@ test("optional inputs aren't required in JSON schema", () => {
         },
       },
       { id: "test-0", type: "test", configuration: {} },
+    ],
+  });
+});
+
+test("input directly to output", () => {
+  const foo = input();
+  const bar = input({ type: "number", default: 42 });
+  const brd = board({
+    inputs: { fooIn: foo, barIn: bar },
+    outputs: { fooOut: foo, barOut: bar },
+  });
+  assert.deepEqual(serialize(brd), {
+    edges: [
+      { from: "input-0", to: "output-0", out: "barIn", in: "barOut" },
+      { from: "input-0", to: "output-0", out: "fooIn", in: "fooOut" },
+    ],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              barIn: { type: "number", default: "42" },
+              fooIn: { type: "string" },
+            },
+            required: ["fooIn"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              barOut: { type: "number" },
+              fooOut: { type: "string" },
+            },
+            required: ["barOut", "fooOut"],
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("input directly to output with description", () => {
+  const foo = input({ description: "Foo IN" });
+  const bar = input({ type: "number", description: "Bar IN", default: 42 });
+  const brd = board({
+    inputs: { fooIn: foo, barIn: bar },
+    outputs: {
+      fooOut: output(foo, { description: "Foo OUT" }),
+      barOut: output(bar, { description: "Bar OUT" }),
+    },
+  });
+  assert.deepEqual(serialize(brd), {
+    edges: [
+      { from: "input-0", to: "output-0", out: "barIn", in: "barOut" },
+      { from: "input-0", to: "output-0", out: "fooIn", in: "fooOut" },
+    ],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              barIn: { type: "number", description: "Bar IN", default: "42" },
+              fooIn: { type: "string", description: "Foo IN" },
+            },
+            required: ["fooIn"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              barOut: { type: "number", description: "Bar OUT" },
+              fooOut: { type: "string", description: "Foo OUT" },
+            },
+            required: ["barOut", "fooOut"],
+          },
+        },
+      },
     ],
   });
 });

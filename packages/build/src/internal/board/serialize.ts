@@ -72,6 +72,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     >
   >;
   let i = 0;
+  const magicInputResolutions = new Map<
+    Input<JsonSerializable> | InputWithDefault<JsonSerializable>,
+    { nodeId: string; portName: string }
+  >();
   for (const inputs of inputsArray) {
     const sortedBoardInputs = Object.entries(inputs).sort(
       // Sort so that mainInputSchema will also be sorted.
@@ -178,6 +182,12 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (schema.default === undefined && !isSpecialOptional) {
         inputNode.configuration.schema.required.push(mainInputName);
       }
+      if (isSpecialInput(input)) {
+        magicInputResolutions.set(input, {
+          nodeId: inputNodeId,
+          portName: mainInputName,
+        });
+      }
     }
   }
 
@@ -204,13 +214,28 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (name === "$id" || name === "$metadata") {
         continue;
       }
-      const port = isSpecialOutput(output)
-        ? output.port[OutputPortGetter]
-        : output[OutputPortGetter];
-      const outputNodeId =
-        (outputs.$id as string | undefined) ??
-        (isSpecialOutput(output) ? output.id : undefined) ??
-        autoId();
+      let port;
+      let outputNodeId;
+      const portMetadata: { title?: string; description?: string } = {};
+      if (isSpecialOutput(output)) {
+        port = output.port;
+        outputNodeId = output.id;
+        if (output.title) {
+          portMetadata.title = output.title;
+        }
+        if (output.description) {
+          portMetadata.description = output.description;
+        }
+      } else {
+        port = output;
+      }
+      if (isOutputPortReference(port)) {
+        port = port[OutputPortGetter];
+      }
+      // TODO(aomarks) Remove cast.
+      outputNodeId ??= outputs.$id as string | undefined;
+      outputNodeId ??= autoId();
+
       let outputNode = outputNodes.get(outputNodeId);
       if (outputNode === undefined) {
         outputNode = {
@@ -225,12 +250,12 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             },
           },
         };
-        const metadata = outputs.$metadata as {
+        const nodeMetadata = outputs.$metadata as {
           title?: string;
           description?: string;
         };
-        if (metadata !== undefined) {
-          outputNode.metadata = metadata;
+        if (nodeMetadata !== undefined) {
+          outputNode.metadata = nodeMetadata;
         }
         outputNodes.set(outputNodeId, outputNode);
       }
@@ -250,14 +275,29 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (!isOpt) {
         outputNode.configuration.schema.required.push(name);
       }
-      addEdge(
-        visitNodeAndReturnItsId(port.node),
-        port.name,
-        outputNodeId,
-        name,
-        isConstant(output),
-        isOpt
-      );
+      if (isSpecialInput(port)) {
+        unconnectedInputs.delete(port);
+        const resolution = magicInputResolutions.get(port);
+        if (resolution !== undefined) {
+          addEdge(
+            resolution.nodeId,
+            resolution.portName,
+            outputNodeId,
+            name,
+            isConstant(output),
+            isOpt
+          );
+        }
+      } else {
+        addEdge(
+          visitNodeAndReturnItsId(port.node),
+          port.name,
+          outputNodeId,
+          name,
+          isConstant(output),
+          isOpt
+        );
+      }
     }
   }
 

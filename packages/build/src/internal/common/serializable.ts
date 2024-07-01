@@ -39,14 +39,26 @@ export interface SerializableBoard {
   //     >;
   outputs: Record<
     string,
-    SerializableOutputPortReference | Output<JsonSerializable>
+    | SerializableOutputPortReference
+    | Output<JsonSerializable>
+    | Input<JsonSerializable>
+    | InputWithDefault<JsonSerializable>
   >;
   outputsForSerialization:
-    | Record<string, SerializableOutputPortReference | Output<JsonSerializable>>
+    | Record<
+        string,
+        | SerializableOutputPortReference
+        | Output<JsonSerializable>
+        | Input<JsonSerializable>
+        | InputWithDefault<JsonSerializable>
+      >
     | Array<
         Record<
           string,
-          SerializableOutputPortReference | Output<JsonSerializable>
+          | SerializableOutputPortReference
+          | Output<JsonSerializable>
+          | Input<JsonSerializable>
+          | InputWithDefault<JsonSerializable>
         >
       >;
   title?: string;
