@@ -5,6 +5,6 @@
  */
 
 import { serve } from "@google-labs/breadboard/harness";
-import { createServeConfig } from "@google-labs/breadboard-web/config.js";
+import { createServeConfig } from "@google-labs/visual-editor/config.js";
 
 serve(createServeConfig());

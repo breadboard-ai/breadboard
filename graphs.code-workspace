@@ -17,8 +17,8 @@
       "path": "packages/breadboard-ui",
     },
     {
-      "name": "breadboard-web",
-      "path": "packages/breadboard-web",
+      "name": "visual-editor",
+      "path": "packages/visual-editor",
     },
     {
       "name": "core-kit",
@@ -43,10 +43,6 @@
     {
       "name": "node-proxy-server",
       "path": "packages/node-proxy-server",
-    },
-    {
-      "name": "breadbuddy",
-      "path": "packages/breadbuddy",
     },
     {
       "name": "cloud-function",
