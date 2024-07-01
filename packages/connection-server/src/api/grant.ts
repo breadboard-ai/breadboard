@@ -15,7 +15,7 @@ interface GrantRequest {
 }
 
 // IMPORTANT: Keep in sync with
-// breadboard/packages/breadboard-ui/src/elements/connection/connection-common.ts
+// breadboard/packages/visual-editor/src/elements/connection/connection-common.ts
 type GrantResponse =
   | { error: string }
   | {

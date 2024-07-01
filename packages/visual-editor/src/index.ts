@@ -10,7 +10,7 @@ import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import * as BreadboardUI from "@google-labs/breadboard-ui";
+import * as BreadboardUI from "./ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
@@ -38,17 +38,14 @@ import { SettingsStore } from "./data/settings-store";
 import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import {
-  Environment,
-  environmentContext,
-} from "@google-labs/breadboard-ui/contexts/environment.js";
-import { dataStoreContext } from "@google-labs/breadboard-ui/contexts/data-store.js";
-import { settingsHelperContext } from "@google-labs/breadboard-ui/contexts/settings-helper.js";
+import { Environment, environmentContext } from "./ui/contexts/environment.js";
+import { dataStoreContext } from "./ui/contexts/data-store.js";
+import { settingsHelperContext } from "./ui/contexts/settings-helper.js";
 import type {
   SETTINGS_TYPE,
   SettingEntry,
   SettingsHelper,
-} from "@google-labs/breadboard-ui/types/types.js";
+} from "./ui/types/types.js";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
@@ -970,7 +967,6 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.graph = this.graph;
-    ui.clearPosition();
 
     const currentBoardId = this.#boardId;
 

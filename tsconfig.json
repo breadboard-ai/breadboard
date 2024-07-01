@@ -8,7 +8,6 @@
     { "path": "packages/breadboard-extension" },
     { "path": "packages/import" },
     { "path": "packages/breadboard-server" },
-    { "path": "packages/breadboard-ui" },
     { "path": "packages/core-kit" },
     { "path": "packages/create-breadboard" },
     { "path": "packages/create-breadboard-kit" },

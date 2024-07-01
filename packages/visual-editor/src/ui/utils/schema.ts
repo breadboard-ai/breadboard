@@ -5,7 +5,7 @@
  */
 
 import { BehaviorSchema, Schema } from "@google-labs/breadboard";
-import Ajv, { AnySchema } from "ajv";
+import Ajv, { AnySchema, ValidateFunction } from "ajv";
 
 const LLMContentSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -111,8 +111,8 @@ export function resolveBehaviorType(value: Schema | Schema[] | undefined) {
 }
 
 export const validate = (item: unknown, schema: unknown) => {
-  const validator = new Ajv.default({ strict: false });
-  let validate: Ajv.ValidateFunction;
+  const validator = new Ajv({ strict: false });
+  let validate: ValidateFunction;
   try {
     validate = validator.compile(schema as AnySchema);
   } catch (e) {

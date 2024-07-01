@@ -11,7 +11,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
-import * as BreadboardUI from "@google-labs/breadboard-ui";
+import * as BreadboardUI from "./ui";
 import {
   type InputValues,
   Kit,
@@ -22,7 +22,7 @@ import {
   createLoader,
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { InputEnterEvent } from "@google-labs/breadboard-ui/events/events.js";
+import { InputEnterEvent } from "./ui/events/events.js";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
 import { SettingsStore } from "./data/settings-store.js";

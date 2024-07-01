@@ -127,7 +127,6 @@ export class UI extends LitElement {
   #detailsRef: Ref<HTMLElement> = createRef();
   #controlsActivityRef: Ref<HTMLDivElement> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
-  #messagePosition = 0;
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
@@ -142,10 +141,6 @@ export class UI extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#resizeObserver.unobserve(this);
-  }
-
-  clearPosition() {
-    this.#messagePosition = 0;
   }
 
   /**
@@ -212,9 +207,6 @@ export class UI extends LitElement {
   async handleStateChange(
     message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
-    if (this.status === STATUS.RUNNING) {
-      this.#messagePosition = (this.run?.events?.length || 0) - 1;
-    }
     this.requestUpdate();
 
     const { data, type } = message;

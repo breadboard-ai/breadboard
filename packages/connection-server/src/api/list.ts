@@ -10,7 +10,7 @@ import { okJson } from "../responses.js";
 import type { OAuthClientSecretData } from "../secrets.js";
 
 // IMPORTANT: Keep in sync with
-// breadboard/packages/breadboard-ui/src/elements/connection/connection-server.ts
+// breadboard/packages/visual-editor/src/elements/connection/connection-server.ts
 interface ListConnectionsResponse {
   connections: Connection[];
 }

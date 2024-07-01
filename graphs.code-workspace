@@ -13,10 +13,6 @@
       "path": "packages/breadboard-extension",
     },
     {
-      "name": "breadboard-ui",
-      "path": "packages/breadboard-ui",
-    },
-    {
       "name": "visual-editor",
       "path": "packages/visual-editor",
     },
