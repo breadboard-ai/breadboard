@@ -36,7 +36,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard-web:build:vite"
+        "../visual-editor:build:vite"
       ],
       "files": [
         "vite.config.ts",
@@ -55,8 +55,8 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../breadboard-web:build:tsc",
-        "../breadboard-web:generate:graphs",
+        "../visual-editor:build:tsc",
+        "../visual-editor:generate:graphs",
         "../core-kit:build:tsc",
         "../import:build",
         "../template-kit:build:tsc"
@@ -159,7 +159,7 @@
     "@breadboard-ai/build": "0.7.0",
     "@breadboard-ai/import": "0.1.4",
     "@google-labs/breadboard": "^0.21.0",
-    "@google-labs/breadboard-web": "^1.10.1",
+    "@google-labs/visual-editor": "^1.10.1",
     "@google-labs/core-kit": "^0.10.1",
     "@google-labs/template-kit": "^0.3.4",
     "@rollup/plugin-commonjs": "^26.0.1",

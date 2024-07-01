@@ -1,9 +1,9 @@
 {
-  "name": "@google-labs/breadboard-web",
+  "name": "@google-labs/visual-editor",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
   "exports": {
