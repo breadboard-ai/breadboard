@@ -8,9 +8,7 @@
     { "path": "packages/breadboard-extension" },
     { "path": "packages/import" },
     { "path": "packages/breadboard-server" },
-    { "path": "packages/breadboard-web" },
     { "path": "packages/breadboard-ui" },
-    { "path": "packages/breadbuddy" },
     { "path": "packages/core-kit" },
     { "path": "packages/create-breadboard" },
     { "path": "packages/create-breadboard-kit" },
@@ -23,6 +21,7 @@
     { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
     { "path": "packages/template-kit" },
+    { "path": "packages/visual-editor" },
     { "path": "packages/website" }
   ]
 }
