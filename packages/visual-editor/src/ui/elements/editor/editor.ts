@@ -1123,14 +1123,18 @@ export class Editor extends LitElement {
     }
 
     // Remove comments.
-    if (this.graph && this.graph.metadata) {
-      this.graph.metadata.comments ??= [];
-      this.graph.metadata.comments = this.graph.metadata.comments.filter(
+    let graph = this.graph;
+    if (this.subGraphId && this.graph?.graphs) {
+      graph = this.graph?.graphs[this.subGraphId];
+    }
+    if (graph && graph.metadata) {
+      graph.metadata.comments ??= [];
+      graph.metadata.comments = graph.metadata.comments.filter(
         (comment) => !comments.includes(comment.id)
       );
       edits.push({
         type: "changegraphmetadata",
-        metadata: this.graph.metadata,
+        metadata: graph.metadata,
       });
     }
 
