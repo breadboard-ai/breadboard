@@ -226,11 +226,11 @@ export class Main extends LitElement {
       cursor: pointer;
     }
 
-    #edit-board-info {
+    #close-board {
       font-size: 0;
       width: 20px;
       height: 20px;
-      background: var(--bb-icon-edit) center center no-repeat;
+      background: var(--bb-icon-close) center center no-repeat;
       background-size: 16px 16px;
       border: 2px solid transparent;
       margin-left: calc(var(--bb-grid-size) * 2);
@@ -239,11 +239,11 @@ export class Main extends LitElement {
       border-radius: 50%;
     }
 
-    #edit-board-info:not([disabled]) {
+    #close-board:not([disabled]) {
       cursor: pointer;
     }
 
-    #edit-board-info:not([disabled]):hover {
+    #close-board:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
       background-color: var(--bb-neutral-300);
@@ -1455,27 +1455,15 @@ export class Main extends LitElement {
                   : nothing}
                 <button
                   @click=${() => {
-                    let graph = this.graph;
-                    if (graph && graph.graphs && this.subGraphId) {
-                      graph = graph.graphs[this.subGraphId];
-                    }
-
-                    this.boardEditOverlayInfo = {
-                      title: graph?.title ?? "No Title",
-                      version: graph?.version ?? "0.0.1",
-                      description: graph?.description ?? "No Description",
-                      published: this.subGraphId
-                        ? null
-                        : graph?.metadata?.tags?.includes("published") ?? false,
-                      isTool: graph?.metadata?.tags?.includes("tool") ?? false,
-                      subGraphId: this.subGraphId,
-                    };
+                    this.#attemptBoardStart(
+                      new BreadboardUI.Events.StartEvent(null, null)
+                    );
                   }}
                   ?disabled=${this.graph === null}
-                  id="edit-board-info"
-                  title="Edit Board Information"
+                  id="close-board"
+                  title="Close Board"
                 >
-                  Edit
+                  Close
                 </button>
               </h1>`
             : nothing}
