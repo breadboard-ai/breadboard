@@ -146,7 +146,7 @@
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.18.0",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.3"
   },
   "engines": {
     "node": ">=20.14.0"

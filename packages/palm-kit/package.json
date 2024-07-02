@@ -100,7 +100,7 @@
     "@typescript-eslint/parser": "^7.14.1",
     "@types/node": "^20.14.9",
     "ava": "^5.2.0",
-    "typescript": "^5.5.2",
+    "typescript": "^5.5.3",
     "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
