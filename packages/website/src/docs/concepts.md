@@ -2,7 +2,7 @@
 layout: docs.njk
 title: Concepts
 tags:
-  - general
+  - miscellaneous
   - wip
 ---
 
