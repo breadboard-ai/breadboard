@@ -159,7 +159,14 @@ test("PortType matches formats", (t) => {
   t.true(audioOnly.canConnect(audioOnly));
   t.false(audioOnly.canConnect(imageOnly));
   t.false(audioAndImage.canConnect(imageOnly));
-  t.true(imageOnly.canConnect(audioAndImage));
+  // TODO(aomarks) Disabled because this is not compatible with
+  // analyzeIsJsonSubSchema, which treats each format as distinct and doesn't
+  // support the comma-delimited format. I think we should just be using `anyOf`
+  // here if we want to make a union of multiple formats. See also
+  // https://json-schema.org/understanding-json-schema/reference/non_json_data
+  // which is how JSON Schema itself represents non-JSON data which we should
+  // consider migrating to.
+  // t.true(imageOnly.canConnect(audioAndImage));
   t.true(audioOnly.canConnect(any));
   t.false(any.canConnect(audioOnly));
 });
