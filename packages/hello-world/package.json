@@ -18,7 +18,7 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "tsx": "^4.15.8",
+    "tsx": "^4.16.0",
     "typescript": "^5.5.2"
   },
   "dependencies": {
