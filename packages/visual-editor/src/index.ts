@@ -778,6 +778,7 @@ export class Main extends LitElement {
     );
 
     const { result, error } = await provider.delete(new URL(url));
+    await this.#removeRecentUrl(url);
 
     this.toast(
       "Board deleted",
@@ -794,7 +795,7 @@ export class Main extends LitElement {
     }
 
     if (isActive) {
-      this.showWelcomePanel = true;
+      this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(null, null));
     }
 
     // Trigger a re-render.
@@ -945,6 +946,21 @@ export class Main extends LitElement {
 
     if (this.#recentBoards.length > 5) {
       this.#recentBoards.length = 5;
+    }
+
+    await this.#recentBoardStore.store(this.#recentBoards);
+  }
+
+  async #removeRecentUrl(url: string) {
+    url = url.replace(window.location.origin, "");
+    const count = this.#recentBoards.length;
+
+    this.#recentBoards = this.#recentBoards.filter(
+      (board) => board.url !== url
+    );
+
+    if (count === this.#recentBoards.length) {
+      return;
     }
 
     await this.#recentBoardStore.store(this.#recentBoards);
