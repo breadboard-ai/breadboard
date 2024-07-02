@@ -34,12 +34,9 @@ const ajv: Ajv = new Ajv({
 
 addFormats(ajv);
 
-let validate: ValidateFunction;
-test.before(async () => {
-  const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
-  const parsedSchema = JSON.parse(readSchemaFile);
-  validate = await ajv.compileAsync(parsedSchema);
-});
+const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
+const parsedSchema = JSON.parse(readSchemaFile);
+const validate = await ajv.compileAsync(parsedSchema);
 
 const manifestArray: BreadboardManifest[] = [
   {},

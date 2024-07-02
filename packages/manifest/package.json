@@ -54,8 +54,7 @@
     "build": {
       "dependencies": [
         "build:schema",
-        "build:ts",
-        "test"
+        "build:ts"
       ]
     },
     "build:schema": {
