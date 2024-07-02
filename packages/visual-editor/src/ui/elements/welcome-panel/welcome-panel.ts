@@ -34,7 +34,7 @@ export class WelcomePanel extends LitElement {
       title: "New here? Try our Getting Started Guide",
       description: "Learn the basics of using the Visual Editor",
       url: "https://breadboard-ai.github.io/breadboard/docs/getting-started/",
-      image: "/images/verified.svg",
+      image: "/third_party/icons/verified.svg",
     },
     {
       title: "Building a Librarian with the Agent Kit",
