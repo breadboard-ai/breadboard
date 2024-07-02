@@ -48,7 +48,7 @@ main a {
 }
 
 .back-to-main-list:hover::before {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   translate: -4px 0;
 }
 
@@ -95,7 +95,7 @@ h2,
 h3,
 h4,
 h5 {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   margin: 1.5rem 0 0.75rem 0;
   position: relative;
 }
@@ -189,7 +189,7 @@ code[class*="language-"] {
 }
 
 .updates summary {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   font-size: 0.875rem;
   margin: 0 0 8px;
   height: 40px;
@@ -214,7 +214,7 @@ code[class*="language-"] {
 }
 
 .updates a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-800);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.8;
