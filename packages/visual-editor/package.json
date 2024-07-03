@@ -196,11 +196,9 @@
     "copy-pyoide-assets": {
       "command": "tsx src/copy-pyodide-assets.ts",
       "files": [],
-      "dependencies": [
-        "../agent-kit:build"
-      ],
       "output": [
-        "public/*.kit.json"
+        "public/python_stdlib.zip",
+        "public/pyodide*"
       ]
     },
     "generate:graphs": {
