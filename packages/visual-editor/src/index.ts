@@ -596,6 +596,29 @@ export class Main extends LitElement {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
+    if (evt.key === "v" && isCtrlCommand && !this.graph) {
+      evt.preventDefault();
+
+      navigator.clipboard.readText().then((content) => {
+        try {
+          const descriptor = JSON.parse(content) as GraphDescriptor;
+          if (!("edges" in descriptor && "nodes" in descriptor)) {
+            return;
+          }
+
+          this.#attemptBoardStart(
+            new BreadboardUI.Events.StartEvent(null, descriptor)
+          );
+        } catch (err) {
+          this.toast(
+            "Unable to paste board",
+            BreadboardUI.Events.ToastType.ERROR
+          );
+        }
+      });
+      return;
+    }
+
     if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
 
