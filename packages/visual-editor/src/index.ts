@@ -849,10 +849,11 @@ export class Main extends LitElement {
     this.graph = null;
     this.subGraphId = null;
 
+    // TODO: Figure out how to avoid needing to null this out.
+    this.#editor = null;
+
     if (startEvent.descriptor) {
       this.graph = startEvent.descriptor;
-      // TODO: Figure out how to avoid needing to null this out.
-      this.#editor = null;
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
@@ -896,13 +897,9 @@ export class Main extends LitElement {
         this.graph = graph;
         this.#setPageTitle();
         await this.#trackRecentBoard();
-        // TODO: Figure out how to avoid needing to null this out.
-        this.#editor = null;
       } catch (err) {
         this.url = null;
         this.graph = null;
-        // TODO: Figure out how to avoid needing to null this out.
-
         this.#editor = null;
         this.#failedGraphLoad = true;
       }
