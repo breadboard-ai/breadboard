@@ -80,116 +80,318 @@ test("runJavascript understands `raw` input", async (t) => {
   t.deepEqual(result, { hello: "world" });
 });
 
-test("describe outputs when raw = true and schema defined", async (t) => {
-  const result = (
-    await handler.describe({
-      raw: true,
-      schema: {
-        type: "object",
-        properties: {
-          hello: { type: "string" },
+test("raw=true with provided schemas", async (t) => {
+  const result = await handler.describe({
+    raw: true,
+    inputSchema: {
+      type: "object",
+      properties: { foo: { type: "string" } },
+    },
+    outputSchema: {
+      type: "object",
+      properties: { bar: { type: "number" } },
+    },
+  });
+  t.deepEqual(result, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          title: "code",
+          description: "The JavaScript code to run",
+          format: "javascript",
+          behavior: ["config", "code"],
+        },
+        foo: {
+          type: "string",
+        },
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "inputSchema",
+          description: "The schema of the input data.",
+          behavior: ["config", "ports-spec"],
+        },
+        name: {
+          type: "string",
+          title: "name",
+          description:
+            'The name of the function to invoke in the supplied code. Default value is "run".',
+          default: "run",
+        },
+        outputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "outputSchema",
+          description: "The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+        raw: {
+          type: "boolean",
+          title: "raw",
+          description:
+            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+          default: false,
+          behavior: ["config"],
+        },
+        schema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "schema",
+          description:
+            "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+          behavior: ["config", "ports-spec"],
         },
       },
-    })
-  ).outputSchema;
-  t.deepEqual(result, {
-    type: "object",
-    properties: {
-      hello: {
-        type: "string",
-        title: "hello",
-        description: 'output "hello"',
-      },
+      required: ["code"],
     },
-    required: [],
-    additionalProperties: false,
-  });
-});
-
-test("describe outputs when raw = true", async (t) => {
-  const result = (await handler.describe({ raw: true })).outputSchema;
-  t.deepEqual(result, {
-    type: "object",
-    properties: {},
-    required: [],
-    additionalProperties: true,
-  });
-});
-
-test("describe outputs when raw = false", async (t) => {
-  const result = (await handler.describe({ raw: false })).outputSchema;
-  t.deepEqual(result, {
-    type: "object",
-    properties: {
-      result: {
-        title: "result",
-        description: "The result of running the JavaScript code",
-        type: ["array", "boolean", "null", "number", "object", "string"],
-      },
-    },
-    required: [],
-    additionalProperties: false,
-  });
-});
-
-test("describe inputs", async (t) => {
-  const result = (
-    await handler.describe(
-      {},
-      {
-        type: "object",
-        properties: {
-          code: { title: "code" },
-          name: { title: "name" },
-          raw: { title: "raw" },
-          what: { title: "what", type: "array", items: { type: "number" } },
+    outputSchema: {
+      type: "object",
+      properties: {
+        bar: {
+          type: "number",
         },
-      }
-    )
-  ).inputSchema;
-  t.deepEqual(result, {
-    type: "object",
-    properties: {
-      code: {
-        behavior: ["config", "code"],
-        description: "The JavaScript code to run",
-        format: "javascript",
-        title: "code",
-        type: "string",
       },
-      name: {
-        default: "run",
-        description:
-          'The name of the function to invoke in the supplied code. Default value is "run".',
-        title: "name",
-        type: "string",
-      },
-      raw: {
-        behavior: ["config"],
-        default: false,
-        description:
-          "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
-        title: "raw",
-        type: "boolean",
-      },
-      schema: {
-        additionalProperties: true,
-        behavior: ["config", "ports-spec"],
-        description:
-          "The schema of the output data. This is used to validate the output data before running the code.",
-        properties: {},
-        required: [],
-        title: "schema",
-        type: "object",
-      },
-      what: {
-        title: "what",
-        type: "array",
-        items: { type: "number" },
-      },
+      required: [],
     },
-    required: ["code"],
-    additionalProperties: true,
+  });
+});
+
+test("raw=true without provided schemas", async (t) => {
+  const result = await handler.describe({ raw: true });
+  t.deepEqual(result, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          title: "code",
+          description: "The JavaScript code to run",
+          format: "javascript",
+          behavior: ["config", "code"],
+        },
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "inputSchema",
+          description: "The schema of the input data.",
+          behavior: ["config", "ports-spec"],
+        },
+        name: {
+          type: "string",
+          title: "name",
+          description:
+            'The name of the function to invoke in the supplied code. Default value is "run".',
+          default: "run",
+        },
+        outputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "outputSchema",
+          description: "The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+        raw: {
+          type: "boolean",
+          title: "raw",
+          description:
+            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+          default: false,
+          behavior: ["config"],
+        },
+        schema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "schema",
+          description:
+            "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+      },
+      required: ["code"],
+      additionalProperties: true,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+  });
+});
+
+test("raw=false with provided schemas", async (t) => {
+  const result = await handler.describe({
+    raw: false,
+    inputSchema: {
+      type: "object",
+      properties: { foo: { type: "string" } },
+    },
+    outputSchema: {
+      type: "object",
+      properties: { result: { type: "number" } },
+    },
+  });
+  t.deepEqual(result, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          title: "code",
+          description: "The JavaScript code to run",
+          format: "javascript",
+          behavior: ["config", "code"],
+        },
+        foo: {
+          type: "string",
+        },
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "inputSchema",
+          description: "The schema of the input data.",
+          behavior: ["config", "ports-spec"],
+        },
+        name: {
+          type: "string",
+          title: "name",
+          description:
+            'The name of the function to invoke in the supplied code. Default value is "run".',
+          default: "run",
+        },
+        outputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "outputSchema",
+          description: "The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+        raw: {
+          type: "boolean",
+          title: "raw",
+          description:
+            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+          default: false,
+          behavior: ["config"],
+        },
+        schema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "schema",
+          description:
+            "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+      },
+      required: ["code"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        result: {
+          description: "The result of running the JavaScript code",
+          title: "result",
+          type: "number",
+        },
+      },
+      additionalProperties: false,
+      required: [],
+    },
+  });
+});
+
+test("raw=false without provided schemas", async (t) => {
+  const result = await handler.describe({ raw: false });
+  t.deepEqual(result, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          title: "code",
+          description: "The JavaScript code to run",
+          format: "javascript",
+          behavior: ["config", "code"],
+        },
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "inputSchema",
+          description: "The schema of the input data.",
+          behavior: ["config", "ports-spec"],
+        },
+        name: {
+          type: "string",
+          title: "name",
+          description:
+            'The name of the function to invoke in the supplied code. Default value is "run".',
+          default: "run",
+        },
+        outputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "outputSchema",
+          description: "The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+        raw: {
+          type: "boolean",
+          title: "raw",
+          description:
+            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+          default: false,
+          behavior: ["config"],
+        },
+        schema: {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: true,
+          title: "schema",
+          description:
+            "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+          behavior: ["config", "ports-spec"],
+        },
+      },
+      required: ["code"],
+      additionalProperties: true,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        result: {
+          description: "The result of running the JavaScript code",
+          title: "result",
+          type: ["array", "boolean", "null", "number", "object", "string"],
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
   });
 });
 

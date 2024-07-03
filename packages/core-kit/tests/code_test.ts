@@ -207,6 +207,34 @@ test("serialization", (t) => {
           code: 'const customId = ({ str, num, bool }) => ({\n        strLen: str.length,\n        strReversed: str.split("").reverse().join(""),\n        doubleNum: num * 2,\n        not: !bool,\n    });',
           name: "customId",
           raw: true,
+          inputSchema: {
+            properties: {
+              bool: {
+                type: "boolean",
+              },
+              num: {
+                type: "number",
+              },
+              str: {
+                type: "string",
+              },
+            },
+            type: "object",
+          },
+          outputSchema: {
+            doubleNum: {
+              type: "number",
+            },
+            not: {
+              type: "boolean",
+            },
+            strLen: {
+              type: "number",
+            },
+            strReversed: {
+              type: "string",
+            },
+          },
         },
         metadata: { title: "Custom title", description: "Custom description" },
       },
