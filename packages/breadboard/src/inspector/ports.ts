@@ -124,6 +124,7 @@ export const collectPorts = (
         ),
         schema: portSchema,
         type: new PortType(portSchema),
+        kind: type === EdgeType.In ? "input" : "output",
       } satisfies InspectablePort;
     })
     .filter(Boolean) as InspectablePort[];
@@ -160,7 +161,10 @@ export class PortType implements InspectablePortType {
   }
 }
 
-export const collectPortsForType = (schema: Schema): InspectablePort[] => {
+export const collectPortsForType = (
+  schema: Schema,
+  kind: "input" | "output"
+): InspectablePort[] => {
   const portNames = Object.keys(schema.properties || {});
   const requiredPortNames = schema.required || [];
   portNames.sort();
@@ -181,6 +185,7 @@ export const collectPortsForType = (schema: Schema): InspectablePort[] => {
       ),
       schema: portSchema,
       type: new PortType(portSchema),
+      kind,
     } satisfies InspectablePort;
   });
 };
