@@ -919,6 +919,7 @@ export class SchemaEditor extends LitElement {
 
         if (oldType === "array" && property.type !== oldType) {
           delete property.items;
+          delete property.default;
         }
 
         if (oldType === "object" && property.type !== oldType) {
@@ -997,8 +998,6 @@ export class SchemaEditor extends LitElement {
             return property;
           }
         );
-
-        console.log(this.#schemaPropertiesOrder);
       }
     }
 
