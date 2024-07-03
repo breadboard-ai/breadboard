@@ -9,6 +9,7 @@ import { JSONSchema4 } from "json-schema";
 import { BehaviorSchema, NodeConfiguration, Schema } from "../types.js";
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import {
+  CanConnectAnalysis,
   InspectableEdge,
   InspectablePort,
   InspectablePortType,
@@ -138,14 +139,26 @@ export class PortType implements InspectablePortType {
   }
 
   canConnect(to: InspectablePortType): boolean {
+    return this.analyzeCanConnect(to).canConnect;
+  }
+
+  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis {
     // Check standard JSON Schema subset rules.
-    if (
-      !analyzeIsJsonSubSchema(
-        this.schema as JSONSchema4,
-        to.schema as JSONSchema4
-      ).isSubSchema
-    ) {
-      return false;
+    const subSchemaAnalysis = analyzeIsJsonSubSchema(
+      this.schema as JSONSchema4,
+      to.schema as JSONSchema4
+    );
+    if (!subSchemaAnalysis.isSubSchema) {
+      return {
+        canConnect: false,
+        details: subSchemaAnalysis.details.map((detail) => ({
+          message: "Incompatible schema",
+          detail: {
+            outputPath: detail.pathA,
+            inputPath: detail.pathB,
+          },
+        })),
+      };
     }
     // Check Breadboard-specific behaviors.
     const fromBehaviors = new Set(this.schema.behavior);
@@ -154,10 +167,18 @@ export class PortType implements InspectablePortType {
         BEHAVIOR_AFFECTS_TYPE_CHECKING[toBehavior] &&
         !fromBehaviors.has(toBehavior)
       ) {
-        return false;
+        return {
+          canConnect: false,
+          details: [
+            {
+              message: "Incompatible behaviors",
+              detail: { outputPath: ["behavior"], inputPath: ["behavior"] },
+            },
+          ],
+        };
       }
     }
-    return true;
+    return { canConnect: true };
   }
 }
 
