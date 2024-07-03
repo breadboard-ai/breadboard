@@ -384,6 +384,11 @@ export type InspectablePort = {
    * Returns a representation of the port's type.
    */
   type: InspectablePortType;
+
+  /**
+   * Is this an input or output port?
+   */
+  kind: "input" | "output";
 };
 
 export type InspectablePortType = {
