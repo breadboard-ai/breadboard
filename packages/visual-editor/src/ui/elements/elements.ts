@@ -17,6 +17,7 @@ export { ConnectionSignin } from "./connection/connection-signin.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
 export { EventDetails } from "./event-details/event-details.js";
+export { FancyJson } from "./editor/fancy-json.js";
 export { FirstRunOverlay } from "./overlay/first-run.js";
 export { GraphHistory } from "./graph-history/graph-history.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
