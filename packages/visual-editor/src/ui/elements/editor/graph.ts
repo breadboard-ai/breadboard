@@ -1167,8 +1167,8 @@ export class Graph extends PIXI.Container {
 
       if (node.descriptor.metadata?.visual) {
         const { x, y, collapsed } = node.descriptor.metadata.visual as {
-          x: number;
-          y: number;
+          x?: number;
+          y?: number;
           collapsed: boolean;
         };
 
@@ -1182,7 +1182,7 @@ export class Graph extends PIXI.Container {
           justAdded = existingLayout.justAdded || false;
         }
         const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
-        const pos = this.toGlobal({ x, y });
+        const pos = this.toGlobal({ x: x ?? 0, y: y ?? 0 });
         this.setNodeLayoutPosition(id, "node", pos, nodeCollapsed, justAdded);
 
         graphNode.collapsed = nodeCollapsed;
