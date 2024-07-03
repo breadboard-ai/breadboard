@@ -97,14 +97,11 @@ class Edge implements InspectableEdge {
     if (outPort === undefined || inPort === undefined) {
       return { status: "unknown" };
     }
-    if (!outPort.type.canConnect(inPort.type)) {
+    const canConnectAnalysis = outPort.type.analyzeCanConnect(inPort.type);
+    if (!canConnectAnalysis.canConnect) {
       return {
         status: "invalid",
-        errors: [
-          {
-            message: `The schema of "${this.in}" is not compatible with "${this.out}"`,
-          },
-        ],
+        errors: canConnectAnalysis.details,
       };
     }
     return { status: "valid" };
