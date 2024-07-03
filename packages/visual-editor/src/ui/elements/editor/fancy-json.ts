@@ -82,16 +82,28 @@ export class FancyJson extends LitElement {
         if (value === null) {
           parts.push("null");
         } else if (Array.isArray(value)) {
-          parts.push(
-            "[",
-            ...value.map((v, i) => {
-              path.push(i);
-              const item = this.#renderJsonValue(v, indent, path);
+          parts.push("[");
+          if (value.length > 0) {
+            for (let v = 0; v < value.length; v++) {
+              parts.push("\n");
+              for (let i = 0; i < indent; i++) {
+                parts.push("  ");
+              }
+              const val = value[v];
+              path.push(v);
+              parts.push(this.#renderJsonValue(val, indent + 1, path));
               path.pop();
-              return item;
-            }),
-            "]"
-          );
+              if (v < value.length - 1) {
+                parts.push(",");
+              } else {
+                parts.push("\n");
+              }
+            }
+            for (let i = 1; i < indent; i++) {
+              parts.push("  ");
+            }
+          }
+          parts.push("]");
         } else {
           parts.push("{");
           const entries = Object.entries(value);
