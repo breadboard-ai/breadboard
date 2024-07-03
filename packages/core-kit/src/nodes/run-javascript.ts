@@ -285,12 +285,6 @@ export default defineNodeType({
     },
   },
   describe: ({ raw, inputSchema, ...rest }) => {
-    console.log({
-      raw,
-      inputSchema,
-      outputSchema: rest.outputSchema,
-      schema: rest.schema,
-    });
     // "schema" is the deprecated name for "outputSchema", so fall back to that.
     const outputSchema: JSONSchema4 | undefined =
       rest.outputSchema ?? rest.schema;
