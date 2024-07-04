@@ -34,8 +34,8 @@ const describe = async (
         body: JSON.stringify({ dynamicInputs }),
       })
     ).json();
-    const inputs = fromJSONSchema(schemas?.inputs ?? {});
-    const outputs = fromJSONSchema(schemas?.outputs ?? {});
+    const inputs = fromJSONSchema(schemas?.inputSchema ?? {});
+    const outputs = fromJSONSchema(schemas?.outputSchema ?? {});
     return { inputs, outputs };
   } catch {
     // Eat any exceptions.
@@ -44,8 +44,8 @@ const describe = async (
   return { inputs: {}, outputs: {} };
 };
 
-const invoke = async (inputs: InputValues) => {
-  const { $service, ...rest } = inputs;
+const invoke = async (inputs: InputValues, dynamicInputs: InputValues) => {
+  const { $service } = inputs;
   if (!$service || typeof $service !== "string") {
     throw new Error("Service URL is required.");
   }
@@ -55,7 +55,7 @@ const invoke = async (inputs: InputValues) => {
   return await (
     await fetch(invokeURL, {
       method: "POST",
-      body: JSON.stringify(rest),
+      body: JSON.stringify(dynamicInputs),
     })
   ).json();
 };
