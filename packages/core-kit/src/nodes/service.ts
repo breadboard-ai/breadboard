@@ -4,11 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType } from "@breadboard-ai/build";
+import { defineNodeType, fromJSONSchema } from "@breadboard-ai/build";
 import { InputValues } from "@google-labs/breadboard";
 
 export type ServiceStaticInputs = {
   $service?: string;
+};
+
+const normalize = (serviceURL: string) => {
+  if (serviceURL.endsWith("/")) {
+    return serviceURL.slice(0, -1);
+  }
+  return serviceURL;
 };
 
 const describe = async (
@@ -18,17 +25,18 @@ const describe = async (
   if (!$service || typeof $service !== "string") {
     return { inputs: {}, outputs: {} };
   }
-  if ($service.endsWith("/")) {
-    $service = $service.slice(0, -1);
-  }
-  const describeURL = `${$service}/describe`;
+  const service = normalize($service);
+  const describeURL = `${service}/describe`;
   try {
-    return await (
+    const schemas = await (
       await fetch(describeURL, {
         method: "POST",
         body: JSON.stringify({ dynamicInputs }),
       })
     ).json();
+    const inputs = fromJSONSchema(schemas?.inputs ?? {});
+    const outputs = fromJSONSchema(schemas?.outputs ?? {});
+    return { inputs, outputs };
   } catch {
     // Eat any exceptions.
     // This is a describer, and it must always return some valid value.
@@ -42,8 +50,7 @@ const invoke = async (inputs: InputValues) => {
     throw new Error("Service URL is required.");
   }
 
-  const service = $service.endsWith("/") ? $service.slice(0, -1) : $service;
-
+  const service = normalize($service);
   const invokeURL = `${service}/invoke`;
   return await (
     await fetch(invokeURL, {
