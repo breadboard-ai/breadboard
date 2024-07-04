@@ -9,9 +9,9 @@ date: 2012-01-01 # Done to place the index atop the list.
 
 These are the docs for Breadboard.
 
-<h2>General</h2>
+<h2>Guides</h2>
 <ul>
-{%- for item in collections.general -%}
+{%- for item in collections.guide -%}
   <li>
     {% if page.url != item.url %}
       <a href="/breadboard{{ item.url }}">
@@ -50,6 +50,25 @@ These are the docs for Breadboard.
 <h2>Kits</h2>
 <ul>
 {%- for item in collections.kits -%}
+  <li>
+    {% if page.url != item.url %}
+      <a href="/breadboard{{ item.url }}">
+    {% endif %}
+
+      {{ item.data.title }}
+
+    {% if page.url != item.url %}
+      </a>
+    {% endif %}
+    </li>
+
+{%- endfor -%}
+
+</ul>
+
+<h2>Miscellaneous</h2>
+<ul>
+{%- for item in collections.miscellaneous -%}
   <li>
     {% if page.url != item.url %}
       <a href="/breadboard{{ item.url }}">
