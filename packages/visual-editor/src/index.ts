@@ -844,11 +844,28 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
+  #canParse(url: string) {
+    // TypeScript assumes that if `canParse` does not exist, then URL is
+    // `never`. However, in older browsers that's not true. We therefore take a
+    // temporary copy of the URL constructor here.
+    const UrlCtor = URL;
+    if ("canParse" in URL) {
+      return URL.canParse(url);
+    }
+
+    try {
+      new UrlCtor(url);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   #makeRelativeToCurrentBoard(boardUrl: string | null) {
     // An inability to parse the URL below likely means it's an example board,
     // which doesn't carry a protocol, etc. In such cases we just return the
     // URL as-is.
-    if (boardUrl && URL.canParse(boardUrl)) {
+    if (boardUrl && this.#canParse(boardUrl)) {
       if (this.url) {
         try {
           const base = new URL(this.url);
