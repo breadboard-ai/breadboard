@@ -26,6 +26,7 @@
   --bb-grid-size-15: calc(var(--bb-grid-size) * 15);
   --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
 
+  --bb-icon-docs: url(/breadboard/static/third_party/icons/docs.svg);
   --bb-icon-fit: url(/breadboard/static/third_party/icons/fit.svg);
   --bb-icon-minimize: url(/breadboard/static/third_party/icons/minimize.svg);
   --bb-icon-maximize: url(/breadboard/static/third_party/icons/maximize.svg);
@@ -99,6 +100,12 @@
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
 
+  --bb-title-xx-large: 36px;
+  --bb-title-line-height-xx-large: 28px;
+
+  --bb-title-x-large: 28px;
+  --bb-title-line-height-x-large: 28px;
+
   --bb-title-large: 22px;
   --bb-title-line-height-large: 28px;
 
@@ -170,29 +177,23 @@ body {
   color: var(--bb-font-color);
 }
 
-body {
-  padding-top: calc(var(--bb-grid-size) * 10.5);
-}
-
 #navigation {
   display: block;
-  height: calc(var(--bb-grid-size) * 10.5);
+  height: var(--bb-grid-size-15);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   font-size: 0.8125rem; /* 13px */
-  border-bottom: 1px solid #bfbfbf;
+  border-bottom: 1px solid var(--bb-neutral-300);
   flex: 0 0 auto;
-  position: fixed;
-  top: 0;
   width: 100%;
-  z-index: 2;
-  background: #fff;
+  z-index: 3;
+  background: var(--bb-neutral-0);
 }
 
 #navigation > .home {
   flex: 1;
   margin-left: calc(var(--bb-grid-size) * 5);
+  color: var(--bb-neutral-900);
 }
 
 #navigation > .home > a {
@@ -201,24 +202,21 @@ body {
   justify-content: flex-start;
 }
 
-#navigation > .home > a::before {
-  content: "";
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  background: no-repeat center/16px url(/breadboard/static/icon.png);
-}
-
 #navigation > .home > a,
 #navigation > .inline-list > a {
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.7;
   margin-right: calc(var(--bb-grid-size) * 5);
-  text-transform: uppercase;
   text-decoration: none;
   color: var(--bb-font-color);
-  font-family: var(--bb-font-family-mono);
+  font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+    var(--bb-font-family);
+}
+
+#navigation > .home > a {
+  color: var(--bb-neutral-900);
+  font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+    var(--bb-font-family);
 }
 
 #navigation a:hover {
@@ -227,10 +225,16 @@ body {
 }
 
 #navigation #github {
-  display: block;
+  display: flex;
+  align-items: center;
+}
+
+#navigation #github::before {
+  content: "";
   width: 16px;
   height: 16px;
   font-size: 0;
+  margin-right: var(--bb-grid-size-2);
   background: no-repeat center/16px url(./third_party/github/github-mark.svg);
 }
 
@@ -252,9 +256,9 @@ body {
   font-size: 0;
   background: no-repeat center/16px
     url(/breadboard/static/third_party/icons/menu.svg);
-  margin-right: 16px;
-  height: 24px;
-  width: 24px;
+  margin-right: var(--bb-grid-size-2);
+  height: 28px;
+  width: 28px;
 }
 
 .toggle-list .item-list {
@@ -276,8 +280,12 @@ body {
   display: block;
 }
 
+#item-list-toggle:checked ~ .home-link {
+  display: block;
+}
+
 .toggle-list .item-list summary {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   font-size: 0.875rem;
   margin: 0 0 8px;
   height: 40px;
@@ -302,26 +310,24 @@ body {
 }
 
 .toggle-list .item-list a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-900);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.8;
   font-weight: normal;
 }
 
+.toggle-list .home-link {
+  color: var(--bb-neutral-900);
+  font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+    var(--bb-font-family);
+  text-decoration: none;
+  display: none;
+}
+
 .toggle-list .item-list a:hover {
   transition-duration: 0.1s;
   opacity: 1;
-}
-
-@media (min-width: 1440px) {
-  #navigation .toggle-list {
-    display: none;
-  }
-
-  #navigation .inline-list {
-    display: flex;
-  }
 }
 
 .eleventy-plugin-youtube-embed {
@@ -362,20 +368,101 @@ bb-board-embed:not(:defined)::before {
 }
 
 footer {
-  border-top: 1px solid rgb(233, 233, 233);
-  padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8);
-  font-family: var(--bb-font-family-mono);
-  color: var(--bb-font-color);
-  font-size: 0.75rem; /* 12px */
-  margin-top: 220px;
+  display: flex;
   z-index: 2;
-  background: #fff;
+  background: var(--bb-neutral-50);
+  color: var(--bb-neutral-600);
+  font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+    var(--bb-font-family);
+}
+
+footer #footer-content {
+  width: 90vw;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 40px 0 80px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+footer h1 {
+  margin: 0 var(--bb-grid-size-4) 0 0;
+  font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+    var(--bb-font-family);
+  color: var(--bb-neutral-700);
+}
+
+footer ul {
+  padding: 0;
+  margin: var(--bb-grid-size-3) 0;
+  list-style: none;
+}
+
+footer ul li {
+  margin: var(--bb-grid-size) 0;
 }
 
 footer a {
   text-decoration: none;
-  font-weight: bold;
-  color: var(--bb-font-color);
+  color: var(--bb-neutral-700);
+}
+
+footer #copyright {
+  flex: 1;
+}
+
+@media (min-width: 780px) {
+  footer #footer-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  footer ul {
+    margin: 0;
+  }
+
+  footer ul li {
+    display: inline-block;
+    margin-right: var(--bb-grid-size);
+  }
+
+  footer #copyright {
+    flex: 1;
+    text-align: right;
+  }
+}
+
+@media (min-width: 1050px) {
+  footer {
+    padding: 50px 0 80px 0;
+    font: 400 var(--bb-body-large) / var(--bb-body-line-height-large)
+      var(--bb-font-family);
+  }
+
+  footer h1 {
+    font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+      var(--bb-font-family);
+    margin-right: var(--bb-grid-size-6);
+  }
+
+  footer ul li {
+    margin-right: var(--bb-grid-size-3);
+  }
+}
+
+@media (min-width: 1440px) {
+  #navigation {
+    justify-content: flex-end;
+  }
+
+  #navigation .toggle-list {
+    display: none;
+  }
+
+  #navigation .inline-list {
+    display: flex;
+  }
 }
 
 @keyframes fadeAndSlideInFromLeft {

@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+:root {
+  --update-width: calc((100% - 860px) / 2);
+}
+
 html,
 body {
   height: 100%;
@@ -19,6 +23,7 @@ main {
   max-width: 720px;
   margin: 0 auto;
   flex: 1;
+  padding-bottom: 220px;
 }
 
 main > ol li,
@@ -171,21 +176,31 @@ code[class*="language-"] {
 }
 
 .updates {
-  border-right: 1px solid #f0f0f0;
+  background: var(--bb-neutral-0);
+  border-right: 1px solid var(--bb-neutral-300);
   display: none;
   position: fixed;
-  height: calc(100% - var(--bb-grid-size) * 10.5 - var(--bb-grid-size) * 16);
+  height: 100%;
   left: 0;
-  top: 42px;
+  top: 0;
   margin: 0 0 0 0;
-  width: calc((100% - 820px) / 2);
+  width: var(--update-width);
   overflow: auto;
   padding: 16px 0 32px 0;
-  align-items: flex-end;
+  align-items: flex-start;
+  z-index: 4;
+}
+
+.updates .home-link {
+  width: 80%;
+  color: var(--bb-neutral-900);
+  font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+    var(--bb-font-family);
+  padding: 0 20px;
 }
 
 .updates details {
-  width: 300px;
+  width: 80%;
 }
 
 .updates summary {
@@ -230,6 +245,13 @@ code[class*="language-"] {
   .updates {
     display: flex;
     flex-direction: column;
+  }
+
+  footer {
+    width: calc(100% - var(--update-width));
+    margin-left: var(--update-width);
+    padding-left: 60px;
+    padding-right: 60px;
   }
 }
 
