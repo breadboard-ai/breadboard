@@ -8,19 +8,19 @@ import { dirname, join } from "path";
 let breadboardWebPublic: boolean | string = false;
 // @ts-expect-error 2274
 if (import.meta.resolve) {
-  const publicPath = import.meta.resolve("@google-labs/visual-editor/public");
+  const publicPath = import.meta.resolve("@breadboard-ai/visual-editor/public");
   breadboardWebPublic = fileURLToPath(publicPath);
 } else {
   const require = createRequire(import.meta.url);
-  const breadboardWebIndex = require.resolve("@google-labs/visual-editor");
+  const breadboardWebIndex = require.resolve("@breadboard-ai/visual-editor");
   breadboardWebPublic = join(dirname(breadboardWebIndex), "..", "public");
 }
 
 export default defineConfig({
   optimizeDeps: {
     include: [
+      "@breadboard-ai/visual-editor",
       "@google-labs/breadboard",
-      "@google-labs/visual-editor",
       "@google-labs/core-kit",
       "@google-labs/template-kit",
       "commander",

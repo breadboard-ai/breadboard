@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/visual-editor",
+  "name": "@breadboard-ai/visual-editor",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
