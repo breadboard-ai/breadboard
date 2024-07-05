@@ -11,14 +11,14 @@ import { gemini } from "@google-labs/gemini-kit";
 
 // A URL of the Webcam board. We will invoke this board to get the picture to
 // describe. The board source is located here:
-// https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard-web/src/boards/webcam.ts
+// https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/src/boards/webcam.ts
 // Has these inputs:
 // - `picture`: the picture from the webcam (image),
 // - `prompt`: the prompt to use with the picture (string).
 // Has these outputs:
 // - `text`: the description of the picture.
 const webcamBoard =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/5c3076a500f692c60bd5cfd0b25e92190f17c12e/packages/breadboard-web/public/graphs/webcam.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/visual-editor/public/graphs/webcam.json";
 
 // A node type that generates a random letter.
 const randomLetterMaker = code(() => {
@@ -57,14 +57,14 @@ export default await board(({ drawing }) => {
     Read the description below and transform it into a mystical creature with unique abilities.
 
     Come up with a fun name for the creature and a backstory for how it came to be. The name must start with the letter "{{letter}}".
-    
+
     Write a story of the creature and how it came to be. Describe its unique abilities. Provide the list of attributes (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores as a bulleted list.
 
     Reply in valid Markdown format with the following headings: "NAME", "STORY", "ABILITIES", and "ATTRIBUTES".
-    
+
     ## DESCRIPTION:
     {{description}}
-    
+
     ## RESPONSE:
     `,
     description: describePicture.text,

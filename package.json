@@ -13,7 +13,7 @@
     "ci": "npm ci",
     "s": "(cd packages/board-server && npm run dev) # Starts the board server",
     "d": "(cd packages/website && npm run dev) # Starts the docs website",
-    "w": "(cd packages/breadboard-web && npm run dev) # Starts the breadboard web UI",
+    "w": "(cd packages/visual-editor && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "syncpack:check": "wireit",
