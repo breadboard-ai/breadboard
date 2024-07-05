@@ -256,7 +256,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard-web#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",

@@ -7,7 +7,7 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Debug breadboard-web",
+      "name": "Debug visual-editor",
       "timeout": 50000,
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",

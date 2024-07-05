@@ -119,7 +119,7 @@ export class BreadboardDebugSession extends LoggingDebugSession {
 
     if (!boardLocations) {
       const locations = await vscode.workspace.findFiles(
-        "packages/breadboard-web/public/graphs/*.json"
+        "packages/visual-editor/public/graphs/*.json"
       );
 
       const value = await vscode.window.showInformationMessage(

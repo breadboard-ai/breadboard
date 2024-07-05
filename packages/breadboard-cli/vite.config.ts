@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import { createRequire } from "module";
 import { dirname, join } from "path";
 
-// Carry through the breadboard-web public dir as the public dir for the
+// Carry through the visual-editor public dir as the public dir for the
 // debugger here. It's essentially a passthrough.
 let breadboardWebPublic: boolean | string = false;
 // @ts-expect-error 2274
@@ -33,7 +33,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        // TODO: These are just variants of the breadboard-web entry points; we
+        // TODO: These are just variants of the visual-editor entry points; we
         // could (and possibly should) unify them.
         index: "./index.html",
         preview: "./preview.html",

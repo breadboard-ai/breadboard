@@ -58,7 +58,7 @@ const sampleInstruction = `You are a hip, fun-loving mathematician who loves to 
 In situations where the tool use is not necessary, just carry the conversation with the user.`;
 
 const sampleTools = JSON.stringify([
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json",
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/visual-editor/public/graphs/search-summarize.json",
   {
     title: "The Calculator Board",
     description:
