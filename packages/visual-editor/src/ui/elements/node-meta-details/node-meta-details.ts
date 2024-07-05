@@ -353,7 +353,7 @@ export class NodeMetaDetails extends LitElement {
 
   render() {
     if (!this.graph || !this.selectedNodeIds.length) {
-      return html`<div id="no-node-selected">No node selected</div>`;
+      return html`<div id="no-node-selected">No component selected</div>`;
     }
 
     return this.#formTask.render({
@@ -392,7 +392,7 @@ export class NodeMetaDetails extends LitElement {
                     );
                   }}
                 >
-                  Node details
+                  Component details
                 </button>
               </h1>
               <form

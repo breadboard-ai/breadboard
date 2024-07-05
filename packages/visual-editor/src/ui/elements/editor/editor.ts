@@ -1378,7 +1378,7 @@ export class Editor extends LitElement {
                         nodeSelector.selectSearchInput();
                       }}
                     />
-                    <label for="add-node">Nodes</label>
+                    <label for="add-node">Components</label>
 
                     <bb-node-selector
                       ${ref(this.#nodeSelectorRef)}
