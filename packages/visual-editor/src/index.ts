@@ -592,11 +592,30 @@ export class Main extends LitElement {
     }
   }
 
+  #receivesInputPreference(target: EventTarget) {
+    return (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLCanvasElement
+    );
+  }
+
   #onKeyDown(evt: KeyboardEvent) {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
     if (evt.key === "v" && isCtrlCommand && !this.graph) {
+      // Only allow a paste when there's nothing else in the composed path that
+      // would accept the paste first.
+      if (
+        evt
+          .composedPath()
+          .some((target) => this.#receivesInputPreference(target))
+      ) {
+        return;
+      }
+
       evt.preventDefault();
 
       navigator.clipboard.readText().then((content) => {
