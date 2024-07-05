@@ -65,7 +65,7 @@ export default defineNodeType({
   metadata: {
     title: "Service",
     description:
-      "Represents an external service that can be used from the board.",
+      "Represents an external service that can be used by the board.",
   },
   inputs: {
     $service: {
