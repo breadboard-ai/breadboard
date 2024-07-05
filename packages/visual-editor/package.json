@@ -227,7 +227,7 @@
     }
   },
   "repository": {
-    "directory": "packages/breadboard-web",
+    "directory": "packages/visual-editor",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
