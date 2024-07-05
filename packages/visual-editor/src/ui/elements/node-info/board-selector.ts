@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphProvider } from "@google-labs/breadboard";
+import { GraphProvider, SubGraphs } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -20,7 +20,7 @@ export class BoardSelector extends LitElement {
   providerOps = 0;
 
   @property()
-  subGraphIds: string[] = [];
+  subGraphs: SubGraphs | null = null;
 
   @state()
   usingCustomURL = false;
@@ -110,11 +110,9 @@ export class BoardSelector extends LitElement {
   }
 
   protected willUpdate(): void {
-    for (const subGraphId of this.subGraphIds) {
-      if (this.#board === `#${subGraphId}`) {
-        this.usingCustomURL = false;
-        return;
-      }
+    if (this.subGraphs && this.#board && this.subGraphs[this.#board.slice(1)]) {
+      this.usingCustomURL = false;
+      return;
     }
 
     for (const provider of this.providers) {
@@ -162,32 +160,40 @@ export class BoardSelector extends LitElement {
           <option ?selected=${this.usingCustomURL} value="--custom--">
             -- Custom URL
           </option>
-          ${this.subGraphIds.length
+          ${this.subGraphs && Object.keys(this.subGraphs).length
             ? html`<optgroup label="Sub Boards">
-                ${map(this.subGraphIds, (subGraphId) => {
-                  const href = `#${subGraphId}`;
+                ${map(Object.entries(this.subGraphs), ([id, subGraph]) => {
+                  const href = `#${id}`;
                   return html`<option
                     ?selected=${href === this.#board}
                     value=${href}
                   >
-                    ${subGraphId}
+                    ${subGraph.title ?? "Untitled sub board"}
                   </option>`;
                 })}
               </optgroup>`
             : nothing}
           ${map(this.providers, (provider) => {
             return html`${map(provider.items(), ([, store]) => {
+              const storeItems = [...store.items].filter(([, storeItem]) => {
+                return (storeItem.tags ?? []).includes("tool");
+              });
+
               return html`<optgroup label="${store.title}">
-                ${map(store.items, ([name, { url }]) => {
-                  // TODO: Figure out whether URLs should be expanded here.
-                  const expandedUrl = new URL(url, window.location.href);
-                  return html`<option
-                    ?selected=${expandedUrl.href === this.#board}
-                    value=${expandedUrl.href}
-                  >
-                    ${name}
-                  </option>`;
-                })}
+                ${storeItems.length
+                  ? map(storeItems, ([name, { url }]) => {
+                      // TODO: Figure out whether URLs should be expanded here.
+                      const expandedUrl = new URL(url, window.location.href);
+                      return html`<option
+                        ?selected=${expandedUrl.href === this.#board}
+                        value=${expandedUrl.href}
+                      >
+                        ${name}
+                      </option>`;
+                    })
+                  : html`<option disabled>
+                      No tools available in this provider
+                    </option>`}
               </optgroup>`;
             })}`;
           })}

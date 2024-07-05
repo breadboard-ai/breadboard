@@ -19,13 +19,13 @@ import type {
   SerializableOutputPortReference,
 } from "../common/serializable.js";
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
+import { isBoard, type GenericBoardDefinition } from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
-import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
+import { isSpecialInput, type Input, type InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import type { Output } from "./output.js";
-import { isBoard, type GenericBoardDefinition } from "./board.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -512,14 +512,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     graphs.set(id, serialize(board));
     return id;
   }
-}
-
-function isSpecialInput(value: unknown): value is GenericSpecialInput {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialInputBrand" in value
-  );
 }
 
 function isSpecialOutput(value: unknown): value is Output<JsonSerializable> {

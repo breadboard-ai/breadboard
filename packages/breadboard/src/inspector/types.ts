@@ -30,6 +30,7 @@ import {
   Schema,
 } from "../types.js";
 import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
+import { type JsonSubSchemaAnalysisDetail } from "@google-labs/breadboard-schema/subschema.js";
 
 export type GraphVersion = number;
 
@@ -183,8 +184,10 @@ export type ValidateResult =
 
 export interface ValidateError {
   message: string;
-  // TODO(aomarks) Could add more data here in future, e.g. a path to the part
-  // of the schema which is invalid for fancy highlighting, etc.
+  detail?: {
+    outputPath: Array<string | number>;
+    inputPath: Array<string | number>;
+  };
 }
 
 export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;
@@ -384,6 +387,11 @@ export type InspectablePort = {
    * Returns a representation of the port's type.
    */
   type: InspectablePortType;
+
+  /**
+   * Is this an input or output port?
+   */
+  kind: "input" | "output";
 };
 
 export type InspectablePortType = {
@@ -402,7 +410,21 @@ export type InspectablePortType = {
    * @param to the incoming port type to which to connect.
    */
   canConnect(to: InspectablePortType): boolean;
+
+  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis;
 };
+
+export type CanConnectAnalysis =
+  | { canConnect: true; details?: never }
+  | { canConnect: false; details: CanConnectAnalysisDetail[] };
+
+export interface CanConnectAnalysisDetail {
+  message: string;
+  detail?: {
+    outputPath: Array<string | number>;
+    inputPath: Array<string | number>;
+  };
+}
 
 /**
  * Represents one side (input or output) of ports of a node.

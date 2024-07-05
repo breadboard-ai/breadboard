@@ -226,11 +226,11 @@ export class Main extends LitElement {
       cursor: pointer;
     }
 
-    #edit-board-info {
+    #close-board {
       font-size: 0;
       width: 20px;
       height: 20px;
-      background: var(--bb-icon-edit) center center no-repeat;
+      background: var(--bb-icon-close) center center no-repeat;
       background-size: 16px 16px;
       border: 2px solid transparent;
       margin-left: calc(var(--bb-grid-size) * 2);
@@ -239,11 +239,11 @@ export class Main extends LitElement {
       border-radius: 50%;
     }
 
-    #edit-board-info:not([disabled]) {
+    #close-board:not([disabled]) {
       cursor: pointer;
     }
 
-    #edit-board-info:not([disabled]):hover {
+    #close-board:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
       background-color: var(--bb-neutral-300);
@@ -596,6 +596,29 @@ export class Main extends LitElement {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
+    if (evt.key === "v" && isCtrlCommand && !this.graph) {
+      evt.preventDefault();
+
+      navigator.clipboard.readText().then((content) => {
+        try {
+          const descriptor = JSON.parse(content) as GraphDescriptor;
+          if (!("edges" in descriptor && "nodes" in descriptor)) {
+            return;
+          }
+
+          this.#attemptBoardStart(
+            new BreadboardUI.Events.StartEvent(null, descriptor)
+          );
+        } catch (err) {
+          this.toast(
+            "Unable to paste board",
+            BreadboardUI.Events.ToastType.ERROR
+          );
+        }
+      });
+      return;
+    }
+
     if (evt.key === "s" && isCtrlCommand) {
       evt.preventDefault();
 
@@ -778,6 +801,7 @@ export class Main extends LitElement {
     );
 
     const { result, error } = await provider.delete(new URL(url));
+    await this.#removeRecentUrl(url);
 
     this.toast(
       "Board deleted",
@@ -794,7 +818,7 @@ export class Main extends LitElement {
     }
 
     if (isActive) {
-      this.showWelcomePanel = true;
+      this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(null, null));
     }
 
     // Trigger a re-render.
@@ -820,11 +844,28 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
+  #canParse(url: string) {
+    // TypeScript assumes that if `canParse` does not exist, then URL is
+    // `never`. However, in older browsers that's not true. We therefore take a
+    // temporary copy of the URL constructor here.
+    const UrlCtor = URL;
+    if ("canParse" in URL) {
+      return URL.canParse(url);
+    }
+
+    try {
+      new UrlCtor(url);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   #makeRelativeToCurrentBoard(boardUrl: string | null) {
     // An inability to parse the URL below likely means it's an example board,
     // which doesn't carry a protocol, etc. In such cases we just return the
     // URL as-is.
-    if (boardUrl && URL.canParse(boardUrl)) {
+    if (boardUrl && this.#canParse(boardUrl)) {
       if (this.url) {
         try {
           const base = new URL(this.url);
@@ -848,10 +889,11 @@ export class Main extends LitElement {
     this.graph = null;
     this.subGraphId = null;
 
+    // TODO: Figure out how to avoid needing to null this out.
+    this.#editor = null;
+
     if (startEvent.descriptor) {
       this.graph = startEvent.descriptor;
-      // TODO: Figure out how to avoid needing to null this out.
-      this.#editor = null;
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
@@ -895,13 +937,9 @@ export class Main extends LitElement {
         this.graph = graph;
         this.#setPageTitle();
         await this.#trackRecentBoard();
-        // TODO: Figure out how to avoid needing to null this out.
-        this.#editor = null;
       } catch (err) {
         this.url = null;
         this.graph = null;
-        // TODO: Figure out how to avoid needing to null this out.
-
         this.#editor = null;
         this.#failedGraphLoad = true;
       }
@@ -945,6 +983,21 @@ export class Main extends LitElement {
 
     if (this.#recentBoards.length > 5) {
       this.#recentBoards.length = 5;
+    }
+
+    await this.#recentBoardStore.store(this.#recentBoards);
+  }
+
+  async #removeRecentUrl(url: string) {
+    url = url.replace(window.location.origin, "");
+    const count = this.#recentBoards.length;
+
+    this.#recentBoards = this.#recentBoards.filter(
+      (board) => board.url !== url
+    );
+
+    if (count === this.#recentBoards.length) {
+      return;
     }
 
     await this.#recentBoardStore.store(this.#recentBoards);
@@ -1455,27 +1508,15 @@ export class Main extends LitElement {
                   : nothing}
                 <button
                   @click=${() => {
-                    let graph = this.graph;
-                    if (graph && graph.graphs && this.subGraphId) {
-                      graph = graph.graphs[this.subGraphId];
-                    }
-
-                    this.boardEditOverlayInfo = {
-                      title: graph?.title ?? "No Title",
-                      version: graph?.version ?? "0.0.1",
-                      description: graph?.description ?? "No Description",
-                      published: this.subGraphId
-                        ? null
-                        : graph?.metadata?.tags?.includes("published") ?? false,
-                      isTool: graph?.metadata?.tags?.includes("tool") ?? false,
-                      subGraphId: this.subGraphId,
-                    };
+                    this.#attemptBoardStart(
+                      new BreadboardUI.Events.StartEvent(null, null)
+                    );
                   }}
                   ?disabled=${this.graph === null}
-                  id="edit-board-info"
-                  title="Edit Board Information"
+                  id="close-board"
+                  title="Close Board"
                 >
-                  Edit
+                  Close
                 </button>
               </h1>`
             : nothing}

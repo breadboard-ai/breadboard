@@ -1,24 +1,4 @@
 <details open>
-  <summary>General Documentation</summary>
-  <ul>
-  {%- for item in collections.general -%}
-    <li>
-      {% if page.url != item.url %}
-        <a href="/breadboard{{ item.url }}">
-      {% endif %}
-
-        {{ item.data.title }}
-
-      {% if page.url != item.url %}
-        </a>
-      {% endif %}
-      </li>
-  {%- endfor -%}
-  </ul>
-</details>
-
-
-<details open>
   <summary>Guides</summary>
   <ul>
   {%- for item in collections.guide -%}
@@ -62,6 +42,25 @@
   <summary>Kit Documentation</summary>
   <ul>
   {%- for item in collections.kits -%}
+    <li>
+      {% if page.url != item.url %}
+        <a href="/breadboard{{ item.url }}">
+      {% endif %}
+
+        {{ item.data.title }}
+
+      {% if page.url != item.url %}
+        </a>
+      {% endif %}
+      </li>
+  {%- endfor -%}
+  </ul>
+</details>
+
+<details open>
+  <summary>Miscellaneous</summary>
+  <ul>
+  {%- for item in collections.miscellaneous -%}
     <li>
       {% if page.url != item.url %}
         <a href="/breadboard{{ item.url }}">

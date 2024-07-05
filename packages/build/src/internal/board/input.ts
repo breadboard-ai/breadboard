@@ -198,3 +198,11 @@ type CheckParams<T extends LooseParams> = (T["type"] extends Defined
     ? unknown
     : never;
 };
+
+export function isSpecialInput(value: unknown): value is GenericSpecialInput {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__SpecialInputBrand" in value
+  );
+}

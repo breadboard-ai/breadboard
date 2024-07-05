@@ -4,9 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType, object } from "@breadboard-ai/build";
+import {
+  defineNodeType,
+  object,
+  unsafeSchema,
+  unsafeType,
+} from "@breadboard-ai/build";
 import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import type { InputValues, Schema } from "@google-labs/breadboard";
+import { JSONSchema4 } from "json-schema";
 
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>
@@ -246,7 +252,19 @@ export default defineNodeType({
     schema: {
       behavior: ["config", "ports-spec"],
       description:
-        "The schema of the output data. This is used to validate the output data before running the code.",
+        "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
+      type: object({}, "unknown"),
+      optional: true,
+    },
+    inputSchema: {
+      behavior: ["config", "ports-spec"],
+      description: "The schema of the input data.",
+      type: object({}, "unknown"),
+      optional: true,
+    },
+    outputSchema: {
+      behavior: ["config", "ports-spec"],
+      description: "The schema of the output data.",
       type: object({}, "unknown"),
       optional: true,
     },
@@ -266,35 +284,25 @@ export default defineNodeType({
       type: "unknown",
     },
   },
-  describe: (inputs) => {
-    if (inputs.raw && inputs.schema && inputs.schema.properties) {
-      const schema: Schema = inputs.schema;
-
-      const outputEntries = Object.entries(schema.properties as object).map(
-        ([name, val]) => [
-          name,
-          {
-            type: val.type,
-            description: `output "${name}"`,
+  describe: ({ raw, inputSchema, ...rest }) => {
+    // "schema" is the deprecated name for "outputSchema", so fall back to that.
+    const outputSchema: JSONSchema4 | undefined =
+      rest.outputSchema ?? rest.schema;
+    return {
+      inputs: inputSchema ? unsafeSchema(inputSchema) : { "*": "unknown" },
+      outputs: raw
+        ? outputSchema
+          ? unsafeSchema(outputSchema)
+          : { "*": "unknown" }
+        : {
+            result: {
+              description: "The result of running the JavaScript code",
+              type: outputSchema?.properties?.result
+                ? unsafeType(outputSchema.properties.result)
+                : "unknown",
+            },
           },
-        ]
-      );
-      return {
-        outputs: Object.fromEntries(outputEntries),
-      };
-    }
-
-    if (inputs.raw == false) {
-      return {
-        outputs: {
-          result: {
-            description: "The result of running the JavaScript code",
-          },
-        },
-      };
-    }
-
-    return { outputs: { "*": {} } };
+    };
   },
   invoke: (config, args) => runJavascriptHandler(config, args),
 });

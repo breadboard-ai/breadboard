@@ -4,11 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Convergence } from "./internal/board/converge.js";
-import type { Input, InputWithDefault } from "./internal/board/input.js";
-import type { Loopback } from "./internal/board/loopback.js";
-import type { OutputPortReference } from "./internal/common/port.js";
-import type { JsonSerializable } from "./internal/type-system/type.js";
+import { isConvergence, type Convergence } from "./internal/board/converge.js";
+import {
+  isSpecialInput,
+  type Input,
+  type InputWithDefault,
+} from "./internal/board/input.js";
+import { isLoopback, type Loopback } from "./internal/board/loopback.js";
+import {
+  isOutputPortReference,
+  OutputPortGetter,
+  type OutputPortReference,
+} from "./internal/common/port.js";
+import { anyOf } from "./internal/type-system/any-of.js";
+import type {
+  BreadboardType,
+  JsonSerializable,
+} from "./internal/type-system/type.js";
 
 export { board } from "./internal/board/board.js";
 export { constant } from "./internal/board/constant.js";
@@ -54,3 +66,42 @@ export type Value<T extends JsonSerializable> =
   | InputWithDefault<T>
   | Loopback<T>
   | Convergence<T>;
+
+/**
+ * Given a Breadboard {@link Value}, determine its JSON Schema type.
+ */
+export function extractTypeFromValue(
+  value: Value<JsonSerializable>
+): BreadboardType {
+  if (typeof value === "string") {
+    return "string";
+  }
+  if (typeof value === "number") {
+    return "number";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  if (value === null) {
+    return "null";
+  }
+  if (isOutputPortReference(value)) {
+    return value[OutputPortGetter].type;
+  }
+  if (isSpecialInput(value)) {
+    return value.type;
+  }
+  if (isLoopback(value)) {
+    return value.type;
+  }
+  if (isConvergence(value)) {
+    return anyOf(
+      ...(value.ports.map((port) => extractTypeFromValue(port)) as [
+        BreadboardType,
+        BreadboardType,
+        ...BreadboardType[],
+      ])
+    );
+  }
+  return "unknown";
+}

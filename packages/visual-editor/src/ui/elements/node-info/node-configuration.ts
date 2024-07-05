@@ -880,9 +880,11 @@ export class NodeConfigurationInfo extends LitElement {
                               if (port.edges.length === 0) {
                                 switch (type) {
                                   case "object": {
-                                    // Only show the schema editor for inputs & outputs
+                                    // The port spec schema editor is shown
+                                    // separately, so skip over the port and
+                                    // render nothing.
                                     if (port.type.hasBehavior("ports-spec")) {
-                                      input = html``;
+                                      input = nothing;
                                     } else if (isBoard(port, value)) {
                                       const selectorValue = value
                                         ? typeof value === "string"
@@ -891,10 +893,7 @@ export class NodeConfigurationInfo extends LitElement {
                                         : "";
                                       input = html`<bb-board-selector
                                         .graph=${this.graph}
-                                        .subGraphIds=${this.graph &&
-                                        this.graph.graphs
-                                          ? Object.keys(this.graph.graphs)
-                                          : []}
+                                        .subGraphs=${this.graph?.graphs ?? null}
                                         .providers=${this.providers}
                                         .providerOps=${this.providerOps}
                                         .value=${selectorValue || ""}
@@ -1021,10 +1020,7 @@ export class NodeConfigurationInfo extends LitElement {
                                             : port.schema.items
                                           : port.schema
                                       )}
-                                      .subGraphIds=${this.graph &&
-                                      this.graph.graphs
-                                        ? Object.keys(this.graph.graphs)
-                                        : []}
+                                      .graph=${this.graph}
                                       .providers=${this.providers}
                                       .providerOps=${this.providerOps}
                                     ></bb-array-editor>`;

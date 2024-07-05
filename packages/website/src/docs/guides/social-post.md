@@ -3,6 +3,7 @@ layout: docs.njk
 title: Building a Social Media Post Creator with the Agent Kit
 tags:
   - guide
+date: 2020-01-03 # Third in the list
 ---
 
 At the end of this guide, we'll have an agent that can create captions for social media posts. The user will first enter the business name and location, and then the agent will chat with the user about the purpose of the social media post. It'll then use that information to create a caption that fits the post and the business needs.
@@ -38,7 +39,7 @@ Now, before we move on, let's modify the input for this flow so that we can have
 
 Now click on the input node itself. In the right panel at the top you'll see "Node Details". Give it a title like "Get business name and location".
 
-In this same right panel, change the title field from  "Context" to "Business Name". Now, below that port at the bottom, you'll see a button called "Add a port" in gray. Click that button and give the new port a title of "Business location (city and state)". The resulting node should now look like what's shown below. 
+In this same right panel, change the title field from "Context" to "Business Name". Now, below that port at the bottom, you'll see a button called "Add a port" in gray. Click that button and give the new port a title of "Business location (city and state)". The resulting node should now look like what's shown below.
 
 ![Breadboard Node Selector](/breadboard/static/images/social-post/new-input-node.png)
 
@@ -80,14 +81,14 @@ Clicking on the Interview Planner Node, this prompt goes into the Task field.
 
 Now that we have a Interview Planner to come up with an interview plan, we will add the Interviewer to the board and get to the details of what we want the conversation to actually entail. The Interviewer will be responsible for formulating the questions for the interview and reacting to user feedback.
 
-This is a job for a [Specialist](../#specialist). The easiest way to add this node is by grabbing the little robot icon on the bottom left corner and dragging it onto the board. You can name it "Interviewer". 
+This is a job for a [Specialist](../#specialist). The easiest way to add this node is by grabbing the little robot icon on the bottom left corner and dragging it onto the board. You can name it "Interviewer".
 
 ![Breadboard Node Selector](/breadboard/static/images/agent-kit/node-selector.png)
 
 Notice that the Looper has two output ports. The "Context Out" port sends the conversation context when the Looper completed all of the steps of its plan. Go ahead and connect the Looper's "Context Out" port to the "out" port of the output node. Connect the Interview Planner's (Looper) "Context Out" port to the input of the Interviewer's (Specialist) "Context" port.
 
 ![Breadboard Node Selector](/breadboard/static/images/social-post/looper-specialist-only.png)
- 
+
 Now we need to educate our Specialist and give it purpose.
 
 > [!NOTE]
@@ -112,6 +113,7 @@ Ask just ONE question that includes what this social media post is
 about and its main goal. You only need to elicit ONE answer.
 Do so in a friendly and casual manner.
 ```
+
 Here's how it'll look in the right panel when you click on this node:
 
 ![Breadboard Node Selector](/breadboard/static/images/social-post/config-interviewer.png)

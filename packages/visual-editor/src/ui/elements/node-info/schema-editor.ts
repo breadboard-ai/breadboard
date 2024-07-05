@@ -47,6 +47,7 @@ export class SchemaEditor extends LitElement {
   expanded = new Map<string, boolean>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
+  #schemaPropertiesOrder: string[] = [];
 
   static styles = css`
     :host {
@@ -293,7 +294,17 @@ export class SchemaEditor extends LitElement {
     properties: Record<string, Schema>,
     required: string[]
   ) {
-    return html`${map(Object.entries(properties), ([id, value]) => {
+    // The only times these are expected to be unmatched are:
+    // 1. We have an entirely new Schema and the current order is unknown.
+    // 2. When we traverse the history.
+    //
+    // In such cases we (re)create the schema property order.
+    if (Object.keys(properties).length !== this.#schemaPropertiesOrder.length) {
+      this.#schemaPropertiesOrder = Object.keys(properties);
+    }
+
+    return html`${map(this.#schemaPropertiesOrder, (id) => {
+      const value = properties[id];
       const enumerations = html`<label for="${id}-enum">User choices</label>
         <bb-array-editor
           id="${id}-enum"
@@ -650,7 +661,7 @@ export class SchemaEditor extends LitElement {
             name="${id}-title"
             id="${id}-title"
             type="text"
-            value="${value.title || ""}"
+            .value="${value.title || ""}"
             ?readonly=${!this.editable}
           />
           <button
@@ -712,7 +723,7 @@ export class SchemaEditor extends LitElement {
             id="${id}-id"
             type="text"
             pattern="^[a-zA-Z0-9\\-]+$"
-            value="${id}"
+            .value="${id}"
             required="required"
           />
           ${value.type === "string" ? enumerations : nothing}
@@ -908,6 +919,7 @@ export class SchemaEditor extends LitElement {
 
         if (oldType === "array" && property.type !== oldType) {
           delete property.items;
+          delete property.default;
         }
 
         if (oldType === "object" && property.type !== oldType) {
@@ -960,6 +972,7 @@ export class SchemaEditor extends LitElement {
       }
 
       for (const [from, to] of renamedProperties) {
+        console.log(`Renaming ${from} to ${to}`);
         if (schema.properties[to]) {
           console.warn(`Attempted to rename to existing property: "${to}"`);
           continue;
@@ -973,6 +986,18 @@ export class SchemaEditor extends LitElement {
           this.expanded.set(to, expandedState);
           this.expanded.delete(from);
         }
+
+        // Ensure stable property order by updating the property name in the
+        // ordered listing.
+        this.#schemaPropertiesOrder = this.#schemaPropertiesOrder.map(
+          (property) => {
+            if (property === from) {
+              return to;
+            }
+
+            return property;
+          }
+        );
       }
     }
 
@@ -996,6 +1021,10 @@ export class SchemaEditor extends LitElement {
     schema.properties = schema.properties || {};
     delete schema.properties[id];
 
+    this.#schemaPropertiesOrder = this.#schemaPropertiesOrder.filter(
+      (item) => item !== id
+    );
+
     this.schema = schema;
     this.dispatchEvent(new SchemaChangeEvent());
   }
@@ -1006,12 +1035,15 @@ export class SchemaEditor extends LitElement {
       typeof schema.properties === "object" ? schema.properties : {};
 
     const idx = Object.keys(schema.properties).length + 1;
+    const key = `property-${idx}`;
     schema.properties = schema.properties || {};
-    schema.properties[`property-${idx}`] = {
+    schema.properties[key] = {
       type: "object",
       behavior: ["llm-content"],
       title: `Property ${idx}`,
     };
+
+    this.#schemaPropertiesOrder.push(key);
 
     this.schema = schema;
     this.dispatchEvent(new SchemaChangeEvent());

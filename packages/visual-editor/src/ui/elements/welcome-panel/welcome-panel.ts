@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import {
@@ -30,6 +30,12 @@ export class WelcomePanel extends LitElement {
 
   @state()
   guides: Guides[] = [
+    {
+      title: "New here? Try our Getting Started Guide",
+      description: "Learn the basics of using the Visual Editor",
+      url: "https://breadboard-ai.github.io/breadboard/docs/getting-started/",
+      image: "/third_party/icons/verified.svg",
+    },
     {
       title: "Building a Librarian with the Agent Kit",
       description:
@@ -217,12 +223,25 @@ export class WelcomePanel extends LitElement {
       border-radius: var(--bb-grid-size-2);
       background: var(--bb-ui-50);
       display: flex;
-      flex-direction: column;
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      padding: var(--bb-grid-size-2);
       text-decoration: none;
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       transition: background 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #guides ul li a img {
+      width: var(--bb-grid-size-12);
+      height: var(--bb-grid-size-12);
+      padding: var(--bb-grid-size-2);
+      margin: 0 var(--bb-grid-size-2) 0 0;
+      background: var(--bb-neutral-0);
+      border-radius: var(--bb-grid-size);
+    }
+
+    #guides ul li a .details {
+      display: flex;
+      flex-direction: column;
     }
 
     #guides a:hover,
@@ -338,8 +357,13 @@ export class WelcomePanel extends LitElement {
             ${map(this.guides, (guide) => {
               return html`<li>
                 <a href="${guide.url}">
-                  <span class="title">${guide.title}</span>
-                  <span class="description">${guide.description}</span>
+                  ${guide.image
+                    ? html`<img src=${guide.image} alt=${guide.description} />`
+                    : nothing}
+                  <span class="details">
+                    <span class="title">${guide.title}</span>
+                    <span class="description">${guide.description}</span>
+                  </span>
                 </a>
               </li>`;
             })}

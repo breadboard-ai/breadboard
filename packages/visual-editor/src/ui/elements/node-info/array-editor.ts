@@ -33,9 +33,6 @@ export class ArrayEditor extends LitElement {
   behavior: BehaviorSchema | null = null;
 
   @property()
-  subGraphId: string | null = null;
-
-  @property()
   providers: GraphProvider[] = [];
 
   @property()
@@ -400,9 +397,7 @@ export class ArrayEditor extends LitElement {
                   ? html`<bb-board-selector
                       name="item-${idx}"
                       id="item-${idx}"
-                      .subGraphIds=${this.graph && this.graph.graphs
-                        ? Object.keys(this.graph.graphs)
-                        : []}
+                      .subGraphs=${this.graph?.graphs ?? null}
                       .providers=${this.providers}
                       .providerOps=${this.providerOps}
                       .value=${value || ""}

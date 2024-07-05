@@ -394,12 +394,6 @@ export class Graph extends PIXI.Container {
       const path = evt.composedPath();
       const topTarget = path[path.length - 1] as PIXI.Graphics;
 
-      // If the pointer target is the same at pointerdown and pointerup, the
-      // user has clicked on a node port, and we should avoid creating a wire.
-      if (topTarget === nodePortBeingEdited) {
-        return;
-      }
-
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
       const targetEdge = edgeBeingEdited;
@@ -412,6 +406,12 @@ export class Graph extends PIXI.Container {
       edgeBeingEdited = null;
       visibleOnNextMove = false;
       lastHoverNode = null;
+
+      // If the pointer target is the same at pointerdown and pointerup, the
+      // user has clicked on a node port, and we should avoid creating a wire.
+      if (topTarget === nodePortBeingEdited) {
+        return;
+      }
 
       let fromNode = targetEdge.fromNode;
       let toNode = targetEdge.toNode;
@@ -1167,8 +1167,8 @@ export class Graph extends PIXI.Container {
 
       if (node.descriptor.metadata?.visual) {
         const { x, y, collapsed } = node.descriptor.metadata.visual as {
-          x: number;
-          y: number;
+          x?: number;
+          y?: number;
           collapsed: boolean;
         };
 
@@ -1182,7 +1182,7 @@ export class Graph extends PIXI.Container {
           justAdded = existingLayout.justAdded || false;
         }
         const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
-        const pos = this.toGlobal({ x, y });
+        const pos = this.toGlobal({ x: x ?? 0, y: y ?? 0 });
         this.setNodeLayoutPosition(id, "node", pos, nodeCollapsed, justAdded);
 
         graphNode.collapsed = nodeCollapsed;
