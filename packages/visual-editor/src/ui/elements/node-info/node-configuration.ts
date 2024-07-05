@@ -738,7 +738,9 @@ export class NodeConfigurationInfo extends LitElement {
 
           const portSpec = ports.filter(
             (port) =>
-              port.type.hasBehavior("ports-spec") && port.edges.length === 0
+              port.type.hasBehavior("ports-spec") &&
+              port.edges.length === 0 &&
+              port.name === "schema"
           );
           const inputs = ports.filter((port) => {
             if (port.star) {
