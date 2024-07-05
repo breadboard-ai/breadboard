@@ -41,7 +41,7 @@ Now we've created a board, we can use the Board Details pane to set the descript
 
 Let's add a Specialist. We can drag one of these from the quick selection bar in the bottom corner of the Visual Editor. It's the one with the little robot icon! 🤖
 
-![The quick selection bar in the Visual Editor](/breadboard/static/images/first-tool/2-quick-selection.png)
+![The quick selection bar in the Visual Editor](/breadboard/static/images/shared/component-selector.png)
 
 Now we can wire the Poet in. Delete the wire that connects the input to the output, and then drag a wire from input to the Poet, and Poet to the output.
 
