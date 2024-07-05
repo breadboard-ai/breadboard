@@ -418,19 +418,23 @@ export class NodeConfigurationInfo extends LitElement {
       changedProperties.has("subGraphId") ||
       changedProperties.has("selectedNodeIds")
     ) {
-      if (!this.#nodeConfigurationFormRef.value) {
-        return;
-      }
+      this.destroyEditors();
+    }
+  }
 
-      // Here we must unhook the editor *before* it is removed from the DOM,
-      // otherwise CodeMirror will hold onto focus if it has it.
-      const editors =
-        this.#nodeConfigurationFormRef.value.querySelectorAll<CodeEditor>(
-          "bb-code-editor"
-        );
-      for (const editor of editors) {
-        editor.unhookSafely();
-      }
+  destroyEditors() {
+    if (!this.#nodeConfigurationFormRef.value) {
+      return;
+    }
+
+    // Here we must unhook the editor *before* it is removed from the DOM,
+    // otherwise CodeMirror will hold onto focus if it has it.
+    const editors =
+      this.#nodeConfigurationFormRef.value.querySelectorAll<CodeEditor>(
+        "bb-code-editor"
+      );
+    for (const editor of editors) {
+      editor.destroy();
     }
   }
 
