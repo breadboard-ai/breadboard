@@ -20,6 +20,7 @@ import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
+import service from "./nodes/service.js";
 import { unnestNode } from "./nodes/unnest.js";
 
 export { code } from "./nodes/code.js";
@@ -205,6 +206,8 @@ export const Core = builder.build({
   inflate,
 
   unnest: unnestNode,
+
+  service,
 });
 
 export type Core = InstanceType<typeof Core>;
