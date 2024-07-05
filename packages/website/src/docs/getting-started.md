@@ -47,7 +47,7 @@ Click **Save**, and we should be greeted with a board view that has two nodes: a
 
 ## Step 2. Running a board
 
-Let's click **Run** in the bottom right corner, which will start the board running. Immediately we will see that the input node is highlighted in the board view, and in the **Activity Log** on the right an input area will appear. Let's put the following into the box:
+Let's click **Run** in the bottom right corner, which will start the board running. Immediately we will see that the input component is highlighted in the board view, and in the **Activity Log** on the right an input area will appear. Let's put the following into the box:
 
 ```prompt
 Hello, Specialist!
@@ -66,13 +66,13 @@ Let's do something a little more fun. Let's add in a **Specialist** component.
 
 To get a Specialist, go to the selector in the bottom left corner and drag the component that has a little robot icon 🤖 onto the board view:
 
-![The quick component selector](/breadboard/static/images/getting-started-with-the-visual-editor/5-node-selector.png)
+![The quick component selector](/breadboard/static/images/shared/component-selector.png)
 
 When we do this a new component will appear. It will be called something like **specialist-1234abcd**.
 
 ![The board with our Specialist added](/breadboard/static/images/getting-started-with-the-visual-editor/6-graph.png)
 
-With the Specialist selected we should see some more information on the right hand side of the UI. Let's expand the **Node details** pane and enter a name for it - **Greeter** - and let's give it a **Persona** by adding a text part and entering the following:
+With the Specialist selected we should see some more information on the right hand side of the UI. Let's expand the **Component details** pane and enter a name for it - **Greeter** - and let's give it a **Persona** by adding a text part and entering the following:
 
 ```prompt
 You are a cheery greeter who always responds with a fun fact.
@@ -96,4 +96,4 @@ Enter a nice greeting in the box and hit **Continue**. Your Specialist should re
 
 Congratulations! We just made our first board with the Visual Editor!
 
-What's next? Have you ever wanted to create your own [Virtual Librarian](./guides/librarian/) that can help you pick your next book? If so, then let us show you how to make one!
+What's next? Have you ever wanted to create your own [Virtual Librarian](../guides/librarian/) that can help you pick your next book? If so, then let us show you how to make one!
