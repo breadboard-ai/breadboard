@@ -14,7 +14,7 @@ export async function bundle(board: string, flags: { output: string }) {
   let breadboardWebPublic;
   if (typeof import.meta.resolve === "function") {
     const publicPath = await import.meta.resolve(
-      "@google-labs/visual-editor/public"
+      "@breadboard-ai/visual-editor/public"
     );
     breadboardWebPublic = fileURLToPath(publicPath);
   }
