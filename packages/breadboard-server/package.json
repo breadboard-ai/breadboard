@@ -107,7 +107,7 @@
     "@typescript-eslint/parser": "^7.14.1",
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
-    "typescript": "^5.5.2",
+    "typescript": "^5.5.3",
     "@google-labs/core-kit": "^0.10.0"
   },
   "dependencies": {
