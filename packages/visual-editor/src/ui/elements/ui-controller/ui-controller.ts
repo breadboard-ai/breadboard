@@ -46,6 +46,7 @@ import { EditorMode } from "../../utils/mode.js";
 import { guard } from "lit/directives/guard.js";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
+import { type NodeConfigurationInfo } from "../elements.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -121,6 +122,7 @@ export class UI extends LitElement {
   @state()
   history: EditHistory | null = null;
 
+  #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
   #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
   #lastBoardId = -1;
@@ -492,6 +494,7 @@ export class UI extends LitElement {
           .editable=${true}
           .providers=${this.providers}
           .providerOps=${this.providerOps}
+          ${ref(this.#nodeConfigurationRef)}
           name="Selected Node"
           @bbschemachange=${() => {
             this.#nodeSchemaUpdateCount++;
@@ -608,6 +611,18 @@ export class UI extends LitElement {
         },
         { once: true }
       );
+    }
+
+    // If we are about to re-render and remove the node configuration element
+    // we need to make sure that we are destroying all instances of the Code
+    // Editor before that happens. If not, CodeMirror will retain focus and a
+    // user won't be able to edit their inputs.
+    //
+    // If there is an "internal switch" from one node configuration view to
+    // another the element will take care of destroying the editors when it
+    // sees fit.
+    if (this.selectedNodeIds.length === 0 && this.#nodeConfigurationRef.value) {
+      this.#nodeConfigurationRef.value.destroyEditors();
     }
 
     const sidePanel = cache(

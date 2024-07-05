@@ -20,7 +20,7 @@ export class CodeEditor extends LitElement {
   #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
 
-  #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onKeyUpBound = this.#onKeyUp.bind(this);
 
   static styles = css`
     :host {
@@ -99,27 +99,27 @@ export class CodeEditor extends LitElement {
     this.#attemptEditorUpdate();
   }
 
-  #onKeyDown() {
+  #onKeyUp() {
     this.dispatchEvent(new CodeChangeEvent());
   }
 
   connectedCallback(): void {
     super.connectedCallback();
 
-    this.addEventListener("keydown", this.#onKeyDownBound);
+    this.addEventListener("keyup", this.#onKeyUpBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("keyup", this.#onKeyUpBound);
   }
 
   render() {
     return html`<div ${ref(this.#content)}></div>`;
   }
 
-  unhookSafely() {
+  destroy() {
     if (!this.#editor) {
       return;
     }
