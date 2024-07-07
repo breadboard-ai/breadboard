@@ -50,7 +50,7 @@ export const asPath = (userStore: string, boardName: string) => {
 
 export const sanitize = (name: string) => {
   if (name.endsWith(".bgl.json")) {
-    name = name.slice(0, -8);
+    name = name.slice(0, -9);
   } else if (name.endsWith(".json")) {
     name = name.slice(0, -5);
   }
