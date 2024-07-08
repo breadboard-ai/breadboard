@@ -258,7 +258,7 @@ export class IDBGraphProvider implements GraphProvider {
   }
 
   startingURL() {
-    return new URL("idb://default/blank.json");
+    return new URL("idb://default/blank.bgl.json");
   }
 
   watch() {
@@ -277,7 +277,10 @@ export class IDBGraphProvider implements GraphProvider {
     let graphs = await db.getAll("graphs");
     if (graphs.length === 0 && store.name === DEFAULT_STORE.name) {
       const blankBoard = blankLLMContent();
-      blankBoard.url = await this.createURL(DEFAULT_STORE.name, "blank.json");
+      blankBoard.url = await this.createURL(
+        DEFAULT_STORE.name,
+        "blank.bgl.json"
+      );
       await db.put("graphs", blankBoard);
       graphs = await db.getAll("graphs");
     }

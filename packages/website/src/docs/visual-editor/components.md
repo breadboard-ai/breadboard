@@ -6,7 +6,7 @@ tags:
 date: 2020-01-03 # Third in the list
 ---
 
-**Components** are key to Breadboard. We create components, configure them, name them, and wire them together to create our boards. By default a blank board contains two components: an **input** and an **output**, with the input wired to the output.
+**Components** are key to Breadboard. We create components, configure them, name them, and wire them together to create our boards. By default a blank board contains two components: an **input** and an **output**, with the input pre-wired to the output.
 
 ![The input & output components in the default blank board](/breadboard/static/images/using-the-visual-editor/input-output.png)
 
@@ -25,7 +25,7 @@ The selector has two main sections. On the left is a button, named **Components*
 
 ![The component selector showing all components and kits](/breadboard/static/images/using-the-visual-editor/all-component-selector.png)
 
-Here we can search for a particular component we're interested in, as well as see short descriptions of what each component offers.
+In the component select we can search for a particular component we're interested in, as well as see short descriptions of what each component offers.
 
 We can add the component to the board by dragging it from the list into the main area of the Visual Editor.
 
@@ -33,7 +33,7 @@ We can add the component to the board by dragging it from the list into the main
 
 #### Removing a Component
 
-To remove a component either click on it and press the delete key (or Backspace) on your keyboard, or click on the three dots to the right of the component and choose **Delete component** in the overflow menu.
+To remove a component either click on it and press the delete key (or Backspace) on the keyboard, or click on the three dots to the right of the component and choose **Delete component** in the overflow menu.
 
 ![The overflow menu of a component](/breadboard/static/images/using-the-visual-editor/component-overflow.png)
 
@@ -42,26 +42,27 @@ To remove a component either click on it and press the delete key (or Backspace)
 
 ### Updating Component Information
 
-We can update the title, log level, and description of the component using the **Component details** section in the right hand pane.
+We can also update the title, log level, and description of the component using the **Component details** section in the right hand pane.
 
 ![The component details section](/breadboard/static/images/using-the-visual-editor/component-details.png)
 
 The **title** is shown in the **Activity Panel** when a board is run, and the **log level** determines if the component's output is shown in the Activity Panel only, or if it should be shown in the Preview as well.
 
-If the log level is set to **Debug** it will show only in the Activity Panel. If, however, it is set to **Information** it will be shown in the Activity Panel _and_ the Preview.
+- If the log level is set to **Debug** it will show only in the Activity Panel.
+- If the log level is set to **Information** it will be shown in the Activity Panel _and_ the Preview.
 
 > [!NOTE]
 > We do not currently use the component description within the Visual Editor UI, but this may change in the future.
 
 ### Changing a Component's Inputs
 
-Most components can be configured in some way. When you select a component in the Visual Editor its configuration options are shown in the right hand pane in the **Input** section just below the **Component details**. The exact options depend on the component itself, but as one example the inputs for the `runJavascript` component are shown below.
+Most components can be configured in some way. When we select a component in the Visual Editor its configuration options are shown in the right hand pane in the **Input** section just below the **Component details**. The exact options depend on the component itself, but as one example the inputs for the `runJavascript` component are shown below.
 
 ![The runJavascript component details](/breadboard/static/images/using-the-visual-editor/runjavascript-inputs.png)
 
-In the case of this particular component we see:
+In the case of this particular component – the `runJavascript` one – we see:
 
-1. **code** The code we wish to run.
+1. **code** The code we wish to run when the component is reached in a board run.
 2. **name** The name of the function to invoke from the `code` input set above.
 3. **raw** Whether or not the output of the component should be used as-is, or whether it should be wrapped in a port called `result`.
 
@@ -72,30 +73,30 @@ Each component is different, however, and the description of what each port does
 
 #### Setting input and output schemas
 
-Input and Output components stand slightly apart from other components in that they have a single schema input which, when changed, adds or removes other input and output ports from the component itself.
+**Input** and **Output** components stand slightly apart from other components in that they have a single schema port which, when changed, adds or removes _other_ ports on the component itself.
 
-By default our input component looks like this.
+For example, our input component starts like this.
 
 ![The default input component schema](/breadboard/static/images/using-the-visual-editor/default-input.png)
 
 > [!TIP]
 > By default components are "collapsed", showing only a single input and output port. By double clicking on their name (or using the component's overflow menu) you can expand them to see all the ports they contain.
 
-Suppose, however, we wanted to add an extra output port from our input component, such that alongside `Context` it has a number called `Foo`. We can this by clicking the **Add a port** button in the **Schema** section of the right hand pane.
+Suppose, however, we wanted to add an extra output port from our input component, such that alongside `Context` it has a number port called `Foo`. We can this by clicking the **Add a port** button in the **Schema** section of the right hand pane.
 
 ![The Add a port button in the schema editor](/breadboard/static/images/using-the-visual-editor/add-a-port.png)
 
 > [!NOTE]
 > There are quite a few options for types supported within a port's schema. A very common one is `LLM Content`, which aligns with the [Gemini API Content type](https://ai.google.dev/api/rest/v1/Content) and which is used in the components like the [Agent Kit's Specialist](../../kits/agents/#specialist). The types we choose affect the inputs that are shown within the [Activity Pane](../activity-pane/) when a board is running.
 
-We can then change the title and type of our new port to be `Foo` and Number, respectively. After that we should see that the input component now has an additional port called `Foo`.
+We can then change the title and type of our new port to be `Foo` and Number, respectively. After that we should see that the input component now has an additional port we can use called `Foo`.
 
 ![The input component with a modified schema](/breadboard/static/images/using-the-visual-editor/input-post-change.png)
 
 > [!NOTE]
 > Input and output components are not the only "shapeshifters" in Breadboard. The [Template Kit](../../reference/kits/built-in/) includes other components that use an input string to derive their additional ports.
 
-There are "extended" properties available to us within the schema editor, some of which change depending on the type of the port. For example, if the port type is a `string` we can set a list of acceptable values from which the user may choose.
+There are also "extended" properties available to us within the schema editor, some of which change depending on the overarching type of the port. For example, if the port type is a `string` we can set a list of acceptable values from which the user may choose.
 
 ![The input component with a fixed set of options](/breadboard/static/images/using-the-visual-editor/string-enumeration.png)
 
@@ -107,14 +108,14 @@ To wire two components together we click drag from the output port of one compon
 
 ![Dragging from one port to another](/breadboard/static/images/using-the-visual-editor/wire-nodes.png)
 
-Depending on the component we can wire an output port to one of its own input ports, too, thereby creating a loop.
+Depending on the component we can also wire an output port to one of its _own_ input ports, too, thereby creating a loop.
 
 > [!NOTE]
 > We are currently working on [limiting the ports that can be connected](https://github.com/breadboard-ai/breadboard/issues/2298) based on their types. Until that feature lands, however, it is important to check that ports are of a compatible type.
 
 #### Removing wires
 
-To remove a wire, click on it and press the delete key (or Backspace) on your keyboard.
+To remove a wire, click on it and press the delete key (or Backspace) on the keyboard.
 
 #### Dynamic wires
 
@@ -126,7 +127,7 @@ When we release the cursor we will be prompted to name the port on the target co
 
 ![Naming the newly created wire's ports](/breadboard/static/images/using-the-visual-editor/create-new-wire.png)
 
-After which we see that is now a new port on the runJavascript called, in this case at least, `context`.
+After which we see that is now a new port on the runJavascript called, in this case at least, `context`. We can then access this port like any other within the component.
 
 ![The new dynamic ports](/breadboard/static/images/using-the-visual-editor/updated-ports.png)
 
