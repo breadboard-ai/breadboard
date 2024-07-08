@@ -8,7 +8,7 @@ date: 2020-01-05 # Fifth in the list
 
 At the end of this guide, we will have an agent that writes poems based on today's date. The agent will use a **Tool** to obtain the date, and write a poem in a style specified by the user.
 
-{% include "api-key.njk" %}
+{% include "final-board-api-key.njk" %}
 
 {{ "/breadboard/static/boards/first-tool/final.bgl.json" | board }}
 

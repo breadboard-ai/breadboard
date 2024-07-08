@@ -11,7 +11,7 @@ At the end of this guide, we will have a simple agent that helps us find interes
 > [!TIP]
 > If this is your first time playing with Breadboard, this guide is a good starting point. It is intentionally a bit more verbose, written with the hope that a Breadboard novice can go through it and get a good sense of how to build boards.
 
-{% include "api-key.njk" %}
+{% include "final-board-api-key.njk" %}
 
 {{ "/breadboard/static/boards/librarian/final.bgl.json" | board }}
 

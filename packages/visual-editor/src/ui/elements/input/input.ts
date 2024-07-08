@@ -309,6 +309,8 @@ export class Input extends LitElement {
           >`;
           let input;
 
+          console.log(key, property);
+
           if (isLLMContent(property)) {
             let value: LLMContent | null = null;
             value = values[key] as LLMContent | null;
