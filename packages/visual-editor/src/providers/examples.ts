@@ -28,7 +28,7 @@ export class ExamplesGraphProvider implements GraphProvider {
     const boards = manifest.boards || [];
     const blank = boards
       .filter(isReference)
-      .find((board) => board.reference?.endsWith("blank.json"));
+      .find((board) => board.reference?.endsWith("blank.bgl.json"));
 
     if (blank?.reference) {
       this.#blank = new URL(blank.reference, window.location.href);
