@@ -86,7 +86,7 @@ Suppose, however, we wanted to add an extra output port from our input component
 ![The Add a port button in the schema editor](/breadboard/static/images/using-the-visual-editor/add-a-port.png)
 
 > [!NOTE]
-> There are quite a few options for types supported within a port's schema. A very common one is `LLM Content`, which aligns with the [Gemini API Content](https://ai.google.dev/api/rest/v1/Content) and which is used in the components like the [Agent Kit's Specialist](../../kits/agents/#specialist).
+> There are quite a few options for types supported within a port's schema. A very common one is `LLM Content`, which aligns with the [Gemini API Content type](https://ai.google.dev/api/rest/v1/Content) and which is used in the components like the [Agent Kit's Specialist](../../kits/agents/#specialist). The types we choose affect the inputs that are shown within the [Activity Pane](../activity-pane/) when a board is running.
 
 We can then change the title and type of our new port to be `Foo` and Number, respectively. After that we should see that the input component now has an additional port called `Foo`.
 
@@ -94,6 +94,10 @@ We can then change the title and type of our new port to be `Foo` and Number, re
 
 > [!NOTE]
 > Input and output components are not the only "shapeshifters" in Breadboard. The [Template Kit](../../reference/kits/built-in/) includes other components that use an input string to derive their additional ports.
+
+There are "extended" properties available to us within the schema editor, some of which change depending on the type of the port. For example, if the port type is a `string` we can set a list of acceptable values from which the user may choose.
+
+![The input component with a fixed set of options](/breadboard/static/images/using-the-visual-editor/string-enumeration.png)
 
 ### Wiring Components Together
 
@@ -128,3 +132,5 @@ After which we see that is now a new port on the runJavascript called, in this c
 
 > [!NOTE]
 > If we delete a dynamic wire the port that was created to service the port is also removed.
+
+[Next: Activity Pane](../activity-pane/)
