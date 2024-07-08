@@ -46,7 +46,7 @@ This will show us the "Save As..." dialog where we can choose a Provider that al
 ![The Save As... dialog](/breadboard/static/images/using-the-visual-editor/save-as-dialog.png)
 
 > [!TIP]
-> We can also use Cmd/Ctrl + S to Save, or Cmd/Ctrl + Shift + S to Save As... at any point. If the board we are working with is read only, the the Save keyboard shortcut will show the Save As dialog instead.
+> We can also use `Cmd`/`Ctrl` + `S` to Save, or `Cmd`/`Ctrl` + `Shift` + `S` to Save As... at any point. If the board we are working with is read only, the the Save keyboard shortcut will show the Save As dialog instead.
 
 ### Deleting Boards
 
@@ -113,7 +113,7 @@ As well as changing the title, version, and description for a board we can also 
 
 Visibility settings are specific to a Provider, and in the case of a Board Server particularly setting a board's visibility to **Draft** (the default) means that it will only show up for you, and not for other users of the Board Server.
 
-Marking the board as a Tool indicates to the Visual Editor that we expect this board to be used by other nodes, such as the [Agent Kit's Specialist](../../kits/agents/#specialist).
+Marking the board as a Tool indicates to the Visual Editor that we expect this board to be used by other components, such as the [Agent Kit's Specialist](../../kits/agents/#specialist).
 
 > [!TIP]
 > If you are new to Tools in Breadboard, why not check out [our guide on creating one](./first-tool/)?
@@ -121,3 +121,5 @@ Marking the board as a Tool indicates to the Visual Editor that we expect this b
 When we look in the Provider list we can identify public boards by the earth icon next to them, and tools by the hammer and screwdriver icon instead of the general board icon.
 
 ![A public Tool board with icons denoting its status](/breadboard/static/images/using-the-visual-editor/public-tool.png)
+
+[Next: Components](../components/)

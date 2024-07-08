@@ -333,11 +333,11 @@ export class GraphRenderer extends LitElement {
     }
 
     #overflow-menu #min-max::after {
-      content: "Minimize node";
+      content: "Minimize component";
     }
 
     #overflow-menu #min-max.minimized::after {
-      content: "Maximize node";
+      content: "Maximize component";
     }
 
     #overflow-menu #delete-node::before {
@@ -1331,7 +1331,7 @@ export class GraphRenderer extends LitElement {
       <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
       ${this.editable
         ? html`<button id="delete-node" ${ref(this.#overflowDeleteNode)}>
-            Delete node
+            Delete component
           </button>`
         : nothing}
     </div>`;
