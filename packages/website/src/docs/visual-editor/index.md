@@ -23,6 +23,9 @@ In the top right corner we find the **undo**, **redo**, and **Preview** buttons,
 
 The undo and redo buttons are there for us to step back and forth through changes we make to our boards, and the Preview button allows us to run the board with less debugging information than we get by default in the Visual Editor's [Activity Panel](#the-activity-panel).
 
+> [!TIP]
+> You can use `Cmd`/`Ctrl` + `Z` and `Cmd`/`Ctrl` + `Shift` + `Z` to undo and redo respectively.
+
 On the right hand side we find the details pane, which changes depending on what we have selected.
 
 ![The right hand side of the Visual Editor, showing the Board information, Activity Panel, and buttons for starting and stopping a board](/breadboard/static/images/using-the-visual-editor/right-hand-side.png)
