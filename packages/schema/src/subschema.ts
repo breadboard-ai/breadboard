@@ -346,27 +346,48 @@ function checkObjectProperties(
   b: JSONSchema4,
   context: Context
 ): boolean {
-  if (a.properties === undefined || b.properties === undefined) {
+  if (a.properties === undefined) {
     return true;
   }
-  for (const [name, bProperty] of Object.entries(b.properties)) {
-    const aProperty = a.properties[name];
-    if (aProperty === undefined) {
+  for (const [name, aSchema] of Object.entries(a.properties)) {
+    const bSchema = b.properties?.[name];
+    if (bSchema !== undefined) {
+      // B also specifies this property, check compatibility.
+      context.pathA.push("properties", name);
+      context.pathB.push("properties", name);
+      const { isSubSchema } = analyzeIsJsonSubSchema(aSchema, bSchema, context);
+      context.pathA.pop();
+      context.pathB.pop();
+      if (!isSubSchema) {
+        return false;
+      }
+    } else if (
+      b.additionalProperties === true ||
+      b.additionalProperties === /* defaults to true */ undefined
+    ) {
+      // B allows any additional property.
       continue;
-    }
-    context.pathA.push("properties", name);
-    context.pathB.push("properties", name);
-    const ok = analyzeIsJsonSubSchema(
-      aProperty,
-      bProperty,
-      context
-    ).isSubSchema;
-    context.pathA.pop();
-    context.pathA.pop();
-    context.pathB.pop();
-    context.pathB.pop();
-    if (!ok) {
+    } else if (b.additionalProperties === false) {
+      // B doesn't allow any additional properties.
+      context.details.push({
+        pathA: [...context.pathA, "properties", name],
+        pathB: [...context.pathB, "additionalProperties"],
+      });
       return false;
+    } else {
+      // B allows additional properties but constrains their schema.
+      context.pathA.push("properties", name);
+      context.pathB.push("additionalProperties");
+      const { isSubSchema } = analyzeIsJsonSubSchema(
+        aSchema,
+        b.additionalProperties,
+        context
+      );
+      context.pathA.pop();
+      context.pathB.pop();
+      if (!isSubSchema) {
+        return false;
+      }
     }
   }
   return true;
@@ -380,29 +401,51 @@ function checkObjectAdditionalProperties(
   b: JSONSchema4,
   context: Context
 ): boolean {
-  if (b.additionalProperties ?? true) {
+  // The additionalProperties constraint can be true (any additional property is
+  // OK), false (no additional properties are OK), or an object (additional
+  // property is OK as long as it matches that type).
+  const bAdditional = b.additionalProperties ?? true;
+  if (bAdditional === true) {
+    //   A   |   B   | Result  |
+    // ----- | ------| ------- |
+    // true  | true  | true    | T
+    // false | true  | true    | T
+    // {...} | true  | true    | T
     return true;
   }
-  if (a.additionalProperties ?? true) {
+  const aAdditional = a.additionalProperties ?? true;
+  if (aAdditional === false) {
+    //   A   |   B   | Result  |
+    // ----- | ------| ------- |
+    // false | false | true    | T
+    // false | {...} | true    | T
+    return true;
+  }
+  if (bAdditional === false) {
+    //   A   |   B   | Result  |
+    // ----- | ------| ------- |
+    // {...} | false | false   | T
+    // true  | false | false   | T
     context.details.push({
       pathA: [...context.pathA, "additionalProperties"],
       pathB: [...context.pathB, "additionalProperties"],
     });
     return false;
   }
-  const aPropertyNames = new Set(Object.keys(a.properties ?? {}));
-  const bPropertyNames = new Set(Object.keys(b.properties ?? {}));
-  let ok = true;
-  for (const name of aPropertyNames) {
-    if (!bPropertyNames.has(name)) {
-      ok = false;
-      context.details.push({
-        pathA: [...context.pathA, "properties", name],
-        pathB: [...context.pathB, "additionalProperties"],
-      });
-    }
-  }
-  return ok;
+  //   A   |   B   | Result  |
+  // ----- | ------| ------- |
+  // true  | {...} | compare | T
+  // {...} | {...} | compare |
+  context.pathA.push("additionalProperties");
+  context.pathB.push("additionalProperties");
+  const result = analyzeIsJsonSubSchema(
+    aAdditional === true ? {} : aAdditional,
+    bAdditional,
+    context
+  ).isSubSchema;
+  context.pathA.pop();
+  context.pathB.pop();
+  return result;
 }
 
 /**
