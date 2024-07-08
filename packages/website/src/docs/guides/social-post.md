@@ -3,7 +3,7 @@ layout: docs.njk
 title: Building a Social Media Post Creator with the Agent Kit
 tags:
   - guide
-date: 2020-01-03 # Third in the list
+date: 2020-01-04 # Fourth in the list
 ---
 
 At the end of this guide, we'll have an agent that can create captions for social media posts. The user will first enter the business name and location, and then the agent will chat with the user about the purpose of the social media post. It'll then use that information to create a caption that fits the post and the business needs.

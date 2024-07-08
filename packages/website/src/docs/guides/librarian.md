@@ -3,7 +3,7 @@ layout: docs.njk
 title: Building a Librarian with the Agent Kit
 tags:
   - guide
-date: 2020-01-02 # Place second in the list
+date: 2020-01-03 # Third in the list
 ---
 
 At the end of this guide, we will have a simple agent that helps us find interesting books. Given a topic, the agent will chat with us a little bit, trying to get a few more details on what exactly we're looking for in a book, then use the Google Books API to find some choices, and finally present them to us in a nice outline.
