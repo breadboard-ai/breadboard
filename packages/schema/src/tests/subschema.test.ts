@@ -403,12 +403,7 @@ describe("object", () => {
   });
 
   describe("additionalProperties", () => {
-    describe("no properties", () => {
-      ok(
-        "false vs false",
-        { type: "object", additionalProperties: false },
-        { type: "object", additionalProperties: false }
-      );
+    describe("without properties", () => {
       ok(
         "true vs true",
         { type: "object", additionalProperties: true },
@@ -419,116 +414,153 @@ describe("object", () => {
         { type: "object", additionalProperties: false },
         { type: "object", additionalProperties: true }
       );
+      ok(
+        "{str} vs true",
+        { type: "object", additionalProperties: { type: "string" } },
+        { type: "object", additionalProperties: true }
+      );
+      ok(
+        "false vs false",
+        { type: "object", additionalProperties: false },
+        { type: "object", additionalProperties: false }
+      );
+      ok(
+        "false vs {str}",
+        { type: "object", additionalProperties: false },
+        { type: "object", additionalProperties: { type: "string" } }
+      );
+      ok(
+        "false vs {}",
+        { type: "object", additionalProperties: false },
+        { type: "object", additionalProperties: {} }
+      );
+      notOk(
+        "{str} vs false",
+        { type: "object", additionalProperties: { type: "string" } },
+        { type: "object", additionalProperties: false }
+      );
       notOk(
         "true vs false",
         { type: "object", additionalProperties: true },
         { type: "object", additionalProperties: false }
       );
-    });
-
-    describe("both false", () => {
+      ok(
+        "true vs {}",
+        { type: "object", additionalProperties: true },
+        { type: "object", additionalProperties: {} }
+      );
+      notOk(
+        "true vs {str}",
+        { type: "object", additionalProperties: true },
+        { type: "object", additionalProperties: { type: "string" } }
+      );
       ok(
         "{} vs {}",
-        {
-          type: "object",
-          additionalProperties: false,
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-        }
+        { type: "object", additionalProperties: {} },
+        { type: "object", additionalProperties: {} }
       );
-
-      notOk(
-        "{foo} vs {}",
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-        }
-      );
-
       ok(
-        "{} vs {foo}",
-        {
-          type: "object",
-          additionalProperties: false,
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        }
+        "{str} vs {str}",
+        { type: "object", additionalProperties: { type: "string" } },
+        { type: "object", additionalProperties: { type: "string" } }
       );
-
       ok(
-        "{foo} vs {foo}",
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        }
+        "{str} vs {}",
+        { type: "object", additionalProperties: { type: "string" } },
+        { type: "object", additionalProperties: {} }
       );
-
       notOk(
-        "{foo} vs {bar}",
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { bar: { type: "string" } },
-        }
-      );
-
-      notOk(
-        "{foo,bar} vs {foo}",
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            foo: { type: "string" },
-            bar: { type: "string" },
-          },
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: { foo: { type: "string" } },
-        }
-      );
-
-      ok(
-        "{foo} vs {foo,bar}",
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            foo: { type: "string" },
-          },
-        },
-        {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            foo: { type: "string" },
-            bar: { type: "string" },
-          },
-        }
+        "{} vs {str}",
+        { type: "object", additionalProperties: {} },
+        { type: "object", additionalProperties: { type: "string" } }
       );
     });
+
+    describe("with properties", () => {});
+    notOk(
+      "a:false/p:{foo} vs a:false/p:-",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+      }
+    );
+    ok(
+      "{} vs {foo}",
+      {
+        type: "object",
+        additionalProperties: false,
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      }
+    );
+    ok(
+      "{foo} vs {foo}",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      }
+    );
+    notOk(
+      "{foo} vs {bar}",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { bar: { type: "string" } },
+      }
+    );
+    notOk(
+      "{foo,bar} vs {foo}",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          foo: { type: "string" },
+          bar: { type: "string" },
+        },
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: { foo: { type: "string" } },
+      }
+    );
+    ok(
+      "{foo} vs {foo,bar}",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          foo: { type: "string" },
+        },
+      },
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          foo: { type: "string" },
+          bar: { type: "string" },
+        },
+      }
+    );
   });
 
   describe("requiredProperties", () => {
