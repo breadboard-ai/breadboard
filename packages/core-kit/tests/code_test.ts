@@ -222,17 +222,20 @@ test("serialization", (t) => {
             type: "object",
           },
           outputSchema: {
-            doubleNum: {
-              type: "number",
-            },
-            not: {
-              type: "boolean",
-            },
-            strLen: {
-              type: "number",
-            },
-            strReversed: {
-              type: "string",
+            type: "object",
+            properties: {
+              doubleNum: {
+                type: "number",
+              },
+              not: {
+                type: "boolean",
+              },
+              strLen: {
+                type: "number",
+              },
+              strReversed: {
+                type: "string",
+              },
             },
           },
         },
