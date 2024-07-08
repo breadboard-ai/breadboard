@@ -96,14 +96,19 @@ export function code<
           ])
       ),
     },
-    outputSchema: Object.fromEntries(
-      Object.entries(outputs).map(([name, output]) => [
-        name,
-        toJSONSchema(
-          typeof output === "object" && "type" in output ? output.type : output
-        ),
-      ])
-    ),
+    outputSchema: {
+      type: "object",
+      properties: Object.fromEntries(
+        Object.entries(outputs).map(([name, output]) => [
+          name,
+          toJSONSchema(
+            typeof output === "object" && "type" in output
+              ? output.type
+              : output
+          ),
+        ])
+      ),
+    },
     ...(inputs as Record<string, JsonSerializable>),
   }) as CodeNode<Expand<CodeNodeInputs<I>>, ConvertBreadboardTypes<O>>;
   for (const [name, type] of Object.entries(outputs)) {
