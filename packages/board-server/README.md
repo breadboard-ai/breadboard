@@ -29,7 +29,7 @@ gcloud config set project <project name>
 Then, to run locally, from the root of the repo:
 
 ```bash
-npm run serve
+npm run s
 ```
 
 This will bring up the board server at `http://localhost:3000` and
