@@ -5,7 +5,6 @@
     { "path": "packages/agent-kit" },
     { "path": "packages/breadboard" },
     { "path": "packages/breadboard-cli" },
-    { "path": "packages/breadboard-server" },
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/discovery-types" },
