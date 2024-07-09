@@ -171,6 +171,16 @@ export type InspectableEdge = {
   type: InspectableEdgeType;
 
   /**
+   * Get an inspectable output port.
+   */
+  outPort(): Promise<InspectablePort>;
+
+  /**
+   * Get the inspectable input port.
+   */
+  inPort(): Promise<InspectablePort>;
+
+  /**
    * Check if the input and output schemas are compatible (meaning that the
    * output port type is a subtype of the input port type).
    */
