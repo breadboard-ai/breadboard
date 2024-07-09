@@ -49,7 +49,6 @@ export class Graph extends PIXI.Container {
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
-  #editable = false;
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
 
@@ -176,15 +175,11 @@ export class Graph extends PIXI.Container {
         return;
       }
 
-      if (!this.editable) {
+      if (this.readOnly) {
         return;
       }
 
       if (evt.target instanceof GraphNodePort) {
-        if (!evt.target.editable) {
-          return;
-        }
-
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
         nodePortBeingEdited.overrideStatus = PortStatus.Connected;
@@ -827,22 +822,6 @@ export class Graph extends PIXI.Container {
     return this.#showNodeTypeDescriptions;
   }
 
-  set editable(editable: boolean) {
-    const nodes = this.children;
-    for (const node of nodes) {
-      if (!(node instanceof GraphNode || node instanceof GraphComment)) {
-        continue;
-      }
-
-      node.editable = editable;
-    }
-    this.#editable = editable;
-  }
-
-  get editable() {
-    return this.#editable;
-  }
-
   set edges(edges: InspectableEdge[] | null) {
     // Validate the edges.
     this.#edges = edges?.filter((edge) => edge.to && edge.from) || null;
@@ -1150,7 +1129,6 @@ export class Graph extends PIXI.Container {
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
-        graphNode.editable = this.editable;
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
@@ -1309,7 +1287,6 @@ export class Graph extends PIXI.Container {
       let graphComment = this.#graphNodeById.get(id);
       if (!graphComment) {
         graphComment = new GraphComment();
-        graphComment.editable = this.editable;
 
         this.#graphNodeById.set(id, graphComment);
       }

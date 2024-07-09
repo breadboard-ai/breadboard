@@ -70,9 +70,6 @@ interface GraphOpts {
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
   @property({ reflect: true })
-  editable = false;
-
-  @property({ reflect: true })
   invertZoomScrollDirection = false;
 
   @property({ reflect: true })
@@ -687,8 +684,6 @@ export class GraphRenderer extends LitElement {
   }
 
   addGraph(graph: Graph) {
-    graph.editable = this.editable;
-
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
       this.#emitGraphNodeVisualInformation(graph);
     });
@@ -1329,7 +1324,7 @@ export class GraphRenderer extends LitElement {
       id="overflow-menu"
     >
       <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
-      ${this.editable
+      ${!this.readOnly
         ? html`<button id="delete-node" ${ref(this.#overflowDeleteNode)}>
             Delete component
           </button>`
