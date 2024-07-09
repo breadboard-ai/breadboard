@@ -767,7 +767,8 @@ export class Editor extends LitElement {
 
           const remappedNodeIds = new Map<string, string>();
           const edits: EditSpec[] = [];
-          for (const node of graph.nodes) {
+          for (let i = 0; i < graph.nodes.length; i++) {
+            const node = graph.nodes[i];
             if (!this.#isNodeDescriptor(node)) {
               continue;
             }
@@ -789,7 +790,7 @@ export class Editor extends LitElement {
 
             // Grab the x & y coordinates, delete them, and use them to instruct
             // the graph where to place the node when it's added.
-            const x = (node.metadata.visual["x"] as number) ?? 0;
+            const x = (node.metadata.visual["x"] as number) ?? i * 40;
             const y = (node.metadata.visual["y"] as number) ?? 0;
 
             delete node.metadata.visual["x"];
