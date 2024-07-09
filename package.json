@@ -71,7 +71,6 @@
       "dependencies": [
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
-        "./packages/breadboard-extension:lint",
         "./packages/build:lint",
         "./packages/connection-server:lint",
         "./packages/core-kit:lint",
