@@ -4,7 +4,7 @@
 
 ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
-Inspired by hardware makers who make amazing things with [physical breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all) and off-the-shelf parts, Breadboard is a library that tries to recreate that same spirit. It simplifies prototyping generative AI applications, helping people to easily "wire" together, experiment with, and share modular components, fostering creativity and collaboration.
+Inspired by hardware makers who make amazing things with [physical breadboards](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all) and off-the-shelf parts, Breadboard is a library that tries to recreate that same spirit. It simplifies prototyping generative AI applications, helping people to easily "wire" together, experiment with, and share modular components, fostering creativity and collaboration.
 
 Breadboard's design emphasizes two key properties:
 
