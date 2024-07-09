@@ -13,9 +13,8 @@ import {
   optional,
   output,
   optionalEdge,
-  unsafeCast,
 } from "@breadboard-ai/build";
-import { fetch, unnest } from "@google-labs/core-kit";
+import { cast, fetch, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
 import { headers } from "./internal/headers.js";
 import { fileType } from "./types.js";
@@ -47,7 +46,7 @@ const url = urlTemplate({
 });
 
 const rawResponse = fetch({ url, headers });
-const response = unsafeCast(rawResponse, fileListType);
+const response = cast(rawResponse, fileListType);
 const { files, incompleteSearch, nextPageToken } = unnest(response);
 
 export const listFiles = board({
