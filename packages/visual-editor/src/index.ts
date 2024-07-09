@@ -2265,6 +2265,7 @@ export class Main extends LitElement {
               if (!this.graph) {
                 break;
               }
+
               const board = structuredClone(this.graph);
               delete board["url"];
 
@@ -2284,8 +2285,21 @@ export class Main extends LitElement {
               generatedUrls.clear();
               generatedUrls.add(url);
 
+              let fileName = `${board.title ?? "Untitled Board"}.json`;
+              if (this.url) {
+                try {
+                  const boardUrl = new URL(this.url, window.location.href);
+                  const baseName = /[^/]+$/.exec(boardUrl.pathname);
+                  if (baseName) {
+                    fileName = baseName[0];
+                  }
+                } catch (err) {
+                  // Ignore errors - this is best-effort to get the file name from the URL.
+                }
+              }
+
               const anchor = document.createElement("a");
-              anchor.download = `${board.title ?? "Untitled Board"}.json`;
+              anchor.download = fileName;
               anchor.href = url;
               anchor.click();
               break;
