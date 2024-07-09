@@ -112,6 +112,28 @@ class Graph implements InspectableGraphWithStore {
     const context: NodeDescriberContext = {
       outerGraph: this.#graph,
       loader,
+      wires: {
+        incoming: Object.fromEntries(
+          (options?.incoming ?? []).map((edge) => [
+            edge.in,
+            {
+              outputPort: {
+                describe: async () => (await edge.outPort()).type.schema,
+              },
+            },
+          ])
+        ),
+        outgoing: Object.fromEntries(
+          (options?.outgoing ?? []).map((edge) => [
+            edge.out,
+            {
+              inputPort: {
+                describe: async () => (await edge.inPort()).type.schema,
+              },
+            },
+          ])
+        ),
+      },
     };
     if (this.#url) {
       context.base = this.#url;

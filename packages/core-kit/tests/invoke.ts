@@ -46,6 +46,7 @@ test("describe with context.base and no values", async (t) => {
     await handler.describe(undefined, undefined, undefined, {
       base: new URL("http://example.com/"),
       outerGraph: { nodes: [], edges: [] },
+      wires: { incoming: {}, outgoing: {} },
     }),
     {
       inputSchema: {
@@ -86,6 +87,7 @@ test("describe with context.base and invalid $board", async (t) => {
     await handler.describe({ $board: "invalid.json" }, undefined, undefined, {
       base: new URL("file://invalid/base"),
       outerGraph: { nodes: [], edges: [] },
+      wires: { incoming: {}, outgoing: {} },
     }),
     {
       inputSchema: {
@@ -161,6 +163,7 @@ test("describe with context.base and valid $board", async (t) => {
       {
         base: new URL("http://example.com/"),
         outerGraph: { nodes: [], edges: [] },
+        wires: { incoming: {}, outgoing: {} },
       }
     ),
     {
