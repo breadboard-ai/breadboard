@@ -172,6 +172,7 @@ export class Graph extends PIXI.Container {
           );
         }
 
+        this.#sortChildrenBySelectedStatus();
         return;
       }
 
@@ -647,6 +648,8 @@ export class Graph extends PIXI.Container {
 
       edge.selected = rect.intersects(edge.getBounds(true).rectangle);
     }
+
+    this.#sortChildrenBySelectedStatus();
   }
 
   getSelectedChildren(): Array<GraphNode | GraphComment | GraphEdge> {
@@ -671,6 +674,16 @@ export class Graph extends PIXI.Container {
     }
 
     return selected;
+  }
+
+  #sortChildrenBySelectedStatus() {
+    for (const node of this.children) {
+      if (!(node instanceof GraphNode || node instanceof GraphComment)) {
+        continue;
+      }
+
+      node.zIndex = node.selected ? this.children.length - 1 : 0;
+    }
   }
 
   getNodeLayoutPositions() {
