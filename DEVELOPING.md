@@ -4,11 +4,47 @@
 
 This repository is configured as a TypeScript monorepo, using Node's built-in [workspace](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true) capability.
 
-Each prototype project lives as an `npm` package. There are two kinds of packages, with a separate directory to store each kind:
+Each item within the project lives as an `npm` package, though not all packages are actively published _to_ npm.
 
-- `core` -- contains projects that are core to the repo. These are usually well-established, largely settled bits of code.
+### Packages
 
-- `packages` -- contains early experiments and things that aren't fully fleshed out. Most projects will be packages in this directory.
+| Package Name                                                              | NPM                                                                                                                                                                   | Description                                                                                           |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| _Core_                                                                    |                                                                                                                                                                       |                                                                                                       |
+| [`@google-labs/breadboard`](./packages/breadboard)                        | [![Published on npm](https://img.shields.io/npm/v/@google-labs/breadboard.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/breadboard)                       | The core Breadboard library                                                                           |
+| [`@breadboard-ai/build`](./packages/build)                                | [![Published on npm](https://img.shields.io/npm/v/@breadboard-ai/build.svg?logo=npm)](https://www.npmjs.com/package/@breadboard-ai/build)                             | Library for defining boards and node types                                                            |
+| [`@breadboard-ai/visual-editor`](./packages/visual-editor)                | _Unpublished_                                                                                                                                                         | The source code for the Breadboard Visual Editor                                                      |
+| _Kits_                                                                    |                                                                                                                                                                       |                                                                                                       |
+| [`@google-labs/agent-kit`](./packages/agent-kit)                          | [![Published on npm](https://img.shields.io/npm/v/@google-labs/agent-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/agent-kit)                         | Breadboard kit for building agent-like experiences                                                    |
+| [`@google-labs/core-kit`](./packages/core-kit)                            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/core-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/core-kit)                           | Breadboard kit for foundational board operations like `map` and `invoke`                              |
+| [`@google-labs/gemini-kit`](./packages/gemini-kit)                        | [![Published on npm](https://img.shields.io/npm/v/@google-labs/gemini-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/gemini-kit)                       | Breadboard kit for working with the Gemini API                                                        |
+| [`@google-labs/google-drive-kit`](./packages/google-drive-kit)            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/google-drive-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/google-drive-kit)           | Breadboard kit for working with Google Drive                                                          |
+| [`@google-labs/json-kit`](./packages/json-kit)                            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/json-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/json-kit)                           | Breadboard kit for working with JSON in boards                                                        |
+| [`@google-labs/template-kit`](./packages/template-kit)                    | [![Published on npm](https://img.shields.io/npm/v/@google-labs/template-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/template-kit)                   | Breadboard kit to help with templating                                                                |
+| [`@google-labs/palm-kit`](./packages/palm-kit)                            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/palm-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/palm-kit)                           | Breadboard kit for working with the PaLM API in boards                                                |
+| [`@exadev/breadboard-kits`](https://github.com/ExaDev-io/breadboard-kits) | [![Published on npm](https://img.shields.io/npm/v/@exadev/breadboard-kits?logo=npm)](https://www.npmjs.com/package/@exadev/breadboard-kits)                           | A variety of utilities, general purpose nodes, and kits specific scenarios                            |
+| _Tools & Support Libraries_                                               |                                                                                                                                                                       |                                                                                                       |
+| [`@google-labs/breadboard-cli`](./packages/breadboard-cli)                | [![Published on npm](https://img.shields.io/npm/v/@google-labs/breadboard-cli.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/breadboard-cli)               | Command-line tool for generating, running, and debugging boards                                       |
+| [`@breadboard-ai/import`](./packages/import)                              | [![Published on npm](https://img.shields.io/npm/v/@breadboard-ai/import.svg?logo=npm)](https://www.npmjs.com/package/@breadboard-ai/import)                           | Library for importing boards from an OpenAPI spec                                                     |
+| [`@google-labs/breadboard-extension`](./packages/breadboard-extension)    | _Unpublished_                                                                                                                                                         | VSCode extension to assist in building Breadboard applications                                        |
+| [`@google-labs/breadboard-server`](./packages/breadboard-server)          | [![Published on npm](https://img.shields.io/npm/v/@google-labs/breadboard-server.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/breadboard-server)         | Library for running boards as Google Cloud Functions                                                  |
+| [`@google-labs/create-breadboard-kit`](./packages/create-breadboard-kit)  | [![Published on npm](https://img.shields.io/npm/v/@google-labs/create-breadboard-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/create-breadboard-kit) | NPM init/create script for creating a kit                                                             |
+| [`@google-labs/create-breadboard`](./packages/create-breadboard)          | [![Published on npm](https://img.shields.io/npm/v/@google-labs/create-breadboard.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/create-breadboard)         | NPM init/create script for creating a board                                                           |
+| _Examples_                                                                |                                                                                                                                                                       |                                                                                                       |
+| [`@google-labs/cloud-function`](./packages/cloud-function)                | _Unpublished_                                                                                                                                                         | Example of using Cloud Functions with Breadboard                                                      |
+| _Internal/Experiments_                                                    |                                                                                                                                                                       |                                                                                                       |
+| [`@breadboard-ai/manifest`](./packages/manifest)                          | _Unpublished_                                                                                                                                                         | An internal tool that generates a JSON list of board files                                            |
+| [`@breadboard-ai/python-wasm`](./packages/python-wasm)                    | _Unpublished_                                                                                                                                                         | Implementation of runPython component using WASM (Web Assembly)                                       |
+| [`@google-labs/breadboard-python`](./packages/breadboard-python)          | _Unpublished_                                                                                                                                                         | A library that allows developers to define Breadboards with Python                                    |
+| [`@google-labs/breadboard-schema`](./packages/breadboard-schema)          | _Unpublished_                                                                                                                                                         | An internal tool that generates a JSON schema from the Breadboard TypeScript types                    |
+| [`@google-labs/breadboard-website`](./packages/website)                   | _Unpublished_                                                                                                                                                         | The documentation website for Breadboard                                                              |
+| [`@google-labs/connection-server`](./packages/connection-server)          | _Unpublished_                                                                                                                                                         | Used for handling connections to third party services                                                 |
+| [`@google-labs/discovery-types`](./packages/discovery-types)              | _Unpublished_                                                                                                                                                         | Library which generates TypeScript declarations from the PaLM API Discovery Document                  |
+| [`@google-labs/node-nursery-web`](./packages/node-nursery-web)            | _Unpublished_                                                                                                                                                         | A place for experimenting with board nodes that aren't yet ready for their own package (web specific) |
+| [`@google-labs/node-nursery`](./packages/node-nursery)                    | _Unpublished_                                                                                                                                                         | A place for experimenting with board nodes that aren't yet ready for their own package (general)      |
+| [`@google-labs/node-proxy-server`](./packages/node-proxy-server)          | _Unpublished_                                                                                                                                                         | Library that allows running nodes remotely                                                            |
+
+## Building a package
 
 We use [Wireit](https://github.com/google/wireit) as the build tool for the monorepo.
 
@@ -76,7 +112,7 @@ npm run s
 
 Occasionally, there will be changes that will require a full rebuild with installing new packages, etc.
 
-When you find your repo in a funky state, use the `clean` command. It will delete all build artifacts and bring the repo back to the pristine state, allowing you to restart with `npm i` and all those things.
+When you find your repo in a funky state, use `npm run clean`. It will delete all build artifacts and bring the repo back to the pristine state, allowing you to restart with `npm i` and all those things.
 
 > [!CAUTION]
 > If you have any local files that you have saved in the tree, they will be deleted.
@@ -86,9 +122,9 @@ npm run clean
 
 ```
 
-## Starting a new project
+## Creating a new package
 
-To start a new project:
+To create a new package:
 
 :one: Copy a template project as a new directory under `packages`. For example, if the name of your new prototyping project is `awesome-ai-game`, you would run something like this:
 
@@ -120,7 +156,7 @@ node .
 
 You should see `code goes here` as output.
 
-:five: Build the awesome AI game or whatever it is you've dreamed up.
+:five: Build whatever it is you've dreamed up!
 
 The new package is configured as a private package by default. If you would like to publish it to `npm`, flip the `private` flag to `true` in `package.json`.
 
@@ -185,7 +221,7 @@ doesn't comply with the license.)
 
 ## TypeScript Developer Happy Path
 
-This section describes that I ([dglazkov](https://github.com/dglazkov)) use and it's probably what will give you the most comfortable developer experience in this repo.
+This section describes that we generally use within the Breadboard team, and it's probably what will give you the most comfortable developer experience in this repo.
 
 ### VSCode
 
@@ -196,11 +232,7 @@ Install “ESLint” and “Prettier” extensions. TypeScript support is built-
 - “ESLint” – provides live commentary on the quality of your code.
 - “Prettier” – will make your code look pretty automatically.
 
-If you are playing with graphs, install the “Markdown Preview Mermaid Support” extension.
-
-(Optional) Install Fira Code (the font you’re reading right now)
-
-Tweak the settings to your liking. The most important one is to format-on-save, so that you never need to worry about formatting TypeScript ever again. Here is what I have:
+Tweak the settings to your liking. The most important one is to format-on-save, so that you never need to worry about formatting TypeScript ever again. Here is what we have:
 
 ```
 "editor.rulers": [80] <-- Draws a nice ruler at 80 columns
@@ -212,12 +244,12 @@ Tweak the settings to your liking. The most important one is to format-on-save, 
 
 Use the built-in terminal (Ctrl+`). For convenience, split the TERMINAL and PROBLEMS tabs horizontally.
 
-This setup creates a really nice separation of the workspace: the top part is where I write code, and the bottom part is where I see if it works. As I type, the problems come and go in the bottom-right window. When I am ready to try running my code, I switch to the terminal and run it from there.
+This setup creates a really nice separation of the workspace: the top part is where we write code, and the bottom part is where we see if it works. As we type, the problems come and go in the bottom-right window. When we are ready to try running my code, we switch to the terminal and run it from there.
 
 Because TypeScript is built-in, TypeScript errors will show up live in the PROBLEMS window as well, which is super-convenient.
 Learn keyboard shortcuts. Ctrl+P (Cmd+P) and Ctrl+Shift+P (Cmd+Shift+P) are likely the most important ones.
 
-Occasionally, VSCode’s built-in TypeScript machinery gets into a confused state. For this purpose, there’s a “TypeScript: Restart TS Server“ command available via Ctrl+Shift+P. You can also use the “Developer: Reload Windows“ command to flush out the gremlins.
+Occasionally, VSCode’s built-in TypeScript machinery gets into a confused state. For this purpose, there’s a “TypeScript: Restart TS Server“ command available via Cmd/Ctrl+Shift+P. We can also use the “Developer: Reload Windows“ command to flush out the gremlins.
 
 ### Workflow
 
@@ -226,8 +258,8 @@ The dev cycle is:
 - Open the directory of the package (or several of them) in VSCode
 - Write some code
 - Make ESLint and TypeScript live-compiler happy (no errors show up in the PROBLEMS window)
-- Run `npm run build` to build the code.
-- Run your code with `node .` or whatever is the right way to run it. For convenience, create an [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine building and running. See example here.
+- Run `npm run build` to build the code. For packages like the Visual Editor we generally use `npm run dev`, which often provides a live reload feature in the browser.
+- Run your code with `node .` or whatever is the right way to run it. For convenience, create an [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine building and running.
 - Go to the “Write some code” step.
 
 ### Build system
@@ -238,14 +270,11 @@ The main reason we need to run `npm run build` is because in the monorepo, we ne
 
 #### Front-end
 
-[Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to
-create a new front-end project.
+[Vite](https://vitejs.dev/) is currently brought up in the `visual-editor` package. Use it as a template for other front-end TypeScript packages.
 
 ## Sending PRs
 
-This repo protects the `main` branch, which means all changes must go through a
-GitHub PR. This enforces that all tests pass and packages builds before any
-change lands, and provides an opportunity for code review.
+This repo protects the `main` branch, which means all changes must go through a GitHub PR. This enforces that all tests pass and packages builds before any change lands, and provides an opportunity for code review.
 
 > [!TIP]
 > The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
@@ -256,37 +285,25 @@ change lands, and provides an opportunity for code review.
 
 ### Changesets
 
-This repo uses [Changesets](https://github.com/changesets/changesets) to ease
-the burden of releasing of NPM packages. The benefits are that it publishes
-multiple packages at once, understands the dependencies between all packages in
-the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files,
-and automatically creates release tags.
+This repo uses [Changesets](https://github.com/changesets/changesets) to ease the burden of releasing of NPM packages. The benefits are that it publishes multiple packages at once, understands the dependencies between all packages in the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files, and automatically creates release tags.
 
 > [!TIP]
 > If you need to publish NPM packages, see the [Publishing NPM
 > packages](#publishing-npm-packages) section below.
 
-After sending a PR, you may receive a comment from
-[**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
+After sending a PR, you may receive a comment from [**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
 
 ![changeset-bot comment](https://user-images.githubusercontent.com/11481355/66183943-dc418680-e6bd-11e9-998d-e43f90a974bd.png)
 
-This bot is telling you that your PR does not contain a [Changeset
-file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md).
-Changeset files are how Changesets understands which packages need to be
-released at any given time, along with the kind of version bump that is needed
-for them.
+This bot is telling you that your PR does not contain a [Changeset file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md). Changeset files are how Changesets understands which packages need to be released at any given time, along with the kind of version bump that is needed for them.
 
-The easiest way to create a Changeset file for your PR is to run this command:
+The easiest way to create a Changeset file for your PR is to run this command from the root of the monorepo:
 
 ```
 npx changeset
 ```
 
-This command will prompt you with an interactive list of packages. Select the
-packages that your PR affects and indicate whether the changes are
-[semver](https://semver.org/) `major` (breaking), `minor` (new features), or
-`patch` (bug fixes).
+This command will prompt you with an interactive list of packages. Select the packages that the PR affects and indicate whether the changes are [semver](https://semver.org/) `major` (breaking), `minor` (new features), or `patch` (bug fixes).
 
 > [!NOTE]
 > If your change only affects **unpublished** packages, then you can
