@@ -72,7 +72,6 @@ export class GraphNode extends PIXI.Container {
   }> = [];
   #inPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
-  #editable = false;
   #selected = false;
   #highlightForAdHoc = false;
   #collapsed = false;
@@ -426,14 +425,6 @@ export class GraphNode extends PIXI.Container {
     return { width: this.#width, height: this.#height };
   }
 
-  set editable(editable: boolean) {
-    this.#editable = editable;
-  }
-
-  get editable() {
-    return this.#editable;
-  }
-
   set inPorts(ports: InspectablePort[] | null) {
     this.#inPorts = ports;
     this.#isDirty = true;
@@ -724,9 +715,6 @@ export class GraphNode extends PIXI.Container {
     this.#headerInPort.visible = true;
     this.#headerOutPort.visible = true;
 
-    this.#headerInPort.editable = this.editable;
-    this.#headerOutPort.editable = this.editable;
-
     const titleHeight =
       this.#padding + (this.#titleText?.height || 0) + this.#padding;
 
@@ -947,7 +935,6 @@ export class GraphNode extends PIXI.Container {
       nodePort.radius = this.#portRadius;
       nodePort.x = 0;
       nodePort.y = portY + label.height * 0.5;
-      nodePort.editable = this.editable;
       nodePort.overrideStatus = null;
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
@@ -975,7 +962,6 @@ export class GraphNode extends PIXI.Container {
       nodePort.radius = this.#portRadius;
       nodePort.x = this.#width;
       nodePort.y = portY + label.height * 0.5;
-      nodePort.editable = this.editable;
       nodePort.overrideStatus = null;
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;

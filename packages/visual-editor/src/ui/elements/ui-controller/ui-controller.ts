@@ -374,7 +374,6 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-editor
-          .editable=${true}
           .graph=${this.graph}
           .subGraphId=${this.subGraphId}
           .kits=${this.kits}

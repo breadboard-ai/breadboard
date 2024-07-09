@@ -110,9 +110,6 @@ export class Editor extends LitElement {
   loader: GraphLoader | null = null;
 
   @property()
-  editable = false;
-
-  @property()
   highlightedNodeId: string | null = null;
 
   @state()
@@ -1251,7 +1248,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.highlightedNodeId = this.highlightedNodeId;
 
     if (this.#graphRenderer) {
-      this.#graphRenderer.editable = this.editable;
       this.#graphRenderer.invertZoomScrollDirection =
         this.invertZoomScrollDirection;
     }
