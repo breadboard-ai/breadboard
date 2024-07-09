@@ -53,6 +53,23 @@ if (config.allowedOrigins.size === 0) {
 const host = env.HOST || "localhost";
 const port = env.PORT ? Number(env.PORT) : 5555;
 const server = createServer(makeRouter(config));
+server.on("error", (error) => {
+  console.error(error);
+  if ((error as { code?: string }).code === "EADDRINUSE") {
+    console.log(
+      `
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Breadboard Connection Server                                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Port ${port} is in use by another process. Try this command to kill it:    │
+│                                                                         │
+│   kill $(lsof -i tcp:${port} | tail -n 1 | head -n1 | cut -w -f2)          │
+└─────────────────────────────────────────────────────────────────────────┘
+`
+    );
+  }
+});
+
 server.listen(port, host, () => {
   console.info(
     `
