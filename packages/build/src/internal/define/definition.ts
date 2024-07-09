@@ -235,7 +235,10 @@ export class DefinitionImpl<
       const { staticValues, dynamicValues } =
         this.#applyDefaultsAndPartitionRuntimeInputValues(values ?? {});
       user = await this.#describe(staticValues, dynamicValues, {
-        ...(context ?? { outerGraph: { nodes: [], edges: [] } }),
+        ...(context ?? {
+          outerGraph: { nodes: [], edges: [] },
+          wires: { incoming: {}, outgoing: {} },
+        }),
         inputSchema: jsonSchemaToPortConfigMap(
           (inboundEdges as JSONSchema4) ?? {}
         ),
