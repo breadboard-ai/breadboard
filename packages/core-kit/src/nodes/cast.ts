@@ -39,6 +39,7 @@ export const castNode = defineNodeType({
     type: {
       type: object({}, "unknown"),
       description: "The JSON schema to cast the value to",
+      behavior: ["json-schema", "config"],
     },
   },
   outputs: {
