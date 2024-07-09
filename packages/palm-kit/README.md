@@ -1,6 +1,9 @@
-# PaLM Kit
+# Breadboard PaLM Kit
 
-![Milestone](https://img.shields.io/badge/milestone-M4-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
+> [!NOTICE]
+> The PaLM API is now deprecated. See https://ai.google.dev/palm_docs for more.
+
+![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
 A Breadboard Kit with nodes to access PaLM APIs.
 

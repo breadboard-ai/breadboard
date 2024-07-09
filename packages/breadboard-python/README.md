@@ -1,6 +1,6 @@
-# Breadboard-python
+# Breadboard Oython
 
-Breadboard-python is a library that allows developers to define Breadboards with Python.
+Breadboard Python is a library that allows developers to define Breadboards with Python.
 
 Each Breadboard can be serialized into a JSON graph. An executor can take this graph and run it.
 
@@ -26,7 +26,7 @@ pip install breadboard_python
 
 # Usage
 
-Here's a very trivial Board:
+Here's a starter board:
 
 ```python
 from breadboard_python.main import Board, Field, SchemaObject
@@ -138,4 +138,4 @@ class ExampleBoard(Board):
 
 ## Defining functions in Python
 
-TBD!
+Coming Soon.
