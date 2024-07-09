@@ -1,12 +1,12 @@
 # Breadboard
 
-## A library for prototyping generative AI applications.
+**A library for prototyping generative AI applications.**
 
 ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
-Inspired by hardware makers who make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all), Breadboard is a library that simplifies prototyping generative AI applications. It helps people to easily "wire" together, experiment with, and share modular components, fostering creativity and collaboration.
+Inspired by hardware makers who make amazing things with [physical breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all) and off-the-shelf parts, Breadboard is a library that tries to recreate that same spirit. It simplifies prototyping generative AI applications, helping people to easily "wire" together, experiment with, and share modular components, fostering creativity and collaboration.
 
-This library's design emphasizes two key properties:
+Breadboard's design emphasizes two key properties:
 
 1. **Ease and flexibility of wiring**. Make wiring prototypes easy and fun.
 1. **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
@@ -17,7 +17,7 @@ The best way to get going with Breadboard is to use the [Visual Editor](https://
 
 [![The Breadboard Visual Editor](./assets/visual-editor.png)](https://breadboard-ai.web.app/)
 
-Our [documentation site](https://breadboard-ai.github.io/breadboard/docs/) also has a number of guides aimed at helping you build an understanding of several key aspects of Breadboard.
+Our [documentation site](https://breadboard-ai.github.io/breadboard/docs/) also has a number of guides aimed at helping you build an understanding of several key aspects of Breadboard. Here are a few that are useful if you're new to Breadboard.
 
 - **[Getting Started](https://breadboard-ai.github.io/breadboard/docs/getting-started/)**. A lightweight introduction to the Visual Editor and how to run a simple board.
 - **[Build a Librarian with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/librarian/)**. A guide to using the Breadboard Agent Kit (a collection of helpful components for dealing with LLMs) to make a virtual librarian that makes book recommendations.
@@ -35,7 +35,9 @@ Please also look over our [Contributing Guide](https://github.com/breadboard-ai/
 
 ### Developing Breadboard
 
-Breadboard is organized as a monorepo, with packages designed to do a specific task. Some of these packages are published to npm for others to use "out of treee". When developing Breadboard, however, npm will use packages from within the monorepo when a given package depends on another. See [DEVELOPING.md](./DEVELOPING.md) for more instructions on the various packages within Breadboard, and how to work with them.
+Breadboard is organized as a monorepo, with packages designed to do a specific task. Some of these packages are published to npm for others to use "out of treee", and others are unpublished. When developing Breadboard, however, npm will use packages from within the monorepo when a given package depends on another.
+
+See [DEVELOPING.md](./DEVELOPING.md) for more information on the various packages within Breadboard, and how to work with them.
 
 Please note that Breadboard requires [Node](https://nodejs.org/) version >=v20.14.0.
 
