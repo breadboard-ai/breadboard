@@ -11,7 +11,7 @@ import {
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
 } from "@google-labs/breadboard";
-import { GraphProviderStore } from "./types";
+import { GraphProviderStore } from "./types.js";
 
 export class ExamplesGraphProvider implements GraphProvider {
   name = "ExamplesGraphProvider";

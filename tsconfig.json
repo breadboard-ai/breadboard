@@ -8,6 +8,7 @@
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/discovery-types" },
+    { "path": "packages/example-boards" },
     { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/import" },

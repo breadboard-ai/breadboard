@@ -18,7 +18,9 @@
     import { SettingsStore } from "./src/data/settings-store.ts";
     import { makeProxyConfig } from "./src/proxy/iframe.ts";
 
-    const localBoards = await (await fetch("/local-boards.json")).json();
+    const localBoards = await (
+      await fetch("@breadboard-ai/example-boards/local-boards.json")
+    ).json();
     const proxy = await makeProxyConfig();
 
     const config = {
