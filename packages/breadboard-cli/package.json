@@ -56,7 +56,7 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../visual-editor:build:tsc",
-        "../visual-editor:generate:graphs",
+        "../example-boards:build:tsc",
         "../core-kit:build:tsc",
         "../import:build",
         "../template-kit:build:tsc"

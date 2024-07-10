@@ -11,9 +11,9 @@ import { Schema, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { graph as forEach } from "./board-for-each";
 import {
-    graph as search,
-    searchQuerySchema,
-    searchTagsSchema,
+  graph as search,
+  searchQuerySchema,
+  searchTagsSchema,
 } from "./hacker-news-algolia-search";
 import { graph as manipulator } from "./object-manipulator";
 
@@ -121,6 +121,7 @@ export interface HighlightResult {
 
 export interface Author {
   matchLevel: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   matchedWords: any[];
   value: string;
 }
