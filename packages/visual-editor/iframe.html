@@ -17,10 +17,8 @@
     import { RemoteGraphProvider } from "./src/providers/remote.ts";
     import { SettingsStore } from "./src/data/settings-store.ts";
     import { makeProxyConfig } from "./src/proxy/iframe.ts";
+    import localBoards from "@breadboard-ai/example-boards/local-boards.json" assert { type: "json" };
 
-    const localBoards = await (
-      await fetch("@breadboard-ai/example-boards/local-boards.json")
-    ).json();
     const proxy = await makeProxyConfig();
 
     const config = {
