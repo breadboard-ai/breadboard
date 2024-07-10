@@ -899,7 +899,13 @@ export class Main extends LitElement {
   }
 
   async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
-    const url = this.#makeRelativeToCurrentBoard(startEvent.url);
+    let url = this.#makeRelativeToCurrentBoard(startEvent.url);
+
+    // Redirect older /graphs examples to /example-boards
+    if (url?.startsWith("/graphs")) {
+      url = url.replace(/^\/graphs/, "/example-boards");
+    }
+
     this.#boardId++;
     this.#setUrlParam("board", url);
 
