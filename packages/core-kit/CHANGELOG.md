@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- 166f290: Introduce `service` node.
+
+### Patch Changes
+
+- f4d2416: Add cast node and helper to core-kit, for asserting some JSON schema as the type of some value.
+- bc94299: The unnest node now uses the actual describe function of the connected node to discover the incoming schema, and sets the outgoing schema to match.
+- 9d93cf8: Added inputSchema and outputSchema properties. The old "schema" property is now deprecated in favor of "outputSchema" (though will fall back to "schema").
+- 9d93cf8: Add extractTypeFromValue function.
+- a9def5c: Fix bug in automatic output schema when using code helper.
+- Updated dependencies [a925cf0]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/build@0.7.1
+
 ## 0.10.1
 
 ### Patch Changes

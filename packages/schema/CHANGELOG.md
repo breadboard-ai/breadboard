@@ -1,5 +1,12 @@
 # @google-labs/breadboard-schema
 
+## 1.5.1
+
+### Patch Changes
+
+- dd783e0: Add analyzeIsJsonSubSchema function
+- 3aba1a4: Improve subschema checking of properties and additionalProperties
+
 ## 1.5.0
 
 ### Minor Changes

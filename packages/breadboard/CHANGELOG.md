@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.22.0
+
+### Minor Changes
+
+- ffbf163: canConnect now checks JSON schema compatibility in a much more complete way, including understanding of nested types.
+
+### Patch Changes
+
+- a925cf0: Add inPort and outPort functions to InspectableEdge
+- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a describe() function for getting the actual schema of a connected port if needed.
+- 8928fb7: Add section for Visual Editor documentation
+- d6706f2: Add analyzeCanConnect method to InspectablePort which is like canConnect but with detailed error messages.
+- 5447426: Add kind port to InspectablePort to tell you whether it's an input or output port
+- 7e1f01c: Start rolling up .d.ts type information for the package.
+- Updated dependencies [dd783e0]
+- Updated dependencies [3aba1a4]
+  - @google-labs/breadboard-schema@1.5.1
+
 ## 0.21.0
 
 ### Minor Changes

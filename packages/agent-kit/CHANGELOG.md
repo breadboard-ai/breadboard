@@ -1,5 +1,11 @@
 # @google-labs/agent-kit
 
+## 0.8.1
+
+### Patch Changes
+
+- f4397b9: Update remaining breadboard-web paths
+
 ## 0.8.0
 
 ### Minor Changes

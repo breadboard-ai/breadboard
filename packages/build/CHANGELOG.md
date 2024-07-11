@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.1
+
+### Patch Changes
+
+- da43bb5: Allow wiring inputs directly to outputs
+- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a describe() function for getting the actual schema of a connected port if needed.
+- 9d93cf8: Fix bug relating to directly returning JSON Schema from describe function instead of wrapping with unsafeSchema.
+- 26e1099: Add describe function to Board component class
+- Updated dependencies [a925cf0]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+
 ## 0.7.0
 
 ### Minor Changes

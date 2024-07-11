@@ -1,5 +1,27 @@
 # @breadboard-ai/board-server
 
+## 0.2.0
+
+### Minor Changes
+
+- 6f82dea: Update Visual Editor package name
+- 0f9d617: Move breadboard-web to visual-editor; remove breadbuddy
+- 4311bd4: Ensure that proxy endpoint uses the same rules as board server.
+
+### Patch Changes
+
+- 77fd526: Update board-server README
+- 501c868: Fix an off-by-one slice error.
+- f4397b9: Update remaining breadboard-web paths
+- Updated dependencies [a925cf0]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+
 ## 0.1.0
 
 ### Minor Changes
