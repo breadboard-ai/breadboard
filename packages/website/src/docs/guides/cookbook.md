@@ -1,10 +1,10 @@
 ---
 layout: docs.njk
-title: Playbook
+title: Cookbook
 tags:
-  - guide
+  - miscellaneous
   - wip
-date: 2020-01-06 # Sixth in the list
+date: 2020-01-01 # First in the list
 ---
 
 This guide contains a collection of patterns aimed at answering "how do I...?" questions. It is very much a work in progress.
@@ -22,7 +22,7 @@ In both cases we will use a `runJavascript` component to _generate_ an array wit
 
 To do this our board looks like something this:
 
-{{ "/breadboard/static/boards/playbook/array-split-1.json" | board }}
+{{ "/breadboard/static/boards/cookbook/array-split-1.json" | board }}
 
 The key is to use the [`jsonata` component](../../kits/json/#the-jsonata-node) to select out the array values with this query.
 
@@ -38,20 +38,20 @@ $[1]
 
 Our JSONata component details input should look like this:
 
-![The JSONata input](/breadboard/static/images/playbook/jsonata-input.png)
+![The JSONata input](/breadboard/static/images/cookbook/jsonata-input.png)
 
 > [!TIP]
 > JSONata can be a bit challenging to get used to, but it's also incredibly powerful and flexible. We recommend looking over the documentation and trying out the [JSONata Exerciser](https://try.jsonata.org/) to get more used to it.
 
 When we run the board we will see two separate outputs.
 
-![The board output](/breadboard/static/images/playbook/array-split-output.png)
+![The board output](/breadboard/static/images/cookbook/array-split-output.png)
 
 ### Using runJavascript
 
 We can also use [`runJavascript` component](../../kits/core/#the-runjavascript-node) to select out the values, but this is slightly more involved than using the `jsonata` component. The board itself looks similar to the `jsonata` one above.
 
-{{ "/breadboard/static/boards/playbook/array-split-2.json" | board }}
+{{ "/breadboard/static/boards/cookbook/array-split-2.json" | board }}
 
 > [!NOTE]
 > While using `runJavascript` involves a little more work than its `jsonata` counterpart, it does give us the chance to change the value or manipulate it in other ways that may be more challenging (or harder to read in `jsonata`). Both are good approaches, though, and we can use whichever suits our end goals.
@@ -66,7 +66,7 @@ Here we use JavaScript to select out the first entry of the array by hand.
 
 The name of the destructured parameter passed to `run` is called `result`. By default, however, you will see that a `runJavascript` component has no such input, so how do we see an additional port called `result`?
 
-![The result port on the runJavascript component](/breadboard/static/images/playbook/array-split-dynamic-wire.png)
+![The result port on the runJavascript component](/breadboard/static/images/cookbook/array-split-dynamic-wire.png)
 
 > [!TIP]
 > We can expand on a component within the Visual Editor by double clicking on its header. When we do this for our **First Number** component we will see the additional port created called `result`.
@@ -107,11 +107,11 @@ Our JSONata component's **Expression input** could look something like this:
 
 This JSONata will filter and then count the number of times the name `"Alice"` exists in a given list. We have one JSONata component that runs this function for the list in `"groupA"`, and another for the list in `"groupB"`. That makes our final board like this.
 
-{{ "/breadboard/static/boards/playbook/object-split.json" | board }}
+{{ "/breadboard/static/boards/cookbook/object-split.json" | board }}
 
 > [!NOTE]
 > We can also use `runJavascript` to do the same thing as JSONata here. If you have more experience with JavaScript than [JSONata](https://jsonata.org/), this may be a preferable path to take.
 
 The final output from our board looks like this:
 
-![The final output of our object split board](/breadboard/static/images/playbook/object-split.png)
+![The final output of our object split board](/breadboard/static/images/cookbook/object-split.png)
