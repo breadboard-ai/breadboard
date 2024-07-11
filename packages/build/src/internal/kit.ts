@@ -7,6 +7,7 @@
 import type {
   InputValues,
   Kit,
+  KitConstructor,
   NodeHandler,
   NodeHandlerContext,
   NodeHandlerFunction,
@@ -26,7 +27,7 @@ export interface KitOptions {
   components: Array<GenericDiscreteComponent | GenericBoardDefinition>;
 }
 
-export function kit(options: KitOptions): Kit {
+export function kit(options: KitOptions): KitConstructor<Kit> {
   const handlers: Record<string, NodeHandler> = Object.fromEntries(
     options.components.map((component) => {
       if (isDiscreteComponent(component)) {
