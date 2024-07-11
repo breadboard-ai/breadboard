@@ -32,7 +32,7 @@ First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#cr
 
 As our next step, let's add a Summarizer [Specialist](../#specialist) to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
 
-![Breadboard Node Selector](/breadboard/static/images/shared/component-selector.png)
+![Breadboard Component Selector](/breadboard/static/images/shared/component-selector.png)
 
 Now, let's remove the existing edge connecting the `input` and `output` components. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
 
@@ -45,7 +45,7 @@ We will not invest a tiny bit of effort to educate our Specialist and imbue it w
 > [!NOTE]
 > With Visual Breadboard, it's super-easy to create and connect Specialists. We wanted to make sure that you can focus on the most interesting -- and challenging! -- part: teaching Specialists to do their work well.
 
-We'll start with naming it appropriately. Click on the component representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Node Details". Then Type in "Summarizer" as the component's title. You will also see that the title changes in the visual editor as well.
+We'll start with naming it appropriately. Click on the component representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Component Details". Then Type in "Summarizer" as the component's title. You will also see that the title changes in the visual editor as well.
 
 Moving on to the Persona, let's type in something like this:
 
@@ -150,7 +150,7 @@ a 3-5 question interview to collect just enough information
 to look for an interesting book in the library.
 ```
 
-Then, let's wire it into the graph: insert it between the Input component and the Researcher Node, the same way we wired the Researcher earlier.
+Then, let's wire it into the graph: insert it between the Input component and the Researcher component, the same way we wired the Researcher earlier.
 
 {{ "/breadboard/static/boards/librarian/4-wire-interview-planner.bgl.json" | board }}
 
