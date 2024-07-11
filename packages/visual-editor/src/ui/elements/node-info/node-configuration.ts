@@ -873,7 +873,10 @@ export class NodeConfigurationInfo extends LitElement {
                               let input;
                               const type = port.schema.type;
                               const behavior = port.schema.behavior;
-                              const defaultValue = port.schema.default;
+                              const defaultValue =
+                                typeof port.schema.default === "string"
+                                  ? port.schema.default
+                                  : "";
 
                               // LLM Inputs show their own description, so don't include it
                               // here.
