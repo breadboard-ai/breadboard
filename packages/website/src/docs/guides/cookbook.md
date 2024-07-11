@@ -22,7 +22,7 @@ In both cases we will use a `runJavascript` component to _generate_ an array wit
 
 To do this our board looks like something this:
 
-{{ "/breadboard/static/boards/cookbook/array-split-1.json" | board }}
+{{ "/breadboard/static/boards/cookbook/array-split-1.bgl.json" | board }}
 
 The key is to use the [`jsonata` component](../../kits/json/#the-jsonata-node) to select out the array values with this query.
 
@@ -51,7 +51,7 @@ When we run the board we will see two separate outputs.
 
 We can also use [`runJavascript` component](../../kits/core/#the-runjavascript-node) to select out the values, but this is slightly more involved than using the `jsonata` component. The board itself looks similar to the `jsonata` one above.
 
-{{ "/breadboard/static/boards/cookbook/array-split-2.json" | board }}
+{{ "/breadboard/static/boards/cookbook/array-split-2.bgl.json" | board }}
 
 > [!NOTE]
 > While using `runJavascript` involves a little more work than its `jsonata` counterpart, it does give us the chance to change the value or manipulate it in other ways that may be more challenging (or harder to read in `jsonata`). Both are good approaches, though, and we can use whichever suits our end goals.
@@ -107,7 +107,7 @@ Our JSONata component's **Expression input** could look something like this:
 
 This JSONata will filter and then count the number of times the name `"Alice"` exists in a given list. We have one JSONata component that runs this function for the list in `"groupA"`, and another for the list in `"groupB"`. That makes our final board like this.
 
-{{ "/breadboard/static/boards/cookbook/object-split.json" | board }}
+{{ "/breadboard/static/boards/cookbook/object-split.bgl.json" | board }}
 
 > [!NOTE]
 > We can also use `runJavascript` to do the same thing as JSONata here. If you have more experience with JavaScript than [JSONata](https://jsonata.org/), this may be a preferable path to take.
@@ -115,3 +115,39 @@ This JSONata will filter and then count the number of times the name `"Alice"` e
 The final output from our board looks like this:
 
 ![The final output of our object split board](/breadboard/static/images/cookbook/object-split.png)
+
+## Creating a conversation using Agent Kit
+
+The [Agent Kit](../../kits/agents) provides the necessary building blocks for us to create an endless conversation with an LLM.
+
+To do this we create a looper, specialist, and a human from the Agent Kit. You'll find all three in the Component selector in the bottom left of the Visual Editor. The robot icon indicates the **specialist**, the person icon the **human**, and the loop icon is the **looper**. We drag one of each onto the Visual Editor and wire them up.
+
+![The Component Selector](/breadboard/static/images/shared/component-selector.png)
+
+1. Connect the **input's** _Context_ to the **looper's** _Context in_.
+1. Connect the **looper's** _loop_ port to the **specialist's** _Context in_.
+1. Connect the **specialist's** _Context out_ to the **humans's** _Context in_.
+1. Connect the **human's** _Context out_ to the **looper's** _Context in_.
+
+When you're done it should look a little like this.
+
+{{ "/breadboard/static/boards/cookbook/agent-conversation.bgl.json" | board }}
+
+We now need to set a couple of inputs in the **looper** and the **specialist** and we're done.
+
+Click on the looper and enter the following **Task**:
+
+```prompt
+You are running a conversation between a user and an agent
+```
+
+And now click on the specialist and set its **Persona** to:
+
+```prompt
+You are a helpful and cheery chat agent. You like to find out how the user is doing and how you can help them.
+```
+
+> [!TIP]
+> You can give your components friendlier names by clicking on them and editing their title in the "Component details" pane.
+
+And you're good to go.
