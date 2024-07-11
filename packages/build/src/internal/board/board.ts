@@ -9,7 +9,6 @@ import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
 import {
   InputPort,
-  isOutputPortReference,
   OutputPort,
   OutputPortGetter,
   type OutputPortReference,
@@ -294,24 +293,6 @@ class BoardDefinitionImpl<
       },
     };
   }
-}
-
-function getSchema(
-  value:
-    | GenericSpecialInput
-    | InputPort<JsonSerializable>
-    | Output<JsonSerializable>
-    | OutputPortReference<JsonSerializable>
-    | Input<JsonSerializable>
-    | InputWithDefault<JsonSerializable>
-): Schema {
-  if ("type" in value) {
-    return toJSONSchema(value.type) as Schema;
-  }
-  if (OutputPortGetter in value) {
-    return getSchema(value[OutputPortGetter]);
-  }
-  return getSchema(value.port);
 }
 
 class BoardInstance<
