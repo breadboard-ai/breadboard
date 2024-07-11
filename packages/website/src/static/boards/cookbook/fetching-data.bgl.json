@@ -1,6 +1,6 @@
 {
-  "title": "Wikipedia",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "title": "Google Books API",
+  "description": "Fetches data from the Google Books API using a string query",
   "version": "0.0.1",
   "metadata": {
     "comments": [
