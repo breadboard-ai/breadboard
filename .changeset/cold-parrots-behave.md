@@ -1,5 +1,5 @@
 ---
-"@google-labs/visual-editor": patch
+"@breadboard-ai/visual-editor": patch
 ---
 
 Change edit board to close

@@ -1,5 +1,5 @@
 ---
-"@google-labs/visual-editor": patch
+"@breadboard-ai/visual-editor": patch
 ---
 
 Clean up recent boards on delete
