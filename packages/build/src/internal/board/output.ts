@@ -32,3 +32,13 @@ export interface Output<T extends JsonSerializable | undefined> {
   readonly description?: string;
   readonly port: OutputPortReference<T> | Input<T> | InputWithDefault<T>;
 }
+
+export function isSpecialOutput(
+  value: unknown
+): value is Output<JsonSerializable> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__SpecialOutputBrand" in value
+  );
+}
