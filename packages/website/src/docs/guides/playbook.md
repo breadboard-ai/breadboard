@@ -74,3 +74,44 @@ The name of the destructured parameter passed to `run` is called `result`. By de
 The answer is that we create a [dynamic wire](../../visual-editor/components/#dynamic-wires) from the **Number Generator** _to_ the **First Number** component, which is done by dragging from the Number Generator to the middle of the First Number component. On releasing the mouse we will be asked to name the wire, and we can use the name `result` (or anything else we prefer). Whatever we call the port will then be used as the input's name.
 
 ![Dragging from one port to the drop zone of another component](/breadboard/static/images/using-the-visual-editor/drop-zone.png)
+
+## Splitting an object
+
+Building on the above example of [splitting an array](#splitting-an-array), we can use `jsonata` to do more advanced tasks. Suppose we have some JSON that looks like this:
+
+```json
+{
+  "groupA": ["Bob", "Alice", "Fred"],
+  "groupB": ["Alice", "Bob", "Alice", "Jane"]
+}
+```
+
+And now we would like to grab each property of the object individually and count the number of times we encounter the name "Alice".
+
+Our JSONata component's **Expression input** could look something like this:
+
+```prompt
+(
+  $count_alices := function($vals) {
+    $count($filter($vals, function($val) { $val = "Alice" }))
+  };
+
+  {
+    "countGroupA": $count_alices(groupA)
+  }
+)
+```
+
+> [!NOTE]
+> This is making use of a custom JSONata function, which is quite a deep topic. Check out the [JSONata docs](https://docs.jsonata.org/programming#functions) for more information on these, and other features of JSONata.
+
+This JSONata will filter and then count the number of times the name `"Alice"` exists in a given list. We have one JSONata component that runs this function for the list in `"groupA"`, and another for the list in `"groupB"`. That makes our final board like this.
+
+{{ "/breadboard/static/boards/playbook/object-split.json" | board }}
+
+> [!NOTE]
+> We can also use `runJavascript` to do the same thing as JSONata here. If you have more experience with JavaScript than [JSONata](https://jsonata.org/), this may be a preferable path to take.
+
+The final output from our board looks like this:
+
+![The final output of our object split board](/breadboard/static/images/playbook/object-split.png)
