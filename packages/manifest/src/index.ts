@@ -140,7 +140,7 @@ export type Reference = UriReference | RelativeReference;
  *
  * Also has a title.
  */
-export interface ResourceReference extends Resource {
+export interface ResourceReference extends Resource, Partial<GraphDescriptor> {
   readonly reference: Reference;
   readonly title?: Title;
 }
