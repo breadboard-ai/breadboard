@@ -193,6 +193,8 @@ export function defineNodeType<
     params.describe as LooseDescribeFn
   );
   return Object.assign(impl.instantiate.bind(impl), {
+    breadboardType: "DiscreteComponent",
+    id: params.name,
     invoke: impl.invoke.bind(impl),
     describe: impl.describe.bind(impl),
     metadata: params.metadata || {},
