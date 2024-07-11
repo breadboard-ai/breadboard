@@ -1,5 +1,5 @@
 ---
-"@google-labs/visual-editor": patch
+"@breadboard-ai/visual-editor": patch
 ---
 
 Enable pasting when on the Welcome Pane

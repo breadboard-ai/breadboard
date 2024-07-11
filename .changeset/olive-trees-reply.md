@@ -1,6 +1,6 @@
 ---
 "@google-labs/breadboard-cli": minor
-"@google-labs/visual-editor": minor
+"@breadboard-ai/visual-editor": minor
 "@breadboard-ai/board-server": minor
 ---
 
