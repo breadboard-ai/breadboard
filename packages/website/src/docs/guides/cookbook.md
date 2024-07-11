@@ -124,6 +124,16 @@ To do this we create a looper, specialist, and a human from the Agent Kit. You'l
 
 ![The Component Selector](/breadboard/static/images/shared/component-selector.png)
 
+Each component handles a distinct part of the process for us.
+
+- **Looper**. This handles the conversation flow, and keeps us in an endless loop (hence the name) going from specialist to human.
+- **Specialist**. This is an LLM-backed component that takes in the conversation history and responds to the user.
+- **Human**. This captures multi-modal user input and formats it correctly for the specialist.
+
+Now we have the components we need to wire them up.
+
+### Wiring up the ports
+
 1. Connect the **input's** _Context_ to the **looper's** _Context in_.
 1. Connect the **looper's** _loop_ port to the **specialist's** _Context in_.
 1. Connect the **specialist's** _Context out_ to the **humans's** _Context in_.
