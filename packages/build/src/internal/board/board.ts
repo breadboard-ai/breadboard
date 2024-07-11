@@ -63,6 +63,7 @@ export function board<
 >({
   inputs,
   outputs,
+  id,
   title,
   description,
   version,
@@ -75,6 +76,7 @@ export function board<
   const flatOutputs = flattenOutputs(outputs);
   const def = new BoardDefinitionImpl(flatInputs, flatOutputs);
   return Object.assign(def.instantiate.bind(def), {
+    id,
     inputs: flatInputs,
     inputsForSerialization: inputs as BoardInputPorts | Array<BoardInputPorts>,
     outputs: flatOutputs,
@@ -161,6 +163,7 @@ export interface BoardParameters<
 > {
   inputs: IPORTS;
   outputs: OPORTS;
+  id?: string;
   title?: string;
   description?: string;
   version?: string;
@@ -216,6 +219,7 @@ export type BoardDefinition<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
+  readonly id?: string;
   readonly inputs: IPORTS;
   readonly inputsForSerialization: BoardInputPorts | Array<BoardInputPorts>;
   readonly outputs: OPORTS;
