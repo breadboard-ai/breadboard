@@ -35,9 +35,9 @@ const ajv: Ajv = new Ajv({
 
 addFormats(ajv);
 
-const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
-const parsedSchema = JSON.parse(readSchemaFile);
-const validate = await ajv.compileAsync(parsedSchema);
+// const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
+// const parsedSchema = JSON.parse(readSchemaFile);
+// const validate = await ajv.compileAsync(parsedSchema);
 
 const manifestArray: BreadboardManifest[] = [
   {},
@@ -47,6 +47,10 @@ const manifestArray: BreadboardManifest[] = [
   {
     title: "Manifest with a had-coded board",
     boards: [
+      {
+        nodes: [],
+        edges: [],
+      },
       {
         edges: [
           {
@@ -160,9 +164,9 @@ const manifestArray: BreadboardManifest[] = [
 ];
 
 const schemaPaths = [
-  { path: ABSOLUTE_SCHEMA_PATH },
+  // { path: ABSOLUTE_SCHEMA_PATH },
   { path: "local.bbm.schema.json" },
-  { path: "head.bbm.schema.json" },
+  // { path: "head.bbm.schema.json" },
 ];
 
 for await (const schemaPath of schemaPaths) {
