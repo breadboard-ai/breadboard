@@ -16,8 +16,8 @@ import {
 } from "@breadboard-ai/build";
 import { cast, fetch, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import { headers } from "./internal/headers.js";
-import { fileType } from "./types.js";
+import { headers } from "../internal/headers.js";
+import { fileType } from "../types.js";
 
 const fileListType = object({
   kind: enumeration("drive#fileList"),
@@ -50,9 +50,9 @@ const response = cast(rawResponse, fileListType);
 const { files, incompleteSearch, nextPageToken } = unnest(response);
 
 export const listFiles = board({
-  title: "List Google Drive Files",
+  title: "List Files",
   description:
-    "Lists the user's files.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
+    "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
   inputs: { query },
   outputs: {
     files: output(files, {

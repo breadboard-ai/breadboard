@@ -7,7 +7,7 @@
 import { board, input, output } from "@breadboard-ai/build";
 import { fetch } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import { headers } from "./internal/headers.js";
+import { headers } from "../internal/headers.js";
 
 const fileId = input({
   title: "File ID",
@@ -32,8 +32,8 @@ const { url } = urlTemplate({
 const content = fetch({ url, headers }).outputs.response;
 
 export const exportFile = board({
-  title: "Google Drive File",
-  description: "A file in Google Drive",
+  title: "Export File",
+  description: "Export a Google Workspace document to the requested MIME type.",
   inputs: { fileId, mimeType },
   outputs: {
     content: output(content, {

@@ -7,7 +7,7 @@
 import { board, input, output } from "@breadboard-ai/build";
 import { fetch } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import { headers } from "./internal/headers.js";
+import { headers } from "../internal/headers.js";
 
 const fileId = input({
   title: "File ID",
