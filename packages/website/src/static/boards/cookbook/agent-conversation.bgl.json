@@ -1,0 +1,166 @@
+{
+  "title": "Conversation with Agents",
+  "description": "Uses components from the Breadboard Agent Kit to create a conversation loop",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-76072c3a",
+        "text": "The initial input from the user.",
+        "metadata": {
+          "visual": {
+            "x": -289,
+            "y": -138.99999999999994,
+            "collapsed": true
+          }
+        }
+      },
+      {
+        "id": "comment-20071d5d",
+        "text": "The looper here keeps the conversation going.",
+        "metadata": {
+          "visual": {
+            "x": -9,
+            "y": -159,
+            "collapsed": true
+          }
+        }
+      },
+      {
+        "id": "comment-9ee9b4ca",
+        "text": "The Chat Bot is backed by an LLM and responds to the user.",
+        "metadata": {
+          "visual": {
+            "x": -129.99999999999994,
+            "y": 177,
+            "collapsed": true
+          }
+        }
+      },
+      {
+        "id": "comment-5093fff2",
+        "text": "The Chat Bot is backed by an LLM and responds to the user.",
+        "metadata": {
+          "visual": {
+            "x": 115.00000000000006,
+            "y": 177,
+            "collapsed": true
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "looper-c7f3dbbc",
+      "to": "specialist-139dc81f",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "specialist-139dc81f",
+      "to": "human-7ad6c7a7",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "human-7ad6c7a7",
+      "to": "looper-c7f3dbbc",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input",
+      "to": "looper-c7f3dbbc",
+      "out": "property-1",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "property-1": {
+              "type": "object",
+              "behavior": ["llm-content"],
+              "title": "Conversation Starter",
+              "examples": [],
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -277,
+          "y": -74,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-139dc81f",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -112,
+          "y": 85.00000000000011,
+          "collapsed": false
+        },
+        "title": "Chat Bot",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a helpful and cheery chat agent. You like to find out how the user is doing and how you can help them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "looper-c7f3dbbc",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": 6.000000000000057,
+          "y": -74,
+          "collapsed": false
+        },
+        "title": "Conversation",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are running a conversation between a user and an agent"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "human-7ad6c7a7",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": 131.00000000000006,
+          "y": 85.00000000000011,
+          "collapsed": false
+        },
+        "title": "User",
+        "logLevel": "debug"
+      }
+    }
+  ]
+}

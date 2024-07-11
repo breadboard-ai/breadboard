@@ -405,12 +405,14 @@ test("describe receives context", async () => {
   const input: NodeDescriberContext = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
+    wires: { incoming: {}, outgoing: {} },
   };
   const expected: NodeDescriberContextWithSchemas = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
     inputSchema: {},
     outputSchema: {},
+    wires: { incoming: {}, outgoing: {} },
   };
   let actual: NodeDescriberContext | undefined;
   defineNodeType({
@@ -469,6 +471,7 @@ test("describe receives converted inputSchema and outputSchema and can return it
   const testContext: NodeDescriberContext = {
     base: new URL("http://example.com/"),
     outerGraph: { nodes: [], edges: [] },
+    wires: { incoming: {}, outgoing: {} },
   };
 
   const testInputSchema: Schema = {
@@ -522,6 +525,7 @@ test("describe receives converted inputSchema and outputSchema and can return it
         },
       },
     },
+    wires: { incoming: {}, outgoing: {} },
   };
 
   const expectedDescription = {

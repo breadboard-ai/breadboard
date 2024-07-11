@@ -294,6 +294,41 @@ Will produce this output:
 
 - [secrets.ts]({{src_url}}secrets.ts)
 
+## The `service` node
+
+{{ "/breadboard/static/boards/kits/core-service.bgl.json" | board }}
+
+Represents an external service that can be used by the board. Useful for integrating external services with Breadboard.
+
+### Input ports
+
+![Service inputs](/breadboard/static/images/core-kit/service-inputs.png)
+
+This node a single fixed "Service URL" configuration port, The endpoint at that URL must conform to [Breadboard Service Endpoint](/breadboard/docs/reference/bse/) (BSE) protocol.
+
+Once the "Service URL" port is configured, Breadboard Visual Editor will ask the service to describe itself and use that description to supply additional input and output ports.
+
+In the example above, the "Query" input port and "News" output port is created based on this description.
+
+> [!NOTE]
+> In addition to Breadboard Service Endpoints being able to describe themselves, they also react to configured and wired inputs, making it possible to write services whose inputs and outputs change based their configuration.
+
+### Output ports
+
+The output ports are defined by the Breadboard Service Endpoint.
+
+### Example
+
+For a sample implementation of a BSE protocol, see the [Google News Service](https://www.val.town/v/dglazkov/googlenews) on [Valtown](https://val.town), which is used in the board above.
+
+> [!TIP]
+>
+> [Valtown](https://val.town) is a quick and easy to create HTTP endpoints for Breadboard services.
+
+### Implementation
+
+- [service.ts]({{src_url}}service.ts)
+
 ## The `unnest` node
 
 {{ "/breadboard/static/boards/kits/core-unnest.bgl.json" | board }}

@@ -16,16 +16,21 @@ import type {
   SerializableBoard,
   SerializableInputPort,
   SerializableNode,
-  SerializableOutputPortReference,
 } from "../common/serializable.js";
-import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
+import { type JsonSerializable } from "../type-system/type.js";
+import {
+  describeInput,
+  describeOutput,
+  isBoard,
+  isSerializableOutputPortReference,
+  type GenericBoardDefinition,
+} from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
-import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
+import { isSpecialInput, type Input, type InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
-import type { Output } from "./output.js";
-import { isBoard, type GenericBoardDefinition } from "./board.js";
+import { isSpecialOutput } from "./output.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -72,6 +77,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     >
   >;
   let i = 0;
+  const magicInputResolutions = new Map<
+    Input<JsonSerializable> | InputWithDefault<JsonSerializable>,
+    { nodeId: string; portName: string }
+  >();
   for (const inputs of inputsArray) {
     const sortedBoardInputs = Object.entries(inputs).sort(
       // Sort so that mainInputSchema will also be sorted.
@@ -106,36 +115,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         portName: mainInputName,
       });
       unconnectedInputs.add(input);
-      const schema = toJSONSchema(input.type);
-      let isSpecialOptional = false;
-      if (isSpecialInput(input)) {
-        if (input.title !== undefined) {
-          schema.title = input.title;
-        }
-        if (input.description !== undefined) {
-          schema.description = input.description;
-        }
-        if (input.default !== undefined) {
-          schema.default =
-            typeof input.default === "string"
-              ? input.default
-              : // TODO(aomarks) Why is default JSON stringified? The UI currently
-                // requires it, but seems like it should be real JSON.
-                JSON.stringify(input.default, null, 2);
-        }
-        if (input.examples !== undefined && input.examples.length > 0) {
-          schema.examples = input.examples.map((example) =>
-            typeof example === "string"
-              ? example
-              : // TODO(aomarks) Why is examples JSON stringified? The UI currently
-                // requires it, but seems like it should be real JSON.
-                JSON.stringify(example, null, 2)
-          );
-        }
-        if ("optional" in input && input.optional) {
-          isSpecialOptional = true;
-        }
-      }
+      const { schema, required } = describeInput(input);
       let inputNode = inputNodes.get(inputNodeId);
       if (inputNode === undefined) {
         inputNode = {
@@ -175,8 +155,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           "additionalProperties",
         ]
       );
-      if (schema.default === undefined && !isSpecialOptional) {
+      if (required) {
         inputNode.configuration.schema.required.push(mainInputName);
+      }
+      if (isSpecialInput(input)) {
+        magicInputResolutions.set(input, {
+          nodeId: inputNodeId,
+          portName: mainInputName,
+        });
       }
     }
   }
@@ -204,13 +190,28 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (name === "$id" || name === "$metadata") {
         continue;
       }
-      const port = isSpecialOutput(output)
-        ? output.port[OutputPortGetter]
-        : output[OutputPortGetter];
-      const outputNodeId =
-        (outputs.$id as string | undefined) ??
-        (isSpecialOutput(output) ? output.id : undefined) ??
-        autoId();
+      let port;
+      let outputNodeId;
+      const portMetadata: { title?: string; description?: string } = {};
+      if (isSpecialOutput(output)) {
+        port = output.port;
+        outputNodeId = output.id;
+        if (output.title) {
+          portMetadata.title = output.title;
+        }
+        if (output.description) {
+          portMetadata.description = output.description;
+        }
+      } else {
+        port = output;
+      }
+      if (isSerializableOutputPortReference(port)) {
+        port = port[OutputPortGetter];
+      }
+      // TODO(aomarks) Remove cast.
+      outputNodeId ??= outputs.$id as string | undefined;
+      outputNodeId ??= autoId();
+
       let outputNode = outputNodes.get(outputNodeId);
       if (outputNode === undefined) {
         outputNode = {
@@ -225,39 +226,43 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             },
           },
         };
-        const metadata = outputs.$metadata as {
+        const nodeMetadata = outputs.$metadata as {
           title?: string;
           description?: string;
         };
-        if (metadata !== undefined) {
-          outputNode.metadata = metadata;
+        if (nodeMetadata !== undefined) {
+          outputNode.metadata = nodeMetadata;
         }
         outputNodes.set(outputNodeId, outputNode);
       }
-      const schema = toJSONSchema(port.type);
-      if (isSpecialOutput(output)) {
-        if (output.title !== undefined) {
-          schema.title = output.title;
-        }
-        if (output.description !== undefined) {
-          schema.description = output.description;
-        }
-      }
+      const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
-      const isOpt = isSpecialOutput(output)
-        ? isOptional(output.port)
-        : isOptional(output);
-      if (!isOpt) {
+      if (required) {
         outputNode.configuration.schema.required.push(name);
       }
-      addEdge(
-        visitNodeAndReturnItsId(port.node),
-        port.name,
-        outputNodeId,
-        name,
-        isConstant(output),
-        isOpt
-      );
+      if (isSpecialInput(port)) {
+        unconnectedInputs.delete(port);
+        const resolution = magicInputResolutions.get(port);
+        if (resolution !== undefined) {
+          addEdge(
+            resolution.nodeId,
+            resolution.portName,
+            outputNodeId,
+            name,
+            isConstant(output),
+            !required
+          );
+        }
+      } else {
+        addEdge(
+          visitNodeAndReturnItsId(port.node),
+          port.name,
+          outputNodeId,
+          name,
+          isConstant(output),
+          !required
+        );
+      }
     }
   }
 
@@ -388,7 +393,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
                 `but that input was not provided to the board inputs.`
             );
           }
-        } else if (isOutputPortReference(value)) {
+        } else if (isSerializableOutputPortReference(value)) {
           const wiredOutputPort = value[OutputPortGetter];
           addEdge(
             visitNodeAndReturnItsId(wiredOutputPort.node),
@@ -472,30 +477,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     graphs.set(id, serialize(board));
     return id;
   }
-}
-
-function isSpecialInput(value: unknown): value is GenericSpecialInput {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialInputBrand" in value
-  );
-}
-
-function isSpecialOutput(value: unknown): value is Output<JsonSerializable> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialOutputBrand" in value
-  );
-}
-
-function isOutputPortReference(
-  value: unknown
-): value is SerializableOutputPortReference {
-  return (
-    typeof value === "object" && value !== null && OutputPortGetter in value
-  );
 }
 
 // Note this is a little stricter than the standard Edge type.

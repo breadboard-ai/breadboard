@@ -20,7 +20,9 @@ import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
+import service from "./nodes/service.js";
 import { unnestNode } from "./nodes/unnest.js";
+import { castNode } from "./nodes/cast.js";
 
 export { code } from "./nodes/code.js";
 export { default as fetch } from "./nodes/fetch.js";
@@ -29,6 +31,7 @@ export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
+export { cast, castNode } from "./nodes/cast.js";
 export { default as mapNode, map } from "./nodes/map.js";
 
 const builder = new KitBuilder({
@@ -205,6 +208,9 @@ export const Core = builder.build({
   inflate,
 
   unnest: unnestNode,
+  cast: castNode,
+
+  service,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -322,6 +328,7 @@ export type CoreKitType = {
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
   unnest: NodeFactoryFromDefinition<typeof unnestNode>;
+  cast: NodeFactoryFromDefinition<typeof castNode>;
   // TODO: Other Core nodes.
 };
 

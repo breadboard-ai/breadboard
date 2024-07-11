@@ -49,7 +49,6 @@ export class Graph extends PIXI.Container {
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
-  #editable = false;
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
 
@@ -173,18 +172,15 @@ export class Graph extends PIXI.Container {
           );
         }
 
+        this.#sortChildrenBySelectedStatus();
         return;
       }
 
-      if (!this.editable) {
+      if (this.readOnly) {
         return;
       }
 
       if (evt.target instanceof GraphNodePort) {
-        if (!evt.target.editable) {
-          return;
-        }
-
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
         nodePortBeingEdited.overrideStatus = PortStatus.Connected;
@@ -394,12 +390,6 @@ export class Graph extends PIXI.Container {
       const path = evt.composedPath();
       const topTarget = path[path.length - 1] as PIXI.Graphics;
 
-      // If the pointer target is the same at pointerdown and pointerup, the
-      // user has clicked on a node port, and we should avoid creating a wire.
-      if (topTarget === nodePortBeingEdited) {
-        return;
-      }
-
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;
       const targetEdge = edgeBeingEdited;
@@ -412,6 +402,12 @@ export class Graph extends PIXI.Container {
       edgeBeingEdited = null;
       visibleOnNextMove = false;
       lastHoverNode = null;
+
+      // If the pointer target is the same at pointerdown and pointerup, the
+      // user has clicked on a node port, and we should avoid creating a wire.
+      if (topTarget === nodePortBeingEdited) {
+        return;
+      }
 
       let fromNode = targetEdge.fromNode;
       let toNode = targetEdge.toNode;
@@ -652,6 +648,8 @@ export class Graph extends PIXI.Container {
 
       edge.selected = rect.intersects(edge.getBounds(true).rectangle);
     }
+
+    this.#sortChildrenBySelectedStatus();
   }
 
   getSelectedChildren(): Array<GraphNode | GraphComment | GraphEdge> {
@@ -676,6 +674,16 @@ export class Graph extends PIXI.Container {
     }
 
     return selected;
+  }
+
+  #sortChildrenBySelectedStatus() {
+    for (const node of this.children) {
+      if (!(node instanceof GraphNode || node instanceof GraphComment)) {
+        continue;
+      }
+
+      node.zIndex = node.selected ? this.children.length - 1 : 0;
+    }
   }
 
   getNodeLayoutPositions() {
@@ -825,22 +833,6 @@ export class Graph extends PIXI.Container {
 
   get showNodeTypeDescriptions() {
     return this.#showNodeTypeDescriptions;
-  }
-
-  set editable(editable: boolean) {
-    const nodes = this.children;
-    for (const node of nodes) {
-      if (!(node instanceof GraphNode || node instanceof GraphComment)) {
-        continue;
-      }
-
-      node.editable = editable;
-    }
-    this.#editable = editable;
-  }
-
-  get editable() {
-    return this.#editable;
   }
 
   set edges(edges: InspectableEdge[] | null) {
@@ -1150,7 +1142,6 @@ export class Graph extends PIXI.Container {
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
         graphNode = new GraphNode(id, node.descriptor.type, node.title());
-        graphNode.editable = this.editable;
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
@@ -1167,8 +1158,8 @@ export class Graph extends PIXI.Container {
 
       if (node.descriptor.metadata?.visual) {
         const { x, y, collapsed } = node.descriptor.metadata.visual as {
-          x: number;
-          y: number;
+          x?: number;
+          y?: number;
           collapsed: boolean;
         };
 
@@ -1182,7 +1173,7 @@ export class Graph extends PIXI.Container {
           justAdded = existingLayout.justAdded || false;
         }
         const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
-        const pos = this.toGlobal({ x, y });
+        const pos = this.toGlobal({ x: x ?? 0, y: y ?? 0 });
         this.setNodeLayoutPosition(id, "node", pos, nodeCollapsed, justAdded);
 
         graphNode.collapsed = nodeCollapsed;
@@ -1309,7 +1300,6 @@ export class Graph extends PIXI.Container {
       let graphComment = this.#graphNodeById.get(id);
       if (!graphComment) {
         graphComment = new GraphComment();
-        graphComment.editable = this.editable;
 
         this.#graphNodeById.set(id, graphComment);
       }

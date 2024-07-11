@@ -82,6 +82,8 @@ typings/
 .nuxt
 dist
 packages/visual-editor/build
+packages/example-boards/build
+packages/example-boards/example-boards
 
 # Gatsby files
 .cache/

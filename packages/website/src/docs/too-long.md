@@ -1,9 +1,10 @@
 ---
 layout: docs.njk
-title: Long-winded writing out of all Breadboard
+title: Philosophy & Overview
 tags:
-  - general
+  - miscellaneous
   - wip
+date: 2020-01-01 # Done to place the index near the top o'the list.
 ---
 
 There are three pillars that guide the overall technical architecture of Breadboard:

@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+:root {
+  --update-width: calc((100% - 860px) / 2);
+}
+
 html,
 body {
   height: 100%;
@@ -19,6 +23,7 @@ main {
   max-width: 720px;
   margin: 0 auto;
   flex: 1;
+  padding-bottom: 220px;
 }
 
 main > ol li,
@@ -48,7 +53,7 @@ main a {
 }
 
 .back-to-main-list:hover::before {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   translate: -4px 0;
 }
 
@@ -95,7 +100,7 @@ h2,
 h3,
 h4,
 h5 {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   margin: 1.5rem 0 0.75rem 0;
   position: relative;
 }
@@ -171,25 +176,35 @@ code[class*="language-"] {
 }
 
 .updates {
-  border-right: 1px solid #f0f0f0;
+  background: var(--bb-neutral-0);
+  border-right: 1px solid var(--bb-neutral-300);
   display: none;
   position: fixed;
-  height: calc(100% - var(--bb-grid-size) * 10.5 - var(--bb-grid-size) * 16);
+  height: 100%;
   left: 0;
-  top: 42px;
+  top: 0;
   margin: 0 0 0 0;
-  width: calc((100% - 820px) / 2);
+  width: var(--update-width);
   overflow: auto;
   padding: 16px 0 32px 0;
-  align-items: flex-end;
+  align-items: flex-start;
+  z-index: 4;
+}
+
+.updates .home-link {
+  width: 80%;
+  color: var(--bb-neutral-900);
+  font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+    var(--bb-font-family);
+  padding: 0 20px;
 }
 
 .updates details {
-  width: 300px;
+  width: 80%;
 }
 
 .updates summary {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   font-size: 0.875rem;
   margin: 0 0 8px;
   height: 40px;
@@ -214,7 +229,7 @@ code[class*="language-"] {
 }
 
 .updates a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-800);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.8;
@@ -230,6 +245,13 @@ code[class*="language-"] {
   .updates {
     display: flex;
     flex-direction: column;
+  }
+
+  footer {
+    width: calc(100% - var(--update-width));
+    margin-left: var(--update-width);
+    padding-left: 60px;
+    padding-right: 60px;
   }
 }
 

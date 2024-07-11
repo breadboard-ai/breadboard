@@ -53,9 +53,11 @@ export const unnestNode = defineNodeType({
       type: "unknown",
     },
   },
-  describe: (_, __, context) => {
+  describe: async (_, __, context) => {
+    const nestedSchema =
+      await context?.wires.incoming["nested"]?.outputPort?.describe();
     return {
-      outputs: context?.inputSchema ? unsafeSchema(context.inputSchema) : {},
+      outputs: nestedSchema ? unsafeSchema(nestedSchema) : { "*": "unknown" },
     };
   },
   invoke: ({ nested }) => {

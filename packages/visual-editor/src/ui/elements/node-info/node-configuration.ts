@@ -418,19 +418,23 @@ export class NodeConfigurationInfo extends LitElement {
       changedProperties.has("subGraphId") ||
       changedProperties.has("selectedNodeIds")
     ) {
-      if (!this.#nodeConfigurationFormRef.value) {
-        return;
-      }
+      this.destroyEditors();
+    }
+  }
 
-      // Here we must unhook the editor *before* it is removed from the DOM,
-      // otherwise CodeMirror will hold onto focus if it has it.
-      const editors =
-        this.#nodeConfigurationFormRef.value.querySelectorAll<CodeEditor>(
-          "bb-code-editor"
-        );
-      for (const editor of editors) {
-        editor.unhookSafely();
-      }
+  destroyEditors() {
+    if (!this.#nodeConfigurationFormRef.value) {
+      return;
+    }
+
+    // Here we must unhook the editor *before* it is removed from the DOM,
+    // otherwise CodeMirror will hold onto focus if it has it.
+    const editors =
+      this.#nodeConfigurationFormRef.value.querySelectorAll<CodeEditor>(
+        "bb-code-editor"
+      );
+    for (const editor of editors) {
+      editor.destroy();
     }
   }
 
@@ -734,7 +738,9 @@ export class NodeConfigurationInfo extends LitElement {
 
           const portSpec = ports.filter(
             (port) =>
-              port.type.hasBehavior("ports-spec") && port.edges.length === 0
+              port.type.hasBehavior("ports-spec") &&
+              port.edges.length === 0 &&
+              port.name === "schema"
           );
           const inputs = ports.filter((port) => {
             if (port.star) {
@@ -867,7 +873,10 @@ export class NodeConfigurationInfo extends LitElement {
                               let input;
                               const type = port.schema.type;
                               const behavior = port.schema.behavior;
-                              const defaultValue = port.schema.default;
+                              const defaultValue =
+                                typeof port.schema.default === "string"
+                                  ? port.schema.default
+                                  : "";
 
                               // LLM Inputs show their own description, so don't include it
                               // here.
@@ -880,9 +889,11 @@ export class NodeConfigurationInfo extends LitElement {
                               if (port.edges.length === 0) {
                                 switch (type) {
                                   case "object": {
-                                    // Only show the schema editor for inputs & outputs
+                                    // The port spec schema editor is shown
+                                    // separately, so skip over the port and
+                                    // render nothing.
                                     if (port.type.hasBehavior("ports-spec")) {
-                                      input = html``;
+                                      input = nothing;
                                     } else if (isBoard(port, value)) {
                                       const selectorValue = value
                                         ? typeof value === "string"
@@ -891,10 +902,7 @@ export class NodeConfigurationInfo extends LitElement {
                                         : "";
                                       input = html`<bb-board-selector
                                         .graph=${this.graph}
-                                        .subGraphIds=${this.graph &&
-                                        this.graph.graphs
-                                          ? Object.keys(this.graph.graphs)
-                                          : []}
+                                        .subGraphs=${this.graph?.graphs ?? null}
                                         .providers=${this.providers}
                                         .providerOps=${this.providerOps}
                                         .value=${selectorValue || ""}
@@ -1021,10 +1029,7 @@ export class NodeConfigurationInfo extends LitElement {
                                             : port.schema.items
                                           : port.schema
                                       )}
-                                      .subGraphIds=${this.graph &&
-                                      this.graph.graphs
-                                        ? Object.keys(this.graph.graphs)
-                                        : []}
+                                      .graph=${this.graph}
                                       .providers=${this.providers}
                                       .providerOps=${this.providerOps}
                                     ></bb-array-editor>`;

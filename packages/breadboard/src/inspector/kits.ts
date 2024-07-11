@@ -96,11 +96,11 @@ class NodeType implements InspectableNodeType {
       return {
         inputs: {
           fixed: described.inputSchema.additionalProperties === false,
-          ports: collectPortsForType(described.inputSchema),
+          ports: collectPortsForType(described.inputSchema, "input"),
         },
         outputs: {
           fixed: described.outputSchema.additionalProperties === false,
-          ports: collectPortsForType(described.outputSchema),
+          ports: collectPortsForType(described.outputSchema, "output"),
         },
       };
     } catch (e) {

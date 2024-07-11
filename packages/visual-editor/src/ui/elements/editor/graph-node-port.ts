@@ -38,7 +38,6 @@ export class GraphNodePort extends PIXI.Graphics {
     [PortStatus.Ready]: readyBorderColor,
     configured: configuredBorderColor,
   };
-  #editable = false;
   #overrideStatus: PortStatus | null = null;
 
   constructor(public type: GraphNodePortType) {
@@ -54,14 +53,6 @@ export class GraphNodePort extends PIXI.Graphics {
       this.clear();
       this.#draw();
     };
-  }
-
-  set editable(editable: boolean) {
-    this.#editable = editable;
-  }
-
-  get editable() {
-    return this.#editable;
   }
 
   set radius(radius: number) {

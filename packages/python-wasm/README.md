@@ -1,5 +1,5 @@
-# @breadboard-ai/python-wasm
+# Breadboard Python wasm
 
 [![Published on npm](https://img.shields.io/npm/v/@breadboard-ai/python-wasm.svg?logo=npm)](https://www.npmjs.com/package/@breadboard-ai/python-wasm)
 
-Implementation of `runPython` node using WASM (Web Assembly)
+This provides an implementation of a `runPython` component, backed by wasm ([WebAssembly](https://webassembly.org/))

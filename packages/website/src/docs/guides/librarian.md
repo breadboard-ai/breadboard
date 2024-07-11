@@ -3,6 +3,7 @@ layout: docs.njk
 title: Building a Librarian with the Agent Kit
 tags:
   - guide
+date: 2020-01-03 # Third in the list
 ---
 
 At the end of this guide, we will have a simple agent that helps us find interesting books. Given a topic, the agent will chat with us a little bit, trying to get a few more details on what exactly we're looking for in a book, then use the Google Books API to find some choices, and finally present them to us in a nice outline.
@@ -10,16 +11,16 @@ At the end of this guide, we will have a simple agent that helps us find interes
 > [!TIP]
 > If this is your first time playing with Breadboard, this guide is a good starting point. It is intentionally a bit more verbose, written with the hope that a Breadboard novice can go through it and get a good sense of how to build boards.
 
-{% include "api-key.njk" %}
+{% include "final-board-api-key.njk" %}
 
 {{ "/breadboard/static/boards/librarian/final.bgl.json" | board }}
 
-This board uses the Agent Kit, a collection of nodes designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" nodes. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
+This board uses the Agent Kit, a collection of components designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" components. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
 
 To build this board, we will use the Breadboard Visual Editor, which is a tool for rapid prototyping AI systems. You can learn more about about all the different features and capabilities of Breadboard Visual Editor in the [Visual Editor Reference](/breadboard/docs/reference/visual-editor/).
 
 > [!TIP]
-> At any point in the tutorial, you can click "See in Visual Editor" link at the left bottom corner of the board diagram. This will open the Breadboard Visual Editor and load the board. So if you're not feeling like typing and doing all the dragging and dropping of nodes, you can just follow along by opening each link.
+> At any point in the tutorial, you can click "See in Visual Editor" link at the left bottom corner of the board diagram. This will open the Breadboard Visual Editor and load the board. So if you're not feeling like typing and doing all the dragging and dropping of components, you can just follow along by opening each link.
 
 ## Step 1: Create a Blank board
 
@@ -31,9 +32,9 @@ First, we'll create a [blank board](/breadboard/docs/reference/visual-editor/#cr
 
 As our next step, let's add a Summarizer [Specialist](../#specialist) to this board. The easiest way to do this is by grabbing the little robot icon on the bottom left corner and dragging it onto the board.
 
-![Breadboard Node Selector](/breadboard/static/images/agent-kit/node-selector.png)
+![Breadboard Component Selector](/breadboard/static/images/shared/component-selector.png)
 
-Now, let's remove the existing edge connecting the `input` and `output` nodes. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
+Now, let's remove the existing edge connecting the `input` and `output` components. We can do this by clicking on the edge to highlight it and then pressing "Delete" (or "Backspace" for non-Mac users).
 
 With the old edge deleted, let's connect input and output to the Specialist. Click and drag from the input's "Context" port to the Specialist's "Context In" port and then from the Specialist's "Context Out" port to the output's "Context" port.
 
@@ -44,7 +45,7 @@ We will not invest a tiny bit of effort to educate our Specialist and imbue it w
 > [!NOTE]
 > With Visual Breadboard, it's super-easy to create and connect Specialists. We wanted to make sure that you can focus on the most interesting -- and challenging! -- part: teaching Specialists to do their work well.
 
-We'll start with naming it appropriately. Click on the node representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Node Details". Then Type in "Summarizer" as the node's title. You will also see that the title changes in the visual editor as well.
+We'll start with naming it appropriately. Click on the component representing the Specialist and in the left (or bottom, if your Breadboard editor window portrait-shaped) panel, click on "Component Details". Then Type in "Summarizer" as the component's title. You will also see that the title changes in the visual editor as well.
 
 Moving on to the Persona, let's type in something like this:
 
@@ -64,7 +65,7 @@ Reply in markdown.
 
 Let's give our simple board a whirl.
 
-To start the board, open it in Visual Editor and click "Run" in the Activity panel. The Activity panel will show the progress of the board's run, and the first thing we'll see is the request for input. This is exactly what we would expect, since the first node in the board is the "input". Let's type some subject that we're interested in. I love systems thinking and utopian sci fi, so that's what I'll enter.
+To start the board, open it in Visual Editor and click "Run" in the Activity panel. The Activity panel will show the progress of the board's run, and the first thing we'll see is the request for input. This is exactly what we would expect, since the first component in the board is the "input". Let's type some subject that we're interested in. I love systems thinking and utopian sci fi, so that's what I'll enter.
 
 ![First Run Input](/breadboard/static/images/agent-kit/first-run-input.png)
 
@@ -131,7 +132,7 @@ What we have is pretty good, but I feel like it's missing something. Often, I do
 
 Let's add a brief interview process in front of the Researcher, and then give the interview results to it.
 
-To do this, we will need to create a loop in our board: a cycle in which the interviewer repeatedly asks us a series of questions. This loop is a very common pattern when working with the Agent Kit, and it has a special node called [Looper](/breadboard/docs/kits/agents/#looper) to make loops quickly.
+To do this, we will need to create a loop in our board: a cycle in which the interviewer repeatedly asks us a series of questions. This loop is a very common pattern when working with the Agent Kit, and it has a special component called [Looper](/breadboard/docs/kits/agents/#looper) to make loops quickly.
 
 Looper has a distinctive "cycle" icon. Just like we did with the Specialists, let's drag a Looper into the board and name it "Interview Planner". The purpose of this particular Looper will be to plan and conduct the book interview described above.
 
@@ -149,7 +150,7 @@ a 3-5 question interview to collect just enough information
 to look for an interesting book in the library.
 ```
 
-Then, let's wire it into the graph: insert it between the Input node and the Researcher Node, the same way we wired the Researcher earlier.
+Then, let's wire it into the graph: insert it between the Input component and the Researcher component, the same way we wired the Researcher earlier.
 
 {{ "/breadboard/static/boards/librarian/4-wire-interview-planner.bgl.json" | board }}
 
@@ -174,11 +175,11 @@ We don't need to put anything into Task -- let's let the Interview Planner provi
 
 ## Step 6: Put Human in the loop
 
-As our final node in this board, let's add Human. This node represents the user in the overall flow of the board.
+As our final component in this board, let's add Human. This component represents the user in the overall flow of the board.
 
-Human node serves as a way to yield control back to the user of the board. When Breadboard encounters it, it pauses execution, shows intermediate results to the user, and asks the user to react to them. This is exactly what we need in our interview: show the question and wait for the user to answer it.
+Human component serves as a way to yield control back to the user of the board. When Breadboard encounters it, it pauses execution, shows intermediate results to the user, and asks the user to react to them. This is exactly what we need in our interview: show the question and wait for the user to answer it.
 
-We'll name this node "Interviewee" and wire the "Context out" port of the Interviewer to its "Context in" port, and then close the loop by wiring Interviewee's "Context out" back into Interview Planner's "Context in".
+We'll name this component "Interviewee" and wire the "Context out" port of the Interviewer to its "Context in" port, and then close the loop by wiring Interviewee's "Context out" back into Interview Planner's "Context in".
 
 {{ "/breadboard/static/boards/librarian/6-add-interviewee.bgl.json" | board }}
 
@@ -260,7 +261,7 @@ When we run our board, we'll see that it now shows links to the books and their 
 
 Pretty cool, right?!
 
-As a final touch, let's add comments. Comments are nodes that don't do anything: they are just there to display text on the board. When playing with boards, they can be quite useful to both explain what happens on the board for others -- and for future selves.
+As a final touch, let's add comments. Comments are components that don't do anything: they are just there to display text on the board. When playing with boards, they can be quite useful to both explain what happens on the board for others -- and for future selves.
 
 After all the comments have been added and emoji carefully selected, here's our final board:
 
@@ -268,7 +269,7 @@ After all the comments have been added and emoji carefully selected, here's our 
 
 Congrats! We've just built a Librarian. Here's what we've learned:
 
-- How to place nodes (like Specialist, Looper, Comments, etc.) on the board
+- How to place components (like Specialist, Looper, Comments, etc.) on the board
 
 - How to give Specialist its purpose
 

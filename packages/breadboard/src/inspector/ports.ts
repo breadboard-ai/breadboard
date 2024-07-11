@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
+import { JSONSchema4 } from "json-schema";
+import { BehaviorSchema, NodeConfiguration, Schema } from "../types.js";
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import {
+  CanConnectAnalysis,
   InspectableEdge,
   InspectablePort,
   InspectablePortType,
   PortStatus,
 } from "./types.js";
-import { BehaviorSchema, NodeConfiguration, Schema } from "../types.js";
 
 const title = (schema: Schema, key: string) => {
   return schema.properties?.[key]?.title || key;
@@ -31,6 +34,28 @@ export const computePortStatus = (
     return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Missing;
   }
   return PortStatus.Ready;
+};
+
+/**
+ * A mapping from each Breadboard behavior to whether or not that behavior
+ * matters for type-checking.
+ */
+const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
+  deprecated: false,
+  transient: false,
+  config: false,
+
+  // TODO(aomarks) Not sure about many of these. Some affect the data type, some
+  // only affect formatting?
+  bubble: true,
+  board: true,
+  stream: true,
+  error: true,
+  "llm-content": true,
+  "json-schema": true,
+  "ports-spec": true,
+  image: true,
+  code: true,
 };
 
 export const collectPorts = (
@@ -100,6 +125,7 @@ export const collectPorts = (
         ),
         schema: portSchema,
         type: new PortType(portSchema),
+        kind: type === EdgeType.In ? "input" : "output",
       } satisfies InspectablePort;
     })
     .filter(Boolean) as InspectablePort[];
@@ -112,64 +138,54 @@ export class PortType implements InspectablePortType {
     return !!this.schema.behavior?.includes(behavior);
   }
 
-  #onlyTypeRelated(behavior: Set<BehaviorSchema>): Set<BehaviorSchema> {
-    behavior.delete("deprecated");
-    behavior.delete("transient");
-    behavior.delete("config");
-    return behavior;
-  }
-
-  #subset<T>(a: Set<T>, b: Set<T>) {
-    return [...a].every((item) => b.has(item));
-  }
-
-  #difference<T>(a: Set<T>, b: Set<T>) {
-    return new Set([...a].filter((item) => !b.has(item)));
-  }
-
-  #matchTypes(from?: Schema, to?: Schema): boolean | undefined {
-    const type = from?.type || "unknown";
-    const toType = to?.type || "unknown";
-    // Allow connecting to the incoming port of unknown type.
-    if (toType === "unknown") return true;
-    // Otherwise, match types exactly.
-    if (type !== toType) return false;
-    return undefined;
-  }
-
   canConnect(to: InspectablePortType): boolean {
-    let schema: Schema | undefined = this.schema;
-    let toSchema: Schema | undefined = to.schema;
-    const match = this.#matchTypes(schema, toSchema);
-    if (match) return true;
-    if (match === false) return false;
-    // Now, check for arrays.
-    if (this.schema.type === "array") {
-      schema = Array.isArray(schema.items) ? schema.items[0] : schema.items;
-      toSchema = Array.isArray(toSchema.items)
-        ? toSchema.items[0]
-        : toSchema.items;
-      this.#matchTypes(schema, toSchema);
+    return this.analyzeCanConnect(to).canConnect;
+  }
+
+  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis {
+    // Check standard JSON Schema subset rules.
+    const subSchemaAnalysis = analyzeIsJsonSubSchema(
+      this.schema as JSONSchema4,
+      to.schema as JSONSchema4
+    );
+    if (!subSchemaAnalysis.isSubSchema) {
+      return {
+        canConnect: false,
+        details: subSchemaAnalysis.details.map((detail) => ({
+          message: "Incompatible schema",
+          detail: {
+            outputPath: detail.pathA,
+            inputPath: detail.pathB,
+          },
+        })),
+      };
     }
-    // Match behaviors.
-    const behavior = this.#onlyTypeRelated(new Set(schema?.behavior));
-    const toBehavior = this.#onlyTypeRelated(new Set(toSchema?.behavior));
-    if (behavior.size !== toBehavior.size) return false;
-    if (!this.#subset(behavior, toBehavior)) return false;
-    // Match formats.
-    const formats = new Set(schema?.format?.split(",") || []);
-    const toFormats = new Set(toSchema?.format?.split(",") || []);
-    // When "to" can accept any format, no need to check for specifics.
-    if (toFormats.size === 0) return true;
-    // When "from" provides any format, we already know we can't handle that.
-    if (formats.size === 0) return false;
-    const formatDiff = this.#difference(formats, toFormats);
-    if (formatDiff.size) return false;
-    return true;
+    // Check Breadboard-specific behaviors.
+    const fromBehaviors = new Set(this.schema.behavior);
+    for (const toBehavior of to.schema.behavior ?? []) {
+      if (
+        BEHAVIOR_AFFECTS_TYPE_CHECKING[toBehavior] &&
+        !fromBehaviors.has(toBehavior)
+      ) {
+        return {
+          canConnect: false,
+          details: [
+            {
+              message: "Incompatible behaviors",
+              detail: { outputPath: ["behavior"], inputPath: ["behavior"] },
+            },
+          ],
+        };
+      }
+    }
+    return { canConnect: true };
   }
 }
 
-export const collectPortsForType = (schema: Schema): InspectablePort[] => {
+export const collectPortsForType = (
+  schema: Schema,
+  kind: "input" | "output"
+): InspectablePort[] => {
   const portNames = Object.keys(schema.properties || {});
   const requiredPortNames = schema.required || [];
   portNames.sort();
@@ -190,6 +206,7 @@ export const collectPortsForType = (schema: Schema): InspectablePort[] => {
       ),
       schema: portSchema,
       type: new PortType(portSchema),
+      kind,
     } satisfies InspectablePort;
   });
 };

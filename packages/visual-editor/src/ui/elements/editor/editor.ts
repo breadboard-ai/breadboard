@@ -110,9 +110,6 @@ export class Editor extends LitElement {
   loader: GraphLoader | null = null;
 
   @property()
-  editable = false;
-
-  @property()
   highlightedNodeId: string | null = null;
 
   @state()
@@ -767,7 +764,8 @@ export class Editor extends LitElement {
 
           const remappedNodeIds = new Map<string, string>();
           const edits: EditSpec[] = [];
-          for (const node of graph.nodes) {
+          for (let i = 0; i < graph.nodes.length; i++) {
+            const node = graph.nodes[i];
             if (!this.#isNodeDescriptor(node)) {
               continue;
             }
@@ -789,7 +787,7 @@ export class Editor extends LitElement {
 
             // Grab the x & y coordinates, delete them, and use them to instruct
             // the graph where to place the node when it's added.
-            const x = (node.metadata.visual["x"] as number) ?? 0;
+            const x = (node.metadata.visual["x"] as number) ?? i * 40;
             const y = (node.metadata.visual["y"] as number) ?? 0;
 
             delete node.metadata.visual["x"];
@@ -1123,14 +1121,18 @@ export class Editor extends LitElement {
     }
 
     // Remove comments.
-    if (this.graph && this.graph.metadata) {
-      this.graph.metadata.comments ??= [];
-      this.graph.metadata.comments = this.graph.metadata.comments.filter(
+    let graph = this.graph;
+    if (this.subGraphId && this.graph?.graphs) {
+      graph = this.graph?.graphs[this.subGraphId];
+    }
+    if (graph && graph.metadata) {
+      graph.metadata.comments ??= [];
+      graph.metadata.comments = graph.metadata.comments.filter(
         (comment) => !comments.includes(comment.id)
       );
       edits.push({
         type: "changegraphmetadata",
-        metadata: this.graph.metadata,
+        metadata: graph.metadata,
       });
     }
 
@@ -1246,7 +1248,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.highlightedNodeId = this.highlightedNodeId;
 
     if (this.#graphRenderer) {
-      this.#graphRenderer.editable = this.editable;
       this.#graphRenderer.invertZoomScrollDirection =
         this.invertZoomScrollDirection;
     }
@@ -1374,7 +1375,7 @@ export class Editor extends LitElement {
                         nodeSelector.selectSearchInput();
                       }}
                     />
-                    <label for="add-node">Nodes</label>
+                    <label for="add-node">Components</label>
 
                     <bb-node-selector
                       ${ref(this.#nodeSelectorRef)}

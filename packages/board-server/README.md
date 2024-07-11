@@ -1,4 +1,4 @@
-# Board Server Reference Implementation
+# Breadboard Board Server Reference Implementation
 
 Uses Firestore. Deploys to App Engine.
 
@@ -22,9 +22,9 @@ gcloud config set project <project name>
 
 - Create App Engine App in Cloud Console
 
-- Enable Firestore API
+- [Enable Firestore API](https://console.cloud.google.com/marketplace/product/google/firestore.googleapis.com)
 
-- Create Firestore database named "board-server"
+- [Create Firestore database](https://console.cloud.google.com/firestore/databases) named "board-server"
 
 Then, to run locally, from the root of the repo:
 

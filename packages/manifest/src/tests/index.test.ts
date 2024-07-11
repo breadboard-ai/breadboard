@@ -14,6 +14,31 @@ import path from "path";
 import { BreadboardManifest } from "..";
 import { ABSOLUTE_SCHEMA_PATH } from "../scripts/util/constants";
 
+const ajv: Ajv = new Ajv({
+  allErrors: true,
+  strict: true,
+  strictTypes: true,
+  validateFormats: true,
+  validateSchema: true,
+  verbose: true,
+  loadSchema: async (uri: string) => {
+    const response = await fetch(uri);
+    if (response.ok) {
+      const json = await response.json();
+      if (ajv.validateSchema(json)) {
+        return json;
+      }
+    }
+    throw new Error(`Loading error: ${response.status}`);
+  },
+});
+
+addFormats(ajv);
+
+const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
+const parsedSchema = JSON.parse(readSchemaFile);
+const validate = await ajv.compileAsync(parsedSchema);
+
 const manifestArray: BreadboardManifest[] = [
   {},
   { title: "Empty manifest" },

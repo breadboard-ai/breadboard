@@ -1,8 +1,8 @@
 ---
 layout: docs.njk
-title: Breadboard Developer Happy Path
+title: Developer Happy Path
 tags:
-  - general
+  - archive
   - wip
 ---
 

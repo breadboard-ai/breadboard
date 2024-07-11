@@ -142,7 +142,6 @@ export class GraphComment extends PIXI.Container {
       },
     },
   });
-  #editable = false;
   #selected = false;
   #background = new PIXI.Graphics();
   #defaultBorderColor = defaultBorderColor;
@@ -253,14 +252,6 @@ export class GraphComment extends PIXI.Container {
 
   get selected() {
     return this.#selected;
-  }
-
-  set editable(editable: boolean) {
-    this.#editable = editable;
-  }
-
-  get editable() {
-    return this.#editable;
   }
 
   set text(text: string | null) {

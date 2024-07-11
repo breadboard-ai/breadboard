@@ -215,7 +215,7 @@ export const boardInvokeAssembler = code(({ functionCalls, urlMap }) => {
   // boards that ask for a generator URL (math and search-summarizer)
   // TODO: Remove this expectation and this hack.
   const generator =
-    "https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json";
+    "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/visual-editor/public/graphs/gemini-generator.json";
   return { $board, generator, ...call.args };
 });
 

@@ -7,9 +7,9 @@
 import { serialize } from "@breadboard-ai/build";
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { getFileContent } from "./get-file-content.js";
-import { exportFile } from "./export-file.js";
-import { listFiles } from "./list-files.js";
+import { getFileContent } from "./components/get-file-content.js";
+import { exportFile } from "./components/export-file.js";
+import { listFiles } from "./components/list-files.js";
 
 export const kit = new Board({
   title: "Google Drive Kit",

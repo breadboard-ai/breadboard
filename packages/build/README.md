@@ -1,4 +1,4 @@
-# @breadboard-ai/build
+# Breadboard Build
 
 [![Published on npm](https://img.shields.io/npm/v/@breadboard-ai/build.svg?logo=npm)](https://www.npmjs.com/package/@breadboard-ai/build)
 

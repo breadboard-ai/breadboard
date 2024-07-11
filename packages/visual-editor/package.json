@@ -1,9 +1,6 @@
 {
-  "name": "@google-labs/visual-editor",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
-  "version": "1.10.3",
+  "name": "@breadboard-ai/visual-editor",
+  "version": "1.11.2",
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -20,7 +17,6 @@
       "types": "./build/config.d.ts"
     },
     "./public": "./public",
-    "./local-boards.json": "./public/local-boards.json",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
     "./embed.js": "./build/embed.js",
@@ -31,6 +27,10 @@
     "./editor": {
       "types": "./build/ui/elements/editor/editor.d.ts",
       "default": "./build/ui/elements/editor/editor.js"
+    },
+    "./providers": {
+      "types": "./build/providers/types.d.ts",
+      "default": "./build/providers/types.js"
     }
   },
   "types": "build/index.d.ts",
@@ -44,7 +44,7 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "generate:graphs": "wireit"
+    "copy-example-boards": "wireit"
   },
   "wireit": {
     "build": {
@@ -53,6 +53,7 @@
         "../breadboard:build",
         "../build:build",
         "../core-kit:build",
+        "../example-boards:build",
         "../gemini-kit:build",
         "../google-drive-kit:build",
         "../json-kit:build",
@@ -62,8 +63,7 @@
         "../python-wasm:build",
         "../manifest:build",
         "build:vite",
-        "build:tsc",
-        "generate:graphs"
+        "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
@@ -72,14 +72,14 @@
         "../breadboard:build:tsc",
         "../build:build:tsc",
         "../core-kit:build:tsc",
+        "../example-boards:build:tsc",
         "../gemini-kit:build:tsc",
         "../google-drive-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
-        "../python-wasm:build:tsc",
-        "../manifest:build"
+        "../python-wasm:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -112,10 +112,6 @@
         "typescript-files-and-deps",
         "copy-pyoide-assets",
         {
-          "script": "generate:graphs",
-          "cascade": false
-        },
-        {
           "script": "copy-light-kits",
           "cascade": false
         }
@@ -135,16 +131,17 @@
       "command": "vite preview",
       "service": true,
       "dependencies": [
+        "../example-boards:build",
         {
           "script": "typescript-files-and-deps",
           "cascade": false
         },
         {
-          "script": "generate:graphs",
+          "script": "copy-light-kits",
           "cascade": false
         },
         {
-          "script": "copy-light-kits",
+          "script": "copy-example-boards",
           "cascade": false
         },
         {
@@ -161,16 +158,17 @@
       "command": "vite",
       "service": true,
       "dependencies": [
+        "../example-boards:build",
         {
           "script": "typescript-files-and-deps",
           "cascade": false
         },
         {
-          "script": "generate:graphs",
+          "script": "copy-light-kits",
           "cascade": false
         },
         {
-          "script": "copy-light-kits",
+          "script": "copy-example-boards",
           "cascade": false
         },
         {
@@ -181,6 +179,18 @@
       "files": [
         "vite.config.ts",
         ".env"
+      ]
+    },
+    "copy-example-boards": {
+      "command": "tsx src/copy-example-boards.ts",
+      "dependencies": [
+        "../example-boards:build"
+      ],
+      "files": [
+        "src/copy-example-boards.ts"
+      ],
+      "output": [
+        "public/example-boards/*.json"
       ]
     },
     "copy-light-kits": {
@@ -196,40 +206,14 @@
     "copy-pyoide-assets": {
       "command": "tsx src/copy-pyodide-assets.ts",
       "files": [],
-      "dependencies": [
-        "../agent-kit:build"
-      ],
       "output": [
-        "public/*.kit.json"
-      ]
-    },
-    "generate:graphs": {
-      "command": "tsx src/make-graphs.ts",
-      "dependencies": [
-        "../agent-kit:build",
-        "../breadboard:build:tsc",
-        "../build:build:tsc",
-        "../core-kit:build",
-        "../gemini-kit:build",
-        "../google-drive-kit:build",
-        "../json-kit:build",
-        "../manifest:build:ts",
-        "../node-nursery-web:build",
-        "../palm-kit:build",
-        "../template-kit:build"
-      ],
-      "files": [
-        "src/boards/**/*.ts"
-      ],
-      "output": [
-        "public/local-boards.json",
-        "public/graphs/**/*.json",
-        "docs/graphs/**/*.md"
+        "public/python_stdlib.zip",
+        "public/pyodide*"
       ]
     }
   },
   "repository": {
-    "directory": "packages/breadboard-web",
+    "directory": "packages/visual-editor",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -258,7 +242,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard-web#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
@@ -269,8 +253,8 @@
     "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.15.8",
-    "typescript": "^5.5.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.7.0",
     "vite": "^5.3.2",
@@ -278,6 +262,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "0.7.0",
+    "@breadboard-ai/example-boards": "0.1.0",
     "@breadboard-ai/google-drive-kit": "0.1.3",
     "@breadboard-ai/manifest": "^0.2.0",
     "@breadboard-ai/python-wasm": "0.1.2",

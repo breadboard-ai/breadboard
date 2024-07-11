@@ -9,6 +9,7 @@ import {
   InspectableEdge,
   InspectableEdgeType,
   InspectableNodeCache,
+  InspectablePort,
   ValidateResult,
 } from "./types.js";
 
@@ -85,26 +86,29 @@ class Edge implements InspectableEdge {
     return InspectableEdgeType.Ordinary;
   }
 
+  async outPort(): Promise<InspectablePort> {
+    const ports = await this.from.ports();
+    return ports.outputs.ports.find((port) => port.name === this.out)!;
+  }
+
+  async inPort(): Promise<InspectablePort> {
+    const ports = await this.to.ports();
+    return ports.inputs.ports.find((port) => port.name === this.in)!;
+  }
+
   async validate(): Promise<ValidateResult> {
-    const [fromPorts, toPorts] = await Promise.all([
-      await this.from.ports(),
-      await this.to.ports(),
+    const [outPort, inPort] = await Promise.all([
+      this.outPort(),
+      this.inPort(),
     ]);
-    const outPort = fromPorts.outputs.ports.find(
-      (port) => port.name === this.out
-    );
-    const inPort = toPorts.inputs.ports.find((port) => port.name === this.in);
     if (outPort === undefined || inPort === undefined) {
       return { status: "unknown" };
     }
-    if (!outPort.type.canConnect(inPort.type)) {
+    const canConnectAnalysis = outPort.type.analyzeCanConnect(inPort.type);
+    if (!canConnectAnalysis.canConnect) {
       return {
         status: "invalid",
-        errors: [
-          {
-            message: `The schema of "${this.in}" is not compatible with "${this.out}"`,
-          },
-        ],
+        errors: canConnectAnalysis.details,
       };
     }
     return { status: "valid" };

@@ -16,7 +16,7 @@
     "deploy": "npm run build && gcloud app deploy",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
-    "dev": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) &&concurrently \"npm run serve --watch\" \"(cd ../breadboard-web && npm run dev)\""
+    "dev": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) &&concurrently \"npm run serve --watch\" \"(cd ../visual-editor && npm run dev)\""
   },
   "wireit": {
     "build": {
@@ -90,14 +90,13 @@
     "concurrently": "^8.2.2",
     "esbuild": "^0.21.5",
     "eslint": "^8.57.0",
-    "typescript": "^5.5.2",
-    "wireit": "^0.14.4"
+    "typescript": "^5.5.3",
+    "wireit": "^0.14.5"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/secret-manager": "^5.6.0",
     "@google-labs/breadboard": "^0.21.0",
-    "@google-labs/visual-editor": "^1.10.0",
     "@lit/context": "^1.1.2",
     "lit": "^3.1.4",
     "vite": "^5.3.2"

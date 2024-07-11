@@ -2,7 +2,7 @@
 layout: docs.njk
 title: Inputs and Outputs
 tags:
-  - general
+  - miscellaneous
   - wip
 ---
 

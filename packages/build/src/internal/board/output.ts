@@ -6,9 +6,10 @@
 
 import type { OutputPortReference } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
+import type { Input, InputWithDefault } from "./input.js";
 
 export function output<T extends JsonSerializable>(
-  port: OutputPortReference<T>,
+  port: OutputPortReference<T> | Input<T> | InputWithDefault<T>,
   {
     id,
     title,
@@ -29,5 +30,15 @@ export interface Output<T extends JsonSerializable | undefined> {
   readonly id?: string;
   readonly title?: string;
   readonly description?: string;
-  readonly port: OutputPortReference<T>;
+  readonly port: OutputPortReference<T> | Input<T> | InputWithDefault<T>;
+}
+
+export function isSpecialOutput(
+  value: unknown
+): value is Output<JsonSerializable> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__SpecialOutputBrand" in value
+  );
 }

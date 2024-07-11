@@ -6,7 +6,7 @@
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import { defineNodeType } from "@breadboard-ai/build";
+import { defineNodeType, input, output } from "@breadboard-ai/build";
 import { test } from "node:test";
 import { board } from "../internal/board/board.js";
 import assert from "node:assert/strict";
@@ -219,3 +219,54 @@ test("allow setting title, description, version", () => {
     });
   });
 }
+
+test("describe board", async () => {
+  const inFoo = input({
+    title: "Foo title",
+    description: "Foo description",
+    default: "Foo default",
+    examples: ["Foo example 1", "Foo example 2"],
+  });
+  const boardA = board({
+    inputs: { inFoo },
+    outputs: {
+      outNum,
+      outStr: output(outStr, {
+        description: "outStr description",
+        title: "outStr title",
+      }),
+    },
+  });
+  const description = await boardA.describe();
+  assert.deepEqual(description, {
+    inputSchema: {
+      type: "object",
+      required: [],
+      additionalProperties: false,
+      properties: {
+        inFoo: {
+          type: "string",
+          title: "Foo title",
+          description: "Foo description",
+          default: "Foo default",
+          examples: ["Foo example 1", "Foo example 2"],
+        },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      required: ["outNum", "outStr"],
+      additionalProperties: false,
+      properties: {
+        outNum: {
+          type: "number",
+        },
+        outStr: {
+          type: "string",
+          title: "outStr title",
+          description: "outStr description",
+        },
+      },
+    },
+  });
+});
