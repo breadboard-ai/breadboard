@@ -119,7 +119,7 @@
       ]
     },
     "generate:graphs": {
-      "command": "mkdir graphs && ls dist/{export-file,list-files,get-file-content}.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "command": "mkdir graphs && ls dist/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
         "../breadboard-cli:build:tsc"
