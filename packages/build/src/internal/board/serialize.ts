@@ -16,16 +16,21 @@ import type {
   SerializableBoard,
   SerializableInputPort,
   SerializableNode,
-  SerializableOutputPortReference,
 } from "../common/serializable.js";
-import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
-import { isBoard, type GenericBoardDefinition } from "./board.js";
+import { type JsonSerializable } from "../type-system/type.js";
+import {
+  describeInput,
+  describeOutput,
+  isBoard,
+  isSerializableOutputPortReference,
+  type GenericBoardDefinition,
+} from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
 import { isSpecialInput, type Input, type InputWithDefault } from "./input.js";
 import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
-import type { Output } from "./output.js";
+import { isSpecialOutput } from "./output.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -110,36 +115,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         portName: mainInputName,
       });
       unconnectedInputs.add(input);
-      const schema = toJSONSchema(input.type);
-      let isSpecialOptional = false;
-      if (isSpecialInput(input)) {
-        if (input.title !== undefined) {
-          schema.title = input.title;
-        }
-        if (input.description !== undefined) {
-          schema.description = input.description;
-        }
-        if (input.default !== undefined) {
-          schema.default =
-            typeof input.default === "string"
-              ? input.default
-              : // TODO(aomarks) Why is default JSON stringified? The UI currently
-                // requires it, but seems like it should be real JSON.
-                JSON.stringify(input.default, null, 2);
-        }
-        if (input.examples !== undefined && input.examples.length > 0) {
-          schema.examples = input.examples.map((example) =>
-            typeof example === "string"
-              ? example
-              : // TODO(aomarks) Why is examples JSON stringified? The UI currently
-                // requires it, but seems like it should be real JSON.
-                JSON.stringify(example, null, 2)
-          );
-        }
-        if ("optional" in input && input.optional) {
-          isSpecialOptional = true;
-        }
-      }
+      const { schema, required } = describeInput(input);
       let inputNode = inputNodes.get(inputNodeId);
       if (inputNode === undefined) {
         inputNode = {
@@ -179,7 +155,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           "additionalProperties",
         ]
       );
-      if (schema.default === undefined && !isSpecialOptional) {
+      if (required) {
         inputNode.configuration.schema.required.push(mainInputName);
       }
       if (isSpecialInput(input)) {
@@ -229,7 +205,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       } else {
         port = output;
       }
-      if (isOutputPortReference(port)) {
+      if (isSerializableOutputPortReference(port)) {
         port = port[OutputPortGetter];
       }
       // TODO(aomarks) Remove cast.
@@ -259,20 +235,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         }
         outputNodes.set(outputNodeId, outputNode);
       }
-      const schema = toJSONSchema(port.type);
-      if (isSpecialOutput(output)) {
-        if (output.title !== undefined) {
-          schema.title = output.title;
-        }
-        if (output.description !== undefined) {
-          schema.description = output.description;
-        }
-      }
+      const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
-      const isOpt = isSpecialOutput(output)
-        ? isOptional(output.port)
-        : isOptional(output);
-      if (!isOpt) {
+      if (required) {
         outputNode.configuration.schema.required.push(name);
       }
       if (isSpecialInput(port)) {
@@ -285,7 +250,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             outputNodeId,
             name,
             isConstant(output),
-            isOpt
+            !required
           );
         }
       } else {
@@ -295,7 +260,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           outputNodeId,
           name,
           isConstant(output),
-          isOpt
+          !required
         );
       }
     }
@@ -428,7 +393,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
                 `but that input was not provided to the board inputs.`
             );
           }
-        } else if (isOutputPortReference(value)) {
+        } else if (isSerializableOutputPortReference(value)) {
           const wiredOutputPort = value[OutputPortGetter];
           addEdge(
             visitNodeAndReturnItsId(wiredOutputPort.node),
@@ -512,22 +477,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     graphs.set(id, serialize(board));
     return id;
   }
-}
-
-function isSpecialOutput(value: unknown): value is Output<JsonSerializable> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialOutputBrand" in value
-  );
-}
-
-function isOutputPortReference(
-  value: unknown
-): value is SerializableOutputPortReference {
-  return (
-    typeof value === "object" && value !== null && OutputPortGetter in value
-  );
 }
 
 // Note this is a little stricter than the standard Edge type.
