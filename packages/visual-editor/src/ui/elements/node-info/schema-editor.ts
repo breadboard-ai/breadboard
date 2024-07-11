@@ -972,7 +972,6 @@ export class SchemaEditor extends LitElement {
       }
 
       for (const [from, to] of renamedProperties) {
-        console.log(`Renaming ${from} to ${to}`);
         if (schema.properties[to]) {
           console.warn(`Attempted to rename to existing property: "${to}"`);
           continue;
