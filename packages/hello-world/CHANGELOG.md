@@ -1,5 +1,36 @@
 # @google-labs/breadboard-hello-world
 
+## 1.2.16
+
+### Patch Changes
+
+- f4397b9: Update remaining breadboard-web paths
+- Updated dependencies [a925cf0]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [6f82dea]
+- Updated dependencies [f4397b9]
+- Updated dependencies [166f290]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [0f9d617]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [4ba1243]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [a9def5c]
+  - @google-labs/breadboard@0.22.0
+  - @google-labs/core-kit@0.11.0
+  - @google-labs/breadboard-cli@0.10.0
+  - @google-labs/agent-kit@0.8.1
+  - @google-labs/gemini-kit@0.5.2
+  - @google-labs/json-kit@0.3.3
+  - @google-labs/palm-kit@0.0.16
+  - @google-labs/template-kit@0.3.5
+
 ## 1.2.15
 
 ### Patch Changes

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.9.5",
+  "version": "0.10.0",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
@@ -156,12 +156,12 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.0",
-    "@breadboard-ai/import": "0.1.4",
-    "@breadboard-ai/visual-editor": "^1.11.0",
-    "@google-labs/breadboard": "^0.21.0",
-    "@google-labs/core-kit": "^0.10.1",
-    "@google-labs/template-kit": "^0.3.4",
+    "@breadboard-ai/build": "0.7.1",
+    "@breadboard-ai/import": "0.1.5",
+    "@breadboard-ai/visual-editor": "^1.12.0",
+    "@google-labs/breadboard": "^0.22.0",
+    "@google-labs/core-kit": "^0.11.0",
+    "@google-labs/template-kit": "^0.3.5",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",

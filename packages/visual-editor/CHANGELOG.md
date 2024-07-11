@@ -1,5 +1,80 @@
 # @google-labs/breadboard-web
 
+## 1.12.0
+
+### Minor Changes
+
+- 6f82dea: Update Visual Editor package name
+- 0f9d617: Move breadboard-web to visual-editor; remove breadbuddy
+- 4ba1243: Migrate breadboard-ui to visual-editor
+
+### Patch Changes
+
+- 39f1aed: Improve paste handling in main area
+- c77b034: Add Getting Started Guide to Visual Editor
+- 43fc9fc: Change edit board to close
+- f4397b9: Update remaining breadboard-web paths
+- 66918fc: Enable pasting when on the Welcome Pane
+- 4c5bc52: Add Other Features section to Visual Editor docs
+- 4bf8894: Redirect older /graphs/ URLs to /example-boards/
+- 6b91b3e: Remove unused editable property
+- eaca143: Fall back to URL Constructor for browsers without canParse
+- 54cb2d4: Fix subgraph metadata bug
+- 6a59c83: Use the filename from the board's URL when exporting
+- e414ba0: Add New Board button to Welcome Pane
+- b357fbc: Sort nodes by selection status
+- bc8dcdd: Remind generate-graphs that it depends on agent-kit
+- fa2d1ab: Add fancy-json component for rendering JSON with configurable highlighting
+- 51034a0: Fix editor locking input focus (again)
+- 7bdb5a2: Default node x & y to 0 if not set
+- cb455ef: Account for schema mismatch in fetch component
+- 10bfeba: Clean up recent boards on delete
+- d016297: Tweak pasting of nodes when there is no metadata
+- ffe100b: Tweak the board selector to only show tools
+- bd55f95: Add components section to Visual Editor docs
+- cb0237d: Remove default when changing from array to anything else
+- 05f3acb: Null out the editor property sooner
+- 9d4ea07: Attempt to maintain property order in the schema editor
+- 164d104: Show red squigglies in port tooltips under mismatched schema constraints
+- 4c1a17c: Rename node to component; fix schema issue
+- a0587ec: Version Bump
+- 359424b: Add Activity Pane section to Visual Editor docs
+- a30fb39: Release drag behavior when clicking on port
+- Updated dependencies [a925cf0]
+- Updated dependencies [f2d9839]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [f4397b9]
+- Updated dependencies [166f290]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [bc8dcdd]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5f6432b]
+- Updated dependencies [5447426]
+- Updated dependencies [4da35e5]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [a9def5c]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/google-drive-kit@0.2.0
+  - @google-labs/core-kit@0.11.0
+  - @google-labs/agent-kit@0.8.1
+  - @breadboard-ai/build@0.7.1
+  - @breadboard-ai/manifest@0.3.0
+  - @breadboard-ai/example-boards@0.1.1
+  - @google-labs/gemini-kit@0.5.2
+  - @google-labs/json-kit@0.3.3
+  - @google-labs/node-nursery-web@1.1.5
+  - @google-labs/palm-kit@0.0.16
+  - @google-labs/template-kit@0.3.5
+  - @breadboard-ai/python-wasm@0.1.3
+
 ## 1.10.1
 
 ### Patch Changes
