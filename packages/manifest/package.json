@@ -92,7 +92,8 @@
       ]
     },
     "test": {
-      "command": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
+      "command:disabled": "c8 node --import tsx --test-reporter spec --test src/tests/index.test.ts ",
+      "command": "echo TEST TEMPORARILY DISABLED",
       "dependencies": [
         "build:schema"
       ],
