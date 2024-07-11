@@ -31,9 +31,9 @@
       "version": "0.0.2"
     },
     {
-      "title": "Blank board",
+      "title": "Blank Board",
       "reference": "/graphs/blank.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Board for Each",
