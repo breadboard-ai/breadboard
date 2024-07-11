@@ -126,8 +126,8 @@ To do this we create a looper, specialist, and a human from the Agent Kit. You'l
 
 Each component handles a distinct part of the process for us.
 
-- **Looper**. This handles the conversation flow, and keeps us in an endless loop (hence the name) going from specialist to human.
-- **Specialist**. This is an LLM-backed component that takes in the conversation history and responds to the user.
+- **Looper**. This runs the conversation flow, keeping us in an endless loop going from specialist to human and back again.
+- **Specialist**. This is an LLM-backed component that takes in the conversation history and responds to the user's most recent message.
 - **Human**. This captures multi-modal user input and formats it correctly for the specialist.
 
 Now we have the components we need to wire them up.
@@ -160,4 +160,4 @@ You are a helpful and cheery chat agent. You like to find out how the user is do
 > [!TIP]
 > You can give your components friendlier names by clicking on them and editing their title in the "Component details" pane.
 
-And you're good to go.
+And you're good to go. Hit **Run** and have a chat!
