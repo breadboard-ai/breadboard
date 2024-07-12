@@ -231,7 +231,104 @@
       "type": "runJavascript",
       "configuration": {
         "code": "const spreadResponse = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{...obj}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "obj": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
         "name": "spreadResponse",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "relevance_score": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "id",
+                  "display_name",
+                  "title",
+                  "relevance_score"
+                ],
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "number"
+                },
+                "db_response_time_ms": {
+                  "type": "number"
+                },
+                "page": {
+                  "type": "number"
+                },
+                "per_page": {
+                  "type": "number"
+                },
+                "groups_count": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "count",
+                "db_response_time_ms",
+                "page",
+                "per_page",
+                "groups_count"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
         "raw": true
       },
       "metadata": {

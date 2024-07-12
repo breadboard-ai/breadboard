@@ -97,7 +97,27 @@
       "type": "runJavascript",
       "configuration": {
         "code": "const run = ({model:model2})=>{const models={\"Gemini Pro\":\"gemini-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[model2];if(!path)throw new Error(`Unsupported model: ${model2}`);return{path}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "model": {
+              "type": "string",
+              "enum": [
+                "Gemini Pro",
+                "GPT 3.5 Turbo"
+              ]
+            }
+          }
+        },
         "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          }
+        },
         "raw": true
       }
     }
