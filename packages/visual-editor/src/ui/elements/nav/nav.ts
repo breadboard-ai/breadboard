@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  TemplateResult,
+  PropertyValueMap,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   GraphProviderAddEvent,
@@ -21,6 +28,7 @@ import { map } from "lit/directives/map.js";
 import { GraphProvider } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
 
 @customElement("bb-nav")
 export class Navigation extends LitElement {
@@ -48,6 +56,7 @@ export class Navigation extends LitElement {
   @state()
   showProviderOverflowMenu = false;
 
+  #providerRef: Ref<HTMLElement> = createRef();
   #hideProviderOverflowMenuBound = this.#hideProviderOverflowMenu.bind(this);
 
   static styles = css`
@@ -441,6 +450,37 @@ export class Navigation extends LitElement {
     );
   }
 
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{
+          selectedProvider: string;
+          selectedLocation: string;
+          url: string | null;
+        }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    if (
+      changedProperties.has("selectedLocation") ||
+      changedProperties.has("selectedProvider")
+    ) {
+      this.#providerContents = this.#loadProviderContents();
+    }
+  }
+
+  protected updated(): void {
+    requestAnimationFrame(() => {
+      if (!this.#providerRef.value) {
+        return;
+      }
+
+      for (const item of this.#providerRef.value.querySelectorAll<HTMLElement>(
+        "button.board"
+      )) {
+        item.classList.toggle("selected", item.dataset.url === this.url);
+      }
+    });
+  }
+
   #createUrl(provider: string, location: string) {
     return `${provider}::${location}`;
   }
@@ -494,6 +534,145 @@ export class Navigation extends LitElement {
     );
   }
 
+  #providerContents: Promise<TemplateResult<1>> | null = null;
+  async #loadProviderContents() {
+    const provider =
+      this.providers.find(
+        (provider) => provider.name === this.selectedProvider
+      ) || this.providers[0];
+
+    if (!provider) {
+      this.#returnToDefaultStore();
+      return html`<nav id="menu">Error loading provider</nav>`;
+    }
+
+    const extendedCapabilities = provider.extendedCapabilities();
+
+    await provider.ready();
+
+    const store = provider.items().get(this.selectedLocation);
+    if (!store) {
+      this.#returnToDefaultStore();
+      return html`<nav id="menu">Error loading store</nav>`;
+    }
+
+    const { permission } = store;
+
+    // Divide the items into two buckets: those that belong to the user and
+    // other published boards.
+    const items = [...store.items].filter(([name]) => {
+      if (!this.filter) {
+        return true;
+      }
+      const filter = new RegExp(this.filter, "gim");
+      return filter.test(name);
+    });
+    const myItems: typeof items = [];
+    const otherItems: typeof items = [];
+    for (const item of items) {
+      const [, data] = item;
+      if (data.mine) {
+        myItems.push(item);
+        continue;
+      }
+
+      otherItems.push(item);
+    }
+
+    type BoardInfo = (typeof items)[0];
+    const renderBoards = ([
+      name,
+      { url, readonly, mine, tags, title, username },
+    ]: BoardInfo) => {
+      return html`<li>
+        <button
+          @click=${() => {
+            this.dispatchEvent(
+              new GraphProviderLoadRequestEvent(provider.name, url)
+            );
+          }}
+          data-url=${url}
+          class=${classMap({
+            mine,
+            board: true,
+            tool: tags?.includes("tool") ?? false,
+            published: tags?.includes("published") ?? false,
+          })}
+        >
+          <span class="name">${title ?? name}</span>
+          ${username && !mine
+            ? html`<span class="username">@${username}</span>`
+            : ""}
+        </button>
+        ${extendedCapabilities.modify && !readonly
+          ? html`<button
+              class="delete"
+              @click=${() => {
+                this.dispatchEvent(
+                  new GraphProviderDeleteRequestEvent(
+                    this.selectedProvider,
+                    url,
+                    url === this.url
+                  )
+                );
+              }}
+            >
+              Delete
+            </button>`
+          : nothing}
+      </li>`;
+    };
+
+    const myBoards = html`<ul class="mine">
+      ${map(myItems, renderBoards)}
+    </ul>`;
+
+    const otherBoards = html`<ul class="other-boards">
+      ${map(otherItems, renderBoards)}
+    </ul>`;
+
+    let boardListing;
+    if (myItems.length > 0 && otherItems.length > 0) {
+      boardListing = html`<div class="boards">
+        <details open>
+          <summary>Your boards</summary>
+          ${myBoards}
+        </details>
+        <details open>
+          <summary>Other people's boards</summary>
+          ${otherBoards}
+        </details>
+      </div>`;
+    } else if (myItems.length > 0 && otherItems.length === 0) {
+      boardListing = html`<div class="boards">${myBoards}</div>`;
+    } else if (myItems.length === 0 && otherItems.length > 0) {
+      boardListing = html`<div class="boards">${otherBoards}</div>`;
+    } else {
+      boardListing = html`<div id="empty-provider">
+        No boards in this provider
+      </div>`;
+    }
+
+    return permission === "granted"
+      ? boardListing
+      : html`<div id="renew-access">
+          <span>Access has expired for this source</span>
+          <button
+            id="request-renewed-access"
+            @click=${() => {
+              this.dispatchEvent(
+                new GraphProviderRenewAccessRequestEvent(
+                  this.selectedProvider,
+                  this.selectedLocation
+                )
+              );
+            }}
+          >
+            Renew
+          </button>
+        </div>`;
+  }
+
   render() {
     const provider =
       this.providers.find(
@@ -505,138 +684,12 @@ export class Navigation extends LitElement {
       return html`<nav id="menu">Error loading provider</nav>`;
     }
 
+    const extendedCapabilities = provider.extendedCapabilities();
+
     const selected = this.#createUrl(
       this.selectedProvider,
       this.selectedLocation
     );
-
-    const extendedCapabilities = provider.extendedCapabilities();
-
-    const loadProviderContents = async () => {
-      await provider.ready();
-
-      const store = provider.items().get(this.selectedLocation);
-      if (!store) {
-        this.#returnToDefaultStore();
-        return html`<nav id="menu">Error loading store</nav>`;
-      }
-
-      const { permission } = store;
-
-      // Divide the items into two buckets: those that belong to the user and
-      // other published boards.
-      const items = [...store.items].filter(([name]) => {
-        if (!this.filter) {
-          return true;
-        }
-        const filter = new RegExp(this.filter, "gim");
-        return filter.test(name);
-      });
-      const myItems: typeof items = [];
-      const otherItems: typeof items = [];
-      for (const item of items) {
-        const [, data] = item;
-        if (data.mine) {
-          myItems.push(item);
-          continue;
-        }
-
-        otherItems.push(item);
-      }
-
-      type BoardInfo = (typeof items)[0];
-      const renderBoards = ([
-        name,
-        { url, readonly, mine, tags, title, username },
-      ]: BoardInfo) => {
-        return html`<li>
-          <button
-            @click=${() => {
-              this.dispatchEvent(
-                new GraphProviderLoadRequestEvent(provider.name, url)
-              );
-            }}
-            class=${classMap({
-              mine,
-              board: true,
-              selected: url === this.url,
-              tool: tags?.includes("tool") ?? false,
-              published: tags?.includes("published") ?? false,
-            })}
-          >
-            <span class="name">${title ?? name}</span>
-            ${username && !mine
-              ? html`<span class="username">@${username}</span>`
-              : ""}
-          </button>
-          ${extendedCapabilities.modify && !readonly
-            ? html`<button
-                class="delete"
-                @click=${() => {
-                  this.dispatchEvent(
-                    new GraphProviderDeleteRequestEvent(
-                      this.selectedProvider,
-                      url,
-                      url === this.url
-                    )
-                  );
-                }}
-              >
-                Delete
-              </button>`
-            : nothing}
-        </li>`;
-      };
-
-      const myBoards = html`<ul class="mine">
-        ${map(myItems, renderBoards)}
-      </ul>`;
-
-      const otherBoards = html`<ul class="other-boards">
-        ${map(otherItems, renderBoards)}
-      </ul>`;
-
-      let boardListing;
-      if (myItems.length > 0 && otherItems.length > 0) {
-        boardListing = html`<div class="boards">
-          <details open>
-            <summary>Your boards</summary>
-            ${myBoards}
-          </details>
-          <details open>
-            <summary>Other people's boards</summary>
-            ${otherBoards}
-          </details>
-        </div>`;
-      } else if (myItems.length > 0 && otherItems.length === 0) {
-        boardListing = html`<div class="boards">${myBoards}</div>`;
-      } else if (myItems.length === 0 && otherItems.length > 0) {
-        boardListing = html`<div class="boards">${otherBoards}</div>`;
-      } else {
-        boardListing = html`<div id="empty-provider">
-          No boards in this provider
-        </div>`;
-      }
-
-      return permission === "granted"
-        ? boardListing
-        : html`<div id="renew-access">
-            <span>Access has expired for this source</span>
-            <button
-              id="request-renewed-access"
-              @click=${() => {
-                this.dispatchEvent(
-                  new GraphProviderRenewAccessRequestEvent(
-                    this.selectedProvider,
-                    this.selectedLocation
-                  )
-                );
-              }}
-            >
-              Renew
-            </button>
-          </div>`;
-    };
 
     return html`<nav id="menu">
         <header>
@@ -671,7 +724,7 @@ export class Navigation extends LitElement {
             }}
           />
         </header>
-        <section id="provider">
+        <section id="provider" ${ref(this.#providerRef)}>
           <header>
             <h1>Provider</h1>
             <div id="provider-chooser">
@@ -713,7 +766,7 @@ export class Navigation extends LitElement {
               </button>
             </div>
           </header>
-          ${until(loadProviderContents(), html`Loading...`)}
+          ${until(this.#providerContents, html`Loading...`)}
         </section>
       </nav>
 
