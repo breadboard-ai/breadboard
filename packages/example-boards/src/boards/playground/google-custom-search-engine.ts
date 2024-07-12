@@ -4,15 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphInlineMetadata,
-  Schema,
-  base,
-} from "@google-labs/breadboard";
+import { GraphInlineMetadata, Schema, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
-import { spread } from "../utils/spread";
-import { pop } from "../utils/pop";
+import { spread } from "../../utils/spread";
+import { pop } from "../../utils/pop";
 
 const PARAM = {
   QUERY: "query",

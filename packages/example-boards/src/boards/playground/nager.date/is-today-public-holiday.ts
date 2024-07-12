@@ -1,7 +1,7 @@
 import { base, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
-import { countryCodes } from "../../utils/countryCodes";
+import { countryCodes } from "../../../utils/countryCodes";
 
 const inputs = base.input({
   $id: "query",

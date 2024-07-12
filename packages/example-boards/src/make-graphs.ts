@@ -10,9 +10,12 @@ import {
   BoardReference,
   BreadboardManifestBuilder,
 } from "@breadboard-ai/manifest";
-import { formatGraphDescriptor } from "@google-labs/breadboard";
+import {
+  formatGraphDescriptor,
+  GraphDescriptor,
+} from "@google-labs/breadboard";
 import { Dirent } from "fs";
-import { mkdir, readdir, writeFile } from "fs/promises";
+import { mkdir, readdir, writeFile, readFile, cp } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -37,7 +40,21 @@ async function findTsFiles(dir: string): Promise<string[]> {
   return tsFiles;
 }
 
-async function saveBoard(
+async function findJsonFiles(dir: string): Promise<string[]> {
+  const files: Dirent[] = await readdir(dir, { withFileTypes: true });
+  let tsFiles: string[] = [];
+  for (const file of files) {
+    const res: string = path.resolve(dir, file.name);
+    if (file.isDirectory()) {
+      tsFiles = tsFiles.concat(await findJsonFiles(res));
+    } else if (file.isFile() && file.name.endsWith(".json")) {
+      tsFiles.push(res);
+    }
+  }
+  return tsFiles;
+}
+
+async function saveTypeScriptBoard(
   filePath: string
 ): Promise<BoardReference | undefined> {
   try {
@@ -97,12 +114,46 @@ async function saveBoard(
   }
 }
 
-async function saveAllBoards(): Promise<void> {
-  const tsFiles = await findTsFiles(PATH);
+async function saveJsonBoard(
+  filePath: string
+): Promise<BoardReference | undefined> {
+  const relativePath: string = path.relative(PATH, filePath);
+  const url = `/example-boards/${relativePath}`;
+  try {
+    // Create corresponding directories based on the relative path
+    const graphDir: string = path.dirname(path.join(GRAPH_PATH, relativePath));
+
+    // Make sure the directories exist
+    await mkdir(graphDir, { recursive: true });
+    const destBoardPath = path.join(graphDir, path.basename(filePath));
+
+    const boardData = await readFile(filePath, { encoding: "utf-8" });
+    const file = JSON.parse(boardData) as GraphDescriptor;
+    const manifest: BoardReference = {
+      title: file.title ?? "Untitled (Raw BGL File)",
+      reference: url,
+      version: file.version ?? "0.0.1",
+      tags: file.metadata?.tags ?? undefined,
+    };
+
+    await cp(filePath, destBoardPath);
+
+    return manifest;
+  } catch (e) {
+    if (e instanceof Error) {
+      console.error(e.stack);
+    }
+    throw new Error(`Error loading ${filePath}: ${e}`);
+  }
+}
+
+async function saveAllBoards(prefix: string): Promise<void> {
+  const tsFiles = await findTsFiles(path.join(PATH, prefix));
+  const jsonFiles = await findJsonFiles(path.join(PATH, prefix));
   const manifest: BreadboardManifestBuilder = new BreadboardManifestBuilder();
 
   for (const file of tsFiles) {
-    const manifestEntry = await saveBoard(file);
+    const manifestEntry = await saveTypeScriptBoard(file);
     if (!manifestEntry) continue;
     // Avoid adding .local.json files to the manifest
     if (!file.endsWith(".local.ts")) {
@@ -110,10 +161,19 @@ async function saveAllBoards(): Promise<void> {
     }
   }
 
+  for (const file of jsonFiles) {
+    const manifestEntry = await saveJsonBoard(file);
+    if (!manifestEntry) continue;
+    // Avoid adding .local.json files to the manifest
+    if (!file.endsWith(".local.json")) {
+      manifest.addBoard(manifestEntry);
+    }
+  }
+
   await writeFile(
-    path.join(MANIFEST_PATH, "local-boards.json"),
+    path.join(MANIFEST_PATH, `${prefix}-boards.json`),
     JSON.stringify(manifest, null, 2)
   );
 }
 
-await saveAllBoards();
+await Promise.all([saveAllBoards("playground"), saveAllBoards("examples")]);

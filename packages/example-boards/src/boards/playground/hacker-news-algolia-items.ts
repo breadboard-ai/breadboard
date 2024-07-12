@@ -9,7 +9,7 @@
 import { Schema, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
-import { spread } from "../utils/spread";
+import { spread } from "../../utils/spread";
 
 const storyInputSchema: Schema = {
   type: "string",
