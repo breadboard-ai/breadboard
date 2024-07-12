@@ -1,4 +1,34 @@
-<details open>
+{% for item in collections.guide %}
+  {% if page.url == item.url %}
+    {% assign guides_open = "open" %}
+  {% endif %}
+{% endfor %}
+
+{% for item in collections.visualeditor %}
+  {% if page.url == item.url %}
+    {% assign visualeditor_open = "open" %}
+  {% endif %}
+{% endfor %}
+
+{% for item in collections.api %}
+  {% if page.url == item.url %}
+    {% assign api_open = "open" %}
+  {% endif %}
+{% endfor %}
+
+{% for item in collections.kits %}
+  {% if page.url == item.url %}
+    {% assign kits_open = "open" %}
+  {% endif %}
+{% endfor %}
+
+{% for item in collections.miscellaneous %}
+  {% if page.url == item.url %}
+    {% assign miscellaneous_open = "open" %}
+  {% endif %}
+{% endfor %}
+
+<details {{guides_open}} id="guides">
   <summary>Guides</summary>
   <ul>
   {%- for item in collections.guide -%}
@@ -17,7 +47,7 @@
   </ul>
 </details>
 
-<details open>
+<details {{visualeditor_open}} id="visual-editor">
   <summary>Visual Editor</summary>
   <ul>
   {%- for item in collections.visualeditor -%}
@@ -37,7 +67,7 @@
 </details>
 
 
-<details open>
+<details {{api_open}} id="api">
   <summary>API Documentation</summary>
   <ul>
   {%- for item in collections.api -%}
@@ -57,7 +87,7 @@
 </details>
 
 
-<details open>
+<details {{kits_open}} id="kits">
   <summary>Kit Documentation</summary>
   <ul>
   {%- for item in collections.kits -%}
@@ -76,7 +106,7 @@
   </ul>
 </details>
 
-<details open>
+<details {{miscellaneous_open}} id="miscellaneous">
   <summary>Miscellaneous</summary>
   <ul>
   {%- for item in collections.miscellaneous -%}

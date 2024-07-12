@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Breadboard Service Endpoint Protocol
 tags:
   - reference

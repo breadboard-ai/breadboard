@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Using Python with Breadboard
 tags:
   - miscellaneous
