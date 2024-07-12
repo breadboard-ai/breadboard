@@ -138,17 +138,13 @@
                 },
                 "per_page": {
                   "type": "number"
-                },
-                "groups_count": {
-                  "type": "number"
                 }
               },
               "required": [
                 "count",
                 "db_response_time_ms",
                 "page",
-                "per_page",
-                "groups_count"
+                "per_page"
               ],
               "additionalProperties": false,
               "title": "Search Result Metadata",
@@ -313,17 +309,13 @@
                 },
                 "per_page": {
                   "type": "number"
-                },
-                "groups_count": {
-                  "type": "number"
                 }
               },
               "required": [
                 "count",
                 "db_response_time_ms",
                 "page",
-                "per_page",
-                "groups_count"
+                "per_page"
               ],
               "additionalProperties": false
             }
