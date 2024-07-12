@@ -906,6 +906,14 @@ export class Main extends LitElement {
       url = url.replace(/^\/graphs/, "/example-boards");
     }
 
+    // Match any older URLs like /example-boards/blank.json and redirect to the
+    // newer /example-boards/playground/blank.json
+    const pgRegex = /example-boards\/([^\\/]+.json)$/;
+    const matches = pgRegex.exec(url ?? "");
+    if (url && matches && matches.length === 2) {
+      url = `/example-boards/playground/${matches[1]}`;
+    }
+
     this.#boardId++;
     this.#setUrlParam("board", url);
 

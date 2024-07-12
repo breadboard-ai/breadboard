@@ -23,8 +23,15 @@ if (import.meta.resolve) {
 }
 
 const destBoardPath = resolve(".", "public", "example-boards");
+const paths = ["examples", "playground"];
 
-await cp(resolvedBoardPath, destBoardPath, {
-  recursive: true,
-  dereference: true,
-});
+await Promise.all([
+  paths.map((path) => {
+    const src = join(resolvedBoardPath, path);
+    const dest = join(destBoardPath, path);
+    return cp(src, dest, {
+      recursive: true,
+      dereference: true,
+    });
+  }),
+]);

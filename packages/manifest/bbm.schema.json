@@ -80,6 +80,9 @@
 				"reference": {
 					"$ref": "#/definitions/Reference"
 				},
+				"tags": {
+					"$ref": "#/definitions/Tags"
+				},
 				"title": {
 					"$ref": "#/definitions/Title"
 				}
@@ -128,6 +131,9 @@
 				"reference": {
 					"$ref": "#/definitions/Reference"
 				},
+				"tags": {
+					"$ref": "#/definitions/Tags"
+				},
 				"title": {
 					"$ref": "#/definitions/Title"
 				}
@@ -136,6 +142,13 @@
 				"reference"
 			],
 			"type": "object"
+		},
+		"Tags": {
+			"description": "The tags for this board",
+			"items": {
+				"type": "string"
+			},
+			"type": "array"
 		},
 		"Title": {
 			"examples": [

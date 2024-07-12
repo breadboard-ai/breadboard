@@ -10,9 +10,9 @@ import { core } from "@google-labs/core-kit";
 import {
   AbstractValue,
   NodeProxy,
-} from "../../../breadboard/dist/src/new/grammar/types";
-import { OutputValue } from "../../../breadboard/dist/src/new/runner/types";
-import { pop } from "../utils/pop";
+} from "../../../../breadboard/dist/src/new/grammar/types";
+import { OutputValue } from "../../../../breadboard/dist/src/new/runner/types";
+import { pop } from "../../utils/pop";
 
 const demoBoard = await board<
   {

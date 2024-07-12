@@ -44,7 +44,7 @@ const manifestArray: BreadboardManifest[] = [
   { title: "Manifest with an empty boards array", boards: [] },
   { title: "Manifest with an empty manifests array", manifests: [] },
   {
-    title: "Manifest with a had-coded board",
+    title: "Manifest with a hard-coded board",
     boards: [
       {
         edges: [
@@ -90,6 +90,16 @@ const manifestArray: BreadboardManifest[] = [
       {
         title: "My Second Board",
         reference: "./boards/board.bgl.json",
+      },
+    ],
+  },
+  {
+    title: "Manifest with tags",
+    boards: [
+      {
+        title: "My Second Board",
+        reference: "./boards/board.bgl.json",
+        tags: ["tool"],
       },
     ],
   },
