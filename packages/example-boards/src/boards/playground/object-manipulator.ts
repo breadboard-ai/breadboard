@@ -16,8 +16,8 @@ import {
 import {
   AbstractValue,
   NodeProxy,
-} from "../../../breadboard/dist/src/new/grammar/types";
-import { OutputValue } from "../../../breadboard/dist/src/new/runner/types";
+} from "../../../../breadboard/dist/src/new/grammar/types";
+import { OutputValue } from "../../../../breadboard/dist/src/new/runner/types";
 
 const johnSmith = {
   forename: "John",

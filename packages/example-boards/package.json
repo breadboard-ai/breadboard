@@ -4,7 +4,8 @@
   "description": "A collection of example boards",
   "main": "./build/make-graphs.js",
   "exports": {
-    "./local-boards.json": "./local-boards.json",
+    "./examples-boards.json": "./examples-boards.json",
+    "./playground-boards.json": "./playground-boards.json",
     "./example-boards/*.json": "./example-boards/*.json"
   },
   "types": "build/make-graphs.d.ts",
@@ -88,10 +89,12 @@
       ],
       "files": [
         "src/make-graphs.ts",
-        "src/boards/**/*.ts"
+        "src/boards/**/*.ts",
+        "src/boards/**/*.json"
       ],
       "output": [
-        "local-boards.json",
+        "example-boards.json",
+        "playground-boards.json",
         "example-boards/**/*.json",
         "docs/graphs/**/*.md"
       ]

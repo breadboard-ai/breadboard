@@ -1,26 +1,13 @@
-import { base, code } from "@google-labs/breadboard";
+import { base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
-import { countryCodes } from "../../utils/countryCodes";
-
-const getCurrentYear = code((): { year: number } => {
-  return {
-    year: new Date().getFullYear(),
-  };
-});
+import { countryCodes } from "../../../utils/countryCodes";
 
 const input = base.input({
   $id: "query",
-  year: getCurrentYear({ $id: "getCurrentYear" }).year,
   schema: {
     type: "object",
     properties: {
-      year: {
-        title: "year",
-        type: "number",
-        description: "The data for year",
-        default: new Date().getFullYear().toString(),
-      },
       countryCode: {
         title: "countryCode",
         type: "string",
@@ -29,14 +16,13 @@ const input = base.input({
         default: "US",
       },
     },
-    required: ["year", "countryCode"],
+    required: ["countryCode"],
   },
 });
 
 const urlTemplate = templates.urlTemplate({
   $id: "urlTemplate",
-  template: "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}",
-  year: input.year,
+  template: "https://date.nager.at/api/v3/CountryInfo/{countryCode}",
   countryCode: input.countryCode,
 });
 
@@ -52,7 +38,7 @@ const output = base.output({
 });
 
 export default await output.serialize({
-  title: "Nager Date Long Weekend API",
-  description: "API for long weekends",
+  title: "Nager Date Country Info API",
+  description: "Get the country info for the Nager Date API",
   version: "0.0.1",
 });

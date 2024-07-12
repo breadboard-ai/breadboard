@@ -4,13 +4,13 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "append-1",
-      "to": "append-1",
+      "from": "append-2",
+      "to": "append-2",
       "out": "accumulator",
       "in": "accumulator"
     },
     {
-      "from": "append-1",
+      "from": "append-2",
       "to": "assistant",
       "out": "accumulator",
       "in": "context"
@@ -23,18 +23,18 @@
     },
     {
       "from": "generator",
-      "to": "append-1",
+      "to": "append-2",
       "out": "text",
       "in": "assistant"
     },
     {
       "from": "generator",
-      "to": "output-2",
+      "to": "output-3",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "output-2",
+      "from": "output-3",
       "to": "userRequest",
       "out": "",
       "in": ""
@@ -54,7 +54,7 @@
     },
     {
       "from": "userRequest",
-      "to": "append-1",
+      "to": "append-2",
       "out": "text",
       "in": "user"
     },
@@ -105,7 +105,7 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-3",
       "type": "output",
       "configuration": {
         "schema": {
@@ -125,7 +125,7 @@
       }
     },
     {
-      "id": "append-1",
+      "id": "append-2",
       "type": "append",
       "configuration": {
         "accumulator": "\n== Conversation History"
