@@ -70,34 +70,28 @@
     },
     {
       "title": "Hacker News Algolia Items",
-      "reference": "/graphs/hacker-news-algolia-items.json"
+      "reference": "/graphs/hacker-news-algolia-items.json",
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Angolia Search",
       "reference": "/graphs/hacker-news-algolia-search.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Firebase API Story by ID",
       "reference": "/graphs/hacker-news-firebase-story-from-id.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Firebase API Story IDs",
+      "title": "Hacker News Firebase Top Story IDs",
       "reference": "/graphs/hacker-news-firebase-top-story-ids.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Comment Search",
-      "reference": "/graphs/hacker-news-simplified-algolia-comment-search.json"
-    },
-    {
-      "title": "Hacker News Simplified Algolia Search",
-      "reference": "/graphs/hacker-news-simplified-algolia-search.json"
-    },
-    {
-      "title": "Hacker News Simplified Algolia Story Search",
-      "reference": "/graphs/hacker-news-simplified-algolia-story-search.json"
+      "title": "Hacker News Angolia Search Simplified",
+      "reference": "/graphs/hacker-news-simplified-algolia-search.json",
+      "version": "0.1.0"
     },
     {
       "title": "Looper Chat Testing Grounds",

@@ -1,159 +1,107 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- *
- * @title Hacker News Simplified Algolia Search
- * see: https://hn.algolia.com/api
- */
-
-import { Schema, base, board, code } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { graph as forEach } from "./board-for-each";
+// /**
+//  * @license
+//  * Copyright 2024 Google LLC
+//  * SPDX-License-Identifier: Apache-2.0
+//  *
+//  * @title Hacker News Simplified Algolia Search
+//  * see: https://hn.algolia.com/api
+//  */
 import {
-    graph as search,
-    searchQuerySchema,
-    searchTagsSchema,
+    output,
+    board,
+    annotate,
+    input,
+    object,
+    array,
+} from "@breadboard-ai/build";
+import {
+    searchQuery,
+    searchTags
 } from "./hacker-news-algolia-search";
-import { graph as manipulator } from "./object-manipulator";
 
-const input = base.input({
-  schema: {
-    type: "object",
-    properties: {
-      query: searchQuerySchema,
-      tags: searchTagsSchema,
-    },
-  },
-  $metadata: { title: "Input" },
-});
-
-const invocation = core.invoke({
-  $metadata: { title: "Invoke Full Search" },
-  $board: search,
-  query: input.query,
-  tags: input.tags,
-});
-
-export const HackerNewsSimplifiedAlgoliaSearchResult: Schema = {
-  type: "array",
-  title: "Results",
-  items: {
-    type: "object",
-    properties: {
-      author: {
-        type: "string",
-      },
-      created_at: {
-        type: "string",
-      },
-      num_comments: {
-        type: "number",
-      },
-      objectID: {
-        type: "string",
-      },
-      points: {
-        type: "number",
-      },
-      story_id: {
-        type: "number",
-      },
-      title: {
-        type: "string",
-      },
-      updated_at: {
-        type: "string",
-      },
-      url: {
-        type: "string",
-      },
-      type: {
-        type: "string",
-      },
-    },
-    required: [
-      "author",
-      "created_at",
-      "num_comments",
-      "objectID",
-      "points",
-      "story_id",
-      "title",
-      "updated_at",
-      "url",
-      "objectType",
-    ],
-  },
-};
-
-const output = base.output({
-  $metadata: { title: "Output" },
-  schema: {
-    type: "object",
-    properties: {
-      output: HackerNewsSimplifiedAlgoliaSearchResult,
-    },
-  },
-});
-
-export interface VerboseSearchResult {
-  _highlightResult: HighlightResult;
-  _tags: string[];
-  author: string;
-  children: number[];
-  created_at: string;
-  created_at_i: number;
-  num_comments: number;
-  objectID: string;
-  points: number;
-  story_id: number;
-  title: string;
-  updated_at: string;
-  url: string;
-}
+import { invoke, code } from "@google-labs/core-kit";
 
 export interface HighlightResult {
-  author: Author;
-  title: Title;
-  url: Url;
+    author: Author;
+    title: Title;
+    url: Url;
 }
 
 export interface Author {
-  matchLevel: string;
-  matchedWords: any[];
-  value: string;
+    matchLevel: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    matchedWords: any[];
+    value: string;
 }
 
 export interface Title {
-  fullyHighlighted: boolean;
-  matchLevel: string;
-  matchedWords: string[];
-  value: string;
+    fullyHighlighted: boolean;
+    matchLevel: string;
+    matchedWords: string[];
+    value: string;
 }
 
 export interface Url {
-  matchLevel: string;
-  matchedWords: string[];
-  value: string;
-  fullyHighlighted?: boolean;
+    matchLevel: string;
+    matchedWords: string[];
+    value: string;
+    fullyHighlighted?: boolean;
+}
+export interface VerboseSearchResult {
+    _highlightResult: HighlightResult;
+    _tags: string[];
+    author: string;
+    children: number[];
+    created_at: string;
+    created_at_i: number;
+    num_comments: number;
+    objectID: string;
+    points: number;
+    story_id: number;
+    title: string;
+    updated_at: string;
+    url: string;
 }
 
-const invokeForEach = core.invoke({
-  $board: forEach,
-  board: board(() => {
-    const input = base.input({});
-    const output = base.output({});
-    const manipulate = core.invoke({
-      $board: manipulator,
-      mode: "pick",
-      keys: [
-        // "_highlightResult",
-        // "_tags",
-        "author",
-        // "children",
+const hackerNewsSearchBoard = input({
+    $id: "query",
+    title: "board location",
+    type: annotate(object({}), {
+        behavior: ["board"],
+    }),
+    description: "The URL of the generator to call",
+    default: { kind: "board", path: "hacker-news-algolia-search.json" },
+});
+
+const hackerNewsOutput = invoke({
+    $id: "generator",
+    $board: hackerNewsSearchBoard,
+    query: searchQuery,
+    tags: searchTags,
+    pageNumber: 1,
+    searchLimit: "1",
+}).unsafeOutput("output");
+
+// WIP THIS WORKS IF SEARCH RETURNS AN ITEM
+// BUT IT RETURNS A LIST, SO NEED TO FIGURE OUT HOW TO LOOP
+
+const objectManipBoard = input({
+    $id: "query",
+    title: "board location",
+    type: annotate(object({}), {
+        behavior: ["board"],
+    }),
+    description: "The URL of the generator to call",
+    default: { kind: "board", path: "object-manipulator.json" },
+})
+
+const objectManipOutput = invoke({
+    $id: "manipulator",
+    $board: objectManipBoard,
+    object: hackerNewsOutput,
+    mode: "pick",
+    keys: [
         "created_at",
-        // "created_at_i",
         "num_comments",
         "objectID",
         "points",
@@ -163,33 +111,12 @@ const invokeForEach = core.invoke({
         "url",
         "objectType",
       ],
-    });
-    const convertTagsToType = code(
-      ({ item }: { item: VerboseSearchResult }) => {
-        return {
-          item: {
-            ...item,
-            objectType: item["_tags"][0],
-          },
-        };
-      }
-    );
+}).unsafeOutput("object")
 
-    input.item.to(convertTagsToType({})).item.as("object").to(manipulate);
-
-    manipulate.object.as("item").to(output);
-
-    return output;
-  }),
-  array: invocation.output,
-  $metadata: { title: "Manipulate elements" },
-});
-
-invokeForEach.array.as("output").to(output);
-
-const serialised = await output.serialize({
-  title: "Hacker News Simplified Algolia Search",
-});
-
-export { serialised as graph, input, output };
-export default serialised;
+export default board({
+    title: "Hacker News Angolia Search Simplified",
+    description: "Board which returns story contents using the Hacker News Angolia API",
+    version: "0.1.0",
+    inputs: { searchQuery, searchTags, hackerNewsSearchBoard, objectManipBoard },
+    outputs: { test: output(objectManipOutput) }
+})

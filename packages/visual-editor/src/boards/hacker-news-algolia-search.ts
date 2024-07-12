@@ -1,325 +1,161 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- *
- * see: https://hn.algolia.com/api
- */
+// /**
+//  * @license
+//  * Copyright 2024 Google LLC
+//  * SPDX-License-Identifier: Apache-2.0
+//  *
+import {
+  array,
+  board,
+  enumeration,
+  input,
+  object,
+  output,
+} from "@breadboard-ai/build";
+import { fetch, code, } from "@google-labs/core-kit";
+import { urlTemplate } from "@google-labs/template-kit";
 
-import { OutputValues, Schema, base, code } from "@google-labs/breadboard";
 
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
-
-export type PostItem = {
-  author: string;
-  created_at: string;
-  created_at_i?: number;
-  id: number;
-  children?: Comment[];
-  story_id: number;
-  type: string;
-};
-
-export type Comment = PostItem & {
-  parent_id: number;
-  text: string;
-  title: null;
-};
-
-export type Story = PostItem & {
-  title: string;
-  points: number;
-  url: string;
-};
-
-export type HackerNewsAlgoliaSearchTags =
-  | "story"
-  | "comment"
-  | "poll"
-  | "pollopt"
-  | "show_hn"
-  | "ask_hn"
-  | "front_page";
-export type NumericFilterField = "created_at_i" | "points" | "num_comments";
-export type Operator = "<" | "<=" | "=" | ">" | ">=";
-
-export type HackerNewsSearchNumericFilters = {
-  operator: Operator;
-  field: NumericFilterField;
-  value: number;
-};
-export type HackerNewAlgoliaSearchParameters = {
-  query: string;
-  tags?: HackerNewsAlgoliaSearchTags[];
-  numericFilters?: HackerNewsSearchNumericFilters[];
-  page?: number;
-  limit?: number;
-};
-
-export type SearchHits = OutputValues & {
-  hits: PostItem[];
-};
-
-const spread = code<{ object: object }>((inputs) => {
-  const object = inputs.object;
-  if (typeof object !== "object") {
-    throw new Error(`object is of type ${typeof object} not object`);
-  }
-  return { ...object };
-});
-
-const slice = code<{ list: PostItem[]; limit: number }>(({ list, limit }) => {
-  return { output: list.slice(0, limit) };
-});
-
-const searchLimitSchema: Schema = {
+const searchLimit = input({
   type: "number",
   title: "limit",
-  default: "5",
+  default: 5,
   description: "Limit the number of results returned by the search",
-};
+  examples: [5]
+})
 
-export const searchQuerySchema: Schema = {
+export const searchQuery = input({
   type: "string",
   title: "Query",
   description: "The term to search for",
-  default: "Artificial Intelligence",
-  examples: ["Artificial Intelligence", "Machine Learning", "Deep Learning"],
-};
+  examples: ["Artificial Intelligence", "Machine Learning", "Deep Learning"]
+})
 
-export const searchTagsSchema: Schema = {
-  type: "string",
-  title: "Tags",
-  default: undefined,
-  description: "Filter on a specific tag",
-  enum: [
-    "story",
+export const searchTags = input({
+  type: enumeration("story",
     "comment",
     "poll",
     "pollopt",
     "show_hn",
     "ask_hn",
-    "front_page",
-  ],
-};
+    "front_page"),
+  title: "Tags",
+  description: "Filter on a specific tag",
+})
 
-export const searchPageSchema: Schema = {
-  type: "number",
+export const pageNumber = input({
+  type: "string",
   title: "Page",
   default: "1",
-  description: "The page number of the search results to return",
-};
+  description: "The page number to query",
+  examples: ["1"]
+})
 
-export const algoliaSearchSchema: Schema = {
-  title: "Hacker News Algolia Search Parameters",
-  type: "object",
-  properties: {
-    query: searchQuerySchema,
-    limit: searchLimitSchema,
-    tags: searchTagsSchema,
-    page: searchPageSchema,
-  },
-};
+const constructURL = code(
+  { id: "urlContructOutput", tags: searchTags, page: pageNumber },
+  { url: "string" },
+  ({ tags, page }) => {
+    let baseURL = "https://hn.algolia.com/api/v1/search?query={query}";
 
-const input = base.input({
-  $id: "query",
-  schema: algoliaSearchSchema,
-});
+    if (tags != undefined) {
+      baseURL = baseURL + "&tags={tags}";
+    }
 
-let baseURL = "https://hn.algolia.com/api/v1/search?query={query}";
+    if (page != undefined) {
+      baseURL = baseURL + "&page={page}";
+    }
 
-if (input.tags != undefined) {
-  baseURL = baseURL + "&tags={tags}";
-}
+    return { url: baseURL }
+  })
 
-if (input.page != undefined) {
-  baseURL = baseURL + "&page={page}";
-}
 
-const urlTemplate = templates.urlTemplate({
+const url = urlTemplate({
   $id: "urlTemplate",
-  template: baseURL,
-  query: input.query,
-  page: input.page,
-  tags: input.tags,
-});
+  template: constructURL.outputs.url,
+  query: searchQuery,
+  page: pageNumber,
+  tags: searchTags
+})
 
-const fetchUrl = core.fetch({
+const fetchOutput = fetch({
   $id: "fetch",
   method: "GET",
-  url: urlTemplate.url,
-});
+  url: url.outputs.url,
+})
 
-const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
+const spreadHackerNewsStoryResponse = code({
+  $id: "spreadResponse",
+  obj: fetchOutput.outputs.response
+}, {
+  hits: array(object({
+    _highlightResult: object(
+      {
+        author: object(
+          {
+            matchLevel: "string",
+            matchedWords: array("string"),
+            value: "string"
+          }),
+        title: object(
+          {
+            fullyHighlighted: "boolean",
+            matchlevel: "string",
+            matchedWords: array("string"),
+            value: "string"
+          }),
+        url: object(
+          {
+            fullyHighlighted: "boolean",
+            matchlevel: "string",
+            matchedWords: array("string"),
+            value: "string"
 
-const sliced = slice({
-  list: response.hits as unknown as PostItem[],
-  limit: input.limit as unknown as number,
-});
+          })
+      }),
+    _tags: array("string"),
+    author: "string",
+    children: array("number"),
+    created_at: "string",
+    created_at_i: "number",
+    num_comments: "number",
+    objectID: "string",
+    points: "number",
+    story_id: "number",
+    title: "string",
+    updated_at: "string",
+    url: "string"
+  })),
+}, ({ obj }) => {
+  const object = obj;
+  if (typeof object !== "object") {
+    throw new Error(`object is of type ${typeof object} not object`);
+  }
+  // Just in case an expected field is not set
+  // output node currently does not support optional fields
+  for (const key in object) {
+    // @ts-ignore
+    if (object[key] == undefined) {
+      // @ts-ignore
+      object[key] = "N/A"
+    }
+  }
 
-export const HackerNewsSearchResultsSchema: Schema = {
-  type: "object",
-  properties: {
-    output: {
-      title: "Hacker News Search Results",
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          _highlightResult: {
-            type: "object",
-            properties: {
-              author: {
-                type: "object",
-                properties: {
-                  matchLevel: {
-                    type: "string",
-                  },
-                  matchedWords: {
-                    type: "array",
-                    items: {},
-                  },
-                  value: {
-                    type: "string",
-                  },
-                },
-                required: ["matchLevel", "matchedWords", "value"],
-              },
-              title: {
-                type: "object",
-                properties: {
-                  fullyHighlighted: {
-                    type: "boolean",
-                  },
-                  matchLevel: {
-                    type: "string",
-                  },
-                  matchedWords: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                  value: {
-                    type: "string",
-                  },
-                },
-                required: [
-                  "fullyHighlighted",
-                  "matchLevel",
-                  "matchedWords",
-                  "value",
-                ],
-              },
-              url: {
-                type: "object",
-                properties: {
-                  fullyHighlighted: {
-                    type: "boolean",
-                  },
-                  matchLevel: {
-                    type: "string",
-                  },
-                  matchedWords: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                  value: {
-                    type: "string",
-                  },
-                },
-                required: [
-                  "fullyHighlighted",
-                  "matchLevel",
-                  "matchedWords",
-                  "value",
-                ],
-              },
-            },
-            required: ["author", "title", "url"],
-          },
-          _tags: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
-          author: {
-            type: "string",
-          },
-          children: {
-            type: "array",
-            items: {
-              type: "number",
-            },
-          },
-          created_at: {
-            type: "string",
-          },
-          created_at_i: {
-            type: "number",
-          },
-          num_comments: {
-            type: "number",
-          },
-          objectID: {
-            type: "string",
-          },
-          points: {
-            type: "number",
-          },
-          story_id: {
-            type: "number",
-          },
-          title: {
-            type: "string",
-          },
-          updated_at: {
-            type: "string",
-          },
-          url: {
-            type: "string",
-          },
-        },
-        required: [
-          "_highlightResult",
-          "_tags",
-          "author",
-          "children",
-          "created_at",
-          "created_at_i",
-          "num_comments",
-          "objectID",
-          "points",
-          "story_id",
-          "title",
-          "updated_at",
-          "url",
-        ],
-      },
-    },
-  },
-};
+  return { ...object } as any;
+})
 
-const output = base.output({
-  $metadata: {
-    title: "Output",
-  },
-  schema: HackerNewsSearchResultsSchema,
-});
+const sliceOutput = code({ $id: "sliceOutput", list: spreadHackerNewsStoryResponse.outputs.hits, limit: searchLimit }, { sliced: "unknown" }, ({ list, limit }) => {
+  return { sliced: list.slice(0, limit) };
+})
 
-urlTemplate.url.to(output);
-sliced.output.to(output);
-
-const serialised = await input.serialize({
+export default board({
   title: "Hacker News Angolia Search",
-  description:
-    "Board which returns API results based on a query using the Hacker News Angolia API",
-  version: "0.0.1",
-});
-export { serialised as graph, input, output };
+  description: "Board which returns story contents using the Hacker News Angolia API",
+  version: "0.1.0",
+  inputs: {
+    query: searchQuery,
+    tags: searchTags,
+    pageNumber: pageNumber,
+    searchLimit: searchLimit
+  },
+  outputs: { searchQuery: url.outputs.url, output: output(sliceOutput.outputs.sliced) }
+})
 
-export default serialised;
