@@ -4,16 +4,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { NodeDescriberResult, Schema } from "@google-labs/breadboard";
 import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type { JSONSchema4 } from "json-schema";
 import {
   InputPort,
   OutputPort,
+  OutputPortGetter,
   type OutputPortReference,
   type ValuesOrOutputPorts,
 } from "../common/port.js";
-import type { JsonSerializable } from "../type-system/type.js";
-import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
-import type { Output } from "./output.js";
+import type {
+  SerializableInputPort,
+  SerializableOutputPortReference,
+} from "../common/serializable.js";
+import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
+import {
+  isSpecialInput,
+  type GenericSpecialInput,
+  type Input,
+  type InputWithDefault,
+} from "./input.js";
+import { isOptional } from "./optional.js";
+import { isSpecialOutput, type Output } from "./output.js";
 
 // TODO(aomarks) Support primary ports in boards.
 // TODO(aomarks) Support adding descriptions to board ports.
@@ -49,6 +62,7 @@ export function board<
 >({
   inputs,
   outputs,
+  id,
   title,
   description,
   version,
@@ -61,6 +75,7 @@ export function board<
   const flatOutputs = flattenOutputs(outputs);
   const def = new BoardDefinitionImpl(flatInputs, flatOutputs);
   return Object.assign(def.instantiate.bind(def), {
+    id,
     inputs: flatInputs,
     inputsForSerialization: inputs as BoardInputPorts | Array<BoardInputPorts>,
     outputs: flatOutputs,
@@ -72,6 +87,7 @@ export function board<
     version,
     metadata,
     isBoard: true,
+    describe: def.describe.bind(def),
   });
 }
 
@@ -146,6 +162,7 @@ export interface BoardParameters<
 > {
   inputs: IPORTS;
   outputs: OPORTS;
+  id?: string;
   title?: string;
   description?: string;
   version?: string;
@@ -201,6 +218,7 @@ export type BoardDefinition<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
+  readonly id?: string;
   readonly inputs: IPORTS;
   readonly inputsForSerialization: BoardInputPorts | Array<BoardInputPorts>;
   readonly outputs: OPORTS;
@@ -209,6 +227,7 @@ export type BoardDefinition<
   readonly description?: string;
   readonly version?: string;
   readonly metadata?: GraphMetadata;
+  describe(): Promise<NodeDescriberResult>;
 };
 
 // TODO(aomarks) Fix this definition so that it doesn't need <any, any>.
@@ -238,6 +257,41 @@ class BoardDefinitionImpl<
     values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
   ): BoardInstance<IPORTS, OPORTS> {
     return new BoardInstance(this.#inputs, this.#outputs, values);
+  }
+
+  async describe(): Promise<NodeDescriberResult> {
+    const requiredInputs: string[] = [];
+    const requiredOutputs: string[] = [];
+    return {
+      inputSchema: {
+        type: "object",
+        required: requiredInputs,
+        additionalProperties: false,
+        properties: Object.fromEntries(
+          Object.entries(this.#inputs).map(([name, input]) => {
+            const { schema, required } = describeInput(input);
+            if (required) {
+              requiredInputs.push(name);
+            }
+            return [name, schema as Schema];
+          })
+        ),
+      },
+      outputSchema: {
+        type: "object",
+        required: requiredOutputs,
+        additionalProperties: false,
+        properties: Object.fromEntries(
+          Object.entries(this.#outputs).map(([name, output]) => {
+            const { schema, required } = describeOutput(output);
+            if (required) {
+              requiredOutputs.push(name);
+            }
+            return [name, schema as Schema];
+          })
+        ),
+      },
+    };
   }
 }
 
@@ -272,5 +326,89 @@ type ExtractPortTypes<PORTS extends BoardInputPorts | BoardOutputPorts> = {
 export function isBoard(value: unknown): value is GenericBoardDefinition {
   return (
     typeof value === "function" && "isBoard" in value && value.isBoard === true
+  );
+}
+
+export function describeInput(
+  input:
+    | Input<JsonSerializable | undefined>
+    | InputWithDefault<JsonSerializable | undefined>
+    | SerializableInputPort
+): {
+  schema: JSONSchema4;
+  required: boolean;
+} {
+  const schema = toJSONSchema(input.type);
+  let isSpecialOptional = false;
+  if (isSpecialInput(input)) {
+    if (input.title !== undefined) {
+      schema.title = input.title;
+    }
+    if (input.description !== undefined) {
+      schema.description = input.description;
+    }
+    if (input.default !== undefined) {
+      schema.default =
+        typeof input.default === "string"
+          ? input.default
+          : // TODO(aomarks) Why is default JSON stringified? The UI currently
+            // requires it, but seems like it should be real JSON.
+            JSON.stringify(input.default, null, 2);
+    }
+    if (input.examples !== undefined && input.examples.length > 0) {
+      schema.examples = input.examples.map((example) =>
+        typeof example === "string"
+          ? example
+          : // TODO(aomarks) Why is examples JSON stringified? The UI currently
+            // requires it, but seems like it should be real JSON.
+            JSON.stringify(example, null, 2)
+      );
+    }
+    if ("optional" in input && input.optional) {
+      isSpecialOptional = true;
+    }
+  }
+  const required = schema.default === undefined && !isSpecialOptional;
+  return { schema, required };
+}
+
+export function describeOutput(
+  output:
+    | SerializableOutputPortReference
+    | Output<JsonSerializable>
+    | Input<JsonSerializable>
+    | InputWithDefault<JsonSerializable>
+): {
+  schema: JSONSchema4;
+  required: boolean;
+} {
+  let port;
+  if (isSpecialOutput(output)) {
+    port = output.port;
+  } else {
+    port = output;
+  }
+  if (isSerializableOutputPortReference(port)) {
+    port = port[OutputPortGetter];
+  }
+  // Input<JsonSerializable> | InputWithDefault<JsonSerializable> | SerializableOutputPort | OutputPort<...>
+  const schema = toJSONSchema(port.type);
+  if (isSpecialOutput(output)) {
+    if (output.title !== undefined) {
+      schema.title = output.title;
+    }
+    if (output.description !== undefined) {
+      schema.description = output.description;
+    }
+  }
+  const required = !isOptional(port);
+  return { schema, required };
+}
+
+export function isSerializableOutputPortReference(
+  value: unknown
+): value is SerializableOutputPortReference {
+  return (
+    typeof value === "object" && value !== null && OutputPortGetter in value
   );
 }

@@ -5,7 +5,7 @@
  */
 
 :root {
-  --update-width: calc((100% - 860px) / 2);
+  --update-width: min(400px, calc((100% - 860px) / 2));
 }
 
 html,

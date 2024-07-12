@@ -159,3 +159,26 @@ You like to find out how the user is doing and how you can help them.
 > You can give your components friendlier names by clicking on them and editing their title in the "Component details" pane.
 
 And you're good to go. Hit **Run** and have a chat!
+
+## Fetching data
+
+For this pattern we generally require two things: a [`urlTemplate`](../../kits/template/#the-urltemplate-node) component and a [`fetch`](../../kits/core/#the-fetch-node) component.
+
+The former allows us to encode some user input (if we need to do so) into a URL, and the latter makes a request over the network to that URL.
+
+The board generally look a little like this.
+
+{{ "/breadboard/static/boards/cookbook/fetching-data.bgl.json" | board }}
+
+> [!NOTE]
+> The `urlTemplate` component is dynamic; the ports it shows depend on the string value in its Template input.
+
+In the above example the `urlTemplate` has the following value for its **Template input**:
+
+```prompt
+https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance
+```
+
+This creates the appropriate input ports on the component -- **query** -- and the input is configured to request the value as a string. This is then substituted into the URL and passed to the `fetch` component's **url input**. The result of the data fetch is then on via the **response output**.
+
+To see this pattern in context, why not check out our [**Building a Librarian with the Agent Kit**](../librarian/) guide?

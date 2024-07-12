@@ -1,6 +1,6 @@
 {
   "title": "Object Split",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "description": "Splits an object using JSONata",
   "version": "0.0.1",
   "metadata": {
     "comments": [

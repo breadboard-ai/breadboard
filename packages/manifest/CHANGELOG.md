@@ -1,5 +1,26 @@
 # @google-labs/breadboard-manifest
 
+## 0.3.0
+
+### Minor Changes
+
+- bc8dcdd: rework manifest package
+
+### Patch Changes
+
+- 4da35e5: Fix unit tests.
+- Updated dependencies [a925cf0]
+- Updated dependencies [dd783e0]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [3aba1a4]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+  - @google-labs/breadboard-schema@1.5.1
+
 ## 0.2.0
 
 ### Minor Changes

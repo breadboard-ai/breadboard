@@ -1,5 +1,72 @@
 # @google-labs/breadboard-cli
 
+## 0.10.0
+
+### Minor Changes
+
+- 6f82dea: Update Visual Editor package name
+- 0f9d617: Move breadboard-web to visual-editor; remove breadbuddy
+- 4ba1243: Migrate breadboard-ui to visual-editor
+
+### Patch Changes
+
+- f4397b9: Update remaining breadboard-web paths
+- Updated dependencies [a925cf0]
+- Updated dependencies [39f1aed]
+- Updated dependencies [c77b034]
+- Updated dependencies [43fc9fc]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [6f82dea]
+- Updated dependencies [f4397b9]
+- Updated dependencies [166f290]
+- Updated dependencies [66918fc]
+- Updated dependencies [4c5bc52]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [4bf8894]
+- Updated dependencies [6b91b3e]
+- Updated dependencies [eaca143]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [54cb2d4]
+- Updated dependencies [6a59c83]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [e414ba0]
+- Updated dependencies [b357fbc]
+- Updated dependencies [0f9d617]
+- Updated dependencies [bc8dcdd]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [fa2d1ab]
+- Updated dependencies [51034a0]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [7bdb5a2]
+- Updated dependencies [cb455ef]
+- Updated dependencies [d6706f2]
+- Updated dependencies [10bfeba]
+- Updated dependencies [d016297]
+- Updated dependencies [ffe100b]
+- Updated dependencies [5447426]
+- Updated dependencies [bd55f95]
+- Updated dependencies [cb0237d]
+- Updated dependencies [4ba1243]
+- Updated dependencies [05f3acb]
+- Updated dependencies [9d4ea07]
+- Updated dependencies [164d104]
+- Updated dependencies [4c1a17c]
+- Updated dependencies [26e1099]
+- Updated dependencies [a0587ec]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [359424b]
+- Updated dependencies [a9def5c]
+- Updated dependencies [a30fb39]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/visual-editor@1.12.0
+  - @google-labs/core-kit@0.11.0
+  - @breadboard-ai/build@0.7.1
+  - @breadboard-ai/import@0.1.5
+  - @google-labs/template-kit@0.3.5
+
 ## 0.9.5
 
 ### Patch Changes

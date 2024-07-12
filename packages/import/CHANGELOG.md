@@ -1,5 +1,18 @@
 # @breadboard-ai/import
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [a925cf0]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+
 ## 0.1.4
 
 ### Patch Changes

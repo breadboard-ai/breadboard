@@ -1,6 +1,6 @@
 {
   "title": "Conversation with Agents",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "description": "Uses components from the Breadboard Agent Kit to create a conversation loop",
   "version": "0.0.1",
   "metadata": {
     "comments": [

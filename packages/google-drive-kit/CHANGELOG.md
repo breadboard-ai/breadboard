@@ -1,5 +1,28 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.2.0
+
+### Minor Changes
+
+- f2d9839: Move components into component folder. Fix some names & descriptions..
+
+### Patch Changes
+
+- 5f6432b: Internal type-safety improvement to list-files
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [166f290]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [26e1099]
+- Updated dependencies [a9def5c]
+  - @google-labs/core-kit@0.11.0
+  - @breadboard-ai/build@0.7.1
+  - @google-labs/template-kit@0.3.5
+
 ## 0.1.3
 
 ### Patch Changes

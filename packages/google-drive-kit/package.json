@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/google-drive-kit",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -119,7 +119,7 @@
       ]
     },
     "generate:graphs": {
-      "command": "mkdir graphs && ls dist/{export-file,list-files,get-file-content}.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "command": "mkdir graphs && ls dist/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
         "../breadboard-cli:build:tsc"
@@ -131,9 +131,9 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.0",
-    "@google-labs/core-kit": "^0.10.1",
-    "@google-labs/template-kit": "^0.3.4"
+    "@breadboard-ai/build": "0.7.1",
+    "@google-labs/core-kit": "^0.11.0",
+    "@google-labs/template-kit": "^0.3.5"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
