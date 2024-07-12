@@ -93,7 +93,8 @@
         "src/boards/**/*.json"
       ],
       "output": [
-        "local-boards.json",
+        "example-boards.json",
+        "playground-boards.json",
         "example-boards/**/*.json",
         "docs/graphs/**/*.md"
       ]
