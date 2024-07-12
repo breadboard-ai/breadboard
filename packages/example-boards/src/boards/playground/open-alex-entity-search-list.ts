@@ -105,6 +105,7 @@ const spreadOpenAlexResponse = code(
     if (typeof obj !== "object") {
       throw new Error(`object is of type ${typeof obj} not object`);
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return { ...obj } as any;
   }
 );
