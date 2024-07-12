@@ -3,6 +3,7 @@ layout: docs.njk
 title: Breadboard Service Endpoint Protocol
 tags:
   - reference
+  - miscellaneous
 ---
 
 Used by the [`service`](/breadboard/docs/kits/core/#the-service-node) node to communicate with external services.
