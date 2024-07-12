@@ -1,5 +1,5 @@
 {
-  "title": "Basics: Split an Array with JSONata",
+  "title": "Cookbook: Split an Array with JSONata",
   "description": "Splits an array of numbers using JSONata",
   "version": "0.0.1",
   "metadata": {
