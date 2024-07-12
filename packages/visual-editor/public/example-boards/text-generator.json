@@ -1,48 +1,42 @@
 {
   "title": "Text Generator",
   "description": "This is a text generator. It can generate text using various LLMs. Currently, it supports the following models: Google Gemini Pro and OpenAI GPT-3.5 Turbo.",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fn-3",
+      "from": "input-0",
+      "to": "invoke",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-0",
+      "out": "model",
+      "in": "model"
+    },
+    {
+      "from": "invoke",
+      "to": "output-0",
+      "out": "text",
+      "in": "textOutput"
+    },
+    {
+      "from": "runJavascript-0",
       "to": "invoke",
       "out": "path",
       "in": "$board"
-    },
-    {
-      "from": "input",
-      "to": "fn-3",
-      "out": "MODEL",
-      "in": "MODEL"
-    },
-    {
-      "from": "input",
-      "to": "invoke",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "invoke",
-      "to": "streamOutput",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "invoke",
-      "to": "textOutput",
-      "out": "text",
-      "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "MODEL": {
+            "model": {
               "type": "string",
               "title": "Model",
               "description": "The model to use for generation",
@@ -58,66 +52,54 @@
               "type": "string",
               "title": "Text",
               "description": "The text to generate"
-            },
-            "useStreaming": {
-              "type": "boolean",
-              "title": "Stream",
-              "description": "Whether to stream the output",
-              "default": "false"
             }
           },
           "required": [
+            "model",
             "text"
           ]
         }
       }
     },
     {
-      "id": "streamOutput",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "stream": {
-              "type": "object",
-              "title": "Stream",
-              "description": "The generated text",
-              "format": "stream"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
+            "textOutput": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
               "title": "Text",
               "description": "The generated text"
             }
-          }
+          },
+          "required": [
+            "textOutput"
+          ]
         }
-      }
-    },
-    {
-      "id": "fn-3",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_3 = ({MODEL})=>{const models={\"Gemini Pro\":\"gemini-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[MODEL];if(!path)throw new Error(`Unsupported model: ${MODEL}`);return{path}};",
-        "name": "fn_3",
-        "raw": true
       }
     },
     {
       "id": "invoke",
       "type": "invoke",
       "configuration": {}
+    },
+    {
+      "id": "runJavascript-0",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const run = ({model:model2})=>{const models={\"Gemini Pro\":\"gemini-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[model2];if(!path)throw new Error(`Unsupported model: ${model2}`);return{path}};",
+        "name": "run",
+        "raw": true
+      }
     }
   ]
 }
