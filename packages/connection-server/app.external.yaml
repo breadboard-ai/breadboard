@@ -11,4 +11,5 @@ handlers:
     script: auto
 
 env_variables:
-  ALLOWED_ORIGINS: "https://breadboard-ai.googleplex.com https://test-dot-breadboard-ai.googleplex.com"
+  CONNECTIONS_FILE: "secrets/external.json"
+  ALLOWED_ORIGINS: "https://breadboard-ai.github.io https://breadboard-ai.web.app"
