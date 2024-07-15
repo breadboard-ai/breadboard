@@ -84,11 +84,11 @@ Now we have our Specialist, we need to wire it in to the input and output.
 
 Click on the wire connecting the input to the output and hit the delete key (or Backspace) on the keyboard. This will delete the existing wire. Now drag a new wire from the **input** to the **Greeter**, and then one from the **Greeter** to the **output**.
 
-{% include "api-key.liquid" %}
+That's everything we need to do!
+
+{% include "final-board-api-key.liquid" %}
 
 {{ "/breadboard/static/boards/getting-started-with-the-visual-editor/final.bgl.json" | board }}
-
-That's everything we need to do! Let's run it again and see what happens.
 
 Enter a nice greeting in the box and hit **Continue**. Your Specialist should respond with a greeting and a fun fact!
 
