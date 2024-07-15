@@ -139,7 +139,7 @@ export class OverflowMenu extends LitElement {
         @click=${() => {
           this.dispatchEvent(new OverflowMenuActionEvent(action.name));
         }}
-        ?disabled=${this.disabled}
+        ?disabled=${action.name !== "settings" && this.disabled}
       >
         ${action.title}
       </button>`;
