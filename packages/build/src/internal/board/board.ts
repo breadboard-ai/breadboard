@@ -9,7 +9,6 @@ import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
 import {
   InputPort,
-  isOutputPortReference,
   OutputPort,
   OutputPortGetter,
   type OutputPortReference,
@@ -63,6 +62,7 @@ export function board<
 >({
   inputs,
   outputs,
+  id,
   title,
   description,
   version,
@@ -75,6 +75,7 @@ export function board<
   const flatOutputs = flattenOutputs(outputs);
   const def = new BoardDefinitionImpl(flatInputs, flatOutputs);
   return Object.assign(def.instantiate.bind(def), {
+    id,
     inputs: flatInputs,
     inputsForSerialization: inputs as BoardInputPorts | Array<BoardInputPorts>,
     outputs: flatOutputs,
@@ -161,6 +162,7 @@ export interface BoardParameters<
 > {
   inputs: IPORTS;
   outputs: OPORTS;
+  id?: string;
   title?: string;
   description?: string;
   version?: string;
@@ -216,6 +218,7 @@ export type BoardDefinition<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > = BoardInstantiateFunction<IPORTS, OPORTS> & {
+  readonly id?: string;
   readonly inputs: IPORTS;
   readonly inputsForSerialization: BoardInputPorts | Array<BoardInputPorts>;
   readonly outputs: OPORTS;
@@ -290,24 +293,6 @@ class BoardDefinitionImpl<
       },
     };
   }
-}
-
-function getSchema(
-  value:
-    | GenericSpecialInput
-    | InputPort<JsonSerializable>
-    | Output<JsonSerializable>
-    | OutputPortReference<JsonSerializable>
-    | Input<JsonSerializable>
-    | InputWithDefault<JsonSerializable>
-): Schema {
-  if ("type" in value) {
-    return toJSONSchema(value.type) as Schema;
-  }
-  if (OutputPortGetter in value) {
-    return getSchema(value[OutputPortGetter]);
-  }
-  return getSchema(value.port);
 }
 
 class BoardInstance<
