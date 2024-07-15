@@ -248,7 +248,7 @@ export class ProviderOverlay extends LitElement {
 
           switch (type) {
             case "BoardServer": {
-              const url = data.get("url") as string;
+              let url = data.get("url") as string;
               if (!url) {
                 return;
               }
@@ -256,6 +256,9 @@ export class ProviderOverlay extends LitElement {
               if (!apiKey) {
                 return;
               }
+
+              // Ensure there is no trailing slash on the end of the URL.
+              url = url.replace(/\/$/, "");
 
               this.dispatchEvent(
                 new GraphProviderConnectRequestEvent(
