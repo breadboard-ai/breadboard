@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Inputs and Outputs
 tags:
   - miscellaneous

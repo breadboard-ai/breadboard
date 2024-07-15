@@ -1,0 +1,50 @@
+{
+  "boards": [
+    {
+      "title": "Basics: Blank board",
+      "reference": "/example-boards/examples/blank.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Cookbook: Split an Array with JSONata",
+      "reference": "/example-boards/examples/array-split-jsonata.bgl.json",
+      "version": "0.0.1",
+      "tags": []
+    },
+    {
+      "title": "Cookbook: Fetch Data",
+      "reference": "/example-boards/examples/google-books-api.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Guide: Hello, Specialist",
+      "reference": "/example-boards/examples/hello-specialist.bgl.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Guide: My Librarian",
+      "reference": "/example-boards/examples/librarian.bgl.json",
+      "version": "0.0.1",
+      "tags": []
+    },
+    {
+      "title": "Guide: Rhyme of the Day",
+      "reference": "/example-boards/examples/rhyme-of-the-day.bgl.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Guide: Social Media Post Creator",
+      "reference": "/example-boards/examples/social-media-post-creator.bgl.json",
+      "version": "0.0.1",
+      "tags": []
+    },
+    {
+      "title": "Tool: Today's Date",
+      "reference": "/example-boards/examples/tool-todays-date.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    }
+  ]
+}

@@ -16,14 +16,20 @@
     import { ExamplesGraphProvider } from "./src/providers/examples.ts";
     import { RemoteGraphProvider } from "./src/providers/remote.ts";
     import { SettingsStore } from "./src/data/settings-store.ts";
-    import localBoards from "@breadboard-ai/example-boards/local-boards.json" assert { type: "json" };
+    import examplesBoards from "@breadboard-ai/example-boards/examples-boards.json" assert { type: "json" };
+    import playgroundBoards from "@breadboard-ai/example-boards/playground-boards.json" assert { type: "json" };
+
+    const boards = new Map([["Example Boards", examplesBoards]]);
+    if (import.meta.env.MODE === "development") {
+      boards.set("Playground Boards", playgroundBoards);
+    }
 
     const config = {
       providers: [
         FileSystemGraphProvider.instance(),
         IDBGraphProvider.instance(),
         RemoteGraphProvider.instance(),
-        new ExamplesGraphProvider(localBoards),
+        new ExamplesGraphProvider(boards),
       ],
       settings: SettingsStore.instance(),
       version: pkg.version,

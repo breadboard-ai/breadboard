@@ -9,6 +9,7 @@ import type {
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
+  NodeHandlerMetadata,
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
@@ -64,6 +65,9 @@ export interface Definition<
   /* Primary Output  */ PO extends string | false,
   /* Input Metadata  */ IM extends { [K: string]: InputMetadata },
 > extends StrictNodeHandler {
+  breadboardType: "DiscreteComponent";
+  id: string;
+  metadata: NodeHandlerMetadata;
   <A extends LooseInstantiateArgs>(
     args: A & StrictInstantiateArgs<SI, OI, DI, A, IM>
   ): Instance<
@@ -74,6 +78,26 @@ export interface Definition<
     PO,
     R
   >;
+}
+
+export type GenericDiscreteComponent = Definition<
+  { [K: string]: JsonSerializable },
+  { [K: string]: JsonSerializable },
+  JsonSerializable | undefined,
+  JsonSerializable | undefined,
+  string,
+  boolean,
+  string | false,
+  string | false,
+  { [K: string]: InputMetadata }
+>;
+
+export function isDiscreteComponent(
+  value: object
+): value is GenericDiscreteComponent {
+  return (
+    "breadboardType" in value && value.breadboardType === "DiscreteComponent"
+  );
 }
 
 export class DefinitionImpl<

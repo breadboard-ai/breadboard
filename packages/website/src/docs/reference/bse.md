@@ -1,11 +1,12 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Breadboard Service Endpoint Protocol
 tags:
   - reference
+  - miscellaneous
 ---
 
-Used by the [`service`](/breadboard/docs/kits/core/#the-service-node) node to communicate with external services.
+Used by the [`service`](/breadboard/docs/kits/core/#the-service-node) component to communicate with external services.
 
 The protocol expects two paths: `./invoke` and `./describe`, both using the `POST` method.
 

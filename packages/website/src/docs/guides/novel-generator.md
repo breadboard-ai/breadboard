@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Building a Novel Generator with the Agent Kit
 tags:
   - guide
@@ -11,7 +11,7 @@ This guide demonstrates how to build an agent that generates novels.  Given an i
 > [!TIP]
 > This introductory guide is suitable for beginners, though it covers some intermediate concepts. For more detailed steps, you can check out the [Librarian](/breadboard/docs/guides/librarian) and [First Tool](/breadboard/docs/guides/librarian) guides.  
 
-{% include "final-board-api-key.njk" %}
+{% include "api-key.liquid" %}
 
 {{ "/breadboard/static/boards/novel-generator/generator.json" | board }}
 
