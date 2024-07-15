@@ -453,15 +453,21 @@ export class Navigation extends LitElement {
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{
+          providerOps: number;
+          providers: GraphProvider[];
           selectedProvider: string;
           selectedLocation: string;
           url: string | null;
+          filter: string | null;
         }>
       | Map<PropertyKey, unknown>
   ): void {
     if (
+      changedProperties.has("providerOps") ||
+      changedProperties.has("providers") ||
       changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedProvider")
+      changedProperties.has("selectedProvider") ||
+      changedProperties.has("filter")
     ) {
       this.#providerContents = this.#loadProviderContents();
     }
