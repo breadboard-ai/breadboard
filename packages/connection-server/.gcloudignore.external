@@ -6,17 +6,5 @@
 # For more information, run:
 #   $ gcloud topic gcloudignore
 
-.eslintrc
-.gcloudignore
-.git
-.gitignore
-.npmignore
-.wireit/
-app.\*.yaml
-CHANGELOG.md
-dist/.tsbuildinfo
-dist/**/\*.d.ts
-dist/**/\*.js.map
-docs/
-node_modules/
-README.md
+#!include:.gcloudignore
+secrets/internal.json

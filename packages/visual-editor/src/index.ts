@@ -69,6 +69,15 @@ type SaveAsConfiguration = {
 
 const generatedUrls = new Set<string>();
 
+// TODO(aomarks) Read this from a global stamped into the HTML somehow.
+const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
+  "http://localhost:5173": "http://localhost:5555",
+  "https://breadboard-ai.googleplex.com":
+    "https://connections-dot-breadboard-ai.googleplex.com",
+  "https://breadboard-ai.web.app":
+    "https://connections-dot-breadboard-community.wl.r.appspot.com",
+};
+
 @customElement("bb-main")
 export class Main extends LitElement {
   @property({ reflect: true })
@@ -143,10 +152,7 @@ export class Main extends LitElement {
   @provide({ context: environmentContext })
   environment: Environment = {
     connectionServerUrl:
-      // TODO(aomarks) Read this from a global stamped into the HTML somehow.
-      new URL(window.location.href).origin === "http://localhost:5173"
-        ? "http://localhost:5555"
-        : "https://connections-dot-breadboard-ai.googleplex.com",
+      ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
     connectionRedirectUrl: "/oauth/",
   };
 
