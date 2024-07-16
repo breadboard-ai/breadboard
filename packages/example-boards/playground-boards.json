@@ -132,7 +132,7 @@
     {
       "title": "Nager Date Long Weekend API",
       "reference": "/example-boards/playground/nager.date/long-weekend.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holidays Worldwide API",
