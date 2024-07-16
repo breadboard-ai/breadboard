@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Config } from "../config.js";
+import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 
 // IMPORTANT: Keep in sync with
@@ -29,7 +29,7 @@ type RefreshResponse =
 export async function refresh(
   req: IncomingMessage,
   res: ServerResponse,
-  config: Config
+  config: ServerConfig
 ): Promise<void> {
   const params = Object.fromEntries(
     new URL(req.url ?? "", "http://example.com").searchParams.entries()
@@ -41,18 +41,21 @@ export async function refresh(
     return badRequestJson(res, { error: "missing refresh_token" });
   }
 
-  const secretData = config.secrets.get(params.connection_id);
-  if (!secretData) {
+  const connectionConfig = config.connections.get(params.connection_id);
+  if (!connectionConfig) {
     return badRequestJson(res, {
       error: `unknown connection ID "${params.connection_id}"`,
     });
   }
 
-  const tokenUrl = new URL(secretData.web.token_uri);
+  const tokenUrl = new URL(connectionConfig.oauth.token_uri);
   tokenUrl.searchParams.set("grant_type", "refresh_token");
   tokenUrl.searchParams.set("refresh_token", params.refresh_token);
-  tokenUrl.searchParams.set("client_id", secretData.web.client_id);
-  tokenUrl.searchParams.set("client_secret", secretData.web.client_secret);
+  tokenUrl.searchParams.set("client_id", connectionConfig.oauth.client_id);
+  tokenUrl.searchParams.set(
+    "client_secret",
+    connectionConfig.oauth.client_secret
+  );
 
   const httpRes = await fetch(tokenUrl, {
     method: "POST",
