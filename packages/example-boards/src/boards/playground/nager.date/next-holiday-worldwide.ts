@@ -43,8 +43,7 @@ const dates = output(
   spreadNagerDateResponse.outputs.results, {
   title: "Public Holidays Worldwide",
   description: "A list of public holidays worldwide from the Nager Date API",
-}
-);
+});
 
 export default board({
   title: "Nager Date Next Public Holidays Worldwide API",
