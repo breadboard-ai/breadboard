@@ -147,7 +147,7 @@
     {
       "title": "Nager Date Public Holidays API",
       "reference": "/example-boards/playground/nager.date/public-holidays.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Object Manipulator",
