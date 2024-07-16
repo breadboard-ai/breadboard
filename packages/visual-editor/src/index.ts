@@ -105,9 +105,6 @@ export class Main extends LitElement {
   showProviderAddOverlay = false;
 
   @state()
-  showPreviewOverlay = false;
-
-  @state()
   showOverflowMenu = false;
 
   @state()
@@ -1413,7 +1410,6 @@ export class Main extends LitElement {
     const settings = this.#settings ? this.#settings.values : null;
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
-      this.showPreviewOverlay ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
       this.showProviderAddOverlay ||
@@ -1581,17 +1577,6 @@ export class Main extends LitElement {
           Preview
         </button>
         ${saveButton}
-        <button
-          class=${classMap({ active: this.showPreviewOverlay })}
-          id="toggle-preview"
-          title="Toggle Board Preview"
-          ?disabled=${this.graph === null}
-          @click=${() => {
-            this.showPreviewOverlay = !this.showPreviewOverlay;
-          }}
-        >
-          Preview
-        </button>
         <button
           class=${classMap({ active: this.showOverflowMenu })}
           id="toggle-overflow-menu"
@@ -2031,17 +2016,6 @@ export class Main extends LitElement {
       ></bb-board-edit-overlay>`;
     }
 
-    let previewOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showPreviewOverlay) {
-      previewOverlay = html`<bb-overlay
-        class="board-preview"
-        @bboverlaydismissed=${() => {
-          this.showPreviewOverlay = false;
-        }}
-        ><iframe src="/preview.html?board=${this.url}"></iframe
-      ></bb-overlay>`;
-    }
-
     let settingsOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showSettingsOverlay) {
       settingsOverlay = html`<bb-settings-edit-overlay
@@ -2368,9 +2342,17 @@ export class Main extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    return html`${tmpl} ${boardOverlay} ${previewOverlay} ${settingsOverlay}
-    ${firstRunOverlay} ${historyOverlay} ${providerAddOverlay}
-    ${saveAsDialogOverlay} ${overflowMenu} ${toasts} `;
+    return [
+      tmpl,
+      boardOverlay,
+      settingsOverlay,
+      firstRunOverlay,
+      historyOverlay,
+      providerAddOverlay,
+      saveAsDialogOverlay,
+      overflowMenu,
+      toasts,
+    ];
   }
 }
 
