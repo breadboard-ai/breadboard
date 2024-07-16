@@ -137,7 +137,7 @@
     {
       "title": "Nager Date Next Public Holidays Worldwide API",
       "reference": "/example-boards/playground/nager.date/next-holiday-worldwide.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holiday",
