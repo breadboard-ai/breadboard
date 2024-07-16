@@ -12,7 +12,7 @@ const spreadNagerDateResponse = code(
     $id: "spreadResponse",
     $metadata: {
       title: "Spread",
-      description: "Spread the properties of the Nager Date response",
+      description: "Spread the properties of the Nager Date response into a new object",
     },
     obj: fetchResult.outputs.response
   },
