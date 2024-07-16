@@ -20,6 +20,6 @@ export default board({
   title: "Nager Date Available Countries API",
   description: "Get the available countries for the Nager Date API",
   version: "0.1.0",
-  inputs: { },
+  inputs: {},
   outputs: { countries },
 });
