@@ -66,7 +66,10 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
           path: {
             title: "path",
             description: 'Value for placeholder "path"',
-            type: "string",
+            type: [
+              "string",
+              "number"
+            ],
           },
           template: {
             title: "Template",
@@ -88,7 +91,10 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
           path: {
             title: "path",
             description: 'Value for path segment expansion placeholder "path"',
-            type: "string",
+            type: [
+              "string",
+              "number"
+            ],
           },
           template: {
             title: "Template",
