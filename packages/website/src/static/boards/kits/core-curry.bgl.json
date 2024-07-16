@@ -73,7 +73,7 @@
       "configuration": {
         "$board": {
           "kind": "board",
-          "path": "http://localhost:8000/breadboard/static/boards/kits/example-simple-greeting.bgl.json"
+          "path": "https://breadboard-ai.github.io/breadboard/static/boards/kits/example-simple-greeting.bgl.json"
         }
       }
     },
