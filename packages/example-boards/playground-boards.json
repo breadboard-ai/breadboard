@@ -117,7 +117,7 @@
     {
       "title": "Nager Date Available Countries API",
       "reference": "/example-boards/playground/nager.date/available-countries.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Country Info API",
