@@ -670,29 +670,18 @@ export class UI extends LitElement {
           <button
             id="run"
             title="Run this board"
-            ?disabled=${this.status !== STATUS.STOPPED ||
-            this.failedToLoad ||
-            !this.graph}
+            ?disabled=${this.failedToLoad || !this.graph}
             @click=${() => {
               this.selectedNodeIds.length = 0;
-              this.dispatchEvent(new RunEvent());
+              if (this.status === STATUS.STOPPED) {
+                this.dispatchEvent(new RunEvent());
+              } else {
+                this.dispatchEvent(new StopEvent());
+                this.#callAllPendingInputHandlers();
+              }
             }}
           >
-            Run
-          </button>
-          <button
-            id="stop"
-            title="Stop this board"
-            ?disabled=${this.status === STATUS.STOPPED ||
-            this.failedToLoad ||
-            !this.graph}
-            @click=${() => {
-              this.selectedNodeIds.length = 0;
-              this.dispatchEvent(new StopEvent());
-              this.#callAllPendingInputHandlers();
-            }}
-          >
-            Stop
+            ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
           </button>
         </div>
       </section>
