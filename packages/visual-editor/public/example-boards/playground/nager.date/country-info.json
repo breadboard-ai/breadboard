@@ -1,30 +1,30 @@
 {
   "title": "Nager Date Country Info API",
   "description": "Get the country info for the Nager Date API",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
-      "to": "output",
+      "from": "fetchResult",
+      "to": "output-0",
       "out": "response",
-      "in": "dates"
+      "in": "info"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "url",
       "out": "countryCode",
       "in": "countryCode"
     },
     {
-      "from": "urlTemplate",
-      "to": "fetch",
+      "from": "url",
+      "to": "fetchResult",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -34,7 +34,6 @@
               "type": "string",
               "title": "countryCode",
               "description": "The data for countryCode",
-              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -172,13 +171,13 @@
       }
     },
     {
-      "id": "output",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "dates": {
+            "info": {
               "type": [
                 "array",
                 "boolean",
@@ -187,22 +186,25 @@
                 "object",
                 "string"
               ],
-              "title": "response",
-              "description": "The response from the fetch request"
+              "title": "Country Info",
+              "description": "The country info for the selected country code from the Nager Date API"
             }
-          }
+          },
+          "required": [
+            "info"
+          ]
         }
       }
     },
     {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET"
       }
     },
     {
-      "id": "urlTemplate",
+      "id": "url",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://date.nager.at/api/v3/CountryInfo/{countryCode}"

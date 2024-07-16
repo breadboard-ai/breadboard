@@ -122,7 +122,7 @@
     {
       "title": "Nager Date Country Info API",
       "reference": "/example-boards/playground/nager.date/country-info.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Is Today a Public Holiday",
