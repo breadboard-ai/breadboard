@@ -1,7 +1,7 @@
 {
   "title": "Is Today a Public Holiday",
   "description": "Get the public holidays for today for the Nager Date API",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
       "from": "fetch",
@@ -10,20 +10,20 @@
       "in": "status"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "countryCode",
       "in": "countryCode"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "validatedOffset",
       "out": "offset",
-      "in": "offset"
+      "in": "offsetString"
     },
     {
       "from": "statusCodeToResult",
-      "to": "output",
+      "to": "output-0",
       "out": "isPublicHoliday",
       "in": "isPublicHoliday"
     },
@@ -32,11 +32,17 @@
       "to": "fetch",
       "out": "url",
       "in": "url"
+    },
+    {
+      "from": "validatedOffset",
+      "to": "urlTemplate",
+      "out": "offset",
+      "in": "offset"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -46,7 +52,6 @@
               "type": "string",
               "title": "countryCode",
               "description": "The data for countryCode",
-              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -177,30 +182,29 @@
               ]
             },
             "offset": {
-              "type": "number",
+              "type": "string",
               "title": "offset",
               "description": "utc timezone offset",
-              "default": "0",
-              "maximum": 12,
-              "minimum": -12
+              "default": "0"
             }
           },
           "required": [
-            "countryCode",
-            "year"
+            "countryCode"
           ]
         }
       }
     },
     {
-      "id": "output",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "isPublicHoliday": {
-              "type": "boolean"
+              "type": "boolean",
+              "title": "Public Holiday Result",
+              "description": "A boolean indicating if today is a bank holiday for the given country code from the Nager Date API"
             }
           },
           "required": [
@@ -222,7 +226,23 @@
       "type": "runJavascript",
       "configuration": {
         "code": "const statusCodeToResult = ({status})=>{if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "number"
+            }
+          }
+        },
         "name": "statusCodeToResult",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "isPublicHoliday": {
+              "type": "boolean"
+            }
+          }
+        },
         "raw": true
       }
     },
@@ -231,6 +251,31 @@
       "type": "urlTemplate",
       "configuration": {
         "template": "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}"
+      }
+    },
+    {
+      "id": "validatedOffset",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const validatedOffset = ({offsetString})=>{const offset2=Number(offsetString);if(isNaN(offset2)||offset2>12||offset2<-12){throw new Error(`Invalid offset input: ${offsetString}. Offset must be maximum 12 and minimum -12.`)}return{offset:offsetString}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "offsetString": {
+              "type": "string"
+            }
+          }
+        },
+        "name": "validatedOffset",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "offset": {
+              "type": "string"
+            }
+          }
+        },
+        "raw": true
       }
     }
   ]

@@ -127,7 +127,7 @@
     {
       "title": "Is Today a Public Holiday",
       "reference": "/example-boards/playground/nager.date/is-today-public-holiday.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Long Weekend API",
