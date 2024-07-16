@@ -1433,7 +1433,7 @@
                   "type": "object",
                   "properties": {
                     "item": {
-                      "title": "board",
+                      "title": "Board",
                       "behavior": [
                         "board"
                       ],
@@ -2114,7 +2114,7 @@
                   "type": "object",
                   "properties": {
                     "item": {
-                      "title": "board",
+                      "title": "Board",
                       "behavior": [
                         "board"
                       ],

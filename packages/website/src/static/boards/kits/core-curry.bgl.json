@@ -1,5 +1,5 @@
 {
-  "title": "curry node example",
+  "title": "curry component example",
   "version": "0.0.1",
   "nodes": [
     {
@@ -8,17 +8,17 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
+            "location": {
+              "type": "string",
+              "title": "Location",
               "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              "description": "Where is the visiting group from?"
+            },
+            "names": {
+              "type": "string",
+              "title": "Names",
+              "examples": [],
+              "description": "Specify comma-separated names."
             }
           },
           "type": "object",
@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": 0,
+          "x": -297,
+          "y": -87,
           "collapsed": false
         }
       }
@@ -39,17 +39,11 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
+            "greetings": {
+              "type": "string",
+              "title": "Greetings",
               "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
+              "format": "markdown"
             }
           },
           "type": "object",
@@ -58,8 +52,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 0,
+          "x": 349,
+          "y": -102,
           "collapsed": false
         }
       }
@@ -69,23 +63,152 @@
       "type": "curry",
       "metadata": {
         "visual": {
-          "x": 83,
-          "y": -137,
+          "x": -119,
+          "y": -104,
           "collapsed": false
+        },
+        "title": "Curry Location",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "$board": {
+          "kind": "board",
+          "path": "http://localhost:8000/breadboard/static/boards/kits/example-simple-greeting.bgl.json"
         }
+      }
+    },
+    {
+      "id": "map-8dc119ad",
+      "type": "map",
+      "metadata": {
+        "visual": {
+          "x": 101,
+          "y": -103,
+          "collapsed": false
+        },
+        "title": "Greet Each Name",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "runJavascript-06f2bde4",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": -134,
+          "y": 46,
+          "collapsed": false
+        },
+        "title": "Split Names",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "code": "function run({names}) {\n  return names.split(\",\").map((name) => name.trim());\n}"
+      }
+    },
+    {
+      "id": "runJavascript-58939abd",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": 144,
+          "y": 39,
+          "collapsed": false
+        },
+        "title": "Join Greetings",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "code": "function run({list}) {\n  return list.map((list) => list.greeting).join(\"\\n\\n\");\n}"
       }
     }
   ],
   "edges": [
     {
       "from": "input",
-      "out": "context",
+      "to": "curry-af767767",
+      "out": "location",
+      "in": "location"
+    },
+    {
+      "from": "curry-af767767",
+      "to": "map-8dc119ad",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "runJavascript-06f2bde4",
+      "to": "map-8dc119ad",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-06f2bde4",
+      "out": "names",
+      "in": "names"
+    },
+    {
+      "from": "map-8dc119ad",
+      "to": "runJavascript-58939abd",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "runJavascript-58939abd",
       "to": "output",
-      "in": "context"
+      "out": "result",
+      "in": "greetings"
     }
   ],
   "description": "No Description",
   "metadata": {
-    "tags": []
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-61f510a4",
+        "text": "Curries the \"Location\" input \ninto the board ...",
+        "metadata": {
+          "visual": {
+            "x": -173,
+            "y": -164,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-4f2837ed",
+        "text": "... so that when we call this board repeatedly, we don't have to re-supply the same location.",
+        "metadata": {
+          "visual": {
+            "x": 85,
+            "y": -205,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-8b71970b",
+        "text": "Some Javascript to split the names into a list...",
+        "metadata": {
+          "visual": {
+            "x": -153,
+            "y": 139,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-48d394c8",
+        "text": "... and some more JS to join the resulting greetings back into a string.",
+        "metadata": {
+          "visual": {
+            "x": 134,
+            "y": 130,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }
