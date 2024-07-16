@@ -25,7 +25,7 @@
       "from": "statusCodeToResult",
       "to": "output-0",
       "out": "isPublicHoliday",
-      "in": "isPublicHoliday"
+      "in": "publicHolidayResult"
     },
     {
       "from": "urlTemplate",
@@ -201,14 +201,14 @@
         "schema": {
           "type": "object",
           "properties": {
-            "isPublicHoliday": {
+            "publicHolidayResult": {
               "type": "boolean",
               "title": "Public Holiday Result",
               "description": "A boolean indicating if today is a bank holiday for the given country code from the Nager Date API"
             }
           },
           "required": [
-            "isPublicHoliday"
+            "publicHolidayResult"
           ]
         }
       }

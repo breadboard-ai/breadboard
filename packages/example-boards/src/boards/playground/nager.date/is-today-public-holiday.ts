@@ -67,7 +67,7 @@ const statusCodeToResult = code(
   }
 );
 
-const isPublicHoliday = output(statusCodeToResult.outputs.isPublicHoliday, {
+const publicHolidayResult = output(statusCodeToResult.outputs.isPublicHoliday, {
   title: "Public Holiday Result",
   description: "A boolean indicating if today is a bank holiday for the given country code from the Nager Date API",
 });
@@ -77,5 +77,5 @@ export default await board({
   description: "Get the public holidays for today for the Nager Date API",
   version: "0.1.0",
   inputs: { countryCode, offset },
-  outputs: { isPublicHoliday }
+  outputs: { publicHolidayResult }
 });
