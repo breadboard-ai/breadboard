@@ -16,7 +16,8 @@
     "deploy": "npm run build && gcloud app deploy",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
-    "dev": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) &&concurrently \"npm run serve --watch\" \"(cd ../visual-editor && npm run dev)\""
+    "dev": "npm run dev:nowatch --watch",
+    "dev:nowatch": "wireit"
   },
   "wireit": {
     "build": {
@@ -67,6 +68,17 @@
       "command": "node .",
       "dependencies": [
         "build"
+      ]
+    },
+    "dev:nowatch": {
+      "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
+      "service": true,
+      "dependencies": [
+        "build",
+        {
+          "script": "../visual-editor:serve",
+          "cascade": false
+        }
       ]
     }
   },
