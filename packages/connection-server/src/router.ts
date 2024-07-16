@@ -8,11 +8,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
-import type { Config } from "./config.js";
+import type { ServerConfig } from "./config.js";
 import { cors } from "./cors.js";
 import { internalServerError, notFound } from "./responses.js";
 
-export function makeRouter(config: Config) {
+export function makeRouter(config: ServerConfig) {
   return async function router(
     req: IncomingMessage,
     res: ServerResponse
