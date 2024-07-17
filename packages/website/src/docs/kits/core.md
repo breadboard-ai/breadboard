@@ -191,13 +191,42 @@ Following the semantics of the "run as component" mode, all inputs of the invoke
 
 {{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
 
-Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.
+Given a list items and a board, runs the board in "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" mode for each item in the list. Similar in to JavaScript [Array.prototype.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function, except boards run in parallel.
+
+When running the board, the `map` component will supply three inputs with these ids:
+
+- `item` -- the item from the list
+- `index` -- the index of the item in the list
+- `list` -- the entire list.
+
+This very is similar to the arguments of the JavaScript [Array.prototype.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function.
 
 ### Input ports
 
+The component has two statically defined input ports:
+
+- **Board** (id: `board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- **List** (id: `list`) -- optional, an array of items to supply to the board as inputs.
+
 ### Output ports
 
+The component has one statically defined output port:
+
+- **List** (id: `list`) -- optional, an array of results from each board's run.
+
 ### Example
+
+Given this board that creates a simple greeting given a name and location:
+
+{{ "/breadboard/static/boards/kits/example-simple-greeting.bgl.json" | board }}
+
+We can use the `map` component to print out a set of greetings for a bunch of people.
+
+{{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
+
+> [!TIP]
+> The [`curry`](#the-curry-component) component and `map` component often go hand in hand, just like in the example above. Currying provides a convenient way to pass unchanging arguments to the board that is being invoked multiple times via `map`.
 
 ### Implementation
 
