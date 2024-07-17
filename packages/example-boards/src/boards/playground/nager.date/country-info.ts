@@ -5,11 +5,9 @@ import { countryCodes } from "../../../utils/countryCodes";
 
 const countryCode = input({
   title: "countryCode",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type: enumeration(...countryCodes as any),
+  type: enumeration(...countryCodes),
   description: "The data for countryCode",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  default: "US" as any
+  default: "US"
 });
 
 const url = urlTemplate({
