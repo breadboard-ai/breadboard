@@ -96,7 +96,7 @@ export default defineNodeType({
       optional: true,
     },
     $board: {
-      title: "board",
+      title: "Board",
       behavior: ["board", "config"],
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",

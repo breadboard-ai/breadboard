@@ -75,7 +75,7 @@ The **Behavior** parameter contains the list of various useful shapes of JSON ob
 - **Port Spec** -- the input port expects the JSON value to be a Port Spec: the [JSON Schema] specifically formatted to inform Breadboard about the input / output port definition (literally what is described in this section).
 
 > [!NOTE]
-> The Visual Editor Schema editor produces [JSON Schema](https://json-schema.org/) for each input. This JSON schema (or more precisely, the **Port Spec** dialect of it) is what is stored in the [BGL](http://localhost:8000/breadboard/docs/concepts/#breadboard-graph-language-bgl) representation of the board.
+> The Visual Editor Schema editor produces [JSON Schema](https://json-schema.org/) for each input. This JSON schema (or more precisely, the **Port Spec** dialect of it) is what is stored in the [BGL](/breadboard/docs/concepts/#breadboard-graph-language-bgl) representation of the board.
 
 - **Code** -- the input port expects the value to be some sort of code (JavaScript, Python), etc.
 
