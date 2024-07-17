@@ -156,28 +156,30 @@ In the board above, any multimedia content supplied as input will be turned into
 
 {{ "/breadboard/static/boards/kits/core-invoke.bgl.json" | board }}
 
-Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.
+Invokes (using "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" runtime mode) specified board, supplying remaining incoming wires as input ports for that board. Returns the outputs of the board as its own output ports.
 
-Use this component to invoke another board from this board.
-
-It recognizes `path`, `graph`, and `board` properties that specify, respectively, a file path or URL to the serialized board, directly the serialized-as-JSON board, and a `BoardCapability` (returned by `lambda` or `import`).
-
-The rest of the inputs in the property bag are passed along to the invoked board as its inputs. If other inputs were bound to the board via wires into the `lambda` or `import` component, then those have precedence over inputs passed here.
-
-The outputs of the invoked board will be passed along as outputs of the `invoke` component.
+Use this component to invoke another board from your board.
 
 ### Input ports
 
-- `path`, which specifes the file path or URL to the serialized board to be included.
-- `graph`, which is a serialized board
-- `board`, a `BoardCapability` representing a board, created by `lambda` or `import`.
-- any other properties are passed as inputs for the invoked board.
+This component has a single static input port and multiple dynamic ports.
+
+- **Board** (id: `$board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- all other wired in ports are passed as the input values for the board.
 
 ### Output ports
 
-- the outputs of the invoked board
+The output ports of this component are the outputs of the invoked board.
 
 ### Example
+
+In the board above, the `invoke` component is used to invoke this board. Following the semantics of the "run as component" mode, all inputs of the invoked board are populated by the input ports of the `invoke` component input ports, and all outputs of the invoked board are passed as output ports.
+
+{{ "/breadboard/static/boards/kits/example-simple-greeting.bgl.json" | board }}
+
+> [!TIP]
+> Note how "Name" and "Location" input ports, as well as the "Greeting" output ports pop up in the Visual Editor when the "Board" input port is populated. This is the key property of the "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" mode: the board API is declarative and can be statically described.
 
 ### Implementation
 
