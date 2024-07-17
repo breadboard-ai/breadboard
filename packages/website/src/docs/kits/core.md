@@ -54,7 +54,7 @@ If we need to print out a set of greetings for a bunch of people visiting from t
 
 {{ "/breadboard/static/boards/kits/core-deflate.bgl.json" | board }}
 
-Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
+This component converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
 
 ### Input ports
 

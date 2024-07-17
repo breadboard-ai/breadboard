@@ -247,7 +247,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     icon: "smart-toy",
   },
   description:
-    "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+    "Given instructions on how to act, performs a single task, optionally invoking tools.",
 });
 
 specialist.graphs = { boardToFunction, invokeBoardWithArgs };
