@@ -13,10 +13,10 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  InputCallback,
   RecentBoard,
   SETTINGS_TYPE,
   STATUS,
-  Settings,
 } from "../../types/types.js";
 import {
   GraphNodeDeselectedEvent,
@@ -46,9 +46,8 @@ import { EditorMode } from "../../utils/mode.js";
 import { guard } from "lit/directives/guard.js";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
-import { type NodeConfigurationInfo } from "../elements.js";
-
-type inputCallback = (data: Record<string, unknown>) => void;
+import { NodeRunner, type NodeConfigurationInfo } from "../elements.js";
+import { SettingsStore } from "../../../data/settings-store.js";
 
 /**
  * Breadboard UI controller element.
@@ -102,7 +101,7 @@ export class UI extends LitElement {
   recentBoards: RecentBoard[] = [];
 
   @property()
-  settings: Settings | null = null;
+  settings: SettingsStore | null = null;
 
   @property()
   providers: GraphProvider[] = [];
@@ -128,7 +127,8 @@ export class UI extends LitElement {
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
   #controlsActivityRef: Ref<HTMLDivElement> = createRef();
-  #handlers: Map<string, inputCallback[]> = new Map();
+  #nodeRunnerRef: Ref<NodeRunner> = createRef();
+  #handlers: Map<string, InputCallback[]> = new Map();
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
@@ -303,34 +303,35 @@ export class UI extends LitElement {
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
     const nodeId = currentNode();
+
     const collapseNodesByDefault = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Collapse Nodes by Default"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Collapse Nodes by Default")?.value
       : false;
 
     const showNodeTypeDescriptions = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Show Node Type Descriptions"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Node Type Descriptions")?.value
       : false;
 
     const hideSubboardSelectorWhenEmpty = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Hide Embedded Board Selector When Empty"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Hide Embedded Board Selector When Empty")?.value
       : false;
 
     const hideAdvancedPortsOnNodes = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Hide Advanced Ports on Nodes"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Hide Advanced Ports on Nodes")?.value
       : false;
 
     const invertZoomScrollDirection = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Invert Zoom Scroll Direction"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Invert Zoom Scroll Direction")?.value
       : false;
 
     const editorMode = hideAdvancedPortsOnNodes
@@ -338,19 +339,21 @@ export class UI extends LitElement {
       : EditorMode.ADVANCED;
 
     const showNodeShortcuts = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Node Shortcuts")
-          ?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Node Shortcuts")?.value
       : false;
 
     const showPortTooltips = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get("Show Port Tooltips")
-          ?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Port Tooltips")?.value
       : false;
 
     const highlightInvalidWires = this.settings
-      ? this.settings[SETTINGS_TYPE.GENERAL].items.get(
-          "Highlight Invalid Wires"
-        )?.value
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Highlight Invalid Wires")?.value
       : false;
 
     /**
@@ -506,6 +509,33 @@ export class UI extends LitElement {
       }
     );
 
+    const nodeRunner = guard(
+      [
+        this.boardId,
+        this.selectedNodeIds,
+        this.#lastEdgeCount,
+        this.#nodeSchemaUpdateCount,
+        // TODO: Figure out a cleaner way of handling this without watching for
+        // all graph changes.
+        this.graph,
+      ],
+      () => {
+        if (this.#nodeRunnerRef.value) {
+          this.#nodeRunnerRef.value.stopComponent();
+        }
+
+        return html`<bb-node-runner
+            ${ref(this.#nodeRunnerRef)}
+            .graph=${this.graph}
+            .settings=${this.settings}
+            .selectedNodeIds=${this.selectedNodeIds}
+            .kits=${this.kits}
+            .loader=${this.loader}
+          ></bb-node-runner>
+        </div>`;
+      }
+    );
+
     const boardDetails = guard(
       [
         this.boardId,
@@ -626,7 +656,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}${nodeRunner}`
         : html`${boardDetails}${activityLog}`
     );
 
@@ -667,22 +697,56 @@ export class UI extends LitElement {
         <div id="controls-activity-content">${sidePanel}</div>
 
         <div id="controls">
-          <button
-            id="run"
-            title="Run this board"
-            ?disabled=${this.failedToLoad || !this.graph}
-            @click=${() => {
-              this.selectedNodeIds.length = 0;
-              if (this.status === STATUS.STOPPED) {
-                this.dispatchEvent(new RunEvent());
-              } else {
-                this.dispatchEvent(new StopEvent());
-                this.#callAllPendingInputHandlers();
-              }
-            }}
-          >
-            ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
-          </button>
+          ${this.selectedNodeIds.length > 0
+            ? html`<button
+                id="run"
+                title=${this.#nodeRunnerRef.value?.status === STATUS.RUNNING
+                  ? "Stop Component"
+                  : "Run Component"}
+                ?disabled=${this.failedToLoad ||
+                !this.graph ||
+                this.selectedNodeIds.length !== 1}
+                @click=${async () => {
+                  if (!this.#nodeRunnerRef.value) {
+                    return;
+                  }
+
+                  if (this.#nodeRunnerRef.value.status === STATUS.RUNNING) {
+                    this.#nodeRunnerRef.value.stopComponent();
+                    return;
+                  }
+
+                  // Set the component running, then request an update so that
+                  // the button updates. When the component is finished, render
+                  // the button again.
+                  const running = this.#nodeRunnerRef.value.runComponent();
+                  requestAnimationFrame(() => {
+                    this.requestUpdate();
+                  });
+                  await running;
+                  this.requestUpdate();
+                }}
+              >
+                ${this.#nodeRunnerRef.value?.status === STATUS.RUNNING
+                  ? "Stop Component"
+                  : "Run Component"}
+              </button>`
+            : html`<button
+                id="run"
+                title="Run this board"
+                ?disabled=${this.failedToLoad || !this.graph}
+                @click=${() => {
+                  this.selectedNodeIds.length = 0;
+                  if (this.status === STATUS.STOPPED) {
+                    this.dispatchEvent(new RunEvent());
+                  } else {
+                    this.dispatchEvent(new StopEvent());
+                    this.#callAllPendingInputHandlers();
+                  }
+                }}
+              >
+                ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
+              </button>`}
         </div>
       </section>
     </bb-splitter>`;
