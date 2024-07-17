@@ -46,6 +46,7 @@
               "type": "string",
               "title": "countryCode",
               "description": "The data for countryCode",
+              "default": "US",
               "enum": [
                 "AD",
                 "AL",
@@ -182,9 +183,7 @@
               "default": "2024"
             }
           },
-          "required": [
-            "countryCode"
-          ]
+          "required": []
         }
       }
     },

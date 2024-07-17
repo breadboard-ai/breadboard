@@ -8,6 +8,8 @@ const countryCode = input({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type: enumeration(...countryCodes as any),
   description: "The data for countryCode",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  default: "US" as any
 });
 
 const offset = input({
