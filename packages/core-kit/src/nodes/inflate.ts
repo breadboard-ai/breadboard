@@ -16,12 +16,14 @@ export default defineNodeType({
   inputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "Data to inflate.",
     },
   },
   outputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "inflated data.",
     },
   },

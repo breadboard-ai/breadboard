@@ -118,13 +118,23 @@ And receive this output:
 
 {{ "/breadboard/static/boards/kits/core-inflate.bgl.json" | board }}
 
-Converts stored data to base64.
+Does opposite of what the [`deflate`](#the-deflate-component) component does. Scans provided data and converts all [lightweight handles to inline, base64 encoded strings](/breadboard/docs/reference/data-store/).
 
 ### Input ports
 
+The component has a single input port.
+
+- **Data** (id: `data`) -- the data to scan and convert all instances of lightweight handles to inline base64-encoded strings. Data can be of any shape.
+
 ### Output ports
 
+The component has a single output port.
+
+- **Data** (id: `data`) -- the result of inflating the input data. Safely passes data through if it's already inline or no stored data is present.
+
 ### Example
+
+In the board above, any multimedia content supplied as input will be turned into base64-encoded strings.
 
 ### Implementation
 
