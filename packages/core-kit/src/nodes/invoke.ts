@@ -86,6 +86,9 @@ export default defineNodeType({
     title: "Invoke",
     description:
       "Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-invoke-component",
+    },
   },
   inputs: {
     path: {
