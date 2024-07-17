@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -54,
-          "y": 3,
+          "x": -99,
+          "y": -51,
           "collapsed": false
         }
       }
@@ -58,8 +58,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 222,
-          "y": 0,
+          "x": 299,
+          "y": -52,
           "collapsed": false
         }
       }
@@ -69,10 +69,12 @@
       "type": "passthrough",
       "metadata": {
         "visual": {
-          "x": 6.5966796875,
-          "y": -116.6416015625,
+          "x": 53,
+          "y": -51,
           "collapsed": false
-        }
+        },
+        "title": "Pass it through",
+        "logLevel": "debug"
       }
     }
   ],
@@ -92,6 +94,19 @@
   ],
   "description": "No Description",
   "metadata": {
-    "tags": []
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-229a4491",
+        "text": "Passes inputs unmodified as outputs.",
+        "metadata": {
+          "visual": {
+            "x": 47,
+            "y": -110,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }

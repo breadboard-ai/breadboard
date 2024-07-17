@@ -90,6 +90,9 @@ const metadata = {
   title: "Curry",
   description:
     "Takes a board and bakes in (curries) supplied arguments into it. Very useful when we want to invoke a board with the same arguments many times (like with `map`).",
+  help: {
+    url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-curry-component",
+  },
 } satisfies NodeHandlerMetadata;
 
 export default { metadata, invoke, describe };

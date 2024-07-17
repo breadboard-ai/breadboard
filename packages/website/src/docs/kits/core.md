@@ -23,7 +23,7 @@ Takes a board and bakes in (or [curries](https://en.wikipedia.org/wiki/Currying)
 
 The `curry` component has a single input port plus any number of additional ports.
 
-- **Board** (id `$board`) -- the board to curry the values into. This port has the `board` behavior and will accept a URL of the board or the actual BGL of the board.
+- **Board** (id: `$board`) -- the board to curry the values into. This port has the `board` behavior and will accept a URL of the board or the actual BGL of the board.
 
 Values supplied with any additional ports will be curried into the output board.
 
@@ -54,13 +54,23 @@ If we need to print out a set of greetings for a bunch of people visiting from t
 
 {{ "/breadboard/static/boards/kits/core-deflate.bgl.json" | board }}
 
-Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
+This component converts all [inline data to stored data](/breadboard/docs/reference/data-store/), saving memory. Useful when working with multimodal content.
 
 ### Input ports
 
+The component has a single input port.
+
+- **Data** (id: `data`) -- the data to scan and convert all instances of inline base64-encoded strings to lightweight handles. Data can be of any shape.
+
 ### Output ports
 
+The component has a single output port.
+
+- **Data** (id: `data`) -- the result of deflating the input data. Safely passes data through if it's already stored or no inline data is present.
+
 ### Example
+
+In the board above, a chunk of JSON is fetched. This JSON contains a base64-encoded string of an image. The `deflate` component turns it into a lightweight handle and then passes it on to output.
 
 ### Implementation
 
@@ -70,35 +80,47 @@ Converts all inline data to stored data, saving memory. Useful when working with
 
 {{ "/breadboard/static/boards/kits/core-fetch.bgl.json" | board }}
 
-Use this component to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+Use this component to fetch data from the Internet. Implementation-wise, this is a wrapper around [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with a few Breadboard-specific tweaks.
+
+The tweaks are:
+
+- When "Content-Type" is specified as "multipart/form-data", the value passed into the **Body** port is treated as a key/value object representing [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) properties and their values.
+
+- Before sending the request, all [Data store lightweight handles](/breadboard/docs/reference/data-store/) are converted to base64 encoded strings or multipart encoded chunks, depending on the content type.
+
+- After receiving the response, any [blob]() responses are converted to [Data Store lightweight handles](/breadboard/docs/reference/data-store/).
 
 ### Input ports
 
-- `url` -- required, URL to fetch. For now, this component can only make a GET request.
-- `headers` -- object (optional), a set of headers to be passed to the request.
-- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+The component has the following input ports.
+
+- **URL** (id: `url`) -- required, the URL to fetch.
+
+- **Method** (id: `method`) -- string (optional), the request [method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). Default is `GET`.
+
+- **Headers** (id: `headers`) -- object (optional), a set of [request headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers). Default is empty.
+
+- **Body** (id: `body`) -- object (optional), the [request body](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit#body). Default is empty.
+
+- **Raw** (id: `raw`) -- boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+
+- **Stream** (id: `stream`) -- boolean (optional), specifies whether the response is expected to be a stream. The default value is `false`.
 
 ### Output ports
 
-- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
+- **Content Type** (id: 'contentType') -- contains response content type.
+
+- **Response** (id: `response`) -- the response from the server. If `raw` is `false` (which it is by default) and content type is `application/json`, the response will be parsed as JSON.
+
+- **Response Headers** (id: `responseHeaders`) -- contains [response headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers).
+
+- **Status** (id: `status`) -- contains [response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+
+- **Status Text** (id: `statusText`) -- contains response status text.
 
 ### Example
 
-If we would like to fetch data from `https://example.com`, we would send the following inputs to `fetch`:
-
-```json
-{
-  "url": "https://example.com"
-}
-```
-
-And receive this output:
-
-```json
-{
-  "response": "<response from https://example.com>"
-}
-```
+In the board above, the `fetch` component makes a call to Wikipedia [open search API](https://www.mediawiki.org/wiki/API:Opensearch) and then passes the response to the output.
 
 ### Implementation
 
@@ -108,13 +130,23 @@ And receive this output:
 
 {{ "/breadboard/static/boards/kits/core-inflate.bgl.json" | board }}
 
-Converts stored data to base64.
+Does opposite of what the [`deflate`](#the-deflate-component) component does. Scans provided data and converts all [lightweight handles to inline, base64 encoded strings](/breadboard/docs/reference/data-store/).
 
 ### Input ports
 
+The component has a single input port.
+
+- **Data** (id: `data`) -- the data to scan and convert all instances of lightweight handles to inline base64-encoded strings. Data can be of any shape.
+
 ### Output ports
 
+The component has a single output port.
+
+- **Data** (id: `data`) -- the result of inflating the input data. Safely passes data through if it's already inline or no stored data is present.
+
 ### Example
+
+In the board above, any multimedia content supplied as input will be turned into base64-encoded strings.
 
 ### Implementation
 
@@ -124,28 +156,32 @@ Converts stored data to base64.
 
 {{ "/breadboard/static/boards/kits/core-invoke.bgl.json" | board }}
 
-Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.
+Invokes (using "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" runtime mode) specified board, supplying remaining incoming wires as input ports for that board. Returns the outputs of the board as its own output ports.
 
-Use this component to invoke another board from this board.
-
-It recognizes `path`, `graph`, and `board` properties that specify, respectively, a file path or URL to the serialized board, directly the serialized-as-JSON board, and a `BoardCapability` (returned by `lambda` or `import`).
-
-The rest of the inputs in the property bag are passed along to the invoked board as its inputs. If other inputs were bound to the board via wires into the `lambda` or `import` component, then those have precedence over inputs passed here.
-
-The outputs of the invoked board will be passed along as outputs of the `invoke` component.
+Use this component to invoke another board from your board.
 
 ### Input ports
 
-- `path`, which specifes the file path or URL to the serialized board to be included.
-- `graph`, which is a serialized board
-- `board`, a `BoardCapability` representing a board, created by `lambda` or `import`.
-- any other properties are passed as inputs for the invoked board.
+This component has a single static input port and multiple dynamic ports.
+
+- **Board** (id: `$board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- all other wired in ports are passed as the input values for the board.
 
 ### Output ports
 
-- the outputs of the invoked board
+The output ports of this component are the outputs of the invoked board.
 
 ### Example
+
+In the board above, the `invoke` component is used to invoke this board:
+
+{{ "/breadboard/static/boards/kits/example-simple-greeting.bgl.json" | board }}
+
+Following the semantics of the "run as component" mode, all inputs of the invoked board are populated by the input ports of the `invoke` component input ports, and all outputs of the invoked board are passed as output ports.
+
+> [!TIP]
+> Note how "Name" and "Location" input ports, as well as the "Greeting" output ports pop up in the Visual Editor when the "Board" input port is populated. This is the key property of the "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" mode: the board API is declarative and can be statically described.
 
 ### Implementation
 
@@ -155,13 +191,42 @@ The outputs of the invoked board will be passed along as outputs of the `invoke`
 
 {{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
 
-Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.
+Given a list items and a board, runs the board in "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" mode for each item in the list. Similar in to JavaScript [Array.prototype.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function, except boards run in parallel.
+
+When running the board, the `map` component will supply three inputs with these ids:
+
+- `item` -- the item from the list
+- `index` -- the index of the item in the list
+- `list` -- the entire list.
+
+This very is similar to the arguments of the JavaScript [Array.prototype.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function.
 
 ### Input ports
 
+The component has two statically defined input ports:
+
+- **Board** (id: `board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- **List** (id: `list`) -- optional, an array of items to supply to the board as inputs.
+
 ### Output ports
 
+The component has one statically defined output port:
+
+- **List** (id: `list`) -- optional, an array of results from each board's run.
+
 ### Example
+
+Given this board that creates a simple greeting given a name and location:
+
+{{ "/breadboard/static/boards/kits/example-simple-greeting.bgl.json" | board }}
+
+We can use the `map` component to print out a set of greetings for a bunch of people.
+
+{{ "/breadboard/static/boards/kits/core-map.bgl.json" | board }}
+
+> [!TIP]
+> The [`curry`](#the-curry-component) component and `map` component often go hand in hand, just like in the example above. Currying provides a convenient way to pass unchanging arguments to the board that is being invoked multiple times via `map`.
 
 ### Implementation
 
@@ -171,35 +236,15 @@ Given a list and a board, iterates over this list (just like your usual JavaScri
 
 {{ "/breadboard/static/boards/kits/core-passthrough.bgl.json" | board }}
 
-This is a no-op component. It takes the input property bag and passes it along as output, unmodified. This component can be useful when the board needs an entry point, but the rest of the board forms a cycle.
+This is a no-op component. It takes the input port values and passes them along as output port values, unmodified. Just like any [no-op statement](<https://en.wikipedia.org/wiki/NOP_(code)>) in programming, this component comes in handy in various situations, like when the board needs an entry point, but the rest of the board forms a cycle.
 
 ### Input ports
 
-- any properties
+- any ports that are wired in.
 
 ### Output ports
 
-- the properties that were passed as inputs
-
-### Example
-
-```js
-board.input().wire("say->", board.passthrough().wire("say->", board.output()));
-
-board.runOnce({
-  say: "Hello, world!",
-});
-
-console.log("result", result);
-```
-
-Will produce this output:
-
-```sh
-result { say: 'Hello, world!' }
-```
-
-See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
+- the mirror of the ports wired in.
 
 ### Implementation
 

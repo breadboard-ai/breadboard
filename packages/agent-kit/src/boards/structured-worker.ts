@@ -268,4 +268,7 @@ export default await board(({ context, instruction, schema }) => {
   title: "Structured Worker",
   description: "A worker who outputs structure data (JSON) provided a schema.",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });
