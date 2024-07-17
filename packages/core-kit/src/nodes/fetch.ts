@@ -85,30 +85,39 @@ export default defineNodeType({
   inputs: {
     url: {
       description: "The URL to fetch",
+      title: "URL",
       type: "string",
     },
     method: {
+      title: "Method",
+      behavior: ["config"],
       description: "The HTTP method to use",
       type: enumeration("GET", "POST", "PUT", "DELETE"),
       default: "GET",
     },
     headers: {
+      title: "Headers",
       description: "Headers to send with the request",
       type: object({}, "string"),
       default: {},
     },
     body: {
+      title: "Body",
       description: "The body of the request",
       type: "unknown",
       optional: true,
     },
     raw: {
+      title: "Raw",
+      behavior: ["config"],
       description:
         "Whether or not to return raw text (as opposed to parsing JSON)",
       type: "boolean",
       default: false,
     },
     stream: {
+      title: "Stream",
+      behavior: ["config"],
       description: "Whether or not to return a stream",
       type: "boolean",
       default: false,
@@ -116,23 +125,28 @@ export default defineNodeType({
   },
   outputs: {
     response: {
+      title: "Response",
       description: "The response from the fetch request",
       type: "unknown",
       primary: true,
     },
     status: {
+      title: "Status",
       description: "The HTTP status code of the response",
       type: "number",
     },
     statusText: {
+      title: "Status Text",
       description: "The status text of the response",
       type: "string",
     },
     contentType: {
+      title: "Content Type",
       description: "The content type of the response",
       type: anyOf("string", "null"),
     },
     responseHeaders: {
+      title: "Response Headers",
       description: "The headers of the response",
       type: object({}, "string"),
     },

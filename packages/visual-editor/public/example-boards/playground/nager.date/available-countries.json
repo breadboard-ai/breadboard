@@ -27,7 +27,7 @@
                 "object",
                 "string"
               ],
-              "title": "response",
+              "title": "Response",
               "description": "The response from the fetch request"
             }
           }

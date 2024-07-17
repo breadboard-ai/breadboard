@@ -80,35 +80,47 @@ In the board above, a chunk of JSON is fetched. This JSON contains a base64-enco
 
 {{ "/breadboard/static/boards/kits/core-fetch.bgl.json" | board }}
 
-Use this component to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+Use this component to fetch data from the Internet. Implementation-wise, this is a wrapper around [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with a few Breadboard-specific tweaks.
+
+The tweaks are:
+
+- When "Content-Type" is specified as "multipart/form-data", the value passed into the **Body** port is treated as a key/value object representing [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) properties and their values.
+
+- Before sending the request, all [Data store lightweight handles](/breadboard/docs/reference/data-store/) are converted to base64 encoded strings or multipart encoded chunks, depending on the content type.
+
+- After receiving the response, any [blob]() responses are converted to [Data Store lightweight handles](/breadboard/docs/reference/data-store/).
 
 ### Input ports
 
-- `url` -- required, URL to fetch. For now, this component can only make a GET request.
-- `headers` -- object (optional), a set of headers to be passed to the request.
-- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+The component has the following input ports.
+
+- **URL** (id: `url`) -- required, the URL to fetch.
+
+- **Method** (id: `method`) -- string (optional), the request [method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). Default is `GET`.
+
+- **Headers** (id: `headers`) -- object (optional), a set of [request headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers). Default is empty.
+
+- **Body** (id: `body`) -- object (optional), the [request body](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit#body). Default is empty.
+
+- **Raw** (id: `raw`) -- boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+
+- **Stream** (id: `stream`) -- boolean (optional), specifies whether the response is expected to be a stream. The default value is `false`.
 
 ### Output ports
 
-- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
+- **Content Type** (id: 'contentType') -- contains response content type.
+
+- **Response** (id: `response`) -- the response from the server. If `raw` is `false` (which it is by default) and content type is `application/json`, the response will be parsed as JSON.
+
+- **Response Headers** (id: `responseHeaders`) -- contains [response headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers).
+
+- **Status** (id: `status`) -- contains [response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+
+- **Status Text** (id: `statusText`) -- contains response status text.
 
 ### Example
 
-If we would like to fetch data from `https://example.com`, we would send the following inputs to `fetch`:
-
-```json
-{
-  "url": "https://example.com"
-}
-```
-
-And receive this output:
-
-```json
-{
-  "response": "<response from https://example.com>"
-}
-```
+In the board above, the `fetch` component makes a call to Wikipedia [open search API](https://www.mediawiki.org/wiki/API:Opensearch) and then passes the response to the output.
 
 ### Implementation
 
