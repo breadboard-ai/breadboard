@@ -39,7 +39,7 @@ const url = urlTemplate({
 });
 
 const fetchResult = fetch({
-  $id: "fetch",
+  $id: "fetchResult",
   raw: true,
   method: "GET",
   url: url.outputs.url,

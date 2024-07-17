@@ -3,7 +3,7 @@ import { fetch } from "@google-labs/core-kit";
 
 const fetchResult = fetch({
   $metadata: {
-    $id: "fetch",
+    $id: "fetchResult",
     title: "API Fetch Results",
     description: "Calling the Nager Date API to get the the available countries",
   },

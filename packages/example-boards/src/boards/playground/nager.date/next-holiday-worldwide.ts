@@ -2,7 +2,7 @@ import { anyOf, array, board, object, output } from "@breadboard-ai/build";
 import { fetch, code } from "@google-labs/core-kit";
 
 const fetchResult = fetch({
-  $id: "fetch",
+  $id: "fetchResult",
   method: "GET",
   url: "https://date.nager.at/api/v3/NextPublicHolidaysWorldwide",
 });
