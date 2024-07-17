@@ -23,7 +23,7 @@ Takes a board and bakes in (or [curries](https://en.wikipedia.org/wiki/Currying)
 
 The `curry` component has a single input port plus any number of additional ports.
 
-- **Board** (id `$board`) -- the board to curry the values into. This port has the `board` behavior and will accept a URL of the board or the actual BGL of the board.
+- **Board** (id: `$board`) -- the board to curry the values into. This port has the `board` behavior and will accept a URL of the board or the actual BGL of the board.
 
 Values supplied with any additional ports will be curried into the output board.
 
