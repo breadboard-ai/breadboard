@@ -236,35 +236,15 @@ We can use the `map` component to print out a set of greetings for a bunch of pe
 
 {{ "/breadboard/static/boards/kits/core-passthrough.bgl.json" | board }}
 
-This is a no-op component. It takes the input property bag and passes it along as output, unmodified. This component can be useful when the board needs an entry point, but the rest of the board forms a cycle.
+This is a no-op component. It takes the input port values and passes them along as output port values, unmodified. Just like any [no-op statement](<https://en.wikipedia.org/wiki/NOP_(code)>) in programming, this component comes in handy in various situations, like when the board needs an entry point, but the rest of the board forms a cycle.
 
 ### Input ports
 
-- any properties
+- any ports that are wired in.
 
 ### Output ports
 
-- the properties that were passed as inputs
-
-### Example
-
-```js
-board.input().wire("say->", board.passthrough().wire("say->", board.output()));
-
-board.runOnce({
-  say: "Hello, world!",
-});
-
-console.log("result", result);
-```
-
-Will produce this output:
-
-```sh
-result { say: 'Hello, world!' }
-```
-
-See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
+- the mirror of the ports wired in.
 
 ### Implementation
 

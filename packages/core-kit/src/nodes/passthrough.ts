@@ -12,6 +12,9 @@ export default defineNodeType({
     title: "Passthrough",
     description:
       "Takes all inputs and passes them through as outputs. Effectively, a no-op node in Breadboard.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-passthrough-component",
+    },
   },
   inputs: {
     "*": {
