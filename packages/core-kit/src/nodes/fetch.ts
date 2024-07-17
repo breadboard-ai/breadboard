@@ -81,6 +81,9 @@ export default defineNodeType({
     title: "Fetch",
     description:
       "A wrapper around `fetch` API. Use this node to fetch content from the Web.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-fetch-component",
+    },
   },
   inputs: {
     url: {

@@ -13,6 +13,9 @@ export default defineNodeType({
     title: "Deflate",
     description:
       "Converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-deflate-component",
+    },
   },
   inputs: {
     data: {
