@@ -6,29 +6,29 @@ tags:
   - kits
 ---
 
-While most nodes in Breadboard come from various kits, there are two nodes that are built-in: **input** and **output**. A good way to think about them is as if they are part of the "Built-in kit": something that you always get, no matter what other kits you choose to employ.
+While most components in Breadboard come from various kits, there are two components that are built-in: **input** and **output**. A good way to think about them is as if they are part of the "Built-in kit": something that you always get, no matter what other kits you choose to employ.
 
-## Why do we need these nodes?
+## Why do we need these components?
 
-These two nodes serve a very important purpose: they communicate the API (or "shape") of the board. While it is definitely convenient in itself, it becomes super-important when we start composing graphs.
+These two components serve a very important purpose: they communicate the API (or "shape") of the board. While it is definitely convenient in itself, it becomes super-important when we start composing graphs.
 
 The **input** and **output** represent, respectively, the beginning and the end of work within a board. Every job begins with an intake of some source material and produces a deliverable. The "input" and "output" components signify those moments. The "input" component is the place where the job begins, and the "output" component (or components, depending on the job) is where it ends.
 
-By adding "input" and "output" nodes in our graph, we not only make it easy for ourselves to spot the starting and ending points of the job -- we also make this graph _reusable_. In Breadboard, graphs can be invoked by other graphs, kind of like delegating work. If we already know that there's a team of workers that does a particular job well, we can just call that team and ask it to do the job for us. When we do that, the "input" and "output" nodes of that team will inform us what the team needs to do their job successfully.
+By adding "input" and "output" components in our graph, we not only make it easy for ourselves to spot the starting and ending points of the job -- we also make this graph _reusable_. In Breadboard, graphs can be invoked by other graphs, kind of like delegating work. If we already know that there's a team of workers that does a particular job well, we can just call that team and ask it to do the job for us. When we do that, the "input" and "output" components of that team will inform us what the team needs to do their job successfully.
 
 > [!NOTE]
-> To make this more concrete, here's an example. The **input** and **output** nodes of a board are used to construct the [signature of function declarations](https://ai.google.dev/gemini-api/docs/function-calling#function_declarations) when we let the [Specialist](https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist-tools) invoke boards as tools. From the perspective of the user, it looks entirely magical: they just add a board as a possible tool that the Specialist could call and it just works. Behind the scenes, the Specialist inspects the board, determines the inputs/outputs and supplies them to the LLM as function declarations.
+> To make this more concrete, here's an example. The **input** and **output** components of a board are used to construct the [signature of function declarations](https://ai.google.dev/gemini-api/docs/function-calling#function_declarations) when we let the [Specialist](https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist-tools) invoke boards as tools. From the perspective of the user, it looks entirely magical: they just add a board as a possible tool that the Specialist could call and it just works. Behind the scenes, the Specialist inspects the board, determines the inputs/outputs and supplies them to the LLM as function declarations.
 
-## The `input` node
+## The `input` component
 
 {{ "/breadboard/static/boards/kits/built-in-input.bgl.json" | board }}
 
-Use this node to specify the inputs for the board. The `input` node has a single fixed input configuration port named **Schema** and a variable number of output ports.
+Use this component to specify the inputs for the board. The `input` component has a single fixed input configuration port named **Schema** and a variable number of output ports.
 
-The output ports of this node are supplied from outside of the board: either by the user when running the board directly or by another board when invoking this board from it.
+The output ports of this component are supplied from outside of the board: either by the user when running the board directly or by another board when invoking this board from it.
 
 > [!TIP]
-> It usually takes a bit of getting used to the idea that the _inputs_ of a board show up as _outputs_ of the `input` node. One metaphor that might help is that the `input` node brings the data from outside of the board.
+> It usually takes a bit of getting used to the idea that the _inputs_ of a board show up as _outputs_ of the `input` component. One metaphor that might help is that the `input` component brings the data from outside of the board.
 
 ### Input ports
 
@@ -98,21 +98,21 @@ Hidden behind the "Show more" in the Visual Editor, there are a few more paramet
 
 ### Output ports
 
-The output ports of the `input` node are defined by **Schema**.
+The output ports of the `input` component are defined by **Schema**.
 
-## The `output` node
+## The `output` component
 
 {{ "/breadboard/static/boards/kits/built-in-output.bgl.json" | board }}
 
-The `output` node does the inverse of what `input` does: it takes the values out of the board, back to the user (if called directly) or to another board (if invoked by that board). It has a variable number of input ports, and no output ports.
+The `output` component does the inverse of what `input` does: it takes the values out of the board, back to the user (if called directly) or to another board (if invoked by that board). It has a variable number of input ports, and no output ports.
 
 ### Input ports
 
-Similar to the `input` node, there's pre-defined input port called **Schema**, whose purpose is identical to **Schema** in the `input` node, with one important distinction: it defines the rest of the input ports (as opposed to output ports in `input`).
+Similar to the `input` component, there's pre-defined input port called **Schema**, whose purpose is identical to **Schema** in the `input` component, with one important distinction: it defines the rest of the input ports (as opposed to output ports in `input`).
 
 > [!WARNING]
-> Avoid defining a port with the id of `schema` in the Schema editor. It will result in the `output` node being confused, since that is the id used by **Schema**.
+> Avoid defining a port with the id of `schema` in the Schema editor. It will result in the `output` component being confused, since that is the id used by **Schema**.
 
 ### Output ports
 
-The `output` node does not have any output ports.
+The `output` component does not have any output ports.
