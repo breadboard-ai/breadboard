@@ -148,7 +148,7 @@
     "@google-labs/template-kit": "^0.3.5",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.14.10",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "tsx": "^4.16.2",
