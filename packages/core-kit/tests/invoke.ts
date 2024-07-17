@@ -16,7 +16,7 @@ test("describe with no values and no context.base", async (t) => {
           behavior: ["board", "config"],
           description:
             "The board to invoke. Can be a BoardCapability, a graph or a URL",
-          title: "board",
+          title: "Board",
           type: "object",
           additionalProperties: false,
           properties: {},
@@ -55,7 +55,7 @@ test("describe with context.base and no values", async (t) => {
             behavior: ["board", "config"],
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
-            title: "board",
+            title: "Board",
             type: "object",
             additionalProperties: false,
             properties: {},
@@ -96,7 +96,7 @@ test("describe with context.base and invalid $board", async (t) => {
             behavior: ["board", "config"],
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
-            title: "board",
+            title: "Board",
             type: "object",
             additionalProperties: false,
             properties: {},
@@ -175,7 +175,7 @@ test("describe with context.base and valid $board", async (t) => {
             behavior: ["board", "config"],
             description:
               "The board to invoke. Can be a BoardCapability, a graph or a URL",
-            title: "board",
+            title: "Board",
             type: "object",
             additionalProperties: false,
             properties: {},
