@@ -221,7 +221,6 @@ export class NodeConfigurationInfo extends LitElement {
 
     .node-properties {
       width: 100%;
-      margin-bottom: calc(var(--bb-grid-size) * 8);
     }
 
     .node-properties form h1 {

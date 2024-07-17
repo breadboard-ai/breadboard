@@ -22,9 +22,10 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { SETTINGS_TYPE } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
 import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
+import { SettingsStore } from "../../../data/settings-store.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -43,11 +44,14 @@ export class ActivityLog extends LitElement {
   @property({ reflect: true })
   logTitle = "Activity Log";
 
+  @property()
+  waitingMessage = 'Click "Run Board" to get started';
+
   @property({ reflect: true })
   showExtendedInfo = false;
 
   @property()
-  settings: Settings | null = null;
+  settings: SettingsStore | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -71,7 +75,10 @@ export class ActivityLog extends LitElement {
       this.#newestEntry.value &&
       this.#newestEntry.value.querySelector(".user-required")
     ) {
-      this.#newestEntry.value.scrollIntoView({block: 'nearest', inline: 'start'});
+      this.#newestEntry.value.scrollIntoView({
+        block: "nearest",
+        inline: "start",
+      });
       this.#newestEntry.value
         .querySelector(".user-required")
         ?.addEventListener("animationend", (evt: Event) => {
@@ -103,7 +110,10 @@ export class ActivityLog extends LitElement {
       this.dispatchEvent(new InputRequestedEvent());
     }
 
-    this.#newestEntry.value.scrollIntoView({block: 'nearest', inline: 'start'});
+    this.#newestEntry.value.scrollIntoView({
+      block: "nearest",
+      inline: "start",
+    });
   }
 
   connectedCallback(): void {
@@ -426,8 +436,9 @@ export class ActivityLog extends LitElement {
                     let values = null;
                     if (this.settings) {
                       const savedSecret =
-                        this.settings[SETTINGS_TYPE.SECRETS].items.get(id) ||
-                        null;
+                        this.settings
+                          .getSection(SETTINGS_TYPE.SECRETS)
+                          .items.get(id) || null;
 
                       if (savedSecret) {
                         values = { secret: savedSecret.value };
@@ -517,7 +528,7 @@ export class ActivityLog extends LitElement {
               <div class="content">${until(content)}</div>
             </div>`;
           })
-        : html`<div id="click-run">Click "Run" to get started</div>`}
+        : html`<div id="click-run">${this.waitingMessage}</div>`}
     `;
   }
 }
