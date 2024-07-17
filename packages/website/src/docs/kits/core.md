@@ -174,9 +174,11 @@ The output ports of this component are the outputs of the invoked board.
 
 ### Example
 
-In the board above, the `invoke` component is used to invoke this board. Following the semantics of the "run as component" mode, all inputs of the invoked board are populated by the input ports of the `invoke` component input ports, and all outputs of the invoked board are passed as output ports.
+In the board above, the `invoke` component is used to invoke this board:
 
 {{ "/breadboard/static/boards/kits/example-simple-greeting.bgl.json" | board }}
+
+Following the semantics of the "run as component" mode, all inputs of the invoked board are populated by the input ports of the `invoke` component input ports, and all outputs of the invoked board are passed as output ports.
 
 > [!TIP]
 > Note how "Name" and "Location" input ports, as well as the "Greeting" output ports pop up in the Visual Editor when the "Board" input port is populated. This is the key property of the "[run as component](/breadboard/docs/reference/runtime-semantics/#run-as-component-mode)" mode: the board API is declarative and can be statically described.
