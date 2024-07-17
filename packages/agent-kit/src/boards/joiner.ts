@@ -52,6 +52,9 @@ export default await board(({ merge }) => {
   title: "Joiner",
   metadata: {
     icon: "merge-type",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#joiner",
+    },
   },
   description:
     "Joins two or more worker contexts into one. Great for combining results of multiple workers.",

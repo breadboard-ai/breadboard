@@ -45,6 +45,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     if (metadata?.deprecated)
       this.metadata.deprecated = metadata.deprecated as boolean;
     if (metadata?.icon) this.metadata.icon = metadata.icon;
+    if (metadata?.help) this.metadata.help = metadata.help;
   }
 
   async describe() {

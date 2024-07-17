@@ -7,7 +7,10 @@
     "human": {
       "title": "Human",
       "metadata": {
-        "icon": "human"
+        "icon": "human",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#human"
+        }
       },
       "description": "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
       "version": "0.0.1",
@@ -914,7 +917,10 @@
     "specialist": {
       "title": "Specialist",
       "metadata": {
-        "icon": "smart-toy"
+        "icon": "smart-toy",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist"
+        }
       },
       "description": "Given instructions on how to act, performs a single task, optionally invoking tools.",
       "edges": [
@@ -2316,7 +2322,10 @@
     "looper": {
       "title": "Looper",
       "metadata": {
-        "icon": "laps"
+        "icon": "laps",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#looper"
+        }
       },
       "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
       "version": "0.0.1",
@@ -2585,7 +2594,10 @@
     "joiner": {
       "title": "Joiner",
       "metadata": {
-        "icon": "merge-type"
+        "icon": "merge-type",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#joiner"
+        }
       },
       "description": "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
       "version": "0.0.1",

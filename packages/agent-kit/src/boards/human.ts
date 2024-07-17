@@ -428,6 +428,9 @@ export default await board(({ context, title, description }) => {
   title: "Human",
   metadata: {
     icon: "human",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#human",
+    },
   },
   description:
     "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",

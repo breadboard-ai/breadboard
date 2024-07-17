@@ -245,6 +245,9 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
   title: "Specialist",
   metadata: {
     icon: "smart-toy",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
+    },
   },
   description:
     "Given instructions on how to act, performs a single task, optionally invoking tools.",
