@@ -260,6 +260,14 @@ export const styles = css`
 
   h1[data-message-id] {
     cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  h1[data-message-id]:hover,
+  h1[data-message-id]:focus {
+    opacity: 1;
+    transition-duration: 0.1s;
   }
 
   summary::-webkit-details-marker {

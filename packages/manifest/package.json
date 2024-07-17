@@ -6,7 +6,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
-    "ajv": "^8.16.0",
+    "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "ajv-keywords": "^5.1.0",
     "c8": "^10.1.2",

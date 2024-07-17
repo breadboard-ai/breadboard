@@ -47,7 +47,7 @@ const describe = async (
 ): Promise<NodeDescriberResult> => {
   const inputBuilder = new SchemaBuilder().addProperties({
     $board: {
-      title: "board",
+      title: "Board",
       behavior: ["board"],
       description:
         "The board to curry. Can be a BoardCapability, a graph or a URL",
@@ -57,7 +57,7 @@ const describe = async (
   const outputBuilder = new SchemaBuilder()
     .setAdditionalProperties(false)
     .addProperty("board", {
-      title: "board",
+      title: "Board",
       behavior: ["board"],
       description: "The curried board as a graph descriptor",
       type: "object",

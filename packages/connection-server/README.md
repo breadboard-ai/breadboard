@@ -80,26 +80,27 @@ duration.
 > In the future, connections will also be configurable via the Google Cloud
 > [Secret Manager](https://cloud.google.com/secret-manager/docs).
 
-Connections are configured by placing JSON files in this package's `secrets/`
-folder. Each available connection should have one `.json` file. The name of the
-file (without the `.json` extension) is used as the connection ID. The format of
-the file is:
+Connections are configured by placing a JSON file in this package's `secrets/`
+folder, and setting the `CONNECTIONS_FILE` environment variable to its path. The
+format of the JSON file follows this example:
 
 ```json
 {
-  "web": {
-    "client_id": "<client id>",
-    "auth_uri": "<auth uri>",
-    "token_uri": "<token uri>",
-    "client_secret": "<secret>",
-    "redirect_uris": ["<redirect uri>"]
-  },
-  "__metadata": {
-    "title": "<short display name>",
-    "description": "<longer description>",
-    "icon": "data:image/png;base64,<optional image data>",
-    "scopes": ["<access token scope>"]
-  }
+  "connections": [
+    {
+      "id": "cool-service",
+      "title": "Cool Service",
+      "description": "A cool service for doing cool stuff",
+      "oauth": {
+        "client_id": "an_oauth_client_id",
+        "client_secret": "the_secret_for_this_oauth_client",
+        "scopes": ["an_oauth_scope"],
+        "auth_uri": "https://example.com/auth",
+        "token_uri": "https://example.com/token"
+      },
+      "icon": "data:image/png;base64,some_base64_bytes_of_a_png"
+    }
+  ]
 }
 ```
 
@@ -111,16 +112,6 @@ the file is:
 > party to impersonate the application it belongs to and intercept user access
 > tokens. The Breadboard Connection Server never reveals this secret over its
 > APIs, and protecting these secrets is the primary reason this server exists.
-
-The `web` section of this file is based on the Google Cloud _client secret JSON
-file_ format. This format was chosen for the Breadboard Connection Server simply
-in lieu of anything better or standardized.
-
-The `__metadata` section of this file is custom to the Breadboard Connection
-Server. It contains descriptive metadata to help the user understand what the
-connection is. The `scopes` field lists the [access token
-scopes](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3) that should
-be requested when making this connection.
 
 ### Configuring Google Cloud Connections
 
@@ -135,13 +126,8 @@ To configure a connection for a Google Cloud project:
 
    <img src="./docs/gcp-client-secrets.png" width="480px" height="229px" alt="Screenshot of the &quot;Client secrets&quot; section of the Google Cloud OAuth 2.0 Client detail page with the &quot;Download JSON&quot; button highlighted">
 
-3. Place the file in this package's `secrets/` folder.
-
-4. Rename the JSON file to something concise and descriptive (e.g.
-   `cool-api.json`). The filename determines the connection ID.
-
-5. Add the `__metadata` section to the file, because only the `web` section will
-   be pre-populated by Google Cloud.
+3. Copy the the `client_id`, `client_secret`, `auth_uri`, and `token_uri` fields from this file
+   into the `CONNECTIONS_FILE` you have chosen (see above for example).
 
 ## Local development
 
@@ -153,7 +139,3 @@ npm run dev
 This will start the server on `localhost:5555`. Set the `HOST` and/or `PORT`
 environment variables to customize the address. The server will automatically
 restart if its implementation or connection configuration files are modified.
-
-## Production deployment
-
-_This server is not yet production ready, check back later!_
