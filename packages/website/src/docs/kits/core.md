@@ -54,13 +54,23 @@ If we need to print out a set of greetings for a bunch of people visiting from t
 
 {{ "/breadboard/static/boards/kits/core-deflate.bgl.json" | board }}
 
-This component converts all inline data to stored data, saving memory. Useful when working with multimodal content. Safely passes data through if it's already stored or no inline data is present.
+This component converts all [inline data to stored data](/breadboard/docs/reference/data-store/), saving memory. Useful when working with multimodal content.
 
 ### Input ports
 
+The component has a single input port.
+
+- **Data** (id: `data`) -- the data to scan and convert all instances of inline base64-encoded strings to lightweight handles. Data can be of any shape.
+
 ### Output ports
 
+The component has a single output port.
+
+- **Data** (id: `data`) -- the result of deflating the input data. Safely passes data through if it's already stored or no inline data is present.
+
 ### Example
+
+In the board above, a chunk of JSON is fetched. This JSON contains a base64-encoded string of an image. The `deflate` component turns it into a lightweight handle and then passes it on to output.
 
 ### Implementation
 

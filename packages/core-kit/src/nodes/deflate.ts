@@ -17,12 +17,14 @@ export default defineNodeType({
   inputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "Data to deflate.",
     },
   },
   outputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "Deflated data.",
     },
   },
