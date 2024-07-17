@@ -409,6 +409,9 @@
       "title": "Repeater",
       "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "counter",
@@ -571,6 +574,9 @@
       "title": "Structured Worker",
       "description": "A worker who outputs structure data (JSON) provided a schema.",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "assembleContext",
@@ -2142,6 +2148,9 @@
       "title": "Worker",
       "description": "The essential Agent building block",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "assembleContext",
