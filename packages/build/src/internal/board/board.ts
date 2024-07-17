@@ -388,6 +388,7 @@ export function describeOutput(
   } else {
     port = output;
   }
+  const required = !isOptional(port);
   if (isSerializableOutputPortReference(port)) {
     port = port[OutputPortGetter];
   }
@@ -401,7 +402,6 @@ export function describeOutput(
       schema.description = output.description;
     }
   }
-  const required = !isOptional(port);
   return { schema, required };
 }
 
