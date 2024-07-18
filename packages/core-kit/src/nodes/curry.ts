@@ -62,7 +62,7 @@ const describe = async (
       description: "The curried board as a graph descriptor",
       type: "object",
     });
-  if (context?.base) {
+  if (context) {
     let board: GraphDescriptor | undefined;
     inputBuilder.setAdditionalProperties(true);
     if (inputs) {

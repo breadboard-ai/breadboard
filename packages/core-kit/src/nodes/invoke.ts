@@ -57,27 +57,30 @@ const describe = async (
   inputs?: InvokeNodeInputs,
   context?: NodeDescriberContext
 ) => {
-  if (context?.base) {
-    let board: GraphDescriptor | undefined;
-    if (inputs) {
-      try {
-        board = (await getRunnableBoard(context, inputs)).board;
-      } catch {
-        // eat any exceptions.
-        // This is a describer, so it must always return some valid value.
-      }
-      if (board) {
-        const inspectableGraph = inspect(board);
-        const { inputSchema, outputSchema } = await inspectableGraph.describe();
-        return {
-          inputs: unsafeSchema(inputSchema),
-          outputs: unsafeSchema(outputSchema),
-        };
-      }
-      return { inputs: { "*": {} }, outputs: { "*": {} } };
-    }
+  if (!context || !inputs) {
+    return { inputs: {}, outputs: {} };
   }
-  return { inputs: {}, outputs: {} };
+  let board: GraphDescriptor | undefined;
+  try {
+    board = (await getRunnableBoard(context, inputs)).board;
+  } catch {
+    // eat any exceptions.
+    // This is a describer, so it must always return some valid value.
+    console.warn(
+      "Could not get a runnable board in invoke describer",
+      context,
+      inputs
+    );
+  }
+  if (board) {
+    const inspectableGraph = inspect(board);
+    const { inputSchema, outputSchema } = await inspectableGraph.describe();
+    return {
+      inputs: unsafeSchema(inputSchema),
+      outputs: unsafeSchema(outputSchema),
+    };
+  }
+  return { inputs: { "*": {} }, outputs: { "*": {} } };
 };
 
 export default defineNodeType({
@@ -119,6 +122,7 @@ export default defineNodeType({
   describe: async (staticInputs, dynamicInputs, context) => {
     // TODO(aomarks) Cast here because the type system doesn't understand
     // BreadboardCapability or GraphDescriptors yet.
+    console.log("🍊 describing invoke", staticInputs);
     const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
     return describe(inputs, context);
   },
