@@ -21,7 +21,6 @@ const prompt = input({
 });
 
 const generator = input({
-  $id: "math-question",
   title: "Generator",
   type: annotate(object({}), {
     behavior: ["board"],
