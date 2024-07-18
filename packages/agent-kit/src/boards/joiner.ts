@@ -45,7 +45,10 @@ export default await board(({ merge }) => {
 
   const output = base.output({
     $metadata: { title: "Output", description: "Returning combined values" },
-    context: contextCombiner.context.isArray().behavior("llm-content"),
+    context: contextCombiner.context
+      .isArray()
+      .title("Context out")
+      .behavior("llm-content"),
   });
   return output;
 }).serialize({
