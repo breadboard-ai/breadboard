@@ -177,7 +177,7 @@
               ]
             },
             "year": {
-              "type": "string",
+              "type": "number",
               "title": "year",
               "description": "The data for year",
               "default": "2024"

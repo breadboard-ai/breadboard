@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
+      "from": "fetchResult",
       "to": "spreadResponse",
       "out": "response",
       "in": "obj"
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET",

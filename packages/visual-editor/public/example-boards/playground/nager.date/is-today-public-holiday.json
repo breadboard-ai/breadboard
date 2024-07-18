@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
+      "from": "fetchResult",
       "to": "statusCodeToResult",
       "out": "status",
       "in": "status"
@@ -19,7 +19,7 @@
       "from": "input-0",
       "to": "validatedOffset",
       "out": "offset",
-      "in": "offsetString"
+      "in": "offset"
     },
     {
       "from": "statusCodeToResult",
@@ -29,7 +29,7 @@
     },
     {
       "from": "urlTemplate",
-      "to": "fetch",
+      "to": "fetchResult",
       "out": "url",
       "in": "url"
     },
@@ -183,7 +183,7 @@
               ]
             },
             "offset": {
-              "type": "string",
+              "type": "number",
               "title": "offset",
               "description": "utc timezone offset",
               "default": "0"
@@ -213,7 +213,7 @@
       }
     },
     {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET",
@@ -256,12 +256,12 @@
       "id": "validatedOffset",
       "type": "runJavascript",
       "configuration": {
-        "code": "const validatedOffset = ({offsetString})=>{const offset2=Number(offsetString);if(isNaN(offset2)||offset2>12||offset2<-12){throw new Error(`Invalid offset input: ${offsetString}. Offset must be maximum 12 and minimum -12.`)}return{offset:offsetString}};",
+        "code": "const validatedOffset = ({offset:offset2})=>{if(offset2>12||offset2<-12){throw new Error(`Invalid offset input: ${offset2}. Offset must be maximum 12 and minimum -12.`)}return{offset:offset2}};",
         "inputSchema": {
           "type": "object",
           "properties": {
-            "offsetString": {
-              "type": "string"
+            "offset": {
+              "type": "number"
             }
           }
         },
@@ -270,7 +270,7 @@
           "type": "object",
           "properties": {
             "offset": {
-              "type": "string"
+              "type": "number"
             }
           }
         },
