@@ -32,7 +32,7 @@ const fetchResult = fetch({
 
 const info = output(fetchResult.outputs.response, {
   title: "Long Weekend Info",
-  description: "The long weeekend info for the selected country code for the given year from the Nager Date API"
+  description: "The long weekend info for the selected country code for the given year from the Nager Date API"
 });
 
 export default board({
