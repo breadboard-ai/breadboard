@@ -24,7 +24,7 @@ export type GrantResponse =
       refresh_token: string;
     };
 
-export interface GrantSettingsValue {
+export interface TokenGrant {
   access_token: string;
   expires_in: number;
   refresh_token: string;

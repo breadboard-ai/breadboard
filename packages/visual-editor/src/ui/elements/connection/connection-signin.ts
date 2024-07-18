@@ -16,7 +16,7 @@ import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
 import {
   oauthTokenBroadcastChannelName,
   type GrantResponse,
-  type GrantSettingsValue,
+  type TokenGrant,
   type OAuthStateParameter,
 } from "./connection-common.js";
 import type { Connection } from "./connection-server.js";
@@ -239,7 +239,7 @@ export class ConnectionSignin extends LitElement {
       this._state = "signedout";
       return;
     }
-    const settingsValue: GrantSettingsValue = {
+    const settingsValue: TokenGrant = {
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
       refresh_token: grantResponse.refresh_token,

@@ -16,7 +16,7 @@ import { settingsHelperContext } from "../../contexts/settings-helper.js";
 import { InputEnterEvent } from "../../events/events.js";
 import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
 import type {
-  GrantSettingsValue,
+  TokenGrant,
   RefreshRequest,
   RefreshResponse,
 } from "./connection-common.js";
@@ -62,7 +62,7 @@ export class ConnectionInput extends LitElement {
       // be cool if I could have some parameters defined in `args`, and others
       // passed to `run`, but right now Task only allows one or the other.
       [grant, connectionId, environment, settingsHelper]: [
-        GrantSettingsValue,
+        TokenGrant,
         typeof this.connectionId,
         typeof this.environment,
         typeof this.settingsHelper,
@@ -95,7 +95,7 @@ export class ConnectionInput extends LitElement {
     return html`Token was fresh`;
   }
 
-  #getGrantFromSettings(): GrantSettingsValue | undefined {
+  #getGrantFromSettings(): TokenGrant | undefined {
     if (!this.connectionId || !this.settingsHelper) {
       return undefined;
     }
@@ -106,10 +106,10 @@ export class ConnectionInput extends LitElement {
     if (setting === undefined) {
       return undefined;
     }
-    return JSON.parse(String(setting.value)) as GrantSettingsValue;
+    return JSON.parse(String(setting.value)) as TokenGrant;
   }
 
-  #accessTokenIsExpired(grant: GrantSettingsValue): boolean {
+  #accessTokenIsExpired(grant: TokenGrant): boolean {
     const expiresAt =
       /* absolute milliseconds */ grant.issue_time +
       /* relative seconds */ grant.expires_in * 1000;
@@ -148,7 +148,7 @@ export class ConnectionInput extends LitElement {
     });
   }
 
-  #refreshAndRenderStatus(grant: GrantSettingsValue) {
+  #refreshAndRenderStatus(grant: TokenGrant) {
     if (this.#refreshTask.status === TaskStatus.INITIAL) {
       this.#refreshTask.run([
         grant,
@@ -165,7 +165,7 @@ export class ConnectionInput extends LitElement {
   }
 
   async #refresh(
-    grant: GrantSettingsValue,
+    grant: TokenGrant,
     connectionId: string,
     environment: Environment,
     settingsHelper: SettingsHelper,
@@ -187,7 +187,7 @@ export class ConnectionInput extends LitElement {
       throw new Error(jsonRes.error);
     }
 
-    const updatedGrant: GrantSettingsValue = {
+    const updatedGrant: TokenGrant = {
       access_token: jsonRes.access_token,
       expires_in: jsonRes.expires_in,
       issue_time: now,
