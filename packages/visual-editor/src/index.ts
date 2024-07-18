@@ -49,6 +49,10 @@ import type {
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
+import {
+  TokenVendor,
+  tokenVendorContext,
+} from "./ui/elements/connection/token-vendor.js";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -154,6 +158,9 @@ export class Main extends LitElement {
 
   @provide({ context: environmentContext })
   environment = ENVIRONMENT;
+
+  @provide({ context: tokenVendorContext })
+  tokenVendor!: TokenVendor;
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
@@ -499,6 +506,7 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
+      this.tokenVendor = new TokenVendor(this.settingsHelper, ENVIRONMENT);
     }
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
