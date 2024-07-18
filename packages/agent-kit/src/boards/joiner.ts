@@ -45,13 +45,19 @@ export default await board(({ merge }) => {
 
   const output = base.output({
     $metadata: { title: "Output", description: "Returning combined values" },
-    context: contextCombiner.context.isArray().behavior("llm-content"),
+    context: contextCombiner.context
+      .isArray()
+      .title("Context out")
+      .behavior("llm-content"),
   });
   return output;
 }).serialize({
   title: "Joiner",
   metadata: {
     icon: "merge-type",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#joiner",
+    },
   },
   description:
     "Joins two or more worker contexts into one. Great for combining results of multiple workers.",

@@ -105,4 +105,7 @@ export default await board(({ context, instruction, stopSequences }) => {
   title: "Worker",
   description: "The essential Agent building block",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });

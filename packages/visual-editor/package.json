@@ -252,7 +252,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/markdown-it": "^14.1.1",
     "@types/node": "^20.14.10",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
@@ -289,6 +289,6 @@
     "idb": "^8.0.0",
     "lit": "^3.1.4",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.2.1"
+    "pixi.js": "^8.2.5"
   }
 }

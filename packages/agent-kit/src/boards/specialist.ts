@@ -227,7 +227,10 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Tool Output",
       description: "Return tool results as output",
     },
-    out: addToolResponseToContext.context.title("Context out"),
+    out: addToolResponseToContext.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
   });
 
   const areWeDoneChecker = checkAreWeDone({
@@ -240,14 +243,22 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     text: routeToFunctionsOrText.text,
   });
 
-  return { out: areWeDoneChecker.context.title("Context out") };
+  return {
+    out: areWeDoneChecker.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
+  };
 }).serialize({
   title: "Specialist",
   metadata: {
     icon: "smart-toy",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
+    },
   },
   description:
-    "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+    "Given instructions on how to act, performs a single task, optionally invoking tools.",
 });
 
 specialist.graphs = { boardToFunction, invokeBoardWithArgs };
