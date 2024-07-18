@@ -15,15 +15,15 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { SchemaChangeEvent } from "../../events/events.js";
+import { SchemaChangeEvent } from "../../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   assertIsLLMContent,
   resolveArrayType,
   resolveBehaviorType,
-} from "../../utils/schema.js";
-import { LLMContent } from "../../types/types.js";
-import { createAllowListFromProperty } from "../../utils/llm-content.js";
+} from "../../../utils/schema.js";
+import { LLMContent } from "../../../types/types.js";
+import { createAllowListFromProperty } from "../../../utils/llm-content.js";
 import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";
 
