@@ -12,9 +12,9 @@ const countryCode = input({
 
 const year = input({
   title: "year",
-  type: "string", // TODO: Change this to "number" type when the Template Kit's `urlTemplate` node has been updated to accept number type wildcard inputs.
+  type: "number",
   description: "The data for year",
-  default: new Date().getFullYear().toString(),
+  default: new Date().getFullYear(),
 });
 
 const url = urlTemplate({

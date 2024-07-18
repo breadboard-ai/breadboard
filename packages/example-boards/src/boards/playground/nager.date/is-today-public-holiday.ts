@@ -12,23 +12,22 @@ const countryCode = input({
 
 const offset = input({
   title: "offset",
-  type: "string", // TODO: Change this to "number" type when the Template Kit's `urlTemplate` node has been updated to accept number type wildcard inputs.
+  type: "number",
   description: "utc timezone offset",
-  default: "0",
+  default: 0,
 });
 
 const validatedOffset = code(
   {
     $id: "validatedOffset",
-    offsetString: offset
+    offset
   },
-  { offset: "string" },
-  ({ offsetString }) => {
-    const offset = Number(offsetString);
-    if (isNaN(offset) || offset > 12 || offset < -12) {
-      throw new Error(`Invalid offset input: ${offsetString}. Offset must be maximum 12 and minimum -12.`);
+  { offset: "number" },
+  ({ offset }) => {
+    if (offset > 12 || offset < -12) {
+      throw new Error(`Invalid offset input: ${offset}. Offset must be maximum 12 and minimum -12.`);
     }
-    return { offset: offsetString }
+    return { offset }
   });
 
 const url = urlTemplate({
