@@ -2643,13 +2643,13 @@
               "properties": {
                 "context": {
                   "type": "array",
+                  "title": "Context out",
                   "items": {
                     "type": "object",
                     "behavior": [
                       "llm-content"
                     ]
-                  },
-                  "title": "context"
+                  }
                 }
               }
             }
