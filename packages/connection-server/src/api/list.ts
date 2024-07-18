@@ -5,9 +5,8 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Config } from "../config.js";
+import type { ConnectionConfig, ServerConfig } from "../config.js";
 import { okJson } from "../responses.js";
-import type { OAuthClientSecretData } from "../secrets.js";
 
 // IMPORTANT: Keep in sync with
 // breadboard/packages/visual-editor/src/elements/connection/connection-server.ts
@@ -31,21 +30,21 @@ interface Connection {
 export async function list(
   _req: IncomingMessage,
   res: ServerResponse,
-  config: Config
+  config: ServerConfig
 ): Promise<void> {
   const response: ListConnectionsResponse = {
-    connections: [...config.secrets.entries()]
-      .map(([connectionId, config]) => {
+    connections: [...config.connections.values()]
+      .map((config) => {
         const connection: Connection = {
-          id: connectionId,
-          authUrl: makeAuthorizationEndpointUrl(connectionId, config),
-          title: config.__metadata?.title ?? connectionId,
+          id: config.id,
+          authUrl: makeAuthorizationEndpointUrl(config),
+          title: config.title ?? config.id,
         };
-        if (config.__metadata?.description) {
-          connection.description = config.__metadata.description;
+        if (config.description) {
+          connection.description = config.description;
         }
-        if (config.__metadata?.icon) {
-          connection.icon = config.__metadata.icon;
+        if (config.icon) {
+          connection.icon = config.icon;
         }
         return connection;
       })
@@ -54,14 +53,11 @@ export async function list(
   return okJson(res, response);
 }
 
-function makeAuthorizationEndpointUrl(
-  connectionId: string,
-  secretData: OAuthClientSecretData
-): string {
-  const url = new URL(secretData.web.auth_uri);
+function makeAuthorizationEndpointUrl(config: ConnectionConfig): string {
+  const url = new URL(config.oauth.auth_uri);
   const params = url.searchParams;
-  params.set("client_id", secretData.web.client_id);
-  params.set("scope", (secretData.__metadata?.scopes ?? []).join(" "));
+  params.set("client_id", config.oauth.client_id);
+  params.set("scope", config.oauth.scopes.join(" "));
   params.set("response_type", "code");
   params.set("access_type", "offline");
   // Force re-consent every time, because we always want a refresh token.

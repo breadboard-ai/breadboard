@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Built-in Kit
 tags:
   - reference

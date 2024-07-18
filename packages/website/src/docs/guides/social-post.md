@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Building a Social Media Post Creator with the Agent Kit
 tags:
   - guide
@@ -13,7 +13,7 @@ At the end of this guide, we'll have an agent that can create captions for socia
 
 When you run the finished board for the first time, it will ask you for the Gemini API Key. Get it at [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
 
-{% include "api-key.njk" %}
+{% include "api-key.liquid" %}
 
 This board uses the Agent Kit, a collection of components designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" components. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
 

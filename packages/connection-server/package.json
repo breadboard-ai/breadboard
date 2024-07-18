@@ -73,7 +73,7 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.14.10",
     "eslint": "^8.57.0",
     "typescript": "^5.5.3",
     "wireit": "^0.14.5"

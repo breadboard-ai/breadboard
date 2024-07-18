@@ -16,7 +16,8 @@
     "deploy": "npm run build && gcloud app deploy",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
-    "dev": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) &&concurrently \"npm run serve --watch\" \"(cd ../visual-editor && npm run dev)\""
+    "dev": "npm run dev:nowatch --watch",
+    "dev:nowatch": "wireit"
   },
   "wireit": {
     "build": {
@@ -68,6 +69,17 @@
       "dependencies": [
         "build"
       ]
+    },
+    "dev:nowatch": {
+      "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
+      "service": true,
+      "dependencies": [
+        "build",
+        {
+          "script": "../visual-editor:serve",
+          "cascade": false
+        }
+      ]
     }
   },
   "repository": {
@@ -86,8 +98,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/node": "^20.14.9",
-    "concurrently": "^8.2.2",
+    "@types/node": "^20.14.10",
     "esbuild": "^0.21.5",
     "eslint": "^8.57.0",
     "typescript": "^5.5.3",

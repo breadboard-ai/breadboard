@@ -13,16 +13,18 @@ title: Breadboard | Docs
     <link rel="stylesheet" href="/breadboard/static/docs.css" />
   </head>
   <body>
-  {% include "navigation.njk" %}
+  {% include "navigation.liquid" %}
   <main>
 
-  <aside class="documentation">
-    {% include "home.njk" %}
-    {% include "documentation-list.njk" %}
+  <aside class="documentation subnav">
+    {% include "home.liquid" %}
+    {% include "documentation-list.liquid" %}
   </aside>
 
+  {% include "nav-script.liquid" %}
+
   {% if not hide_toc %}
-  {{content | toc | safe }}
+  {{content | toc }}
   {% endif %}
 
   {%- for tag in tags -%}
@@ -35,9 +37,9 @@ title: Breadboard | Docs
 
   <h1>{{ title }}</h1>
 
-  {{content | safe}}
+  {{content}}
   </main>
-  {% include "footer.njk" %}
+  {% include "footer.liquid" %}
 
   {% raw %}
   <script type="module">

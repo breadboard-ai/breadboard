@@ -6,10 +6,15 @@
       "version": "0.0.1"
     },
     {
-      "title": "Basics: Split an Array with JSONata",
+      "title": "Cookbook: Split an Array with JSONata",
       "reference": "/example-boards/examples/array-split-jsonata.bgl.json",
       "version": "0.0.1",
       "tags": []
+    },
+    {
+      "title": "Cookbook: Fetch Data",
+      "reference": "/example-boards/examples/google-books-api.json",
+      "version": "0.0.1"
     },
     {
       "title": "Guide: Hello, Specialist",

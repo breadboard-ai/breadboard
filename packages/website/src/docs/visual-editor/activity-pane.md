@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Activity Pane
 tags:
   - visualeditor
@@ -8,7 +8,7 @@ date: 2020-01-04 # Fourth in the list
 
 The **Activity Pane** is where we can see the details of the running board. It is where we request any inputs from the user (including things like API keys), and where we show the outputs from any components or boards.
 
-{% include "api-key.njk" %}
+{% include "api-key.liquid" %}
 
 ### Starting and Stopping a Board
 

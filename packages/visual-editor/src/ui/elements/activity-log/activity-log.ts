@@ -71,7 +71,7 @@ export class ActivityLog extends LitElement {
       this.#newestEntry.value &&
       this.#newestEntry.value.querySelector(".user-required")
     ) {
-      this.#newestEntry.value.scrollIntoView(true);
+      this.#newestEntry.value.scrollIntoView({block: 'nearest', inline: 'start'});
       this.#newestEntry.value
         .querySelector(".user-required")
         ?.addEventListener("animationend", (evt: Event) => {
@@ -103,7 +103,7 @@ export class ActivityLog extends LitElement {
       this.dispatchEvent(new InputRequestedEvent());
     }
 
-    this.#newestEntry.value.scrollIntoView(true);
+    this.#newestEntry.value.scrollIntoView({block: 'nearest', inline: 'start'});
   }
 
   connectedCallback(): void {

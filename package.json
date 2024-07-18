@@ -11,7 +11,7 @@
     "build": "wireit",
     "lint": "wireit",
     "ci": "npm ci",
-    "s": "(cd packages/board-server && npm run dev) # Starts the board server",
+    "s": "npm run dev -w packages/board-server --watch",
     "d": "(cd packages/website && npm run dev) # Starts the docs website",
     "w": "(cd packages/visual-editor && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
@@ -139,17 +139,17 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@changesets/cli": "^2.27.6",
+    "@changesets/cli": "^2.27.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
     "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
-    "rimraf": "^5.0.7",
+    "rimraf": "^6.0.1",
     "rollup": "^4.18.0",
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^12.3.3",
@@ -163,7 +163,7 @@
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.16.4",
-    "@rollup/rollup-linux-x64-gnu": "^4.17.1"
+    "@rollup/rollup-linux-x64-gnu": "^4.18.1"
   },
   "dependencies": {
     "@google-labs/core-kit": "^0.10.1",
