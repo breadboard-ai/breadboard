@@ -2368,19 +2368,19 @@ class SettingsHelperImpl implements SettingsHelper {
     return this.#store.values[section].items.get(name);
   }
 
-  set(
+  async set(
     section: SETTINGS_TYPE,
     name: string,
     value: SettingEntry["value"]
-  ): void {
+  ): Promise<void> {
     const values = this.#store.values;
     values[section].items.set(name, value);
-    this.#store.save(values);
+    await this.#store.save(values);
   }
 
-  delete(section: SETTINGS_TYPE, name: string): void {
+  async delete(section: SETTINGS_TYPE, name: string): Promise<void> {
     const values = this.#store.values;
     values[section].items.delete(name);
-    this.#store.save(values);
+    await this.#store.save(values);
   }
 }

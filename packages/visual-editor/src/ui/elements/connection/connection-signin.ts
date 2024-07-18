@@ -245,10 +245,14 @@ export class ConnectionSignin extends LitElement {
       refresh_token: grantResponse.refresh_token,
       issue_time: now,
     };
-    this.settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, this.connection.id, {
-      name: this.connection.id,
-      value: JSON.stringify(settingsValue),
-    });
+    await this.settingsHelper.set(
+      SETTINGS_TYPE.CONNECTIONS,
+      this.connection.id,
+      {
+        name: this.connection.id,
+        value: JSON.stringify(settingsValue),
+      }
+    );
     this.dispatchEvent(new TokenGrantedEvent(grantResponse.access_token));
     this._state = "signedin";
   }
