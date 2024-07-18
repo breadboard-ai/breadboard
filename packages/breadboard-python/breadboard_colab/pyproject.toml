@@ -1,0 +1,16 @@
+[project]
+name = "breadboard_colab"
+requires-python = ">= 3.8"
+version = "0.0.2"
+
+description = "A Python library for running Breadboard on Colab"
+authors = [
+  {name = "Kevin Xiao", email = "xiaok10003@gmail.com"},
+]
+keywords = ["breadboard", "colab"]
+
+
+dependencies = [
+  "google",
+  "google-api-core"
+]
