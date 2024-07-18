@@ -6,32 +6,23 @@
 
 import { consume } from "@lit/context";
 import { Task, TaskStatus } from "@lit/task";
-import { LitElement, css, html } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   environmentContext,
   type Environment,
 } from "../../contexts/environment.js";
-import { settingsHelperContext } from "../../contexts/settings-helper.js";
 import { InputEnterEvent } from "../../events/events.js";
-import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
-import type {
-  TokenGrant,
-  RefreshRequest,
-  RefreshResponse,
-} from "./connection-common.js";
 import {
   fetchAvailableConnections,
   type Connection,
 } from "./connection-server.js";
 import "./connection-signin.js";
-
-/**
- * If a token is going to expire in less than this many milliseconds, we treat
- * it as though it is already expired, since there might be a delay between
- * returning it from here and it actually getting used.
- */
-const EXPIRY_THRESHOLD_MS = /* 1 minute */ 60_000;
+import {
+  ExpiredTokenResult,
+  TokenVendor,
+  tokenVendorContext,
+} from "./token-vendor.js";
 
 /**
  * Input element for handling secrets provided by OAuth connections.
@@ -44,8 +35,8 @@ export class ConnectionInput extends LitElement {
   @consume({ context: environmentContext })
   environment?: Environment;
 
-  @consume({ context: settingsHelperContext })
-  settingsHelper?: SettingsHelper;
+  @consume({ context: tokenVendorContext })
+  tokenVendor?: TokenVendor;
 
   #availableConnections = fetchAvailableConnections(
     this,
@@ -57,22 +48,18 @@ export class ConnectionInput extends LitElement {
 
   #refreshTask = new Task(this, {
     autoRun: false,
-    task: (
+    task: async (
       // TOOD(aomarks) The way we receive parameters here is a bit odd. It would
       // be cool if I could have some parameters defined in `args`, and others
       // passed to `run`, but right now Task only allows one or the other.
-      [grant, connectionId, environment, settingsHelper]: [
-        TokenGrant,
-        typeof this.connectionId,
-        typeof this.environment,
-        typeof this.settingsHelper,
-      ],
+      [expired]: [ExpiredTokenResult],
       { signal }
     ) => {
-      if (!grant || !connectionId || !environment || !settingsHelper) {
+      if (!expired) {
         throw new Error("Uninitialized");
       }
-      this.#refresh(grant, connectionId, environment, settingsHelper, signal);
+      const refreshed = await expired.refresh({ signal });
+      this.#broadcastSecret(refreshed.grant.access_token);
     },
   });
 
@@ -83,38 +70,17 @@ export class ConnectionInput extends LitElement {
   `;
 
   render() {
-    const grant = this.#getGrantFromSettings();
-    if (grant === undefined) {
-      return this.#renderSigninButton();
+    if (!this.tokenVendor || !this.connectionId) {
+      return nothing;
     }
-    const expired = this.#accessTokenIsExpired(grant);
-    if (expired) {
+    const grant = this.tokenVendor.getToken(this.connectionId);
+    if (grant.state === "signedout") {
+      return this.#renderSigninButton();
+    } else if (grant.state === "expired") {
       return this.#refreshAndRenderStatus(grant);
     }
-    this.#broadcastSecret(grant.access_token);
+    this.#broadcastSecret(grant.grant.access_token);
     return html`Token was fresh`;
-  }
-
-  #getGrantFromSettings(): TokenGrant | undefined {
-    if (!this.connectionId || !this.settingsHelper) {
-      return undefined;
-    }
-    const setting = this.settingsHelper.get(
-      SETTINGS_TYPE.CONNECTIONS,
-      this.connectionId
-    );
-    if (setting === undefined) {
-      return undefined;
-    }
-    return JSON.parse(String(setting.value)) as TokenGrant;
-  }
-
-  #accessTokenIsExpired(grant: TokenGrant): boolean {
-    const expiresAt =
-      /* absolute milliseconds */ grant.issue_time +
-      /* relative seconds */ grant.expires_in * 1000;
-    const expiresIn = expiresAt - /* unix milliseconds */ Date.now();
-    return expiresIn <= EXPIRY_THRESHOLD_MS;
   }
 
   #renderSigninButton() {
@@ -148,56 +114,15 @@ export class ConnectionInput extends LitElement {
     });
   }
 
-  #refreshAndRenderStatus(grant: TokenGrant) {
+  #refreshAndRenderStatus(grant: ExpiredTokenResult) {
     if (this.#refreshTask.status === TaskStatus.INITIAL) {
-      this.#refreshTask.run([
-        grant,
-        this.connectionId,
-        this.environment,
-        this.settingsHelper,
-      ]);
+      this.#refreshTask.run([grant]);
     }
     return this.#refreshTask.render({
       pending: () => html`<p>Refreshing token ...</p>`,
       error: (e) => html`<p>Error refreshing token: ${e}</p>`,
       complete: () => html`<p>Token refreshed!</p>`,
     });
-  }
-
-  async #refresh(
-    grant: TokenGrant,
-    connectionId: string,
-    environment: Environment,
-    settingsHelper: SettingsHelper,
-    signal: AbortSignal
-  ) {
-    const refreshUrl = new URL("refresh", environment.connectionServerUrl);
-    refreshUrl.search = new URLSearchParams({
-      connection_id: connectionId,
-      refresh_token: grant.refresh_token,
-    } satisfies RefreshRequest).toString();
-
-    const now = Date.now();
-    const httpRes = await fetch(refreshUrl, { signal, credentials: "include" });
-    if (!httpRes.ok) {
-      throw new Error(String(httpRes.status));
-    }
-    const jsonRes = (await httpRes.json()) as RefreshResponse;
-    if (jsonRes.error !== undefined) {
-      throw new Error(jsonRes.error);
-    }
-
-    const updatedGrant: TokenGrant = {
-      access_token: jsonRes.access_token,
-      expires_in: jsonRes.expires_in,
-      issue_time: now,
-      refresh_token: grant.refresh_token,
-    };
-    settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connectionId, {
-      name: connectionId,
-      value: JSON.stringify(updatedGrant),
-    });
-    this.#broadcastSecret(updatedGrant.access_token);
   }
 
   #broadcastSecret(secret: string) {
