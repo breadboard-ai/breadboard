@@ -78,6 +78,12 @@ const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
     "https://connections-dot-breadboard-community.wl.r.appspot.com",
 };
 
+const ENVIRONMENT: Environment = {
+  connectionServerUrl:
+    ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
+  connectionRedirectUrl: "/oauth/",
+};
+
 @customElement("bb-main")
 export class Main extends LitElement {
   @property({ reflect: true })
@@ -147,11 +153,7 @@ export class Main extends LitElement {
   providerOps = 0;
 
   @provide({ context: environmentContext })
-  environment: Environment = {
-    connectionServerUrl:
-      ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
-    connectionRedirectUrl: "/oauth/",
-  };
+  environment = ENVIRONMENT;
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
