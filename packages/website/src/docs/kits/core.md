@@ -254,13 +254,42 @@ This is a no-op component. It takes the input port values and passes them along 
 
 {{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
 
-Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.
+Given a list, an initial accumulator value, and a board, invokes a board in ["run as component"](https://breadboard-ai.github.io/breadboard/docs/reference/runtime-semantics/#run-as-component-mode) mode for each item and accumulator in the list, returning the final accumulator value. Loosely, same logic as the [`Array.prototype.reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce) function in JavaScript.
+
+When running the board, the `reduce` component will supply input values with the following ids:
+
+- `accumulator` -- the current accumulated result
+- `item` -- the item in the list
+
+In the outputs, it will look for the output values with the following ids:
+
+- `accumulator` -- the new accumulated result.
 
 ### Input ports
 
+The `reduce` component has three static input ports:
+
+- **Accumulator** (id: `accumulator`) -- optional, the initial value of the accumulator that will be supplied along with the first item in the list.
+
+- **Board** (id: `board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- **List** (id: `list`) -- optional, a list to reduce over.
+
 ### Output ports
 
+The component has one static output port:
+
+- **Accumulator** (id: `accumulator`) -- the final accumulated value.
+
 ### Example
+
+Let's suppose we want to research a few topics on Wikipedia, and get a bunch of links for each topic. First, we'll build a board that fits the shape required by the `reduce` component. This board will query Wikipedia for one topic.
+
+{{ "/breadboard/static/boards/kits/example-search-wikipedia.bgl.json" | board }}
+
+Then, we can use another board that makes it run over a list of topics using the `reduce` component.
+
+{{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
 
 ### Implementation
 
