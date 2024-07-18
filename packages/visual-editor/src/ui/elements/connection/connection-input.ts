@@ -5,6 +5,7 @@
  */
 
 import { consume } from "@lit/context";
+import { Task, TaskStatus } from "@lit/task";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
@@ -12,15 +13,18 @@ import {
   type Environment,
 } from "../../contexts/environment.js";
 import { settingsHelperContext } from "../../contexts/settings-helper.js";
-import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
-import type { GrantSettingsValue } from "./connection-common.js";
-import "./connection-signin.js";
-import {
-  type Connection,
-  fetchAvailableConnections,
-} from "./connection-server.js";
-import { Task, TaskStatus } from "@lit/task";
 import { InputEnterEvent } from "../../events/events.js";
+import { SETTINGS_TYPE, type SettingsHelper } from "../../types/types.js";
+import type {
+  GrantSettingsValue,
+  RefreshRequest,
+  RefreshResponse,
+} from "./connection-common.js";
+import {
+  fetchAvailableConnections,
+  type Connection,
+} from "./connection-server.js";
+import "./connection-signin.js";
 
 /**
  * If a token is going to expire in less than this many milliseconds, we treat
@@ -209,18 +213,3 @@ export class ConnectionInput extends LitElement {
     );
   }
 }
-
-// IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/api/refresh.ts
-interface RefreshRequest {
-  connection_id: string;
-  refresh_token: string;
-}
-
-type RefreshResponse =
-  | { error: string }
-  | {
-      error?: undefined;
-      access_token: string;
-      expires_in: number;
-    };
