@@ -89,13 +89,13 @@
               ]
             },
             "page": {
-              "type": "string",
+              "type": "number",
               "title": "Results per page",
               "description": "Number of results to return per page",
               "default": "5"
             },
             "per_page": {
-              "type": "string",
+              "type": "number",
               "title": "Results per page",
               "description": "Number of results to return per page",
               "default": "5"
