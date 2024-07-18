@@ -227,7 +227,10 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Tool Output",
       description: "Return tool results as output",
     },
-    out: addToolResponseToContext.context.title("Context out"),
+    out: addToolResponseToContext.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
   });
 
   const areWeDoneChecker = checkAreWeDone({
@@ -240,7 +243,12 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     text: routeToFunctionsOrText.text,
   });
 
-  return { out: areWeDoneChecker.context.title("Context out") };
+  return {
+    out: areWeDoneChecker.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
+  };
 }).serialize({
   title: "Specialist",
   metadata: {
