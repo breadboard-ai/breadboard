@@ -89,8 +89,18 @@
       "version": "0.1.0"
     },
     {
-      "title": "Hacker News Angolia Search Simplified",
+      "title": "Hacker News Angolia Simplified Comment Search ",
+      "reference": "/graphs/hacker-news-simplified-algolia-comment-search.json",
+      "version": "0.1.0"
+    },
+    {
+      "title": "Hacker News Angolia Simplified Search",
       "reference": "/graphs/hacker-news-simplified-algolia-search.json",
+      "version": "0.1.0"
+    },
+    {
+      "title": "Hacker News Angolia Simplified Story Search",
+      "reference": "/graphs/hacker-news-simplified-algolia-story-search.json",
       "version": "0.1.0"
     },
     {

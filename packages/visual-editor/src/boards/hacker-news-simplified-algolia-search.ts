@@ -12,14 +12,13 @@ import {
     annotate,
     input,
     object,
-    array,
 } from "@breadboard-ai/build";
 import {
     searchQuery,
     searchTags
 } from "./hacker-news-algolia-search";
 
-import { invoke, code } from "@google-labs/core-kit";
+import { invoke} from "@google-labs/core-kit";
 
 export interface HighlightResult {
     author: Author;
@@ -29,7 +28,7 @@ export interface HighlightResult {
 
 export interface Author {
     matchLevel: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     matchedWords: any[];
     value: string;
 }
@@ -64,7 +63,7 @@ export interface VerboseSearchResult {
 }
 
 const hackerNewsSearchBoard = input({
-    $id: "query",
+    $id: "Hacker News Board",
     title: "board location",
     type: annotate(object({}), {
         behavior: ["board"],
@@ -74,19 +73,17 @@ const hackerNewsSearchBoard = input({
 });
 
 const hackerNewsOutput = invoke({
-    $id: "generator",
+    $id: "Hackernews Board Output",
     $board: hackerNewsSearchBoard,
     query: searchQuery,
     tags: searchTags,
     pageNumber: 1,
-    searchLimit: "1",
+    searchLimit: "2",
 }).unsafeOutput("output");
 
-// WIP THIS WORKS IF SEARCH RETURNS AN ITEM
-// BUT IT RETURNS A LIST, SO NEED TO FIGURE OUT HOW TO LOOP
 
 const objectManipBoard = input({
-    $id: "query",
+    $id: "Object Manipulation Board",
     title: "board location",
     type: annotate(object({}), {
         behavior: ["board"],
@@ -95,28 +92,36 @@ const objectManipBoard = input({
     default: { kind: "board", path: "object-manipulator.json" },
 })
 
-const objectManipOutput = invoke({
-    $id: "manipulator",
-    $board: objectManipBoard,
-    object: hackerNewsOutput,
-    mode: "pick",
+const forEachBoard = input({
+    $id: "Manipulation Board For Each",
+    title: "board location",
+    type: annotate(object({}), {
+        behavior: ["board"],
+    }),
+    description: "The URL of the generator to call",
+    default: { kind: "board", path: "board-for-each.json" }
+});
+
+// ignore until object manip board has been refactored
+// @ts-ignore
+const invokeForEach = invoke({$id: "forEachOutput", $board: forEachBoard, board: objectManipBoard, array:hackerNewsOutput, mode: "pick",
     keys: [
         "created_at",
         "num_comments",
+        "comment_text",
         "objectID",
         "points",
         "story_id",
         "title",
-        "updated_at",
         "url",
-        "objectType",
-      ],
-}).unsafeOutput("object")
+        "type",
+        "_tags"
+      ], }).unsafeOutput("outputs")
+
 
 export default board({
-    title: "Hacker News Angolia Search Simplified",
-    description: "Board which returns story contents using the Hacker News Angolia API",
+    title: "Hacker News Angolia Simplified Search",
     version: "0.1.0",
-    inputs: { searchQuery, searchTags, hackerNewsSearchBoard, objectManipBoard },
-    outputs: { test: output(objectManipOutput) }
+    inputs: { query: searchQuery, tags: searchTags, hackerNewsSearchBoard, objectManipBoard, forEachBoard },
+    outputs: { output: output(invokeForEach) }
 })

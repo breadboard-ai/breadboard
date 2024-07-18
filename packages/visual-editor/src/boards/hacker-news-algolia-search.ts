@@ -67,7 +67,6 @@ const constructURL = code(
     return { url: baseURL }
   })
 
-
 const url = urlTemplate({
   $id: "urlTemplate",
   template: constructURL.outputs.url,
@@ -138,6 +137,8 @@ const spreadHackerNewsStoryResponse = code({
       object[key] = "N/A"
     }
   }
+  // @ts-ignore
+
 
   return { ...object } as any;
 })
@@ -156,6 +157,6 @@ export default board({
     pageNumber: pageNumber,
     searchLimit: searchLimit
   },
-  outputs: { searchQuery: url.outputs.url, output: output(sliceOutput.outputs.sliced) }
+  outputs: { searchQuery: url.outputs.url, output: output(sliceOutput.outputs.sliced)}
 })
 
