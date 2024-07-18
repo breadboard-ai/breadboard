@@ -122,7 +122,6 @@ export default defineNodeType({
   describe: async (staticInputs, dynamicInputs, context) => {
     // TODO(aomarks) Cast here because the type system doesn't understand
     // BreadboardCapability or GraphDescriptors yet.
-    console.log("🍊 describing invoke", staticInputs);
     const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
     return describe(inputs, context);
   },
