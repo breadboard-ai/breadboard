@@ -29,7 +29,7 @@ const generator = input({
   default: { kind: "board", path: "gemini-generator.json" },
 });
 
-const response = invoke({ $id: "gemini", $board: generator, instructions: prompt }).unsafeOutput("text");
+const response = invoke({ $id: "gemini", $board: generator, text: prompt }).unsafeOutput("text");
 
 export default board({
   title: "The simplest LLM-based board",
