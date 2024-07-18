@@ -1,59 +1,234 @@
 {
   "title": "Hacker News Algolia Items",
   "description": "Fetch a single item from the Hacker News Algolia API",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch-38",
+      "from": "fetch",
       "to": "spreadResponse",
       "out": "response",
-      "in": "object"
+      "in": "obj"
     },
     {
-      "from": "input-36",
-      "to": "urlTemplate-37",
-      "out": "OBJECT_ID",
-      "in": "OBJECT_ID"
+      "from": "input-0",
+      "to": "urlTemplate",
+      "out": "ID",
+      "in": "ID"
     },
     {
       "from": "spreadResponse",
-      "to": "output-39",
-      "out": "*",
-      "in": ""
+      "to": "output-0",
+      "out": "author",
+      "in": "author"
     },
     {
-      "from": "urlTemplate-37",
-      "to": "fetch-38",
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "children",
+      "in": "children"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "created_at",
+      "in": "created_at"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "created_at_i",
+      "in": "created_at_i"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "id",
+      "in": "id"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "parent_id",
+      "in": "parent_id"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "points",
+      "in": "points"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "title",
+      "in": "title"
+    },
+    {
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "type",
+      "in": "type"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "fetch",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "urlTemplate",
+      "to": "output-0",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "input-36",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
+          "type": "object",
           "properties": {
-            "OBJECT_ID": {
+            "ID": {
               "type": "string",
-              "title": "Object ID",
-              "description": "ID of object to fetch from Hacker News Algolia API",
+              "title": "story ID",
+              "description": "Hacker News Story ID",
               "examples": [
                 "39788322"
               ]
             }
-          }
+          },
+          "required": [
+            "ID"
+          ]
         }
-      },
-      "metadata": {
-        "title": "Input"
       }
     },
     {
-      "id": "output-39",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
+          "type": "object",
+          "properties": {
+            "author": {
+              "type": "string",
+              "title": "Hacker News item author",
+              "description": "Hacker News item author"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "array",
+                  "boolean",
+                  "null",
+                  "number",
+                  "object",
+                  "string"
+                ]
+              },
+              "title": "Hacker News item children IDs'",
+              "description": "Hacker News item children' IDs'"
+            },
+            "created_at": {
+              "type": "string",
+              "title": "Hacker News item created_at'",
+              "description": "Hacker News item created_at'"
+            },
+            "created_at_i": {
+              "type": "number",
+              "title": "Hacker News Story created_at timestamp'",
+              "description": "Hacker item item created_at timestamp'"
+            },
+            "id": {
+              "type": "number",
+              "title": "Hacker News item ID",
+              "description": "Hacker News item ID"
+            },
+            "parent_id": {
+              "type": "number",
+              "title": "Hacker News item parent ID",
+              "description": "Hacker News item parent ID"
+            },
+            "points": {
+              "type": "number",
+              "title": "Hacker News item Points",
+              "description": "Hacker News item Points"
+            },
+            "text": {
+              "type": "string",
+              "title": "Hacker News item text Field",
+              "description": "Hacker News item text "
+            },
+            "title": {
+              "type": "string",
+              "title": "Hacker News item title Field",
+              "description": "Hacker News item title"
+            },
+            "type": {
+              "type": "string",
+              "title": "Hacker News item type Field",
+              "description": "Hacker News item type"
+            },
+            "url": {
+              "type": "string",
+              "title": "item URL",
+              "description": "The fetched Hackernews item URL"
+            }
+          },
+          "required": [
+            "author",
+            "children",
+            "created_at",
+            "created_at_i",
+            "id",
+            "parent_id",
+            "points",
+            "text",
+            "title",
+            "type",
+            "url"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "method": "GET"
+      }
+    },
+    {
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = ({obj})=>{if(obj==void 0){throw new Error(`object is undefined`)}const object=obj;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}for(const key in object){if(object[key]==void 0){object[key]=\"N/A\"}}return{...object}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "obj": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
+        "name": "spreadResponse",
+        "outputSchema": {
           "type": "object",
           "properties": {
             "author": {
@@ -62,7 +237,14 @@
             "children": {
               "type": "array",
               "items": {
-                "type": "object"
+                "type": [
+                  "array",
+                  "boolean",
+                  "null",
+                  "number",
+                  "object",
+                  "string"
+                ]
               }
             },
             "created_at": {
@@ -71,12 +253,11 @@
             "created_at_i": {
               "type": "number"
             },
-            "id": {
-              "type": "number"
-            },
             "options": {
               "type": "array",
-              "items": {}
+              "items": {
+                "type": "string"
+              }
             },
             "parent_id": {
               "type": "number"
@@ -84,10 +265,12 @@
             "points": {
               "type": "number"
             },
-            "story_id": {
+            "id": {
               "type": "number"
             },
-            "text": {},
+            "text": {
+              "type": "string"
+            },
             "title": {
               "type": "string"
             },
@@ -97,58 +280,16 @@
             "url": {
               "type": "string"
             }
-          },
-          "required": [
-            "author",
-            "children",
-            "created_at",
-            "created_at_i",
-            "id",
-            "options",
-            "parent_id",
-            "points",
-            "story_id",
-            "text",
-            "title",
-            "type",
-            "url"
-          ]
-        }
-      },
-      "metadata": {
-        "title": "Output"
-      }
-    },
-    {
-      "id": "fetch-38",
-      "type": "fetch",
-      "configuration": {
-        "method": "GET"
-      },
-      "metadata": {
-        "title": "Fetch"
-      }
-    },
-    {
-      "id": "spreadResponse",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
-        "name": "spreadResponse",
+          }
+        },
         "raw": true
-      },
-      "metadata": {
-        "title": "Spread Response"
       }
     },
     {
-      "id": "urlTemplate-37",
+      "id": "urlTemplate",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://hn.algolia.com/api/v1/items/{OBJECT_ID}"
-      },
-      "metadata": {
-        "title": "URL Template "
+        "template": "https://hn.algolia.com/api/v1/items/{ID}"
       }
     }
   ]
