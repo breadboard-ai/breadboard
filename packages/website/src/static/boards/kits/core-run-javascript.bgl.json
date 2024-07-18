@@ -1,5 +1,5 @@
 {
-  "title": "runJavascript node example",
+  "title": "runJavascript component example",
   "version": "0.0.1",
   "nodes": [
     {
@@ -8,17 +8,12 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
+            "topics": {
+              "type": "string",
+              "title": "Topics",
               "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              "format": "multiline",
+              "description": "A list of topics, each on new line"
             }
           },
           "type": "object",
@@ -27,8 +22,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": 0,
+          "x": -86,
+          "y": -79,
           "collapsed": false
         }
       }
@@ -39,17 +34,13 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
+            "list": {
               "type": "array",
-              "title": "Context",
+              "title": "List",
               "examples": [],
               "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
+                "type": "string"
+              }
             }
           },
           "type": "object",
@@ -58,8 +49,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 0,
+          "x": 270,
+          "y": -100,
           "collapsed": false
         }
       }
@@ -69,23 +60,48 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 17,
-          "y": -136,
+          "x": 52,
+          "y": -107,
           "collapsed": false
-        }
+        },
+        "title": "Split Topics",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "name": "run",
+        "code": "function run({topics}) {\n  return topics.trim().split(\"\\n\");\n}"
       }
     }
   ],
   "edges": [
     {
-      "from": "input",
-      "out": "context",
+      "from": "runJavascript-b94c0252",
       "to": "output",
-      "in": "context"
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-b94c0252",
+      "out": "topics",
+      "in": "topics"
     }
   ],
   "description": "No Description",
   "metadata": {
-    "tags": []
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-7a3b4e32",
+        "text": "Use JS to split a string into a list of topics.",
+        "metadata": {
+          "visual": {
+            "x": 34,
+            "y": -168,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }
