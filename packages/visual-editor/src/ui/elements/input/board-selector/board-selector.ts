@@ -9,7 +9,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { SubGraphChosenEvent } from "../../events/events.js";
+import { SubGraphChosenEvent } from "../../../events/events.js";
 
 @customElement("bb-board-selector")
 export class BoardSelector extends LitElement {

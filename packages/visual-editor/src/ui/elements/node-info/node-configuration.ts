@@ -20,7 +20,7 @@ import {
   inspect,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { SchemaEditor } from "./schema-editor.js";
+import { SchemaEditor } from "../input/schema-editor/schema-editor.js";
 import {
   CommentUpdateEvent,
   GraphNodeDeselectedAllEvent,
@@ -32,8 +32,8 @@ import {
   resolveArrayType,
   resolveBehaviorType,
 } from "../../utils/schema.js";
-import { ArrayEditor } from "./array-editor.js";
-import { BoardSelector } from "./board-selector.js";
+import { ArrayEditor } from "../input/array/array-editor.js";
+import { BoardSelector } from "../input/board-selector/board-selector.js";
 import { isBoard } from "../../utils/board.js";
 import { CodeEditor } from "../input/code-editor/code-editor.js";
 import { LLMInput } from "../input/llm-input/llm-input.js";

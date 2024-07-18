@@ -5,10 +5,10 @@
  */
 
 export { ActivityLog } from "./activity-log/activity-log.js";
-export { ArrayEditor } from "./node-info/array-editor.js";
+export { ArrayEditor } from "./input/array/array-editor.js";
 export { BoardDetails } from "./board-details/board-details.js";
 export { BoardEditOverlay } from "./overlay/board-edit.js";
-export { BoardSelector } from "./node-info/board-selector.js";
+export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { ConnectionBroker } from "./connection/connection-broker.js";
 export { ConnectionInput } from "./connection/connection-input.js";
@@ -28,8 +28,8 @@ export { LLMInputArray } from "./input/llm-input/llm-input-array.js";
 export { LLMOutput } from "./llm-output/llm-output.js";
 export { LLMOutputArray } from "./llm-output/llm-output-array.js";
 export { Navigation } from "./nav/nav.js";
+export { NodeMetaDetails } from "./node-info/node-meta-details.js";
 export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
-export { NodeMetaDetails } from "./node-meta-details/node-meta-details.js";
 export { NodeRunner } from "./node-runner/node-runner.js";
 export { NodeSelector } from "./editor/node-selector.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
@@ -37,7 +37,7 @@ export { Overlay } from "./overlay/overlay.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
 export { ProviderOverlay } from "./overlay/provider.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
-export { SchemaEditor } from "./node-info/schema-editor.js";
+export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { Splitter } from "./splitter/splitter.js";
 export { Switcher } from "./switcher/switcher.js";

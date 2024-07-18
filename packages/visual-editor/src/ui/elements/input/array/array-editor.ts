@@ -13,8 +13,8 @@ import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { assertIsLLMContent } from "../../utils/schema.js";
-import { BoardSelector } from "./board-selector.js";
+import { assertIsLLMContent } from "../../../utils/schema.js";
+import { BoardSelector } from "../board-selector/board-selector.js";
 
 enum TYPE {
   STRING = "string",
