@@ -33,15 +33,15 @@ const entity = input({
 });
 
 const page = input({
-  type: "string", // TODO(Tina): This needs to be changed to "number" once the TemplateKit `urlTemplate` wildcard input also accepts numbers.
-  default: "5",
+  type: "number",
+  default: 5,
   title: "Results per page",
   description: "Number of results to return per page",
 });
 
 const per_page = input({
-  type: "string", // TODO(Tina): This needs to be changed to "number" once the TemplateKit `urlTemplate` wildcard input also accepts numbers.
-  default: "5",
+  type: "number",
+  default: 5,
   title: "Results per page",
   description: "Number of results to return per page",
 });
