@@ -45,6 +45,9 @@ const mapNode = defineNodeType({
     title: "Map",
     description:
       "Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-map-component",
+    },
   },
   inputs: {
     list: {

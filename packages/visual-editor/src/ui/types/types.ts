@@ -27,6 +27,8 @@ export const enum HistoryEventType {
   GRAPHEND = "graphend",
 }
 
+export type InputCallback = (data: Record<string, unknown>) => void;
+
 export type Board = {
   title: string;
   url: string;

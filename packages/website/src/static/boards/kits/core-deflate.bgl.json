@@ -1,38 +1,7 @@
 {
-  "title": "deflate node example",
+  "title": "deflate component example",
   "version": "0.0.1",
   "nodes": [
-    {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 0,
-          "y": 0,
-          "collapsed": false
-        }
-      }
-    },
     {
       "type": "output",
       "id": "output",
@@ -58,34 +27,83 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 0,
+          "x": 237,
+          "y": -165,
           "collapsed": false
         }
       }
     },
     {
-      "id": "deflate-c0515b15",
+      "id": "fetch-3a33a03d",
+      "type": "fetch",
+      "metadata": {
+        "visual": {
+          "x": -212,
+          "y": -187,
+          "collapsed": false
+        },
+        "title": "Get Inline Data",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "method": "GET",
+        "url": "https://dglazkov-getbreadboardemoji.web.val.run"
+      }
+    },
+    {
+      "id": "deflate-5a602188",
       "type": "deflate",
       "metadata": {
         "visual": {
-          "x": 61,
-          "y": -139,
+          "x": 50,
+          "y": -164,
           "collapsed": false
-        }
+        },
+        "title": "Deflate It",
+        "logLevel": "debug"
       }
     }
   ],
   "edges": [
     {
-      "from": "input",
-      "out": "context",
+      "from": "fetch-3a33a03d",
+      "to": "deflate-5a602188",
+      "out": "response",
+      "in": "data"
+    },
+    {
+      "from": "deflate-5a602188",
       "to": "output",
+      "out": "data",
       "in": "context"
     }
   ],
   "description": "No Description",
   "metadata": {
-    "tags": []
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-dedad955",
+        "text": "Fetches some inline data from the Internet.",
+        "metadata": {
+          "visual": {
+            "x": -270,
+            "y": -244,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b5dcea8d",
+        "text": "Converts inline data to\na lightweight handle.",
+        "metadata": {
+          "visual": {
+            "x": 39,
+            "y": -228,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }

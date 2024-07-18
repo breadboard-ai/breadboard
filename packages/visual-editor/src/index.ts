@@ -1407,7 +1407,6 @@ export class Main extends LitElement {
     const editor = this.#getEditor();
     const history = editor?.history();
 
-    const settings = this.#settings ? this.#settings.values : null;
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
@@ -1600,7 +1599,7 @@ export class Main extends LitElement {
           .status=${this.status}
           .boardId=${this.#boardId}
           .failedToLoad=${this.#failedGraphLoad}
-          .settings=${settings}
+          .settings=${this.#settings}
           .providers=${this.#providers}
           .providerOps=${this.providerOps}
           .history=${history}

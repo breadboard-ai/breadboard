@@ -14,6 +14,7 @@ import {
   array,
   defineNodeType,
   object,
+  optionalEdge,
   output,
   unsafeCast,
 } from "../index.js";
@@ -2161,6 +2162,51 @@ test("constant input", () => {
           },
         },
         { id: "a-0", type: "a", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("optional output", () => {
+  const foo = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      nodeOut: { type: "string" },
+    },
+    invoke: () => ({ nodeOut: "foo" }),
+  });
+
+  const { nodeOut } = foo({}).outputs;
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { boardOut: output(optionalEdge(nodeOut)) },
+    }),
+    {
+      edges: [
+        {
+          from: "foo-0",
+          to: "output-0",
+          out: "nodeOut",
+          in: "boardOut",
+          optional: true,
+        },
+      ],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { boardOut: { type: "string" } },
+              required: [],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
       ],
     }
   );
