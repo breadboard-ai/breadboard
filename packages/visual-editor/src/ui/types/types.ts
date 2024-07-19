@@ -43,7 +43,8 @@ export enum STATUS {
 export type UserInputConfiguration = {
   name: string;
   title: string;
-  configured: boolean;
+  required?: boolean;
+  configured?: boolean;
   value?: NodeValue;
   schema?: Schema;
   status?: PortStatus;

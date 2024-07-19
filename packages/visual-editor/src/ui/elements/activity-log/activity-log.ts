@@ -11,21 +11,23 @@ import {
   InspectableRunInputs,
   InspectableRunNodeEvent,
   OutputValues,
+  Schema,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { InputRequestedEvent } from "../../events/events.js";
+import { InputEnterEvent, InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { SETTINGS_TYPE } from "../../types/types.js";
+import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
 import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
 import { SettingsStore } from "../../../data/settings-store.js";
+import { UserInput } from "../elements.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -55,6 +57,7 @@ export class ActivityLog extends LitElement {
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
+  #userInputRef: Ref<UserInput> = createRef();
   #isHidden = false;
   #serializedRun: SerializedRun | null = null;
   #observer = new IntersectionObserver((entries) => {
@@ -242,23 +245,65 @@ export class ActivityLog extends LitElement {
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
     const schema = nodeSchema?.outputSchema || inputs.schema;
+    const requiredFields = (inputs.schema as Schema).required ?? [];
 
     // TODO: Implement support for multiple iterations over the
     // same input over a run. Currently, we will only grab the
     // first value.
     const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
+    const userInputs: UserInputConfiguration[] = Object.entries(
+      schema.properties ?? {}
+    ).reduce((prev, [name, schema]) => {
+      prev.push({
+        name,
+        title: schema.title ?? name,
+        schema,
+        configured: false,
+        required: requiredFields.includes(name),
+        value: values ? values[name] : undefined,
+      });
+
+      return prev;
+    }, [] as UserInputConfiguration[]);
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData();
+      if (!outputs) {
+        return;
+      }
+
+      this.dispatchEvent(new InputEnterEvent(descriptor.id, outputs, true));
+    };
+
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
       </h1>
-      <bb-input
+      <bb-user-input
         id="${descriptor.id}"
-        .secret=${false}
+        .showTypes=${false}
         .autosubmit=${false}
         .remember=${false}
-        .schema=${schema}
-        .values=${values}
-      ></bb-input>
+        .inputs=${userInputs}
+        ${ref(this.#userInputRef)}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (!(evt.key === "Enter" && isCtrlCommand)) {
+            return;
+          }
+
+          continueRun();
+        }}
+      ></bb-user-input>
+      <button class="continue-button" @click=${() => continueRun()}>
+        Continue
+      </button>
     </section>`;
   }
 

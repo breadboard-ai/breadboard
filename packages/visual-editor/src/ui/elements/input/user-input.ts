@@ -162,9 +162,14 @@ export class UserInput extends LitElement {
     evt.preventDefault();
   }
 
-  #processData() {
+  processData() {
     if (!this.#formRef.value) {
-      return;
+      return null;
+    }
+
+    if (!this.#formRef.value.checkValidity()) {
+      this.#formRef.value.reportValidity();
+      return null;
     }
 
     const outputs: UserOutputValues = this.inputs
@@ -184,6 +189,14 @@ export class UserInput extends LitElement {
         let inputValue: NodeValue = el.value;
         if (input.schema) {
           switch (input.schema.type) {
+            case "number": {
+              inputValue = Number.parseFloat(inputValue);
+              if (Number.isNaN(inputValue)) {
+                inputValue = null;
+              }
+              break;
+            }
+
             case "boolean": {
               inputValue = el.checked;
               break;
@@ -208,12 +221,25 @@ export class UserInput extends LitElement {
         return { name: input.name, value: inputValue };
       })
       .reduce((prev, curr) => {
-        if (curr.value !== "") {
+        if (
+          curr.value !== "" &&
+          curr.value !== null &&
+          curr.value !== undefined
+        ) {
           prev[curr.name] = curr.value;
         }
 
         return prev;
       }, {} as UserOutputValues);
+
+    return outputs;
+  }
+
+  #emitProcessedData() {
+    const outputs = this.processData();
+    if (!outputs) {
+      return;
+    }
 
     this.dispatchEvent(new UserOutputEvent(outputs));
   }
@@ -222,9 +248,9 @@ export class UserInput extends LitElement {
     return html`<form
       ${ref(this.#formRef)}
       @input=${() => {
-        this.#processData();
+        this.#emitProcessedData();
       }}
-      @bbcodechange=${this.#processData}
+      @bbcodechange=${this.#emitProcessedData}
       @submit=${this.#onFormSubmit}
     >
       ${map(this.inputs, (input) => {
@@ -242,10 +268,32 @@ export class UserInput extends LitElement {
             >`;
           }
 
-          const defaultValue =
-            typeof input.schema.default === "string"
-              ? input.schema.default
-              : "";
+          const unparsedDefaultValue =
+            input.schema.examples && input.schema.examples.length > 0
+              ? input.schema.examples[0]
+              : typeof input.schema.default === "string"
+                ? input.schema.default
+                : "";
+
+          let defaultValue: unknown = unparsedDefaultValue;
+          try {
+            // For objects & arrays the default value / example values should be
+            // serialized values, so we attempt to deserialize them before use.
+            if (
+              input.schema.type === "object" ||
+              input.schema.type === "array"
+            ) {
+              if (defaultValue !== "") {
+                defaultValue = JSON.parse(unparsedDefaultValue);
+              } else {
+                defaultValue = null;
+              }
+            }
+          } catch (err) {
+            console.warn(`Unable to parse default value for "${input.name}"`);
+            console.warn("Value provided", unparsedDefaultValue);
+            console.warn(err);
+          }
 
           switch (input.schema.type) {
             case "array": {
@@ -265,13 +313,6 @@ export class UserInput extends LitElement {
                 inputField = html`<bb-llm-input-array
                   id="${input.name}"
                   name="${input.name}"
-                  @keydown=${(evt: KeyboardEvent) => {
-                    if (!(evt.key === "Enter" && evt.metaKey)) {
-                      return;
-                    }
-
-                    // TODO: this.processInput();
-                  }}
                   .description=${input.schema.description || null}
                   .values=${value}
                   .allow=${allow}
@@ -325,7 +366,7 @@ export class UserInput extends LitElement {
                   id="${input.name}"
                   name="${input.name}"
                   .schema=${input.schema}
-                  .value=${input.value}
+                  .value=${input.value ?? defaultValue ?? null}
                   .description=${input.schema.description || null}
                 ></bb-llm-input>`;
                 break;
@@ -357,6 +398,7 @@ export class UserInput extends LitElement {
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"
+                ?required=${input.required}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
               break;
@@ -383,11 +425,13 @@ export class UserInput extends LitElement {
                 ></bb-code-editor>`;
                 break;
               }
+              console.log(input);
               inputField = html`<input
                 type="text"
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"
+                ?required=${input.required}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
               break;
@@ -397,7 +441,7 @@ export class UserInput extends LitElement {
 
         const styles: Record<string, boolean> = {
           item: true,
-          configured: input.configured,
+          configured: input.configured ?? false,
         };
 
         if (input.status) {
@@ -450,6 +494,6 @@ export class UserInput extends LitElement {
           ${inputField}
         </div>`;
       })}
-    </form>`;
+    </form> `;
   }
 }
