@@ -417,17 +417,17 @@ export class UserInput extends LitElement {
                 }
 
                 const behavior = Array.isArray(input.schema?.items?.behavior)
-                  ? input.schema?.items?.behavior.join(", ")
+                  ? ` [input.schema?.items?.behavior.join(", ")]`
                   : "";
-                typeString = `array [${behavior}]`;
+                typeString = `array${behavior}`;
                 break;
               }
 
               case "object": {
                 const behavior = Array.isArray(input.schema?.behavior)
-                  ? input.schema?.behavior.join(", ")
+                  ? ` [${input.schema?.behavior.join(", ")}]`
                   : "";
-                typeString = `object [${behavior}]`;
+                typeString = `object${behavior}`;
                 break;
               }
 
