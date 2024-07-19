@@ -2,11 +2,7 @@
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- *
- * @title Hacker News Simplified Algolia Search
- * see: https://hn.algolia.com/api
  */
-
 import {
   output,
   board,
@@ -30,7 +26,6 @@ const hackerNewsSimplifiedSearchBoard = input({
   description: "The URL of the generator to call",
   default: { kind: "board", path: "hacker-news-simplified-algolia-search.json" },
 });
-
 
 const simplifiedStory = invoke({
   $id: "Simplified Search Test",

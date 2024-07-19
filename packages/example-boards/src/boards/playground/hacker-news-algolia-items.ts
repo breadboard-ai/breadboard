@@ -1,7 +1,13 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import {
     array,
     board,
     input,
+    object,
     output,
 } from "@breadboard-ai/build";
 import { fetch, code } from "@google-labs/core-kit";
@@ -26,6 +32,12 @@ const fetchOutput = fetch({
     url: url.outputs.url,
 })
 
+// children can also have children, not sure how to show that here
+const children = object({
+    "author": "string", children: array(object({})), created_at: "string", id: "number", options: array("string"), story_id: "number", text: "string", title: "string", type: "string",
+    url: "string"
+})
+
 // TODO properly do output schema
 const spreadHackerNewsStoryResponse = code({
     $id: "spreadResponse",
@@ -33,7 +45,7 @@ const spreadHackerNewsStoryResponse = code({
 }, {
     author: "string",
     // children themselves cause also have children, not sure how to do that
-    children: array("unknown"),
+    children: array(children),
     created_at: "string",
     created_at_i: "number",
     options: array("string"),
@@ -78,8 +90,8 @@ export default board({
             description: "Hacker News item author",
         }),
         children: output(spreadHackerNewsStoryResponse.outputs.children, {
-            title: "Hacker News item children IDs'",
-            description: "Hacker News item children' IDs'",
+            title: "Hacker News item children'",
+            description: "Hacker News item children",
         }),
         created_at: output(spreadHackerNewsStoryResponse.outputs.created_at, {
             title: "Hacker News item created_at'",

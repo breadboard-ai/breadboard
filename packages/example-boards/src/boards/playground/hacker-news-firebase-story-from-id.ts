@@ -1,9 +1,10 @@
-// /**
-//  * @license
-//  * Copyright 2024 Google LLC
-//  * SPDX-License-Identifier: Apache-2.0
-//  *
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import {
+  array,
   board,
   input,
   output,
@@ -38,7 +39,7 @@ const spreadHackerNewsStoryResponse = code({
   by: "string",
   descendants: "string",
   id: "string",
-  kids: "unknown",
+  kids: array("number"),
   score: "string",
   text: "string",
   time: "string",

@@ -122,14 +122,10 @@
               "description": "Hacker News Story ID"
             },
             "kids": {
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ],
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
               "title": "Hacker News Story Kids' IDs'",
               "description": "Hacker News Story Kids' IDs'"
             },
@@ -214,14 +210,10 @@
               "type": "string"
             },
             "kids": {
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ]
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
             },
             "score": {
               "type": "string"
