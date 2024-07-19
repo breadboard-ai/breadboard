@@ -14,6 +14,7 @@ import {
   isWebcamImage,
   isLLMContent,
   isLLMContentArray,
+  isEnum,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -377,7 +378,9 @@ export class Input extends LitElement {
             input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
           } else if (isSelect(property)) {
             // Select input.
-            const options = property.enum || [];
+            const options = isEnum(property)
+              ? property.enum || []
+              : property.examples || [];
             input = html`<div>
               <select name="${key}" id="${key}">
                 ${options.map((option) => {
