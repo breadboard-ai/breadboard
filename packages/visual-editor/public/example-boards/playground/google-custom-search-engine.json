@@ -52,18 +52,6 @@
       "in": "CSE_START"
     },
     {
-      "from": "pop",
-      "to": "repop",
-      "out": "array",
-      "in": "arr"
-    },
-    {
-      "from": "repop",
-      "to": "spreadFinal",
-      "out": "item",
-      "in": "obj"
-    },
-    {
       "from": "search",
       "to": "spread",
       "out": "response",
@@ -71,57 +59,15 @@
     },
     {
       "from": "spread",
-      "to": "pop",
+      "to": "spreadFinals",
       "out": "items",
-      "in": "arr"
+      "in": "obj"
     },
     {
-      "from": "spreadFinal",
+      "from": "spreadFinals",
       "to": "output-0",
-      "out": "displayLink",
-      "in": "displayLink"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "formattedUrl",
-      "in": "formattedUrl"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "htmlSnippet",
-      "in": "htmlSnippet"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "htmlTitle",
-      "in": "htmlTitle"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "link",
-      "in": "link"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "pagemap",
-      "in": "pagemap"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "snippet",
-      "in": "snippet"
-    },
-    {
-      "from": "spreadFinal",
-      "to": "output-0",
-      "out": "title",
-      "in": "title"
+      "out": "results",
+      "in": "results"
     }
   ],
   "nodes": [
@@ -220,119 +166,135 @@
         "schema": {
           "type": "object",
           "properties": {
-            "displayLink": {
-              "type": "string"
-            },
-            "formattedUrl": {
-              "type": "string"
-            },
-            "htmlSnippet": {
-              "type": "string"
-            },
-            "htmlTitle": {
-              "type": "string"
-            },
-            "link": {
-              "type": "string"
-            },
-            "pagemap": {
-              "type": "object",
-              "properties": {
-                "cse_thumbnail": {
-                  "type": "array",
-                  "items": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
                     "type": "object",
                     "properties": {
-                      "src": {
-                        "type": "string"
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
+                        }
                       },
-                      "height": {
-                        "type": "string"
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
                       },
-                      "width": {
-                        "type": "string"
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
                       }
                     },
                     "required": [
-                      "src",
-                      "height",
-                      "width"
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
                     ],
                     "additionalProperties": false
                   }
                 },
-                "softwaresourcecode": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "author": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "text": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "author",
-                      "name",
-                      "text"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "metatags": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": false
-                  }
-                },
-                "cse_image": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "src": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "src"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "required": [
-                "cse_thumbnail",
-                "softwaresourcecode",
-                "metatags",
-                "cse_image"
-              ],
-              "additionalProperties": false
-            },
-            "snippet": {
-              "type": "string"
-            },
-            "title": {
-              "type": "string"
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl",
+                  "pagemap"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "required": [
-            "displayLink",
-            "formattedUrl",
-            "htmlSnippet",
-            "htmlTitle",
-            "link",
-            "pagemap",
-            "snippet",
-            "title"
+            "results"
           ]
         }
       }
@@ -366,215 +328,6 @@
       }
     },
     {
-      "id": "pop",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const pop = ({arr})=>{const[item,...rest]=arr;if(item){console.log(\"ITEM EXISTS 1\");return{array:rest,item}}return{}};",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "arr": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {},
-                "required": [],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "name": "pop",
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "array": {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": [
-                      "array",
-                      "boolean",
-                      "null",
-                      "number",
-                      "object",
-                      "string"
-                    ]
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              }
-            },
-            "item": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object",
-                  "properties": {},
-                  "required": [],
-                  "additionalProperties": false
-                },
-                {
-                  "type": [
-                    "array",
-                    "boolean",
-                    "null",
-                    "number",
-                    "object",
-                    "string"
-                  ]
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
-          }
-        },
-        "raw": true
-      },
-      "metadata": {
-        "title": "Pop",
-        "description": "Pop the array"
-      }
-    },
-    {
-      "id": "repop",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const repop = ({arr})=>{const[item,...rest]=arr;if(item){console.log(\"ITEM EXISTS 2\");return{array:rest,item}}return{}};",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "arr": {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": [
-                      "array",
-                      "boolean",
-                      "null",
-                      "number",
-                      "object",
-                      "string"
-                    ]
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "name": "repop",
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "array": {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": [
-                      "array",
-                      "boolean",
-                      "null",
-                      "number",
-                      "object",
-                      "string"
-                    ]
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              }
-            },
-            "item": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object",
-                  "properties": {},
-                  "required": [],
-                  "additionalProperties": false
-                },
-                {
-                  "type": [
-                    "array",
-                    "boolean",
-                    "null",
-                    "number",
-                    "object",
-                    "string"
-                  ]
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
-          }
-        },
-        "raw": true
-      },
-      "metadata": {
-        "title": "RePop",
-        "description": "Pop the array"
-      }
-    },
-    {
       "id": "search",
       "type": "fetch",
       "configuration": {},
@@ -586,7 +339,7 @@
       "id": "spread",
       "type": "runJavascript",
       "configuration": {
-        "code": "const spread = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{...obj}};",
+        "code": "const spread = ({obj:obj2})=>{if(typeof obj2!==\"object\"){throw new Error(`object is of type ${typeof obj2} not object`)}return{...obj2}};",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -625,153 +378,153 @@
       }
     },
     {
-      "id": "spreadFinal",
+      "id": "spreadFinals",
       "type": "runJavascript",
       "configuration": {
-        "code": "const spreadFinal = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{...obj}};",
+        "code": "const spreadFinals = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{results:{...obj}}};",
         "inputSchema": {
           "type": "object",
           "properties": {
             "obj": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object",
-                  "properties": {},
-                  "required": [],
-                  "additionalProperties": false
-                },
-                {
-                  "type": [
-                    "array",
-                    "boolean",
-                    "null",
-                    "number",
-                    "object",
-                    "string"
-                  ]
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
             }
           }
         },
-        "name": "spreadFinal",
+        "name": "spreadFinals",
         "outputSchema": {
           "type": "object",
           "properties": {
-            "title": {
-              "type": "string"
-            },
-            "htmlTitle": {
-              "type": "string"
-            },
-            "link": {
-              "type": "string"
-            },
-            "displayLink": {
-              "type": "string"
-            },
-            "snippet": {
-              "type": "string"
-            },
-            "htmlSnippet": {
-              "type": "string"
-            },
-            "formattedUrl": {
-              "type": "string"
-            },
-            "htmlFormattedUrl": {
-              "type": "string"
-            },
-            "pagemap": {
-              "type": "object",
-              "properties": {
-                "cse_thumbnail": {
-                  "type": "array",
-                  "items": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
                     "type": "object",
                     "properties": {
-                      "src": {
-                        "type": "string"
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
+                        }
                       },
-                      "height": {
-                        "type": "string"
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
                       },
-                      "width": {
-                        "type": "string"
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
                       }
                     },
                     "required": [
-                      "src",
-                      "height",
-                      "width"
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
                     ],
                     "additionalProperties": false
                   }
                 },
-                "softwaresourcecode": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "author": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "text": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "author",
-                      "name",
-                      "text"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "metatags": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": false
-                  }
-                },
-                "cse_image": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "src": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "src"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "required": [
-                "cse_thumbnail",
-                "softwaresourcecode",
-                "metatags",
-                "cse_image"
-              ],
-              "additionalProperties": false
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl",
+                  "pagemap"
+                ],
+                "additionalProperties": false
+              }
             }
           }
         },

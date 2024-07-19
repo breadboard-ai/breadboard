@@ -3,9 +3,10 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { anyOf, array, board, enumeration, input, object, optional, output } from "@breadboard-ai/build";
+import { array, board, enumeration, input, object, output } from "@breadboard-ai/build";
 import { code, fetch, secret } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
+import { createSpreadCode } from "../../utils/newSpread";
 
 const PARAM = {
   QUERY: "query",
@@ -129,114 +130,51 @@ const fetchResult = fetch({
   url: url.outputs.url,
 });
 
-const spreadResponse = code(
-  {
-    $id: "spread",
-    $metadata: {
-      title: "Spread",
-      description: "Spread the properties of an object into a new object",
-    },
-    obj: fetchResult.outputs.response
-  },
-  {
-    items: array(object({}))
-  },
-  ({ obj }) => {
-    if (typeof obj !== "object") {
-      throw new Error(`object is of type ${typeof obj} not object`);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { ...obj } as any;
-  }
-);
-
-const popSearchResult = code(
-  {
-    $id: "pop",
-    $metadata: {
-      title: "Pop",
-      description: "Pop the array",
-    },
-    arr: spreadResponse.outputs.items
-  },
-  {
-    array: optional(array(anyOf("string", "number", object({}), "unknown", "boolean"))),
-    item: optional(anyOf("string", "number", object({}), "unknown", "boolean"))
-  },
-  ({ arr }) => {
-    const [item, ...rest] = arr
-    if (item) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { array: rest, item } as any
-    }
-    return {}
-  }
-);
-
-const repop = code(
-  {
-    $id: "repop",
-    $metadata: {
-      title: "RePop",
-      description: "Pop the array",
-    },
-    arr: popSearchResult.outputs.array
-  },
-  {
-    array: optional(array(anyOf("string", "number", object({}), "unknown", "boolean"))),
-    item: optional(anyOf("string", "number", object({}), "unknown", "boolean"))
-  },
-  ({ arr }) => {
-    const [item, ...rest] = arr
-    if (item) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { array: rest, item } as any
-    }
-    return {}
-  }
-);
+const spreadResponse = createSpreadCode(fetchResult.outputs.response, { items: array(object({})) })
 
 const spreadSearchResult = code(
   {
-    $id: "spreadFinal",
+    $id: "spreadFinals",
     $metadata: {
       title: "Spread Final",
       description: "Spread the properties of an object into a new object",
     },
-    obj: repop.outputs.item
+    obj: spreadResponse.outputs.items
   },
   {
-    title: "string",
-    htmlTitle: "string",
-    link: "string",
-    displayLink: "string",
-    snippet: "string",
-    htmlSnippet: "string",
-    formattedUrl: "string",
-    htmlFormattedUrl: "string",
-    pagemap: object({
-      cse_thumbnail: array(object({
-        src: "string",
-        height: "string",
-        width: "string",
-      })),
-      softwaresourcecode: array(object({
-        author: "string",
-        name: "string",
-        text: "string",
-      })),
-      metatags: array(object({})),
-      cse_image: array(object({
-        src: "string",
-      })),
-    })
+    results: array(object({
+      title: "string",
+      htmlTitle: "string",
+      link: "string",
+      displayLink: "string",
+      snippet: "string",
+      htmlSnippet: "string",
+      formattedUrl: "string",
+      htmlFormattedUrl: "string",
+      pagemap: object({
+        cse_thumbnail: array(object({
+          src: "string",
+          height: "string",
+          width: "string",
+        })),
+        softwaresourcecode: array(object({
+          author: "string",
+          name: "string",
+          text: "string",
+        })),
+        metatags: array(object({})),
+        cse_image: array(object({
+          src: "string",
+        })),
+      })
+    }))
   },
   ({ obj }) => {
     if (typeof obj !== "object") {
       throw new Error(`object is of type ${typeof obj} not object`);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { ...obj } as any;
+    return { results: { ...obj } } as any;
   }
 );
 
@@ -250,13 +188,6 @@ export default board({
   version: "0.2.0",
   inputs: { query, numberOfResults, language, safeSearch, startIndex },
   outputs: {
-    title: output(spreadSearchResult.outputs.title),
-    htmlTitle: output(spreadSearchResult.outputs.htmlTitle),
-    link: output(spreadSearchResult.outputs.link),
-    displayLink: output(spreadSearchResult.outputs.displayLink),
-    snippet: output(spreadSearchResult.outputs.snippet),
-    htmlSnippet: output(spreadSearchResult.outputs.htmlSnippet),
-    formattedUrl: output(spreadSearchResult.outputs.formattedUrl),
-    pagemap: output(spreadSearchResult.outputs.pagemap),
+    results: output(spreadSearchResult.outputs.results)
   },
 });
