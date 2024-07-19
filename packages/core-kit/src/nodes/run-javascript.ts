@@ -11,7 +11,7 @@ import {
   unsafeType,
 } from "@breadboard-ai/build";
 import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
-import type { InputValues, Schema } from "@google-labs/breadboard";
+import type { InputValues } from "@google-labs/breadboard";
 import { JSONSchema4 } from "json-schema";
 
 // https://regex101.com/r/PeEmEW/1
@@ -250,7 +250,7 @@ export default defineNodeType({
       default: "run",
     },
     schema: {
-      behavior: ["config", "ports-spec"],
+      behavior: ["config", "ports-spec", "deprecated"],
       description:
         "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
       type: object({}, "unknown"),
