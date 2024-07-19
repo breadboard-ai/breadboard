@@ -189,8 +189,12 @@ export type CustomSettingsElement = HTMLElement & {
  */
 export interface SettingsHelper {
   get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined;
-  set(section: SETTINGS_TYPE, name: string, value: SettingEntry["value"]): void;
-  delete(section: SETTINGS_TYPE, name: string): void;
+  set(
+    section: SETTINGS_TYPE,
+    name: string,
+    value: SettingEntry["value"]
+  ): Promise<void>;
+  delete(section: SETTINGS_TYPE, name: string): Promise<void>;
 }
 
 /**

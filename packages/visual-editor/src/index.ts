@@ -49,6 +49,10 @@ import type {
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
+import {
+  TokenVendor,
+  tokenVendorContext,
+} from "./ui/elements/connection/token-vendor.js";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -76,6 +80,12 @@ const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
     "https://connections-dot-breadboard-ai.googleplex.com",
   "https://breadboard-ai.web.app":
     "https://connections-dot-breadboard-community.wl.r.appspot.com",
+};
+
+const ENVIRONMENT: Environment = {
+  connectionServerUrl:
+    ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
+  connectionRedirectUrl: "/oauth/",
 };
 
 @customElement("bb-main")
@@ -147,11 +157,10 @@ export class Main extends LitElement {
   providerOps = 0;
 
   @provide({ context: environmentContext })
-  environment: Environment = {
-    connectionServerUrl:
-      ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
-    connectionRedirectUrl: "/oauth/",
-  };
+  environment = ENVIRONMENT;
+
+  @provide({ context: tokenVendorContext })
+  tokenVendor!: TokenVendor;
 
   @provide({ context: dataStoreContext })
   dataStore: { instance: DataStore | null } = { instance: createDataStore() };
@@ -497,6 +506,7 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
+      this.tokenVendor = new TokenVendor(this.settingsHelper, ENVIRONMENT);
     }
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
@@ -2366,19 +2376,19 @@ class SettingsHelperImpl implements SettingsHelper {
     return this.#store.values[section].items.get(name);
   }
 
-  set(
+  async set(
     section: SETTINGS_TYPE,
     name: string,
     value: SettingEntry["value"]
-  ): void {
+  ): Promise<void> {
     const values = this.#store.values;
     values[section].items.set(name, value);
-    this.#store.save(values);
+    await this.#store.save(values);
   }
 
-  delete(section: SETTINGS_TYPE, name: string): void {
+  async delete(section: SETTINGS_TYPE, name: string): Promise<void> {
     const values = this.#store.values;
     values[section].items.delete(name);
-    this.#store.save(values);
+    await this.#store.save(values);
   }
 }

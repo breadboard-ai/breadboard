@@ -1,5 +1,5 @@
 {
-  "title": "reduce node example",
+  "title": "reduce component example",
   "version": "0.0.1",
   "nodes": [
     {
@@ -8,17 +8,12 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
+            "topics": {
+              "type": "string",
+              "title": "Topics",
               "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              "format": "multiline",
+              "description": "Enter a list of topics to search Wikipedia for, each topic on a new line."
             }
           },
           "type": "object",
@@ -27,8 +22,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": 0,
+          "x": -275,
+          "y": -159,
           "collapsed": false
         }
       }
@@ -39,17 +34,11 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
+            "results": {
+              "type": "string",
+              "title": "Results",
               "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
+              "format": "markdown"
             }
           },
           "type": "object",
@@ -58,8 +47,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 0,
+          "x": 331,
+          "y": -177,
           "collapsed": false
         }
       }
@@ -69,23 +58,85 @@
       "type": "reduce",
       "metadata": {
         "visual": {
-          "x": 55,
-          "y": -160,
+          "x": 100,
+          "y": -200,
           "collapsed": false
-        }
+        },
+        "title": "Search All Results",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "path": "https://breadboard-ai.github.io/breadboard/static/boards/kits/example-search-wikipedia.bgl.json"
+        },
+        "accumulator": "Search Results"
+      }
+    },
+    {
+      "id": "runJavascript-0c197bee",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": -134,
+          "y": -171,
+          "collapsed": false
+        },
+        "title": "Split Topics",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "name": "run",
+        "code": "function run({topics}) {\n  return topics.trim().split(\"\\n\");\n}"
       }
     }
   ],
   "edges": [
     {
-      "from": "input",
-      "out": "context",
+      "from": "reduce-67cd5cbb",
       "to": "output",
-      "in": "context"
+      "out": "accumulator",
+      "in": "results"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-0c197bee",
+      "out": "topics",
+      "in": "topics"
+    },
+    {
+      "from": "runJavascript-0c197bee",
+      "to": "reduce-67cd5cbb",
+      "out": "result",
+      "in": "list"
     }
   ],
   "description": "No Description",
   "metadata": {
-    "tags": []
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-4e2b8ef8",
+        "text": "Split topics into\na list with JS.",
+        "metadata": {
+          "visual": {
+            "x": -119,
+            "y": -231,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-52d8133a",
+        "text": "Call [Search Wikipedia](https://breadboard-ai.web.app/?board=https%3A%2Fbreadboard-ai.github.io%2Fbreadboard%2Fstatic%2Fboards%2Fkits%2Fexample-search-wikipedia.bgl.json) board for each item in the list.",
+        "metadata": {
+          "visual": {
+            "x": 60,
+            "y": -258,
+            "collapsed": false
+          }
+        }
+      }
+    ]
   }
 }
