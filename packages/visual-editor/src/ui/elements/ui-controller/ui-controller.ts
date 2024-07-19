@@ -122,7 +122,6 @@ export class UI extends LitElement {
   history: EditHistory | null = null;
 
   #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
-  #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
@@ -356,6 +355,12 @@ export class UI extends LitElement {
           .items.get("Highlight Invalid Wires")?.value
       : false;
 
+    const showPortTypesInConfiguration = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Port Types in Configuration")?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -481,13 +486,12 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeIds,
         this.#lastEdgeCount,
-        this.#nodeSchemaUpdateCount,
         // TODO: Figure out a cleaner way of handling this without watching for
         // all graph changes.
         this.graph,
       ],
       () => {
-        return html`<bb-node-configuration
+        return html`<bb-node-configuration-alt
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
@@ -496,16 +500,14 @@ export class UI extends LitElement {
           .editable=${true}
           .providers=${this.providers}
           .providerOps=${this.providerOps}
+          .showTypes=${showPortTypesInConfiguration}
           ${ref(this.#nodeConfigurationRef)}
           name="Selected Node"
-          @bbschemachange=${() => {
-            this.#nodeSchemaUpdateCount++;
-          }}
           @bbgraphnodedeselectedall=${() => {
             this.selectedNodeIds = [];
             this.requestUpdate();
           }}
-        ></bb-node-configuration>`;
+        ></bb-node-configuration-alt>`;
       }
     );
 
@@ -514,7 +516,6 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeIds,
         this.#lastEdgeCount,
-        this.#nodeSchemaUpdateCount,
         // TODO: Figure out a cleaner way of handling this without watching for
         // all graph changes.
         this.graph,

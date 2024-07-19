@@ -53,6 +53,12 @@ export class LLMInputArray extends LitElement {
       display: block;
     }
 
+    header {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size-2) 0;
+    }
+
     #controls {
       display: flex;
       flex-direction: row;
@@ -123,6 +129,10 @@ export class LLMInputArray extends LitElement {
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
     return [...inputs].every((input) => input.hasMinItems());
+  }
+
+  get value() {
+    return this.values;
   }
 
   protected willUpdate(

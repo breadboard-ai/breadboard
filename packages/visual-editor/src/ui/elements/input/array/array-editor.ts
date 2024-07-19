@@ -340,6 +340,7 @@ export class ArrayEditor extends LitElement {
 
     const newItem: Record<string, unknown> = {};
     if (this.behavior === "llm-content") {
+      newItem.role = "user";
       newItem.parts = [];
     }
 

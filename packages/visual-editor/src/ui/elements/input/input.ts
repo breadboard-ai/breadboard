@@ -12,8 +12,6 @@ import {
   isMultiline,
   isSelect,
   isWebcamImage,
-  isLLMContent,
-  isLLMContentArray,
 } from "../../utils/index.js";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -27,6 +25,8 @@ import { LLMInput } from "./llm-input/llm-input.js";
 import {
   createAllowListFromProperty,
   getMinItemsFromProperty,
+  isArrayOfLLMContent,
+  isLLMContent,
 } from "../../utils/llm-content.js";
 import { LLMInputArray } from "../elements.js";
 
@@ -343,7 +343,7 @@ export class Input extends LitElement {
               .allow=${allow}
               .minItems=${minItems}
             ></bb-llm-input>`;
-          } else if (isLLMContentArray(property)) {
+          } else if (isArrayOfLLMContent(property)) {
             let value: LLMContent[] | null = null;
             value = values[key] as LLMContent[] | null;
             if (!value) {

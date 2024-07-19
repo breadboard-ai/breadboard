@@ -34,7 +34,7 @@ import {
 } from "../../utils/schema.js";
 import { ArrayEditor } from "../input/array/array-editor.js";
 import { BoardSelector } from "../input/board-selector/board-selector.js";
-import { isBoard } from "../../utils/board.js";
+import { isBoardBehavior } from "../../utils/index.js";
 import { CodeEditor } from "../input/code-editor/code-editor.js";
 import { LLMInput } from "../input/llm-input/llm-input.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
@@ -893,7 +893,9 @@ export class NodeConfigurationInfo extends LitElement {
                                     // render nothing.
                                     if (port.type.hasBehavior("ports-spec")) {
                                       input = nothing;
-                                    } else if (isBoard(port, value)) {
+                                    } else if (
+                                      isBoardBehavior(port.schema, value)
+                                    ) {
                                       const selectorValue = value
                                         ? typeof value === "string"
                                           ? value

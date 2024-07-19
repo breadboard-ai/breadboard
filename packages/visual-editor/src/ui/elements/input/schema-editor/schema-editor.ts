@@ -15,7 +15,6 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { SchemaChangeEvent } from "../../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   assertIsLLMContent,
@@ -33,9 +32,6 @@ const STORAGE_PREFIX = "bb-schema-editor";
 export class SchemaEditor extends LitElement {
   @property({ reflect: false })
   nodeId: string | null = null;
-
-  @property({ reflect: true })
-  editable = false;
 
   @property()
   schema: Schema | null = {};
@@ -111,6 +107,10 @@ export class SchemaEditor extends LitElement {
       border-radius: var(--bb-grid-size-2);
       margin: var(--bb-grid-size-4) 0;
       overflow-x: auto;
+    }
+
+    .schema-item:first-of-type {
+      margin-top: 0;
     }
 
     .schema-item label {
@@ -271,6 +271,10 @@ export class SchemaEditor extends LitElement {
     this.expanded = new Map(expanded);
   }
 
+  get value() {
+    return this.schema;
+  }
+
   #toggleExpanded(key: string) {
     if (!this.nodeId) {
       return;
@@ -309,7 +313,6 @@ export class SchemaEditor extends LitElement {
         <bb-array-editor
           id="${id}-enum"
           name="${id}-enum"
-          ?readonly=${!this.editable}
           .items=${value.enum || []}
           .type=${"string"}
         ></bb-array-editor>`;
@@ -322,11 +325,7 @@ export class SchemaEditor extends LitElement {
               ? value.items.type
               : "none";
           itemType = html`<label for="${id}-items">Array Item Type</label>
-            <select
-              name="${id}-items"
-              id="${id}-items"
-              ?readonly=${!this.editable}
-            >
+            <select name="${id}-items" id="${id}-items">
               <option value="none">No type</option>
               <option ?selected=${selectedItemType === "object"} value="object">
                 Object
@@ -375,11 +374,7 @@ export class SchemaEditor extends LitElement {
           }
 
           behavior = html`<label for="${id}-behavior">Behavior</label>
-            <select
-              name="${id}-behavior"
-              id="${id}-behavior"
-              ?readonly=${!this.editable}
-            >
+            <select name="${id}-behavior" id="${id}-behavior">
               <option value="none">No behavior</option>
               <option
                 value="llm-content"
@@ -420,12 +415,7 @@ export class SchemaEditor extends LitElement {
       switch (value.type) {
         case "string": {
           format = html`<label for="${id}-format">Format</label>
-            <select
-              name="${id}-format"
-              id="${id}-format"
-              type="text"
-              ?readonly=${!this.editable}
-            >
+            <select name="${id}-format" id="${id}-format" type="text">
               <option value="none">No format</option>
               <option value="markdown" ?selected=${value.format === "markdown"}>
                 Markdown
@@ -466,7 +456,6 @@ export class SchemaEditor extends LitElement {
                 name="${id}-format"
                 id="${id}-format"
                 multiple
-                ?readonly=${!this.editable}
                 @input=${(evt: InputEvent) => {
                   if (!(evt.target instanceof HTMLSelectElement)) {
                     return;
@@ -561,7 +550,6 @@ export class SchemaEditor extends LitElement {
           defaultValue = html`${defaultLabel}<bb-array-editor
               id="${id}-default"
               name="${id}-default"
-              ?readonly=${!this.editable}
               .items=${items}
               .type=${resolveArrayType(value)}
               .behavior=${resolveBehaviorType(value.items)}
@@ -575,7 +563,6 @@ export class SchemaEditor extends LitElement {
               id="${id}-default"
               name="${id}-default"
               ?checked="${value.default === "true"}"
-              ?readonly=${!this.editable}
             />`;
           break;
         }
@@ -586,7 +573,6 @@ export class SchemaEditor extends LitElement {
               id="${id}-default"
               name="${id}-default"
               value="${value.default}"
-              ?readonly=${!this.editable}
             />`;
           break;
         }
@@ -598,7 +584,6 @@ export class SchemaEditor extends LitElement {
                 type="text"
                 id="${id}-default"
                 name="${id}-default"
-                ?readonly=${!this.editable}
               >
                 ${map(value.enum, (option) => {
                   return html`<option ?selected=${option === value.default}>
@@ -633,7 +618,6 @@ export class SchemaEditor extends LitElement {
                 id="${id}-default"
                 name="${id}-default"
                 value="${value.default || ""}"
-                ?readonly=${!this.editable}
               />`;
           }
           break;
@@ -644,7 +628,6 @@ export class SchemaEditor extends LitElement {
         <bb-array-editor
           id="${id}-examples"
           name="${id}-examples"
-          ?readonly=${!this.editable}
           .items=${value.examples || []}
           .type=${value.type}
         ></bb-array-editor>`;
@@ -662,13 +645,11 @@ export class SchemaEditor extends LitElement {
             id="${id}-title"
             type="text"
             .value="${value.title || ""}"
-            ?readonly=${!this.editable}
           />
           <button
             class="delete"
             type="button"
             @click=${() => this.#deleteProperty(id)}
-            ?disabled=${!this.editable}
           >
             Delete
           </button>
@@ -676,15 +657,7 @@ export class SchemaEditor extends LitElement {
 
         <label for="${id}-type">Type</label>
         <div class="type-and-required">
-          <select
-            name="${id}-type"
-            id="${id}-type"
-            type="text"
-            @input=${() => {
-              this.dispatchEvent(new SchemaChangeEvent());
-            }}
-            ?readonly=${!this.editable}
-          >
+          <select name="${id}-type" id="${id}-type" type="text">
             <option ?selected=${value.type === "object"} value="object">
               Object
             </option>
@@ -707,7 +680,6 @@ export class SchemaEditor extends LitElement {
             id="${id}-required"
             type="checkbox"
             ?checked=${required.includes(id)}
-            ?readonly=${!this.editable}
           />
           <label for="${id}-required">Required</label>
         </div>
@@ -737,7 +709,6 @@ export class SchemaEditor extends LitElement {
             name="${id}-description"
             id="${id}-description"
             .value="${value.description || ""}"
-            ?readonly=${!this.editable}
           ></textarea>
           <button class="show-less" @click=${() => this.#toggleExpanded(id)}>
             Show less
@@ -1005,7 +976,13 @@ export class SchemaEditor extends LitElement {
     }
 
     this.schema = schema;
-    return true;
+    this.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      })
+    );
   }
 
   #deleteProperty(id: string) {
@@ -1025,7 +1002,7 @@ export class SchemaEditor extends LitElement {
     );
 
     this.schema = schema;
-    this.dispatchEvent(new SchemaChangeEvent());
+    this.applyPendingChanges();
   }
 
   #createNewPort() {
@@ -1045,7 +1022,7 @@ export class SchemaEditor extends LitElement {
     this.#schemaPropertiesOrder.push(key);
 
     this.schema = schema;
-    this.dispatchEvent(new SchemaChangeEvent());
+    this.applyPendingChanges();
   }
 
   render() {
@@ -1058,6 +1035,11 @@ export class SchemaEditor extends LitElement {
         @submit=${(evt: Event) => {
           evt.preventDefault();
         }}
+        @input=${(evt: InputEvent) => {
+          evt.stopImmediatePropagation();
+
+          this.applyPendingChanges();
+        }}
         ${ref(this.#formRef)}
       >
         ${properties}
@@ -1066,7 +1048,6 @@ export class SchemaEditor extends LitElement {
         <button
           id="create-new-port"
           type="button"
-          ?disabled=${!this.editable}
           @click=${this.#createNewPort}
         >
           Add a port

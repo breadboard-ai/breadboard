@@ -29,6 +29,7 @@ export { LLMOutput } from "./llm-output/llm-output.js";
 export { LLMOutputArray } from "./llm-output/llm-output-array.js";
 export { Navigation } from "./nav/nav.js";
 export { NodeMetaDetails } from "./node-info/node-meta-details.js";
+export { NodeConfigurationInfoAlt } from "./node-info/node-configuration-alt.js";
 export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeRunner } from "./node-runner/node-runner.js";
 export { NodeSelector } from "./editor/node-selector.js";

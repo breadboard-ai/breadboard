@@ -109,6 +109,15 @@ export class SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show Port Types in Configuration",
+          {
+            name: "Show Port Types in Configuration",
+            description:
+              "Toggles whether or not to show a port's type information in the Component Configuration pane",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
