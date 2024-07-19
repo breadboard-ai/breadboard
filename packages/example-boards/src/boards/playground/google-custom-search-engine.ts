@@ -166,7 +166,6 @@ const popSearchResult = code(
   ({ arr }) => {
     const [item, ...rest] = arr
     if (item) {
-      console.log("ITEM EXISTS 1")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return { array: rest, item } as any
     }
@@ -190,7 +189,6 @@ const repop = code(
   ({ arr }) => {
     const [item, ...rest] = arr
     if (item) {
-      console.log("ITEM EXISTS 2")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return { array: rest, item } as any
     }
