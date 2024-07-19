@@ -235,6 +235,9 @@ export default defineNodeType({
   metadata: {
     title: "Run Javascript",
     description: "Runs supplied `code` input as Javascript.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-runjavascript-component",
+    },
   },
   inputs: {
     code: {

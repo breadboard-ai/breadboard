@@ -299,58 +299,106 @@ Then, we can use another board that makes it run over a list of topics using the
 
 {{ "/breadboard/static/boards/kits/core-run-javascript.bgl.json" | board }}
 
-Use this component to execute JavaScript code. The component recognizes a required `code` input property, which is a string that contains the code to be executed. It also recognizes a `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
+Use this component to execute JavaScript code. It is particularly useful for manipulating data between other components or adding other kinds of logic to your boards.
 
-All other input properties will be passed as arguments to the function.
+> [!NOTE]
+> The code is executed in a new V8 context in component or a Web Worker in the browser, which means that it cannot access any variables or functions from outside the context in which it is run.
 
-The code is executed in a new V8 context in component or a Web Worker in the browser, which means that it cannot access any variables or functions from the outside.
+The key input port is **Code**, which contains the code to execute. The code must be a JS function. When the component is run, the function is called with a single argument, which is an object with each key holding a value of the ports that are wired in:
 
-The component will pass the result of the execution as the `result` output property.
+```ts
+type PortName = string;
+// Each key in this object is an input port name that is wired in,
+// and the value is the value that was passed into this port.
+type InputValues = Record<PortName, JsonSerializable>;
+```
+
+The name of the function is specified by the **Function Name** port and is `run` by default.
+
+> [!TIP]
+> Unless there's a specific need to do so, leave **Function Name** port value as default.
+
+Depending on the value of the **Raw Output** port, the return value of the called function is interpreted in two different ways:
+
+- When **Raw Output** value is `false` (default), the result of function is passed as the **Result** output port of the `runJavascript` component. This is the most common scenario, where one or more inputs into the component are transformed into a single output port. The output value must be JSON-serializable, since it is shuttled across the Web Worker (or V8 context) boundary:
+
+```ts
+function run(inputs: InputValues): JsonSerializable {
+  return "This will be a `Result` port value";
+}
+```
+
+- When **Raw Output** value is `true`, the result of the function is treated as an object where each key represents an output port for the `runJavascript` component. The value that corresponds to that key will be passed as port's value out of the component.
+
+```ts
+// Each key is an output port name that is wired out,
+// and the value is a JSON-serializable value that is
+// passed out of this port.
+type OutputValues = Record<PortName, JsonSerializable>;
+
+function run(inputs: InputValues): OutputValues | Promise<OutputValues> {
+  return {
+    yes: "This will be a value of the `yes` port",
+    no: "This will be a value of the `no` port",
+  };
+}
+```
+
+To aid with specifying the input and output ports, there are two additional configuration ports: **Input Schema** and **Output Schema**, respectively.
 
 ### Input ports
 
-- `code` - required, must contain the code to execute
-- `name` - optional, must contain the name of the function to invoke (default: `run`)
-- zero or more inputs that will be passed as arguments to the function.
+The component has the following static input ports:
+
+- **Code** (id: `code`) -- required, contains the function to call.
+- **Function Name** (id: `name`) -- optional, the name of the function to call (default: `run`)
+- **Raw Output** (id: `raw`) -- optional, whether (`true`) or not (`false`) to treat the result of the function call as an object with port values (default: `false`).
+- **Input Schema** (id: `inputSchema`) -- optional, defines additional input ports wired into this component instance
+- **Output Schema** (id: `outputSchema`) -- optional, defines additional output ports wired out of this component instance. Only relevant when **Raw Output** is set to `true`.
+
+The component may have zero or more dynamically wired ports, each passed as part of the function argument.
 
 ### Output ports
 
-- `result` - the result of the execution
+The component has either a single or no static output ports:
+
+- **Result** (id: `result`) - the return value of the function call, when the **Raw Output** is `false`.
+
+When the **Raw Output** is `true`, the output ports are all dynamic and are defined as keys of object, returned by the called function.
 
 ### Example
 
-If we send the following inputs to `runJavascript`:
+The board above is a very simple string splitter. The body of the function is:
 
-```json
-{
-  "code": "function run() { return 1 + 1; }"
+```js
+function run({ topics }) {
+  return topics.trim().split("\n");
 }
 ```
 
-We will get this output:
+The component uses the default **Raw Output** = `false` value, and so the return value of the function becomes the **Result** port value.
 
-```json
-{
-  "result": 2
+Let's consider a bit more elaborate example. Suppose we want to create a router: a way to choose which path to take within a board. This is a very common pattern in Breadboard, because such routing enables a board to perform different actions depending on the inputs it receives.
+
+In this example, we check to see if the list of topics we supplied has only one item, and if so, we print out an output message stating that. Otherwise, we print the list of topics.
+
+{{ "/breadboard/static/boards/kits/example-simple-router.bgl.json" | board }}
+
+The **Raw Output** port is set to `true` and the body of the function is:
+
+```js
+function run({ topics }) {
+  const list = topics.trim().split("\n");
+  if (list.length < 2) {
+    return {
+      message: "Please supply more than one topic.",
+    };
+  }
+  return { list };
 }
 ```
 
-If we send:
-
-```json
-{
-  "code": "function run({ what }) { return `hello ${what}`; }",
-  "what": "world"
-}
-```
-
-We will get:
-
-```json
-{
-  "result": "hello world"
-}
-```
+Instead of returning just a value, we return an object with ports as keys and port values.
 
 ### Implementation
 
