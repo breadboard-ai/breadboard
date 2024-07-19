@@ -391,6 +391,17 @@ export const styles = css`
     animation: fadeOut 1s ease-out forwards;
   }
 
+  .continue-button {
+    background: var(--bb-continue-color) var(--bb-icon-resume-blue) 8px 4px /
+      16px 16px no-repeat;
+    color: var(--bb-ui-700);
+    border-radius: var(--bb-grid-size-5);
+    border: none;
+    height: var(--bb-grid-size-6);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+    margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+  }
+
   @keyframes slideIn {
     from {
       translate: 0 -5px;
