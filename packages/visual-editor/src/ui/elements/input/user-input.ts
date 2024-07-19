@@ -387,6 +387,7 @@ export class UserInput extends LitElement {
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"
+                placeholder=${input.schema.description ?? ""}
                 .value=${input.value ?? defaultValue ?? ""}
               ></textarea>`;
               break;
@@ -398,6 +399,7 @@ export class UserInput extends LitElement {
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"
+                placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
@@ -425,12 +427,24 @@ export class UserInput extends LitElement {
                 ></bb-code-editor>`;
                 break;
               }
-              console.log(input);
+
+              if (input.schema.format === "multiline") {
+                inputField = html`<textarea
+                  id=${input.name}
+                  name=${input.name}
+                  autocomplete="off"
+                  placeholder=${input.schema.description ?? ""}
+                  .value=${input.value ?? defaultValue ?? ""}
+                ></textarea>`;
+                break;
+              }
+
               inputField = html`<input
                 type="text"
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"
+                placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
