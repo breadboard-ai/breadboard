@@ -1,36 +1,74 @@
 {
   "title": "Gemini Simple",
   "description": "The simplest possible example of using Gemini Kit.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "input-1",
-      "to": "llm",
-      "out": "text",
+      "from": "input-0",
+      "to": "invoke-0",
+      "out": "generator",
+      "in": "$board"
+    },
+    {
+      "from": "input-0",
+      "to": "invoke-0",
+      "out": "prompt",
       "in": "text"
     },
     {
-      "from": "llm",
-      "to": "output-2",
+      "from": "invoke-0",
+      "to": "output-0",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "generator": {
+              "type": "object",
+              "behavior": [
+                "board"
+              ],
+              "default": "{\n  \"kind\": \"board\",\n  \"path\": \"gemini-generator.json\"\n}",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            },
+            "prompt": {
               "type": "string",
               "title": "Prompt",
-              "description": "The text to generate",
-              "default": "",
               "examples": [
-                "Write a rhyming poem about breadboards."
+                "Write a rhyming poem about breadboards"
+              ]
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-0",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
               ]
             }
           },
@@ -41,24 +79,8 @@
       }
     },
     {
-      "id": "output-2",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "llm",
-      "type": "text",
+      "id": "invoke-0",
+      "type": "invoke",
       "configuration": {}
     }
   ]
