@@ -303,6 +303,22 @@ export class UI extends LitElement {
     const eventPosition = events.length - 1;
     const nodeId = currentNode();
 
+    let selectedNodeIsInputOrOutput = true;
+    if (this.selectedNodeIds.length === 1) {
+      let graph = this.graph;
+      if (this.subGraphId && this.graph && this.graph.graphs) {
+        graph = this.graph.graphs[this.subGraphId];
+      }
+
+      if (graph) {
+        const node = graph.nodes.find(
+          (node) => node.id === this.selectedNodeIds[0]
+        );
+        selectedNodeIsInputOrOutput =
+          node?.type === "input" || node?.type === "output";
+      }
+    }
+
     const collapseNodesByDefault = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -491,7 +507,7 @@ export class UI extends LitElement {
         this.graph,
       ],
       () => {
-        return html`<bb-node-configuration-alt
+        return html`<bb-node-configuration
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${this.graph}
@@ -507,7 +523,7 @@ export class UI extends LitElement {
             this.selectedNodeIds = [];
             this.requestUpdate();
           }}
-        ></bb-node-configuration-alt>`;
+        ></bb-node-configuration>`;
       }
     );
 
@@ -657,7 +673,9 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}${nodeRunner}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}${selectedNodeIsInputOrOutput
+            ? nothing
+            : nodeRunner}`
         : html`${boardDetails}${activityLog}`
     );
 
@@ -706,7 +724,8 @@ export class UI extends LitElement {
                   : "Run Component"}
                 ?disabled=${this.failedToLoad ||
                 !this.graph ||
-                this.selectedNodeIds.length !== 1}
+                this.selectedNodeIds.length !== 1 ||
+                selectedNodeIsInputOrOutput}
                 @click=${async () => {
                   if (!this.#nodeRunnerRef.value) {
                     return;
