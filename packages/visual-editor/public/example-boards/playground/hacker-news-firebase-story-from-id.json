@@ -180,7 +180,7 @@
       "id": "spreadResponse",
       "type": "runJavascript",
       "configuration": {
-        "code": "const spreadResponse = ({obj})=>{const object=obj;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}for(const key in object){if(object[key]==void 0){object[key]=\"N/A\"}}return{...object}};",
+        "code": "const spreadResponse = ({obj})=>{const object=obj;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
         "inputSchema": {
           "type": "object",
           "properties": {

@@ -50,16 +50,6 @@ const spreadHackerNewsStoryResponse = code({
   if (typeof object !== "object") {
       throw new Error(`object is of type ${typeof object} not object`);
   }
-
-  // some fields may not be set, output currently does not support optional fields
-  // so for now set unset field to N/A
-  for (const key in object) {
-    // @ts-ignore
-    if (object[key] == undefined) {
-        // @ts-ignore
-        object[key] = "N/A"
-    }
-}
   return { ...object } as any;
 })
 
