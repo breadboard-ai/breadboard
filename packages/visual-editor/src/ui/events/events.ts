@@ -10,7 +10,7 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
 } from "@google-labs/breadboard";
-import type { EdgeData, Settings } from "../types/types.js";
+import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
 import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const eventInit = {
@@ -360,19 +360,19 @@ export class CommentUpdateEvent extends Event {
   }
 }
 
-export class SchemaChangeEvent extends Event {
-  static eventName = "bbschemachange";
-
-  constructor() {
-    super(SchemaChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class CodeChangeEvent extends Event {
   static eventName = "bbcodechange";
 
   constructor() {
     super(CodeChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class UserOutputEvent extends Event {
+  static eventName = "bbuseroutput";
+
+  constructor(public readonly values: UserOutputValues) {
+    super(UserOutputEvent.eventName, { ...eventInit });
   }
 }
 

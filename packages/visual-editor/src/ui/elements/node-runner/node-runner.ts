@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { InputEnterEvent } from "../../events/events.js";
 import {
@@ -225,6 +225,10 @@ export class NodeRunner extends LitElement {
   }
 
   render() {
+    if (!this.#isolatedNodeGraphDescriptor) {
+      return nothing;
+    }
+
     const runs = this.#runObserver?.runs();
     const currentRun = runs?.[0] ?? null;
     const events = currentRun?.events ?? [];
@@ -235,7 +239,7 @@ export class NodeRunner extends LitElement {
       .events=${events}
       .eventPosition=${eventPosition}
       .showExtendedInfo=${true}
-      .logTitle=${"Activity"}
+      .logTitle=${"Test Component"}
       .waitingMessage=${'Click "Run Component" to get started'}
       .settings=${this.settings}
       @bbinputrequested=${() => {
