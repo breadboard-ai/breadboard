@@ -408,33 +408,22 @@ Instead of returning just a value, we return an object with ports as keys and po
 
 {{ "/breadboard/static/boards/kits/core-secrets.bgl.json" | board }}
 
-Use this component to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The component takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
+Use this component to access sensitive data, such as API keys or other valuable bits of information that you might not want to store in the board. The component takes in an array of strings as input port **Keys**, looks for these keys in its store and, if found, returns them as outputs.
+
+> [!NOTE]
+> Different implementations of Breadboard will use their own strategies for retrieving secrets. The Visual Editor opts to ask the user whenever it runs into a need for a secret, and then stores these secrets in browser local storage.
 
 ### The input ports
 
-- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
+- **Keys** (id: `keys`) - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, an empty output is returned.
 
 ### The output ports
 
-- one output for each key that was found in the environment.
+- one output port for each key that was found.
 
 ### Example
 
-Use this component to pass the `PALM_KEY` environment variable to the `text-completion` component. The input:
-
-```json
-{
-  "keys": ["PALM_KEY"]
-}
-```
-
-Will produce this output:
-
-```json
-{
-  "PALM_KEY": "<value of the API key from the environment>"
-}
-```
+The board above makes a Gemini API call to [list models](https://ai.google.dev/api/models#method:-models.list). To do this, it first retrieves a `GEMINI_KEY` secret and then uses the [`fetch` component](#the-fetch-component) to get the results.
 
 ### Implementation
 
