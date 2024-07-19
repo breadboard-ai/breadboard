@@ -38,13 +38,11 @@ const children = object({
     url: "string"
 })
 
-// TODO properly do output schema
 const spreadHackerNewsStoryResponse = code({
     $id: "spreadResponse",
     obj: fetchOutput.outputs.response
 }, {
     author: "string",
-    // children themselves cause also have children, not sure how to do that
     children: array(children),
     created_at: "string",
     created_at_i: "number",

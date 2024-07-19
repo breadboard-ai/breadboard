@@ -31,7 +31,6 @@ const fetchOutput = fetch({
   url: url.outputs.url,
 })
 
-// TODO properly do output schema
 const spreadHackerNewsStoryResponse = code({
   $id: "spreadResponse",
   obj: fetchOutput.outputs.response

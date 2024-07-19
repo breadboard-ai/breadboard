@@ -137,8 +137,6 @@ const spreadHackerNewsStoryResponse = code({
       object[key] = "N/A"
     }
   }
-  // @ts-ignore
-
 
   return { ...object } as any;
 })
