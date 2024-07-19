@@ -140,6 +140,10 @@ export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
  */
 export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
   ({ context }) => {
+    console.log("🌻 context", context);
+    if (!context) {
+      return { input: [] };
+    }
     const c = asContextArray(context);
     const mode = computeMode(c);
     if (mode === "input") {
@@ -172,6 +176,9 @@ export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
 
     function computeMode(context: Context[]): HumanMode {
       const lastItem = context[context.length - 1];
+      if (!lastItem) {
+        return "input";
+      }
       if (lastItem.role === "user") {
         return "input";
       }
