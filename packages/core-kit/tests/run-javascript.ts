@@ -147,7 +147,7 @@ test("raw=true with provided schemas", async (t) => {
           title: "schema",
           description:
             "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
-          behavior: ["config", "ports-spec"],
+          behavior: ["config", "ports-spec", "deprecated"],
         },
       },
       required: ["code"],
@@ -218,7 +218,7 @@ test("raw=true without provided schemas", async (t) => {
           title: "schema",
           description:
             "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
-          behavior: ["config", "ports-spec"],
+          behavior: ["config", "ports-spec", "deprecated"],
         },
       },
       required: ["code"],
@@ -300,7 +300,7 @@ test("raw=false with provided schemas", async (t) => {
           title: "schema",
           description:
             "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
-          behavior: ["config", "ports-spec"],
+          behavior: ["config", "ports-spec", "deprecated"],
         },
       },
       required: ["code"],
@@ -374,7 +374,7 @@ test("raw=false without provided schemas", async (t) => {
           title: "schema",
           description:
             "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
-          behavior: ["config", "ports-spec"],
+          behavior: ["config", "ports-spec", "deprecated"],
         },
       },
       required: ["code"],
