@@ -49,8 +49,8 @@ export class OverflowMenu extends LitElement {
     }
 
     button {
-      padding: var(--bb-grid-size-3);
-      padding-left: var(--bb-grid-size-11);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
+        var(--bb-grid-size-11);
       color: var(--bb-neutral-900);
       background: transparent var(--bb-icon-public) 12px center / 20px 20px
         no-repeat;
@@ -77,6 +77,10 @@ export class OverflowMenu extends LitElement {
     button:not([disabled]):hover,
     button:not([disabled]):focus {
       background-color: var(--bb-neutral-50);
+    }
+
+    button.copy {
+      background-image: var(--bb-icon-copy-to-clipboard);
     }
 
     button.download {
