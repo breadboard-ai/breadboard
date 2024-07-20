@@ -254,13 +254,18 @@ export class ActivityLog extends LitElement {
     const userInputs: UserInputConfiguration[] = Object.entries(
       schema.properties ?? {}
     ).reduce((prev, [name, schema]) => {
+      let value = values ? values[name] : undefined;
+      if ((schema.type === "array" || schema.type === "object") && value) {
+        value = JSON.stringify(value, null, 2);
+      }
+
       prev.push({
         name,
         title: schema.title ?? name,
         schema,
         configured: false,
         required: requiredFields.includes(name),
-        value: values ? values[name] : undefined,
+        value,
       });
 
       return prev;

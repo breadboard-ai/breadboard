@@ -234,6 +234,7 @@ export class NodeConfigurationInfo extends LitElement {
       if (changedProperties.has("selectedNodeIds")) {
         const oldSelectedIds = changedProperties.get("selectedNodeIds") ?? [];
         selectedNodeIdsAreTheSame =
+          this.selectedNodeIds.length === 1 &&
           this.selectedNodeIds[0] === oldSelectedIds[0];
       }
 
