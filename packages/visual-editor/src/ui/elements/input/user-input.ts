@@ -178,11 +178,12 @@ export class UserInput extends LitElement {
         // Assume all form elements and Custom Elements conform to the rough
         // shape of the HTMLInputElement insofar as they have a .value property
         // on them.
+        const id = this.#createId(input.name);
         const el = this.#formRef.value?.querySelector<HTMLInputElement>(
-          `#${input.name}`
+          `#${id}`
         );
         if (!el) {
-          console.warn(`Unable to locate element for #${input.name}`);
+          console.warn(`Unable to locate element for #${id} (${input.name})`);
           return { name: input.name, value: null };
         }
 
@@ -206,7 +207,8 @@ export class UserInput extends LitElement {
             case "array": {
               if (
                 isLLMContentBehavior(input.schema) ||
-                isArrayOfLLMContentBehavior(input.schema)
+                isArrayOfLLMContentBehavior(input.schema) ||
+                isBoardBehavior(input.schema, inputValue)
               ) {
                 break;
               }
@@ -217,10 +219,10 @@ export class UserInput extends LitElement {
                 if (inputValue !== "") {
                   inputValue = JSON.parse(inputValue);
                 }
-              } catch (_err) {
+              } catch (err) {
                 // Ignore errors.
                 console.warn("Unexpected input");
-                console.warn(_err);
+                console.warn(err);
               }
               break;
             }
@@ -251,6 +253,10 @@ export class UserInput extends LitElement {
     }
 
     this.dispatchEvent(new UserOutputEvent(outputs));
+  }
+
+  #createId(name: string) {
+    return name.replace(/^\$/, "__");
   }
 
   render() {
@@ -304,6 +310,7 @@ export class UserInput extends LitElement {
             console.warn(err);
           }
 
+          const id = this.#createId(input.name);
           switch (input.schema.type) {
             case "array": {
               if (isArrayOfLLMContentBehavior(input.schema)) {
@@ -320,8 +327,8 @@ export class UserInput extends LitElement {
                 const minItems = getMinItemsFromProperty(input.schema);
 
                 inputField = html`<bb-llm-input-array
-                  id="${input.name}"
-                  name="${input.name}"
+                  id="${id}"
+                  name="${id}"
                   .description=${input.schema.description || null}
                   .values=${value}
                   .allow=${allow}
@@ -341,8 +348,8 @@ export class UserInput extends LitElement {
                 }
 
                 inputField = html`<bb-array-editor
-                  id="${input.name}"
-                  name="${input.name}"
+                  id="${id}"
+                  name="${id}"
                   .items=${items}
                   .type=${resolveArrayType(input.schema)}
                   .behavior=${resolveBehaviorType(
@@ -363,8 +370,8 @@ export class UserInput extends LitElement {
             case "object": {
               if (isPortSpecBehavior(input.schema)) {
                 inputField = html`<bb-schema-editor
-                  .id=${input.name}
-                  .name=${input.name}
+                  id=${id}
+                  name=${id}
                   .nodeId=${input.name}
                   .schema=${input.value}
                   .schemaVersion=${0}
@@ -372,8 +379,8 @@ export class UserInput extends LitElement {
                 break;
               } else if (isLLMContentBehavior(input.schema)) {
                 inputField = html`<bb-llm-input
-                  id="${input.name}"
-                  name="${input.name}"
+                  id="${id}"
+                  name="${id}"
                   .schema=${input.schema}
                   .value=${input.value ?? defaultValue ?? null}
                   .description=${input.schema.description || null}
@@ -385,8 +392,8 @@ export class UserInput extends LitElement {
                     ? input.value
                     : input.value?.path) ?? "";
                 inputField = html`<bb-board-selector
-                  id="${input.name}"
-                  name="${input.name}"
+                  id="${id}"
+                  name="${id}"
                   .graph=${this.graph}
                   .subGraphs=${this.graph?.graphs ?? null}
                   .providers=${this.providers}
@@ -429,8 +436,8 @@ export class UserInput extends LitElement {
                     evt.stopImmediatePropagation();
                   }
                 }}
-                id=${input.name}
-                name=${input.name}
+                id=${id}
+                name=${id}
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
                 .value=${input.value ?? defaultValue ?? ""}
@@ -441,8 +448,8 @@ export class UserInput extends LitElement {
             case "number": {
               inputField = html`<input
                 type="number"
-                id=${input.name}
-                name=${input.name}
+                id=${id}
+                name=${id}
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
@@ -454,8 +461,8 @@ export class UserInput extends LitElement {
             case "boolean": {
               inputField = html`<input
                 type="checkbox"
-                id=${input.name}
-                name=${input.name}
+                id=${id}
+                name=${id}
                 autocomplete="off"
                 .checked=${input.value}
               />`;
@@ -466,8 +473,8 @@ export class UserInput extends LitElement {
             default: {
               if (isCodeBehavior(input.schema)) {
                 inputField = html`<bb-code-editor
-                  id=${input.name}
-                  name=${input.name}
+                  id=${id}
+                  name=${id}
                   .value=${input.value ?? defaultValue ?? ""}
                 ></bb-code-editor>`;
                 break;
@@ -475,8 +482,8 @@ export class UserInput extends LitElement {
 
               if (input.schema.format === "multiline") {
                 inputField = html`<textarea
-                  id=${input.name}
-                  name=${input.name}
+                  id=${id}
+                  name=${id}
                   autocomplete="off"
                   placeholder=${input.schema.description ?? ""}
                   .value=${input.value ?? defaultValue ?? ""}
@@ -486,8 +493,8 @@ export class UserInput extends LitElement {
 
               inputField = html`<input
                 type="text"
-                id=${input.name}
-                name=${input.name}
+                id=${id}
+                name=${id}
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
