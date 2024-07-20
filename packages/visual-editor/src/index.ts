@@ -2249,6 +2249,12 @@ export class Main extends LitElement {
       }
 
       actions.push({
+        title: "Copy Board URL",
+        name: "copy-to-clipboard",
+        icon: "copy",
+      });
+
+      actions.push({
         title: "Settings",
         name: "settings",
         icon: "settings",
@@ -2264,6 +2270,22 @@ export class Main extends LitElement {
           evt: BreadboardUI.Events.OverflowMenuActionEvent
         ) => {
           switch (evt.action) {
+            case "copy-to-clipboard": {
+              if (!this.graph || !this.graph.url) {
+                this.toast(
+                  "Unable to copy board URL",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                break;
+              }
+
+              await navigator.clipboard.writeText(this.graph.url);
+              this.toast(
+                "Board URL copied",
+                BreadboardUI.Events.ToastType.INFORMATION
+              );
+              break;
+            }
             case "download": {
               if (!this.graph) {
                 break;
