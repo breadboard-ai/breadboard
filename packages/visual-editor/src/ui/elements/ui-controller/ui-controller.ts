@@ -669,6 +669,7 @@ export class UI extends LitElement {
     // sees fit.
     if (this.selectedNodeIds.length === 0 && this.#nodeConfigurationRef.value) {
       this.#nodeConfigurationRef.value.destroyEditors();
+      this.#nodeConfigurationRef.value.ensureRenderOnNextUpdate();
     }
 
     const sidePanel = cache(
