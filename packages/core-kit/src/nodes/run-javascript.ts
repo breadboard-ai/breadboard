@@ -235,18 +235,24 @@ export default defineNodeType({
   metadata: {
     title: "Run Javascript",
     description: "Runs supplied `code` input as Javascript.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-runjavascript-component",
+    },
   },
   inputs: {
     code: {
+      description: "The JavaScript code to run",
+      title: "Code",
       behavior: ["config", "code"],
       format: "javascript",
-      description: "The JavaScript code to run",
       type: "string",
     },
     name: {
+      title: "Function Name",
       description:
         'The name of the function to invoke in the supplied code. Default value is "run".',
       type: "string",
+      behavior: ["config"],
       default: "run",
     },
     schema: {
@@ -257,18 +263,22 @@ export default defineNodeType({
       optional: true,
     },
     inputSchema: {
+      title: "Input Schema",
+      description: "The schema of the input data, the function arguments.",
       behavior: ["config", "ports-spec"],
-      description: "The schema of the input data.",
       type: object({}, "unknown"),
       optional: true,
     },
     outputSchema: {
+      title: "Output Schema",
       behavior: ["config", "ports-spec"],
-      description: "The schema of the output data.",
+      description:
+        "The schema of the output data, the shape of the object of the function return value.",
       type: object({}, "unknown"),
       optional: true,
     },
     raw: {
+      title: "Raw Output",
       behavior: ["config"],
       description:
         "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
@@ -296,6 +306,7 @@ export default defineNodeType({
           : { "*": "unknown" }
         : {
             result: {
+              title: "Result",
               description: "The result of running the JavaScript code",
               type: outputSchema?.properties?.result
                 ? unsafeType(outputSchema.properties.result)

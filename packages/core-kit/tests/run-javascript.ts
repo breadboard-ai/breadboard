@@ -98,7 +98,7 @@ test("raw=true with provided schemas", async (t) => {
       properties: {
         code: {
           type: "string",
-          title: "code",
+          title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
           behavior: ["config", "code"],
@@ -111,29 +111,31 @@ test("raw=true with provided schemas", async (t) => {
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "inputSchema",
-          description: "The schema of the input data.",
+          title: "Input Schema",
+          description: "The schema of the input data, the function arguments.",
           behavior: ["config", "ports-spec"],
         },
         name: {
           type: "string",
-          title: "name",
+          title: "Function Name",
           description:
             'The name of the function to invoke in the supplied code. Default value is "run".',
           default: "run",
+          behavior: ["config"],
         },
         outputSchema: {
           type: "object",
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "outputSchema",
-          description: "The schema of the output data.",
+          title: "Output Schema",
+          description:
+            "The schema of the output data, the shape of the object of the function return value.",
           behavior: ["config", "ports-spec"],
         },
         raw: {
           type: "boolean",
-          title: "raw",
+          title: "Raw Output",
           description:
             "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
           default: false,
@@ -172,7 +174,7 @@ test("raw=true without provided schemas", async (t) => {
       properties: {
         code: {
           type: "string",
-          title: "code",
+          title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
           behavior: ["config", "code"],
@@ -182,29 +184,31 @@ test("raw=true without provided schemas", async (t) => {
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "inputSchema",
-          description: "The schema of the input data.",
+          title: "Input Schema",
+          description: "The schema of the input data, the function arguments.",
           behavior: ["config", "ports-spec"],
         },
         name: {
           type: "string",
-          title: "name",
+          title: "Function Name",
           description:
             'The name of the function to invoke in the supplied code. Default value is "run".',
           default: "run",
+          behavior: ["config"],
         },
         outputSchema: {
           type: "object",
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "outputSchema",
-          description: "The schema of the output data.",
+          title: "Output Schema",
+          description:
+            "The schema of the output data, the shape of the object of the function return value.",
           behavior: ["config", "ports-spec"],
         },
         raw: {
           type: "boolean",
-          title: "raw",
+          title: "Raw Output",
           description:
             "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
           default: false,
@@ -251,7 +255,7 @@ test("raw=false with provided schemas", async (t) => {
       properties: {
         code: {
           type: "string",
-          title: "code",
+          title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
           behavior: ["config", "code"],
@@ -264,29 +268,31 @@ test("raw=false with provided schemas", async (t) => {
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "inputSchema",
-          description: "The schema of the input data.",
+          title: "Input Schema",
+          description: "The schema of the input data, the function arguments.",
           behavior: ["config", "ports-spec"],
         },
         name: {
           type: "string",
-          title: "name",
+          title: "Function Name",
           description:
             'The name of the function to invoke in the supplied code. Default value is "run".',
           default: "run",
+          behavior: ["config"],
         },
         outputSchema: {
           type: "object",
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "outputSchema",
-          description: "The schema of the output data.",
+          title: "Output Schema",
+          description:
+            "The schema of the output data, the shape of the object of the function return value.",
           behavior: ["config", "ports-spec"],
         },
         raw: {
           type: "boolean",
-          title: "raw",
+          title: "Raw Output",
           description:
             "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
           default: false,
@@ -310,7 +316,7 @@ test("raw=false with provided schemas", async (t) => {
       properties: {
         result: {
           description: "The result of running the JavaScript code",
-          title: "result",
+          title: "Result",
           type: "number",
         },
       },
@@ -328,7 +334,7 @@ test("raw=false without provided schemas", async (t) => {
       properties: {
         code: {
           type: "string",
-          title: "code",
+          title: "Code",
           description: "The JavaScript code to run",
           format: "javascript",
           behavior: ["config", "code"],
@@ -338,29 +344,31 @@ test("raw=false without provided schemas", async (t) => {
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "inputSchema",
-          description: "The schema of the input data.",
+          title: "Input Schema",
+          description: "The schema of the input data, the function arguments.",
           behavior: ["config", "ports-spec"],
         },
         name: {
           type: "string",
-          title: "name",
+          title: "Function Name",
           description:
             'The name of the function to invoke in the supplied code. Default value is "run".',
           default: "run",
+          behavior: ["config"],
         },
         outputSchema: {
           type: "object",
           properties: {},
           required: [],
           additionalProperties: true,
-          title: "outputSchema",
-          description: "The schema of the output data.",
+          title: "Output Schema",
+          description:
+            "The schema of the output data, the shape of the object of the function return value.",
           behavior: ["config", "ports-spec"],
         },
         raw: {
           type: "boolean",
-          title: "raw",
+          title: "Raw Output",
           description:
             "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
           default: false,
@@ -385,7 +393,7 @@ test("raw=false without provided schemas", async (t) => {
       properties: {
         result: {
           description: "The result of running the JavaScript code",
-          title: "result",
+          title: "Result",
           type: ["array", "boolean", "null", "number", "object", "string"],
         },
       },

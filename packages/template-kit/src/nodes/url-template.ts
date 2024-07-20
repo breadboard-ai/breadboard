@@ -62,6 +62,7 @@ export default defineNodeType({
       title: "Template",
       format: "multiline",
       description: "The URL template to use",
+      behavior: ["config"],
     },
     "*": {
       type: anyOf("string", "number"),
