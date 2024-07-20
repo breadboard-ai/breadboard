@@ -137,8 +137,9 @@ export class NodeMetaDetails extends LitElement {
         return { type, node, metadata } as CommentMetaDetailsInfo;
       }
     },
-    onError: (err) => {
-      console.warn(err);
+    onError: () => {
+      // Ignore errors here because the node configuration will emit an event
+      // when it can't load the details.
     },
     args: () => [this.graph, this.subGraphId, this.selectedNodeIds],
   });

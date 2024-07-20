@@ -202,6 +202,7 @@ export class UserInput extends LitElement {
               break;
             }
 
+            case "object":
             case "array": {
               if (
                 isLLMContentBehavior(input.schema) ||
@@ -212,7 +213,15 @@ export class UserInput extends LitElement {
 
               // The ArrayEditor returns a JSON serialized string for its value
               // so we decode that here.
-              inputValue = JSON.parse(inputValue);
+              try {
+                if (inputValue !== "") {
+                  inputValue = JSON.parse(inputValue);
+                }
+              } catch (_err) {
+                // Ignore errors.
+                console.warn("Unexpected input");
+                console.warn(_err);
+              }
               break;
             }
           }
@@ -372,9 +381,9 @@ export class UserInput extends LitElement {
                 break;
               } else if (isBoardBehavior(input.schema, input.value)) {
                 const board =
-                  typeof input.value === "string"
+                  (typeof input.value === "string"
                     ? input.value
-                    : input.value?.path;
+                    : input.value?.path) ?? "";
                 inputField = html`<bb-board-selector
                   id="${input.name}"
                   name="${input.name}"
@@ -388,6 +397,38 @@ export class UserInput extends LitElement {
                 break;
               }
               inputField = html`<textarea
+                @blur=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLTextAreaElement)) {
+                    return;
+                  }
+
+                  try {
+                    if (!evt.target.value) {
+                      return;
+                    }
+
+                    JSON.parse(evt.target.value);
+                  } catch (err) {
+                    evt.target.setCustomValidity("Please enter valid JSON");
+                    evt.target.reportValidity();
+                  }
+                }}
+                @input=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLTextAreaElement)) {
+                    return;
+                  }
+
+                  evt.target.setCustomValidity("");
+                  try {
+                    if (!evt.target.value) {
+                      return;
+                    }
+
+                    JSON.parse(evt.target.value);
+                  } catch (err) {
+                    evt.stopImmediatePropagation();
+                  }
+                }}
                 id=${input.name}
                 name=${input.name}
                 autocomplete="off"

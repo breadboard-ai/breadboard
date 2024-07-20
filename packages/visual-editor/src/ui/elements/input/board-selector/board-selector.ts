@@ -117,9 +117,9 @@ export class BoardSelector extends LitElement {
 
     for (const provider of this.providers) {
       for (const [, store] of provider.items()) {
-        for (const [, { url }] of store.items) {
+        for (const [, { url, tags }] of store.items) {
           const expandedUrl = new URL(url, window.location.href);
-          if (this.#board === expandedUrl.href) {
+          if (this.#board === expandedUrl.href && tags?.includes("tool")) {
             this.usingCustomURL = false;
             return;
           }
