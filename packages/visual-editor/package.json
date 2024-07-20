@@ -113,6 +113,7 @@
       },
       "dependencies": [
         "typescript-files-and-deps",
+        "../example-boards:build",
         "copy-pyoide-assets",
         {
           "script": "copy-light-kits",
