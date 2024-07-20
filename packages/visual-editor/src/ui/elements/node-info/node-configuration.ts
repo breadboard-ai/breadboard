@@ -198,6 +198,10 @@ export class NodeConfigurationInfo extends LitElement {
     }
   }
 
+  ensureRenderOnNextUpdate() {
+    this.#manualUpdateRequested = true;
+  }
+
   protected shouldUpdate(
     changedProperties: PropertyValueMap<{
       graph: GraphDescriptor | null;
@@ -533,7 +537,7 @@ export class NodeConfigurationInfo extends LitElement {
                   // If the user clicks on the "stale data" marker, refresh the
                   // data, otherwise do the expand-collapse behavior.
                   if (top instanceof HTMLElement && top.id === "stale-data") {
-                    this.#manualUpdateRequested = true;
+                    this.ensureRenderOnNextUpdate();
                   } else {
                     this.#expanded = !this.#expanded;
 

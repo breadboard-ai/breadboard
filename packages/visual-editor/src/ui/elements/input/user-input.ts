@@ -371,6 +371,10 @@ export class UserInput extends LitElement {
                 ></bb-llm-input>`;
                 break;
               } else if (isBoardBehavior(input.schema, input.value)) {
+                const board =
+                  typeof input.value === "string"
+                    ? input.value
+                    : input.value?.path;
                 inputField = html`<bb-board-selector
                   id="${input.name}"
                   name="${input.name}"
@@ -378,7 +382,7 @@ export class UserInput extends LitElement {
                   .subGraphs=${this.graph?.graphs ?? null}
                   .providers=${this.providers}
                   .providerOps=${this.providerOps}
-                  .value=${input.value ?? defaultValue ?? ""}
+                  .value=${board}
                   }
                 ></bb-board-selector>`;
                 break;
