@@ -19,8 +19,9 @@
     "verbatimModuleSyntax": true,
     "useUnknownInCatchVariables": true,
     "experimentalDecorators": true,
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": []
 }

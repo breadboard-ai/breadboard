@@ -17,7 +17,8 @@
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
-    "dev:nowatch": "wireit"
+    "dev:nowatch": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -80,6 +81,39 @@
           "cascade": false
         }
       ]
+    },
+    "build:tests": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../agent-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tests"
+      ],
+      "files": [],
+      "output": []
     }
   },
   "repository": {
