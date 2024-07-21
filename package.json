@@ -51,6 +51,7 @@
     "test": {
       "dependencies": [
         "./packages/agent-kit:test",
+        "./packages/board-server:test",
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
         "./packages/build:test",

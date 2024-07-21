@@ -8,9 +8,11 @@ import type { GraphDescriptor } from "@google-labs/breadboard";
 import { authenticate } from "../auth.js";
 import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
-import type { ApiHandler } from "../types.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 
-const post: ApiHandler = async (path, req, res, body) => {
+const post: ApiHandler = async (parsed, req, res, body) => {
+  const { board: path } = parsed as BoardParseResult;
+
   const userKey = authenticate(req, res);
   if (!userKey) {
     serverError(res, "Unauthorized");

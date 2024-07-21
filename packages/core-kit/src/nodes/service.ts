@@ -5,11 +5,20 @@
  */
 
 import { defineNodeType, fromJSONSchema } from "@breadboard-ai/build";
+import { PortConfigMap } from "@breadboard-ai/build/internal/common/port.js";
 import { InputValues } from "@google-labs/breadboard";
+
+export type ServiceDescriptionMap = Map<
+  string,
+  { inputs: PortConfigMap; outputs: PortConfigMap }
+>;
 
 export type ServiceStaticInputs = {
   $service?: string;
 };
+
+// TODO: This cache should be cleared periodically.
+const cache: ServiceDescriptionMap = new Map();
 
 const normalize = (serviceURL: string) => {
   if (serviceURL.endsWith("/")) {
@@ -26,17 +35,22 @@ const describe = async (
     return { inputs: {}, outputs: {} };
   }
   const service = normalize($service);
+  if (cache.has(service)) {
+    return cache.get(service)!;
+  }
   const describeURL = `${service}/describe`;
   try {
     const schemas = await (
       await fetch(describeURL, {
         method: "POST",
-        body: JSON.stringify({ dynamicInputs }),
+        body: JSON.stringify({ ...dynamicInputs }),
       })
     ).json();
     const inputs = fromJSONSchema(schemas?.inputSchema ?? {});
     const outputs = fromJSONSchema(schemas?.outputSchema ?? {});
-    return { inputs, outputs };
+    const result = { inputs, outputs };
+    cache.set(service, result);
+    return result;
   } catch {
     // Eat any exceptions.
     // This is a describer, and it must always return some valid value.
