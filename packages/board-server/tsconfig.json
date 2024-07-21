@@ -22,6 +22,6 @@
     "useDefineForClassFields": false,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "tests/**/*.json"],
   "exclude": []
 }

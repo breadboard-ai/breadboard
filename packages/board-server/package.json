@@ -99,6 +99,7 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        "tests/*.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],
