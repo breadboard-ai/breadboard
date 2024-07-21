@@ -28,6 +28,7 @@ import Core from "@google-labs/core-kit";
 import { asInfo, getStore } from "../store.js";
 import type { IncomingMessage } from "http";
 import { secretsKit } from "../proxy/secrets.js";
+import { unauthorized } from "../errors.js";
 
 class BoardServerProvider implements GraphProvider {
   #path: string;
@@ -206,9 +207,29 @@ export const invoke = async (
   };
 };
 
+const verifyKey = async (inputs: Record<string, any>) => {
+  const key = inputs.$key;
+  if (!key) {
+    return { success: false, error: "No key supplied" };
+  }
+  const store = getStore();
+  const userStore = await store.getUserStore(key);
+  if (!userStore.success) {
+    return { success: false, error: userStore.error };
+  }
+  delete inputs.$key;
+  return { success: true };
+};
+
 const invokeHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
   const inputs = body as Record<string, any>;
+  const keyVerificationResult = await verifyKey(inputs);
+  if (!keyVerificationResult.success) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ $error: keyVerificationResult.error }));
+    return true;
+  }
   const result = await invoke(url, board, inputs);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(result));

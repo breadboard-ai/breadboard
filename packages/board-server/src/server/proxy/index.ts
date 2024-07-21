@@ -17,6 +17,7 @@ import {
 } from "@google-labs/breadboard/remote";
 import { asRuntimeKit, createDataStore } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
+import { cors } from "../cors.js";
 
 const config: ProxyServerConfig = {
   kits: [secretsKit, asRuntimeKit(Core)],
@@ -98,6 +99,10 @@ export const serveProxyAPI = async (
   const isProxy = path === "/proxy" || path === "/proxy/";
   if (!isProxy) {
     return false;
+  }
+
+  if (!cors(req, res)) {
+    return true;
   }
 
   if (req.method !== "POST") {

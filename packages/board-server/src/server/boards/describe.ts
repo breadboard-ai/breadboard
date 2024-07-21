@@ -14,6 +14,20 @@ import { serverError } from "../errors.js";
 import { asInfo, getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
+export const addKeyInput = (describeResult: NodeDescriberResult) => {
+  const inputSchema = describeResult.inputSchema;
+  const properties = inputSchema.properties;
+  if (properties) {
+    properties.$key = {
+      type: "string",
+      title: "Service Key",
+      description: "The key to access the service",
+    };
+  }
+  inputSchema.required ??= [];
+  inputSchema.required.push("$key");
+};
+
 const describe: ApiHandler = async (parsed, _req, res) => {
   const store = getStore();
   const { user, name } = parsed as BoardParseResult;
@@ -30,6 +44,7 @@ const describe: ApiHandler = async (parsed, _req, res) => {
   const inspector = inspect(board, { loader });
   const { title, description, metadata } = board;
   const describeResult = await inspector.describe();
+  addKeyInput(describeResult);
   const result = {
     ...describeResult,
     title,
