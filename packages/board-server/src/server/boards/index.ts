@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { methodNotAllowed, serverError } from "../errors.js";
+import { methodNotAllowed } from "../errors.js";
 import { serveFile, serveIndex } from "../common.js";
 import list from "./list.js";
 import create from "./create.js";
@@ -16,6 +16,7 @@ import type { ViteDevServer } from "vite";
 import invoke from "./invoke.js";
 import describe from "./describe.js";
 import { parse } from "./utils/board-api-parser.js";
+import type { GeneralParseResult } from "../types.js";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -52,21 +53,21 @@ export const serveBoardsAPI = async (
 
   switch (parsed.type) {
     case "list": {
-      if (await list("", req, res)) return true;
+      if (await list(parsed, req, res)) return true;
       break;
     }
     case "create": {
-      if (await create("", req, res)) return true;
+      if (await create(parsed, req, res)) return true;
       break;
     }
     case "get": {
-      if (await get(parsed.board, req, res)) return true;
+      if (await get(parsed, req, res)) return true;
       break;
     }
     case "update": {
       const body = await getBody(req);
-      if (await post(parsed.board, req, res, body)) return true;
-      if (await del(parsed.board, req, res, body)) return true;
+      if (await post(parsed, req, res, body)) return true;
+      if (await del(parsed, req, res, body)) return true;
       break;
     }
     case "app": {
@@ -80,11 +81,11 @@ export const serveBoardsAPI = async (
     }
     case "invoke": {
       const body = await getBody(req);
-      if (await invoke(parsed.board, req, res, body)) return true;
+      if (await invoke(parsed, req, res, body)) return true;
       break;
     }
     case "describe": {
-      if (await describe(parsed.board, req, res)) return true;
+      if (await describe(parsed, req, res)) return true;
       break;
     }
     default: {

@@ -6,9 +6,11 @@
 
 import { serverError } from "../errors.js";
 import { asInfo, getStore } from "../store.js";
-import type { ApiHandler } from "../types.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 
-const get: ApiHandler = async (path, req, res) => {
+const get: ApiHandler = async (parsed, req, res) => {
+  const { board: path } = parsed as BoardParseResult;
+
   const store = getStore();
 
   const { userStore, boardName } = asInfo(path);

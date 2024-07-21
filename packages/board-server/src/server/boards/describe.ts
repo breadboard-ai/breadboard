@@ -12,7 +12,7 @@ import {
 } from "@google-labs/breadboard";
 import { serverError } from "../errors.js";
 import { asInfo, getStore } from "../store.js";
-import type { ApiHandler } from "../types.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 import type { IncomingMessage } from "http";
 
 export const getBoardUrl = (req: IncomingMessage, path: string) => {
@@ -21,8 +21,9 @@ export const getBoardUrl = (req: IncomingMessage, path: string) => {
   return `${protocol}://${host}/boards/${path}`;
 };
 
-const describe: ApiHandler = async (path, req, res) => {
+const describe: ApiHandler = async (parsed, req, res) => {
   const store = getStore();
+  const { board: path } = parsed as BoardParseResult;
 
   const { userStore, boardName } = asInfo(path);
   if (!userStore || !boardName) {

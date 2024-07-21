@@ -5,6 +5,7 @@
  */
 
 import type { IncomingMessage } from "http";
+import type { ParseResult } from "../../types.js";
 
 const API_ENTRY = "/boards";
 
@@ -13,32 +14,6 @@ export const parseBoardURL = (url: URL, req: IncomingMessage): string => {
 
   return url.pathname;
 };
-
-export type GeneralRequestType = "list" | "create";
-
-export type UserRequestType =
-  | "list"
-  | "create"
-  | "get"
-  | "update"
-  | "app"
-  | "api"
-  | "invoke"
-  | "describe";
-
-export type RequestType = GeneralRequestType | UserRequestType;
-
-export type ParseResult =
-  | {
-      success: true;
-      type: GeneralRequestType;
-    }
-  | {
-      success: true;
-      type: UserRequestType;
-      board: string;
-    }
-  | { success: false; error: string; code: number };
 
 const notFound = (): ParseResult => ({
   success: false,

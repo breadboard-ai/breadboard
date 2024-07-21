@@ -17,7 +17,7 @@ import {
   type GraphProviderStore,
   type KitManifest,
 } from "@google-labs/breadboard";
-import type { ApiHandler } from "../types.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
 import { fromManifest } from "@google-labs/breadboard/kits";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" with { type: "json" };
@@ -209,7 +209,8 @@ export const invoke = async (
   };
 };
 
-const invokeHandler: ApiHandler = async (path, req, res, body) => {
+const invokeHandler: ApiHandler = async (parsed, req, res, body) => {
+  const { board: path } = parsed as BoardParseResult;
   const inputs = body as Record<string, any>;
   const result = await invoke(req, path, inputs);
   res.writeHead(200, { "Content-Type": "application/json" });
