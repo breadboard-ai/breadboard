@@ -9,17 +9,11 @@ import { asInfo, getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
 const get: ApiHandler = async (parsed, req, res) => {
-  const { board: path } = parsed as BoardParseResult;
+  const { user, name } = parsed as BoardParseResult;
 
   const store = getStore();
 
-  const { userStore, boardName } = asInfo(path);
-  if (!userStore || !boardName) {
-    serverError(res, "Invalid path");
-    return true;
-  }
-
-  const board = await store.get(userStore, boardName);
+  const board = await store.get(user!, name!);
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(board);

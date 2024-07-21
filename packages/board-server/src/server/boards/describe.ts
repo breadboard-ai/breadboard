@@ -13,33 +13,18 @@ import {
 import { serverError } from "../errors.js";
 import { asInfo, getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
-import type { IncomingMessage } from "http";
 
-export const getBoardUrl = (req: IncomingMessage, path: string) => {
-  const host = req.headers.host || "";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  return `${protocol}://${host}/boards/${path}`;
-};
-
-const describe: ApiHandler = async (parsed, req, res) => {
+const describe: ApiHandler = async (parsed, _req, res) => {
   const store = getStore();
-  const { board: path } = parsed as BoardParseResult;
+  const { user, name } = parsed as BoardParseResult;
 
-  const { userStore, boardName } = asInfo(path);
-  if (!userStore || !boardName) {
-    serverError(res, "Invalid path");
-    return true;
-  }
-
-  const board = JSON.parse(await store.get(userStore, boardName)) as
+  const board = JSON.parse(await store.get(user!, name!)) as
     | GraphDescriptor
     | undefined;
   if (!board) {
     serverError(res, "Board not found");
     return true;
   }
-
-  board.url = getBoardUrl(req, path);
 
   const loader = createLoader();
   const inspector = inspect(board, { loader });
@@ -55,7 +40,7 @@ const describe: ApiHandler = async (parsed, req, res) => {
   res.writeHead(200, {
     "Content-Type": "application/json",
   });
-  res.end(JSON.stringify(result, null, 2));
+  res.end(JSON.stringify(result));
 
   return true;
 };

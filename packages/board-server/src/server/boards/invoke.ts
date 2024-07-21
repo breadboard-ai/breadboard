@@ -27,7 +27,6 @@ import JSONKit from "@google-labs/json-kit";
 import Core from "@google-labs/core-kit";
 import { asInfo, getStore } from "../store.js";
 import type { IncomingMessage } from "http";
-import { getBoardUrl } from "./describe.js";
 import { secretsKit } from "../proxy/secrets.js";
 
 class BoardServerProvider implements GraphProvider {
@@ -169,13 +168,11 @@ const formatRunError = (e: unknown) => {
 };
 
 export const invoke = async (
-  req: IncomingMessage,
+  url: string,
   path: string,
   inputs: Record<string, any>
 ) => {
   const store = createDataStore();
-
-  const url = getBoardUrl(req, path);
 
   const runner = run({
     url,
@@ -210,9 +207,9 @@ export const invoke = async (
 };
 
 const invokeHandler: ApiHandler = async (parsed, req, res, body) => {
-  const { board: path } = parsed as BoardParseResult;
+  const { board, url } = parsed as BoardParseResult;
   const inputs = body as Record<string, any>;
-  const result = await invoke(req, path, inputs);
+  const result = await invoke(url, board, inputs);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(result));
   return true;
