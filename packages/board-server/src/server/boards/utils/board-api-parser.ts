@@ -56,6 +56,13 @@ export class BoardAPIParser {
     return this.#url.pathname.startsWith(API_ENTRY);
   }
 
+  #getAdjustedBoardURL = (board: string): string => {
+    const url = new URL(this.#url);
+    url.pathname = `${API_ENTRY}/${board}`;
+    url.search = "";
+    return url.href;
+  };
+
   parse(): ParseResult {
     if (!this.isBoardURL()) {
       return notFound();
@@ -74,43 +81,49 @@ export class BoardAPIParser {
     } else if (parts.length === 1) {
       return notFound();
     } else if (parts.length === 2 || parts.length === 3) {
-      const [maybeUser, name] = parts;
+      const [maybeUser, maybeName] = parts;
       const user = maybeUser?.startsWith("@") ? maybeUser.slice(1) : undefined;
-      if (!user || !name) {
+      if (!user || !maybeName) {
         return notFound();
       }
-      const isAPI = name.endsWith(".api");
-      const isApp = name.endsWith(".app");
-      const isJson = name.endsWith(".json");
+      const isAPI = maybeName.endsWith(".api");
+      const isApp = maybeName.endsWith(".app");
+      const isJson = maybeName.endsWith(".json");
 
       if (isAPI) {
         const isInvoke = parts.length === 3 && parts[2] === "invoke";
         const isDescribe = parts.length === 3 && parts[2] === "describe";
-        const board = `@${user}/${name.slice(0, -".api".length)}.json`;
+        const name = `${maybeName.slice(0, -".api".length)}.json`;
+        const board = `@${user}/${name}`;
+        const url = this.#getAdjustedBoardURL(board);
         if (isInvoke) {
           if (isPOST) {
-            return { success: true, type: "invoke", board };
+            return { success: true, type: "invoke", board, url, user, name };
           } else {
             return invalidMethod();
           }
         }
         if (isDescribe) {
           if (isPOST) {
-            return { success: true, type: "describe", board };
+            return { success: true, type: "describe", board, url, user, name };
           } else {
             return invalidMethod();
           }
         }
-        return { success: true, type: "api", board };
+        return { success: true, type: "api", board, url, user, name };
       } else if (isApp && parts.length === 2) {
-        const board = `@${user}/${name.slice(0, -".app".length)}.json`;
-        return { success: true, type: "app", board };
-      } else if (isJson && parts.length === 2) {
+        const name = `${maybeName.slice(0, -".app".length)}.json`;
         const board = `@${user}/${name}`;
+        const url = this.#getAdjustedBoardURL(board);
+        return { success: true, type: "app", board, url, user, name };
+      } else if (isJson && parts.length === 2) {
+        const name = maybeName;
+        const board = `@${user}/${name}`;
+        const url = this.#getAdjustedBoardURL(board);
         if (this.#method === "GET") {
-          return { success: true, type: "get", board };
+          return { success: true, type: "get", board, url, user, name };
         } else if (this.#method === "POST") {
-          return { success: true, type: "update", board };
+          return { success: true, type: "update", board, url, user, name };
         }
       }
     }

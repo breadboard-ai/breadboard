@@ -30,7 +30,10 @@
     "result": {
       "success": true,
       "type": "get",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   },
   {
@@ -39,7 +42,10 @@
     "result": {
       "success": true,
       "type": "update",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   },
   {
@@ -63,7 +69,22 @@
     "result": {
       "success": true,
       "type": "invoke",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
+    }
+  },
+  {
+    "url": "https://example.com/boards/@user/name.api/invoke?API_KEY=foo",
+    "method": "POST",
+    "result": {
+      "success": true,
+      "type": "invoke",
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   },
   {
@@ -77,7 +98,10 @@
     "result": {
       "success": true,
       "type": "describe",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   },
   {
@@ -91,7 +115,10 @@
     "result": {
       "success": true,
       "type": "api",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   },
   {
@@ -100,7 +127,10 @@
     "result": {
       "success": true,
       "type": "app",
-      "board": "@user/name.json"
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
     }
   }
 ]

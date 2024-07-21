@@ -29,6 +29,9 @@ export type BoardParseResult = {
   success: true;
   type: UserRequestType;
   board: string;
+  url: string;
+  user: string;
+  name: string;
 };
 
 export type ParseResult =
