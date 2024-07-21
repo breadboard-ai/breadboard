@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { serverError } from "../errors.js";
+import { methodNotAllowed, serverError } from "../errors.js";
 import { serveFile, serveIndex } from "../common.js";
 import list from "./list.js";
 import create from "./create.js";
@@ -13,15 +13,9 @@ import get from "./get.js";
 import post from "./post.js";
 import del from "./delete.js";
 import type { ViteDevServer } from "vite";
-
-const API_ENTRY = "/boards";
-const getApiPath = (path: string) => {
-  const maybePath = path.slice(API_ENTRY.length);
-  if (maybePath.startsWith("/")) {
-    return maybePath.slice(1);
-  }
-  return maybePath;
-};
+import invoke from "./invoke.js";
+import describe from "./describe.js";
+import { parse } from "./utils/board-api-parser.js";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -43,47 +37,59 @@ export const serveBoardsAPI = async (
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<boolean> => {
-  const { pathname } = url;
+  const parsed = parse(url, req.method);
 
-  const isBoardServer = pathname.startsWith(API_ENTRY);
-  const isApp = pathname.endsWith(".app");
-  const isAPI = pathname.endsWith(".api");
-
-  if (!isBoardServer) {
+  if (!parsed.success) {
+    if (parsed.code === 404) {
+      return false;
+    }
+    if (parsed.code === 405) {
+      methodNotAllowed(res, parsed.error);
+      return true;
+    }
     return false;
   }
-  if (isApp) {
-    // Serve the index.html file for the app.
-    serveIndex(vite, res);
-    return true;
-  }
-  if (isAPI) {
-    serveFile(res, "/api.html");
-    return true;
-  }
 
-  const apiPath = getApiPath(pathname);
-  try {
-    if (apiPath.length === 0) {
-      if (req.method === "GET") {
-        if (await list(apiPath, req, res)) return true;
-      } else if (req.method === "POST") {
-        if (await create(apiPath, req, res)) return true;
-      }
-    } else {
-      if (req.method === "GET") {
-        if (await get(apiPath, req, res)) return true;
-      } else if (req.method === "POST") {
-        const body = await getBody(req);
-        if (await post(apiPath, req, res, body)) return true;
-        if (await del(apiPath, req, res, body)) return true;
-      } else {
-        serverError(res, `Method not allowed: ${req.method}`);
-        return true;
-      }
+  switch (parsed.type) {
+    case "list": {
+      if (await list("", req, res)) return true;
+      break;
     }
-  } catch (e) {
-    serverError(res, `API Error: ${e}`);
+    case "create": {
+      if (await create("", req, res)) return true;
+      break;
+    }
+    case "get": {
+      if (await get(parsed.board, req, res)) return true;
+      break;
+    }
+    case "update": {
+      const body = await getBody(req);
+      if (await post(parsed.board, req, res, body)) return true;
+      if (await del(parsed.board, req, res, body)) return true;
+      break;
+    }
+    case "app": {
+      // Serve the index.html file for the app.
+      serveIndex(vite, res);
+      return true;
+    }
+    case "api": {
+      serveFile(res, "/api.html");
+      return true;
+    }
+    case "invoke": {
+      const body = await getBody(req);
+      if (await invoke(parsed.board, req, res, body)) return true;
+      break;
+    }
+    case "describe": {
+      if (await describe(parsed.board, req, res)) return true;
+      break;
+    }
+    default: {
+      return false;
+    }
   }
-  return true;
+  return false;
 };

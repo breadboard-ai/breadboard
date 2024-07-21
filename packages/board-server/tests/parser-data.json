@@ -30,8 +30,7 @@
     "result": {
       "success": true,
       "type": "get",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   },
   {
@@ -40,8 +39,7 @@
     "result": {
       "success": true,
       "type": "update",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   },
   {
@@ -65,8 +63,7 @@
     "result": {
       "success": true,
       "type": "invoke",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   },
   {
@@ -80,8 +77,7 @@
     "result": {
       "success": true,
       "type": "describe",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   },
   {
@@ -95,8 +91,7 @@
     "result": {
       "success": true,
       "type": "api",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   },
   {
@@ -105,8 +100,7 @@
     "result": {
       "success": true,
       "type": "app",
-      "user": "user",
-      "name": "name.json"
+      "board": "@user/name.json"
     }
   }
 ]
