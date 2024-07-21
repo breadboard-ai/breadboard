@@ -46,12 +46,16 @@ const environment = (): Environment => {
 };
 
 const runInNode: ScriptRunner = async ({ code, functionName, args }) => {
-  let vm;
-  if (typeof require === "function") {
-    vm = require("node:vm");
-  } else {
-    vm = await import(/*@vite-ignore*/ "node:vm");
-  }
+  // TODO: This code does not work when used with esbuild. Esbuild provides
+  // the "require" function anyway, and then throws an error when trying to
+  // call it. Figure out what's the right thing to do here.
+  // let vm;
+  // if (typeof require === "function") {
+  //   vm = require("node:vm");
+  // } else {
+  //   vm = await import(/*@vite-ignore*/ "node:vm");
+  // }
+  const vm = await import("node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console, structuredClone });
   const script = new vm.Script(codeToRun);
