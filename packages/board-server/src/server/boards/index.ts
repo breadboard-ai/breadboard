@@ -17,6 +17,7 @@ import invoke from "./invoke.js";
 import describe from "./describe.js";
 import { parse } from "./utils/board-api-parser.js";
 import type { GeneralParseResult } from "../types.js";
+import { cors, corsAll } from "../cors.js";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -53,18 +54,22 @@ export const serveBoardsAPI = async (
 
   switch (parsed.type) {
     case "list": {
+      if (!cors(req, res)) return true;
       if (await list(parsed, req, res)) return true;
       break;
     }
     case "create": {
+      if (!cors(req, res)) return true;
       if (await create(parsed, req, res)) return true;
       break;
     }
     case "get": {
+      if (!cors(req, res)) return true;
       if (await get(parsed, req, res)) return true;
       break;
     }
     case "update": {
+      if (!cors(req, res)) return true;
       const body = await getBody(req);
       if (await post(parsed, req, res, body)) return true;
       if (await del(parsed, req, res, body)) return true;
@@ -80,11 +85,13 @@ export const serveBoardsAPI = async (
       return true;
     }
     case "invoke": {
+      if (!corsAll(req, res)) return true;
       const body = await getBody(req);
       if (await invoke(parsed, req, res, body)) return true;
       break;
     }
     case "describe": {
+      if (!corsAll(req, res)) return true;
       if (await describe(parsed, req, res)) return true;
       break;
     }
