@@ -7,7 +7,6 @@ from google.colab import output
 from IPython import display
 
 
-
 def run_python(data):
   try:
     # Extract code input
@@ -50,7 +49,6 @@ def run_python(data):
     return json.dumps([{"error": f"Python Failure: {e}"}])
 
 
-
 def start_breadboard_iframe(
     breadboard_url: str = "https://breadboard-ai.web.app",
 ):
@@ -87,14 +85,14 @@ const channel = new MessageChannel();
     out.start();
 
     window.addEventListener("message", (evt) => {
-      if (evt.data !== "letsgo") {
+      if (evt.data !== "colab_iframe") {
         return;
       }
       const iframe = document.getElementById("breadboard_iframe").contentWindow;
       iframe.postMessage(evt.data, evt.origin, [ channel.port1 ]);
     });
   """)
-  target_url = breadboard_url
+  target_url = breadboard_url.strip("/") + "/iframe.html?configId=colab_iframe"
   display.display_html(
       f'<iframe id=breadboard_iframe src={target_url} allow="clipboard-write'
       ' self *" height=700 width="100%"></iframe>', raw=True
