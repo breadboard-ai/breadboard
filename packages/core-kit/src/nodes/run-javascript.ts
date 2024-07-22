@@ -103,12 +103,14 @@ const runInBrowser = async ({
     [x in WebWorkerResultType]: string;
   };
 
-  const worker = new Worker(URL.createObjectURL(blob));
+  const workerURL = URL.createObjectURL(blob);
+  const worker = new Worker(workerURL);
   const result = new Promise<string>((resolve, reject) => {
     worker.onmessage = (e) => {
       const data = e.data as WebWorkerResult;
       if (data.result) {
         resolve(data.result);
+        URL.revokeObjectURL(workerURL);
         return;
       } else if (data.error) {
         console.log("Error in worker", data.error);
