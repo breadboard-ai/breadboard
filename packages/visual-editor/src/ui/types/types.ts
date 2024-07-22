@@ -43,6 +43,7 @@ export enum STATUS {
 export type UserInputConfiguration = {
   name: string;
   title: string;
+  secret: boolean;
   required?: boolean;
   configured?: boolean;
   value?: NodeValue;

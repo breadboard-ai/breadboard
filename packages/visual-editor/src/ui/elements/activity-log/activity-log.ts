@@ -10,6 +10,7 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
+  InspectableRunSecretEvent,
   OutputValues,
   Schema,
   SerializedRun,
@@ -240,6 +241,109 @@ export class ActivityLog extends LitElement {
     this.requestUpdate();
   }
 
+  async #renderSecretInput(idx: number, event: InspectableRunSecretEvent) {
+    const userInputs: UserInputConfiguration[] = event.keys.reduce(
+      (prev, key) => {
+        const schema: Schema = {
+          properties: {
+            secret: {
+              title: key,
+              description: `Enter ${key}`,
+              type: "string",
+            },
+          },
+        };
+
+        const savedSecret =
+          this.settings?.getSection(SETTINGS_TYPE.SECRETS).items.get(key) ??
+          null;
+
+        let value = undefined;
+        if (savedSecret) {
+          value = savedSecret.value;
+        }
+
+        prev.push({
+          name: key,
+          title: schema.title ?? key,
+          secret: false,
+          schema,
+          configured: false,
+          required: true,
+          value,
+        });
+
+        return prev;
+      },
+      [] as UserInputConfiguration[]
+    );
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData(true);
+      if (!outputs) {
+        return;
+      }
+
+      for (const [key, value] of Object.entries(outputs)) {
+        if (typeof value !== "string") {
+          console.warn(
+            `Expected secret as string, instead received ${typeof value}`
+          );
+          continue;
+        }
+
+        // Dispatch an event for each secret received.
+        this.dispatchEvent(
+          new InputEnterEvent(
+            key,
+            { secret: value },
+            /* allowSavingIfSecret */ true
+          )
+        );
+      }
+    };
+
+    return html`<section class=${classMap({ "user-required": this.#isHidden })}>
+      <h1 data-message-idx=${idx}>${event.type}</h1>
+      ${event.keys.map((id) => {
+        if (id.startsWith("connection:")) {
+          return html`<bb-connection-input
+            id=${id}
+            .connectionId=${id.replace(/^connection:/, "")}
+          ></bb-connection-input>`;
+        }
+
+        return html``;
+      })}
+
+      <bb-user-input
+        id=${event.id}
+        .showTypes=${false}
+        .autosubmit=${false}
+        .inputs=${userInputs}
+        ${ref(this.#userInputRef)}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (!(evt.key === "Enter" && isCtrlCommand)) {
+            return;
+          }
+
+          continueRun();
+        }}
+      ></bb-user-input>
+
+      <button class="continue-button" @click=${() => continueRun()}>
+        Continue
+      </button>
+    </section>`;
+  }
+
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
     const { inputs, node } = event;
     const nodeSchema = await node.describe(inputs);
@@ -262,6 +366,7 @@ export class ActivityLog extends LitElement {
       prev.push({
         name,
         title: schema.title ?? name,
+        secret: false,
         schema,
         configured: false,
         required: requiredFields.includes(name),
@@ -276,12 +381,18 @@ export class ActivityLog extends LitElement {
         return;
       }
 
-      const outputs = this.#userInputRef.value.processData();
+      const outputs = this.#userInputRef.value.processData(true);
       if (!outputs) {
         return;
       }
 
-      this.dispatchEvent(new InputEnterEvent(descriptor.id, outputs, true));
+      this.dispatchEvent(
+        new InputEnterEvent(
+          descriptor.id,
+          outputs,
+          /* allowSavingIfSecret */ true
+        )
+      );
     };
 
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
@@ -292,7 +403,6 @@ export class ActivityLog extends LitElement {
         id="${descriptor.id}"
         .showTypes=${false}
         .autosubmit=${false}
-        .remember=${false}
         .inputs=${userInputs}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
@@ -459,52 +569,7 @@ export class ActivityLog extends LitElement {
                   return nothing;
                 }
 
-                content = html`<section
-                  class=${classMap({ "user-required": this.#isHidden })}
-                >
-                  <h1 data-message-idx=${idx}>${event.type}</h1>
-                  ${event.keys.map((id) => {
-                    if (id.startsWith("connection:")) {
-                      return html`<bb-connection-input
-                        id=${id}
-                        .connectionId=${id.replace(/^connection:/, "")}
-                      ></bb-connection-input>`;
-                    }
-
-                    const configuration = {
-                      schema: {
-                        properties: {
-                          secret: {
-                            title: id,
-                            description: `Enter ${id}`,
-                            type: "string",
-                          },
-                        },
-                      },
-                    };
-
-                    let values = null;
-                    if (this.settings) {
-                      const savedSecret =
-                        this.settings
-                          .getSection(SETTINGS_TYPE.SECRETS)
-                          .items.get(id) || null;
-
-                      if (savedSecret) {
-                        values = { secret: savedSecret.value };
-                      }
-                    }
-
-                    return html`<bb-input
-                      id="${id}"
-                      .values=${values}
-                      .secret=${true}
-                      .remember=${true}
-                      .autosubmit=${true}
-                      .schema=${configuration.schema}
-                    ></bb-input>`;
-                  })}
-                </section>`;
+                content = this.#renderSecretInput(idx, event);
                 break;
               }
 
