@@ -589,6 +589,8 @@ export class UI extends LitElement {
         .showExtendedInfo=${true}
         .settings=${this.settings}
         .logTitle=${"Activity"}
+        .providers=${this.providers}
+        .providerOps=${this.providerOps}
         @bbinputrequested=${() => {
           this.selectedNodeIds.length = 0;
           this.requestUpdate();

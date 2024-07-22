@@ -489,7 +489,10 @@ export class UserInput extends LitElement {
                 break;
               }
 
-              if (input.schema.format === "multiline") {
+              if (
+                input.schema.format === "multiline" ||
+                input.schema.format === "markdown"
+              ) {
                 inputField = html`<textarea
                   id=${id}
                   name=${id}
