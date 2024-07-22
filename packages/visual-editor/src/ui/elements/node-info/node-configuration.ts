@@ -519,6 +519,7 @@ export class NodeConfigurationInfo extends LitElement {
               return {
                 name: port.name,
                 title: port.title,
+                secret: false,
                 configured: port.configured,
                 value: port.value,
                 schema: port.edges.length === 0 ? port.schema : undefined,
