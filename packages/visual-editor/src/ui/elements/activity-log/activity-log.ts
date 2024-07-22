@@ -6,6 +6,7 @@
 
 import {
   ErrorObject,
+  GraphProvider,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -29,6 +30,10 @@ import { styles as activityLogStyles } from "./activity-log.styles.js";
 import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
 import { SettingsStore } from "../../../data/settings-store.js";
 import { UserInput } from "../elements.js";
+import {
+  isArrayOfLLMContentBehavior,
+  isLLMContentBehavior,
+} from "../../utils/index.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -55,6 +60,12 @@ export class ActivityLog extends LitElement {
 
   @property()
   settings: SettingsStore | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -361,6 +372,22 @@ export class ActivityLog extends LitElement {
       let value = values ? values[name] : undefined;
       if ((schema.type === "array" || schema.type === "object") && value) {
         value = JSON.stringify(value, null, 2);
+
+        if (
+          schema.type === "object" &&
+          isLLMContentBehavior(schema) &&
+          !isLLMContent(value)
+        ) {
+          value = undefined;
+        }
+
+        if (
+          schema.type === "array" &&
+          isArrayOfLLMContentBehavior(schema) &&
+          !isArrayOfLLMContent(value)
+        ) {
+          value = undefined;
+        }
       }
 
       prev.push({
@@ -401,6 +428,8 @@ export class ActivityLog extends LitElement {
       </h1>
       <bb-user-input
         id="${descriptor.id}"
+        .providers=${this.providers}
+        .providerOps=${this.providerOps}
         .showTypes=${false}
         .autosubmit=${false}
         .inputs=${userInputs}

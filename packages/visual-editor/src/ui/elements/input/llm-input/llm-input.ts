@@ -896,7 +896,9 @@ export class LLMInput extends LitElement {
         </div>
       </header>
       <div id="container" ${ref(this.#containerRef)}>
-        ${this.value && this.value.parts.length
+        ${this.value &&
+        Array.isArray(this.value.parts) &&
+        this.value.parts.length
           ? map(this.value.parts, (part, idx) => {
               const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
