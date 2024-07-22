@@ -162,13 +162,15 @@ export class UserInput extends LitElement {
     evt.preventDefault();
   }
 
-  processData() {
+  processData(showValidationErrors = false) {
     if (!this.#formRef.value) {
       return null;
     }
 
     if (!this.#formRef.value.checkValidity()) {
-      this.#formRef.value.reportValidity();
+      if (showValidationErrors) {
+        this.#formRef.value.reportValidity();
+      }
       return null;
     }
 
@@ -206,6 +208,7 @@ export class UserInput extends LitElement {
             case "object":
             case "array": {
               if (
+                isPortSpecBehavior(input.schema) ||
                 isLLMContentBehavior(input.schema) ||
                 isArrayOfLLMContentBehavior(input.schema) ||
                 isBoardBehavior(input.schema, inputValue)
@@ -221,7 +224,10 @@ export class UserInput extends LitElement {
                 }
               } catch (err) {
                 // Ignore errors.
-                console.warn("Unexpected input");
+                console.warn(
+                  `Unexpected input for "${input.name}"`,
+                  inputValue
+                );
                 console.warn(err);
               }
               break;
@@ -268,7 +274,7 @@ export class UserInput extends LitElement {
       @bbcodechange=${this.#emitProcessedData}
       @submit=${this.#onFormSubmit}
     >
-      ${map(this.inputs, (input) => {
+      ${map(this.inputs, (input, idx) => {
         let inputField: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
 
@@ -440,6 +446,7 @@ export class UserInput extends LitElement {
                 name=${id}
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
+                .autofocus=${idx === 0 ? true : false}
                 .value=${input.value ?? defaultValue ?? ""}
               ></textarea>`;
               break;
@@ -453,6 +460,7 @@ export class UserInput extends LitElement {
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
+                .autofocus=${idx === 0 ? true : false}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
               break;
@@ -464,6 +472,7 @@ export class UserInput extends LitElement {
                 id=${id}
                 name=${id}
                 autocomplete="off"
+                .autofocus=${idx === 0 ? true : false}
                 .checked=${input.value}
               />`;
               break;
@@ -486,18 +495,20 @@ export class UserInput extends LitElement {
                   name=${id}
                   autocomplete="off"
                   placeholder=${input.schema.description ?? ""}
+                  .autofocus=${idx === 0 ? true : false}
                   .value=${input.value ?? defaultValue ?? ""}
                 ></textarea>`;
                 break;
               }
 
               inputField = html`<input
-                type="text"
+                .type=${input.secret ? "password" : "text"}
                 id=${id}
                 name=${id}
                 autocomplete="off"
                 placeholder=${input.schema.description ?? ""}
                 ?required=${input.required}
+                .autofocus=${idx === 0 ? true : false}
                 .value=${input.value ?? defaultValue ?? ""}
               />`;
               break;
