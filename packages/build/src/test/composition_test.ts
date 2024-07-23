@@ -314,3 +314,147 @@ test("can invoke one board in another (output wrappers)", () => {
     },
   });
 });
+
+test("can invoke one board in another (indirect)", () => {
+  const innerStrInput = input({ description: "innerStrInput" });
+  const innerNumInput = input({ type: "number", description: "innerNumInput" });
+  const innerNode = trivialNode({
+    trivialStrIn: innerStrInput,
+    trivialNumIn: innerNumInput,
+  });
+  const innerOutput = innerNode.outputs.trivialOut;
+  const innerBoard = board({
+    inputs: { innerStrInput, innerNumInput },
+    outputs: { innerOutput },
+  });
+
+  const outerInput = input({ description: "outerInput" });
+  const nestedBoard = innerBoard({
+    innerStrInput: outerInput,
+    innerNumInput: 42,
+  });
+  const outerNode = trivialNode({
+    trivialStrIn: nestedBoard.outputs.innerOutput,
+    trivialNumIn: 47,
+  });
+  const outerOutput = outerNode.outputs.trivialOut;
+  const outerBoard = board({
+    inputs: { outerInput },
+    outputs: { outerOutput },
+  });
+
+  const serialized = serialize(outerBoard);
+  console.log(JSON.stringify(serialized));
+  assert.deepEqual(serialized, {
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              outerInput: { type: "string", description: "outerInput" },
+            },
+            required: ["outerInput"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { outerOutput: { type: "string" } },
+            required: ["outerOutput"],
+          },
+        },
+      },
+      {
+        id: "invoke-0",
+        type: "invoke",
+        configuration: { $board: "#subgraph-0", innerNumInput: 42 },
+      },
+      { id: "trivial-0", type: "trivial", configuration: { trivialNumIn: 47 } },
+    ],
+    edges: [
+      {
+        from: "input-0",
+        to: "invoke-0",
+        out: "outerInput",
+        in: "innerStrInput",
+      },
+      {
+        from: "invoke-0",
+        to: "trivial-0",
+        out: "innerOutput",
+        in: "trivialStrIn",
+      },
+      {
+        from: "trivial-0",
+        to: "output-0",
+        out: "trivialOut",
+        in: "outerOutput",
+      },
+    ],
+    graphs: {
+      "subgraph-0": {
+        edges: [
+          {
+            from: "input-0",
+            to: "trivial-0",
+            out: "innerNumInput",
+            in: "trivialNumIn",
+          },
+          {
+            from: "input-0",
+            to: "trivial-0",
+            out: "innerStrInput",
+            in: "trivialStrIn",
+          },
+          {
+            from: "trivial-0",
+            to: "output-0",
+            out: "trivialOut",
+            in: "innerOutput",
+          },
+        ],
+        nodes: [
+          {
+            id: "input-0",
+            type: "input",
+            configuration: {
+              schema: {
+                type: "object",
+                properties: {
+                  innerNumInput: {
+                    type: "number",
+                    description: "innerNumInput",
+                  },
+                  innerStrInput: {
+                    type: "string",
+                    description: "innerStrInput",
+                  },
+                },
+                required: ["innerNumInput", "innerStrInput"],
+              },
+            },
+          },
+          {
+            id: "output-0",
+            type: "output",
+            configuration: {
+              schema: {
+                type: "object",
+                properties: { innerOutput: { type: "string" } },
+                required: ["innerOutput"],
+              },
+            },
+          },
+          { id: "trivial-0", type: "trivial", configuration: {} },
+        ],
+      },
+    },
+  });
+});

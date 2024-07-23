@@ -404,6 +404,18 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           wasOptional = true;
         }
 
+        if (isBoardOutput(value)) {
+          addEdge(
+            visitNodeAndReturnItsId(value.innerBoard),
+            value.innerPortName,
+            thisNodeId,
+            portName,
+            wasConstant,
+            wasOptional
+          );
+          continue;
+        }
+
         if (isLoopback(value)) {
           value = value.value;
           if (value === undefined) {
