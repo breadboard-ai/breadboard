@@ -9,7 +9,7 @@ import type { JsonSerializable } from "../type-system/type.js";
 import type { Input, InputWithDefault } from "./input.js";
 
 export function output<T extends JsonSerializable>(
-  port: OutputPortReference<T> | Input<T> | InputWithDefault<T>,
+  port: Output<T> | OutputPortReference<T> | Input<T> | InputWithDefault<T>,
   {
     id,
     title,
@@ -30,7 +30,11 @@ export interface Output<T extends JsonSerializable | undefined> {
   readonly id?: string;
   readonly title?: string;
   readonly description?: string;
-  readonly port: OutputPortReference<T> | Input<T> | InputWithDefault<T>;
+  readonly port:
+    | Output<T>
+    | OutputPortReference<T>
+    | Input<T>
+    | InputWithDefault<T>;
 }
 
 export function isSpecialOutput(
