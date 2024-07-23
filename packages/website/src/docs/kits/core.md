@@ -468,11 +468,18 @@ For a sample implementation of a BSE protocol, see the [Google News Service](htt
 
 {{ "/breadboard/static/boards/kits/core-unnest.bgl.json" | board }}
 
+Exposes all properties of a given JSON object as separate output ports.
+
 ### Input ports
+
+The `unnest` component has a single input port.
+
+- _Nested_ (id `nested`) — the JSON object to unnest.
 
 ### Output ports
 
-### Example
+The `unnest` component will create one output port for each property in the
+given object.
 
 ### Implementation
 
