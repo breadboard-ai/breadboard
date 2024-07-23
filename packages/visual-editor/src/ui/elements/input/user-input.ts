@@ -26,7 +26,11 @@ import {
   GraphProvider,
   NodeValue,
 } from "@google-labs/breadboard";
-import { resolveArrayType, resolveBehaviorType } from "../../utils/schema";
+import {
+  assertIsLLMContent,
+  resolveArrayType,
+  resolveBehaviorType,
+} from "../../utils/schema";
 import {
   createAllowListFromProperty,
   getMinItemsFromProperty,
@@ -215,7 +219,7 @@ export class UserInput extends LitElement {
               ) {
                 if (isArrayOfLLMContentBehavior(input.schema)) {
                   (el as unknown as LLMInputArray).processAllOpenParts();
-                } else if (isBoardBehavior(input.schema, inputValue)) {
+                } else if (isLLMContentBehavior(input.schema)) {
                   (el as unknown as LLMInput).processAllOpenParts();
                 }
                 break;
@@ -313,6 +317,14 @@ export class UserInput extends LitElement {
                 defaultValue = JSON.parse(unparsedDefaultValue);
               } else {
                 defaultValue = null;
+              }
+
+              if (isLLMContentBehavior(input.schema)) {
+                try {
+                  assertIsLLMContent(defaultValue);
+                } catch (err) {
+                  defaultValue = null;
+                }
               }
             }
           } catch (err) {
