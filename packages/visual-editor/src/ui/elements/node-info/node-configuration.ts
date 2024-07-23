@@ -140,8 +140,7 @@ export class NodeConfigurationInfo extends LitElement {
     }
 
     .comment {
-      padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-4)
-        var(--bb-grid-size-4);
+      padding: var(--bb-grid-size-4);
     }
 
     .comment textarea {
@@ -153,6 +152,9 @@ export class NodeConfigurationInfo extends LitElement {
       resize: none;
       field-sizing: content;
       max-height: 300px;
+      width: 100%;
+      display: block;
+      margin-top: var(--bb-grid-size);
     }
 
     #stale-data {
