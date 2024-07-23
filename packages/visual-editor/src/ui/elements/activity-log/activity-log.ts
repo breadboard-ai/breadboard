@@ -289,6 +289,27 @@ export class ActivityLog extends LitElement {
       [] as UserInputConfiguration[]
     );
 
+    // Potentially do the autosubmit.
+    if (userInputs.every((secret) => secret.value !== undefined)) {
+      for (const input of userInputs) {
+        if (typeof input.value !== "string") {
+          console.warn(
+            `Expected secret as string, instead received ${typeof input.value}`
+          );
+          continue;
+        }
+
+        // Dispatch an event for each secret received.
+        this.dispatchEvent(
+          new InputEnterEvent(
+            input.name,
+            { secret: input.value },
+            /* allowSavingIfSecret */ true
+          )
+        );
+      }
+    }
+
     const continueRun = () => {
       if (!this.#userInputRef.value) {
         return;
@@ -334,7 +355,6 @@ export class ActivityLog extends LitElement {
       <bb-user-input
         id=${event.id}
         .showTypes=${false}
-        .autosubmit=${false}
         .inputs=${userInputs}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
@@ -431,7 +451,6 @@ export class ActivityLog extends LitElement {
         .providers=${this.providers}
         .providerOps=${this.providerOps}
         .showTypes=${false}
-        .autosubmit=${false}
         .inputs=${userInputs}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
