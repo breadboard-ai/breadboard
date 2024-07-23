@@ -9,25 +9,28 @@ import {
   GraphDescriptor,
   GraphProvider,
 } from "@google-labs/breadboard";
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { assertIsLLMContent } from "../../../utils/schema.js";
-import { BoardSelector } from "../board-selector/board-selector.js";
+import { LLMInput } from "../llm-input/llm-input";
 
 enum TYPE {
   STRING = "string",
   OBJECT = "object",
   NUMBER = "number",
+  BOOLEAN = "boolean",
 }
 
-type ArrayEditorType = string | number | object;
+type ArrayEditorType = string | number | object | boolean | null;
 
 @customElement("bb-array-editor")
 export class ArrayEditor extends LitElement {
   @property({ reflect: true })
   type = TYPE.STRING;
+
+  @property()
+  items: ArrayEditorType[] | null = null;
 
   @property({ reflect: true })
   behavior: BehaviorSchema | null = null;
@@ -42,7 +45,6 @@ export class ArrayEditor extends LitElement {
   graph: GraphDescriptor | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
-  #items: ArrayEditorType[] | null = null;
   #appendNewItemOnNextRender = false;
 
   static styles = css`
@@ -66,6 +68,9 @@ export class ArrayEditor extends LitElement {
       align-items: center;
     }
 
+    input[type="number"],
+    input[type="text"],
+    select,
     textarea {
       resize: none;
       display: block;
@@ -77,6 +82,10 @@ export class ArrayEditor extends LitElement {
       line-height: var(--bb-body-line-height-x-small);
       max-height: 300px;
       flex: 1;
+    }
+
+    input[type="checkbox"] {
+      margin: 0;
     }
 
     .delete {
@@ -131,44 +140,13 @@ export class ArrayEditor extends LitElement {
     }
   `;
 
-  set items(items: ArrayEditorType[] | null) {
-    this.#items = items;
-
-    if (Array.isArray(items) && items.length > 0) {
-      const type = typeof items[0];
-      switch (type) {
-        case "string":
-          this.type = TYPE.STRING;
-          break;
-
-        case "number":
-          this.type = TYPE.NUMBER;
-          break;
-
-        case "object":
-          this.type = TYPE.OBJECT;
-          break;
-
-        default:
-          console.warn(`Array editor sent unexpected data: ${type}`);
-          break;
-      }
-    }
-
-    this.requestUpdate();
-  }
-
-  get items() {
-    return this.#items;
-  }
-
   get value() {
     return JSON.stringify(this.items);
   }
 
   #addItem() {
-    if (!this.#items) {
-      this.#items = [];
+    if (!this.items) {
+      this.items = [];
     }
 
     this.#appendNewItemOnNextRender = true;
@@ -182,7 +160,7 @@ export class ArrayEditor extends LitElement {
   #removeItem(evt: Event) {
     if (
       !(evt.target instanceof HTMLButtonElement) ||
-      !this.#items ||
+      !this.items ||
       !this.#formRef.value
     ) {
       return;
@@ -202,7 +180,7 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    this.#items.splice(idx, 1);
+    this.items.splice(idx, 1);
     this.#notify();
     this.requestUpdate();
   }
@@ -212,7 +190,7 @@ export class ArrayEditor extends LitElement {
       return;
     }
 
-    this.#items = null;
+    this.items = null;
     this.#notify();
     this.requestUpdate();
   }
@@ -222,13 +200,56 @@ export class ArrayEditor extends LitElement {
       return true;
     }
 
-    // This will update values synchronously.
-    this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
-    const isValid = this.#formRef.value.checkValidity();
-    if (isValid) {
-      this.requestUpdate();
+    const form = this.#formRef.value;
+    const items: ArrayEditorType[] = [];
+
+    for (const entry of form.querySelectorAll<HTMLInputElement>(".entry")) {
+      if ("setCustomValidity" in entry) {
+        entry.setCustomValidity("");
+      }
+
+      switch (this.type) {
+        case TYPE.STRING: {
+          items.push(entry.value);
+          break;
+        }
+
+        case TYPE.NUMBER: {
+          items.push(
+            Number.isNaN(entry.valueAsNumber) ? null : entry.valueAsNumber
+          );
+          break;
+        }
+
+        case TYPE.BOOLEAN: {
+          items.push(entry.checked);
+          break;
+        }
+
+        case TYPE.OBJECT: {
+          if (this.behavior === "llm-content") {
+            (entry as unknown as LLMInput).processAllOpenParts();
+            items.push(entry.value);
+            break;
+          }
+
+          if (this.behavior === "board") {
+            items.push(entry.value);
+            break;
+          }
+
+          try {
+            items.push(JSON.parse(entry.value));
+          } catch (err) {
+            console.warn("Unable to parse", entry.value);
+            console.warn(err);
+          }
+          break;
+        }
+      }
     }
-    return isValid;
+
+    this.items = items;
   }
 
   #notify() {
@@ -238,119 +259,42 @@ export class ArrayEditor extends LitElement {
     );
   }
 
-  #onSubmit(evt: SubmitEvent) {
-    evt.preventDefault();
-
-    if (!(evt.target instanceof HTMLFormElement)) {
-      return;
-    }
-
-    const form = evt.target;
-    const data = new FormData(form);
-    const items: ArrayEditorType[] = [];
-
-    for (const board of form.querySelectorAll<BoardSelector>(
-      "bb-board-selector"
-    )) {
-      if (board.value === null || board.value === "") {
-        continue;
-      }
-
-      data.set(board.id, board.value);
-    }
-
-    for (const [id, value] of data) {
-      // Boards go through to the board selector, which will do its own
-      // validation, so we don't need to do anything here besides appending.
-      if (this.behavior === "board") {
-        items.push(value);
-        continue;
-      }
-
-      const field = form.querySelector(`#${id}`) as HTMLObjectElement;
-      if (!field) {
-        console.warn(`Unable to find field ${id}`);
-        continue;
-      }
-
-      field.setCustomValidity("");
-      const formValue = (value as string).trim();
-      if (
-        formValue === "" &&
-        (this.type === TYPE.STRING || this.type === TYPE.NUMBER)
-      ) {
-        field.setCustomValidity("Field must not be empty");
-        field.reportValidity();
-        continue;
-      }
-
-      if (
-        this.type === TYPE.NUMBER &&
-        Number.isNaN(Number.parseFloat(formValue))
-      ) {
-        field.setCustomValidity("Field must be a number");
-        field.reportValidity();
-        continue;
-      }
-
-      if (this.type === TYPE.STRING || this.type === TYPE.NUMBER) {
-        if (this.type === TYPE.NUMBER) {
-          items.push(Number.parseFloat(value as string));
-        } else {
-          items.push(value);
-        }
-        continue;
-      }
-
-      try {
-        const formValueObject = JSON.parse(formValue);
-        if (this.behavior === "llm-content") {
-          assertIsLLMContent(formValueObject);
-        }
-
-        if (typeof formValueObject === "string") {
-          items.push(formValue);
-        } else {
-          items.push(formValueObject);
-        }
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          field.setCustomValidity("Invalid JSON");
-        } else {
-          const llmError = err as Error;
-          field.setCustomValidity(`Invalid LLM Content: ${llmError.message}`);
-        }
-
-        field.reportValidity();
-      }
-    }
-
-    const isValid = form.checkValidity();
-    if (!isValid) {
-      return;
-    }
-
-    this.#items = items;
-  }
-
   protected willUpdate(): void {
-    if (!this.#appendNewItemOnNextRender || !this.#items) {
+    if (!this.#appendNewItemOnNextRender || !this.items) {
       return;
     }
 
-    const newItem: Record<string, unknown> = {};
-    if (this.behavior === "llm-content") {
-      newItem.role = "user";
-      newItem.parts = [];
+    const items = [...this.items];
+    switch (this.type) {
+      case TYPE.STRING:
+      case TYPE.NUMBER: {
+        items.push("");
+        break;
+      }
+
+      case TYPE.BOOLEAN: {
+        items.push(false);
+        break;
+      }
+
+      case TYPE.OBJECT: {
+        if (this.behavior === "board") {
+          items.push(null);
+          break;
+        } else if (this.behavior === "llm-content") {
+          items.push({
+            role: "user",
+            parts: [],
+          });
+          break;
+        }
+
+        items.push({});
+        break;
+      }
     }
 
-    this.#items.push(
-      this.type === TYPE.STRING ||
-        this.type === TYPE.NUMBER ||
-        this.behavior === "board"
-        ? ""
-        : newItem
-    );
+    this.items = items;
   }
 
   protected updated(): void {
@@ -384,58 +328,133 @@ export class ArrayEditor extends LitElement {
 
     return html`<form
       ${ref(this.#formRef)}
-      @input=${(evt: Event) => evt.stopImmediatePropagation()}
-      @submit=${this.#onSubmit}
+      @input=${(evt: Event) => {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        if (
+          evt.target instanceof HTMLInputElement ||
+          evt.target instanceof HTMLTextAreaElement
+        ) {
+          evt.target.setCustomValidity("");
+        }
+
+        this.#updateItems();
+        this.#notify();
+      }}
+      @blur=${(evt: InputEvent) => {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        this.#updateItems();
+        this.#notify();
+      }}
+      @submit=${(evt: Event) => evt.preventDefault()}
     >
       <ul>
         ${this.items.length
           ? map(this.items, (item, idx) => {
-              const value =
-                typeof item === "string" ? item : JSON.stringify(item, null, 2);
+              let selector: HTMLTemplateResult | symbol = nothing;
+              switch (this.type) {
+                case TYPE.STRING: {
+                  selector = html`<textarea
+                    name="item-${idx}"
+                    id="item-${idx}"
+                    class="entry"
+                    .value=${item}
+                  ></textarea>`;
+                  break;
+                }
 
-              const selector =
-                this.behavior === "board"
-                  ? html`<bb-board-selector
+                case TYPE.NUMBER: {
+                  selector = html`<input
+                    name="item-${idx}"
+                    id="item-${idx}"
+                    type="number"
+                    class="entry"
+                    .value=${item}
+                  />`;
+                  break;
+                }
+
+                case TYPE.BOOLEAN: {
+                  selector = html`<input
+                    type="checkbox"
+                    name="item-${idx}"
+                    id="item-${idx}"
+                    class="entry"
+                    ?checked=${item}
+                  />`;
+                  break;
+                }
+
+                case TYPE.OBJECT: {
+                  if (this.behavior === "board") {
+                    selector = html`<bb-board-selector
                       name="item-${idx}"
                       id="item-${idx}"
+                      class="entry"
                       .subGraphs=${this.graph?.graphs ?? null}
                       .providers=${this.providers}
                       .providerOps=${this.providerOps}
-                      .value=${value || ""}
-                      @input=${(evt: Event) => {
-                        evt.preventDefault();
-                        if (!this.#updateItems()) {
-                          return;
-                        }
-
-                        this.#notify();
-                      }}
-                    ></bb-board-selector>`
-                  : html`<textarea
+                      .value=${item ?? ""}
+                    ></bb-board-selector>`;
+                    break;
+                  } else if (this.behavior === "llm-content") {
+                    // const value = JSON.stringify(item, null, 2);
+                    selector = html`<bb-llm-input
                       name="item-${idx}"
                       id="item-${idx}"
-                      .value=${value}
-                      @input=${(evt: InputEvent) => {
-                        evt.preventDefault();
-                        evt.stopImmediatePropagation();
-                        if (!(evt.target instanceof HTMLTextAreaElement)) {
+                      class="entry"
+                      .value=${item ?? null}
+                    ></bb-llm-input>`;
+                    break;
+                  }
+
+                  selector = html`<textarea
+                    name="item-${idx}"
+                    id="item-${idx}"
+                    class="entry"
+                    .value=${JSON.stringify(item, null, 2) ?? null}
+                    @input=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLTextAreaElement)) {
+                        return;
+                      }
+                      // We only want to attempt to parse the value when the
+                      // user leaves the field.
+                      evt.stopImmediatePropagation();
+                      evt.target.setCustomValidity("");
+                    }}
+                    @blur=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLTextAreaElement)) {
+                        return;
+                      }
+
+                      try {
+                        JSON.parse(evt.target.value);
+                        if (!this.#formRef.value) {
                           return;
                         }
+                        this.#formRef.value.dispatchEvent(
+                          new InputEvent("input")
+                        );
+                      } catch (err) {
+                        // When there is a JSON parse error in an object prevent
+                        // the input from propagating further up.
+                        evt.target.setCustomValidity(
+                          "Please enter a valid object"
+                        );
+                        evt.target.reportValidity();
+                      }
+                    }}
+                  ></textarea>`;
+                  break;
+                }
 
-                        const target =
-                          evt.target as unknown as HTMLObjectElement;
-                        target.setCustomValidity("");
-                      }}
-                      @blur=${(evt: InputEvent) => {
-                        evt.preventDefault();
-                        evt.stopImmediatePropagation();
-                        if (!this.#updateItems()) {
-                          return;
-                        }
-
-                        this.#notify();
-                      }}
-                    ></textarea>`;
+                default: {
+                  console.warn(`Unexpected type for array: ${this.type}`);
+                  return nothing;
+                }
+              }
 
               return html`<li>
                 ${selector}
