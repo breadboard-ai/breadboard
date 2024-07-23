@@ -506,26 +506,24 @@ export class LLMInput extends LitElement {
     }
   }
 
-  async processAllOpenParts(): Promise<void> {
+  processAllOpenParts() {
     if (!this.value) {
       return;
     }
 
-    await Promise.all([
-      this.value.parts.map((part, idx) => {
-        if (!isInlineData(part)) {
-          return;
-        }
+    this.value.parts.map((part, idx) => {
+      if (!isInlineData(part)) {
+        return;
+      }
 
-        switch (part.inlineData.mimeType) {
-          case "audio-microphone":
-          case "image-webcam":
-          case "image-drawable": {
-            return this.#processInputPart(idx);
-          }
+      switch (part.inlineData.mimeType) {
+        case "audio-microphone":
+        case "image-webcam":
+        case "image-drawable": {
+          return this.#processInputPart(idx);
         }
-      }),
-    ]);
+      }
+    });
   }
 
   async #processFilePart(evt: InputEvent, partIdx: number) {
@@ -562,7 +560,7 @@ export class LLMInput extends LitElement {
     this.requestUpdate();
   }
 
-  async #processInputPart(partIdx: number) {
+  #processInputPart(partIdx: number) {
     if (!this.value) {
       this.value = { role: "user", parts: [] };
     }
