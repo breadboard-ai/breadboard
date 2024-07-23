@@ -20,7 +20,7 @@ import {
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CodeEditor } from "../elements";
+import { CodeEditor, LLMInput, LLMInputArray } from "../elements";
 import {
   GraphDescriptor,
   GraphProvider,
@@ -213,6 +213,11 @@ export class UserInput extends LitElement {
                 isArrayOfLLMContentBehavior(input.schema) ||
                 isBoardBehavior(input.schema, inputValue)
               ) {
+                if (isArrayOfLLMContentBehavior(input.schema)) {
+                  (el as unknown as LLMInputArray).processAllOpenParts();
+                } else if (isBoardBehavior(input.schema, inputValue)) {
+                  (el as unknown as LLMInput).processAllOpenParts();
+                }
                 break;
               }
 

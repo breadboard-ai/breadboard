@@ -118,7 +118,7 @@ export class LLMInputArray extends LitElement {
 
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
-    return Promise.all([...inputs].map((input) => input.processAllOpenParts()));
+    return [...inputs].map((input) => input.processAllOpenParts());
   }
 
   hasMinItems(): boolean {

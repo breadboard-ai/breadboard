@@ -87,7 +87,7 @@ export function resolveArrayType(value: Schema) {
   if (value.items) {
     const valueItems = value.items as Items;
     if (valueItems.type) {
-      return valueItems.type;
+      return valueItems.type ?? "string";
     }
   }
 
