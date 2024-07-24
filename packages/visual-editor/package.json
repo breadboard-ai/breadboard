@@ -268,7 +268,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "0.7.1",
-    "@breadboard-ai/data-store": "0.0.1",
+    "@breadboard-ai/data-store": "^0.0.1",
     "@breadboard-ai/example-boards": "0.1.1",
     "@breadboard-ai/google-drive-kit": "0.2.0",
     "@breadboard-ai/manifest": "^0.3.0",
