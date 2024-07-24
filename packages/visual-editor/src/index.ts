@@ -16,7 +16,6 @@ import {
   blankLLMContent,
   BoardRunner,
   createLoader,
-  DataStore,
   edit,
   EditableGraph,
   GraphDescriptor,
@@ -39,7 +38,6 @@ import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { Environment, environmentContext } from "./ui/contexts/environment.js";
-import { dataStoreContext } from "./ui/contexts/data-store.js";
 import { settingsHelperContext } from "./ui/contexts/settings-helper.js";
 import type {
   SETTINGS_TYPE,
@@ -162,8 +160,8 @@ export class Main extends LitElement {
   @provide({ context: tokenVendorContext })
   tokenVendor!: TokenVendor;
 
-  @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: getDataStore() };
+  @state()
+  dataStore = getDataStore();
 
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
@@ -179,7 +177,6 @@ export class Main extends LitElement {
   #boardId = 0;
   #boardPendingSave = false;
   #lastBoardId = 0;
-  #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runObserver: InspectableRunObserver | null = null;
   #editor: EditableGraph | null = null;
@@ -1083,16 +1080,12 @@ export class Main extends LitElement {
     if (!this.#runObserver)
       this.#runObserver = createRunObserver({
         logLevel: "debug",
-        store: this.dataStore.instance!,
+        store: this.dataStore,
       });
 
     for await (const result of runner) {
       // Update "runs" to ensure the UI is aware when the new run begins.
-      this.runs = this.#runObserver.observe(result);
-      if (this.#delay !== 0) {
-        await new Promise((r) => setTimeout(r, this.#delay));
-      }
-
+      this.runs = await this.#runObserver.observe(result);
       if (currentBoardId !== this.#boardId) {
         return;
       }
@@ -1316,7 +1309,7 @@ export class Main extends LitElement {
           if (!this.#runObserver) {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
-              store: this.dataStore.instance!,
+              store: this.dataStore,
             });
           }
 
@@ -1326,7 +1319,7 @@ export class Main extends LitElement {
             if (result.success) {
               const run = result.run;
               for await (const result of run.replay()) {
-                this.runs = runObserver.observe(result);
+                this.runs = await runObserver.observe(result);
                 await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
                 this.requestUpdate();
               }
@@ -1377,6 +1370,7 @@ export class Main extends LitElement {
     const runs = this.#runObserver?.runs();
     const currentRun = runs?.[0];
     const inputsFromLastRun = runs?.[1]?.inputs() || null;
+
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
       try {
@@ -1616,6 +1610,7 @@ export class Main extends LitElement {
           .version=${this.#version}
           .showWelcomePanel=${this.showWelcomePanel}
           .recentBoards=${this.#recentBoards}
+          .dataStore=${this.dataStore}
           @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
             this.#attemptBoardStart(evt);
           }}
@@ -1717,7 +1712,7 @@ export class Main extends LitElement {
                     diagnostics: true,
                     kits: this.kits,
                     loader: this.#loader,
-                    store: this.dataStore.instance!,
+                    store: this.dataStore,
                     signal: this.#abortController?.signal,
                     inputs: inputsFromSettings(this.#settings),
                     interactiveSecrets: true,
@@ -1948,9 +1943,6 @@ export class Main extends LitElement {
             }
 
             this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          @bbdelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
-            this.#delay = delayEvent.duration;
           }}
           @bbinputenter=${async (
             event: BreadboardUI.Events.InputEnterEvent

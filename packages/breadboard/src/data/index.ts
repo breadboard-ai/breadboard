@@ -12,6 +12,10 @@ export const createDefaultDataStore = (): DataStore => {
 export { inflateData, deflateData } from "./inflate-deflate.js";
 
 export {
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
+  isLLMContent,
+  isTextCapabilityPart,
   isDataCapability,
   isInlineData,
   isStoredData,
@@ -20,4 +24,12 @@ export {
   asBase64,
 } from "./common.js";
 
-export { type DataStore } from "./types.js";
+export type {
+  DataStore,
+  FunctionCallCapabilityPart,
+  FunctionResponseCapabilityPart,
+  LLMContent,
+  TextCapabilityPart,
+  StoredDataCapabilityPart,
+  InlineDataCapabilityPart,
+} from "./types.js";

@@ -28,6 +28,7 @@ import {
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
+  DataStore,
   EditHistory,
   GraphDescriptor,
   GraphLoader,
@@ -75,6 +76,9 @@ export class UI extends LitElement {
 
   @property()
   loader: GraphLoader | null = null;
+
+  @property()
+  dataStore: DataStore | null = null;
 
   @property({ reflect: true })
   status = STATUS.RUNNING;
@@ -591,6 +595,7 @@ export class UI extends LitElement {
         .logTitle=${"Activity"}
         .providers=${this.providers}
         .providerOps=${this.providerOps}
+        .dataStore=${this.dataStore}
         @bbinputrequested=${() => {
           this.selectedNodeIds.length = 0;
           this.requestUpdate();

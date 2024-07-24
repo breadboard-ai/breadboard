@@ -28,8 +28,8 @@ const loadRawRun = async (
 ): Promise<InspectableRun> => {
   const s = await readFile(join(BASE_PATH, name), "utf-8");
   const raw = JSON.parse(s) as HarnessRunResult[];
-  raw.forEach((result) => {
-    observer.observe(result);
+  raw.forEach(async (result) => {
+    await observer.observe(result);
   });
   return observer.runs()[0];
 };

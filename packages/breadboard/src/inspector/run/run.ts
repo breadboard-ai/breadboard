@@ -24,6 +24,12 @@ import {
   InspectableRunInputs,
 } from "../types.js";
 import { DataStore } from "../../data/types.js";
+import {
+  asBlob,
+  isInlineData,
+  isLLMContent,
+  isStoredData,
+} from "../../data/index.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -48,7 +54,7 @@ export class RunObserver implements InspectableRunObserver {
     return this.#runs;
   }
 
-  observe(result: HarnessRunResult): InspectableRun[] {
+  async observe(result: HarnessRunResult): Promise<InspectableRun[]> {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
@@ -83,9 +89,38 @@ export class RunObserver implements InspectableRunObserver {
           dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
       }
     }
+
+    await this.#storeInlineData(result);
+
     const run = this.#runs[0];
     run.addResult(result);
     return this.#runs;
+  }
+
+  async #storeInlineData(result: HarnessRunResult): Promise<void> {
+    if (result.type !== "nodeend" || result.data.node.type !== "input") {
+      return;
+    }
+
+    if (!this.#options.store) {
+      return;
+    }
+
+    for (const value of Object.values(result.data.outputs)) {
+      if (!isLLMContent(value)) {
+        continue;
+      }
+
+      for (let i = 0; i < value.parts.length; i++) {
+        const part = value.parts[i];
+        if (isInlineData(part)) {
+          const blob = await asBlob(part);
+          value.parts[i] = await this.#options.store.store(blob);
+        } else if (isStoredData(part)) {
+          value.parts[i] = await this.#options.store.copyToNewestGroup(part);
+        }
+      }
+    }
   }
 
   async load(

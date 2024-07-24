@@ -5,6 +5,7 @@
  */
 
 import {
+  DataStore,
   ErrorObject,
   GraphProvider,
   InspectableRun,
@@ -12,6 +13,7 @@ import {
   InspectableRunInputs,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
+  isLLMContent,
   OutputValues,
   Schema,
   SerializedRun,
@@ -27,7 +29,7 @@ import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
-import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
+import { isArrayOfLLMContent } from "../../utils/llm-content.js";
 import { SettingsStore } from "../../../data/settings-store.js";
 import { UserInput } from "../elements.js";
 import {
@@ -66,6 +68,9 @@ export class ActivityLog extends LitElement {
 
   @property()
   providerOps = 0;
+
+  @property()
+  dataStore: DataStore | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -356,6 +361,7 @@ export class ActivityLog extends LitElement {
         id=${event.id}
         .showTypes=${false}
         .inputs=${userInputs}
+        .dataStore=${this.dataStore}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -390,23 +396,23 @@ export class ActivityLog extends LitElement {
       schema.properties ?? {}
     ).reduce((prev, [name, schema]) => {
       let value = values ? values[name] : undefined;
-      if ((schema.type === "array" || schema.type === "object") && value) {
-        value = JSON.stringify(value, null, 2);
-
-        if (
-          schema.type === "object" &&
-          isLLMContentBehavior(schema) &&
-          !isLLMContent(value)
-        ) {
-          value = undefined;
+      if (schema.type === "object") {
+        if (isLLMContentBehavior(schema)) {
+          if (!isLLMContent(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
         }
+      }
 
-        if (
-          schema.type === "array" &&
-          isArrayOfLLMContentBehavior(schema) &&
-          !isArrayOfLLMContent(value)
-        ) {
-          value = undefined;
+      if (schema.type === "array") {
+        if (isArrayOfLLMContentBehavior(schema)) {
+          if (!isArrayOfLLMContent(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
         }
       }
 
@@ -486,6 +492,7 @@ export class ActivityLog extends LitElement {
         if (typeof nodeValue === "object") {
           if (isArrayOfLLMContent(nodeValue)) {
             value = html`<bb-llm-output-array
+              .dataStore=${this.dataStore}
               .values=${nodeValue}
             ></bb-llm-output-array>`;
           } else if (isLLMContent(nodeValue)) {
@@ -502,7 +509,10 @@ export class ActivityLog extends LitElement {
             }
 
             value = nodeValue.parts.length
-              ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
+              ? html`<bb-llm-output
+                  .dataStore=${this.dataStore}
+                  .value=${nodeValue}
+                ></bb-llm-output>`
               : html`No data provided`;
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
