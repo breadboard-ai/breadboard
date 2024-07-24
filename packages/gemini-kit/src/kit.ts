@@ -6,8 +6,8 @@
 
 import { Board } from "@google-labs/breadboard";
 
-import geminiGenerator from "./components/text.js";
-import nanoGenerator from "./components/nano.js";
+import { geminiText } from "./components/text.js";
+import { geminiNano } from "./components/nano.js";
 
 import { Core } from "@google-labs/core-kit";
 import { serialize } from "@breadboard-ai/build";
@@ -22,8 +22,8 @@ const kit = new Board({
 const core = kit.addKit(Core);
 
 kit.graphs = {
-  text: serialize(geminiGenerator),
-  nano: serialize(nanoGenerator),
+  text: serialize(geminiText),
+  nano: serialize(geminiNano),
 };
 
 core.invoke({

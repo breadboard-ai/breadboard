@@ -474,9 +474,10 @@ const errorCollector = passthrough({
 retryLoopback.resolve(errorCollector.outputs.retry);
 errorLoopback.resolve(errorCollector.outputs.error);
 
-export default board({
-  title: "Gemini Pro Generator",
-  description: "The text generator board powered by the Gemini Pro model",
+export const geminiText = board({
+  title: "Gemini Text",
+  description:
+    "The text generator board powered by the Gemini Pro et al models",
   metadata: {
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
