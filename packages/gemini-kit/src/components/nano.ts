@@ -7,14 +7,12 @@
 import { board, input, output } from "@breadboard-ai/build";
 import { code } from "@google-labs/core-kit";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var ai: {
-    createTextSession: () => Promise<{
-      prompt: (text: string) => Promise<string>;
-    }>;
-    canCreateTextSession: () => Promise<boolean>;
-  };
+/** See https://github.com/explainers-by-googlers/prompt-api */
+interface PromptApi {
+  createTextSession: () => Promise<{
+    prompt: (text: string) => Promise<string>;
+  }>;
+  canCreateTextSession: () => Promise<"no" | "after-download" | "readily">;
 }
 
 const prompt = input({
@@ -32,19 +30,27 @@ const { text } = code(
   },
   { text: "string" },
   async ({ prompt }) => {
-    const ERROR_MESSAGE =
-      "Prompt API is not available. For more information, see https://developer.chrome.com/docs/ai/built-in.";
-
-    const ai = globalThis.ai;
+    const ai = (globalThis as { ai?: PromptApi }).ai;
     if (!ai) {
-      throw new Error(ERROR_MESSAGE);
+      throw new Error(
+        `The AI Prompt API is not available on this platform. For more ` +
+          `information see https://developer.chrome.com/docs/ai/built-in.`
+      );
     }
-    const canAI = await ai.canCreateTextSession();
-    if (!canAI) {
-      throw new Error(ERROR_MESSAGE);
+    const status = await ai.canCreateTextSession();
+    // TODO It would be better if the "after-download" status popped up a dialog
+    // asking if the user wants to download the model, since it is large.
+    // Currently, the first session will just take a much longer time because it
+    // will also download the model, and the user won't know why.
+    if (!(status === "readily" || status === "after-download")) {
+      throw new Error(
+        `The AI Prompt API reports it is not available (status:${status}). ` +
+          `For more information see ` +
+          `https://developer.chrome.com/docs/ai/built-in.`
+      );
     }
     const session = await ai.createTextSession();
-    const text = (await session.prompt(prompt)) as string;
+    const text = await session.prompt(prompt);
     return { text };
   }
 ).outputs;
