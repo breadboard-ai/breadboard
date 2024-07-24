@@ -55,6 +55,7 @@
       ],
       "dependencies": [
         "../breadboard:build",
+        "../data-store:build",
         "../agent-kit:build",
         "../palm-kit:build",
         "../core-kit:build",
@@ -89,6 +90,7 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
+        "../data-store:build:tsc",
         "../agent-kit:build:tsc",
         "../palm-kit:build:tsc",
         "../core-kit:build:tsc",
@@ -140,6 +142,7 @@
     "wireit": "^0.14.5"
   },
   "dependencies": {
+    "@breadboard-ai/data-store": "^0.0.1",
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/secret-manager": "^5.6.0",
     "@google-labs/breadboard": "^0.22.0",

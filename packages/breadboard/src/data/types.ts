@@ -55,6 +55,7 @@ export type DataStore = {
   startGroup(): void;
   endGroup(): number;
   releaseGroup(group: number): void;
+  releaseAll(): void;
   serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
   retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
 };

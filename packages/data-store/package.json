@@ -1,12 +1,14 @@
 {
-  "name": "@google-labs/breadboard-server",
+  "name": "@breadboard-ai/data-store",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.1.17",
-  "description": "Scaffolding for running Breadboard as a server",
+  "version": "0.0.1",
+  "description": "A data store implementation to support Breadboard",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
@@ -19,20 +21,17 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
-        "../core-kit:build",
         "build:tsc"
       ]
     },
     "build:tsc": {
       "command": "tsc -b --pretty",
+      "dependencies": [
+        "../breadboard:build"
+      ],
       "env": {
         "FORCE_COLOR": "1"
       },
-      "dependencies": [
-        "../breadboard:build:tsc",
-        "../core-kit:build:tsc"
-      ],
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
@@ -40,7 +39,8 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/"
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
     },
@@ -52,7 +52,9 @@
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
+      "files": [
+        "tests/**/*.json"
+      ],
       "output": []
     },
     "lint": {
@@ -70,13 +72,14 @@
     }
   },
   "repository": {
-    "directory": "packages/breadboard-server",
+    "directory": "packages/data-store",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "public",
-    "dist/src"
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
   ],
   "ava": {
     "timeout": "30s",
@@ -97,21 +100,20 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard-server#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/data-store#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/express": "^4.17.17",
-    "@types/node": "^20.14.9",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1",
-    "jsonschema": "^1.4.1",
+    "@types/node": "^20.14.11",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
     "ava": "^5.2.0",
-    "typescript": "^5.5.3",
-    "@google-labs/core-kit": "^0.11.0"
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.14.0"
   },
   "dependencies": {
-    "@google-cloud/firestore": "^7.9.0",
-    "@google-labs/breadboard": "^0.21.0"
+    "@google-labs/breadboard": "^0.22.0"
   }
 }

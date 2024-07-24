@@ -21,6 +21,10 @@
       "path": "packages/core-kit",
     },
     {
+      "name": "data-store",
+      "path": "packages/data-store",
+    },
+    {
       "name": "json-kit",
       "path": "packages/json-kit",
     },
