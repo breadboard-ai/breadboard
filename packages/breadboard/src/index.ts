@@ -91,9 +91,12 @@ export { formatGraphDescriptor } from "./formatter.js";
  */
 export type * from "./data/types.js";
 export {
-  createDataStore,
-  inflateData,
-  deflateData,
-  isDataCapability,
+  asBase64,
   asBlob,
+  deflateData,
+  inflateData,
+  isDataCapability,
+  isInlineData,
+  isStoredData,
+  isSerializedData,
 } from "./data/index.js";

@@ -1,0 +1,119 @@
+{
+  "name": "@breadboard-ai/data-store",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.1",
+  "description": "A data store implementation to support Breadboard",
+  "main": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "dependencies": [
+        "../breadboard:build"
+      ],
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/**/*.json"
+      ],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    }
+  },
+  "repository": {
+    "directory": "packages/data-store",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/data-store#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^20.14.11",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
+    "ava": "^5.2.0",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.14.0"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.22.0"
+  }
+}

@@ -15,7 +15,6 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
   BoardRunner,
-  createDataStore,
   createLoader,
   DataStore,
   edit,
@@ -28,6 +27,7 @@ import {
   Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
+import { getDataStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
@@ -163,7 +163,7 @@ export class Main extends LitElement {
   tokenVendor!: TokenVendor;
 
   @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+  dataStore: { instance: DataStore | null } = { instance: getDataStore() };
 
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;

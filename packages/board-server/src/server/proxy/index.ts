@@ -15,13 +15,14 @@ import {
   type ProxyServerConfig,
   hasOrigin,
 } from "@google-labs/breadboard/remote";
-import { asRuntimeKit, createDataStore } from "@google-labs/breadboard";
+import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { cors } from "../cors.js";
+import { getDataStore } from "@breadboard-ai/data-store";
 
 const config: ProxyServerConfig = {
   kits: [secretsKit, asRuntimeKit(Core)],
-  store: createDataStore(),
+  store: getDataStore(),
   proxy: [
     "fetch",
     {

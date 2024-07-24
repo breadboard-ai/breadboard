@@ -52,6 +52,17 @@ export const isInlineData = (
   return true;
 };
 
+export const isSerializedData = (
+  value: unknown
+): value is InlineDataCapabilityPart => {
+  if (typeof value !== "object" || value === null) return false;
+  const data = value as DataCapability;
+  if (!("inlineData" in data)) return false;
+  if (!("handle" in data)) return false;
+  if (!data.inlineData.data) return false;
+  return true;
+};
+
 export async function asBase64(file: File | Blob): Promise<string> {
   if ("Buffer" in globalThis) {
     // Node.js implementation, since Node.js doesn't have FileReader.

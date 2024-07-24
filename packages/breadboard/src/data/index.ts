@@ -3,14 +3,21 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { SimpleDataStore } from "./simple.js";
+import { DefaultDataStore } from "./default-store.js";
 import { DataStore } from "./types.js";
 
-export const createDataStore = (): DataStore => {
-  return new SimpleDataStore();
+export const createDefaultDataStore = (): DataStore => {
+  return new DefaultDataStore();
 };
-
 export { inflateData, deflateData } from "./inflate-deflate.js";
 
-export { isDataCapability, asBlob } from "./common.js";
+export {
+  isDataCapability,
+  isInlineData,
+  isStoredData,
+  isSerializedData,
+  asBlob,
+  asBase64,
+} from "./common.js";
+
+export { type DataStore } from "./types.js";

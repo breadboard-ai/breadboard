@@ -18,7 +18,6 @@ import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader.js";
 import {
   BoardRunner,
-  createDataStore,
   createLoader,
   createRunObserver,
   type DataStore,
@@ -41,6 +40,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
 import { provide } from "@lit/context";
 import { dataStoreContext } from "./contexts/data-store.js";
+import { getDataStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -65,7 +65,7 @@ export class ApiExplorer extends LitElement {
   status = STATUS.STOPPED;
 
   @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+  dataStore: { instance: DataStore | null } = { instance: getDataStore() };
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({

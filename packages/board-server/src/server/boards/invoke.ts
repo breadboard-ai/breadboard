@@ -6,7 +6,6 @@
 
 import {
   asRuntimeKit,
-  createDataStore,
   createLoader,
   inflateData,
   type ChangeNotificationCallback,
@@ -26,9 +25,8 @@ import TemplateKit from "@google-labs/template-kit";
 import JSONKit from "@google-labs/json-kit";
 import Core from "@google-labs/core-kit";
 import { asInfo, getStore } from "../store.js";
-import type { IncomingMessage } from "http";
 import { secretsKit } from "../proxy/secrets.js";
-import { unauthorized } from "../errors.js";
+import { getDataStore } from "@breadboard-ai/data-store";
 
 class BoardServerProvider implements GraphProvider {
   #path: string;
@@ -173,7 +171,10 @@ export const invoke = async (
   path: string,
   inputs: Record<string, any>
 ) => {
-  const store = createDataStore();
+  const store = getDataStore();
+  if (!store) {
+    return;
+  }
 
   const runner = run({
     url,

@@ -1,24 +1,27 @@
 /**
  * @license
- * Copyright 2024 Google LLC
+ * Copyright 2023 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asBase64, isStoredData } from "./common.js";
 import {
+  asBase64,
   DataStore,
   InlineDataCapabilityPart,
+  isStoredData,
   SerializedDataStoreGroup,
   StoredDataCapabilityPart,
-} from "./types.js";
+} from "@google-labs/breadboard";
 
-export class SimpleDataStore implements DataStore {
+export class InMemoryStore implements DataStore {
+  static supported(): boolean {
+    return true;
+  }
+
   #groupCount = 1;
   #items = new Map<number, string[]>();
 
   async store(data: Blob): Promise<StoredDataCapabilityPart> {
-    // TODO: Figure out how to revoke the URLs when the data
-    // is no longer needed.
     const handle = URL.createObjectURL(data);
     let groupHandles = this.#items.get(this.#groupCount);
     if (!groupHandles) {
@@ -31,6 +34,7 @@ export class SimpleDataStore implements DataStore {
       storedData: { handle, mimeType },
     };
   }
+
   async retrieve(
     storedData: StoredDataCapabilityPart
   ): Promise<InlineDataCapabilityPart> {
@@ -44,6 +48,7 @@ export class SimpleDataStore implements DataStore {
     if (!isStoredData(storedData)) {
       throw new Error("Invalid stored data");
     }
+
     const { handle } = storedData.storedData;
     const response = await fetch(handle);
     return await response.blob();
@@ -53,6 +58,7 @@ export class SimpleDataStore implements DataStore {
     if (!isStoredData(storedData)) {
       throw new Error("Invalid stored data");
     }
+
     const { handle } = storedData.storedData;
     return handle;
   }
@@ -88,10 +94,18 @@ export class SimpleDataStore implements DataStore {
 
   releaseGroup(group: number): void {
     const handles = this.#items.get(group);
-    if (!handles) return;
+    if (!handles) {
+      return;
+    }
 
     for (const handle of handles) {
       URL.revokeObjectURL(handle);
+    }
+  }
+
+  releaseAll(): void {
+    for (const group of this.#items.keys()) {
+      this.releaseGroup(group);
     }
   }
 }
