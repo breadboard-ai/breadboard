@@ -63,4 +63,4 @@ export default GeminiKit;
  */
 export const gemini = addKit(GeminiKit) as unknown as GeminiKitType;
 
-export { default as geminiText } from "./components/gemini-generator.js";
+export { default as geminiText } from "./components/text.js";

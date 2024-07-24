@@ -6,8 +6,8 @@
 
 import { Board } from "@google-labs/breadboard";
 
-import geminiGenerator from "./components/gemini-generator.js";
-import nanoGenerator from "./components/nano-generator.js";
+import geminiGenerator from "./components/text.js";
+import nanoGenerator from "./components/nano.js";
 
 import { Core } from "@google-labs/core-kit";
 import { serialize } from "@breadboard-ai/build";
