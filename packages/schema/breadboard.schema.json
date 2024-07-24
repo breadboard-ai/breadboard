@@ -417,7 +417,7 @@
 				"tags": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/KitTags"
+						"$ref": "#/definitions/KitTag"
 					},
 					"description": "Tags, associated with the kit."
 				},
@@ -430,7 +430,7 @@
 				"url"
 			]
 		},
-		"KitTags": {
+		"KitTag": {
 			"type": "string",
 			"enum": [
 				"deprecated",

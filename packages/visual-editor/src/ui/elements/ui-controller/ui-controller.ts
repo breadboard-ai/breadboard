@@ -381,6 +381,12 @@ export class UI extends LitElement {
           .items.get("Show Port Types in Configuration")?.value
       : false;
 
+    const showExperimentalComponents = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Experimental Components")?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -399,6 +405,7 @@ export class UI extends LitElement {
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
+        showExperimentalComponents,
       ],
       () => {
         return html`<bb-editor
@@ -416,6 +423,7 @@ export class UI extends LitElement {
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .showPortTooltips=${showPortTooltips}
           .highlightInvalidWires=${highlightInvalidWires}
+          .showExperimentalComponents=${showExperimentalComponents}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"

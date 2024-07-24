@@ -30,6 +30,9 @@ export class NodeSelector extends LitElement {
   @state()
   filter: string | null = null;
 
+  @property()
+  showExperimentalComponents = false;
+
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
@@ -277,6 +280,17 @@ export class NodeSelector extends LitElement {
 
     for (const kit of kits) {
       if (!kit.descriptor.title) {
+        continue;
+      }
+
+      if (kit.descriptor.tags?.includes("deprecated")) {
+        continue;
+      }
+
+      if (
+        !this.showExperimentalComponents &&
+        kit.descriptor.tags?.includes("experimental")
+      ) {
         continue;
       }
 

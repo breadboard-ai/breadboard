@@ -66,6 +66,15 @@ export class SettingsStore {
           },
         ],
         [
+          "Show Experimental Components",
+          {
+            name: "Show Experimental Components",
+            description:
+              "Toggles the visibility of experimental components and kits",
+            value: false,
+          },
+        ],
+        [
           "Show Node Shortcuts",
           {
             name: "Show Node Shortcuts",
