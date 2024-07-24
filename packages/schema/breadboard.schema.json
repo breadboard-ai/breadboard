@@ -414,6 +414,13 @@
 					"description": "Version of the kit. [semver](https://semver.org/) format is encouraged.",
 					"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
 				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/KitTags"
+					},
+					"description": "Tags, associated with the kit."
+				},
 				"url": {
 					"type": "string",
 					"description": "The URL pointing to the location of the kit."
@@ -422,6 +429,14 @@
 			"required": [
 				"url"
 			]
+		},
+		"KitTags": {
+			"type": "string",
+			"enum": [
+				"deprecated",
+				"experimental"
+			],
+			"description": "Represents various tags that can be associated with a kit.\n- `deprecated`: The kit is deprecated and should not be used.\n- `experimental`: The kit is experimental and may not be stable."
 		},
 		"SubGraphs": {
 			"type": "object",
