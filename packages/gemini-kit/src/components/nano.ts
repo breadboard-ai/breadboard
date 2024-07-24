@@ -55,7 +55,7 @@ const { text } = code(
   }
 ).outputs;
 
-export default board({
+export const geminiNano = board({
   title: "Gemini Nano",
   description: "Generate text with Gemini Nano",
   metadata: {
