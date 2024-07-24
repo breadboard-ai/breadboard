@@ -18,12 +18,14 @@ import {
   isDiscreteComponent,
   type GenericDiscreteComponent,
 } from "./define/definition.js";
+import type { KitTag } from "@google-labs/breadboard-schema/graph.js";
 
 export interface KitOptions {
   title: string;
   description: string;
   version: string;
   url: string;
+  tags?: KitTag[];
   components: Array<GenericDiscreteComponent | GenericBoardDefinition>;
 }
 
@@ -56,6 +58,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
     description = options.description;
     version = options.version;
     url = options.url;
+    tags = options.tags ?? [];
   };
 }
 
