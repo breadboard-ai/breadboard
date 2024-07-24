@@ -108,4 +108,11 @@ export class InMemoryStore implements DataStore {
       this.releaseGroup(group);
     }
   }
+
+  async copyToNewestGroup(storedData: StoredDataCapabilityPart) {
+    const blob = await this.retrieveAsBlob(storedData);
+    const newHandle = await this.store(blob);
+
+    return newHandle;
+  }
 }

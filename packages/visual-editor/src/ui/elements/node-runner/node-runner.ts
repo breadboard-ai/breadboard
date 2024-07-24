@@ -18,8 +18,6 @@ import {
 } from "@google-labs/breadboard";
 import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { consume } from "@lit/context";
-import { dataStoreContext } from "../../contexts/data-store.js";
 import { InputCallback, STATUS } from "../../types/types.js";
 import { getIsolatedNodeGraphDescriptor } from "../../utils/isolated-node-board.js";
 import { inputsFromSettings } from "../../../data/inputs.js";
@@ -48,8 +46,8 @@ export class NodeRunner extends LitElement {
   @property()
   kits: Kit[] = [];
 
-  @consume({ context: dataStoreContext })
-  dataStore?: { instance: DataStore | null };
+  @property()
+  dataStore: DataStore | null = null;
 
   #isolatedNodeGraphDescriptor: Promise<GraphDescriptor | null> | null = null;
   #handlers: Map<string, InputCallback[]> = new Map();
@@ -134,7 +132,7 @@ export class NodeRunner extends LitElement {
     if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
-        store: this.dataStore?.instance ?? undefined,
+        store: this.dataStore ?? undefined,
       });
     }
 
@@ -142,7 +140,7 @@ export class NodeRunner extends LitElement {
     for await (const result of runner) {
       try {
         // Update "runs" to ensure the UI is aware when the new run begins.
-        this.runs = this.#runObserver.observe(result);
+        this.runs = await this.#runObserver.observe(result);
       } catch (err) {
         // TODO: Do we need to output an error here?
         break;

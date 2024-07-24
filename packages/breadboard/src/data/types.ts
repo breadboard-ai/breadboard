@@ -4,6 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type FunctionCallCapabilityPart = {
+  functionCall: {
+    name: string;
+    args: object;
+  };
+};
+
+export type FunctionResponseCapabilityPart = {
+  functionResponse: {
+    name: string;
+    response: object;
+  };
+};
+
+export type TextCapabilityPart = {
+  text: string;
+};
+
+export type DataPart =
+  | InlineDataCapabilityPart
+  | StoredDataCapabilityPart
+  | FunctionCallCapabilityPart
+  | FunctionResponseCapabilityPart
+  | TextCapabilityPart;
+
+export type LLMContent = {
+  role?: string;
+  parts: DataPart[];
+};
+
 /**
  * Represents inline data, encoded as a base64 string.
  */
@@ -58,4 +88,7 @@ export type DataStore = {
   releaseAll(): void;
   serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
   retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
+  copyToNewestGroup(
+    storedData: StoredDataCapabilityPart
+  ): Promise<StoredDataCapabilityPart>;
 };

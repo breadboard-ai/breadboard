@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BehaviorSchema, Schema } from "@google-labs/breadboard";
+import { BehaviorSchema, LLMContent, Schema } from "@google-labs/breadboard";
 import {
   LitElement,
   html,
@@ -21,7 +21,6 @@ import {
   resolveArrayType,
   resolveBehaviorType,
 } from "../../../utils/schema.js";
-import { LLMContent } from "../../../types/types.js";
 import { createAllowListFromProperty } from "../../../utils/llm-content.js";
 import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";

@@ -99,4 +99,8 @@ export {
   isInlineData,
   isStoredData,
   isSerializedData,
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
+  isLLMContent,
+  isTextCapabilityPart,
 } from "./data/index.js";

@@ -210,7 +210,8 @@ export class PreviewRun extends LitElement {
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     for await (const result of run(config)) {
-      this.runs = this.#runObserver?.observe(result);
+      this.runs = await this.#runObserver?.observe(result);
+
       const answer = await this.#handleStateChange(result);
 
       if (answer) {

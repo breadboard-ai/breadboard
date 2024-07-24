@@ -38,8 +38,6 @@ import { until } from "lit/directives/until.js";
 import { isBoolean, isMultiline, isSelect } from "./utils/input.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
-import { provide } from "@lit/context";
-import { dataStoreContext } from "./contexts/data-store.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -64,12 +62,12 @@ export class ApiExplorer extends LitElement {
   @state()
   status = STATUS.STOPPED;
 
-  @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: getDataStore() };
+  @state()
+  dataStore = getDataStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
-    store: this.dataStore.instance!,
+    store: this.dataStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: GraphProvider[] = [];
@@ -297,7 +295,7 @@ export class ApiExplorer extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      store: this.dataStore.instance!,
+      store: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -307,7 +305,8 @@ export class ApiExplorer extends LitElement {
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
-      this.runs = this.#runObserver?.observe(result);
+      this.runs = await this.#runObserver?.observe(result);
+
       const answer = await this.#handleStateChange(result);
 
       if (answer) {
