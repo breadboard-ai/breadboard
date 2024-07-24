@@ -16,7 +16,8 @@ export type UserRequestType =
   | "app"
   | "api"
   | "invoke"
-  | "describe";
+  | "describe"
+  | "run";
 
 export type RequestType = GeneralRequestType | UserRequestType;
 

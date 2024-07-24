@@ -105,6 +105,18 @@
     }
   },
   {
+    "url": "https://example.com/boards/@user/name.api/run",
+    "method": "POST",
+    "result": {
+      "success": true,
+      "type": "run",
+      "board": "@user/name.json",
+      "name": "name.json",
+      "user": "user",
+      "url": "https://example.com/boards/@user/name.json"
+    }
+  },
+  {
     "url": "https://example.com/boards/@user/name.app/describe",
     "method": "GET",
     "result": { "success": false, "code": 404, "error": "Not found" }
