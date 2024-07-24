@@ -1,5 +1,5 @@
 {
-  "title": "cast component example",
+  "title": "unnest node example",
   "version": "0.0.1",
   "metadata": {
     "comments": [
@@ -102,7 +102,7 @@
         "method": "GET",
         "raw": false,
         "stream": false,
-        "url": "http://example.com/api"
+        "url": "data:application/json,{\"foo\":\"hello\",\"bar\":42}"
       }
     },
     {

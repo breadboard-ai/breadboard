@@ -13,6 +13,37 @@ This is the kit that provides the most fundamental building blocks for Breadboar
 > [!TIP]
 > Most of these components are closer to actual programming than just dragging and dropping high-level components. Expect climbing a learning curve to get comfortable using them.
 
+## The `cast` component
+
+{{ "/breadboard/static/boards/kits/core-cast.bgl.json" | board }}
+
+Takes any kind of value and forces its schema to be the given JSON Schema.
+
+### Input ports
+
+The `cast` component has two input ports:
+
+- **Value** (id: `value`) — Any kind of value.
+- **Type** (id: `type`) — The JSON schema to cast `value` to.
+
+### Output ports
+
+The `cast` component has a single output port:
+
+- **Value** (id `value`) — The unmodified `value` input, but now with `type` as its schema.
+
+### Example
+
+In the board above, a URL is fetched which responds with an object containing
+properties `foo` and `bar`. Since the `fetch` component doesn't intrinsically
+know what the response type of any given request will be, by default it will be
+typed as `unknown`. By wiring the response to a `cast` node, we can assert to
+Breadboard what the expected response type is.
+
+### Implementation
+
+- [cast.ts]({{src_url}}cast.ts)
+
 ## The `curry` component
 
 {{ "/breadboard/static/boards/kits/core-curry.bgl.json" | board }}
@@ -474,7 +505,7 @@ Exposes all properties of a given JSON object as separate output ports.
 
 The `unnest` component has a single input port.
 
-- _Nested_ (id `nested`) — the JSON object to unnest.
+- **Nested** (id `nested`) — the JSON object to unnest.
 
 ### Output ports
 
