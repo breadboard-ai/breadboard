@@ -147,7 +147,7 @@ test("lambda node from function with correctly assigned nodes", async (t) => {
               { id: "output-2", type: "output" },
               { id: "test-3", type: "test" },
             ],
-            kits: [{ url: "test" }],
+            kits: [{ tags: [], url: "test" }],
           },
         },
       },
