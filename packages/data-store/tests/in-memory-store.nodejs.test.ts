@@ -120,3 +120,20 @@ test("InMemoryStore copies to newest group", async (t) => {
 
   store.releaseAll();
 });
+
+test("InMemoryStore drops all entries", async (t) => {
+  const store = getDataStore();
+
+  const data1 = new Blob(["file contents 1"]);
+  const data2 = new Blob(["file contents 2"]);
+
+  const [stored1, stored2] = await Promise.all([
+    store.store(data1),
+    store.store(data2),
+  ]);
+
+  await store.drop();
+
+  await t.throwsAsync(store.retrieve(stored1));
+  await t.throwsAsync(store.retrieve(stored2));
+});

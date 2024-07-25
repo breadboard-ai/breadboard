@@ -110,4 +110,9 @@ export class DefaultDataStore implements DataStore {
 
     return newHandle;
   }
+
+  async drop() {
+    this.releaseAll();
+    this.#items.clear();
+  }
 }
