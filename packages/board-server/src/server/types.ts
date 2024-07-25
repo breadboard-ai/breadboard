@@ -5,6 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
+import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -16,7 +17,8 @@ export type UserRequestType =
   | "app"
   | "api"
   | "invoke"
-  | "describe";
+  | "describe"
+  | "run";
 
 export type RequestType = GeneralRequestType | UserRequestType;
 
@@ -45,3 +47,29 @@ export type ApiHandler = <T extends ParseResult>(
   res: ServerResponse,
   body?: unknown
 ) => Promise<boolean>;
+
+export type SecretInputs = {
+  keys: string[];
+};
+
+export type BoardServerLoadFunction = (
+  path: string
+) => Promise<GraphDescriptor | null>;
+
+export type InvokeBoardArguments = {
+  url: string;
+  path: string;
+  loader: BoardServerLoadFunction;
+  inputs: Record<string, any>;
+  kitOverrides?: Kit[];
+};
+
+export type RunBoardArguments = {
+  url: string;
+  path: string;
+  loader: BoardServerLoadFunction;
+  inputs?: Record<string, any>;
+  kitOverrides?: Kit[];
+};
+
+export type RunBoardResult = Record<string, any>;

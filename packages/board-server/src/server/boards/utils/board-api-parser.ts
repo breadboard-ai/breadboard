@@ -93,6 +93,7 @@ export class BoardAPIParser {
       if (isAPI) {
         const isInvoke = parts.length === 3 && parts[2] === "invoke";
         const isDescribe = parts.length === 3 && parts[2] === "describe";
+        const isRun = parts.length === 3 && parts[2] === "run";
         const name = `${maybeName.slice(0, -".api".length)}.json`;
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
@@ -106,6 +107,13 @@ export class BoardAPIParser {
         if (isDescribe) {
           if (isPOST) {
             return { success: true, type: "describe", board, url, user, name };
+          } else {
+            return invalidMethod();
+          }
+        }
+        if (isRun) {
+          if (isPOST) {
+            return { success: true, type: "run", board, url, user, name };
           } else {
             return invalidMethod();
           }

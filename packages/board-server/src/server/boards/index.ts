@@ -16,7 +16,6 @@ import type { ViteDevServer } from "vite";
 import invoke from "./invoke.js";
 import describe from "./describe.js";
 import { parse } from "./utils/board-api-parser.js";
-import type { GeneralParseResult } from "../types.js";
 import { cors, corsAll } from "../cors.js";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
