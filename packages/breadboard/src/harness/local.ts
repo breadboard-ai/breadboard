@@ -7,6 +7,7 @@
 import { createDefaultDataStore } from "../data/index.js";
 import { Board, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
@@ -14,6 +15,7 @@ import {
   ErrorObject,
   Kit,
   ProbeMessage,
+  RunStackEntry,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
@@ -45,6 +47,17 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
 ) => {
   const { type, node, timestamp, invocationId } = result;
   const bubbled = invocationId == -1;
+
+  const state = async (): Promise<RunStackEntry[]> => {
+    return [
+      {
+        graph: 0,
+        node: invocationId,
+        state: await saveRunnerState(type, result.state),
+      },
+    ];
+  };
+
   if (type === "input") {
     const { inputArguments, path } = result;
     return {
@@ -53,9 +66,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async (value) => {
         result.inputs = value.inputs;
       },
-      state: async () => {
-        return [];
-      },
+      state,
     } as HarnessRunResult;
   } else if (type === "output") {
     const { outputs, path } = result;
@@ -65,9 +76,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async () => {
         // Do nothing
       },
-      state: async () => {
-        return [];
-      },
+      state,
     } as HarnessRunResult;
   }
   throw new Error(`Unknown result type "${type}".`);
