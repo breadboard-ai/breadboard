@@ -240,6 +240,7 @@ export class ConnectionSignin extends LitElement {
       return;
     }
     const settingsValue: TokenGrant = {
+      client_id: this.connection.clientId,
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
       refresh_token: grantResponse.refresh_token,
