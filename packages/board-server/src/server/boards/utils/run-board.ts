@@ -36,19 +36,35 @@ export const runBoard = async ({
   });
 
   for await (const result of runner) {
-    const { type, data, reply } = result as HarnessRunResult;
+    const { type, data, reply } = result;
     if (type === "input") {
       if (inputsToConsume) {
         await reply({ inputs: inputsToConsume });
         inputsToConsume = undefined;
       } else {
+        const schema = data.node.configuration?.schema || {};
+        const state = await result.state?.();
+        if (!state) {
+          return {
+            $error: "No state supplied.",
+          };
+        }
+        const next = JSON.stringify(state);
         return {
-          $state: { type, schema: data.node.configuration?.schema || {} },
+          $state: { type, schema, next },
         };
       }
     } else if (type === "output") {
+      const schema = data.node.configuration?.schema || {};
+      const state = await result.state?.();
+      if (!state) {
+        return {
+          $error: "No state supplied.",
+        };
+      }
+      const next = JSON.stringify(state);
       return {
-        $state: { type, schema: data.node.configuration?.schema || {} },
+        $state: { type, schema, next },
         ...((await inflateData(store, data.outputs)) as RunBoardResult),
       };
     } else if (type === "error") {

@@ -35,9 +35,12 @@ const assertResult = (
   ok(result.$state);
   const { type, outputs } = expected;
   deepStrictEqual(result.$state.type, type);
+  if (result.$state.type === "input" || result.$state.type === "output") {
+    deepStrictEqual(result.$state.next, "[]");
+  }
   if (expected.outputs) {
-    const { $state, ...outputs } = result;
-    deepStrictEqual(outputs, outputs);
+    const { $state, ...expectedOutputs } = result;
+    deepStrictEqual(outputs, expectedOutputs);
   }
 };
 

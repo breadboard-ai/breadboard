@@ -14,7 +14,7 @@ import {
   HTTPClientTransport,
   HTTPServerTransport,
 } from "../../src/remote/http.js";
-import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
+import { AnyProxyRequestMessage } from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { StreamCapability } from "../../src/stream.js";

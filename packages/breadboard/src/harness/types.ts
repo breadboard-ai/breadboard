@@ -5,15 +5,13 @@
  */
 
 import {
-  ClientTransport,
-  LoadResponse,
-  ServerTransport,
-} from "../remote/protocol.js";
-import {
   AnyClientRunResult,
   AnyProbeClientRunResult,
   ClientRunResult,
-} from "../remote/run.js";
+  ClientTransport,
+  LoadResponse,
+  ServerTransport,
+} from "../remote/types.js";
 import {
   ErrorResponse,
   InputResponse,

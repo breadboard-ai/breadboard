@@ -81,10 +81,12 @@ export type RunBoardResultState = {
     | {
         type: "input";
         schema: NodeValue;
+        next: string;
       }
     | {
         type: "output";
         schema: NodeValue;
+        next: string;
       }
     | {
         type: "end";

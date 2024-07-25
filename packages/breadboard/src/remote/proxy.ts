@@ -21,7 +21,7 @@ import {
   ClientBidirectionalStream,
   ClientTransport,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
 import { inflateData } from "../data/inflate-deflate.js";

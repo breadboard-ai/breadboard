@@ -53,6 +53,9 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async (value) => {
         result.inputs = value.inputs;
       },
+      state: async () => {
+        return [];
+      },
     } as HarnessRunResult;
   } else if (type === "output") {
     const { outputs, path } = result;
@@ -61,6 +64,9 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       data: { node, outputs, path, timestamp, bubbled },
       reply: async () => {
         // Do nothing
+      },
+      state: async () => {
+        return [];
       },
     } as HarnessRunResult;
   }
