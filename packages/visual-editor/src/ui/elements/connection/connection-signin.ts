@@ -258,11 +258,14 @@ export class ConnectionSignin extends LitElement {
     this._state = "signedin";
   }
 
-  #onClickSignout() {
+  async #onClickSignout() {
     if (!this.settingsHelper || !this.connection) {
       return;
     }
-    this.settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, this.connection.id);
+    await this.settingsHelper.delete(
+      SETTINGS_TYPE.CONNECTIONS,
+      this.connection.id
+    );
     this._state = "signedout";
   }
 }
