@@ -136,3 +136,31 @@ it("InMemoryStore copies to newest group", async () => {
 
   store.releaseAll();
 });
+
+it("InMemoryStore drops all entries", async () => {
+  const store = getDataStore();
+
+  const data1 = new Blob(["file contents 1"]);
+  const data2 = new Blob(["file contents 2"]);
+
+  const [stored1, stored2] = await Promise.all([
+    store.store(data1),
+    store.store(data2),
+  ]);
+
+  await store.drop();
+
+  try {
+    await store.retrieve(stored1);
+    expect.fail("Should have thrown an error");
+  } catch (err) {
+    expect(err).to.be.instanceOf(Error);
+  }
+
+  try {
+    await store.retrieve(stored2);
+    expect.fail("Should have thrown an error");
+  } catch (err) {
+    expect(err).to.be.instanceOf(Error);
+  }
+});

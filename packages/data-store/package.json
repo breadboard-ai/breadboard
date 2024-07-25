@@ -59,10 +59,9 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/",
-        "!dist/**/*.min.js{,.map}"
+        "bundled"
       ],
-      "clean": "if-file-deleted"
+      "clean": true
     },
     "test": {
       "dependencies": [
@@ -155,6 +154,7 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.22.0"
+    "@google-labs/breadboard": "^0.22.0",
+    "idb": "^8.0.0"
   }
 }

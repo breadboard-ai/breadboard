@@ -91,4 +91,5 @@ export type DataStore = {
   copyToNewestGroup(
     storedData: StoredDataCapabilityPart
   ): Promise<StoredDataCapabilityPart>;
+  drop(): Promise<void>;
 };
