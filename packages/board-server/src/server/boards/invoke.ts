@@ -8,10 +8,14 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import { createLoader, inflateData } from "@google-labs/breadboard";
 import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
 import type { ApiHandler, BoardParseResult } from "../types.js";
-import { BoardServerProvider } from "./utils/board-server-provider.js";
+import {
+  BoardServerProvider,
+  loadFromStore,
+} from "./utils/board-server-provider.js";
 import { createKits } from "./utils/create-kits.js";
 import { formatRunError } from "./utils/format-run-error.js";
 import { verifyKey } from "./utils/verify-key.js";
+import { secretsKit } from "../proxy/secrets.js";
 
 export const invoke = async (
   url: string,
@@ -25,8 +29,8 @@ export const invoke = async (
 
   const runner = run({
     url,
-    kits: createKits(),
-    loader: createLoader([new BoardServerProvider(path)]),
+    kits: createKits([secretsKit]),
+    loader: createLoader([new BoardServerProvider(path, loadFromStore)]),
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,

@@ -6,6 +6,7 @@
 
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import type { Kit } from "@google-labs/breadboard";
+import type { SecretInputs } from "../types.js";
 
 const url = import.meta.url;
 
@@ -14,10 +15,6 @@ const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT;
 if (!PROJECT_ID) {
   throw new Error("Please set GOOGLE_CLOUD_PROJECT environment variable.");
 }
-
-type SecretInputs = {
-  keys: string[];
-};
 
 const secretManager = new SecretManagerServiceClient();
 

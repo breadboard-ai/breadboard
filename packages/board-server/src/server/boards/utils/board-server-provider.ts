@@ -14,14 +14,29 @@ import {
 } from "@google-labs/breadboard";
 
 import { asInfo, getStore } from "../../store.js";
+import type { BoardServerLoadFunction } from "../../types.js";
+
+export const loadFromStore = async (
+  path: string
+): Promise<GraphDescriptor | null> => {
+  const store = getStore();
+  const { userStore, boardName } = asInfo(path);
+  if (!userStore || !boardName) {
+    return null;
+  }
+  const graph = JSON.parse(await store.get(userStore, boardName));
+  return graph as GraphDescriptor;
+};
 
 export class BoardServerProvider implements GraphProvider {
   #path: string;
+  #loader: BoardServerLoadFunction;
 
   name = "Board Server Provider";
 
-  constructor(path: string) {
+  constructor(path: string, loader: BoardServerLoadFunction) {
     this.#path = path;
+    this.#loader = loader;
   }
 
   async ready(): Promise<void> {
@@ -52,14 +67,8 @@ export class BoardServerProvider implements GraphProvider {
     };
   }
 
-  async load(url: URL): Promise<GraphDescriptor | null> {
-    const store = getStore();
-    const { userStore, boardName } = asInfo(this.#path);
-    if (!userStore || !boardName) {
-      return null;
-    }
-    const graph = JSON.parse(await store.get(userStore, boardName));
-    return graph as GraphDescriptor;
+  async load(_url: URL): Promise<GraphDescriptor | null> {
+    return this.#loader(this.#path);
   }
 
   async save(
