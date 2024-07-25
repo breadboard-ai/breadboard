@@ -28,6 +28,7 @@ export { annotate } from "./internal/type-system/annotate.js";
 export { anyOf } from "./internal/type-system/any-of.js";
 export { array } from "./internal/type-system/array.js";
 export { enumeration } from "./internal/type-system/enumeration.js";
+export { intersect } from "./internal/type-system/intersect.js";
 export { object, optional } from "./internal/type-system/object.js";
 export { toJSONSchema } from "./internal/type-system/type.js";
 export { unsafeType } from "./internal/type-system/unsafe.js";
