@@ -6,10 +6,10 @@
 
 import test, { describe } from "node:test";
 import { deepStrictEqual } from "assert";
-import { runBoard } from "../src/server/boards/utils/run-board.js";
 import type { Kit } from "@google-labs/breadboard";
 
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
+import { invokeBoard } from "../src/server/boards/utils/invoke-board.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -20,11 +20,11 @@ const mockSecretsKit: Kit = {
   },
 };
 
-describe("Board Server Runs Boards", () => {
-  test("can run a simple board", async () => {
+describe("Board Server Invokes Boards", () => {
+  test("can invoke a simple board", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar" };
-    const result = await runBoard({
+    const result = await invokeBoard({
       path,
       url: `https://example.com${path}`,
       inputs,

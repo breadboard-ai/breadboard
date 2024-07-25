@@ -56,6 +56,14 @@ export type BoardServerLoadFunction = (
   path: string
 ) => Promise<GraphDescriptor | null>;
 
+export type InvokeBoardArguments = {
+  url: string;
+  path: string;
+  inputs: Record<string, any>;
+  loader: BoardServerLoadFunction;
+  kitOverrides?: Kit[];
+};
+
 export type RunBoardArguments = {
   url: string;
   path: string;
