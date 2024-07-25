@@ -66,7 +66,8 @@
     },
     "test": {
       "dependencies": [
-        "test:ava"
+        "test:ava",
+        "test:browser"
       ]
     },
     "test:ava": {
