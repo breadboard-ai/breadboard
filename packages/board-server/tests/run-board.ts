@@ -11,6 +11,7 @@ import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
 
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
+import type { RunBoardResult } from "../src/server/types.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -21,6 +22,21 @@ const mockSecretsKit: Kit = {
   },
 };
 
+const assertResult = (
+  result: RunBoardResult,
+  expected: {
+    type: string;
+    outputs?: Record<string, any>;
+  }
+) => {
+  ok(result.$state);
+  deepStrictEqual(result.$state?.type, expected.type);
+  if (expected.outputs) {
+    const { $state, ...outputs } = result;
+    deepStrictEqual(outputs, expected.outputs);
+  }
+};
+
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
@@ -29,8 +45,7 @@ describe("Board Server Runs Boards", () => {
       url: `https://example.com${path}`,
       loader: async () => simpleBoard,
     });
-    const state = result.$state;
-    ok(state);
+    assertResult(result, { type: "input" });
   });
 
   test("can start a simple board with inputs", async () => {
@@ -42,9 +57,12 @@ describe("Board Server Runs Boards", () => {
       inputs,
       loader: async () => simpleBoard,
     });
-    const state = result.$state;
-    ok(state);
-    deepStrictEqual(result.text, "bar");
+    assertResult(result, {
+      type: "output",
+      outputs: {
+        text: "bar",
+      },
+    });
   });
 
   test("can start multiple a board with multiple inputs", async () => {
@@ -56,7 +74,6 @@ describe("Board Server Runs Boards", () => {
       inputs,
       loader: async () => multipleInputsBoard as GraphDescriptor,
     });
-    const state = result.$state;
-    ok(state);
+    assertResult(result, { type: "input" });
   });
 });
