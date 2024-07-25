@@ -59,7 +59,10 @@ export class ConnectionInput extends LitElement {
         throw new Error("Uninitialized");
       }
       const refreshed = await expired.refresh({ signal });
-      this.#broadcastSecret(refreshed.grant.access_token);
+      this.#broadcastSecret(
+        refreshed.grant.access_token,
+        refreshed.grant.client_id
+      );
     },
   });
 
@@ -79,7 +82,7 @@ export class ConnectionInput extends LitElement {
     } else if (grant.state === "expired") {
       return this.#refreshAndRenderStatus(grant);
     }
-    this.#broadcastSecret(grant.grant.access_token);
+    this.#broadcastSecret(grant.grant.access_token, grant.grant.client_id);
     return html`Token was fresh`;
   }
 
@@ -107,7 +110,7 @@ export class ConnectionInput extends LitElement {
           @bbtokengranted=${({
             token,
           }: HTMLElementEventMap["bbtokengranted"]) => {
-            this.#broadcastSecret(token);
+            this.#broadcastSecret(token, connection.clientId);
           }}
         ></bb-connection-signin>`;
       },
@@ -125,11 +128,11 @@ export class ConnectionInput extends LitElement {
     });
   }
 
-  #broadcastSecret(secret: string) {
+  #broadcastSecret(secret: string, clientId: string) {
     this.dispatchEvent(
       new InputEnterEvent(
         this.id,
-        { secret },
+        { clientId, secret },
         // Disable allowSavingIfSecret so that it does not get saved to the
         // regular secrets section, because we're managing this secret in a
         // special way using the connections system.
