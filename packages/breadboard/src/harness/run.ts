@@ -9,6 +9,7 @@ import {
   DataStore,
   InputValues,
   Kit,
+  RunStackEntry,
   asyncGen,
 } from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
@@ -111,6 +112,10 @@ export type RunConfig = {
    * The data store to use for storing data.
    */
   store?: DataStore;
+  /**
+   * The state from which to resume the run.
+   */
+  resumeFrom?: RunStackEntry[];
 };
 
 const configureKits = async (config: RunConfig): Promise<Kit[]> => {

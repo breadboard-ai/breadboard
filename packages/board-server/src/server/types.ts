@@ -70,6 +70,7 @@ export type RunBoardArguments = {
   loader: BoardServerLoadFunction;
   inputs?: Record<string, any>;
   kitOverrides?: Kit[];
+  next?: string;
 };
 
 export type RunBoardResultError = {

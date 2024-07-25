@@ -45,6 +45,17 @@ const assertResult = (
   }
 };
 
+const getNext = (result: RunBoardResult) => {
+  if ("$error" in result) {
+    fail(result.$error);
+  }
+  ok(result.$state);
+  if (result.$state.type === "input" || result.$state.type === "output") {
+    return result.$state.next;
+  }
+  fail("Unexpected state type.");
+};
+
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
@@ -54,6 +65,29 @@ describe("Board Server Runs Boards", () => {
       loader: async () => simpleBoard,
     });
     assertResult(result, { type: "input" });
+  });
+
+  test("can finish a simple board", async () => {
+    let next;
+    const path = "/path/to/board";
+    {
+      const result = await runBoard({
+        path,
+        url: `https://example.com${path}`,
+        loader: async () => simpleBoard,
+      });
+      assertResult(result, { type: "input" });
+      next = getNext(result);
+    }
+    {
+      const result = await runBoard({
+        path,
+        url: `https://example.com${path}`,
+        loader: async () => simpleBoard,
+        next,
+      });
+      assertResult(result, { type: "output" });
+    }
   });
 
   test("can start a simple board with inputs", async () => {

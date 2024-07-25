@@ -12,12 +12,21 @@ import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
 import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 
+const fromNextToState = (next?: string) => {
+  return next ? JSON.parse(next) : undefined;
+};
+
+const fromStateToNext = (state: any) => {
+  return JSON.stringify(state);
+};
+
 export const runBoard = async ({
   url,
   path,
   inputs,
   loader,
   kitOverrides,
+  next,
 }: RunBoardArguments): Promise<RunBoardResult> => {
   const store = getDataStore();
   if (!store) {
@@ -33,6 +42,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
+    resumeFrom: fromNextToState(next),
   });
 
   for await (const result of runner) {
@@ -49,7 +59,7 @@ export const runBoard = async ({
             $error: "No state supplied, internal run error.",
           };
         }
-        const next = JSON.stringify(state);
+        const next = fromStateToNext(state);
         return {
           $state: { type, schema, next },
         };
@@ -62,7 +72,7 @@ export const runBoard = async ({
           $error: "No state supplied, internal run error.",
         };
       }
-      const next = JSON.stringify(state);
+      const next = fromStateToNext(state);
       return {
         $state: { type, schema, next },
         ...((await inflateData(store, data.outputs)) as RunBoardResult),
