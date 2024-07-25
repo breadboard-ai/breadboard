@@ -29,9 +29,7 @@
       "dependencies": [
         "../breadboard:build",
         "../core-kit:build",
-        "../json-kit:build",
         "../template-kit:build",
-        "../node-nursery-web:build",
         "build:tsc"
       ]
     },
@@ -43,13 +41,10 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
-        "../json-kit:build:tsc",
-        "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc"
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],
@@ -60,13 +55,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "ava",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
+      "command": "echo \"no tests currently\"",
       "files": [],
       "output": []
     },
@@ -77,14 +66,13 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
     },
     "generate:graphs": {
-      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "command": "mkdir graphs && ls dist/src/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc",
         "../breadboard-cli:build"
@@ -103,19 +91,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -124,21 +99,17 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
     "@google-labs/breadboard-cli": "^0.10.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.14.12",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
     "@typescript-eslint/parser": "^7.17.0",
-    "ava": "^5.2.0",
     "typescript": "^5.5.3"
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.7.1",
     "@google-labs/breadboard": "^0.22.0",
     "@google-labs/core-kit": "^0.11.0",
-    "@google-labs/json-kit": "^0.3.3",
-    "@google-labs/node-nursery-web": "^1.1.5",
     "@google-labs/template-kit": "^0.3.5"
   }
 }

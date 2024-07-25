@@ -180,15 +180,6 @@ const context = input({
   ],
 });
 
-const useStreaming = input({
-  type: annotate("boolean", {
-    behavior: ["deprecated"],
-  }),
-  title: "Stream Output",
-  description: "Whether to stream the output",
-  default: false,
-});
-
 const retry = input({
   type: annotate("number", {
     behavior: ["config"],
@@ -251,26 +242,6 @@ const requestBodyType = object({
   ),
 });
 
-const { method, sseOption } = code(
-  {
-    $id: "choose-method",
-    useStreaming,
-    $metadata: {
-      title: "Choose Method",
-      description: "Choosing the right Gemini API method",
-    },
-  },
-  {
-    method: enumeration("streamGenerateContent", "generateContent"),
-    sseOption: "string",
-  },
-  ({ useStreaming }) => {
-    const method = useStreaming ? "streamGenerateContent" : "generateContent";
-    const sseOption = useStreaming ? "&alt=sse" : "";
-    return { method, sseOption };
-  }
-).outputs;
-
 const makeUrl = urlTemplate({
   $id: "make-url",
   $metadata: {
@@ -278,11 +249,9 @@ const makeUrl = urlTemplate({
     description: "Creating the Gemini API URL",
   },
   template:
-    "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}?key={GEMINI_KEY}{+sseOption}",
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_KEY}",
   GEMINI_KEY: secret("GEMINI_KEY"),
   model,
-  method,
-  sseOption,
 });
 
 const errorLoopback = loopback({
@@ -501,7 +470,6 @@ const fetchResult = fetch({
   $id: "fetch-gemini-api",
   $metadata: { title: "Make API Call", description: "Calling Gemini API" },
   method: "POST",
-  stream: constant(useStreaming),
   url: constant(makeUrl),
   body,
 });
@@ -554,33 +522,10 @@ const errorCollector = passthrough({
 retryLoopback.resolve(errorCollector.outputs.retry);
 errorLoopback.resolve(errorCollector.outputs.error);
 
-//   const streamTransform = nursery.transformStream({
-//     $metadata: {
-//       title: "Transform Stream",
-//       description: "Transforming the API output stream to be consumable",
-//     },
-//     board: board(() => {
-//       const transformChunk = json.jsonata({
-//         $id: "transformChunk",
-//         expression:
-//           "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
-//         json: base.input({}).chunk as V<string>,
-//       });
-//       return base.output({ chunk: transformChunk.result });
-//     }),
-//     stream: fetch,
-//   });
-
-//   return base.output({
-//     $metadata: { title: "Stream Output", description: "Outputting a stream" },
-//     schema: streamOutputSchema,
-//     stream: streamTransform,
-//   });
-// }).serialize(metadata);
-
-export default board({
-  title: "Gemini Pro Generator",
-  description: "The text generator board powered by the Gemini Pro model",
+export const geminiText = board({
+  title: "Gemini Text",
+  description:
+    "The text generator board powered by the Gemini Pro et al models",
   metadata: {
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
@@ -600,7 +545,6 @@ export default board({
       responseMimeType,
       tools,
       context,
-      useStreaming,
       retry,
       safetySettings,
       stopSequences,
