@@ -120,3 +120,7 @@ export function isDrawableImage(schema: Schema) {
     schema.format === "image-drawable"
   );
 }
+
+export function isGoogleDriveQuery(schema: Schema) {
+  return schema.behavior?.includes("google-drive-query");
+}
