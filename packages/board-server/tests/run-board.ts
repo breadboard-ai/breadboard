@@ -5,7 +5,7 @@
  */
 
 import test, { describe } from "node:test";
-import { deepStrictEqual, ok } from "assert";
+import { deepStrictEqual, fail, ok } from "assert";
 import { runBoard } from "../src/server/boards/utils/run-board.js";
 import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
 
@@ -16,7 +16,7 @@ import type { RunBoardResult } from "../src/server/types.js";
 const mockSecretsKit: Kit = {
   url: import.meta.url,
   handlers: {
-    secrets: async (inputs) => {
+    secrets: async () => {
       throw new Error("Secrets aren't implemented in tests.");
     },
   },
@@ -29,11 +29,15 @@ const assertResult = (
     outputs?: Record<string, any>;
   }
 ) => {
+  if ("$error" in result) {
+    fail(result.$error);
+  }
   ok(result.$state);
-  deepStrictEqual(result.$state?.type, expected.type);
+  const { type, outputs } = expected;
+  deepStrictEqual(result.$state.type, type);
   if (expected.outputs) {
     const { $state, ...outputs } = result;
-    deepStrictEqual(outputs, expected.outputs);
+    deepStrictEqual(outputs, outputs);
   }
 };
 
