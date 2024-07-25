@@ -73,7 +73,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
@@ -81,7 +81,7 @@
       "output": []
     },
     "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --test-only --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
@@ -89,7 +89,7 @@
       "output": []
     },
     "coverage": {
-      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info",
       "dependencies": [
         "build:tsc"
       ],
