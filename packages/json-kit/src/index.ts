@@ -17,6 +17,8 @@ import schemish from "./nodes/schemish.js";
 import validateJson from "./nodes/validate-json.js";
 import xmlToJson from "./nodes/xml-to-json.js";
 
+export { default as jsonata } from "./nodes/jsonata.js";
+
 const JSONKit = new KitBuilder({
   title: "JSON Kit",
   description:
