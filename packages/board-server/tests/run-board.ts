@@ -85,8 +85,19 @@ describe("Board Server Runs Boards", () => {
         url: `https://example.com${path}`,
         loader: async () => simpleBoard,
         next,
+        inputs: { text: "foo" },
       });
       assertResult(result, { type: "output" });
+      next = getNext(result);
+    }
+    {
+      const result = await runBoard({
+        path,
+        url: `https://example.com${path}`,
+        loader: async () => simpleBoard,
+        next,
+      });
+      assertResult(result, { type: "end" });
     }
   });
 

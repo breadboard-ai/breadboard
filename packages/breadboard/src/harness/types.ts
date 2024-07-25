@@ -185,5 +185,10 @@ export type RunConfig = {
   /**
    * The state from which to resume the run.
    */
-  resumeFrom?: RunStackEntry[];
+  resumeFrom?: StateToResumeFrom;
+};
+
+export type StateToResumeFrom = {
+  state: RunStackEntry[];
+  inputs?: InputValues;
 };

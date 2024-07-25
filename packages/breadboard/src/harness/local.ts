@@ -5,7 +5,7 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, asyncGen } from "../index.js";
+import { Board, RunResult, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
@@ -19,7 +19,7 @@ import {
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
-import { HarnessRunResult, RunConfig } from "./types.js";
+import { HarnessRunResult, RunConfig, StateToResumeFrom } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
@@ -111,11 +111,25 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   return Board.fromGraphDescriptor(graph);
 };
 
+const createPreviousRunResult = (
+  resumeFrom: StateToResumeFrom | undefined
+): RunResult | undefined => {
+  if (resumeFrom?.state?.[0].state) {
+    const result = RunResult.load(resumeFrom.state[0].state);
+    if (resumeFrom.inputs) {
+      result.inputs = resumeFrom.inputs;
+    }
+    return result;
+  }
+  return undefined;
+};
+
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
+    const resumeFrom = createPreviousRunResult(config.resumeFrom);
 
     try {
       const probe = config.diagnostics
@@ -124,15 +138,18 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({
-        probe,
-        kits,
-        loader,
-        store,
-        base: config.base,
-        signal: config.signal,
-        inputs: config.inputs,
-      })) {
+      for await (const data of runner.run(
+        {
+          probe,
+          kits,
+          loader,
+          store,
+          base: config.base,
+          signal: config.signal,
+          inputs: config.inputs,
+        },
+        resumeFrom
+      )) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());

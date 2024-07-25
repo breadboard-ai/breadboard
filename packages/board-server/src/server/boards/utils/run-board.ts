@@ -5,15 +5,26 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
+import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
 import { createKits } from "./create-kits.js";
-import { createLoader, inflateData } from "@google-labs/breadboard";
+import {
+  createLoader,
+  inflateData,
+  type InputValues,
+} from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
 import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 
-const fromNextToState = (next?: string) => {
-  return next ? JSON.parse(next) : undefined;
+const fromNextToState = (
+  next?: string,
+  inputs?: InputValues
+): StateToResumeFrom => {
+  const state = next ? JSON.parse(next) : undefined;
+  return {
+    state,
+    inputs,
+  };
 };
 
 const fromStateToNext = (state: any) => {
@@ -42,7 +53,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
-    resumeFrom: fromNextToState(next),
+    resumeFrom: fromNextToState(next, inputs),
   });
 
   for await (const result of runner) {
