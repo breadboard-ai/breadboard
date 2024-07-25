@@ -5,6 +5,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "./wtr-config.mjs"],
+  "exclude": ["bundled"],
   "extends": "@google-labs/tsconfig/base.json"
 }
