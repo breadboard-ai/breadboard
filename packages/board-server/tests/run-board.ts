@@ -22,7 +22,18 @@ const mockSecretsKit: Kit = {
 };
 
 describe("Board Server Runs Boards", () => {
-  test("can run a simple board", async () => {
+  test("can start a simple board", async () => {
+    const path = "/path/to/board";
+    const result = await runBoard({
+      path,
+      url: `https://example.com${path}`,
+      loader: async () => simpleBoard,
+    });
+    const state = result.$state;
+    ok(state);
+  });
+
+  test("can start a simple board with inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar" };
     const result = await runBoard({
@@ -31,7 +42,9 @@ describe("Board Server Runs Boards", () => {
       inputs,
       loader: async () => simpleBoard,
     });
-    deepStrictEqual(result, { text: "bar" });
+    const state = result.$state;
+    ok(state);
+    deepStrictEqual(result.text, "bar");
   });
 
   test("can start multiple a board with multiple inputs", async () => {
@@ -43,7 +56,7 @@ describe("Board Server Runs Boards", () => {
       inputs,
       loader: async () => multipleInputsBoard as GraphDescriptor,
     });
-    const pause = result.$pause;
-    ok(pause);
+    const state = result.$state;
+    ok(state);
   });
 });

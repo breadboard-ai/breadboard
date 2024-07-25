@@ -42,21 +42,21 @@ export const runBoard = async ({
         await reply({ inputs: inputsToConsume });
         inputsToConsume = undefined;
       } else {
-        // TODO: Implement proper pausing.
         return {
-          $pause: { type, schema: data.node.configuration?.schema || {} },
+          $state: { type, schema: data.node.configuration?.schema || {} },
         };
       }
     } else if (type === "output") {
-      return inflateData(store, data.outputs) as RunBoardResult;
+      return {
+        $state: { type, schema: data.node.configuration?.schema || {} },
+        ...((await inflateData(store, data.outputs)) as RunBoardResult),
+      };
     } else if (type === "error") {
       return {
         $error: formatRunError(data.error),
       };
     } else if (type === "end") {
-      return {
-        $error: "Run completed without producing output.",
-      };
+      return { $state: { type } };
     } else {
       console.log("UNKNOWN RESULT", type, data);
     }
