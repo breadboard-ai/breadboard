@@ -130,7 +130,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.1",
+    "@breadboard-ai/build": "^0.7.1",
     "@google-labs/breadboard": "^0.22.0"
   }
 }

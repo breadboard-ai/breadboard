@@ -133,7 +133,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.1",
+    "@breadboard-ai/build": "^0.7.1",
     "@breadboard-ai/google-drive-kit": "0.2.0",
     "@breadboard-ai/manifest": "^0.3.0",
     "@breadboard-ai/python-wasm": "0.1.3",
