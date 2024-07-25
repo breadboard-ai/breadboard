@@ -22,13 +22,7 @@ const mockSecretsKit: Kit = {
   },
 };
 
-const assertResult = (
-  result: RunBoardResult,
-  expected: {
-    type: string;
-    outputs?: Record<string, any>;
-  }
-) => {
+const assertResult = (result: RunBoardResult, expected: ExpectedResult) => {
   if ("$error" in result) {
     fail(result.$error);
   }
@@ -53,7 +47,39 @@ const getNext = (result: RunBoardResult) => {
   if (result.$state.type === "input" || result.$state.type === "output") {
     return result.$state.next;
   }
+  if (result.$state.type === "end") {
+    return undefined;
+  }
   fail("Unexpected state type.");
+};
+
+type ExpectedResult = {
+  type: string;
+  outputs?: Record<string, any>;
+};
+
+type RunScriptEntry = {
+  inputs?: Record<string, any>;
+  expected: ExpectedResult;
+};
+
+const scriptedRun = async (
+  board: GraphDescriptor,
+  script: RunScriptEntry[]
+) => {
+  let next;
+  const path = "/path/to/board";
+  for (const { inputs, expected } of script) {
+    const result = await runBoard({
+      path,
+      url: `https://example.com${path}`,
+      loader: async () => board,
+      inputs,
+      next,
+    });
+    assertResult(result, expected);
+    next = getNext(result);
+  }
 };
 
 describe("Board Server Runs Boards", () => {
@@ -68,37 +94,11 @@ describe("Board Server Runs Boards", () => {
   });
 
   test("can finish a simple board", async () => {
-    let next;
-    const path = "/path/to/board";
-    {
-      const result = await runBoard({
-        path,
-        url: `https://example.com${path}`,
-        loader: async () => simpleBoard,
-      });
-      assertResult(result, { type: "input" });
-      next = getNext(result);
-    }
-    {
-      const result = await runBoard({
-        path,
-        url: `https://example.com${path}`,
-        loader: async () => simpleBoard,
-        next,
-        inputs: { text: "foo" },
-      });
-      assertResult(result, { type: "output" });
-      next = getNext(result);
-    }
-    {
-      const result = await runBoard({
-        path,
-        url: `https://example.com${path}`,
-        loader: async () => simpleBoard,
-        next,
-      });
-      assertResult(result, { type: "end" });
-    }
+    await scriptedRun(simpleBoard, [
+      { expected: { type: "input" } },
+      { inputs: { text: "foo" }, expected: { type: "output" } },
+      { expected: { type: "end" } },
+    ]);
   });
 
   test("can start a simple board with inputs", async () => {
