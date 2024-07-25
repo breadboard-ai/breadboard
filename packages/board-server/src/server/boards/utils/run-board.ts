@@ -5,12 +5,31 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
+import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
 import { createKits } from "./create-kits.js";
-import { createLoader, inflateData } from "@google-labs/breadboard";
+import {
+  createLoader,
+  inflateData,
+  type InputValues,
+} from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
 import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+
+const fromNextToState = (
+  next?: string,
+  inputs?: InputValues
+): StateToResumeFrom => {
+  const state = next ? JSON.parse(next) : undefined;
+  return {
+    state,
+    inputs,
+  };
+};
+
+const fromStateToNext = (state: any) => {
+  return JSON.stringify(state);
+};
 
 export const runBoard = async ({
   url,
@@ -18,13 +37,14 @@ export const runBoard = async ({
   inputs,
   loader,
   kitOverrides,
+  next,
 }: RunBoardArguments): Promise<RunBoardResult> => {
   const store = getDataStore();
   if (!store) {
     return { $error: "Data store not available." };
   }
 
-  let inputsToConsume = inputs;
+  let inputsToConsume = next ? undefined : inputs;
 
   const runner = run({
     url,
@@ -33,22 +53,39 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
+    resumeFrom: fromNextToState(next, inputs),
   });
 
   for await (const result of runner) {
-    const { type, data, reply } = result as HarnessRunResult;
+    const { type, data, reply } = result;
     if (type === "input") {
       if (inputsToConsume) {
         await reply({ inputs: inputsToConsume });
         inputsToConsume = undefined;
       } else {
+        const schema = data.node.configuration?.schema || {};
+        const state = await result.saveState?.();
+        if (!state) {
+          return {
+            $error: "No state supplied, internal run error.",
+          };
+        }
+        const next = fromStateToNext(state);
         return {
-          $state: { type, schema: data.node.configuration?.schema || {} },
+          $state: { type, schema, next },
         };
       }
     } else if (type === "output") {
+      const schema = data.node.configuration?.schema || {};
+      const state = await result.saveState?.();
+      if (!state) {
+        return {
+          $error: "No state supplied, internal run error.",
+        };
+      }
+      const next = fromStateToNext(state);
       return {
-        $state: { type, schema: data.node.configuration?.schema || {} },
+        $state: { type, schema, next },
         ...((await inflateData(store, data.outputs)) as RunBoardResult),
       };
     } else if (type === "error") {

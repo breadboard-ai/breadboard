@@ -12,7 +12,7 @@ import {
   parseWithStreamsTransform,
 } from "../../src/remote/http.js";
 import { RunServer } from "../../src/remote/run.js";
-import { AnyRunRequestMessage } from "../../src/remote/protocol.js";
+import { AnyRunRequestMessage } from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { MockHTTPConnection } from "../helpers/_test-transport.js";
@@ -366,7 +366,7 @@ test("HTTPClientTransport handles input with a single stream in it", async (t) =
   ]);
   const value = data.value as [
     type: string,
-    data: { outputs: { dataStream: NodeValue } }
+    data: { outputs: { dataStream: NodeValue } },
   ];
   const dataStream = value[1].outputs.dataStream;
   t.true(isStreamCapability(dataStream));

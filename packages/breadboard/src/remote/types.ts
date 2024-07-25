@@ -83,7 +83,7 @@ export type InputResolveRequest = { inputs: InputValues };
 export type InputResolveRequestMessage = [
   "input",
   InputResolveRequest,
-  RunState
+  RunState,
 ];
 
 /**
@@ -172,3 +172,34 @@ export interface ServerTransport<Request, Response> {
 export interface ClientTransport<Request, Response> {
   createClientStream(): ClientBidirectionalStream<Request, Response>;
 }
+
+export type RunClientTransport = ClientTransport<
+  AnyRunRequestMessage,
+  AnyRunResponseMessage
+>;
+
+type ReplyFunction = {
+  reply: (chunk: AnyRunRequestMessage[1]) => Promise<void>;
+};
+
+export type RunStateFunction = () => Promise<RunState>;
+
+type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
+  string,
+  object,
+  RunState?,
+]
+  ? {
+      type: ResponseMessage[0];
+      data: ResponseMessage[1];
+      saveState?: RunStateFunction;
+    } & ReplyFunction
+  : never;
+
+export type AnyClientRunResult =
+  ClientRunResultFromMessage<AnyRunResponseMessage>;
+
+export type AnyProbeClientRunResult =
+  ClientRunResultFromMessage<AnyProbeMessage>;
+
+export type ClientRunResult<T> = T & ReplyFunction;
