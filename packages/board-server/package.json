@@ -102,6 +102,7 @@
         "src/**/*.ts",
         "tests/**/*.ts",
         "tests/*.json",
+        "tests/boards/*.bgl.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],

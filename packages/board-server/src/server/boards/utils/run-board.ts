@@ -10,7 +10,7 @@ import { createKits } from "./create-kits.js";
 import { createLoader, inflateData } from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
-import type { RunBoardArguments } from "../../types.js";
+import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 
 export const runBoard = async ({
   url,
@@ -18,11 +18,13 @@ export const runBoard = async ({
   inputs,
   loader,
   kitOverrides,
-}: RunBoardArguments) => {
+}: RunBoardArguments): Promise<RunBoardResult> => {
   const store = getDataStore();
   if (!store) {
-    return;
+    return { $error: "Data store not available." };
   }
+
+  let inputsToConsume = inputs;
 
   const runner = run({
     url,
@@ -36,9 +38,17 @@ export const runBoard = async ({
   for await (const result of runner) {
     const { type, data, reply } = result as HarnessRunResult;
     if (type === "input") {
-      await reply({ inputs });
+      if (inputsToConsume) {
+        await reply({ inputs: inputsToConsume });
+        inputsToConsume = undefined;
+      } else {
+        // TODO: Implement proper pausing.
+        return {
+          $pause: { type, schema: data.node.configuration?.schema || {} },
+        };
+      }
     } else if (type === "output") {
-      return inflateData(store, data.outputs);
+      return inflateData(store, data.outputs) as RunBoardResult;
     } else if (type === "error") {
       return {
         $error: formatRunError(data.error),

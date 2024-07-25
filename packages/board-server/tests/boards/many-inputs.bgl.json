@@ -1,5 +1,5 @@
 {
-  "title": "Blank board",
+  "title": "many inputs",
   "version": "0.0.1",
   "nodes": [
     {
@@ -8,7 +8,7 @@
       "configuration": {
         "schema": {
           "properties": {
-            "text": {
+            "text1": {
               "type": "string",
               "title": "Text",
               "examples": []
@@ -20,10 +20,12 @@
       },
       "metadata": {
         "visual": {
-          "x": -180,
-          "y": 62,
+          "x": -64,
+          "y": 0,
           "collapsed": false
-        }
+        },
+        "title": "One",
+        "logLevel": "debug"
       }
     },
     {
@@ -32,9 +34,14 @@
       "configuration": {
         "schema": {
           "properties": {
-            "text": {
+            "text-one": {
               "type": "string",
-              "title": "Text",
+              "title": "Text One",
+              "examples": []
+            },
+            "text-two": {
+              "type": "string",
+              "title": "Text Two",
               "examples": []
             }
           },
@@ -49,14 +56,51 @@
           "collapsed": false
         }
       }
+    },
+    {
+      "id": "input-3c20cd3f",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -63,
+          "y": 111,
+          "collapsed": false
+        },
+        "title": "Two",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "text2": {
+              "type": "string",
+              "title": "Text",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
     }
   ],
   "edges": [
     {
+      "from": "input-3c20cd3f",
+      "to": "output",
+      "out": "text2",
+      "in": "text-two"
+    },
+    {
       "from": "input",
       "to": "output",
-      "out": "text",
-      "in": "text"
+      "out": "text1",
+      "in": "text-one"
     }
-  ]
+  ],
+  "description": "",
+  "metadata": {
+    "tags": [],
+    "comments": []
+  }
 }

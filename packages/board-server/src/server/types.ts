@@ -59,15 +59,17 @@ export type BoardServerLoadFunction = (
 export type InvokeBoardArguments = {
   url: string;
   path: string;
-  inputs: Record<string, any>;
   loader: BoardServerLoadFunction;
+  inputs: Record<string, any>;
   kitOverrides?: Kit[];
 };
 
 export type RunBoardArguments = {
   url: string;
   path: string;
-  inputs: Record<string, any>;
   loader: BoardServerLoadFunction;
+  inputs?: Record<string, any>;
   kitOverrides?: Kit[];
 };
+
+export type RunBoardResult = Record<string, any>;
