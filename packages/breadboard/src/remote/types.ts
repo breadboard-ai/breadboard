@@ -192,7 +192,7 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   ? {
       type: ResponseMessage[0];
       data: ResponseMessage[1];
-      state?: RunStateFunction;
+      saveState?: RunStateFunction;
     } & ReplyFunction
   : never;
 

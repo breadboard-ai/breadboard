@@ -43,10 +43,10 @@ export const runBoard = async ({
         inputsToConsume = undefined;
       } else {
         const schema = data.node.configuration?.schema || {};
-        const state = await result.state?.();
+        const state = await result.saveState?.();
         if (!state) {
           return {
-            $error: "No state supplied.",
+            $error: "No state supplied, internal run error.",
           };
         }
         const next = JSON.stringify(state);
@@ -56,10 +56,10 @@ export const runBoard = async ({
       }
     } else if (type === "output") {
       const schema = data.node.configuration?.schema || {};
-      const state = await result.state?.();
+      const state = await result.saveState?.();
       if (!state) {
         return {
-          $error: "No state supplied.",
+          $error: "No state supplied, internal run error.",
         };
       }
       const next = JSON.stringify(state);

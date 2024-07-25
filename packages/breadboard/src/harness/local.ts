@@ -48,7 +48,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
   const { type, node, timestamp, invocationId } = result;
   const bubbled = invocationId == -1;
 
-  const state = async (): Promise<RunStackEntry[]> => {
+  const saveState = async (): Promise<RunStackEntry[]> => {
     return [
       {
         graph: 0,
@@ -66,7 +66,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async (value) => {
         result.inputs = value.inputs;
       },
-      state,
+      saveState,
     } as HarnessRunResult;
   } else if (type === "output") {
     const { outputs, path } = result;
@@ -76,7 +76,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async () => {
         // Do nothing
       },
-      state,
+      saveState,
     } as HarnessRunResult;
   }
   throw new Error(`Unknown result type "${type}".`);
