@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "./types.js";
+import type { HarnessRunResult, RunConfig } from "./types.js";
 import { RunState, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
@@ -15,7 +15,6 @@ import {
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
 import { InitClient } from "../remote/init.js";
-import { RunConfig } from "./run.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);

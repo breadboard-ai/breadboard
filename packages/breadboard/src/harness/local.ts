@@ -19,8 +19,7 @@ import {
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
-import { RunConfig } from "./run.js";
-import { HarnessRunResult } from "./types.js";
+import { HarnessRunResult, RunConfig } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
