@@ -11,6 +11,7 @@ import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
 
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
+import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
 import type { RunBoardResult } from "../src/server/types.js";
 
 const mockSecretsKit: Kit = {
@@ -22,20 +23,32 @@ const mockSecretsKit: Kit = {
   },
 };
 
-const assertResult = (result: RunBoardResult, expected: ExpectedResult) => {
+const assertResult = (
+  result: RunBoardResult,
+  expected: ExpectedResult,
+  index = 0
+) => {
   if ("$error" in result) {
     fail(result.$error);
   }
   ok(result.$state);
   const { type, outputs } = expected;
-  deepStrictEqual(result.$state.type, type);
+  deepStrictEqual(
+    result.$state.type,
+    type,
+    `Expected state type to be ${type} at index ${index}`
+  );
   if (result.$state.type === "input" || result.$state.type === "output") {
     const state = JSON.parse(result.$state.next);
-    ok(Array.isArray(state));
+    ok(Array.isArray(state), `Expected state to be an array at index ${index}`);
   }
   if (expected.outputs) {
     const { $state, ...expectedOutputs } = result;
-    deepStrictEqual(outputs, expectedOutputs);
+    deepStrictEqual(
+      outputs,
+      expectedOutputs,
+      `Expected outputs to match at index ${index}`
+    );
   }
 };
 
@@ -69,7 +82,7 @@ const scriptedRun = async (
 ) => {
   let next;
   const path = "/path/to/board";
-  for (const { inputs, expected } of script) {
+  for (const [index, { inputs, expected }] of script.entries()) {
     const result = await runBoard({
       path,
       url: `https://example.com${path}`,
@@ -77,7 +90,7 @@ const scriptedRun = async (
       inputs,
       next,
     });
-    assertResult(result, expected);
+    assertResult(result, expected, index);
     next = getNext(result);
   }
 };
@@ -118,7 +131,7 @@ describe("Board Server Runs Boards", () => {
     });
   });
 
-  test("can start multiple a board with multiple inputs", async () => {
+  test("can start a board with multiple inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar", number: 42 };
     const result = await runBoard({
@@ -128,5 +141,42 @@ describe("Board Server Runs Boards", () => {
       loader: async () => multipleInputsBoard as GraphDescriptor,
     });
     assertResult(result, { type: "input" });
+  });
+
+  test("can finish a board with multiple inputs", async () => {
+    await scriptedRun(multipleInputsBoard as GraphDescriptor, [
+      { expected: { type: "input" } },
+      { inputs: { text1: "foo" }, expected: { type: "input" } },
+      {
+        inputs: { text2: "bar" },
+        expected: {
+          type: "output",
+          outputs: {
+            "text-one": "foo",
+            "text-two": "bar",
+          },
+        },
+      },
+      { expected: { type: "end" } },
+    ]);
+  });
+
+  test("can finish a board with multiple outputs", async () => {
+    await scriptedRun(manyOutputsBoard as GraphDescriptor, [
+      { expected: { type: "input" } },
+      {
+        inputs: { start: "foo" },
+        expected: { type: "output", outputs: { one: "foo" } },
+      },
+      {
+        expected: {
+          type: "output",
+          outputs: {
+            two: "foo",
+          },
+        },
+      },
+      { expected: { type: "end" } },
+    ]);
   });
 });

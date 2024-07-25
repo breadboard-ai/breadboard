@@ -44,7 +44,7 @@ export const runBoard = async ({
     return { $error: "Data store not available." };
   }
 
-  let inputsToConsume = inputs;
+  let inputsToConsume = next ? undefined : inputs;
 
   const runner = run({
     url,
