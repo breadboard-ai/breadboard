@@ -58,6 +58,7 @@ export const runBoard = async ({
 
   for await (const result of runner) {
     const { type, data, reply } = result;
+    console.log("RESULT", type, data);
     if (type === "input") {
       if (inputsToConsume) {
         await reply({ inputs: inputsToConsume });
