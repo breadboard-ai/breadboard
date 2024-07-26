@@ -117,7 +117,7 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
 
 const createPreviousRunResult = (
   resumeFrom: StateToResumeFrom | undefined
-): RunResult | undefined => {
+): BreadboardRunResult | undefined => {
   if (resumeFrom?.state?.[0].state) {
     const result = RunResult.load(resumeFrom.state[0].state);
     if (resumeFrom.inputs) {

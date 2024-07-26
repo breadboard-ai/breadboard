@@ -5,42 +5,33 @@
  */
 
 import type {
-  Edge,
-  NodeDescriptor,
-  NodeHandlers,
-  InputValues,
-  GraphDescriptor,
-  OutputValues,
-  GraphInlineMetadata,
-  SubGraphs,
+  BreadboardCapability,
+  BreadboardRunResult,
   BreadboardRunner,
   BreadboardSlotSpec,
-  Kit,
   BreadboardValidator,
-  NodeHandlerContext,
-  BreadboardCapability,
+  Edge,
+  GraphDescriptor,
+  GraphInlineMetadata,
+  InputValues,
+  Kit,
   LambdaNodeInputs,
   LambdaNodeOutputs,
+  NodeDescriptor,
+  NodeHandlerContext,
+  NodeHandlers,
+  OutputValues,
   RunArguments,
+  SubGraphs,
 } from "./types.js";
 
-import { TraversalMachine } from "./traversal/machine.js";
-import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { callHandler, handlersFromKits } from "./handler.js";
-import { toMermaid } from "./mermaid.js";
-import { SchemaBuilder } from "./schema.js";
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 import {
   RequestedInputsManager,
   bubbleUpInputsIfNeeded,
-  createOutputProvider,
   bubbleUpOutputsIfNeeded,
+  createOutputProvider,
 } from "./bubble.js";
-import { asyncGen } from "./utils/async-gen.js";
-import { StackManager } from "./stack.js";
-import { timestamp } from "./timestamp.js";
-import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
-import { GraphLoader, GraphProvider } from "./loader/types.js";
-import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
 import {
   isBreadboardCapability,
   isGraphDescriptorCapability,
@@ -49,6 +40,16 @@ import {
   resolveBoardCapabilities,
   resolveBoardCapabilitiesInInputs,
 } from "./capability.js";
+import { callHandler, handlersFromKits } from "./handler.js";
+import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
+import { GraphLoader, GraphProvider } from "./loader/types.js";
+import { toMermaid } from "./mermaid.js";
+import { InputStageResult, OutputStageResult } from "./run.js";
+import { SchemaBuilder } from "./schema.js";
+import { StackManager } from "./stack.js";
+import { timestamp } from "./timestamp.js";
+import { TraversalMachine } from "./traversal/machine.js";
+import { asyncGen } from "./utils/async-gen.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -130,12 +131,12 @@ export class BoardRunner implements BreadboardRunner {
    */
   async *run(
     args: RunArguments = {},
-    result?: RunResult
-  ): AsyncGenerator<RunResult> {
+    result?: BreadboardRunResult
+  ): AsyncGenerator<BreadboardRunResult> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs, ...context } = args;
     const base = context.base || SENTINEL_BASE_URL;
-    yield* asyncGen<RunResult>(async (next) => {
+    yield* asyncGen<BreadboardRunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
       const slots = { ...this.#slots, ...context.slots };

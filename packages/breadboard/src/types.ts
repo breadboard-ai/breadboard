@@ -381,6 +381,8 @@ export interface BreadboardRunResult {
   get timestamp(): number;
   /** The current run state associated with the result. */
   get runState(): RunState | undefined;
+
+  save(): Promise<string>;
 }
 
 export interface NodeFactory {
