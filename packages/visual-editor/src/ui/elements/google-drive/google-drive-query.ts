@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Task } from "@lit/task";
 import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
@@ -16,26 +15,27 @@ export class GoogleDriveQuery extends LitElement {
   @state()
   private _authorization?: { clientId: string; secret: string };
 
-  #loadPickerLib = new Task(
-    this,
-    () => loadDrivePicker(),
-    () => []
-  );
+  @state()
+  private _pickerLib?: typeof google.picker;
+
+  override async connectedCallback(): Promise<void> {
+    super.connectedCallback();
+    this._pickerLib ??= await loadDrivePicker();
+  }
 
   override render() {
-    if (!this._authorization) {
+    if (this._authorization === undefined) {
       return html`<bb-connection-input
         @bbinputenter=${this.#onToken}
         connectionId="google-drive"
       ></bb-connection-input>`;
     }
-
-    return this.#loadPickerLib.render({
-      pending: () => html`<p>Loading Google Drive Picker ...</p>`,
-      error: () => html`<p>Error Loading Google Drive Picker</p>`,
-      complete: (lib: typeof google.picker) =>
-        html`<em>Not yet implemented (${Object.keys(lib).length})</em>`,
-    });
+    if (this._pickerLib === undefined) {
+      return html`<p>Loading Google Drive Picker ...</p>`;
+    }
+    return html`<em
+      >Not yet implemented (${Object.keys(this._pickerLib).length})</em
+    >`;
   }
 
   #onToken(event: InputEnterEvent) {
