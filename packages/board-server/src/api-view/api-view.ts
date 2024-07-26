@@ -38,7 +38,7 @@ import { until } from "lit/directives/until.js";
 import { isBoolean, isMultiline, isSelect } from "./utils/input.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
-import { getDefaultDataStore, IDBRunStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore, getRunStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -66,7 +66,7 @@ export class ApiExplorer extends LitElement {
   dataStore = getDefaultDataStore();
 
   @state()
-  runStore = new IDBRunStore();
+  runStore = getRunStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({

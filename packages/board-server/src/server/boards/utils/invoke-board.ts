@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getDataStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore } from "@breadboard-ai/data-store";
 import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
 import { createKits } from "./create-kits.js";
 import { createLoader, inflateData } from "@google-labs/breadboard";
@@ -19,7 +19,7 @@ export const invokeBoard = async ({
   loader,
   kitOverrides,
 }: InvokeBoardArguments) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   if (!store) {
     return;
   }

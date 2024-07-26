@@ -18,11 +18,11 @@ import {
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { cors } from "../cors.js";
-import { getDataStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore } from "@breadboard-ai/data-store";
 
 const config: ProxyServerConfig = {
   kits: [secretsKit, asRuntimeKit(Core)],
-  store: getDataStore(),
+  store: getDefaultDataStore(),
   proxy: [
     "fetch",
     {

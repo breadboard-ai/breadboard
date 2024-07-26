@@ -26,7 +26,7 @@ import {
   Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
-import { getDefaultDataStore, IDBRunStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
@@ -164,7 +164,7 @@ export class Main extends LitElement {
   dataStore = getDefaultDataStore();
 
   @state()
-  runStore = new IDBRunStore();
+  runStore = getRunStore();
 
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;

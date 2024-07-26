@@ -54,7 +54,7 @@ import { classMap } from "lit/directives/class-map.js";
 
 import "./elements/nav.js";
 import { messages } from "./utils/messages.js";
-import { getDefaultDataStore, IDBRunStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore, getRunStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -87,7 +87,7 @@ export class App extends LitElement {
   dataStore = getDefaultDataStore();
 
   @state()
-  runStore = new IDBRunStore();
+  runStore = getRunStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
