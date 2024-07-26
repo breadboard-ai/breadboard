@@ -6,11 +6,12 @@
 import {
   InspectablePort,
   InspectableRunEvent,
+  isLLMContent,
   OutputValues,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
+import { isArrayOfLLMContent } from "../../utils/llm-content.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";

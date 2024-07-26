@@ -4,52 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
-import {
-  AllowedLLMContentTypes,
-  LLMContent,
-  LLMFunctionCall,
-  LLMFunctionResponse,
-  LLMInlineData,
-  LLMPart,
-  LLMStoredData,
-  LLMText,
-} from "../types/types.js";
-
-export function isText(part: LLMPart): part is LLMText {
-  return "text" in part;
-}
-
-export function isFunctionCall(part: LLMPart): part is LLMFunctionCall {
-  return "functionCall" in part;
-}
-
-export function isFunctionResponse(part: LLMPart): part is LLMFunctionResponse {
-  return "functionResponse" in part;
-}
-
-export function isInlineData(part: LLMPart): part is LLMInlineData {
-  return "inlineData" in part;
-}
-
-export function isStoredData(part: LLMPart): part is LLMStoredData {
-  return "storedData" in part;
-}
-
-export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
-  if (typeof nodeValue !== "object" || !nodeValue) {
-    return false;
-  }
-
-  if ("parts" in nodeValue && Array.isArray(nodeValue.parts)) {
-    return true;
-  }
-
-  if ("role" in nodeValue && nodeValue.role === "$metadata") {
-    return true;
-  }
-  return false;
-}
+import { isLLMContent, LLMContent, Schema } from "@google-labs/breadboard";
+import { AllowedLLMContentTypes } from "../types/types.js";
 
 export function isArrayOfLLMContent(
   nodeValue: unknown

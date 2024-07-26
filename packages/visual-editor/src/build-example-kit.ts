@@ -38,6 +38,7 @@ const BuildExampleKit = new KitBuilder({
   description: "An example kit",
   version: "0.1.0",
   url: "npm:@breadboard-ai/example-kit",
+  tags: ["experimental"],
 }).build({ reverseString });
 export default BuildExampleKit;
 

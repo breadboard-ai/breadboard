@@ -16,6 +16,7 @@ interface ListConnectionsResponse {
 
 interface Connection {
   id: string;
+  clientId: string;
   authUrl: string;
   title: string;
   description?: string;
@@ -37,6 +38,7 @@ export async function list(
       .map((config) => {
         const connection: Connection = {
           id: config.id,
+          clientId: config.oauth.client_id,
           authUrl: makeAuthorizationEndpointUrl(config),
           title: config.title ?? config.id,
         };

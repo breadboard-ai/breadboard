@@ -66,6 +66,15 @@ export class SettingsStore {
           },
         ],
         [
+          "Show Experimental Components",
+          {
+            name: "Show Experimental Components",
+            description:
+              "Toggles the visibility of experimental components and kits",
+            value: false,
+          },
+        ],
+        [
           "Show Node Shortcuts",
           {
             name: "Show Node Shortcuts",
@@ -106,6 +115,15 @@ export class SettingsStore {
           {
             name: "Invert Zoom Scroll Direction",
             description: "Inverts the board zoom scroll direction",
+            value: false,
+          },
+        ],
+        [
+          "Show Port Types in Configuration",
+          {
+            name: "Show Port Types in Configuration",
+            description:
+              "Toggles whether or not to show a port's type information in the Component Configuration pane",
             value: false,
           },
         ],

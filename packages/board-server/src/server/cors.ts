@@ -20,6 +20,28 @@ const CORS_HEADERS = {
 // TODO: Make this a bit more dynamic.
 const CONFIG = await getStore().getBoardServerCorsConfig();
 
+export const corsAll = (req: IncomingMessage, res: ServerResponse) => {
+  const headers = { ...CORS_HEADERS };
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, headers);
+    res.end();
+    return false;
+  }
+
+  const method = req.method || "GET";
+  if (["GET", "POST"].indexOf(method) > -1) {
+    Object.entries(headers).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
+    return true;
+  }
+
+  res.writeHead(405);
+  res.end(`${req.method} is not allowed for the request.`);
+  return false;
+};
+
 export const cors = (req: IncomingMessage, res: ServerResponse) => {
   const origin = req.headers.origin || "";
   const isLocalhost = origin.includes("localhost");
@@ -46,7 +68,7 @@ export const cors = (req: IncomingMessage, res: ServerResponse) => {
   }
 
   const method = req.method || "GET";
-  if (["GET", "POST", "DELETE"].indexOf(method) > -1) {
+  if (["GET", "POST"].indexOf(method) > -1) {
     Object.entries(headers).forEach(([key, value]) => {
       res.setHeader(key, value);
     });

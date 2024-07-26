@@ -7,7 +7,6 @@
 import { createServer } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
-import { cors } from "./server/cors.js";
 import { serveContent } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
@@ -28,10 +27,6 @@ const vite = IS_PROD
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "", HOSTNAME);
-
-  if (!cors(req, res)) {
-    return;
-  }
 
   if (await serveProxyAPI(req, res)) {
     return;

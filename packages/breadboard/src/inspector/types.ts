@@ -30,7 +30,6 @@ import {
   Schema,
 } from "../types.js";
 import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
-import { type JsonSubSchemaAnalysisDetail } from "@google-labs/breadboard-schema/subschema.js";
 
 export type GraphVersion = number;
 
@@ -638,7 +637,7 @@ export type InspectableRunObserver = {
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
    */
-  observe(result: HarnessRunResult): InspectableRun[];
+  observe(result: HarnessRunResult): Promise<InspectableRun[]>;
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.

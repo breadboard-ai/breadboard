@@ -28,6 +28,7 @@ import {
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
+  DataStore,
   EditHistory,
   GraphDescriptor,
   GraphLoader,
@@ -76,6 +77,9 @@ export class UI extends LitElement {
   @property()
   loader: GraphLoader | null = null;
 
+  @property()
+  dataStore: DataStore | null = null;
+
   @property({ reflect: true })
   status = STATUS.RUNNING;
 
@@ -122,7 +126,6 @@ export class UI extends LitElement {
   history: EditHistory | null = null;
 
   #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
-  #nodeSchemaUpdateCount = -1;
   #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
@@ -304,6 +307,22 @@ export class UI extends LitElement {
     const eventPosition = events.length - 1;
     const nodeId = currentNode();
 
+    let selectedNodeIsInputOrOutput = true;
+    if (this.selectedNodeIds.length === 1) {
+      let graph = this.graph;
+      if (this.subGraphId && this.graph && this.graph.graphs) {
+        graph = this.graph.graphs[this.subGraphId];
+      }
+
+      if (graph) {
+        const node = graph.nodes.find(
+          (node) => node.id === this.selectedNodeIds[0]
+        );
+        selectedNodeIsInputOrOutput =
+          node?.type === "input" || node?.type === "output";
+      }
+    }
+
     const collapseNodesByDefault = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -356,6 +375,18 @@ export class UI extends LitElement {
           .items.get("Highlight Invalid Wires")?.value
       : false;
 
+    const showPortTypesInConfiguration = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Port Types in Configuration")?.value
+      : false;
+
+    const showExperimentalComponents = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Experimental Components")?.value
+      : false;
+
     /**
      * Create all the elements we need.
      */
@@ -374,6 +405,7 @@ export class UI extends LitElement {
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
+        showExperimentalComponents,
       ],
       () => {
         return html`<bb-editor
@@ -391,6 +423,7 @@ export class UI extends LitElement {
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .showPortTooltips=${showPortTooltips}
           .highlightInvalidWires=${highlightInvalidWires}
+          .showExperimentalComponents=${showExperimentalComponents}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"
@@ -481,7 +514,6 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeIds,
         this.#lastEdgeCount,
-        this.#nodeSchemaUpdateCount,
         // TODO: Figure out a cleaner way of handling this without watching for
         // all graph changes.
         this.graph,
@@ -496,11 +528,9 @@ export class UI extends LitElement {
           .editable=${true}
           .providers=${this.providers}
           .providerOps=${this.providerOps}
+          .showTypes=${showPortTypesInConfiguration}
           ${ref(this.#nodeConfigurationRef)}
           name="Selected Node"
-          @bbschemachange=${() => {
-            this.#nodeSchemaUpdateCount++;
-          }}
           @bbgraphnodedeselectedall=${() => {
             this.selectedNodeIds = [];
             this.requestUpdate();
@@ -514,7 +544,6 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeIds,
         this.#lastEdgeCount,
-        this.#nodeSchemaUpdateCount,
         // TODO: Figure out a cleaner way of handling this without watching for
         // all graph changes.
         this.graph,
@@ -572,6 +601,9 @@ export class UI extends LitElement {
         .showExtendedInfo=${true}
         .settings=${this.settings}
         .logTitle=${"Activity"}
+        .providers=${this.providers}
+        .providerOps=${this.providerOps}
+        .dataStore=${this.dataStore}
         @bbinputrequested=${() => {
           this.selectedNodeIds.length = 0;
           this.requestUpdate();
@@ -652,11 +684,14 @@ export class UI extends LitElement {
     // sees fit.
     if (this.selectedNodeIds.length === 0 && this.#nodeConfigurationRef.value) {
       this.#nodeConfigurationRef.value.destroyEditors();
+      this.#nodeConfigurationRef.value.ensureRenderOnNextUpdate();
     }
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}${nodeRunner}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}${selectedNodeIsInputOrOutput
+            ? nothing
+            : nodeRunner}`
         : html`${boardDetails}${activityLog}`
     );
 
@@ -705,7 +740,8 @@ export class UI extends LitElement {
                   : "Run Component"}
                 ?disabled=${this.failedToLoad ||
                 !this.graph ||
-                this.selectedNodeIds.length !== 1}
+                this.selectedNodeIds.length !== 1 ||
+                selectedNodeIsInputOrOutput}
                 @click=${async () => {
                   if (!this.#nodeRunnerRef.value) {
                     return;

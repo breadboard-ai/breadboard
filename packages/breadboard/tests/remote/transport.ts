@@ -9,7 +9,7 @@ import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   InputResponseMessage,
-} from "../../src/remote/protocol.js";
+} from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import {

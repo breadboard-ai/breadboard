@@ -35,12 +35,13 @@ export function fetchAvailableConnections(
 
 // IMPORTANT: Keep in sync with
 // breadboard/packages/connection-server/src/api/list.ts
-interface ListConnectionsResponse {
+export interface ListConnectionsResponse {
   connections: Connection[];
 }
 
 export interface Connection {
   id: string;
+  clientId: string;
   authUrl: string;
   title: string;
   description?: string;

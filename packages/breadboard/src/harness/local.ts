@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, asyncGen, createDataStore } from "../index.js";
+import { createDefaultDataStore } from "../data/index.js";
+import { Board, RunResult, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
@@ -13,11 +15,11 @@ import {
   ErrorObject,
   Kit,
   ProbeMessage,
+  RunStackEntry,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
-import { RunConfig } from "./run.js";
-import { HarnessRunResult } from "./types.js";
+import { HarnessRunResult, RunConfig, StateToResumeFrom } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
@@ -44,6 +46,17 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
 ) => {
   const { type, node, timestamp, invocationId } = result;
   const bubbled = invocationId == -1;
+
+  const saveState = async (): Promise<RunStackEntry[]> => {
+    return [
+      {
+        graph: 0,
+        node: invocationId,
+        state: await saveRunnerState(type, result.state),
+      },
+    ];
+  };
+
   if (type === "input") {
     const { inputArguments, path } = result;
     return {
@@ -52,6 +65,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async (value) => {
         result.inputs = value.inputs;
       },
+      saveState,
     } as HarnessRunResult;
   } else if (type === "output") {
     const { outputs, path } = result;
@@ -61,6 +75,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       reply: async () => {
         // Do nothing
       },
+      saveState,
     } as HarnessRunResult;
   }
   throw new Error(`Unknown result type "${type}".`);
@@ -96,11 +111,25 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   return Board.fromGraphDescriptor(graph);
 };
 
+const createPreviousRunResult = (
+  resumeFrom: StateToResumeFrom | undefined
+): RunResult | undefined => {
+  if (resumeFrom?.state?.[0].state) {
+    const result = RunResult.load(resumeFrom.state[0].state);
+    if (resumeFrom.inputs) {
+      result.inputs = resumeFrom.inputs;
+    }
+    return result;
+  }
+  return undefined;
+};
+
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
-    const store = config.store || createDataStore();
+    const store = config.store || createDefaultDataStore();
+    const resumeFrom = createPreviousRunResult(config.resumeFrom);
 
     try {
       const probe = config.diagnostics
@@ -109,15 +138,18 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({
-        probe,
-        kits,
-        loader,
-        store,
-        base: config.base,
-        signal: config.signal,
-        inputs: config.inputs,
-      })) {
+      for await (const data of runner.run(
+        {
+          probe,
+          kits,
+          loader,
+          store,
+          base: config.base,
+          signal: config.signal,
+          inputs: config.inputs,
+        },
+        resumeFrom
+      )) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());

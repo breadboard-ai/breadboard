@@ -7,6 +7,7 @@
     { "path": "packages/breadboard-cli" },
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
+    { "path": "packages/data-store" },
     { "path": "packages/discovery-types" },
     { "path": "packages/example-boards" },
     { "path": "packages/gemini-kit" },

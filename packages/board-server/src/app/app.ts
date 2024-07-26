@@ -25,7 +25,6 @@ import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader.js";
 import {
   BoardRunner,
-  createDataStore,
   createLoader,
   createRunObserver,
   type DataStore,
@@ -55,8 +54,7 @@ import { classMap } from "lit/directives/class-map.js";
 
 import "./elements/nav.js";
 import { messages } from "./utils/messages.js";
-import { provide } from "@lit/context";
-import { dataStoreContext } from "./contexts/data-store.js";
+import { getDataStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -85,12 +83,12 @@ export class App extends LitElement {
   @state()
   showNav = false;
 
-  @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+  @state()
+  dataStore = getDataStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
-    store: this.dataStore.instance!,
+    store: this.dataStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: GraphProvider[] = [];
@@ -465,7 +463,7 @@ export class App extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      store: this.dataStore.instance!,
+      store: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -483,7 +481,8 @@ export class App extends LitElement {
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
-      this.runs = this.#runObserver?.observe(result);
+      this.runs = await this.#runObserver?.observe(result);
+
       const answer = await this.#handleStateChange(result);
 
       if (answer) {
@@ -816,7 +815,7 @@ export class App extends LitElement {
           evt.preventDefault();
 
           this.#runObserver = createRunObserver({
-            store: this.dataStore.instance!,
+            store: this.dataStore,
           });
           this.#runObserver.load(runData).then(async (result) => {
             this.status = STATUS.STOPPED;
@@ -827,7 +826,7 @@ export class App extends LitElement {
 
             const run = result.run;
             for await (const result of run.replay()) {
-              this.runs = this.#runObserver.observe(result);
+              this.runs = await this.#runObserver.observe(result);
               this.requestUpdate();
             }
           });

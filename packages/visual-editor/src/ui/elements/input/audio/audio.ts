@@ -7,8 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Task } from "@lit/task";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { asBase64 } from "../../../utils/as-base-64.js";
-import { LLMContent } from "../../../types/types.js";
+import { asBase64, LLMContent } from "@google-labs/breadboard";
 
 @customElement("bb-audio-input")
 export class AudioInput extends LitElement {
