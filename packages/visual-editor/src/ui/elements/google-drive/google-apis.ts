@@ -9,7 +9,6 @@
 /// <reference types="@types/google.picker" />
 
 let gapiPromise: Promise<typeof globalThis.gapi>;
-
 /**
  * Load the top-level GAPI (Google API) library.
  *
@@ -31,7 +30,7 @@ let gapiClientPromise: Promise<typeof globalThis.gapi.client>;
 export async function loadGapiClient(): Promise<typeof globalThis.gapi.client> {
   return (gapiClientPromise ??= (async () => {
     const gapi = await loadGapi();
-    await new Promise((resolve) => gapi.load("client", resolve));
+    await new Promise<void>((resolve) => gapi.load("client", () => resolve()));
     return globalThis.gapi.client;
   })());
 }
