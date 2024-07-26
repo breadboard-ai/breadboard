@@ -1,50 +1,40 @@
 {
-  "title": "Error boardsss",
+  "title": "Error Board",
   "description": "Use this board to test error handling. It will throw an error when run.",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "input-1",
-      "to": "jsonata-3",
+      "from": "input-0",
+      "to": "jsonata-0",
       "out": "text",
       "in": "json"
     },
     {
-      "from": "jsonata-3",
-      "to": "output-2",
+      "from": "jsonata-0",
+      "to": "output-0",
       "out": "result",
       "in": "stub"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ],
-              "title": "JSON",
-              "description": "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object.",
+              "type": "string",
               "default": "Could you please throw an error?"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": []
         }
       }
     },
     {
-      "id": "output-2",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
@@ -58,16 +48,17 @@
                 "number",
                 "object",
                 "string"
-              ],
-              "title": "Result",
-              "description": "The result of the Jsonata expression"
+              ]
             }
-          }
+          },
+          "required": [
+            "stub"
+          ]
         }
       }
     },
     {
-      "id": "jsonata-3",
+      "id": "jsonata-0",
       "type": "jsonata",
       "configuration": {
         "expression": "$assert(false, \"Here is an error!\")"

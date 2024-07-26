@@ -14,7 +14,7 @@ const error = jsonata({
 const stub = output(error);
 
 export default board({
-  title: "Error board",
+  title: "Error Board",
   description: "Use this board to test error handling. It will throw an error when run.",
   version: "0.1.0",
   inputs: { text },
