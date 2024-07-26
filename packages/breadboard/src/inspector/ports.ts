@@ -45,6 +45,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   transient: false,
   config: false,
   "google-drive-query": false,
+  "google-drive-file-id": false,
 
   // TODO(aomarks) Not sure about many of these. Some affect the data type, some
   // only affect formatting?

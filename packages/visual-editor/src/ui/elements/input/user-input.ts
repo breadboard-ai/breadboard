@@ -11,6 +11,7 @@ import {
   isArrayOfLLMContentBehavior,
   isBoardBehavior,
   isCodeBehavior,
+  isGoogleDriveFileId,
   isGoogleDriveQuery,
   isLLMContentBehavior,
   isPortSpecBehavior,
@@ -512,6 +513,13 @@ export class UserInput extends LitElement {
                   name=${id}
                   .value=${input.value ?? defaultValue ?? ""}
                 ></bb-code-editor>`;
+                break;
+              }
+              if (isGoogleDriveFileId(input.schema)) {
+                inputField = html`<bb-google-drive-file-id
+                  id=${id}
+                  .value=${input.value ?? defaultValue ?? ""}
+                ></bb-google-drive-file-id>`;
                 break;
               }
               if (isGoogleDriveQuery(input.schema)) {
