@@ -4,19 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssertionError, expect } from "@esm-bundle/chai";
-import { getDefaultDataStore } from "../src/index.js";
+import test from "ava";
+
+import { getDefaultDataStore } from "../../src/index.js";
 import { isSerializedData } from "@google-labs/breadboard";
 
-it("InMemoryStore stores blobs", async () => {
+test("InMemoryStore stores blobs", async (t) => {
   const store = getDefaultDataStore();
   const url = await store.store(new Blob(["file contents"]));
   store.releaseAll();
 
-  expect(url).to.be.ok;
+  t.truthy(url, "Failed to store blob");
 });
 
-it("InMemoryStore retrieves inline data", async () => {
+test("InMemoryStore retrieves inline data", async (t) => {
   const store = getDefaultDataStore();
   const contents = "file contents";
   const type = "text/plain";
@@ -25,54 +26,43 @@ it("InMemoryStore retrieves inline data", async () => {
   const retrieved = await store.retrieve(url);
   store.releaseAll();
 
-  expect(atob(retrieved.inlineData.data)).to.deep.equal(
-    contents,
-    "Contents do not match"
-  );
-  expect(retrieved.inlineData.mimeType).to.deep.equal(
-    type,
-    "Types do not match"
-  );
+  t.is(atob(retrieved.inlineData.data), contents, "Contents do not match");
+  t.is(retrieved.inlineData.mimeType, type, "Types do not match");
 });
 
-it("InMemoryStore retrieves blobs", async () => {
+test("InMemoryStore retrieves blobs", async (t) => {
   const store = getDefaultDataStore();
-  const originalContent = "file contents";
-  const data = new Blob([originalContent], { type: "text/plain" });
+  const data = new Blob(["file contents"]);
   const url = await store.store(data);
   const retrieved = await store.retrieveAsBlob(url);
-  const retrievedContent = await retrieved.text();
   store.releaseAll();
 
-  expect(retrievedContent).to.equal(originalContent, "Blobs do not match");
+  t.deepEqual(data, retrieved, "Blobs do not match");
 });
 
-it("InMemoryStore retrieves urls", async () => {
+test("InMemoryStore retrieves urls", async (t) => {
   const store = getDefaultDataStore();
   const data = new Blob(["file contents"]);
   const stored = await store.store(data);
   const url = await store.retrieveAsURL(stored);
   store.releaseAll();
 
-  expect(typeof url === "string" && url.startsWith("blob:")).to.be.ok;
+  t.truthy(typeof url === "string" && url.startsWith("blob:"));
 });
 
-it("InMemoryStore throws if item does not exist", async () => {
+test("InMemoryStore throws if item does not exist", async (t) => {
   const store = getDefaultDataStore();
-  try {
-    await store.retrieve({
+  await t.throwsAsync(
+    store.retrieve({
       storedData: {
         handle: "fakeHandle",
         mimeType: "image/jpeg",
       },
-    });
-    expect.fail("Should have thrown an error");
-  } catch (err) {
-    expect(err).to.be.instanceOf(AssertionError);
-  }
+    })
+  );
 });
 
-it("InMemoryStore serializes a group", async () => {
+test("InMemoryStore serializes a group", async (t) => {
   const store = getDefaultDataStore();
   store.startGroup();
 
@@ -86,21 +76,21 @@ it("InMemoryStore serializes a group", async () => {
   store.releaseAll();
 
   if (serialized === null) {
-    expect.fail("Serialization failed");
+    t.fail("Serialization failed");
   } else {
     serialized.every((item) => {
-      expect(isSerializedData(item)).to.be.ok;
+      t.assert(isSerializedData(item));
     });
   }
 });
 
-it("InMemoryStore returns null if a group does not exist", async () => {
+test("InMemoryStore returns null if a group does not exist", async (t) => {
   const store = getDefaultDataStore();
   const group = await store.serializeGroup(100);
-  expect(group).to.not.be.ok;
+  t.falsy(group);
 });
 
-it("InMemoryStore copies to newest group", async () => {
+test("InMemoryStore copies to newest group", async (t) => {
   const store = getDefaultDataStore();
   const contents = "file contents 1";
   const type = "text/plain";
@@ -116,28 +106,22 @@ it("InMemoryStore copies to newest group", async () => {
 
   const serialized = await store.serializeGroup(group);
   if (serialized === null) {
-    expect.fail("Serialization failed");
+    t.fail("Serialization failed");
   } else {
-    expect(serialized.length).to.equal(1);
+    t.assert(serialized.length === 1);
     serialized.every((item) => {
-      expect(isSerializedData(item)).to.be.ok;
+      t.assert(isSerializedData(item));
     });
 
     const retrieved = await store.retrieve(newStored);
-    expect(atob(retrieved.inlineData.data)).to.deep.equal(
-      contents,
-      "Contents do not match"
-    );
-    expect(retrieved.inlineData.mimeType).to.deep.equal(
-      type,
-      "Types do not match"
-    );
+    t.is(atob(retrieved.inlineData.data), contents, "Contents do not match");
+    t.is(retrieved.inlineData.mimeType, type, "Types do not match");
   }
 
   store.releaseAll();
 });
 
-it("InMemoryStore drops all entries", async () => {
+test("InMemoryStore drops all entries", async (t) => {
   const store = getDefaultDataStore();
 
   const data1 = new Blob(["file contents 1"]);
@@ -150,17 +134,6 @@ it("InMemoryStore drops all entries", async () => {
 
   await store.drop();
 
-  try {
-    await store.retrieve(stored1);
-    expect.fail("Should have thrown an error");
-  } catch (err) {
-    expect(err).to.be.instanceOf(Error);
-  }
-
-  try {
-    await store.retrieve(stored2);
-    expect.fail("Should have thrown an error");
-  } catch (err) {
-    expect(err).to.be.instanceOf(Error);
-  }
+  await t.throwsAsync(store.retrieve(stored1));
+  await t.throwsAsync(store.retrieve(stored2));
 });

@@ -193,7 +193,10 @@ export class IDBRunStore implements RunStore {
     await idb.deleteDB(RUN_DB);
   }
 
-  async getNewestRuns(limit: number): Promise<HarnessRunResult[][]> {
+  async getNewestRuns(
+    limit = Number.POSITIVE_INFINITY,
+    convertInlineData = true
+  ): Promise<HarnessRunResult[][]> {
     await this.#version;
 
     const db = await idb.openDB(RUN_DB);
@@ -208,6 +211,11 @@ export class IDBRunStore implements RunStore {
     const runs: HarnessRunResult[][] = await Promise.all(
       storeNames.map((storeName) => db.getAll(storeName))
     );
+
+    if (!convertInlineData) {
+      db.close();
+      return runs;
+    }
 
     // Now step through each of the runs and convert any inlineData over to a
     // storedData instead.

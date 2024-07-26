@@ -121,7 +121,10 @@ export class InMemoryRunStore implements RunStore {
     this.#runs.clear();
   }
 
-  async getNewestRuns(limit: number): Promise<HarnessRunResult[][]> {
+  async getNewestRuns(
+    limit = Number.POSITIVE_INFINITY,
+    convertInlineData = true
+  ): Promise<HarnessRunResult[][]> {
     const storeNames = [...this.#runs.keys()]
       .sort((a, b) => {
         if (a > b) return -1;
@@ -133,6 +136,10 @@ export class InMemoryRunStore implements RunStore {
     const runs = storeNames.map(
       (storeName) => JSON.parse(JSON.stringify(this.#runs.get(storeName))) ?? []
     );
+
+    if (!convertInlineData) {
+      return runs;
+    }
 
     // Now step through each of the runs and convert any inlineData over to a
     // storedData instead.

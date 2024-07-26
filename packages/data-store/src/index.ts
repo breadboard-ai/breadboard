@@ -6,8 +6,8 @@
 
 import type { RunStore, DataStore } from "@google-labs/breadboard";
 import { DefaultDataStore } from "./data/default-store.js";
-import { InMemoryRunStore } from "./run/in-memory-store.js";
-import { IDBRunStore } from "./run/idb-store.js";
+import { InMemoryRunStore } from "./run/in-memory-run-store.js";
+import { IDBRunStore } from "./run/idb-run-store.js";
 
 export { toInlineDataPart, toStoredDataPart } from "./run/convert.js";
 
@@ -17,10 +17,10 @@ export function getDefaultDataStore(): DataStore {
 
 export function getRunStore(): RunStore {
   if ("indexedDB" in globalThis) {
-    console.log("[Data Store] Using IDB Store");
+    console.log("[Breadboard Run Store] Using IDB Store");
     return new IDBRunStore();
   }
 
-  console.log("[Data Store] Using In-Memory Store");
+  console.log("[Breadboard Run Store] Using In-Memory Store");
   return new InMemoryRunStore();
 }

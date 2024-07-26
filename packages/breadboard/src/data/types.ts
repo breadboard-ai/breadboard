@@ -102,5 +102,8 @@ export type RunStore = {
   stop(): Promise<void>;
   abort(): Promise<void>;
   drop(): Promise<void>;
-  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
+  getNewestRuns(
+    limit: number,
+    convertInlineData?: boolean
+  ): Promise<HarnessRunResult[][]>;
 };
