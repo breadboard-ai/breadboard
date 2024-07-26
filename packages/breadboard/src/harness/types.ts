@@ -23,7 +23,7 @@ import type {
   Kit,
   OutputResponse,
   OutputValues,
-  RunStackEntry,
+  RunState,
 } from "../types.js";
 
 /**
@@ -189,6 +189,6 @@ export type RunConfig = {
 };
 
 export type StateToResumeFrom = {
-  state: RunStackEntry[];
+  state: RunState;
   inputs?: InputValues;
 };

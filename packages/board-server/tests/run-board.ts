@@ -30,7 +30,7 @@ const assertResult = (
   index = 0
 ) => {
   if ("$error" in result) {
-    fail(result.$error);
+    fail(`Unexpected error: ${result.$error}`);
   }
   ok(result.$state);
   const { type, outputs } = expected;

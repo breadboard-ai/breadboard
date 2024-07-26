@@ -159,8 +159,7 @@ export class BoardRunner implements BreadboardRunner {
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
-        console.log("INSIDE BREADBOARD RUNNER", result.skip, result);
-        console.log("STACK", await stack.state());
+        console.log(path(), "INSIDE BREADBOARD RUNNER", result.skip, result);
         context?.signal?.throwIfAborted();
 
         invocationId++;
@@ -204,15 +203,14 @@ export class BoardRunner implements BreadboardRunner {
               path()
             )
           );
-          console.log("BEFORE...");
           await bubbleUpInputsIfNeeded(
             this,
             context,
             descriptor,
             result,
-            path()
+            path(),
+            await stack.state()
           );
-          console.log("DID I GET HERE?");
           outputsPromise = result.outputsPromise
             ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
             : undefined;

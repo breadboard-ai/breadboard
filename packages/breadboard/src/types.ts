@@ -379,6 +379,8 @@ export interface BreadboardRunResult {
    * The timestamp of when this result was issued.
    */
   get timestamp(): number;
+  /** The current run state associated with the result. */
+  get runState(): RunState | undefined;
 }
 
 export interface NodeFactory {
@@ -725,7 +727,8 @@ export interface NodeHandlerContext {
     name: string,
     schema: Schema,
     node: NodeDescriptor,
-    path: number[]
+    path: number[],
+    state: RunState
   ) => Promise<NodeValue>;
   /**
    * Provide output directly to the user. This will bypass the normal output
