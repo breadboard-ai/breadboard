@@ -4,15 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Task } from "@lit/task";
 import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
+import { loadDrivePicker } from "./google-apis.js";
 
 @customElement("bb-google-drive-query")
 export class GoogleDriveQuery extends LitElement {
   @state()
   private _authorization?: { clientId: string; secret: string };
+
+  #loadPickerLib = new Task(
+    this,
+    () => loadDrivePicker(),
+    () => []
+  );
 
   override render() {
     if (!this._authorization) {
@@ -20,9 +28,14 @@ export class GoogleDriveQuery extends LitElement {
         @bbinputenter=${this.#onToken}
         connectionId="google-drive"
       ></bb-connection-input>`;
-    } else {
-      return html`<em>(Not yet implemented)</em>`;
     }
+
+    return this.#loadPickerLib.render({
+      pending: () => html`<p>Loading Google Drive Picker ...</p>`,
+      error: () => html`<p>Error Loading Google Drive Picker</p>`,
+      complete: (lib: typeof google.picker) =>
+        html`<em>Not yet implemented (${Object.keys(lib).length})</em>`,
+    });
   }
 
   #onToken(event: InputEnterEvent) {
