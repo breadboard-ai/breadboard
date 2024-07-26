@@ -6,7 +6,7 @@
 import { array, board, enumeration, input, object, output } from "@breadboard-ai/build";
 import { code, fetch, secret } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import { createSpreadCode } from "../../utils/newSpread";
+import { createSpreadNode } from "../../utils/spread";
 
 const PARAM = {
   QUERY: "query",
@@ -130,7 +130,7 @@ const fetchResult = fetch({
   url: url.outputs.url,
 });
 
-const spreadResponse = createSpreadCode(fetchResult.outputs.response, { items: array(object({})) })
+const spreadResponse = createSpreadNode(fetchResult.outputs.response, { items: array(object({})) })
 
 const spreadSearchResult = code(
   {
