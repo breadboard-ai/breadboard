@@ -10,7 +10,7 @@ import {
   input,
   output,
 } from "@breadboard-ai/build";
-import { invoke, code } from "@google-labs/core-kit";
+import { geminiText } from "@google-labs/gemini-kit";
 
 const text = input({
   type: "string",
@@ -19,33 +19,12 @@ const text = input({
 });
 
 const model = input({
-  type: enumeration("Gemini Pro", "GPT 3.5 Turbo"),
-  title: "Model",
-  description: "The model to use for generation",
-  examples: ["Gemini Pro"],
+  type: enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest")
 });
 
-const switchModel = code(
-  { model },
-  { path: "string" },
-  ({ model }) => {
-    const models: Record<string, string> = {
-      "Gemini Pro": "gemini-generator.json",
-      "GPT 3.5 Turbo": "openai-gpt-35-turbo.json",
-    };
-    const path = models[model];
-    if (!path) throw new Error(`Unsupported model: ${model}`);
-    return { path };
-  }
-);
+const llmResponse = geminiText({ model, text });
 
-const invoker = invoke({
-  $id: "invoke",
-  $board: switchModel.outputs.path,
-  text
-});
-
-const textOutput = output(invoker.unsafeOutput("text"), {
+const textOutput = output(llmResponse.outputs.text, {
   title: "Text",
   description: "The generated text",
 });
