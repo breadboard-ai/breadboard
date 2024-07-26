@@ -18,6 +18,8 @@ export class GoogleDriveQuery extends LitElement {
   @state()
   private _pickerLib?: typeof google.picker;
 
+  #picker?: google.picker.Picker;
+
   override async connectedCallback(): Promise<void> {
     super.connectedCallback();
     this._pickerLib ??= await loadDrivePicker();
@@ -33,9 +35,15 @@ export class GoogleDriveQuery extends LitElement {
     if (this._pickerLib === undefined) {
       return html`<p>Loading Google Drive Picker ...</p>`;
     }
-    return html`<em
-      >Not yet implemented (${Object.keys(this._pickerLib).length})</em
-    >`;
+    // TODO(aomarks) The actual input element.
+    return html`
+      <p>
+        Only files that you choose to share with Breadboard will be matched by
+        this query. Sharing a file is permanent and applies to all future
+        queries from your signed-in account.
+      </p>
+      <button @click=${this.#onClickPickFiles}>Share Google Drive Files</button>
+    `;
   }
 
   #onToken(event: InputEnterEvent) {
@@ -52,5 +60,47 @@ export class GoogleDriveQuery extends LitElement {
     if (clientId && secret) {
       this._authorization = { clientId, secret };
     }
+  }
+
+  #onClickPickFiles() {
+    if (this._authorization === undefined || this._pickerLib === undefined) {
+      return;
+    }
+    this.#destroyPicker();
+    // See https://developers.google.com/drive/picker/reference
+    this.#picker = new this._pickerLib.PickerBuilder()
+      .setAppId(this._authorization.clientId)
+      .setOAuthToken(this._authorization.secret)
+      .setCallback(this.#pickerCallback.bind(this))
+      .addView(google.picker.ViewId.DOCS)
+      .enableFeature(google.picker.Feature.NAV_HIDDEN)
+      .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+      .build();
+    this.#picker.setVisible(true);
+  }
+
+  #pickerCallback(result: google.picker.ResponseObject): void {
+    switch (result.action) {
+      case "cancel": {
+        this.#destroyPicker();
+        return;
+      }
+      case "picked": {
+        this.#destroyPicker();
+        // TODO(aomarks) Show this as a snackbar
+        console.log(
+          `Shared ${result.docs.length} Google Drive files with Breadboard`
+        );
+      }
+    }
+  }
+
+  #destroyPicker() {
+    if (this.#picker === undefined) {
+      return;
+    }
+    this.#picker.setVisible(false);
+    this.#picker.dispose();
+    this.#picker = undefined;
   }
 }
