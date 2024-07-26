@@ -1,8 +1,5 @@
 {
   "name": "@breadboard-ai/data-store",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "version": "0.1.0",
   "description": "A data store implementation to support Breadboard",
   "main": "./dist/src/index.js",

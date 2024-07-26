@@ -1,8 +1,5 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "version": "1.14.0",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
