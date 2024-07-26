@@ -83,7 +83,7 @@ export class GoogleDriveQuery extends LitElement {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
         @bbinputenter=${this.#onToken}
-        connectionId="google-drive"
+        connectionId="google-drive-limited"
       ></bb-connection-input>`;
     }
     if (this._pickerLib === undefined) {
