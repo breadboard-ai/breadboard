@@ -164,6 +164,13 @@ export type KitReference = {
   url: string;
 };
 
+/**
+ * Represents various tags that can be associated with a kit.
+ * - `deprecated`: The kit is deprecated and should not be used.
+ * - `experimental`: The kit is experimental and may not be stable.
+ */
+export type KitTag = "deprecated" | "experimental";
+
 export type KitDescriptor = KitReference & {
   /**
    * The title of the kit.
@@ -179,6 +186,10 @@ export type KitDescriptor = KitReference & {
    * @pattern ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
    */
   version?: string;
+  /**
+   * Tags, associated with the kit.
+   */
+  tags?: KitTag[];
 };
 
 /**

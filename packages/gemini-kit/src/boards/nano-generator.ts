@@ -54,6 +54,9 @@ export default board({
   description: "Generate text with Gemini Nano",
   metadata: {
     icon: "nano",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-nano-component",
+    },
   },
   inputs: { prompt },
   outputs: {

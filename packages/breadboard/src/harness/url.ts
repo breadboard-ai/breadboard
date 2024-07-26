@@ -5,8 +5,8 @@
  */
 
 import { SENTINEL_BASE_URL } from "../loader/index.js";
-import { RunConfig } from "./run.js";
 import { ServeConfig } from "./serve.js";
+import { RunConfig } from "./types.js";
 
 export const baseURL = (config: RunConfig | ServeConfig) => {
   if (config.base) return config.base;

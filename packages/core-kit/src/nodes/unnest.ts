@@ -18,6 +18,9 @@ import type {
 } from "@breadboard-ai/build/internal/common/port.js";
 import type { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 
+/**
+ * Expose all properties of the given JSON object as separate output ports.
+ */
 export function unnest<T extends { [K: string]: JsonSerializable }>(
   nested: OutputPortReference<T>
 ): { [K in keyof T]-?: OutputPort<T[K]> } {
@@ -40,12 +43,27 @@ export function unnest<T extends { [K: string]: JsonSerializable }>(
   return outputs as { [K in keyof T]-?: OutputPort<T[K]> };
 }
 
+/**
+ * Expose all properties of the given JSON object as separate output ports.
+ *
+ * When using TypeScript, prefer the {@link unnest} function which also provides
+ * compile-time type-checking.
+ */
 export const unnestNode = defineNodeType({
   name: "unnest",
+  metadata: {
+    title: "Unnest",
+    description:
+      "Expose all properties of the given JSON object as separate output ports.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-unnest-component",
+    },
+  },
   inputs: {
     nested: {
       type: object({}, "unknown"),
       description: "The nested object",
+      primary: true,
     },
   },
   outputs: {

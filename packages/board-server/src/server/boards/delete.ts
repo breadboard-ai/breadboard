@@ -7,9 +7,11 @@
 import { authenticate } from "../auth.js";
 import { serverError } from "../errors.js";
 import { getStore } from "../store.js";
-import type { ApiHandler } from "../types.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 
-const del: ApiHandler = async (path, req, res, body) => {
+const del: ApiHandler = async (parsed, req, res, body) => {
+  const { board: path } = parsed as BoardParseResult;
+
   const userKey = authenticate(req, res);
   if (!userKey) {
     return true;

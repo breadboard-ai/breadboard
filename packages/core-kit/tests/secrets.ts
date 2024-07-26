@@ -15,12 +15,13 @@ test("describer correctly responds to no inputs", async (t) => {
       type: "object",
       properties: {
         keys: {
-          title: "secrets",
+          title: "Secrets",
           description: "The array of secrets to retrieve from the node.",
           type: "array",
           items: {
             type: "string",
           },
+          behavior: ["config"],
         },
       },
       required: ["keys"],
@@ -44,12 +45,13 @@ test("describer correctly responds to inputs", async (t) => {
       type: "object",
       properties: {
         keys: {
-          title: "secrets",
+          title: "Secrets",
           description: "The array of secrets to retrieve from the node.",
           type: "array",
           items: {
             type: "string",
           },
+          behavior: ["config"],
         },
       },
       required: ["keys"],

@@ -109,14 +109,14 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.14.11",
-    "@typescript-eslint/eslint-plugin": "^7.16.1",
-    "@typescript-eslint/parser": "^7.16.1",
+    "@types/node": "^20.14.12",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
     "ava": "^5.2.0",
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.1",
+    "@breadboard-ai/build": "^0.7.1",
     "@google-labs/breadboard": "^0.22.0",
     "url-template": "^3.1.0"
   }

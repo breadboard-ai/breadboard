@@ -3,3 +3,4 @@
 .gitignore
 node_modules/
 .wireit/
+tests/

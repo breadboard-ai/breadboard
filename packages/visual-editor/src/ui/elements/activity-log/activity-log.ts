@@ -5,27 +5,37 @@
  */
 
 import {
+  DataStore,
   ErrorObject,
+  GraphProvider,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
+  InspectableRunSecretEvent,
+  isLLMContent,
   OutputValues,
+  Schema,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { InputRequestedEvent } from "../../events/events.js";
+import { InputEnterEvent, InputRequestedEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
-import { SETTINGS_TYPE } from "../../types/types.js";
+import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
-import { isArrayOfLLMContent, isLLMContent } from "../../utils/llm-content.js";
+import { isArrayOfLLMContent } from "../../utils/llm-content.js";
 import { SettingsStore } from "../../../data/settings-store.js";
+import { UserInput } from "../elements.js";
+import {
+  isArrayOfLLMContentBehavior,
+  isLLMContentBehavior,
+} from "../../utils/index.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -53,8 +63,18 @@ export class ActivityLog extends LitElement {
   @property()
   settings: SettingsStore | null = null;
 
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
+
+  @property()
+  dataStore: DataStore | null = null;
+
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
+  #userInputRef: Ref<UserInput> = createRef();
   #isHidden = false;
   #serializedRun: SerializedRun | null = null;
   #observer = new IntersectionObserver((entries) => {
@@ -237,28 +257,222 @@ export class ActivityLog extends LitElement {
     this.requestUpdate();
   }
 
+  async #renderSecretInput(idx: number, event: InspectableRunSecretEvent) {
+    const userInputs: UserInputConfiguration[] = event.keys.reduce(
+      (prev, key) => {
+        const schema: Schema = {
+          properties: {
+            secret: {
+              title: key,
+              description: `Enter ${key}`,
+              type: "string",
+            },
+          },
+        };
+
+        const savedSecret =
+          this.settings?.getSection(SETTINGS_TYPE.SECRETS).items.get(key) ??
+          null;
+
+        let value = undefined;
+        if (savedSecret) {
+          value = savedSecret.value;
+        }
+
+        prev.push({
+          name: key,
+          title: schema.title ?? key,
+          secret: false,
+          schema,
+          configured: false,
+          required: true,
+          value,
+        });
+
+        return prev;
+      },
+      [] as UserInputConfiguration[]
+    );
+
+    // Potentially do the autosubmit.
+    if (userInputs.every((secret) => secret.value !== undefined)) {
+      for (const input of userInputs) {
+        if (typeof input.value !== "string") {
+          console.warn(
+            `Expected secret as string, instead received ${typeof input.value}`
+          );
+          continue;
+        }
+
+        // Dispatch an event for each secret received.
+        this.dispatchEvent(
+          new InputEnterEvent(
+            input.name,
+            { secret: input.value },
+            /* allowSavingIfSecret */ true
+          )
+        );
+      }
+    }
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData(true);
+      if (!outputs) {
+        return;
+      }
+
+      for (const [key, value] of Object.entries(outputs)) {
+        if (typeof value !== "string") {
+          console.warn(
+            `Expected secret as string, instead received ${typeof value}`
+          );
+          continue;
+        }
+
+        // Dispatch an event for each secret received.
+        this.dispatchEvent(
+          new InputEnterEvent(
+            key,
+            { secret: value },
+            /* allowSavingIfSecret */ true
+          )
+        );
+      }
+    };
+
+    return html`<section class=${classMap({ "user-required": this.#isHidden })}>
+      <h1 data-message-idx=${idx}>${event.type}</h1>
+      ${event.keys.map((id) => {
+        if (id.startsWith("connection:")) {
+          return html`<bb-connection-input
+            id=${id}
+            .connectionId=${id.replace(/^connection:/, "")}
+          ></bb-connection-input>`;
+        }
+
+        return html``;
+      })}
+
+      <bb-user-input
+        id=${event.id}
+        .showTypes=${false}
+        .inputs=${userInputs}
+        .dataStore=${this.dataStore}
+        ${ref(this.#userInputRef)}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (!(evt.key === "Enter" && isCtrlCommand)) {
+            return;
+          }
+
+          continueRun();
+        }}
+      ></bb-user-input>
+
+      <button class="continue-button" @click=${() => continueRun()}>
+        Continue
+      </button>
+    </section>`;
+  }
+
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
     const { inputs, node } = event;
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
     const schema = nodeSchema?.outputSchema || inputs.schema;
+    const requiredFields = (inputs.schema as Schema).required ?? [];
 
     // TODO: Implement support for multiple iterations over the
     // same input over a run. Currently, we will only grab the
     // first value.
     const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
+    const userInputs: UserInputConfiguration[] = Object.entries(
+      schema.properties ?? {}
+    ).reduce((prev, [name, schema]) => {
+      let value = values ? values[name] : undefined;
+      if (schema.type === "object") {
+        if (isLLMContentBehavior(schema)) {
+          if (!isLLMContent(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
+        }
+      }
+
+      if (schema.type === "array") {
+        if (isArrayOfLLMContentBehavior(schema)) {
+          if (!isArrayOfLLMContent(value)) {
+            value = undefined;
+          }
+        } else {
+          value = JSON.stringify(value, null, 2);
+        }
+      }
+
+      prev.push({
+        name,
+        title: schema.title ?? name,
+        secret: false,
+        schema,
+        configured: false,
+        required: requiredFields.includes(name),
+        value,
+      });
+
+      return prev;
+    }, [] as UserInputConfiguration[]);
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData(true);
+      if (!outputs) {
+        return;
+      }
+
+      this.dispatchEvent(
+        new InputEnterEvent(
+          descriptor.id,
+          outputs,
+          /* allowSavingIfSecret */ true
+        )
+      );
+    };
+
     return html`<section class=${classMap({ "user-required": this.#isHidden })}>
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
       </h1>
-      <bb-input
+      <bb-user-input
         id="${descriptor.id}"
-        .secret=${false}
-        .autosubmit=${false}
-        .remember=${false}
-        .schema=${schema}
-        .values=${values}
-      ></bb-input>
+        .providers=${this.providers}
+        .providerOps=${this.providerOps}
+        .showTypes=${false}
+        .inputs=${userInputs}
+        ${ref(this.#userInputRef)}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (!(evt.key === "Enter" && isCtrlCommand)) {
+            return;
+          }
+
+          continueRun();
+        }}
+      ></bb-user-input>
+      <button class="continue-button" @click=${() => continueRun()}>
+        Continue
+      </button>
     </section>`;
   }
 
@@ -278,6 +492,7 @@ export class ActivityLog extends LitElement {
         if (typeof nodeValue === "object") {
           if (isArrayOfLLMContent(nodeValue)) {
             value = html`<bb-llm-output-array
+              .dataStore=${this.dataStore}
               .values=${nodeValue}
             ></bb-llm-output-array>`;
           } else if (isLLMContent(nodeValue)) {
@@ -294,7 +509,10 @@ export class ActivityLog extends LitElement {
             }
 
             value = nodeValue.parts.length
-              ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
+              ? html`<bb-llm-output
+                  .dataStore=${this.dataStore}
+                  .value=${nodeValue}
+                ></bb-llm-output>`
               : html`No data provided`;
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
@@ -409,52 +627,7 @@ export class ActivityLog extends LitElement {
                   return nothing;
                 }
 
-                content = html`<section
-                  class=${classMap({ "user-required": this.#isHidden })}
-                >
-                  <h1 data-message-idx=${idx}>${event.type}</h1>
-                  ${event.keys.map((id) => {
-                    if (id.startsWith("connection:")) {
-                      return html`<bb-connection-input
-                        id=${id}
-                        .connectionId=${id.replace(/^connection:/, "")}
-                      ></bb-connection-input>`;
-                    }
-
-                    const configuration = {
-                      schema: {
-                        properties: {
-                          secret: {
-                            title: id,
-                            description: `Enter ${id}`,
-                            type: "string",
-                          },
-                        },
-                      },
-                    };
-
-                    let values = null;
-                    if (this.settings) {
-                      const savedSecret =
-                        this.settings
-                          .getSection(SETTINGS_TYPE.SECRETS)
-                          .items.get(id) || null;
-
-                      if (savedSecret) {
-                        values = { secret: savedSecret.value };
-                      }
-                    }
-
-                    return html`<bb-input
-                      id="${id}"
-                      .values=${values}
-                      .secret=${true}
-                      .remember=${true}
-                      .autosubmit=${true}
-                      .schema=${configuration.schema}
-                    ></bb-input>`;
-                  })}
-                </section>`;
+                content = this.#renderSecretInput(idx, event);
                 break;
               }
 

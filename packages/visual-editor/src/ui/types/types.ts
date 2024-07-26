@@ -5,14 +5,13 @@
  */
 
 import {
-  GraphStartProbeData,
-  NodeEndResponse,
-  NodeStartResponse,
   Schema,
   InspectableEdgeType,
   InspectableEdge,
+  PortStatus,
+  NodeValue,
+  NodeConfiguration,
 } from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -35,91 +34,25 @@ export type Board = {
   version: string;
 };
 
-export type AnyHistoryEvent =
-  | GraphStartProbeData
-  | NodeStartResponse
-  | NodeEndResponse;
-
-export interface ImageHandler {
-  start(): Promise<void>;
-  stop(): void;
-}
-
-export type HistoryEntry = HarnessRunResult & {
-  id: string;
-  guid: string;
-  graphNodeData:
-    | { inputs: Record<string, unknown>; outputs: Record<string, unknown> }
-    | null
-    | undefined;
-  children: HistoryEntry[];
-};
-
 export enum STATUS {
   RUNNING = "running",
   PAUSED = "paused",
   STOPPED = "stopped",
 }
 
-export type StartArgs = {
-  boards: Board[];
-};
-
-export type InputArgs = {
+export type UserInputConfiguration = {
+  name: string;
+  title: string;
+  secret: boolean;
+  required?: boolean;
+  configured?: boolean;
+  value?: NodeValue;
   schema?: Schema;
+  status?: PortStatus;
+  type?: Schema["type"];
 };
 
-export type OutputArgs = {
-  node: {
-    id: string;
-    type: string;
-    configuration?: unknown;
-  };
-  outputs: {
-    schema?: Schema;
-  } & Record<string, unknown>;
-};
-
-export type LLMInlineData = {
-  inlineData: { data: string; mimeType: string };
-};
-
-export type LLMFunctionCall = {
-  functionCall: {
-    name: string;
-    args: object;
-  };
-};
-
-export type LLMFunctionResponse = {
-  functionResponse: {
-    name: string;
-    response: object;
-  };
-};
-
-export type LLMText = {
-  text: string;
-};
-
-export type LLMStoredData = {
-  storedData: {
-    handle: string;
-    mimeType: string;
-  };
-};
-
-export type LLMPart =
-  | LLMInlineData
-  | LLMStoredData
-  | LLMFunctionCall
-  | LLMFunctionResponse
-  | LLMText;
-
-export type LLMContent = {
-  role?: string;
-  parts: LLMPart[];
-};
+export type UserOutputValues = NodeConfiguration;
 
 export interface AllowedLLMContentTypes {
   audioFile: boolean;

@@ -1,0 +1,88 @@
+{
+  "title": "Gemini text component: using context",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "examples": [],
+              "format": "multiline"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -234,
+          "y": -76,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "examples": [],
+              "format": "markdown"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 161,
+          "y": -84,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "text-2c858f19",
+      "type": "text",
+      "metadata": {
+        "visual": {
+          "x": -66,
+          "y": -98,
+          "collapsed": false
+        },
+        "title": "Generate Text",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "text-2c858f19",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "text-2c858f19",
+      "to": "output",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "description": "",
+  "metadata": {
+    "tags": [],
+    "comments": []
+  }
+}

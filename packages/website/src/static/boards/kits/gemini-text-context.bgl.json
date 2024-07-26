@@ -1,0 +1,100 @@
+{
+  "title": "Gemini text component: using context",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -220,
+          "y": -89,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 211,
+          "y": -98,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "text-2c858f19",
+      "type": "text",
+      "metadata": {
+        "visual": {
+          "x": -13,
+          "y": -109,
+          "collapsed": false
+        },
+        "title": "Generate Text",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "text-2c858f19",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "text-2c858f19",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "description": "",
+  "metadata": {
+    "tags": [],
+    "comments": []
+  }
+}
