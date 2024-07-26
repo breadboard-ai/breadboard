@@ -63,6 +63,9 @@ export const createBubbleHandler = (
       return schema.default;
     }
     const value = await context.requestInput?.(name, schema, descriptor, path);
+    if (context?.signal?.aborted) {
+      throw context.signal.throwIfAborted();
+    }
     if (value === undefined) {
       throw new Error(createErrorMessage(name, metadata, required));
     }
