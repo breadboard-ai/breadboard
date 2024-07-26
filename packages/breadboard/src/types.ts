@@ -114,7 +114,12 @@ export type BehaviorSchema =
    * Indicates that the string is a Google Drive Query. See
    * https://developers.google.com/drive/api/guides/search-files.
    */
-  | "google-drive-query";
+  | "google-drive-query"
+  /**
+   * Indicates that the string is a Google Drive File ID.
+   * https://developers.google.com/drive/api/guides/about-files#characteristics
+   */
+  | "google-drive-file-id";
 
 export type Schema = {
   title?: string;
