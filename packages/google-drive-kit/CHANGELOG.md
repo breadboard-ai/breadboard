@@ -1,5 +1,32 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.2.1
+
+### Patch Changes
+
+- cb0f513: Convert google-drive to use new kit function.
+- 38e3232: Annotate file ID/query inputs with new behaviors so that the dedicated input components will be used for them.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- Updated dependencies [ad8aa22]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [a0852df]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+
 ## 0.2.0
 
 ### Minor Changes

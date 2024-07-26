@@ -1,5 +1,58 @@
 # @breadboard-ai/example-boards
 
+## 0.2.0
+
+### Minor Changes
+
+- 5f6d97c: Separate playground and examples
+
+### Patch Changes
+
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- Updated dependencies [cb0f513]
+- Updated dependencies [ad8aa22]
+- Updated dependencies [0519ebb]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [8d2e618]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [8dbbe20]
+- Updated dependencies [a0852df]
+- Updated dependencies [38e3232]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [8db38aa]
+- Updated dependencies [5f6d97c]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b049e00]
+- Updated dependencies [0a846ff]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [1341291]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/google-drive-kit@0.2.1
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/gemini-kit@0.5.3
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @google-labs/agent-kit@0.9.0
+  - @google-labs/json-kit@0.3.4
+  - @breadboard-ai/manifest@0.4.0
+  - @breadboard-ai/python-wasm@0.1.4
+  - @google-labs/palm-kit@0.1.0
+  - @google-labs/node-nursery-web@1.1.6
+
 ## 0.1.1
 
 ### Patch Changes

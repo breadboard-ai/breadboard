@@ -1,5 +1,86 @@
 # @google-labs/breadboard-web
 
+## 1.14.0
+
+### Minor Changes
+
+- 9171352: Migrates the node configuration to new unified user input component
+- 2b9ef5b: Rewrire Datastore usage
+- 1a83a77: Migrate Activity Log to new unified input
+- 5f6d97c: Separate playground and examples
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- e6c7269: Reinstate autosubmit of secrets
+- 62e5a34: Tidy the unified input a little
+- bdaaa81: Add example boards deps to vite build.
+- fa9073d: Fix bug where code editor fails to show up
+- 4e2fbd6: Prevent nav from jumping when a user selects an item
+- ec06605: Improve Array Editor robustness
+- 8d2e618: Teach Human to act as a start node.
+- 215bd15: Add google-drive-file-id
+- 2a206e8: Add "copy board URL to clipboard" option to overflow menu
+- 645eb63: Minor UI tweaks to VE and website
+- a0852df: Update titles and help links in Core Kit.
+- 8b370d7: Increase the set of reasons to refresh the side nav
+- 98f0ff2: Improve board support in unified editor
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- 618e265: Add MVP of Node Runner
+- a527740: Add improved support for untyped arrays and objects
+- f1546f5: Make some tweaks to help newer users
+- 960922e: Store the OAuth client ID locally, in addition to the token details. Useful for APIs that require the client ID to be provided.
+- 1d98374: Teach unified input to honor multiline strings
+- 70ba2d3: Teach Activity Log & Unified User Input about secrets
+- Updated dependencies [cb0f513]
+- Updated dependencies [ad8aa22]
+- Updated dependencies [0519ebb]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [8d2e618]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [8dbbe20]
+- Updated dependencies [a0852df]
+- Updated dependencies [38e3232]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [5ce1026]
+- Updated dependencies [8db38aa]
+- Updated dependencies [5f6d97c]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b049e00]
+- Updated dependencies [0a846ff]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [1341291]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/google-drive-kit@0.2.1
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/gemini-kit@0.5.3
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @breadboard-ai/data-store@0.1.0
+  - @google-labs/agent-kit@0.9.0
+  - @google-labs/json-kit@0.3.4
+  - @breadboard-ai/example-boards@0.2.0
+  - @breadboard-ai/manifest@0.4.0
+  - @breadboard-ai/python-wasm@0.1.4
+  - @google-labs/palm-kit@0.1.0
+  - @google-labs/node-nursery-web@1.1.6
+
 ## 1.12.0
 
 ### Minor Changes

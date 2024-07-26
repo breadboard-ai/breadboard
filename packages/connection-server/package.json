@@ -1,7 +1,7 @@
 {
   "name": "@breadboard-ai/connection-server",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Breadboard Connection Server",
   "license": "Apache-2.0",
   "author": "Google Labs Team",
