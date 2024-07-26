@@ -53,21 +53,15 @@
     },
     {
       "from": "runJavascript-0",
-      "to": "spreadFinals",
+      "to": "output-0",
       "out": "items",
-      "in": "obj"
+      "in": "results"
     },
     {
       "from": "search",
       "to": "runJavascript-0",
       "out": "response",
       "in": "obj"
-    },
-    {
-      "from": "spreadFinals",
-      "to": "output-0",
-      "out": "results",
-      "in": "results"
     }
   ],
   "nodes": [
@@ -170,125 +164,8 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "htmlTitle": {
-                    "type": "string"
-                  },
-                  "link": {
-                    "type": "string"
-                  },
-                  "displayLink": {
-                    "type": "string"
-                  },
-                  "snippet": {
-                    "type": "string"
-                  },
-                  "htmlSnippet": {
-                    "type": "string"
-                  },
-                  "formattedUrl": {
-                    "type": "string"
-                  },
-                  "htmlFormattedUrl": {
-                    "type": "string"
-                  },
-                  "pagemap": {
-                    "type": "object",
-                    "properties": {
-                      "cse_thumbnail": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "src": {
-                              "type": "string"
-                            },
-                            "height": {
-                              "type": "string"
-                            },
-                            "width": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "src",
-                            "height",
-                            "width"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "softwaresourcecode": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "author": {
-                              "type": "string"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "text": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "author",
-                            "name",
-                            "text"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "metatags": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {},
-                          "required": [],
-                          "additionalProperties": false
-                        }
-                      },
-                      "cse_image": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "src": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "src"
-                          ],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "cse_thumbnail",
-                      "softwaresourcecode",
-                      "metatags",
-                      "cse_image"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "title",
-                  "htmlTitle",
-                  "link",
-                  "displayLink",
-                  "snippet",
-                  "htmlSnippet",
-                  "formattedUrl",
-                  "htmlFormattedUrl",
-                  "pagemap"
-                ],
+                "properties": {},
+                "required": [],
                 "additionalProperties": false
               }
             }
@@ -375,164 +252,6 @@
       "configuration": {},
       "metadata": {
         "title": "Fetch search results"
-      }
-    },
-    {
-      "id": "spreadFinals",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const spreadFinals = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{results:{...obj}}};",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "obj": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {},
-                "required": [],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "name": "spreadFinals",
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "results": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "htmlTitle": {
-                    "type": "string"
-                  },
-                  "link": {
-                    "type": "string"
-                  },
-                  "displayLink": {
-                    "type": "string"
-                  },
-                  "snippet": {
-                    "type": "string"
-                  },
-                  "htmlSnippet": {
-                    "type": "string"
-                  },
-                  "formattedUrl": {
-                    "type": "string"
-                  },
-                  "htmlFormattedUrl": {
-                    "type": "string"
-                  },
-                  "pagemap": {
-                    "type": "object",
-                    "properties": {
-                      "cse_thumbnail": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "src": {
-                              "type": "string"
-                            },
-                            "height": {
-                              "type": "string"
-                            },
-                            "width": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "src",
-                            "height",
-                            "width"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "softwaresourcecode": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "author": {
-                              "type": "string"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "text": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "author",
-                            "name",
-                            "text"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "metatags": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {},
-                          "required": [],
-                          "additionalProperties": false
-                        }
-                      },
-                      "cse_image": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "src": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "src"
-                          ],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "cse_thumbnail",
-                      "softwaresourcecode",
-                      "metatags",
-                      "cse_image"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "title",
-                  "htmlTitle",
-                  "link",
-                  "displayLink",
-                  "snippet",
-                  "htmlSnippet",
-                  "formattedUrl",
-                  "htmlFormattedUrl",
-                  "pagemap"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "raw": true
-      },
-      "metadata": {
-        "title": "Spread Final",
-        "description": "Spread the properties of an object into a new object"
       }
     }
   ]

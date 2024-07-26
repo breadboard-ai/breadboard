@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { array, board, enumeration, input, object, output } from "@breadboard-ai/build";
-import { code, fetch, secret } from "@google-labs/core-kit";
+import { fetch, secret } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
 import { createSpreadNode } from "../../utils/spread";
 
@@ -130,53 +130,7 @@ const fetchResult = fetch({
   url: url.outputs.url,
 });
 
-const spreadResponse = createSpreadNode(fetchResult.outputs.response, { items: array(object({})) })
-
-const spreadSearchResult = code(
-  {
-    $id: "spreadFinals",
-    $metadata: {
-      title: "Spread Final",
-      description: "Spread the properties of an object into a new object",
-    },
-    obj: spreadResponse.outputs.items
-  },
-  {
-    results: array(object({
-      title: "string",
-      htmlTitle: "string",
-      link: "string",
-      displayLink: "string",
-      snippet: "string",
-      htmlSnippet: "string",
-      formattedUrl: "string",
-      htmlFormattedUrl: "string",
-      pagemap: object({
-        cse_thumbnail: array(object({
-          src: "string",
-          height: "string",
-          width: "string",
-        })),
-        softwaresourcecode: array(object({
-          author: "string",
-          name: "string",
-          text: "string",
-        })),
-        metatags: array(object({})),
-        cse_image: array(object({
-          src: "string",
-        })),
-      })
-    }))
-  },
-  ({ obj }) => {
-    if (typeof obj !== "object") {
-      throw new Error(`object is of type ${typeof obj} not object`);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { results: { ...obj } } as any;
-  }
-);
+const spreadSearchResult = createSpreadNode(fetchResult.outputs.response, { items: array(object({})) })
 
 export default board({
   title: "Google Custom Search Engine Tool",
@@ -188,6 +142,6 @@ export default board({
   version: "0.2.0",
   inputs: { query, numberOfResults, language, safeSearch, startIndex },
   outputs: {
-    results: output(spreadSearchResult.outputs.results)
+    results: output(spreadSearchResult.outputs.items)
   },
 });
