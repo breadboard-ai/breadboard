@@ -515,7 +515,10 @@ export class UserInput extends LitElement {
                 break;
               }
               if (isGoogleDriveQuery(input.schema)) {
-                inputField = html`<bb-google-drive-query></bb-google-drive-query>`;
+                inputField = html`<bb-google-drive-query
+                  id=${id}
+                  .value=${input.value ?? defaultValue ?? ""}
+                ></bb-google-drive-query>`;
                 break;
               }
 
