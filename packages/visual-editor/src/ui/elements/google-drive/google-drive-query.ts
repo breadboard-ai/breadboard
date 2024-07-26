@@ -89,7 +89,6 @@ export class GoogleDriveQuery extends LitElement {
     if (this._pickerLib === undefined) {
       return html`<p>Loading Google Drive Picker ...</p>`;
     }
-    // TODO(aomarks) Hook up the textarea so it works as a real input.
     return html`
       <section id="query">
         <textarea
