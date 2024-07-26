@@ -33,7 +33,7 @@
   },
   "wireit": {
     "dev:nowatch": {
-      "command": "node --enable-source-maps dist/index.js",
+      "command": "[ -f ./secrets/local.json ] && export CONNECTIONS_FILE=./secrets/local.json; node --enable-source-maps dist/index.js",
       "service": true,
       "env": {
         "ALLOWED_ORIGINS": "http://localhost:5173"
@@ -73,7 +73,7 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.14.12",
     "eslint": "^8.57.0",
     "typescript": "^5.5.3",
     "wireit": "^0.14.5"

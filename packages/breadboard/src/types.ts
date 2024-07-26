@@ -109,7 +109,12 @@ export type BehaviorSchema =
   /**
    * Indicates that the input or output represents some sort of code
    */
-  | "code";
+  | "code"
+  /**
+   * Indicates that the string is a Google Drive Query. See
+   * https://developers.google.com/drive/api/guides/search-files.
+   */
+  | "google-drive-query";
 
 export type Schema = {
   title?: string;

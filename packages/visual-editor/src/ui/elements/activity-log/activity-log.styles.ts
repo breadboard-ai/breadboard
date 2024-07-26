@@ -11,7 +11,7 @@ export const styles = css`
     background: #fff;
 
     --padding-x: calc(var(--bb-grid-size) * 4);
-    --padding-y: calc(var(--bb-grid-size) * 2);
+    --padding-y: var(--bb-grid-size-2);
   }
 
   :host > h1 {
@@ -134,7 +134,7 @@ export const styles = css`
     display: inline-block;
     margin-left: -2px;
     margin-top: -2px;
-    margin-right: calc(var(--bb-grid-size) * 2);
+    margin-right: var(--bb-grid-size-2);
     position: relative;
     z-index: 1;
     --background: var(--bb-nodes-400);
@@ -208,7 +208,7 @@ export const styles = css`
   }
 
   .subgraph-info {
-    padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+    padding: var(--bb-grid-size-2) calc(var(--bb-grid-size) * 4);
   }
 
   .subgraph-info summary {
@@ -279,12 +279,12 @@ export const styles = css`
   }
 
   .node-output details {
-    padding: calc(var(--bb-grid-size) * 2);
+    padding: var(--bb-grid-size-2);
   }
 
   .node-output summary {
     font-size: var(--bb-text-small);
-    margin: calc(var(--bb-grid-size) * 2) 0;
+    margin: var(--bb-grid-size-2) 0;
     font-weight: normal;
   }
 
@@ -308,7 +308,7 @@ export const styles = css`
 
   dd {
     display: block;
-    margin: calc(var(--bb-grid-size) * 2) 0 var(--bb-grid-size) 0;
+    margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
     font-size: var(--bb-text-small);
   }
 
@@ -319,40 +319,40 @@ export const styles = css`
   dt .value {
     white-space: pre-line;
     border-radius: var(--bb-grid-size);
-    padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+    padding: var(--bb-input-padding, var(--bb-grid-size-2));
     user-select: auto;
-  }
-
-  dt .value.markdown {
-    white-space: normal;
-    line-height: 1.5;
-    user-select: text;
   }
 
   dt .value.output * {
     margin: var(--bb-grid-size) 0;
   }
 
+  dt .value.input h1,
   dt .value.output h1 {
     font-size: var(--bb-title-large);
-    margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    margin: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
   }
 
+  dt .value.input h2,
   dt .value.output h2 {
     font-size: var(--bb-title-medium);
-    margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+    margin: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
   }
 
+  dt .value.input h3,
+  dt .value.input h4,
+  dt .value.input h5,
   dt .value.output h3,
   dt .value.output h4,
   dt .value.output h5 {
     font-size: var(--bb-title-small);
-    margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    margin: 0 0 var(--bb-grid-size-2) 0;
   }
 
+  dt .value.input p,
   dt .value.output p {
     font-size: var(--bb-body-medium);
-    margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+    margin: 0 0 var(--bb-grid-size-2) 0;
     white-space: pre-line;
   }
 
@@ -362,6 +362,23 @@ export const styles = css`
     max-height: 300px;
     overflow-y: auto;
     scrollbar-gutter: stable;
+  }
+
+  dt .value.input.markdown,
+  dt .value.output.markdown {
+    white-space: normal;
+    line-height: 1.5;
+    user-select: text;
+  }
+
+  dt .value.input.markdown p,
+  dt .value.output.markdown p {
+    white-space: normal;
+  }
+
+  dt .value.input :first-child,
+  dt .value.output :first-child {
+    margin-top: 0;
   }
 
   pre {
@@ -389,6 +406,17 @@ export const styles = css`
     background: var(--bb-selected-color);
     border-radius: var(--bb-grid-size);
     animation: fadeOut 1s ease-out forwards;
+  }
+
+  .continue-button {
+    background: var(--bb-continue-color) var(--bb-icon-resume-blue) 8px 4px /
+      16px 16px no-repeat;
+    color: var(--bb-ui-700);
+    border-radius: var(--bb-grid-size-5);
+    border: none;
+    height: var(--bb-grid-size-6);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+    margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
   }
 
   @keyframes slideIn {

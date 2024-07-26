@@ -1,0 +1,135 @@
+{
+  "title": "unnest node example",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-f0216a94",
+        "text": "*Example type*:\n\n`{`\n`  \"type\": \"object\",`\n`  \"properties\": {`\n`    \"foo\": {`\n`      \"type\": \"string\"`\n`    },`\n`    \"bar\": {`\n`      \"type\": \"number\"`\n`    }`\n`  }`\n`}`",
+        "metadata": {
+          "visual": {
+            "x": 62,
+            "y": -92,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b1a44625",
+        "text": "*Example response*:\n\n`{`\n`  \"foo\": \"hello\",`\n`  \"bar\": 42`\n`}`",
+        "metadata": {
+          "visual": {
+            "x": -240,
+            "y": -157,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-19bba74d",
+        "text": "**`cast`** takes any kind of value and forces it to have a particular schema.",
+        "metadata": {
+          "visual": {
+            "x": 140,
+            "y": -273,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "cast-4c2fdedc",
+      "to": "output",
+      "out": "value",
+      "in": "context"
+    },
+    {
+      "from": "fetch-066f61f4",
+      "to": "cast-4c2fdedc",
+      "out": "response",
+      "in": "value"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "object",
+              "title": "Typed Response",
+              "properties": {
+                "foo": {
+                  "type": "string"
+                },
+                "bar": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 395,
+          "y": -35,
+          "collapsed": false
+        },
+        "title": "Output",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "fetch-066f61f4",
+      "type": "fetch",
+      "metadata": {
+        "visual": {
+          "x": -182,
+          "y": -314,
+          "collapsed": false
+        },
+        "title": "Fetch Some URL",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "method": "GET",
+        "raw": false,
+        "stream": false,
+        "url": "data:application/json,{\"foo\":\"hello\",\"bar\":42}"
+      }
+    },
+    {
+      "id": "cast-4c2fdedc",
+      "type": "cast",
+      "metadata": {
+        "visual": {
+          "x": 168,
+          "y": -176,
+          "collapsed": false
+        },
+        "title": "Cast Fetch Result",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "type": {
+          "type": "object",
+          "properties": {
+            "foo": {
+              "type": "string"
+            },
+            "bar": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

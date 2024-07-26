@@ -73,7 +73,9 @@ const functionDeclaration = object({
 });
 
 const systemInstruction = input({
-  type: "string",
+  type: annotate("string", {
+    behavior: ["config"],
+  }),
   title: "System Instruction",
   description:
     "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
@@ -94,7 +96,12 @@ const text = input({
 const model = input({
   title: "Model",
   description: "The model to use for generation",
-  type: enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+  type: annotate(
+    enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+    {
+      behavior: ["config"],
+    }
+  ),
   examples: ["gemini-1.5-flash-latest"],
   optional: true,
 });
@@ -102,17 +109,15 @@ const model = input({
 const responseMimeType = input({
   title: "Response MIME Type",
   description: "Output response mimetype of the generated text.",
-  type: enumeration("text/plain", "application/json"),
+  type: annotate(enumeration("text/plain", "application/json"), {
+    behavior: ["config"],
+  }),
   examples: ["text/plain"],
   default: "text/plain",
 });
 
 const tools = input({
-  type: array(
-    annotate(functionDeclaration, {
-      behavior: ["board"],
-    })
-  ),
+  type: array(functionDeclaration),
   title: "Tools",
   description: "An array of functions to use for tool-calling",
   default: [],
@@ -176,25 +181,32 @@ const context = input({
 });
 
 const useStreaming = input({
-  type: "boolean",
-  title: "Stream",
+  type: annotate("boolean", {
+    behavior: ["deprecated"],
+  }),
+  title: "Stream Output",
   description: "Whether to stream the output",
   default: false,
 });
 
 const retry = input({
-  type: "number",
+  type: annotate("number", {
+    behavior: ["config"],
+  }),
   title: "Retry Count",
   description: "The number of times to retry the LLM call in case of failure",
   default: 1,
 });
 
 const safetySettings = input({
-  type: array(
-    object({
-      category: "string",
-      threshold: "string",
-    })
+  type: annotate(
+    array(
+      object({
+        category: "string",
+        threshold: "string",
+      })
+    ),
+    { behavior: ["config"] }
   ),
   title: "Safety Settings",
   description:
@@ -203,7 +215,9 @@ const safetySettings = input({
 });
 
 const stopSequences = input({
-  type: array("string"),
+  type: annotate(array("string"), {
+    behavior: ["config"],
+  }),
   title: "Stop Sequences",
   description: "An array of strings that will stop the output",
   default: [],
@@ -509,10 +523,6 @@ const formattedResponse = code(
       optional: true,
     },
     context: responseContentType,
-    toolCalls: {
-      type: array(object({}, "unknown")),
-      optional: true,
-    },
   },
   ({ response }) => {
     const r = response;
@@ -526,7 +536,7 @@ const formattedResponse = code(
     if ("text" in firstPart) {
       return { text: firstPart.text, context };
     } else {
-      return { toolCalls: [], context };
+      return { context };
     }
   }
 );
@@ -571,6 +581,11 @@ errorLoopback.resolve(errorCollector.outputs.error);
 export default board({
   title: "Gemini Pro Generator",
   description: "The text generator board powered by the Gemini Pro model",
+  metadata: {
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
+    },
+  },
   version: "0.1.0",
   inputs: [
     {
@@ -616,10 +631,6 @@ export default board({
       context: output(formattedResponse.outputs.context, {
         title: "Context",
         description: "The conversation context",
-      }),
-      toolCalls: output(formattedResponse.outputs.toolCalls, {
-        title: "Tool Calls",
-        description: "The generated tool calls",
       }),
     },
   ],

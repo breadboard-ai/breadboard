@@ -7,8 +7,10 @@
 import type { NodeDescriberResult, Schema } from "@google-labs/breadboard";
 import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
+import type { Value } from "../../index.js";
 import {
   InputPort,
+  isOutputPortReference,
   OutputPort,
   OutputPortGetter,
   type OutputPortReference,
@@ -16,6 +18,7 @@ import {
 } from "../common/port.js";
 import type {
   SerializableInputPort,
+  SerializableOutputPort,
   SerializableOutputPortReference,
 } from "../common/serializable.js";
 import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
@@ -73,8 +76,8 @@ export function board<
 > {
   const flatInputs = flattenInputs(inputs);
   const flatOutputs = flattenOutputs(outputs);
-  const def = new BoardDefinitionImpl(flatInputs, flatOutputs);
-  return Object.assign(def.instantiate.bind(def), {
+  const defImpl = new BoardDefinitionImpl(flatInputs, flatOutputs);
+  const definition = Object.assign(defImpl.instantiate.bind(defImpl), {
     id,
     inputs: flatInputs,
     inputsForSerialization: inputs as BoardInputPorts | Array<BoardInputPorts>,
@@ -87,8 +90,13 @@ export function board<
     version,
     metadata,
     isBoard: true,
-    describe: def.describe.bind(def),
+    describe: defImpl.describe.bind(defImpl),
   });
+  // TODO(aomarks) This is a bit silly, need a small refactor here so that we
+  // aren't juggling all these objects. The complexity here comes from the fact
+  // that we want to return a function that also has data attached.
+  defImpl.definition = definition;
+  return definition;
 }
 
 function flattenInputs<IPORTS extends BoardInputShape>(
@@ -247,6 +255,7 @@ class BoardDefinitionImpl<
 > {
   readonly #inputs: IPORTS;
   readonly #outputs: OPORTS;
+  definition?: BoardDefinition<IPORTS, OPORTS>;
 
   constructor(inputs: IPORTS, outputs: OPORTS) {
     this.#inputs = inputs;
@@ -256,7 +265,12 @@ class BoardDefinitionImpl<
   instantiate(
     values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
   ): BoardInstance<IPORTS, OPORTS> {
-    return new BoardInstance(this.#inputs, this.#outputs, values);
+    return new BoardInstance(
+      this.#inputs,
+      this.#outputs,
+      values,
+      this.definition!
+    );
   }
 
   async describe(): Promise<NodeDescriberResult> {
@@ -295,30 +309,78 @@ class BoardDefinitionImpl<
   }
 }
 
-class BoardInstance<
+export class BoardInstance<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > {
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
-  // TODO(aomarks) This should get used somewhere.
-  readonly #values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>;
+  readonly values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>;
+  readonly definition: BoardDefinition<IPORTS, OPORTS>;
 
   constructor(
     inputs: IPORTS,
     outputs: OPORTS,
-    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
+    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>,
+    definition: BoardDefinition<IPORTS, OPORTS>
   ) {
     this.inputs = inputs;
-    this.outputs = outputs;
-    this.#values = values;
+    this.outputs = this.#tagOutputs(outputs);
+    this.values = values;
+    this.definition = definition;
   }
+
+  /**
+   * Tag all of our outputs with a link back this board instance. This allows us
+   * to recognize when we are hitting a board boundary during serialization,
+   * which is important because we need to do special stuff there (e.g. create
+   * an invoke node).
+   */
+  #tagOutputs(outputs: OPORTS): OPORTS {
+    return Object.fromEntries(
+      Object.entries(outputs).map(([name, output]) => [
+        name,
+        {
+          ...output,
+          innerPortName: name,
+          innerBoard: this as object as BoardInstance<
+            BoardInputPorts,
+            BoardOutputPorts
+          >,
+        } satisfies BoardOutput,
+      ])
+    ) as object as OPORTS;
+  }
+}
+
+export function isBoardInstance(
+  value: unknown
+): value is BoardInstance<BoardInputPorts, BoardOutputPorts> {
+  // TODO(aomarks) Use a better brand
+  return (
+    (value as Partial<BoardInstance<BoardInputPorts, BoardOutputPorts>>)
+      .definition !== undefined
+  );
+}
+
+export type BoardOutput = (
+  | OutputPortReference<JsonSerializable>
+  | Output<JsonSerializable>
+  | Input<JsonSerializable>
+  | InputWithDefault<JsonSerializable>
+) & {
+  innerBoard: BoardInstance<BoardInputPorts, BoardOutputPorts>;
+  innerPortName: string;
+};
+
+export function isBoardOutput(value: unknown): value is BoardOutput {
+  return (value as Partial<BoardOutput>).innerBoard !== undefined;
 }
 
 type ExtractPortTypes<PORTS extends BoardInputPorts | BoardOutputPorts> = {
   [PORT_NAME in keyof PORTS]: PORTS[PORT_NAME] extends
     | InputPort<infer TYPE>
-    | OutputPortReference<infer TYPE>
+    | Value<infer TYPE>
     ? TYPE
     : never;
 };
@@ -393,7 +455,7 @@ export function describeOutput(
     port = port[OutputPortGetter];
   }
   // Input<JsonSerializable> | InputWithDefault<JsonSerializable> | SerializableOutputPort | OutputPort<...>
-  const schema = toJSONSchema(port.type);
+  const schema = toJSONSchema(unroll(port).type);
   if (isSpecialOutput(output)) {
     if (output.title !== undefined) {
       schema.title = output.title;
@@ -411,4 +473,29 @@ export function isSerializableOutputPortReference(
   return (
     typeof value === "object" && value !== null && OutputPortGetter in value
   );
+}
+
+export function unroll(
+  value:
+    | Input<JsonSerializable>
+    | InputWithDefault<JsonSerializable>
+    | Output<JsonSerializable>
+    | OutputPort<JsonSerializable>
+    | OutputPortReference<JsonSerializable>
+    | SerializableOutputPort
+):
+  | Input<JsonSerializable>
+  | InputWithDefault<JsonSerializable>
+  | OutputPort<JsonSerializable>
+  | SerializableOutputPort {
+  if (isSpecialOutput(value)) {
+    return unroll(value.port);
+  }
+  if ("type" in value) {
+    return value;
+  }
+  if (isOutputPortReference(value)) {
+    return unroll(value[OutputPortGetter]);
+  }
+  return value;
 }

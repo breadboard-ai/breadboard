@@ -1,0 +1,83 @@
+{
+  "title": "The nano component",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "examples": [],
+              "format": "multiline"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -119,
+          "y": -4,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 245,
+          "y": -13,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "nano-63f2f5d1",
+      "type": "nano",
+      "metadata": {
+        "visual": {
+          "x": 46,
+          "y": -21,
+          "collapsed": false
+        },
+        "title": "Nano",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "nano-63f2f5d1",
+      "out": "prompt",
+      "in": "prompt"
+    },
+    {
+      "from": "nano-63f2f5d1",
+      "to": "output",
+      "out": "text",
+      "in": "text"
+    }
+  ]
+}

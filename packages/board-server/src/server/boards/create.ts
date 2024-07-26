@@ -13,7 +13,7 @@ export type CreateRequest = {
   dryRun?: boolean;
 };
 
-const create: ApiHandler = async (path, req, res) => {
+const create: ApiHandler = async (_path, req, res) => {
   const userKey = authenticate(req, res);
   if (!userKey) {
     return true;

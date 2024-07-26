@@ -13,6 +13,37 @@ This is the kit that provides the most fundamental building blocks for Breadboar
 > [!TIP]
 > Most of these components are closer to actual programming than just dragging and dropping high-level components. Expect climbing a learning curve to get comfortable using them.
 
+## The `cast` component
+
+{{ "/breadboard/static/boards/kits/core-cast.bgl.json" | board }}
+
+Takes any kind of value and forces its schema to be the given JSON Schema.
+
+### Input ports
+
+The `cast` component has two input ports:
+
+- **Value** (id: `value`) — Any kind of value.
+- **Type** (id: `type`) — The JSON schema to cast `value` to.
+
+### Output ports
+
+The `cast` component has a single output port:
+
+- **Value** (id `value`) — The unmodified `value` input, but now with `type` as its schema.
+
+### Example
+
+In the board above, a URL is fetched which responds with an object containing
+properties `foo` and `bar`. Since the `fetch` component doesn't intrinsically
+know what the response type of any given request will be, by default it will be
+typed as `unknown`. By wiring the response to a `cast` node, we can assert to
+Breadboard what the expected response type is.
+
+### Implementation
+
+- [cast.ts]({{src_url}}cast.ts)
+
 ## The `curry` component
 
 {{ "/breadboard/static/boards/kits/core-curry.bgl.json" | board }}
@@ -254,13 +285,42 @@ This is a no-op component. It takes the input port values and passes them along 
 
 {{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
 
-Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.
+Given a list, an initial accumulator value, and a board, invokes a board in ["run as component"](https://breadboard-ai.github.io/breadboard/docs/reference/runtime-semantics/#run-as-component-mode) mode for each item and accumulator in the list, returning the final accumulator value. Loosely, same logic as the [`Array.prototype.reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce) function in JavaScript.
+
+When running the board, the `reduce` component will supply input values with the following ids:
+
+- `accumulator` -- the current accumulated result
+- `item` -- the item in the list
+
+In the outputs, it will look for the output values with the following ids:
+
+- `accumulator` -- the new accumulated result.
 
 ### Input ports
 
+The `reduce` component has three static input ports:
+
+- **Accumulator** (id: `accumulator`) -- optional, the initial value of the accumulator that will be supplied along with the first item in the list.
+
+- **Board** (id: `board`) -- required, a board to run. The board can be specified as a URL to the [BGL file](/breadboard/docs/concepts/#breadboard-graph-language-bgl), or as BGL directly.
+
+- **List** (id: `list`) -- optional, a list to reduce over.
+
 ### Output ports
 
+The component has one static output port:
+
+- **Accumulator** (id: `accumulator`) -- the final accumulated value.
+
 ### Example
+
+Let's suppose we want to research a few topics on Wikipedia, and get a bunch of links for each topic. First, we'll build a board that fits the shape required by the `reduce` component. This board will query Wikipedia for one topic.
+
+{{ "/breadboard/static/boards/kits/example-search-wikipedia.bgl.json" | board }}
+
+Then, we can use another board that makes it run over a list of topics using the `reduce` component.
+
+{{ "/breadboard/static/boards/kits/core-reduce.bgl.json" | board }}
 
 ### Implementation
 
@@ -270,58 +330,106 @@ Given a list, an initial accumulator value, and a board, invokes a board (runOnc
 
 {{ "/breadboard/static/boards/kits/core-run-javascript.bgl.json" | board }}
 
-Use this component to execute JavaScript code. The component recognizes a required `code` input property, which is a string that contains the code to be executed. It also recognizes a `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
+Use this component to execute JavaScript code. It is particularly useful for manipulating data between other components or adding other kinds of logic to your boards.
 
-All other input properties will be passed as arguments to the function.
+> [!NOTE]
+> The code is executed in a new V8 context in component or a Web Worker in the browser, which means that it cannot access any variables or functions from outside the context in which it is run.
 
-The code is executed in a new V8 context in component or a Web Worker in the browser, which means that it cannot access any variables or functions from the outside.
+The key input port is **Code**, which contains the code to execute. The code must be a JS function. When the component is run, the function is called with a single argument, which is an object with each key holding a value of the ports that are wired in:
 
-The component will pass the result of the execution as the `result` output property.
+```ts
+type PortName = string;
+// Each key in this object is an input port name that is wired in,
+// and the value is the value that was passed into this port.
+type InputValues = Record<PortName, JsonSerializable>;
+```
+
+The name of the function is specified by the **Function Name** port and is `run` by default.
+
+> [!TIP]
+> Unless there's a specific need to do so, leave **Function Name** port value as default.
+
+Depending on the value of the **Raw Output** port, the return value of the called function is interpreted in two different ways:
+
+- When **Raw Output** value is `false` (default), the result of function is passed as the **Result** output port of the `runJavascript` component. This is the most common scenario, where one or more inputs into the component are transformed into a single output port. The output value must be JSON-serializable, since it is shuttled across the Web Worker (or V8 context) boundary:
+
+```ts
+function run(inputs: InputValues): JsonSerializable {
+  return "This will be a `Result` port value";
+}
+```
+
+- When **Raw Output** value is `true`, the result of the function is treated as an object where each key represents an output port for the `runJavascript` component. The value that corresponds to that key will be passed as port's value out of the component.
+
+```ts
+// Each key is an output port name that is wired out,
+// and the value is a JSON-serializable value that is
+// passed out of this port.
+type OutputValues = Record<PortName, JsonSerializable>;
+
+function run(inputs: InputValues): OutputValues | Promise<OutputValues> {
+  return {
+    yes: "This will be a value of the `yes` port",
+    no: "This will be a value of the `no` port",
+  };
+}
+```
+
+To aid with specifying the input and output ports, there are two additional configuration ports: **Input Schema** and **Output Schema**, respectively.
 
 ### Input ports
 
-- `code` - required, must contain the code to execute
-- `name` - optional, must contain the name of the function to invoke (default: `run`)
-- zero or more inputs that will be passed as arguments to the function.
+The component has the following static input ports:
+
+- **Code** (id: `code`) -- required, contains the function to call.
+- **Function Name** (id: `name`) -- optional, the name of the function to call (default: `run`)
+- **Raw Output** (id: `raw`) -- optional, whether (`true`) or not (`false`) to treat the result of the function call as an object with port values (default: `false`).
+- **Input Schema** (id: `inputSchema`) -- optional, defines additional input ports wired into this component instance
+- **Output Schema** (id: `outputSchema`) -- optional, defines additional output ports wired out of this component instance. Only relevant when **Raw Output** is set to `true`.
+
+The component may have zero or more dynamically wired ports, each passed as part of the function argument.
 
 ### Output ports
 
-- `result` - the result of the execution
+The component has either a single or no static output ports:
+
+- **Result** (id: `result`) - the return value of the function call, when the **Raw Output** is `false`.
+
+When the **Raw Output** is `true`, the output ports are all dynamic and are defined as keys of object, returned by the called function.
 
 ### Example
 
-If we send the following inputs to `runJavascript`:
+The board above is a very simple string splitter. The body of the function is:
 
-```json
-{
-  "code": "function run() { return 1 + 1; }"
+```js
+function run({ topics }) {
+  return topics.trim().split("\n");
 }
 ```
 
-We will get this output:
+The component uses the default **Raw Output** = `false` value, and so the return value of the function becomes the **Result** port value.
 
-```json
-{
-  "result": 2
+Let's consider a bit more elaborate example. Suppose we want to create a router: a way to choose which path to take within a board. This is a very common pattern in Breadboard, because such routing enables a board to perform different actions depending on the inputs it receives.
+
+In this example, we check to see if the list of topics we supplied has only one item, and if so, we print out an output message stating that. Otherwise, we print the list of topics.
+
+{{ "/breadboard/static/boards/kits/example-simple-router.bgl.json" | board }}
+
+The **Raw Output** port is set to `true` and the body of the function is:
+
+```js
+function run({ topics }) {
+  const list = topics.trim().split("\n");
+  if (list.length < 2) {
+    return {
+      message: "Please supply more than one topic.",
+    };
+  }
+  return { list };
 }
 ```
 
-If we send:
-
-```json
-{
-  "code": "function run({ what }) { return `hello ${what}`; }",
-  "what": "world"
-}
-```
-
-We will get:
-
-```json
-{
-  "result": "hello world"
-}
-```
+Instead of returning just a value, we return an object with ports as keys and port values.
 
 ### Implementation
 
@@ -331,33 +439,22 @@ We will get:
 
 {{ "/breadboard/static/boards/kits/core-secrets.bgl.json" | board }}
 
-Use this component to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The component takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
+Use this component to access sensitive data, such as API keys or other valuable bits of information that you might not want to store in the board. The component takes in an array of strings as input port **Keys**, looks for these keys in its store and, if found, returns them as outputs.
+
+> [!NOTE]
+> Different implementations of Breadboard will use their own strategies for retrieving secrets. The Visual Editor opts to ask the user whenever it runs into a need for a secret, and then stores these secrets in browser local storage.
 
 ### The input ports
 
-- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
+- **Keys** (id: `keys`) - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, an empty output is returned.
 
 ### The output ports
 
-- one output for each key that was found in the environment.
+- one output port for each key that was found.
 
 ### Example
 
-Use this component to pass the `PALM_KEY` environment variable to the `text-completion` component. The input:
-
-```json
-{
-  "keys": ["PALM_KEY"]
-}
-```
-
-Will produce this output:
-
-```json
-{
-  "PALM_KEY": "<value of the API key from the environment>"
-}
-```
+The board above makes a Gemini API call to [list models](https://ai.google.dev/api/models#method:-models.list). To do this, it first retrieves a `GEMINI_KEY` secret and then uses the [`fetch` component](#the-fetch-component) to get the results.
 
 ### Implementation
 
@@ -402,11 +499,18 @@ For a sample implementation of a BSE protocol, see the [Google News Service](htt
 
 {{ "/breadboard/static/boards/kits/core-unnest.bgl.json" | board }}
 
+Exposes all properties of a given JSON object as separate output ports.
+
 ### Input ports
+
+The `unnest` component has a single input port.
+
+- **Nested** (id `nested`) — the JSON object to unnest.
 
 ### Output ports
 
-### Example
+The `unnest` component will create one output port for each property in the
+given object.
 
 ### Implementation
 

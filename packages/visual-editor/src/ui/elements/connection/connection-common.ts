@@ -24,9 +24,25 @@ export type GrantResponse =
       refresh_token: string;
     };
 
-export interface GrantSettingsValue {
+export interface TokenGrant {
+  client_id: string;
   access_token: string;
   expires_in: number;
   refresh_token: string;
   issue_time: number;
+}
+
+export type RefreshResponse =
+  | { error: string }
+  | {
+      error?: undefined;
+      access_token: string;
+      expires_in: number;
+    };
+
+// IMPORTANT: Keep in sync with
+// breadboard/packages/connection-server/src/api/refresh.ts
+export interface RefreshRequest {
+  connection_id: string;
+  refresh_token: string;
 }

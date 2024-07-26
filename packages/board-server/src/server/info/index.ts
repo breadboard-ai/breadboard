@@ -7,6 +7,7 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { getStore, type ServerInfo } from "../store.js";
 import { methodNotAllowed } from "../errors.js";
+import { corsAll } from "../cors.js";
 
 const DEFAULT_SERVER_INFO: ServerInfo = {
   title: "Board Server",
@@ -28,6 +29,10 @@ export const serveInfoAPI = async (
   const isInfo = path === "/info";
   if (!isInfo) {
     return false;
+  }
+
+  if (!corsAll(req, res)) {
+    return true;
   }
 
   if (req.method !== "GET") {

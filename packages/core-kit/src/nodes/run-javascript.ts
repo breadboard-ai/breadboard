@@ -11,7 +11,7 @@ import {
   unsafeType,
 } from "@breadboard-ai/build";
 import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
-import type { InputValues, Schema } from "@google-labs/breadboard";
+import type { InputValues } from "@google-labs/breadboard";
 import { JSONSchema4 } from "json-schema";
 
 // https://regex101.com/r/PeEmEW/1
@@ -46,12 +46,16 @@ const environment = (): Environment => {
 };
 
 const runInNode: ScriptRunner = async ({ code, functionName, args }) => {
-  let vm;
-  if (typeof require === "function") {
-    vm = require("node:vm");
-  } else {
-    vm = await import(/*@vite-ignore*/ "node:vm");
-  }
+  // TODO: This code does not work when used with esbuild. Esbuild provides
+  // the "require" function anyway, and then throws an error when trying to
+  // call it. Figure out what's the right thing to do here.
+  // let vm;
+  // if (typeof require === "function") {
+  //   vm = require("node:vm");
+  // } else {
+  //   vm = await import(/*@vite-ignore*/ "node:vm");
+  // }
+  const vm = await import("node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console, structuredClone });
   const script = new vm.Script(codeToRun);
@@ -99,12 +103,14 @@ const runInBrowser = async ({
     [x in WebWorkerResultType]: string;
   };
 
-  const worker = new Worker(URL.createObjectURL(blob));
+  const workerURL = URL.createObjectURL(blob);
+  const worker = new Worker(workerURL);
   const result = new Promise<string>((resolve, reject) => {
     worker.onmessage = (e) => {
       const data = e.data as WebWorkerResult;
       if (data.result) {
         resolve(data.result);
+        URL.revokeObjectURL(workerURL);
         return;
       } else if (data.error) {
         console.log("Error in worker", data.error);
@@ -235,40 +241,50 @@ export default defineNodeType({
   metadata: {
     title: "Run Javascript",
     description: "Runs supplied `code` input as Javascript.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-runjavascript-component",
+    },
   },
   inputs: {
     code: {
+      description: "The JavaScript code to run",
+      title: "Code",
       behavior: ["config", "code"],
       format: "javascript",
-      description: "The JavaScript code to run",
       type: "string",
     },
     name: {
+      title: "Function Name",
       description:
         'The name of the function to invoke in the supplied code. Default value is "run".',
       type: "string",
+      behavior: ["config"],
       default: "run",
     },
     schema: {
-      behavior: ["config", "ports-spec"],
+      behavior: ["config", "ports-spec", "deprecated"],
       description:
         "Deprecated! Please use inputSchema/outputSchema instead. The schema of the output data.",
       type: object({}, "unknown"),
       optional: true,
     },
     inputSchema: {
+      title: "Input Schema",
+      description: "The schema of the input data, the function arguments.",
       behavior: ["config", "ports-spec"],
-      description: "The schema of the input data.",
       type: object({}, "unknown"),
       optional: true,
     },
     outputSchema: {
+      title: "Output Schema",
       behavior: ["config", "ports-spec"],
-      description: "The schema of the output data.",
+      description:
+        "The schema of the output data, the shape of the object of the function return value.",
       type: object({}, "unknown"),
       optional: true,
     },
     raw: {
+      title: "Raw Output",
       behavior: ["config"],
       description:
         "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
@@ -296,6 +312,7 @@ export default defineNodeType({
           : { "*": "unknown" }
         : {
             result: {
+              title: "Result",
               description: "The result of running the JavaScript code",
               type: outputSchema?.properties?.result
                 ? unsafeType(outputSchema.properties.result)

@@ -137,6 +137,9 @@ export class Editor extends LitElement {
   highlightInvalidWires = false;
 
   @property()
+  showExperimentalComponents = false;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -1382,6 +1385,8 @@ export class Editor extends LitElement {
                       inert
                       .graph=${this.graph}
                       .kits=${this.kits}
+                      .showExperimentalComponents=${this
+                        .showExperimentalComponents}
                       @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
                         const id = this.#createRandomID(evt.nodeType);
                         this.dispatchEvent(

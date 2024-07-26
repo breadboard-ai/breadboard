@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { InputEnterEvent } from "../../events/events.js";
 import {
@@ -18,8 +18,6 @@ import {
 } from "@google-labs/breadboard";
 import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { consume } from "@lit/context";
-import { dataStoreContext } from "../../contexts/data-store.js";
 import { InputCallback, STATUS } from "../../types/types.js";
 import { getIsolatedNodeGraphDescriptor } from "../../utils/isolated-node-board.js";
 import { inputsFromSettings } from "../../../data/inputs.js";
@@ -48,8 +46,8 @@ export class NodeRunner extends LitElement {
   @property()
   kits: Kit[] = [];
 
-  @consume({ context: dataStoreContext })
-  dataStore?: { instance: DataStore | null };
+  @property()
+  dataStore: DataStore | null = null;
 
   #isolatedNodeGraphDescriptor: Promise<GraphDescriptor | null> | null = null;
   #handlers: Map<string, InputCallback[]> = new Map();
@@ -134,7 +132,7 @@ export class NodeRunner extends LitElement {
     if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
-        store: this.dataStore?.instance ?? undefined,
+        store: this.dataStore ?? undefined,
       });
     }
 
@@ -142,7 +140,7 @@ export class NodeRunner extends LitElement {
     for await (const result of runner) {
       try {
         // Update "runs" to ensure the UI is aware when the new run begins.
-        this.runs = this.#runObserver.observe(result);
+        this.runs = await this.#runObserver.observe(result);
       } catch (err) {
         // TODO: Do we need to output an error here?
         break;
@@ -225,6 +223,10 @@ export class NodeRunner extends LitElement {
   }
 
   render() {
+    if (!this.#isolatedNodeGraphDescriptor) {
+      return nothing;
+    }
+
     const runs = this.#runObserver?.runs();
     const currentRun = runs?.[0] ?? null;
     const events = currentRun?.events ?? [];
@@ -235,7 +237,7 @@ export class NodeRunner extends LitElement {
       .events=${events}
       .eventPosition=${eventPosition}
       .showExtendedInfo=${true}
-      .logTitle=${"Activity"}
+      .logTitle=${"Test Component"}
       .waitingMessage=${'Click "Run Component" to get started'}
       .settings=${this.settings}
       @bbinputrequested=${() => {

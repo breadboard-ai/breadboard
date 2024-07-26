@@ -16,7 +16,7 @@ import {
   ClientTransport,
   ServerBidirectionalStream,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 
 const DISPATCHER_SEND = "port-dispatcher-sendport";
 

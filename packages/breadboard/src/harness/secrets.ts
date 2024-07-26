@@ -6,10 +6,10 @@
 
 import { SecretResult } from "./types.js";
 import { KitBuilder } from "../kits/builder.js";
-import { ClientRunResult } from "../remote/run.js";
 import { timestamp } from "../timestamp.js";
 import { asRuntimeKit } from "../index.js";
 import { OutputValues } from "../types.js";
+import { ClientRunResult } from "../remote/types.js";
 
 export const createSecretAskingKit = (
   next: (result: ClientRunResult<SecretResult>) => Promise<void>

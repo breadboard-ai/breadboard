@@ -1,7 +1,8 @@
 <details open>
   <summary>Breadboard Updates</summary>
   <ul>
-  {%- for item in collections.update | sort(true, false, 'url') -%}
+  {%- assign sorted_updates = collections.update | sort: 'date' | reverse -%}
+  {%- for item in sorted_updates -%}
     <li>
       {% if page.url != item.url %}
         <a href="/breadboard{{ item.url }}">

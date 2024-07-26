@@ -5,12 +5,7 @@
  */
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import {
-  AllowedLLMContentTypes,
-  LLMContent,
-  LLMInlineData,
-  LLMStoredData,
-} from "../../../types/types.js";
+import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -20,15 +15,16 @@ import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
-  isFunctionCall,
-  isFunctionResponse,
+  DataStore,
+  InlineDataCapabilityPart,
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
   isInlineData,
   isStoredData,
-  isText,
-} from "../../../utils/llm-content.js";
-import { DataStore } from "@google-labs/breadboard";
-import { consume } from "@lit/context";
-import { dataStoreContext } from "../../../contexts/data-store.js";
+  isTextCapabilityPart,
+  LLMContent,
+  StoredDataCapabilityPart,
+} from "@google-labs/breadboard";
 import { asBase64 } from "../../../utils/as-base-64.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
@@ -48,6 +44,9 @@ export class LLMInput extends LitElement {
 
   @property()
   minItems = 0;
+
+  @property({ attribute: false })
+  dataStore: DataStore | null = null;
 
   @property()
   allow: AllowedLLMContentTypes = {
@@ -70,10 +69,6 @@ export class LLMInput extends LitElement {
   #containerRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
-
-  @consume({ context: dataStoreContext })
-  @property({ attribute: false })
-  public dataStore?: { instance: DataStore | null };
 
   static styles = css`
     * {
@@ -506,26 +501,24 @@ export class LLMInput extends LitElement {
     }
   }
 
-  async processAllOpenParts(): Promise<void> {
+  processAllOpenParts() {
     if (!this.value) {
       return;
     }
 
-    await Promise.all([
-      this.value.parts.map((part, idx) => {
-        if (!isInlineData(part)) {
-          return;
-        }
+    this.value.parts.map((part, idx) => {
+      if (!isInlineData(part)) {
+        return;
+      }
 
-        switch (part.inlineData.mimeType) {
-          case "audio-microphone":
-          case "image-webcam":
-          case "image-drawable": {
-            return this.#processInputPart(idx);
-          }
+      switch (part.inlineData.mimeType) {
+        case "audio-microphone":
+        case "image-webcam":
+        case "image-drawable": {
+          return this.#processInputPart(idx);
         }
-      }),
-    ]);
+      }
+    });
   }
 
   async #processFilePart(evt: InputEvent, partIdx: number) {
@@ -542,27 +535,23 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
-    if (this.dataStore?.instance) {
-      const store = this.dataStore.instance;
-      this.value.parts[partIdx] = await store.store(files[0]);
-    } else {
-      if (!this.value.parts[partIdx]) {
-        this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
-      }
-      let part = this.value.parts[partIdx];
-
-      if (!isInlineData(part)) {
-        part = structuredClone(inlineDataTemplate);
-      }
-
-      part.inlineData.data = await asBase64(files[0]);
-      part.inlineData.mimeType = files[0].type;
+    if (!this.value.parts[partIdx]) {
+      this.value.parts[partIdx] = structuredClone(inlineDataTemplate);
     }
+    let part = this.value.parts[partIdx];
+
+    if (!isInlineData(part)) {
+      part = structuredClone(inlineDataTemplate);
+    }
+
+    part.inlineData.data = await asBase64(files[0]);
+    part.inlineData.mimeType = files[0].type;
+
     this.#emitUpdate();
     this.requestUpdate();
   }
 
-  async #processInputPart(partIdx: number) {
+  #processInputPart(partIdx: number) {
     if (!this.value) {
       this.value = { role: "user", parts: [] };
     }
@@ -689,7 +678,7 @@ export class LLMInput extends LitElement {
 
   async #getPartDataAsHTML(
     idx: number,
-    part: LLMInlineData | LLMStoredData,
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart,
     isLastPart = false
   ) {
     let mimeType;
@@ -709,7 +698,11 @@ export class LLMInput extends LitElement {
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       getData = async () => {
-        const response = await this.dataStore?.instance?.retrieve(part);
+        if (!this.dataStore) {
+          return "Unable to retrieve data - no store";
+        }
+
+        const response = await this.dataStore.retrieve(part);
         if (!response) {
           return "Unable to retrieve data";
         }
@@ -896,18 +889,20 @@ export class LLMInput extends LitElement {
         </div>
       </header>
       <div id="container" ${ref(this.#containerRef)}>
-        ${this.value && this.value.parts.length
+        ${this.value &&
+        Array.isArray(this.value.parts) &&
+        this.value.parts.length
           ? map(this.value.parts, (part, idx) => {
               const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
               let partClass = "";
               let value: HTMLTemplateResult | symbol = nothing;
-              if (isText(part)) {
+              if (isTextCapabilityPart(part)) {
                 partClass = "text";
                 value = html` <textarea
                   @input=${(evt: Event) => {
                     if (
-                      !isText(part) ||
+                      !isTextCapabilityPart(part) ||
                       !(evt.target instanceof HTMLTextAreaElement)
                     ) {
                       return;
@@ -918,10 +913,10 @@ export class LLMInput extends LitElement {
                   .value=${part.text}
                   ${isLastPart ? ref(this.#lastPartRef) : nothing}
                 ></textarea>`;
-              } else if (isFunctionCall(part)) {
+              } else if (isFunctionCallCapabilityPart(part)) {
                 partClass = "function-call";
                 value = html`${part.functionCall.name}`;
-              } else if (isFunctionResponse(part)) {
+              } else if (isFunctionResponseCapabilityPart(part)) {
                 partClass = "function-response";
                 value = html`${part.functionResponse.name}
                 ${JSON.stringify(part.functionResponse.response, null, 2)}`;
