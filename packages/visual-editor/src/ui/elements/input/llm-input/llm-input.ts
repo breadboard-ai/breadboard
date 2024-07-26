@@ -15,7 +15,6 @@ import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
-  DataStore,
   InlineDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
@@ -26,6 +25,7 @@ import {
   StoredDataCapabilityPart,
 } from "@google-labs/breadboard";
 import { asBase64 } from "../../../utils/as-base-64.js";
+import { toInlineDataPart } from "@breadboard-ai/data-store";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -44,9 +44,6 @@ export class LLMInput extends LitElement {
 
   @property()
   minItems = 0;
-
-  @property({ attribute: false })
-  dataStore: DataStore | null = null;
 
   @property()
   allow: AllowedLLMContentTypes = {
@@ -698,11 +695,7 @@ export class LLMInput extends LitElement {
       url = part.storedData.handle;
       mimeType = part.storedData.mimeType;
       getData = async () => {
-        if (!this.dataStore) {
-          return "Unable to retrieve data - no store";
-        }
-
-        const response = await this.dataStore.retrieve(part);
+        const response = await toInlineDataPart(part);
         if (!response) {
           return "Unable to retrieve data";
         }

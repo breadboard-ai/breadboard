@@ -26,7 +26,7 @@ import {
   Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
-import { getDataStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore, IDBRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
@@ -161,7 +161,10 @@ export class Main extends LitElement {
   tokenVendor!: TokenVendor;
 
   @state()
-  dataStore = getDataStore();
+  dataStore = getDefaultDataStore();
+
+  @state()
+  runStore = new IDBRunStore();
 
   @provide({ context: settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
@@ -1081,11 +1084,13 @@ export class Main extends LitElement {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
         store: this.dataStore,
+        runStore: this.runStore,
       });
 
     for await (const result of runner) {
-      // Update "runs" to ensure the UI is aware when the new run begins.
-      this.runs = await this.#runObserver.observe(result);
+      await this.#runObserver.observe(result);
+      this.requestUpdate();
+
       if (currentBoardId !== this.#boardId) {
         return;
       }
@@ -1310,6 +1315,7 @@ export class Main extends LitElement {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
               store: this.dataStore,
+              runStore: this.runStore,
             });
           }
 
@@ -1319,7 +1325,7 @@ export class Main extends LitElement {
             if (result.success) {
               const run = result.run;
               for await (const result of run.replay()) {
-                this.runs = await runObserver.observe(result);
+                await runObserver.observe(result);
                 await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
                 this.requestUpdate();
               }
@@ -1367,9 +1373,11 @@ export class Main extends LitElement {
     )}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
-    const runs = this.#runObserver?.runs();
-    const currentRun = runs?.[0];
-    const inputsFromLastRun = runs?.[1]?.inputs() || null;
+
+    let runs: Promise<InspectableRun[]> = Promise.resolve([]);
+    if (this.#runObserver) {
+      runs = this.#runObserver?.runs();
+    }
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
@@ -1592,402 +1600,415 @@ export class Main extends LitElement {
         </button>
       </div>
       <div id="content" ?inert=${showingOverlay}>
-        <bb-ui-controller
-          ${ref(this.#uiRef)}
-          .graph=${this.graph}
-          .subGraphId=${this.subGraphId}
-          .run=${currentRun}
-          .inputsFromLastRun=${inputsFromLastRun}
-          .kits=${this.kits}
-          .loader=${this.#loader}
-          .status=${this.status}
-          .boardId=${this.#boardId}
-          .failedToLoad=${this.#failedGraphLoad}
-          .settings=${this.#settings}
-          .providers=${this.#providers}
-          .providerOps=${this.providerOps}
-          .history=${history}
-          .version=${this.#version}
-          .showWelcomePanel=${this.showWelcomePanel}
-          .recentBoards=${this.#recentBoards}
-          .dataStore=${this.dataStore}
-          @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-            this.#attemptBoardStart(evt);
-          }}
-          @dragover=${(evt: DragEvent) => {
-            evt.preventDefault();
-          }}
-          @drop=${(evt: DragEvent) => {
-            evt.preventDefault();
-            this.#attemptLoad(evt);
-          }}
-          @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
-            this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
-            return;
-          }}
-          @bbboardinfoupdate=${(
-            evt: BreadboardUI.Events.BoardInfoUpdateEvent
-          ) => {
-            this.#handleBoardInfoUpdate(evt);
-            this.requestUpdate();
-          }}
-          @bbgraphproviderblankboard=${() => {
-            this.#attemptBoardCreate(blankLLMContent());
-          }}
-          @bbsubgraphcreate=${async (
-            evt: BreadboardUI.Events.SubGraphCreateEvent
-          ) => {
-            const editableGraph = this.#getEditor();
+        ${until(
+          runs.then((runInfo) => {
+            const currentRun = runInfo?.[0];
+            const inputsFromLastRun = runInfo?.[1]?.inputs() || null;
 
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
+            return html`<bb-ui-controller
+              ${ref(this.#uiRef)}
+              .graph=${this.graph}
+              .subGraphId=${this.subGraphId}
+              .run=${currentRun}
+              .inputsFromLastRun=${inputsFromLastRun}
+              .kits=${this.kits}
+              .loader=${this.#loader}
+              .status=${this.status}
+              .boardId=${this.#boardId}
+              .failedToLoad=${this.#failedGraphLoad}
+              .settings=${this.#settings}
+              .providers=${this.#providers}
+              .providerOps=${this.providerOps}
+              .history=${history}
+              .version=${this.#version}
+              .showWelcomePanel=${this.showWelcomePanel}
+              .recentBoards=${this.#recentBoards}
+              @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
+                this.#attemptBoardStart(evt);
+              }}
+              @dragover=${(evt: DragEvent) => {
+                evt.preventDefault();
+              }}
+              @drop=${(evt: DragEvent) => {
+                evt.preventDefault();
+                this.#attemptLoad(evt);
+              }}
+              @bbinputerror=${(evt: BreadboardUI.Events.InputErrorEvent) => {
+                this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
+                return;
+              }}
+              @bbboardinfoupdate=${(
+                evt: BreadboardUI.Events.BoardInfoUpdateEvent
+              ) => {
+                this.#handleBoardInfoUpdate(evt);
+                this.requestUpdate();
+              }}
+              @bbgraphproviderblankboard=${() => {
+                this.#attemptBoardCreate(blankLLMContent());
+              }}
+              @bbsubgraphcreate=${async (
+                evt: BreadboardUI.Events.SubGraphCreateEvent
+              ) => {
+                const editableGraph = this.#getEditor();
 
-            const id = globalThis.crypto.randomUUID();
-            const board = blankLLMContent();
-            board.title = evt.subGraphTitle;
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
 
-            const editResult = editableGraph.addGraph(id, board);
-            if (!editResult) {
-              this.toast(
-                "Unable to create sub board",
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
+                const id = globalThis.crypto.randomUUID();
+                const board = blankLLMContent();
+                board.title = evt.subGraphTitle;
 
-            this.subGraphId = id;
-            this.requestUpdate();
-          }}
-          @bbsubgraphdelete=${async (
-            evt: BreadboardUI.Events.SubGraphDeleteEvent
-          ) => {
-            const editableGraph = this.#getEditor();
+                const editResult = editableGraph.addGraph(id, board);
+                if (!editResult) {
+                  this.toast(
+                    "Unable to create sub board",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
 
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
+                this.subGraphId = id;
+                this.requestUpdate();
+              }}
+              @bbsubgraphdelete=${async (
+                evt: BreadboardUI.Events.SubGraphDeleteEvent
+              ) => {
+                const editableGraph = this.#getEditor();
 
-            const editResult = editableGraph.removeGraph(evt.subGraphId);
-            if (!editResult.success) {
-              this.toast(
-                "Unable to create sub board",
-                BreadboardUI.Events.ToastType.ERROR
-              );
-              return;
-            }
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
 
-            if (evt.subGraphId === this.subGraphId) {
-              this.subGraphId = null;
-            }
-            this.requestUpdate();
-          }}
-          @bbsubgraphchosen=${(
-            evt: BreadboardUI.Events.SubGraphChosenEvent
-          ) => {
-            this.subGraphId =
-              evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
-                ? evt.subGraphId
-                : null;
-            this.requestUpdate();
-          }}
-          @bbrunboard=${async () => {
-            if (!this.graph?.url) {
-              return;
-            }
+                const editResult = editableGraph.removeGraph(evt.subGraphId);
+                if (!editResult.success) {
+                  this.toast(
+                    "Unable to create sub board",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
 
-            const runner = await BoardRunner.fromGraphDescriptor(this.graph);
+                if (evt.subGraphId === this.subGraphId) {
+                  this.subGraphId = null;
+                }
+                this.requestUpdate();
+              }}
+              @bbsubgraphchosen=${(
+                evt: BreadboardUI.Events.SubGraphChosenEvent
+              ) => {
+                this.subGraphId =
+                  evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
+                    ? evt.subGraphId
+                    : null;
+                this.requestUpdate();
+              }}
+              @bbrunboard=${async () => {
+                if (!this.graph?.url) {
+                  return;
+                }
 
-            this.#abortController = new AbortController();
-
-            this.#runBoard(
-              run(
-                addNodeProxyServerConfig(
-                  this.#proxy,
-                  {
-                    url: this.graph.url,
-                    runner,
-                    diagnostics: true,
-                    kits: this.kits,
-                    loader: this.#loader,
-                    store: this.dataStore,
-                    signal: this.#abortController?.signal,
-                    inputs: inputsFromSettings(this.#settings),
-                    interactiveSecrets: true,
-                  },
-                  this.#settings,
-                  this.proxyFromUrl
-                )
-              )
-            );
-          }}
-          @bbstopboard=${() => {
-            if (!this.#abortController) {
-              return;
-            }
-
-            this.#abortController.abort("Stopped board");
-            this.requestUpdate();
-          }}
-          @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            switch (evt.changeType) {
-              case "add": {
-                editableGraph.edit(
-                  [{ type: "addedge", edge: evt.from }],
-                  `Add edge between ${evt.from.from} and ${evt.from.to}`
+                const runner = await BoardRunner.fromGraphDescriptor(
+                  this.graph
                 );
-                break;
-              }
 
-              case "remove": {
-                editableGraph.edit(
-                  [{ type: "removeedge", edge: evt.from }],
-                  `Remove edge between ${evt.from.from} and ${evt.from.to}`
+                this.#abortController = new AbortController();
+
+                this.#runBoard(
+                  run(
+                    addNodeProxyServerConfig(
+                      this.#proxy,
+                      {
+                        url: this.graph.url,
+                        runner,
+                        diagnostics: true,
+                        kits: this.kits,
+                        loader: this.#loader,
+                        store: this.dataStore,
+                        signal: this.#abortController?.signal,
+                        inputs: inputsFromSettings(this.#settings),
+                        interactiveSecrets: true,
+                      },
+                      this.#settings,
+                      this.proxyFromUrl
+                    )
+                  )
                 );
-                break;
-              }
+              }}
+              @bbstopboard=${() => {
+                if (!this.#abortController) {
+                  return;
+                }
 
-              case "move": {
-                if (!evt.to) {
-                  throw new Error("Unable to move edge - no `to` provided");
+                this.#abortController.abort("Stopped board");
+                this.requestUpdate();
+              }}
+              @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
+                let editableGraph = this.#getEditor();
+                if (editableGraph && evt.subGraphId) {
+                  editableGraph = editableGraph.getGraph(evt.subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
+
+                switch (evt.changeType) {
+                  case "add": {
+                    editableGraph.edit(
+                      [{ type: "addedge", edge: evt.from }],
+                      `Add edge between ${evt.from.from} and ${evt.from.to}`
+                    );
+                    break;
+                  }
+
+                  case "remove": {
+                    editableGraph.edit(
+                      [{ type: "removeedge", edge: evt.from }],
+                      `Remove edge between ${evt.from.from} and ${evt.from.to}`
+                    );
+                    break;
+                  }
+
+                  case "move": {
+                    if (!evt.to) {
+                      throw new Error("Unable to move edge - no `to` provided");
+                    }
+
+                    editableGraph.edit(
+                      [
+                        {
+                          type: "changeedge",
+                          from: evt.from,
+                          to: evt.to,
+                        },
+                      ],
+                      `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
+                    );
+                    break;
+                  }
+                }
+              }}
+              @bbnodemetadataupdate=${(
+                evt: BreadboardUI.Events.NodeMetadataUpdateEvent
+              ) => {
+                let editableGraph = this.#getEditor();
+                if (editableGraph && evt.subGraphId) {
+                  editableGraph = editableGraph.getGraph(evt.subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn(
+                    "Unable to update node metadata; no active graph"
+                  );
+                  return;
+                }
+
+                const inspectableGraph = editableGraph.inspect();
+                const { id, metadata } = evt;
+                const existingNode = inspectableGraph.nodeById(id);
+                const existingMetadata = existingNode?.metadata() || {};
+                const newMetadata = {
+                  ...existingMetadata,
+                  ...metadata,
+                };
+
+                editableGraph.edit(
+                  [{ type: "changemetadata", id, metadata: newMetadata }],
+                  `Change metadata for "${id}"`
+                );
+              }}
+              @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
+                const { edits, description, subGraphId } = evt;
+                let editableGraph = this.#getEditor();
+                if (editableGraph && subGraphId) {
+                  editableGraph = editableGraph.getGraph(subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn("Unable to multi-edit; no active graph");
+                  return;
+                }
+
+                editableGraph.edit(edits, description);
+              }}
+              @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
+                const { id, nodeType, metadata, configuration } = evt;
+                const newNode = {
+                  id,
+                  type: nodeType,
+                  metadata: metadata || undefined,
+                  configuration: configuration || undefined,
+                };
+
+                let editableGraph = this.#getEditor();
+                if (editableGraph && evt.subGraphId) {
+                  editableGraph = editableGraph.getGraph(evt.subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
+
+                // Comment nodes are stored in the metadata for the graph
+                if (nodeType === "comment") {
+                  const inspectableGraph = editableGraph.inspect();
+                  const { id, metadata } = evt;
+
+                  if (!metadata) {
+                    return;
+                  }
+
+                  const graphMetadata = inspectableGraph.metadata() || {};
+                  graphMetadata.comments = graphMetadata.comments || [];
+                  graphMetadata.comments.push({
+                    id,
+                    text: "",
+                    metadata,
+                  });
+
+                  editableGraph.edit(
+                    [{ type: "changegraphmetadata", metadata: graphMetadata }],
+                    `Change metadata for graph - add comment "${id}"`
+                  );
+                  return;
+                }
+
+                editableGraph.edit(
+                  [{ type: "addnode", node: newNode }],
+                  `Add node ${id}`
+                );
+              }}
+              @bbcommentupdate=${(
+                evt: BreadboardUI.Events.CommentUpdateEvent
+              ) => {
+                const { id, text, subGraphId } = evt;
+
+                let editableGraph = this.#getEditor();
+                if (editableGraph && subGraphId) {
+                  editableGraph = editableGraph.getGraph(subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
+
+                const inspectableGraph = editableGraph.inspect();
+                const graphMetadata = inspectableGraph.metadata() || {};
+                graphMetadata.comments ??= [];
+
+                const comment = graphMetadata.comments.find(
+                  (comment) => comment.id === id
+                );
+                if (!comment) {
+                  console.warn("Unable to update comment; not found");
+                  return;
+                }
+
+                comment.text = text;
+                editableGraph.edit(
+                  [{ type: "changegraphmetadata", metadata: graphMetadata }],
+                  `Change metadata for graph - add comment "${id}"`
+                );
+              }}
+              @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
+                let editableGraph = this.#getEditor();
+                if (editableGraph && evt.subGraphId) {
+                  editableGraph = editableGraph.getGraph(evt.subGraphId);
+                }
+
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
                 }
 
                 editableGraph.edit(
                   [
                     {
-                      type: "changeedge",
-                      from: evt.from,
-                      to: evt.to,
+                      type: "changeconfiguration",
+                      id: evt.id,
+                      configuration: evt.configuration,
+                      reset: true,
                     },
                   ],
-                  `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
+                  `Change configuration for "${evt.id}"`
                 );
-                break;
-              }
-            }
-          }}
-          @bbnodemetadataupdate=${(
-            evt: BreadboardUI.Events.NodeMetadataUpdateEvent
-          ) => {
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
+              }}
+              @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
+                let editableGraph = this.#getEditor();
+                if (editableGraph && evt.subGraphId) {
+                  editableGraph = editableGraph.getGraph(evt.subGraphId);
+                }
 
-            if (!editableGraph) {
-              console.warn("Unable to update node metadata; no active graph");
-              return;
-            }
+                if (!editableGraph) {
+                  console.warn("Unable to create node; no active graph");
+                  return;
+                }
 
-            const inspectableGraph = editableGraph.inspect();
-            const { id, metadata } = evt;
-            const existingNode = inspectableGraph.nodeById(id);
-            const existingMetadata = existingNode?.metadata() || {};
-            const newMetadata = {
-              ...existingMetadata,
-              ...metadata,
-            };
+                editableGraph.edit(
+                  [{ type: "removenode", id: evt.id }],
+                  `Remove node ${evt.id}`
+                );
+              }}
+              @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+                if (!this.#uiRef.value) {
+                  return;
+                }
 
-            editableGraph.edit(
-              [{ type: "changemetadata", id, metadata: newMetadata }],
-              `Change metadata for "${id}"`
-            );
-          }}
-          @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-            const { edits, description, subGraphId } = evt;
-            let editableGraph = this.#getEditor();
-            if (editableGraph && subGraphId) {
-              editableGraph = editableGraph.getGraph(subGraphId);
-            }
+                this.toast(toastEvent.message, toastEvent.toastType);
+              }}
+              @bbinputenter=${async (
+                event: BreadboardUI.Events.InputEnterEvent
+              ) => {
+                if (!this.#settings) {
+                  return;
+                }
 
-            if (!editableGraph) {
-              console.warn("Unable to multi-edit; no active graph");
-              return;
-            }
+                const isSecret = "secret" in event.data;
+                const shouldSaveSecrets =
+                  (event.allowSavingIfSecret &&
+                    this.#settings
+                      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                      .items.get("Save Secrets")?.value) ||
+                  false;
+                if (!shouldSaveSecrets || !isSecret) {
+                  return;
+                }
 
-            editableGraph.edit(edits, description);
-          }}
-          @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-            const { id, nodeType, metadata, configuration } = evt;
-            const newNode = {
-              id,
-              type: nodeType,
-              metadata: metadata || undefined,
-              configuration: configuration || undefined,
-            };
+                const name = event.id;
+                const value = event.data.secret as string;
+                const secrets = this.#settings.getSection(
+                  BreadboardUI.Types.SETTINGS_TYPE.SECRETS
+                ).items;
+                let shouldSave = false;
+                if (secrets.has(event.id)) {
+                  const secret = secrets.get(event.id);
+                  if (secret && secret.value !== value) {
+                    secret.value = value;
+                    shouldSave = true;
+                  }
+                } else {
+                  secrets.set(name, { name, value });
+                  shouldSave = true;
+                }
 
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            // Comment nodes are stored in the metadata for the graph
-            if (nodeType === "comment") {
-              const inspectableGraph = editableGraph.inspect();
-              const { id, metadata } = evt;
-
-              if (!metadata) {
-                return;
-              }
-
-              const graphMetadata = inspectableGraph.metadata() || {};
-              graphMetadata.comments = graphMetadata.comments || [];
-              graphMetadata.comments.push({
-                id,
-                text: "",
-                metadata,
-              });
-
-              editableGraph.edit(
-                [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                `Change metadata for graph - add comment "${id}"`
-              );
-              return;
-            }
-
-            editableGraph.edit(
-              [{ type: "addnode", node: newNode }],
-              `Add node ${id}`
-            );
-          }}
-          @bbcommentupdate=${(evt: BreadboardUI.Events.CommentUpdateEvent) => {
-            const { id, text, subGraphId } = evt;
-
-            let editableGraph = this.#getEditor();
-            if (editableGraph && subGraphId) {
-              editableGraph = editableGraph.getGraph(subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            const inspectableGraph = editableGraph.inspect();
-            const graphMetadata = inspectableGraph.metadata() || {};
-            graphMetadata.comments ??= [];
-
-            const comment = graphMetadata.comments.find(
-              (comment) => comment.id === id
-            );
-            if (!comment) {
-              console.warn("Unable to update comment; not found");
-              return;
-            }
-
-            comment.text = text;
-            editableGraph.edit(
-              [{ type: "changegraphmetadata", metadata: graphMetadata }],
-              `Change metadata for graph - add comment "${id}"`
-            );
-          }}
-          @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            editableGraph.edit(
-              [
-                {
-                  type: "changeconfiguration",
-                  id: evt.id,
-                  configuration: evt.configuration,
-                  reset: true,
-                },
-              ],
-              `Change configuration for "${evt.id}"`
-            );
-          }}
-          @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-            let editableGraph = this.#getEditor();
-            if (editableGraph && evt.subGraphId) {
-              editableGraph = editableGraph.getGraph(evt.subGraphId);
-            }
-
-            if (!editableGraph) {
-              console.warn("Unable to create node; no active graph");
-              return;
-            }
-
-            editableGraph.edit(
-              [{ type: "removenode", id: evt.id }],
-              `Remove node ${evt.id}`
-            );
-          }}
-          @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-            if (!this.#uiRef.value) {
-              return;
-            }
-
-            this.toast(toastEvent.message, toastEvent.toastType);
-          }}
-          @bbinputenter=${async (
-            event: BreadboardUI.Events.InputEnterEvent
-          ) => {
-            if (!this.#settings) {
-              return;
-            }
-
-            const isSecret = "secret" in event.data;
-            const shouldSaveSecrets =
-              (event.allowSavingIfSecret &&
-                this.#settings
-                  .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-                  .items.get("Save Secrets")?.value) ||
-              false;
-            if (!shouldSaveSecrets || !isSecret) {
-              return;
-            }
-
-            const name = event.id;
-            const value = event.data.secret as string;
-            const secrets = this.#settings.getSection(
-              BreadboardUI.Types.SETTINGS_TYPE.SECRETS
-            ).items;
-            let shouldSave = false;
-            if (secrets.has(event.id)) {
-              const secret = secrets.get(event.id);
-              if (secret && secret.value !== value) {
-                secret.value = value;
-                shouldSave = true;
-              }
-            } else {
-              secrets.set(name, { name, value });
-              shouldSave = true;
-            }
-
-            if (!shouldSave) {
-              return;
-            }
-            await this.#settings.save(this.#settings.values);
-            this.requestUpdate();
-          }}
-        ></bb-ui-controller>
-      </div>
-      ${until(nav)}`;
+                if (!shouldSave) {
+                  return;
+                }
+                await this.#settings.save(this.#settings.values);
+                this.requestUpdate();
+              }}
+            ></bb-ui-controller>
+          </div>`;
+          })
+        )}
+        ${until(nav)}
+      </div>`;
 
     if (this.embed) {
       tmpl = html`<iframe

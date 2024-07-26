@@ -28,3 +28,5 @@ export const createRunObserver = (
   const store = new GraphStore();
   return new RunObserver(store, options || {});
 };
+
+export { Run } from "./run/run.js";

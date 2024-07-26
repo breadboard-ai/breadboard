@@ -9,7 +9,6 @@ import { InputEnterEvent } from "../../events/events.js";
 import {
   BoardRunner,
   createRunObserver,
-  DataStore,
   GraphDescriptor,
   GraphLoader,
   InspectableRun,
@@ -22,6 +21,7 @@ import { InputCallback, STATUS } from "../../types/types.js";
 import { getIsolatedNodeGraphDescriptor } from "../../utils/isolated-node-board.js";
 import { inputsFromSettings } from "../../../data/inputs.js";
 import { SettingsStore } from "../../../data/settings-store.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-node-runner")
 export class NodeRunner extends LitElement {
@@ -45,9 +45,6 @@ export class NodeRunner extends LitElement {
 
   @property()
   kits: Kit[] = [];
-
-  @property()
-  dataStore: DataStore | null = null;
 
   #isolatedNodeGraphDescriptor: Promise<GraphDescriptor | null> | null = null;
   #handlers: Map<string, InputCallback[]> = new Map();
@@ -132,15 +129,14 @@ export class NodeRunner extends LitElement {
     if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
-        store: this.dataStore ?? undefined,
       });
     }
 
     this.status = STATUS.RUNNING;
     for await (const result of runner) {
       try {
-        // Update "runs" to ensure the UI is aware when the new run begins.
-        this.runs = await this.#runObserver.observe(result);
+        await this.#runObserver.observe(result);
+        this.requestUpdate();
       } catch (err) {
         // TODO: Do we need to output an error here?
         break;
@@ -227,35 +223,42 @@ export class NodeRunner extends LitElement {
       return nothing;
     }
 
-    const runs = this.#runObserver?.runs();
-    const currentRun = runs?.[0] ?? null;
-    const events = currentRun?.events ?? [];
-    const eventPosition = events.length - 1;
+    let runs: Promise<InspectableRun[]> = Promise.resolve([]);
+    if (this.#runObserver) {
+      runs = this.#runObserver?.runs();
+    }
 
-    return html`<bb-activity-log
-      .run=${currentRun}
-      .events=${events}
-      .eventPosition=${eventPosition}
-      .showExtendedInfo=${true}
-      .logTitle=${"Test Component"}
-      .waitingMessage=${'Click "Run Component" to get started'}
-      .settings=${this.settings}
-      @bbinputrequested=${() => {
-        this.requestUpdate();
-      }}
-      @bbinputenter=${(event: InputEnterEvent) => {
-        const data = event.data;
-        const handlers = this.#handlers.get(event.id) || [];
-        if (handlers.length === 0) {
-          console.warn(
-            `Received event for input(id="${event.id}") but no handlers were found`
-          );
-        }
-        for (const handler of handlers) {
-          handler.call(null, data);
-        }
-      }}
-      name="Board"
-    ></bb-activity-log>`;
+    runs.then((runInfo) => {
+      const currentRun = runInfo?.[0] ?? null;
+      const events = currentRun?.events ?? [];
+      const eventPosition = events.length - 1;
+      return html`<bb-activity-log
+        .run=${currentRun}
+        .events=${events}
+        .eventPosition=${eventPosition}
+        .showExtendedInfo=${true}
+        .logTitle=${"Test Component"}
+        .waitingMessage=${'Click "Run Component" to get started'}
+        .settings=${this.settings}
+        @bbinputrequested=${() => {
+          this.requestUpdate();
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          const data = event.data;
+          const handlers = this.#handlers.get(event.id) || [];
+          if (handlers.length === 0) {
+            console.warn(
+              `Received event for input(id="${event.id}") but no handlers were found`
+            );
+          }
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+        name="Board"
+      ></bb-activity-log>`;
+    });
+
+    return html`${until(runs)}`;
   }
 }

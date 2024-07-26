@@ -20,7 +20,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CodeEditor, LLMInput, LLMInputArray } from "../elements";
 import {
-  DataStore,
   GraphDescriptor,
   GraphProvider,
   isLLMContent,
@@ -57,9 +56,6 @@ export class UserInput extends LitElement {
 
   @property()
   providerOps = 0;
-
-  @property()
-  dataStore: DataStore | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -356,7 +352,6 @@ export class UserInput extends LitElement {
                 inputField = html`<bb-llm-input-array
                   id="${id}"
                   name="${id}"
-                  .dataStore=${this.dataStore}
                   .description=${input.schema.description || null}
                   .values=${value}
                   .allow=${allow}
@@ -413,7 +408,6 @@ export class UserInput extends LitElement {
                 inputField = html`<bb-llm-input
                   id="${id}"
                   name="${id}"
-                  .dataStore=${this.dataStore}
                   .schema=${input.schema}
                   .value=${input.value ?? defaultValue ?? null}
                   .description=${input.schema.description || null}

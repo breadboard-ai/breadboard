@@ -13,7 +13,7 @@ import {
   StoredDataCapabilityPart,
 } from "@google-labs/breadboard";
 
-export class InMemoryStore implements DataStore {
+export class DefaultDataStore implements DataStore {
   static supported(): boolean {
     return true;
   }

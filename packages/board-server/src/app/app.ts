@@ -54,7 +54,7 @@ import { classMap } from "lit/directives/class-map.js";
 
 import "./elements/nav.js";
 import { messages } from "./utils/messages.js";
-import { getDataStore } from "@breadboard-ai/data-store";
+import { getDefaultDataStore, IDBRunStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -84,11 +84,15 @@ export class App extends LitElement {
   showNav = false;
 
   @state()
-  dataStore = getDataStore();
+  dataStore = getDefaultDataStore();
+
+  @state()
+  runStore = new IDBRunStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
     store: this.dataStore,
+    runStore: this.runStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: GraphProvider[] = [];
@@ -481,7 +485,8 @@ export class App extends LitElement {
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
-      this.runs = await this.#runObserver?.observe(result);
+      await this.#runObserver?.observe(result);
+      this.requestUpdate();
 
       const answer = await this.#handleStateChange(result);
 
@@ -816,6 +821,7 @@ export class App extends LitElement {
 
           this.#runObserver = createRunObserver({
             store: this.dataStore,
+            runStore: this.runStore,
           });
           this.#runObserver.load(runData).then(async (result) => {
             this.status = STATUS.STOPPED;
@@ -826,7 +832,7 @@ export class App extends LitElement {
 
             const run = result.run;
             for await (const result of run.replay()) {
-              this.runs = await this.#runObserver.observe(result);
+              await this.#runObserver.observe(result);
               this.requestUpdate();
             }
           });
@@ -924,12 +930,12 @@ export class App extends LitElement {
     };
 
     let initialInputPlaceholder = "";
-    const loadData = this.#load.then(({ title, description }) => {
+    const loadData = this.#load.then(async ({ title, description }) => {
       if (title === "Error") {
         return html`${description}`;
       }
 
-      const currentRun = this.#runObserver.runs()[0];
+      const currentRun = (await this.#runObserver.runs())[0];
       const events = currentRun?.events || [];
       const eventPosition = events.length - 1;
       const topEvent = events[eventPosition];

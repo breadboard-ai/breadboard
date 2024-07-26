@@ -10,7 +10,6 @@ import { markdown } from "../../directives/markdown.js";
 import { until } from "lit/directives/until.js";
 import { cache } from "lit/directives/cache.js";
 import {
-  DataStore,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
@@ -25,8 +24,6 @@ export class LLMOutput extends LitElement {
   value: LLMContent | null = null;
 
   #partDataURLs = new Map<number, string>();
-
-  dataStore: DataStore | null = null;
 
   static styles = css`
     :host {
@@ -195,32 +192,27 @@ export class LLMOutput extends LitElement {
           ) {
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
           } else if (isStoredData(part)) {
-            const storedData = this.dataStore?.retrieveAsURL(part);
-            if (!storedData) {
+            const url = part.storedData.handle;
+            if (!url) {
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
-              const tmpl = storedData.then((url) => {
-                const { mimeType } = part.storedData;
-                const getData = async () => {
-                  const response = await fetch(url);
-                  return response.text();
-                };
-                if (mimeType.startsWith("image")) {
-                  return html`<img src="${url}" alt="LLM Image" />`;
-                }
-                if (mimeType.startsWith("audio")) {
-                  return html`<audio src="${url}" controls />`;
-                }
-                if (mimeType.startsWith("video")) {
-                  return html`<video src="${url}" controls />`;
-                }
-                if (mimeType.startsWith("text")) {
-                  return html`<div class="plain-text">
-                    ${until(getData())}
-                  </div>`;
-                }
-              });
-              value = html`${until(tmpl)}`;
+              const { mimeType } = part.storedData;
+              const getData = async () => {
+                const response = await fetch(url);
+                return response.text();
+              };
+              if (mimeType.startsWith("image")) {
+                value = html`<img src="${url}" alt="LLM Image" />`;
+              }
+              if (mimeType.startsWith("audio")) {
+                value = html`<audio src="${url}" controls />`;
+              }
+              if (mimeType.startsWith("video")) {
+                value = html`<video src="${url}" controls />`;
+              }
+              if (mimeType.startsWith("text")) {
+                value = html`<div class="plain-text">${until(getData())}</div>`;
+              }
             }
           } else {
             value = html`Unrecognized part`;

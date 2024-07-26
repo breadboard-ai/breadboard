@@ -5,8 +5,12 @@
  */
 
 import { type DataStore } from "@google-labs/breadboard";
-import { InMemoryStore } from "./in-memory-store.js";
+import { DefaultDataStore } from "./data/default-store.js";
 
-export function getDataStore(): DataStore {
-  return new InMemoryStore();
+export function getDefaultDataStore(): DataStore {
+  return new DefaultDataStore();
 }
+
+export { IDBRunStore } from "./run/idb-store.js";
+export { InMemoryRunStore } from "./run/in-memory-store.js";
+export { toInlineDataPart, toStoredDataPart } from "./run/convert.js";

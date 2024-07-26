@@ -29,7 +29,11 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
-import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
+import {
+  DataStore,
+  RunStore,
+  SerializedDataStoreGroup,
+} from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -631,13 +635,13 @@ export type InspectableRunObserver = {
    * Returns the list of runs that were observed. The current run is always
    * at the top of the list.
    */
-  runs(): InspectableRun[];
+  runs(): Promise<InspectableRun[]>;
   /**
    * Observes the given result and collects it into the list of runs.
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
    */
-  observe(result: HarnessRunResult): Promise<InspectableRun[]>;
+  observe(result: HarnessRunResult): Promise<void>;
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.
@@ -945,6 +949,10 @@ export type RunObserverOptions = {
    * The data store that will manage non-text data within the run.
    */
   store?: DataStore;
+  /**
+   * A run store
+   */
+  runStore?: RunStore;
 };
 
 export type GraphstartTimelineEntry = [

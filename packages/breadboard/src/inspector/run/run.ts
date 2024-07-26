@@ -50,51 +50,103 @@ export class RunObserver implements InspectableRunObserver {
     this.#options = options;
   }
 
-  runs() {
+  async runs(): Promise<InspectableRun[]> {
     return this.#runs;
   }
 
-  async observe(result: HarnessRunResult): Promise<InspectableRun[]> {
-    if (result.type === "graphstart") {
-      const { path, timestamp } = result.data;
-      if (path.length === 0) {
-        this.#options.store?.startGroup();
-        // start a new run
-        const run = new Run(
-          timestamp,
-          this.#store,
-          result.data.graph,
-          this.#options
-        );
-        // For now, confine the `runs` array to two runs.
-        if (this.#runs.length === 0) {
-          this.#runs = [run];
-        } else {
-          if (this.#runs.length === 2) {
-            const removedRun = this.#runs.pop();
-            this.#options.store?.releaseGroup(removedRun!.dataStoreGroupId);
+  async observe(result: HarnessRunResult): Promise<void> {
+    if (this.#options.runStore) {
+      const { runStore } = this.#options;
+      if (result.type === "graphstart") {
+        const { path } = result.data;
+        if (path.length === 0) {
+          await runStore.start(Date.now().toFixed(0));
+        }
+
+        await runStore.write(result);
+      } else if (result.type === "graphend") {
+        await runStore.write(result);
+
+        const { path } = result.data;
+        if (path.length === 0) {
+          await runStore.stop();
+        }
+      } else if (result.type === "error") {
+        await runStore.abort();
+      } else if (result.type !== "end") {
+        await runStore.write(result);
+      }
+
+      const runs = await this.#options.runStore.getNewestRuns(2);
+      this.#runs = runs
+        .filter((results) => {
+          return results.some((result) => result.type === "graphstart");
+        })
+        .map((results) => {
+          let run!: Run;
+          for (const result of results) {
+            if (result.type === "graphstart") {
+              const { path, timestamp } = result.data;
+              if (path.length === 0) {
+                run = new Run(
+                  timestamp,
+                  this.#store,
+                  result.data.graph,
+                  this.#options
+                );
+              }
+            }
+
+            run.addResult(result);
           }
-          this.#runs = [run, this.#runs[0]];
+
+          if (!run) {
+            throw new Error("Run was not created");
+          }
+
+          return run;
+        });
+    } else {
+      if (result.type === "graphstart") {
+        const { path, timestamp } = result.data;
+        if (path.length === 0) {
+          this.#options.store?.startGroup();
+          // start a new run
+          const run = new Run(
+            timestamp,
+            this.#store,
+            result.data.graph,
+            this.#options
+          );
+          // For now, confine the `runs` array to two runs.
+          if (this.#runs.length === 0) {
+            this.#runs = [run];
+          } else {
+            if (this.#runs.length === 2) {
+              const removedRun = this.#runs.pop();
+              this.#options.store?.releaseGroup(removedRun!.dataStoreGroupId);
+            }
+            this.#runs = [run, this.#runs[0]];
+          }
+        }
+      } else if (result.type === "graphend") {
+        const { path, timestamp } = result.data;
+        if (path.length === 0) {
+          // close out the run
+          const run = this.#runs[0];
+          run.end = timestamp;
+
+          const dataStoreGroupId = this.#options.store?.endGroup();
+          run.dataStoreGroupId =
+            dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
         }
       }
-    } else if (result.type === "graphend") {
-      const { path, timestamp } = result.data;
-      if (path.length === 0) {
-        // close out the run
-        const run = this.#runs[0];
-        run.end = timestamp;
 
-        const dataStoreGroupId = this.#options.store?.endGroup();
-        run.dataStoreGroupId =
-          dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
-      }
+      await this.#storeInlineData(result);
+
+      const run = this.#runs[0];
+      run.addResult(result);
     }
-
-    await this.#storeInlineData(result);
-
-    const run = this.#runs[0];
-    run.addResult(result);
-    return this.#runs;
   }
 
   async #storeInlineData(result: HarnessRunResult): Promise<void> {

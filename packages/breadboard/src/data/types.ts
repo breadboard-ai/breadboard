@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult } from "../harness/types.js";
+
 export type FunctionCallCapabilityPart = {
   functionCall: {
     name: string;
@@ -92,4 +94,13 @@ export type DataStore = {
     storedData: StoredDataCapabilityPart
   ): Promise<StoredDataCapabilityPart>;
   drop(): Promise<void>;
+};
+
+export type RunStore = {
+  start(storeId: string): Promise<string>;
+  write(result: HarnessRunResult): Promise<void>;
+  stop(): Promise<void>;
+  abort(): Promise<void>;
+  drop(): Promise<void>;
+  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
 };

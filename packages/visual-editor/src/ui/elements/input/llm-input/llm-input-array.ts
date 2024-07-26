@@ -10,7 +10,7 @@ import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { LLMInput } from "./llm-input.js";
 import { classMap } from "lit/directives/class-map.js";
-import { DataStore, LLMContent } from "@google-labs/breadboard";
+import { LLMContent } from "@google-labs/breadboard";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
@@ -25,9 +25,6 @@ export class LLMInputArray extends LitElement {
 
   @property()
   minItems = 0;
-
-  @property({ attribute: false })
-  dataStore: DataStore | null = null;
 
   @property()
   allow: AllowedLLMContentTypes = {
@@ -244,7 +241,6 @@ export class LLMInputArray extends LitElement {
                 .minimal=${this.minimal}
                 .minItems=${this.minItems}
                 .allow=${this.allow}
-                .dataStore=${this.dataStore}
               ></bb-llm-input>`;
             })
           : html`No items specified`}

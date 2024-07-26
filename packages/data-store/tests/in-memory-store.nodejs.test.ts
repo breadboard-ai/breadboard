@@ -6,11 +6,11 @@
 
 import test from "ava";
 
-import { getDataStore } from "../src/index.js";
+import { getDefaultDataStore } from "../src/index.js";
 import { isSerializedData } from "@google-labs/breadboard";
 
 test("InMemoryStore stores blobs", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const url = await store.store(new Blob(["file contents"]));
   store.releaseAll();
 
@@ -18,7 +18,7 @@ test("InMemoryStore stores blobs", async (t) => {
 });
 
 test("InMemoryStore retrieves inline data", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const contents = "file contents";
   const type = "text/plain";
   const data = new Blob([contents], { type });
@@ -31,7 +31,7 @@ test("InMemoryStore retrieves inline data", async (t) => {
 });
 
 test("InMemoryStore retrieves blobs", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const data = new Blob(["file contents"]);
   const url = await store.store(data);
   const retrieved = await store.retrieveAsBlob(url);
@@ -41,7 +41,7 @@ test("InMemoryStore retrieves blobs", async (t) => {
 });
 
 test("InMemoryStore retrieves urls", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const data = new Blob(["file contents"]);
   const stored = await store.store(data);
   const url = await store.retrieveAsURL(stored);
@@ -51,7 +51,7 @@ test("InMemoryStore retrieves urls", async (t) => {
 });
 
 test("InMemoryStore throws if item does not exist", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   await t.throwsAsync(
     store.retrieve({
       storedData: {
@@ -63,7 +63,7 @@ test("InMemoryStore throws if item does not exist", async (t) => {
 });
 
 test("InMemoryStore serializes a group", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   store.startGroup();
 
   const data1 = new Blob(["file contents 1"]);
@@ -85,13 +85,13 @@ test("InMemoryStore serializes a group", async (t) => {
 });
 
 test("InMemoryStore returns null if a group does not exist", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const group = await store.serializeGroup(100);
   t.falsy(group);
 });
 
 test("InMemoryStore copies to newest group", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
   const contents = "file contents 1";
   const type = "text/plain";
 
@@ -122,7 +122,7 @@ test("InMemoryStore copies to newest group", async (t) => {
 });
 
 test("InMemoryStore drops all entries", async (t) => {
-  const store = getDataStore();
+  const store = getDefaultDataStore();
 
   const data1 = new Blob(["file contents 1"]);
   const data2 = new Blob(["file contents 2"]);

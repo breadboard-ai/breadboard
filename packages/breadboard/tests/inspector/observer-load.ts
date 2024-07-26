@@ -31,7 +31,7 @@ const loadRawRun = async (
   raw.forEach(async (result) => {
     await observer.observe(result);
   });
-  return observer.runs()[0];
+  return (await observer.runs())[0];
 };
 
 const propsEqual = (
@@ -104,7 +104,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     t.fail(run1LoadResult.error);
     return;
   }
-  runsEqual(t, run1, observer.runs()[0]);
+  runsEqual(t, run1, (await observer.runs())[0]);
 });
 
 test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
@@ -174,5 +174,5 @@ test("run load/save: serialization produces consistent size", async (t) => {
       })
     ).success
   );
-  runsEqual(t, run, observer.runs()[0]);
+  runsEqual(t, run, (await observer.runs())[0]);
 });
