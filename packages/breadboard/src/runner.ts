@@ -8,8 +8,6 @@ import type {
   BreadboardCapability,
   BreadboardRunResult,
   BreadboardRunner,
-  BreadboardSlotSpec,
-  BreadboardValidator,
   Edge,
   GraphDescriptor,
   GraphInlineMetadata,
@@ -72,9 +70,6 @@ export class BoardRunner implements BreadboardRunner {
   graphs?: SubGraphs;
   args?: InputValues;
 
-  #slots: BreadboardSlotSpec = {};
-  #validators: BreadboardValidator[] = [];
-
   /**
    *
    * @param metadata - optional metadata for the board. Use this parameter
@@ -119,15 +114,6 @@ export class BoardRunner implements BreadboardRunner {
    *
    * If `stop.type` is `output`, the board is providing output values.
    * When that is the case, use `stop.outputs` to receive output values.
-   *
-   * See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
-   *
-   * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
-   * @param result - an optional result of a previous run. If provided, the
-   * board will resume from the state of the previous run.
-   * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
     args: RunArguments = {},
@@ -139,8 +125,6 @@ export class BoardRunner implements BreadboardRunner {
     yield* asyncGen<BreadboardRunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
-      const slots = { ...this.#slots, ...context.slots };
-      this.#validators.forEach((validator) => validator.addGraph(this));
 
       const machine = new TraversalMachine(this, result?.state);
 
@@ -239,7 +223,6 @@ export class BoardRunner implements BreadboardRunner {
             // TODO: Remove this, since it is now the same as `board`.
             outerGraph: this,
             base,
-            slots,
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
             provideOutput: createOutputProvider(next, result, context),
@@ -262,9 +245,6 @@ export class BoardRunner implements BreadboardRunner {
             node: descriptor,
             inputs,
             outputs: (await outputsPromise) as OutputValues,
-            validatorMetadata: this.#validators.map((validator) =>
-              validator.getValidatorMetadata(descriptor)
-            ),
             path: path(),
             timestamp: timestamp(),
           },
@@ -282,10 +262,6 @@ export class BoardRunner implements BreadboardRunner {
     });
   }
 
-  get validators() {
-    return this.#validators;
-  }
-
   /**
    * A simplified version of `run` that runs the board until the board provides
    * an output, and returns that output.
@@ -294,10 +270,6 @@ export class BoardRunner implements BreadboardRunner {
    * or the the outputs are only expected to be visited once.
    *
    * @param inputs - the input values to provide to the board.
-   * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
-   * @param kits - an optional map of kits to use when running the board.
    * @returns - outputs provided by the board.
    */
   async runOnce(
@@ -306,15 +278,6 @@ export class BoardRunner implements BreadboardRunner {
   ): Promise<OutputValues> {
     const args = { ...inputs, ...this.args };
     const { probe } = context;
-
-    if (context.board && context.descriptor) {
-      // If called from another node in a parent board, add the parent board's
-      // validators to the board, with the current arguments.
-      for (const validator of (context.board as this).validators)
-        this.addValidator(
-          validator.getSubgraphValidator(context.descriptor, Object.keys(args))
-        );
-    }
 
     try {
       let outputs: OutputValues = {};
@@ -357,16 +320,6 @@ export class BoardRunner implements BreadboardRunner {
   }
 
   /**
-   * Add validator to the board.
-   * Will call .addGraph() on the validator before executing a graph.
-   *
-   * @param validator - a validator to add to the board.
-   */
-  addValidator(validator: BreadboardValidator) {
-    this.#validators.push(validator);
-  }
-
-  /**
    * Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
    * of the board.
    *
@@ -400,7 +353,6 @@ export class BoardRunner implements BreadboardRunner {
    * Loads a board from a URL or a file path.
    *
    * @param url - the URL or a file path to the board.
-   * @param slots - optional slots to provide to the board.
    * @returns - a new `Board` instance.
    * @deprecated Use `createLoader` directly within this package or use
    * `loader` from the `NodeHandlerContext`.
@@ -409,17 +361,15 @@ export class BoardRunner implements BreadboardRunner {
     path: string,
     options: {
       base: URL;
-      slotted?: BreadboardSlotSpec;
       outerGraph?: GraphDescriptor;
       graphProviders?: GraphProvider[];
     }
   ): Promise<BoardRunner> {
-    const { base, slotted, outerGraph } = options || {};
+    const { base, outerGraph } = options || {};
     const loader = createLoader(options.graphProviders);
     const graph = await loader.load(path, { base, outerGraph });
     if (!graph) throw new Error(`Unable to load graph from "${path}"`);
     const board = await BoardRunner.fromGraphDescriptor(graph);
-    board.#slots = slotted || {};
     return board;
   }
 

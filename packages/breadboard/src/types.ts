@@ -654,7 +654,6 @@ export interface RunnerLike {
 
 export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
   kits: Kit[]; // No longer optional
-  addValidator(validator: BreadboardValidator): void;
 }
 
 export interface Breadboard extends BreadboardRunner {
