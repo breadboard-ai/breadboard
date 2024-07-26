@@ -108,7 +108,7 @@
     "@typescript-eslint/parser": "^7.17.0",
     "ava": "^5.2.0",
     "npm": "^10.8.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.23.0"

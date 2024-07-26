@@ -148,7 +148,7 @@
     "rollup": "^4.19.0",
     "rollup-plugin-dts": "^6.1.1",
     "@rollup/plugin-json": "^6.1.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=20.14.0"
