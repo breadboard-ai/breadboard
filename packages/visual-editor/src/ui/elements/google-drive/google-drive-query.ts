@@ -5,7 +5,7 @@
  */
 
 import { LitElement, css, html } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
@@ -69,6 +69,9 @@ export class GoogleDriveQuery extends LitElement {
   @state()
   private _pickerLib?: typeof google.picker;
 
+  @property()
+  value = "";
+
   #picker?: google.picker.Picker;
 
   override async connectedCallback(): Promise<void> {
@@ -89,7 +92,11 @@ export class GoogleDriveQuery extends LitElement {
     // TODO(aomarks) Hook up the textarea so it works as a real input.
     return html`
       <section id="query">
-        <textarea placeholder="Google Drive Query"></textarea>
+        <textarea
+          placeholder="Google Drive Query"
+          .value=${this.value}
+          @input=${this.#onQueryInput}
+        ></textarea>
         <a
           href="https://developers.google.com/drive/api/guides/search-files"
           target="_blank"
@@ -165,5 +172,9 @@ export class GoogleDriveQuery extends LitElement {
     this.#picker.setVisible(false);
     this.#picker.dispose();
     this.#picker = undefined;
+  }
+
+  #onQueryInput(event: { target: HTMLTextAreaElement }) {
+    this.value = event.target.value;
   }
 }
