@@ -164,8 +164,124 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "properties": {},
-                "required": [],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
+                    "type": "object",
+                    "properties": {
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl"
+                ],
                 "additionalProperties": false
               }
             }
@@ -232,8 +348,124 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "properties": {},
-                "required": [],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
+                    "type": "object",
+                    "properties": {
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl"
+                ],
                 "additionalProperties": false
               }
             }
