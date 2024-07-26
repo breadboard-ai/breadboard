@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+
+### Patch Changes
+
+- ad8aa22: Add kit function to build for making kits
+- f78ec0a: Add intersect function to breadboard type expressions system for intersecting two objects
+- b76f9a1: Add id, metadata, and breadboardType to component definition classes
+- 15ae381: Fix optional output serialization
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [6ffa89c]
+  - @google-labs/breadboard@0.23.0
+
 ## 0.7.1
 
 ### Patch Changes

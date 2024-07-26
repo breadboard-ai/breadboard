@@ -1,5 +1,11 @@
 # @google-labs/breadboard-schema
 
+## 1.6.0
+
+### Minor Changes
+
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+
 ## 1.5.1
 
 ### Patch Changes

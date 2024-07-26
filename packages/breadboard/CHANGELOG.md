@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.23.0
+
+### Minor Changes
+
+- 1e1be2a: Teach board-server run API endpoint to run simple boards.
+- 2b9ef5b: Rewrire Datastore usage
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- 2b094a3: Add google-drive-query behavior
+- fa93c3f: Add drop function to datastore
+- 215bd15: Add google-drive-file-id
+- a0852df: Update titles and help links in Core Kit.
+- Updated dependencies [2312443]
+  - @google-labs/breadboard-schema@1.6.0
+
 ## 0.22.0
 
 ### Minor Changes
