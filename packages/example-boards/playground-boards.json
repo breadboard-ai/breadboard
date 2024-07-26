@@ -176,7 +176,7 @@
     {
       "title": "The Search Summarizer Board",
       "reference": "/example-boards/playground/search-summarize.json",
-      "version": "0.1.1"
+      "version": "0.2.0"
     },
     {
       "title": "The simplest LLM-based board",

@@ -4,90 +4,70 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphInlineMetadata,
-  Schema,
-  V,
-  base,
-  board,
-} from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
-import { json } from "@google-labs/json-kit";
+import { annotate, board, input, object, output } from "@breadboard-ai/build";
+import { fetch, invoke, secret } from "@google-labs/core-kit";
+import { promptTemplate, urlTemplate } from "@google-labs/template-kit";
+import { jsonata } from "@google-labs/json-kit";
 
-const metadata = {
+const query = input({
+  type: "string",
+  title: "Query",
+  description: "What would you like to search for?",
+});
+
+const generator = input({
+  $id: "text-generator",
+  title: "Generator",
+  type: annotate(object({}), {
+    behavior: ["board"],
+  }),
+  description: "The URL of the generator to call",
+  default: { kind: "board", path: "text-generator.json" }
+});
+
+const apiKey = secret("API_KEY");
+const cseId = secret("GOOGLE_CSE_ID");
+
+const url = urlTemplate({
+  $id: "customSearchURL",
+  $metadata: {
+    title: "CSE URL Template",
+  },
+  template:
+    "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
+  query,
+  API_KEY: apiKey,
+  GOOGLE_CSE_ID: cseId
+});
+
+const fetchResult = fetch({
+  $id: "search",
+  url
+});
+
+const snippets = jsonata({
+  $id: "getSnippets",
+  expression: "$join(items.snippet, '\n')",
+  json: fetchResult.outputs.response
+}).unsafeOutput("result");
+
+const prompt = promptTemplate({
+  $id: "summarizing-template",
+  template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+  question: query,
+  context: snippets
+});
+
+const llmResponse = invoke({
+  $id: "llm-response",
+  $board: generator,
+  text: prompt
+}).unsafeOutput("text");
+
+export default board({
   title: "The Search Summarizer Board",
-  description:
-    "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-  version: "0.1.1",
-} satisfies GraphInlineMetadata;
-
-const inputSchema = {
-  type: "object",
-  properties: {
-    text: {
-      type: "string",
-      title: "Query",
-      description: "What would you like to search for?",
-    },
-    generator: {
-      type: "string",
-      title: "Generator",
-      description: "The URL of the generator to call",
-      default: "text-generator.json",
-    },
-  },
-  required: ["text"],
-} satisfies Schema;
-
-const outputSchema = {
-  type: "object",
-  properties: {
-    text: {
-      type: "string",
-      title: "Answer",
-      description: "The answer to the query",
-    },
-  },
-  required: ["text"],
-} satisfies Schema;
-
-export default await board(() => {
-  const parameters = base.input({ $id: "parameters", schema: inputSchema });
-
-  return core
-    .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
-    .to(
-      templates.urlTemplate({
-        $id: "customSearchURL",
-        template:
-          "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
-        query: parameters.text,
-      })
-    )
-    .url.to(core.fetch({ $id: "search" }))
-    .response.as("json")
-    .to(
-      json.jsonata({
-        $id: "getSnippets",
-        expression: "$join(items.snippet, '\n')",
-      })
-    )
-    .result.as("context")
-    .to(
-      templates.promptTemplate({
-        template:
-          "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-        $id: "summarizing-template",
-        question: parameters.text,
-      })
-    )
-    .prompt.as("text")
-    .to(
-      core.invoke({
-        $id: "generator",
-        $board: parameters.generator as V<string>,
-      })
-    )
-    .text.to(base.output({ schema: outputSchema }));
-}).serialize(metadata);
+  description: "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+  version: "0.2.0",
+  inputs: { query, generator },
+  outputs: { result: output(llmResponse) },
+});
