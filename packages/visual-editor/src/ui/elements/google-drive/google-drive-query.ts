@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html } from "lit";
+import { LitElement, css, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
@@ -12,6 +12,57 @@ import { loadDrivePicker } from "./google-apis.js";
 
 @customElement("bb-google-drive-query")
 export class GoogleDriveQuery extends LitElement {
+  static styles = css`
+    :host {
+      display: flex;
+      flex-direction: column;
+      max-width: 400px;
+    }
+
+    #query {
+      display: flex;
+      flex-direction: column;
+    }
+    #query > textarea {
+      box-sizing: border-box;
+      height: 4lh;
+      margin-top: 14px;
+      padding: 8px;
+      width: 100%;
+    }
+    #query > a {
+      align-self: flex-end;
+      color: var(--bb-ui-600);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    #sharing {
+      display: flex;
+      margin-top: 14px;
+    }
+    #sharing > button {
+      background: var(--bb-inputs-500);
+      border-radius: 20px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: var(--bb-label-large);
+      max-height: 32px;
+      padding: 4px 18px;
+      white-space: nowrap;
+    }
+    #sharing > button:hover {
+      background-color: var(--bb-inputs-400);
+    }
+    #sharing > p {
+      color: var(--bb-neutral-600);
+      font-size: 11px;
+      margin: 0 0 0 12px;
+      text-align: justify;
+    }
+  `;
+
   @state()
   private _authorization?: { clientId: string; secret: string };
 
@@ -35,14 +86,26 @@ export class GoogleDriveQuery extends LitElement {
     if (this._pickerLib === undefined) {
       return html`<p>Loading Google Drive Picker ...</p>`;
     }
-    // TODO(aomarks) The actual input element.
+    // TODO(aomarks) Hook up the textarea so it works as a real input.
     return html`
-      <p>
-        Only files that you choose to share with Breadboard will be matched by
-        this query. Sharing a file is permanent and applies to all future
-        queries from your signed-in account.
-      </p>
-      <button @click=${this.#onClickPickFiles}>Share Google Drive Files</button>
+      <section id="query">
+        <textarea placeholder="Google Drive Query"></textarea>
+        <a
+          href="https://developers.google.com/drive/api/guides/search-files"
+          target="_blank"
+          referrerpolicy="no-referrer"
+          >Syntax Documentation</a
+        >
+      </section>
+
+      <section id="sharing">
+        <button @click=${this.#onClickPickFiles}>Share Files</button>
+        <p>
+          The query above only matches files you have shared with Breadboard
+          (including all previously shared files). Click to share additional
+          files. Hold <kbd>Shift</kbd> for multi-select.
+        </p>
+      </section>
     `;
   }
 
