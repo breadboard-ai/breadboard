@@ -48,6 +48,10 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
   const bubbled = invocationId == -1;
 
   const saveState = async (): Promise<RunStackEntry[]> => {
+    const runState = result.runState;
+    if (runState) {
+      return runState;
+    }
     return [
       {
         graph: 0,
@@ -113,7 +117,7 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
 
 const createPreviousRunResult = (
   resumeFrom: StateToResumeFrom | undefined
-): RunResult | undefined => {
+): BreadboardRunResult | undefined => {
   if (resumeFrom?.state?.[0].state) {
     const result = RunResult.load(resumeFrom.state[0].state);
     if (resumeFrom.inputs) {

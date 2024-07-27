@@ -10,11 +10,18 @@ import { createKits } from "./create-kits.js";
 import {
   createLoader,
   inflateData,
+  traversalResultFromStack,
   type InputValues,
+  type RunStackEntry,
 } from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
-import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+import type {
+  InvokeBoardArguments,
+  RunBoardArguments,
+  RunBoardResult,
+} from "../../types.js";
+import { invokeBoard } from "./invoke-board.js";
 
 const fromNextToState = (
   next?: string,
@@ -46,6 +53,8 @@ export const runBoard = async ({
 
   let inputsToConsume = next ? undefined : inputs;
 
+  const resumeFrom = fromNextToState(next, inputs);
+
   const runner = run({
     url,
     kits: createKits(kitOverrides),
@@ -53,7 +62,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
-    resumeFrom: fromNextToState(next, inputs),
+    resumeFrom,
   });
 
   for await (const result of runner) {

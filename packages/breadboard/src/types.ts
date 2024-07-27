@@ -384,6 +384,10 @@ export interface BreadboardRunResult {
    * The timestamp of when this result was issued.
    */
   get timestamp(): number;
+  /** The current run state associated with the result. */
+  get runState(): RunState | undefined;
+
+  save(): Promise<string>;
 }
 
 export interface NodeFactory {
@@ -655,7 +659,6 @@ export interface RunnerLike {
 
 export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
   kits: Kit[]; // No longer optional
-  addValidator(validator: BreadboardValidator): void;
 }
 
 export interface Breadboard extends BreadboardRunner {
@@ -730,7 +733,8 @@ export interface NodeHandlerContext {
     name: string,
     schema: Schema,
     node: NodeDescriptor,
-    path: number[]
+    path: number[],
+    state: RunState
   ) => Promise<NodeValue>;
   /**
    * Provide output directly to the user. This will bypass the normal output

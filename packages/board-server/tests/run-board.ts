@@ -12,6 +12,7 @@ import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
 import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
+import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RunBoardResult } from "../src/server/types.js";
 
 const mockSecretsKit: Kit = {
@@ -29,7 +30,7 @@ const assertResult = (
   index = 0
 ) => {
   if ("$error" in result) {
-    fail(result.$error);
+    fail(`Unexpected error: ${result.$error}`);
   }
   ok(result.$state);
   const { type, outputs } = expected;
@@ -173,6 +174,23 @@ describe("Board Server Runs Boards", () => {
           type: "output",
           outputs: {
             two: "foo",
+          },
+        },
+      },
+      { expected: { type: "end" } },
+    ]);
+  });
+
+  test.skip("can finish a board with bubbling inputs", async () => {
+    await scriptedRun(invokeWithBubblingInput as GraphDescriptor, [
+      { expected: { type: "input" } },
+      { inputs: { name: "Bob" }, expected: { type: "input" } },
+      {
+        inputs: { location: "New York" },
+        expected: {
+          type: "output",
+          outputs: {
+            greeting: "Hello, Bob from New York!",
           },
         },
       },
