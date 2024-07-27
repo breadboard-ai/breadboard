@@ -15,7 +15,6 @@ import type {
   Kit,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeHandlers,
   OutputValues,
   RunArguments,
   SubGraphs,
@@ -115,25 +114,27 @@ export class BoardRunner implements BreadboardRunner {
     args: RunArguments = {},
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult> {
+    const graph = this as GraphDescriptor;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs, ...context } = args;
+    const kits = context.kits ?? [];
     const base = context.base || SENTINEL_BASE_URL;
     const { probe, state } = context;
     const lifecycle = state?.lifecycle();
     yield* asyncGen<BreadboardRunResult>(async (next) => {
-      const handlers = handlersFromKits(context.kits ?? []);
+      const handlers = handlersFromKits(kits);
 
-      const machine = new TraversalMachine(this, result?.state);
+      const machine = new TraversalMachine(graph, result?.state);
 
       const requestedInputs = new RequestedInputsManager(args);
 
       const invocationPath = context.invocationPath || [];
 
-      lifecycle?.dispatchGraphStart(this.url!);
+      lifecycle?.dispatchGraphStart(graph.url!);
 
       await probe?.report?.({
         type: "graphstart",
-        data: { graph: this, path: invocationPath, timestamp: timestamp() },
+        data: { graph, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
@@ -185,7 +186,7 @@ export class BoardRunner implements BreadboardRunner {
             )
           );
           await bubbleUpInputsIfNeeded(
-            this,
+            graph,
             context,
             descriptor,
             result,
@@ -193,7 +194,11 @@ export class BoardRunner implements BreadboardRunner {
             await lifecycle?.state()
           );
           outputsPromise = result.outputsPromise
-            ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
+            ? resolveBoardCapabilities(
+                result.outputsPromise,
+                context,
+                graph.url
+              )
             : undefined;
         } else if (descriptor.type === "output") {
           if (
@@ -215,11 +220,11 @@ export class BoardRunner implements BreadboardRunner {
           const newContext: NodeHandlerContext = {
             ...context,
             descriptor,
-            board: this,
+            board: graph,
             // TODO: Remove this, since it is now the same as `board`.
-            outerGraph: this,
+            outerGraph: graph,
             base,
-            kits: [...(context.kits || []), ...this.kits],
+            kits,
             requestInput: requestedInputs.createHandler(next, result),
             provideOutput: createOutputProvider(next, result, context),
             invocationPath: path(),
@@ -228,7 +233,7 @@ export class BoardRunner implements BreadboardRunner {
 
           outputsPromise = callHandler(
             handler,
-            resolveBoardCapabilitiesInInputs(inputs, context, this.url),
+            resolveBoardCapabilitiesInInputs(inputs, context, graph.url),
             newContext
           ) as Promise<OutputValues>;
         }
