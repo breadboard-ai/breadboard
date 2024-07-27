@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { loadRunnerState, saveRunnerState } from "./serialization.js";
-import { MachineResult } from "./traversal/result.js";
+import { loadRunnerState, saveRunnerState } from "../serialization.js";
+import { MachineResult } from "../traversal/result.js";
 import {
   ManagedRunStateLifecycle,
   RunState,
   TraversalResult,
-} from "./types.js";
+} from "../types.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
-export class StackManager implements ManagedRunStateLifecycle {
+export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #result?: TraversalResult;
 
