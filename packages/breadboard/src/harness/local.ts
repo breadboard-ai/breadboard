@@ -54,7 +54,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
     }
     return [
       {
-        graph: 0,
+        url: undefined,
         node: invocationId,
         state: await saveRunnerState(type, result.state),
       },
@@ -118,8 +118,10 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
 const createPreviousRunResult = (
   resumeFrom: StateToResumeFrom | undefined
 ): BreadboardRunResult | undefined => {
-  if (resumeFrom?.state?.[0].state) {
-    const result = RunResult.load(resumeFrom.state[0].state);
+  if (resumeFrom?.state?.length) {
+    const result = RunResult.load(
+      resumeFrom.state[resumeFrom.state.length - 1].state!
+    );
     if (resumeFrom.inputs) {
       result.inputs = resumeFrom.inputs;
     }

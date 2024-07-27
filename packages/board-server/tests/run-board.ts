@@ -181,7 +181,7 @@ describe("Board Server Runs Boards", () => {
     ]);
   });
 
-  test.skip("can finish a board with bubbling inputs", async () => {
+  test("can finish a board with bubbling inputs", async () => {
     await scriptedRun(invokeWithBubblingInput as GraphDescriptor, [
       { expected: { type: "input" } },
       { inputs: { name: "Bob" }, expected: { type: "input" } },

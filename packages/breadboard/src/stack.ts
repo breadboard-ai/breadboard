@@ -19,8 +19,8 @@ export class StackManager {
     this.#stack = structuredClone(stack) || [];
   }
 
-  onGraphStart(): void {
-    this.#stack.push({ graph: 0, node: 0 });
+  onGraphStart(url: string): void {
+    this.#stack.push({ url, node: 0 });
   }
 
   onNodeStart(result: TraversalResult): void {

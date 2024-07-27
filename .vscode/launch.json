@@ -1,7 +1,4 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
@@ -37,6 +34,13 @@
       "outputCapture": "std",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node-terminal",
+      "name": "Board Server: Test",
+      "request": "launch",
+      "command": "npm run test",
+      "cwd": "${workspaceFolder}/packages/board-server"
     }
   ]
 }

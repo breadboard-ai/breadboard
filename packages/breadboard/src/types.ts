@@ -196,6 +196,7 @@ export interface TraversalResult {
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
   outputsPromise?: Promise<OutputValues>;
+  partialOutputs?: OutputValues;
   pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
   skip: boolean;
 }
@@ -470,9 +471,9 @@ export type InvocationId = number;
  */
 export type RunStackEntry = {
   /**
-   * The invocation id of the graph.
+   * The URL of the graph being run;
    */
-  graph: InvocationId;
+  url: string | undefined;
   /**
    * The invocation id of the node within that graph.
    */
