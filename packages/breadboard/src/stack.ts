@@ -6,12 +6,16 @@
 
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
 import { MachineResult } from "./traversal/result.js";
-import { RunState, TraversalResult } from "./types.js";
+import {
+  ManagedRunStateLifecycle,
+  RunState,
+  TraversalResult,
+} from "./types.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
-export class StackManager {
+export class StackManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #result?: TraversalResult;
 

@@ -7,7 +7,7 @@ import test, { describe } from "node:test";
  * SPDX-License-Identifier: Apache-2.0
  */
 describe("managed run state", () => {
-  test("stack manager", async (t) => {
+  test("stack manager", async () => {
     ok(true);
   });
 });

@@ -44,10 +44,10 @@ import { GraphLoader, GraphProvider } from "./loader/types.js";
 import { toMermaid } from "./mermaid.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 import { SchemaBuilder } from "./schema.js";
-import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import { TraversalMachine } from "./traversal/machine.js";
 import { asyncGen } from "./utils/async-gen.js";
+import { StackManager } from "./stack.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -132,15 +132,19 @@ export class BoardRunner implements BreadboardRunner {
 
       const invocationPath = context.invocationPath || [];
 
-      const stack = new StackManager(context.state);
-
       await probe?.report?.({
         type: "graphstart",
         data: { graph: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
-      stack.onGraphStart(this.url!);
+      const state = context.state || {
+        lifecycle: () => {
+          return new StackManager();
+        },
+      };
+      const lifecycle = state.lifecycle();
+      lifecycle.onGraphStart(this.url!);
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
@@ -163,7 +167,7 @@ export class BoardRunner implements BreadboardRunner {
           continue;
         }
 
-        stack.onNodeStart(result);
+        lifecycle.onNodeStart(result);
 
         await probe?.report?.({
           type: "nodestart",
@@ -173,7 +177,7 @@ export class BoardRunner implements BreadboardRunner {
             path: path(),
             timestamp: timestamp(),
           },
-          state: await stack.state(),
+          state: await lifecycle.state(),
         });
 
         let outputsPromise: Promise<OutputValues> | undefined = undefined;
@@ -182,7 +186,7 @@ export class BoardRunner implements BreadboardRunner {
           await next(
             new InputStageResult(
               result,
-              await stack.state(),
+              await lifecycle?.state(),
               invocationId,
               path()
             )
@@ -193,7 +197,7 @@ export class BoardRunner implements BreadboardRunner {
             descriptor,
             result,
             path(),
-            await stack.state()
+            await lifecycle.state()
           );
           outputsPromise = result.outputsPromise
             ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
@@ -226,7 +230,7 @@ export class BoardRunner implements BreadboardRunner {
             requestInput: requestedInputs.createHandler(next, result),
             provideOutput: createOutputProvider(next, result, context),
             invocationPath: path(),
-            state: await stack.state(),
+            state,
           };
 
           outputsPromise = callHandler(
@@ -236,7 +240,7 @@ export class BoardRunner implements BreadboardRunner {
           ) as Promise<OutputValues>;
         }
 
-        stack.onNodeEnd();
+        lifecycle.onNodeEnd();
 
         await probe?.report?.({
           type: "nodeend",
@@ -252,7 +256,7 @@ export class BoardRunner implements BreadboardRunner {
         result.outputsPromise = outputsPromise;
       }
 
-      stack.onGraphEnd();
+      lifecycle.onGraphEnd();
 
       await probe?.report?.({
         type: "graphend",

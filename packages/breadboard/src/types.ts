@@ -717,6 +717,22 @@ export type BreadboardCapability =
   | ResolvedURLBoardCapability
   | UnresolvedPathBoardCapability;
 
+export type ManagedRunStateLifecycle = {
+  /**
+   * Signifies the beginning of a new graph being run or invoked.
+   * @param url -- url of the graph that is starting
+   */
+  onGraphStart(url: string): void;
+  onNodeStart(result: TraversalResult): void;
+  onNodeEnd(): void;
+  onGraphEnd(): void;
+  state(): Promise<RunState>;
+};
+
+export type ManagedRunState = {
+  lifecycle(): ManagedRunStateLifecycle;
+};
+
 export interface NodeHandlerContext {
   readonly board?: GraphDescriptor;
   readonly descriptor?: NodeDescriptor;
@@ -749,7 +765,7 @@ export interface NodeHandlerContext {
     path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
-  readonly state?: RunState;
+  readonly state?: ManagedRunState;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
