@@ -190,7 +190,7 @@ describe("Board Server Runs Boards", () => {
         expected: {
           type: "output",
           outputs: {
-            greeting: "Hello, Bob from New York!",
+            greeting: 'Greeting is "Hello, Bob from New York!"',
           },
         },
       },

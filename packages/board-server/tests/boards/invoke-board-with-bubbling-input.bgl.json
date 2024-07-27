@@ -21,8 +21,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": 11,
+          "x": -22,
+          "y": -37,
           "collapsed": false
         }
       }
@@ -45,8 +45,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 387,
-          "y": 11,
+          "x": 428,
+          "y": 30,
           "collapsed": false
         }
       }
@@ -56,8 +56,8 @@
       "type": "invoke",
       "metadata": {
         "visual": {
-          "x": 164,
-          "y": 0,
+          "x": 125,
+          "y": -48,
           "collapsed": false
         },
         "title": "Invoker",
@@ -65,6 +65,22 @@
       },
       "configuration": {
         "$board": "#382969d5-0908-4367-b09e-95d8b351c39b"
+      }
+    },
+    {
+      "id": "promptTemplate-f586d280",
+      "type": "promptTemplate",
+      "metadata": {
+        "visual": {
+          "x": 175,
+          "y": 105,
+          "collapsed": false
+        },
+        "title": "Wrapper",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "template": "Greeting is: \"{{greeting}}\""
       }
     }
   ],
@@ -77,8 +93,14 @@
     },
     {
       "from": "invoke-b5fe388d",
-      "to": "output",
+      "to": "promptTemplate-f586d280",
       "out": "greeting",
+      "in": "greeting"
+    },
+    {
+      "from": "promptTemplate-f586d280",
+      "to": "output",
+      "out": "prompt",
       "in": "greeting"
     }
   ],
