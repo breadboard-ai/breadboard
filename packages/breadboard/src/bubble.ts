@@ -37,7 +37,7 @@ export const bubbleUpInputsIfNeeded = async (
   descriptor: NodeDescriptor,
   result: TraversalResult,
   path: number[],
-  state: RunState
+  state: RunState = []
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
   // enforce required inputs.

@@ -47,7 +47,6 @@ import { SchemaBuilder } from "./schema.js";
 import { timestamp } from "./timestamp.js";
 import { TraversalMachine } from "./traversal/machine.js";
 import { asyncGen } from "./utils/async-gen.js";
-import { StackManager } from "./stack.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -122,8 +121,9 @@ export class BoardRunner implements BreadboardRunner {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs, ...context } = args;
     const base = context.base || SENTINEL_BASE_URL;
+    const { probe, state } = context;
+    const lifecycle = state?.lifecycle();
     yield* asyncGen<BreadboardRunResult>(async (next) => {
-      const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
 
       const machine = new TraversalMachine(this, result?.state);
@@ -138,13 +138,7 @@ export class BoardRunner implements BreadboardRunner {
       });
 
       let invocationId = 0;
-      const state = context.state || {
-        lifecycle: () => {
-          return new StackManager();
-        },
-      };
-      const lifecycle = state.lifecycle();
-      lifecycle.onGraphStart(this.url!);
+      lifecycle?.onGraphStart(this.url!);
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
@@ -167,7 +161,7 @@ export class BoardRunner implements BreadboardRunner {
           continue;
         }
 
-        lifecycle.onNodeStart(result);
+        lifecycle?.onNodeStart(result);
 
         await probe?.report?.({
           type: "nodestart",
@@ -177,7 +171,7 @@ export class BoardRunner implements BreadboardRunner {
             path: path(),
             timestamp: timestamp(),
           },
-          state: await lifecycle.state(),
+          state: await lifecycle?.state(),
         });
 
         let outputsPromise: Promise<OutputValues> | undefined = undefined;
@@ -197,7 +191,7 @@ export class BoardRunner implements BreadboardRunner {
             descriptor,
             result,
             path(),
-            await lifecycle.state()
+            await lifecycle?.state()
           );
           outputsPromise = result.outputsPromise
             ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
@@ -240,7 +234,7 @@ export class BoardRunner implements BreadboardRunner {
           ) as Promise<OutputValues>;
         }
 
-        lifecycle.onNodeEnd();
+        lifecycle?.onNodeEnd();
 
         await probe?.report?.({
           type: "nodeend",
@@ -256,7 +250,7 @@ export class BoardRunner implements BreadboardRunner {
         result.outputsPromise = outputsPromise;
       }
 
-      lifecycle.onGraphEnd();
+      lifecycle?.onGraphEnd();
 
       await probe?.report?.({
         type: "graphend",

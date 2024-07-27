@@ -7,6 +7,7 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { extractError } from "../harness/error.js";
 import { RunResult } from "../run.js";
+import { createRunStateManager } from "../run/index.js";
 import { BoardRunner } from "../runner.js";
 import {
   WritableResult,
@@ -73,8 +74,9 @@ export class RunServer {
     const result = resumeRun(request.value);
     const responses = stream.writableResponses.getWriter();
 
-    const servingContext = {
+    const servingContext: NodeHandlerContext = {
       ...context,
+      state: createRunStateManager(),
       probe: diagnostics
         ? new Diagnostics(async (message) => {
             const { type, data } = message;

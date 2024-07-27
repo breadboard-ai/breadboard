@@ -527,7 +527,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  state: RunState;
+  state?: RunState;
 };
 
 export type NodeEndProbeMessage = {

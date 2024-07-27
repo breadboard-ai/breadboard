@@ -104,3 +104,8 @@ export {
   isLLMContent,
   isTextCapabilityPart,
 } from "./data/index.js";
+
+/**
+ * Managed Run State API
+ */
+export { createRunStateManager } from "./run/index.js";
