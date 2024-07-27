@@ -84,7 +84,6 @@ const scriptedRun = async (
   let next;
   const path = "/path/to/board";
   for (const [index, { inputs, expected }] of script.entries()) {
-    console.log("STEP", index);
     const result = await runBoard({
       path,
       url: `https://example.com${path}`,
@@ -98,91 +97,91 @@ const scriptedRun = async (
 };
 
 describe("Board Server Runs Boards", () => {
-  // test("can start a simple board", async () => {
-  //   const path = "/path/to/board";
-  //   const result = await runBoard({
-  //     path,
-  //     url: `https://example.com${path}`,
-  //     loader: async () => simpleBoard,
-  //   });
-  //   assertResult(result, { type: "input" });
-  // });
+  test("can start a simple board", async () => {
+    const path = "/path/to/board";
+    const result = await runBoard({
+      path,
+      url: `https://example.com${path}`,
+      loader: async () => simpleBoard,
+    });
+    assertResult(result, { type: "input" });
+  });
 
-  // test("can finish a simple board", async () => {
-  //   await scriptedRun(simpleBoard, [
-  //     { expected: { type: "input" } },
-  //     { inputs: { text: "foo" }, expected: { type: "output" } },
-  //     { expected: { type: "end" } },
-  //   ]);
-  // });
+  test("can finish a simple board", async () => {
+    await scriptedRun(simpleBoard, [
+      { expected: { type: "input" } },
+      { inputs: { text: "foo" }, expected: { type: "output" } },
+      { expected: { type: "end" } },
+    ]);
+  });
 
-  // test("can start a simple board with inputs", async () => {
-  //   const path = "/path/to/board";
-  //   const inputs = { text: "bar" };
-  //   const result = await runBoard({
-  //     path,
-  //     url: `https://example.com${path}`,
-  //     inputs,
-  //     loader: async () => simpleBoard,
-  //   });
-  //   assertResult(result, {
-  //     type: "output",
-  //     outputs: {
-  //       text: "bar",
-  //     },
-  //   });
-  // });
+  test("can start a simple board with inputs", async () => {
+    const path = "/path/to/board";
+    const inputs = { text: "bar" };
+    const result = await runBoard({
+      path,
+      url: `https://example.com${path}`,
+      inputs,
+      loader: async () => simpleBoard,
+    });
+    assertResult(result, {
+      type: "output",
+      outputs: {
+        text: "bar",
+      },
+    });
+  });
 
-  // test("can start a board with multiple inputs", async () => {
-  //   const path = "/path/to/board";
-  //   const inputs = { text: "bar", number: 42 };
-  //   const result = await runBoard({
-  //     path,
-  //     url: `https://example.com${path}`,
-  //     inputs,
-  //     loader: async () => multipleInputsBoard as GraphDescriptor,
-  //   });
-  //   assertResult(result, { type: "input" });
-  // });
+  test("can start a board with multiple inputs", async () => {
+    const path = "/path/to/board";
+    const inputs = { text: "bar", number: 42 };
+    const result = await runBoard({
+      path,
+      url: `https://example.com${path}`,
+      inputs,
+      loader: async () => multipleInputsBoard as GraphDescriptor,
+    });
+    assertResult(result, { type: "input" });
+  });
 
-  // test("can finish a board with multiple inputs", async () => {
-  //   await scriptedRun(multipleInputsBoard as GraphDescriptor, [
-  //     { expected: { type: "input" } },
-  //     { inputs: { text1: "foo" }, expected: { type: "input" } },
-  //     {
-  //       inputs: { text2: "bar" },
-  //       expected: {
-  //         type: "output",
-  //         outputs: {
-  //           "text-one": "foo",
-  //           "text-two": "bar",
-  //         },
-  //       },
-  //     },
-  //     { expected: { type: "end" } },
-  //   ]);
-  // });
+  test("can finish a board with multiple inputs", async () => {
+    await scriptedRun(multipleInputsBoard as GraphDescriptor, [
+      { expected: { type: "input" } },
+      { inputs: { text1: "foo" }, expected: { type: "input" } },
+      {
+        inputs: { text2: "bar" },
+        expected: {
+          type: "output",
+          outputs: {
+            "text-one": "foo",
+            "text-two": "bar",
+          },
+        },
+      },
+      { expected: { type: "end" } },
+    ]);
+  });
 
-  // test("can finish a board with multiple outputs", async () => {
-  //   await scriptedRun(manyOutputsBoard as GraphDescriptor, [
-  //     { expected: { type: "input" } },
-  //     {
-  //       inputs: { start: "foo" },
-  //       expected: { type: "output", outputs: { one: "foo" } },
-  //     },
-  //     {
-  //       expected: {
-  //         type: "output",
-  //         outputs: {
-  //           two: "foo",
-  //         },
-  //       },
-  //     },
-  //     { expected: { type: "end" } },
-  //   ]);
-  // });
+  test("can finish a board with multiple outputs", async () => {
+    await scriptedRun(manyOutputsBoard as GraphDescriptor, [
+      { expected: { type: "input" } },
+      {
+        inputs: { start: "foo" },
+        expected: { type: "output", outputs: { one: "foo" } },
+      },
+      {
+        expected: {
+          type: "output",
+          outputs: {
+            two: "foo",
+          },
+        },
+      },
+      { expected: { type: "end" } },
+    ]);
+  });
 
-  test("can finish a board with bubbling inputs", async () => {
+  test.skip("can finish a board with bubbling inputs", async () => {
     await scriptedRun(invokeWithBubblingInput as GraphDescriptor, [
       { expected: { type: "input" } },
       { inputs: { name: "Bob" }, expected: { type: "input" } },

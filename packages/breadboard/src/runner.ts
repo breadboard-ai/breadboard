@@ -144,7 +144,6 @@ export class BoardRunner implements BreadboardRunner {
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
-        console.log(path(), "INSIDE BREADBOARD RUNNER", result.skip, result);
         context?.signal?.throwIfAborted();
 
         invocationId++;
