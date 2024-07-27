@@ -726,10 +726,18 @@ export type ManagedRunStateLifecycle = {
   onNodeStart(result: TraversalResult): void;
   onNodeEnd(): void;
   onGraphEnd(): void;
+  onSkip(): void;
   state(): Promise<RunState>;
 };
 
+/**
+ * The representation of Breadboard runtime.
+ * TODO: Rename to ManagedRuntime.
+ */
 export type ManagedRunState = {
+  /**
+   * The entry point for signaling run lifecycle changes.
+   */
   lifecycle(): ManagedRunStateLifecycle;
 };
 

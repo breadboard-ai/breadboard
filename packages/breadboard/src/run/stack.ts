@@ -27,6 +27,10 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     this.#stack.push({ url, node: 0 });
   }
 
+  onSkip(): void {
+    // TODO: implement
+  }
+
   onNodeStart(result: TraversalResult): void {
     this.#stack[this.#stack.length - 1].node++;
     this.#result = result;

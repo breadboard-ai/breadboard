@@ -132,13 +132,14 @@ export class BoardRunner implements BreadboardRunner {
 
       const invocationPath = context.invocationPath || [];
 
+      lifecycle?.onGraphStart(this.url!);
+
       await probe?.report?.({
         type: "graphstart",
         data: { graph: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
-      lifecycle?.onGraphStart(this.url!);
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
@@ -148,6 +149,7 @@ export class BoardRunner implements BreadboardRunner {
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
+          lifecycle?.onSkip();
           await probe?.report?.({
             type: "skip",
             data: {
