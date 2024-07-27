@@ -6,7 +6,7 @@
 
 import { KitDescriptor, KitTag } from "@google-labs/breadboard-schema/graph.js";
 import {
-  ConfigOrLambda,
+  ConfigOrGraph,
   GenericKit,
   InputValues,
   Kit,
@@ -14,7 +14,6 @@ import {
   NodeFactory,
   NodeHandler,
   NodeHandlers,
-  OutputValues,
 } from "../types.js";
 
 export type KitBuilderOptions = KitDescriptor & {
@@ -92,10 +91,8 @@ export class KitBuilder {
             ) {
               return target[prop];
             } else if (nodes.includes(prop as NodeNames[number])) {
-              return (
-                configOrLambda: ConfigOrLambda<InputValues, OutputValues> = {}
-              ) => {
-                const config = nodeFactory.getConfigWithLambda(configOrLambda);
+              return (configOrGraph: ConfigOrGraph = {}) => {
+                const config = nodeFactory.getConfigWithLambda(configOrGraph);
                 const { $id, ...rest } = config;
                 return nodeFactory.create(
                   proxy as unknown as Kit,

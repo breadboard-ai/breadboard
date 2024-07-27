@@ -13,8 +13,6 @@ import type {
   GraphInlineMetadata,
   InputValues,
   Kit,
-  LambdaNodeInputs,
-  LambdaNodeOutputs,
   NodeDescriptor,
   NodeHandlerContext,
   NodeHandlers,
@@ -43,7 +41,6 @@ import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
 import { GraphLoader, GraphProvider } from "./loader/types.js";
 import { toMermaid } from "./mermaid.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
-import { SchemaBuilder } from "./schema.js";
 import { timestamp } from "./timestamp.js";
 import { TraversalMachine } from "./traversal/machine.js";
 import { asyncGen } from "./utils/async-gen.js";
@@ -425,54 +422,8 @@ export class BoardRunner implements BreadboardRunner {
     board: BoardRunner,
     upstreamKits: Kit[] = []
   ): Promise<NodeHandlers> {
-    const core = new Core();
-    const kits = [core as Kit, ...upstreamKits, ...board.kits];
+    const kits = [...upstreamKits, ...board.kits];
 
     return handlersFromKits(kits);
-  }
-}
-
-// HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).
-class Core {
-  handlers: NodeHandlers;
-
-  constructor() {
-    this.handlers = {
-      lambda: {
-        describe: async (inputs?: InputValues) => ({
-          inputSchema: new SchemaBuilder()
-            .setAdditionalProperties(true)
-            .addInputs(inputs)
-            .addProperty("board", {
-              title: "board",
-              description: "The board to run.",
-              type: "object",
-            })
-            .build(),
-          outputSchema: new SchemaBuilder()
-            .addProperty("board", {
-              title: "board",
-              description: "The now-runnable board.",
-              type: "object",
-            })
-            .build(),
-        }),
-        invoke: async (inputs: InputValues): Promise<LambdaNodeOutputs> => {
-          const { board, ...args } = inputs as LambdaNodeInputs;
-          if (!board || board.kind !== "board" || !board.board)
-            throw new Error(
-              `Lambda node requires a BoardCapability as "board" input`
-            );
-          const runnableBoard = {
-            ...(await BoardRunner.fromBreadboardCapability(board)),
-            args,
-          };
-
-          return {
-            board: { ...board, board: runnableBoard as GraphDescriptor },
-          };
-        },
-      },
-    };
   }
 }

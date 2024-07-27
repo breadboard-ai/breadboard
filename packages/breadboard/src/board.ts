@@ -13,14 +13,10 @@ import type {
 
 import type {
   Breadboard,
-  BreadboardRunner,
   Kit,
   KitConstructor,
   OptionalIdConfiguration,
-  LambdaFunction,
   BreadboardNode,
-  LambdaNodeOutputs,
-  BreadboardCapability,
 } from "./types.js";
 
 import { BoardRunner } from "./runner.js";
@@ -82,95 +78,6 @@ export class Board extends BoardRunner implements Breadboard {
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, undefined, "output", { ...rest }, $id);
-  }
-
-  /**
-   * Place a `lambda` node on the board.
-   *
-   * It is a node that represents a subgraph of nodes. It can be passed to
-   * `invoke` or nodes like `map` (defined in another kit) that invoke boards.
-   *
-   * Input wires are made available as input values to the lambda board.
-   *
-   * `board` is the only output and represents a BoardCapability that invoke and
-   * others consume.
-   *
-   * You can either pass a `Board` or a Javascript function to this method. The
-   * JS function is called with a `board` to add things to, and for convenience,
-   * input and output nodes attached to the board.
-   *
-   * Example: board.lambda((board, input, output) => { input.wire( "item->item",
-   * kit.someNode().wire( "value->value", output));
-   * });
-   *
-   * @param boardOrFunction A board or a function that builds the board
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  lambda<In, InL extends In, OutL = OutputValues>(
-    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<In, LambdaNodeOutputs> {
-    const { $id, ...rest } = config;
-
-    let board: Board;
-    let input: BreadboardNode<In, InL> | undefined;
-    if (typeof boardOrFunction === "function") {
-      board = new Board();
-      input = board.input<InL>();
-      const output = board.output<OutL>();
-
-      board.#topClosure = this.#topClosure ?? this;
-      board.#topClosure.#closureStack.push(board);
-
-      boardOrFunction(board, input, output);
-
-      board.#topClosure.#closureStack.pop();
-    } else {
-      board = boardOrFunction as Board;
-    }
-
-    const node = new Node(
-      this,
-      undefined,
-      "lambda",
-      {
-        board: { kind: "board", board } as BreadboardCapability,
-        ...rest,
-      },
-      $id
-    );
-
-    // Process edges that span lambdas. We have to turn this into two wires:
-    //  (1) From the input node in the child board to the destination node
-    //  (2) From the source node to this node. If the source node is in a
-    //      parent board, then instead ask parent to wire it up.
-    if (input && board.#acrossBoardsEdges.length > 0) {
-      for (const { edge, from, to } of board.#acrossBoardsEdges) {
-        if (to !== board || !edge.constant)
-          throw new Error(
-            "Across board wires: Must be constant and from parent to child"
-          );
-
-        // Hopefully unique enough name that doesn't class with other inputs
-        const label = `$l-${edge.to}-${edge.in}`;
-
-        board.addEdge({ ...edge, from: input.id, out: label });
-
-        const outerEdge = { ...edge, to: node.id, in: label };
-        if (from === this) {
-          this.addEdge(outerEdge);
-        } else {
-          this.addEdgeAcrossBoards(outerEdge, from, this);
-        }
-      }
-
-      // Clear the edges, as they are now added to the board itself.
-      // TODO: Add code in .run() to verify that all edges are consumed.
-      board.#acrossBoardsEdges = [];
-    }
-
-    return node;
   }
 
   addEdge(edge: Edge) {

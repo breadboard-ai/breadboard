@@ -398,9 +398,7 @@ export interface NodeFactory {
     configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
-  getConfigWithLambda<Inputs, Outputs>(
-    config: ConfigOrLambda<Inputs, Outputs>
-  ): OptionalIdConfiguration;
+  getConfigWithLambda(config: ConfigOrGraph): OptionalIdConfiguration;
 }
 
 export interface KitConstructor<T extends Kit> {
@@ -408,7 +406,7 @@ export interface KitConstructor<T extends Kit> {
 }
 
 export type NodeSugar<In, Out> = (
-  config?: ConfigOrLambda<In, Out>
+  config?: ConfigOrGraph
 ) => BreadboardNode<In, Out>;
 
 export type GenericKit<T extends NodeHandlers> = Kit & {
@@ -669,10 +667,6 @@ export interface Breadboard extends BreadboardRunner {
   output<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;
-  lambda<In, InL extends In, OutL = OutputValues>(
-    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<In, LambdaNodeOutputs>;
 
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
@@ -841,46 +835,7 @@ export type NodeConfigurationConstructor = Record<
  *
  * use `getConfigWithLambda()` to turn this into a regular config.
  */
-export type ConfigOrLambda<In, Out> =
+export type ConfigOrGraph =
   | OptionalIdConfiguration
   | BreadboardCapability
-  | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-  | GraphDescriptor
-  | LambdaFunction<In, Out>
-  | {
-      board:
-        | BreadboardCapability
-        | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-        | LambdaFunction<In, Out>;
-    };
-
-export type LambdaFunction<In = InputValues, Out = OutputValues> = (
-  board: Breadboard,
-  input: BreadboardNode<In, Out>,
-  output: BreadboardNode<In, Out>
-) => void;
-
-export type LambdaNodeInputs = InputValues & {
-  /**
-   * The (lambda) board this node represents. The purpose of the this node is to
-   * allow wiring data into the lambda board, outside of where it's called.
-   * This is useful when passing a lambda to a map node or as a slot.
-   *
-   * Note that (for now) each board can only be represented by one node.
-   */
-  board: GraphDescriptorBoardCapability;
-
-  /**
-   * All other inputs will be bound to the board.
-   */
-  args: InputValues;
-};
-
-export type LambdaNodeOutputs =
-  | OutputValues
-  | {
-      /**
-       * The lambda board that can be run.
-       */
-      board: BreadboardCapability;
-    };
+  | GraphDescriptor;
