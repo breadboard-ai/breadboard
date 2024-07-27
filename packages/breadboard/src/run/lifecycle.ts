@@ -23,24 +23,24 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     this.#stack = structuredClone(stack) || [];
   }
 
-  onGraphStart(url: string): void {
+  dispatchGraphStart(url: string): void {
     this.#stack.push({ url, node: 0 });
   }
 
-  onSkip(): void {
+  dispatchSkip(): void {
     // TODO: implement
   }
 
-  onNodeStart(result: TraversalResult): void {
+  dispatchNodeStart(result: TraversalResult): void {
     this.#stack[this.#stack.length - 1].node++;
     this.#result = result;
   }
 
-  onNodeEnd(): void {
+  dispatchNodeEnd(): void {
     // TODO: implement
   }
 
-  onGraphEnd(): void {
+  dispatchGraphEnd(): void {
     // TODO: implement
   }
 

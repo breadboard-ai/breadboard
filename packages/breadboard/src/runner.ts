@@ -132,7 +132,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const invocationPath = context.invocationPath || [];
 
-      lifecycle?.onGraphStart(this.url!);
+      lifecycle?.dispatchGraphStart(this.url!);
 
       await probe?.report?.({
         type: "graphstart",
@@ -149,7 +149,7 @@ export class BoardRunner implements BreadboardRunner {
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
-          lifecycle?.onSkip();
+          lifecycle?.dispatchSkip();
           await probe?.report?.({
             type: "skip",
             data: {
@@ -163,7 +163,7 @@ export class BoardRunner implements BreadboardRunner {
           continue;
         }
 
-        lifecycle?.onNodeStart(result);
+        lifecycle?.dispatchNodeStart(result);
 
         await probe?.report?.({
           type: "nodestart",
@@ -236,7 +236,7 @@ export class BoardRunner implements BreadboardRunner {
           ) as Promise<OutputValues>;
         }
 
-        lifecycle?.onNodeEnd();
+        lifecycle?.dispatchNodeEnd();
 
         await probe?.report?.({
           type: "nodeend",
@@ -252,7 +252,7 @@ export class BoardRunner implements BreadboardRunner {
         result.outputsPromise = outputsPromise;
       }
 
-      lifecycle?.onGraphEnd();
+      lifecycle?.dispatchGraphEnd();
 
       await probe?.report?.({
         type: "graphend",

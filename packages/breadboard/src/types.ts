@@ -722,11 +722,11 @@ export type ManagedRunStateLifecycle = {
    * Signifies the beginning of a new graph being run or invoked.
    * @param url -- url of the graph that is starting
    */
-  onGraphStart(url: string): void;
-  onNodeStart(result: TraversalResult): void;
-  onNodeEnd(): void;
-  onGraphEnd(): void;
-  onSkip(): void;
+  dispatchGraphStart(url: string): void;
+  dispatchNodeStart(result: TraversalResult): void;
+  dispatchNodeEnd(): void;
+  dispatchGraphEnd(): void;
+  dispatchSkip(): void;
   state(): Promise<RunState>;
 };
 
