@@ -62,7 +62,7 @@ test("using map as part of a board", async (t) => {
   });
   input.wire("list->", map);
   map.wire("list->", board.output());
-  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  const outputs = await board.runOnce({ list: [1, 2, 3] }, { kits: [core] });
   t.deepEqual(outputs, {
     list: [
       { index: 0, item: 1, list: [1, 2, 3] },
@@ -87,7 +87,12 @@ test("sending a real board to a map", async (t) => {
   });
   input.wire("list->", map);
   map.wire("list->", board.output());
-  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  const outputs = await board.runOnce(
+    { list: [1, 2, 3] },
+    {
+      kits: [core],
+    }
+  );
   t.deepEqual(outputs, {
     list: [
       { index: 0, item: 1, list: [1, 2, 3] },

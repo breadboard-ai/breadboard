@@ -142,7 +142,12 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
     // extra noop so that the above output would be used first
     kit.noop().wire("$error->", board.output())
   );
-  const result = await board.runOnce({});
+  const result = await board.runOnce(
+    {},
+    {
+      kits: [kit],
+    }
+  );
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
 });
@@ -154,7 +159,7 @@ test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const output = board.output();
   noop.wire("*->", output);
   noop.wire("$error->", output);
-  const result = await board.runOnce({});
+  const result = await board.runOnce({}, { kits: [kit] });
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
 });

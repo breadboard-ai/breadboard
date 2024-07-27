@@ -35,7 +35,7 @@ test("Interruptible streaming", async (t) => {
       AnyRunResponseMessage
     >();
     const server = new RunServer(transport);
-    server.serve(board);
+    server.serve(board, false, { kits: [kit] });
     const client = transport.createClientStream();
     const writer = client.writableRequests.getWriter();
     writer.write(request);
@@ -93,7 +93,7 @@ test("Continuous streaming", async (t) => {
   );
 
   // Serve the board.
-  server.serve(board);
+  server.serve(board, false, { kits: [kit] });
 
   // Hand-craft running the board
   const { writableRequests: requests, readableResponses: responses } =
@@ -137,7 +137,7 @@ test("runOnce client can run once (client starts first)", async (t) => {
     new WorkerServerTransport(workerDispatcher.receive("test"))
   );
 
-  server.serve(board);
+  server.serve(board, false, { kits: [kit] });
   const outputs = await client.runOnce({ hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });
@@ -159,7 +159,7 @@ test("runOnce client can run once (server starts first)", async (t) => {
     new WorkerClientTransport(hostDispatcher.send("test"))
   );
 
-  server.serve(board);
+  server.serve(board, false, { kits: [kit] });
   const outputs = await client.runOnce({ hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });

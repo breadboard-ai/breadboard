@@ -121,7 +121,7 @@ export class BoardRunner implements BreadboardRunner {
     const { probe, state } = context;
     const lifecycle = state?.lifecycle();
     yield* asyncGen<BreadboardRunResult>(async (next) => {
-      const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
+      const handlers = handlersFromKits(context.kits ?? []);
 
       const machine = new TraversalMachine(this, result?.state);
 
@@ -416,14 +416,5 @@ export class BoardRunner implements BreadboardRunner {
     throw new Error(
       `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`
     );
-  }
-
-  static async handlersFromBoard(
-    board: BoardRunner,
-    upstreamKits: Kit[] = []
-  ): Promise<NodeHandlers> {
-    const kits = [...upstreamKits, ...board.kits];
-
-    return handlersFromKits(kits);
   }
 }
