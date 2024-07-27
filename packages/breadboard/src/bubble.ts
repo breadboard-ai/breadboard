@@ -5,6 +5,7 @@
  */
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
+import { loadRunnerState, saveRunnerState } from "./serialization.js";
 import {
   GraphInlineMetadata,
   InputValues,
@@ -44,6 +45,14 @@ export const bubbleUpInputsIfNeeded = async (
 
   const outputs = (await result.outputsPromise) ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs, path);
+  if (state.length > 0) {
+    const last = state[state.length - 1];
+    if (last.state) {
+      const unpackedState = loadRunnerState(last.state).state;
+      unpackedState.partialOutputs = outputs;
+      last.state = await saveRunnerState("nodestart", unpackedState);
+    }
+  }
   result.outputsPromise = reader.read(
     createBubbleHandler(metadata, context, descriptor, state)
   );

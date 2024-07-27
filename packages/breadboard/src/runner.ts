@@ -140,7 +140,7 @@ export class BoardRunner implements BreadboardRunner {
       });
 
       let invocationId = 0;
-      stack.onGraphStart();
+      stack.onGraphStart(this.url!);
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
