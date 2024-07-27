@@ -717,7 +717,7 @@ export type BreadboardCapability =
   | UnresolvedPathBoardCapability;
 
 export interface NodeHandlerContext {
-  readonly board?: BreadboardRunner;
+  readonly board?: GraphDescriptor;
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
   readonly base?: URL;
@@ -727,7 +727,6 @@ export interface NodeHandlerContext {
    */
   readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
-  readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
   readonly requestInput?: (
     name: string,

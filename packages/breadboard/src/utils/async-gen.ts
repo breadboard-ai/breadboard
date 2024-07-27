@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-type AsyncGenNext<T> = (value: T) => Promise<void>;
-type AsyncGenCallback<T> = (next: AsyncGenNext<T>) => Promise<void>;
+export type AsyncGenNext<T> = (value: T) => Promise<void>;
+export type AsyncGenCallback<T> = (next: AsyncGenNext<T>) => Promise<void>;
 
 // only here for historical purposes. Use asyncGen instead.
 // Remove this when we're sure we don't need it anymore.
