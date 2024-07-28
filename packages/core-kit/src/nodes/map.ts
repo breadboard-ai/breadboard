@@ -104,10 +104,6 @@ const mapNode = defineNodeType({
           base: base || context?.base,
           invocationPath: [...(context?.invocationPath || []), index],
         };
-        // Remove the ability to bubble up inputs from the mapped boards.
-        delete newContext.requestInput;
-        // Remove the ability to bubble up outputs from the mapped boards.
-        delete newContext.provideOutput;
         const outputs = await runnableBoard.runOnce(
           { item, index, list },
           newContext
