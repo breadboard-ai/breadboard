@@ -8,28 +8,18 @@ import type {
   GraphDescriptor,
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
-import {
-  bubbleUpInputsIfNeeded,
-  bubbleUpOutputsIfNeeded,
-  createOutputProvider,
-  RequestedInputsManager,
-} from "../bubble.js";
-import {
-  resolveBoardCapabilities,
-  resolveBoardCapabilitiesInInputs,
-} from "../capability.js";
-import { callHandler, handlersFromKits } from "../handler.js";
-import { SENTINEL_BASE_URL } from "../loader/loader.js";
+import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
+import { resolveBoardCapabilities } from "../capability.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
 import { timestamp } from "../timestamp.js";
 import { TraversalMachine } from "../traversal/machine.js";
 import type {
   BreadboardRunResult,
-  NodeHandlerContext,
   RunArguments,
   TraversalResult,
 } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
+import { NodeInvoker } from "./node-invoker.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -43,16 +33,13 @@ export async function* runGraph(
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs, ...context } = args;
-  const kits = context.kits ?? [];
-  const base = context.base || SENTINEL_BASE_URL;
   const { probe, state } = context;
+
   const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {
-    const handlers = handlersFromKits(kits);
+    const nodeInvoker = new NodeInvoker(args, graph, next);
 
     const machine = new TraversalMachine(graph, resumeFrom);
-
-    const requestedInputs = new RequestedInputsManager(args);
 
     const invocationPath = context.invocationPath || [];
 
@@ -130,29 +117,7 @@ export async function* runGraph(
         }
         outputsPromise = result.outputsPromise;
       } else {
-        const handler = handlers[descriptor.type];
-        if (!handler)
-          throw new Error(`No handler for node type "${descriptor.type}"`);
-
-        const newContext: NodeHandlerContext = {
-          ...context,
-          descriptor,
-          board: graph,
-          // TODO: Remove this, since it is now the same as `board`.
-          outerGraph: graph,
-          base,
-          kits,
-          requestInput: requestedInputs.createHandler(next, result),
-          provideOutput: createOutputProvider(next, result, context),
-          invocationPath: path(),
-          state,
-        };
-
-        outputsPromise = callHandler(
-          handler,
-          resolveBoardCapabilitiesInInputs(inputs, context, graph.url),
-          newContext
-        ) as Promise<OutputValues>;
+        outputsPromise = nodeInvoker.invokeNode(result, path());
       }
 
       lifecycle?.dispatchNodeEnd();
