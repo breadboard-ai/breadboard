@@ -30,6 +30,11 @@ import type {
 } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 
+/**
+ * Runs a graph in "run" mode. See
+ * https://breadboard-ai.github.io/breadboard/docs/reference/runtime-semantics/#run-mode
+ * for more details.
+ */
 export async function* runGraph(
   graph: GraphDescriptor,
   args: RunArguments = {},

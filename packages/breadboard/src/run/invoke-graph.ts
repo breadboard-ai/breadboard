@@ -13,6 +13,11 @@ import type {
 } from "../types.js";
 import { runGraph } from "./run-graph.js";
 
+/**
+ * Runs a graph in "run as component" mode. See
+ * https://breadboard-ai.github.io/breadboard/docs/reference/runtime-semantics/#run-as-component-mode
+ * for more details.
+ */
 export async function invokeGraph(
   graph: GraphDescriptor,
   inputs: InputValues,
