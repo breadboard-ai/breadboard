@@ -5,8 +5,9 @@
  */
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
+import type { RunState } from "./run/types.js";
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
-import {
+import type {
   GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
@@ -14,7 +15,6 @@ import {
   NodeValue,
   OutputValues,
   RunArguments,
-  RunState,
   Schema,
   TraversalResult,
 } from "./types.js";

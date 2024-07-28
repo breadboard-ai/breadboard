@@ -27,6 +27,7 @@ import type {
   BreadboardRunResult,
   NodeHandlerContext,
   RunArguments,
+  TraversalResult,
 } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 
@@ -38,7 +39,7 @@ import { asyncGen } from "../utils/async-gen.js";
 export async function* runGraph(
   graph: GraphDescriptor,
   args: RunArguments = {},
-  result?: BreadboardRunResult
+  resumeFrom?: TraversalResult
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs, ...context } = args;
@@ -49,7 +50,7 @@ export async function* runGraph(
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const handlers = handlersFromKits(kits);
 
-    const machine = new TraversalMachine(graph, result?.state);
+    const machine = new TraversalMachine(graph, resumeFrom);
 
     const requestedInputs = new RequestedInputsManager(args);
 

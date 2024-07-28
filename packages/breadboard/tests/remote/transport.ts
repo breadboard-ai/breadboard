@@ -22,7 +22,7 @@ import {
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
-import { RunState } from "../../src/types.js";
+import type { RunState } from "../../src/run/types.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();

@@ -103,7 +103,7 @@ export class BoardRunner implements BreadboardRunner {
     args: RunArguments = {},
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult> {
-    yield* runGraph(this, args, result);
+    yield* runGraph(this, args, result?.state);
   }
 
   /**

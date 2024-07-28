@@ -6,11 +6,8 @@
 
 import { loadRunnerState, saveRunnerState } from "../serialization.js";
 import { MachineResult } from "../traversal/result.js";
-import {
-  ManagedRunStateLifecycle,
-  RunState,
-  TraversalResult,
-} from "../types.js";
+import type { TraversalResult } from "../types.js";
+import type { ManagedRunStateLifecycle, RunState } from "./types.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423

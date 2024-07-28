@@ -5,7 +5,7 @@
  */
 
 import { LifecycleManager } from "./lifecycle.js";
-import { ManagedRunState } from "../types.js";
+import { ManagedRunState } from "./types.js";
 
 export const createRunStateManager = (): ManagedRunState => {
   const lifecycle = new LifecycleManager();

@@ -10,6 +10,7 @@ import type {
   InputValues,
   NodeHandlerContext,
   OutputValues,
+  TraversalResult,
 } from "../types.js";
 import { runGraph } from "./run-graph.js";
 
@@ -21,7 +22,8 @@ import { runGraph } from "./run-graph.js";
 export async function invokeGraph(
   graph: GraphDescriptor,
   inputs: InputValues,
-  context: NodeHandlerContext = {}
+  context: NodeHandlerContext = {},
+  resumeFrom?: TraversalResult
 ): Promise<OutputValues> {
   const args = { ...inputs, ...graph.args };
   const { probe } = context;
@@ -31,7 +33,7 @@ export async function invokeGraph(
 
     const path = context.invocationPath || [];
 
-    for await (const result of runGraph(graph, context)) {
+    for await (const result of runGraph(graph, context, resumeFrom)) {
       if (result.type === "input") {
         // Pass the inputs to the board. If there are inputs bound to the
         // board (e.g. from a lambda node that had incoming wires), they will
