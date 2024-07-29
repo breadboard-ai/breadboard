@@ -23,9 +23,9 @@ import {
   isTextCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
+  toInlineDataPart,
 } from "@google-labs/breadboard";
 import { asBase64 } from "../../../utils/as-base-64.js";
-import { toInlineDataPart } from "@breadboard-ai/data-store";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 

@@ -837,9 +837,8 @@ export type InspectableRun = {
   events: InspectableRunEvent[];
   /**
    * A way to associate data with the run.
-   * TODO: Revisit the approach once the evolutionary forces have settled.
    */
-  dataStoreGroupId: number;
+  dataStoreKey: string;
   /**
    * Returns the current `InspectableRunNodeEvent` if any.
    * This is useful for tracking the latest node that is being run.
@@ -948,11 +947,15 @@ export type RunObserverOptions = {
   /**
    * The data store that will manage non-text data within the run.
    */
-  store?: DataStore;
+  dataStore?: DataStore;
   /**
-   * A run store
+   * The store that will be used to capture the run's data.
    */
   runStore?: RunStore;
+  /**
+   * Whether or not to skip replacing inlineData parts with storedData parts.
+   */
+  skipDataStore?: boolean;
 };
 
 export type GraphstartTimelineEntry = [

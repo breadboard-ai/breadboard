@@ -22,7 +22,7 @@ import {
 export const inflateData = async (store: DataStore, data: unknown) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
-      const blob = await store.retrieveAsBlob(value);
+      const blob = new Blob(); // await store.retrieveAsBlob(value);
       const data = await asBase64(blob);
       const mimeType = blob.type;
       return { inlineData: { data, mimeType } };
@@ -64,7 +64,7 @@ export const deflateData = async (store: DataStore, data: unknown) => {
       const blob = await fetch(`data:${mimeType};base64,${data}`).then((r) =>
         r.blob()
       );
-      return await store.store(blob);
+      return null; // await store.store(blob);
     }
     if (Array.isArray(value)) {
       const result = [];
@@ -110,7 +110,7 @@ export const remapData = async (
         throw new Error(`Could not find serialized data for handle: ${handle}`);
       }
       const blob = await asBlob(serialized);
-      return await store.store(blob);
+      return null; // await store.store(blob);
     }
     if (Array.isArray(value)) {
       const result = [];

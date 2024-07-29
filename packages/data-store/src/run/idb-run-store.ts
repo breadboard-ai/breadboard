@@ -7,19 +7,11 @@
 import * as idb from "idb";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
-  isInlineData,
   isLLMContent,
   isStoredData,
   RunStore,
-  StoredDataCapabilityPart,
+  toInlineDataPart,
 } from "@google-labs/breadboard";
-import { toInlineDataPart, toStoredDataPart } from "./convert.js";
-import {
-  NodeTimeStamp,
-  OutputProperty,
-  OutputPropertyPartIndex,
-  StoreID,
-} from "./types.js";
 
 const RUN_DB = "runs";
 
@@ -31,17 +23,6 @@ export class IDBRunStore implements RunStore {
 
     return version;
   });
-
-  #dataStores = new Map<
-    StoreID,
-    Map<
-      NodeTimeStamp,
-      Map<
-        OutputProperty,
-        Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
-      >
-    >
-  >();
 
   /**
    * Starts tracking a run.
@@ -60,7 +41,6 @@ export class IDBRunStore implements RunStore {
     this.#version = Promise.resolve(newVersion);
 
     // Now figure out the new version.
-    const dataStores = this.#dataStores;
     const dbNewVersion = await idb.openDB(RUN_DB, newVersion, {
       blocked(currentVersion, blockedVersion, event) {
         console.warn(
@@ -85,24 +65,6 @@ export class IDBRunStore implements RunStore {
           .map((storeName) => {
             // Delete the entries.
             db.deleteObjectStore(storeName);
-
-            // Revoke any open blobs for this store, too.
-            const dataStore = dataStores.get(storeName);
-            if (!dataStore) {
-              return;
-            }
-
-            for (const nodeTimeStamp of dataStore.values()) {
-              for (const property of nodeTimeStamp.values()) {
-                for (const part of property.values()) {
-                  if (!part.storedData.handle.startsWith("blob:")) {
-                    continue;
-                  }
-
-                  URL.revokeObjectURL(part.storedData.handle);
-                }
-              }
-            }
           });
       },
     });
@@ -194,8 +156,7 @@ export class IDBRunStore implements RunStore {
   }
 
   async getNewestRuns(
-    limit = Number.POSITIVE_INFINITY,
-    convertInlineData = true
+    limit = Number.POSITIVE_INFINITY
   ): Promise<HarnessRunResult[][]> {
     await this.#version;
 
@@ -208,80 +169,11 @@ export class IDBRunStore implements RunStore {
       })
       .slice(0, limit);
 
-    const runs: HarnessRunResult[][] = await Promise.all(
+    const runs = await Promise.all(
       storeNames.map((storeName) => db.getAll(storeName))
     );
-
-    if (!convertInlineData) {
-      db.close();
-      return runs;
-    }
-
-    // Now step through each of the runs and convert any inlineData over to a
-    // storedData instead.
-    for (let i = 0; i < storeNames.length; i++) {
-      const storeName = storeNames[i];
-      let dataStore = this.#dataStores.get(storeName);
-      if (!dataStore) {
-        dataStore = new Map<
-          NodeTimeStamp,
-          Map<
-            OutputProperty,
-            Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
-          >
-        >();
-        this.#dataStores.set(storeName, dataStore);
-      }
-
-      for (const event of runs[i]) {
-        if (event.type !== "nodeend" || event.data.node.type !== "input") {
-          continue;
-        }
-
-        const nodeTimeStamp = event.data.timestamp.toFixed(3);
-        let properties = dataStore.get(nodeTimeStamp);
-        if (!properties) {
-          properties = new Map<
-            OutputProperty,
-            Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
-          >();
-          dataStore.set(nodeTimeStamp, properties);
-        }
-
-        for (const [property, value] of Object.entries(event.data.outputs)) {
-          if (!isLLMContent(value)) {
-            continue;
-          }
-
-          let partHandles = properties.get(property);
-          if (!partHandles) {
-            partHandles = new Map<
-              OutputPropertyPartIndex,
-              StoredDataCapabilityPart
-            >();
-            properties.set(property, partHandles);
-          }
-
-          for (let j = 0; j < value.parts.length; j++) {
-            const part = value.parts[j];
-
-            if (isInlineData(part)) {
-              let storedDataPart = partHandles.get(j);
-              if (!storedDataPart) {
-                storedDataPart = await toStoredDataPart(part);
-              }
-
-              value.parts[j] = storedDataPart;
-              partHandles.set(j, storedDataPart);
-            } else if (isStoredData(part)) {
-              throw new Error("Unexpected storedData part in retrieved values");
-            }
-          }
-        }
-      }
-    }
-
     db.close();
+
     return runs;
   }
 }

@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export {
+  createDefaultRunStore,
+  createDefaultDataStore,
+} from "../data/index.js";
 import { GraphDescriptor } from "../types.js";
 import { GraphStore } from "./graph-store.js";
 import { inspectableGraph } from "./graph.js";

@@ -103,6 +103,10 @@ export {
   isFunctionResponseCapabilityPart,
   isLLMContent,
   isTextCapabilityPart,
+  toInlineDataPart,
+  toStoredDataPart,
+  createDefaultDataStore,
+  createDefaultRunStore,
 } from "./data/index.js";
 
 /**

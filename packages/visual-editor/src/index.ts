@@ -26,7 +26,7 @@ import {
   Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
-import { getDefaultDataStore, getRunStore } from "@breadboard-ai/data-store";
+import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
@@ -161,7 +161,7 @@ export class Main extends LitElement {
   tokenVendor!: TokenVendor;
 
   @state()
-  dataStore = getDefaultDataStore();
+  dataStore = getDataStore();
 
   @state()
   runStore = getRunStore();
@@ -1083,7 +1083,7 @@ export class Main extends LitElement {
     if (!this.#runObserver)
       this.#runObserver = createRunObserver({
         logLevel: "debug",
-        store: this.dataStore,
+        dataStore: this.dataStore,
         runStore: this.runStore,
       });
 
@@ -1314,7 +1314,7 @@ export class Main extends LitElement {
           if (!this.#runObserver) {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
-              store: this.dataStore,
+              dataStore: this.dataStore,
               runStore: this.runStore,
             });
           }

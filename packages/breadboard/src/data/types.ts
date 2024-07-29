@@ -78,32 +78,20 @@ export type DataStoreProvider = {
   releaseAll(): Promise<void>;
 };
 
-export type DataStore = {
-  store(data: Blob): Promise<StoredDataCapabilityPart>;
-  retrieve(
-    storedData: StoredDataCapabilityPart
-  ): Promise<InlineDataCapabilityPart>;
-  retrieveAsBlob(storedData: StoredDataCapabilityPart): Promise<Blob>;
-  startGroup(): void;
-  endGroup(): number;
-  releaseGroup(group: number): void;
-  releaseAll(): void;
-  serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
-  retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
-  copyToNewestGroup(
-    storedData: StoredDataCapabilityPart
-  ): Promise<StoredDataCapabilityPart>;
-  drop(): Promise<void>;
-};
-
 export type RunStore = {
-  start(storeId: string): Promise<string>;
+  start(storeId: string, limit?: number): Promise<string>;
   write(result: HarnessRunResult): Promise<void>;
   stop(): Promise<void>;
   abort(): Promise<void>;
   drop(): Promise<void>;
-  getNewestRuns(
-    limit: number,
-    convertInlineData?: boolean
-  ): Promise<HarnessRunResult[][]>;
+  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
+};
+
+export type DataStore = {
+  has(groupId: string): boolean;
+  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
+  serializeGroup(group: string): Promise<SerializedDataStoreGroup | null>;
+  releaseGroup(group: string): void;
+  releaseAll(): void;
+  drop(): Promise<void>;
 };

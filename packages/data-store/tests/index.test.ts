@@ -6,9 +6,9 @@
 
 import test from "ava";
 
-import { getDefaultDataStore } from "../src/index.js";
+import { getDataStore } from "../src/index.js";
 
 test("getStore can find a store", async (t) => {
-  const store = getDefaultDataStore();
+  const store = getDataStore();
   t.truthy(store, "Unable to find store");
 });
