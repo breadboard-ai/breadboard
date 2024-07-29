@@ -34,13 +34,15 @@ export const errorResult = (error: string): HarnessRunResult => {
 };
 
 export class PastRun implements InspectableRun {
-  public readonly dataStoreKey = Date.now().toFixed(3);
-
   #timeline: TimelineEntry[];
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
 
-  constructor(timeline: TimelineEntry[], options: SerializedRunLoadingOptions) {
+  constructor(
+    public readonly dataStoreKey = crypto.randomUUID(),
+    timeline: TimelineEntry[],
+    options: SerializedRunLoadingOptions
+  ) {
     this.#timeline = timeline;
     this.#options = options;
   }
