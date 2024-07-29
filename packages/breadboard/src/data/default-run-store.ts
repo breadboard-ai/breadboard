@@ -13,7 +13,6 @@ export class DefaultRunStore implements RunStore {
   #storeId: string | null = null;
 
   async start(storeId: string, limit = 2) {
-    console.log(`Created store: ${storeId}`);
     if (this.#runs.has(storeId)) {
       throw new Error("Run by name has already started");
     }
@@ -60,9 +59,6 @@ export class DefaultRunStore implements RunStore {
             continue;
           }
 
-          console.log(
-            `Converting stored data to inline part for storage: ${part.storedData.handle}`
-          );
           output.parts[i] = await toInlineDataPart(part);
         }
       }

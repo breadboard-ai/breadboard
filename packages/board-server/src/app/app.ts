@@ -91,7 +91,7 @@ export class App extends LitElement {
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
-    store: this.dataStore,
+    dataStore: this.dataStore,
     runStore: this.runStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
@@ -467,7 +467,7 @@ export class App extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      store: this.dataStore,
+      dataStore: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -820,7 +820,7 @@ export class App extends LitElement {
           evt.preventDefault();
 
           this.#runObserver = createRunObserver({
-            store: this.dataStore,
+            dataStore: this.dataStore,
             runStore: this.runStore,
           });
           this.#runObserver.load(runData).then(async (result) => {

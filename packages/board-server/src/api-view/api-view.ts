@@ -70,7 +70,7 @@ export class ApiExplorer extends LitElement {
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
-    store: this.dataStore,
+    dataStore: this.dataStore,
     runStore: this.runStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
@@ -299,7 +299,7 @@ export class ApiExplorer extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      store: this.dataStore,
+      dataStore: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
