@@ -88,10 +88,16 @@ export type RunStore = {
 };
 
 export type DataStore = {
-  has(groupId: string): boolean;
-  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
-  serializeGroup(group: string): Promise<SerializedDataStoreGroup | null>;
-  releaseGroup(group: string): void;
-  releaseAll(): void;
+  createGroup(groupId: string): void;
   drop(): Promise<void>;
+  has(groupId: string): boolean;
+  releaseAll(): void;
+  releaseGroup(group: string): void;
+  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
+  retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob>;
+  serializeGroup(
+    group: string,
+    storeId?: string
+  ): Promise<SerializedDataStoreGroup | null>;
+  store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
 };

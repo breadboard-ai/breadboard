@@ -14,7 +14,11 @@ import {
   StoredDataCapabilityPart,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { asBase64, toStoredDataPart } from "./common.js";
+import {
+  asBase64,
+  toStoredDataPart,
+  retrieveAsBlob as genericRetrieveAsBlob,
+} from "./common.js";
 
 export type GroupID = string;
 export type NodeTimeStamp = string;
@@ -22,6 +26,7 @@ export type OutputProperty = string;
 export type OutputPropertyPartIndex = number;
 
 export class DefaultDataStore implements DataStore {
+  #lastGroupId: string | null = null;
   #dataStores = new Map<
     GroupID,
     Map<
@@ -33,24 +38,67 @@ export class DefaultDataStore implements DataStore {
     >
   >();
 
-  async replaceDataParts(
-    group: string,
-    result: HarnessRunResult
-  ): Promise<void> {
-    let dataStore = this.#dataStores.get(group);
-    if (!dataStore) {
-      dataStore = new Map<
-        NodeTimeStamp,
-        Map<
-          OutputProperty,
-          Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
-        >
-      >();
-      this.#dataStores.set(group, dataStore);
+  createGroup(groupId: string) {
+    let dataStore = this.#dataStores.get(groupId);
+    if (dataStore) {
+      throw new Error(`Group with ID already exists: ${groupId}`);
     }
 
+    dataStore = new Map<
+      NodeTimeStamp,
+      Map<
+        OutputProperty,
+        Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
+      >
+    >();
+    this.#dataStores.set(groupId, dataStore);
+    this.#lastGroupId = groupId;
+  }
+
+  async store(blob: Blob, groupId?: string) {
+    groupId ??= this.#lastGroupId ?? undefined;
+    if (!groupId) {
+      throw new Error("No active group - unable to store blob");
+    }
+
+    const dataStore = this.#dataStores.get(groupId);
+    if (!dataStore) {
+      throw new Error(`No group in data store with ID: ${groupId}`);
+    }
+
+    const part = await toStoredDataPart(blob);
+    const nodeTimeStamp = Date.now().toFixed(3);
+    let properties = dataStore.get(nodeTimeStamp);
+    if (!properties) {
+      properties = new Map<
+        OutputProperty,
+        Map<OutputPropertyPartIndex, StoredDataCapabilityPart>
+      >();
+
+      dataStore.set(nodeTimeStamp, properties);
+    }
+
+    properties.set(`direct-set-${nodeTimeStamp}`, new Map([[0, part]]));
+    return part;
+  }
+
+  async retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob> {
+    return genericRetrieveAsBlob(part);
+  }
+
+  async replaceDataParts(
+    groupId: string,
+    result: HarnessRunResult
+  ): Promise<void> {
     if (result.type !== "nodeend" || result.data.node.type !== "input") {
       return;
+    }
+
+    const dataStore = this.#dataStores.get(groupId);
+    if (!dataStore) {
+      throw new Error(
+        `Unable to replace data parts, no group created for ${groupId}`
+      );
     }
 
     const nodeTimeStamp = result.data.timestamp.toFixed(3);
@@ -145,12 +193,18 @@ export class DefaultDataStore implements DataStore {
     }
 
     this.#dataStores.delete(groupId);
+
+    if (this.#lastGroupId === groupId) {
+      this.#lastGroupId = null;
+    }
   }
 
   releaseAll(): void {
     for (const groupId of this.#dataStores.keys()) {
       this.releaseGroup(groupId);
     }
+
+    this.#lastGroupId = null;
   }
 
   async drop(): Promise<void> {

@@ -135,6 +135,11 @@ export class RunObserver implements InspectableRunObserver {
           result.data.graph,
           this.#options
         );
+
+        if (!this.#options.skipDataStore) {
+          this.#options.dataStore?.createGroup(run.dataStoreKey);
+        }
+
         this.#runs.unshift(run);
 
         if (this.#runs.length > this.#runLimit) {
@@ -142,6 +147,10 @@ export class RunObserver implements InspectableRunObserver {
             .slice(this.#runLimit)
             .map((run) => run.dataStoreKey);
           for (const groupId of groupIds) {
+            if (this.#options.skipDataStore) {
+              continue;
+            }
+
             this.#options.dataStore?.releaseGroup(groupId);
           }
           this.#runs.length = this.#runLimit;
@@ -177,7 +186,7 @@ export class RunObserver implements InspectableRunObserver {
 }
 
 export class Run implements InspectableRun {
-  public readonly dataStoreKey = (Math.random() * 10000000).toFixed(3);
+  public readonly dataStoreKey = crypto.randomUUID();
 
   #events: EventManager;
 

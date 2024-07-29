@@ -67,6 +67,7 @@ test("Default Data Store replaces inline data parts", async (t) => {
     }
   }
 
+  store.createGroup("store");
   await store.replaceDataParts("store", result);
 
   for (const property of Object.values(result.data.outputs)) {
@@ -91,6 +92,7 @@ test("Default Data Store replaces stored data parts", async (t) => {
     return;
   }
 
+  store.createGroup("store");
   await store.replaceDataParts("store", result);
 
   const handles: string[] = [];
@@ -124,6 +126,36 @@ test("Default Data Store replaces stored data parts", async (t) => {
   store.releaseAll();
 });
 
+test("Default Data Store stores blobs against the existing group", async (t) => {
+  const store = createDefaultDataStore();
+  const blob = new Blob(["Hello, world!"], { type: "text/plain" });
+
+  store.createGroup("store");
+  const part = await store.store(blob);
+  const retrieved = await store.retrieveAsBlob(part);
+
+  await t.deepEqual(blob, retrieved);
+  store.releaseAll();
+});
+
+test("Default Data Store stores blobs against other groups", async (t) => {
+  const store = createDefaultDataStore();
+  const blob = new Blob(["Hello, world!"], { type: "text/plain" });
+
+  store.createGroup("blobs");
+
+  // Creating this group sets the default group in the store, so the test only
+  // passes if the blob is found in the right store.
+  store.createGroup("store");
+  const part = await store.store(blob, "blobs");
+  store.releaseGroup("store");
+
+  const retrieved = await store.retrieveAsBlob(part);
+
+  await t.deepEqual(blob, retrieved);
+  store.releaseAll();
+});
+
 test("Default Data Store releases groups", async (t) => {
   const store = createDefaultDataStore();
   const result = copyResult(inputResult);
@@ -133,8 +165,12 @@ test("Default Data Store releases groups", async (t) => {
     return;
   }
 
+  store.createGroup("store");
   await store.replaceDataParts("store", result);
+
+  store.createGroup("store2");
   await store.replaceDataParts("store2", result);
+
   store.releaseGroup("store");
   t.falsy(store.has("store"));
 
@@ -151,10 +187,10 @@ test("Default Data Store serializes groups", async (t) => {
     return;
   }
 
+  store.createGroup("store");
   await store.replaceDataParts("store", result);
-  const serialized = await store.serializeGroup("store");
-  console.log(serialized);
 
+  const serialized = await store.serializeGroup("store");
   t.deepEqual(serialized?.length, 1);
   t.truthy(serialized![0].handle);
   t.deepEqual(serialized![0].inlineData, {

@@ -123,7 +123,9 @@ export async function asBase64(file: File | Blob): Promise<string> {
   }
 }
 
-async function retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob> {
+export async function retrieveAsBlob(
+  part: StoredDataCapabilityPart
+): Promise<Blob> {
   if (!isStoredData(part)) {
     throw new Error("Invalid stored data");
   }
@@ -143,9 +145,9 @@ export async function toInlineDataPart(
 }
 
 export async function toStoredDataPart(
-  part: InlineDataCapabilityPart | StoredDataCapabilityPart
+  part: InlineDataCapabilityPart | StoredDataCapabilityPart | Blob
 ): Promise<StoredDataCapabilityPart> {
-  const blob = await asBlob(part);
+  const blob = part instanceof Blob ? part : await asBlob(part);
   const handle = URL.createObjectURL(blob);
 
   return {

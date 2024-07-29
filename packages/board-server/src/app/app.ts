@@ -54,7 +54,7 @@ import { classMap } from "lit/directives/class-map.js";
 
 import "./elements/nav.js";
 import { messages } from "./utils/messages.js";
-import { getDefaultDataStore, getRunStore } from "@breadboard-ai/data-store";
+import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -84,7 +84,7 @@ export class App extends LitElement {
   showNav = false;
 
   @state()
-  dataStore = getDefaultDataStore();
+  dataStore = getDataStore();
 
   @state()
   runStore = getRunStore();
