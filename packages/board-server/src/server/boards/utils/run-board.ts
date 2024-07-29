@@ -48,13 +48,13 @@ export const runBoard = async ({
 
   const resumeFrom = fromNextToState(next, inputs);
 
-  if (resumeFrom.state?.length > 1) {
-    const { url: subgraphUrl } = resumeFrom.state[resumeFrom.state.length - 1]!;
-    if (!subgraphUrl) {
-      return { $error: "Invalid state to resume from." };
-    }
-    url = subgraphUrl;
-  }
+  // if (resumeFrom.state?.length > 1) {
+  //   const { url: subgraphUrl } = resumeFrom.state[resumeFrom.state.length - 1]!;
+  //   if (!subgraphUrl) {
+  //     return { $error: "Invalid state to resume from." };
+  //   }
+  //   url = subgraphUrl;
+  // }
 
   const runner = run({
     url,
