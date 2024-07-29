@@ -467,7 +467,7 @@ export class App extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      dataStore: this.dataStore,
+      store: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
