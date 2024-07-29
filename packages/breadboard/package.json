@@ -90,7 +90,7 @@
       ],
       "files": [
         "tests/node/*.ts",
-        "tests/boards/*.json"
+        "tests/bgl/*.bgl.json"
       ],
       "output": []
     },
