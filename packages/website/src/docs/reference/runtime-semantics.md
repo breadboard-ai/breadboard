@@ -18,14 +18,14 @@ The **run** mode is what we typically see when we run the board directly. In thi
 
 In the **run** mode, the board may visit many [`input`](/breadboard/docs/reference/kits/built-in/#the-input-node) and [`output`](/breadboard/docs/reference/kits/built-in/#output-ports) components throughout the run, producing multiple outputs and requesting multiple outputs. The chat bot from example above will wait for user input (using the `input` component) and then provide a response (using the `output` component), over and over.
 
-The implementation of the **run** mode can be found in [runner.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/runner.ts#L131-L132). See the `run` method.
+The implementation of the **run** mode can be found in [run-graph.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/run/run-graph.ts).
 
 ### "Run as component" mode
 
-The **run as component** mode is a bit more limited, and is designed to mimic the behavior of a component. This mode is being used whenever the board is used as a component inside of another board, be it part of a kit, or used by the [`invoke`](/breadboard/docs/kits/core/#the-invoke-component), [`map`](/breadboard/docs/kits/core/#the-map-component), or [`reduce`](/breadboard/docs/kits/core/#the-reduce-component) components.
+The **run as component** mode (also known as "invoke" mode) is a bit more limited, and is designed to mimic the behavior of a component. This mode is being used whenever the board is used as a component inside of another board, be it part of a kit, or used by the [`invoke`](/breadboard/docs/kits/core/#the-invoke-component), [`map`](/breadboard/docs/kits/core/#the-map-component), or [`reduce`](/breadboard/docs/kits/core/#the-reduce-component) components.
 
 To mimic a component, the board must only request input once (just like the component would only have one set of input ports), and only provide output once -- since the component only provides outputs once.
 
 In **run as component** mode, the board will provide the same set of input values to any `input` component it visits, and not stop to request input from user. It will also stop running as soon as it encounters the first `output` component.
 
-The implementation of the **run as component** node can be found in [runner.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/runner.ts#L300-L301). See the `runOnce` method.
+The implementation of the **run as component** node can be found in [invoke-graph.ts](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/src/run/invoke-graph.ts).

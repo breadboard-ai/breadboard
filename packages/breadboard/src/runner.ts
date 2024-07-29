@@ -13,11 +13,8 @@ import type {
   GraphInlineMetadata,
   InputValues,
   Kit,
-  LambdaNodeInputs,
-  LambdaNodeOutputs,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeHandlers,
   OutputValues,
   RunArguments,
   SubGraphs,
@@ -25,29 +22,16 @@ import type {
 
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 import {
-  RequestedInputsManager,
-  bubbleUpInputsIfNeeded,
-  bubbleUpOutputsIfNeeded,
-  createOutputProvider,
-} from "./bubble.js";
-import {
   isBreadboardCapability,
   isGraphDescriptorCapability,
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
-  resolveBoardCapabilities,
-  resolveBoardCapabilitiesInInputs,
 } from "./capability.js";
-import { callHandler, handlersFromKits } from "./handler.js";
-import { SENTINEL_BASE_URL, createLoader } from "./loader/index.js";
+import { createLoader } from "./loader/index.js";
 import { GraphLoader, GraphProvider } from "./loader/types.js";
 import { toMermaid } from "./mermaid.js";
-import { InputStageResult, OutputStageResult } from "./run.js";
-import { SchemaBuilder } from "./schema.js";
-import { StackManager } from "./stack.js";
-import { timestamp } from "./timestamp.js";
-import { TraversalMachine } from "./traversal/machine.js";
-import { asyncGen } from "./utils/async-gen.js";
+import { invokeGraph } from "./run/invoke-graph.js";
+import { runGraph } from "./run/run-graph.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -119,146 +103,7 @@ export class BoardRunner implements BreadboardRunner {
     args: RunArguments = {},
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { inputs, ...context } = args;
-    const base = context.base || SENTINEL_BASE_URL;
-    yield* asyncGen<BreadboardRunResult>(async (next) => {
-      const { probe } = context;
-      const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
-
-      const machine = new TraversalMachine(this, result?.state);
-
-      const requestedInputs = new RequestedInputsManager(args);
-
-      const invocationPath = context.invocationPath || [];
-
-      const stack = new StackManager(context.state);
-
-      await probe?.report?.({
-        type: "graphstart",
-        data: { graph: this, path: invocationPath, timestamp: timestamp() },
-      });
-
-      let invocationId = 0;
-      stack.onGraphStart(this.url!);
-      const path = () => [...invocationPath, invocationId];
-
-      for await (const result of machine) {
-        context?.signal?.throwIfAborted();
-
-        invocationId++;
-        const { inputs, descriptor, missingInputs } = result;
-
-        if (result.skip) {
-          await probe?.report?.({
-            type: "skip",
-            data: {
-              node: descriptor,
-              inputs,
-              missingInputs,
-              path: path(),
-              timestamp: timestamp(),
-            },
-          });
-          continue;
-        }
-
-        stack.onNodeStart(result);
-
-        await probe?.report?.({
-          type: "nodestart",
-          data: {
-            node: descriptor,
-            inputs,
-            path: path(),
-            timestamp: timestamp(),
-          },
-          state: await stack.state(),
-        });
-
-        let outputsPromise: Promise<OutputValues> | undefined = undefined;
-
-        if (descriptor.type === "input") {
-          await next(
-            new InputStageResult(
-              result,
-              await stack.state(),
-              invocationId,
-              path()
-            )
-          );
-          await bubbleUpInputsIfNeeded(
-            this,
-            context,
-            descriptor,
-            result,
-            path(),
-            await stack.state()
-          );
-          outputsPromise = result.outputsPromise
-            ? resolveBoardCapabilities(result.outputsPromise, context, this.url)
-            : undefined;
-        } else if (descriptor.type === "output") {
-          if (
-            !(await bubbleUpOutputsIfNeeded(
-              inputs,
-              descriptor,
-              context,
-              path()
-            ))
-          ) {
-            await next(new OutputStageResult(result, invocationId, path()));
-          }
-          outputsPromise = result.outputsPromise;
-        } else {
-          const handler = handlers[descriptor.type];
-          if (!handler)
-            throw new Error(`No handler for node type "${descriptor.type}"`);
-
-          const newContext: NodeHandlerContext = {
-            ...context,
-            descriptor,
-            board: this,
-            // TODO: Remove this, since it is now the same as `board`.
-            outerGraph: this,
-            base,
-            kits: [...(context.kits || []), ...this.kits],
-            requestInput: requestedInputs.createHandler(next, result),
-            provideOutput: createOutputProvider(next, result, context),
-            invocationPath: path(),
-            state: await stack.state(),
-          };
-
-          outputsPromise = callHandler(
-            handler,
-            resolveBoardCapabilitiesInInputs(inputs, context, this.url),
-            newContext
-          ) as Promise<OutputValues>;
-        }
-
-        stack.onNodeEnd();
-
-        await probe?.report?.({
-          type: "nodeend",
-          data: {
-            node: descriptor,
-            inputs,
-            outputs: (await outputsPromise) as OutputValues,
-            path: path(),
-            timestamp: timestamp(),
-          },
-        });
-
-        result.outputsPromise = outputsPromise;
-      }
-
-      stack.onGraphEnd();
-
-      await probe?.report?.({
-        type: "graphend",
-        data: { path: invocationPath, timestamp: timestamp() },
-      });
-    });
+    yield* runGraph(this, args, result?.state);
   }
 
   /**
@@ -275,47 +120,7 @@ export class BoardRunner implements BreadboardRunner {
     inputs: InputValues,
     context: NodeHandlerContext = {}
   ): Promise<OutputValues> {
-    const args = { ...inputs, ...this.args };
-    const { probe } = context;
-
-    try {
-      let outputs: OutputValues = {};
-
-      const path = context.invocationPath || [];
-
-      for await (const result of this.run(context)) {
-        if (result.type === "input") {
-          // Pass the inputs to the board. If there are inputs bound to the
-          // board (e.g. from a lambda node that had incoming wires), they will
-          // overwrite supplied inputs.
-          result.inputs = args;
-        } else if (result.type === "output") {
-          outputs = result.outputs;
-          // Exit once we receive the first output.
-          await probe?.report?.({
-            type: "nodeend",
-            data: {
-              node: result.node,
-              inputs: result.inputs,
-              outputs,
-              path: [...path, result.invocationId],
-              timestamp: timestamp(),
-            },
-          });
-          await probe?.report?.({
-            type: "graphend",
-            data: { path, timestamp: timestamp() },
-          });
-          break;
-        }
-      }
-      return outputs;
-    } catch (e) {
-      // Unwrap unhandled error (handled errors are just outputs of the board!)
-      if ((e as Error).cause)
-        return { $error: (e as Error).cause } as OutputValues;
-      else throw e;
-    }
+    return invokeGraph(this, inputs, context);
   }
 
   /**
@@ -419,60 +224,5 @@ export class BoardRunner implements BreadboardRunner {
     throw new Error(
       `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`
     );
-  }
-
-  static async handlersFromBoard(
-    board: BoardRunner,
-    upstreamKits: Kit[] = []
-  ): Promise<NodeHandlers> {
-    const core = new Core();
-    const kits = [core as Kit, ...upstreamKits, ...board.kits];
-
-    return handlersFromKits(kits);
-  }
-}
-
-// HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).
-class Core {
-  handlers: NodeHandlers;
-
-  constructor() {
-    this.handlers = {
-      lambda: {
-        describe: async (inputs?: InputValues) => ({
-          inputSchema: new SchemaBuilder()
-            .setAdditionalProperties(true)
-            .addInputs(inputs)
-            .addProperty("board", {
-              title: "board",
-              description: "The board to run.",
-              type: "object",
-            })
-            .build(),
-          outputSchema: new SchemaBuilder()
-            .addProperty("board", {
-              title: "board",
-              description: "The now-runnable board.",
-              type: "object",
-            })
-            .build(),
-        }),
-        invoke: async (inputs: InputValues): Promise<LambdaNodeOutputs> => {
-          const { board, ...args } = inputs as LambdaNodeInputs;
-          if (!board || board.kind !== "board" || !board.board)
-            throw new Error(
-              `Lambda node requires a BoardCapability as "board" input`
-            );
-          const runnableBoard = {
-            ...(await BoardRunner.fromBreadboardCapability(board)),
-            args,
-          };
-
-          return {
-            board: { ...board, board: runnableBoard as GraphDescriptor },
-          };
-        },
-      },
-    };
   }
 }

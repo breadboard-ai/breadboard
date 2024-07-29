@@ -88,7 +88,7 @@ await Promise.all(
       if (graph.throws) await t.throwsAsync(run);
       else await run();
 
-      // Rewrite instancesof Error to strings for comparison.
+      // Rewrite instances of Error to strings for comparison.
       outputs.forEach((output) => {
         if (output.$error) {
           const $error = output.$error as ErrorCapability;

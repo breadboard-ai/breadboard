@@ -4,35 +4,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { loadRunnerState, saveRunnerState } from "./serialization.js";
-import { MachineResult } from "./traversal/result.js";
-import { RunState, TraversalResult } from "./types.js";
+import { loadRunnerState, saveRunnerState } from "../serialization.js";
+import { MachineResult } from "../traversal/result.js";
+import type { TraversalResult } from "../types.js";
+import type { ManagedRunStateLifecycle, RunState } from "./types.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
-export class StackManager {
+export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #result?: TraversalResult;
 
-  constructor(stack?: RunState) {
-    this.#stack = structuredClone(stack) || [];
+  constructor(stack: RunState) {
+    this.#stack = stack;
   }
 
-  onGraphStart(url: string): void {
-    this.#stack.push({ url, node: 0 });
+  dispatchGraphStart(url: string, invocationPath: number[]): void {
+    this.#stack.push({ url, path: invocationPath });
   }
 
-  onNodeStart(result: TraversalResult): void {
-    this.#stack[this.#stack.length - 1].node++;
-    this.#result = result;
-  }
-
-  onNodeEnd(): void {
+  dispatchSkip(): void {
     // TODO: implement
   }
 
-  onGraphEnd(): void {
+  dispatchNodeStart(result: TraversalResult): void {
+    this.#result = result;
+  }
+
+  dispatchNodeEnd(): void {
+    // TODO: implement
+  }
+
+  dispatchGraphEnd(): void {
     // TODO: implement
   }
 

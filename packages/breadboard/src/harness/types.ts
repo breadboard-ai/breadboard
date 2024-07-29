@@ -15,6 +15,7 @@ import type {
   LoadResponse,
   ServerTransport,
 } from "../remote/types.js";
+import type { RunState } from "../run/types.js";
 import type {
   BreadboardRunner,
   ErrorResponse,
@@ -23,7 +24,6 @@ import type {
   Kit,
   OutputResponse,
   OutputValues,
-  RunState,
 } from "../types.js";
 
 /**

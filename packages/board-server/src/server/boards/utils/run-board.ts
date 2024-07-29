@@ -5,23 +5,16 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
-import { createKits } from "./create-kits.js";
 import {
   createLoader,
   inflateData,
-  traversalResultFromStack,
   type InputValues,
-  type RunStackEntry,
 } from "@google-labs/breadboard";
+import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
+import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
+import { createKits } from "./create-kits.js";
 import { formatRunError } from "./format-run-error.js";
-import type {
-  InvokeBoardArguments,
-  RunBoardArguments,
-  RunBoardResult,
-} from "../../types.js";
-import { invokeBoard } from "./invoke-board.js";
 
 const fromNextToState = (
   next?: string,

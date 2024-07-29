@@ -22,6 +22,7 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./data/types.js";
+import { ManagedRunState, RunState } from "./run/types.js";
 
 export type {
   Capability,
@@ -398,9 +399,7 @@ export interface NodeFactory {
     configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
-  getConfigWithLambda<Inputs, Outputs>(
-    config: ConfigOrLambda<Inputs, Outputs>
-  ): OptionalIdConfiguration;
+  getConfigWithLambda(config: ConfigOrGraph): OptionalIdConfiguration;
 }
 
 export interface KitConstructor<T extends Kit> {
@@ -408,7 +407,7 @@ export interface KitConstructor<T extends Kit> {
 }
 
 export type NodeSugar<In, Out> = (
-  config?: ConfigOrLambda<In, Out>
+  config?: ConfigOrGraph
 ) => BreadboardNode<In, Out>;
 
 export type GenericKit<T extends NodeHandlers> = Kit & {
@@ -458,40 +457,6 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-/**
- * Sequential number of the invocation of a node.
- * Useful for understanding the relative position of a
- * given invocation of node within the run.
- */
-export type InvocationId = number;
-
-/**
- * Information about a given invocation of a graph and
- * node within the graph.
- */
-export type RunStackEntry = {
-  /**
-   * The URL of the graph being run;
-   */
-  url: string | undefined;
-  /**
-   * The invocation id of the node within that graph.
-   */
-  node: InvocationId;
-  /**
-   * The state of the graph traversal at the time of the invocation.
-   */
-  state?: string;
-};
-
-/**
- * A stack of all invocations of graphs and nodes within the graphs.
- * The stack is ordered from the outermost graph to the innermost graph
- * that is currently being run.
- * Can be used to understand the current state of the run.
- */
-export type RunState = RunStackEntry[];
-
 export type GraphStartProbeData = {
   graph: GraphDescriptor;
   path: number[];
@@ -527,7 +492,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  state: RunState;
+  state?: RunState;
 };
 
 export type NodeEndProbeMessage = {
@@ -669,10 +634,6 @@ export interface Breadboard extends BreadboardRunner {
   output<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;
-  lambda<In, InL extends In, OutL = OutputValues>(
-    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<In, LambdaNodeOutputs>;
 
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
@@ -749,7 +710,7 @@ export interface NodeHandlerContext {
     path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
-  readonly state?: RunState;
+  readonly state?: ManagedRunState;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -817,46 +778,7 @@ export type NodeConfigurationConstructor = Record<
  *
  * use `getConfigWithLambda()` to turn this into a regular config.
  */
-export type ConfigOrLambda<In, Out> =
+export type ConfigOrGraph =
   | OptionalIdConfiguration
   | BreadboardCapability
-  | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-  | GraphDescriptor
-  | LambdaFunction<In, Out>
-  | {
-      board:
-        | BreadboardCapability
-        | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-        | LambdaFunction<In, Out>;
-    };
-
-export type LambdaFunction<In = InputValues, Out = OutputValues> = (
-  board: Breadboard,
-  input: BreadboardNode<In, Out>,
-  output: BreadboardNode<In, Out>
-) => void;
-
-export type LambdaNodeInputs = InputValues & {
-  /**
-   * The (lambda) board this node represents. The purpose of the this node is to
-   * allow wiring data into the lambda board, outside of where it's called.
-   * This is useful when passing a lambda to a map node or as a slot.
-   *
-   * Note that (for now) each board can only be represented by one node.
-   */
-  board: GraphDescriptorBoardCapability;
-
-  /**
-   * All other inputs will be bound to the board.
-   */
-  args: InputValues;
-};
-
-export type LambdaNodeOutputs =
-  | OutputValues
-  | {
-      /**
-       * The lambda board that can be run.
-       */
-      board: BreadboardCapability;
-    };
+  | GraphDescriptor;

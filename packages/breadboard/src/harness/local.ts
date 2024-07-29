@@ -7,6 +7,7 @@
 import { createDefaultDataStore } from "../data/index.js";
 import { Board, RunResult, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import type { RunStackEntry } from "../run/types.js";
 import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
@@ -15,7 +16,6 @@ import {
   ErrorObject,
   Kit,
   ProbeMessage,
-  RunStackEntry,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
@@ -55,7 +55,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
     return [
       {
         url: undefined,
-        node: invocationId,
+        path: [invocationId],
         state: await saveRunnerState(type, result.state),
       },
     ];

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
@@ -16,7 +17,6 @@ import {
   NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
-  RunState,
   SkipProbeMessage,
 } from "../types.js";
 
