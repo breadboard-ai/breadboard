@@ -34,6 +34,8 @@ export const errorResult = (error: string): HarnessRunResult => {
 };
 
 export class PastRun implements InspectableRun {
+  public readonly dataStoreKey = Date.now().toFixed(3);
+
   #timeline: TimelineEntry[];
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;

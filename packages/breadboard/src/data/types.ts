@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult } from "../harness/types.js";
+
 export type FunctionCallCapabilityPart = {
   functionCall: {
     name: string;
@@ -76,20 +78,26 @@ export type DataStoreProvider = {
   releaseAll(): Promise<void>;
 };
 
-export type DataStore = {
-  store(data: Blob): Promise<StoredDataCapabilityPart>;
-  retrieve(
-    storedData: StoredDataCapabilityPart
-  ): Promise<InlineDataCapabilityPart>;
-  retrieveAsBlob(storedData: StoredDataCapabilityPart): Promise<Blob>;
-  startGroup(): void;
-  endGroup(): number;
-  releaseGroup(group: number): void;
-  releaseAll(): void;
-  serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
-  retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
-  copyToNewestGroup(
-    storedData: StoredDataCapabilityPart
-  ): Promise<StoredDataCapabilityPart>;
+export type RunStore = {
+  start(storeId: string, limit?: number): Promise<string>;
+  write(result: HarnessRunResult): Promise<void>;
+  stop(): Promise<void>;
+  abort(): Promise<void>;
   drop(): Promise<void>;
+  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
+};
+
+export type DataStore = {
+  createGroup(groupId: string): void;
+  drop(): Promise<void>;
+  has(groupId: string): boolean;
+  releaseAll(): void;
+  releaseGroup(group: string): void;
+  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
+  retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob>;
+  serializeGroup(
+    group: string,
+    storeId?: string
+  ): Promise<SerializedDataStoreGroup | null>;
+  store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
 };
