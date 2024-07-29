@@ -67,7 +67,7 @@ export class NodeInvoker {
         result,
         this.#context
       ),
-      invocationPath: invocationPath,
+      invocationPath,
       state,
     };
 

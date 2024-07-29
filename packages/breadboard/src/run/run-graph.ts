@@ -39,9 +39,35 @@ export async function* runGraph(
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graph, next);
 
+    const reanimation = state?.reanimation();
+    if (reanimation) {
+      if (reanimation.mode() !== "none") {
+        switch (state?.reanimation().mode()) {
+          case "replay": {
+            // This can only happen when `runGraph` is called by `invokeGraph`,
+            // which means that all we need to do is provide the output and
+            // return.
+            const { result, invocationId, path } = reanimation.replay();
+            await next(new OutputStageResult(result, invocationId, path));
+            // The nodeend and graphend will be dispatched by `invokeGraph`.
+            return;
+          }
+          case "resume": {
+            const { result, invocationPath } = reanimation.resume();
+            result.outputsPromise = nodeInvoker.invokeNode(
+              result,
+              invocationPath
+            );
+          }
+        }
+      }
+    }
+
     const machine = new TraversalMachine(graph, resumeFrom);
 
     const invocationPath = context.invocationPath || [];
+    let invocationId = 0;
+    const path = () => [...invocationPath, invocationId];
 
     lifecycle?.dispatchGraphStart(graph.url!);
 
@@ -49,9 +75,6 @@ export async function* runGraph(
       type: "graphstart",
       data: { graph, path: invocationPath, timestamp: timestamp() },
     });
-
-    let invocationId = 0;
-    const path = () => [...invocationPath, invocationId];
 
     for await (const result of machine) {
       context?.signal?.throwIfAborted();

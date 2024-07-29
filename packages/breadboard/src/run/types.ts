@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TraversalResult } from "../types.js";
+import type { OutputValues, TraversalResult } from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -71,4 +71,58 @@ export type ManagedRunState = {
    * The entry point for signaling run lifecycle changes.
    */
   lifecycle(): ManagedRunStateLifecycle;
+  reanimation(): ReanimationController;
+};
+
+export type ReanimationMode =
+  /**
+   * This run is just replaying existing results.
+   */
+  | "replay"
+  /**
+   * This run is resuming from a previously saved state.
+   */
+  | "resume"
+  /**
+   * This run is running normally.
+   */
+  | "none";
+
+export type ReanimationController = {
+  mode(): ReanimationMode;
+  replay(): ReplayResults;
+  resume(): ResumeResults;
+};
+
+export type ReplayResults = {
+  result: TraversalResult;
+  invocationId: InvocationId;
+  path: number[];
+};
+
+export type ResumeResults = {
+  result: TraversalResult;
+  invocationPath: number[];
+};
+
+export type ReanimationFrame = {
+  /**
+   * The state to resume from.
+   */
+  result: TraversalResult;
+  /**
+   * Invocation path of the node.
+   */
+  invocationPath: number[];
+  /**
+   * The results of all completed `invokeGraph` calls.
+   * This list will be empty for the typical invoke case,
+   * but will contain values for nodes that call `invokeGraph`
+   * more than once during their execution (like `map`
+   * and `reduce`)
+   *
+   * The order is the same as the order of the `invokeGraph`
+   * calls from the node.
+   */
+  replayOutputs: OutputValues[];
 };
