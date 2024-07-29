@@ -309,6 +309,9 @@ export class ActivityLog extends LitElement {
           )
         );
       }
+
+      // If we have chosen to autosubmit do not render the control.
+      return html``;
     }
 
     const continueRun = () => {

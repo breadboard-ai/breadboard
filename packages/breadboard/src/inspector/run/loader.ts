@@ -142,6 +142,9 @@ export class RunLoader {
 
   async load(): Promise<InspectableRunLoadResult> {
     const run = this.#run;
+    const runId = crypto.randomUUID();
+    this.#store.createGroup(runId);
+
     if (run.$schema !== "tbd") {
       return {
         success: false,
@@ -156,7 +159,8 @@ export class RunLoader {
       timeline = run.data
         ? await this.#inflateData(timeline, run.data)
         : timeline;
-      return { success: true, run: new PastRun(timeline, this.#options) };
+      const pastRun = new PastRun(runId, timeline, this.#options);
+      return { success: true, run: pastRun };
     } catch (e) {
       const error = e as Error;
       return {

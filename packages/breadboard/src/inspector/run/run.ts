@@ -64,6 +64,10 @@ export class RunObserver implements InspectableRunObserver {
                     result.data.graph,
                     this.#options
                   );
+
+                  if (!this.#options.skipDataStore) {
+                    this.#options.dataStore?.createGroup(run.dataStoreKey);
+                  }
                 }
               } else if (result.type === "graphend") {
                 const { path, timestamp } = result.data;
@@ -76,10 +80,12 @@ export class RunObserver implements InspectableRunObserver {
                 console.warn("Unable to restore run");
               }
 
-              this.#options.dataStore?.replaceDataParts(
-                run.dataStoreKey,
-                result
-              );
+              if (!this.#options.skipDataStore) {
+                this.#options.dataStore?.replaceDataParts(
+                  run.dataStoreKey,
+                  result
+                );
+              }
               run.addResult(result);
             }
 
@@ -161,6 +167,7 @@ export class RunObserver implements InspectableRunObserver {
     const run = this.#runs[0];
     if (!run) {
       console.warn("No run available");
+      return;
     }
 
     if (!this.#options.skipDataStore) {
