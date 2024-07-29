@@ -69,7 +69,7 @@ export async function* runGraph(
     let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
 
-    lifecycle?.dispatchGraphStart(graph.url!);
+    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
     await probe?.report?.({
       type: "graphstart",

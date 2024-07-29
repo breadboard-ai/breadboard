@@ -12,15 +12,18 @@ export class RunStateManager implements ManagedRunState {
   #lifecycle: LifecycleManager;
 
   constructor() {
-    this.#lifecycle = new LifecycleManager();
+    this.#lifecycle = new LifecycleManager([]);
   }
 
   lifecycle() {
+    // TODO: Lifecycle during reanimation should be doing
+    // nothing, since we're reconstructing the state of
+    // the run from a previously saved state.
     return this.#lifecycle;
   }
 
   reanimation(): ReanimationController {
-    // Always return the new instance all the time:
+    // Always return the new instance:
     // wraps the actual ReanimationFrame, if any.
     return new Reanimator(undefined);
   }

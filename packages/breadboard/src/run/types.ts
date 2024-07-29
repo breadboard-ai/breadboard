@@ -23,9 +23,9 @@ export type RunStackEntry = {
    */
   url: string | undefined;
   /**
-   * The invocation id of the node within that graph.
+   * The invocation path of the node within the graph.
    */
-  node: InvocationId;
+  path: number[];
   /**
    * The state of the graph traversal at the time of the invocation.
    */
@@ -54,7 +54,7 @@ export type ManagedRunStateLifecycle = {
    * Signifies the beginning of a new graph being run or invoked.
    * @param url -- url of the graph that is starting
    */
-  dispatchGraphStart(url: string): void;
+  dispatchGraphStart(url: string, invocationPath: number[]): void;
   dispatchNodeStart(result: TraversalResult): void;
   dispatchNodeEnd(): void;
   dispatchGraphEnd(): void;

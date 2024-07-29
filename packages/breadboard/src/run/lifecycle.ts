@@ -16,12 +16,12 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #result?: TraversalResult;
 
-  constructor(stack?: RunState) {
-    this.#stack = structuredClone(stack) || [];
+  constructor(stack: RunState) {
+    this.#stack = stack;
   }
 
-  dispatchGraphStart(url: string): void {
-    this.#stack.push({ url, node: 0 });
+  dispatchGraphStart(url: string, invocationPath: number[]): void {
+    this.#stack.push({ url, path: invocationPath });
   }
 
   dispatchSkip(): void {
@@ -29,7 +29,6 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   }
 
   dispatchNodeStart(result: TraversalResult): void {
-    this.#stack[this.#stack.length - 1].node++;
     this.#result = result;
   }
 
