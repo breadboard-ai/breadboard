@@ -54,10 +54,18 @@ export async function* runGraph(
           }
           case "resume": {
             const { result, invocationPath } = reanimation.resume();
-            result.outputsPromise = nodeInvoker.invokeNode(
-              result,
-              invocationPath
-            );
+            if (
+              result.descriptor.type === "input" ||
+              result.descriptor.type === "output"
+            ) {
+              // TODO: Implement.
+              resumeFrom = result;
+            } else {
+              result.outputsPromise = nodeInvoker.invokeNode(
+                result,
+                invocationPath
+              );
+            }
           }
         }
       }
@@ -69,7 +77,7 @@ export async function* runGraph(
     let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
 
-    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
+    lifecycle?.dispatchGraphStart(graph.url!);
 
     await probe?.report?.({
       type: "graphstart",
@@ -97,7 +105,7 @@ export async function* runGraph(
         continue;
       }
 
-      lifecycle?.dispatchNodeStart(result);
+      lifecycle?.dispatchNodeStart(result, path());
 
       await probe?.report?.({
         type: "nodestart",

@@ -54,12 +54,21 @@ export type ManagedRunStateLifecycle = {
    * Signifies the beginning of a new graph being run or invoked.
    * @param url -- url of the graph that is starting
    */
-  dispatchGraphStart(url: string, invocationPath: number[]): void;
-  dispatchNodeStart(result: TraversalResult): void;
+  dispatchGraphStart(url: string): void;
+  dispatchNodeStart(
+    result: TraversalResult,
+    invocationPath: number[]
+  ): Promise<void>;
   dispatchNodeEnd(): void;
   dispatchGraphEnd(): void;
   dispatchSkip(): void;
-  state(): Promise<RunState>;
+  state(): RunState;
+  /**
+   * Returns true when the run is complete. The run is complete when
+   * the initial dispatchGraphStart was matched with the dispatchGraphEnd
+   * of the same invocationPath.
+   */
+  complete(): boolean;
 };
 
 /**

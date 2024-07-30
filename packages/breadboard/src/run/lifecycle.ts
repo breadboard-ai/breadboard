@@ -14,22 +14,31 @@ import type { ManagedRunStateLifecycle, RunState } from "./types.js";
 
 export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
-  #result?: TraversalResult;
 
   constructor(stack: RunState) {
     this.#stack = stack;
   }
+  complete(): boolean {
+    return false;
+  }
 
-  dispatchGraphStart(url: string, invocationPath: number[]): void {
-    this.#stack.push({ url, path: invocationPath });
+  dispatchGraphStart(url: string): void {
+    this.#stack.push({ url, path: [] });
   }
 
   dispatchSkip(): void {
     // TODO: implement
   }
 
-  dispatchNodeStart(result: TraversalResult): void {
-    this.#result = result;
+  async dispatchNodeStart(
+    result: TraversalResult,
+    invocationPath: number[]
+  ): Promise<void> {
+    const last = this.#stack[this.#stack.length - 1];
+    if (last) {
+      last.state = await saveRunnerState("nodestart", result);
+      last.path = invocationPath;
+    }
   }
 
   dispatchNodeEnd(): void {
@@ -40,16 +49,8 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     // TODO: implement
   }
 
-  async state(): Promise<RunState> {
-    // Assemble the stack from existing pieces.
-    const stack = structuredClone(this.#stack);
-    if (this.#result) {
-      stack[stack.length - 1].state = await saveRunnerState(
-        "nodestart",
-        this.#result
-      );
-    }
-    return stack;
+  state(): RunState {
+    return this.#stack;
   }
 }
 
