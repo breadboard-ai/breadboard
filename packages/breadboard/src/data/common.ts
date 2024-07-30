@@ -40,11 +40,7 @@ export function isFunctionResponseCapabilityPart(
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
   if (typeof nodeValue !== "object" || !nodeValue) return false;
 
-  return (
-    "parts" in nodeValue &&
-    Array.isArray(nodeValue.parts) &&
-    "role" in nodeValue
-  );
+  return "parts" in nodeValue && Array.isArray(nodeValue.parts);
 }
 
 export const isDataCapability = (value: unknown): value is DataCapability => {
