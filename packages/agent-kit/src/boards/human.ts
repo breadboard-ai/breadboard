@@ -140,7 +140,6 @@ export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
  */
 export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
   ({ context }) => {
-    console.log("🌻 context", context);
     if (!context) {
       return { input: [] };
     }
