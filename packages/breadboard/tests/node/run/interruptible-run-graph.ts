@@ -7,6 +7,8 @@
 import test, { describe } from "node:test";
 
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import manyInputs from "../../bgl/many-inputs.bgl.json" with { type: "json" };
+import manyOutputs from "../../bgl/many-outputs.bgl.json" with { type: "json" };
 import { interruptibleScriptedRun } from "../scripted-run.js";
 
 describe("interruptibleRunGraph end-to-end", async () => {
@@ -14,6 +16,36 @@ describe("interruptibleRunGraph end-to-end", async () => {
     await interruptibleScriptedRun(simple, [
       { expected: { type: "input" }, inputs: { text: "Hello" } },
       { expected: { type: "output", outputs: [{ text: "Hello" }] } },
+    ]);
+  });
+
+  test("many inputs", async () => {
+    await interruptibleScriptedRun(manyInputs, [
+      { expected: { type: "input" }, inputs: { text1: "foo" } },
+      { expected: { type: "input" }, inputs: { text2: "bar" } },
+      {
+        expected: {
+          type: "output",
+          outputs: [
+            {
+              "text-one": "foo",
+              "text-two": "bar",
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("many outputs", async () => {
+    await interruptibleScriptedRun(manyOutputs, [
+      { expected: { type: "input" }, inputs: { start: "foo" } },
+      {
+        expected: {
+          type: "output",
+          outputs: [{ one: "foo" }, { two: "foo " }],
+        },
+      },
     ]);
   });
 });

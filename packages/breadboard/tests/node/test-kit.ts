@@ -12,6 +12,17 @@ import { InputValues, Kit } from "../../src/types.js";
 export const testKit: Kit = {
   url: import.meta.url,
   handlers: {
+    runJavascript: {
+      invoke: async (inputs) => {
+        const { code, functionName = "run", ...args } = inputs;
+        const vm = await import("node:vm");
+        const codeToRun = `${code}\n${functionName}(${JSON.stringify(args)});`;
+        const context = vm.createContext({ console, structuredClone });
+        const script = new vm.Script(codeToRun);
+        const result = await script.runInNewContext(context);
+        return { result: JSON.stringify(result) };
+      },
+    },
     promptTemplate: {
       invoke: async (inputs) => {
         const { template, ...parameters } = inputs;

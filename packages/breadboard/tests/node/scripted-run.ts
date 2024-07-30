@@ -26,9 +26,10 @@ export type RunScriptEntry = {
 };
 
 export async function interruptibleScriptedRun(
-  graph: GraphDescriptor,
+  g: unknown,
   script: RunScriptEntry[]
 ) {
+  const graph = g as GraphDescriptor;
   let resumeFrom: RunState = [];
   let inputs: InputValues = {};
   for (const [index, scriptEntry] of script.entries()) {
@@ -62,7 +63,7 @@ export async function interruptibleScriptedRun(
       inputs = scriptEntry.inputs!;
     } else {
       if (index !== script.length - 1) {
-        fail("Unexpected end of run");
+        fail(`Unexpected end of run at index ${index}`);
       }
     }
   }
