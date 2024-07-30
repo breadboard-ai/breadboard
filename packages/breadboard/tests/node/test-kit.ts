@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getGraphDescriptor } from "../../src/capability.js";
+import { invokeGraph } from "../../src/run/invoke-graph.js";
 import { InputValues, Kit } from "../../src/types.js";
 
 // A simplest possible re-implementation of some nodes to be used in tests
@@ -12,6 +14,36 @@ import { InputValues, Kit } from "../../src/types.js";
 export const testKit: Kit = {
   url: import.meta.url,
   handlers: {
+    invoke: {
+      invoke: async (inputs, context) => {
+        const { $board, ...args } = inputs;
+        if (!$board) {
+          throw new Error("No board provided for the `invoke` handler");
+        }
+        const graph = await getGraphDescriptor($board, context);
+        if (!graph) {
+          throw new Error(
+            "Unable to get graph descriptor from the board in `invoke` handler"
+          );
+        }
+        const base = context.board?.url && new URL(context.board?.url);
+        const invocationContext = base
+          ? {
+              ...context,
+              base,
+            }
+          : { ...context };
+
+        console.log("🌻 invoking graph", graph, args);
+        return invokeGraph(graph, args, invocationContext);
+      },
+    },
+    promptTemplate: {
+      invoke: async (inputs) => {
+        const { template, ...parameters } = inputs;
+        return promptTemplateHandler(template as string, parameters);
+      },
+    },
     runJavascript: {
       invoke: async (inputs) => {
         const { code, functionName = "run", ...args } = inputs;
@@ -21,12 +53,6 @@ export const testKit: Kit = {
         const script = new vm.Script(codeToRun);
         const result = await script.runInNewContext(context);
         return { result: JSON.stringify(result) };
-      },
-    },
-    promptTemplate: {
-      invoke: async (inputs) => {
-        const { template, ...parameters } = inputs;
-        promptTemplateHandler(template as string, parameters);
       },
     },
   },

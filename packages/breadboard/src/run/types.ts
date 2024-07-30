@@ -98,6 +98,10 @@ export type ReanimationMode =
   | "none";
 
 export type ReanimationController = {
+  enter(): ReanimationFrameController;
+};
+
+export type ReanimationFrameController = {
   mode(): ReanimationMode;
   replay(): ReplayResults;
   resume(): ResumeResults;
