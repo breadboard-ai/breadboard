@@ -40,7 +40,7 @@
         "logLevel": "debug"
       },
       "configuration": {
-        "code": "function run() {\n  return [ \"Bob\"];\n}",
+        "code": "function run() {\n  return [\"Bob\", \"Alice\"];\n}",
         "name": "run",
         "raw": false
       }
