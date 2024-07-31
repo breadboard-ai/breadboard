@@ -967,6 +967,8 @@ export class Main extends LitElement {
     if (this.url) {
       try {
         const base = new URL(window.location.href);
+        const decodedUrl = decodeURIComponent(base.href);
+        window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
         if (URL.canParse(this.url)) {
           const provider = this.#getProviderForURL(new URL(this.url));
           if (provider) {
