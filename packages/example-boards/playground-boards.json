@@ -50,8 +50,9 @@
       "version": "0.0.2"
     },
     {
-      "title": "Error board",
-      "reference": "/example-boards/playground/error.json"
+      "title": "Error Board",
+      "reference": "/example-boards/playground/error.json",
+      "version": "0.1.0"
     },
     {
       "title": "Gemini Pro Generator",
