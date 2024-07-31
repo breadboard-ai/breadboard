@@ -6,7 +6,7 @@
 
 import { getGraphDescriptor } from "../../src/capability.js";
 import { invokeGraph } from "../../src/run/invoke-graph.js";
-import { InputValues, Kit } from "../../src/types.js";
+import { InputValues, Kit, NodeValue, OutputValues } from "../../src/types.js";
 
 // A simplest possible re-implementation of some nodes to be used in tests
 // in tests/bgl/*.
@@ -34,8 +34,49 @@ export const testKit: Kit = {
             }
           : { ...context };
 
-        console.log("🌻 invoking graph", graph, args);
         return invokeGraph(graph, args, invocationContext);
+      },
+    },
+    map: {
+      invoke: async (inputs, context) => {
+        const { board, list = [] } = inputs;
+        if (!board) {
+          throw new Error("No board provided for the `map` handler");
+        }
+        const graph = await getGraphDescriptor(board, context);
+        if (!graph) {
+          throw new Error(
+            "Unable to get graph descriptor from the board in `map` handler"
+          );
+        }
+        let listArray;
+        if (typeof list === "string") {
+          listArray = JSON.parse(list);
+        } else {
+          listArray = list;
+        }
+        if (!Array.isArray(listArray)) {
+          throw new Error(
+            "In `map` handler, `list` port value is not an array"
+          );
+        }
+        const base = context.board?.url && new URL(context.board?.url);
+        const result = await Promise.all(
+          listArray.map(async (item, index) => {
+            const newContext = {
+              ...context,
+              base: base || context?.base,
+              invocationPath: [...(context?.invocationPath || []), index],
+            };
+            const outputs = await invokeGraph(
+              graph,
+              { item, index, list },
+              newContext
+            );
+            return outputs;
+          })
+        );
+        return { list: result } as OutputValues;
       },
     },
     promptTemplate: {
@@ -52,7 +93,9 @@ export const testKit: Kit = {
         const context = vm.createContext({ console, structuredClone });
         const script = new vm.Script(codeToRun);
         const result = await script.runInNewContext(context);
-        return { result: JSON.stringify(result) };
+        return {
+          result: typeof result === "string" ? result : JSON.stringify(result),
+        };
       },
     },
   },

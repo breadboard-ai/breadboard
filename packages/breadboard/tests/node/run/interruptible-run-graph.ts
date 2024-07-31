@@ -5,13 +5,14 @@
  */
 
 import test, { describe } from "node:test";
+import { interruptibleScriptedRun } from "../scripted-run.js";
 
-import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import invokeWithBubblingInput from "../../bgl/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import manyInputs from "../../bgl/many-inputs.bgl.json" with { type: "json" };
 import manyOutputs from "../../bgl/many-outputs.bgl.json" with { type: "json" };
 import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
-import { interruptibleScriptedRun } from "../scripted-run.js";
-import invokeWithBubblingInput from "../../bgl/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
+import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import mapWithBubblingInputs from "../../bgl/map-with-bubbling-inputs.bgl.json" with { type: "json" };
 
 describe("interruptibleRunGraph end-to-end", async () => {
   test("simple graph", async () => {
@@ -103,6 +104,28 @@ describe("interruptibleRunGraph end-to-end", async () => {
           outputs: [
             {
               greeting: 'Greeting is: "Hello, Bob from New York!"',
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("map with bubbling inputs", async () => {
+    await interruptibleScriptedRun(mapWithBubblingInputs, [
+      {
+        expected: {
+          type: "input",
+          state: [{ node: "map-6088d0ca" }, { node: "input" }],
+        },
+        inputs: { location: "Neptune" },
+      },
+      {
+        expected: {
+          type: "output",
+          outputs: [
+            {
+              greetings: "Hello, Bob from Neptune!",
             },
           ],
         },
