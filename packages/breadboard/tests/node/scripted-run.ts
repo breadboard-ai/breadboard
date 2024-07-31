@@ -47,7 +47,7 @@ export async function interruptibleScriptedRun(
   let resumeFrom: RunState = [];
   let inputs: InputValues = {};
   for (const [index, scriptEntry] of script.entries()) {
-    // console.log("🌻🍞 script entry", index, scriptEntry);
+    console.log("🌻🍞 scriptedRun: script entry", index, scriptEntry);
     const state = createRunStateManager(resumeFrom, inputs);
     const args: RunArguments = {
       kits: [testKit],
@@ -57,14 +57,14 @@ export async function interruptibleScriptedRun(
     let outputCount = 0;
     let interrupted = false;
     for await (const result of interruptibleRunGraph(graph, args)) {
-      const { type } = result;
+      const { type, path } = result;
       const expectedRunResult = scriptEntry;
-      // console.log("🌻 interruptibleRunGraph result", {
-      //   type,
-      //   node: result.node,
-      //   state: result.state,
-      //   path,
-      // });
+      console.log("🌻 scriptedRun: interruptibleRunGraph result", {
+        type,
+        node: result.node,
+        state: result.state,
+        path,
+      });
       deepStrictEqual(
         type,
         expectedRunResult.expected.type,
@@ -84,7 +84,7 @@ export async function interruptibleScriptedRun(
       resumeFrom = state.lifecycle().state();
       if (scriptEntry.expected.state) {
         if (resumeFrom.length !== scriptEntry.expected.state.length) {
-          // console.log("🌻 scriptedRun: resumeFrom", resumeFrom);
+          console.log("🌻 scriptedRun: resumeFrom", resumeFrom);
           fail(
             `Script entry ${index}: expected ${scriptEntry.expected.state.length} states in run stack, got ${resumeFrom.length}`
           );

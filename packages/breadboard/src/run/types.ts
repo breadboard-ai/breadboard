@@ -54,7 +54,7 @@ export type ManagedRunStateLifecycle = {
    * Signifies the beginning of a new graph being run or invoked.
    * @param url -- url of the graph that is starting
    */
-  dispatchGraphStart(url: string): void;
+  dispatchGraphStart(url: string, invocationPath: number[]): void;
   dispatchNodeStart(
     result: TraversalResult,
     invocationPath: number[]

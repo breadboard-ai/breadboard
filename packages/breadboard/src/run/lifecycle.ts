@@ -22,14 +22,16 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     return false;
   }
 
-  dispatchGraphStart(url: string): void {
-    this.#stack.push({ url, path: [] });
-    // console.log(
-    //   "🌻 dispatchGraphStart",
-    //   url,
-    //   "stack size:",
-    //   this.#stack.length
-    // );
+  dispatchGraphStart(url: string, path: number[]): void {
+    this.#stack.push({ url, path });
+    console.log(
+      "🌻 dispatchGraphStart",
+      url,
+      "stack size:",
+      this.#stack.length,
+      "path:",
+      path
+    );
   }
 
   dispatchSkip(): void {

@@ -33,19 +33,19 @@ export async function* runGraph(
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs, ...context } = args;
-  const { probe, state } = context;
+  const { probe, state, invocationPath = [] } = context;
 
   const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graph, next);
 
-    lifecycle?.dispatchGraphStart(graph.url!);
+    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
     const reanimation = state?.reanimation();
     if (reanimation) {
       const frame = reanimation.enter();
       const mode = frame.mode();
-      // console.log("🌻 reanimation", mode);
+      console.log("🌻 reanimation", mode);
       switch (mode) {
         case "replay": {
           // This can only happen when `runGraph` is called by `invokeGraph`,
@@ -59,7 +59,7 @@ export async function* runGraph(
         case "resume": {
           const { result, invocationPath } = frame.resume();
           resumeFrom = result;
-          // console.log("🌻 resuming", result, invocationPath);
+          console.log("🌻 resuming", result, invocationPath);
           // The graphstart will be dispatched by `invokeGraph`.
           await lifecycle?.dispatchNodeStart(result, invocationPath);
 
@@ -77,29 +77,35 @@ export async function* runGraph(
       }
     }
 
-    // console.log("🌻🧠 runGraph", graph, resumeFrom);
+    let invocationId = 0;
+    const path = () => [...invocationPath, invocationId];
 
     const machine = new TraversalMachine(graph, resumeFrom);
 
-    const invocationPath = context.invocationPath || [];
-    let invocationId = 0;
-    const path = () => [...invocationPath, invocationId];
+    console.log(
+      "🌻🧠 runGraph",
+      graph,
+      "resumeFrom:",
+      resumeFrom,
+      "path:",
+      path(),
+      "machine",
+      machine
+    );
 
     await probe?.report?.({
       type: "graphstart",
       data: { graph, path: invocationPath, timestamp: timestamp() },
     });
 
-    // console.log("🌻 runGraph machine", machine);
-
     for await (const result of machine) {
-      // console.log(
-      //   "🌻 machine iteration",
-      //   result,
-      //   result.skip,
-      //   "depth",
-      //   path().length
-      // );
+      console.log(
+        "🌻 machine iteration",
+        result,
+        result.skip,
+        "depth",
+        path().length
+      );
       context?.signal?.throwIfAborted();
 
       invocationId++;
