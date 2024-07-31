@@ -150,7 +150,7 @@ const searchResultType = object({
       })
     )
   }))
-})
+});
 
 const rawResponse = fetch({
   $metadata: {
@@ -163,36 +163,6 @@ const rawResponse = fetch({
 const response = cast(rawResponse, searchResultType);
 
 const { items } = unnest(response);
-// const spreadSearchResult = createSpreadNode(fetchResult.outputs.response, {
-//   items: array(object({
-//     title: "string",
-//     htmlTitle: "string",
-//     link: "string",
-//     displayLink: "string",
-//     snippet: "string",
-//     htmlSnippet: "string",
-//     formattedUrl: "string",
-//     htmlFormattedUrl: "string",
-//     pagemap: optional(
-//       object({
-//         cse_thumbnail: array(object({
-//           src: "string",
-//           height: "string",
-//           width: "string",
-//         })),
-//         softwaresourcecode: array(object({
-//           author: "string",
-//           name: "string",
-//           text: "string",
-//         })),
-//         metatags: array(object({})),
-//         cse_image: array(object({
-//           src: "string",
-//         })),
-//       })
-//     )
-//   }))
-// });
 
 export default board({
   title: "Google Custom Search Engine Tool",
