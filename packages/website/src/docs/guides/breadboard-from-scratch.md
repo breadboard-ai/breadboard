@@ -17,7 +17,7 @@ and all current features.
 
 ## Prerequisites
 
-These instructions assume that the reader has a normal consume (gmail.com)
+These instructions assume that the reader has a normal consumer (gmail.com)
 Google account. They will detail how to set up a new Google Cloud project. If
 you are using an existing Cloud project, or are a Workspace user, some of these
 steps may be different or may not apply.
