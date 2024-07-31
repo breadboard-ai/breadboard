@@ -6,7 +6,7 @@
 
 import { getGraphDescriptor } from "../../src/capability.js";
 import { invokeGraph } from "../../src/run/invoke-graph.js";
-import { InputValues, Kit, NodeValue, OutputValues } from "../../src/types.js";
+import { InputValues, Kit, OutputValues } from "../../src/types.js";
 
 // A simplest possible re-implementation of some nodes to be used in tests
 // in tests/bgl/*.
