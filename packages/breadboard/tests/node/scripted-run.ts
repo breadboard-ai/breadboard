@@ -57,7 +57,7 @@ export async function interruptibleScriptedRun(
     let outputCount = 0;
     let interrupted = false;
     for await (const result of interruptibleRunGraph(graph, args)) {
-      const { type, path } = result;
+      const { type } = result;
       const expectedRunResult = scriptEntry;
       // console.log("🌻 interruptibleRunGraph result", {
       //   type,
