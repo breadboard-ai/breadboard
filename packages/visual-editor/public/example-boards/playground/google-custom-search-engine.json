@@ -4,6 +4,12 @@
   "version": "0.2.0",
   "edges": [
     {
+      "from": "cast-0",
+      "to": "unnest-0",
+      "out": "value",
+      "in": "nested"
+    },
+    {
       "from": "CSE_API_KEY-secret",
       "to": "customSearchURL",
       "out": "CSE_API_KEY",
@@ -52,16 +58,16 @@
       "in": "CSE_START"
     },
     {
-      "from": "runJavascript-0",
+      "from": "search",
+      "to": "cast-0",
+      "out": "response",
+      "in": "value"
+    },
+    {
+      "from": "unnest-0",
       "to": "output-0",
       "out": "items",
       "in": "results"
-    },
-    {
-      "from": "search",
-      "to": "runJavascript-0",
-      "out": "response",
-      "in": "obj"
     }
   ],
   "nodes": [
@@ -293,55 +299,10 @@
       }
     },
     {
-      "id": "CSE_API_KEY-secret",
-      "type": "secrets",
+      "id": "cast-0",
+      "type": "cast",
       "configuration": {
-        "keys": [
-          "CSE_API_KEY"
-        ]
-      }
-    },
-    {
-      "id": "CSE_ID-secret",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "CSE_ID"
-        ]
-      }
-    },
-    {
-      "id": "customSearchURL",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://www.googleapis.com/customsearch/v1?key={CSE_API_KEY}&cx={CSE_ID}&q={query}&lr={CSE_LANG}&safe={CSE_SAFE}&num={CSE_NUM}&start={CSE_START}"
-      },
-      "metadata": {
-        "title": "CSE URL Template"
-      }
-    },
-    {
-      "id": "runJavascript-0",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const run = ({obj:obj2})=>{if(typeof obj2!==\"object\"){throw new Error(`object is of type ${typeof obj2} not object`)}return{...obj2}};",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "obj": {
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ]
-            }
-          }
-        },
-        "name": "run",
-        "outputSchema": {
+        "type": {
           "type": "object",
           "properties": {
             "items": {
@@ -469,13 +430,40 @@
                 "additionalProperties": false
               }
             }
-          }
-        },
-        "raw": true
+          },
+          "required": [
+            "items"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "CSE_API_KEY-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "CSE_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "CSE_ID-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "CSE_ID"
+        ]
+      }
+    },
+    {
+      "id": "customSearchURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://www.googleapis.com/customsearch/v1?key={CSE_API_KEY}&cx={CSE_ID}&q={query}&lr={CSE_LANG}&safe={CSE_SAFE}&num={CSE_NUM}&start={CSE_START}"
       },
       "metadata": {
-        "title": "Spread",
-        "description": "Spread the properties of an object into a new object"
+        "title": "CSE URL Template"
       }
     },
     {
@@ -485,6 +473,11 @@
       "metadata": {
         "title": "Fetch search results"
       }
+    },
+    {
+      "id": "unnest-0",
+      "type": "unnest",
+      "configuration": {}
     }
   ]
 }

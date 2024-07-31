@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { array, board, enumeration, input, object, optional, output } from "@breadboard-ai/build";
-import { fetch, secret } from "@google-labs/core-kit";
+import { cast, fetch, secret, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
-import { createSpreadNode } from "../../utils/spread";
 
 const PARAM = {
   QUERY: "query",
@@ -122,15 +121,7 @@ const url = urlTemplate({
   [PARAM.CSE.START]: startIndex,
 });
 
-const fetchResult = fetch({
-  $metadata: {
-    title: "Fetch search results",
-  },
-  $id: "search",
-  url: url.outputs.url,
-});
-
-const spreadSearchResult = createSpreadNode(fetchResult.outputs.response, {
+const searchResultType = object({
   items: array(object({
     title: "string",
     htmlTitle: "string",
@@ -159,7 +150,49 @@ const spreadSearchResult = createSpreadNode(fetchResult.outputs.response, {
       })
     )
   }))
+})
+
+const rawResponse = fetch({
+  $metadata: {
+    title: "Fetch search results",
+  },
+  $id: "search",
+  url: url.outputs.url,
 });
+
+const response = cast(rawResponse, searchResultType);
+
+const { items } = unnest(response);
+// const spreadSearchResult = createSpreadNode(fetchResult.outputs.response, {
+//   items: array(object({
+//     title: "string",
+//     htmlTitle: "string",
+//     link: "string",
+//     displayLink: "string",
+//     snippet: "string",
+//     htmlSnippet: "string",
+//     formattedUrl: "string",
+//     htmlFormattedUrl: "string",
+//     pagemap: optional(
+//       object({
+//         cse_thumbnail: array(object({
+//           src: "string",
+//           height: "string",
+//           width: "string",
+//         })),
+//         softwaresourcecode: array(object({
+//           author: "string",
+//           name: "string",
+//           text: "string",
+//         })),
+//         metatags: array(object({})),
+//         cse_image: array(object({
+//           src: "string",
+//         })),
+//       })
+//     )
+//   }))
+// });
 
 export default board({
   title: "Google Custom Search Engine Tool",
@@ -171,6 +204,6 @@ export default board({
   version: "0.2.0",
   inputs: { query, numberOfResults, language, safeSearch, startIndex },
   outputs: {
-    results: output(spreadSearchResult.outputs.items)
+    results: output(items)
   },
 });
