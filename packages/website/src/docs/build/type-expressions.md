@@ -114,3 +114,32 @@ const sensorReading = input({
   description: "Time series data from a sensor",
 });
 ```
+
+## Arrays
+
+Use the `array` function to declare a JSON Array.
+
+### Arguments
+
+1. `itemType` (required): The type of the elements in the array. Any Breadboard
+   Type Expression.
+
+## Example
+
+```ts
+import { array, object } from "@breadboard-ai/build";
+
+// string[]
+array("string");
+
+// { timestamp: string, value: number }[]
+array(
+  object({
+    timestamp: "string",
+    value: "number",
+  })
+);
+
+// unknown[]
+array("unknown");
+```
