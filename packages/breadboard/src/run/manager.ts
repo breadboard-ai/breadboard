@@ -4,15 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InputValues } from "../types.js";
 import { LifecycleManager } from "./lifecycle.js";
 import { Reanimator } from "./reanimator.js";
-import type { ManagedRunState, ReanimationController } from "./types.js";
+import type {
+  ManagedRunState,
+  ReanimationController,
+  RunState,
+} from "./types.js";
 
 export class RunStateManager implements ManagedRunState {
+  #resumeFrom: RunState;
   #lifecycle: LifecycleManager;
+  #inputs?: InputValues;
 
-  constructor() {
+  constructor(resumeFrom: RunState, inputs?: InputValues) {
+    this.#resumeFrom = resumeFrom;
     this.#lifecycle = new LifecycleManager([]);
+    this.#inputs = inputs;
   }
 
   lifecycle() {
@@ -23,8 +32,6 @@ export class RunStateManager implements ManagedRunState {
   }
 
   reanimation(): ReanimationController {
-    // Always return the new instance:
-    // wraps the actual ReanimationFrame, if any.
-    return new Reanimator(undefined);
+    return new Reanimator(this.#resumeFrom, this.#inputs);
   }
 }

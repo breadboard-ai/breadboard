@@ -4,15 +4,55 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { loadRunnerState } from "../serialization.js";
+import { InputValues } from "../types.js";
 import {
   ReanimationController,
   ReanimationFrame,
+  ReanimationFrameController,
   ReanimationMode,
   ReplayResults,
   ResumeResults,
+  RunState,
 } from "./types.js";
 
 export class Reanimator implements ReanimationController {
+  #resumeFrom: RunState;
+  #inputs?: InputValues;
+
+  constructor(resumeFrom: RunState, inputs?: InputValues) {
+    this.#resumeFrom = resumeFrom;
+    this.#inputs = inputs;
+  }
+
+  enter(): ReanimationFrameController {
+    if (this.#resumeFrom.length === 0) {
+      return new FrameReanimator(undefined);
+    }
+    const stackEntry = this.#resumeFrom.shift();
+    if (!stackEntry || !stackEntry.state) {
+      throw new Error("Cannot reanimate without a state");
+    }
+    const result = loadRunnerState(stackEntry.state).state;
+    if (this.#inputs && this.#resumeFrom.length === 0) {
+      result.outputsPromise = Promise.resolve({
+        ...this.#inputs,
+        ...result.partialOutputs,
+      });
+      this.#inputs = undefined;
+    }
+
+    // Always return the new instance:
+    // wraps the actual ReanimationFrame, if any.
+    return new FrameReanimator({
+      result,
+      invocationPath: stackEntry.path,
+      replayOutputs: [],
+    });
+  }
+}
+
+export class FrameReanimator implements ReanimationFrameController {
   #frame: ReanimationFrame | undefined;
 
   constructor(frame: ReanimationFrame | undefined) {

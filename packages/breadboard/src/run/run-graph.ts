@@ -39,29 +39,45 @@ export async function* runGraph(
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graph, next);
 
+    lifecycle?.dispatchGraphStart(graph.url!);
+
     const reanimation = state?.reanimation();
     if (reanimation) {
-      if (reanimation.mode() !== "none") {
-        switch (state?.reanimation().mode()) {
-          case "replay": {
-            // This can only happen when `runGraph` is called by `invokeGraph`,
-            // which means that all we need to do is provide the output and
-            // return.
-            const { result, invocationId, path } = reanimation.replay();
-            await next(new OutputStageResult(result, invocationId, path));
-            // The nodeend and graphend will be dispatched by `invokeGraph`.
-            return;
-          }
-          case "resume": {
-            const { result, invocationPath } = reanimation.resume();
-            result.outputsPromise = nodeInvoker.invokeNode(
+      const frame = reanimation.enter();
+      const mode = frame.mode();
+      // console.log("🌻 reanimation", mode);
+      switch (mode) {
+        case "replay": {
+          // This can only happen when `runGraph` is called by `invokeGraph`,
+          // which means that all we need to do is provide the output and
+          // return.
+          const { result, invocationId, path } = frame.replay();
+          await next(new OutputStageResult(result, invocationId, path));
+          // The nodeend and graphend will be dispatched by `invokeGraph`.
+          return;
+        }
+        case "resume": {
+          const { result, invocationPath } = frame.resume();
+          resumeFrom = result;
+          // console.log("🌻 resuming", result, invocationPath);
+          // The graphstart will be dispatched by `invokeGraph`.
+          await lifecycle?.dispatchNodeStart(result, invocationPath);
+
+          const type = result.descriptor.type;
+          if (type !== "input" && type !== "output") {
+            const outputs = await nodeInvoker.invokeNode(
               result,
               invocationPath
             );
+            result.outputsPromise = Promise.resolve(outputs);
+            result.pendingOutputs = new Map();
+            resumeFrom = result;
           }
         }
       }
     }
+
+    // console.log("🌻🧠 runGraph", graph, resumeFrom);
 
     const machine = new TraversalMachine(graph, resumeFrom);
 
@@ -69,14 +85,21 @@ export async function* runGraph(
     let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
 
-    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
-
     await probe?.report?.({
       type: "graphstart",
       data: { graph, path: invocationPath, timestamp: timestamp() },
     });
 
+    // console.log("🌻 runGraph machine", machine);
+
     for await (const result of machine) {
+      // console.log(
+      //   "🌻 machine iteration",
+      //   result,
+      //   result.skip,
+      //   "depth",
+      //   path().length
+      // );
       context?.signal?.throwIfAborted();
 
       invocationId++;
@@ -97,7 +120,7 @@ export async function* runGraph(
         continue;
       }
 
-      lifecycle?.dispatchNodeStart(result);
+      await lifecycle?.dispatchNodeStart(result, path());
 
       await probe?.report?.({
         type: "nodestart",
