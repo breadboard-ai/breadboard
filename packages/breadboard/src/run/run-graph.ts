@@ -45,7 +45,7 @@ export async function* runGraph(
     if (reanimation) {
       const frame = reanimation.enter();
       const mode = frame.mode();
-      console.log("🌻 reanimation", mode);
+      // console.log("🌻 reanimation", mode);
       switch (mode) {
         case "replay": {
           // This can only happen when `runGraph` is called by `invokeGraph`,
@@ -59,7 +59,7 @@ export async function* runGraph(
         case "resume": {
           const { result, invocationPath } = frame.resume();
           resumeFrom = result;
-          console.log("🌻 resuming", result, invocationPath);
+          // console.log("🌻 resuming", result, invocationPath);
           // The graphstart will be dispatched by `invokeGraph`.
           await lifecycle?.dispatchNodeStart(result, invocationPath);
 
@@ -77,7 +77,7 @@ export async function* runGraph(
       }
     }
 
-    console.log("🌻🧠 runGraph", graph, resumeFrom);
+    // console.log("🌻🧠 runGraph", graph, resumeFrom);
 
     const machine = new TraversalMachine(graph, resumeFrom);
 
@@ -90,16 +90,16 @@ export async function* runGraph(
       data: { graph, path: invocationPath, timestamp: timestamp() },
     });
 
-    console.log("🌻 runGraph machine", machine);
+    // console.log("🌻 runGraph machine", machine);
 
     for await (const result of machine) {
-      console.log(
-        "🌻 machine iteration",
-        result,
-        result.skip,
-        "depth",
-        path().length
-      );
+      // console.log(
+      //   "🌻 machine iteration",
+      //   result,
+      //   result.skip,
+      //   "depth",
+      //   path().length
+      // );
       context?.signal?.throwIfAborted();
 
       invocationId++;
