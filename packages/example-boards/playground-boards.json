@@ -67,7 +67,7 @@
     {
       "title": "Google Custom Search Engine Tool",
       "reference": "/example-boards/playground/google-custom-search-engine.json",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "title": "Hacker News Algolia Items",
