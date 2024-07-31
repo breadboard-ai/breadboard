@@ -20,6 +20,9 @@ import { RunState } from "../../src/run/types.js";
 import { loadRunnerState } from "../../src/serialization.js";
 import { testKit } from "./test-kit.js";
 
+const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
+  .href;
+
 export type ExpectedRunState = {
   node: string;
 };
@@ -40,10 +43,11 @@ export async function interruptibleScriptedRun(
   script: RunScriptEntry[]
 ) {
   const graph = g as GraphDescriptor;
+  graph.url = BGL_DIR;
   let resumeFrom: RunState = [];
   let inputs: InputValues = {};
   for (const [index, scriptEntry] of script.entries()) {
-    console.log("🍞 script entry", index, scriptEntry);
+    console.log("🌻🍞 script entry", index, scriptEntry);
     const state = createRunStateManager(resumeFrom, inputs);
     const args: RunArguments = {
       kits: [testKit],
@@ -80,6 +84,7 @@ export async function interruptibleScriptedRun(
       resumeFrom = state.lifecycle().state();
       if (scriptEntry.expected.state) {
         if (resumeFrom.length !== scriptEntry.expected.state.length) {
+          console.log("🌻 scriptedRun: resumeFrom", resumeFrom);
           fail(
             `Script entry ${index}: expected ${scriptEntry.expected.state.length} states in run stack, got ${resumeFrom.length}`
           );

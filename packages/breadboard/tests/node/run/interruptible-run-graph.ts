@@ -9,6 +9,7 @@ import test, { describe } from "node:test";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import manyInputs from "../../bgl/many-inputs.bgl.json" with { type: "json" };
 import manyOutputs from "../../bgl/many-outputs.bgl.json" with { type: "json" };
+import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
 import { interruptibleScriptedRun } from "../scripted-run.js";
 import invokeWithBubblingInput from "../../bgl/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 
@@ -60,6 +61,39 @@ describe("interruptibleRunGraph end-to-end", async () => {
         expected: {
           type: "input",
           state: [{ node: "invoke-b5fe388d" }, { node: "input" }],
+        },
+        inputs: { location: "New York" },
+      },
+      {
+        expected: {
+          type: "output",
+          outputs: [
+            {
+              greeting: 'Greeting is: "Hello, Bob from New York!"',
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("invoke board multiple levels of nesting and bubbling", async () => {
+    await interruptibleScriptedRun(multiLevelInvoke, [
+      {
+        expected: {
+          type: "input",
+          state: [{ node: "invoke-d5aa6bf1" }, { node: "input" }],
+        },
+        inputs: { name: "Bob" },
+      },
+      {
+        expected: {
+          type: "input",
+          state: [
+            { node: "invoke-d5aa6bf1" },
+            { node: "invoke-b5fe388d" },
+            { node: "input" },
+          ],
         },
         inputs: { location: "New York" },
       },

@@ -24,6 +24,12 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
 
   dispatchGraphStart(url: string): void {
     this.#stack.push({ url, path: [] });
+    console.log(
+      "🌻 dispatchGraphStart",
+      url,
+      "stack size:",
+      this.#stack.length
+    );
   }
 
   dispatchSkip(): void {

@@ -39,6 +39,8 @@ export async function* runGraph(
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graph, next);
 
+    lifecycle?.dispatchGraphStart(graph.url!);
+
     const reanimation = state?.reanimation();
     if (reanimation) {
       const frame = reanimation.enter();
@@ -58,6 +60,9 @@ export async function* runGraph(
           const { result, invocationPath } = frame.resume();
           resumeFrom = result;
           console.log("🌻 resuming", result, invocationPath);
+          // The graphstart will be dispatched by `invokeGraph`.
+          await lifecycle?.dispatchNodeStart(result, invocationPath);
+
           const type = result.descriptor.type;
           if (type !== "input" && type !== "output") {
             const outputs = await nodeInvoker.invokeNode(
@@ -72,15 +77,13 @@ export async function* runGraph(
       }
     }
 
-    console.log("🧠 runGraph", graph, resumeFrom);
+    console.log("🌻🧠 runGraph", graph, resumeFrom);
 
     const machine = new TraversalMachine(graph, resumeFrom);
 
     const invocationPath = context.invocationPath || [];
     let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
-
-    lifecycle?.dispatchGraphStart(graph.url!);
 
     await probe?.report?.({
       type: "graphstart",
@@ -117,7 +120,7 @@ export async function* runGraph(
         continue;
       }
 
-      lifecycle?.dispatchNodeStart(result, path());
+      await lifecycle?.dispatchNodeStart(result, path());
 
       await probe?.report?.({
         type: "nodestart",

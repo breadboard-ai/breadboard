@@ -206,7 +206,12 @@
         ],
         "comments": []
       },
-      "url": "file://fsapi~boards/invoke-board-with-bubbling-input.bgl.json#382969d5-0908-4367-b09e-95d8b351c39b"
+      "url": "file://fsapi~bgl/invoke-board-with-bubbling-input.bgl.json#382969d5-0908-4367-b09e-95d8b351c39b"
     }
+  },
+  "metadata": {
+    "tags": [
+      "tool"
+    ]
   }
 }
