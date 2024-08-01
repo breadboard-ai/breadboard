@@ -14,8 +14,8 @@ import {
   createLoader,
   createRunStateManager,
   RunArguments,
+  runGraph,
 } from "../../src/index.js";
-import { interruptibleRunGraph } from "../../src/run/interruptible-run-graph.js";
 import { ReanimationInputs, ReanimationState } from "../../src/run/types.js";
 import { loadRunnerState } from "../../src/serialization.js";
 import { testKit } from "./test-kit.js";
@@ -56,7 +56,7 @@ export async function interruptibleScriptedRun(
     let outputCount = 0;
     let interrupted = false;
     let interruptedPath: number[] | undefined;
-    for await (const result of interruptibleRunGraph(graph, args)) {
+    for await (const result of runGraph(graph, args)) {
       const { type, path } = result;
       const expectedRunResult = scriptEntry;
       interruptedPath = path;
@@ -73,6 +73,7 @@ export async function interruptibleScriptedRun(
         outputCount++;
       } else if (type === "input") {
         interrupted = true;
+        break;
       }
     }
     if (interrupted) {
