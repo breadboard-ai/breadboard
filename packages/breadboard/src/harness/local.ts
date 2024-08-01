@@ -5,7 +5,7 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, RunResult, asyncGen } from "../index.js";
+import { Board, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import type { RunStackEntry } from "../run/types.js";
 import { saveRunnerState } from "../serialization.js";
@@ -19,7 +19,7 @@ import {
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
-import { HarnessRunResult, RunConfig, StateToResumeFrom } from "./types.js";
+import { HarnessRunResult, RunConfig } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
@@ -115,27 +115,12 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   return Board.fromGraphDescriptor(graph);
 };
 
-const createPreviousRunResult = (
-  resumeFrom: StateToResumeFrom | undefined
-): BreadboardRunResult | undefined => {
-  if (resumeFrom?.state?.length) {
-    const result = RunResult.load(
-      resumeFrom.state[resumeFrom.state.length - 1].state!
-    );
-    if (resumeFrom.inputs) {
-      result.inputs = resumeFrom.inputs;
-    }
-    return result;
-  }
-  return undefined;
-};
-
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
-    const resumeFrom = createPreviousRunResult(config.resumeFrom);
+    const { base, signal, inputs, state } = config;
 
     try {
       const probe = config.diagnostics
@@ -144,18 +129,16 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run(
-        {
-          probe,
-          kits,
-          loader,
-          store,
-          base: config.base,
-          signal: config.signal,
-          inputs: config.inputs,
-        },
-        resumeFrom
-      )) {
+      for await (const data of runner.run({
+        probe,
+        kits,
+        loader,
+        store,
+        base,
+        signal,
+        inputs,
+        state,
+      })) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());

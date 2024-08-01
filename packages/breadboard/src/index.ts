@@ -111,7 +111,7 @@ export {
 /**
  * Managed Run State API
  */
+export type * from "./run/types.js";
 export { createRunStateManager } from "./run/index.js";
-
 export { invokeGraph } from "./run/invoke-graph.js";
 export { runGraph } from "./run/run-graph.js";

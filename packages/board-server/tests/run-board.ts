@@ -7,7 +7,11 @@
 import test, { describe } from "node:test";
 import { deepStrictEqual, fail, ok } from "assert";
 import { runBoard } from "../src/server/boards/utils/run-board.js";
-import type { GraphDescriptor, Kit } from "@google-labs/breadboard";
+import type {
+  GraphDescriptor,
+  Kit,
+  OutputValues,
+} from "@google-labs/breadboard";
 
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
@@ -39,15 +43,11 @@ const assertResult = (
     type,
     `Expected state type to be ${type} at index ${index}`
   );
-  if (result.$state.type === "input" || result.$state.type === "output") {
-    const state = JSON.parse(result.$state.next);
-    ok(Array.isArray(state), `Expected state to be an array at index ${index}`);
-  }
   if (expected.outputs) {
-    const { $state, ...expectedOutputs } = result;
+    const { $state, outputs } = result;
     deepStrictEqual(
       outputs,
-      expectedOutputs,
+      expected.outputs,
       `Expected outputs to match at index ${index}`
     );
   }
@@ -58,7 +58,7 @@ const getNext = (result: RunBoardResult) => {
     fail(result.$error);
   }
   ok(result.$state);
-  if (result.$state.type === "input" || result.$state.type === "output") {
+  if (result.$state.type === "input") {
     return result.$state.next;
   }
   if (result.$state.type === "end") {
@@ -69,7 +69,7 @@ const getNext = (result: RunBoardResult) => {
 
 type ExpectedResult = {
   type: string;
-  outputs?: Record<string, any>;
+  outputs?: OutputValues[];
 };
 
 type RunScriptEntry = {
@@ -110,8 +110,10 @@ describe("Board Server Runs Boards", () => {
   test("can finish a simple board", async () => {
     await scriptedRun(simpleBoard, [
       { expected: { type: "input" } },
-      { inputs: { text: "foo" }, expected: { type: "output" } },
-      { expected: { type: "end" } },
+      {
+        inputs: { text: "foo" },
+        expected: { type: "end", outputs: [{ text: "foo" }] },
+      },
     ]);
   });
 
@@ -125,10 +127,12 @@ describe("Board Server Runs Boards", () => {
       loader: async () => simpleBoard,
     });
     assertResult(result, {
-      type: "output",
-      outputs: {
-        text: "bar",
-      },
+      type: "end",
+      outputs: [
+        {
+          text: "bar",
+        },
+      ],
     });
   });
 
@@ -151,14 +155,15 @@ describe("Board Server Runs Boards", () => {
       {
         inputs: { text2: "bar" },
         expected: {
-          type: "output",
-          outputs: {
-            "text-one": "foo",
-            "text-two": "bar",
-          },
+          type: "end",
+          outputs: [
+            {
+              "text-one": "foo",
+              "text-two": "bar",
+            },
+          ],
         },
       },
-      { expected: { type: "end" } },
     ]);
   });
 
@@ -167,34 +172,34 @@ describe("Board Server Runs Boards", () => {
       { expected: { type: "input" } },
       {
         inputs: { start: "foo" },
-        expected: { type: "output", outputs: { one: "foo" } },
-      },
-      {
         expected: {
-          type: "output",
-          outputs: {
-            two: "foo",
-          },
+          type: "end",
+          outputs: [
+            { one: "foo" },
+            {
+              two: "foo",
+            },
+          ],
         },
       },
-      { expected: { type: "end" } },
     ]);
   });
 
-  test.skip("can finish a board with bubbling inputs", async () => {
+  test("can finish a board with bubbling inputs", async () => {
     await scriptedRun(invokeWithBubblingInput as GraphDescriptor, [
       { expected: { type: "input" } },
       { inputs: { name: "Bob" }, expected: { type: "input" } },
       {
         inputs: { location: "New York" },
         expected: {
-          type: "output",
-          outputs: {
-            greeting: 'Greeting is "Hello, Bob from New York!"',
-          },
+          type: "end",
+          outputs: [
+            {
+              greeting: 'Greeting is: "Hello, Bob from New York!"',
+            },
+          ],
         },
       },
-      { expected: { type: "end" } },
     ]);
   });
 });
