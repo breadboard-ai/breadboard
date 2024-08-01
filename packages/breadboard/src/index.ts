@@ -28,7 +28,6 @@ export {
 } from "./stream.js";
 
 // New Syntax:
-export { Runner } from "./new/runner/runner.js";
 export {
   board,
   // TODO Alias for easier migration to the new name. Remove in a future breaking change.

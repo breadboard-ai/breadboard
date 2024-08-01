@@ -60,10 +60,10 @@ export class RunResult implements BreadboardRunResult {
   }
 
   set inputs(inputs: InputValues) {
-    this.#state.outputsPromise = Promise.resolve({
+    this.#state.outputs = {
       ...inputs,
       ...this.#state.partialOutputs,
-    });
+    };
   }
 
   get outputs(): OutputValues {
@@ -79,7 +79,7 @@ export class RunResult implements BreadboardRunResult {
     return this.#state;
   }
 
-  async save() {
+  save() {
     return saveRunnerState(this.#type, this.#state);
   }
 
@@ -94,8 +94,7 @@ export class RunResult implements BreadboardRunResult {
   isAtExitNode(): boolean {
     return (
       this.#state.newOpportunities.length === 0 &&
-      this.#state.opportunities.length === 0 &&
-      this.#state.pendingOutputs.size === 0
+      this.#state.opportunities.length === 0
     );
   }
 

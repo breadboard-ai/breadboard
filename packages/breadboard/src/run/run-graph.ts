@@ -65,8 +65,7 @@ export async function* runGraph(
           const type = result.descriptor.type;
           if (!(type === "input" || type === "output")) {
             outputs = await nodeInvoker.invokeNode(result, invocationPath);
-            result.outputsPromise = Promise.resolve(outputs);
-            result.pendingOutputs = new Map();
+            result.outputs = outputs;
             resumeFrom = result;
           }
 
@@ -118,7 +117,7 @@ export async function* runGraph(
         state: lifecycle?.state(),
       });
 
-      let outputsPromise: Promise<OutputValues> | undefined = undefined;
+      let outputs: OutputValues | undefined = undefined;
 
       if (descriptor.type === "input") {
         await next(
@@ -132,14 +131,8 @@ export async function* runGraph(
           path(),
           lifecycle?.state()
         );
-        outputsPromise = result.outputsPromise
-          ? Promise.resolve(
-              resolveBoardCapabilities(
-                Promise.resolve(await result.outputsPromise),
-                context,
-                graph.url
-              )
-            )
+        outputs = result.outputs
+          ? await resolveBoardCapabilities(result.outputs, context, graph.url)
           : undefined;
       } else if (descriptor.type === "output") {
         if (
@@ -147,29 +140,25 @@ export async function* runGraph(
         ) {
           await next(new OutputStageResult(result, invocationId, path()));
         }
-        outputsPromise = result.outputsPromise
-          ? Promise.resolve(result.outputsPromise)
-          : undefined;
+        outputs = result.outputs;
       } else {
-        outputsPromise = Promise.resolve(
-          await nodeInvoker.invokeNode(result, path())
-        );
+        outputs = await nodeInvoker.invokeNode(result, path());
       }
 
-      lifecycle?.dispatchNodeEnd(await outputsPromise, path());
+      lifecycle?.dispatchNodeEnd(outputs, path());
 
       await probe?.report?.({
         type: "nodeend",
         data: {
           node: descriptor,
           inputs,
-          outputs: (await outputsPromise) as OutputValues,
+          outputs: outputs as OutputValues,
           path: path(),
           timestamp: timestamp(),
         },
       });
 
-      result.outputsPromise = outputsPromise;
+      result.outputs = outputs;
     }
 
     lifecycle?.dispatchGraphEnd();

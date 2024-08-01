@@ -40,15 +40,8 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
       [],
       opportunities,
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     return new TraversalMachineIterator(this.graph, entryResult);
-  }
-
-  static async prepareToSave(
-    result: TraversalResult
-  ): Promise<TraversalResult> {
-    return await TraversalMachineIterator.processAllPendingNodes(result);
   }
 }

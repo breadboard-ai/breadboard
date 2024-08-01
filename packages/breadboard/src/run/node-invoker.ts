@@ -44,7 +44,7 @@ export class NodeInvoker {
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
     const { inputs, descriptor } = result;
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
-    let outputsPromise: Promise<OutputValues> | undefined = undefined;
+    let outputs: OutputValues | undefined = undefined;
 
     const handler = this.#handlers[descriptor.type];
     if (!handler)
@@ -71,12 +71,12 @@ export class NodeInvoker {
       state,
     };
 
-    outputsPromise = callHandler(
+    outputs = (await callHandler(
       handler,
       resolveBoardCapabilitiesInInputs(inputs, this.#context, this.#graph.url),
       newContext
-    ) as Promise<OutputValues>;
+    )) as OutputValues;
 
-    return outputsPromise;
+    return outputs;
   }
 }

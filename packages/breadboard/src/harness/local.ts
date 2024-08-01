@@ -56,7 +56,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       {
         url: undefined,
         path: [invocationId],
-        state: await saveRunnerState(type, result.state),
+        state: saveRunnerState(type, result.state),
       },
     ];
   };
