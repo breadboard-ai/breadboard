@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { JSONSchema4 } from "json-schema";
 import type { AdvancedBreadboardType } from "./type.js";
 
 /**
@@ -25,6 +24,5 @@ export interface StringOptions {
  * Create a string type with additional options.
  */
 export function string(options: StringOptions): AdvancedBreadboardType<string> {
-  const jsonSchema: JSONSchema4 = { type: "string", ...options };
-  return { jsonSchema };
+  return { jsonSchema: { type: "string", ...options } };
 }
