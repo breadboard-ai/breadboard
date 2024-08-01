@@ -5,10 +5,14 @@
  */
 
 import { createContext } from "@lit/context";
+import { InputPlugin } from "../../plugins/input-plugin.js";
 
 export interface Environment {
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
+  plugins: {
+    input: InputPlugin[];
+  };
 }
 
 export const environmentContext = createContext<Environment>("bb-environment");

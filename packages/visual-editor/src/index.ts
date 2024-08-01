@@ -84,6 +84,9 @@ const ENVIRONMENT: Environment = {
   connectionServerUrl:
     ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
   connectionRedirectUrl: "/oauth/",
+  plugins: {
+    input: [],
+  },
 };
 
 @customElement("bb-main")
