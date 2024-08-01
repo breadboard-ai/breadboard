@@ -13,6 +13,7 @@ import {
 } from "../../internal/type-system/type.js";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 test("no options", () => {
   const t = string({});
@@ -48,5 +49,13 @@ test("all options", () => {
     pattern: "^.*$",
     minLength: 2,
     maxLength: 42,
+  });
+});
+
+test("error: unknown option", () => {
+  string({
+    format: "uri",
+    // @ts-expect-error
+    potato: true,
   });
 });
