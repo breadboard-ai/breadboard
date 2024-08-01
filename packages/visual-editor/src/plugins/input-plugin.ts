@@ -23,7 +23,7 @@ export interface InputPlugin {
    * Called the first time the widget is needed in a session. Usually it should
    * load the custom element definition with a dynamic `import`.
    */
-  load?: () => unknown | Promise<unknown>;
+  load?: (abort: AbortSignal) => unknown | Promise<unknown>;
 
   instantiate: {
     /**
