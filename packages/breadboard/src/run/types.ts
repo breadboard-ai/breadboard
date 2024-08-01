@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OutputValues, TraversalResult } from "../types.js";
+import type { InputValues, OutputValues, TraversalResult } from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -30,6 +30,10 @@ export type RunStackEntry = {
    * The state of the graph traversal at the time of the invocation.
    */
   state?: string;
+  /**
+   * Outputs of the node if it has been run.
+   */
+  outputs?: OutputValues;
 };
 
 /**
@@ -40,13 +44,10 @@ export type RunStackEntry = {
  */
 export type RunState = RunStackEntry[];
 
-/**
- * A representation of the current run state.
- * Given this representation RunStateManager can correctly
- * resume a run.
- */
-export type CurrentRunState = {
-  // TODO: Define.
+export type LifecyclePathRegistryEntry<Data> = {
+  children: LifecyclePathRegistryEntry<Data>[];
+  // parent: LifecyclePathRegistryEntry | null;
+  data: Data | null;
 };
 
 export type ManagedRunStateLifecycle = {
@@ -59,16 +60,18 @@ export type ManagedRunStateLifecycle = {
     result: TraversalResult,
     invocationPath: number[]
   ): Promise<void>;
-  dispatchNodeEnd(): void;
+  dispatchNodeEnd(
+    outputs: OutputValues | undefined,
+    invocationPath: number[]
+  ): void;
   dispatchGraphEnd(): void;
   dispatchSkip(): void;
+  supplyPartialOutputs(
+    outputs: OutputValues,
+    invocationPath: number[]
+  ): Promise<void>;
   state(): RunState;
-  /**
-   * Returns true when the run is complete. The run is complete when
-   * the initial dispatchGraphStart was matched with the dispatchGraphEnd
-   * of the same invocationPath.
-   */
-  complete(): boolean;
+  reanimationState(): ReanimationState;
 };
 
 /**
@@ -81,6 +84,13 @@ export type ManagedRunState = {
    */
   lifecycle(): ManagedRunStateLifecycle;
   reanimation(): ReanimationController;
+};
+
+export type ReanimationState = Record<string, RunStackEntry>;
+
+export type ReanimationInputs = {
+  invocationPath: number[];
+  inputs: InputValues;
 };
 
 export type ReanimationMode =
@@ -98,7 +108,7 @@ export type ReanimationMode =
   | "none";
 
 export type ReanimationController = {
-  enter(): ReanimationFrameController;
+  enter(invocationPath: number[]): ReanimationFrameController;
 };
 
 export type ReanimationFrameController = {

@@ -6,11 +6,18 @@
 
 import { InputValues } from "../types.js";
 import { RunStateManager } from "./manager.js";
-import type { ManagedRunState, RunState } from "./types.js";
+import { emptyEntry } from "./registry.js";
+import type {
+  LifecyclePathRegistryEntry,
+  ManagedRunState,
+  ReanimationInputs,
+  ReanimationState,
+  RunStackEntry,
+} from "./types.js";
 
 export const createRunStateManager = (
-  resumeFrom: RunState = [],
-  inputs?: InputValues
+  resumeFrom: ReanimationState = {},
+  inputs?: ReanimationInputs
 ): ManagedRunState => {
   return new RunStateManager(resumeFrom, inputs);
 };

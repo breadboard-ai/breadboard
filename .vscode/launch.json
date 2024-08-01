@@ -41,6 +41,13 @@
       "request": "launch",
       "command": "npm run test",
       "cwd": "${workspaceFolder}/packages/board-server"
+    },
+    {
+      "type": "node-terminal",
+      "name": "packages/breadboard: test",
+      "request": "launch",
+      "command": "rm -rf ${workspaceFolder}/packages/breadboard/.wireit && npm run test",
+      "cwd": "${workspaceFolder}/packages/breadboard"
     }
   ]
 }
