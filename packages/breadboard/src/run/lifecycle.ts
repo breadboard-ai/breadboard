@@ -68,7 +68,7 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     }
     const unpackedState = loadRunnerState(state.state!).state;
     unpackedState.partialOutputs = outputs;
-    state.state = await saveRunnerState("nodestart", unpackedState);
+    state.state = saveRunnerState("nodestart", unpackedState);
   }
 
   dispatchGraphStart(url: string, path: number[]): void {
@@ -91,7 +91,7 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
       return;
     }
     const entry = this.#registry.create(invocationPath);
-    const state = await saveRunnerState("nodestart", result);
+    const state = saveRunnerState("nodestart", result);
     const last = this.#stack[this.#stack.length - 1];
     if (last) {
       last.state = state;

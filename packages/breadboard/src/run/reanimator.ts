@@ -55,10 +55,10 @@ export class Reanimator implements ReanimationController {
     }
     const result = loadRunnerState(stackEntry.state).state;
     if (this.#supplyInputs(invocationPath)) {
-      result.outputsPromise = Promise.resolve({
+      result.outputs = {
         ...this.#inputs?.inputs,
         ...result.partialOutputs,
-      });
+      };
       this.#inputs = undefined;
     }
     const replayOutputs = stackEntry.outputs ? [stackEntry.outputs] : [];

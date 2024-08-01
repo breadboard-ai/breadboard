@@ -133,15 +133,12 @@ const resolvePath = (
  * `UnresolvedPathBoardCapability` to `ResolvedURLBoardCapability`.
  * This must happen at run-time, at the earliest moment when
  * the inputs are received by the BoardRunner.
- * @param outputsPromise
- * @returns
  */
 export const resolveBoardCapabilities = async (
-  outputsPromise: Promise<OutputValues>,
+  outputs: OutputValues,
   context: NodeHandlerContext,
   url?: string
 ): Promise<OutputValues> => {
-  const outputs = await outputsPromise;
   resolveBoardCapabilitiesInInputs(outputs, context, url);
   return Promise.resolve(outputs);
 };

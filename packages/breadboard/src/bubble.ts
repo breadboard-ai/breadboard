@@ -43,7 +43,7 @@ export const bubbleUpInputsIfNeeded = async (
   // enforce required inputs.
   if (!context.requestInput) return;
 
-  const outputs = (await result.outputsPromise) ?? {};
+  const outputs = result.outputs ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs, path);
   await context.state?.lifecycle().supplyPartialOutputs(outputs, path);
   if (state.length > 0) {
@@ -51,10 +51,10 @@ export const bubbleUpInputsIfNeeded = async (
     if (last.state) {
       const unpackedState = loadRunnerState(last.state).state;
       unpackedState.partialOutputs = outputs;
-      last.state = await saveRunnerState("nodestart", unpackedState);
+      last.state = saveRunnerState("nodestart", unpackedState);
     }
   }
-  result.outputsPromise = reader.read(
+  result.outputs = await reader.read(
     createBubbleHandler(metadata, context, descriptor, state)
   );
 };
@@ -173,7 +173,7 @@ export class RequestedInputsManager {
         },
       };
       await next(new InputStageResult(requestInputResult, state, -1, path));
-      const outputs = await requestInputResult.outputsPromise;
+      const outputs = requestInputResult.outputs;
       let value = outputs && outputs[name];
       if (value === undefined) {
         value = await this.#context.requestInput?.(
