@@ -115,19 +115,14 @@ export async function* runGraph(
           path: path(),
           timestamp: timestamp(),
         },
-        state: await lifecycle?.state(),
+        state: lifecycle?.state(),
       });
 
       let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
       if (descriptor.type === "input") {
         await next(
-          new InputStageResult(
-            result,
-            await lifecycle?.state(),
-            invocationId,
-            path()
-          )
+          new InputStageResult(result, lifecycle?.state(), invocationId, path())
         );
         await bubbleUpInputsIfNeeded(
           graph,
