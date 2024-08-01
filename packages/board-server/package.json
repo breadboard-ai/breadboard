@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": "./dist/server/index.js",
@@ -17,7 +17,8 @@
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
-    "dev:nowatch": "wireit"
+    "dev:nowatch": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -54,6 +55,7 @@
       ],
       "dependencies": [
         "../breadboard:build",
+        "../data-store:build",
         "../agent-kit:build",
         "../palm-kit:build",
         "../core-kit:build",
@@ -80,6 +82,42 @@
           "cascade": false
         }
       ]
+    },
+    "build:tests": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../data-store:build:tsc",
+        "../agent-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tests/*.json",
+        "tests/boards/*.bgl.json",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tests"
+      ],
+      "files": [],
+      "output": []
     }
   },
   "repository": {
@@ -98,18 +136,19 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/node": "^20.14.11",
-    "esbuild": "^0.21.5",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.23.0",
     "eslint": "^8.57.0",
-    "typescript": "^5.5.3",
+    "typescript": "^5.5.4",
     "wireit": "^0.14.5"
   },
   "dependencies": {
+    "@breadboard-ai/data-store": "^0.1.0",
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/secret-manager": "^5.6.0",
-    "@google-labs/breadboard": "^0.22.0",
+    "@google-labs/breadboard": "^0.23.0",
     "@lit/context": "^1.1.2",
     "lit": "^3.1.4",
-    "vite": "^5.3.4"
+    "vite": "^5.3.5"
   }
 }

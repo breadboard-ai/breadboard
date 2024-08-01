@@ -24,6 +24,7 @@ export class MachineResult implements TraversalResult {
   state: QueuedNodeValuesState;
   outputsPromise?: Promise<OutputValues>;
   pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
+  partialOutputs?: OutputValues;
 
   constructor(
     descriptor: NodeDescriptor,
@@ -32,7 +33,8 @@ export class MachineResult implements TraversalResult {
     opportunities: Edge[],
     newOpportunities: Edge[],
     state: QueuedNodeValuesState,
-    pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>
+    pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>,
+    partialOutputs?: OutputValues
   ) {
     this.descriptor = descriptor;
     this.inputs = inputs;
@@ -41,6 +43,7 @@ export class MachineResult implements TraversalResult {
     this.newOpportunities = newOpportunities;
     this.state = state;
     this.pendingOutputs = pendingOutputs;
+    this.partialOutputs = partialOutputs;
   }
 
   /**
@@ -62,7 +65,8 @@ export class MachineResult implements TraversalResult {
       o.opportunities,
       o.newOpportunities,
       edgeState,
-      o.pendingOutputs
+      o.pendingOutputs,
+      o.partialOutputs
     );
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/build",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "JavaScript library for building boards and defining new node types for the Breadboard AI prototyping library",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -73,7 +73,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
@@ -81,7 +81,7 @@
       "output": []
     },
     "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --test-only --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
@@ -89,7 +89,7 @@
       "output": []
     },
     "coverage": {
-      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info",
       "dependencies": [
         "build:tsc"
       ],
@@ -115,13 +115,13 @@
     }
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.22.0",
+    "@google-labs/breadboard": "^0.23.0",
     "@types/json-schema": "^7.0.15"
   },
   "devDependencies": {
-    "@types/node": "^20.14.11",
+    "@types/node": "^22.0.0",
     "eslint": "^8.57.0",
-    "typescript": "^5.5.3",
+    "typescript": "^5.5.4",
     "wireit": "^0.14.5"
   }
 }

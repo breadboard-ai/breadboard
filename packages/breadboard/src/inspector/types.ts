@@ -29,8 +29,11 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
-import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
-import { type JsonSubSchemaAnalysisDetail } from "@google-labs/breadboard-schema/subschema.js";
+import {
+  DataStore,
+  RunStore,
+  SerializedDataStoreGroup,
+} from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -632,13 +635,13 @@ export type InspectableRunObserver = {
    * Returns the list of runs that were observed. The current run is always
    * at the top of the list.
    */
-  runs(): InspectableRun[];
+  runs(): Promise<InspectableRun[]>;
   /**
    * Observes the given result and collects it into the list of runs.
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
    */
-  observe(result: HarnessRunResult): InspectableRun[];
+  observe(result: HarnessRunResult): Promise<void>;
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.
@@ -834,9 +837,8 @@ export type InspectableRun = {
   events: InspectableRunEvent[];
   /**
    * A way to associate data with the run.
-   * TODO: Revisit the approach once the evolutionary forces have settled.
    */
-  dataStoreGroupId: number;
+  dataStoreKey: string;
   /**
    * Returns the current `InspectableRunNodeEvent` if any.
    * This is useful for tracking the latest node that is being run.
@@ -945,7 +947,15 @@ export type RunObserverOptions = {
   /**
    * The data store that will manage non-text data within the run.
    */
-  store?: DataStore;
+  dataStore?: DataStore;
+  /**
+   * The store that will be used to capture the run's data.
+   */
+  runStore?: RunStore;
+  /**
+   * Whether or not to skip replacing inlineData parts with storedData parts.
+   */
+  skipDataStore?: boolean;
 };
 
 export type GraphstartTimelineEntry = [

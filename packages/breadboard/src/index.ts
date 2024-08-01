@@ -13,7 +13,7 @@ export { SchemaBuilder, combineSchemas } from "./schema.js";
 export { RunResult } from "./run.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
-export { traversalResultFromStack } from "./stack.js";
+export { traversalResultFromStack } from "./run/lifecycle.js";
 export { toMermaid } from "./mermaid.js";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
@@ -91,9 +91,25 @@ export { formatGraphDescriptor } from "./formatter.js";
  */
 export type * from "./data/types.js";
 export {
-  createDataStore,
-  inflateData,
-  deflateData,
-  isDataCapability,
+  asBase64,
   asBlob,
+  deflateData,
+  inflateData,
+  isDataCapability,
+  isInlineData,
+  isStoredData,
+  isSerializedData,
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
+  isLLMContent,
+  isTextCapabilityPart,
+  toInlineDataPart,
+  toStoredDataPart,
+  createDefaultDataStore,
+  createDefaultRunStore,
 } from "./data/index.js";
+
+/**
+ * Managed Run State API
+ */
+export { createRunStateManager } from "./run/index.js";

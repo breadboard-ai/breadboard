@@ -19,10 +19,15 @@ import type {
 } from "../common/serializable.js";
 import { type JsonSerializable } from "../type-system/type.js";
 import {
+  BoardInstance,
   describeInput,
   describeOutput,
   isBoard,
+  isBoardInstance,
+  isBoardOutput,
   isSerializableOutputPortReference,
+  type BoardInputPorts,
+  type BoardOutputPorts,
   type GenericBoardDefinition,
 } from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
@@ -190,21 +195,28 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (name === "$id" || name === "$metadata") {
         continue;
       }
+
+      let nested = isBoardOutput(output) ? output : undefined;
       let port;
       let outputNodeId;
       const portMetadata: { title?: string; description?: string } = {};
       if (isSpecialOutput(output)) {
         port = output.port;
-        outputNodeId = output.id;
-        if (output.title) {
-          portMetadata.title = output.title;
-        }
-        if (output.description) {
-          portMetadata.description = output.description;
+        if (nested === undefined) {
+          outputNodeId = output.id;
+          if (output.title) {
+            portMetadata.title = output.title;
+          }
+          if (output.description) {
+            portMetadata.description = output.description;
+          }
         }
       } else {
         port = output;
       }
+
+      nested = nested ?? (isBoardOutput(port) ? port : undefined);
+
       if (isSerializableOutputPortReference(port)) {
         port = port[OutputPortGetter];
       }
@@ -240,7 +252,17 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (required) {
         outputNode.configuration.schema.required.push(name);
       }
-      if (isSpecialInput(port)) {
+      if (nested !== undefined) {
+        const { innerBoard, innerPortName } = nested;
+        addEdge(
+          visitNodeAndReturnItsId(innerBoard),
+          innerPortName,
+          outputNodeId,
+          name,
+          isConstant(output),
+          !required
+        );
+      } else if (isSpecialInput(port)) {
         unconnectedInputs.delete(port);
         const resolution = magicInputResolutions.get(port);
         if (resolution !== undefined) {
@@ -253,7 +275,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             !required
           );
         }
-      } else {
+      } else if ("node" in port) {
         addEdge(
           visitNodeAndReturnItsId(port.node),
           port.name,
@@ -315,14 +337,25 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   }
   return bgl;
 
-  function visitNodeAndReturnItsId(node: SerializableNode): string {
+  function visitNodeAndReturnItsId(
+    node: SerializableNode | BoardInstance<BoardInputPorts, BoardOutputPorts>
+  ): string {
     let descriptor = nodes.get(node);
     if (descriptor !== undefined) {
       return descriptor.id;
     }
+    let type, metadata, thisNodeId;
+    if (isBoardInstance(node)) {
+      type = "invoke";
+      metadata = undefined;
+      thisNodeId = nextIdForType("invoke");
+    } else {
+      const cast = node as SerializableNode;
+      type = cast.type;
+      metadata = cast.metadata;
+      thisNodeId = cast.id ?? nextIdForType(type);
+    }
 
-    const { type, metadata } = node;
-    const thisNodeId = node.id ?? nextIdForType(type);
     const configuration: Record<string, NodeValue> = {};
     descriptor = { id: thisNodeId, type, configuration };
 
@@ -341,11 +374,21 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     nodes.set(node, descriptor);
 
     const configurationEntries: Array<[string, NodeValue]> = [];
-    for (const [portName, inputPort] of Object.entries(node.inputs)) {
+    if (isBoardInstance(node)) {
+      configurationEntries.push([
+        "$board",
+        `#${embedBoardAndReturnItsId(node.definition)}`,
+      ]);
+    }
+    for (const [portName, inputPort] of Object.entries(
+      isBoardInstance(node) ? node.values : node.inputs
+    )) {
       unconnectedInputs.delete(inputPort);
       const values = isConvergence(inputPort.value)
         ? inputPort.value.ports
-        : [inputPort.value];
+        : inputPort.value
+          ? [inputPort.value]
+          : [inputPort];
       for (let value of values) {
         let wasConstant = false;
         if (isConstant(value)) {
@@ -359,6 +402,18 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           // TODO(aomarks) The way optional works is kind of hacky.
           value = value[OptionalVersionOf];
           wasOptional = true;
+        }
+
+        if (isBoardOutput(value)) {
+          addEdge(
+            visitNodeAndReturnItsId(value.innerBoard),
+            value.innerPortName,
+            thisNodeId,
+            portName,
+            wasConstant,
+            wasOptional
+          );
+          continue;
         }
 
         if (isLoopback(value)) {
@@ -413,7 +468,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           // TODO(aomarks) Why is this possible in the type system? An inport port
           // value can never actually be undefined, right?
           throw new Error(
-            `Internal error: value was undefined for a ${inputPort.node.type}:${inputPort.name} port.`
+            `Internal error: value was undefined for a ${inputPort.node?.type}:${inputPort.name} port.`
           );
         } else if (typeof value === "symbol") {
           // TODO(aomarks) Why is this possible in the type system? This should
@@ -429,6 +484,12 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
               path: `#${embedBoardAndReturnItsId(value)}`,
             },
           ]);
+        } else if (
+          typeof value === "object" &&
+          value.constructor !== Object &&
+          "value" in value
+        ) {
+          configurationEntries.push([portName, value.value]);
         } else {
           configurationEntries.push([
             portName,

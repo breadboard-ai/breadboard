@@ -25,6 +25,7 @@ export type GrantResponse =
     };
 
 export interface TokenGrant {
+  client_id: string;
   access_token: string;
   expires_in: number;
   refresh_token: string;

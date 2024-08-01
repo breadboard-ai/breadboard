@@ -74,12 +74,16 @@ const secrets = defineNodeType({
   metadata: {
     title: "Secrets",
     description: "Retrieves secret values, such as API keys.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-secrets-component",
+    },
   },
   inputs: {
     keys: {
-      title: "secrets",
+      title: "Secrets",
       description: "The array of secrets to retrieve from the node.",
       type: array("string"),
+      behavior: ["config"],
     },
   },
   outputs: {

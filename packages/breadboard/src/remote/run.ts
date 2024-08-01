@@ -7,6 +7,8 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { extractError } from "../harness/error.js";
 import { RunResult } from "../run.js";
+import { createRunStateManager } from "../run/index.js";
+import { RunState } from "../run/types.js";
 import { BoardRunner } from "../runner.js";
 import {
   WritableResult,
@@ -14,21 +16,16 @@ import {
   stubOutStreams,
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
+import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
 import {
-  InputValues,
-  NodeHandlerContext,
-  OutputValues,
-  RunState,
-} from "../types.js";
-import {
-  AnyProbeMessage,
+  AnyClientRunResult,
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  ClientTransport,
   InputResolveRequest,
+  RunClientTransport,
   RunRequestMessage,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
@@ -73,8 +70,9 @@ export class RunServer {
     const result = resumeRun(request.value);
     const responses = stream.writableResponses.getWriter();
 
-    const servingContext = {
+    const servingContext: NodeHandlerContext = {
       ...context,
+      state: createRunStateManager(),
       probe: diagnostics
         ? new Diagnostics(async (message) => {
             const { type, data } = message;
@@ -127,35 +125,6 @@ export class RunServer {
     }
   }
 }
-
-type RunClientTransport = ClientTransport<
-  AnyRunRequestMessage,
-  AnyRunResponseMessage
->;
-
-type ReplyFunction = {
-  reply: (chunk: AnyRunRequestMessage[1]) => Promise<void>;
-};
-
-type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
-  string,
-  object,
-  RunState?,
-]
-  ? {
-      type: ResponseMessage[0];
-      data: ResponseMessage[1];
-      state?: RunState;
-    } & ReplyFunction
-  : never;
-
-export type AnyClientRunResult =
-  ClientRunResultFromMessage<AnyRunResponseMessage>;
-
-export type AnyProbeClientRunResult =
-  ClientRunResultFromMessage<AnyProbeMessage>;
-
-export type ClientRunResult<T> = T & ReplyFunction;
 
 const createRunResult = (
   response: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>

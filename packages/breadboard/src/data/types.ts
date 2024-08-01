@@ -4,6 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { HarnessRunResult } from "../harness/types.js";
+
+export type FunctionCallCapabilityPart = {
+  functionCall: {
+    name: string;
+    args: object;
+  };
+};
+
+export type FunctionResponseCapabilityPart = {
+  functionResponse: {
+    name: string;
+    response: object;
+  };
+};
+
+export type TextCapabilityPart = {
+  text: string;
+};
+
+export type DataPart =
+  | InlineDataCapabilityPart
+  | StoredDataCapabilityPart
+  | FunctionCallCapabilityPart
+  | FunctionResponseCapabilityPart
+  | TextCapabilityPart;
+
+export type LLMContent = {
+  role?: string;
+  parts: DataPart[];
+};
+
 /**
  * Represents inline data, encoded as a base64 string.
  */
@@ -46,15 +78,26 @@ export type DataStoreProvider = {
   releaseAll(): Promise<void>;
 };
 
+export type RunStore = {
+  start(storeId: string, limit?: number): Promise<string>;
+  write(result: HarnessRunResult): Promise<void>;
+  stop(): Promise<void>;
+  abort(): Promise<void>;
+  drop(): Promise<void>;
+  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
+};
+
 export type DataStore = {
-  store(data: Blob): Promise<StoredDataCapabilityPart>;
-  retrieve(
-    storedData: StoredDataCapabilityPart
-  ): Promise<InlineDataCapabilityPart>;
-  retrieveAsBlob(storedData: StoredDataCapabilityPart): Promise<Blob>;
-  startGroup(): void;
-  endGroup(): number;
-  releaseGroup(group: number): void;
-  serializeGroup(group: number): Promise<SerializedDataStoreGroup | null>;
-  retrieveAsURL(storedData: StoredDataCapabilityPart): Promise<string>;
+  createGroup(groupId: string): void;
+  drop(): Promise<void>;
+  has(groupId: string): boolean;
+  releaseAll(): void;
+  releaseGroup(group: string): void;
+  replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
+  retrieveAsBlob(part: StoredDataCapabilityPart): Promise<Blob>;
+  serializeGroup(
+    group: string,
+    storeId?: string
+  ): Promise<SerializedDataStoreGroup | null>;
+  store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
 };

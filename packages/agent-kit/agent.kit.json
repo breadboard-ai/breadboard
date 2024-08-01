@@ -207,7 +207,7 @@
           "id": "fn-5",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_5 = ({context})=>{console.log(\"\\u{1F33B} context\",context);if(!context){return{input:[]}}const c=asContextArray(context);const mode=computeMode(c);if(mode===\"input\"){return{input:c}}else if(mode===\"inputOutput\"){return{input:c,output:c}}return{output:onlyChoices(c),choose:c};function asContextArray(context2){const input=context2;return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function onlyChoices(context2){const choices=[];const reversed=[...context2].reverse();for(const item of reversed){choices.push(item);if(item.role===\"$metadata\"&&item.type===\"split\"&&item.data.type===\"start\"){break}}return choices.reverse()}__name(onlyChoices,\"onlyChoices\");function computeMode(context2){const lastItem=context2[context2.length-1];if(!lastItem){return\"input\"}if(lastItem.role===\"user\"){return\"input\"}if(lastItem.role!==\"$metadata\"){return\"inputOutput\"}if(lastItem.type===\"split\"&&lastItem.data.type===\"end\"){const splitId=lastItem.data.id;let choiceCounter=1;for(let i=context2.length-2;i>=0;i--){const item=context2[i];if(item.role===\"$metadata\"&&item.type===\"split\"){const{id,type}=item.data;if(splitId!==id){return\"inputOutput\"}if(type===\"start\"){break}choiceCounter++}}if(choiceCounter>1){return\"choose\"}}return\"inputOutput\"}__name(computeMode,\"computeMode\")};",
+            "code": "const fn_5 = ({context})=>{if(!context){return{input:[]}}const c=asContextArray(context);const mode=computeMode(c);if(mode===\"input\"){return{input:c}}else if(mode===\"inputOutput\"){return{input:c,output:c}}return{output:onlyChoices(c),choose:c};function asContextArray(context2){const input=context2;return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function onlyChoices(context2){const choices=[];const reversed=[...context2].reverse();for(const item of reversed){choices.push(item);if(item.role===\"$metadata\"&&item.type===\"split\"&&item.data.type===\"start\"){break}}return choices.reverse()}__name(onlyChoices,\"onlyChoices\");function computeMode(context2){const lastItem=context2[context2.length-1];if(!lastItem){return\"input\"}if(lastItem.role===\"user\"){return\"input\"}if(lastItem.role!==\"$metadata\"){return\"inputOutput\"}if(lastItem.type===\"split\"&&lastItem.data.type===\"end\"){const splitId=lastItem.data.id;let choiceCounter=1;for(let i=context2.length-2;i>=0;i--){const item=context2[i];if(item.role===\"$metadata\"&&item.type===\"split\"){const{id,type}=item.data;if(splitId!==id){return\"inputOutput\"}if(type===\"start\"){break}choiceCounter++}}if(choiceCounter>1){return\"choose\"}}return\"inputOutput\"}__name(computeMode,\"computeMode\")};",
             "name": "fn_5",
             "raw": true
           },
@@ -1251,15 +1251,15 @@
                 },
                 "persona": {
                   "type": "object",
+                  "behavior": [
+                    "llm-content",
+                    "config"
+                  ],
                   "title": "Persona",
                   "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
                   "default": "",
                   "examples": [
                     "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
-                  ],
-                  "behavior": [
-                    "llm-content",
-                    "config"
                   ]
                 }
               },
@@ -1918,6 +1918,9 @@
                 },
                 "instruction": {
                   "type": "string",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Instruction",
                   "description": "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action.",
                   "default": "",
@@ -1943,6 +1946,9 @@
                 },
                 "retry": {
                   "type": "number",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Retry Count",
                   "description": "How many times to retry in case of LLM error",
                   "default": "5"
@@ -2310,6 +2316,9 @@
                 },
                 "stopSequences": {
                   "type": "array",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Stop Sequences",
                   "description": "An array of strings that will stop the output",
                   "default": "[]",

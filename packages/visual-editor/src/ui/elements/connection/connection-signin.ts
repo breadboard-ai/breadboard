@@ -240,6 +240,7 @@ export class ConnectionSignin extends LitElement {
       return;
     }
     const settingsValue: TokenGrant = {
+      client_id: this.connection.clientId,
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
       refresh_token: grantResponse.refresh_token,
@@ -257,11 +258,14 @@ export class ConnectionSignin extends LitElement {
     this._state = "signedin";
   }
 
-  #onClickSignout() {
+  async #onClickSignout() {
     if (!this.settingsHelper || !this.connection) {
       return;
     }
-    this.settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, this.connection.id);
+    await this.settingsHelper.delete(
+      SETTINGS_TYPE.CONNECTIONS,
+      this.connection.id
+    );
     this._state = "signedout";
   }
 }

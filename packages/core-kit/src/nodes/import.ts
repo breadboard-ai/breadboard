@@ -11,7 +11,7 @@ import type {
   BreadboardCapability,
   NodeHandlerContext,
   GraphDescriptor,
-  LambdaNodeOutputs,
+  OutputValues,
 } from "@google-labs/breadboard";
 import { loadGraphFromPath } from "../utils.js";
 
@@ -55,7 +55,7 @@ export default {
   invoke: async (
     inputs: InputValues,
     context: NodeHandlerContext
-  ): Promise<LambdaNodeOutputs> => {
+  ): Promise<OutputValues> => {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
     const board = graph

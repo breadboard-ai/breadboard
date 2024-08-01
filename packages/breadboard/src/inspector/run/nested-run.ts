@@ -19,12 +19,13 @@ import type {
  * data in the `PathRegistryEntry`.
  */
 export class NestedRun implements InspectableRun {
+  public readonly dataStoreKey = Date.now().toFixed(3);
+
   graphId: GraphUUID;
   start: number;
   end: number | null;
   graphVersion = 0;
   events: InspectableRunEvent[];
-  dataStoreGroupId: number = -1;
 
   constructor(entry: PathRegistryEntry) {
     this.graphId = entry.graphId as GraphUUID;

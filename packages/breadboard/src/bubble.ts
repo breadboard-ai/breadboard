@@ -5,7 +5,9 @@
  */
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import {
+import type { RunState } from "./run/types.js";
+import { loadRunnerState, saveRunnerState } from "./serialization.js";
+import type {
   GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
@@ -34,7 +36,8 @@ export const bubbleUpInputsIfNeeded = async (
   context: NodeHandlerContext,
   descriptor: NodeDescriptor,
   result: TraversalResult,
-  path: number[]
+  path: number[],
+  state: RunState = []
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
   // enforce required inputs.
@@ -42,15 +45,24 @@ export const bubbleUpInputsIfNeeded = async (
 
   const outputs = (await result.outputsPromise) ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs, path);
+  if (state.length > 0) {
+    const last = state[state.length - 1];
+    if (last.state) {
+      const unpackedState = loadRunnerState(last.state).state;
+      unpackedState.partialOutputs = outputs;
+      last.state = await saveRunnerState("nodestart", unpackedState);
+    }
+  }
   result.outputsPromise = reader.read(
-    createBubbleHandler(metadata, context, descriptor)
+    createBubbleHandler(metadata, context, descriptor, state)
   );
 };
 
 export const createBubbleHandler = (
   metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
-  descriptor: NodeDescriptor
+  descriptor: NodeDescriptor,
+  state: RunState
 ) => {
   return (async (name, schema, required, path) => {
     if (required) {
@@ -62,7 +74,16 @@ export const createBubbleHandler = (
       }
       return schema.default;
     }
-    const value = await context.requestInput?.(name, schema, descriptor, path);
+    const value = await context.requestInput?.(
+      name,
+      schema,
+      descriptor,
+      path,
+      state
+    );
+    if (context?.signal?.aborted) {
+      throw context.signal.throwIfAborted();
+    }
     if (value === undefined) {
       throw new Error(createErrorMessage(name, metadata, required));
     }
@@ -137,7 +158,8 @@ export class RequestedInputsManager {
       name: string,
       schema: Schema,
       node: NodeDescriptor,
-      path: number[]
+      path: number[],
+      state: RunState
     ) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
@@ -149,8 +171,7 @@ export class RequestedInputsManager {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
-      //console.log("requestInputResult", requestInputResult);
-      await next(new InputStageResult(requestInputResult, undefined, -1, path));
+      await next(new InputStageResult(requestInputResult, state, -1, path));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
       if (value === undefined) {
@@ -158,7 +179,8 @@ export class RequestedInputsManager {
           name,
           schema,
           descriptor,
-          path
+          path,
+          state
         );
       }
       if (!isTransient(schema)) {

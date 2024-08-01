@@ -55,6 +55,7 @@ export const collectKits = (kits: Kit[]): InspectableKit[] => {
         title: kit.title,
         description: kit.description,
         url: kit.url,
+        tags: kit.tags || [],
       };
       return {
         descriptor,

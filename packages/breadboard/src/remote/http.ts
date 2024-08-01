@@ -15,7 +15,7 @@ import {
   ClientTransport,
   ServerBidirectionalStream,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 
 /**
  * Minimal interface in the shape of express.js's request object.

@@ -5,11 +5,12 @@
  */
 import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AllowedLLMContentTypes, LLMContent } from "../../../types/types.js";
+import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { LLMInput } from "./llm-input.js";
 import { classMap } from "lit/directives/class-map.js";
+import { LLMContent } from "@google-labs/breadboard";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
@@ -51,6 +52,12 @@ export class LLMInputArray extends LitElement {
 
     :host {
       display: block;
+    }
+
+    header {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size-2) 0;
     }
 
     #controls {
@@ -112,7 +119,7 @@ export class LLMInputArray extends LitElement {
 
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
-    return Promise.all([...inputs].map((input) => input.processAllOpenParts()));
+    return [...inputs].map((input) => input.processAllOpenParts());
   }
 
   hasMinItems(): boolean {
@@ -123,6 +130,10 @@ export class LLMInputArray extends LitElement {
     const inputs =
       this.#containerRef.value.querySelectorAll<LLMInput>("bb-llm-input");
     return [...inputs].every((input) => input.hasMinItems());
+  }
+
+  get value() {
+    return this.values;
   }
 
   protected willUpdate(

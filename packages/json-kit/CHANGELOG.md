@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.4
+
+### Patch Changes
+
+- 8db38aa: Exporting jsonata node from index
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- Updated dependencies [ad8aa22]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/breadboard@0.23.0
+
 ## 0.3.3
 
 ### Patch Changes

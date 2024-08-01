@@ -7,25 +7,25 @@ tags:
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/json-kit/src/nodes/" %}
 
-This kit contains nodes that facilitate wrangling JSON objects. It contains the following nodes: **jsonata**, **validateJson**, and **xmlToJson**.
+This kit contains components that facilitate wrangling JSON objects. It contains the following components: **jsonata**, **validateJson**, and **xmlToJson**.
 
-## The `jsonata` node
+## The `jsonata` component
 
 {{ "/breadboard/static/boards/kits/json-jsonata.bgl.json" | board }}
 
-Use this node to evaluate a [JSONata](https://jsonata.org/) expressions in your board. JSONata is a versatile JSON query language (a kind of "SQL for JSON"). The node takes a JSON object, applies the JSONata expression to it, and returns the resulting object. See [https://jsonata.org/](https://jsonata.org/) for more details on the JSONata expression language.
+Use this component to evaluate a [JSONata](https://jsonata.org/) expressions in your board. JSONata is a versatile JSON query language (a kind of "SQL for JSON"). The component takes a JSON object, applies the JSONata expression to it, and returns the resulting object. See [https://jsonata.org/](https://jsonata.org/) for more details on the JSONata expression language.
 
 ### Input ports
 
-![jsonata node input ports](/breadboard/static/images/json-kit/jsonata-inputs.png)
+![jsonata component input ports](/breadboard/static/images/json-kit/jsonata-inputs.png)
 
-The `jsonata` node has the following input ports:
+The `jsonata` component has the following input ports:
 
 - **Expression** (id: `expression`) -- required, a string that contains the JSONata expression to evaluate.
 
 - **Raw** (id: `raw`) -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output port (`false`, default).
 
-- **JSON** (id: `json`) -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the node will use all input ports (minus `expression` and `raw`) as the context.
+- **JSON** (id: `json`) -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the component will use all input ports (minus `expression` and `raw`) as the context.
 
 ### Output ports
 
@@ -72,19 +72,19 @@ Thought: I wonder how old planet Earth is?"
 
 Evaluates whether a string contains valid JSON that (optionally) conforms to a given JSON Schema.
 
-The most common usage of this node is processing LLM output that contains JSON.
+The most common usage of this component is processing LLM output that contains JSON.
 
-It takes in a string input, and first attempts to parse it as JSON. Because the LLM output commonly surrounds JSON with [Markdown JSON code block](https://www.markdownguide.org/extended-syntax/#syntax-highlighting), the node will look for the first code block like that and only look inside of it. If a code block is not found, it will try to parse the entire output as JSON.
+It takes in a string input, and first attempts to parse it as JSON. Because the LLM output commonly surrounds JSON with [Markdown JSON code block](https://www.markdownguide.org/extended-syntax/#syntax-highlighting), the component will look for the first code block like that and only look inside of it. If a code block is not found, it will try to parse the entire output as JSON.
 
 If the string successfully parses into JSON, it will attempt to validate this JSON against a provided schema. If the schema is not supplied, it will declare success.
 
-In any other case, the node will throw an error. As with any Breadboard node, this error can be captured by wiring the `$error` output port (you will need to temporarily turn off "Hide Advanced Ports on Nodes" in Visual Editor Settings to see the port).
+In any other case, the component will throw an error. As with any Breadboard component, this error can be captured by wiring the `$error` output port (you will need to temporarily turn off "Hide Advanced Ports on components" in Visual Editor Settings to see the port).
 
 ### Input ports
 
-![validateJson node input ports](/breadboard/static/images/json-kit/validate-json-inputs.png)
+![validateJson component input ports](/breadboard/static/images/json-kit/validate-json-inputs.png)
 
-The `validateJson` node has the following input ports:
+The `validateJson` component has the following input ports:
 
 - **JSON String** (id: `json`) -- the JSON string to parse and validate as JSON
 
@@ -140,23 +140,23 @@ We will see the following JSON object on the **JSON** output port:
 
 - [validateJson.ts]({{src_url}}validate-json.ts)
 
-## The `xmlToJson` node
+## The `xmlToJson` component
 
 {{ "/breadboard/static/boards/kits/json-xml-to-json.bgl.json" | board }}
 
-Use this node to convert XML to JSON. JSON is a sort of [lingua franca](https://en.wikipedia.org/wiki/Lingua_franca) in Breadboard, so this node is useful when starting with XML data.
+Use this component to convert XML to JSON. JSON is a sort of [lingua franca](https://en.wikipedia.org/wiki/Lingua_franca) in Breadboard, so this component is useful when starting with XML data.
 
-This node takes a string as its single input port. It then tries to parse it as XML. If successful, it then converts it to the `alt-json` format that is described in [here](https://developers.google.com/gdata/docs/json).
+This component takes a string as its single input port. It then tries to parse it as XML. If successful, it then converts it to the `alt-json` format that is described in [here](https://developers.google.com/gdata/docs/json).
 
 ### Input ports
 
-The `xmlToJson` node has a single input port:
+The `xmlToJson` component has a single input port:
 
 - **XML String** (id: `xml`) -- expects a valid stringified XML
 
 ### Output Ports
 
-The `xmlToJson` node has a single output port:
+The `xmlToJson` component has a single output port:
 
 - **JSON** (id: `json`) -- provides a JSON object that represents the supplied XML.
 

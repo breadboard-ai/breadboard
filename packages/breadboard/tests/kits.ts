@@ -3,7 +3,6 @@ import { KitBuilder } from "../src/kits/builder.js";
 import { Board } from "../src/board.js";
 
 test("KitBuilder can wrap a function", async (t) => {
-
   // A normal function that will be wrapped.
   const echo = (input: string) => input;
   const test = (input: string) => input;
@@ -22,9 +21,7 @@ test("KitBuilder can wrap a function", async (t) => {
   t.true(myKit.test instanceof Function);
 });
 
-
 test("KitBuilder can call a function that returns a string", async (t) => {
-
   // A normal function that will be wrapped.
   const echo = (echo_this: string) => echo_this;
 
@@ -45,19 +42,20 @@ test("KitBuilder can call a function that returns a string", async (t) => {
   // result because it's just a string from a dynamic function
   echoNode.wire("result->an_output", board.output());
 
-  const output = await board.runOnce({
-    "an_input": "hello world"
-  });
+  const output = await board.runOnce(
+    {
+      an_input: "hello world",
+    },
+    { kits: [myKit] }
+  );
 
-  t.is((<string>output["an_output"]), "hello world");
-
+  t.is(<string>output["an_output"], "hello world");
 });
 
 test("KitBuilder can call a function that returns an object", async (t) => {
-
   // A normal function that will be wrapped.
   const echo = (echo_this: string) => {
-    return { "out": echo_this, "other": "stuff" }
+    return { out: echo_this, other: "stuff" };
   };
 
   const MyKit = KitBuilder.wrap({ url: "test" }, { echo });
@@ -77,16 +75,17 @@ test("KitBuilder can call a function that returns an object", async (t) => {
   // result because it's just a string from a dynamic function
   echoNode.wire("out->an_output", board.output());
 
-  const output = await board.runOnce({
-    "an_input": "hello world"
-  });
+  const output = await board.runOnce(
+    {
+      an_input: "hello world",
+    },
+    { kits: [myKit] }
+  );
 
-  t.is((<string>output["an_output"]), "hello world");
-
+  t.is(<string>output["an_output"], "hello world");
 });
 
 test("KitBuilder can call a function that has more than one input", async (t) => {
-
   // A normal function that will be wrapped.
   const add = (a: number, b: number) => {
     return a + b;
@@ -112,20 +111,25 @@ test("KitBuilder can call a function that has more than one input", async (t) =>
   // result because it's just a string from a dynamic function
   addNode.wire("result->", board.output());
 
-  const output = await board.runOnce({
-    "a": 1,
-    "b": 2
-  });
+  const output = await board.runOnce(
+    {
+      a: 1,
+      b: 2,
+    },
+    { kits: [myKit] }
+  );
 
-  t.is((<number>output["result"]), 3);
+  t.is(<number>output["result"], 3);
 });
 
 test("KitBuilder can call a function from an external import", async (t) => {
-
   const js = await import("jsonschema");
 
   // Wrap the jsonschema validate function in a kit and expose function as a node.
-  const MyKit = KitBuilder.wrap({ url: "test" }, { validate: js.default.validate });
+  const MyKit = KitBuilder.wrap(
+    { url: "test" },
+    { validate: js.default.validate }
+  );
 
   const board = new Board({
     title: "Test Echo",
@@ -148,19 +152,25 @@ test("KitBuilder can call a function from an external import", async (t) => {
   // result because it's just a string from a dynamic function
   validateNode.wire("errors->", board.output());
 
-  const output = await board.runOnce({
-    "a": { "hello": "world" },
-    "b": { "type": "object" },
-    "c": { allowUnknownAttributes: true }
-  });
+  const output = await board.runOnce(
+    {
+      a: { hello: "world" },
+      b: { type: "object" },
+      c: { allowUnknownAttributes: true },
+    },
+    { kits: [myKit] }
+  );
 
-  const result = js.default.validate({ "hello": "world" }, { "type": "object" }, { allowUnknownAttributes: true });
+  const result = js.default.validate(
+    { hello: "world" },
+    { type: "object" },
+    { allowUnknownAttributes: true }
+  );
 
-  t.is(((<Array<string>>output["errors"]).length), result.errors.length);
+  t.is((<Array<string>>output["errors"]).length, result.errors.length);
 });
 
-test("KitBuilder can splat all the functions in the extenral library and make nodes", async (t) => {
-
+test("KitBuilder can splat all the functions in the external library and make nodes", async (t) => {
   const js = await import("jsonschema");
 
   // Wrap the jsonschema validate function in a kit and expose function as a node.
@@ -174,12 +184,11 @@ test("KitBuilder can splat all the functions in the extenral library and make no
 
   const myKit = board.addKit(MyKit);
 
-  myKit.validate()
+  myKit.validate();
 
   // We really need to pick a library with more than one function.
   t.true(myKit.validate instanceof Function);
 });
-
 
 test("KitBuilder can access platform functions", async (t) => {
   // Wrap the jsonschema validate function in a kit and expose function as a node.
@@ -216,10 +225,10 @@ test("KitBuilder can call platform functions that contain 0 arguments", async (t
   // result because it's just a string from a dynamic function
   random.wire("result->", board.output());
 
-  const output = await board.runOnce({});
+  const output = await board.runOnce({}, { kits: [myKit] });
 
   // We really need to pick a library with more than one function.
-  t.true(typeof(output["result"]) === "number");
+  t.true(typeof output["result"] === "number");
 });
 
 test("KitBuilder can call platform functions that accept a splat", async (t) => {
@@ -240,12 +249,14 @@ test("KitBuilder can call platform functions that accept a splat", async (t) => 
   // result because it's just a string from a dynamic function
   input.wire("___args->", min.wire("result->", board.output()));
 
-  const output = await board.runOnce({
-    "___args": [1, 2, 3, 4, 5]
-  });
+  const output = await board.runOnce(
+    {
+      ___args: [1, 2, 3, 4, 5],
+    },
+    { kits: [myKit] }
+  );
 
   // We really need to pick a library with more than one function.
-  t.true(typeof(output["result"]) === "number");
+  t.true(typeof output["result"] === "number");
   t.true(output["result"] === 1);
-
 });

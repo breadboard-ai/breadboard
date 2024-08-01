@@ -12,6 +12,7 @@ import {
   type RefreshResponse,
   type TokenGrant,
 } from "./connection-common.js";
+import { type ListConnectionsResponse } from "./connection-server.js";
 
 export const tokenVendorContext = createContext<TokenVendor>("TokenVendor");
 
@@ -86,11 +87,12 @@ export class TokenVendor {
       return { state: "signedout" };
     }
     const grant = JSON.parse(String(grantJsonText.value)) as TokenGrant;
-    if (grantIsExpired(grant)) {
+    const needsClientIdRepair = grant.client_id === undefined;
+    if (grantIsExpired(grant) || needsClientIdRepair) {
       return {
         state: "expired",
         refresh: (opts?: { signal?: AbortSignal }) =>
-          this.#refresh(connectionId, grant.refresh_token, opts?.signal),
+          this.#refresh(connectionId, grant, opts?.signal),
       };
     }
     return { state: "valid", grant };
@@ -98,16 +100,25 @@ export class TokenVendor {
 
   async #refresh(
     connectionId: string,
-    refreshToken: string,
+    expiredGrant: TokenGrant,
     signal?: AbortSignal
   ): Promise<ValidTokenResult> {
+    if (expiredGrant.client_id === undefined) {
+      // We used to not store the client_id locally, but later discovered it's
+      // helpful to store because it's needed for some APIs.
+      expiredGrant = await this.#repairGrantWithMissingClientId(
+        connectionId,
+        expiredGrant
+      );
+    }
+
     const refreshUrl = new URL(
       "refresh",
       this.#environment.connectionServerUrl
     );
     refreshUrl.search = new URLSearchParams({
       connection_id: connectionId,
-      refresh_token: refreshToken,
+      refresh_token: expiredGrant.refresh_token,
     } satisfies RefreshRequest).toString();
 
     const now = Date.now();
@@ -124,16 +135,55 @@ export class TokenVendor {
     }
 
     const updatedGrant: TokenGrant = {
+      client_id: expiredGrant.client_id,
       access_token: jsonRes.access_token,
       expires_in: jsonRes.expires_in,
       issue_time: now,
-      refresh_token: refreshToken,
+      refresh_token: expiredGrant.refresh_token,
     };
     await this.#settings.set(SETTINGS_TYPE.CONNECTIONS, connectionId, {
       name: connectionId,
       value: JSON.stringify(updatedGrant),
     });
     return { state: "valid", grant: updatedGrant };
+  }
+
+  async #repairGrantWithMissingClientId(
+    connectionId: string,
+    grant: TokenGrant
+  ): Promise<TokenGrant> {
+    const httpRes = await fetch(
+      new URL("list", this.#environment.connectionServerUrl),
+      { credentials: "include" }
+    );
+    if (!httpRes.ok) {
+      throw new Error(
+        `HTTP ${httpRes.status} error calling list connections API ` +
+          `while repairing a grant with missing client id.`
+      );
+    }
+    let jsonRes: ListConnectionsResponse;
+    try {
+      jsonRes = await httpRes.json();
+    } catch {
+      throw new Error(
+        `Error decoding JSON from list connections API ` +
+          `while repairing a grant with missing client id.`
+      );
+    }
+    for (const connection of jsonRes.connections) {
+      if (connection.id === connectionId) {
+        return {
+          ...grant,
+          client_id: connection.clientId,
+        };
+      }
+    }
+    throw new Error(
+      `Could not find a connection with id ` +
+        `"${connectionId}" from list connections API ` +
+        `while repairing a grant with missing client id.`
+    );
   }
 }
 

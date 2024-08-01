@@ -131,3 +131,5 @@ packages/example-boards/example-boards
 .vscode/settings.json
 
 lcov.info
+
+packages/data-store/bundled
