@@ -36,16 +36,22 @@ Required software:
 
 Start by creating a local clone of the Breadboard Git repo.
 
+```sh
+git clone https://github.com/breadboard-ai/breadboard
 ```
-$ git clone https://github.com/breadboard-ai/breadboard
-$ cd breadboard
+
+```sh
+cd breadboard
 ```
 
 Install dependencies and build.
 
+```sh
+npm i
 ```
-$ npm i
-$ npm run build
+
+```sh
+npm run build
 ```
 
 These steps should complete without error. If you encounter any issues, please
@@ -85,15 +91,15 @@ on almost any platform that can serve static content. These instructions use
 Log in to Firebase on your local machine. This will open a browser window that
 will take you through the authentication process.
 
-```
-$ firebase login
+```sh
+firebase login
 ```
 
 You should now be able to use the `firebase` command to access your Firebase
 projects. You can test this by using the `projects:list` command.
 
-```
-$ firebase projects:list
+```sh
+firebase projects:list
 ✔ Preparing the list of your Firebase projects
 ┌──────────────────────┬──────────────────┬────────────────┬──────────────────────┐
 │ Project Display Name │ Project ID       │ Project Number │ Resource Location ID │
@@ -111,8 +117,8 @@ $ firebase projects:list
 
 Set your project as the current project.
 
-```
-$ firebase use --add your-project-id
+```sh
+firebase use --add your-project-id
 ```
 
 ### Deploy to Firebase hosting
@@ -120,9 +126,12 @@ $ firebase use --add your-project-id
 Now that the project is built and Firebase is configured, we can deploy the
 static site.
 
+```sh
+cd packages/visual-editor
 ```
-$ cd packages/visual-editor
-$ npm run deploy
+
+```sh
+npm run deploy
 ```
 
 That's it! By default, Firebase will deploy your site to a custom domain under
