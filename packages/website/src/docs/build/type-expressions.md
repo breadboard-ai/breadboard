@@ -44,12 +44,12 @@ const numImages = input({
 
 ## String Formatting
 
-To add a formatting constraint to a string, use the `string` function instead of
+To add formatting constraints to a string, use the `string` function instead of
 the `"string"` literal.
 
 ### Arguments
 
-Pass an options object which any or all of the following properties:
+Pass an options object any of the following properties:
 
 <div class="tight-list">
 
