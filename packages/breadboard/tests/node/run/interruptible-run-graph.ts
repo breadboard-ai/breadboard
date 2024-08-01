@@ -55,13 +55,21 @@ describe("interruptibleRunGraph end-to-end", async () => {
   test("invoke board with a bubbling input", async () => {
     await interruptibleScriptedRun(invokeWithBubblingInput, [
       {
-        expected: { type: "input", state: [{ node: "input" }] },
+        expected: {
+          type: "input",
+          state: {
+            "": { node: "input" },
+          },
+        },
         inputs: { name: "Bob" },
       },
       {
         expected: {
           type: "input",
-          state: [{ node: "invoke-b5fe388d" }, { node: "input" }],
+          state: {
+            "": { node: "invoke-b5fe388d" },
+            "1": { node: "input" },
+          },
         },
         inputs: { location: "New York" },
       },
@@ -83,18 +91,21 @@ describe("interruptibleRunGraph end-to-end", async () => {
       {
         expected: {
           type: "input",
-          state: [{ node: "invoke-d5aa6bf1" }, { node: "input" }],
+          state: {
+            "": { node: "invoke-d5aa6bf1" },
+            "1": { node: "input" },
+          },
         },
         inputs: { name: "Bob" },
       },
       {
         expected: {
           type: "input",
-          state: [
-            { node: "invoke-d5aa6bf1" },
-            { node: "invoke-b5fe388d" },
-            { node: "input" },
-          ],
+          state: {
+            "": { node: "invoke-d5aa6bf1" },
+            "1": { node: "invoke-b5fe388d" },
+            "1-1": { node: "input" },
+          },
         },
         inputs: { location: "New York" },
       },
@@ -116,16 +127,37 @@ describe("interruptibleRunGraph end-to-end", async () => {
       {
         expected: {
           type: "input",
-          state: [{ node: "map-6088d0ca" }, { node: "input" }],
+          state: {
+            "": {
+              node: "map-6088d0ca",
+            },
+            "2-0": {
+              node: "input",
+            },
+          },
         },
         inputs: { location: "Neptune" },
+      },
+      {
+        expected: {
+          type: "input",
+          state: {
+            "": {
+              node: "map-6088d0ca",
+            },
+            "2-1": {
+              node: "input",
+            },
+          },
+        },
+        inputs: { location: "Mercury" },
       },
       {
         expected: {
           type: "output",
           outputs: [
             {
-              greetings: "Hello, Bob from Neptune!",
+              greetings: "Hello, Bob from Neptune!\nHello, Alice from Mercury!",
             },
           ],
         },

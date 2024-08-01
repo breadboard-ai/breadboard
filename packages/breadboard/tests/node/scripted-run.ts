@@ -16,20 +16,18 @@ import {
   RunArguments,
 } from "../../src/index.js";
 import { interruptibleRunGraph } from "../../src/run/interruptible-run-graph.js";
-import { RunState } from "../../src/run/types.js";
+import { ReanimationInputs, ReanimationState } from "../../src/run/types.js";
 import { loadRunnerState } from "../../src/serialization.js";
 import { testKit } from "./test-kit.js";
 
 const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
   .href;
 
-export type ExpectedRunState = {
-  node: string;
-};
+export type ExpectedRunState = { node: string };
 
 export type ExpectedResult = {
   type: string;
-  state?: ExpectedRunState[];
+  state?: Record<string, ExpectedRunState>;
   outputs?: OutputValues[];
 };
 
@@ -44,10 +42,11 @@ export async function interruptibleScriptedRun(
 ) {
   const graph = g as GraphDescriptor;
   graph.url = BGL_DIR;
-  let resumeFrom: RunState = [];
-  let inputs: InputValues = {};
+  let resumeFrom: ReanimationState = {};
+  let inputs: ReanimationInputs | undefined;
   for (const [index, scriptEntry] of script.entries()) {
-    // console.log("🌻🍞 script entry", index, scriptEntry);
+    // TODO: Move inputs into the current scriptEntry, rather than the previous
+    // one.
     const state = createRunStateManager(resumeFrom, inputs);
     const args: RunArguments = {
       kits: [testKit],
@@ -56,15 +55,11 @@ export async function interruptibleScriptedRun(
     };
     let outputCount = 0;
     let interrupted = false;
+    let interruptedPath: number[] | undefined;
     for await (const result of interruptibleRunGraph(graph, args)) {
-      const { type } = result;
+      const { type, path } = result;
       const expectedRunResult = scriptEntry;
-      // console.log("🌻 interruptibleRunGraph result", {
-      //   type,
-      //   node: result.node,
-      //   state: result.state,
-      //   path,
-      // });
+      interruptedPath = path;
       deepStrictEqual(
         type,
         expectedRunResult.expected.type,
@@ -81,29 +76,28 @@ export async function interruptibleScriptedRun(
       }
     }
     if (interrupted) {
-      resumeFrom = state.lifecycle().state();
+      const reanimationState = state.lifecycle().reanimationState();
       if (scriptEntry.expected.state) {
-        if (resumeFrom.length !== scriptEntry.expected.state.length) {
-          // console.log("🌻 scriptedRun: resumeFrom", resumeFrom);
-          fail(
-            `Script entry ${index}: expected ${scriptEntry.expected.state.length} states in run stack, got ${resumeFrom.length}`
-          );
-        }
-        for (const [
-          stackIndex,
-          expectedState,
-        ] of scriptEntry.expected.state.entries()) {
-          const actualState = resumeFrom[stackIndex];
-          if (!actualState.state) {
-            fail(
-              `Script entry ${index}: expected state at run stack index ${stackIndex} `
-            );
+        for (const [key, expectedState] of Object.entries(
+          scriptEntry.expected.state
+        )) {
+          const entry = reanimationState[key];
+          if (!entry) {
+            fail(`Script entry ${index}: expected state at path "${key}"`);
           }
-          const result = await loadRunnerState(actualState.state).state;
+          const state = entry?.state;
+          if (!state) {
+            fail(`Script entry ${index}: expected state at path "${key}"`);
+          }
+          const result = loadRunnerState(state).state;
           deepStrictEqual(result.descriptor.id, expectedState.node);
         }
       }
-      inputs = scriptEntry.inputs!;
+      inputs = {
+        inputs: scriptEntry.inputs!,
+        invocationPath: interruptedPath!,
+      };
+      resumeFrom = reanimationState;
     } else {
       if (index !== script.length - 1) {
         fail(`Script entry ${index}: unexpected end of run at`);

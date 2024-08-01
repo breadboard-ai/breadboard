@@ -61,8 +61,9 @@ export const testKit: Kit = {
           );
         }
         const base = context.board?.url && new URL(context.board?.url);
-        const result = await Promise.all(
-          listArray.map(async (item, index) => {
+        if (context.state) {
+          const result: OutputValues[] = [];
+          for (const [index, item] of listArray.entries()) {
             const newContext = {
               ...context,
               base: base || context?.base,
@@ -73,10 +74,27 @@ export const testKit: Kit = {
               { item, index, list },
               newContext
             );
-            return outputs;
-          })
-        );
-        return { list: result } as OutputValues;
+            result.push(outputs);
+          }
+          return { list: result } as OutputValues;
+        } else {
+          const result = await Promise.all(
+            listArray.map(async (item, index) => {
+              const newContext = {
+                ...context,
+                base: base || context?.base,
+                invocationPath: [...(context?.invocationPath || []), index],
+              };
+              const outputs = await invokeGraph(
+                graph,
+                { item, index, list },
+                newContext
+              );
+              return outputs;
+            })
+          );
+          return { list: result } as OutputValues;
+        }
       },
     },
     promptTemplate: {

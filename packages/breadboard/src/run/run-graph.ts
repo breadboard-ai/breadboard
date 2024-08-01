@@ -33,19 +33,18 @@ export async function* runGraph(
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs, ...context } = args;
-  const { probe, state } = context;
+  const { probe, state, invocationPath = [] } = context;
 
   const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graph, next);
 
-    lifecycle?.dispatchGraphStart(graph.url!);
+    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
     const reanimation = state?.reanimation();
     if (reanimation) {
-      const frame = reanimation.enter();
+      const frame = reanimation.enter(invocationPath);
       const mode = frame.mode();
-      // console.log("🌻 reanimation", mode);
       switch (mode) {
         case "replay": {
           // This can only happen when `runGraph` is called by `invokeGraph`,
@@ -59,47 +58,33 @@ export async function* runGraph(
         case "resume": {
           const { result, invocationPath } = frame.resume();
           resumeFrom = result;
-          // console.log("🌻 resuming", result, invocationPath);
-          // The graphstart will be dispatched by `invokeGraph`.
           await lifecycle?.dispatchNodeStart(result, invocationPath);
 
+          let outputs: OutputValues | undefined = undefined;
+
           const type = result.descriptor.type;
-          if (type !== "input" && type !== "output") {
-            const outputs = await nodeInvoker.invokeNode(
-              result,
-              invocationPath
-            );
+          if (!(type === "input" || type === "output")) {
+            outputs = await nodeInvoker.invokeNode(result, invocationPath);
             result.outputsPromise = Promise.resolve(outputs);
             result.pendingOutputs = new Map();
             resumeFrom = result;
           }
+
+          lifecycle?.dispatchNodeEnd(outputs, invocationPath);
         }
       }
     }
 
-    // console.log("🌻🧠 runGraph", graph, resumeFrom);
-
-    const machine = new TraversalMachine(graph, resumeFrom);
-
-    const invocationPath = context.invocationPath || [];
     let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
 
+    const machine = new TraversalMachine(graph, resumeFrom);
     await probe?.report?.({
       type: "graphstart",
       data: { graph, path: invocationPath, timestamp: timestamp() },
     });
 
-    // console.log("🌻 runGraph machine", machine);
-
     for await (const result of machine) {
-      // console.log(
-      //   "🌻 machine iteration",
-      //   result,
-      //   result.skip,
-      //   "depth",
-      //   path().length
-      // );
       context?.signal?.throwIfAborted();
 
       invocationId++;
@@ -130,19 +115,14 @@ export async function* runGraph(
           path: path(),
           timestamp: timestamp(),
         },
-        state: await lifecycle?.state(),
+        state: lifecycle?.state(),
       });
 
       let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
       if (descriptor.type === "input") {
         await next(
-          new InputStageResult(
-            result,
-            await lifecycle?.state(),
-            invocationId,
-            path()
-          )
+          new InputStageResult(result, lifecycle?.state(), invocationId, path())
         );
         await bubbleUpInputsIfNeeded(
           graph,
@@ -150,10 +130,16 @@ export async function* runGraph(
           descriptor,
           result,
           path(),
-          await lifecycle?.state()
+          lifecycle?.state()
         );
         outputsPromise = result.outputsPromise
-          ? resolveBoardCapabilities(result.outputsPromise, context, graph.url)
+          ? Promise.resolve(
+              resolveBoardCapabilities(
+                Promise.resolve(await result.outputsPromise),
+                context,
+                graph.url
+              )
+            )
           : undefined;
       } else if (descriptor.type === "output") {
         if (
@@ -161,12 +147,16 @@ export async function* runGraph(
         ) {
           await next(new OutputStageResult(result, invocationId, path()));
         }
-        outputsPromise = result.outputsPromise;
+        outputsPromise = result.outputsPromise
+          ? Promise.resolve(result.outputsPromise)
+          : undefined;
       } else {
-        outputsPromise = nodeInvoker.invokeNode(result, path());
+        outputsPromise = Promise.resolve(
+          await nodeInvoker.invokeNode(result, path())
+        );
       }
 
-      lifecycle?.dispatchNodeEnd();
+      lifecycle?.dispatchNodeEnd(await outputsPromise, path());
 
       await probe?.report?.({
         type: "nodeend",

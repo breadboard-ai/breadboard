@@ -32,6 +32,7 @@ export async function invokeGraph(
     let outputs: OutputValues = {};
 
     const path = context.invocationPath || [];
+    const lifecycle = context.state?.lifecycle();
 
     for await (const result of runGraph(graph, context, resumeFrom)) {
       if (result.type === "input") {
@@ -52,6 +53,10 @@ export async function invokeGraph(
             timestamp: timestamp(),
           },
         });
+        lifecycle?.dispatchNodeEnd(outputs, [...path, result.invocationId]);
+
+        lifecycle?.dispatchGraphEnd();
+
         await probe?.report?.({
           type: "graphend",
           data: { path, timestamp: timestamp() },

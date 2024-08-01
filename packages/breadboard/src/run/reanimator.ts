@@ -5,49 +5,70 @@
  */
 
 import { loadRunnerState } from "../serialization.js";
-import { InputValues } from "../types.js";
 import {
   ReanimationController,
   ReanimationFrame,
   ReanimationFrameController,
+  ReanimationInputs,
   ReanimationMode,
+  ReanimationState,
   ReplayResults,
   ResumeResults,
-  RunState,
 } from "./types.js";
 
-export class Reanimator implements ReanimationController {
-  #resumeFrom: RunState;
-  #inputs?: InputValues;
+const pathMatches = (a: number[], b: number[]): boolean => {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+};
 
-  constructor(resumeFrom: RunState, inputs?: InputValues) {
+export class Reanimator implements ReanimationController {
+  #resumeFrom: ReanimationState;
+  #inputs?: ReanimationInputs;
+
+  constructor(resumeFrom: ReanimationState, inputs?: ReanimationInputs) {
     this.#resumeFrom = resumeFrom;
     this.#inputs = inputs;
   }
 
-  enter(): ReanimationFrameController {
-    if (this.#resumeFrom.length === 0) {
+  #supplyInputs(invocationPath: number[]): boolean {
+    if (!this.#inputs) {
+      return false;
+    }
+    const inputsPath = this.#inputs.invocationPath.slice(0, -1);
+    return pathMatches(invocationPath, inputsPath);
+  }
+
+  enter(invocationPath: number[]): ReanimationFrameController {
+    const stackEntry = this.#resumeFrom[invocationPath.join("-")];
+    if (!stackEntry) {
       return new FrameReanimator(undefined);
     }
-    const stackEntry = this.#resumeFrom.shift();
     if (!stackEntry || !stackEntry.state) {
       throw new Error("Cannot reanimate without a state");
     }
     const result = loadRunnerState(stackEntry.state).state;
-    if (this.#inputs && this.#resumeFrom.length === 0) {
+    if (this.#supplyInputs(invocationPath)) {
       result.outputsPromise = Promise.resolve({
-        ...this.#inputs,
+        ...this.#inputs?.inputs,
         ...result.partialOutputs,
       });
       this.#inputs = undefined;
     }
+    const replayOutputs = stackEntry.outputs ? [stackEntry.outputs] : [];
 
     // Always return the new instance:
     // wraps the actual ReanimationFrame, if any.
     return new FrameReanimator({
       result,
       invocationPath: stackEntry.path,
-      replayOutputs: [],
+      replayOutputs,
     });
   }
 }
