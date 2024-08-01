@@ -5,7 +5,13 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import type { GraphDescriptor, Kit, NodeValue } from "@google-labs/breadboard";
+import type {
+  GraphDescriptor,
+  InputValues,
+  Kit,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/breadboard";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -68,7 +74,7 @@ export type RunBoardArguments = {
   url: string;
   path: string;
   loader: BoardServerLoadFunction;
-  inputs?: Record<string, any>;
+  inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
 };
@@ -78,6 +84,7 @@ export type RunBoardResultError = {
 };
 
 export type RunBoardResultState = {
+  outputs: OutputValues[];
   $state:
     | {
         type: "input";
@@ -85,13 +92,8 @@ export type RunBoardResultState = {
         next: string;
       }
     | {
-        type: "output";
-        schema: NodeValue;
-        next: string;
-      }
-    | {
         type: "end";
       };
-} & Record<string, any>;
+};
 
 export type RunBoardResult = RunBoardResultError | RunBoardResultState;

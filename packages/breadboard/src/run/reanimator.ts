@@ -5,44 +5,24 @@
  */
 
 import { loadRunnerState } from "../serialization.js";
+import { InputValues } from "../types.js";
 import {
   ReanimationController,
   ReanimationFrame,
   ReanimationFrameController,
-  ReanimationInputs,
   ReanimationMode,
   ReanimationState,
   ReplayResults,
   ResumeResults,
 } from "./types.js";
 
-const pathMatches = (a: number[], b: number[]): boolean => {
-  if (a.length !== b.length) {
-    return false;
-  }
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) {
-      return false;
-    }
-  }
-  return true;
-};
-
 export class Reanimator implements ReanimationController {
   #resumeFrom: ReanimationState;
-  #inputs?: ReanimationInputs;
+  #inputs?: InputValues;
 
-  constructor(resumeFrom: ReanimationState, inputs?: ReanimationInputs) {
+  constructor(resumeFrom: ReanimationState, inputs?: InputValues) {
     this.#resumeFrom = resumeFrom;
     this.#inputs = inputs;
-  }
-
-  #supplyInputs(invocationPath: number[]): boolean {
-    if (!this.#inputs) {
-      return false;
-    }
-    const inputsPath = this.#inputs.invocationPath.slice(0, -1);
-    return pathMatches(invocationPath, inputsPath);
   }
 
   enter(invocationPath: number[]): ReanimationFrameController {
@@ -54,13 +34,11 @@ export class Reanimator implements ReanimationController {
       throw new Error("Cannot reanimate without a state");
     }
     const result = loadRunnerState(stackEntry.state).state;
-    if (this.#supplyInputs(invocationPath)) {
-      result.outputs = {
-        ...this.#inputs?.inputs,
-        ...result.partialOutputs,
-      };
-      this.#inputs = undefined;
-    }
+    result.outputs = {
+      ...this.#inputs,
+      ...result.partialOutputs,
+    };
+    this.#inputs = undefined;
     const replayOutputs = stackEntry.outputs ? [stackEntry.outputs] : [];
 
     // Always return the new instance:

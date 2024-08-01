@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, OutputValues, TraversalResult } from "../types.js";
+import type { OutputValues, TraversalResult } from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -87,11 +87,6 @@ export type ManagedRunState = {
 };
 
 export type ReanimationState = Record<string, RunStackEntry>;
-
-export type ReanimationInputs = {
-  invocationPath: number[];
-  inputs: InputValues;
-};
 
 export type ReanimationMode =
   /**

@@ -16,7 +16,7 @@ import {
   RunArguments,
   runGraph,
 } from "../../src/index.js";
-import { ReanimationInputs, ReanimationState } from "../../src/run/types.js";
+import { ReanimationState } from "../../src/run/types.js";
 import { loadRunnerState } from "../../src/serialization.js";
 import { testKit } from "./test-kit.js";
 
@@ -43,7 +43,7 @@ export async function interruptibleScriptedRun(
   const graph = g as GraphDescriptor;
   graph.url = BGL_DIR;
   let resumeFrom: ReanimationState = {};
-  let inputs: ReanimationInputs | undefined;
+  let inputs: InputValues | undefined;
   for (const [index, scriptEntry] of script.entries()) {
     // TODO: Move inputs into the current scriptEntry, rather than the previous
     // one.
@@ -55,11 +55,9 @@ export async function interruptibleScriptedRun(
     };
     let outputCount = 0;
     let interrupted = false;
-    let interruptedPath: number[] | undefined;
     for await (const result of runGraph(graph, args)) {
-      const { type, path } = result;
+      const { type } = result;
       const expectedRunResult = scriptEntry;
-      interruptedPath = path;
       deepStrictEqual(
         type,
         expectedRunResult.expected.type,
@@ -94,10 +92,7 @@ export async function interruptibleScriptedRun(
           deepStrictEqual(result.descriptor.id, expectedState.node);
         }
       }
-      inputs = {
-        inputs: scriptEntry.inputs!,
-        invocationPath: interruptedPath!,
-      };
+      inputs = scriptEntry.inputs;
       resumeFrom = reanimationState;
     } else {
       if (index !== script.length - 1) {
