@@ -6,6 +6,7 @@
 
 import { annotate, board, enumeration, input, object, output } from "@breadboard-ai/build";
 import { invoke } from "@google-labs/core-kit";
+import { geminiText } from "@google-labs/gemini-kit";
 
 const audio = input({
   title: "Audio",
@@ -23,13 +24,12 @@ const generator = input({
   default: { kind: "board", path: "gemini-generator.json" },
 });
 
-const llmResponse = invoke({
-  $board: generator,
+const llmResponse = geminiText({
   text: "unused",
   context: audio,
   model: "gemini-1.5-pro-latest",
   systemInstruction: `Describe what you hear in the audio. Please respond in markdown`,
-}).unsafeOutput("text");
+});
 
 export default board({
   title: "Audio",
@@ -37,6 +37,6 @@ export default board({
   version: "0.1.0",
   inputs: { audio, generator },
   outputs: {
-    text: output(llmResponse),
+    text: output(llmResponse.outputs.text),
   },
 });
