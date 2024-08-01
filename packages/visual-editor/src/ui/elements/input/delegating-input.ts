@@ -110,7 +110,9 @@ export class DelegatingInput
   }
 
   #onChange = (event: InputChangeEvent) => {
-    // Avoid redundantly setting the value on the widget element, since
+    // Set the #value shadow to avoid redundantly setting the value back on the
+    // widget element via the #widget task, since we can assume it already knows
+    // about the value it just dispatched an event for.
     this.#value = event.value;
     if (!event.composed || !event.bubbles) {
       // Our parent element won't receive the event unless we re-emit it.
