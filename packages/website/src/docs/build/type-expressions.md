@@ -42,6 +42,34 @@ const numImages = input({
 });
 ```
 
+## String Formatting
+
+To add a formatting constraint to a string, use the `string` function instead of
+the `"string"` literal.
+
+### Arguments
+
+Pass an options object which any or all of the following properties:
+
+<div class="tight-list">
+
+- [`format`](https://json-schema.org/understanding-json-schema/reference/string#format)
+- [`pattern`](https://json-schema.org/understanding-json-schema/reference/string#regexp)
+- [`minLength`](https://json-schema.org/understanding-json-schema/reference/string#length)
+- [`maxLength`](https://json-schema.org/understanding-json-schema/reference/string#length)
+
+</div>
+
+### Example
+
+```ts
+import { string } from "@breadboard-ai/build";
+
+const apiAddress = input({
+  type: string({ format: "uri", maxLength: 256 }),
+});
+```
+
 ## Unknown
 
 The `"unknown"` Breadboard Type Expression matches _any JSON value_. In other
