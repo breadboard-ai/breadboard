@@ -63,28 +63,7 @@ export async function* runGraph(
           let outputs: OutputValues | undefined = undefined;
 
           const type = result.descriptor.type;
-          if (type === "input") {
-            await bubbleUpInputsIfNeeded(
-              graph,
-              context,
-              result.descriptor,
-              result,
-              invocationPath,
-              await lifecycle?.state()
-            );
-            outputs;
-            result.outputsPromise = result.outputsPromise
-              ? Promise.resolve(
-                  resolveBoardCapabilities(
-                    Promise.resolve(await result.outputsPromise),
-                    context,
-                    graph.url
-                  )
-                )
-              : undefined;
-          } else if (type === "output") {
-            // TODO
-          } else {
+          if (!(type === "input" || type === "output")) {
             outputs = await nodeInvoker.invokeNode(result, invocationPath);
             result.outputsPromise = Promise.resolve(outputs);
             result.pendingOutputs = new Map();
@@ -156,7 +135,7 @@ export async function* runGraph(
           descriptor,
           result,
           path(),
-          await lifecycle?.state()
+          lifecycle?.state()
         );
         outputsPromise = result.outputsPromise
           ? Promise.resolve(
