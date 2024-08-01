@@ -8,9 +8,10 @@ import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
 import type { JSONSchema4 } from "json-schema";
-import { html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { html, LitElement } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import type {
+  InputChangeEvent,
   InputPlugin,
   InputWidget,
 } from "../../../plugins/input-plugin.js";
@@ -18,12 +19,6 @@ import {
   type Environment,
   environmentContext,
 } from "../../contexts/environment.js";
-
-type State =
-  | { stage: "initial" }
-  | { stage: "loading"; plugin: InputPlugin; cancel: AbortController }
-  | { stage: "error"; error: string }
-  | { stage: "loaded"; widget: InputWidget };
 
 /**
  * An input widget which doesn't render anything directly, but instead matches
@@ -35,146 +30,112 @@ export class DelegatingInput
   extends LitElement
   implements InputWidget<unknown>
 {
-  @state()
-  private _state: State = { stage: "initial" };
-
-  #environment?: Environment;
-  @consume({ context: environmentContext })
-  private get _environment(): Environment | undefined {
-    return this.#environment;
-  }
-  private set _environment(environment: Environment) {
-    if (environment !== this.#environment) {
-      this.#environment = environment;
-      this._state = this.#maybeReset();
-    }
-  }
-
-  #schema?: JSONSchema4;
   @property({ attribute: false })
-  get schema(): JSONSchema4 | undefined {
-    return this.#schema;
-  }
-  set schema(schema: JSONSchema4) {
-    if (schema !== this.#schema) {
-      this.#schema = schema;
-      this._state = this.#maybeReset();
-    }
-  }
+  schema?: JSONSchema4;
 
+  // See #onChange for why we maintain a private #value shadow.
   #value: unknown;
   @property({ attribute: false })
-  get value() {
+  get value(): unknown {
     return this.#value;
   }
   set value(value: unknown) {
     this.#value = value;
-    if (this._state.stage === "loaded") {
-      this._state.widget.value = value;
-    }
   }
 
-  #maybeReset(): State {
-    if (this._state.stage === "loading") {
-      this._state.cancel.abort();
-    }
-    if (!this.#environment || !this.#schema) {
-      return { stage: "initial" };
-    }
-  }
+  @consume({ context: environmentContext })
+  private _environment?: Environment;
 
-  override render() {
-    switch (this._state.stage) {
-      case "initial": {
-        return nothing;
-      }
-      case "loading": {
-        return html`<p>Loading ...</p>`;
-      }
-      case "error": {
-        return html`<p>Error: ${this._state.error}</p>`;
-      }
-      case "loaded": {
-        return this._state.widget;
-      }
-    }
-    this._state satisfies never;
-  }
-
-  #delegateTask = new Task(this, {
-    task: async (
-      [schema, inputPlugin],
-      { signal }
-    ): Promise<InputWidget<unknown> | undefined> => {
-      if (!schema) {
+  /**
+   * This first task chooses the best plugin and instantiates the inner widget
+   * element.
+   */
+  #widgetIgnoringValue = new Task(this, {
+    args: () => [this.schema, this._environment] as const,
+    task: ([schema, environment], { signal }) => {
+      if (!schema || !environment) {
         return undefined;
       }
-      if (!inputPlugin) {
+      const plugin = chooseBestPlugin(schema, environment);
+      if (!plugin) {
         throw new Error(
           `<bb-delegating-input> could not find an input widget capable of ` +
             `handling schema: ${JSON.stringify(schema)}`
         );
       }
-      return await this.#instantiateWidget(schema, inputPlugin, signal);
+      return this.#instantiateWidget(plugin, schema, signal);
     },
-    args: () =>
-      [
-        this.schema,
-        this.#chooseBestMatchingPlugin(),
-        this._environment,
-      ] as const,
   });
 
-  #chooseBestMatchingPlugin(): InputPlugin | undefined {
-    if (!this.schema || !this._environment) {
-      return undefined;
-    }
-    // TODO(aomarks) Performance of this search could be improved by
-    // partitioning by the top-level "type" field. But note we have to account
-    // for schema compositions like `{ anyOf: { ... } }`, so it's not so simple.
-    for (const plugin of this._environment.plugins.input) {
-      // TODO If there are ties, a good starting heuristic could be to prefer
-      // the widget with the most narrowly defined schema, and a proxy for
-      // that could simply be JSON.stringify(match.schema).length.
-      if (
-        analyzeIsJsonSubSchema(this.schema, plugin.match.schema).isSubSchema
-      ) {
-        return plugin;
+  /**
+   * This second task propagates any values set from our parent down to the
+   * inner widget element.
+   *
+   * Note this is a separate task from #widgetIgnoringValue so that when it's
+   * only the value that changed, we don't re-instantiate the element.
+   */
+  #widget = new Task(this, {
+    args: () => [this.#widgetIgnoringValue.value, this.#value] as const,
+    task: ([widget, value]) => {
+      if (widget) {
+        widget.value = value;
       }
-    }
+      return widget;
+    },
+  });
+
+  override render() {
+    return this.#widget.render({
+      pending: () => html`<p>Loading input...</p>`,
+      error: (error) => html`<p>Error delegating to input: ${error}</p>`,
+      complete: (widget) => widget,
+    });
   }
 
   async #instantiateWidget(
-    schema: JSONSchema4,
     plugin: InputPlugin,
+    schema: JSONSchema4,
     signal: AbortSignal
-  ): Promise<InputWidget> {
+  ): Promise<InputWidget | undefined> {
     await plugin.load?.(signal);
+    if (signal.aborted) {
+      return undefined;
+    }
     const element = document.createElement(
       plugin.instantiate.customElementName
     ) as InputWidget;
-    // TODO(aomarks) What if the value is updated from the outside after
-    // instantiation? It doesn't matter as used right now, but might become a
-    // problem.
-    element.value = this.value;
     element.schema = schema;
-    element.addEventListener(
-      "bb-input-change",
-      (event) => {
-        this.#value = event.value;
-        if (!event.composed || !event.bubbles) {
-          // Our parent element won't receive the event unless we re-emit it.
-          this.dispatchEvent(event);
-        }
-      },
-      { signal }
-    );
+    element.addEventListener("bb-input-change", this.#onChange, { signal });
     return element;
   }
+
+  #onChange = (event: InputChangeEvent) => {
+    // Avoid redundantly setting the value on the widget element, since
+    this.#value = event.value;
+    if (!event.composed || !event.bubbles) {
+      // Our parent element won't receive the event unless we re-emit it.
+      this.dispatchEvent(event);
+    }
+  };
 }
 
 declare global {
   interface HTMLElementTagNameMap {
     "bb-delegating-input": DelegatingInput;
+  }
+}
+
+function chooseBestPlugin(schema: JSONSchema4, environment: Environment) {
+  // TODO(aomarks) Performance of this search could be improved by
+  // partitioning by the top-level "type" field. But note we have to account
+  // for schema compositions like `{ anyOf: { ... } }`, so it's not so
+  // simple.
+  for (const plugin of environment.plugins.input) {
+    // TODO If there are ties, a good starting heuristic could be to prefer
+    // the widget with the most narrowly defined schema, and a proxy for
+    // that could simply be JSON.stringify(match.schema).length.
+    if (analyzeIsJsonSubSchema(schema, plugin.match.schema).isSubSchema) {
+      return plugin;
+    }
   }
 }
