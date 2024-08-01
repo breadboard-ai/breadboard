@@ -4,39 +4,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, code } from "@google-labs/breadboard";
-import { gemini } from "@google-labs/gemini-kit";
+import { annotate, board, enumeration, input, object, output } from "@breadboard-ai/build";
+import { invoke } from "@google-labs/core-kit";
 
-const contextify = code(({ audio }) => {
-  return { context: [audio] };
+const audio = input({
+  title: "Audio",
+  type: annotate(object({
+    format: enumeration("audio-microphone", "audio-microphone"), // TODO: How can the format be set properly?
+  }), {
+    behavior: ["llm-content"],
+  })
 });
 
-export default await board(({ audio }) => {
-  audio
-    .isObject()
-    .behavior("llm-content")
-    .format("audio-microphone")
-    .title("Audio");
+const generator = input({
+  type: annotate(object({}), {
+    behavior: ["board"],
+  }),
+  default: { kind: "board", path: "gemini-generator.json" },
+});
 
-  const { context } = contextify({
-    $id: "contextify",
-    $metadata: {
-      title: "Wrap audio",
-      description: "Wraps the audio in a context object for Gemini",
-    },
-    audio,
-  });
+const llmResponse = invoke({
+  $board: generator,
+  text: "unused",
+  context: audio,
+  model: "gemini-1.5-pro-latest",
+  systemInstruction: `Describe what you hear in the audio. Please respond in markdown`,
+}).unsafeOutput("text");
 
-  const describeAudio = gemini.text({
-    $id: "describeAudio",
-    model: "gemini-1.5-pro-latest",
-    text: "unused",
-    context,
-    systemInstruction: `Describe what you hear in the audio. Please respond in markdown`,
-  });
-  return { text: describeAudio.text.format("markdown") };
-}).serialize({
+export default board({
   title: "Audio",
   description: "An example of using Gemini Kit's vision(?) node with audio",
-  version: "0.0.1",
+  version: "0.1.0",
+  inputs: { audio, generator },
+  outputs: {
+    text: output(llmResponse),
+  },
 });
