@@ -1,19 +1,19 @@
 {
   "title": "The Search Summarizer Board",
   "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "edges": [
+    {
+      "from": "API_KEY-secret",
+      "to": "customSearchURL",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
     {
       "from": "customSearchURL",
       "to": "search",
       "out": "url",
       "in": "url"
-    },
-    {
-      "from": "generator",
-      "to": "output-4",
-      "out": "text",
-      "in": "text"
     },
     {
       "from": "getSnippets",
@@ -22,22 +22,28 @@
       "in": "context"
     },
     {
-      "from": "parameters",
+      "from": "GOOGLE_CSE_ID-secret",
       "to": "customSearchURL",
-      "out": "text",
+      "out": "GOOGLE_CSE_ID",
+      "in": "GOOGLE_CSE_ID"
+    },
+    {
+      "from": "input-0",
+      "to": "customSearchURL",
+      "out": "query",
       "in": "query"
     },
     {
-      "from": "parameters",
-      "to": "generator",
-      "out": "generator",
-      "in": "$board"
+      "from": "input-0",
+      "to": "summarizing-template",
+      "out": "query",
+      "in": "question"
     },
     {
-      "from": "parameters",
-      "to": "summarizing-template",
+      "from": "llm-response",
+      "to": "output-0",
       "out": "text",
-      "in": "question"
+      "in": "result"
     },
     {
       "from": "search",
@@ -46,61 +52,93 @@
       "in": "json"
     },
     {
-      "from": "secrets-3",
-      "to": "customSearchURL",
-      "out": "*",
-      "in": ""
-    },
-    {
       "from": "summarizing-template",
-      "to": "generator",
+      "to": "llm-response",
       "out": "prompt",
       "in": "text"
+    },
+    {
+      "from": "text-generator",
+      "to": "llm-response",
+      "out": "generator",
+      "in": "$board"
     }
   ],
   "nodes": [
     {
-      "id": "parameters",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "generator": {
-              "type": "string",
-              "title": "Generator",
-              "description": "The URL of the generator to call",
-              "default": "text-generator.json"
-            },
-            "text": {
+            "query": {
               "type": "string",
               "title": "Query",
               "description": "What would you like to search for?"
             }
           },
           "required": [
-            "text"
+            "query"
           ]
         }
       }
     },
     {
-      "id": "output-4",
+      "id": "text-generator",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "generator": {
+              "type": "object",
+              "behavior": [
+                "board"
+              ],
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "{\n  \"kind\": \"board\",\n  \"path\": \"text-generator.json\"\n}",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
-              "type": "string",
-              "title": "Answer",
-              "description": "The answer to the query"
+            "result": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
           },
           "required": [
-            "text"
+            "result"
           ]
         }
+      }
+    },
+    {
+      "id": "API_KEY-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
       }
     },
     {
@@ -108,12 +146,10 @@
       "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
+      },
+      "metadata": {
+        "title": "CSE URL Template"
       }
-    },
-    {
-      "id": "generator",
-      "type": "invoke",
-      "configuration": {}
     },
     {
       "id": "getSnippets",
@@ -123,19 +159,23 @@
       }
     },
     {
-      "id": "search",
-      "type": "fetch",
-      "configuration": {}
-    },
-    {
-      "id": "secrets-3",
+      "id": "GOOGLE_CSE_ID-secret",
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY",
           "GOOGLE_CSE_ID"
         ]
       }
+    },
+    {
+      "id": "llm-response",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "search",
+      "type": "fetch",
+      "configuration": {}
     },
     {
       "id": "summarizing-template",

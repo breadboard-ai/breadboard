@@ -59,6 +59,9 @@ export class ActivityLog extends LitElement {
   @property({ reflect: true })
   showExtendedInfo = false;
 
+  @property({ reflect: true })
+  showLogTitle = true;
+
   @property()
   settings: SettingsStore | null = null;
 
@@ -551,17 +554,19 @@ export class ActivityLog extends LitElement {
     const downloadReady = !!this.#serializedRun;
 
     return html`
-      <h1>
-        <span>${this.logTitle}</span>${showLogDownload
-          ? downloadReady
-            ? html`<a @click=${(evt: Event) => this.#download(evt)}
-                >Click to Download</a
-              >`
-            : html`<a @click=${(evt: Event) => this.#getRunLog(evt)}
-                >Download</a
-              >`
-          : nothing}
-      </h1>
+      ${this.showLogTitle
+        ? html`<h1>
+            <span>${this.logTitle}</span>${showLogDownload
+              ? downloadReady
+                ? html`<a @click=${(evt: Event) => this.#download(evt)}
+                    >Click to Download</a
+                  >`
+                : html`<a @click=${(evt: Event) => this.#getRunLog(evt)}
+                    >Download</a
+                  >`
+              : nothing}
+          </h1>`
+        : nothing}
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             const isNew = this.#seenItems.has(event.id);

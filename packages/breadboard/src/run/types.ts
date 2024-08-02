@@ -30,6 +30,10 @@ export type RunStackEntry = {
    * The state of the graph traversal at the time of the invocation.
    */
   state?: string;
+  /**
+   * Outputs of the node if it has been run.
+   */
+  outputs?: OutputValues;
 };
 
 /**
@@ -40,13 +44,10 @@ export type RunStackEntry = {
  */
 export type RunState = RunStackEntry[];
 
-/**
- * A representation of the current run state.
- * Given this representation RunStateManager can correctly
- * resume a run.
- */
-export type CurrentRunState = {
-  // TODO: Define.
+export type LifecyclePathRegistryEntry<Data> = {
+  children: LifecyclePathRegistryEntry<Data>[];
+  // parent: LifecyclePathRegistryEntry | null;
+  data: Data | null;
 };
 
 export type ManagedRunStateLifecycle = {
@@ -55,11 +56,22 @@ export type ManagedRunStateLifecycle = {
    * @param url -- url of the graph that is starting
    */
   dispatchGraphStart(url: string, invocationPath: number[]): void;
-  dispatchNodeStart(result: TraversalResult): void;
-  dispatchNodeEnd(): void;
+  dispatchNodeStart(
+    result: TraversalResult,
+    invocationPath: number[]
+  ): Promise<void>;
+  dispatchNodeEnd(
+    outputs: OutputValues | undefined,
+    invocationPath: number[]
+  ): void;
   dispatchGraphEnd(): void;
   dispatchSkip(): void;
-  state(): Promise<RunState>;
+  supplyPartialOutputs(
+    outputs: OutputValues,
+    invocationPath: number[]
+  ): Promise<void>;
+  state(): RunState;
+  reanimationState(): ReanimationState;
 };
 
 /**
@@ -73,6 +85,8 @@ export type ManagedRunState = {
   lifecycle(): ManagedRunStateLifecycle;
   reanimation(): ReanimationController;
 };
+
+export type ReanimationState = Record<string, RunStackEntry>;
 
 export type ReanimationMode =
   /**
@@ -89,6 +103,10 @@ export type ReanimationMode =
   | "none";
 
 export type ReanimationController = {
+  enter(invocationPath: number[]): ReanimationFrameController;
+};
+
+export type ReanimationFrameController = {
   mode(): ReanimationMode;
   replay(): ReplayResults;
   resume(): ResumeResults;

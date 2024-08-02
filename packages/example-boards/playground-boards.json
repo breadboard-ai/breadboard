@@ -50,8 +50,9 @@
       "version": "0.0.2"
     },
     {
-      "title": "Error board",
-      "reference": "/example-boards/playground/error.json"
+      "title": "Error Board",
+      "reference": "/example-boards/playground/error.json",
+      "version": "0.1.0"
     },
     {
       "title": "Gemini Pro Generator",
@@ -66,7 +67,7 @@
     {
       "title": "Google Custom Search Engine Tool",
       "reference": "/example-boards/playground/google-custom-search-engine.json",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "title": "Hacker News Algolia Items",
@@ -176,7 +177,7 @@
     {
       "title": "The Search Summarizer Board",
       "reference": "/example-boards/playground/search-summarize.json",
-      "version": "0.1.1"
+      "version": "0.2.0"
     },
     {
       "title": "The simplest LLM-based board",

@@ -196,9 +196,8 @@ export interface TraversalResult {
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
-  outputsPromise?: Promise<OutputValues>;
+  outputs?: OutputValues;
   partialOutputs?: OutputValues;
-  pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
   skip: boolean;
 }
 
@@ -389,7 +388,7 @@ export interface BreadboardRunResult {
   /** The current run state associated with the result. */
   get runState(): RunState | undefined;
 
-  save(): Promise<string>;
+  save(): string;
 }
 
 export interface NodeFactory {

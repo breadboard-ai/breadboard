@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.14.1",
+  "version": "1.14.3",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -251,17 +251,17 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "^20.14.12",
-    "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.16.2",
+    "tsx": "^4.16.3",
     "typescript": "^5.5.4",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
     "vite": "^5.3.5",
-    "vitest": "^2.0.4"
+    "vitest": "^2.0.5"
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.8.0",
@@ -293,6 +293,6 @@
     "idb": "^8.0.0",
     "lit": "^3.1.4",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.2.5"
+    "pixi.js": "^8.2.6"
   }
 }

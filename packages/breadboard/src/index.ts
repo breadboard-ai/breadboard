@@ -28,7 +28,6 @@ export {
 } from "./stream.js";
 
 // New Syntax:
-export { Runner } from "./new/runner/runner.js";
 export {
   board,
   // TODO Alias for easier migration to the new name. Remove in a future breaking change.
@@ -112,4 +111,7 @@ export {
 /**
  * Managed Run State API
  */
+export type * from "./run/types.js";
 export { createRunStateManager } from "./run/index.js";
+export { invokeGraph } from "./run/invoke-graph.js";
+export { runGraph } from "./run/run-graph.js";

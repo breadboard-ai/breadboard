@@ -15,6 +15,7 @@ import {
   isGoogleDriveQuery,
   isLLMContentBehavior,
   isPortSpecBehavior,
+  isSelect,
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -521,6 +522,25 @@ export class UserInput extends LitElement {
                   id=${id}
                   .value=${input.value ?? defaultValue ?? ""}
                 ></bb-google-drive-query>`;
+                break;
+              }
+
+              if (isSelect(input.schema) && input.schema.enum) {
+                const enumValue = input.value ?? defaultValue ?? "";
+                inputField = html`<select
+                  id=${id}
+                  name=${id}
+                  autocomplete="off"
+                  placeholder=${input.schema.description ?? ""}
+                  .autofocus=${idx === 0 ? true : false}
+                >
+                  ${input.schema.enum.map(
+                    (item) =>
+                      html`<option ?selected=${item === enumValue}>
+                        ${item}
+                      </option>`
+                  )}
+                </select>`;
                 break;
               }
 

@@ -10,7 +10,6 @@ import type {
   InputValues,
   NodeDescriptor,
   OutputValues,
-  CompletedNodeOutput,
   TraversalResult,
 } from "../types.js";
 import { MachineEdgeState } from "./state.js";
@@ -22,8 +21,7 @@ export class MachineResult implements TraversalResult {
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
-  outputsPromise?: Promise<OutputValues>;
-  pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
+  outputs?: OutputValues;
   partialOutputs?: OutputValues;
 
   constructor(
@@ -33,7 +31,6 @@ export class MachineResult implements TraversalResult {
     opportunities: Edge[],
     newOpportunities: Edge[],
     state: QueuedNodeValuesState,
-    pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>,
     partialOutputs?: OutputValues
   ) {
     this.descriptor = descriptor;
@@ -42,7 +39,6 @@ export class MachineResult implements TraversalResult {
     this.opportunities = opportunities;
     this.newOpportunities = newOpportunities;
     this.state = state;
-    this.pendingOutputs = pendingOutputs;
     this.partialOutputs = partialOutputs;
   }
 
@@ -65,7 +61,6 @@ export class MachineResult implements TraversalResult {
       o.opportunities,
       o.newOpportunities,
       edgeState,
-      o.pendingOutputs,
       o.partialOutputs
     );
   }
