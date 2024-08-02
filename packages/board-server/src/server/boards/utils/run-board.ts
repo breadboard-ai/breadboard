@@ -54,7 +54,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
-    diagnostics: true,
+    diagnostics: false,
     state,
   });
 

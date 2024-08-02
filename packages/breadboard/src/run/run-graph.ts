@@ -41,6 +41,8 @@ export async function* runGraph(
 
     lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
+    let invocationId = 0;
+
     const reanimation = state?.reanimation();
     if (reanimation) {
       const frame = reanimation.enter(invocationPath);
@@ -50,14 +52,18 @@ export async function* runGraph(
           // This can only happen when `runGraph` is called by `invokeGraph`,
           // which means that all we need to do is provide the output and
           // return.
-          const { result, invocationId, path } = frame.replay();
-          await next(new OutputStageResult(result, invocationId, path));
+          const { result, invocationId: id, path } = frame.replay();
+          await next(new OutputStageResult(result, id, path));
           // The nodeend and graphend will be dispatched by `invokeGraph`.
           return;
         }
         case "resume": {
           const { result, invocationPath } = frame.resume();
+
           resumeFrom = result;
+          // Adjust invocationId to match the point from which we are resuming.
+          invocationId = invocationPath[invocationPath.length - 1];
+
           await lifecycle?.dispatchNodeStart(result, invocationPath);
 
           let outputs: OutputValues | undefined = undefined;
@@ -74,7 +80,6 @@ export async function* runGraph(
       }
     }
 
-    let invocationId = 0;
     const path = () => [...invocationPath, invocationId];
 
     const machine = new TraversalMachine(graph, resumeFrom);
