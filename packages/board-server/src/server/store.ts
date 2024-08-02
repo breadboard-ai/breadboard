@@ -12,6 +12,7 @@ import {
 } from "@google-labs/breadboard";
 
 const REANIMATION_COLLECTION_ID = "resume";
+const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -101,8 +102,9 @@ class Store {
     state: ReanimationState
   ): Promise<string> {
     const timestamp = new Date();
+    const expireAt = new Date(timestamp.getTime() + EXPIRATION_TIME_MS);
     const docRef = this.#getReanimationStateDoc(user);
-    await docRef.set({ state: JSON.stringify(state), timestamp });
+    await docRef.set({ state: JSON.stringify(state), timestamp, expireAt });
     return docRef.id;
   }
 
