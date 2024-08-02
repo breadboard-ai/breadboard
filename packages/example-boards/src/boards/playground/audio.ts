@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, board, enumeration, input, object, output } from "@breadboard-ai/build";
-import { invoke } from "@google-labs/core-kit";
+import { annotate, board, input, object, output } from "@breadboard-ai/build";
 import { geminiText } from "@google-labs/gemini-kit";
 
 const audio = input({
   title: "Audio",
-  type: annotate(object({
-    format: enumeration("audio-microphone", "audio-microphone"), // TODO: How can the format be set properly?
-  }), {
+  type: annotate(object({}), {
     behavior: ["llm-content"],
   })
 });
