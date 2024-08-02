@@ -12,7 +12,7 @@ import { runBoard } from "./utils/run-board.js";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
-  const inputs = body as Record<string, any>;
+  const { $next: next, ...inputs } = body as Record<string, any>;
   const keyVerificationResult = await verifyKey(inputs);
   if (!keyVerificationResult.success) {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -33,6 +33,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     loader: loadFromStore,
     kitOverrides: [secretsKit],
     writer,
+    next,
   });
   writer.close();
   res.end();
