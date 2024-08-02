@@ -14,13 +14,6 @@ const audio = input({
   })
 });
 
-const generator = input({
-  type: annotate(object({}), {
-    behavior: ["board"],
-  }),
-  default: { kind: "board", path: "gemini-generator.json" },
-});
-
 const llmResponse = geminiText({
   text: "unused",
   context: audio,
@@ -32,7 +25,7 @@ export default board({
   title: "Audio",
   description: "An example of using Gemini Kit's vision(?) node with audio",
   version: "0.1.0",
-  inputs: { audio, generator },
+  inputs: { audio },
   outputs: {
     text: output(llmResponse.outputs.text),
   },
