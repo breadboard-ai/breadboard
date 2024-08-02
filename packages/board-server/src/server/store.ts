@@ -5,7 +5,15 @@
  */
 
 import { Firestore } from "@google-cloud/firestore";
-import { blankLLMContent, type GraphDescriptor } from "@google-labs/breadboard";
+import {
+  blankLLMContent,
+  type GraphDescriptor,
+  type ReanimationState,
+} from "@google-labs/breadboard";
+import type { RunBoardStateStore } from "./types.js";
+
+const REANIMATION_COLLECTION_ID = "resume";
+const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -69,13 +77,47 @@ export const asInfo = (path: string) => {
 export type BoardServerCorsConfig = {
   allow: string[];
 };
-class Store {
+
+class Store implements RunBoardStateStore {
   #database;
 
   constructor(storeName: string) {
     this.#database = new Firestore({
       databaseId: storeName,
     });
+  }
+
+  #getReanimationStateDoc(user: string, ticket?: string) {
+    const collection = this.#database
+      .collection("runs")
+      .doc(user)
+      .collection(REANIMATION_COLLECTION_ID);
+    if (ticket) {
+      return collection.doc(ticket);
+    }
+    return collection.doc();
+  }
+
+  async saveReanimationState(
+    user: string,
+    state: ReanimationState
+  ): Promise<string> {
+    const timestamp = new Date();
+    const expireAt = new Date(timestamp.getTime() + EXPIRATION_TIME_MS);
+    const docRef = this.#getReanimationStateDoc(user);
+    await docRef.set({ state: JSON.stringify(state), timestamp, expireAt });
+    return docRef.id;
+  }
+
+  async loadReanimationState(
+    user: string,
+    ticket: string
+  ): Promise<ReanimationState | undefined> {
+    const data = await this.#getReanimationStateDoc(user, ticket).get();
+    if (!data.exists) {
+      return undefined;
+    }
+    return JSON.parse(data.get("state"));
   }
 
   async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {

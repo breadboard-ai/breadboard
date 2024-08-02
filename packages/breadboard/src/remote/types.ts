@@ -86,11 +86,19 @@ export type InputResolveRequestMessage = [
   RunState,
 ];
 
+export type LastNode = {
+  node: NodeDescriptor;
+  missing: string[];
+};
+
 /**
  * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
-export type End = { timestamp: number };
+export type End = {
+  timestamp: number;
+  last?: LastNode;
+};
 export type EndResponseMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 

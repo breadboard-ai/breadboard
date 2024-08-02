@@ -11,6 +11,7 @@ import type {
   Kit,
   NodeValue,
   OutputValues,
+  ReanimationState,
 } from "@google-labs/breadboard";
 
 export type GeneralRequestType = "list" | "create";
@@ -73,27 +74,38 @@ export type InvokeBoardArguments = {
 export type RunBoardArguments = {
   url: string;
   path: string;
+  user: string;
   loader: BoardServerLoadFunction;
+  runStateStore: RunBoardStateStore;
+  writer: RunBoardResultWriter;
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
 };
 
-export type RunBoardResultError = {
-  $error: string;
+export type RunBoardStateStore = {
+  loadReanimationState(
+    user: string,
+    ticket: string
+  ): Promise<ReanimationState | undefined>;
+  saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
 
-export type RunBoardResultState = {
-  outputs: OutputValues[];
-  $state:
-    | {
-        type: "input";
-        schema: NodeValue;
-        next: string;
-      }
-    | {
-        type: "end";
-      };
-};
+export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
 
-export type RunBoardResult = RunBoardResultError | RunBoardResultState;
+export type RunBoardResultError = ["error", error: string];
+
+export type RunBoardResultOutput = ["output", outputs: OutputValues];
+
+export type RunBoardResultInput = [
+  "input",
+  data: {
+    schema: NodeValue;
+    next: string;
+  },
+];
+
+export type RunBoardResult =
+  | RunBoardResultError
+  | RunBoardResultOutput
+  | RunBoardResultInput;

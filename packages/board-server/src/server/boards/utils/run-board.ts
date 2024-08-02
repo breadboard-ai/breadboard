@@ -9,42 +9,58 @@ import {
   createLoader,
   createRunStateManager,
   inflateData,
-  type InputValues,
   type OutputValues,
   type ReanimationState,
 } from "@google-labs/breadboard";
-import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
-import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+import { run } from "@google-labs/breadboard/harness";
+import type { RunBoardArguments, RunBoardStateStore } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
 import { formatRunError } from "./format-run-error.js";
 
-const fromNextToState = (next?: string): ReanimationState | undefined => {
-  return next ? JSON.parse(next) : undefined;
+const fromNextToState = async (
+  store: RunBoardStateStore,
+  user: string,
+  next?: string
+): Promise<ReanimationState | undefined> => {
+  if (!next) {
+    return undefined;
+  }
+  return store.loadReanimationState(user, next);
 };
 
-const fromStateToNext = (state: any) => {
-  return JSON.stringify(state);
+const fromStateToNext = async (
+  store: RunBoardStateStore,
+  user: string,
+  state: ReanimationState
+): Promise<string> => {
+  return store.saveReanimationState(user, state);
 };
 
 export const runBoard = async ({
   url,
   path,
+  user,
   inputs,
   loader,
   kitOverrides,
   next,
-}: RunBoardArguments): Promise<RunBoardResult> => {
+  writer,
+  runStateStore,
+}: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
-    return { $error: "Data store not available." };
+    await writer.write(["error", "Data store not available."]);
+    return;
   }
 
   let inputsToConsume = next ? undefined : inputs;
 
-  const resumeFrom = fromNextToState(next);
+  const resumeFrom = await fromNextToState(runStateStore, user, next);
 
   const state = createRunStateManager(resumeFrom, inputs);
+
+  const diagnostics = false;
 
   const runner = run({
     url,
@@ -53,42 +69,53 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
+    diagnostics,
     state,
   });
 
-  const outputs: OutputValues[] = [];
   for await (const result of runner) {
     const { type, data, reply } = result;
-    if (type === "input") {
-      if (inputsToConsume) {
-        await reply({ inputs: inputsToConsume });
-        inputsToConsume = undefined;
-      } else {
-        const {
-          node: { configuration },
-        } = data;
-        const reanimationState = state.lifecycle().reanimationState();
-        const schema = configuration?.schema || {};
-        const next = fromStateToNext(reanimationState);
-        return {
-          outputs,
-          $state: { type, schema, next },
-        };
+    switch (type) {
+      case "input": {
+        if (inputsToConsume) {
+          await reply({ inputs: inputsToConsume });
+          inputsToConsume = undefined;
+          break;
+        } else {
+          const { inputArguments } = data;
+          const reanimationState = state.lifecycle().reanimationState();
+          const schema = inputArguments?.schema || {};
+          const next = await fromStateToNext(
+            runStateStore,
+            user,
+            reanimationState
+          );
+          await writer.write(["input", { schema, next }]);
+          return;
+        }
       }
-    } else if (type === "output") {
-      outputs.push((await inflateData(store, data.outputs)) as OutputValues);
-    } else if (type === "error") {
-      return {
-        outputs,
-        $error: formatRunError(data.error),
-      };
-    } else if (type === "end") {
-      return { outputs, $state: { type } };
-    } else {
-      console.log("UNKNOWN RESULT", type, data);
+      case "output": {
+        const outputs = (await inflateData(
+          store,
+          data.outputs
+        )) as OutputValues;
+        await writer.write(["output", outputs]);
+        break;
+      }
+      case "error": {
+        await writer.write(["error", formatRunError(data.error)]);
+        return;
+      }
+      case "end": {
+        if (diagnostics) {
+          console.log("Run completed.", data.last);
+        }
+        return;
+      }
+      default: {
+        console.log("Diagnostics", type, data);
+      }
     }
   }
-  return {
-    $error: "Run completed without signaling end or error.",
-  };
+  writer.write(["error", "Run completed without signaling end or error."]);
 };
