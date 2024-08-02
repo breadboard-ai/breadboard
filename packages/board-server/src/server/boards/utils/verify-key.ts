@@ -11,5 +11,5 @@ export const verifyKey = async (inputs: Record<string, any> | undefined) => {
     return { success: false, error: userStore.error };
   }
   delete inputs.$key;
-  return { success: true };
+  return { success: true, user: userStore.store };
 };

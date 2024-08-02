@@ -5,7 +5,13 @@
  */
 
 import { Firestore } from "@google-cloud/firestore";
-import { blankLLMContent, type GraphDescriptor } from "@google-labs/breadboard";
+import {
+  blankLLMContent,
+  type GraphDescriptor,
+  type ReanimationState,
+} from "@google-labs/breadboard";
+
+const REANIMATION_COLLECTION_ID = "resume";
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -69,6 +75,7 @@ export const asInfo = (path: string) => {
 export type BoardServerCorsConfig = {
   allow: string[];
 };
+
 class Store {
   #database;
 
@@ -76,6 +83,38 @@ class Store {
     this.#database = new Firestore({
       databaseId: storeName,
     });
+  }
+
+  #getReanimationStateDoc(user: string, ticket?: string) {
+    const collection = this.#database
+      .collection("runs")
+      .doc(user)
+      .collection(REANIMATION_COLLECTION_ID);
+    if (ticket) {
+      return collection.doc(ticket);
+    }
+    return collection.doc();
+  }
+
+  async saveReanimationState(
+    user: string,
+    state: ReanimationState
+  ): Promise<string> {
+    const timestamp = new Date();
+    const docRef = this.#getReanimationStateDoc(user);
+    await docRef.set({ state: JSON.stringify(state), timestamp });
+    return docRef.id;
+  }
+
+  async loadReanimationState(
+    user: string,
+    ticket: string
+  ): Promise<ReanimationState | undefined> {
+    const data = await this.#getReanimationStateDoc(user, ticket).get();
+    if (!data.exists) {
+      return undefined;
+    }
+    return JSON.parse(data.get("state"));
   }
 
   async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {

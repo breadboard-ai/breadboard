@@ -73,6 +73,7 @@ export type InvokeBoardArguments = {
 export type RunBoardArguments = {
   url: string;
   path: string;
+  user: string;
   loader: BoardServerLoadFunction;
   writer: RunBoardResultWriter;
   inputs?: InputValues;

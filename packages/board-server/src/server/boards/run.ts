@@ -29,6 +29,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
   await runBoard({
     url,
     path: board,
+    user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,
     kitOverrides: [secretsKit],

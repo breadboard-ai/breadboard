@@ -17,18 +17,31 @@ import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
 import { formatRunError } from "./format-run-error.js";
+import { getStore } from "../../store.js";
 
-const fromNextToState = (next?: string): ReanimationState | undefined => {
-  return next ? JSON.parse(next) : undefined;
+const fromNextToState = async (
+  user: string,
+  next?: string
+): Promise<ReanimationState | undefined> => {
+  if (!next) {
+    return undefined;
+  }
+  const store = getStore();
+  return store.loadReanimationState(user, next);
 };
 
-const fromStateToNext = (state: any) => {
-  return JSON.stringify(state);
+const fromStateToNext = async (
+  user: string,
+  state: ReanimationState
+): Promise<string> => {
+  const store = getStore();
+  return store.saveReanimationState(user, state);
 };
 
 export const runBoard = async ({
   url,
   path,
+  user,
   inputs,
   loader,
   kitOverrides,
@@ -43,7 +56,7 @@ export const runBoard = async ({
 
   let inputsToConsume = next ? undefined : inputs;
 
-  const resumeFrom = fromNextToState(next);
+  const resumeFrom = await fromNextToState(user, next);
 
   const state = createRunStateManager(resumeFrom, inputs);
 
@@ -70,7 +83,7 @@ export const runBoard = async ({
           const { inputArguments } = data;
           const reanimationState = state.lifecycle().reanimationState();
           const schema = inputArguments?.schema || {};
-          const next = fromStateToNext(reanimationState);
+          const next = await fromStateToNext(user, reanimationState);
           await writer.write(["input", { schema, next }]);
           return;
         }
