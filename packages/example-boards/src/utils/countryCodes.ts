@@ -131,4 +131,4 @@ export const countryCodes = [
   "VN",
   "ZA",
   "ZW",
-];
+] as const;

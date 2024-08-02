@@ -1,42 +1,36 @@
 {
   "title": "Nager Date Long Weekend API",
   "description": "API for long weekends",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
-      "to": "output",
+      "from": "fetchResult",
+      "to": "output-0",
       "out": "response",
-      "in": "dates"
+      "in": "info"
     },
     {
-      "from": "getCurrentYear",
-      "to": "query",
-      "out": "year",
-      "in": "year"
-    },
-    {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "url",
       "out": "countryCode",
       "in": "countryCode"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "url",
       "out": "year",
       "in": "year"
     },
     {
-      "from": "urlTemplate",
-      "to": "fetch",
+      "from": "url",
+      "to": "fetchResult",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -183,21 +177,18 @@
               "default": "2024"
             }
           },
-          "required": [
-            "countryCode",
-            "year"
-          ]
+          "required": []
         }
       }
     },
     {
-      "id": "output",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "dates": {
+            "info": {
               "type": [
                 "array",
                 "boolean",
@@ -206,31 +197,25 @@
                 "object",
                 "string"
               ],
-              "title": "Response",
-              "description": "The response from the fetch request"
+              "title": "Long Weekend Info",
+              "description": "The long weekend info for the selected country code for the given year from the Nager Date API"
             }
-          }
+          },
+          "required": [
+            "info"
+          ]
         }
       }
     },
     {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET"
       }
     },
     {
-      "id": "getCurrentYear",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const getCurrentYear = ()=>{return{year:new Date().getFullYear()}};",
-        "name": "getCurrentYear",
-        "raw": true
-      }
-    },
-    {
-      "id": "urlTemplate",
+      "id": "url",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://date.nager.at/api/v3/LongWeekend/{year}/{countryCode}"
