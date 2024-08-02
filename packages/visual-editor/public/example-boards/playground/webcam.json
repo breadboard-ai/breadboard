@@ -1,36 +1,42 @@
 {
   "title": "Webcam",
   "description": "An example of using Gemini Kit's vision node with a webcam",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "combinePictureAndPrompt",
-      "to": "describePicture",
-      "out": "parts",
-      "in": "parts"
-    },
-    {
-      "from": "describePicture",
-      "to": "output-2",
+      "from": "generator",
+      "to": "output-0",
       "out": "result",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "combinePictureAndPrompt",
+      "from": "input-0",
+      "to": "runJavascript-0",
       "out": "picture",
       "in": "picture"
     },
     {
-      "from": "input-1",
-      "to": "combinePictureAndPrompt",
+      "from": "input-0",
+      "to": "runJavascript-0",
       "out": "prompt",
       "in": "prompt"
+    },
+    {
+      "from": "llm-generator",
+      "to": "generator",
+      "out": "generator",
+      "in": "$board"
+    },
+    {
+      "from": "runJavascript-0",
+      "to": "generator",
+      "out": "parts",
+      "in": "parts"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -42,7 +48,9 @@
                 "llm-content"
               ],
               "title": "Image",
-              "format": "image-webcam"
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
             },
             "prompt": {
               "type": "string",
@@ -60,33 +68,97 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "llm-generator",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "generator": {
+              "type": "object",
+              "behavior": [
+                "board"
+              ],
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "{\n  \"kind\": \"board\",\n  \"path\": \"gemini-pro-vision.json\"\n}",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "Result"
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     },
     {
-      "id": "combinePictureAndPrompt",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{const picturePart=picture.parts[0];return{parts:[picturePart,{text:prompt}]}};",
-        "name": "combinePictureAndPrompt",
-        "raw": true
-      }
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
     },
     {
-      "id": "describePicture",
-      "type": "vision",
-      "configuration": {}
+      "id": "runJavascript-0",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const run = ({picture:picture2,prompt:prompt2})=>{return{parts:[picture2,prompt2]}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "picture": {
+              "behavior": [
+                "llm-content"
+              ],
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            },
+            "prompt": {
+              "type": "string"
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "parts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "raw": true
+      }
     }
   ]
 }

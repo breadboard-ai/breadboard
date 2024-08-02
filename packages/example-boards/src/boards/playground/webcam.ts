@@ -4,39 +4,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, code } from "@google-labs/breadboard";
-import { gemini } from "@google-labs/gemini-kit";
+import { annotate, board, input, object, output } from "@breadboard-ai/build";
+import { geminiText } from "@google-labs/gemini-kit";
 
-// A node that appends the prompt to the picture.
-// Note, this one is a bit "in the weeds": it literally formats the Gemini Pro
-// API request to include the picture as part of the prompt.
-const partsMaker = code(({ picture, prompt }) => {
-  const picturePart = (picture as { parts: unknown[] }).parts[0];
-  return { parts: [picturePart, { text: prompt }] };
+const picture = input({
+  title: "Image",
+  type: annotate(object({}), {
+    behavior: ["llm-content"],
+  })
 });
 
-export default await board(({ picture, prompt }) => {
-  picture
-    .isObject()
-    .behavior("llm-content")
-    .title("Image")
-    .format("image-webcam");
-  prompt
-    .isString()
-    .title("Prompt")
-    .examples("Describe what you see in the picture");
-  const { parts } = partsMaker({
-    $id: "combinePictureAndPrompt",
-    picture,
-    prompt,
-  });
-  const describePicture = gemini.vision({
-    $id: "describePicture",
-    parts,
-  });
-  return { text: describePicture.result };
-}).serialize({
+const prompt = input({
+  title: "Prompt",
+  type: "string",
+  examples: ["Describe what you see in the picture"]
+});
+
+const llmResponse = geminiText({
+  text: "unused",
+  context: picture,
+  model: "gemini-1.5-pro-latest",
+  systemInstruction: prompt
+});
+
+export default board({
   title: "Webcam",
-  description: "An example of using Gemini Kit's vision node with a webcam",
-  version: "0.0.2",
+  description: "An example of using Gemini Kit's text node with a webcam",
+  version: "0.1.0",
+  inputs: { picture, prompt },
+  outputs: {
+    text: output(llmResponse.outputs.text),
+  },
 });
