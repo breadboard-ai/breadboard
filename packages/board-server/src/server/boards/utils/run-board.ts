@@ -33,10 +33,12 @@ export const runBoard = async ({
   loader,
   kitOverrides,
   next,
-}: RunBoardArguments): Promise<RunBoardResult> => {
+  writer,
+}: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
-    return { $error: "Data store not available." };
+    await writer.write(["error", "Data store not available."]);
+    return;
   }
 
   let inputsToConsume = next ? undefined : inputs;
@@ -55,37 +57,42 @@ export const runBoard = async ({
     state,
   });
 
-  const outputs: OutputValues[] = [];
   for await (const result of runner) {
     const { type, data, reply } = result;
-    if (type === "input") {
-      if (inputsToConsume) {
-        await reply({ inputs: inputsToConsume });
-        inputsToConsume = undefined;
-      } else {
-        const { inputArguments } = data;
-        const reanimationState = state.lifecycle().reanimationState();
-        const schema = inputArguments?.schema || {};
-        const next = fromStateToNext(reanimationState);
-        return {
-          outputs,
-          $state: { type, schema, next },
-        };
+    switch (type) {
+      case "input": {
+        if (inputsToConsume) {
+          await reply({ inputs: inputsToConsume });
+          inputsToConsume = undefined;
+          break;
+        } else {
+          const { inputArguments } = data;
+          const reanimationState = state.lifecycle().reanimationState();
+          const schema = inputArguments?.schema || {};
+          const next = fromStateToNext(reanimationState);
+          await writer.write(["input", { schema, next }]);
+          return;
+        }
       }
-    } else if (type === "output") {
-      outputs.push((await inflateData(store, data.outputs)) as OutputValues);
-    } else if (type === "error") {
-      return {
-        outputs,
-        $error: formatRunError(data.error),
-      };
-    } else if (type === "end") {
-      return { outputs, $state: { type } };
-    } else {
-      console.log("UNKNOWN RESULT", type, data);
+      case "output": {
+        const outputs = (await inflateData(
+          store,
+          data.outputs
+        )) as OutputValues;
+        await writer.write(["output", outputs]);
+        break;
+      }
+      case "error": {
+        await writer.write(["error", formatRunError(data.error)]);
+        return;
+      }
+      case "end": {
+        return;
+      }
+      default: {
+        console.log("UNKNOWN RESULT", type, data);
+      }
     }
   }
-  return {
-    $error: "Run completed without signaling end or error.",
-  };
+  writer.write(["error", "Run completed without signaling end or error."]);
 };
