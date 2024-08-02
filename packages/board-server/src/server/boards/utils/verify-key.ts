@@ -1,7 +1,7 @@
 import { getStore } from "../../store.js";
 
-export const verifyKey = async (inputs: Record<string, any>) => {
-  const key = inputs.$key;
+export const verifyKey = async (inputs: Record<string, any> | undefined) => {
+  const key = inputs?.$key;
   if (!key) {
     return { success: false, error: "No key supplied" };
   }

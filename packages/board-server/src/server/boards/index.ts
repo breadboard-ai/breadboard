@@ -97,7 +97,8 @@ export const serveBoardsAPI = async (
     }
     case "run": {
       if (!corsAll(req, res)) return true;
-      if (await run(parsed, req, res)) return true;
+      const body = await getBody(req);
+      if (await run(parsed, req, res, body)) return true;
       break;
     }
     default: {

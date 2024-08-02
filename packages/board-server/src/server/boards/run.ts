@@ -24,7 +24,9 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     },
   }).getWriter();
-  const result = await runBoard({
+  res.setHeader("Content-Type", "text/event-stream");
+  res.statusCode = 200;
+  await runBoard({
     url,
     path: board,
     inputs,
@@ -32,9 +34,8 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     kitOverrides: [secretsKit],
     writer,
   });
-  res.setHeader("Content-Type", "text/event-stream");
-  res.statusCode = 200;
-  res.end(JSON.stringify(result));
+  writer.close();
+  res.end();
   return true;
 };
 
