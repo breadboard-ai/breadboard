@@ -10,6 +10,7 @@ import {
   type GraphDescriptor,
   type ReanimationState,
 } from "@google-labs/breadboard";
+import type { RunBoardStateStore } from "./types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
@@ -77,7 +78,7 @@ export type BoardServerCorsConfig = {
   allow: string[];
 };
 
-class Store {
+class Store implements RunBoardStateStore {
   #database;
 
   constructor(storeName: string) {

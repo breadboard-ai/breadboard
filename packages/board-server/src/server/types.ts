@@ -11,6 +11,7 @@ import type {
   Kit,
   NodeValue,
   OutputValues,
+  ReanimationState,
 } from "@google-labs/breadboard";
 
 export type GeneralRequestType = "list" | "create";
@@ -75,10 +76,19 @@ export type RunBoardArguments = {
   path: string;
   user: string;
   loader: BoardServerLoadFunction;
+  runStateStore: RunBoardStateStore;
   writer: RunBoardResultWriter;
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
+};
+
+export type RunBoardStateStore = {
+  loadReanimationState(
+    user: string,
+    ticket: string
+  ): Promise<ReanimationState | undefined>;
+  saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
 
 export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;

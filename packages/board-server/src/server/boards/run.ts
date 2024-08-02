@@ -9,6 +9,7 @@ import { loadFromStore } from "./utils/board-server-provider.js";
 import { verifyKey } from "./utils/verify-key.js";
 import { secretsKit } from "../proxy/secrets.js";
 import { runBoard } from "./utils/run-board.js";
+import { getStore } from "../store.js";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
@@ -24,6 +25,9 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     },
   }).getWriter();
+
+  const runStateStore = getStore();
+
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
   await runBoard({
@@ -35,6 +39,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     kitOverrides: [secretsKit],
     writer,
     next,
+    runStateStore,
   });
   writer.close();
   res.end();

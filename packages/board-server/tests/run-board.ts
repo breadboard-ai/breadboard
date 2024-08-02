@@ -11,6 +11,7 @@ import type {
   GraphDescriptor,
   Kit,
   OutputValues,
+  ReanimationState,
 } from "@google-labs/breadboard";
 
 import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
@@ -86,6 +87,15 @@ type RunScriptEntry = {
   expected: ExpectedResult[];
 };
 
+const runStateStore = {
+  async loadReanimationState(user: string, ticket: string) {
+    return JSON.parse(ticket) as ReanimationState;
+  },
+  async saveReanimationState(user: string, state: any) {
+    return JSON.stringify(state);
+  },
+};
+
 const scriptedRun = async (
   board: GraphDescriptor,
   script: RunScriptEntry[]
@@ -99,13 +109,16 @@ const scriptedRun = async (
         results.push(chunk);
       },
     }).getWriter();
+
     await runBoard({
+      user: "test",
       path,
       url: `https://example.com${path}`,
       loader: async () => board,
       inputs,
       next,
       writer,
+      runStateStore,
     });
     assertResults(results, expected, index);
     next = getNext(results[results.length - 1]);
@@ -122,10 +135,12 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      user: "test",
       path,
       url: `https://example.com${path}`,
       loader: async () => simpleBoard,
       writer,
+      runStateStore,
     });
     assertResults(results, [{ type: "input" }]);
   });
@@ -150,11 +165,13 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      user: "test",
       path,
       url: `https://example.com${path}`,
       inputs,
       loader: async () => simpleBoard,
       writer,
+      runStateStore,
     });
     assertResults(results, [
       {
@@ -176,11 +193,13 @@ describe("Board Server Runs Boards", () => {
       },
     }).getWriter();
     await runBoard({
+      user: "test",
       path,
       url: `https://example.com${path}`,
       inputs,
       loader: async () => multipleInputsBoard as GraphDescriptor,
       writer,
+      runStateStore,
     });
     assertResults(results, [{ type: "input" }]);
   });

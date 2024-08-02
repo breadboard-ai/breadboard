@@ -13,28 +13,27 @@ import {
   type ReanimationState,
 } from "@google-labs/breadboard";
 import { run } from "@google-labs/breadboard/harness";
-import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+import type { RunBoardArguments, RunBoardStateStore } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
 import { formatRunError } from "./format-run-error.js";
-import { getStore } from "../../store.js";
 
 const fromNextToState = async (
+  store: RunBoardStateStore,
   user: string,
   next?: string
 ): Promise<ReanimationState | undefined> => {
   if (!next) {
     return undefined;
   }
-  const store = getStore();
   return store.loadReanimationState(user, next);
 };
 
 const fromStateToNext = async (
+  store: RunBoardStateStore,
   user: string,
   state: ReanimationState
 ): Promise<string> => {
-  const store = getStore();
   return store.saveReanimationState(user, state);
 };
 
@@ -47,6 +46,7 @@ export const runBoard = async ({
   kitOverrides,
   next,
   writer,
+  runStateStore,
 }: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
@@ -56,9 +56,11 @@ export const runBoard = async ({
 
   let inputsToConsume = next ? undefined : inputs;
 
-  const resumeFrom = await fromNextToState(user, next);
+  const resumeFrom = await fromNextToState(runStateStore, user, next);
 
   const state = createRunStateManager(resumeFrom, inputs);
+
+  const diagnostics = false;
 
   const runner = run({
     url,
@@ -67,7 +69,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
-    diagnostics: false,
+    diagnostics,
     state,
   });
 
@@ -83,7 +85,11 @@ export const runBoard = async ({
           const { inputArguments } = data;
           const reanimationState = state.lifecycle().reanimationState();
           const schema = inputArguments?.schema || {};
-          const next = await fromStateToNext(user, reanimationState);
+          const next = await fromStateToNext(
+            runStateStore,
+            user,
+            reanimationState
+          );
           await writer.write(["input", { schema, next }]);
           return;
         }
@@ -101,7 +107,9 @@ export const runBoard = async ({
         return;
       }
       case "end": {
-        console.log("Run completed.", data.last);
+        if (diagnostics) {
+          console.log("Run completed.", data.last);
+        }
         return;
       }
       default: {
