@@ -8,10 +8,13 @@ import {
   anyOf,
   array,
   enumeration,
+  intersect,
   object,
   optional,
+  toJSONSchema,
+  unsafeType,
 } from "@breadboard-ai/build";
-import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
+import type { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import { code } from "@google-labs/breadboard";
 
 export const textPartType = object({ text: "string" });
@@ -35,11 +38,6 @@ export const llmContentType = object({
   parts: array(anyOf(textPartType, functionCallPartType)),
 });
 export type LlmContent = ConvertBreadboardType<typeof llmContentType>;
-
-// TODO(aomarks) Convert to BTE after adding an intersection utility.
-export type Metadata = {
-  role: "$metadata";
-} & (LooperMetadata | SplitMetadata);
 
 export const splitMarkerDataType = object({
   /**
@@ -124,11 +122,34 @@ export const looperMetadataType = object({
 });
 export type LooperMetadata = ConvertBreadboardType<typeof looperMetadataType>;
 
-// TODO(aomarks) Convert to BTE after adding an intersection utility.
-export type LooperProgress = LooperPlan & { next: string };
+const metadataBase = object({ role: enumeration("$metadata") });
+export const metadataType = anyOf(
+  intersect(metadataBase, looperMetadataType),
+  intersect(metadataBase, splitMetadataType)
+);
+export type Metadata = ConvertBreadboardType<typeof metadataType>;
 
-// TODO(aomarks) Convert to BTW after converting Metadata.
-export type Context = LlmContent | Metadata;
+// TODO(aomarks) intersect currently knows it can't handle cases like this and
+// throws. It's the case where the two intersected objects both have the same
+// property. E.g. {role: "$metadata"} & {role?: "$metadata"} should be
+// {role: "$metadata"}.
+export const looperProgressType = unsafeType<
+  ConvertBreadboardType<typeof looperPlanType> & { next: string }
+>(
+  (() => {
+    const schema = toJSONSchema(looperPlanType);
+    const required = (schema.required as string[] | undefined) ?? [];
+    if (!required.includes("next")) {
+      required.push("next");
+      schema.required = required;
+    }
+    return schema;
+  })()
+);
+export type LooperProgress = ConvertBreadboardType<typeof looperProgressType>;
+
+export const contextType = anyOf(llmContentType, metadataType);
+export type Context = ConvertBreadboardType<typeof contextType>;
 
 /**
  * Type helper for wrapping `code` functions.

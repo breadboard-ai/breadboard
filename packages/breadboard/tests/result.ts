@@ -17,8 +17,7 @@ test("MachineResult#skip", (t) => {
       ["input"],
       [],
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     t.true(result.skip);
   }
@@ -29,8 +28,7 @@ test("MachineResult#skip", (t) => {
       [],
       [],
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     t.false(result.skip);
   }

@@ -121,6 +121,10 @@ export function isDrawableImage(schema: Schema) {
   );
 }
 
+export function isGoogleDriveFileId(schema: Schema) {
+  return schema.behavior?.includes("google-drive-file-id");
+}
+
 export function isGoogleDriveQuery(schema: Schema) {
   return schema.behavior?.includes("google-drive-query");
 }

@@ -40,11 +40,7 @@ export function isFunctionResponseCapabilityPart(
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
   if (typeof nodeValue !== "object" || !nodeValue) return false;
 
-  return (
-    "parts" in nodeValue &&
-    Array.isArray(nodeValue.parts) &&
-    "role" in nodeValue
-  );
+  return "parts" in nodeValue && Array.isArray(nodeValue.parts);
 }
 
 export const isDataCapability = (value: unknown): value is DataCapability => {
@@ -121,4 +117,39 @@ export async function asBase64(file: File | Blob): Promise<string> {
       reader.readAsDataURL(file);
     });
   }
+}
+
+export async function retrieveAsBlob(
+  part: StoredDataCapabilityPart
+): Promise<Blob> {
+  if (!isStoredData(part)) {
+    throw new Error("Invalid stored data");
+  }
+
+  const { handle } = part.storedData;
+  const response = await fetch(handle);
+  return await response.blob();
+}
+
+export async function toInlineDataPart(
+  part: StoredDataCapabilityPart
+): Promise<InlineDataCapabilityPart> {
+  const raw = await retrieveAsBlob(part);
+  const mimeType = part.storedData.mimeType;
+  const data = await asBase64(raw);
+  return { inlineData: { mimeType, data } };
+}
+
+export async function toStoredDataPart(
+  part: InlineDataCapabilityPart | StoredDataCapabilityPart | Blob
+): Promise<StoredDataCapabilityPart> {
+  const blob = part instanceof Blob ? part : await asBlob(part);
+  const handle = URL.createObjectURL(blob);
+
+  return {
+    storedData: {
+      handle,
+      mimeType: blob.type,
+    },
+  };
 }

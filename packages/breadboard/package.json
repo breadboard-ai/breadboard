@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": {
@@ -64,6 +64,12 @@
       ]
     },
     "test": {
+      "dependencies": [
+        "test:ava",
+        "test:node"
+      ]
+    },
+    "test:ava": {
       "command": "ava",
       "env": {
         "FORCE_COLOR": "1"
@@ -72,7 +78,19 @@
         "build:tsc"
       ],
       "files": [
-        "tests/**/*.json"
+        "tests/**/*.json",
+        "!tests/node/**/*.ts"
+      ],
+      "output": []
+    },
+    "test:node": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/**/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/node/*.ts",
+        "tests/bgl/*.bgl.json"
       ],
       "output": []
     },
@@ -117,7 +135,8 @@
     "timeout": "30s",
     "files": [
       "tests/**/*.ts",
-      "!tests/type-checks.ts"
+      "!tests/type-checks.ts",
+      "!tests/node/**/*.ts"
     ],
     "workerThreads": false,
     "typescript": {
@@ -140,21 +159,21 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.14.12",
-    "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
-    "rollup": "^4.19.0",
+    "rollup": "^4.19.1",
     "rollup-plugin-dts": "^6.1.1",
     "@rollup/plugin-json": "^6.1.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@google-labs/breadboard-schema": "^1.5.1",
+    "@google-labs/breadboard-schema": "^1.6.0",
     "json-schema": "^0.4.0"
   }
 }

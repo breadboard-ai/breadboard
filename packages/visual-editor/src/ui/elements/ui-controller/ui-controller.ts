@@ -28,7 +28,6 @@ import {
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
-  DataStore,
   EditHistory,
   GraphDescriptor,
   GraphLoader,
@@ -76,9 +75,6 @@ export class UI extends LitElement {
 
   @property()
   loader: GraphLoader | null = null;
-
-  @property()
-  dataStore: DataStore | null = null;
 
   @property({ reflect: true })
   status = STATUS.RUNNING;
@@ -603,7 +599,6 @@ export class UI extends LitElement {
         .logTitle=${"Activity"}
         .providers=${this.providers}
         .providerOps=${this.providerOps}
-        .dataStore=${this.dataStore}
         @bbinputrequested=${() => {
           this.selectedNodeIds.length = 0;
           this.requestUpdate();
@@ -732,57 +727,22 @@ export class UI extends LitElement {
         <div id="controls-activity-content">${sidePanel}</div>
 
         <div id="controls">
-          ${this.selectedNodeIds.length > 0
-            ? html`<button
-                id="run"
-                title=${this.#nodeRunnerRef.value?.status === STATUS.RUNNING
-                  ? "Stop Component"
-                  : "Run Component"}
-                ?disabled=${this.failedToLoad ||
-                !this.graph ||
-                this.selectedNodeIds.length !== 1 ||
-                selectedNodeIsInputOrOutput}
-                @click=${async () => {
-                  if (!this.#nodeRunnerRef.value) {
-                    return;
-                  }
-
-                  if (this.#nodeRunnerRef.value.status === STATUS.RUNNING) {
-                    this.#nodeRunnerRef.value.stopComponent();
-                    return;
-                  }
-
-                  // Set the component running, then request an update so that
-                  // the button updates. When the component is finished, render
-                  // the button again.
-                  const running = this.#nodeRunnerRef.value.runComponent();
-                  requestAnimationFrame(() => {
-                    this.requestUpdate();
-                  });
-                  await running;
-                  this.requestUpdate();
-                }}
-              >
-                ${this.#nodeRunnerRef.value?.status === STATUS.RUNNING
-                  ? "Stop Component"
-                  : "Run Component"}
-              </button>`
-            : html`<button
-                id="run"
-                title="Run this board"
-                ?disabled=${this.failedToLoad || !this.graph}
-                @click=${() => {
-                  this.selectedNodeIds.length = 0;
-                  if (this.status === STATUS.STOPPED) {
-                    this.dispatchEvent(new RunEvent());
-                  } else {
-                    this.dispatchEvent(new StopEvent());
-                    this.#callAllPendingInputHandlers();
-                  }
-                }}
-              >
-                ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
-              </button>`}
+          <button
+            id="run"
+            title="Run this board"
+            ?disabled=${this.failedToLoad || !this.graph}
+            @click=${() => {
+              this.selectedNodeIds.length = 0;
+              if (this.status === STATUS.STOPPED) {
+                this.dispatchEvent(new RunEvent());
+              } else {
+                this.dispatchEvent(new StopEvent());
+                this.#callAllPendingInputHandlers();
+              }
+            }}
+          >
+            ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
+          </button>
         </div>
       </section>
     </bb-splitter>`;

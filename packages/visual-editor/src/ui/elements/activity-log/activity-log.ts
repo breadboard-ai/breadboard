@@ -5,7 +5,6 @@
  */
 
 import {
-  DataStore,
   ErrorObject,
   GraphProvider,
   InspectableRun,
@@ -60,6 +59,9 @@ export class ActivityLog extends LitElement {
   @property({ reflect: true })
   showExtendedInfo = false;
 
+  @property({ reflect: true })
+  showLogTitle = true;
+
   @property()
   settings: SettingsStore | null = null;
 
@@ -68,9 +70,6 @@ export class ActivityLog extends LitElement {
 
   @property()
   providerOps = 0;
-
-  @property()
-  dataStore: DataStore | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -313,6 +312,9 @@ export class ActivityLog extends LitElement {
           )
         );
       }
+
+      // If we have chosen to autosubmit do not render the control.
+      return html``;
     }
 
     const continueRun = () => {
@@ -361,7 +363,6 @@ export class ActivityLog extends LitElement {
         id=${event.id}
         .showTypes=${false}
         .inputs=${userInputs}
-        .dataStore=${this.dataStore}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -492,7 +493,6 @@ export class ActivityLog extends LitElement {
         if (typeof nodeValue === "object") {
           if (isArrayOfLLMContent(nodeValue)) {
             value = html`<bb-llm-output-array
-              .dataStore=${this.dataStore}
               .values=${nodeValue}
             ></bb-llm-output-array>`;
           } else if (isLLMContent(nodeValue)) {
@@ -509,10 +509,7 @@ export class ActivityLog extends LitElement {
             }
 
             value = nodeValue.parts.length
-              ? html`<bb-llm-output
-                  .dataStore=${this.dataStore}
-                  .value=${nodeValue}
-                ></bb-llm-output>`
+              ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
               : html`No data provided`;
           } else if (this.#isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
@@ -557,17 +554,19 @@ export class ActivityLog extends LitElement {
     const downloadReady = !!this.#serializedRun;
 
     return html`
-      <h1>
-        <span>${this.logTitle}</span>${showLogDownload
-          ? downloadReady
-            ? html`<a @click=${(evt: Event) => this.#download(evt)}
-                >Click to Download</a
-              >`
-            : html`<a @click=${(evt: Event) => this.#getRunLog(evt)}
-                >Download</a
-              >`
-          : nothing}
-      </h1>
+      ${this.showLogTitle
+        ? html`<h1>
+            <span>${this.logTitle}</span>${showLogDownload
+              ? downloadReady
+                ? html`<a @click=${(evt: Event) => this.#download(evt)}
+                    >Click to Download</a
+                  >`
+                : html`<a @click=${(evt: Event) => this.#getRunLog(evt)}
+                    >Download</a
+                  >`
+              : nothing}
+          </h1>`
+        : nothing}
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             const isNew = this.#seenItems.has(event.id);

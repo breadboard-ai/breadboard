@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": "./dist/server/index.js",
@@ -136,17 +136,17 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/node": "^20.14.12",
+    "@types/node": "^22.0.0",
     "esbuild": "^0.23.0",
     "eslint": "^8.57.0",
-    "typescript": "^5.5.3",
+    "typescript": "^5.5.4",
     "wireit": "^0.14.5"
   },
   "dependencies": {
-    "@breadboard-ai/data-store": "^0.0.1",
+    "@breadboard-ai/data-store": "^0.1.0",
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/secret-manager": "^5.6.0",
-    "@google-labs/breadboard": "^0.22.0",
+    "@google-labs/breadboard": "^0.23.0",
     "@lit/context": "^1.1.2",
     "lit": "^3.1.4",
     "vite": "^5.3.5"

@@ -5,26 +5,22 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
-import { createKits } from "./create-kits.js";
 import {
   createLoader,
+  createRunStateManager,
   inflateData,
   type InputValues,
+  type OutputValues,
+  type ReanimationState,
 } from "@google-labs/breadboard";
-import { BoardServerProvider } from "./board-server-provider.js";
-import { formatRunError } from "./format-run-error.js";
+import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
 import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+import { BoardServerProvider } from "./board-server-provider.js";
+import { createKits } from "./create-kits.js";
+import { formatRunError } from "./format-run-error.js";
 
-const fromNextToState = (
-  next?: string,
-  inputs?: InputValues
-): StateToResumeFrom => {
-  const state = next ? JSON.parse(next) : undefined;
-  return {
-    state,
-    inputs,
-  };
+const fromNextToState = (next?: string): ReanimationState | undefined => {
+  return next ? JSON.parse(next) : undefined;
 };
 
 const fromStateToNext = (state: any) => {
@@ -46,6 +42,10 @@ export const runBoard = async ({
 
   let inputsToConsume = next ? undefined : inputs;
 
+  const resumeFrom = fromNextToState(next);
+
+  const state = createRunStateManager(resumeFrom, inputs);
+
   const runner = run({
     url,
     kits: createKits(kitOverrides),
@@ -53,9 +53,10 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
-    resumeFrom: fromNextToState(next, inputs),
+    state,
   });
 
+  const outputs: OutputValues[] = [];
   for await (const result of runner) {
     const { type, data, reply } = result;
     if (type === "input") {
@@ -63,37 +64,26 @@ export const runBoard = async ({
         await reply({ inputs: inputsToConsume });
         inputsToConsume = undefined;
       } else {
-        const schema = data.node.configuration?.schema || {};
-        const state = await result.saveState?.();
-        if (!state) {
-          return {
-            $error: "No state supplied, internal run error.",
-          };
-        }
-        const next = fromStateToNext(state);
+        const {
+          node: { configuration },
+        } = data;
+        const reanimationState = state.lifecycle().reanimationState();
+        const schema = configuration?.schema || {};
+        const next = fromStateToNext(reanimationState);
         return {
+          outputs,
           $state: { type, schema, next },
         };
       }
     } else if (type === "output") {
-      const schema = data.node.configuration?.schema || {};
-      const state = await result.saveState?.();
-      if (!state) {
-        return {
-          $error: "No state supplied, internal run error.",
-        };
-      }
-      const next = fromStateToNext(state);
-      return {
-        $state: { type, schema, next },
-        ...((await inflateData(store, data.outputs)) as RunBoardResult),
-      };
+      outputs.push((await inflateData(store, data.outputs)) as OutputValues);
     } else if (type === "error") {
       return {
+        outputs,
         $error: formatRunError(data.error),
       };
     } else if (type === "end") {
-      return { $state: { type } };
+      return { outputs, $state: { type } };
     } else {
       console.log("UNKNOWN RESULT", type, data);
     }

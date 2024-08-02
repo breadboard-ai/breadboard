@@ -11,15 +11,16 @@ import {
   isArrayOfLLMContentBehavior,
   isBoardBehavior,
   isCodeBehavior,
+  isGoogleDriveFileId,
   isGoogleDriveQuery,
   isLLMContentBehavior,
   isPortSpecBehavior,
+  isSelect,
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CodeEditor, LLMInput, LLMInputArray } from "../elements";
 import {
-  DataStore,
   GraphDescriptor,
   GraphProvider,
   isLLMContent,
@@ -56,9 +57,6 @@ export class UserInput extends LitElement {
 
   @property()
   providerOps = 0;
-
-  @property()
-  dataStore: DataStore | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -355,7 +353,6 @@ export class UserInput extends LitElement {
                 inputField = html`<bb-llm-input-array
                   id="${id}"
                   name="${id}"
-                  .dataStore=${this.dataStore}
                   .description=${input.schema.description || null}
                   .values=${value}
                   .allow=${allow}
@@ -412,7 +409,6 @@ export class UserInput extends LitElement {
                 inputField = html`<bb-llm-input
                   id="${id}"
                   name="${id}"
-                  .dataStore=${this.dataStore}
                   .schema=${input.schema}
                   .value=${input.value ?? defaultValue ?? null}
                   .description=${input.schema.description || null}
@@ -514,8 +510,37 @@ export class UserInput extends LitElement {
                 ></bb-code-editor>`;
                 break;
               }
+              if (isGoogleDriveFileId(input.schema)) {
+                inputField = html`<bb-google-drive-file-id
+                  id=${id}
+                  .value=${input.value ?? defaultValue ?? ""}
+                ></bb-google-drive-file-id>`;
+                break;
+              }
               if (isGoogleDriveQuery(input.schema)) {
-                inputField = html`<bb-google-drive-query></bb-google-drive-query>`;
+                inputField = html`<bb-google-drive-query
+                  id=${id}
+                  .value=${input.value ?? defaultValue ?? ""}
+                ></bb-google-drive-query>`;
+                break;
+              }
+
+              if (isSelect(input.schema) && input.schema.enum) {
+                const enumValue = input.value ?? defaultValue ?? "";
+                inputField = html`<select
+                  id=${id}
+                  name=${id}
+                  autocomplete="off"
+                  placeholder=${input.schema.description ?? ""}
+                  .autofocus=${idx === 0 ? true : false}
+                >
+                  ${input.schema.enum.map(
+                    (item) =>
+                      html`<option ?selected=${item === enumValue}>
+                        ${item}
+                      </option>`
+                  )}
+                </select>`;
                 break;
               }
 

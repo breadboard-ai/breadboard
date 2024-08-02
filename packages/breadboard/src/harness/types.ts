@@ -15,6 +15,7 @@ import type {
   LoadResponse,
   ServerTransport,
 } from "../remote/types.js";
+import type { ManagedRunState, RunState } from "../run/types.js";
 import type {
   BreadboardRunner,
   ErrorResponse,
@@ -23,7 +24,6 @@ import type {
   Kit,
   OutputResponse,
   OutputValues,
-  RunStackEntry,
 } from "../types.js";
 
 /**
@@ -185,10 +185,10 @@ export type RunConfig = {
   /**
    * The state from which to resume the run.
    */
-  resumeFrom?: StateToResumeFrom;
+  state?: ManagedRunState;
 };
 
 export type StateToResumeFrom = {
-  state: RunStackEntry[];
+  state: RunState;
   inputs?: InputValues;
 };

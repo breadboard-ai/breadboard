@@ -9,7 +9,7 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { LLMOutput } from "./llm-output.js";
-import { DataStore, LLMContent } from "@google-labs/breadboard";
+import { LLMContent } from "@google-labs/breadboard";
 
 @customElement("bb-llm-output-array")
 export class LLMOutputArray extends LitElement {
@@ -21,9 +21,6 @@ export class LLMOutputArray extends LitElement {
 
   @property({ reflect: true })
   mode: "visual" | "json" = "visual";
-
-  @property({ attribute: false })
-  dataStore: DataStore | null = null;
 
   #resizeObserver: ResizeObserver | null = null;
   #activeLLMContentRef: Ref<LLMOutput> = createRef();
@@ -202,7 +199,6 @@ export class LLMOutputArray extends LitElement {
                       : nothing}
                     class=${classMap({ visible: idx === this.selected })}
                     .value=${item}
-                    .dataStore=${this.dataStore}
                   ></bb-llm-output>`;
                 })
               : html`<bb-json-tree .json=${this.values}></bb-json-tree>`}

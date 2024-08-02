@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- 6d2939e: Remove the ability to bubble up inputs from `map` component.
+- 7298a47: Add simplistic caching to `service` component.
+
+### Patch Changes
+
+- 5c5b665: Stop leaking blob URLs in runJavascript.
+- a0852df: Update titles and help links in Core Kit.
+- ea7e2a1: Mark `schema` as deprecated on `runJavascript`.
+- 8edcbc0: Update Template and Core Kit to jive with docs.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- b99472b: Update titles in `curry` component.
+- 4bfaec5: Improve documentation/metadata for unnest and cast nodes
+- Updated dependencies [ad8aa22]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/breadboard@0.23.0
+
 ## 0.11.0
 
 ### Minor Changes

@@ -1,5 +1,30 @@
 # @breadboard-ai/board-server
 
+## 0.3.0
+
+### Minor Changes
+
+- 1e1be2a: Teach board-server run API endpoint to run simple boards.
+- 7298a47: Add simple BSE endpoint to boards.
+- 1b17915: Start laying down infrastructure for `run` API endpoint.
+- 2b9ef5b: Rewrire Datastore usage
+- 08a4c24: Lock BSE endpoints behind a key.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [5ce1026]
+- Updated dependencies [2312443]
+- Updated dependencies [6ffa89c]
+  - @google-labs/breadboard@0.23.0
+  - @breadboard-ai/data-store@0.1.0
+
 ## 0.2.0
 
 ### Minor Changes

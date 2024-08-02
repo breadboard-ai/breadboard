@@ -13,7 +13,7 @@ export { SchemaBuilder, combineSchemas } from "./schema.js";
 export { RunResult } from "./run.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
-export { traversalResultFromStack } from "./stack.js";
+export { traversalResultFromStack } from "./run/lifecycle.js";
 export { toMermaid } from "./mermaid.js";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
@@ -28,7 +28,6 @@ export {
 } from "./stream.js";
 
 // New Syntax:
-export { Runner } from "./new/runner/runner.js";
 export {
   board,
   // TODO Alias for easier migration to the new name. Remove in a future breaking change.
@@ -103,4 +102,16 @@ export {
   isFunctionResponseCapabilityPart,
   isLLMContent,
   isTextCapabilityPart,
+  toInlineDataPart,
+  toStoredDataPart,
+  createDefaultDataStore,
+  createDefaultRunStore,
 } from "./data/index.js";
+
+/**
+ * Managed Run State API
+ */
+export type * from "./run/types.js";
+export { createRunStateManager } from "./run/index.js";
+export { invokeGraph } from "./run/invoke-graph.js";
+export { runGraph } from "./run/run-graph.js";

@@ -5,8 +5,9 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, RunResult, asyncGen } from "../index.js";
+import { Board, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import type { RunStackEntry } from "../run/types.js";
 import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
@@ -15,11 +16,10 @@ import {
   ErrorObject,
   Kit,
   ProbeMessage,
-  RunStackEntry,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
-import { HarnessRunResult, RunConfig, StateToResumeFrom } from "./types.js";
+import { HarnessRunResult, RunConfig } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
@@ -48,11 +48,15 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
   const bubbled = invocationId == -1;
 
   const saveState = async (): Promise<RunStackEntry[]> => {
+    const runState = result.runState;
+    if (runState) {
+      return runState;
+    }
     return [
       {
-        graph: 0,
-        node: invocationId,
-        state: await saveRunnerState(type, result.state),
+        url: undefined,
+        path: [invocationId],
+        state: saveRunnerState(type, result.state),
       },
     ];
   };
@@ -111,25 +115,12 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   return Board.fromGraphDescriptor(graph);
 };
 
-const createPreviousRunResult = (
-  resumeFrom: StateToResumeFrom | undefined
-): RunResult | undefined => {
-  if (resumeFrom?.state?.[0].state) {
-    const result = RunResult.load(resumeFrom.state[0].state);
-    if (resumeFrom.inputs) {
-      result.inputs = resumeFrom.inputs;
-    }
-    return result;
-  }
-  return undefined;
-};
-
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
-    const resumeFrom = createPreviousRunResult(config.resumeFrom);
+    const { base, signal, inputs, state } = config;
 
     try {
       const probe = config.diagnostics
@@ -138,18 +129,16 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run(
-        {
-          probe,
-          kits,
-          loader,
-          store,
-          base: config.base,
-          signal: config.signal,
-          inputs: config.inputs,
-        },
-        resumeFrom
-      )) {
+      for await (const data of runner.run({
+        probe,
+        kits,
+        loader,
+        store,
+        base,
+        signal,
+        inputs,
+        state,
+      })) {
         await next(fromRunnerResult(data));
       }
       await next(endResult());
