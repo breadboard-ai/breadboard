@@ -9,11 +9,10 @@ import {
   createLoader,
   createRunStateManager,
   inflateData,
-  type InputValues,
   type OutputValues,
   type ReanimationState,
 } from "@google-labs/breadboard";
-import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
+import { run } from "@google-labs/breadboard/harness";
 import type { RunBoardArguments, RunBoardResult } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
@@ -64,11 +63,9 @@ export const runBoard = async ({
         await reply({ inputs: inputsToConsume });
         inputsToConsume = undefined;
       } else {
-        const {
-          node: { configuration },
-        } = data;
+        const { inputArguments } = data;
         const reanimationState = state.lifecycle().reanimationState();
-        const schema = configuration?.schema || {};
+        const schema = inputArguments?.schema || {};
         const next = fromStateToNext(reanimationState);
         return {
           outputs,
