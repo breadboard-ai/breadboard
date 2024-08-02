@@ -54,6 +54,7 @@ export const runBoard = async ({
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
+    diagnostics: true,
     state,
   });
 
@@ -87,10 +88,11 @@ export const runBoard = async ({
         return;
       }
       case "end": {
+        console.log("Run completed.", data.last);
         return;
       }
       default: {
-        console.log("UNKNOWN RESULT", type, data);
+        console.log("Diagnostics", type, data);
       }
     }
   }

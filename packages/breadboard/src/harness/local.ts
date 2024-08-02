@@ -7,6 +7,7 @@
 import { createDefaultDataStore } from "../data/index.js";
 import { Board, asyncGen } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import { LastNode } from "../remote/types.js";
 import type { RunStackEntry } from "../run/types.js";
 import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
@@ -85,10 +86,10 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
   throw new Error(`Unknown result type "${type}".`);
 };
 
-const endResult = () => {
+const endResult = (last: LastNode | undefined) => {
   return {
     type: "end",
-    data: { timestamp: timestamp() },
+    data: { timestamp: timestamp(), last },
     reply: async () => {
       // Do nothing
     },
@@ -103,6 +104,31 @@ const errorResult = (error: string | ErrorObject) => {
       // Do nothing
     },
   } as HarnessRunResult;
+};
+
+const maybeSaveProbe = (
+  result: ProbeMessage,
+  last?: LastNode
+): LastNode | undefined => {
+  const { type, data } = result;
+  if (type === "skip") {
+    return {
+      node: data.node,
+      missing: data.missingInputs,
+    };
+  }
+  return last;
+};
+
+const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
+  const { type, node } = result;
+  if (type === "output" || type === "input") {
+    return {
+      node,
+      missing: [],
+    };
+  }
+  return last;
 };
 
 const load = async (config: RunConfig): Promise<BreadboardRunner> => {
@@ -123,8 +149,11 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
     const { base, signal, inputs, state } = config;
 
     try {
+      let last: LastNode | undefined;
+
       const probe = config.diagnostics
         ? new Diagnostics(async (message) => {
+            last = maybeSaveProbe(message, last);
             await next(fromProbe(message));
           })
         : undefined;
@@ -139,9 +168,10 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         inputs,
         state,
       })) {
+        last = maybeSaveResult(data, last);
         await next(fromRunnerResult(data));
       }
-      await next(endResult());
+      await next(endResult(last));
     } catch (e) {
       const error = extractError(e);
       console.error("Local Run error:", error);
