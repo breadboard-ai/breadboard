@@ -299,8 +299,6 @@ export class UserInput extends LitElement {
             >`;
           }
 
-          console.log("🌻 input", input);
-
           const unparsedDefaultValue =
             input.schema.examples && input.schema.examples.length > 0
               ? input.schema.examples[0]
