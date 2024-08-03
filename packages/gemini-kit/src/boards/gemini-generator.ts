@@ -79,9 +79,6 @@ const systemInstruction = input({
   title: "System Instruction",
   description:
     "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
-  examples: [
-    "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
-  ],
   default: "",
 });
 
@@ -89,7 +86,6 @@ const text = input({
   type: "string",
   title: "Text",
   description: "The text to generate",
-  examples: ["What is the square root of pi?"],
   default: "",
 });
 
@@ -121,40 +117,6 @@ const tools = input({
   title: "Tools",
   description: "An array of functions to use for tool-calling",
   default: [],
-  examples: [
-    [
-      {
-        name: "The_Calculator_Board",
-        description:
-          "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "Ask a math question",
-            },
-          },
-          required: ["text"],
-        },
-      },
-      {
-        name: "The_Search_Summarizer_Board",
-        description:
-          "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "What would you like to search for?",
-            },
-          },
-          required: ["text"],
-        },
-      },
-    ],
-  ],
 });
 
 const context = input({
@@ -166,18 +128,6 @@ const context = input({
   title: "Context",
   description: "An array of messages to use as conversation context",
   default: [],
-  examples: [
-    [
-      {
-        role: "user",
-        parts: [{ text: "You are a pirate. Please talk like a pirate." }],
-      },
-      {
-        role: "model",
-        parts: [{ text: "Arr, matey!" }],
-      },
-    ],
-  ],
 });
 
 const useStreaming = input({
