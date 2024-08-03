@@ -125,7 +125,7 @@
     "@google-labs/palm-kit": "^0.1.1",
     "@google-labs/template-kit": "^0.3.7",
     "eleventy-plugin-youtube-embed": "^1.10.2",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.23.0",
     "typescript": "^5.5.4"
   },
   "devDependencies": {
