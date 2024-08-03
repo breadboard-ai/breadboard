@@ -75,9 +75,10 @@ export const runBoard = async ({
 
   for await (const result of runner) {
     const { type, data, reply } = result;
+    console.log("Run result", type, data);
     switch (type) {
       case "input": {
-        if (inputsToConsume) {
+        if (inputsToConsume && Object.keys(inputsToConsume).length > 0) {
           await reply({ inputs: inputsToConsume });
           inputsToConsume = undefined;
           break;
