@@ -21,7 +21,8 @@ const CORS_HEADERS = {
 const CONFIG = await getStore().getBoardServerCorsConfig();
 
 export const corsAll = (req: IncomingMessage, res: ServerResponse) => {
-  const headers = { ...CORS_HEADERS };
+  const headers = structuredClone(CORS_HEADERS);
+  headers["Access-Control-Allow-Origin"] = req.headers.origin || "*";
 
   if (req.method === "OPTIONS") {
     res.writeHead(204, headers);

@@ -49,6 +49,8 @@ export const runBoard = async ({
   runStateStore,
 }: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
+  // TODO: Figure out if this is the right thing to do here.
+  store.createGroup("run-board");
   if (!store) {
     await writer.write(["error", "Data store not available."]);
     return;
@@ -75,7 +77,6 @@ export const runBoard = async ({
 
   for await (const result of runner) {
     const { type, data, reply } = result;
-    console.log("Run result", type, data);
     switch (type) {
       case "input": {
         if (inputsToConsume && Object.keys(inputsToConsume).length > 0) {
