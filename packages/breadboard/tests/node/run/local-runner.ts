@@ -10,7 +10,7 @@ import test, { describe } from "node:test";
 import { LocalRunner } from "../../../src/harness/local-runner.js";
 import { HarnessRunner } from "../../../src/harness/types.js";
 import { createLoader } from "../../../src/loader/index.js";
-import { ErrorResponse, OutputResponse } from "../../../src/types.js";
+import { OutputResponse } from "../../../src/types.js";
 import { testKit } from "../test-kit.js";
 
 import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
