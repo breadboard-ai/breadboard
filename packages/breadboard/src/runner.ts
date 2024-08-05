@@ -29,7 +29,6 @@ import {
 } from "./capability.js";
 import { createLoader } from "./loader/index.js";
 import { GraphLoader, GraphProvider } from "./loader/types.js";
-import { toMermaid } from "./mermaid.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import { runGraph } from "./run/run-graph.js";
 
@@ -121,18 +120,6 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {}
   ): Promise<OutputValues> {
     return invokeGraph(this, inputs, context);
-  }
-
-  /**
-   * Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
-   * of the board.
-   *
-   * This is useful for visualizing the board.
-   *
-   * @returns - a string containing the Mermaid representation of the board.
-   */
-  mermaid(direction = "TD", unstyled = false, ignoreSubgraphs = false): string {
-    return toMermaid(this, direction, unstyled, ignoreSubgraphs);
   }
 
   /**
