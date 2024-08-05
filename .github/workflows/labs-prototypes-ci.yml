@@ -31,7 +31,7 @@ jobs:
       - run: pip install packages/breadboard-python/breadboard_python
       - run: pip install packages/breadboard-python/breadboard_colab
 
-      - uses: google/wireit@setup-github-actions-caching/v1
+      - uses: google/wireit@setup-github-actions-caching/v2
         if: github.event_name != 'pull_request' # For PRs, caching is disabled to ensure a clean build
 
       - name: Clean Installing dependencies
