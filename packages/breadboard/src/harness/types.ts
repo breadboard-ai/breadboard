@@ -31,7 +31,10 @@ import type {
   NodeEndResponse,
   NodeStartResponse,
 } from "../types.js";
-import { TypedEventTarget } from "../utils/typed-event-target.js";
+import {
+  IntermediateEventTarget,
+  TypedEventTarget,
+} from "../utils/typed-event-target.js";
 
 /**
  * The board has been loaded
@@ -271,7 +274,7 @@ export type RunNodeEndEvent = Event & {
 
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
-export type HarnessRunner = {
+export type HarnessRunner = IntermediateEventTarget<RunEventMap> & {
   running(): boolean;
   run(inputs?: InputValues): Promise<boolean>;
 };

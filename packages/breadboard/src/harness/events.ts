@@ -151,12 +151,19 @@ export class PauseEvent extends Event implements RunLifecycleEvent {
 
 export class ResumeEvent extends Event implements RunLifecycleEvent {
   static readonly eventName = "resume";
+  readonly running = true;
 
-  constructor(
-    public running: boolean,
-    public data: { timestamp: number }
-  ) {
+  constructor(public data: { timestamp: number }) {
     super(ResumeEvent.eventName, { ...opts });
+  }
+}
+
+export class StartEvent extends Event implements RunLifecycleEvent {
+  static readonly eventName = "start";
+  readonly running = true;
+
+  constructor(public data: { timestamp: number }) {
+    super(StartEvent.eventName, { ...opts });
   }
 }
 

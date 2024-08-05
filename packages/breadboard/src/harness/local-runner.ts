@@ -25,6 +25,7 @@ import {
   SkipEvent,
   PauseEvent,
   ResumeEvent,
+  StartEvent,
 } from "./events.js";
 
 export const now = () => ({ timestamp: globalThis.performance.now() });
@@ -54,7 +55,7 @@ export class LocalRunner
    * @returns -- true if the runner is currently running, or false otherwise.
    */
   running() {
-    return !!this.#pendingResult;
+    return !!this.#run && !this.#pendingResult;
   }
 
   /**
@@ -64,6 +65,7 @@ export class LocalRunner
    *             for input.
    */
   async run(inputs?: InputValues): Promise<boolean> {
+    const starting = !this.#run;
     if (!this.#run) {
       this.#run = run(this.#config);
     } else if (this.#pendingResult) {
@@ -72,6 +74,10 @@ export class LocalRunner
     }
     this.#pendingResult = null;
 
+    this.dispatchEvent(
+      starting ? new StartEvent(now()) : new ResumeEvent(now())
+    );
+
     for (;;) {
       const result = await this.#run.next();
       if (result.done) {
@@ -79,7 +85,6 @@ export class LocalRunner
         this.#pendingResult = null;
         return true;
       }
-      this.dispatchEvent(new ResumeEvent(true, now()));
       const { type, data, reply } = result.value;
       switch (type) {
         case "input": {
@@ -95,7 +100,7 @@ export class LocalRunner
             this.dispatchEvent(new InputEvent(false, data));
             this.#pendingResult = result.value;
             this.dispatchEvent(new PauseEvent(false, now()));
-            return true;
+            return false;
           }
           break;
         }
