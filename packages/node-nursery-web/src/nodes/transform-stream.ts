@@ -5,7 +5,7 @@
  */
 
 import {
-  Board,
+  BoardRunner,
   BreadboardCapability,
   InputValues,
   NodeHandlerContext,
@@ -28,7 +28,7 @@ const getTransformer = async (
   context?: NodeHandlerContext
 ): Promise<Transformer> => {
   if (board) {
-    const runnableBoard = await Board.fromBreadboardCapability(
+    const runnableBoard = await BoardRunner.fromBreadboardCapability(
       board as BreadboardCapability
     );
     // Because stream transformers run outside of the normal board lifecycle,

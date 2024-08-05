@@ -5,7 +5,6 @@
  */
 
 import {
-  BoardRunner,
   NodeHandlerContext,
   getGraphDescriptor,
 } from "@google-labs/breadboard";
@@ -23,7 +22,5 @@ export const getRunner = async (
   board: unknown,
   context: NodeHandlerContext
 ) => {
-  const graph = await getGraphDescriptor(board, context);
-  if (!graph) return undefined;
-  return await BoardRunner.fromGraphDescriptor(graph);
+  return getGraphDescriptor(board, context);
 };

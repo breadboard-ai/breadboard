@@ -77,32 +77,21 @@ test("allows pausing and resuming the board", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of runGraph(firstBoard, { kits: [kit] }, result)) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of runGraph(
-      secondBoard,
-      { kits: [kit] },
-      result?.state
-    )) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
       t.is(stop.type, "output");
       result = stop;
       break;
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of runGraph(
-      thirdBoard,
-      { kits: [kit] },
-      result?.state
-    )) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
       t.is(stop.type, "input");
       result = stop;
       break;

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "../../src/board.js";
 import { KitBuilder } from "../../src/kits/index.js";
 import { StreamCapability } from "../../src/stream.js";
 import {
@@ -54,8 +53,7 @@ export const TestKit = new KitBuilder({
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    const board = await Board.fromGraphDescriptor(graph);
-    return await invokeGraph(board, inputs, context);
+    return await invokeGraph(graph, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
@@ -69,7 +67,7 @@ export const TestKit = new KitBuilder({
       if ($board) {
         const board =
           ($board as BreadboardCapability).kind === "board"
-            ? await Board.fromBreadboardCapability(
+            ? await BoardRunner.fromBreadboardCapability(
                 $board as BreadboardCapability
               )
             : typeof $board === "string"
@@ -86,7 +84,7 @@ export const TestKit = new KitBuilder({
         const { board, path, ...args } = inputs;
 
         const runnableBoard = board
-          ? await Board.fromBreadboardCapability(board)
+          ? await BoardRunner.fromBreadboardCapability(board)
           : path
             ? await context.loader?.load(path, {
                 base,
@@ -239,6 +237,7 @@ import {
   NewOutputValues,
   NewNodeFactory as NodeFactory,
   invokeGraph,
+  BoardRunner,
 } from "../../src/index.js";
 
 export const testKit = addKit(TestKit) as unknown as {

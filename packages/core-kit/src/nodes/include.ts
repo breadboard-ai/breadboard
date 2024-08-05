@@ -80,10 +80,8 @@ export default {
     const runnableBoard = board
       ? await BoardRunner.fromBreadboardCapability(board)
       : graph
-        ? await BoardRunner.fromGraphDescriptor(graph)
-        : await BoardRunner.fromGraphDescriptor(
-            await loadGraphFromPath(source, context)
-          );
+        ? graph
+        : await loadGraphFromPath(source, context);
 
     return await invokeGraph(runnableBoard, args, context);
   },

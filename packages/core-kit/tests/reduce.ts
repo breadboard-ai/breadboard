@@ -9,7 +9,6 @@ import test from "ava";
 import reduce from "../src/nodes/reduce.js";
 import Core, { core } from "../src/index.js";
 import {
-  Board,
   asRuntimeKit,
   code,
   board,
@@ -37,9 +36,8 @@ test("using reduce as part of a board", async (t) => {
     });
     return { value: accumulator.isNumber() };
   }).serialize();
-  const b = await Board.fromGraphDescriptor(reducer);
   const { value } = await invokeGraph(
-    b,
+    reducer,
     { value: 4 },
     { kits: [asRuntimeKit(Core)] }
   );

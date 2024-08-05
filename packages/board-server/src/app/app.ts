@@ -445,7 +445,7 @@ export class App extends LitElement {
       // TODO: Better error handling, maybe a toast?
       throw new Error(`Unable to load graph: ${url}`);
     }
-    const runner = await BoardRunner.fromGraphDescriptor(graph);
+    const runner = graph;
     const { title, description } = runner;
 
     if (title) {

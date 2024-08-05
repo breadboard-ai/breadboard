@@ -1,4 +1,4 @@
-import { BoardRunner } from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import { JSLoader } from "./javascript.js";
 import { Loader, Options } from "../loader.js";
 import { TypeScriptLoader } from "./typescript.js";
@@ -27,7 +27,10 @@ export class Loaders {
     }
   }
 
-  async load(filePath: string, options: Options): Promise<BoardRunner> {
+  async load(
+    filePath: string,
+    options: Options
+  ): Promise<GraphDescriptor | null> {
     return this.#loaderInstance.load(filePath, options);
   }
 }

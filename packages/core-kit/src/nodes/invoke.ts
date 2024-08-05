@@ -23,7 +23,7 @@ export type InvokeNodeInputs = InputValues & {
 };
 
 type RunnableBoardWithArgs = {
-  board: BoardRunner | undefined;
+  board: GraphDescriptor | undefined;
   args: InputValues;
 };
 
@@ -43,11 +43,9 @@ const getRunnableBoard = async (
     if (board) {
       runnableBoard = await BoardRunner.fromBreadboardCapability(board);
     } else if (graph) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
+      runnableBoard = graph;
     } else if (path) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(
-        await loadGraphFromPath(path, context)
-      );
+      runnableBoard = await loadGraphFromPath(path, context);
     }
     return { board: runnableBoard, args };
   }

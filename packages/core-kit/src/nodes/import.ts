@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import type {
   InputValues,
@@ -59,7 +58,7 @@ export default {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
     const board = graph
-      ? await BoardRunner.fromGraphDescriptor(graph)
+      ? graph
       : path
         ? await loadGraphFromPath(path, context)
         : undefined;

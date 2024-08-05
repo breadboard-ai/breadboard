@@ -6,6 +6,7 @@
 
 import {
   BoardRunner,
+  GraphDescriptor,
   InputValues,
   Kit,
   Schema,
@@ -25,7 +26,7 @@ import {
 } from "@google-labs/breadboard/remote";
 
 async function runBoard(
-  board: BoardRunner,
+  board: GraphDescriptor,
   inputs: InputValues,
   kits: Kit[],
   verbose: boolean,
@@ -133,6 +134,9 @@ export const run = async (file: string, options: RunOptions) => {
     const filePath = resolveFilePath(file);
 
     let board = await loadBoard(filePath, options);
+    if (!board) {
+      return;
+    }
 
     // We always have to run the board once.
     await runBoard(board, input, kits, verbose);
@@ -143,6 +147,9 @@ export const run = async (file: string, options: RunOptions) => {
         onChange: async () => {
           // Now the board has changed, we need to reload it and run it again.
           board = await loadBoard(filePath, options);
+          if (!board) {
+            return;
+          }
           // We might want to clear the console here.
           await runBoard(board, input, kits, verbose);
         },
@@ -153,7 +160,7 @@ export const run = async (file: string, options: RunOptions) => {
 
     // TODO: What do we do if it's typescript?
     // We should validate it looks like a board...
-    const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
+    const board = JSON.parse(stdin);
 
     await runBoard(board, input, kits, verbose, true);
   }

@@ -7,7 +7,6 @@
 import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
 import { invokeGraph } from "../run/invoke-graph.js";
-import { BoardRunner } from "../runner.js";
 import {
   GraphDescriptor,
   InputValues,
@@ -54,8 +53,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
-    const board = await BoardRunner.fromGraphDescriptor(this.#graph);
-    return await invokeGraph(board, inputs, context);
+    return await invokeGraph(this.#graph, inputs, context);
   }
 }
 

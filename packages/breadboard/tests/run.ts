@@ -51,17 +51,15 @@ test("correctly saves and loads", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of runGraph(firstBoard, { kits: [kit] })) {
+    for await (const stop of runGraph(board, { kits: [kit] })) {
       t.is(stop.type, "input");
       runResult = stop.save();
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of runGraph(
-      secondBoard,
+      board,
       { kits: [kit] },
       RunResult.load(runResult)?.state
     )) {
@@ -71,9 +69,8 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of runGraph(
-      thirdBoard,
+      board,
       { kits: [kit] },
       RunResult.load(runResult)?.state
     )) {

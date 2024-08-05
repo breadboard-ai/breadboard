@@ -5,7 +5,7 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, asyncGen, runGraph } from "../index.js";
+import { asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { LastNode } from "../remote/types.js";
 import type { RunStackEntry } from "../run/types.js";
@@ -138,7 +138,7 @@ const load = async (config: RunConfig): Promise<BreadboardRunner> => {
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }
-  return Board.fromGraphDescriptor(graph);
+  return graph;
 };
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {

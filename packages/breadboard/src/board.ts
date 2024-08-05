@@ -9,6 +9,9 @@ import type {
   NodeDescriptor,
   InputValues,
   OutputValues,
+  GraphDescriptor,
+  SubGraphs,
+  GraphInlineMetadata,
 } from "./types.js";
 
 import type {
@@ -19,9 +22,10 @@ import type {
   BreadboardNode,
 } from "./types.js";
 
-import { BoardRunner } from "./runner.js";
 import { Node } from "./node.js";
 import { asComposeTimeKit } from "./kits/ctors.js";
+
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
 
 /**
  * This is the heart of the Breadboard library.
@@ -36,7 +40,37 @@ import { asComposeTimeKit } from "./kits/ctors.js";
  *
  * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
-export class Board extends BoardRunner implements Breadboard {
+export class Board implements Breadboard, GraphDescriptor {
+  // GraphDescriptor implementation.
+  url?: string;
+  title?: string;
+  description?: string;
+  $schema?: string;
+  version?: string;
+  edges: Edge[] = [];
+  nodes: NodeDescriptor[] = [];
+  graphs?: SubGraphs;
+  args?: InputValues;
+
+  /**
+   *
+   * @param metadata - optional metadata for the board. Use this parameter
+   * to provide title, description, version, and URL for the board.
+   */
+  constructor(
+    { url, title, description, version, $schema }: GraphInlineMetadata = {
+      $schema: breadboardSchema.$id,
+    }
+  ) {
+    Object.assign(this, {
+      $schema: $schema ?? breadboardSchema.$id,
+      url,
+      title,
+      description,
+      version,
+    });
+  }
+
   #closureStack: Board[] = [];
   #topClosure: Board | undefined;
   #acrossBoardsEdges: { edge: Edge; from: Board; to: Board }[] = [];

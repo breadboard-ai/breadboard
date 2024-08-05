@@ -10,14 +10,18 @@ import { RunResult } from "../run.js";
 import { createRunStateManager } from "../run/index.js";
 import { runGraph } from "../run/run-graph.js";
 import { RunState } from "../run/types.js";
-import { BoardRunner } from "../runner.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
-import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  NodeHandlerContext,
+  OutputValues,
+} from "../types.js";
 import {
   AnyClientRunResult,
   AnyRunRequestMessage,
@@ -59,7 +63,7 @@ export class RunServer {
   }
 
   async serve(
-    runner: BoardRunner,
+    runner: GraphDescriptor,
     diagnostics = false,
     context: NodeHandlerContext = {}
   ) {

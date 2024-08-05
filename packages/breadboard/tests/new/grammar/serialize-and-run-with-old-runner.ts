@@ -11,7 +11,6 @@ import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,
   OutputValues,
-  BoardRunner,
   asRuntimeKit,
   invokeGraph,
 } from "../../../src/index.js";
@@ -22,7 +21,7 @@ async function serializeAndRunGraph(
   graph: Serializeable,
   inputs: InputValues
 ): Promise<OutputValues> {
-  const board = await BoardRunner.fromGraphDescriptor(await graph.serialize());
+  const board = await graph.serialize();
   return invokeGraph(board, inputs, { kits: [asRuntimeKit(TestKit)] });
 }
 
