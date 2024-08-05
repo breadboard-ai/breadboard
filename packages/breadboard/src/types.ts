@@ -615,10 +615,6 @@ export interface Probe {
 }
 
 export interface RunnerLike {
-  run(
-    context?: RunArguments,
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult>;
   runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
 }
 

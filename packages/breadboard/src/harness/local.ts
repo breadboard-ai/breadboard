@@ -5,7 +5,7 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, asyncGen } from "../index.js";
+import { Board, asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { LastNode } from "../remote/types.js";
 import type { RunStackEntry } from "../run/types.js";
@@ -158,7 +158,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({
+      for await (const data of runGraph(runner, {
         probe,
         kits,
         loader,

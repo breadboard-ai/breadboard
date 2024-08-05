@@ -8,6 +8,7 @@ import { Diagnostics } from "../harness/diagnostics.js";
 import { extractError } from "../harness/error.js";
 import { RunResult } from "../run.js";
 import { createRunStateManager } from "../run/index.js";
+import { runGraph } from "../run/run-graph.js";
 import { RunState } from "../run/types.js";
 import { BoardRunner } from "../runner.js";
 import {
@@ -86,7 +87,11 @@ export class RunServer {
     };
 
     try {
-      for await (const stop of runner.run(servingContext, result)) {
+      for await (const stop of runGraph(
+        runner,
+        servingContext,
+        result?.state
+      )) {
         if (stop.type === "input") {
           const state = stop.runState as RunState;
           const { node, inputArguments, timestamp, path, invocationId } = stop;

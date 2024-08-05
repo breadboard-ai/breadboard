@@ -6,7 +6,6 @@
 
 import type {
   BreadboardCapability,
-  BreadboardRunResult,
   BreadboardRunner,
   Edge,
   GraphDescriptor,
@@ -16,7 +15,6 @@ import type {
   NodeDescriptor,
   NodeHandlerContext,
   OutputValues,
-  RunArguments,
   SubGraphs,
 } from "./types.js";
 
@@ -29,7 +27,6 @@ import {
 } from "./capability.js";
 import { GraphLoader } from "./loader/types.js";
 import { invokeGraph } from "./run/invoke-graph.js";
-import { runGraph } from "./run/run-graph.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -69,39 +66,6 @@ export class BoardRunner implements BreadboardRunner {
       description,
       version,
     });
-  }
-
-  /**
-   * Runs the board. This method is an async generator that
-   * yields the results of each stage of the run.
-   *
-   * Conceptually, when we ask the board to run, it will occasionally pause
-   * and give us a chance to interact with it.
-   *
-   * It's typically used like this:
-   *
-   * ```js
-   * for await (const stop of board.run()) {
-   * // do something with `stop`
-   * }
-   * ```
-   *
-   * The `stop` iterator result will be a `RunResult` and provide ability
-   * to influence running of the board.
-   *
-   * The two key use cases are providing input and receiving output.
-   *
-   * If `stop.type` is `input`, the board is waiting for input values.
-   * When that is the case, use `stop.inputs` to provide input values.
-   *
-   * If `stop.type` is `output`, the board is providing output values.
-   * When that is the case, use `stop.outputs` to receive output values.
-   */
-  async *run(
-    args: RunArguments = {},
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult> {
-    yield* runGraph(this, args, result?.state);
   }
 
   /**

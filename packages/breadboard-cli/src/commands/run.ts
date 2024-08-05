@@ -10,6 +10,7 @@ import {
   Kit,
   Schema,
   asRuntimeKit,
+  runGraph,
 } from "@google-labs/breadboard";
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
@@ -34,7 +35,7 @@ async function runBoard(
     ? new VerboseLoggingProbe(async (data) => console.log(data))
     : undefined;
 
-  for await (const stop of board.run({
+  for await (const stop of runGraph(board, {
     kits,
     probe,
   })) {
