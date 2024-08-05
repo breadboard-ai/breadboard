@@ -12,7 +12,7 @@ import type {
   BreadboardCapability,
   GraphDescriptor,
 } from "@google-labs/breadboard";
-import { BoardRunner } from "@google-labs/breadboard";
+import { BoardRunner, invokeGraph } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import { loadGraphFromPath } from "../utils.js";
 
@@ -85,6 +85,6 @@ export default {
             await loadGraphFromPath(source, context)
           );
 
-    return await runnableBoard.runOnce(args, context);
+    return await invokeGraph(runnableBoard, args, context);
   },
 };

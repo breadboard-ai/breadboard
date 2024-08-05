@@ -55,7 +55,7 @@ export const TestKit = new KitBuilder({
       throw new Error("Must provide a graph to include");
     }
     const board = await Board.fromGraphDescriptor(graph);
-    return await board.runOnce(inputs, context);
+    return await invokeGraph(board, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,

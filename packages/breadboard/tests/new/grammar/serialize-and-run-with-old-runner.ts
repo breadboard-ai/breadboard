@@ -13,6 +13,7 @@ import {
   OutputValues,
   BoardRunner,
   asRuntimeKit,
+  invokeGraph,
 } from "../../../src/index.js";
 
 import { TestKit, testKit } from "../../helpers/_test-kit.js";
@@ -22,7 +23,7 @@ async function serializeAndRunGraph(
   inputs: InputValues
 ): Promise<OutputValues> {
   const board = await BoardRunner.fromGraphDescriptor(await graph.serialize());
-  return board.runOnce(inputs, { kits: [asRuntimeKit(TestKit)] });
+  return invokeGraph(board, inputs, { kits: [asRuntimeKit(TestKit)] });
 }
 
 test("simplest graph", async (t) => {

@@ -1,6 +1,7 @@
 import test from "ava";
 import { KitBuilder } from "../src/kits/builder.js";
 import { Board } from "../src/board.js";
+import { invokeGraph } from "../src/index.js";
 
 test("KitBuilder can wrap a function", async (t) => {
   // A normal function that will be wrapped.
@@ -42,7 +43,8 @@ test("KitBuilder can call a function that returns a string", async (t) => {
   // result because it's just a string from a dynamic function
   echoNode.wire("result->an_output", board.output());
 
-  const output = await board.runOnce(
+  const output = await invokeGraph(
+    board,
     {
       an_input: "hello world",
     },
@@ -75,7 +77,8 @@ test("KitBuilder can call a function that returns an object", async (t) => {
   // result because it's just a string from a dynamic function
   echoNode.wire("out->an_output", board.output());
 
-  const output = await board.runOnce(
+  const output = await invokeGraph(
+    board,
     {
       an_input: "hello world",
     },
@@ -111,7 +114,8 @@ test("KitBuilder can call a function that has more than one input", async (t) =>
   // result because it's just a string from a dynamic function
   addNode.wire("result->", board.output());
 
-  const output = await board.runOnce(
+  const output = await invokeGraph(
+    board,
     {
       a: 1,
       b: 2,
@@ -152,7 +156,8 @@ test("KitBuilder can call a function from an external import", async (t) => {
   // result because it's just a string from a dynamic function
   validateNode.wire("errors->", board.output());
 
-  const output = await board.runOnce(
+  const output = await invokeGraph(
+    board,
     {
       a: { hello: "world" },
       b: { type: "object" },
@@ -225,7 +230,7 @@ test("KitBuilder can call platform functions that contain 0 arguments", async (t
   // result because it's just a string from a dynamic function
   random.wire("result->", board.output());
 
-  const output = await board.runOnce({}, { kits: [myKit] });
+  const output = await invokeGraph(board, {}, { kits: [myKit] });
 
   // We really need to pick a library with more than one function.
   t.true(typeof output["result"] === "number");
@@ -249,7 +254,8 @@ test("KitBuilder can call platform functions that accept a splat", async (t) => 
   // result because it's just a string from a dynamic function
   input.wire("___args->", min.wire("result->", board.output()));
 
-  const output = await board.runOnce(
+  const output = await invokeGraph(
+    board,
     {
       ___args: [1, 2, 3, 4, 5],
     },

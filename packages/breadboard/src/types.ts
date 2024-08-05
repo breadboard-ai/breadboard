@@ -614,11 +614,7 @@ export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-export interface RunnerLike {
-  runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
-}
-
-export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
+export interface BreadboardRunner extends GraphDescriptor {
   kits: Kit[]; // No longer optional
 }
 

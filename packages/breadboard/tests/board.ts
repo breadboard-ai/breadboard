@@ -9,7 +9,7 @@ import { Board } from "../src/board.js";
 import type { GraphDescriptor, InputValues } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
-import { runGraph } from "../src/index.js";
+import { invokeGraph, runGraph } from "../src/index.js";
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
@@ -32,7 +32,11 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
+  const result = await invokeGraph(
+    board,
+    { hello: "world" },
+    { kits: [nestedKit] }
+  );
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -52,7 +56,11 @@ test("correctly passes inputs and outputs to invoked boards", async (t) => {
     .input()
     .wire("hello->", kit.invoke(nestedBoard).wire("hello->", board.output()));
 
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
+  const result = await invokeGraph(
+    board,
+    { hello: "world" },
+    { kits: [nestedKit] }
+  );
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -77,7 +85,11 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
+  const result = await invokeGraph(
+    board,
+    { hello: "world" },
+    { kits: [nestedKit] }
+  );
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -151,7 +163,8 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
     // extra noop so that the above output would be used first
     kit.noop().wire("$error->", board.output())
   );
-  const result = await board.runOnce(
+  const result = await invokeGraph(
+    board,
     {},
     {
       kits: [kit],
@@ -168,7 +181,7 @@ test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const output = board.output();
   noop.wire("*->", output);
   noop.wire("$error->", output);
-  const result = await board.runOnce({}, { kits: [kit] });
+  const result = await invokeGraph(board, {}, { kits: [kit] });
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
 });

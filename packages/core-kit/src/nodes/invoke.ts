@@ -11,7 +11,7 @@ import type {
   GraphDescriptor,
   NodeDescriberContext,
 } from "@google-labs/breadboard";
-import { BoardRunner, inspect } from "@google-labs/breadboard";
+import { BoardRunner, inspect, invokeGraph } from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
 import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
@@ -141,6 +141,6 @@ export default defineNodeType({
         }
       : { ...context };
 
-    return await board.runOnce(args, invocationContext);
+    return await invokeGraph(board, args, invocationContext);
   },
 });

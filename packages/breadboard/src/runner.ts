@@ -14,7 +14,6 @@ import type {
   Kit,
   NodeDescriptor,
   NodeHandlerContext,
-  OutputValues,
   SubGraphs,
 } from "./types.js";
 
@@ -26,7 +25,6 @@ import {
   isUnresolvedPathBoardCapability,
 } from "./capability.js";
 import { GraphLoader } from "./loader/types.js";
-import { invokeGraph } from "./run/invoke-graph.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -69,23 +67,6 @@ export class BoardRunner implements BreadboardRunner {
   }
 
   /**
-   * A simplified version of `run` that runs the board until the board provides
-   * an output, and returns that output.
-   *
-   * This is useful for running boards that don't have multiple outputs
-   * or the the outputs are only expected to be visited once.
-   *
-   * @param inputs - the input values to provide to the board.
-   * @returns - outputs provided by the board.
-   */
-  async runOnce(
-    inputs: InputValues,
-    context: NodeHandlerContext = {}
-  ): Promise<OutputValues> {
-    return invokeGraph(this, inputs, context);
-  }
-
-  /**
    * Creates a new board from JSON. If you have a serialized board, you can
    * use this method to turn it into into a new Board instance.
    *
@@ -125,9 +106,6 @@ export class BoardRunner implements BreadboardRunner {
       // TODO: Use JSON schema to validate rather than this hack.
       const board = capability.board;
       const runnableBoard = board as BoardRunner;
-      if (!runnableBoard.runOnce) {
-        return await BoardRunner.fromGraphDescriptor(board);
-      }
       return runnableBoard;
     } else if (isResolvedURLBoardCapability(capability)) {
       if (!loader || !context) {

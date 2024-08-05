@@ -59,9 +59,7 @@ export default {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
     const board = graph
-      ? (graph as BoardRunner).runOnce // TODO: Hack! Use JSON schema or so instead.
-        ? ({ ...graph } as BoardRunner)
-        : await BoardRunner.fromGraphDescriptor(graph)
+      ? await BoardRunner.fromGraphDescriptor(graph)
       : path
         ? await loadGraphFromPath(path, context)
         : undefined;
