@@ -73,7 +73,7 @@ export const TestKit = new KitBuilder({
                 $board as BreadboardCapability
               )
             : typeof $board === "string"
-              ? await Board.load($board, {
+              ? await context.loader?.load($board, {
                   base,
                   outerGraph: context.outerGraph,
                 })
@@ -81,14 +81,14 @@ export const TestKit = new KitBuilder({
 
         if (!board) throw new Error("Must provide valid $board to invoke");
 
-        return await board.runOnce(args, context);
+        return await invokeGraph(board, args, context);
       } else {
         const { board, path, ...args } = inputs;
 
         const runnableBoard = board
           ? await Board.fromBreadboardCapability(board)
           : path
-            ? await Board.load(path, {
+            ? await context.loader?.load(path, {
                 base,
                 outerGraph: context.outerGraph,
               })
@@ -97,7 +97,7 @@ export const TestKit = new KitBuilder({
         if (!runnableBoard)
           throw new Error("Must provide valid board to invoke");
 
-        return await runnableBoard.runOnce(args, context);
+        return await invokeGraph(runnableBoard, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
@@ -238,6 +238,7 @@ import {
   NewInputValues,
   NewOutputValues,
   NewNodeFactory as NodeFactory,
+  invokeGraph,
 } from "../../src/index.js";
 
 export const testKit = addKit(TestKit) as unknown as {

@@ -27,8 +27,7 @@ import {
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
 } from "./capability.js";
-import { createLoader } from "./loader/index.js";
-import { GraphLoader, GraphProvider } from "./loader/types.js";
+import { GraphLoader } from "./loader/types.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import { runGraph } from "./run/run-graph.js";
 
@@ -138,30 +137,6 @@ export class BoardRunner implements BreadboardRunner {
     breadboard.graphs = graph.graphs;
     breadboard.args = graph.args;
     return breadboard;
-  }
-
-  /**
-   * Loads a board from a URL or a file path.
-   *
-   * @param url - the URL or a file path to the board.
-   * @returns - a new `Board` instance.
-   * @deprecated Use `createLoader` directly within this package or use
-   * `loader` from the `NodeHandlerContext`.
-   */
-  static async load(
-    path: string,
-    options: {
-      base: URL;
-      outerGraph?: GraphDescriptor;
-      graphProviders?: GraphProvider[];
-    }
-  ): Promise<BoardRunner> {
-    const { base, outerGraph } = options || {};
-    const loader = createLoader(options.graphProviders);
-    const graph = await loader.load(path, { base, outerGraph });
-    if (!graph) throw new Error(`Unable to load graph from "${path}"`);
-    const board = await BoardRunner.fromGraphDescriptor(graph);
-    return board;
   }
 
   /**
