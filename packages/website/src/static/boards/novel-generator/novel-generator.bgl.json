@@ -1,6 +1,6 @@
 {
-  "title": "Novel Generator (v1)",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "title": "Novel Generator",
+  "description": "Generates a novel.",
   "version": "0.0.1",
   "nodes": [
     {
@@ -28,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 40.2318115234375,
-          "y": -49.74998092651367,
+          "x": 100.71093750000003,
+          "y": -107.34375000000011,
           "collapsed": true
         }
       }
@@ -59,8 +59,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 730.2318115234375,
-          "y": -47.74998092651367,
+          "x": 790.7109375000001,
+          "y": -105.34375000000011,
           "collapsed": true
         }
       }
@@ -70,17 +70,14 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 208.2318115234375,
-          "y": -49.74998092651367,
+          "x": 299,
+          "y": -108,
           "collapsed": true
         },
         "title": "Outliner",
         "logLevel": "debug"
       },
       "configuration": {
-        "tools": [
-          "https://bb-labs.googleplex.com/boards/@jorgebar/novel-generator-outliner.bgl.json"
-        ],
         "persona": {
           "role": "user",
           "parts": [
@@ -96,7 +93,10 @@
               "text": "Call the novel outliner tool with the prompt."
             }
           ]
-        }
+        },
+        "tools": [
+          "idb://default/novel-generator-outliner.bgl.json"
+        ]
       }
     },
     {
@@ -104,8 +104,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 461.2318115234375,
-          "y": -50.74998092651367,
+          "x": 521.7109375000001,
+          "y": -108.34374999999989,
           "collapsed": true
         },
         "title": "Developer",
@@ -129,7 +129,7 @@
           ]
         },
         "tools": [
-          "https://bb-labs.googleplex.com/boards/@jorgebar/novel-generator-developer.bgl.json"
+          "idb://default/novel-generator-developer.bgl.json"
         ]
       }
     }
@@ -155,9 +155,6 @@
     }
   ],
   "metadata": {
-    "comments": [],
-    "tags": [
-      "published"
-    ]
+    "comments": []
   }
 }
