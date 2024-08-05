@@ -610,7 +610,7 @@ export type ErrorResponse = {
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
-export interface Probe extends EventTarget {
+export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
