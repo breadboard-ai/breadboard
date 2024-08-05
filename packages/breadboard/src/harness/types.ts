@@ -17,7 +17,7 @@ import type {
 } from "../remote/types.js";
 import type { ManagedRunState } from "../run/types.js";
 import type {
-  BreadboardRunner,
+  GraphDescriptor,
   ErrorResponse,
   InputResponse,
   InputValues,
@@ -160,7 +160,7 @@ export type RunConfig = {
    * Specifies a runner to use. This can be used instead of loading a board
    * from a URL.
    */
-  runner?: BreadboardRunner;
+  runner?: GraphDescriptor;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */

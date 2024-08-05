@@ -614,9 +614,7 @@ export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-export interface BreadboardRunner extends GraphDescriptor {}
-
-export interface Breadboard extends BreadboardRunner {
+export interface Breadboard extends GraphDescriptor {
   input<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;

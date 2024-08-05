@@ -5,7 +5,6 @@
  */
 
 import {
-  BoardRunner,
   GraphDescriptor,
   InputValues,
   Kit,

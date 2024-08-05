@@ -13,8 +13,8 @@ import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
-  BreadboardRunner,
   ErrorObject,
+  GraphDescriptor,
   Kit,
   ProbeMessage,
 } from "../types.js";
@@ -131,7 +131,7 @@ const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
   return last;
 };
 
-const load = async (config: RunConfig): Promise<BreadboardRunner> => {
+const load = async (config: RunConfig): Promise<GraphDescriptor> => {
   const base = baseURL(config);
   const loader = config.loader || createLoader();
   const graph = await loader.load(config.url, { base });

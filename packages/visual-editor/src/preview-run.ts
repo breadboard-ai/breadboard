@@ -18,7 +18,6 @@ import {
   InspectableRunObserver,
   createRunObserver,
   InspectableRun,
-  BoardRunner,
   createLoader,
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
@@ -46,7 +45,7 @@ export const getBoardInfo = async (url: string) => {
     // TODO: Better error handling, maybe a toast?
     throw new Error(`Unable to load graph: ${url}`);
   }
-  const runner = await BoardRunner.fromGraphDescriptor(graph);
+  const runner = graph;
   const { title, description, version } = runner;
   return { title, description, version };
 };
