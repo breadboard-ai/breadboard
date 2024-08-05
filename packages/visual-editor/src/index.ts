@@ -14,7 +14,6 @@ import * as BreadboardUI from "./ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
-  BoardRunner,
   createLoader,
   edit,
   EditableGraph,
@@ -1715,9 +1714,7 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const runner = await BoardRunner.fromGraphDescriptor(
-                  this.graph
-                );
+                const runner = this.graph;
 
                 this.#abortController = new AbortController();
 

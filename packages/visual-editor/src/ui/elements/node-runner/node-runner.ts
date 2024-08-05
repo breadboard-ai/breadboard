@@ -7,7 +7,6 @@ import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { InputEnterEvent } from "../../events/events.js";
 import {
-  BoardRunner,
   createRunObserver,
   GraphDescriptor,
   GraphLoader,
@@ -220,13 +219,12 @@ export class NodeRunner extends LitElement {
       return;
     }
 
-    const boardRunner = await BoardRunner.fromGraphDescriptor(descriptor);
     this.#abortController = new AbortController();
 
     const runner = run({
       url: window.location.href,
       kits: this.kits,
-      runner: boardRunner,
+      runner: descriptor,
       loader: this.loader ?? undefined,
       signal: this.#abortController.signal,
       diagnostics: true,

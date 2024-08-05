@@ -309,7 +309,7 @@ Some nodes may represent entire subgraphs. For instance, `core.invoke` node take
 > Make sure that when calling `inspect`, the BGL document argument has the `url` property set to
 > a valid URL that represents the current location of this graph. It will enable nodes that do loading as part of describing themselves (such as `core.invoke`) to correctly resolve any relative paths that might be given as their inputs.
 >
-> This value will be automatically set when loading a BGL file using the `BoardRunner.load` method.
+> This value will be automatically set when loading a BGL file using the `GraphLoader.load` method.
 
 It is the responsibility of the respective nodes to provide an accurate description of their input and output ports.
 

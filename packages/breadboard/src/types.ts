@@ -610,23 +610,11 @@ export type ErrorResponse = {
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
-export interface Probe extends EventTarget {
+export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-export interface RunnerLike {
-  run(
-    context?: RunArguments,
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult>;
-  runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
-}
-
-export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
-  kits: Kit[]; // No longer optional
-}
-
-export interface Breadboard extends BreadboardRunner {
+export interface Breadboard extends GraphDescriptor {
   input<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;

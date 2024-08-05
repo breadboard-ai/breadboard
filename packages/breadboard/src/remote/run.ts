@@ -8,15 +8,20 @@ import { Diagnostics } from "../harness/diagnostics.js";
 import { extractError } from "../harness/error.js";
 import { RunResult } from "../run.js";
 import { createRunStateManager } from "../run/index.js";
+import { runGraph } from "../run/run-graph.js";
 import { RunState } from "../run/types.js";
-import { BoardRunner } from "../runner.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
-import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  NodeHandlerContext,
+  OutputValues,
+} from "../types.js";
 import {
   AnyClientRunResult,
   AnyRunRequestMessage,
@@ -58,7 +63,7 @@ export class RunServer {
   }
 
   async serve(
-    runner: BoardRunner,
+    runner: GraphDescriptor,
     diagnostics = false,
     context: NodeHandlerContext = {}
   ) {
@@ -86,7 +91,11 @@ export class RunServer {
     };
 
     try {
-      for await (const stop of runner.run(servingContext, result)) {
+      for await (const stop of runGraph(
+        runner,
+        servingContext,
+        result?.state
+      )) {
         if (stop.type === "input") {
           const state = stop.runState as RunState;
           const { node, inputArguments, timestamp, path, invocationId } = stop;

@@ -60,14 +60,14 @@ const isGraphDescriptor = (
 
 export const graphDescriptorFromCapability = async (
   capability: BreadboardCapability,
-  context: NodeHandlerContext
+  context?: NodeHandlerContext
 ) => {
   if (isGraphDescriptorCapability(capability)) {
     // If all we got is a GraphDescriptor, build a runnable board from it.
     // TODO: Use JSON schema to validate rather than this hack.
     return capability.board;
   } else if (isResolvedURLBoardCapability(capability)) {
-    if (!context.loader) {
+    if (!context?.loader) {
       throw new Error(
         `The "board" Capability is a URL, but no loader was supplied.`
       );
@@ -80,7 +80,7 @@ export const graphDescriptorFromCapability = async (
     }
     return graph;
   } else if (isUnresolvedPathBoardCapability(capability)) {
-    if (!context.loader) {
+    if (!context?.loader) {
       throw new Error(
         `The "board" Capability is a URL, but no loader was supplied.`
       );
@@ -103,12 +103,12 @@ export const graphDescriptorFromCapability = async (
 // shape-detect? And this is the code to do it.
 export const getGraphDescriptor = async (
   board: unknown,
-  context: NodeHandlerContext
+  context?: NodeHandlerContext
 ): Promise<GraphDescriptor | undefined> => {
   if (!board) return undefined;
 
   if (typeof board === "string") {
-    const graph = await context.loader?.load(board, context);
+    const graph = await context?.loader?.load(board, context);
     if (!graph) throw new Error(`Unable to load graph from "${board}"`);
     return graph;
   } else if (isBreadboardCapability(board)) {

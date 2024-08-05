@@ -5,7 +5,7 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, asyncGen } from "../index.js";
+import { asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { LastNode } from "../remote/types.js";
 import type { RunStackEntry } from "../run/types.js";
@@ -13,8 +13,8 @@ import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
-  BreadboardRunner,
   ErrorObject,
+  GraphDescriptor,
   Kit,
   ProbeMessage,
 } from "../types.js";
@@ -131,14 +131,14 @@ const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
   return last;
 };
 
-const load = async (config: RunConfig): Promise<BreadboardRunner> => {
+const load = async (config: RunConfig): Promise<GraphDescriptor> => {
   const base = baseURL(config);
   const loader = config.loader || createLoader();
   const graph = await loader.load(config.url, { base });
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }
-  return Board.fromGraphDescriptor(graph);
+  return graph;
 };
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
@@ -158,7 +158,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runner.run({
+      for await (const data of runGraph(runner, {
         probe,
         kits,
         loader,

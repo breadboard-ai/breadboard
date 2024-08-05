@@ -10,6 +10,7 @@ import { RunResult } from "../src/run.js";
 import { Board } from "../src/board.js";
 import { TestKit } from "./helpers/_test-kit.js";
 import { replacer, reviver } from "../src/serialization.js";
+import { runGraph } from "../src/index.js";
 
 test("replacer correctly serializes Maps", async (t) => {
   t.is(JSON.stringify({}, replacer), "{}");
@@ -50,32 +51,31 @@ test("correctly saves and loads", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of firstBoard.run({ kits: [kit] })) {
+    for await (const stop of runGraph(board, { kits: [kit] })) {
       t.is(stop.type, "input");
-      runResult = await stop.save();
+      runResult = stop.save();
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of secondBoard.run(
+    for await (const stop of runGraph(
+      board,
       { kits: [kit] },
-      RunResult.load(runResult)
+      RunResult.load(runResult)?.state
     )) {
       t.is(stop.type, "output");
-      runResult = await stop.save();
+      runResult = stop.save();
       break;
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of thirdBoard.run(
+    for await (const stop of runGraph(
+      board,
       { kits: [kit] },
-      RunResult.load(runResult)
+      RunResult.load(runResult)?.state
     )) {
       t.is(stop.type, "input");
-      runResult = await stop.save();
+      runResult = stop.save();
       break;
     }
   }
@@ -88,7 +88,7 @@ test("correctly detects exit node", async (t) => {
   const input = board.input();
   input.wire("*->", kit.noop().wire("*->", board.output()));
 
-  const generator = board.run({ kits: [kit] });
+  const generator = runGraph(board, { kits: [kit] });
 
   {
     const stop = await generator.next();

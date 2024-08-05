@@ -6,6 +6,7 @@
 
 import {
   InputValues,
+  invokeGraph,
   NodeHandlerContext,
   NodeHandlerMetadata,
   NodeValue,
@@ -67,7 +68,8 @@ const invoke = async (
       ...context,
       invocationPath: [...(context?.invocationPath || []), index++],
     };
-    const { accumulator } = await runnableBoard.runOnce(
+    const { accumulator } = await invokeGraph(
+      runnableBoard,
       { item, accumulator: result },
       newContext
     );
