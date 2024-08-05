@@ -12,6 +12,7 @@ import type {
   AnyProbeClientRunResult,
   ClientRunResult,
   ClientTransport,
+  End,
   LoadResponse,
   ServerTransport,
 } from "../remote/types.js";
@@ -24,7 +25,13 @@ import type {
   Kit,
   OutputResponse,
   OutputValues,
+  SkipProbeMessage,
+  GraphStartProbeData,
+  GraphEndProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
 } from "../types.js";
+import { TypedEventTarget } from "../utils/typed-event-target.js";
 
 /**
  * The board has been loaded
@@ -55,7 +62,12 @@ export type OutputResult = {
  */
 export type SecretResult = {
   type: "secret";
-  data: { keys: string[]; timestamp: number };
+  data: SecretResponse;
+};
+
+export type SecretResponse = {
+  keys: string[];
+  timestamp: number;
 };
 
 /**
@@ -187,3 +199,76 @@ export type RunConfig = {
    */
   state?: ManagedRunState;
 };
+
+export type RunEventMap = {
+  start: RunLifecycleEvent;
+  pause: RunLifecycleEvent;
+  resume: RunLifecycleEvent;
+  input: RunInputEvent;
+  output: RunOutputEvent;
+  secret: RunSecretEvent;
+  error: RunErrorEvent;
+  skip: RunSkipEvent;
+  graphstart: RunGraphStartEvent;
+  graphend: RunGraphEndEvent;
+  nodestart: RunNodeStartEvent;
+  nodeend: RunNodeEndEvent;
+  end: RunEndEvent;
+};
+
+export type RunLifecycleEvent = Event & {
+  running: boolean;
+  data: { timestamp: number };
+};
+
+export type RunInputEvent = Event & {
+  data: InputResponse;
+  running: boolean;
+};
+
+export type RunOutputEvent = Event & {
+  data: OutputResponse;
+  running: true;
+};
+
+export type RunSecretEvent = Event & {
+  data: SecretResult["data"];
+  running: boolean;
+};
+
+export type RunErrorEvent = Event & {
+  data: ErrorResponse;
+  running: false;
+};
+
+export type RunEndEvent = Event & {
+  data: End;
+  running: false;
+};
+
+export type RunSkipEvent = Event & {
+  data: SkipProbeMessage["data"];
+  running: true;
+};
+
+export type RunGraphStartEvent = Event & {
+  data: GraphStartProbeData;
+  running: true;
+};
+
+export type RunGraphEndEvent = Event & {
+  data: GraphEndProbeData;
+  running: true;
+};
+
+export type RunNodeStartEvent = Event & {
+  data: NodeStartResponse;
+  running: true;
+};
+
+export type RunNodeEndEvent = Event & {
+  data: NodeEndResponse;
+  running: true;
+};
+
+export type RunEventTarget = TypedEventTarget<RunEventMap>;
