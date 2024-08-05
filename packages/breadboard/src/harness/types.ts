@@ -101,8 +101,6 @@ export type TransportFactory = {
   server<Request, Response>(label: string): ServerTransport<Request, Response>;
 };
 
-export type HarnessRunner = AsyncGenerator<HarnessRunResult, void, unknown>;
-
 export type ProxyLocation = "main" | "worker" | "http" | "python";
 
 export type CustomProxyConfig = () => Promise<Kit>;
@@ -272,3 +270,8 @@ export type RunNodeEndEvent = Event & {
 };
 
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
+
+export type HarnessRunner = {
+  running(): boolean;
+  run(inputs?: InputValues): Promise<boolean>;
+};

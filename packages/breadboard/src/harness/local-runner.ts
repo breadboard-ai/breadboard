@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult, RunConfig, RunEventTarget } from "./types.js";
+import {
+  HarnessRunner,
+  HarnessRunResult,
+  RunConfig,
+  RunEventTarget,
+} from "./types.js";
 import { run } from "./run.js";
 import { InputValues } from "../types.js";
 import {
@@ -24,7 +29,10 @@ import {
 
 export const now = () => ({ timestamp: globalThis.performance.now() });
 
-export class Runner extends (EventTarget as RunEventTarget) implements Runner {
+export class LocalRunner
+  extends (EventTarget as RunEventTarget)
+  implements HarnessRunner
+{
   #config: RunConfig;
   #run: ReturnType<typeof run> | null = null;
   #pendingResult: HarnessRunResult | null = null;
