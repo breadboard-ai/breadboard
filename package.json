@@ -158,7 +158,7 @@
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^12.4.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.5"
+    "wireit": "^0.14.7"
   },
   "workspaces": [
     "./core/*",
