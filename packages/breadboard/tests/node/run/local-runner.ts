@@ -4,15 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { deepStrictEqual, fail, ok } from "node:assert";
-import test, { describe } from "node:test";
-import simple from "../../bgl/simple.bgl.json" with { type: "json" };
-import { LocalRunner } from "../../../src/harness/local-runner.js";
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
-import { testKit } from "../test-kit.js";
+import { deepStrictEqual, ok } from "node:assert";
+import test, { describe } from "node:test";
+import { LocalRunner } from "../../../src/harness/local-runner.js";
+import { HarnessRunner } from "../../../src/harness/types.js";
 import { createLoader } from "../../../src/loader/index.js";
 import { OutputResponse } from "../../../src/types.js";
-import { HarnessRunner } from "../../../src/harness/types.js";
+import { testKit } from "../test-kit.js";
+
+import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
+import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+
+const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
+  .href;
 
 type EventLogEntry = [name: string, data: unknown];
 
@@ -46,7 +51,7 @@ const logEvents = (runner: HarnessRunner, events: EventLogEntry[]) => {
 
 describe("LocalRunner", async () => {
   test("simple graph with no diagnostics", async () => {
-    const events: [name: string, data: unknown][] = [];
+    const events: EventLogEntry[] = [];
     const runner = new LocalRunner({
       runner: simple as GraphDescriptor,
       url: import.meta.url,
@@ -119,6 +124,81 @@ describe("LocalRunner", async () => {
       ]);
       const output = queryLog(events, "output") as OutputResponse;
       deepStrictEqual(output.outputs, { text: "foo" });
+    }
+  });
+
+  test("multi-level invoke graph with diagnostics", async () => {
+    const events: EventLogEntry[] = [];
+    const graph = multiLevelInvoke as GraphDescriptor;
+    graph.url = BGL_DIR;
+    const runner = new LocalRunner({
+      runner: multiLevelInvoke as GraphDescriptor,
+      url: import.meta.url,
+      loader: createLoader(),
+      kits: [testKit],
+      diagnostics: true,
+    });
+    logEvents(runner, events);
+    {
+      const result = await runner.run();
+      ok(!result);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "start",
+        "graphstart",
+        "nodestart",
+        "graphstart",
+        "nodestart",
+        "input",
+        "pause",
+      ]);
+    }
+    {
+      events.length = 0;
+      const result = await runner.run({ name: "Bob" });
+      ok(!result);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "resume",
+        "nodeend",
+        "nodestart",
+        "graphstart",
+        "nodestart",
+        "input",
+        "pause",
+      ]);
+    }
+    {
+      events.length = 0;
+      const result = await runner.run({ location: "Neptune" });
+      ok(result);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "resume",
+        "nodeend",
+        "nodestart",
+        "nodeend",
+        "skip",
+        "nodestart",
+        "nodeend",
+        "graphend",
+        "nodeend",
+        "nodestart",
+        "nodeend",
+        "nodestart",
+        "nodeend",
+        "graphend",
+        "nodeend",
+        "nodestart",
+        "output",
+        "nodeend",
+        "graphend",
+        "end",
+      ]);
+      const output = queryLog(events, "output") as OutputResponse;
+      deepStrictEqual(output.outputs, {
+        greeting: 'Greeting is: "Hello, Bob from Neptune!"',
+      });
     }
   });
 });
