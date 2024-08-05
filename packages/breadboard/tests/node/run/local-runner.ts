@@ -10,11 +10,12 @@ import test, { describe } from "node:test";
 import { LocalRunner } from "../../../src/harness/local-runner.js";
 import { HarnessRunner } from "../../../src/harness/types.js";
 import { createLoader } from "../../../src/loader/index.js";
-import { OutputResponse } from "../../../src/types.js";
+import { ErrorResponse, OutputResponse } from "../../../src/types.js";
 import { testKit } from "../test-kit.js";
 
 import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import askForSecret from "../../bgl/ask-for-secret.bgl.json" with { type: "json" };
 
 const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
   .href;
@@ -199,6 +200,63 @@ describe("LocalRunner", async () => {
       deepStrictEqual(output.outputs, {
         greeting: 'Greeting is: "Hello, Bob from Neptune!"',
       });
+    }
+  });
+
+  test("local runner provides schema for pending inputs", async () => {
+    const runner = new LocalRunner({
+      runner: simple as GraphDescriptor,
+      url: import.meta.url,
+      loader: createLoader(),
+      kits: [testKit],
+    });
+    const result = await runner.run();
+    ok(!result);
+    const schema = runner.inputSchema();
+    deepStrictEqual(schema, {
+      type: "object",
+      properties: {
+        text: { type: "string", title: "Text", examples: [] },
+      },
+      required: [],
+    });
+  });
+
+  test("local runner correctly handles secret inputs", async () => {
+    const events: EventLogEntry[] = [];
+    const runner = new LocalRunner({
+      runner: askForSecret as GraphDescriptor,
+      url: import.meta.url,
+      loader: createLoader(),
+      kits: [testKit],
+      diagnostics: true,
+      interactiveSecrets: true,
+    });
+    logEvents(runner, events);
+    {
+      const result = await runner.run();
+      ok(!result);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "start",
+        "graphstart",
+        "nodestart",
+        "secret",
+        "pause",
+      ]);
+    }
+    {
+      events.length = 0;
+      deepStrictEqual(runner.secretKeys(), ["SECRET"]);
+      const result = await runner.run({ SECRET: "foo" });
+      ok(result);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "resume",
+        "nodeend",
+        "graphend",
+        "end",
+      ]);
     }
   });
 });

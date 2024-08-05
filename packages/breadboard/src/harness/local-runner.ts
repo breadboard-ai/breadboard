@@ -11,7 +11,7 @@ import {
   RunEventTarget,
 } from "./types.js";
 import { run } from "./run.js";
-import { InputValues } from "../types.js";
+import { InputValues, Schema } from "../types.js";
 import {
   EndEvent,
   InputEvent,
@@ -50,6 +50,38 @@ export class LocalRunner
   }
 
   /**
+   * A convenience method to get the secret keys that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `secret` event.
+   *
+   * Returns null if the runner is not waiting for any secrets.
+   *
+   * @returns -- set of secret keys that the runner is waiting for, or null.
+   */
+  secretKeys(): string[] | null {
+    if (!this.#pendingResult || this.#pendingResult.type !== "secret") {
+      return null;
+    }
+    return this.#pendingResult.data.keys;
+  }
+
+  /**
+   * A convenience method to get the input schema that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `input` event.
+   *
+   * Returns null if the runner is not waiting for any inputs.
+   *
+   * @returns -- the input schema that the runner is waiting for, or null.
+   */
+  inputSchema(): Schema | null {
+    if (!this.#pendingResult || this.#pendingResult.type !== "input") {
+      return null;
+    }
+    return this.#pendingResult.data.inputArguments.schema || null;
+  }
+
+  /**
    * Check if the runner is running or not.
    *
    * @returns -- true if the runner is currently running, or false otherwise.
@@ -59,6 +91,12 @@ export class LocalRunner
   }
 
   /**
+   * The main method for this class. It starts or resumes the runner.
+   * If the runner is waiting for input, the input arguments will be used
+   * to provide the input values.
+   *
+   * If the runner is done, it will return true. If the runner is waiting
+   * for input or secret, it will return false.
    *
    * @param inputs -- input values to provide to the runner.
    * @returns -- true if the runner is done, or false if it is waiting
@@ -149,7 +187,7 @@ export class LocalRunner
             this.dispatchEvent(new SecretEvent(false, data));
             this.#pendingResult = result.value;
             this.dispatchEvent(new PauseEvent(false, now()));
-            return true;
+            return false;
           }
           break;
         }

@@ -30,6 +30,7 @@ import type {
   GraphEndProbeData,
   NodeEndResponse,
   NodeStartResponse,
+  Schema,
 } from "../types.js";
 import {
   TypedEventTargetType,
@@ -276,5 +277,7 @@ export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
 export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   running(): boolean;
+  secretKeys(): string[] | null;
+  inputSchema(): Schema | null;
   run(inputs?: InputValues): Promise<boolean>;
 };
