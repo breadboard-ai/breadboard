@@ -103,8 +103,6 @@ export class GraphToKitAdapter {
           ...context,
           outerGraph: board,
           base,
-          // Add this board's kits, so they are available to subgraphs
-          kits: [...(context.kits || []), ...board.kits],
         });
       },
     } as NodeHandler;

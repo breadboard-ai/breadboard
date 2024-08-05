@@ -11,7 +11,6 @@ import type {
   GraphDescriptor,
   GraphInlineMetadata,
   InputValues,
-  Kit,
   NodeDescriptor,
   NodeHandlerContext,
   SubGraphs,
@@ -43,7 +42,6 @@ export class BoardRunner implements BreadboardRunner {
   version?: string;
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
-  kits: Kit[] = [];
   graphs?: SubGraphs;
   args?: InputValues;
 

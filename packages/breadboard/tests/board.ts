@@ -40,30 +40,6 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
   t.deepEqual(result, { hello: "world" });
 });
 
-test("correctly passes inputs and outputs to invoked boards", async (t) => {
-  const nestedBoard = new Board();
-  const nestedKit = nestedBoard.addKit(TestKit);
-  nestedBoard
-    .input()
-    .wire(
-      "hello->",
-      nestedKit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
-    );
-
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board
-    .input()
-    .wire("hello->", kit.invoke(nestedBoard).wire("hello->", board.output()));
-
-  const result = await invokeGraph(
-    board,
-    { hello: "world" },
-    { kits: [nestedKit] }
-  );
-  t.deepEqual(result, { hello: "world" });
-});
-
 test("correctly passes inputs and outputs to included boards with a probe", async (t) => {
   const nestedBoard = new Board();
   const nestedKit = nestedBoard.addKit(TestKit);

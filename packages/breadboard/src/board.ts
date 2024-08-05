@@ -112,7 +112,6 @@ export class Board extends BoardRunner implements Breadboard {
    */
   addKit<T extends Kit>(ctr: KitConstructor<T>): T {
     const kit = asComposeTimeKit(ctr, this);
-    this.kits.push(kit);
     return kit as T;
   }
 
