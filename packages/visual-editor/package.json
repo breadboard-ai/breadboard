@@ -270,7 +270,7 @@
     "@breadboard-ai/google-drive-kit": "0.2.2",
     "@breadboard-ai/manifest": "^0.4.1",
     "@breadboard-ai/python-wasm": "0.1.4",
-    "@codemirror/autocomplete": "^6.17.0",
+    "@codemirror/autocomplete": "^6.18.0",
     "@codemirror/commands": "^6.6.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.3",
