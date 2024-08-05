@@ -67,9 +67,7 @@ export const TestKit = new KitBuilder({
       if ($board) {
         const board =
           ($board as BreadboardCapability).kind === "board"
-            ? await BoardRunner.fromBreadboardCapability(
-                $board as BreadboardCapability
-              )
+            ? await getGraphDescriptor($board as BreadboardCapability, context)
             : typeof $board === "string"
               ? await context.loader?.load($board, {
                   base,
@@ -84,7 +82,7 @@ export const TestKit = new KitBuilder({
         const { board, path, ...args } = inputs;
 
         const runnableBoard = board
-          ? await BoardRunner.fromBreadboardCapability(board)
+          ? await getGraphDescriptor(board, context)
           : path
             ? await context.loader?.load(path, {
                 base,
@@ -237,8 +235,8 @@ import {
   NewOutputValues,
   NewNodeFactory as NodeFactory,
   invokeGraph,
-  BoardRunner,
 } from "../../src/index.js";
+import { getGraphDescriptor } from "../../src/capability.js";
 
 export const testKit = addKit(TestKit) as unknown as {
   noop: NodeFactory<NewInputValues, NewOutputValues>;

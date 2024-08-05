@@ -12,7 +12,7 @@ import type {
   BreadboardCapability,
   GraphDescriptor,
 } from "@google-labs/breadboard";
-import { BoardRunner, invokeGraph } from "@google-labs/breadboard";
+import { getGraphDescriptor, invokeGraph } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import { loadGraphFromPath } from "../utils.js";
 
@@ -78,10 +78,14 @@ export default {
     const source = path || $ref || "";
 
     const runnableBoard = board
-      ? await BoardRunner.fromBreadboardCapability(board)
+      ? await getGraphDescriptor(board, context)
       : graph
         ? graph
         : await loadGraphFromPath(source, context);
+
+    if (!runnableBoard) {
+      throw new Error("Must provide valid board to include");
+    }
 
     return await invokeGraph(runnableBoard, args, context);
   },

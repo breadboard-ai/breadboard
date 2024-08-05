@@ -11,7 +11,11 @@ import type {
   GraphDescriptor,
   NodeDescriberContext,
 } from "@google-labs/breadboard";
-import { BoardRunner, inspect, invokeGraph } from "@google-labs/breadboard";
+import {
+  getGraphDescriptor,
+  inspect,
+  invokeGraph,
+} from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
 import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
@@ -41,7 +45,7 @@ const getRunnableBoard = async (
     let runnableBoard;
 
     if (board) {
-      runnableBoard = await BoardRunner.fromBreadboardCapability(board);
+      runnableBoard = await getGraphDescriptor(board, context);
     } else if (graph) {
       runnableBoard = graph;
     } else if (path) {
