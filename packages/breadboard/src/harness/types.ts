@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 import type { DataStore } from "../data/types.js";
 import { InspectableRunObserver } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
@@ -201,6 +202,12 @@ export type RunConfig = {
    * The state from which to resume the run.
    */
   state?: ManagedRunState;
+  /**
+   * Start label to use for the run. This is useful for specifying a particular
+   * node as the start of the run. If not provided, nodes without any incoming
+   * edges will be used.
+   */
+  start?: StartLabel;
 };
 
 export type RunEventMap = {
