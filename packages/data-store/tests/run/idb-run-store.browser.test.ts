@@ -119,7 +119,7 @@ it("IDBRunStore drops data", async () => {
   expect(runs.size).to.equal(0);
 });
 
-it.only("IDBRunStore truncates data", async () => {
+it("IDBRunStore truncates data", async () => {
   const runStore = new IDBRunStore();
   const result = copyResult(inputResult);
 
@@ -138,6 +138,8 @@ it.only("IDBRunStore truncates data", async () => {
   const runs = await runStore.getStoredRuns(url);
   expect(runs.size).to.equal(1);
   expect(runs.get(runTimestamp2)).to.be.ok;
+
+  await runStore.drop();
 });
 
 it("IDBRunStore replaces storedData with inlineData when writing", async () => {
@@ -173,6 +175,7 @@ it("IDBRunStore replaces storedData with inlineData when writing", async () => {
   const run = await runStore.getStoredRuns(url);
   const runValues = [...run.values()];
 
+  console.log(run.size);
   expect(run.size).to.equal(1);
   expect(runValues[0].length).to.equal(8);
   expect(runValues[0][3].type).to.equal("nodeend");

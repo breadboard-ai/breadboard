@@ -164,7 +164,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   }
 });
 
-test.only("run load/save: serialization produces consistent size", async (t) => {
+test("run load/save: serialization produces consistent size", async (t) => {
   const observer = createRunObserver({
     logLevel: "debug",
     dataStore: createDefaultDataStore(),
