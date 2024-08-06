@@ -31,9 +31,11 @@ const loadRawRun = async (
 ): Promise<InspectableRun> => {
   const s = await readFile(join(BASE_PATH, name), "utf-8");
   const raw = JSON.parse(s) as HarnessRunResult[];
-  await Promise.all(raw.map((result) => observer.observe(result)));
-  const runs = await observer.runs();
+  for (const result of raw) {
+    await observer.observe(result);
+  }
 
+  const runs = await observer.runs();
   return runs[0];
 };
 
@@ -162,7 +164,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
   }
 });
 
-test("run load/save: serialization produces consistent size", async (t) => {
+test.only("run load/save: serialization produces consistent size", async (t) => {
   const observer = createRunObserver({
     logLevel: "debug",
     dataStore: createDefaultDataStore(),

@@ -9,6 +9,8 @@ import test from "ava";
 import { createDefaultRunStore } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 
+const url = "http://www.example.com";
+
 const inputResult: HarnessRunResult = {
   type: "nodeend",
   data: {
@@ -42,49 +44,67 @@ function copyResult(result: HarnessRunResult): HarnessRunResult {
   return JSON.parse(JSON.stringify(result));
 }
 
-test("Default Run Store throws if already writing", async (t) => {
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+test("Default Run Store creates multiple stores per URL", async (t) => {
   const runStore = createDefaultRunStore();
 
-  await runStore.start("store");
-  await t.throwsAsync(runStore.start("store"));
-});
+  const runTimestamp = await runStore.start(url);
+  await runStore.stop(url, runTimestamp);
 
-test("Default Run Store removes old stores", async (t) => {
-  const runStore = createDefaultRunStore();
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
 
-  await runStore.start("store", 1);
-  await runStore.stop();
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.stop(url, runTimestamp2);
 
-  await runStore.start("store2", 1);
-  await runStore.stop();
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 2);
 
-  const runs = await runStore.getNewestRuns(3);
-  t.is(runs.length, 1);
+  await runStore.drop();
 });
 
 test("Default Run Store writes data", async (t) => {
   const runStore = createDefaultRunStore();
   const result = copyResult(inputResult);
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+  const runs = await runStore.getStoredRuns(url);
 
-  await runStore.start("store", 1);
-  await runStore.write(result);
-  await runStore.stop();
-
-  const runs = await runStore.getNewestRuns(1);
-  t.is(runs.length, 1);
-  t.deepEqual(runs[0][0], result);
+  t.is(runs.size, 1);
+  t.deepEqual(runs.get(runTimestamp)![0], result);
+  await runStore.drop();
 });
 
 test("Default Run Store drops data", async (t) => {
   const runStore = createDefaultRunStore();
   const result = copyResult(inputResult);
-
-  await runStore.start("store", 1);
-  await runStore.write(result);
-  await runStore.stop();
-
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
   await runStore.drop();
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 0);
+});
 
-  const runs = await runStore.getNewestRuns(1);
-  t.is(runs.length, 0);
+test("Default Run Store truncates data", async (t) => {
+  const runStore = createDefaultRunStore();
+  const result = copyResult(inputResult);
+
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
+
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.write(url, runTimestamp2, result);
+  await runStore.stop(url, runTimestamp2);
+
+  await runStore.truncate(url, 1);
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 1);
+  t.truthy(runs.get(runTimestamp2));
 });

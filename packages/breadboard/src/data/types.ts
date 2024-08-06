@@ -71,6 +71,10 @@ export type SerializedDataStoreGroup = SerializedStoredData[];
 /**
  * A provider that handles storing and retrieving data.
  */
+
+export type RunURL = string;
+export type RunTimestamp = number;
+
 export type DataStoreProvider = {
   store(data: InlineDataCapabilityPart): Promise<StoredData>;
   retrieve(handle: DataStoreHandle): Promise<StoredData>;
@@ -79,12 +83,17 @@ export type DataStoreProvider = {
 };
 
 export type RunStore = {
-  start(storeId: string, limit?: number): Promise<string>;
-  write(result: HarnessRunResult): Promise<void>;
-  stop(): Promise<void>;
-  abort(): Promise<void>;
-  drop(): Promise<void>;
-  getNewestRuns(limit: number): Promise<HarnessRunResult[][]>;
+  start(url: RunURL): Promise<RunTimestamp>;
+  write(
+    url: RunURL,
+    timestamp: RunTimestamp,
+    result: HarnessRunResult
+  ): Promise<void>;
+  stop(url: RunURL, timestamp: RunTimestamp): Promise<void>;
+  abort(url: RunURL, timestamp: RunTimestamp): Promise<void>;
+  drop(url?: RunURL): Promise<void>;
+  truncate(url: RunURL, limit: number): Promise<void>;
+  getStoredRuns(url: RunURL): Promise<Map<RunTimestamp, HarnessRunResult[]>>;
 };
 
 export type DataStore = {
