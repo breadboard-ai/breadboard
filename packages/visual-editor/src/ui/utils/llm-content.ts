@@ -4,18 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isLLMContent, LLMContent, Schema } from "@google-labs/breadboard";
+import { Schema } from "@google-labs/breadboard";
 import { AllowedLLMContentTypes } from "../types/types.js";
-
-export function isArrayOfLLMContent(
-  nodeValue: unknown
-): nodeValue is LLMContent[] {
-  if (!Array.isArray(nodeValue)) {
-    return false;
-  }
-
-  return isLLMContent(nodeValue[0]);
-}
 
 function updateAllowList(
   allow: AllowedLLMContentTypes,

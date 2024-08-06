@@ -7,11 +7,11 @@ import {
   InspectablePort,
   InspectableRunEvent,
   isLLMContent,
+  isLLMContentArray,
   OutputValues,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { isArrayOfLLMContent } from "../../utils/llm-content.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -79,7 +79,7 @@ export class EventDetails extends LitElement {
                 const nodeValue = port.value;
                 let value: HTMLTemplateResult | symbol = nothing;
                 if (typeof nodeValue === "object") {
-                  if (isArrayOfLLMContent(nodeValue)) {
+                  if (isLLMContentArray(nodeValue)) {
                     value = html`<bb-llm-output-array
                       .values=${nodeValue}
                     ></bb-llm-output-array>`;

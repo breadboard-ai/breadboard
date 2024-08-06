@@ -8,7 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import { map } from "lit/directives/map.js";
 import {
-  isArrayOfLLMContentBehavior,
+  isLLMContentArrayBehavior,
   isBoardBehavior,
   isCodeBehavior,
   isGoogleDriveFileId,
@@ -215,10 +215,10 @@ export class UserInput extends LitElement {
               if (
                 isPortSpecBehavior(input.schema) ||
                 isLLMContentBehavior(input.schema) ||
-                isArrayOfLLMContentBehavior(input.schema) ||
+                isLLMContentArrayBehavior(input.schema) ||
                 isBoardBehavior(input.schema, inputValue)
               ) {
-                if (isArrayOfLLMContentBehavior(input.schema)) {
+                if (isLLMContentArrayBehavior(input.schema)) {
                   (el as unknown as LLMInputArray).processAllOpenParts();
                 } else if (isLLMContentBehavior(input.schema)) {
                   (el as unknown as LLMInput).processAllOpenParts();
@@ -292,7 +292,7 @@ export class UserInput extends LitElement {
           if (
             input.schema.description &&
             !isLLMContentBehavior(input.schema) &&
-            !isArrayOfLLMContentBehavior(input.schema)
+            !isLLMContentArrayBehavior(input.schema)
           ) {
             description = html`<span class="description"
               >${input.schema.description}</span
@@ -337,7 +337,7 @@ export class UserInput extends LitElement {
           const id = this.#createId(input.name);
           switch (input.schema.type) {
             case "array": {
-              if (isArrayOfLLMContentBehavior(input.schema)) {
+              if (isLLMContentArrayBehavior(input.schema)) {
                 let value: LLMContent[] | null =
                   (input.value as LLMContent[]) ?? null;
                 if (!value) {
