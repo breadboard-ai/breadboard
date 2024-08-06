@@ -32,7 +32,7 @@ export async function* runGraph(
   resumeFrom?: TraversalResult
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { inputs, ...context } = args;
+  const { inputs, start, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
 
   const lifecycle = state?.lifecycle();
@@ -82,7 +82,7 @@ export async function* runGraph(
 
     const path = () => [...invocationPath, invocationId];
 
-    const machine = new TraversalMachine(graph, resumeFrom);
+    const machine = new TraversalMachine(graph, resumeFrom, start);
     await probe?.report?.({
       type: "graphstart",
       data: { graph, path: invocationPath, timestamp: timestamp() },
