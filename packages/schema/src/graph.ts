@@ -360,6 +360,12 @@ type TestProperties = {
    * @deprecated For internal testing only. Do not use.
    */
   explanation?: string;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  start?: StartLabel;
 };
 
 /**

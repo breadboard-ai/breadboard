@@ -61,6 +61,11 @@
 					"description": "For internal testing only. Do not use.",
 					"deprecated": "For internal testing only. Do not use."
 				},
+				"start": {
+					"$ref": "#/definitions/StartLabel",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
 				"metadata": {
 					"$ref": "#/definitions/GraphMetadata",
 					"description": "Metadata associated with the graph."
@@ -188,6 +193,14 @@
 		"NodeIdentifier": {
 			"type": "string",
 			"description": "Unique identifier of a node in a graph."
+		},
+		"StartLabel": {
+			"type": "string",
+			"enum": [
+				"default",
+				"describe"
+			],
+			"description": "Valid start labels."
 		},
 		"GraphMetadata": {
 			"type": "object",
@@ -343,14 +356,6 @@
 			],
 			"additionalProperties": false,
 			"description": "Represents a start tag, which is a special tag that can be associated with a node. It is used to indicate that the node is a starting point for traversal. The `label` field allows the user to specify additional way to specify the kind of traversal they are looking for."
-		},
-		"StartLabel": {
-			"type": "string",
-			"enum": [
-				"default",
-				"describe"
-			],
-			"description": "Valid start labels."
 		},
 		"GraphTag": {
 			"type": "string",
