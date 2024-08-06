@@ -15,6 +15,7 @@ import type {
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
 import {
@@ -714,6 +715,12 @@ export type RunArguments = NodeHandlerContext & {
    * action will be taken. For example, the web-based harness will ask the user.
    */
   inputs?: InputValues;
+  /**
+   * Start label to use for the run. This is useful for specifying a particular
+   * node as the start of the run. If not provided, nodes without any incoming
+   * edges will be used.
+   */
+  start?: StartLabel;
 };
 
 export interface BreadboardNode<Inputs, Outputs> {
