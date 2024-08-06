@@ -37,7 +37,7 @@ import {
   getMinItemsFromProperty,
 } from "../../utils/llm-content";
 import { UserOutputEvent } from "../../events/events";
-import "./delegating-input.ts";
+import "./delegating-input.js";
 
 @customElement("bb-user-input")
 export class UserInput extends LitElement {
