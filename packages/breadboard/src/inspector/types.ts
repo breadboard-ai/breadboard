@@ -8,6 +8,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   NodeMetadata,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
@@ -69,9 +70,14 @@ export type InspectableNode = {
    */
   outgoing(): InspectableEdge[];
   /**
-   * Return true if the node is an entry node (no incoming edges)
+   * Return true if the node is an entry node (labeled as such or
+   * has no incoming edges)
    */
-  isEntry(): boolean;
+  isEntry(label?: StartLabel): boolean;
+  /**
+   * The start label of the node.
+   */
+  startLabels(): StartLabel[] | undefined;
   /**
    * Return true if the node is an exit node (no outgoing edges)
    */
@@ -271,7 +277,7 @@ export type InspectableGraph = {
   /**
    * Returns a list of entry nodes for the graph.
    */
-  entries(): InspectableNode[];
+  entries(label?: StartLabel): InspectableNode[];
   /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.

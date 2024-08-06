@@ -3,7 +3,7 @@ layout: docs.liquid
 title: Run API
 tags:
   - reference
-  - miscellaneous
+  - api
   - wip
 ---
 
