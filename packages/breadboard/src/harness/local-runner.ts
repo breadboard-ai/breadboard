@@ -27,6 +27,7 @@ import {
   ResumeEvent,
   StartEvent,
 } from "./events.js";
+import { InspectableRunObserver } from "../inspector/types.js";
 
 export const now = () => ({ timestamp: globalThis.performance.now() });
 
@@ -35,6 +36,7 @@ export class LocalRunner
   implements HarnessRunner
 {
   #config: RunConfig;
+  #observers: InspectableRunObserver[] = [];
   #run: ReturnType<typeof run> | null = null;
   #pendingResult: HarnessRunResult | null = null;
 
@@ -49,15 +51,20 @@ export class LocalRunner
     this.#config = config;
   }
 
-  /**
-   * A convenience method to get the secret keys that the runner is
-   * waiting for. This information can also be obtained by listening to
-   * the `secret` event.
-   *
-   * Returns null if the runner is not waiting for any secrets.
-   *
-   * @returns -- set of secret keys that the runner is waiting for, or null.
-   */
+  addObserver(observer: InspectableRunObserver): void {
+    this.#observers.push(observer);
+  }
+
+  async #notifyObservers(result: HarnessRunResult) {
+    for (const observer of this.#observers) {
+      try {
+        await observer.observe(result);
+      } catch (e) {
+        console.error("Observer failed to observe result", result, e);
+      }
+    }
+  }
+
   secretKeys(): string[] | null {
     if (!this.#pendingResult || this.#pendingResult.type !== "secret") {
       return null;
@@ -65,15 +72,6 @@ export class LocalRunner
     return this.#pendingResult.data.keys;
   }
 
-  /**
-   * A convenience method to get the input schema that the runner is
-   * waiting for. This information can also be obtained by listening to
-   * the `input` event.
-   *
-   * Returns null if the runner is not waiting for any inputs.
-   *
-   * @returns -- the input schema that the runner is waiting for, or null.
-   */
   inputSchema(): Schema | null {
     if (!this.#pendingResult || this.#pendingResult.type !== "input") {
       return null;
@@ -81,27 +79,10 @@ export class LocalRunner
     return this.#pendingResult.data.inputArguments.schema || null;
   }
 
-  /**
-   * Check if the runner is running or not.
-   *
-   * @returns -- true if the runner is currently running, or false otherwise.
-   */
   running() {
     return !!this.#run && !this.#pendingResult;
   }
 
-  /**
-   * The main method for this class. It starts or resumes the runner.
-   * If the runner is waiting for input, the input arguments will be used
-   * to provide the input values.
-   *
-   * If the runner is done, it will return true. If the runner is waiting
-   * for input or secret, it will return false.
-   *
-   * @param inputs -- input values to provide to the runner.
-   * @returns -- true if the runner is done, or false if it is waiting
-   *             for input.
-   */
   async run(inputs?: InputValues): Promise<boolean> {
     const starting = !this.#run;
     if (!this.#run) {
@@ -123,6 +104,7 @@ export class LocalRunner
         this.#pendingResult = null;
         return true;
       }
+      await this.#notifyObservers(result.value);
       const { type, data, reply } = result.value;
       switch (type) {
         case "input": {

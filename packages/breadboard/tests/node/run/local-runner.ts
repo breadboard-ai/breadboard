@@ -259,4 +259,50 @@ describe("LocalRunner", async () => {
       ]);
     }
   });
+
+  test("correctly calls the observer", async () => {
+    const runner = new LocalRunner({
+      runner: simple as GraphDescriptor,
+      url: import.meta.url,
+      loader: createLoader(),
+      kits: [testKit],
+    });
+    let observed = false;
+    runner.addObserver({
+      runs() {
+        throw new Error("Not implemented");
+      },
+      load() {
+        throw new Error("Not implemented");
+      },
+      async observe() {
+        observed = true;
+      },
+    });
+    const result = await runner.run();
+    ok(observed);
+    ok(!result);
+  });
+
+  test("can handle observers that throw errors", async () => {
+    const runner = new LocalRunner({
+      runner: simple as GraphDescriptor,
+      url: import.meta.url,
+      loader: createLoader(),
+      kits: [testKit],
+    });
+    runner.addObserver({
+      runs() {
+        throw new Error("Not implemented");
+      },
+      load() {
+        throw new Error("Not implemented");
+      },
+      observe() {
+        throw new Error("I'm an observer that throws an error");
+      },
+    });
+    const result = await runner.run();
+    ok(!result);
+  });
 });
