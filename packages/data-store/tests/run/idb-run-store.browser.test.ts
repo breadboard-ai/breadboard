@@ -14,6 +14,44 @@ import {
   isLLMContent,
   toStoredDataPart,
 } from "@google-labs/breadboard";
+import { HarnessRunResult } from "@google-labs/breadboard/harness";
+
+const url = "http://www.example.com";
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const inputResult: HarnessRunResult = {
+  type: "nodeend",
+  data: {
+    node: {
+      id: "input-45dd0a3d",
+      type: "input",
+    },
+    inputs: {},
+    path: [],
+    timestamp: 10,
+    outputs: {
+      content: {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              data: "aabbcc",
+              mimeType: "text/plain",
+            },
+          },
+        ],
+      },
+    },
+  },
+  async reply() {},
+};
+
+function copyResult(result: HarnessRunResult): HarnessRunResult {
+  // We can't use structuredClone because of the async function, so we fall back
+  // to using parse/stringify to make a copy.
+  return JSON.parse(JSON.stringify(result));
+}
 
 before(async () => {
   const store = new IDBRunStore();
@@ -21,27 +59,94 @@ before(async () => {
 });
 
 it("IDBRunStore stores run events", async () => {
-  const store = new IDBRunStore();
-  await store.start("store");
+  const runStore = new IDBRunStore();
+  const url = "http://www.example.com";
+  const timestamp = await runStore.start(url);
 
   for (const result of simpleRunResults) {
-    await store.write(result);
+    await runStore.write(url, timestamp, result);
   }
 
-  await store.stop();
-  const runs = await store.getNewestRuns();
+  await runStore.stop(url, timestamp);
+  const runs = await runStore.getStoredRuns(url);
 
-  expect(runs.length).to.equal(1);
-  expect(runs[0].length).to.equal(8);
+  expect(runs.size).to.equal(1);
+  expect([...runs.values()][0].length).to.equal(8);
 
-  await store.drop();
+  await runStore.drop();
+});
+
+it("IDBRunStore creates multiple stores per URL", async () => {
+  const runStore = new IDBRunStore();
+
+  const runTimestamp = await runStore.start(url);
+  await runStore.stop(url, runTimestamp);
+
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
+
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.stop(url, runTimestamp2);
+
+  const runs = await runStore.getStoredRuns(url);
+  expect(runs.size).to.equal(2);
+
+  await runStore.drop();
+});
+
+it("IDBRunStore writes data", async () => {
+  const runStore = new IDBRunStore();
+  const result = copyResult(inputResult);
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+  const runs = await runStore.getStoredRuns(url);
+
+  expect(runs.size).to.equal(1);
+  expect(runs.get(runTimestamp)![0].type).to.deep.equal(result.type);
+  expect(runs.get(runTimestamp)![0].data).to.deep.equal(result.data);
+  await runStore.drop();
+});
+
+it("IDBRunStore drops data", async () => {
+  const runStore = new IDBRunStore();
+  const result = copyResult(inputResult);
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+  await runStore.drop();
+  const runs = await runStore.getStoredRuns(url);
+  expect(runs.size).to.equal(0);
+});
+
+it("IDBRunStore truncates data", async () => {
+  const runStore = new IDBRunStore();
+  const result = copyResult(inputResult);
+
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
+
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.write(url, runTimestamp2, result);
+  await runStore.stop(url, runTimestamp2);
+
+  await runStore.truncate(url, 1);
+  const runs = await runStore.getStoredRuns(url);
+  expect(runs.size).to.equal(1);
+  expect(runs.get(runTimestamp2)).to.be.ok;
+
+  await runStore.drop();
 });
 
 it("IDBRunStore replaces storedData with inlineData when writing", async () => {
   // Step 1. Write the data in, converting inlineData parts to storedDataParts
   // before they get written in.
-  const store = new IDBRunStore();
-  await store.start("store");
+  const runStore = new IDBRunStore();
+  const timestamp = await runStore.start(url);
 
   for (const result of inlineDataRunResults) {
     if (result.type === "nodeend" && result.data.node.type === "input") {
@@ -61,20 +166,22 @@ it("IDBRunStore replaces storedData with inlineData when writing", async () => {
       }
     }
 
-    await store.write(result);
+    await runStore.write(url, timestamp, result);
   }
 
-  await store.stop();
+  await runStore.stop(url, timestamp);
 
   // Step 2. Get the run.
-  const run = await store.getNewestRuns();
+  const run = await runStore.getStoredRuns(url);
+  const runValues = [...run.values()];
 
-  expect(run.length).to.equal(1);
-  expect(run[0].length).to.equal(8);
-  expect(run[0][3].type).to.equal("nodeend");
+  console.log(run.size);
+  expect(run.size).to.equal(1);
+  expect(runValues[0].length).to.equal(8);
+  expect(runValues[0][3].type).to.equal("nodeend");
 
   // Step 3. Assert we have an inlineData object.
-  const nodeToInspect = run[0][3];
+  const nodeToInspect = runValues[0][3];
   if (
     nodeToInspect.type === "nodeend" &&
     nodeToInspect.data.node.type === "input"
@@ -94,5 +201,5 @@ it("IDBRunStore replaces storedData with inlineData when writing", async () => {
     expect.fail("Unexpected node type");
   }
 
-  await store.drop();
+  await runStore.drop();
 });
