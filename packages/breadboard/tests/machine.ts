@@ -17,6 +17,7 @@ import {
   OutputValues,
 } from "../src/types.js";
 import { MachineResult } from "../src/traversal/result.js";
+import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 
 const IN_DIR = "./tests/data/";
 
@@ -25,6 +26,7 @@ interface TestGraphDescriptor extends GraphDescriptor {
   inputs: InputValues;
   outputs: OutputValues[];
   throws: boolean;
+  start: StartLabel;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
@@ -41,7 +43,7 @@ await Promise.all(
         t.log("Skipped");
         return;
       }
-      const machine = new TraversalMachine(graph);
+      const machine = new TraversalMachine(graph, undefined, graph.start);
       const outputs: OutputValues[] = [];
       const sequence: string[] = [];
       const run = async () => {

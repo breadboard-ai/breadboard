@@ -41,6 +41,7 @@ export class GraphRepresentation {
   #findEntries() {
     const entries = new Set<NodeIdentifier>();
     const start = this.start ?? "default";
+    let hasStartLabels = false;
     this.nodes.forEach((node) => {
       node.metadata?.tags?.forEach((tag) => {
         const startTag = tag as StartTag;
@@ -48,6 +49,7 @@ export class GraphRepresentation {
           entries.add(node.id);
         } else if (startTag.type === "start") {
           const label = startTag.label ?? "default";
+          hasStartLabels = true;
           if (label === start) {
             entries.add(node.id);
           }
@@ -60,6 +62,12 @@ export class GraphRepresentation {
       return Array.from(entries);
     }
 
+    // If there were start labels present, return an empty array, since we
+    // are asked to traverse a graph from a non-existent entry point.
+    if (hasStartLabels) {
+      return [];
+    }
+
     // Otherwise, fall back to computing entries based on edges.
     return Array.from(this.nodes.keys()).filter((node) =>
       this.#notInHeads(node)
@@ -67,7 +75,7 @@ export class GraphRepresentation {
   }
 
   constructor(descriptor: GraphDescriptor, start?: StartLabel) {
-    if (this.start) {
+    if (start) {
       this.start = start;
     }
     this.tails = descriptor.edges.reduce((acc, edge) => {
