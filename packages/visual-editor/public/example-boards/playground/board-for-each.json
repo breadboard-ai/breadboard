@@ -36,7 +36,7 @@
       "from": "fn-30",
       "to": "output-27",
       "out": "emit",
-      "in": "array"
+      "in": "outputs"
     },
     {
       "from": "input-24",
@@ -53,7 +53,7 @@
     {
       "from": "invoke-26",
       "to": "fn-29",
-      "out": "item",
+      "out": "object",
       "in": "item"
     },
     {
@@ -66,7 +66,7 @@
       "from": "passthrough-25",
       "to": "invoke-26",
       "out": "item",
-      "in": "item"
+      "in": "object"
     },
     {
       "from": "passthrough-25",
@@ -91,7 +91,7 @@
             },
             "board": {
               "examples": [
-                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"item\",\"in\":\"item\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{},\"metadata\":{\"title\":\"Output\"}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{item}=inputs;return{item:item.split(\\\"\\\").map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"item\":{\"type\":\"string\",\"title\":\"item\"}},\"required\":[\"item\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
+                "{\"edges\":[{\"from\":\"fn-4\",\"to\":\"output-5\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"input-3\",\"to\":\"fn-4\",\"out\":\"object\",\"in\":\"object\"}],\"nodes\":[{\"id\":\"output-5\",\"type\":\"output\",\"configuration\":{},\"metadata\":{\"title\":\"Output\"}},{\"id\":\"fn-4\",\"type\":\"runJavascript\",\"configuration\":{\"code\":\"const fn_4 = inputs=>{const{object}=inputs;return{object:object.split(\\\"\\\").map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(\\\"\\\")}};\",\"name\":\"fn_4\",\"raw\":true}},{\"id\":\"input-3\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"object\":{\"type\":\"string\",\"title\":\"object\"}},\"required\":[\"object\"]}},\"metadata\":{\"title\":\"Input\"}}],\"graphs\":{}}"
               ]
             }
           }
@@ -108,9 +108,9 @@
         "schema": {
           "type": "object",
           "properties": {
-            "array": {
+            "outputs": {
               "type": "string",
-              "title": "array"
+              "title": "outputs"
             }
           }
         }

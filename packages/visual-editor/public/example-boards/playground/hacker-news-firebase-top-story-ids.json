@@ -1,69 +1,77 @@
 {
-  "title": "Hacker News Firebase API Story IDs",
-  "description": "Board which returns the top story ID using the Hacker News Firebase API",
-  "version": "0.0.1",
+  "title": "Hacker News Firebase Top Story IDs",
+  "description": "Board which returns Top Story IDs of Hacker News Story Posts using the Firebase API",
+  "version": "0.1.0",
   "edges": [
     {
       "from": "fetch",
-      "to": "fn-3",
+      "to": "passThrough",
       "out": "response",
-      "in": "list"
+      "in": "object"
     },
     {
-      "from": "fn-3",
-      "to": "main",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "limit",
-      "to": "fn-3",
-      "out": "limit",
+      "from": "input-0",
+      "to": "sliceOutput",
+      "out": "limitInput",
       "in": "limit"
     },
     {
-      "from": "main",
-      "to": "output-2",
-      "out": "output",
-      "in": "output"
+      "from": "passThrough",
+      "to": "sliceOutput",
+      "out": "object",
+      "in": "list"
+    },
+    {
+      "from": "sliceOutput",
+      "to": "output-0",
+      "out": "sliced",
+      "in": "storyIDs"
     }
   ],
   "nodes": [
     {
-      "id": "limit",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
-          "title": "Hacker News Story",
+          "type": "object",
           "properties": {
-            "limit": {
+            "limitInput": {
               "type": "number",
-              "title": "Story Limit",
-              "description": "The Number of Hacker News Story ID's to return",
-              "default": "1"
+              "title": "Number of story IDs to return",
+              "description": "The number of Hacker News Top story IDs to return",
+              "examples": [
+                "5"
+              ]
             }
-          }
-        },
-        "type": "number"
+          },
+          "required": [
+            "limitInput"
+          ]
+        }
       }
     },
     {
-      "id": "main",
-      "type": "output",
-      "configuration": {}
-    },
-    {
-      "id": "output-2",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "output": {
-              "type": "string",
-              "title": "output"
+            "storyIDs": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
-          }
+          },
+          "required": [
+            "storyIDs"
+          ]
         }
       }
     },
@@ -76,11 +84,75 @@
       }
     },
     {
-      "id": "fn-3",
+      "id": "passThrough",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_3 = ({list,limit})=>{return{output:list.slice(0,limit)}};",
-        "name": "fn_3",
+        "code": "const passThrough = ({object})=>{return{object}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
+        "name": "passThrough",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "raw": true
+      }
+    },
+    {
+      "id": "sliceOutput",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const sliceOutput = ({limit,list})=>{return{sliced:list?.slice(0,limit)}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "list": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "name": "sliceOutput",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "sliced": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
         "raw": true
       }
     }

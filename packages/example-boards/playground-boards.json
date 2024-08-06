@@ -71,34 +71,38 @@
     },
     {
       "title": "Hacker News Algolia Items",
-      "reference": "/example-boards/playground/hacker-news-algolia-items.json"
+      "reference": "/example-boards/playground/hacker-news-algolia-items.json",
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Angolia Search",
       "reference": "/example-boards/playground/hacker-news-algolia-search.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Firebase API Story by ID",
       "reference": "/example-boards/playground/hacker-news-firebase-story-from-id.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Firebase API Story IDs",
+      "title": "Hacker News Firebase Top Story IDs",
       "reference": "/example-boards/playground/hacker-news-firebase-top-story-ids.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Comment Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-comment-search.json"
+      "title": "Hacker News Angolia Simplified Comment Search ",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-comment-search.json",
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-search.json"
+      "title": "Hacker News Angolia Simplified Search",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-search.json",
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Story Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-story-search.json"
+      "title": "Hacker News Angolia Simplified Story Search",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-story-search.json",
+      "version": "0.1.0"
     },
     {
       "title": "Looper Chat Testing Grounds",

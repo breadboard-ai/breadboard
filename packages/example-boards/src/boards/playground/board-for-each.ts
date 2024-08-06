@@ -16,7 +16,7 @@ import { pop } from "../../utils/pop";
 
 const demoBoard = await board<
   {
-    item: string;
+    object: string;
   },
   {
     item: string;
@@ -28,15 +28,15 @@ const demoBoard = await board<
     },
   });
 
-  const reverse = code<{ item: string }, { item: string }>((inputs) => {
-    const { item } = inputs;
+  const reverse = code<{ object: string }, { object: string }>((inputs) => {
+    const { object } = inputs;
     return {
-      item: item
+      object: object
         .split("")
         .map((c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()))
         .join(""),
     };
-  })(input.item);
+  })(input.object);
 
   const output = base.output({
     $metadata: {
@@ -74,7 +74,7 @@ passthrough.board.to(passthrough);
 
 const invocation = core.invoke({
   // $board: input.board,
-  item: passthrough.item,
+  object: passthrough.item,
   $board: passthrough.board,
   $metadata: {
     title: "Invoke",
@@ -131,7 +131,7 @@ function accumulator<T>(
 }
 
 const accumulate = accumulator({
-  item: invocation.item,
+  item: invocation.object,
   $metadata: {
     title: "Accumulate",
   },
@@ -140,7 +140,6 @@ const accumulate = accumulator({
 accumulate.to(accumulate);
 
 function emitter<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any
 ): NodeProxy<
   { a?: T[] | undefined; b?: T[] | undefined },
@@ -172,7 +171,7 @@ emitter({
     title: "Emitter",
   },
 })
-  .emit.as("array")
+  .emit.as("outputs")
   .to(output);
 
 const serialised = await input.serialize({
