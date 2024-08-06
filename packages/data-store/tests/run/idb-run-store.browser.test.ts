@@ -9,9 +9,11 @@ import { IDBRunStore } from "../../src/run/idb-run-store.js";
 
 import { results as simpleRunResults } from "./simple-run.js";
 import { results as inlineDataRunResults } from "./inline-data-run.js";
+import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
 import {
   isInlineData,
   isLLMContent,
+  isLLMContentArray,
   toStoredDataPart,
 } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
@@ -142,7 +144,7 @@ it("IDBRunStore truncates data", async () => {
   await runStore.drop();
 });
 
-it("IDBRunStore replaces storedData with inlineData when writing", async () => {
+it("IDBRunStore replaces storedData with inlineData when writing (LLM Content)", async () => {
   // Step 1. Write the data in, converting inlineData parts to storedDataParts
   // before they get written in.
   const runStore = new IDBRunStore();
@@ -175,7 +177,6 @@ it("IDBRunStore replaces storedData with inlineData when writing", async () => {
   const run = await runStore.getStoredRuns(url);
   const runValues = [...run.values()];
 
-  console.log(run.size);
   expect(run.size).to.equal(1);
   expect(runValues[0].length).to.equal(8);
   expect(runValues[0][3].type).to.equal("nodeend");
@@ -194,6 +195,72 @@ it("IDBRunStore replaces storedData with inlineData when writing", async () => {
       if (isLLMContent(output)) {
         for (const part of output.parts) {
           expect(isInlineData(part), "Part is not inlineData").to.be.ok;
+        }
+      }
+    }
+  } else {
+    expect.fail("Unexpected node type");
+  }
+
+  await runStore.drop();
+});
+
+it("IDBRunStore replaces storedData with inlineData when writing (LLM Content Array)", async () => {
+  // Step 1. Write the data in, converting inlineData parts to storedDataParts
+  // before they get written in.
+  const runStore = new IDBRunStore();
+  const timestamp = await runStore.start(url);
+
+  for (const result of inlineDataArrayRunResults) {
+    if (result.type === "nodeend" && result.data.node.type === "input") {
+      for (const output of Object.values(result.data.outputs)) {
+        if (!isLLMContentArray(output)) {
+          continue;
+        }
+
+        for (const entry of output) {
+          for (let i = 0; i < entry.parts.length; i++) {
+            const part = entry.parts[i];
+            if (!isInlineData(part)) {
+              continue;
+            }
+
+            entry.parts[i] = await toStoredDataPart(part);
+          }
+        }
+      }
+    }
+
+    await runStore.write(url, timestamp, result);
+  }
+
+  await runStore.stop(url, timestamp);
+
+  // Step 2. Get the run.
+  const run = await runStore.getStoredRuns(url);
+  const runValues = [...run.values()];
+
+  expect(run.size).to.equal(1);
+  expect(runValues[0].length).to.equal(9);
+  expect(runValues[0][3].type).to.equal("nodeend");
+
+  // Step 3. Assert we have an inlineData object.
+  const nodeToInspect = runValues[0][3];
+  if (
+    nodeToInspect.type === "nodeend" &&
+    nodeToInspect.data.node.type === "input"
+  ) {
+    const outputs = Object.values(nodeToInspect.data.outputs);
+    expect(outputs.length).to.equal(1);
+    for (const output of outputs) {
+      expect(isLLMContentArray(output), "Output is not LLM Content Array").to.be
+        .ok;
+
+      if (isLLMContentArray(output)) {
+        for (const entry of output) {
+          for (const part of entry.parts) {
+            expect(isInlineData(part), "Part is not inlineData").to.be.ok;
+          }
         }
       }
     }

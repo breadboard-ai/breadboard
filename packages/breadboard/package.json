@@ -136,7 +136,8 @@
     "files": [
       "tests/**/*.ts",
       "!tests/type-checks.ts",
-      "!tests/node/**/*.ts"
+      "!tests/node/**/*.ts",
+      "!tests/inspector/inline-data-*.ts"
     ],
     "workerThreads": false,
     "typescript": {

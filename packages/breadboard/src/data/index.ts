@@ -21,6 +21,7 @@ export {
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isLLMContent,
+  isLLMContentArray,
   isTextCapabilityPart,
   isDataCapability,
   isInlineData,

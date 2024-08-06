@@ -5,7 +5,12 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { isLLMContent, isStoredData, toInlineDataPart } from "./common.js";
+import {
+  isLLMContent,
+  isLLMContentArray,
+  isStoredData,
+  toInlineDataPart,
+} from "./common.js";
 import { RunStore, RunTimestamp, RunURL } from "./types.js";
 
 export class DefaultRunStore implements RunStore {
@@ -37,17 +42,20 @@ export class DefaultRunStore implements RunStore {
     // If so inflate them back to inlineData before storage.
     if (result.type === "nodeend" && result.data.node.type === "input") {
       for (const output of Object.values(result.data.outputs)) {
-        if (!isLLMContent(output)) {
+        if (!isLLMContent(output) && !isLLMContentArray(output)) {
           continue;
         }
 
-        for (let i = 0; i < output.parts.length; i++) {
-          const part = output.parts[i];
-          if (!isStoredData(part)) {
-            continue;
-          }
+        const outputs = isLLMContent(output) ? [output] : output;
+        for (const output of outputs) {
+          for (let i = 0; i < output.parts.length; i++) {
+            const part = output.parts[i];
+            if (!isStoredData(part)) {
+              continue;
+            }
 
-          output.parts[i] = await toInlineDataPart(part);
+            output.parts[i] = await toInlineDataPart(part);
+          }
         }
       }
     }
