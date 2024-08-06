@@ -23,7 +23,7 @@
     {
       "title": "Audio",
       "reference": "/example-boards/playground/audio.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Best of N",

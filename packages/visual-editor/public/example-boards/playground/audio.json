@@ -1,30 +1,30 @@
 {
   "title": "Audio",
   "description": "An example of using Gemini Kit's vision(?) node with audio",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "contextify",
-      "to": "describeAudio",
-      "out": "context",
+      "from": "input-0",
+      "to": "invoke-0",
+      "out": "audio",
       "in": "context"
     },
     {
-      "from": "describeAudio",
-      "to": "output-2",
-      "out": "text",
-      "in": "text"
+      "from": "input-0",
+      "to": "invoke-0",
+      "out": "generator",
+      "in": "$board"
     },
     {
-      "from": "input-1",
-      "to": "contextify",
-      "out": "audio",
-      "in": "audio"
+      "from": "invoke-0",
+      "to": "output-0",
+      "out": "text",
+      "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -36,7 +36,29 @@
                 "llm-content"
               ],
               "title": "Audio",
-              "format": "audio-microphone"
+              "properties": {
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "audio-microphone",
+                    "audio-microphone"
+                  ]
+                }
+              },
+              "required": [
+                "format"
+              ],
+              "additionalProperties": false
+            },
+            "generator": {
+              "type": "object",
+              "behavior": [
+                "board"
+              ],
+              "default": "{\n  \"kind\": \"board\",\n  \"path\": \"gemini-generator.json\"\n}",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -46,38 +68,32 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text",
-              "format": "markdown"
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     },
     {
-      "id": "contextify",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const contextify = ({audio})=>{return{context:[audio]}};",
-        "name": "contextify",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Wrap audio",
-        "description": "Wraps the audio in a context object for Gemini"
-      }
-    },
-    {
-      "id": "describeAudio",
-      "type": "text",
+      "id": "invoke-0",
+      "type": "invoke",
       "configuration": {
         "model": "gemini-1.5-pro-latest",
         "systemInstruction": "Describe what you hear in the audio. Please respond in markdown",
