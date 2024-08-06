@@ -4,7 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StartLabel, StartTag } from "@google-labs/breadboard-schema/graph.js";
 import { Edge, InputValues, NodeDescriptor } from "../types.js";
+
+const requiredInputsFromEdges = (edges: Edge[]): string[] => {
+  return [
+    ...new Set(
+      edges
+        .filter((edge: Edge) => !!edge.in && !edge.optional)
+        .map((edge: Edge) => edge.in || "")
+    ),
+  ];
+};
+
+const isStartNode = (
+  node: NodeDescriptor,
+  start: StartLabel = "default"
+): boolean => {
+  if (!node.metadata?.tags) return false;
+  return node.metadata.tags.some((tag) => {
+    const startTag = tag as StartTag;
+    if (!("type" in startTag) || startTag.type !== "start") return false;
+    const label = startTag.label ?? "default";
+    return start === label;
+  });
+};
 
 /**
  * This class holds important parts of the graph traversal algorithm.
@@ -21,15 +45,12 @@ export class Traversal {
   static computeMissingInputs(
     heads: Edge[],
     inputs: InputValues,
-    current: NodeDescriptor
+    current: NodeDescriptor,
+    start?: StartLabel
   ): string[] {
-    const requiredInputs: string[] = [
-      ...new Set(
-        heads
-          .filter((edge: Edge) => !!edge.in && !edge.optional)
-          .map((edge: Edge) => edge.in || "")
-      ),
-    ];
+    const requiredInputs: string[] = isStartNode(current, start)
+      ? []
+      : requiredInputsFromEdges(heads);
     const inputsWithConfiguration = new Set();
     Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
     if (current.configuration) {

@@ -62,6 +62,11 @@ await Promise.all(
               result.outputs = list.length ? { list, text } : { text };
               break;
             }
+            case "make": {
+              // A node that creates its own output.
+              result.outputs = { text: "Hello, world!" };
+              break;
+            }
             case "error": {
               result.outputs = {
                 $error: {
