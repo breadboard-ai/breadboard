@@ -60,9 +60,18 @@ const incoming = node.incoming();
 // Returns an array of `InspectableEdge`;
 const outgoing = node.outgoing();
 
-// See if the node is an entry node (no incoming edges)
+// See if the node is a default entry point (no incoming edges or
+// labeled as "default").
 // Returns true or false.
 const isEntry = node.isEntry();
+
+// See if the node is a "describe" entry point.
+// Returns true or false.
+const isDescribeEntry = node.isEntry("describe");
+
+// Get all the start labels assigned to the node.
+// Returns array of strings or undefined if no labels are assigned.
+const startLabels = node.startLabels();
 
 // See if the node is an exit node (no outgoing edges)
 // Returns true or false.
