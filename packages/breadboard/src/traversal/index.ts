@@ -24,7 +24,8 @@ const isStartNode = (
   if (!node.metadata?.tags) return false;
   return node.metadata.tags.some((tag) => {
     const startTag = tag as StartTag;
-    if (!("type" in startTag) || startTag.type !== "start") return false;
+    if (typeof startTag === "string") return startTag === "start";
+    if (startTag.type !== "start") return false;
     const label = startTag.label ?? "default";
     return start === label;
   });

@@ -159,7 +159,15 @@ export type NodeMetadata = {
 /**
  * Represents a tag that can be associated with a node.
  */
-export type NodeTag = string | StartTag;
+export type NodeTag =
+  /**
+   * A simple start tag, which is the same as { type: "start" }.
+   */
+  | "start"
+  /**
+   * A tag that indicates that the node is a starting point for traversal.
+   */
+  | StartTag;
 
 /**
  * Represents a start tag, which is a special tag that can be associated with a

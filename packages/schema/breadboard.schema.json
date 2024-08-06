@@ -318,7 +318,8 @@
 		"NodeTag": {
 			"anyOf": [
 				{
-					"type": "string"
+					"type": "string",
+					"const": "start"
 				},
 				{
 					"$ref": "#/definitions/StartTag"

@@ -44,7 +44,9 @@ export class GraphRepresentation {
     this.nodes.forEach((node) => {
       node.metadata?.tags?.forEach((tag) => {
         const startTag = tag as StartTag;
-        if ("type" in startTag && startTag.type === "start") {
+        if (typeof startTag === "string" && startTag === "start") {
+          entries.add(node.id);
+        } else if (startTag.type === "start") {
           const label = startTag.label ?? "default";
           if (label === start) {
             entries.add(node.id);
