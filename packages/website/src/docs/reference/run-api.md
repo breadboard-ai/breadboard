@@ -17,10 +17,14 @@ The Run API provides a way to run and observe the running of a graph. It is desi
 To create a runner, you typically use a factory function provided by the specific implementation. The runner implements the `HarnessRunner` interface:
 
 ```typescript
-import { createRunner } from "@google-labs/breadboard/harness";
+import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
+
+const config: RunConfig = {
+  // ... Specify configuration
+};
 
 // Returns an instance of `HarnessRunner`.
-const runner = createRunner(graph);
+const runner = createRunner(config);
 ```
 
 ## Runner events
@@ -149,8 +153,15 @@ Let's walk through a more comprehensive example of using the Run API to run a gr
 import { createRunner } from "@google-labs/breadboard/harness";
 import type { Schema, InputValues } from "@google-labs/breadboard";
 
-// Assume we have a graph that takes text input, processes it, and returns a summary
-const graph = loadGraph("text-summarizer.json");
+// Assume we have a graph that takes text input, processes it,
+// and returns a summary.
+const config: RunConfig = {
+  url: "https://example.com/boards/text-summarizer.bgljson",
+  kits: [
+    /* specify kits */
+  ],
+  // ... more config
+};
 
 // Create the runner
 const runner = createRunner(graph);
