@@ -129,7 +129,6 @@ export class DefaultDataStore implements DataStore {
       dataStore.set(nodeTimeStamp, properties);
     }
 
-    let partsChanged = 0;
     for (const [property, value] of Object.entries(result.data.outputs)) {
       if (!isLLMContent(value) && !isLLMContentArray(value)) {
         continue;
@@ -169,7 +168,6 @@ export class DefaultDataStore implements DataStore {
 
             value.parts[j] = storedDataPart;
             partHandles.set(j, storedDataPart);
-            partsChanged++;
           } else if (isStoredData(part)) {
             let partHandles = propertyHandles.get(0);
             if (!partHandles) {
@@ -186,13 +184,10 @@ export class DefaultDataStore implements DataStore {
             const storedDataPart = await toStoredDataPart(part);
             value.parts[j] = storedDataPart;
             partHandles.set(j, storedDataPart);
-            partsChanged++;
           }
         }
       }
     }
-
-    console.log(`${groupId}: parts changed: ${partsChanged}`);
   }
 
   has(groupId: string) {
