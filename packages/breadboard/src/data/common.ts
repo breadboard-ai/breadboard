@@ -47,6 +47,9 @@ export function isLLMContentArray(
   nodeValue: unknown
 ): nodeValue is LLMContent[] {
   if (typeof nodeValue !== "object" || !nodeValue) return false;
+  if (!Array.isArray(nodeValue)) return false;
+
+  nodeValue = nodeValue.filter((item) => item.role !== "$metadata");
 
   return (
     Array.isArray(nodeValue) && nodeValue.every((entry) => isLLMContent(entry))
