@@ -6,9 +6,22 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { InputPlugin } from "../../../plugins/input-plugin.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
+
+export const googleDriveFileIdInputPlugin: InputPlugin = {
+  instantiate: {
+    customElementName: "bb-google-drive-file-id",
+  },
+  match: {
+    schema: {
+      type: "string",
+      behavior: ["google-drive-file-id"],
+    },
+  },
+};
 
 @customElement("bb-google-drive-file-id")
 export class GoogleDriveFileId extends LitElement {
