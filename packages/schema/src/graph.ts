@@ -149,7 +149,33 @@ export type NodeMetadata = {
    * Logging level.
    */
   logLevel?: "debug" | "info";
+  /**
+   * Tags associated with the node. Can be either a string or a structured tag,
+   * like a `StartTag`.
+   */
+  tags?: NodeTag[];
 };
+
+/**
+ * Represents a tag that can be associated with a node.
+ */
+export type NodeTag = string | StartTag;
+
+/**
+ * Represents a start tag, which is a special tag that can be associated with a
+ * node. It is used to indicate that the node is a starting point for traversal.
+ * The `label` field allows the user to specify additional way to specify the
+ * kind of traversal they are looking for.
+ */
+export type StartTag = {
+  type: "start";
+  label?: StartLabel;
+};
+
+/**
+ * Valid start labels.
+ */
+export type StartLabel = "default" | "describe";
 
 /**
  * Represents references to a "kit": a collection of `NodeHandlers`.
