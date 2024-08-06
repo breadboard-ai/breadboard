@@ -6,9 +6,22 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import type { InputPlugin } from "../../../plugins/input-plugin.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
+
+export const googleDriveQueryInputPlugin: InputPlugin = {
+  instantiate: {
+    customElementName: "bb-google-drive-query",
+  },
+  match: {
+    schema: {
+      type: "string",
+      behavior: ["google-drive-query"],
+    },
+  },
+};
 
 @customElement("bb-google-drive-query")
 export class GoogleDriveQuery extends LitElement {
