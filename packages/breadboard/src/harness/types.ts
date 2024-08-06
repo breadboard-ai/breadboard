@@ -5,6 +5,7 @@
  */
 
 import type { DataStore } from "../data/types.js";
+import { InspectableRunObserver } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
 import type { NodeProxyConfig } from "../remote/config.js";
 import type {
@@ -276,8 +277,48 @@ export type RunNodeEndEvent = Event & {
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
 export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
+  addObserver(observer: InspectableRunObserver): void;
+
+  /**
+   * Check if the runner is running or not.
+   *
+   * @returns -- true if the runner is currently running, or false otherwise.
+   */
   running(): boolean;
+
+  /**
+   * A convenience method to get the secret keys that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `secret` event.
+   *
+   * Returns null if the runner is not waiting for any secrets.
+   *
+   * @returns -- set of secret keys that the runner is waiting for, or null.
+   */
   secretKeys(): string[] | null;
+
+  /**
+   * A convenience method to get the input schema that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `input` event.
+   *
+   * Returns null if the runner is not waiting for any inputs.
+   *
+   * @returns -- the input schema that the runner is waiting for, or null.
+   */
   inputSchema(): Schema | null;
+
+  /**
+   * Starts or resumes the running of the board.
+   * If the runner is waiting for input, the input arguments will be used
+   * to provide the input values.
+   *
+   * If the runner is done, it will return true. If the runner is waiting
+   * for input or secret, it will return false.
+   *
+   * @param inputs -- input values to provide to the runner.
+   * @returns -- true if the runner is done, or false if it is waiting
+   *             for input.
+   */
   run(inputs?: InputValues): Promise<boolean>;
 };
