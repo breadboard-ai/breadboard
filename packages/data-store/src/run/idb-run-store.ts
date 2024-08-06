@@ -10,72 +10,91 @@ import {
   isLLMContent,
   isStoredData,
   RunStore,
+  RunTimestamp,
+  RunURL,
   toInlineDataPart,
 } from "@google-labs/breadboard";
 
-const RUN_DB = "runs";
+const RUN_LISTING_DB = "run-listing";
+const RUN_LISTING_VERSION = 1;
+
+interface RunListing extends idb.DBSchema {
+  urls: {
+    key: "url";
+    value: {
+      url: string;
+    };
+  };
+}
 
 export class IDBRunStore implements RunStore {
-  #writer: WritableStreamDefaultWriter | null = null;
-  #version = idb.openDB(RUN_DB).then((db) => {
-    const { version } = db;
-    db.close();
+  #writers: Map<RunURL, Map<RunTimestamp, WritableStreamDefaultWriter>> =
+    new Map();
 
-    return version;
-  });
+  #urlToDbName(url: string) {
+    return `run-${url}`;
+  }
+
+  constructor() {
+    // Remove the deprecated 'runs' database if it exists.
+    try {
+      idb.deleteDB("runs");
+    } catch (err) {
+      // Best effort - don't throw if there are any issues.
+    }
+  }
 
   /**
    * Starts tracking a run.
    *
    * @param storeId The ID of the store to create.
-   * @param limit The maximum number of old runs to keep around.
+   * @param releaseGroupIds The IDs of any old stores to be released.
    * @returns The store ID used.
    */
-  async start(storeId: string, limit = 2) {
-    if (this.#writer) {
-      throw new Error("Already writing a stream - please stop it first");
-    }
+  async start(url: RunURL): Promise<RunTimestamp> {
+    // 1. Store the URLs that we've seen (necessary to support the truncation
+    // and drop calls).
+    const runListing = await idb.openDB<RunListing>(
+      RUN_LISTING_DB,
+      RUN_LISTING_VERSION,
+      {
+        upgrade(db) {
+          db.createObjectStore("urls", { keyPath: "url" });
+        },
+      }
+    );
+    await runListing.put("urls", { url });
+    runListing.close();
 
-    // Get the current version, bump it and set it for future starts.
-    const newVersion = (await this.#version) + 1;
-    this.#version = Promise.resolve(newVersion);
+    // 2. Create a database and object store for this particular run.
+    const dbName = this.#urlToDbName(url);
+    const timestamp = Date.now();
+    const timestampKey = timestamp.toString();
+    const dbVersion = await idb.openDB(dbName);
+    const nextVersion = dbVersion.version + 1;
+    dbVersion.close();
 
-    // Now figure out the new version.
-    const dbNewVersion = await idb.openDB(RUN_DB, newVersion, {
-      blocked(currentVersion, blockedVersion, event) {
-        console.warn(
-          `IDB Store blocked version ${blockedVersion} by version ${currentVersion}`,
-          event
-        );
-      },
-
-      upgrade(db) {
-        db.createObjectStore(storeId, {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-
-        [...db.objectStoreNames]
-          .sort((a, b) => {
-            if (a > b) return -1;
-            if (a < b) return 1;
-            return 0;
-          })
-          .slice(limit)
-          .map((storeName) => {
-            // Delete the entries.
-            db.deleteObjectStore(storeName);
-          });
-      },
-    });
-
-    dbNewVersion.close();
-
-    // Now set up a stream to write to the new version.
+    // 3. Set up a stream to write to the new database.
     let db: idb.IDBPDatabase;
     const stream = new WritableStream({
       async start() {
-        db = await idb.openDB(RUN_DB);
+        db = await idb.openDB(dbName, nextVersion, {
+          blocked(currentVersion, blockedVersion, event) {
+            console.warn(
+              `IDB Store blocked version ${blockedVersion} by version ${currentVersion}`,
+              event
+            );
+          },
+
+          upgrade(db) {
+            db.createObjectStore(timestampKey, {
+              keyPath: "id",
+              autoIncrement: true,
+            });
+          },
+        });
+
+        db.close();
       },
       async write(chunk: HarnessRunResult) {
         try {
@@ -100,14 +119,20 @@ export class IDBRunStore implements RunStore {
             }
           }
 
-          const tx = db.transaction(storeId, "readwrite");
+          db = await idb.openDB(dbName);
+          const tx = db.transaction(timestampKey, "readwrite");
           await Promise.all([tx.store.add(result), tx.done]);
         } catch (err) {
-          console.warn("Unable to write to storage", chunk);
+          console.warn(
+            `Unable to write to storage (URL: ${url}, Timestamp: ${timestampKey})`,
+            chunk
+          );
           console.warn(err);
           if (this.abort) {
             this.abort();
           }
+        } finally {
+          db.close();
         }
       },
       abort() {
@@ -118,62 +143,132 @@ export class IDBRunStore implements RunStore {
       },
     });
 
-    this.#writer = stream.getWriter();
-    return storeId;
+    // 4. Store the writer and return the timestamp.
+    let store = this.#writers.get(url);
+    if (!store) {
+      store = new Map<
+        RunTimestamp,
+        WritableStreamDefaultWriter<HarnessRunResult>
+      >();
+      this.#writers.set(url, store);
+    }
+
+    if (store.has(timestamp)) {
+      throw new Error("Already writing a stream - please stop it first");
+    }
+
+    store.set(timestamp, stream.getWriter());
+    return timestamp;
   }
 
-  async write(result: HarnessRunResult) {
-    if (!this.#writer) {
+  async write(
+    url: RunURL,
+    timestamp: RunTimestamp,
+    result: HarnessRunResult
+  ): Promise<void> {
+    const store = this.#writers.get(url);
+    if (!store) {
       throw new Error("No active stream - please start one before writing");
     }
 
-    await this.#writer.ready;
-    this.#writer.write(result);
-  }
-
-  async stop() {
-    if (!this.#writer) {
+    const writer = store.get(timestamp);
+    if (!writer) {
       throw new Error("No active stream - please start one before writing");
     }
 
-    await this.#writer.ready;
-    this.#writer.close();
-    this.#writer = null;
+    await writer.ready;
+    writer.write(result);
   }
 
-  async abort() {
-    if (!this.#writer) {
+  async stop(url: RunURL, timestamp: RunTimestamp) {
+    const store = this.#writers.get(url);
+    if (!store) {
       throw new Error("No active stream - please start one before writing");
     }
 
-    await this.#writer.ready;
-    this.#writer.abort();
-    this.#writer = null;
+    const writer = store.get(timestamp);
+    if (!writer) {
+      throw new Error("No active stream - please start one before writing");
+    }
+
+    await writer.ready;
+    writer.close();
+    store.delete(timestamp);
   }
 
-  async drop() {
-    await idb.deleteDB(RUN_DB);
+  async abort(url: RunURL, timestamp: RunTimestamp) {
+    const store = this.#writers.get(url);
+    if (!store) {
+      throw new Error("No active stream - please start one before writing");
+    }
+
+    const writer = store.get(timestamp);
+    if (!writer) {
+      throw new Error("No active stream - please start one before writing");
+    }
+
+    await writer.ready;
+    writer.abort();
+    store.delete(timestamp);
   }
 
-  async getNewestRuns(
-    limit = Number.POSITIVE_INFINITY
-  ): Promise<HarnessRunResult[][]> {
-    await this.#version;
+  async drop(url?: RunURL) {
+    if (url) {
+      await idb.deleteDB(this.#urlToDbName(url));
+      return;
+    }
 
-    const db = await idb.openDB(RUN_DB);
-    const storeNames = [...db.objectStoreNames]
+    const runListing = await idb.openDB<RunListing>(RUN_LISTING_DB);
+    if (runListing.objectStoreNames.contains("urls")) {
+      const urls = await runListing.getAll("urls");
+      for (const item of urls) {
+        await idb.deleteDB(this.#urlToDbName(item.url));
+      }
+    }
+
+    runListing.close();
+    await idb.deleteDB(RUN_LISTING_DB);
+  }
+
+  async truncate(url: RunURL, limit: number): Promise<void> {
+    const dbName = this.#urlToDbName(url);
+    const db = await idb.openDB(dbName);
+    const nextVersion = db.version + 1;
+    const storesToRemove = [...db.objectStoreNames]
       .sort((a, b) => {
-        if (a > b) return -1;
-        if (a < b) return 1;
-        return 0;
+        return Number.parseInt(b) - Number.parseInt(a);
       })
-      .slice(0, limit);
+      .slice(limit);
+    db.close();
 
+    // Now re-open the database with a new version and use that operation to
+    // delete the stores that are no longer needed.
+    const truncateDb = await idb.openDB(this.#urlToDbName(url), nextVersion, {
+      upgrade(db) {
+        for (const store of storesToRemove) {
+          db.deleteObjectStore(store);
+        }
+      },
+    });
+    truncateDb.close();
+  }
+
+  async getStoredRuns(
+    url: RunURL
+  ): Promise<Map<RunTimestamp, HarnessRunResult[]>> {
+    const dbName = this.#urlToDbName(url);
+    const db = await idb.openDB(dbName);
     const runs = await Promise.all(
-      storeNames.map((storeName) => db.getAll(storeName))
+      [...db.objectStoreNames].map(async (timestamp) => {
+        const events = (await db.getAll(timestamp)) as HarnessRunResult[];
+        return [Number.parseInt(timestamp), events] as [
+          RunTimestamp,
+          HarnessRunResult[],
+        ];
+      })
     );
     db.close();
 
-    return runs;
+    return new Map(runs);
   }
 }
