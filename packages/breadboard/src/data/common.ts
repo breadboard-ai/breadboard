@@ -43,6 +43,16 @@ export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
   return "parts" in nodeValue && Array.isArray(nodeValue.parts);
 }
 
+export function isLLMContentArray(
+  nodeValue: unknown
+): nodeValue is LLMContent[] {
+  if (typeof nodeValue !== "object" || !nodeValue) return false;
+
+  return (
+    Array.isArray(nodeValue) && nodeValue.every((entry) => isLLMContent(entry))
+  );
+}
+
 export const isDataCapability = (value: unknown): value is DataCapability => {
   if (typeof value !== "object" || value === null) return false;
   const data = value as DataCapability;
