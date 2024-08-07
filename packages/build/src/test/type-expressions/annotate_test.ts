@@ -48,3 +48,21 @@ test("can annotate basic type with behavior", () => {
     }
   );
 });
+
+test("behaviors are additive", () => {
+  assert.deepEqual(
+    toJSONSchema(
+      // $ExpectType "string"
+      annotate(
+        annotate("string", {
+          behavior: ["llm-content"],
+        }),
+        { behavior: ["llm-content", "config"] }
+      )
+    ),
+    {
+      type: "string",
+      behavior: ["llm-content", "config"],
+    }
+  );
+});
