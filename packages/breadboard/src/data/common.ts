@@ -56,6 +56,10 @@ export function isLLMContentArray(
   );
 }
 
+export function isMetadataEntry(nodeValue: LLMContent) {
+  return nodeValue.role === "$metadata";
+}
+
 export const isDataCapability = (value: unknown): value is DataCapability => {
   if (typeof value !== "object" || value === null) return false;
   const data = value as DataCapability;

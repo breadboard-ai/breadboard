@@ -27,6 +27,7 @@ export {
   isInlineData,
   isStoredData,
   isSerializedData,
+  isMetadataEntry,
   asBlob,
   asBase64,
   toInlineDataPart,
