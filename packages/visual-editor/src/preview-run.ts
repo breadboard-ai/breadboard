@@ -11,7 +11,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
-import * as BreadboardUI from "./ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   type InputValues,
   Kit,
@@ -21,11 +21,9 @@ import {
   createLoader,
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { InputEnterEvent } from "./ui/events/events.js";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
 import { SettingsStore } from "./data/settings-store.js";
-import { inputsFromSettings } from "./data/inputs";
 import { until } from "lit/directives/until.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
@@ -205,7 +203,7 @@ export class PreviewRun extends LitElement {
       diagnostics: true,
       loader: this.#loader,
       interactiveSecrets: true,
-      inputs: inputsFromSettings(this.#settings),
+      inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
     };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
@@ -332,7 +330,9 @@ export class PreviewRun extends LitElement {
             .settings=${this.#settings.values}
             .events=${events}
             .eventPosition=${eventPosition}
-            @bbinputenter=${async (event: InputEnterEvent) => {
+            @bbinputenter=${async (
+              event: BreadboardUI.Events.InputEnterEvent
+            ) => {
               const data = event.data;
               const handlers = this.#handlers.get(event.id) || [];
               if (handlers.length === 0) {

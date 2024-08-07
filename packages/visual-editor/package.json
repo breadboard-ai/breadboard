@@ -24,33 +24,9 @@
     "./core-kit.js": "./build/core-kit.js",
     "./json-kit.js": "./build/json-kit.js",
     "./template-kit.js": "./build/template-kit.js",
-    "./editor": {
-      "types": "./build/ui/elements/editor/editor.d.ts",
-      "default": "./build/ui/elements/editor/editor.js"
-    },
     "./providers": {
       "types": "./build/providers/types.d.ts",
       "default": "./build/providers/types.js"
-    },
-    "./user-input": {
-      "types": "./build/ui/elements/input/user-input.d.ts",
-      "default": "./build/ui/elements/input/user-input.js"
-    },
-    "./llm-input": {
-      "types": "./build/ui/elements/input/llm-input/llm-input.d.ts",
-      "default": "./build/ui/elements/input/llm-input/llm-input.js"
-    },
-    "./llm-input-array": {
-      "types": "./build/ui/elements/input/llm-input/llm-input-array.d.ts",
-      "default": "./build/ui/elements/input/llm-input/llm-input-array.js"
-    },
-    "./llm-output-array": {
-      "types": "./build/ui/elements/llm-output/llm-output-array.d.ts",
-      "default": "./build/ui/elements/llm-output/llm-output-array.js"
-    },
-    "./llm-output": {
-      "types": "./build/ui/elements/llm-output/llm-output.d.ts",
-      "default": "./build/ui/elements/llm-output/llm-output.js"
     }
   },
   "types": "build/index.d.ts",
@@ -72,6 +48,7 @@
         "../agent-kit:build",
         "../breadboard:build",
         "../build:build",
+        "../shared-ui:build",
         "../core-kit:build",
         "../data-store:build",
         "../example-boards:build",
@@ -91,6 +68,7 @@
       "dependencies": [
         "../agent-kit:build:tsc",
         "../breadboard:build:tsc",
+        "../shared-ui:build:tsc",
         "../build:build:tsc",
         "../core-kit:build:tsc",
         "../data-store:build:tsc",
@@ -289,6 +267,7 @@
     "@breadboard-ai/example-boards": "0.2.1",
     "@breadboard-ai/google-drive-kit": "0.2.2",
     "@breadboard-ai/manifest": "^0.4.1",
+    "@breadboard-ai/shared-ui": "^1.15.0",
     "@breadboard-ai/python-wasm": "0.1.4",
     "@codemirror/autocomplete": "^6.18.0",
     "@codemirror/commands": "^6.6.0",

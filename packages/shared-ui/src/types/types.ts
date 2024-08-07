@@ -92,6 +92,11 @@ export interface SettingsList {
   [SETTINGS_TYPE.CONNECTIONS]: SettingEntry;
 }
 
+export type SettingsItems = Map<
+  SettingEntry["value"]["name"],
+  SettingEntry["value"]
+>;
+
 export type Settings = {
   [K in keyof SettingsList]: {
     configuration: {
@@ -106,7 +111,7 @@ export type Settings = {
        */
       customElement?: string;
     };
-    items: Map<SettingEntry["value"]["name"], SettingEntry["value"]>;
+    items: SettingsItems;
   };
 };
 
@@ -169,4 +174,12 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
 export interface RecentBoard {
   title: string;
   url: string;
+}
+
+export interface SettingsStore {
+  values: Settings;
+  getSection(section: SETTINGS_TYPE): Settings[typeof section];
+  getItem(section: SETTINGS_TYPE, name: string): void;
+  save(settings: Settings): Promise<void>;
+  restore(): Promise<void>;
 }

@@ -6,7 +6,7 @@
 
 import { HarnessProxyConfig, RunConfig } from "@google-labs/breadboard/harness";
 import { SettingsStore } from "./settings-store";
-import * as BreadboardUI from "../ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 type SettingEntry = {
   name: string;
