@@ -102,6 +102,7 @@ export {
   isFunctionResponseCapabilityPart,
   isLLMContent,
   isLLMContentArray,
+  isMetadataEntry,
   isTextCapabilityPart,
   toInlineDataPart,
   toStoredDataPart,

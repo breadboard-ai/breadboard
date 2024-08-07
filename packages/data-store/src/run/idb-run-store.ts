@@ -9,6 +9,7 @@ import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
   isLLMContent,
   isLLMContentArray,
+  isMetadataEntry,
   isStoredData,
   LLMContent,
   RunStore,
@@ -114,6 +115,10 @@ export class IDBRunStore implements RunStore {
                 ? [output]
                 : output;
               for (const output of outputs) {
+                if (isMetadataEntry(output)) {
+                  continue;
+                }
+
                 for (let i = 0; i < output.parts.length; i++) {
                   const part = output.parts[i];
                   if (!isStoredData(part)) {

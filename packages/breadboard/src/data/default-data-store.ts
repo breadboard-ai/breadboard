@@ -20,6 +20,7 @@ import {
   toStoredDataPart,
   retrieveAsBlob as genericRetrieveAsBlob,
   isLLMContentArray,
+  isMetadataEntry,
 } from "./common.js";
 
 export type GroupID = string;
@@ -147,6 +148,9 @@ export class DefaultDataStore implements DataStore {
 
       for (let i = 0; i < values.length; i++) {
         const value = values[i];
+        if (isMetadataEntry(value)) {
+          continue;
+        }
 
         for (let j = 0; j < value.parts.length; j++) {
           const part = value.parts[j];

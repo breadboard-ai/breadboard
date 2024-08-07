@@ -8,6 +8,7 @@ import { HarnessRunResult } from "../harness/types.js";
 import {
   isLLMContent,
   isLLMContentArray,
+  isMetadataEntry,
   isStoredData,
   toInlineDataPart,
 } from "./common.js";
@@ -48,6 +49,10 @@ export class DefaultRunStore implements RunStore {
 
         const outputs = isLLMContent(output) ? [output] : output;
         for (const output of outputs) {
+          if (isMetadataEntry(output)) {
+            continue;
+          }
+
           for (let i = 0; i < output.parts.length; i++) {
             const part = output.parts[i];
             if (!isStoredData(part)) {
