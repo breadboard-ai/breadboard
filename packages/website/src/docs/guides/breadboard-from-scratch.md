@@ -342,8 +342,45 @@ yourself and other users.
 
 ### Add an API connection
 
-> [!NOTE]
-> Coming soon
+The **Visual Editor** is a static frontend application. It has no built-in
+concept of identity or access control. Instead, it can be configured to use a
+**Connection Server** to provide it with access tokens that can be used to
+access remote APIs.
+
+In this section, we will walk through this process using the Google Drive API as
+an example.
+
+#### Connect the Visual Editor to the Connection Server
+
+The Visual Editor chooses a Connection Server based on a hard-coded origin map.
+To get your Visual Editor to connect to your Connection Server, you will need to
+edit this map.
+
+Open [`packages/visual-editor/src/index.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/src/index.ts)
+in a text editor.
+
+Update the value of **`ORIGIN_TO_CONNECTION_SERVER`** to contain the origins of
+your Visual Editor and Connection Server.
+
+```ts
+const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
+  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}",
+};
+```
+
+Re-deploy the Visual Editor.
+
+```sh
+cd packages-visual/editor
+```
+
+```sh
+npm run build
+```
+
+```sh
+gcloud app deploy
+```
 
 ---
 
