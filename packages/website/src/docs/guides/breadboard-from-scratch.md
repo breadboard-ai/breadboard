@@ -15,25 +15,61 @@ and all current features.
 > Writing this document is part of an effort to document and improve this
 > workflow. Expect this process to change over time.
 
-## Prerequisites
+## Prerequisites: Required software
 
-These instructions assume that the reader has a normal consumer (gmail.com)
-Google account. They will detail how to set up a new Google Cloud project. If
-you are using an existing Cloud project, or are a Workspace user, some of these
-steps may be different or may not apply.
-
-For Workspace users, some steps may require administrator privileges.
-
-Required software:
+This guide assumes that the reader has the following software installed in their
+local environment.
 
 - Git
 - Node (v20.14.0 or higher)
 - npm
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
 
-## System setup
+## Part 1: Google Cloud setup
 
-Start by creating a local clone of the Breadboard Git repo.
+This guide will show you how to deploy Breadboard using Google Cloud. All three
+servers will be deployed using [AppEngine](https://cloud.google.com/appengine).
+
+### Create a new Google Cloud project
+
+> [!NOTE]
+> These instructions assume that the reader has a normal consumer (gmail.com)
+> Google account. They will detail how to set up a new Google Cloud project. If
+> you are using an existing Cloud project, or are a Workspace user, some of these
+> steps may be different or may not apply.
+
+> [!NOTE]
+> For Workspace users, some steps may require administrator privileges.
+
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/) and
+   accept the Cloud terms of service if you haven't already.
+1. Click "Select a Project", and click "NEW PROJECT"
+1. Give your project a name and complete the Cloud project setup
+
+### Enable AppEngine and Cloud Billing
+
+AppEngine requires a billing account. This section will walk you through the
+steps, assuming that no previous setup has been performed. See [this help center
+article](https://cloud.google.com/appengine/docs/standard/managing-projects-apps-billing)
+for more information.
+
+> [!NOTE]
+> Coming soon
+
+### Configure the AppEngine service account
+
+> [!NOTE]
+> Coming soon
+
+## Part 2: Deploying the servers
+
+Breadboard is composed of three separate servers: the Visual Editor, the
+Connection Server, and the Board Server. In this step, we will deploy each
+server using Google AppEngine.
+
+### Create a local copy of the repo
+
+You will need a local clone of the Breadboard Git repo.
 
 ```sh
 git clone https://github.com/breadboard-ai/breadboard
@@ -56,27 +92,26 @@ npm run build
 These steps should complete without error. If you encounter any issues, please
 feel free to get in touch with the team on Discord.
 
-## Part 1: Google Cloud setup
-
-1. Navigate to https://console.cloud.google.com/ and accept the Cloud terms of
-   service if you haven't already.
-1. Click "Select a Project", and click "NEW PROJECT"
-1. Give your project a name and complete the Cloud project setup
-
-> [!NOTE]
-> TODO: Set up AppEngine service account
-
-## Deploying the Visual Editor
+### Deploy the Visual Editor
 
 > [!NOTE]
 > Coming soon
 
-## Deploying the Connections Server
+### Deploy the Connection Server
 
 > [!NOTE]
 > Coming soon
 
-## Deploying the Board Server
+### Deploy the Board Server
+
+> [!NOTE]
+> Coming soon
+
+## Part 2: Tying it all together
+
+So far we have deployed each server as a separate, standalone entity. Further
+configuration is required to enable the Visual Editor to make use of the
+Connection and Board Servers.
 
 > [!NOTE]
 > Coming soon
