@@ -212,7 +212,7 @@ From the repository root:
 cd packages/connection-server
 ```
 
-```
+```sh
 gcloud app deploy
 ```
 
