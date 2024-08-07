@@ -142,8 +142,20 @@ feel free to get in touch with the team on Discord.
 
 ### Deploy the Visual Editor
 
-> [!NOTE]
-> Coming soon
+From the root of the repository.
+
+```sh
+cd packages/visual-editor
+```
+
+```sh
+gcloud app deploy
+```
+
+This will deploy the Visual Editor as the default App Engine application. You
+should now be able to access and use the Visual Editor at the URL given in the
+console output. You can also see the deployed service on the [App Engine
+dashboard](https://console.cloud.google.com/appengine/services).
 
 ### Deploy the Connection Server
 
