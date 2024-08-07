@@ -25,6 +25,8 @@ local environment.
 - npm
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
 
+---
+
 ## Part 1: Google Cloud setup
 
 This guide will show you how to deploy Breadboard using Google Cloud. All three
@@ -43,8 +45,8 @@ servers will be deployed using [App Engine](https://cloud.google.com/appengine).
 
 1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/) and
    accept the Cloud terms of service if you haven't already.
-1. Click **Select a Project**, and click **NEW PROJECT**
-1. Give your project a name and complete the Cloud project setup
+2. Click **Select a Project**, and click **NEW PROJECT**
+3. Give your project a name and complete the Cloud project setup
 
 ### Configure the `gcloud` CLI
 
@@ -109,6 +111,8 @@ This will interactively walk through the process of selecting a region to which 
 deploy your application, plus other setup options. For more information and
 additional options, see the [SDK
 documentation](https://cloud.google.com/sdk/gcloud/reference/app/create).
+
+---
 
 ## Part 2: Deploying the servers
 
@@ -231,6 +235,12 @@ You will need to select a location for your database. See the [help
 center](https://cloud.google.com/firestore/docs/locations) for available
 locations and for more information.
 
+Choose an appropriate location:
+
+```sh
+LOCATION="your-selected-location"
+```
+
 Create a Firestore database called `board-server`:
 
 ```sh
@@ -248,16 +258,67 @@ origins by adding the origin for your Visual Editor.
 1. Open the [board-server](https://console.cloud.google.com/firestore/databases/board-server)
    database in Cloud Console.
 2. Click **START COLLECTION**
-3. Create a collection called `configuration` with a single document called
-   `board-server-cors`
-4. Add a single field called `allow` with a type of `array`
+3. Create a collection called **`configuration`** with a single document called
+   **`board-server-cors`**
+4. Add a single field called **`allow`** with a type of **`array`**
 5. Add the origin of your Visual Editor instance to the array
 
 #### Add user(s)
 
+Each user who wishes to connect to a Board Server is identified by an API key.
+These keys are created by an admin with write access to the `board-server` DB.
+
+From the repository root:
+
+```sh
+cd packages/board-server
+```
+
+```sh
+npm run add ${USERNAME}
+```
+
+This will run the user creation script and output the API key. The API key can
+also be read from the Firestore database under `/users/{USERNAME}/apiKey`. The
+API key will be used later when adding a provider in the Visual Editor.
+
+> [!NOTE]
+> All data in a board server is globally readable. The API key is only validated
+> when writing to the database.
+
+#### Update `app.yaml`
+
+By default, the Board Server is deployed as the default App Engine service.
+Since we have deployed the Visual Editor as the default service, we want to
+specify an explicit service name.
+
+1. Open [`packages/board-server/app.yaml`](https://github.com/breadboard-ai/breadboard/blob/main/packages/board-server/app.yaml)
+   in a text editor.
+2. At the top of the file, add the following line:
+
+```yaml
+service: boards
+# REST OF FILE REMAINS THE SAME
+```
+
 #### Deploy the server
 
-## Part 2: Tying it all together
+From the repository root
+
+```sh
+cd packages/board-server
+```
+
+```sh
+npm run deploy
+```
+
+This will deploy the service to App Engine. You can see details of the running
+service in the [App Engine console](https://console.cloud.google.com/appengine/services)
+
+---
+
+## Part 3: Tying it all together
 
 So far we have deployed each server as a separate, standalone entity. Further
 configuration is required to enable the Visual Editor to make use of the
@@ -265,6 +326,8 @@ Connection and Board Servers.
 
 > [!NOTE]
 > Coming soon
+
+---
 
 ## APPENDIX: Deploying the Visual Editor on Firebase hosting
 
@@ -279,9 +342,9 @@ These instructions require the [Firebase CLI](https://firebase.google.com/docs/c
 ### Enable Firebase
 
 1. Navigate to https://console.firebase.google.com/ and click "Create a project"
-1. Complete the project creation flow, or click "Add Firebase to a Google Cloud
+2. Complete the project creation flow, or click "Add Firebase to a Google Cloud
    project" to use an existing Cloud project.
-1. Select the Google Cloud project that you would like to use
+3. Select the Google Cloud project that you would like to use
 
 ### Set up the Firebase CLI
 
