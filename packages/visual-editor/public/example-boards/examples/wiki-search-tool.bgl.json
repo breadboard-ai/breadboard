@@ -1,7 +1,7 @@
 {
   "title": "Tool: Wiki Search",
   "description": "A tool designed to take keywords, make use of the Wikipedia API, and get articles based on the keywords.",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "nodes": [
     {
       "type": "input",
