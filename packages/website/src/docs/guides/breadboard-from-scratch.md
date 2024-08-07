@@ -87,7 +87,7 @@ it is no longer possible for App Engine to make this change automatically. It
 will need to be done manually.
 
 > [!NOTE]
-> If you are using an older project, or have already configured a service
+> If you are using an established project, or have already configured a service
 > account, this step may not be necessary. See [the troubleshooting
 > guide](https://cloud.google.com/appengine/docs/standard/troubleshooting#default-sa-permissions)
 > for more information.
@@ -159,8 +159,67 @@ dashboard](https://console.cloud.google.com/appengine/services).
 
 ### Deploy the Connection Server
 
-> [!NOTE]
-> Coming soon
+The Connection Server is responsible for hosting client secrets and creating
+access tokens for boards running in the Visual Editor. See the
+[README](https://github.com/breadboard-ai/breadboard/blob/main/packages/connection-server/README.md)
+for more information.
+
+#### Create a secrets file
+
+Create a new JSON file called `packages/connection-server/secrets/secrets.json`:
+
+```json
+{
+  "connections": []
+}
+```
+
+By default, our server will host no secrets. We will come back and add secrets in **Part 2**.
+
+#### Create an `app.yaml` file
+
+Create a new YAML file at `packages/connection-server/app.yaml`:
+
+```yaml
+service: connections
+
+runtime: nodejs22
+
+instance_class: F1
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
+
+env_variables:
+  CONNECTIONS_FILE: "secrets/secrets.json"
+  ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
+```
+
+Be sure to provide the
+[origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin) of
+your Visual Editor as the value of the `ALLOWED_ORIGINS` variable. Multiple
+origins can be separated by spaces. Requests from origins not in this list will
+be rejected.
+
+#### Deploy the server
+
+From the repository root:
+
+```sh
+cd packages/connection-server
+```
+
+```
+gcloud app deploy
+```
+
+Your Connection Server is now deployed to an App Engine service called `connections`.
+
+However, it does not have any connections configuered, and your Visual Editor is
+not yet configured to call it. We will set up this configuration in **Part 2**.
 
 ### Deploy the Board Server
 
