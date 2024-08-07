@@ -225,7 +225,33 @@ not yet configured to call it. We will set up this configuration in **Part 2**.
 
 #### Create a Firestore database
 
+Board Server depends on Cloud Firestore for its storage backend.
+
+You will need to select a location for your database. See the [help
+center](https://cloud.google.com/firestore/docs/locations) for available
+locations and for more information.
+
+Create a Firestore database called `board-server`:
+
+```sh
+gcloud firestore databases create --location=${LOCATION} --database=board-server
+```
+
+If you have not already enabled the Firestore API in your Cloud project, you
+will be prompted to do so.
+
 #### Configure CORS
+
+CORS configuration for Board Server lives in Firestore. Configure the allowed
+origins by adding the origin for your Visual Editor.
+
+1. Open the [board-server](https://console.cloud.google.com/firestore/databases/board-server)
+   database in Cloud Console.
+2. Click **START COLLECTION**
+3. Create a collection called `configuration` with a single document called
+   `board-server-cors`
+4. Add a single field called `allow` with a type of `array`
+5. Add the origin of your Visual Editor instance to the array
 
 #### Add user(s)
 
