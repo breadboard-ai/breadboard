@@ -8,7 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import { map } from "lit/directives/map.js";
 import {
-  isArrayOfLLMContentBehavior,
+  isLLMContentArrayBehavior,
   isBoardBehavior,
   isCodeBehavior,
   isGoogleDriveFileId,
@@ -37,6 +37,7 @@ import {
   getMinItemsFromProperty,
 } from "../../utils/llm-content";
 import { UserOutputEvent } from "../../events/events";
+import "./delegating-input.js";
 
 @customElement("bb-user-input")
 export class UserInput extends LitElement {
@@ -215,10 +216,10 @@ export class UserInput extends LitElement {
               if (
                 isPortSpecBehavior(input.schema) ||
                 isLLMContentBehavior(input.schema) ||
-                isArrayOfLLMContentBehavior(input.schema) ||
+                isLLMContentArrayBehavior(input.schema) ||
                 isBoardBehavior(input.schema, inputValue)
               ) {
-                if (isArrayOfLLMContentBehavior(input.schema)) {
+                if (isLLMContentArrayBehavior(input.schema)) {
                   (el as unknown as LLMInputArray).processAllOpenParts();
                 } else if (isLLMContentBehavior(input.schema)) {
                   (el as unknown as LLMInput).processAllOpenParts();
@@ -292,7 +293,7 @@ export class UserInput extends LitElement {
           if (
             input.schema.description &&
             !isLLMContentBehavior(input.schema) &&
-            !isArrayOfLLMContentBehavior(input.schema)
+            !isLLMContentArrayBehavior(input.schema)
           ) {
             description = html`<span class="description"
               >${input.schema.description}</span
@@ -335,220 +336,147 @@ export class UserInput extends LitElement {
           }
 
           const id = this.#createId(input.name);
-          switch (input.schema.type) {
-            case "array": {
-              if (isArrayOfLLMContentBehavior(input.schema)) {
-                let value: LLMContent[] | null =
-                  (input.value as LLMContent[]) ?? null;
-                if (!value) {
-                  const unparsedValue = input.schema.default;
-                  value = unparsedValue
-                    ? JSON.parse(unparsedValue)
-                    : [{ parts: [], role: "user" }];
-                }
-
-                const allow = createAllowListFromProperty(input.schema);
-                const minItems = getMinItemsFromProperty(input.schema);
-
-                inputField = html`<bb-llm-input-array
-                  id="${id}"
-                  name="${id}"
-                  .description=${input.schema.description || null}
-                  .values=${value}
-                  .allow=${allow}
-                  .minItems=${minItems}
-                ></bb-llm-input-array>`;
-              } else {
-                let renderableValue = input.value;
-                if (typeof input.value !== "string") {
-                  renderableValue = JSON.stringify(input.value);
-                }
-
-                let items: Array<string | number | object> | null = null;
-                try {
-                  items = JSON.parse(renderableValue as string);
-                } catch (err) {
-                  items = null;
-                }
-
-                inputField = html`<bb-array-editor
-                  id="${id}"
-                  name="${id}"
-                  .items=${items}
-                  .type=${resolveArrayType(input.schema)}
-                  .behavior=${resolveBehaviorType(
-                    input.schema.items
-                      ? Array.isArray(input.schema.items)
-                        ? input.schema.items[0]
-                        : input.schema.items
-                      : input.schema
-                  )}
-                  .graph=${this.graph}
-                  .providers=${this.providers}
-                  .providerOps=${this.providerOps}
-                ></bb-array-editor>`;
-              }
-              break;
-            }
-
-            case "object": {
-              if (isPortSpecBehavior(input.schema)) {
-                inputField = html`<bb-schema-editor
-                  id=${id}
-                  name=${id}
-                  .nodeId=${input.name}
-                  .schema=${input.value}
-                  .schemaVersion=${0}
-                ></bb-schema-editor>`;
-                break;
-              } else if (isLLMContentBehavior(input.schema)) {
-                if (!isLLMContent(input.value)) {
-                  input.value = undefined;
-                }
-
-                inputField = html`<bb-llm-input
-                  id="${id}"
-                  name="${id}"
-                  .schema=${input.schema}
-                  .value=${input.value ?? defaultValue ?? null}
-                  .description=${input.schema.description || null}
-                ></bb-llm-input>`;
-                break;
-              } else if (isBoardBehavior(input.schema, input.value)) {
-                const board =
-                  (typeof input.value === "string"
-                    ? input.value
-                    : input.value?.path) ?? "";
-                inputField = html`<bb-board-selector
-                  id="${id}"
-                  name="${id}"
-                  .graph=${this.graph}
-                  .subGraphs=${this.graph?.graphs ?? null}
-                  .providers=${this.providers}
-                  .providerOps=${this.providerOps}
-                  .value=${board}
-                  }
-                ></bb-board-selector>`;
-                break;
-              }
-              inputField = html`<textarea
-                @blur=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLTextAreaElement)) {
-                    return;
+          if (
+            // TODO(aomarks) Once all inputs are converted to the plugin system,
+            // we simply render delegating-input and let it figure it all out.
+            isGoogleDriveFileId(input.schema) ||
+            isGoogleDriveQuery(input.schema)
+          ) {
+            inputField = html`<bb-delegating-input
+              id=${id}
+              .schema=${input.schema}
+              .value=${input.value ?? defaultValue}
+            ></bb-delegating-input>`;
+          } else {
+            switch (input.schema.type) {
+              case "array": {
+                if (isLLMContentArrayBehavior(input.schema)) {
+                  let value: LLMContent[] | null =
+                    (input.value as LLMContent[]) ?? null;
+                  if (!value) {
+                    const unparsedValue = input.schema.default;
+                    value = unparsedValue
+                      ? JSON.parse(unparsedValue)
+                      : [{ parts: [], role: "user" }];
                   }
 
+                  const allow = createAllowListFromProperty(input.schema);
+                  const minItems = getMinItemsFromProperty(input.schema);
+
+                  inputField = html`<bb-llm-input-array
+                    id="${id}"
+                    name="${id}"
+                    .description=${input.schema.description || null}
+                    .values=${value}
+                    .allow=${allow}
+                    .minItems=${minItems}
+                  ></bb-llm-input-array>`;
+                } else {
+                  let renderableValue = input.value;
+                  if (typeof input.value !== "string") {
+                    renderableValue = JSON.stringify(input.value);
+                  }
+
+                  let items: Array<string | number | object> | null = null;
                   try {
-                    if (!evt.target.value) {
-                      return;
-                    }
-
-                    JSON.parse(evt.target.value);
+                    items = JSON.parse(renderableValue as string);
                   } catch (err) {
-                    evt.target.setCustomValidity("Please enter valid JSON");
-                    evt.target.reportValidity();
-                  }
-                }}
-                @input=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLTextAreaElement)) {
-                    return;
+                    items = null;
                   }
 
-                  evt.target.setCustomValidity("");
-                  try {
-                    if (!evt.target.value) {
-                      return;
+                  inputField = html`<bb-array-editor
+                    id="${id}"
+                    name="${id}"
+                    .items=${items}
+                    .type=${resolveArrayType(input.schema)}
+                    .behavior=${resolveBehaviorType(
+                      input.schema.items
+                        ? Array.isArray(input.schema.items)
+                          ? input.schema.items[0]
+                          : input.schema.items
+                        : input.schema
+                    )}
+                    .graph=${this.graph}
+                    .providers=${this.providers}
+                    .providerOps=${this.providerOps}
+                  ></bb-array-editor>`;
+                }
+                break;
+              }
+
+              case "object": {
+                if (isPortSpecBehavior(input.schema)) {
+                  inputField = html`<bb-schema-editor
+                    id=${id}
+                    name=${id}
+                    .nodeId=${input.name}
+                    .schema=${input.value}
+                    .schemaVersion=${0}
+                  ></bb-schema-editor>`;
+                  break;
+                } else if (isLLMContentBehavior(input.schema)) {
+                  if (!isLLMContent(input.value)) {
+                    input.value = undefined;
+                  }
+
+                  inputField = html`<bb-llm-input
+                    id="${id}"
+                    name="${id}"
+                    .schema=${input.schema}
+                    .value=${input.value ?? defaultValue ?? null}
+                    .description=${input.schema.description || null}
+                  ></bb-llm-input>`;
+                  break;
+                } else if (isBoardBehavior(input.schema, input.value)) {
+                  const board =
+                    (typeof input.value === "string"
+                      ? input.value
+                      : input.value?.path) ?? "";
+                  inputField = html`<bb-board-selector
+                    id="${id}"
+                    name="${id}"
+                    .graph=${this.graph}
+                    .subGraphs=${this.graph?.graphs ?? null}
+                    .providers=${this.providers}
+                    .providerOps=${this.providerOps}
+                    .value=${board}
                     }
-
-                    JSON.parse(evt.target.value);
-                  } catch (err) {
-                    evt.stopImmediatePropagation();
-                  }
-                }}
-                id=${id}
-                name=${id}
-                autocomplete="off"
-                placeholder=${input.schema.description ?? ""}
-                .autofocus=${idx === 0 ? true : false}
-                .value=${input.value ?? defaultValue ?? ""}
-              ></textarea>`;
-              break;
-            }
-
-            case "number": {
-              inputField = html`<input
-                type="number"
-                id=${id}
-                name=${id}
-                autocomplete="off"
-                placeholder=${input.schema.description ?? ""}
-                ?required=${input.required}
-                .autofocus=${idx === 0 ? true : false}
-                .value=${input.value ?? defaultValue ?? ""}
-              />`;
-              break;
-            }
-
-            case "boolean": {
-              inputField = html`<input
-                type="checkbox"
-                id=${id}
-                name=${id}
-                autocomplete="off"
-                .autofocus=${idx === 0 ? true : false}
-                .checked=${input.value}
-              />`;
-              break;
-            }
-
-            case "string":
-            default: {
-              if (isCodeBehavior(input.schema)) {
-                inputField = html`<bb-code-editor
-                  id=${id}
-                  name=${id}
-                  .value=${input.value ?? defaultValue ?? ""}
-                ></bb-code-editor>`;
-                break;
-              }
-              if (isGoogleDriveFileId(input.schema)) {
-                inputField = html`<bb-google-drive-file-id
-                  id=${id}
-                  .value=${input.value ?? defaultValue ?? ""}
-                ></bb-google-drive-file-id>`;
-                break;
-              }
-              if (isGoogleDriveQuery(input.schema)) {
-                inputField = html`<bb-google-drive-query
-                  id=${id}
-                  .value=${input.value ?? defaultValue ?? ""}
-                ></bb-google-drive-query>`;
-                break;
-              }
-
-              if (isSelect(input.schema) && input.schema.enum) {
-                const enumValue = input.value ?? defaultValue ?? "";
-                inputField = html`<select
-                  id=${id}
-                  name=${id}
-                  autocomplete="off"
-                  placeholder=${input.schema.description ?? ""}
-                  .autofocus=${idx === 0 ? true : false}
-                >
-                  ${input.schema.enum.map(
-                    (item) =>
-                      html`<option ?selected=${item === enumValue}>
-                        ${item}
-                      </option>`
-                  )}
-                </select>`;
-                break;
-              }
-
-              if (
-                input.schema.format === "multiline" ||
-                input.schema.format === "markdown"
-              ) {
+                  ></bb-board-selector>`;
+                  break;
+                }
                 inputField = html`<textarea
+                  @blur=${(evt: Event) => {
+                    if (!(evt.target instanceof HTMLTextAreaElement)) {
+                      return;
+                    }
+
+                    try {
+                      if (!evt.target.value) {
+                        return;
+                      }
+
+                      JSON.parse(evt.target.value);
+                    } catch (err) {
+                      evt.target.setCustomValidity("Please enter valid JSON");
+                      evt.target.reportValidity();
+                    }
+                  }}
+                  @input=${(evt: Event) => {
+                    if (!(evt.target instanceof HTMLTextAreaElement)) {
+                      return;
+                    }
+
+                    evt.target.setCustomValidity("");
+                    try {
+                      if (!evt.target.value) {
+                        return;
+                      }
+
+                      JSON.parse(evt.target.value);
+                    } catch (err) {
+                      evt.stopImmediatePropagation();
+                    }
+                  }}
                   id=${id}
                   name=${id}
                   autocomplete="off"
@@ -559,17 +487,89 @@ export class UserInput extends LitElement {
                 break;
               }
 
-              inputField = html`<input
-                .type=${input.secret ? "password" : "text"}
-                id=${id}
-                name=${id}
-                autocomplete="off"
-                placeholder=${input.schema.description ?? ""}
-                ?required=${input.required}
-                .autofocus=${idx === 0 ? true : false}
-                .value=${input.value ?? defaultValue ?? ""}
-              />`;
-              break;
+              case "number": {
+                inputField = html`<input
+                  type="number"
+                  id=${id}
+                  name=${id}
+                  autocomplete="off"
+                  placeholder=${input.schema.description ?? ""}
+                  ?required=${input.required}
+                  .autofocus=${idx === 0 ? true : false}
+                  .value=${input.value ?? defaultValue ?? ""}
+                />`;
+                break;
+              }
+
+              case "boolean": {
+                inputField = html`<input
+                  type="checkbox"
+                  id=${id}
+                  name=${id}
+                  autocomplete="off"
+                  .autofocus=${idx === 0 ? true : false}
+                  .checked=${input.value}
+                />`;
+                break;
+              }
+
+              case "string":
+              default: {
+                if (isCodeBehavior(input.schema)) {
+                  inputField = html`<bb-code-editor
+                    id=${id}
+                    name=${id}
+                    .value=${input.value ?? defaultValue ?? ""}
+                  ></bb-code-editor>`;
+                  break;
+                }
+
+                if (isSelect(input.schema) && input.schema.enum) {
+                  const enumValue = input.value ?? defaultValue ?? "";
+                  inputField = html`<select
+                    id=${id}
+                    name=${id}
+                    autocomplete="off"
+                    placeholder=${input.schema.description ?? ""}
+                    .autofocus=${idx === 0 ? true : false}
+                  >
+                    ${input.schema.enum.map(
+                      (item) =>
+                        html`<option ?selected=${item === enumValue}>
+                          ${item}
+                        </option>`
+                    )}
+                  </select>`;
+                  break;
+                }
+
+                if (
+                  input.schema.format === "multiline" ||
+                  input.schema.format === "markdown"
+                ) {
+                  inputField = html`<textarea
+                    id=${id}
+                    name=${id}
+                    autocomplete="off"
+                    placeholder=${input.schema.description ?? ""}
+                    .autofocus=${idx === 0 ? true : false}
+                    .value=${input.value ?? defaultValue ?? ""}
+                  ></textarea>`;
+                  break;
+                }
+
+                inputField = html`<input
+                  .type=${input.secret ? "password" : "text"}
+                  id=${id}
+                  name=${id}
+                  autocomplete="off"
+                  placeholder=${input.schema.description ?? ""}
+                  ?required=${input.required}
+                  .autofocus=${idx === 0 ? true : false}
+                  .value=${input.value ?? defaultValue ?? ""}
+                />`;
+                break;
+              }
             }
           }
         }

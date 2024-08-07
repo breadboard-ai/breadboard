@@ -1,6 +1,6 @@
 {
-  "title": "Novel Generator Developer (v1)",
-  "description": "A blank board. Use it as a starting point for your creations.",
+  "title": "Novel Generator Developer",
+  "description": "Develops a novel",
   "version": "0.0.1",
   "nodes": [
     {

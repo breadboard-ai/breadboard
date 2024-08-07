@@ -50,6 +50,8 @@ import {
   TokenVendor,
   tokenVendorContext,
 } from "./ui/elements/connection/token-vendor.js";
+import { googleDriveQueryInputPlugin } from "./ui/elements/google-drive/google-drive-query.js";
+import { googleDriveFileIdInputPlugin } from "./ui/elements/google-drive/google-drive-file-id.js";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -84,7 +86,7 @@ const ENVIRONMENT: Environment = {
     ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
   connectionRedirectUrl: "/oauth/",
   plugins: {
-    input: [],
+    input: [googleDriveFileIdInputPlugin, googleDriveQueryInputPlugin],
   },
 };
 

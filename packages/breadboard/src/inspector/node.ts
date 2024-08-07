@@ -7,6 +7,7 @@
 import {
   GraphDescriptor,
   NodeMetadata,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import {
   InputValues,
@@ -54,8 +55,25 @@ class Node implements InspectableNode {
     return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
-  isEntry(): boolean {
+  isEntry(label?: StartLabel): boolean {
+    const labels = this.startLabels();
+    if (labels) {
+      return labels.includes(label || "default");
+    }
     return this.incoming().length === 0;
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    const tags = this.descriptor?.metadata?.tags || [];
+    const labels: StartLabel[] = [];
+    for (const tag of tags) {
+      if (typeof tag === "string" && tag === "start") {
+        labels.push("default");
+      } else if (tag.type === "start") {
+        labels.push(tag.label || "default");
+      }
+    }
+    return labels.length > 0 ? labels : undefined;
   }
 
   isExit(): boolean {

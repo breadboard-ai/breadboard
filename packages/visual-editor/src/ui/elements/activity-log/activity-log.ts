@@ -13,6 +13,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   isLLMContent,
+  isLLMContentArray,
   OutputValues,
   Schema,
   SerializedRun,
@@ -28,11 +29,10 @@ import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
-import { isArrayOfLLMContent } from "../../utils/llm-content.js";
 import { SettingsStore } from "../../../data/settings-store.js";
 import { UserInput } from "../elements.js";
 import {
-  isArrayOfLLMContentBehavior,
+  isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../utils/index.js";
 
@@ -408,8 +408,8 @@ export class ActivityLog extends LitElement {
       }
 
       if (schema.type === "array") {
-        if (isArrayOfLLMContentBehavior(schema)) {
-          if (!isArrayOfLLMContent(value)) {
+        if (isLLMContentArrayBehavior(schema)) {
+          if (!isLLMContentArray(value)) {
             value = undefined;
           }
         } else {
@@ -491,7 +491,7 @@ export class ActivityLog extends LitElement {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
-          if (isArrayOfLLMContent(nodeValue)) {
+          if (isLLMContentArray(nodeValue)) {
             value = html`<bb-llm-output-array
               .values=${nodeValue}
             ></bb-llm-output-array>`;

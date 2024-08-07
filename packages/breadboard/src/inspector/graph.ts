@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
 import { handlersFromKits } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
@@ -199,8 +202,8 @@ class Graph implements InspectableGraphWithStore {
       .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
-  entries(): InspectableNode[] {
-    return this.#cache.nodes.nodes().filter((node) => node.isEntry());
+  entries(label?: StartLabel): InspectableNode[] {
+    return this.#cache.nodes.nodes().filter((node) => node.isEntry(label));
   }
 
   async describe(): Promise<NodeDescriberResult> {

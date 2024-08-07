@@ -6,8 +6,18 @@
 
 import test from "ava";
 
-import { createDefaultRunStore } from "../../src/index.js";
+import {
+  createDefaultRunStore,
+  isInlineData,
+  isLLMContent,
+  isLLMContentArray,
+  toStoredDataPart,
+} from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
+import { results as inlineDataRunResults } from "./inline-data-run.js";
+import { results as inlineDataArrayRunResults } from "./inline-data-run-array.js";
+
+const url = "http://www.example.com";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",
@@ -42,49 +52,193 @@ function copyResult(result: HarnessRunResult): HarnessRunResult {
   return JSON.parse(JSON.stringify(result));
 }
 
-test("Default Run Store throws if already writing", async (t) => {
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+test("Default Run Store creates multiple stores per URL", async (t) => {
   const runStore = createDefaultRunStore();
 
-  await runStore.start("store");
-  await t.throwsAsync(runStore.start("store"));
-});
+  const runTimestamp = await runStore.start(url);
+  await runStore.stop(url, runTimestamp);
 
-test("Default Run Store removes old stores", async (t) => {
-  const runStore = createDefaultRunStore();
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
 
-  await runStore.start("store", 1);
-  await runStore.stop();
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.stop(url, runTimestamp2);
 
-  await runStore.start("store2", 1);
-  await runStore.stop();
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 2);
 
-  const runs = await runStore.getNewestRuns(3);
-  t.is(runs.length, 1);
+  await runStore.drop();
 });
 
 test("Default Run Store writes data", async (t) => {
   const runStore = createDefaultRunStore();
   const result = copyResult(inputResult);
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+  const runs = await runStore.getStoredRuns(url);
 
-  await runStore.start("store", 1);
-  await runStore.write(result);
-  await runStore.stop();
-
-  const runs = await runStore.getNewestRuns(1);
-  t.is(runs.length, 1);
-  t.deepEqual(runs[0][0], result);
+  t.is(runs.size, 1);
+  t.deepEqual(runs.get(runTimestamp)![0], result);
+  await runStore.drop();
 });
 
 test("Default Run Store drops data", async (t) => {
   const runStore = createDefaultRunStore();
   const result = copyResult(inputResult);
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+  await runStore.drop();
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 0);
+});
 
-  await runStore.start("store", 1);
-  await runStore.write(result);
-  await runStore.stop();
+test("Default Run Store truncates data", async (t) => {
+  const runStore = createDefaultRunStore();
+  const result = copyResult(inputResult);
+
+  const runTimestamp = await runStore.start(url);
+  await runStore.write(url, runTimestamp, result);
+  await runStore.stop(url, runTimestamp);
+
+  // Wait 10ms so that the timestamps of the two runs don't clash.
+  await delay(10);
+
+  const runTimestamp2 = await runStore.start(url);
+  await runStore.write(url, runTimestamp2, result);
+  await runStore.stop(url, runTimestamp2);
+
+  await runStore.truncate(url, 1);
+  const runs = await runStore.getStoredRuns(url);
+  t.is(runs.size, 1);
+  t.truthy(runs.get(runTimestamp2));
+});
+
+test("IDBRunStore replaces storedData with inlineData when writing (LLM Content)", async (t) => {
+  // Step 1. Write the data in, converting inlineData parts to storedDataParts
+  // before they get written in.
+  const runStore = createDefaultRunStore();
+  const timestamp = await runStore.start(url);
+
+  for (const result of inlineDataRunResults) {
+    if (result.type === "nodeend" && result.data.node.type === "input") {
+      for (const output of Object.values(result.data.outputs)) {
+        if (!isLLMContent(output)) {
+          continue;
+        }
+
+        for (let i = 0; i < output.parts.length; i++) {
+          const part = output.parts[i];
+          if (!isInlineData(part)) {
+            continue;
+          }
+
+          output.parts[i] = await toStoredDataPart(part);
+        }
+      }
+    }
+
+    await runStore.write(url, timestamp, result);
+  }
+
+  await runStore.stop(url, timestamp);
+
+  // Step 2. Get the run.
+  const run = await runStore.getStoredRuns(url);
+  const runValues = [...run.values()];
+
+  t.is(run.size, 1);
+  t.is(runValues[0].length, 8);
+  t.is(runValues[0][3].type, "nodeend");
+
+  // Step 3. Assert we have an inlineData object.
+  const nodeToInspect = runValues[0][3];
+  if (
+    nodeToInspect.type === "nodeend" &&
+    nodeToInspect.data.node.type === "input"
+  ) {
+    const outputs = Object.values(nodeToInspect.data.outputs);
+    t.is(outputs.length, 1);
+    for (const output of outputs) {
+      t.truthy(isLLMContent(output), "Output is not LLM Content");
+
+      if (isLLMContent(output)) {
+        for (const part of output.parts) {
+          t.truthy(isInlineData(part), "Part is not inlineData");
+        }
+      }
+    }
+  } else {
+    t.fail("Unexpected node type");
+  }
 
   await runStore.drop();
+});
 
-  const runs = await runStore.getNewestRuns(1);
-  t.is(runs.length, 0);
+test("IDBRunStore replaces storedData with inlineData when writing (LLM Content Array)", async (t) => {
+  // Step 1. Write the data in, converting inlineData parts to storedDataParts
+  // before they get written in.
+  const runStore = createDefaultRunStore();
+  const timestamp = await runStore.start(url);
+
+  for (const result of inlineDataArrayRunResults) {
+    if (result.type === "nodeend" && result.data.node.type === "input") {
+      for (const output of Object.values(result.data.outputs)) {
+        if (!isLLMContentArray(output)) {
+          continue;
+        }
+
+        for (const entry of output) {
+          for (let i = 0; i < entry.parts.length; i++) {
+            const part = entry.parts[i];
+            if (!isInlineData(part)) {
+              continue;
+            }
+
+            entry.parts[i] = await toStoredDataPart(part);
+          }
+        }
+      }
+    }
+
+    await runStore.write(url, timestamp, result);
+  }
+
+  await runStore.stop(url, timestamp);
+
+  // Step 2. Get the run.
+  const run = await runStore.getStoredRuns(url);
+  const runValues = [...run.values()];
+
+  t.is(run.size, 1);
+  t.is(runValues[0].length, 9);
+  t.is(runValues[0][3].type, "nodeend");
+
+  // Step 3. Assert we have an inlineData object.
+  const nodeToInspect = runValues[0][3];
+  if (
+    nodeToInspect.type === "nodeend" &&
+    nodeToInspect.data.node.type === "input"
+  ) {
+    const outputs = Object.values(nodeToInspect.data.outputs);
+    t.is(outputs.length, 1);
+    for (const output of outputs) {
+      t.truthy(isLLMContentArray(output), "Output is not LLM Content Array");
+
+      if (isLLMContentArray(output)) {
+        for (const entry of output) {
+          for (const part of entry.parts) {
+            t.truthy(isInlineData(part), "Part is not inlineData");
+          }
+        }
+      }
+    }
+  } else {
+    t.fail("Unexpected node type");
+  }
+
+  await runStore.drop();
 });

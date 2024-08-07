@@ -543,6 +543,7 @@ export class LLMInput extends LitElement {
 
     part.inlineData.data = await asBase64(files[0]);
     part.inlineData.mimeType = files[0].type;
+    this.#partDataURLs.delete(partIdx);
 
     this.#emitUpdate();
     this.requestUpdate();
@@ -581,6 +582,7 @@ export class LLMInput extends LitElement {
 
         const contentPart = content.parts[0];
         part.inlineData = contentPart.inlineData;
+        this.#partDataURLs.delete(partIdx);
         break;
       }
     }

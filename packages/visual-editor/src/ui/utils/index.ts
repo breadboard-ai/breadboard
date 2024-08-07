@@ -36,7 +36,7 @@ export function isLLMContentBehavior(schema: Schema) {
   return schema.behavior?.includes("llm-content");
 }
 
-export function isArrayOfLLMContentBehavior(schema: Schema) {
+export function isLLMContentArrayBehavior(schema: Schema) {
   if (schema.type !== "array") return false;
   if (Array.isArray(schema.items)) return false;
   if (schema.items?.type !== "object") return false;
