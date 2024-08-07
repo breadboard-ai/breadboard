@@ -13,7 +13,7 @@ import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
-import "@breadboard-ai/visual-editor/editor";
+import "@breadboard-ai/shared-ui/editor";
 
 import {
   KitManifest,

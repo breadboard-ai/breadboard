@@ -47,3 +47,7 @@ export { UI } from "./ui-controller/ui-controller.js";
 export { UserInput } from "./input/user-input.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
 export { WelcomePanel } from "./welcome-panel/welcome-panel.js";
+
+export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";
+export { googleDriveQueryInputPlugin } from "./google-drive/google-drive-query.js";
+export { TokenVendor, tokenVendorContext } from "./connection/token-vendor.js";

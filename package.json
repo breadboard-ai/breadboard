@@ -28,6 +28,7 @@
         "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
+        "./packages/shared-ui:build",
         "./packages/visual-editor:build",
         "./packages/build:build",
         "./packages/connection-server:build",

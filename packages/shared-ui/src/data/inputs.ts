@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SettingsStore } from "./settings-store";
-import * as BreadboardUI from "../ui";
+import { SettingsStore, SETTINGS_TYPE } from "../types/types.js";
 
 export const inputsFromSettings = (settings: SettingsStore | null) => {
   if (!settings) return undefined;
 
-  const inputsSection = settings.getSection(
-    BreadboardUI.Types.SETTINGS_TYPE.INPUTS
-  );
+  const inputsSection = settings.getSection(SETTINGS_TYPE.INPUTS);
   if (!inputsSection) return undefined;
   const values = Array.from(inputsSection.items.values());
   if (!values.length) return undefined;

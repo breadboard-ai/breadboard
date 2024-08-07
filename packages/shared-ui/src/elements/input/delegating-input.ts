@@ -14,7 +14,7 @@ import type {
   InputChangeEvent,
   InputPlugin,
   InputWidget,
-} from "../../../plugins/input-plugin.js";
+} from "../../plugins/input-plugin.js";
 import {
   type Environment,
   environmentContext,

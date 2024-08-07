@@ -47,7 +47,7 @@ import { guard } from "lit/directives/guard.js";
 import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { NodeRunner, type NodeConfigurationInfo } from "../elements.js";
-import { SettingsStore } from "../../../data/settings-store.js";
+import { SettingsStore } from "../../types/types.js";
 
 /**
  * Breadboard UI controller element.
