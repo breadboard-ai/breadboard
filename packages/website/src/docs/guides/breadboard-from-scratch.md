@@ -28,7 +28,7 @@ local environment.
 ## Part 1: Google Cloud setup
 
 This guide will show you how to deploy Breadboard using Google Cloud. All three
-servers will be deployed using [AppEngine](https://cloud.google.com/appengine).
+servers will be deployed using [App Engine](https://cloud.google.com/appengine).
 
 ### Create a new Google Cloud project
 
@@ -43,29 +43,77 @@ servers will be deployed using [AppEngine](https://cloud.google.com/appengine).
 
 1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/) and
    accept the Cloud terms of service if you haven't already.
-1. Click "Select a Project", and click "NEW PROJECT"
+1. Click **Select a Project**, and click **NEW PROJECT**
 1. Give your project a name and complete the Cloud project setup
 
-### Enable AppEngine and Cloud Billing
+### Configure the `gcloud` CLI
 
-AppEngine requires a billing account. This section will walk you through the
+Authenticate with the `gcloud` CLI.
+
+```sh
+gcloud auth login
+```
+
+```sh
+gcloud auth application-default login
+```
+
+This will open a browser on your local machine to complete the authentication flow.
+
+Set your project as the current project.
+
+```sh
+gcloud config set project your-project-id
+```
+
+All future commands will now reference this project by default.
+
+### Enable App Engine and Cloud Billing
+
+App Engine requires a billing account. This section will walk you through the
 steps, assuming that no previous setup has been performed. See [this help center
 article](https://cloud.google.com/appengine/docs/standard/managing-projects-apps-billing)
 for more information.
 
-> [!NOTE]
-> Coming soon
+In the [Google Cloud Console](https://console.cloud.google.com), go to [App
+Engine](https://console.cloud.google.com/appengine). If no billing account
+exists, you will be prompted to set up billing for your Cloud project.
 
-### Configure the AppEngine service account
+### Configure the App Engine service account
+
+App Engine requires the default service account to possess both the **Editor**
+and **Storage Admin** roles to successfully deploy applications. As of May 2024,
+it is no longer possible for App Engine to make this change automatically. It
+will need to be done manually.
 
 > [!NOTE]
-> Coming soon
+> If you are using an older project, or have already configured a service
+> account, this step may not be necessary. See [the troubleshooting
+> guide](https://cloud.google.com/appengine/docs/standard/troubleshooting#default-sa-permissions)
+> for more information.
+
+1. Go to [Identity & Access Management](https://pantheon.corp.google.com/iam-admin/iam) in Google Cloud console.
+1. Locate the default App Engine service account: **`${PROJECT_ID}@appspot.gserviceaccount.com`**
+1. Click **Edit Principal** (the pencil icon)
+1. Ensure that the service account has both the **Editor** and **Storage Admin** roles.
+
+### Create the App Engine application
+
+Run the following command to create an App Engine application.
+
+```sh
+gcloud app create
+```
+
+This will interactively walk through the process of selecting a region to which to
+deploy your application, plus other setup options. For more information and
+additional options, see the [SDK
+documentation](https://cloud.google.com/sdk/gcloud/reference/app/create).
 
 ## Part 2: Deploying the servers
 
 Breadboard is composed of three separate servers: the Visual Editor, the
-Connection Server, and the Board Server. In this step, we will deploy each
-server using Google AppEngine.
+Connection Server, and the Board Server.
 
 ### Create a local copy of the repo
 
@@ -130,7 +178,7 @@ These instructions require the [Firebase CLI](https://firebase.google.com/docs/c
 
 1. Navigate to https://console.firebase.google.com/ and click "Create a project"
 1. Complete the project creation flow, or click "Add Firebase to a Google Cloud
-project" to use an existing Cloud project.
+   project" to use an existing Cloud project.
 1. Select the Google Cloud project that you would like to use
 
 ### Set up the Firebase CLI
