@@ -282,10 +282,6 @@ This will run the user creation script and output the API key. The API key can
 also be read from the Firestore database under `/users/{USERNAME}/apiKey`. The
 API key will be used later when adding a provider in the Visual Editor.
 
-> [!NOTE]
-> All data in a board server is globally readable. The API key is only validated
-> when writing to the database.
-
 #### Update `app.yaml`
 
 By default, the Board Server is deployed as the default App Engine service.
@@ -323,6 +319,28 @@ service in the [App Engine console](https://console.cloud.google.com/appengine/s
 So far we have deployed each server as a separate, standalone entity. Further
 configuration is required to enable the Visual Editor to make use of the
 Connection and Board Servers.
+
+### Add a Board Server provider
+
+The Visual Editor can be configured to connect a number of different
+**providers**. The default provider stores boards in local browser storage. You
+can also add a Board Server as a provider. This allows sharing of boards between
+users and devices.
+
+In your Visual Editor:
+
+1. Open the Breadboard menu by clicking on the three lines in the top-left
+   corner
+2. In the **Providers** menu, click **Add new provider**
+3. Create a new **Board Server** provider by entering the URL of your board
+   server, and your API key. (The API key can be found in the
+   [users](https://console.cloud.google.com/firestore/databases/board-server/data/panel/users)
+   collection in the Cloud Console.)
+
+You can now create new boards on the board server, and access boards created by
+yourself and other users.
+
+### Add an API connection
 
 > [!NOTE]
 > Coming soon
