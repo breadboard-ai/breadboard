@@ -6,6 +6,7 @@
 
 import {
   GraphMetadata,
+  InputValues,
   StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { handlersFromKits } from "../handler.js";
@@ -40,6 +41,7 @@ import {
   NodeTypeDescriberOptions,
   InspectableNodeType,
 } from "./types.js";
+import { invokeGraph } from "../run/invoke-graph.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -206,7 +208,7 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.nodes.nodes().filter((node) => node.isEntry(label));
   }
 
-  async describe(): Promise<NodeDescriberResult> {
+  async #describeWithStaticAnalysis(): Promise<NodeDescriberResult> {
     const inputSchemas = (
       await Promise.all(
         this.nodesByType("input")
@@ -256,6 +258,31 @@ class Graph implements InspectableGraphWithStore {
     );
 
     return { inputSchema, outputSchema };
+  }
+
+  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+    const describers = this.entries("describe");
+    console.log("🌻 describers", describers);
+    if (describers.length === 0) {
+      return this.#describeWithStaticAnalysis();
+    } else {
+      // invoke graph
+      try {
+        return (await invokeGraph(
+          this.#graph,
+          inputs || {},
+          {
+            // Fill out
+            kits: this.#options.kits,
+          },
+          undefined,
+          "describe"
+        )) as NodeDescriberResult;
+      } catch (e) {
+        console.warn(`Error while invoking graph's describe entry point`, e);
+        return await this.#describeWithStaticAnalysis();
+      }
+    }
   }
 
   get nodeStore() {
