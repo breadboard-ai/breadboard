@@ -97,6 +97,57 @@ will need to be done manually.
 1. Click **Edit Principal** (the pencil icon)
 1. Ensure that the service account has both the **Editor** and **Storage Admin** roles.
 
+### Configure the `gcloud` CLI
+
+Authenticate with the `gcloud` CLI.
+
+```sh
+gcloud auth login
+```
+
+```sh
+gcloud auth application-default login
+```
+
+This will open a browser on your local machine to complete the authentication flow.
+
+Set your project as the current project.
+
+```sh
+gcloud config set project your-project-id
+```
+
+All future commands will now reference this project by default.
+
+### Enable App Engine and Cloud Billing
+
+App Engine requires a billing account. This section will walk you through the
+steps, assuming that no previous setup has been performed. See [this help center
+article](https://cloud.google.com/appengine/docs/standard/managing-projects-apps-billing)
+for more information.
+
+In the [Google Cloud Console](https://console.cloud.google.com), go to [App
+Engine](https://console.cloud.google.com/appengine). If no billing account
+exists, you will be prompted to set up billing for your Cloud project.
+
+### Configure the App Engine service account
+
+App Engine requires the default service account to possess both the **Editor**
+and **Storage Admin** roles to successfully deploy applications. As of May 2024,
+it is no longer possible for App Engine to make this change automatically. It
+will need to be done manually.
+
+> [!NOTE]
+> If you are using an older project, or have already configured a service
+> account, this step may not be necessary. See [the troubleshooting
+> guide](https://cloud.google.com/appengine/docs/standard/troubleshooting#default-sa-permissions)
+> for more information.
+
+1. Go to [Identity & Access Management](https://pantheon.corp.google.com/iam-admin/iam) in Google Cloud console.
+1. Locate the default App Engine service account: **`${PROJECT_ID}@appspot.gserviceaccount.com`**
+1. Click **Edit Principal** (the pencil icon)
+1. Ensure that the service account has both the **Editor** and **Storage Admin** roles.
+
 ### Create the App Engine application
 
 Run the following command to create an App Engine application.
@@ -142,8 +193,20 @@ feel free to get in touch with the team on Discord.
 
 ### Deploy the Visual Editor
 
-> [!NOTE]
-> Coming soon
+From the root of the repository.
+
+```sh
+cd packages/visual-editor
+```
+
+```sh
+gcloud app deploy
+```
+
+This will deploy the Visual Editor as the default App Engine application. You
+should now be able to access and use the Visual Editor at the URL given in the
+console output. You can also see the deployed service on the [App Engine
+dashboard](https://console.cloud.google.com/appengine/services).
 
 ### Deploy the Connection Server
 
