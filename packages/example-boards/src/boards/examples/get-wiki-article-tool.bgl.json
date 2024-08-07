@@ -1,7 +1,7 @@
 {
   "title": "Tool: Get Wiki Article",
   "description": "A tool to get a Wikipedia article's content based on its title.",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "nodes": [
     {
       "id": "urlTemplate-473c72ee",
