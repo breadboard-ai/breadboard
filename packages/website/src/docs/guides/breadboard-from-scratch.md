@@ -5,7 +5,7 @@ tags:
   - wip
 ---
 
-_Work in progress. See #2675_
+_Work in progress. See <https://github.com/breadboard-ai/breadboard/issues/2675>_
 
 This guide is targeted at a developer who wants to deploy their own Breadboard
 instance with no previous setup or configuration. It will cover all components
@@ -30,7 +30,6 @@ Required software:
 - Node (v20.14.0 or higher)
 - npm
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
-- [Firebase CLI](https://firebase.google.com/docs/cli)
 
 ## System setup
 
@@ -57,33 +56,46 @@ npm run build
 These steps should complete without error. If you encounter any issues, please
 feel free to get in touch with the team on Discord.
 
-## Deploying the Visual Editor
-
-The Visual Editor is the core of Breadboard, and can be used indepdenently of
-other components. It is a static client-side web application, and can be hosted
-on almost any platform that can serve static content. These instructions use
-[Firebase Hosting](https://firebase.google.com/docs/hosting).
-
-### Create a Google Cloud project
-
-> [!NOTE]
-> These instructions specify how to create a new project in Google Cloud, and
-> then to enable Firebase in that project. It is written this way in case the
-> reader wants to use an existing Cloud project without Firebase enabled.
->
-> It is also possible to create a new project directly in Firebase, or to use an
-> existing Firebase project. The end result is the same.
+## Part 1: Google Cloud setup
 
 1. Navigate to https://console.cloud.google.com/ and accept the Cloud terms of
    service if you haven't already.
 1. Click "Select a Project", and click "NEW PROJECT"
 1. Give your project a name and complete the Cloud project setup
 
+> [!NOTE]
+> TODO: Set up AppEngine service account
+
+## Deploying the Visual Editor
+
+> [!NOTE]
+> Coming soon
+
+## Deploying the Connections Server
+
+> [!NOTE]
+> Coming soon
+
+## Deploying the Board Server
+
+> [!NOTE]
+> Coming soon
+
+## APPENDIX: Deploying the Visual Editor on Firebase hosting
+
+> [!NOTE]
+> This is an alternative option for deploying the Visual Editor. The Visual
+> Editor is a simple static site, so it can be served from any service that
+> supports serving static files. The process would be largely similar on any other
+> static hosting service.
+
+These instructions require the [Firebase CLI](https://firebase.google.com/docs/cli).
+
 ### Enable Firebase
 
 1. Navigate to https://console.firebase.google.com/ and click "Create a project"
-1. Click "Add Firebase to a Google Cloud project" (or proceed with project
-   creation if you don't already have a Cloud project)
+1. Complete the project creation flow, or click "Add Firebase to a Google Cloud
+project" to use an existing Cloud project.
 1. Select the Google Cloud project that you would like to use
 
 ### Set up the Firebase CLI
@@ -138,13 +150,3 @@ That's it! By default, Firebase will deploy your site to a custom domain under
 `web.app` and/or `firebaseapp.com`. You can see the exact URL in your
 [console](https://console.firebase.google.com/). You should now be able to see
 and use the Breadboard Visual Editor at this URL.
-
-## Deploying the Connections Server
-
-> [!NOTE]
-> Coming soon
-
-## Deploying the Board Server
-
-> [!NOTE]
-> Coming soon
