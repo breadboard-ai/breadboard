@@ -6,73 +6,50 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { InputPlugin } from "../../../plugins/input-plugin.js";
+import { InputPlugin } from "../../plugins/input-plugin.js";
 import { type InputEnterEvent } from "../../events/events.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 
-export const googleDriveQueryInputPlugin: InputPlugin = {
+export const googleDriveFileIdInputPlugin: InputPlugin = {
   instantiate: {
-    customElementName: "bb-google-drive-query",
+    customElementName: "bb-google-drive-file-id",
   },
   match: {
     schema: {
       type: "string",
-      behavior: ["google-drive-query"],
+      behavior: ["google-drive-file-id"],
     },
   },
 };
 
-@customElement("bb-google-drive-query")
-export class GoogleDriveQuery extends LitElement {
+@customElement("bb-google-drive-file-id")
+export class GoogleDriveFileId extends LitElement {
   static styles = css`
     :host {
       display: flex;
-      flex-direction: column;
       max-width: 400px;
     }
 
-    #query {
-      display: flex;
-      flex-direction: column;
-    }
-    #query > textarea {
-      box-sizing: border-box;
-      height: 4lh;
-      margin-top: 14px;
-      padding: 8px;
-      width: 100%;
-    }
-    #query > a {
-      align-self: flex-end;
-      color: var(--bb-ui-600);
-      font-size: 11px;
-      margin-top: 4px;
-    }
-
-    #sharing {
-      display: flex;
-      margin-top: 14px;
-    }
-    #sharing > button {
+    button {
       background: var(--bb-inputs-500);
       border-radius: 20px;
       border: none;
       color: white;
       cursor: pointer;
       font-size: var(--bb-label-large);
-      max-height: 32px;
       padding: 4px 18px;
       white-space: nowrap;
     }
-    #sharing > button:hover {
+    button:hover {
       background-color: var(--bb-inputs-400);
     }
-    #sharing > p {
-      color: var(--bb-neutral-600);
+
+    input {
+      flex-grow: 1;
       font-size: 11px;
-      margin: 0 0 0 12px;
-      text-align: justify;
+      margin-left: 14px;
+      padding: 6px 8px;
     }
   `;
 
@@ -103,28 +80,13 @@ export class GoogleDriveQuery extends LitElement {
       return html`<p>Loading Google Drive Picker ...</p>`;
     }
     return html`
-      <section id="query">
-        <textarea
-          placeholder="Google Drive Query"
-          .value=${this.value}
-          @input=${this.#onQueryInput}
-        ></textarea>
-        <a
-          href="https://developers.google.com/drive/api/guides/search-files"
-          target="_blank"
-          referrerpolicy="no-referrer"
-          >Syntax Documentation</a
-        >
-      </section>
-
-      <section id="sharing">
-        <button @click=${this.#onClickPickFiles}>Share Files</button>
-        <p>
-          The query above only matches files you have shared with Breadboard
-          (including all previously shared files). Click to share additional
-          files. Hold <kbd>Shift</kbd> for multi-select.
-        </p>
-      </section>
+      <button @click=${this.#onClickPickFiles}>Pick File</button>
+      <input
+        type="text"
+        placeholder='Click "Pick File" or paste a Google Drive File ID'
+        .value=${this.value}
+        @input=${this.#onQueryInput}
+      />
     `;
   }
 
@@ -156,7 +118,6 @@ export class GoogleDriveQuery extends LitElement {
       .setCallback(this.#pickerCallback.bind(this))
       .addView(google.picker.ViewId.DOCS)
       .enableFeature(google.picker.Feature.NAV_HIDDEN)
-      .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
       .build();
     this.#picker.setVisible(true);
   }
@@ -170,9 +131,10 @@ export class GoogleDriveQuery extends LitElement {
       case "picked": {
         this.#destroyPicker();
         // TODO(aomarks) Show this as a snackbar
-        console.log(
-          `Shared ${result.docs.length} Google Drive files with Breadboard`
-        );
+        console.log(`Shared 1 Google Drive file with Breadboard`);
+        if (result.docs.length > 0) {
+          this.value = result.docs[0].id;
+        }
       }
     }
   }
