@@ -55,14 +55,14 @@ test("behaviors are additive", () => {
       // $ExpectType "string"
       annotate(
         annotate("string", {
-          behavior: ["llm-content"],
+          behavior: ["llm-content", "deprecated"],
         }),
         { behavior: ["llm-content", "config"] }
       )
     ),
     {
       type: "string",
-      behavior: ["llm-content", "config"],
+      behavior: ["llm-content", "deprecated", "config"],
     }
   );
 });
