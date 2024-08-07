@@ -14,7 +14,7 @@
     {
       "title": "Tool: Get Wiki Article",
       "reference": "/example-boards/examples/get-wiki-article-tool.bgl.json",
-      "version": "1.0.0",
+      "version": "0.0.1",
       "tags": [
         "tool"
       ]
@@ -57,7 +57,7 @@
     {
       "title": "Tool: Wiki Search",
       "reference": "/example-boards/examples/wiki-search-tool.bgl.json",
-      "version": "1.0.0",
+      "version": "0.0.1",
       "tags": [
         "tool"
       ]
