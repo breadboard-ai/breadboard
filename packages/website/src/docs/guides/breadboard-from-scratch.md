@@ -223,8 +223,13 @@ not yet configured to call it. We will set up this configuration in **Part 2**.
 
 ### Deploy the Board Server
 
-> [!NOTE]
-> Coming soon
+#### Create a Firestore database
+
+#### Configure CORS
+
+#### Add user(s)
+
+#### Deploy the server
 
 ## Part 2: Tying it all together
 
