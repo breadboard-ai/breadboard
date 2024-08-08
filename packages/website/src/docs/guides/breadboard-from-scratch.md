@@ -384,8 +384,95 @@ gcloud app deploy
 
 #### Add an API connection to the Connection Server
 
+Your Visual Editor is now configured to store boards on a Board Server, and to
+read connections from a Connection Server. However, our Connection Server is
+still not hosting any credentials. In this final step, we will add the ability
+for the Connection Server to serve access tokens for the [Google Drive
+API](https://developers.google.com/drive/api).
+
 > [!NOTE]
-> Coming soon
+> This guide will not provide an in-depth explanation of how OAuth and access
+> tokens work. For more information, see the
+> [README](https://github.com/breadboard-ai/breadboard/blob/main/packages/connection-server/README.md)
+> for Connection Server.
+
+##### Enable the Drive API
+
+```sh
+gcloud services enable drive.googleapis.com
+```
+
+##### Configure the OAuth consent screen
+
+The OAuth consent screen is the dialog that users see when they are asked to
+authorize your application to access Drive on their behalf. By consenting, the
+user grants your Cloud project permission to read their Drive files.
+
+1. Go to the [OAuth consent screen](https://console.cloud.google.com/apis/credentials/consent)
+   in the Google Cloud console
+2. Select the **External** user type
+
+   - If you are a Workspace user who only wants other members of your
+     organization to use your application, you may select the **Internal** user
+     type
+
+3. Provide **App name**, **User support email**, and **Developer contact
+   information**.
+
+   - Other fields may be skipped for now.
+
+4. For **Authorized Domains**, provide the domain of your Visual Editor instance
+
+   - The value of this field must match the domain of your Visual Editor, or your
+     users will not be able to complete the authorization flow.
+
+5. Click **Save and Continue**
+6. On the **Scopes** page, click **ADD OR REMOVE SCOPES** and add the
+   **`drive.file`** scope
+
+   - The full name of the scope is `https://www.googleapis.com/auth/drive.file`
+   - This permission allows your application to create new files, to access
+     created files, and to access files that the user explicitly selects in the
+     Drive picker dialog.
+   - This is a much less permissive scope than the full **`drive`** scope, which
+     gives the application complete, unrestricted access to the user's Drive.
+
+7. Add the users that you want to authorize to use your application.
+
+   - All applications begin in "Testing" mode. Access to your application is
+     restricted to specific test users while in testing mode, and users will see a
+     [warning screen](https://support.google.com/cloud/answer/7454865) when
+     authorizing the application.
+   - To open your application to all users, you will need to complete the [app
+     verification process](https://support.google.com/cloud/answer/13463073?hl=en)
+
+##### Create an OAuth credential
+
+1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
+   Google Cloud console
+2. Click **CREATE CREDENTIALS > OAuth Client ID**
+3. Set the **Application type** to **Web application**
+4. Give the credential a name.
+
+   - This is an internal identifier that is not shown to end users
+   - End users will see the name provided in the previous step when they are
+     asked to authorize the application
+
+5. Add an **Authorized JavaScript origin** and provide the origin for your Visual Editor instance
+6. Add an **Authorized redirect URI** and provide your Visual Editor origin plus `/oauth`.
+
+   - For example, if your visual editor is deployed at
+     `https://example.appspot.com` then the redirect URI would be
+     `https://example.appspot.com/oauth`
+
+7. Click **CREATE** to finish creating the credential
+
+> [!WARNING]
+> You will be shown a confirmation dialog with details of your new credential,
+> including a client secret value. This client secret is highly sensitive. Do not
+> store it where anyone else will have access to it. Especially do not check it
+> into any version control system. There is no need to write this value down. You
+> can always access it later in Cloud Console.
 
 ---
 
