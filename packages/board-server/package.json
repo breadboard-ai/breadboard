@@ -14,6 +14,7 @@
     "prepack": "npm run build",
     "build": "wireit",
     "deploy": "npm run build && gcloud app deploy",
+    "deploy:gcr": "npm run build && gcloud run deploy --source .",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",

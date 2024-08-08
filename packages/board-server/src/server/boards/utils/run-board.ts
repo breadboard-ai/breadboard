@@ -49,12 +49,12 @@ export const runBoard = async ({
   runStateStore,
 }: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
-  // TODO: Figure out if this is the right thing to do here.
-  store.createGroup("run-board");
   if (!store) {
     await writer.write(["error", "Data store not available."]);
     return;
   }
+  // TODO: Figure out if this is the right thing to do here.
+  store.createGroup("run-board");
 
   let inputsToConsume = next ? undefined : inputs;
 
