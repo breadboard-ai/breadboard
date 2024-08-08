@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "default": "./dist/index.js",
-      "types": "./dist.index.d.ts"
+      "types": "./dist/index.d.ts"
     },
     "./elements/connection/connection-broker.ts": {
       "default": "./dist/elements/connection/connection-broker.js",
