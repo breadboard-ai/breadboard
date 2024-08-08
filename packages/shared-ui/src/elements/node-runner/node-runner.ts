@@ -18,8 +18,8 @@ import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { InputCallback, STATUS } from "../../types/types.js";
 import { getIsolatedNodeGraphDescriptor } from "../../utils/isolated-node-board.js";
-import { inputsFromSettings } from "../../../data/inputs.js";
-import { SettingsStore } from "../../../data/settings-store.js";
+import { inputsFromSettings } from "../../data/inputs.js";
+import { SettingsStore } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
 import { classMap } from "lit/directives/class-map.js";
 
@@ -228,8 +228,8 @@ export class NodeRunner extends LitElement {
       loader: this.loader ?? undefined,
       signal: this.#abortController.signal,
       diagnostics: true,
-      inputs: inputsFromSettings(this.settings),
       interactiveSecrets: true,
+      inputs: inputsFromSettings(this.settings),
     });
 
     if (!this.#runObserver) {

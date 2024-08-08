@@ -29,7 +29,7 @@ import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
 import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { styles as activityLogStyles } from "./activity-log.styles.js";
-import { SettingsStore } from "../../../data/settings-store.js";
+import { SettingsStore } from "../../types/types.js";
 import { UserInput } from "../elements.js";
 import {
   isLLMContentArrayBehavior,

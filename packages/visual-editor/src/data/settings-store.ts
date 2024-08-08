@@ -5,14 +5,14 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "../ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
 const SETTINGS_VERSION = 7;
 
-export class SettingsStore {
+export class SettingsStore implements BreadboardUI.Types.SettingsStore {
   static #instance: SettingsStore;
   static instance() {
     if (!this.#instance) {

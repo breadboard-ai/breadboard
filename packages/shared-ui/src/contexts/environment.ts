@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { InputPlugin } from "../../plugins/input-plugin.js";
+import { InputPlugin } from "../plugins/input-plugin.js";
 
 export interface Environment {
   connectionServerUrl: string | undefined;
