@@ -42,14 +42,6 @@ export type UserInputConfiguration = {
 
 export type UserOutputValues = NodeConfiguration;
 
-export type ActivityEvent =
-  | RunOutputEvent
-  | RunInputEvent
-  | RunSecretEvent
-  | RunErrorEvent
-  | RunNodeEndEvent
-  | RunNodeStartEvent;
-
 export interface AllowedLLMContentTypes {
   audioFile: boolean;
   audioMicrophone: boolean;

@@ -6,6 +6,11 @@
 import {
   isLLMContent,
   isLLMContentArray,
+  type ErrorObject,
+  type InspectableRun,
+  type InspectableRunEvent,
+  type InspectableRunNodeEvent,
+  type InspectableRunSecretEvent,
   type Schema,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
@@ -13,10 +18,7 @@ import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { type Ref, createRef, ref } from "lit/directives/ref.js";
-import {
-  type ActivityEvent,
-  type UserInputConfiguration,
-} from "../../types/types.js";
+import { type UserInputConfiguration } from "../../types/types.js";
 import { InputEnterEvent } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
@@ -36,7 +38,7 @@ import type {
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
   @property()
-  events: ActivityEvent[] = [];
+  events: InspectableRunEvent[] = [];
 
   static styles = css`
     * {
@@ -130,6 +132,24 @@ export class ActivityLogLite extends LitElement {
       padding: var(--bb-grid-size-3);
     }
 
+    .entry details summary::after {
+      content: "";
+      width: 16px;
+      height: 16px;
+      background: transparent var(--bb-icon-expand) center center / 16px 16px
+        no-repeat;
+    }
+
+    .entry details[open] summary::after {
+      background: transparent var(--bb-icon-collapse) center center / 16px 16px
+        no-repeat;
+    }
+
+    .entry.pending details summary::after {
+      background: transparent url(/images/progress-ui.svg) center center / 16px
+        16px no-repeat;
+    }
+
     .entry summary::-webkit-details-marker {
       display: none;
     }
@@ -139,7 +159,20 @@ export class ActivityLogLite extends LitElement {
       align-items: center;
       list-style: none;
       font: var(--bb-font-title-small);
-      color: var(--bb-neutral-700);
+      color: var(--bb-neutral-600);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    .entry summary:hover,
+    .entry summary:focus {
+      color: var(--bb-neutral-800);
+      transition-duration: 0.1s;
+    }
+
+    .entry summary .title {
+      flex: 1;
     }
 
     .entry summary::before {
@@ -157,6 +190,57 @@ export class ActivityLogLite extends LitElement {
 
     .entry.output summary::before {
       background: var(--bb-icon-output) center center / 20px 20px no-repeat;
+    }
+
+    .entry.secret summary::before {
+      background: var(--bb-icon-password) center center / 20px 20px no-repeat;
+    }
+
+    .entry.specialist summary {
+      color: var(--bb-ui-500);
+    }
+
+    .entry.specialist summary:hover,
+    .entry.specialist summary:focus {
+      color: var(--bb-ui-700);
+    }
+
+    .entry.specialist summary::before {
+      background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
+    }
+
+    .entry.human summary {
+      color: var(--bb-human-500);
+    }
+
+    .entry.human summary:hover,
+    .entry.human summary:focus {
+      color: var(--bb-human-700);
+    }
+
+    .entry.human summary::before {
+      background: var(--bb-icon-human) center center / 20px 20px no-repeat;
+    }
+
+    .entry.looper summary {
+      color: var(--bb-looper-500);
+    }
+
+    .entry.looper summary:hover,
+    .entry.looper summary:focus {
+      color: var(--bb-looper-700);
+    }
+
+    .entry.looper summary::before {
+      background: var(--bb-icon-lightbulb) center center / 20px 20px no-repeat;
+    }
+
+    .entry .no-information {
+      font: var(--bb-font-label-medium);
+      color: var(--bb-neutral-600);
+      width: 100%;
+      text-align: center;
+      margin-top: var(--bb-grid-size);
     }
 
     .continue-button {
@@ -192,6 +276,10 @@ export class ActivityLogLite extends LitElement {
       #controls input {
         height: 42px;
       }
+
+      #activity {
+        padding: var(--bb-grid-size-2) 0;
+      }
     }
   `;
 
@@ -202,8 +290,8 @@ export class ActivityLogLite extends LitElement {
     return globalThis.localStorage.getItem(key);
   }
 
-  async #renderSecretInput(event: RunSecretEvent) {
-    const userInputs: UserInputConfiguration[] = event.data.keys.reduce(
+  async #renderSecretInput(event: InspectableRunSecretEvent) {
+    const userInputs: UserInputConfiguration[] = event.keys.reduce(
       (prev, key) => {
         const schema: Schema = {
           properties: {
@@ -313,8 +401,8 @@ export class ActivityLogLite extends LitElement {
     </section>`;
   }
 
-  async #renderPendingInput(event: RunNodeStartEvent) {
-    const schema = event.data.inputs.schema as Schema;
+  async #renderPendingInput(event: InspectableRunNodeEvent) {
+    const schema = event.inputs.schema as Schema;
     if (!schema) {
       return html`Unable to render`;
     }
@@ -373,7 +461,7 @@ export class ActivityLogLite extends LitElement {
 
       this.dispatchEvent(
         new InputEnterEvent(
-          event.data.node.id,
+          event.node.descriptor.id,
           outputs,
           /* allowSavingIfSecret */ true
         )
@@ -381,7 +469,7 @@ export class ActivityLogLite extends LitElement {
     };
 
     return html`<bb-user-input
-        id="${event.data.node.id}"
+        id="${event.node.descriptor.id}"
         .inputs=${userInputs}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
@@ -400,15 +488,19 @@ export class ActivityLogLite extends LitElement {
       </button>`;
   }
 
-  async #renderCompletedInputOrOutput(event: RunNodeEndEvent | RunOutputEvent) {
-    const { node, outputs } = event.data;
-    const schema = node.configuration?.schema as Schema;
-    const properties = schema.properties ?? {};
+  async #renderCompletedInputOrOutput(event: InspectableRunNodeEvent) {
+    const { node, inputs, outputs } = event;
+    const items = event.node.descriptor.type === "input" ? outputs : inputs;
 
-    console.log(event);
+    if (!items) {
+      return html`Unable to render item`;
+    }
+
+    const schema = event.inputs.schema as Schema | undefined;
+    const properties = schema?.properties ?? {};
 
     return html`<dl class="node-output">
-      ${Object.entries(outputs).map(([name, nodeValue]) => {
+      ${Object.entries(items).map(([name, nodeValue]) => {
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
           if (isLLMContentArray(nodeValue)) {
@@ -434,7 +526,7 @@ export class ActivityLogLite extends LitElement {
           } else if (isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {
-            value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
+            value = nothing;
           }
         } else {
           let renderableValue: HTMLTemplateResult | symbol = nothing;
@@ -458,7 +550,7 @@ export class ActivityLogLite extends LitElement {
             class=${classMap({
               markdown: format === 'markdown',
               value: true,
-              [node.type]: true,
+              [node.descriptor.type]: true,
             })}
           >${renderableValue}</div>`;
         }
@@ -468,7 +560,34 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderEvents(events: ActivityEvent[]) {
+  #renderEventRunInfo(events: InspectableRunNodeEvent[]): HTMLTemplateResult {
+    return html`${events.length
+      ? map(events, (event) => {
+          if (event.end === null && event.node.descriptor.type === "input") {
+            return html`${until(this.#renderPendingInput(event))}`;
+          }
+
+          return html`${until(this.#renderCompletedInputOrOutput(event))} `;
+        })
+      : html`<div class="no-information">No information available</div>`}`;
+  }
+
+  #renderEvents(events: InspectableRunEvent[]) {
+    const bubbledInputAndOutputIds: string[] = events.reduce((prev, curr) => {
+      if (curr.type !== "node" || curr.hidden) {
+        return prev;
+      }
+
+      const isInputOutput =
+        curr.node.descriptor.type === "input" ||
+        curr.node.descriptor.type === "output";
+      if (isInputOutput && curr.bubbled) {
+        prev.push(curr.id);
+      }
+
+      return prev;
+    }, [] as string[]);
+
     return html`${map(events, (event, idx) => {
       let title: HTMLTemplateResult | symbol = nothing;
       let description: HTMLTemplateResult | symbol = nothing;
@@ -478,69 +597,102 @@ export class ActivityLogLite extends LitElement {
         entry: true,
       };
 
+      let isOpen =
+        idx === events.length - 1 ||
+        (event.type === "node" && event.end === null);
+
       switch (event.type) {
-        case "nodestart": {
-          const nodeEvent = event as RunNodeEndEvent;
-          if (idx < events.length - 1) {
+        case "node": {
+          const { node, end } = event;
+          const { type } = node.descriptor;
+          const { icon } = node.type().metadata();
+
+          classes[type] = true;
+          classes.pending = type !== "input" && end === null;
+
+          if (icon) {
+            classes[icon] = true;
+          }
+
+          if (event.bubbled || event.hidden) {
             return nothing;
           }
 
-          if (nodeEvent.data.node.type === "input") {
-            title = html`Input`;
-            content = this.#renderPendingInput(event as RunNodeStartEvent);
-            classes.input = true;
-          } else {
-            title = html`Working...`;
-          }
-          break;
-        }
+          title =
+            type === "input"
+              ? html`Input`
+              : type === "output"
+                ? html`Output`
+                : html`${node.title()}`;
+          if (event.runs && event.runs[0]) {
+            const run = event.runs[0];
+            const events: InspectableRunNodeEvent[] = run.events.filter(
+              (event) => {
+                return bubbledInputAndOutputIds.includes(event.id);
+              }
+            ) as InspectableRunNodeEvent[];
 
-        case "nodeend": {
-          const nodeEvent = event as RunNodeEndEvent;
-          if (
-            nodeEvent.data.node.type !== "input" ||
-            nodeEvent.data.path.length > 1
-          ) {
-            return nothing;
+            isOpen = isOpen && events.length > 0;
+            content = this.#renderEventRunInfo(events);
+          } else if (type === "input") {
+            content =
+              event.end === null
+                ? this.#renderPendingInput(event)
+                : this.#renderCompletedInputOrOutput(event);
+          } else if (type === "output") {
+            content = this.#renderCompletedInputOrOutput(event);
           }
-
-          title = html`Input`;
-          content = this.#renderCompletedInputOrOutput(
-            event as RunNodeEndEvent
-          );
-          classes.input = true;
           break;
         }
 
         case "secret": {
-          // Only render when they are the most recent event.
-          if (idx < events.length - 1) {
+          if (event.end !== null) {
             return nothing;
           }
 
-          title = html`Secret`;
-          content = this.#renderSecretInput(event as RunSecretEvent);
+          title = html`Requesting secret`;
+          content = this.#renderSecretInput(event);
           classes.secret = true;
           break;
         }
 
-        case "output": {
-          title = html`Output`;
-          content = this.#renderCompletedInputOrOutput(event as RunOutputEvent);
-          classes.output = true;
+        case "error": {
+          const { error } = event;
+          let output = "";
+          if (typeof error === "string") {
+            output = error;
+          } else {
+            if ((error.error as Error)?.name === "AbortError") {
+              console.log("💖 actually aborted");
+            }
+            if (typeof error.error === "string") {
+              output = error.error;
+            } else {
+              let messageOutput = "";
+              let errorData = error;
+              while (typeof errorData === "object") {
+                if (errorData && "message" in errorData) {
+                  messageOutput += `${errorData.message}\n`;
+                }
+
+                errorData = errorData.error as ErrorObject;
+              }
+
+              output = messageOutput;
+            }
+          }
+
+          content = html`${output}`;
           break;
         }
 
         default: {
-          console.log(event);
           return nothing;
         }
       }
 
       return html`<section class=${classMap(classes)}>
-        <details ?open=${
-          idx === events.length - 1 || event.type === "output"
-        }><summary>${title}</summary></h1>
+        <details ?open=${isOpen}><summary><span class="title">${title}</span></summary></h1>
         <div>
         ${description}
         ${until(content)}

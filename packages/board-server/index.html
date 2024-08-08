@@ -8,9 +8,14 @@
   </head>
   <body>
     <script type="module">
-      import { AppView } from "./src/index.ts";
+      import { AppView } from "./src/app/app.ts";
       const appView = new AppView();
       document.body.appendChild(appView);
+
+      // appView.url = "/graphs/markdown-string.bgl.json";
+      // appView.url = "/graphs/hello-specialist.bgl.json";
+      // appView.url = "/graphs/librarian.bgl.json";
+      // appView.url = "/graphs/blank.bgl.json";
     </script>
   </body>
 </html>

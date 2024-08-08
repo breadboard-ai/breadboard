@@ -9,9 +9,11 @@ import { classMap } from "lit/directives/class-map.js";
 import { InputEnterEvent } from "./events/events.js";
 import {
   createLoader,
+  createRunObserver,
   type GraphDescriptor,
   type InputValues,
   type InspectableRun,
+  type InspectableRunObserver,
   type NodeValue,
 } from "@google-labs/breadboard";
 import {
@@ -19,11 +21,7 @@ import {
   type RunConfig,
   type RunNodeStartEvent,
 } from "@google-labs/breadboard/harness";
-import {
-  type ActivityEvent,
-  type InputCallback,
-  STATUS,
-} from "./types/types.js";
+import { type InputCallback, STATUS } from "./types/types.js";
 import { until } from "lit/directives/until.js";
 import { loadKits } from "./utils/kit-loader.js";
 
@@ -50,9 +48,6 @@ export class AppView extends LitElement {
   @state()
   showMenu = false;
 
-  @state()
-  events: ActivityEvent[] = [];
-
   #loader = createLoader([]);
   #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
@@ -60,6 +55,7 @@ export class AppView extends LitElement {
   #isSharing = false;
   #handlers: Map<string, InputCallback[]> = new Map();
   #abortController: AbortController | null = null;
+  #runObserver: InspectableRunObserver | null = null;
 
   static styles = css`
     * {
@@ -76,6 +72,21 @@ export class AppView extends LitElement {
       display: grid;
       grid-template-columns: none;
       grid-template-rows: 48px auto;
+    }
+
+    #loading {
+      padding: var(--bb-grid-size-4);
+      display: flex;
+      align-items: center;
+    }
+
+    #loading::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      background: transparent url(/images/progress-ui.svg) 0 center / 16px 16px
+        no-repeat;
+      margin-right: var(--bb-grid-size);
     }
 
     #board-description {
@@ -284,6 +295,12 @@ export class AppView extends LitElement {
     }
   `;
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.url = window.location.pathname.replace(/app$/, "json");
+  }
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
@@ -352,7 +369,9 @@ export class AppView extends LitElement {
       },
     };
 
-    this.events = [];
+    if (!this.#runObserver) {
+      this.#runObserver = createRunObserver({ kits, logLevel: "debug" });
+    }
 
     const runner = createRunner(config);
     runner.addEventListener("end", () => {
@@ -360,8 +379,7 @@ export class AppView extends LitElement {
     });
 
     runner.addEventListener("error", (evt) => {
-      this.events = [...this.events, evt];
-
+      this.requestUpdate();
       this.status = STATUS.STOPPED;
     });
 
@@ -371,20 +389,19 @@ export class AppView extends LitElement {
     });
 
     runner.addEventListener("nodeend", (evt) => {
-      this.events = [...this.events, evt];
+      this.requestUpdate();
       this.#handlers.delete(evt.data.node.id);
     });
 
     runner.addEventListener("nodestart", (evt) => {
-      this.events = [...this.events, evt];
-
+      this.requestUpdate();
       if (!this.#handlers.has(evt.data.node.id)) {
         this.#handlers.set(evt.data.node.id, []);
       }
     });
 
     runner.addEventListener("output", (evt) => {
-      this.events = [...this.events, evt];
+      this.requestUpdate();
     });
 
     runner.addEventListener("pause", () => {
@@ -396,7 +413,7 @@ export class AppView extends LitElement {
     });
 
     runner.addEventListener("secret", async (evt) => {
-      this.events = [...this.events, evt];
+      this.requestUpdate();
 
       const secrets = await this.#registerSecretsHandler(evt.data.keys);
       await runner.run(secrets);
@@ -406,6 +423,7 @@ export class AppView extends LitElement {
       this.status = STATUS.RUNNING;
     });
 
+    runner.addObserver(this.#runObserver);
     runner.run();
   }
 
@@ -472,7 +490,7 @@ export class AppView extends LitElement {
   }
 
   #renderLoading() {
-    return html`Loading...`;
+    return html`<div id="loading">Loading...</div>`;
   }
 
   render() {
@@ -500,29 +518,75 @@ export class AppView extends LitElement {
       }
     );
 
-    const classes: Record<string, boolean> = { pending: false };
+    const runs = this.#runObserver
+      ? this.#runObserver.runs()
+      : Promise.resolve([]);
 
-    let message = 'Press "Start Activity" to begin';
-    if (this.events.length && this.status !== STATUS.STOPPED) {
-      const newest = this.events[this.events.length - 1];
-      if (newest && newest.type === "nodestart") {
-        const nodeStart = newest as RunNodeStartEvent;
-        if (nodeStart.data.node.type === "input") {
-          classes.pending = true;
-          message = "Requesting user input...";
-        } else {
-          classes.pending = true;
-          message = nodeStart.data.node.metadata?.description ?? "Working...";
+    const status = runs.then((runs) => {
+      const currentRun = runs[0];
+      const events = currentRun?.events ?? [];
+
+      const classes: Record<string, boolean> = { pending: false };
+
+      let message = 'Press "Start Activity" to begin';
+      if (events.length && this.status !== STATUS.STOPPED) {
+        const newest = events[events.length - 1];
+        if (newest && newest.type === "node") {
+          if (newest.node.descriptor.type === "input") {
+            classes.pending = true;
+            message = "Requesting user input...";
+          } else {
+            classes.pending = true;
+            message =
+              newest.node.descriptor.metadata?.description ?? "Working...";
+          }
         }
       }
-    }
 
-    const status = html`<div id="status" class=${classMap(classes)}>
-      ${message}
-    </div>`;
+      return html`<div id="status" class=${classMap(classes)}>
+        ${until(message)}
+      </div>`;
+    });
 
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
+
+    const activity = Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+      runs,
+    ]).then(([, , runs]) => {
+      const currentRun = runs[0];
+      const events = currentRun?.events ?? [];
+
+      return html`<bb-activity-log-lite
+        .events=${events}
+        @bbinputrequested=${() => {
+          this.requestUpdate();
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          const data = event.data as InputValues;
+          const handlers = this.#handlers.get(event.id) || [];
+          if (handlers.length === 0) {
+            console.warn(
+              `Received event for input(id="${event.id}") but no handlers were found`
+            );
+          }
+
+          if (
+            event.allowSavingIfSecret &&
+            typeof event.data.secret === "string"
+          ) {
+            globalThis.localStorage.setItem(event.id, event.data.secret);
+          }
+
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+      ></bb-activity-log-lite>`;
+    });
+
     return html` <main>
         <bb-app-nav
           .popout=${true}
@@ -536,34 +600,7 @@ export class AppView extends LitElement {
           <div id="board-info">${until(loading, this.#renderLoading())}</div>
         </section>
         <section id="activity-container" ?inert=${this.showMenu}>
-          <div id="activity">
-            <bb-activity-log-lite
-              .events=${this.events}
-              @bbinputrequested=${() => {
-                this.requestUpdate();
-              }}
-              @bbinputenter=${(event: InputEnterEvent) => {
-                const data = event.data as InputValues;
-                const handlers = this.#handlers.get(event.id) || [];
-                if (handlers.length === 0) {
-                  console.warn(
-                    `Received event for input(id="${event.id}") but no handlers were found`
-                  );
-                }
-
-                if (
-                  event.allowSavingIfSecret &&
-                  typeof event.data.secret === "string"
-                ) {
-                  globalThis.localStorage.setItem(event.id, event.data.secret);
-                }
-
-                for (const handler of handlers) {
-                  handler.call(null, data);
-                }
-              }}
-            ></bb-activity-log-lite>
-          </div>
+          <div id="activity">${until(activity)}</div>
         </section>
       </main>
       <footer>

@@ -147,7 +147,7 @@ export class AppNav extends LitElement {
       >
         ${this.popout ? html`<h1>Menu</h1>` : nothing}
         <ul>
-          <li><button id="recent">Recent Activity</button></li>
+          <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>
                 <button

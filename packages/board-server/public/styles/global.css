@@ -82,6 +82,7 @@
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-laps: url(/third_party/icons/laps.svg);
   --bb-icon-lan: url(/third_party/icons/lan.svg);
+  --bb-icon-lightbulb: url(/third_party/icons/lightbulb.svg);
   --bb-icon-maximize: url(/third_party/icons/maximize.svg);
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
@@ -93,6 +94,7 @@
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-open-new: url(/third_party/icons/open-new.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
+  --bb-icon-password: url(/third_party/icons/password.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-public: url(/third_party/icons/public.svg);
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
@@ -189,6 +191,28 @@
   --bb-neutral-700: #595959;
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
+
+  --bb-human-50: #ece7f4;
+  --bb-human-100: #cfc3e4;
+  --bb-human-200: #b19cd2;
+  --bb-human-300: #9274c0;
+  --bb-human-400: #7c56b3;
+  --bb-human-500: #653aa6;
+  --bb-human-600: #5d35a0;
+  --bb-human-700: #512d97;
+  --bb-human-800: #46278e;
+  --bb-human-900: #351c7f;
+
+  --bb-looper-50: #e0f2f1;
+  --bb-looper-100: #b2dfdb;
+  --bb-looper-200: #80cbc4;
+  --bb-looper-300: #4db6ac;
+  --bb-looper-400: #26a69a;
+  --bb-looper-500: #009688;
+  --bb-looper-600: #00897b;
+  --bb-looper-700: #00796b;
+  --bb-looper-800: #00695c;
+  --bb-looper-900: #004d40;
 
   --bb-title-large: 22px;
   --bb-title-line-height-large: 28px;
