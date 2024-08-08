@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 import { timestamp } from "../timestamp.js";
 import type {
   GraphDescriptor,
   InputValues,
-  NodeHandlerContext,
   OutputValues,
+  RunArguments,
   TraversalResult,
 } from "../types.js";
 import { runGraph } from "./run-graph.js";
@@ -23,9 +22,8 @@ import { runGraph } from "./run-graph.js";
 export async function invokeGraph(
   graph: GraphDescriptor,
   inputs: InputValues,
-  context: NodeHandlerContext = {},
-  resumeFrom?: TraversalResult,
-  start?: StartLabel
+  context: RunArguments = {},
+  resumeFrom?: TraversalResult
 ): Promise<OutputValues> {
   const args = { ...inputs, ...graph.args };
   const { probe } = context;
@@ -36,11 +34,7 @@ export async function invokeGraph(
     const path = context.invocationPath || [];
     const lifecycle = context.state?.lifecycle();
 
-    for await (const result of runGraph(
-      graph,
-      { ...context, start },
-      resumeFrom
-    )) {
+    for await (const result of runGraph(graph, context, resumeFrom)) {
       if (result.type === "input") {
         // Pass the inputs to the board. If there are inputs bound to the
         // board (e.g. from a lambda node that had incoming wires), they will
