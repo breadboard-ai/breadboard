@@ -382,6 +382,11 @@ npm run build
 gcloud app deploy
 ```
 
+#### Add an API connection to the Connection Server
+
+> [!NOTE]
+> Coming soon
+
 ---
 
 ## APPENDIX: Deploying the Visual Editor on Firebase hosting
