@@ -32,7 +32,12 @@ import {
 } from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
-import { isSpecialInput, type Input, type InputWithDefault } from "./input.js";
+import {
+  isSpecialInput,
+  type GenericSpecialInput,
+  type Input,
+  type InputWithDefault,
+} from "./input.js";
 import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import { isSpecialOutput } from "./output.js";
@@ -83,7 +88,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   >;
   let i = 0;
   const magicInputResolutions = new Map<
-    Input<JsonSerializable> | InputWithDefault<JsonSerializable>,
+    GenericSpecialInput,
     { nodeId: string; portName: string }
   >();
   for (const inputs of inputsArray) {

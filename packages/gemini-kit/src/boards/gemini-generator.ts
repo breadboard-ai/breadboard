@@ -99,7 +99,7 @@ const model = input({
     }
   ),
   examples: ["gemini-1.5-flash-latest"],
-  optional: true,
+  default: "gemini-1.5-flash-latest",
 });
 
 const responseMimeType = input({
