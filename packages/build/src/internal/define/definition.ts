@@ -480,7 +480,7 @@ type StrictInstantiateArgs<
     : InstantiateArg<SI[K]>;
 } & {
   [K in OI]?:
-    | InstantiateArg<SI[K]>
+    | InstantiateArg<SI[K] | undefined>
     | OutputPortReference<SI[K] | undefined>
     | undefined;
 } & {
@@ -510,13 +510,13 @@ type InstanceOutputs<
   ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id" | "$metadata">]: DO }>
   : SO;
 
-type InstantiateArg<T extends JsonSerializable> =
+type InstantiateArg<T extends JsonSerializable | undefined> =
   | T
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Loopback<T>
-  | Convergence<T>;
+  | Loopback<Exclude<T, /* TODO(aomarks) questionable */ undefined>>
+  | Convergence<Exclude<T, /* TODO(aomarks) questionable */ undefined>>;
 
 function mergeStaticsAndUnsafeUserSchema(
   statics: JSONSchema4,

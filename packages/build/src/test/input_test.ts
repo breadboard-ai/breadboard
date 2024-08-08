@@ -37,6 +37,9 @@ test("defaults to string", () => {
   // $ExpectType Input<string>
   checkInput(input(), "string");
 
+  // $ExpectType Input<string | undefined>
+  checkInput(input({ optional: true }), "string");
+
   checkInput(
     // $ExpectType Input<string>
     input({ description: "Description" }),
@@ -59,6 +62,9 @@ test("defaults to string", () => {
 test("only type", () => {
   // $ExpectType Input<string>
   checkInput(input({ type: "string" }), "string");
+
+  // $ExpectType Input<string | undefined>
+  checkInput(input({ type: "string", optional: true }), "string");
 
   // $ExpectType Input<number>
   checkInput(input({ type: "number" }), "number");
@@ -129,6 +135,14 @@ test("type and default and examples", () => {
     default: { foo: ["bar"] },
     examples: [{ foo: ["a"] }, { foo: ["b"] }],
   });
+});
+
+test("just examples", () => {
+  // $ExpectType Input<number>
+  checkInput(input({ examples: [1, 2] }), "number", [1, 2]);
+
+  // $ExpectType Input<number | undefined>
+  checkInput(input({ examples: [1, 2], optional: true }), "number", [1, 2]);
 });
 
 test("default doesn't match type", () => {
@@ -334,19 +348,22 @@ test("optional inputs aren't required in JSON schema", () => {
   const req = input({ type: "number" });
   const opt = input({ type: "number", optional: true });
 
-  const { baz } = defineNodeType({
+  // $ExpectType Definition<{ foo: number; bar: number; }, { baz: number; }, undefined, undefined, "bar", false, false, false, { foo: { board: false; }; bar: { board: false; }; }>
+  const def = defineNodeType({
     name: "test",
     inputs: {
       foo: { type: "number" },
-      bar: { type: "number" },
+      bar: { type: "number", optional: true },
     },
     outputs: {
       baz: { type: "number" },
     },
     invoke: () => ({ baz: 123 }),
-  })({ foo: req, bar: opt }).outputs;
+  });
 
-  // $ExpectType BoardDefinition<{ req: Input<number>; opt: Input<number>; }, { baz: OutputPort<number>; }>
+  const { baz } = def({ foo: req, bar: opt }).outputs;
+
+  // $ExpectType BoardDefinition<{ req: Input<number>; opt: Input<number | undefined>; }, { baz: OutputPort<number>; }>
   const brd = board({
     inputs: {
       req,
