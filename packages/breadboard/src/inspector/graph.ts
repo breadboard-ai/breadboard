@@ -266,18 +266,13 @@ class Graph implements InspectableGraphWithStore {
     // invoke graph
     try {
       const base = this.#url;
-      return (await invokeGraph(
-        this.#graph,
-        inputs,
-        {
-          // Fill out
-          base,
-          kits: this.#options.kits,
-          loader: this.#options.loader,
-          start: "describe",
-        },
-        undefined
-      )) as NodeDescriberResult;
+      return (await invokeGraph(this.#graph, inputs, {
+        // Fill out
+        base,
+        kits: this.#options.kits,
+        loader: this.#options.loader,
+        start: "describe",
+      })) as NodeDescriberResult;
     } catch (e) {
       console.warn(`Error while invoking graph's describe entry point`, e);
       return await this.#describeWithStaticAnalysis();
@@ -286,12 +281,10 @@ class Graph implements InspectableGraphWithStore {
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
     const describers = this.entries("describe");
-    console.log("🌻 describers", describers);
-    if (describers.length === 0) {
-      return this.#describeWithStaticAnalysis();
-    } else {
+    if (describers.length > 0) {
       return this.#describeWithEntryPoint(inputs || {});
     }
+    return this.#describeWithStaticAnalysis();
   }
 
   get nodeStore() {

@@ -75,8 +75,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -137,
-          "y": 34,
+          "x": -188,
+          "y": 69,
           "collapsed": false
         },
         "tags": [
@@ -90,14 +90,7 @@
       },
       "configuration": {
         "schema": {
-          "properties": {
-            "template": {
-              "type": "string",
-              "title": "Template",
-              "examples": [],
-              "format": "multiline"
-            }
-          },
+          "properties": {},
           "type": "object",
           "required": []
         }
@@ -108,17 +101,33 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 42,
-          "y": 34,
+          "x": -29,
+          "y": 66,
           "collapsed": false
         },
         "title": "Schema from Inputs",
         "logLevel": "debug"
       },
       "configuration": {
-        "code": "function run({ template }) {\n  const parametersFromTemplate = (template) => {\n    if (!template) return [];\n    const matches = template.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    const parameters = Array.from(matches).map(\n      (match) => match.groups?.name || \"\"\n    );\n    const unique = Array.from(new Set(parameters));\n    return unique;\n  };\n\n  const parameters = parametersFromTemplate(template);\n\n  const inputSchema = {\n    type: \"object\",\n    properties: {\n      ...Object.fromEntries(\n        parameters.map((parameter) => [\n          parameter,\n          {\n            title: parameter,\n            description: `The value to substitute for the parameter \"${parameter}\"`,\n            type: \"string\",\n          },\n        ])\n      ),\n      template: {\n        title: \"Template\",\n        description: \"The template string to substitute the parameters into\",\n        type: \"string\",\n        format: \"multiline\",\n      },\n    },\n  };\n\n  const outputSchema = {\n    type: \"object\",\n    properties: {\n      prompt: {\n        type: \"string\",\n        format: \"multiline\",\n      },\n    },\n  };\n\n  return {\n    inputSchema,\n    outputSchema,\n  };\n}\n",
+        "outputSchema": {
+          "properties": {
+            "outputSchema": {
+              "type": "object",
+              "title": "Output Schema",
+              "examples": []
+            },
+            "inputSchema": {
+              "type": "object",
+              "title": "Input Schema",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        },
+        "code": "function run({ template }) {\n  const parametersFromTemplate = (template) => {\n    if (!template) return [];\n    const matches = template.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    const parameters = Array.from(matches).map(\n      (match) => match.groups?.name || \"\"\n    );\n    const unique = Array.from(new Set(parameters));\n    return unique;\n  };\n\n  const parameters = parametersFromTemplate(template);\n\n  const inputSchema = {\n    type: \"object\",\n    properties: {\n      ...Object.fromEntries(\n        parameters.map((parameter) => [\n          parameter,\n          {\n            title: parameter,\n            description: `The value to substitute for the parameter \"${parameter}\"`,\n            type: \"string\",\n          },\n        ])\n      ),\n      template: {\n        title: \"Template\",\n        description: \"The template string to substitute the parameters into\",\n        type: \"string\",\n        format: \"multiline\",\n      },\n    },\n    required: [ \"template\" ]\n  };\n\n  const outputSchema = {\n    type: \"object\",\n    properties: {\n      prompt: {\n        type: \"string\",\n        format: \"multiline\",\n        title: \"Prompt\",\n        description: \"The prompt string with the parameters substituted\",        \n      },\n    },\n  };\n\n  return {\n    inputSchema,\n    outputSchema,\n  };\n}\n",
         "name": "run",
-        "raw": false
+        "raw": true
       }
     },
     {
@@ -126,8 +135,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 261,
-          "y": 53,
+          "x": 262,
+          "y": 72,
           "collapsed": false
         },
         "title": "Schemas",
@@ -136,9 +145,14 @@
       "configuration": {
         "schema": {
           "properties": {
-            "content": {
+            "inputSchema": {
               "type": "object",
-              "title": "Schemas",
+              "title": "Input Schema",
+              "examples": []
+            },
+            "outputSchema": {
+              "type": "object",
+              "title": "Output Schema",
               "examples": []
             }
           },
@@ -162,16 +176,22 @@
       "in": "template"
     },
     {
-      "from": "runJavascript-4e04e982",
-      "to": "output-acc3ef03",
-      "out": "result",
-      "in": "content"
-    },
-    {
       "from": "input-58c1588f",
       "to": "runJavascript-4e04e982",
-      "out": "template",
-      "in": "template"
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "runJavascript-4e04e982",
+      "to": "output-acc3ef03",
+      "out": "inputSchema",
+      "in": "inputSchema"
+    },
+    {
+      "from": "runJavascript-4e04e982",
+      "to": "output-acc3ef03",
+      "out": "outputSchema",
+      "in": "outputSchema"
     }
   ],
   "metadata": {

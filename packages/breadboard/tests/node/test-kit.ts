@@ -105,15 +105,18 @@ export const testKit: Kit = {
     },
     runJavascript: {
       invoke: async (inputs) => {
-        const { code, functionName = "run", ...args } = inputs;
+        const { code, functionName = "run", raw, ...args } = inputs;
         const vm = await import("node:vm");
         const codeToRun = `${code}\n${functionName}(${JSON.stringify(args)});`;
         const context = vm.createContext({ console, structuredClone });
         const script = new vm.Script(codeToRun);
         const result = await script.runInNewContext(context);
-        return {
-          result: typeof result === "string" ? result : JSON.stringify(result),
-        };
+        return raw
+          ? result
+          : {
+              result:
+                typeof result === "string" ? result : JSON.stringify(result),
+            };
       },
     },
   },
