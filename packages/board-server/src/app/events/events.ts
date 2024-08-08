@@ -10,10 +10,30 @@ const eventInit = {
   composed: true,
 };
 
-export class DownloadRunEvent extends Event {
-  static eventName = "bbdownload";
+export class InputEnterEvent extends Event {
+  static eventName = "bbinputenter";
+
+  constructor(
+    public readonly id: string,
+    public readonly data: Record<string, unknown>,
+    public readonly allowSavingIfSecret: boolean
+  ) {
+    super(InputEnterEvent.eventName, { ...eventInit });
+  }
+}
+
+export class DismissMenuEvent extends Event {
+  static eventName = "bbdismissmenu";
 
   constructor() {
-    super(DownloadRunEvent.eventName, { ...eventInit });
+    super(DismissMenuEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ShareEvent extends Event {
+  static eventName = "bbshare";
+
+  constructor() {
+    super(ShareEvent.eventName, { ...eventInit });
   }
 }
