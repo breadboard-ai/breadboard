@@ -117,6 +117,7 @@ class Graph implements InspectableGraphWithStore {
     const context: NodeDescriberContext = {
       outerGraph: this.#graph,
       loader,
+      kits,
       wires: {
         incoming: Object.fromEntries(
           (options?.incoming ?? []).map((edge) => [

@@ -69,8 +69,12 @@ const describe = async (
         // This is a describer, so it must always return some valid value.
       }
       if (board) {
-        const inspectableGraph = inspect(board);
-        const { inputSchema, outputSchema } = await inspectableGraph.describe();
+        const inspectableGraph = inspect(board, {
+          kits: context.kits,
+          loader: context.loader,
+        });
+        const { inputSchema, outputSchema } =
+          await inspectableGraph.describe(inputs);
         return {
           inputs: unsafeSchema(inputSchema),
           outputs: unsafeSchema(outputSchema),
