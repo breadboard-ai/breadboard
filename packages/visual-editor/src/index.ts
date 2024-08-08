@@ -37,6 +37,7 @@ import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+import NewAgentKit from "@google-labs/agent-kit/new.js";
 import { RecentBoardStore } from "./data/recent-boards";
 
 const REPLAY_DELAY_MS = 10;
@@ -538,6 +539,7 @@ export class Main extends LitElement {
             BuildExampleKit,
             PythonWasmKit,
             GoogleDriveKit,
+            NewAgentKit,
           ]),
           ...this.#providers.map((provider) => provider.restore()),
           this.#settings?.restore(),
