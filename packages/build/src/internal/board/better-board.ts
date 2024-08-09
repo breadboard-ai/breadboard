@@ -16,9 +16,14 @@ import type { JsonSerializable } from "../type-system/type.js";
 import type { Convergence } from "./converge.js";
 import type { GenericSpecialInput, Input, InputWithDefault } from "./input.js";
 import type { Loopback } from "./loopback.js";
+import type { Output } from "./output.js";
 
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// TODO(aomarks) Get it actually working! Hook up the immplementation.
+// TODO(aomarks) Clean up, documentation. Move some things around.
+// TODO(aomarks) Do a mental sweep through, are we missing any tests?
 
 export function board<const T extends BoardInit>(
   init: T
@@ -27,7 +32,7 @@ export function board<const T extends BoardInit>(
   Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitOutputs<T["outputs"]>>>>
 > {
   console.log({ init });
-  return () => ({});
+  return () => ({ outputs: {} as any });
 }
 
 export interface BoardInit {
@@ -37,7 +42,7 @@ export interface BoardInit {
 
 type AnonymousInputNodeShorthand = Record<string, GenericSpecialInput>;
 
-type AnonymousOutputNodeShorthand = Record<string, Value | undefined>;
+type AnonymousOutputNodeShorthand = Record<string, Value | Output | undefined>;
 
 export type BoardDefinition<
   I extends Record<string, JsonSerializable | undefined>,
@@ -46,10 +51,12 @@ export type BoardDefinition<
   [K in keyof I]: Value<I[K]>;
 }) => BoardInstance<I, O>;
 
-export type BoardInstance<
+export interface BoardInstance<
   I extends Record<string, JsonSerializable | undefined>,
   O extends Record<string, JsonSerializable | undefined>,
-> = {};
+> {
+  outputs: { [K in keyof Required<O>]: Value<O[K]> };
+}
 
 /**
  * Board inputs can either be an object (one input node) or an array of objects
@@ -94,19 +101,21 @@ type ExtractInputTypes<T extends Record<string, GenericSpecialInput>> = {
  * in the case of `InputWithDefault`. This is because when there is a default,
  * then it is optional from the caller's perspective.
  */
-type ExtractOutputTypes<T extends Record<string, Value | undefined>> = {
-  [K in keyof T]: T[K] extends Input<infer X>
-    ? X
-    : T[K] extends InputWithDefault<infer X>
-      ? X | undefined
-      : T[K] extends
-            | Loopback<infer X>
-            | Convergence<infer X>
-            | OutputPort<infer X>
-            | OutputPortReference<infer X>
-        ? X
-        : never;
-};
+type ExtractOutputTypes<T extends Record<string, Value | Output | undefined>> =
+  {
+    [K in keyof T]: T[K] extends Input<infer X>
+      ? X
+      : T[K] extends InputWithDefault<infer X>
+        ? X | undefined
+        : T[K] extends
+              | Loopback<infer X>
+              | Convergence<infer X>
+              | Output<infer X>
+              | OutputPort<infer X>
+              | OutputPortReference<infer X>
+          ? X
+          : never;
+  };
 
 export function inputNode<T extends Record<string, GenericSpecialInput>>(
   inputs: T,

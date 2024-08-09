@@ -13,6 +13,7 @@ import {
 import { converge } from "../internal/board/converge.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
+import { output } from "../internal/board/output.js";
 import type {
   OutputPort,
   OutputPortReference,
@@ -20,12 +21,6 @@ import type {
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
-// TODO(aomarks) Multiple output nodes
-// TODO(aomarks) Output node metadata ($id, metadata, etc.)
-// TODO(aomarks) Output port metadata (the output function)
-// TODO(aomarks) Polymorphic output tests
-// TOOD(aomarks) Instance types (outputs especially).
 
 describe("input types", () => {
   test("required", () => {
@@ -150,9 +145,12 @@ describe("instantiate function", () => {
     // $ExpectType { bar?: Value<number | undefined>; foo: Value<string>; }
     const x = {} as Parameters<typeof b>[0];
 
-    test("instance type reflects definition", () => {
+    test("instance types", () => {
       // $ExpectType BoardInstance<{ bar?: number | undefined; foo: string; }, { bar?: number | undefined; foo: string; }>
-      b({ foo: "foo", bar: 123 });
+      const inst = b({ foo: "foo", bar: 123 });
+
+      // $ExpectType { bar: Value<number | undefined>; foo: Value<string>; }
+      inst.outputs;
     });
 
     test("required values", () => {
@@ -347,5 +345,24 @@ test("one output node metadata", () => {
         description: "Output Node Description",
       }
     ),
+  });
+});
+
+test("output port metadata", () => {
+  const foo = input();
+  const bar = input({ type: "number" });
+  // $ExpectType BoardDefinition<{}, { foo: string; bar: number; }>
+  board({
+    inputs: {},
+    outputs: {
+      foo: output(foo, {
+        id: "foo-port-id",
+        description: "Foo Port Description",
+      }),
+      bar: output(bar, {
+        id: "bar-port-id",
+        description: "Bar Port Description",
+      }),
+    },
   });
 });
