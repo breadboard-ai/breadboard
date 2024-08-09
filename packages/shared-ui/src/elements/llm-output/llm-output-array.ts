@@ -16,6 +16,18 @@ export class LLMOutputArray extends LitElement {
   @property()
   values: LLMContent[] | null = null;
 
+  @property()
+  showModeToggle = true;
+
+  @property()
+  showEntrySelector = true;
+
+  @property()
+  clamped = true;
+
+  @property()
+  lite = false;
+
   @property({ reflect: true })
   selected = 0;
 
@@ -143,51 +155,60 @@ export class LLMOutputArray extends LitElement {
   }
 
   render() {
+    const showControls = this.showEntrySelector || this.showModeToggle;
+
     return this.values
-      ? html` <div id="controls">
-            ${this.mode === "visual"
-              ? html`<h1>Role</h1>
-                  <div id="role-buttons">
-                    ${map(this.values, (item, idx) => {
-                      if (item.role === "$metadata") return nothing;
-                      const roleClass = (item.role || "user")
-                        .toLocaleLowerCase()
-                        .replaceAll(/\s/gim, "-");
-                      return html`<button
-                        class=${classMap({ [roleClass]: true })}
-                        ?disabled=${idx === this.selected}
-                        title=${item.role || "User"}
-                        @click=${() => {
-                          this.selected = idx;
-                        }}
+      ? html` ${showControls
+            ? html`<div id="controls">
+                ${this.mode === "visual" && this.showEntrySelector
+                  ? html`<h1>Role</h1>
+                      <div id="role-buttons">
+                        ${map(this.values, (item, idx) => {
+                          if (item.role === "$metadata") return nothing;
+                          const roleClass = (item.role || "user")
+                            .toLocaleLowerCase()
+                            .replaceAll(/\s/gim, "-");
+                          return html`<button
+                            class=${classMap({ [roleClass]: true })}
+                            ?disabled=${idx === this.selected}
+                            title=${item.role || "User"}
+                            @click=${() => {
+                              this.selected = idx;
+                            }}
+                          >
+                            ${item.role || "User"}
+                          </button>`;
+                        })}
+                      </div>`
+                  : nothing}
+                ${this.showModeToggle
+                  ? html`<select
+                      @input=${(evt: Event) => {
+                        if (!(evt.target instanceof HTMLSelectElement)) {
+                          return;
+                        }
+
+                        const mode = evt.target.value;
+                        if (mode !== "visual" && mode !== "json") {
+                          return;
+                        }
+
+                        this.mode = mode;
+                      }}
+                    >
+                      <option
+                        value="visual"
+                        ?selected=${this.mode === "visual"}
                       >
-                        ${item.role || "User"}
-                      </button>`;
-                    })}
-                  </div>`
-              : nothing}
-            <select
-              @input=${(evt: Event) => {
-                if (!(evt.target instanceof HTMLSelectElement)) {
-                  return;
-                }
-
-                const mode = evt.target.value;
-                if (mode !== "visual" && mode !== "json") {
-                  return;
-                }
-
-                this.mode = mode;
-              }}
-            >
-              <option value="visual" ?selected=${this.mode === "visual"}>
-                Visual Debug
-              </option>
-              <option value="json" ?selected=${this.mode === "json"}>
-                Raw data
-              </option>
-            </select>
-          </div>
+                        Visual Debug
+                      </option>
+                      <option value="json" ?selected=${this.mode === "json"}>
+                        Raw data
+                      </option>
+                    </select>`
+                  : nothing}
+              </div>`
+            : nothing}
 
           <div ${ref(this.#containerRef)}>
             ${this.mode === "visual"
@@ -199,6 +220,8 @@ export class LLMOutputArray extends LitElement {
                       : nothing}
                     class=${classMap({ visible: idx === this.selected })}
                     .value=${item}
+                    .clamped=${this.clamped}
+                    .lite=${this.lite}
                   ></bb-llm-output>`;
                 })
               : html`<bb-json-tree .json=${this.values}></bb-json-tree>`}
