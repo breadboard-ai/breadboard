@@ -19,6 +19,8 @@ import {
   output,
   unsafeCast,
   unsafeType,
+  inputNode,
+  outputNode,
 } from "@breadboard-ai/build";
 import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import { Schema } from "@google-labs/breadboard";
@@ -537,13 +539,8 @@ export default board({
     },
   },
   version: "0.1.0",
-  inputs: [
+  inputs: inputNode(
     {
-      $id: "inputs",
-      $metadata: {
-        title: "Input Parameters",
-        description: "Collecting input parameters",
-      },
       systemInstruction,
       text,
       model,
@@ -555,33 +552,42 @@ export default board({
       safetySettings,
       stopSequences,
     },
-  ],
-  outputs: [
     {
-      $id: "content-output",
-      $metadata: {
+      id: "inputs",
+      title: "Input Parameters",
+      description: "Collecting input parameters",
+    }
+  ),
+  outputs: [
+    outputNode(
+      {
+        context: output(formattedResponse.outputs.context, {
+          title: "Context",
+          description: "The conversation context",
+        }),
+        text: output(formattedResponse.outputs.text, {
+          title: "Text",
+          description: "The generated text",
+        }),
+      },
+      {
+        id: "content-output",
         title: "Content Output",
         description: "Outputting content",
+      }
+    ),
+    outputNode(
+      {
+        context: output(formattedResponse.outputs.context, {
+          title: "Context",
+          description: "The conversation context",
+        }),
       },
-      context: output(formattedResponse.outputs.context, {
-        title: "Context",
-        description: "The conversation context",
-      }),
-      text: output(formattedResponse.outputs.text, {
-        title: "Text",
-        description: "The generated text",
-      }),
-    },
-    {
-      $id: "tool-call-output",
-      $metadata: {
+      {
+        id: "tool-call-output",
         title: "Tool Call Output",
         description: "Outputting a tool call",
-      },
-      context: output(formattedResponse.outputs.context, {
-        title: "Context",
-        description: "The conversation context",
-      }),
-    },
+      }
+    ),
   ],
 });

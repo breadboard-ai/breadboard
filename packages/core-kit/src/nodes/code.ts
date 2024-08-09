@@ -18,6 +18,8 @@ import type {
   JsonSerializable,
 } from "@breadboard-ai/build/internal/type-system/type.js";
 import runJavascript from "./run-javascript.js";
+import type { Convergence } from "@breadboard-ai/build/internal/board/converge.js";
+import type { Loopback } from "@breadboard-ai/build/internal/board/loopback.js";
 
 /**
  * The `code` function creates a {@link runJavascript} Breadboard node in a
@@ -145,7 +147,9 @@ export interface CodeOutputConfig {
 }
 
 type CodeNodeInputs<I extends Record<string, Value<JsonSerializable>>> = {
-  [K in keyof I]: I[K] extends Value<infer T> ? T : never;
+  [K in keyof I]: I[K] extends Value<infer T extends JsonSerializable>
+    ? T
+    : never;
 };
 
 type ConvertOutput<T extends BreadboardType | CodeOutputConfig> =
@@ -163,7 +167,12 @@ type ConvertOutput<T extends BreadboardType | CodeOutputConfig> =
 type StrictCodeFunctionParams<
   I extends Record<string, Value<JsonSerializable>>,
 > = {
-  [K in keyof I]: I[K] extends Value<infer T> ? T : never;
+  [K in keyof I]: I[K] extends
+    | Convergence<infer T>
+    | Loopback<infer T>
+    | Value<infer T>
+    ? T
+    : never;
 };
 
 type ConvertBreadboardTypes<
