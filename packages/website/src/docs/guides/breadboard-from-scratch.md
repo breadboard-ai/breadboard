@@ -459,11 +459,13 @@ user grants your Cloud project permission to read their Drive files.
      asked to authorize the application
 
 5. Add an **Authorized JavaScript origin** and provide the origin for your Visual Editor instance
-6. Add an **Authorized redirect URI** and provide your Visual Editor origin plus `/oauth`.
+6. Add an **Authorized redirect URI** and provide your Visual Editor origin plus `/oauth/`.
 
    - For example, if your visual editor is deployed at
      `https://example.appspot.com` then the redirect URI would be
-     `https://example.appspot.com/oauth`
+     `https://example.appspot.com/oauth/`
+   - Be sure not to omit the trailing slash. The authorization request will fail
+     without it.
 
 7. Click **CREATE** to finish creating the credential
 
@@ -473,6 +475,60 @@ user grants your Cloud project permission to read their Drive files.
 > store it where anyone else will have access to it. Especially do not check it
 > into any version control system. There is no need to write this value down. You
 > can always access it later in Cloud Console.
+
+##### Add the credential to the Connections Server
+
+1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
+   Google Cloud console
+2. Find your OAuth client ID and click **Download OAuth client**
+3. Download the JSON file to your local filesystem
+
+> [!WARNING]
+> The downloaded client secret has sensitive data that can be used to
+> impersonate your application to Google's APIs. Ensure that no unauthorized users
+> have access to it. You can delete the file once you are done with this step.
+
+4. Edit `packages/connection-server/secrets/secrets.json` to add a connection to
+   Google Drive. You will need to provide the `"client_id"`, `"client_secret"`,
+   `"auth_uri"`, and `"token_uri"` values from your downloaded client secret.
+
+```json
+{
+  "connections": [
+    {
+      "id": "google-drive-limited",
+      "title": "Google Drive",
+      "description": "Read & write only the files in your Google Drive that you have shared with Breadboard.",
+      "oauth": {
+        "client_id": "{YOUR_CLIENT_ID}",
+        "client_secret": "{YOUR_CLIENT_SECRET}",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "scopes": ["https://www.googleapis.com/auth/drive.file"]
+      }
+    }
+  ]
+}
+```
+
+> [!NOTE]
+> The ID must be **`"google-drive-limited`**. This value is hard coded into the
+> Google Drive component. The title and description can be whatever you like.
+> These values will be shown in the Visual Editor UI.
+
+5. Redeploy the Connection Server
+
+```sh
+cd packages/connection-server
+```
+
+```sh
+gcloud app deploy
+```
+
+Your Connection Server is now configured to serve access tokens for the Google
+Drive API. You can see the configured connection (and sign in to the Drive API)
+in the **Settings > Connections** menu in the Visual Editor.
 
 ---
 
