@@ -18,7 +18,10 @@ import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { type Ref, createRef, ref } from "lit/directives/ref.js";
-import { type UserInputConfiguration } from "../../types/types.js";
+import {
+  type UserInputConfiguration,
+  type UserMessage,
+} from "../../types/types.js";
 import { InputEnterEvent } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
@@ -38,6 +41,9 @@ import type {
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
   @property()
+  message: UserMessage | null = null;
+
+  @property()
   events: InspectableRunEvent[] = [];
 
   static styles = css`
@@ -55,7 +61,7 @@ export class ActivityLogLite extends LitElement {
       top: 0;
       background: var(--bb-neutral-0);
       display: grid;
-      grid-template-rows: 32px 24px;
+      grid-template-rows: 24px;
       row-gap: var(--bb-grid-size-10);
       align-items: center;
       padding: var(--bb-grid-size-2) var(--bb-grid-size-2);
@@ -256,7 +262,7 @@ export class ActivityLogLite extends LitElement {
 
     @media (min-width: 700px) {
       #controls {
-        grid-template-rows: 36px 24px;
+        grid-template-rows: 24px;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-2) var(--bb-grid-size)
           0;
       }
@@ -269,7 +275,7 @@ export class ActivityLogLite extends LitElement {
 
     @media (min-width: 1120px) {
       #controls {
-        grid-template-rows: 40px 24px;
+        grid-template-rows: 24px;
         padding: var(--bb-grid-size-3) 0 0 0;
       }
 
@@ -560,16 +566,54 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderEventRunInfo(events: InspectableRunNodeEvent[]): HTMLTemplateResult {
-    return html`${events.length
-      ? map(events, (event) => {
-          if (event.end === null && event.node.descriptor.type === "input") {
-            return html`${until(this.#renderPendingInput(event))}`;
+  #renderEventRunInfo(
+    runs: InspectableRun[],
+    bubbledInputAndOutputIds: string[]
+  ): { found: boolean; tmpl: HTMLTemplateResult } {
+    const descender = (
+      runs: InspectableRun[],
+      bubbled: string,
+      target: InspectableRunNodeEvent[]
+    ) => {
+      for (const run of runs) {
+        for (const event of run.events) {
+          if (event.type !== "node") {
+            continue;
           }
 
-          return html`${until(this.#renderCompletedInputOrOutput(event))} `;
-        })
-      : html`<div class="no-information">No information available</div>`}`;
+          if (event.id === bubbled) {
+            target.push(event);
+          } else if (bubbled.startsWith(`${event.id}-`) && event.runs) {
+            descender(event.runs, bubbled, target);
+          }
+        }
+      }
+    };
+
+    // Populate this events array based on a matching the nested run
+    // information with the bubbled events. After that render any events that
+    // we've found.
+    const events: InspectableRunNodeEvent[] = [];
+    for (const bubbled of bubbledInputAndOutputIds) {
+      descender(runs, bubbled, events);
+    }
+
+    return {
+      found: events.length > 0,
+      tmpl:
+        events.length > 0
+          ? html`${map(events, (event) => {
+              if (
+                event.end === null &&
+                event.node.descriptor.type === "input"
+              ) {
+                return html`${until(this.#renderPendingInput(event))}`;
+              }
+
+              return html`${until(this.#renderCompletedInputOrOutput(event))} `;
+            })}`
+          : html`<div class="no-information">No information available</div>`,
+    };
   }
 
   #renderEvents(events: InspectableRunEvent[]) {
@@ -588,7 +632,7 @@ export class ActivityLogLite extends LitElement {
       return prev;
     }, [] as string[]);
 
-    return html`${map(events, (event, idx) => {
+    return html`${map(events, (event) => {
       let title: HTMLTemplateResult | symbol = nothing;
       let description: HTMLTemplateResult | symbol = nothing;
       let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
@@ -597,9 +641,7 @@ export class ActivityLogLite extends LitElement {
         entry: true,
       };
 
-      let isOpen =
-        idx === events.length - 1 ||
-        (event.type === "node" && event.end === null);
+      let isOpen = event.type === "node" && event.end === null;
 
       switch (event.type) {
         case "node": {
@@ -624,23 +666,22 @@ export class ActivityLogLite extends LitElement {
               : type === "output"
                 ? html`Output`
                 : html`${node.title()}`;
-          if (event.runs && event.runs[0]) {
-            const run = event.runs[0];
-            const events: InspectableRunNodeEvent[] = run.events.filter(
-              (event) => {
-                return bubbledInputAndOutputIds.includes(event.id);
-              }
-            ) as InspectableRunNodeEvent[];
-
-            isOpen = isOpen && events.length > 0;
-            content = this.#renderEventRunInfo(events);
-          } else if (type === "input") {
+          if (type === "input") {
             content =
               event.end === null
                 ? this.#renderPendingInput(event)
                 : this.#renderCompletedInputOrOutput(event);
+            isOpen = true;
           } else if (type === "output") {
             content = this.#renderCompletedInputOrOutput(event);
+            isOpen = true;
+          } else if (event.runs) {
+            const { tmpl, found } = this.#renderEventRunInfo(
+              event.runs,
+              bubbledInputAndOutputIds
+            );
+            isOpen = isOpen || found;
+            content = tmpl;
           }
           break;
         }
@@ -737,25 +778,7 @@ export class ActivityLogLite extends LitElement {
   }
 
   render() {
-    const randomMessage = [
-      {
-        srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.webp",
-        src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.gif",
-        alt: "🙈",
-      },
-      {
-        srcset:
-          "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.webp",
-        src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.gif",
-        alt: "😶",
-      },
-    ];
-
-    const message =
-      randomMessage[Math.floor(Math.random() * randomMessage.length)];
-
     return html` <div id="controls">
-        <input type="search" placeholder="Search Activity" />
         <div id="actions">
           ${this.events.length
             ? html`<button
@@ -774,10 +797,10 @@ export class ActivityLogLite extends LitElement {
           ? this.#renderEvents(this.events)
           : html`<div id="no-events">
               <picture>
-                <source srcset="${message!.srcset}" type="image/webp" />
+                <source srcset="${this.message?.srcset}" type="image/webp" />
                 <img
-                  src="${message!.src}"
-                  alt="${message!.alt}"
+                  src="${this.message?.src}"
+                  alt="${this.message?.alt}"
                   width="128"
                   height="128"
                 />

@@ -105,7 +105,8 @@ export class AppNav extends LitElement {
       margin-bottom: var(--bb-grid-size-3);
     }
 
-    button {
+    button,
+    a {
       background: transparent;
       border: none;
       cursor: pointer;
@@ -129,9 +130,16 @@ export class AppNav extends LitElement {
       background: transparent var(--bb-icon-share) left center / 20px 20px
         no-repeat;
     }
+
+    a#visual-editor {
+      background: transparent var(--bb-icon-open-new) left center / 20px 20px
+        no-repeat;
+    }
   `;
 
   render() {
+    const boardUrl = window.location.href.replace(/app$/, "json");
+    const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -147,6 +155,11 @@ export class AppNav extends LitElement {
       >
         ${this.popout ? html`<h1>Menu</h1>` : nothing}
         <ul>
+          <li>
+            <a id="visual-editor" .href=${visualEditorUrl}
+              >Open in Visual Editor</a
+            >
+          </li>
           <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>
