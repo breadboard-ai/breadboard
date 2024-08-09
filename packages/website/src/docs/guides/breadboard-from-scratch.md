@@ -66,7 +66,7 @@ gcloud projects create ${PROJECT_ID}
 > If you get the message "Callers must accept Terms of Service", visit the
 > [Google Cloud Console](https://console.cloud.google.com/) to accept the terms.
 
-Once the project is created, set it project as the default project.
+Once the project is created, set it as the default project.
 
 ```sh
 gcloud config set project ${PROJECT_ID}
