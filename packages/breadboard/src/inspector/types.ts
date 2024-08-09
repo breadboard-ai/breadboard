@@ -282,7 +282,7 @@ export type InspectableGraph = {
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
-  describe(): Promise<NodeDescriberResult>;
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
   /**
    * Returns the subgraphs that are embedded in this graph.
    */

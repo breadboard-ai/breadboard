@@ -55,10 +55,12 @@ class Node implements InspectableNode {
     return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
-  isEntry(label?: StartLabel): boolean {
+  isEntry(label: StartLabel = "default"): boolean {
     const labels = this.startLabels();
     if (labels) {
-      return labels.includes(label || "default");
+      return labels.includes(label);
+    } else if (label !== "default") {
+      return false;
     }
     return this.incoming().length === 0;
   }
