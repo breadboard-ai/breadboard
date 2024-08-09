@@ -53,3 +53,9 @@ export interface AllowedLLMContentTypes {
   textFile: boolean;
   textInline: boolean;
 }
+
+export interface UserMessage {
+  srcset: string;
+  src: string;
+  alt: string;
+}

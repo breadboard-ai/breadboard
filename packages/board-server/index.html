@@ -8,14 +8,12 @@
   </head>
   <body>
     <script type="module">
+      import * as pkg from "./package.json";
       import { AppView } from "./src/app/app.ts";
       const appView = new AppView();
+      appView.version = pkg.version;
       document.body.appendChild(appView);
-
-      // appView.url = "/graphs/markdown-string.bgl.json";
-      // appView.url = "/graphs/hello-specialist.bgl.json";
-      // appView.url = "/graphs/librarian.bgl.json";
-      // appView.url = "/graphs/blank.bgl.json";
+      console.log(`[Board Server App View: Version ${pkg.version}]`);
     </script>
   </body>
 </html>

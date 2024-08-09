@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, type PropertyValueMap } from "lit";
+import { LitElement, html, css, type PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { InputEnterEvent } from "./events/events.js";
@@ -21,7 +21,7 @@ import {
   type RunConfig,
   type RunNodeStartEvent,
 } from "@google-labs/breadboard/harness";
-import { type InputCallback, STATUS } from "./types/types.js";
+import { type InputCallback, STATUS, type UserMessage } from "./types/types.js";
 import { until } from "lit/directives/until.js";
 import { loadKits } from "./utils/kit-loader.js";
 
@@ -34,10 +34,37 @@ import AgentKit from "@google-labs/agent-kit";
 import "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 
+const randomMessage: UserMessage[] = [
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.gif",
+    alt: "🙈",
+  },
+  {
+    srcset:
+      "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.gif",
+    alt: "😶",
+  },
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f9d0/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f9d0/512.gif",
+    alt: "🧐",
+  },
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif",
+    alt: "💡",
+  },
+];
+
 @customElement("bb-app-view")
 export class AppView extends LitElement {
   @property({ reflect: true })
   url: string | null = null;
+
+  @property({ reflect: true })
+  version: string = "dev";
 
   @state()
   status = STATUS.STOPPED;
@@ -56,6 +83,7 @@ export class AppView extends LitElement {
   #handlers: Map<string, InputCallback[]> = new Map();
   #abortController: AbortController | null = null;
   #runObserver: InspectableRunObserver | null = null;
+  #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
 
   static styles = css`
     * {
@@ -102,8 +130,8 @@ export class AppView extends LitElement {
     #menu-toggle {
       width: 20px;
       height: 20px;
-      background: transparent var(--bb-icon-menu) center center / 20px 20px
-        no-repeat;
+      background: transparent var(--bb-icon-menu-inverted) center center / 20px
+        20px no-repeat;
       border: none;
       font-size: 0;
       margin-right: var(--bb-grid-size-2);
@@ -203,7 +231,7 @@ export class AppView extends LitElement {
     }
 
     #board-info h1 {
-      color: var(--bb-ui-500);
+      color: var(--bb-neutral-0);
     }
 
     #board-info bb-app-nav {
@@ -214,7 +242,7 @@ export class AppView extends LitElement {
       display: flex;
       align-items: center;
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
-      border-bottom: 1px solid var(--bb-neutral-300);
+      background: var(--bb-ui-500);
     }
 
     @media (min-width: 700px) {
@@ -223,6 +251,19 @@ export class AppView extends LitElement {
         grid-template-columns: max(300px, 20vw) 1fr;
         grid-template-rows: none;
         column-gap: var(--bb-grid-size-5);
+      }
+
+      #board-info-container {
+        background: var(--bb-neutral-0);
+        border-bottom: 1px solid var(--bb-neutral-300);
+      }
+
+      #board-info h1 {
+        color: var(--bb-ui-500);
+      }
+
+      #menu-toggle {
+        background-image: var(--bb-icon-menu);
       }
 
       footer {
@@ -258,6 +299,7 @@ export class AppView extends LitElement {
         position: sticky;
         top: 0;
         padding: 0;
+        background: var(--bb-neutral-0);
       }
 
       #board-info bb-app-nav {
@@ -289,7 +331,7 @@ export class AppView extends LitElement {
     @media (min-width: 1120px) {
       #activity,
       #controls {
-        width: 500px;
+        width: 750px;
         left: calc(50% - 250px - (max(300px, 20vw) / 2));
       }
     }
@@ -494,29 +536,26 @@ export class AppView extends LitElement {
   }
 
   render() {
-    const loading = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
+    const boardTitle = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
       ([graph, kits]) => {
         if (!graph || !kits) {
           return html`Failed to load`;
         }
 
-        return html`
-          <header>
-            <button
-              id="menu-toggle"
-              @click=${() => {
-                this.showMenu = true;
-              }}
-            >
-              ${this.showMenu ? "Hide Menu" : "Show Menu"}
-            </button>
-            <h1>${graph.title}</h1>
-          </header>
-          <p id="board-description">${graph.description}</p>
-          <bb-app-nav .popout=${false} @bbshare=${this.#share}></bb-app-nav>
-        `;
+        return html`${graph.title}`;
       }
     );
+
+    const boardDescription = Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+    ]).then(([graph, kits]) => {
+      if (!graph || !kits) {
+        return html`Failed to load`;
+      }
+
+      return graph.description ? html`${graph.description}` : nothing;
+    });
 
     const runs = this.#runObserver
       ? this.#runObserver.runs()
@@ -537,8 +576,9 @@ export class AppView extends LitElement {
             message = "Requesting user input...";
           } else {
             classes.pending = true;
-            message =
+            const details =
               newest.node.descriptor.metadata?.description ?? "Working...";
+            message = `${details} (${events.length} event${events.length === 1 ? "" : "s"} received)`;
           }
         }
       }
@@ -560,6 +600,7 @@ export class AppView extends LitElement {
       const events = currentRun?.events ?? [];
 
       return html`<bb-activity-log-lite
+        .message=${this.#message}
         .events=${events}
         @bbinputrequested=${() => {
           this.requestUpdate();
@@ -597,7 +638,21 @@ export class AppView extends LitElement {
           ?visible=${this.showMenu}
         ></bb-app-nav>
         <section id="board-info-container">
-          <div id="board-info">${until(loading, this.#renderLoading())}</div>
+          <div id="board-info">
+            <header>
+              <button
+                id="menu-toggle"
+                @click=${() => {
+                  this.showMenu = true;
+                }}
+              >
+                ${this.showMenu ? "Hide Menu" : "Show Menu"}
+              </button>
+              <h1>${until(boardTitle, this.#renderLoading())}</h1>
+            </header>
+            <p id="board-description">${until(boardDescription)}</p>
+            <bb-app-nav .popout=${false} @bbshare=${this.#share}></bb-app-nav>
+          </div>
         </section>
         <section id="activity-container" ?inert=${this.showMenu}>
           <div id="activity">${until(activity)}</div>
@@ -607,7 +662,7 @@ export class AppView extends LitElement {
         <div id="links">
           Created with
           <a href="https://breadboard-ai.github.io/breadboard/">Breadboard</a>
-          by <a href="https://labs.google/">Google labs</a>
+          by <a href="https://labs.google/">Google labs</a> - v${this.version}
         </div>
         <div id="controls">
           ${until(status)}
