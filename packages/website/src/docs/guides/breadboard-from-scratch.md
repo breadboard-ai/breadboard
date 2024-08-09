@@ -368,6 +368,19 @@ const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
 };
 ```
 
+Open
+[`packages/shared-ui/src/elements/connection/connection-broker.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/shared-ui/src/elements/connection/connection-broker.ts)
+in a text editor.
+
+Update the value of **`ORIGIN_TO_GRANT_URL`**. This is the same as the change
+made above, but the target URL has a path of `/grant`.
+
+```ts
+const ORIGIN_TO_GRANT_URL: Record<string, string> = {
+  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}/grant",
+};
+```
+
 Re-deploy the Visual Editor.
 
 ```sh
