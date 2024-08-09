@@ -142,11 +142,10 @@ export class ActivityLogLite extends LitElement {
       border-radius: var(--bb-grid-size);
       margin-bottom: var(--bb-grid-size);
       padding: var(--bb-grid-size-3);
-      animation: fadeAndSlideIn 0.5s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
-    .entry.finalized {
-      animation: none;
+    .entry.hidden {
+      display: none;
     }
 
     .entry details summary::after {
@@ -331,18 +330,6 @@ export class ActivityLogLite extends LitElement {
         padding: var(--bb-grid-size-2) 0;
       }
     }
-
-    @keyframes fadeAndSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
   `;
 
   #formatter = new Intl.DateTimeFormat(navigator.languages, {
@@ -351,7 +338,6 @@ export class ActivityLogLite extends LitElement {
   });
   #userInputRef: Ref<BreadboardUI.Elements.UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
-  #renderedElements: Set<string> = new Set<string>();
 
   #getSecretIfAvailable(key: string) {
     return globalThis.localStorage.getItem(key);
@@ -697,138 +683,138 @@ export class ActivityLogLite extends LitElement {
       return prev;
     }, [] as string[]);
 
-    return html`${map(events, (event) => {
-      let title: HTMLTemplateResult | symbol = nothing;
-      let description: HTMLTemplateResult | symbol = nothing;
-      let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
-        nothing;
+    return html`${repeat(
+      events,
+      (event) => event.id,
+      (event) => {
+        let title: HTMLTemplateResult | symbol = nothing;
+        let description: HTMLTemplateResult | symbol = nothing;
+        let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
+          nothing;
 
-      const dateTime: HTMLTemplateResult = html`${this.#formatter.format(
-        this.start + event.start
-      )}`;
-      const classes: Record<string, boolean> = {
-        entry: true,
-      };
+        const dateTime: HTMLTemplateResult = html`${this.#formatter.format(
+          this.start + event.start
+        )}`;
+        const classes: Record<string, boolean> = {
+          entry: true,
+        };
 
-      let isOpen = event.type === "node" && event.end === null;
-      switch (event.type) {
-        case "node": {
-          const { node, end } = event;
-          const { type } = node.descriptor;
-          const { icon } = node.type().metadata();
+        let isOpen = event.type === "node" && event.end === null;
+        switch (event.type) {
+          case "node": {
+            const { node, end } = event;
+            const { type } = node.descriptor;
+            const { icon } = node.type().metadata();
 
-          classes[type.toLocaleLowerCase()] = true;
-          classes.pending = end === null;
-          classes.finalized = this.#renderedElements.has(event.id);
-
-          if (!this.#renderedElements.has(event.id)) {
-            this.#renderedElements = new Set([
-              ...this.#renderedElements,
-              event.id,
-            ]);
-          }
-
-          if (icon) {
-            classes[icon] = true;
-          }
-
-          if (event.bubbled || event.hidden) {
-            return nothing;
-          }
-
-          title =
-            type === "input"
-              ? html`Input`
-              : type === "output"
-                ? html`Output`
-                : html`${node.title()}`;
-          if (type === "input") {
-            content =
-              event.end === null
-                ? this.#renderPendingInput(event)
-                : this.#renderCompletedInputOrOutput(event);
-            isOpen = true;
-          } else if (type === "output") {
-            content = this.#renderCompletedInputOrOutput(event);
-            isOpen = true;
-          } else if (event.runs) {
-            const { tmpl, found } = this.#renderEventRunInfo(
-              event.runs,
-              bubbledInputAndOutputIds
-            );
-            isOpen = isOpen || found;
-            content = tmpl;
-          }
-          break;
-        }
-
-        case "secret": {
-          if (event.end !== null) {
-            return nothing;
-          }
-
-          title = html`Requesting secret`;
-          content = this.#renderSecretInput(event);
-          classes.secret = true;
-          isOpen = true;
-          break;
-        }
-
-        case "error": {
-          const { error } = event;
-          let output = "";
-          if (typeof error === "string") {
-            output = error;
-          } else {
-            if ((error.error as Error)?.name === "AbortError") {
-              console.log("💖 actually aborted");
+            classes[type.toLocaleLowerCase()] = true;
+            classes.pending = end === null;
+            if (icon) {
+              classes[icon] = true;
             }
-            if (typeof error.error === "string") {
-              output = error.error;
+
+            if (event.bubbled || event.hidden) {
+              return nothing;
+            }
+
+            title =
+              type === "input"
+                ? html`Input`
+                : type === "output"
+                  ? html`Output`
+                  : html`${node.title()}`;
+            if (type === "input") {
+              content =
+                event.end === null
+                  ? this.#renderPendingInput(event)
+                  : this.#renderCompletedInputOrOutput(event);
+              isOpen = true;
+            } else if (type === "output") {
+              content = this.#renderCompletedInputOrOutput(event);
+              isOpen = true;
+            } else if (event.runs) {
+              const { tmpl, found } = this.#renderEventRunInfo(
+                event.runs,
+                bubbledInputAndOutputIds
+              );
+              isOpen = isOpen || found;
+              content = tmpl;
+            }
+            break;
+          }
+
+          case "secret": {
+            if (event.end !== null) {
+              content = html``;
+              classes.hidden = true;
             } else {
-              let messageOutput = "";
-              let errorData = error;
-              while (typeof errorData === "object") {
-                if (errorData && "message" in errorData) {
-                  messageOutput += `${errorData.message}\n`;
+              title = html`Requesting secret`;
+              content = this.#renderSecretInput(event);
+              classes.secret = true;
+              isOpen = true;
+            }
+            break;
+          }
+
+          case "error": {
+            const { error } = event;
+            let output = "";
+            if (typeof error === "string") {
+              output = error;
+            } else {
+              if ((error.error as Error)?.name === "AbortError") {
+                console.log("💖 actually aborted");
+              }
+              if (typeof error.error === "string") {
+                output = error.error;
+              } else {
+                let messageOutput = "";
+                let errorData = error;
+                while (typeof errorData === "object") {
+                  if (errorData && "message" in errorData) {
+                    messageOutput += `${errorData.message}\n`;
+                  }
+
+                  errorData = errorData.error as ErrorObject;
                 }
 
-                errorData = errorData.error as ErrorObject;
+                output = messageOutput;
               }
-
-              output = messageOutput;
             }
+
+            content = html`${output}`;
+            isOpen = true;
+            break;
           }
 
-          content = html`${output}`;
-          isOpen = true;
-          break;
+          default: {
+            return nothing;
+          }
         }
 
-        default: {
-          return nothing;
-        }
-      }
+        return html`<section class=${classMap(classes)} @animationend=${(
+          evt: Event
+        ) => {
+          if (!(evt.target instanceof HTMLElement)) {
+            return;
+          }
 
-      const guardCriteria =
-        event.type === "node" ? [this.#renderedElements] : [];
-      return html`${guard(guardCriteria, () => {
-        return html`<section class=${classMap(classes)}>
-            <details ?open=${isOpen}>
-              <summary>
-                <div class="title-date-time">
-                  <div class="title">${title}</div>
-                  <div class="date-time">${dateTime}</div>
-                </div>
-              </summary></h1>
+          evt.target.classList.remove("animating");
+        }}>
+          <details ?open=${isOpen}>
+            <summary>
+              <div class="title-date-time">
+                <div class="title">${title}</div>
+                <div class="date-time">${dateTime}</div>
+              </div>
+            </summary></h1>
             <div>
               ${description}
               ${until(content)}
             </div>
-            </details>
-          </section>`;
-      })}`;
-    })}`;
+          </details>
+        </section>`;
+      }
+    )}`;
   }
 
   #expandAll() {
@@ -863,12 +849,6 @@ export class ActivityLogLite extends LitElement {
 
   protected updated(): void {
     this.#jumpToBottom();
-  }
-
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("start")) {
-      this.#renderedElements.clear();
-    }
   }
 
   render() {
