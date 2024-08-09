@@ -1,59 +1,53 @@
 {
   "title": "Open Alex Entity Search Results",
   "description": "Query the OpenAlex API for a list entities",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
       "from": "fetch",
       "to": "spreadResponse",
       "out": "response",
-      "in": "object"
+      "in": "obj"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "entity",
       "in": "entity"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "page",
       "in": "page"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "per_page",
       "in": "per_page"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "search",
       "in": "search"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "select",
       "in": "select"
     },
     {
       "from": "spreadResponse",
-      "to": "response",
-      "out": "group_by",
-      "in": "group_by"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "response",
+      "to": "output-0",
       "out": "meta",
       "in": "meta"
     },
     {
       "from": "spreadResponse",
-      "to": "response",
+      "to": "output-0",
       "out": "results",
       "in": "results"
     },
@@ -65,18 +59,18 @@
     },
     {
       "from": "urlTemplate",
-      "to": "response",
+      "to": "output-0",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
-          "title": "OpenAlex Search",
+          "type": "object",
           "properties": {
             "entity": {
               "type": "string",
@@ -95,13 +89,13 @@
               ]
             },
             "page": {
-              "type": "integer",
-              "title": "Page number",
-              "description": "Page number to return",
-              "default": "1"
+              "type": "number",
+              "title": "Results per page",
+              "description": "Number of results to return per page",
+              "default": "5"
             },
             "per_page": {
-              "type": "integer",
+              "type": "number",
               "title": "Results per page",
               "description": "Number of results to return per page",
               "default": "5"
@@ -119,54 +113,42 @@
               "default": "id,display_name,title,relevance_score"
             }
           },
-          "type": "object",
-          "required": [
-            "search"
-          ],
-          "additionalProperties": false
+          "required": []
         }
       }
     },
     {
-      "id": "response",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "group_by": {
-              "type": "array",
-              "items": {}
-            },
             "meta": {
               "type": "object",
               "properties": {
                 "count": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "db_response_time_ms": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "page": {
-                  "type": "integer"
+                  "type": "number"
                 },
                 "per_page": {
-                  "type": "integer"
-                },
-                "groups_count": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
+                  "type": "number"
                 }
               },
               "required": [
                 "count",
                 "db_response_time_ms",
                 "page",
-                "per_page",
-                "groups_count"
-              ]
+                "per_page"
+              ],
+              "additionalProperties": false,
+              "title": "Search Result Metadata",
+              "description": "The metadata from the search results"
             },
             "results": {
               "type": "array",
@@ -186,22 +168,50 @@
                     "type": "number"
                   }
                 },
-                "additionalProperties": true
-              }
+                "required": [
+                  "id",
+                  "display_name",
+                  "title",
+                  "relevance_score"
+                ],
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "title": "Entity Search Results",
+              "description": "A list of entities from the search results"
             },
             "url": {
               "type": "string",
               "title": "URL",
-              "description": "URL to fetch"
+              "description": "The fetched Open Alex URL"
             }
           },
           "required": [
-            "group_by",
             "meta",
             "results",
             "url"
-          ],
-          "additionalProperties": false
+          ]
         }
       }
     },
@@ -216,9 +226,106 @@
       "id": "spreadResponse",
       "type": "runJavascript",
       "configuration": {
-        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
+        "code": "const spreadResponse = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{...obj}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "obj": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
         "name": "spreadResponse",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "relevance_score": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "id",
+                  "display_name",
+                  "title",
+                  "relevance_score"
+                ],
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "number"
+                },
+                "db_response_time_ms": {
+                  "type": "number"
+                },
+                "page": {
+                  "type": "number"
+                },
+                "per_page": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "count",
+                "db_response_time_ms",
+                "page",
+                "per_page"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
         "raw": true
+      },
+      "metadata": {
+        "title": "Spread",
+        "description": "Spread the properties of the Open Alex response"
       }
     },
     {
