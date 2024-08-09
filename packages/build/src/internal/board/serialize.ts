@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // TODO(aomarks) Switch import to schema package
 import type {
   GraphDescriptor,
@@ -19,7 +21,7 @@ import type {
 } from "../common/serializable.js";
 import { type JsonSerializable } from "../type-system/type.js";
 import {
-  BoardInstance,
+  OldBoardInstance,
   describeInput,
   describeOutput,
   isBoard,
@@ -280,10 +282,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             !required
           );
         }
-      } else if ("node" in port) {
+      } else if ("node" in (port as any)) {
         addEdge(
-          visitNodeAndReturnItsId(port.node),
-          port.name,
+          visitNodeAndReturnItsId((port as any).node),
+          (port as any).name,
           outputNodeId,
           name,
           isConstant(output),
@@ -343,7 +345,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   return bgl;
 
   function visitNodeAndReturnItsId(
-    node: SerializableNode | BoardInstance<BoardInputPorts, BoardOutputPorts>
+    node: SerializableNode | OldBoardInstance<BoardInputPorts, BoardOutputPorts>
   ): string {
     let descriptor = nodes.get(node);
     if (descriptor !== undefined) {

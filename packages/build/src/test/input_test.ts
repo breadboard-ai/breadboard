@@ -20,6 +20,7 @@ import type {
   BreadboardType,
   JsonSerializable,
 } from "../internal/type-system/type.js";
+import { inputNode } from "../internal/board/board.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -258,17 +259,22 @@ test("multiple input nodes with ids and metadata", () => {
     invoke: () => ({ d: "foo" }),
   })({ a, b, c }).outputs;
 
-  // $ExpectType BoardDefinition<{ a: Input<string | undefined>; b: Input<number | undefined>; c: Input<boolean>; }, { d: OutputPort<string>; }>
+  // $ExpectType BoardDefinition<{ a: string; b: number; c: boolean; } | { b: number; c: boolean; } | { c: boolean; a: string; }, { d: string; }>
   const brd = board({
     inputs: [
-      { a, b, c },
-      {
-        $id: "foo",
-        $metadata: { title: "Foo Title", description: "Foo Desc" },
-        b,
-        c,
-      },
-      { c, a },
+      inputNode({ a, b, c }),
+      inputNode(
+        {
+          b,
+          c,
+        },
+        {
+          id: "foo",
+          title: "Foo Title",
+          description: "Foo Desc",
+        }
+      ),
+      inputNode({ c, a }),
     ],
     outputs: {
       d,
@@ -363,7 +369,7 @@ test("optional inputs aren't required in JSON schema", () => {
 
   const { baz } = def({ foo: req, bar: opt }).outputs;
 
-  // $ExpectType BoardDefinition<{ req: Input<number>; opt: Input<number | undefined>; }, { baz: OutputPort<number>; }>
+  // $ExpectType BoardDefinition<{ opt?: number | undefined; req: number; }, { baz: number; }>
   const brd = board({
     inputs: {
       req,

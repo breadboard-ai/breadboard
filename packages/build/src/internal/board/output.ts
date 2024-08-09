@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OutputPortReference } from "../common/port.js";
+import type { Value } from "../common/value.js";
 import type { JsonSerializable } from "../type-system/type.js";
-import type { Input, InputWithDefault } from "./input.js";
 
-export function output<T extends JsonSerializable>(
-  port: Output<T> | OutputPortReference<T> | Input<T> | InputWithDefault<T>,
+export function output<T extends JsonSerializable | undefined>(
+  port: Value<T>,
   {
     id,
     title,
@@ -25,16 +24,14 @@ export function output<T extends JsonSerializable>(
   };
 }
 
-export interface Output<T extends JsonSerializable | undefined> {
+export interface Output<
+  T extends JsonSerializable | undefined = JsonSerializable | undefined,
+> {
   readonly __SpecialOutputBrand: true;
   readonly id?: string;
   readonly title?: string;
   readonly description?: string;
-  readonly port:
-    | Output<T>
-    | OutputPortReference<T>
-    | Input<T>
-    | InputWithDefault<T>;
+  readonly port: Value<T>;
 }
 
 export function isSpecialOutput(
