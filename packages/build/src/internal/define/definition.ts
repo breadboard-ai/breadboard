@@ -52,7 +52,7 @@ import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
 import type { Convergence } from "../board/converge.js";
-import type { BoardDefinition } from "../board/board.js";
+import type { OldBoardDefinition } from "../board/board.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -476,7 +476,7 @@ type StrictInstantiateArgs<
     ? K
     : never]["board"] extends true
     ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      InstantiateArg<SI[K]> | BoardDefinition<any, any>
+      InstantiateArg<SI[K]> | OldBoardDefinition<any, any>
     : InstantiateArg<SI[K]>;
 } & {
   [K in OI]?:

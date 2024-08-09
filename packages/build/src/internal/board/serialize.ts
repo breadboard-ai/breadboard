@@ -19,7 +19,7 @@ import type {
 } from "../common/serializable.js";
 import { type JsonSerializable } from "../type-system/type.js";
 import {
-  BoardInstance,
+  OldBoardInstance,
   describeInput,
   describeOutput,
   isBoard,
@@ -29,6 +29,7 @@ import {
   type BoardInputPorts,
   type BoardOutputPorts,
   type GenericBoardDefinition,
+  type BoardDefinition,
 } from "./board.js";
 import { ConstantVersionOf, isConstant } from "./constant.js";
 import { isConvergence } from "./converge.js";
@@ -46,7 +47,8 @@ import { isSpecialOutput } from "./output.js";
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
  * can be executed.
  */
-export function serialize(board: SerializableBoard): GraphDescriptor {
+export function serialize(newBoard: SerializableBoard): GraphDescriptor {
+  const board = newBoard as unknown as SerializableBoard;
   const nodes = new Map<object, NodeDescriptor>();
   const edges: Edge[] = [];
   const graphs = new Map<string, GraphDescriptor>();
@@ -280,10 +282,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             !required
           );
         }
-      } else if ("node" in port) {
+      } else if ("node" in (port as any)) {
         addEdge(
-          visitNodeAndReturnItsId(port.node),
-          port.name,
+          visitNodeAndReturnItsId((port as any).node),
+          (port as any).name,
           outputNodeId,
           name,
           isConstant(output),
@@ -343,7 +345,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   return bgl;
 
   function visitNodeAndReturnItsId(
-    node: SerializableNode | BoardInstance<BoardInputPorts, BoardOutputPorts>
+    node: SerializableNode | OldBoardInstance<BoardInputPorts, BoardOutputPorts>
   ): string {
     let descriptor = nodes.get(node);
     if (descriptor !== undefined) {

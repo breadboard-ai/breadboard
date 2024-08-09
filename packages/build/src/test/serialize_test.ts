@@ -17,15 +17,16 @@ import {
   optionalEdge,
   output,
   unsafeCast,
+  type SerializableBoard,
 } from "../index.js";
-import { board, type GenericBoardDefinition } from "../internal/board/board.js";
+import { board } from "../internal/board/board.js";
 import { constant } from "../internal/board/constant.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
 import { serialize } from "../internal/board/serialize.js";
 
 function checkSerialization(
-  board: GenericBoardDefinition,
+  board: SerializableBoard,
   expected: GraphDescriptor
 ) {
   const actual = serialize(board);
