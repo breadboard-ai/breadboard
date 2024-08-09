@@ -37,7 +37,7 @@ const isIterable = (o: unknown): boolean => {
   return typeof o === "object" && o !== null && Symbol.iterator in o;
 };
 
-const serverStreamEventDecoder = () => {
+export const serverStreamEventDecoder = () => {
   return new TransformStream<string, string>({
     transform(chunk, controller) {
       if (chunk.startsWith("data: ")) {
@@ -154,7 +154,7 @@ export type HTTPClientTransportOptions = RequestInit & {
  *
  * @returns The transform stream that repaired chunks.
  */
-const chunkRepairTransform = () => {
+export const chunkRepairTransform = () => {
   let queue: string[] = [];
   return new TransformStream<string, string>({
     transform(chunk, controller) {
