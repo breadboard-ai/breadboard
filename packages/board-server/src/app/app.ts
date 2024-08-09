@@ -83,6 +83,7 @@ export class AppView extends LitElement {
   #handlers: Map<string, InputCallback[]> = new Map();
   #abortController: AbortController | null = null;
   #runObserver: InspectableRunObserver | null = null;
+  #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
 
   static styles = css`
@@ -463,6 +464,7 @@ export class AppView extends LitElement {
 
     runner.addEventListener("start", () => {
       this.status = STATUS.RUNNING;
+      this.#runStartTime = Date.now();
     });
 
     runner.addObserver(this.#runObserver);
@@ -600,6 +602,7 @@ export class AppView extends LitElement {
       const events = currentRun?.events ?? [];
 
       return html`<bb-activity-log-lite
+        .start=${this.#runStartTime}
         .message=${this.#message}
         .events=${events}
         @bbinputrequested=${() => {
