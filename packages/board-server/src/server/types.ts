@@ -9,10 +9,13 @@ import type {
   GraphDescriptor,
   InputValues,
   Kit,
+  NodeDescriptor,
   NodeValue,
   OutputValues,
   ReanimationState,
 } from "@google-labs/breadboard";
+import type path from "path";
+import type { LastNode } from "@google-labs/breadboard/remote";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -72,15 +75,35 @@ export type InvokeBoardArguments = {
 };
 
 export type RunBoardArguments = {
+  /**
+   * The full URL or the requested board, like
+   * `https://board.server/boards/@user/board.bgl.json`.
+   */
   url: string;
+  /**
+   * The path to the board, like `@user/board.bgl.json`.
+   */
   path: string;
+  /**
+   * The user who is running the board.
+   */
   user: string;
+  /**
+   * The function that supplies the actual board given the path.
+   */
   loader: BoardServerLoadFunction;
+  /**
+   * The state store for graph reanimation.
+   */
   runStateStore: RunBoardStateStore;
+  /**
+   * The writer for the results of the board run.
+   */
   writer: RunBoardResultWriter;
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
+  diagnostics?: boolean;
 };
 
 export type RunBoardStateStore = {
@@ -92,6 +115,40 @@ export type RunBoardStateStore = {
 };
 
 export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
+
+export type RunBoardResultGraphStart = [
+  "graphstart",
+  path: number[],
+  timestamp: number,
+];
+
+export type RunBoardResultGraphEnd = [
+  "graphend",
+  path: number[],
+  timestamp: number,
+];
+
+export type RunBoardResultNodeStart = [
+  "nodestart",
+  path: number[],
+  timestamp: number,
+  node: NodeDescriptor,
+];
+
+export type RunBoardResultNodeEnd = [
+  "nodeend",
+  path: number[],
+  timestamp: number,
+  node: NodeDescriptor,
+];
+
+export type RunBoardResultSkip = [
+  "skip",
+  path: number[],
+  timestamp: number,
+  node: NodeDescriptor,
+  missingInputs: string[],
+];
 
 export type RunBoardResultError = ["error", error: string];
 
@@ -105,7 +162,15 @@ export type RunBoardResultInput = [
   },
 ];
 
+export type RunBoardResultEnd = ["end", timestamp: number, last?: LastNode];
+
 export type RunBoardResult =
   | RunBoardResultError
   | RunBoardResultOutput
-  | RunBoardResultInput;
+  | RunBoardResultInput
+  | RunBoardResultGraphStart
+  | RunBoardResultGraphEnd
+  | RunBoardResultNodeStart
+  | RunBoardResultNodeEnd
+  | RunBoardResultSkip
+  | RunBoardResultEnd;

@@ -35,6 +35,7 @@ const assertResults = (
   index = 0
 ) => {
   if (results.length !== expectedResults.length) {
+    console.log("Results:", results);
     fail(
       `Expected ${expectedResults.length} results, but got ${results.length} at index ${index}`
     );
@@ -50,12 +51,27 @@ const assertResults = (
       expected.type,
       `Expected state type to be ${expected.type} at index ${index}`
     );
-    if (type === "output") {
-      deepStrictEqual(
-        data,
-        expected.outputs,
-        `Expected outputs to match at index ${index}`
-      );
+    switch (type) {
+      case "output": {
+        deepStrictEqual(
+          data,
+          expected.outputs,
+          `Expected outputs to match at index ${index}`
+        );
+        break;
+      }
+      case "graphend":
+      case "graphstart":
+      case "nodestart":
+      case "nodeend": {
+        const [, path] = result;
+        deepStrictEqual(
+          path,
+          expected.path,
+          `Expected path "${JSON.stringify(path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
+        );
+        break;
+      }
     }
   }
 };
@@ -74,12 +90,16 @@ const getNext = (result?: RunBoardResult) => {
   if (type === "output") {
     return undefined;
   }
-  fail("Unexpected state type.");
+  if (type === "end") {
+    return undefined;
+  }
+  fail(`Unexpected state type: ${type}`);
 };
 
 type ExpectedResult = {
   type: string;
   outputs?: OutputValues;
+  path?: number[];
 };
 
 type RunScriptEntry = {
@@ -98,7 +118,8 @@ const runStateStore = {
 
 const scriptedRun = async (
   board: GraphDescriptor,
-  script: RunScriptEntry[]
+  script: RunScriptEntry[],
+  diagnostics = false
 ) => {
   let next;
   const path = "/path/to/board";
@@ -119,6 +140,7 @@ const scriptedRun = async (
       next,
       writer,
       runStateStore,
+      diagnostics,
     });
     assertResults(results, expected, index);
     next = getNext(results[results.length - 1]);
@@ -258,5 +280,56 @@ describe("Board Server Runs Boards", () => {
         ],
       },
     ]);
+  });
+
+  test("can finish a board with bubbling inputs with diagnostics", async () => {
+    await scriptedRun(
+      invokeWithBubblingInput as GraphDescriptor,
+      [
+        {
+          expected: [
+            { type: "graphstart", path: [] },
+            { type: "nodestart", path: [1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { name: "Bob" },
+          expected: [
+            { type: "nodeend", path: [1] },
+            { type: "nodestart", path: [2] },
+            { type: "graphstart", path: [2] },
+            { type: "nodestart", path: [2, 1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { location: "New York" },
+          expected: [
+            { type: "nodeend", path: [2, 1] },
+            { type: "nodestart", path: [2, 2] },
+            { type: "nodeend", path: [2, 2] },
+            { type: "skip", path: [2, 3] },
+            { type: "nodestart", path: [2, 4] },
+            { type: "nodeend", path: [2, 4] },
+            { type: "graphend", path: [2] },
+            { type: "nodeend", path: [2] },
+            { type: "nodestart", path: [3] },
+            { type: "nodeend", path: [3] },
+            { type: "nodestart", path: [4] },
+            {
+              type: "output",
+              outputs: {
+                greeting: 'Greeting is: "Hello, Bob from New York!"',
+              },
+            },
+            { type: "nodeend", path: [4] },
+            { type: "graphend", path: [] },
+            { type: "end" },
+          ],
+        },
+      ],
+      true
+    );
   });
 });

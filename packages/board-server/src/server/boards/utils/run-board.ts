@@ -47,6 +47,7 @@ export const runBoard = async ({
   next,
   writer,
   runStateStore,
+  diagnostics = false,
 }: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
@@ -62,8 +63,6 @@ export const runBoard = async ({
 
   const state = createRunStateManager(resumeFrom, inputs);
 
-  const diagnostics = false;
-
   const runner = run({
     url,
     kits: createKits(kitOverrides),
@@ -78,6 +77,32 @@ export const runBoard = async ({
   for await (const result of runner) {
     const { type, data, reply } = result;
     switch (type) {
+      case "graphstart": {
+        await writer.write(["graphstart", data.path, data.timestamp]);
+        break;
+      }
+      case "graphend": {
+        await writer.write(["graphend", data.path, data.timestamp]);
+        break;
+      }
+      case "nodestart": {
+        await writer.write(["nodestart", data.path, data.timestamp, data.node]);
+        break;
+      }
+      case "nodeend": {
+        await writer.write(["nodeend", data.path, data.timestamp, data.node]);
+        break;
+      }
+      case "skip": {
+        await writer.write([
+          "skip",
+          data.path,
+          data.timestamp,
+          data.node,
+          data.missingInputs,
+        ]);
+        break;
+      }
       case "input": {
         if (inputsToConsume && Object.keys(inputsToConsume).length > 0) {
           await reply({ inputs: inputsToConsume });
@@ -110,12 +135,12 @@ export const runBoard = async ({
       }
       case "end": {
         if (diagnostics) {
-          console.log("Run completed.", data.last);
+          await writer.write(["end", data.timestamp, data.last]);
         }
         return;
       }
       default: {
-        console.log("Diagnostics", type, data);
+        console.log("Unknown type", type, data);
       }
     }
   }
