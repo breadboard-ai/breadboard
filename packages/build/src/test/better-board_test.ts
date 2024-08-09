@@ -5,11 +5,7 @@
  */
 
 import test, { describe } from "node:test";
-import {
-  board,
-  inputNode,
-  outputNode,
-} from "../internal/board/better-board.js";
+import { board, inputNode, outputNode } from "../internal/board/board.js";
 import { converge } from "../internal/board/converge.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
@@ -21,6 +17,9 @@ import type {
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+
+// TODO(aomarks) board definitions that take boards (we have this working for
+// discrete component, but not boards).
 
 describe("input types", () => {
   test("required", () => {
@@ -119,7 +118,7 @@ describe("output types", () => {
     // $ExpectType BoardDefinition<{}, { foo: string; }>
     board({ inputs: {}, outputs: [outputNode({ foo })] });
 
-    // $ExpectType BoardDefinition<{}, { foo: string; } | { bar: number; }>
+    // $ExpectType BoardDefinition<{}, { foo: string | undefined, bar: number | undefined; }>
     board({ inputs: {}, outputs: [outputNode({ foo }), outputNode({ bar })] });
 
     // $ExpectType BoardDefinition<{}, { foo: string; bar: number; } | { bar: number; }>
