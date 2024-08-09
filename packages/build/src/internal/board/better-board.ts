@@ -24,7 +24,7 @@ export function board<const T extends BoardInit>(
   init: T
 ): BoardDefinition<
   Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitInputs<T["inputs"]>>>>,
-  Expand<AutoOptional<ExtractOutputTypes<RemoveReadonly<T["outputs"]>>>>
+  Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitOutputs<T["outputs"]>>>>
 > {
   console.log({ init });
   return () => ({});
@@ -32,12 +32,12 @@ export function board<const T extends BoardInit>(
 
 export interface BoardInit {
   inputs: InputNode | InputNode[] | AnonymousInputNodeShorthand;
-  outputs: BoardInitOutputs;
+  outputs: OutputNode | OutputNode[] | AnonymousOutputNodeShorthand;
 }
 
 type AnonymousInputNodeShorthand = Record<string, GenericSpecialInput>;
 
-export type BoardInitOutputs = Record<string, Value | undefined>;
+type AnonymousOutputNodeShorthand = Record<string, Value | undefined>;
 
 export type BoardDefinition<
   I extends Record<string, JsonSerializable | undefined>,
@@ -66,6 +66,17 @@ type SimplifyBoardInitInputs<T extends BoardInit["inputs"]> =
         : never;
 
 /**
+ */
+type SimplifyBoardInitOutputs<T extends BoardInit["outputs"]> =
+  T extends OutputNode<infer X>
+    ? X
+    : T extends OutputNode[]
+      ? SimplifyBoardInitOutputs<T[number]>
+      : T extends AnonymousOutputNodeShorthand
+        ? ExtractOutputTypes<T>
+        : never;
+
+/**
  * Pulls out the type parameter for each `Input`, taking care to add `undefined`
  * in the case of `InputWithDefault`. This is because when there is a default,
  * then it is optional from the caller's perspective.
@@ -83,7 +94,7 @@ type ExtractInputTypes<T extends Record<string, GenericSpecialInput>> = {
  * in the case of `InputWithDefault`. This is because when there is a default,
  * then it is optional from the caller's perspective.
  */
-type ExtractOutputTypes<T extends BoardInitOutputs> = {
+type ExtractOutputTypes<T extends Record<string, Value | undefined>> = {
   [K in keyof T]: T[K] extends Input<infer X>
     ? X
     : T[K] extends InputWithDefault<infer X>
@@ -112,4 +123,21 @@ export interface InputNode<
 > {
   // TODO(aomarks) Better branding
   isInputNode: true;
+}
+
+export function outputNode<T extends Record<string, Value | undefined>>(
+  outputs: T,
+  metadata?: NodeMetadata & { id?: string }
+): OutputNode<ExtractOutputTypes<T>> {
+  return {} as OutputNode<ExtractOutputTypes<T>>;
+}
+
+export interface OutputNode<
+  T extends Record<string, JsonSerializable | undefined> = Record<
+    string,
+    JsonSerializable | undefined
+  >,
+> {
+  // TODO(aomarks) Better branding
+  isOutputNode: true;
 }

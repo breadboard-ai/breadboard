@@ -5,7 +5,11 @@
  */
 
 import test, { describe } from "node:test";
-import { board, inputNode } from "../internal/board/better-board.js";
+import {
+  board,
+  inputNode,
+  outputNode,
+} from "../internal/board/better-board.js";
 import { converge } from "../internal/board/converge.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
@@ -109,6 +113,31 @@ describe("output types", () => {
     const foo = converge(input(), input());
     // $ExpectType BoardDefinition<{}, { foo: string; }>
     board({ inputs: {}, outputs: { foo } });
+  });
+
+  test("multiple", () => {
+    const foo = input();
+    const bar = input({ type: "number" });
+    const baz = input({ type: "boolean", default: true });
+    const qux = input({ optional: true });
+
+    // $ExpectType BoardDefinition<{}, { foo: string; }>
+    board({ inputs: {}, outputs: [outputNode({ foo })] });
+
+    // $ExpectType BoardDefinition<{}, { foo: string; } | { bar: number; }>
+    board({ inputs: {}, outputs: [outputNode({ foo }), outputNode({ bar })] });
+
+    // $ExpectType BoardDefinition<{}, { foo: string; bar: number; } | { bar: number; }>
+    board({
+      inputs: {},
+      outputs: [outputNode({ foo, bar }), outputNode({ bar })],
+    });
+
+    // $ExpectType BoardDefinition<{}, { baz?: boolean | undefined; }>
+    board({ inputs: {}, outputs: [outputNode({ baz })] });
+
+    // $ExpectType BoardDefinition<{}, { qux?: string | undefined; }>
+    board({ inputs: {}, outputs: [outputNode({ qux })] });
   });
 });
 
@@ -303,5 +332,20 @@ test("one input node metadata", () => {
       }
     ),
     outputs: {},
+  });
+});
+
+test("one output node metadata", () => {
+  const foo = input({ type: "boolean" });
+  // $ExpectType BoardDefinition<{}, { foo: boolean; }>
+  board({
+    inputs: {},
+    outputs: outputNode(
+      { foo },
+      {
+        id: "output-node-id",
+        description: "Output Node Description",
+      }
+    ),
   });
 });
