@@ -200,6 +200,11 @@ export class AppView extends LitElement {
         center / 16px 16px no-repeat;
     }
 
+    #status .messages-received {
+      color: var(--bb-neutral-500);
+      margin-left: var(--bb-grid-size-4);
+    }
+
     #main-control {
       height: 32px;
       background: var(--bb-ui-500);
@@ -368,6 +373,7 @@ export class AppView extends LitElement {
       try {
         const response = await fetch(this.url);
         const graph = (await response.json()) as GraphDescriptor;
+        document.title = `${`${graph.title} - ` ?? ""}Breadboard App View`;
         resolve(graph);
       } catch (err) {
         console.warn(err);
@@ -569,25 +575,27 @@ export class AppView extends LitElement {
 
       const classes: Record<string, boolean> = { pending: false };
 
-      let message = 'Press "Start Activity" to begin';
+      let message = html`Press "Start Activity" to begin`;
       if (events.length && this.status !== STATUS.STOPPED) {
         const newest = events[events.length - 1];
         if (newest && newest.type === "node") {
           if (newest.node.descriptor.type === "input") {
             classes.pending = true;
-            message = "Requesting user input...";
+            message = html`Requesting user input...`;
           } else {
             classes.pending = true;
             const details =
               newest.node.descriptor.metadata?.description ?? "Working...";
-            message = `${details} (${events.length} event${events.length === 1 ? "" : "s"} received)`;
+            message = html`${details}
+              <span class="messages-received"
+                >${events.length} event${events.length === 1 ? "" : "s"}
+                received</span
+              >`;
           }
         }
       }
 
-      return html`<div id="status" class=${classMap(classes)}>
-        ${until(message)}
-      </div>`;
+      return html`<div id="status" class=${classMap(classes)}>${message}</div>`;
     });
 
     const active =

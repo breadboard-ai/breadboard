@@ -13,7 +13,14 @@ import {
   type InspectableRunSecretEvent,
   type Schema,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  type HTMLTemplateResult,
+  type PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -32,6 +39,7 @@ import {
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { repeat } from "lit/directives/repeat.js";
+import { guard } from "lit/directives/guard.js";
 
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
@@ -134,11 +142,10 @@ export class ActivityLogLite extends LitElement {
       border-radius: var(--bb-grid-size);
       margin-bottom: var(--bb-grid-size);
       padding: var(--bb-grid-size-3);
-      animation: fadeAndSlideIn 0.5s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
-    .entry.finalized {
-      animation: none;
+    .entry.hidden {
+      display: none;
     }
 
     .entry details summary::after {
@@ -193,7 +200,8 @@ export class ActivityLogLite extends LitElement {
       content: "";
       width: 20px;
       height: 20px;
-      background: var(--bb-ui-300);
+      background: var(--bb-ui-50) var(--bb-icon-generic-node) center center /
+        20px 20px no-repeat;
       border-radius: 50%;
       margin-right: var(--bb-grid-size-2);
     }
@@ -249,6 +257,33 @@ export class ActivityLogLite extends LitElement {
       background: var(--bb-icon-lightbulb) center center / 20px 20px no-repeat;
     }
 
+    .entry.joiner summary {
+      color: var(--bb-looper-500);
+    }
+
+    .entry.joiner summary:hover,
+    .entry.joiner summary:focus {
+      color: var(--bb-looper-700);
+    }
+
+    .entry.joiner summary::before {
+      background: var(--bb-icon-merge-type) center center / 20px 20px no-repeat;
+    }
+
+    .entry.runjavascript summary {
+      color: var(--bb-nodes-700);
+    }
+
+    .entry.runjavascript summary:hover,
+    .entry.runjavascript summary:focus {
+      color: var(--bb-nodes-800);
+    }
+
+    .entry.runjavascript summary::before {
+      background: var(--bb-nodes-400) var(--bb-icon-javascript) center center /
+        20px 20px no-repeat;
+    }
+
     .entry .no-information {
       font: var(--bb-font-label-medium);
       color: var(--bb-neutral-600);
@@ -271,8 +306,8 @@ export class ActivityLogLite extends LitElement {
     @media (min-width: 700px) {
       #controls {
         grid-template-rows: 24px;
-        padding: var(--bb-grid-size-3) var(--bb-grid-size-2) var(--bb-grid-size)
-          0;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-2)
+          var(--bb-grid-size-3) 0;
       }
 
       #activity {
@@ -284,7 +319,7 @@ export class ActivityLogLite extends LitElement {
     @media (min-width: 1120px) {
       #controls {
         grid-template-rows: 24px;
-        padding: var(--bb-grid-size-3) 0 0 0;
+        padding: var(--bb-grid-size-3) 0;
       }
 
       #controls input {
@@ -293,18 +328,6 @@ export class ActivityLogLite extends LitElement {
 
       #activity {
         padding: var(--bb-grid-size-2) 0;
-      }
-    }
-
-    @keyframes fadeAndSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
       }
     }
   `;
@@ -536,6 +559,10 @@ export class ActivityLogLite extends LitElement {
           if (isLLMContentArray(nodeValue)) {
             value = html`<bb-llm-output-array
               .values=${nodeValue}
+              .showEntrySelector=${false}
+              .showModeToggle=${false}
+              .clamped=${false}
+              .lite=${true}
             ></bb-llm-output-array>`;
           } else if (isLLMContent(nodeValue)) {
             if (!nodeValue.parts) {
@@ -658,13 +685,7 @@ export class ActivityLogLite extends LitElement {
 
     return html`${repeat(
       events,
-      (event) => {
-        if (event.type === "node") {
-          return `${event.id}-${event.end}`;
-        }
-
-        return event.id;
-      },
+      (event) => event.id,
       (event) => {
         let title: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
@@ -679,17 +700,14 @@ export class ActivityLogLite extends LitElement {
         };
 
         let isOpen = event.type === "node" && event.end === null;
-
         switch (event.type) {
           case "node": {
             const { node, end } = event;
             const { type } = node.descriptor;
             const { icon } = node.type().metadata();
 
-            classes[type] = true;
+            classes[type.toLocaleLowerCase()] = true;
             classes.pending = end === null;
-            classes.finalized = type !== "output" && end !== null;
-
             if (icon) {
               classes[icon] = true;
             }
@@ -726,12 +744,14 @@ export class ActivityLogLite extends LitElement {
 
           case "secret": {
             if (event.end !== null) {
-              return nothing;
+              content = html``;
+              classes.hidden = true;
+            } else {
+              title = html`Requesting secret`;
+              content = this.#renderSecretInput(event);
+              classes.secret = true;
+              isOpen = true;
             }
-
-            title = html`Requesting secret`;
-            content = this.#renderSecretInput(event);
-            classes.secret = true;
             break;
           }
 
@@ -762,6 +782,7 @@ export class ActivityLogLite extends LitElement {
             }
 
             content = html`${output}`;
+            isOpen = true;
             break;
           }
 
@@ -770,20 +791,28 @@ export class ActivityLogLite extends LitElement {
           }
         }
 
-        return html`<section class=${classMap(classes)}>
-        <details ?open=${isOpen}>
-          <summary>
-            <div class="title-date-time">
-              <div class="title">${title}</div>
-              <div class="date-time">${dateTime}</div>
+        return html`<section class=${classMap(classes)} @animationend=${(
+          evt: Event
+        ) => {
+          if (!(evt.target instanceof HTMLElement)) {
+            return;
+          }
+
+          evt.target.classList.remove("animating");
+        }}>
+          <details ?open=${isOpen}>
+            <summary>
+              <div class="title-date-time">
+                <div class="title">${title}</div>
+                <div class="date-time">${dateTime}</div>
+              </div>
+            </summary></h1>
+            <div>
+              ${description}
+              ${until(content)}
             </div>
-          </summary></h1>
-        <div>
-        ${description}
-        ${until(content)}
-      </div>
-        </details>
-      </section>`;
+          </details>
+        </section>`;
       }
     )}`;
   }
