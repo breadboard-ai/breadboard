@@ -31,15 +31,12 @@ import {
 } from "../../utils/types.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import type {
-  RunNodeEndEvent,
-  RunNodeStartEvent,
-  RunOutputEvent,
-  RunSecretEvent,
-} from "@google-labs/breadboard/harness";
 
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
+  @property()
+  start: number = 0;
+
   @property()
   message: UserMessage | null = null;
 
@@ -162,7 +159,7 @@ export class ActivityLogLite extends LitElement {
 
     .entry summary {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       list-style: none;
       font: var(--bb-font-title-small);
       color: var(--bb-neutral-600);
@@ -171,13 +168,18 @@ export class ActivityLogLite extends LitElement {
       transition: color 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
+    .entry summary .date-time {
+      font: var(--bb-font-body-x-small);
+      color: var(--bb-neutral-600);
+    }
+
     .entry summary:hover,
     .entry summary:focus {
       color: var(--bb-neutral-800);
       transition-duration: 0.1s;
     }
 
-    .entry summary .title {
+    .entry summary .title-date-time {
       flex: 1;
     }
 
@@ -289,6 +291,10 @@ export class ActivityLogLite extends LitElement {
     }
   `;
 
+  #formatter = new Intl.DateTimeFormat(navigator.languages, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   #userInputRef: Ref<BreadboardUI.Elements.UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
 
@@ -637,6 +643,10 @@ export class ActivityLogLite extends LitElement {
       let description: HTMLTemplateResult | symbol = nothing;
       let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
         nothing;
+
+      const dateTime: HTMLTemplateResult = html`${this.#formatter.format(
+        this.start + event.start
+      )}`;
       const classes: Record<string, boolean> = {
         entry: true,
       };
@@ -733,7 +743,13 @@ export class ActivityLogLite extends LitElement {
       }
 
       return html`<section class=${classMap(classes)}>
-        <details ?open=${isOpen}><summary><span class="title">${title}</span></summary></h1>
+        <details ?open=${isOpen}>
+          <summary>
+            <div class="title-date-time">
+              <div class="title">${title}</div>
+              <div class="date-time">${dateTime}</div>
+            </div>
+          </summary></h1>
         <div>
         ${description}
         ${until(content)}
