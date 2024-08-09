@@ -29,43 +29,47 @@ local environment.
 
 ## Part 1: Google Cloud setup
 
-This guide will show you how to deploy Breadboard using Google Cloud. All three
-servers will be deployed using [App Engine](https://cloud.google.com/appengine).
-
-### Create a new Google Cloud project
-
 > [!NOTE]
 > These instructions assume that the reader has a normal consumer (gmail.com)
 > Google account. They will detail how to set up a new Google Cloud project. If
 > you are using an existing Cloud project, or are a Workspace user, some of these
-> steps may be different or may not apply.
+> steps may be different or may not apply. For Workspace users, some steps may
+> require administrator privileges.
 
-> [!NOTE]
-> For Workspace users, some steps may require administrator privileges.
+### Create a new Google Cloud project
 
-1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/) and
-   accept the Cloud terms of service if you haven't already.
-2. Click **Select a Project**, and click **NEW PROJECT**
-3. Give your project a name and complete the Cloud project setup
-
-### Configure the `gcloud` CLI
-
-Authenticate with the `gcloud` CLI.
+Log in to the gcloud CLI. Opens a browser on your local machine to complete the
+authentication flow.
 
 ```sh
 gcloud auth login
 ```
 
+Create a project ID for your new Google Cloud project (if you're not using an existing project).
+
 ```sh
-gcloud auth application-default login
+PROJECT_ID="YOUR-PROJECT-ID"
 ```
 
-This will open a browser on your local machine to complete the authentication flow.
+> [!TIP]
+> Google Cloud project IDs must be unique. You will get an error message when
+> creating a project if the ID you are trying to use is already in use by another
+> project.
 
-Set your project as the current project.
+Create a new Google Cloud project.
 
 ```sh
-gcloud config set project your-project-id
+gcloud projects create ${PROJECT_ID}
+```
+
+> [!TIP]
+> If you get the message "Callers must accept Terms of Service", visit the
+> [Google Cloud Console](https://console.cloud.google.com/) to accept the terms.
+
+Once the project is created, set it project as the default project.
+
+```sh
+gcloud config set project ${PROJECT_ID}
 ```
 
 All future commands will now reference this project by default.
