@@ -2,6 +2,7 @@
 layout: docs.liquid
 title: Breadboard from scratch
 tags:
+  - guide
   - wip
 ---
 
