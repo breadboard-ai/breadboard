@@ -68,13 +68,13 @@ describe("InspectableGraph", async () => {
             title: "Template",
             type: "string",
           },
-          name: {
+          "p-name": {
             description: 'The value to substitute for the parameter "name"',
             title: "name",
             type: "string",
           },
         },
-        required: ["template", "name"],
+        required: ["template", "p-name"],
       },
       outputSchema: {
         type: "object",
