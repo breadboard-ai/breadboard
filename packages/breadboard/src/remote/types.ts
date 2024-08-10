@@ -65,7 +65,11 @@ export type LoadResponse = {
 
 type GenericResult = { type: string; data: unknown };
 
-type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
+type RemoteMessage<T extends GenericResult> = [
+  T["type"],
+  T["data"],
+  next?: string,
+];
 
 /**
  * A run request is an empty object.
@@ -74,13 +78,17 @@ type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 export type OutputRemoteMessage = ["output", OutputResponse];
-export type InputResponseMessage = ["input", InputResponse, RunState];
+export type InputRemoveMessage = ["input", InputResponse, next?: string];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
  */
 export type InputResolveRequest = { inputs: InputValues };
-export type InputRemoteMessage = ["input", InputResolveRequest, next?: string];
+export type InputResolveRequestMessage = [
+  "input",
+  InputResolveRequest,
+  next?: string,
+];
 
 export type LastNode = {
   node: NodeDescriptor;
@@ -141,7 +149,9 @@ export type AnyProxyResponseMessage =
   | ProxyChunkResponseMessage
   | EndRemoteMessage;
 
-export type AnyRunRequestMessage = RunRequestMessage | InputRemoteMessage;
+export type AnyRunRequestMessage =
+  | RunRequestMessage
+  | InputResolveRequestMessage;
 
 export type NodeStartRemoteMessage = RemoteMessage<NodeStartProbeMessage>;
 export type NodeEndRemoteMessage = RemoteMessage<NodeEndProbeMessage>;
@@ -158,7 +168,7 @@ export type AnyProbeMessage =
 
 export type AnyRunResponseMessage =
   | OutputRemoteMessage
-  | InputResponseMessage
+  | InputRemoveMessage
   | EndRemoteMessage
   | ErrorRemoteMessage
   | AnyProbeMessage;
@@ -195,7 +205,7 @@ export type RunStateFunction = () => Promise<RunState>;
 type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   string,
   object,
-  RunState?,
+  string?,
 ]
   ? {
       type: ResponseMessage[0];

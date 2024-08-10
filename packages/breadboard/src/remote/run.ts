@@ -73,13 +73,11 @@ export class RunServer {
     try {
       for await (const stop of runGraph(runner, servingContext)) {
         if (stop.type === "input") {
-          const state = stop.runState as RunState;
           const { node, inputArguments, timestamp, path, invocationId } = stop;
           const bubbled = invocationId == -1;
           await responses.write([
             "input",
             { node, inputArguments, timestamp, path, bubbled },
-            state,
           ]);
           request = await requestReader.read();
           if (request.done) {
