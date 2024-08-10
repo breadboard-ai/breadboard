@@ -12,6 +12,8 @@ const PROD_PATH = "/dist/client";
 const CONTENT_TYPE = new Map([
   [".html", "text/html"],
   [".json", "application/json"],
+  [".css", "text/css"],
+  [".js", "text/javascript"],
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
