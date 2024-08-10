@@ -60,8 +60,16 @@ const assertResults = (
         );
         break;
       }
+      case "graphstart": {
+        const [, data] = result;
+        deepStrictEqual(
+          data.path,
+          expected.path,
+          `Expected path "${JSON.stringify(data.path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
+        );
+        break;
+      }
       case "graphend":
-      case "graphstart":
       case "nodestart":
       case "nodeend": {
         const [, path] = result;

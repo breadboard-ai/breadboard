@@ -16,6 +16,7 @@ import type {
 import type {
   EndResponseMessage,
   ErrorResponseMessage,
+  GraphStartRemoteMessage,
   SkipRemoteMessage,
 } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
@@ -119,11 +120,7 @@ export type RunBoardStateStore = {
 
 export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
 
-export type RunBoardResultGraphStart = [
-  "graphstart",
-  path: number[],
-  timestamp: number,
-];
+export type RunBoardResultGraphStart = GraphStartRemoteMessage;
 
 export type RunBoardResultGraphEnd = [
   "graphend",

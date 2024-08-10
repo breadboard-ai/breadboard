@@ -83,7 +83,7 @@ export const runBoard = async ({
     const { type, data, reply } = result;
     switch (type) {
       case "graphstart": {
-        await writer.write(["graphstart", data.path, data.timestamp]);
+        await writer.write(["graphstart", data]);
         break;
       }
       case "graphend": {
