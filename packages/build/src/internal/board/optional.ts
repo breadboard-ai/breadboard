@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { brand, isBranded } from "../common/brand.js";
 import { type OutputPortReference } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { Input, InputWithDefault } from "./input.js";
@@ -23,6 +24,7 @@ export function optionalEdge<
     | InputWithDefault<JsonSerializable>,
 >(output: T): T {
   return {
+    [brand]: "Optional",
     ...output,
     [OptionalVersionOf]: output,
   };
@@ -38,9 +40,5 @@ interface Optional {
 }
 
 export function isOptional(value: unknown): value is Optional {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as Partial<Optional>)[OptionalVersionOf] !== undefined
-  );
+  return isBranded(value, "Optional");
 }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { brand, isBranded } from "../common/brand.js";
 import type { Value } from "../common/value.js";
 import type { JsonSerializable } from "../type-system/type.js";
 
@@ -16,7 +17,7 @@ export function output<T extends JsonSerializable | undefined>(
   }: { id?: string; title?: string; description?: string } = {}
 ): Output<T> {
   return {
-    __SpecialOutputBrand: true,
+    [brand]: "Output",
     id,
     title,
     description,
@@ -27,19 +28,13 @@ export function output<T extends JsonSerializable | undefined>(
 export interface Output<
   T extends JsonSerializable | undefined = JsonSerializable | undefined,
 > {
-  readonly __SpecialOutputBrand: true;
+  readonly [brand]: "Output";
   readonly id?: string;
   readonly title?: string;
   readonly description?: string;
   readonly port: Value<T>;
 }
 
-export function isSpecialOutput(
-  value: unknown
-): value is Output<JsonSerializable> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialOutputBrand" in value
-  );
+export function isSpecialOutput(value: unknown): value is Output {
+  return isBranded(value, "Output");
 }
