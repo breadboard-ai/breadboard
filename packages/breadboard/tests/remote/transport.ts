@@ -8,70 +8,16 @@ import test from "ava";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  InputResponseMessage,
 } from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
-import {
-  IdentityTransport,
-  createMockWorkers,
-} from "../helpers/_test-transport.js";
+import { createMockWorkers } from "../helpers/_test-transport.js";
 import { RunClient, RunServer } from "../../src/remote/run.js";
 import {
   PortDispatcher,
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
-import type { RunState } from "../../src/run/types.js";
-
-test("Interruptible streaming", async (t) => {
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
-
-  const run = async (request: AnyRunRequestMessage) => {
-    const transport = new IdentityTransport<
-      AnyRunRequestMessage,
-      AnyRunResponseMessage
-    >();
-    const server = new RunServer(transport);
-    server.serve(board, false, { kits: [kit] });
-    const client = transport.createClientStream();
-    const writer = client.writableRequests.getWriter();
-    writer.write(request);
-    writer.close();
-    return client.readableResponses;
-  };
-
-  let intermediateState;
-  for await (const result of await run(["run", {}])) {
-    const [type, response, state] = result as InputResponseMessage;
-    t.is(type, "input");
-    t.is(response.node.type, "input");
-    t.deepEqual(response.inputArguments, { foo: "bar" });
-    intermediateState = state;
-  }
-  t.assert(intermediateState !== undefined);
-  const secondRunResults = [];
-  let outputs;
-  for await (const result of await run([
-    "input",
-    {
-      inputs: { hello: "world" },
-    },
-    intermediateState as RunState,
-  ])) {
-    const [type, , state] = result;
-    if (type === "output") {
-      const [, output] = result;
-      outputs = output.outputs;
-    }
-    t.assert(state === undefined);
-    secondRunResults.push(type);
-  }
-  t.deepEqual(outputs, { hello: "world" });
-  t.deepEqual(secondRunResults, ["output", "end"]);
-});
 
 test("Continuous streaming", async (t) => {
   const board = new Board();

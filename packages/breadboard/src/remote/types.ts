@@ -80,7 +80,7 @@ export type InputResponseMessage = ["input", InputResponse, RunState];
  * Sent by the client to provide inputs, requested by the server.
  */
 export type InputResolveRequest = { inputs: InputValues };
-export type InputRemoteMessage = ["input", InputResolveRequest, RunState];
+export type InputRemoteMessage = ["input", InputResolveRequest, next?: string];
 
 export type LastNode = {
   node: NodeDescriptor;
