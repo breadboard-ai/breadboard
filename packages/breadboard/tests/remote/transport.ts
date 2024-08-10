@@ -5,10 +5,7 @@
  */
 
 import test from "ava";
-import {
-  AnyRunRequestMessage,
-  AnyRunResponseMessage,
-} from "../../src/remote/types.js";
+import { AnyRunRequestMessage, RemoteMessage } from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { createMockWorkers } from "../helpers/_test-transport.js";
@@ -32,7 +29,7 @@ test("Continuous streaming", async (t) => {
 
   const clientTransport = new WorkerClientTransport<
     AnyRunRequestMessage,
-    AnyRunResponseMessage
+    RemoteMessage
   >(hostDispatcher.send("test"));
   const server = new RunServer(
     new WorkerServerTransport(workerDispatcher.receive("test"))

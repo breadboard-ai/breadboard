@@ -65,7 +65,7 @@ export type LoadResponse = {
 
 type GenericResult = { type: string; data: unknown };
 
-type RemoteMessage<T extends GenericResult> = [
+type AsRemoteMessage<T extends GenericResult> = [
   T["type"],
   T["data"],
   next?: string,
@@ -153,25 +153,25 @@ export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage;
 
-export type NodeStartRemoteMessage = RemoteMessage<NodeStartProbeMessage>;
-export type NodeEndRemoteMessage = RemoteMessage<NodeEndProbeMessage>;
-export type GraphStartRemoteMessage = RemoteMessage<GraphStartProbeMessage>;
-export type GraphEndRemoteMessage = RemoteMessage<GraphEndProbeMessage>;
-export type SkipRemoteMessage = RemoteMessage<SkipProbeMessage>;
+export type NodeStartRemoteMessage = AsRemoteMessage<NodeStartProbeMessage>;
+export type NodeEndRemoteMessage = AsRemoteMessage<NodeEndProbeMessage>;
+export type GraphStartRemoteMessage = AsRemoteMessage<GraphStartProbeMessage>;
+export type GraphEndRemoteMessage = AsRemoteMessage<GraphEndProbeMessage>;
+export type SkipRemoteMessage = AsRemoteMessage<SkipProbeMessage>;
 
-export type AnyProbeMessage =
+export type DiagnosticsRemoteMessage =
   | NodeStartRemoteMessage
   | NodeEndRemoteMessage
   | GraphStartRemoteMessage
   | GraphEndRemoteMessage
   | SkipRemoteMessage;
 
-export type AnyRunResponseMessage =
+export type RemoteMessage =
   | OutputRemoteMessage
   | InputRemoteMessage
   | EndRemoteMessage
   | ErrorRemoteMessage
-  | AnyProbeMessage;
+  | DiagnosticsRemoteMessage;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;
@@ -193,7 +193,7 @@ export interface ClientTransport<Request, Response> {
 
 export type RunClientTransport = ClientTransport<
   AnyRunRequestMessage,
-  AnyRunResponseMessage
+  RemoteMessage
 >;
 
 type ReplyFunction = {
@@ -214,10 +214,9 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
     } & ReplyFunction
   : never;
 
-export type AnyClientRunResult =
-  ClientRunResultFromMessage<AnyRunResponseMessage>;
+export type AnyClientRunResult = ClientRunResultFromMessage<RemoteMessage>;
 
 export type AnyProbeClientRunResult =
-  ClientRunResultFromMessage<AnyProbeMessage>;
+  ClientRunResultFromMessage<DiagnosticsRemoteMessage>;
 
 export type ClientRunResult<T> = T & ReplyFunction;

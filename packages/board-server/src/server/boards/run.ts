@@ -10,7 +10,7 @@ import { verifyKey } from "./utils/verify-key.js";
 import { secretsKit } from "../proxy/secrets.js";
 import { runBoard } from "./utils/run-board.js";
 import { getStore } from "../store.js";
-import type { AnyRunResponseMessage } from "@google-labs/breadboard/remote";
+import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
@@ -21,7 +21,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     res.end(JSON.stringify({ $error: keyVerificationResult.error }));
     return true;
   }
-  const writer = new WritableStream<AnyRunResponseMessage>({
+  const writer = new WritableStream<RemoteMessage>({
     write(chunk) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     },

@@ -18,7 +18,7 @@ import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
 import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
-import type { AnyRunResponseMessage } from "@google-labs/breadboard/remote";
+import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -30,7 +30,7 @@ const mockSecretsKit: Kit = {
 };
 
 const assertResults = (
-  results: AnyRunResponseMessage[],
+  results: RemoteMessage[],
   expectedResults: ExpectedResult[],
   index = 0
 ) => {
@@ -76,7 +76,7 @@ const assertResults = (
   }
 };
 
-const getNext = (result?: AnyRunResponseMessage) => {
+const getNext = (result?: RemoteMessage) => {
   if (!result) {
     fail("No result provided.");
   }
@@ -124,8 +124,8 @@ const scriptedRun = async (
   let next;
   const path = "/path/to/board";
   for (const [index, { inputs, expected }] of script.entries()) {
-    const results: AnyRunResponseMessage[] = [];
-    const writer = new WritableStream<AnyRunResponseMessage>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -150,8 +150,8 @@ const scriptedRun = async (
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
-    const results: AnyRunResponseMessage[] = [];
-    const writer = new WritableStream<AnyRunResponseMessage>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -180,8 +180,8 @@ describe("Board Server Runs Boards", () => {
   test("can start a simple board with inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar" };
-    const results: AnyRunResponseMessage[] = [];
-    const writer = new WritableStream<AnyRunResponseMessage>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -208,8 +208,8 @@ describe("Board Server Runs Boards", () => {
   test("can start a board with multiple inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar", number: 42 };
-    const results: AnyRunResponseMessage[] = [];
-    const writer = new WritableStream<AnyRunResponseMessage>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },

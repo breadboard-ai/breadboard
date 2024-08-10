@@ -24,17 +24,14 @@ import {
 import {
   AnyClientRunResult,
   AnyRunRequestMessage,
-  AnyRunResponseMessage,
+  RemoteMessage,
   InputResolveRequest,
   RunClientTransport,
   RunRequestMessage,
   ServerTransport,
 } from "./types.js";
 
-type RunServerTransport = ServerTransport<
-  AnyRunRequestMessage,
-  AnyRunResponseMessage
->;
+type RunServerTransport = ServerTransport<AnyRunRequestMessage, RemoteMessage>;
 
 export class RunServer {
   #transport: RunServerTransport;
@@ -65,7 +62,7 @@ export class RunServer {
             if (type == "nodestart") {
               response.push(message.state);
             }
-            await responses.write(response as AnyRunResponseMessage);
+            await responses.write(response as RemoteMessage);
           })
         : undefined,
     };
@@ -110,7 +107,7 @@ export class RunServer {
 }
 
 const createRunResult = (
-  response: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>
+  response: WritableResult<RemoteMessage, AnyRunRequestMessage>
 ): AnyClientRunResult => {
   const [type, data, state] = response.data;
   const reply = async (chunk: AnyRunRequestMessage[1]) => {
