@@ -14,6 +14,7 @@ import type {
   ReanimationState,
 } from "@google-labs/breadboard";
 import type {
+  AnyRunResponseMessage,
   EndRemoteMessage,
   ErrorRemoteMessage,
   GraphEndRemoteMessage,
@@ -123,15 +124,5 @@ export type RunBoardStateStore = {
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
 
-export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
-
-export type RunBoardResult =
-  | ErrorRemoteMessage
-  | OutputRemoteMessage
-  | InputRemoteMessage
-  | GraphStartRemoteMessage
-  | GraphEndRemoteMessage
-  | NodeStartRemoteMessage
-  | NodeEndRemoteMessage
-  | SkipRemoteMessage
-  | EndRemoteMessage;
+export type RunBoardResultWriter =
+  WritableStreamDefaultWriter<AnyRunResponseMessage>;
