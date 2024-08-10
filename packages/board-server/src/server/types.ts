@@ -14,13 +14,13 @@ import type {
   ReanimationState,
 } from "@google-labs/breadboard";
 import type {
-  EndResponseMessage,
-  ErrorResponseMessage,
+  EndRemoteMessage,
+  ErrorRemoteMessage,
   GraphEndRemoteMessage,
   GraphStartRemoteMessage,
   NodeEndRemoteMessage,
   NodeStartRemoteMessage,
-  OutputResponseMessage,
+  OutputRemoteMessage,
   SkipRemoteMessage,
 } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
@@ -133,12 +133,12 @@ export type RunBoardResultInput = [
 ];
 
 export type RunBoardResult =
-  | ErrorResponseMessage
-  | OutputResponseMessage
+  | ErrorRemoteMessage
+  | OutputRemoteMessage
   | RunBoardResultInput
   | GraphStartRemoteMessage
   | GraphEndRemoteMessage
   | NodeStartRemoteMessage
   | NodeEndRemoteMessage
   | SkipRemoteMessage
-  | EndResponseMessage;
+  | EndRemoteMessage;

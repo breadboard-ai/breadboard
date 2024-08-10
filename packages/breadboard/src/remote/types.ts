@@ -73,18 +73,14 @@ type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
  */
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
-export type OutputResponseMessage = ["output", OutputResponse];
+export type OutputRemoteMessage = ["output", OutputResponse];
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
  */
 export type InputResolveRequest = { inputs: InputValues };
-export type InputResolveRequestMessage = [
-  "input",
-  InputResolveRequest,
-  RunState,
-];
+export type InputRemoteMessage = ["input", InputResolveRequest, RunState];
 
 export type LastNode = {
   node: NodeDescriptor;
@@ -99,10 +95,10 @@ export type End = {
   timestamp: number;
   last?: LastNode;
 };
-export type EndResponseMessage = ["end", End];
+export type EndRemoteMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 
-export type ErrorResponseMessage = ["error", ErrorResponse];
+export type ErrorRemoteMessage = ["error", ErrorResponse];
 
 /**
  * Sent by the client to request to proxy a node.
@@ -141,13 +137,11 @@ export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
 export type AnyProxyResponseMessage =
   | ProxyResponseMessage
-  | ErrorResponseMessage
+  | ErrorRemoteMessage
   | ProxyChunkResponseMessage
-  | EndResponseMessage;
+  | EndRemoteMessage;
 
-export type AnyRunRequestMessage =
-  | RunRequestMessage
-  | InputResolveRequestMessage;
+export type AnyRunRequestMessage = RunRequestMessage | InputRemoteMessage;
 
 export type NodeStartRemoteMessage = RemoteMessage<NodeStartProbeMessage>;
 export type NodeEndRemoteMessage = RemoteMessage<NodeEndProbeMessage>;
@@ -163,10 +157,10 @@ export type AnyProbeMessage =
   | SkipRemoteMessage;
 
 export type AnyRunResponseMessage =
-  | OutputResponseMessage
+  | OutputRemoteMessage
   | InputResponseMessage
-  | EndResponseMessage
-  | ErrorResponseMessage
+  | EndRemoteMessage
+  | ErrorRemoteMessage
   | AnyProbeMessage;
 
 export interface ClientBidirectionalStream<Request, Response> {
