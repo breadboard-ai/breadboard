@@ -116,7 +116,7 @@ export const runBoard = async ({
             user,
             reanimationState
           );
-          await writer.write(["input", { schema, next }]);
+          await writer.write(["input", data, next]);
           return;
         }
       }

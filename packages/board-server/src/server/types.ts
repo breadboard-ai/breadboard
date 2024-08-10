@@ -18,6 +18,7 @@ import type {
   ErrorRemoteMessage,
   GraphEndRemoteMessage,
   GraphStartRemoteMessage,
+  InputRemoteMessage,
   NodeEndRemoteMessage,
   NodeStartRemoteMessage,
   OutputRemoteMessage,
@@ -124,18 +125,10 @@ export type RunBoardStateStore = {
 
 export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
 
-export type RunBoardResultInput = [
-  "input",
-  data: {
-    schema: NodeValue;
-    next: string;
-  },
-];
-
 export type RunBoardResult =
   | ErrorRemoteMessage
   | OutputRemoteMessage
-  | RunBoardResultInput
+  | InputRemoteMessage
   | GraphStartRemoteMessage
   | GraphEndRemoteMessage
   | NodeStartRemoteMessage

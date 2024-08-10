@@ -78,7 +78,7 @@ type RemoteMessage<T extends GenericResult> = [
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 export type OutputRemoteMessage = ["output", OutputResponse];
-export type InputRemoveMessage = ["input", InputResponse, next?: string];
+export type InputRemoteMessage = ["input", InputResponse, next?: string];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -168,7 +168,7 @@ export type AnyProbeMessage =
 
 export type AnyRunResponseMessage =
   | OutputRemoteMessage
-  | InputRemoveMessage
+  | InputRemoteMessage
   | EndRemoteMessage
   | ErrorRemoteMessage
   | AnyProbeMessage;

@@ -80,12 +80,12 @@ const getNext = (result?: RunBoardResult) => {
   if (!result) {
     fail("No result provided.");
   }
-  const [type, data] = result;
+  const [type, data, next] = result;
   if (type === "error") {
     fail(data.error as string);
   }
   if (type === "input") {
-    return data.next;
+    return next;
   }
   if (type === "output") {
     return undefined;
