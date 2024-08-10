@@ -87,15 +87,15 @@ export const runBoard = async ({
         break;
       }
       case "graphend": {
-        await writer.write(["graphend", data.path, data.timestamp]);
+        await writer.write(["graphend", data]);
         break;
       }
       case "nodestart": {
-        await writer.write(["nodestart", data.path, data.timestamp, data.node]);
+        await writer.write(["nodestart", data]);
         break;
       }
       case "nodeend": {
-        await writer.write(["nodeend", data.path, data.timestamp, data.node]);
+        await writer.write(["nodeend", data]);
         break;
       }
       case "skip": {
@@ -125,7 +125,7 @@ export const runBoard = async ({
           store,
           data.outputs
         )) as OutputValues;
-        await writer.write(["output", outputs]);
+        await writer.write(["output", { ...data, outputs }]);
         break;
       }
       case "error": {

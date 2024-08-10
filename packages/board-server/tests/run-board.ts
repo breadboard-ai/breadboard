@@ -54,29 +54,21 @@ const assertResults = (
     switch (type) {
       case "output": {
         deepStrictEqual(
-          data,
+          data.outputs,
           expected.outputs,
           `Expected outputs to match at index ${index}`
         );
         break;
       }
-      case "graphstart": {
+      case "graphstart":
+      case "graphend":
+      case "nodestart":
+      case "nodeend": {
         const [, data] = result;
         deepStrictEqual(
           data.path,
           expected.path,
           `Expected path "${JSON.stringify(data.path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
-        );
-        break;
-      }
-      case "graphend":
-      case "nodestart":
-      case "nodeend": {
-        const [, path] = result;
-        deepStrictEqual(
-          path,
-          expected.path,
-          `Expected path "${JSON.stringify(path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
         );
         break;
       }
