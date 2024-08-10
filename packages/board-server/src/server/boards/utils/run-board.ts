@@ -135,7 +135,7 @@ export const runBoard = async ({
       }
       case "end": {
         if (diagnostics) {
-          await writer.write(["end", data.timestamp, data.last]);
+          await writer.write(["end", data]);
         }
         return;
       }

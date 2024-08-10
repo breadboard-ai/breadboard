@@ -15,7 +15,10 @@ import type {
   ReanimationState,
 } from "@google-labs/breadboard";
 import type path from "path";
-import type { LastNode } from "@google-labs/breadboard/remote";
+import type {
+  EndResponseMessage,
+  LastNode,
+} from "@google-labs/breadboard/remote";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -162,7 +165,7 @@ export type RunBoardResultInput = [
   },
 ];
 
-export type RunBoardResultEnd = ["end", timestamp: number, last?: LastNode];
+export type RunBoardResultEnd = EndResponseMessage;
 
 export type RunBoardResult =
   | RunBoardResultError
