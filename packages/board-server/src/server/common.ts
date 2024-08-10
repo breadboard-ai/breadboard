@@ -14,6 +14,22 @@ const CONTENT_TYPE = new Map([
   [".json", "application/json"],
   [".css", "text/css"],
   [".js", "text/javascript"],
+  [".png", "image/png"],
+  [".svg", "image/svg+xml"],
+  [".ico", "image/x-icon"],
+  [".webp", "image/webp"],
+  [".woff", "font/woff"],
+  [".woff2", "font/woff2"],
+  [".ttf", "font/ttf"],
+  [".otf", "font/otf"],
+  [".eot", "application/vnd.ms-fontobject"],
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".mp4", "video/mp4"],
+  [".webm", "video/webm"],
+  [".pdf", "application/pdf"],
+  [".md", "text/markdown"],
+  [".txt", "text/plain"],
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
