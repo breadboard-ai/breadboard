@@ -251,6 +251,7 @@ export class RemoteRunner
       }
       case "end": {
         this.dispatchEvent(new EndEvent(data));
+        this.#client = null;
         break;
       }
       case "skip": {
