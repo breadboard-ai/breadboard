@@ -65,7 +65,7 @@ export type LoadResponse = {
 
 type GenericResult = { type: string; data: unknown };
 
-type AsRemoteMessage<T extends GenericResult> = [
+export type AsRemoteMessage<T extends GenericResult> = [
   T["type"],
   T["data"],
   next?: string,
@@ -172,6 +172,9 @@ export type RemoteMessage =
   | EndRemoteMessage
   | ErrorRemoteMessage
   | DiagnosticsRemoteMessage;
+
+export type RemoteMessageWriter = WritableStreamDefaultWriter<RemoteMessage>;
+export type RemoteMessageWritableStream = WritableStream<RemoteMessage>;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;

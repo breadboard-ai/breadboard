@@ -24,6 +24,7 @@ import type {
   NodeStartRemoteMessage,
   OutputRemoteMessage,
   SkipRemoteMessage,
+  RemoteMessageWriter,
 } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
 
@@ -109,7 +110,7 @@ export type RunBoardArguments = {
   /**
    * The writer for the results of the board run.
    */
-  writer: RunBoardResultWriter;
+  writer: RemoteMessageWriter;
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
@@ -123,5 +124,3 @@ export type RunBoardStateStore = {
   ): Promise<ReanimationState | undefined>;
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
-
-export type RunBoardResultWriter = WritableStreamDefaultWriter<RemoteMessage>;
