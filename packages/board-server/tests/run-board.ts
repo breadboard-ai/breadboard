@@ -82,7 +82,7 @@ const getNext = (result?: RunBoardResult) => {
   }
   const [type, data] = result;
   if (type === "error") {
-    fail(data);
+    fail(data.error as string);
   }
   if (type === "input") {
     return data.next;

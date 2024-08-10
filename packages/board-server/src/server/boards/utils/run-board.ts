@@ -18,6 +18,8 @@ import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
 import { formatRunError } from "./format-run-error.js";
 
+export const timestamp = () => globalThis.performance.now();
+
 const fromNextToState = async (
   store: RunBoardStateStore,
   user: string,
@@ -51,7 +53,10 @@ export const runBoard = async ({
 }: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
-    await writer.write(["error", "Data store not available."]);
+    await writer.write([
+      "error",
+      { error: "Data store not available.", timestamp: timestamp() },
+    ]);
     return;
   }
   // TODO: Figure out if this is the right thing to do here.
@@ -130,7 +135,10 @@ export const runBoard = async ({
         break;
       }
       case "error": {
-        await writer.write(["error", formatRunError(data.error)]);
+        await writer.write([
+          "error",
+          { error: formatRunError(data.error), timestamp: timestamp() },
+        ]);
         return;
       }
       case "end": {
@@ -144,5 +152,11 @@ export const runBoard = async ({
       }
     }
   }
-  writer.write(["error", "Run completed without signaling end or error."]);
+  writer.write([
+    "error",
+    {
+      error: "Run completed without signaling end or error.",
+      timestamp: timestamp(),
+    },
+  ]);
 };

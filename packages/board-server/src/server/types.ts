@@ -17,6 +17,7 @@ import type {
 import type path from "path";
 import type {
   EndResponseMessage,
+  ErrorResponseMessage,
   LastNode,
 } from "@google-labs/breadboard/remote";
 
@@ -153,7 +154,7 @@ export type RunBoardResultSkip = [
   missingInputs: string[],
 ];
 
-export type RunBoardResultError = ["error", error: string];
+export type RunBoardResultError = ErrorResponseMessage;
 
 export type RunBoardResultOutput = ["output", outputs: OutputValues];
 
