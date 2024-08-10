@@ -124,20 +124,6 @@ export type RunBoardStateStore = {
 
 export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
 
-export type RunBoardResultGraphStart = GraphStartRemoteMessage;
-
-export type RunBoardResultGraphEnd = GraphEndRemoteMessage;
-
-export type RunBoardResultNodeStart = NodeStartRemoteMessage;
-
-export type RunBoardResultNodeEnd = NodeEndRemoteMessage;
-
-export type RunBoardResultSkip = SkipRemoteMessage;
-
-export type RunBoardResultError = ErrorResponseMessage;
-
-export type RunBoardResultOutput = OutputResponseMessage;
-
 export type RunBoardResultInput = [
   "input",
   data: {
@@ -146,15 +132,13 @@ export type RunBoardResultInput = [
   },
 ];
 
-export type RunBoardResultEnd = EndResponseMessage;
-
 export type RunBoardResult =
-  | RunBoardResultError
-  | RunBoardResultOutput
+  | ErrorResponseMessage
+  | OutputResponseMessage
   | RunBoardResultInput
-  | RunBoardResultGraphStart
-  | RunBoardResultGraphEnd
-  | RunBoardResultNodeStart
-  | RunBoardResultNodeEnd
-  | RunBoardResultSkip
-  | RunBoardResultEnd;
+  | GraphStartRemoteMessage
+  | GraphEndRemoteMessage
+  | NodeStartRemoteMessage
+  | NodeEndRemoteMessage
+  | SkipRemoteMessage
+  | EndResponseMessage;
