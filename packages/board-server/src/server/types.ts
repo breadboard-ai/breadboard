@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
 import type {
   GraphDescriptor,
   InputValues,
@@ -14,13 +13,12 @@ import type {
   OutputValues,
   ReanimationState,
 } from "@google-labs/breadboard";
-import type path from "path";
 import type {
   EndResponseMessage,
   ErrorResponseMessage,
-  SkipMessage,
-  LastNode,
+  SkipRemoteMessage,
 } from "@google-labs/breadboard/remote";
+import type { IncomingMessage, ServerResponse } from "http";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -147,7 +145,7 @@ export type RunBoardResultNodeEnd = [
   node: NodeDescriptor,
 ];
 
-export type RunBoardResultSkip = SkipMessage;
+export type RunBoardResultSkip = SkipRemoteMessage;
 
 export type RunBoardResultError = ErrorResponseMessage;
 
