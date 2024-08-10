@@ -99,13 +99,7 @@ export const runBoard = async ({
         break;
       }
       case "skip": {
-        await writer.write([
-          "skip",
-          data.path,
-          data.timestamp,
-          data.node,
-          data.missingInputs,
-        ]);
+        await writer.write(["skip", data]);
         break;
       }
       case "input": {

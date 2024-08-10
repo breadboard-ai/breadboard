@@ -149,12 +149,18 @@ export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage;
 
+export type NodeStartMessage = RemoteMessage<NodeStartProbeMessage>;
+export type NodeEndMessage = RemoteMessage<NodeEndProbeMessage>;
+export type GraphStartMessage = RemoteMessage<GraphStartProbeMessage>;
+export type GraphEndMessage = RemoteMessage<GraphEndProbeMessage>;
+export type SkipMessage = RemoteMessage<SkipProbeMessage>;
+
 export type AnyProbeMessage =
-  | RemoteMessage<NodeStartProbeMessage>
-  | RemoteMessage<NodeEndProbeMessage>
-  | RemoteMessage<GraphStartProbeMessage>
-  | RemoteMessage<GraphEndProbeMessage>
-  | RemoteMessage<SkipProbeMessage>;
+  | NodeStartMessage
+  | NodeEndMessage
+  | GraphStartMessage
+  | GraphEndMessage
+  | SkipMessage;
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage

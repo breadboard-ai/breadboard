@@ -18,6 +18,7 @@ import type path from "path";
 import type {
   EndResponseMessage,
   ErrorResponseMessage,
+  SkipMessage,
   LastNode,
 } from "@google-labs/breadboard/remote";
 
@@ -146,13 +147,7 @@ export type RunBoardResultNodeEnd = [
   node: NodeDescriptor,
 ];
 
-export type RunBoardResultSkip = [
-  "skip",
-  path: number[],
-  timestamp: number,
-  node: NodeDescriptor,
-  missingInputs: string[],
-];
+export type RunBoardResultSkip = SkipMessage;
 
 export type RunBoardResultError = ErrorResponseMessage;
 
