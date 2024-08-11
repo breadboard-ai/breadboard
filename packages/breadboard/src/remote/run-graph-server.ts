@@ -32,8 +32,6 @@ export const handleRunGraphRequest = async (
 
   const resumeFrom = await stateStore?.load(next);
 
-  console.log("🌻 next in resumeFrom", next, resumeFrom);
-
   const state = createRunStateManager(resumeFrom, inputs);
 
   const runner = run({

@@ -30,7 +30,6 @@ import {
   NodeStartEvent,
   OutputEvent,
   RunnerErrorEvent,
-  SecretEvent,
   SkipEvent,
   PauseEvent,
   ResumeEvent,
@@ -71,7 +70,7 @@ export class HttpClient {
   #fetch: FetchType;
   #writer: MessageConsumer;
   #fetching = false;
-  #lastMessage: SecretRemoteMessage | InputRemoteMessage | null = null;
+  #lastMessage: InputRemoteMessage | null = null;
 
   constructor(
     url: string,
@@ -93,7 +92,6 @@ export class HttpClient {
       $key: this.#key,
     };
     if (this.#lastMessage) {
-      console.log("🌻 lastMessage in createBody", this.#lastMessage);
       const [, , next] = this.#lastMessage;
       if (next) {
         body.$next = next;
@@ -137,7 +135,7 @@ export class HttpClient {
         new WritableStream({
           write: async (message) => {
             const [type] = message;
-            if (type === "secret" || type === "input") {
+            if (type === "input") {
               this.#lastMessage = message;
             }
             await this.#writer(message);
@@ -189,14 +187,8 @@ export class RemoteRunner
   }
 
   secretKeys(): string[] | null {
-    if (this.#client?.fetching()) {
-      return null;
-    }
-    const message = this.#client?.lastMessage();
-    if (!message || message[0] !== "secret") {
-      return null;
-    }
-    return message[1].keys;
+    console.warn("Secret keys are not sent over to the client.");
+    return null;
   }
 
   inputSchema(): Schema | null {
@@ -288,19 +280,7 @@ export class RemoteRunner
         this.dispatchEvent(new OutputEvent(data));
         break;
       }
-      case "secret": {
-        const haveInputs = !next;
-        this.dispatchEvent(new SecretEvent(haveInputs, data));
-        if (!haveInputs) {
-          // When there are no inputs to consume, pause the run
-          // and wait for the next input.
-          this.dispatchEvent(new PauseEvent(false, now()));
-          return false;
-        }
-        break;
-      }
     }
-    return false;
   }
 
   async run(inputs?: InputValues): Promise<boolean> {
