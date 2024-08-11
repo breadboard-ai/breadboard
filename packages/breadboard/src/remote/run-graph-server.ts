@@ -24,14 +24,15 @@ export const handleRunGraphRequest = async (
     dataStore,
     stateStore,
     inputs: defaultInputs,
-    diagnostics,
     graph,
   } = config;
-  const { next, inputs } = request;
+  const { next, inputs, diagnostics = false } = request;
 
   let inputsToConsume = next ? undefined : inputs;
 
   const resumeFrom = await stateStore?.load(next);
+
+  console.log("🌻 next in resumeFrom", next, resumeFrom);
 
   const state = createRunStateManager(resumeFrom, inputs);
 

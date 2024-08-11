@@ -46,8 +46,11 @@ const mockFetch = (graph: GraphDescriptor) => {
     const {
       $key,
       $next: next,
+      $diagnostics: diagnostics,
       ...inputs
     } = JSON.parse(body as string) as RemoteRunRequestBody;
+
+    console.log("🌻 body in mockFetch", body);
 
     if ($key !== "my-key") {
       fail(`Invalid key provided. Use "my-key".`);
@@ -76,7 +79,7 @@ const mockFetch = (graph: GraphDescriptor) => {
       },
     };
 
-    handleRunGraphRequest({ inputs: inputs, next }, config);
+    handleRunGraphRequest({ inputs: inputs, next, diagnostics }, config);
 
     return new Response(pipe.readable.pipeThrough(new TextEncoderStream()));
   };
@@ -84,7 +87,7 @@ const mockFetch = (graph: GraphDescriptor) => {
 };
 
 describe("RemoteRunner", async () => {
-  test("can run simple graph", async () => {
+  test("simple graph with no diagnostics", async () => {
     const events: EventLogEntry[] = [];
 
     const runner = new RemoteRunner(
@@ -95,7 +98,6 @@ describe("RemoteRunner", async () => {
           url: "https://example.com/run",
         },
         url: import.meta.url,
-        kits: [],
       },
       mockFetch(simple)
     );
@@ -116,6 +118,56 @@ describe("RemoteRunner", async () => {
         "pause",
         "resume",
         "output",
+        "end",
+      ]);
+      const output = queryLog(events, "output") as OutputResponse;
+      deepStrictEqual(output.outputs, { text: "foo" });
+    }
+  });
+
+  test("simple graph with diagnostics", async () => {
+    const events: [name: string, data: unknown][] = [];
+    const runner = new RemoteRunner(
+      {
+        remote: {
+          type: "http",
+          key: "my-key",
+          url: "https://example.com/run",
+        },
+        url: import.meta.url,
+        diagnostics: true,
+      },
+      mockFetch(simple)
+    );
+    logEvents(runner, events);
+    {
+      const result = await runner.run();
+      ok(result == false);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "start",
+        "graphstart",
+        "nodestart",
+        "input",
+        "pause",
+      ]);
+    }
+    {
+      const result = await runner.run({ text: "foo" });
+      ok(result == true);
+      ok(!runner.running());
+      deepStrictEqual(eventNamesFromLog(events), [
+        "start",
+        "graphstart",
+        "nodestart",
+        "input",
+        "pause",
+        "resume",
+        "nodeend",
+        "nodestart",
+        "output",
+        "nodeend",
+        "graphend",
         "end",
       ]);
       const output = queryLog(events, "output") as OutputResponse;

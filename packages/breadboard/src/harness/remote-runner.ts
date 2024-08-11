@@ -8,7 +8,6 @@ import { Schema, InputValues } from "../types.js";
 import type {
   HarnessRunner,
   HarnessRunResult,
-  RunConfig,
   RunEventTarget,
   SecretResult,
 } from "./types.js";
@@ -16,7 +15,12 @@ import {
   chunkRepairTransform,
   serverStreamEventDecoder,
 } from "../remote/http.js";
-import type { AsRemoteMessage, RemoteMessage } from "../remote/types.js";
+import type {
+  AsRemoteMessage,
+  InputRemoteMessage,
+  RemoteMessage,
+  RemoteRunConfig,
+} from "../remote/types.js";
 import {
   EndEvent,
   InputEvent,
@@ -63,19 +67,22 @@ export class HttpClient {
    * The API key for the remote service.
    */
   #key: string;
+  #diagnostics: boolean;
   #fetch: FetchType;
   #writer: MessageConsumer;
   #fetching = false;
-  #lastMessage: HarnessRemoteMessage | null = null;
+  #lastMessage: SecretRemoteMessage | InputRemoteMessage | null = null;
 
   constructor(
     url: string,
     key: string,
+    diagnostics: boolean,
     writer: MessageConsumer,
     fetch: FetchType = globalThis.fetch
   ) {
     this.#url = url;
     this.#key = key;
+    this.#diagnostics = diagnostics;
     this.#writer = writer;
     this.#fetch = fetch;
   }
@@ -86,10 +93,14 @@ export class HttpClient {
       $key: this.#key,
     };
     if (this.#lastMessage) {
+      console.log("🌻 lastMessage in createBody", this.#lastMessage);
       const [, , next] = this.#lastMessage;
       if (next) {
         body.$next = next;
       }
+    }
+    if (this.#diagnostics) {
+      body.$diagnostics = true;
     }
     return JSON.stringify(body);
   }
@@ -106,12 +117,12 @@ export class HttpClient {
     if (this.#fetching) {
       throw new Error("Fetch is already in progress.");
     }
-    this.#lastMessage = null;
     this.#fetching = true;
     const response = await this.#fetch(this.#url, {
       method: "POST",
       body: this.#createBody(inputs),
     });
+    this.#lastMessage = null;
 
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
@@ -132,7 +143,7 @@ export class HttpClient {
             await this.#writer(message);
           },
           close: async () => {
-            if (!this.#lastMessage) {
+            if (!this.#lastMessage && !this.#diagnostics) {
               await this.#writer(["end", { timestamp: timestamp() }]);
             }
           },
@@ -148,12 +159,12 @@ export class RemoteRunner
   extends (EventTarget as RunEventTarget)
   implements HarnessRunner
 {
-  #config: RunConfig;
+  #config: RemoteRunConfig;
   #client: HttpClient | null = null;
   #observers: InspectableRunObserver[] = [];
   #fetch: FetchType;
 
-  constructor(config: RunConfig, fetch?: FetchType) {
+  constructor(config: RemoteRunConfig, fetch?: FetchType) {
     super();
     this.#config = config;
     this.#fetch = fetch || globalThis.fetch;
@@ -218,6 +229,7 @@ export class RemoteRunner
     this.#client = new HttpClient(
       url,
       key,
+      this.#config.diagnostics || false,
       async (message) => {
         await this.#processMessage(message);
       },
