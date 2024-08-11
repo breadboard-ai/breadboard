@@ -67,7 +67,7 @@ export class HttpClient {
    */
   #key: string;
   #diagnostics: boolean;
-  #fetch: FetchType;
+  #fetch: FetchType | undefined;
   #writer: MessageConsumer;
   #fetching = false;
   #lastMessage: InputRemoteMessage | null = null;
@@ -77,7 +77,7 @@ export class HttpClient {
     key: string,
     diagnostics: boolean,
     writer: MessageConsumer,
-    fetch: FetchType = globalThis.fetch
+    fetch?: FetchType
   ) {
     this.#url = url;
     this.#key = key;
@@ -116,7 +116,7 @@ export class HttpClient {
       throw new Error("Fetch is already in progress.");
     }
     this.#fetching = true;
-    const response = await this.#fetch(this.#url, {
+    const response = await (this.#fetch ? this.#fetch : fetch)(this.#url, {
       method: "POST",
       body: this.#createBody(inputs),
     });
