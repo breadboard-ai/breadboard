@@ -40,6 +40,7 @@ export const runBoard = async ({
     {
       inputs,
       next,
+      diagnostics,
     },
     {
       url,
