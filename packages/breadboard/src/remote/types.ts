@@ -5,7 +5,6 @@
  */
 
 import { DataStore, StateStore } from "../data/types.js";
-import { RunConfig } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
