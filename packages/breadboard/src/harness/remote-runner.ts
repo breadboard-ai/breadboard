@@ -32,6 +32,7 @@ import {
   ResumeEvent,
   StartEvent,
 } from "./events.js";
+import { timestamp } from "../timestamp.js";
 
 export type SecretRemoteMessage = AsRemoteMessage<SecretResult>;
 
@@ -54,15 +55,7 @@ export const remoteMessageTransform = () => {
   });
 };
 
-function createResolvablePromise<T>(): [Promise<T>, (value: T) => void] {
-  let resolve: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return [promise, resolve!];
-}
-
-export const now = () => ({ timestamp: globalThis.performance.now() });
+export const now = () => ({ timestamp: timestamp() });
 
 export class HttpClient {
   #url: string;
@@ -124,9 +117,7 @@ export class HttpClient {
       throw new Error(`HTTP error: ${response.status}`);
     }
 
-    const [promise, resolver] = createResolvablePromise<void>();
-
-    response.body
+    await response.body
       ?.pipeThrough(new TextDecoderStream())
       .pipeThrough(chunkRepairTransform())
       .pipeThrough(serverStreamEventDecoder())
@@ -140,14 +131,15 @@ export class HttpClient {
             }
             await this.#writer(message);
           },
-          close: () => {
-            this.#fetching = false;
-            resolver();
+          close: async () => {
+            if (!this.#lastMessage) {
+              await this.#writer(["end", { timestamp: timestamp() }]);
+            }
           },
         })
       );
 
-    await promise;
+    this.#fetching = false;
     return this.#lastMessage === null;
   }
 }
@@ -159,10 +151,12 @@ export class RemoteRunner
   #config: RunConfig;
   #client: HttpClient | null = null;
   #observers: InspectableRunObserver[] = [];
+  #fetch: FetchType;
 
-  constructor(config: RunConfig) {
+  constructor(config: RunConfig, fetch?: FetchType) {
     super();
     this.#config = config;
+    this.#fetch = fetch || globalThis.fetch;
   }
 
   addObserver(observer: InspectableRunObserver): void {
@@ -221,9 +215,14 @@ export class RemoteRunner
     if (!key) {
       throw new Error("Remote API Key isn't specified.");
     }
-    this.#client = new HttpClient(url, key, async (message) => {
-      await this.#processMessage(message);
-    });
+    this.#client = new HttpClient(
+      url,
+      key,
+      async (message) => {
+        await this.#processMessage(message);
+      },
+      this.#fetch
+    );
   }
 
   async #processMessage(message: HarnessRemoteMessage) {
@@ -240,7 +239,6 @@ export class RemoteRunner
         if (!haveInputs) {
           // When there are no inputs to consume, pause the run
           // and wait for the next input.
-          this.dispatchEvent(new InputEvent(false, data));
           this.dispatchEvent(new PauseEvent(false, now()));
         }
         break;
@@ -284,7 +282,6 @@ export class RemoteRunner
         if (!haveInputs) {
           // When there are no inputs to consume, pause the run
           // and wait for the next input.
-          this.dispatchEvent(new SecretEvent(false, data));
           this.dispatchEvent(new PauseEvent(false, now()));
           return false;
         }

@@ -10,6 +10,7 @@ import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
+  GraphDescriptor,
   GraphEndProbeMessage,
   GraphStartProbeMessage,
   InputResponse,
@@ -233,6 +234,7 @@ export type ServerRunRequest = {
 };
 
 export type ServerRunConfig = {
+  graph?: GraphDescriptor;
   url: string;
   kits: Kit[];
   writer: RemoteMessageWriter;
@@ -240,5 +242,10 @@ export type ServerRunConfig = {
   dataStore: DataStore;
   stateStore: StateStore;
   inputs?: InputValues;
-  diagnostics: boolean;
+  diagnostics?: boolean;
 };
+
+export type RemoteRunRequestBody = {
+  $key: string;
+  $next?: string;
+} & InputValues;

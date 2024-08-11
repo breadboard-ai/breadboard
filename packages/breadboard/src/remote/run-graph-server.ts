@@ -25,6 +25,7 @@ export const handleRunGraphRequest = async (
     stateStore,
     inputs: defaultInputs,
     diagnostics,
+    graph,
   } = config;
   const { next, inputs } = request;
 
@@ -35,6 +36,7 @@ export const handleRunGraphRequest = async (
   const state = createRunStateManager(resumeFrom, inputs);
 
   const runner = run({
+    runner: graph,
     url,
     kits,
     loader,
@@ -77,6 +79,7 @@ export const handleRunGraphRequest = async (
           const reanimationState = state.lifecycle().reanimationState();
           const next = await stateStore.save(reanimationState);
           await writer.write(["input", data, next]);
+          await writer.close();
           return;
         }
       }
@@ -93,12 +96,14 @@ export const handleRunGraphRequest = async (
           "error",
           { error: formatRunError(data.error), timestamp: timestamp() },
         ]);
+        await writer.close();
         return;
       }
       case "end": {
         if (diagnostics) {
           await writer.write(["end", data]);
         }
+        await writer.close();
         return;
       }
       default: {
