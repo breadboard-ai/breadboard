@@ -35,7 +35,6 @@ const assertResults = (
   index = 0
 ) => {
   if (results.length !== expectedResults.length) {
-    console.log("Results:", results);
     fail(
       `Expected ${expectedResults.length} results, but got ${results.length} at index ${index}`
     );
