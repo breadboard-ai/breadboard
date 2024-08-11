@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DataStore, StateStore } from "../data/types.js";
+import { RunConfig } from "../harness/types.js";
+import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
 import {
@@ -12,6 +15,7 @@ import {
   GraphStartProbeMessage,
   InputResponse,
   InputValues,
+  Kit,
   NodeDescriptor,
   NodeEndProbeMessage,
   NodeStartProbeMessage,
@@ -223,3 +227,19 @@ export type AnyProbeClientRunResult =
   ClientRunResultFromMessage<DiagnosticsRemoteMessage>;
 
 export type ClientRunResult<T> = T & ReplyFunction;
+
+export type ServerRunRequest = {
+  inputs: InputValues;
+  next: string;
+};
+
+export type ServerRunConfig = {
+  url: string;
+  kits: Kit[];
+  writer: RemoteMessageWriter;
+  loader: GraphLoader;
+  dataStore: DataStore;
+  stateStore: StateStore;
+  inputs?: InputValues;
+  diagnostics: boolean;
+};

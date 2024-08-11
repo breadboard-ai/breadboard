@@ -5,6 +5,7 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
+import { ReanimationState } from "../run/types.js";
 
 export type FunctionCallCapabilityPart = {
   functionCall: {
@@ -109,4 +110,9 @@ export type DataStore = {
     storeId?: string
   ): Promise<SerializedDataStoreGroup | null>;
   store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
+};
+
+export type StateStore = {
+  load(key: string): Promise<ReanimationState | undefined>;
+  save(state: ReanimationState): Promise<string>;
 };
