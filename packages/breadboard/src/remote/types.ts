@@ -229,8 +229,8 @@ export type AnyProbeClientRunResult =
 export type ClientRunResult<T> = T & ReplyFunction;
 
 export type ServerRunRequest = {
-  inputs: InputValues;
-  next: string;
+  inputs?: InputValues;
+  next?: string;
 };
 
 export type ServerRunConfig = {

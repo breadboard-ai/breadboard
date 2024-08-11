@@ -113,6 +113,6 @@ export type DataStore = {
 };
 
 export type StateStore = {
-  load(key: string): Promise<ReanimationState | undefined>;
-  save(state: ReanimationState): Promise<string>;
+  load(key?: string): Promise<ReanimationState | undefined>;
+  save(state: ReanimationState): Promise<string | undefined>;
 };

@@ -5,18 +5,11 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import {
-  createLoader,
-  createRunStateManager,
-  inflateData,
-  type OutputValues,
-  type ReanimationState,
-} from "@google-labs/breadboard";
-import { run } from "@google-labs/breadboard/harness";
+import { createLoader, type ReanimationState } from "@google-labs/breadboard";
+import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
 import type { RunBoardArguments, RunBoardStateStore } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
-import { formatRunError } from "./format-run-error.js";
 
 export const timestamp = () => globalThis.performance.now();
 
@@ -62,95 +55,27 @@ export const runBoard = async ({
   // TODO: Figure out if this is the right thing to do here.
   store.createGroup("run-board");
 
-  let inputsToConsume = next ? undefined : inputs;
-
-  const resumeFrom = await fromNextToState(runStateStore, user, next);
-
-  const state = createRunStateManager(resumeFrom, inputs);
-
-  const runner = run({
-    url,
-    kits: createKits(kitOverrides),
-    loader: createLoader([new BoardServerProvider(path, loader)]),
-    store,
-    inputs: { model: "gemini-1.5-flash-latest" },
-    interactiveSecrets: false,
-    diagnostics,
-    state,
-  });
-
-  for await (const result of runner) {
-    const { type, data, reply } = result;
-    switch (type) {
-      case "graphstart": {
-        await writer.write(["graphstart", data]);
-        break;
-      }
-      case "graphend": {
-        await writer.write(["graphend", data]);
-        break;
-      }
-      case "nodestart": {
-        await writer.write(["nodestart", data]);
-        break;
-      }
-      case "nodeend": {
-        await writer.write(["nodeend", data]);
-        break;
-      }
-      case "skip": {
-        await writer.write(["skip", data]);
-        break;
-      }
-      case "input": {
-        if (inputsToConsume && Object.keys(inputsToConsume).length > 0) {
-          await reply({ inputs: inputsToConsume });
-          inputsToConsume = undefined;
-          break;
-        } else {
-          const { inputArguments } = data;
-          const reanimationState = state.lifecycle().reanimationState();
-          const schema = inputArguments?.schema || {};
-          const next = await fromStateToNext(
-            runStateStore,
-            user,
-            reanimationState
-          );
-          await writer.write(["input", data, next]);
-          return;
-        }
-      }
-      case "output": {
-        const outputs = (await inflateData(
-          store,
-          data.outputs
-        )) as OutputValues;
-        await writer.write(["output", { ...data, outputs }]);
-        break;
-      }
-      case "error": {
-        await writer.write([
-          "error",
-          { error: formatRunError(data.error), timestamp: timestamp() },
-        ]);
-        return;
-      }
-      case "end": {
-        if (diagnostics) {
-          await writer.write(["end", data]);
-        }
-        return;
-      }
-      default: {
-        console.log("Unknown type", type, data);
-      }
-    }
-  }
-  writer.write([
-    "error",
+  return handleRunGraphRequest(
     {
-      error: "Run completed without signaling end or error.",
-      timestamp: timestamp(),
+      inputs,
+      next,
     },
-  ]);
+    {
+      url,
+      kits: createKits(kitOverrides),
+      writer,
+      loader: createLoader([new BoardServerProvider(path, loader)]),
+      dataStore: store,
+      stateStore: {
+        load(next?: string) {
+          return fromNextToState(runStateStore, user, next);
+        },
+        save(state: ReanimationState) {
+          return fromStateToNext(runStateStore, user, state);
+        },
+      },
+      inputs: { model: "gemini-1.5-flash-latest" },
+      diagnostics,
+    }
+  );
 };
