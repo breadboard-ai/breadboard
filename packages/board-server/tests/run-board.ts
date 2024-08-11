@@ -18,7 +18,7 @@ import simpleBoard from "./boards/simple.bgl.json" with { type: "json" };
 import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "json" };
 import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
-import type { RunBoardResult } from "../src/server/types.js";
+import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -30,7 +30,7 @@ const mockSecretsKit: Kit = {
 };
 
 const assertResults = (
-  results: RunBoardResult[],
+  results: RemoteMessage[],
   expectedResults: ExpectedResult[],
   index = 0
 ) => {
@@ -50,36 +50,55 @@ const assertResults = (
       expected.type,
       `Expected state type to be ${expected.type} at index ${index}`
     );
-    if (type === "output") {
-      deepStrictEqual(
-        data,
-        expected.outputs,
-        `Expected outputs to match at index ${index}`
-      );
+    switch (type) {
+      case "output": {
+        deepStrictEqual(
+          data.outputs,
+          expected.outputs,
+          `Expected outputs to match at index ${index}`
+        );
+        break;
+      }
+      case "graphstart":
+      case "graphend":
+      case "nodestart":
+      case "nodeend": {
+        const [, data] = result;
+        deepStrictEqual(
+          data.path,
+          expected.path,
+          `Expected path "${JSON.stringify(data.path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
+        );
+        break;
+      }
     }
   }
 };
 
-const getNext = (result?: RunBoardResult) => {
+const getNext = (result?: RemoteMessage) => {
   if (!result) {
     fail("No result provided.");
   }
-  const [type, data] = result;
+  const [type, data, next] = result;
   if (type === "error") {
-    fail(data);
+    fail(data.error as string);
   }
   if (type === "input") {
-    return data.next;
+    return next;
   }
   if (type === "output") {
     return undefined;
   }
-  fail("Unexpected state type.");
+  if (type === "end") {
+    return undefined;
+  }
+  fail(`Unexpected state type: ${type}`);
 };
 
 type ExpectedResult = {
   type: string;
   outputs?: OutputValues;
+  path?: number[];
 };
 
 type RunScriptEntry = {
@@ -98,13 +117,14 @@ const runStateStore = {
 
 const scriptedRun = async (
   board: GraphDescriptor,
-  script: RunScriptEntry[]
+  script: RunScriptEntry[],
+  diagnostics = false
 ) => {
   let next;
   const path = "/path/to/board";
   for (const [index, { inputs, expected }] of script.entries()) {
-    const results: RunBoardResult[] = [];
-    const writer = new WritableStream<RunBoardResult>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -119,6 +139,7 @@ const scriptedRun = async (
       next,
       writer,
       runStateStore,
+      diagnostics,
     });
     assertResults(results, expected, index);
     next = getNext(results[results.length - 1]);
@@ -128,8 +149,8 @@ const scriptedRun = async (
 describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
-    const results: RunBoardResult[] = [];
-    const writer = new WritableStream<RunBoardResult>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -158,8 +179,8 @@ describe("Board Server Runs Boards", () => {
   test("can start a simple board with inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar" };
-    const results: RunBoardResult[] = [];
-    const writer = new WritableStream<RunBoardResult>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -186,8 +207,8 @@ describe("Board Server Runs Boards", () => {
   test("can start a board with multiple inputs", async () => {
     const path = "/path/to/board";
     const inputs = { text: "bar", number: 42 };
-    const results: RunBoardResult[] = [];
-    const writer = new WritableStream<RunBoardResult>({
+    const results: RemoteMessage[] = [];
+    const writer = new WritableStream<RemoteMessage>({
       async write(chunk) {
         results.push(chunk);
       },
@@ -258,5 +279,56 @@ describe("Board Server Runs Boards", () => {
         ],
       },
     ]);
+  });
+
+  test("can finish a board with bubbling inputs with diagnostics", async () => {
+    await scriptedRun(
+      invokeWithBubblingInput as GraphDescriptor,
+      [
+        {
+          expected: [
+            { type: "graphstart", path: [] },
+            { type: "nodestart", path: [1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { name: "Bob" },
+          expected: [
+            { type: "nodeend", path: [1] },
+            { type: "nodestart", path: [2] },
+            { type: "graphstart", path: [2] },
+            { type: "nodestart", path: [2, 1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { location: "New York" },
+          expected: [
+            { type: "nodeend", path: [2, 1] },
+            { type: "nodestart", path: [2, 2] },
+            { type: "nodeend", path: [2, 2] },
+            { type: "skip", path: [2, 3] },
+            { type: "nodestart", path: [2, 4] },
+            { type: "nodeend", path: [2, 4] },
+            { type: "graphend", path: [2] },
+            { type: "nodeend", path: [2] },
+            { type: "nodestart", path: [3] },
+            { type: "nodeend", path: [3] },
+            { type: "nodestart", path: [4] },
+            {
+              type: "output",
+              outputs: {
+                greeting: 'Greeting is: "Hello, Bob from New York!"',
+              },
+            },
+            { type: "nodeend", path: [4] },
+            { type: "graphend", path: [] },
+            { type: "end" },
+          ],
+        },
+      ],
+      true
+    );
   });
 });

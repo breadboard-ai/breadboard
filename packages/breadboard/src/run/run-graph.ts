@@ -76,6 +76,17 @@ export async function* runGraph(
           }
 
           lifecycle?.dispatchNodeEnd(outputs, invocationPath);
+
+          await probe?.report?.({
+            type: "nodeend",
+            data: {
+              node: result.descriptor,
+              inputs: result.inputs,
+              outputs: outputs as OutputValues,
+              path: invocationPath,
+              timestamp: timestamp(),
+            },
+          });
         }
       }
     }
@@ -83,10 +94,12 @@ export async function* runGraph(
     const path = () => [...invocationPath, invocationId];
 
     const machine = new TraversalMachine(graph, resumeFrom, start);
-    await probe?.report?.({
-      type: "graphstart",
-      data: { graph, path: invocationPath, timestamp: timestamp() },
-    });
+    if (!resumeFrom) {
+      await probe?.report?.({
+        type: "graphstart",
+        data: { graph, path: invocationPath, timestamp: timestamp() },
+      });
+    }
 
     for await (const result of machine) {
       context?.signal?.throwIfAborted();

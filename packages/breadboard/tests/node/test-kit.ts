@@ -119,6 +119,14 @@ export const testKit: Kit = {
             };
       },
     },
+    secrets: {
+      invoke: async (inputs) => {
+        const { keys } = inputs as { keys: string[] };
+        return Object.fromEntries(
+          keys.map((key: string) => [key, "secret-value"])
+        );
+      },
+    },
   },
 };
 

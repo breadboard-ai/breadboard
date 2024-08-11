@@ -4,15 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IncomingMessage, ServerResponse } from "http";
 import type {
   GraphDescriptor,
   InputValues,
   Kit,
-  NodeValue,
-  OutputValues,
   ReanimationState,
 } from "@google-labs/breadboard";
+import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
+import type { IncomingMessage, ServerResponse } from "http";
 
 export type GeneralRequestType = "list" | "create";
 
@@ -72,15 +71,35 @@ export type InvokeBoardArguments = {
 };
 
 export type RunBoardArguments = {
+  /**
+   * The full URL or the requested board, like
+   * `https://board.server/boards/@user/board.bgl.json`.
+   */
   url: string;
+  /**
+   * The path to the board, like `@user/board.bgl.json`.
+   */
   path: string;
+  /**
+   * The user who is running the board.
+   */
   user: string;
+  /**
+   * The function that supplies the actual board given the path.
+   */
   loader: BoardServerLoadFunction;
+  /**
+   * The state store for graph reanimation.
+   */
   runStateStore: RunBoardStateStore;
-  writer: RunBoardResultWriter;
+  /**
+   * The writer for the results of the board run.
+   */
+  writer: RemoteMessageWriter;
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
+  diagnostics?: boolean;
 };
 
 export type RunBoardStateStore = {
@@ -90,22 +109,3 @@ export type RunBoardStateStore = {
   ): Promise<ReanimationState | undefined>;
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
-
-export type RunBoardResultWriter = WritableStreamDefaultWriter<RunBoardResult>;
-
-export type RunBoardResultError = ["error", error: string];
-
-export type RunBoardResultOutput = ["output", outputs: OutputValues];
-
-export type RunBoardResultInput = [
-  "input",
-  data: {
-    schema: NodeValue;
-    next: string;
-  },
-];
-
-export type RunBoardResult =
-  | RunBoardResultError
-  | RunBoardResultOutput
-  | RunBoardResultInput;
