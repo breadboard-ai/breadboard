@@ -5,6 +5,7 @@
  */
 
 import { LocalRunner } from "./local-runner.js";
+import { RemoteRunner } from "./remote-runner.js";
 import { HarnessRunner, RunConfig } from "./types.js";
 
 export type * from "./types.js";
@@ -19,5 +20,8 @@ export { createWorker } from "./worker.js";
 export { createSecretAskingKit } from "./secrets.js";
 
 export const createRunner = (config: RunConfig): HarnessRunner => {
+  if (config.remote) {
+    return new RemoteRunner(config);
+  }
   return new LocalRunner(config);
 };
