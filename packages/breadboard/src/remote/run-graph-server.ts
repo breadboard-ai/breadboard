@@ -10,7 +10,7 @@ import { OutputValues } from "../types.js";
 import { timestamp } from "../timestamp.js";
 import { createRunStateManager } from "../run/index.js";
 import { inflateData } from "../data/inflate-deflate.js";
-import { formatRunError } from "../harness/error.js";
+import { DiagnosticsFilter } from "./diagnostics-filter.js";
 
 export const handleRunGraphRequest = async (
   request: ServerRunRequest,
@@ -46,27 +46,29 @@ export const handleRunGraphRequest = async (
     state,
   });
 
+  const filter = new DiagnosticsFilter(writer, diagnostics);
+
   for await (const result of runner) {
     const { type, data, reply } = result;
     switch (type) {
       case "graphstart": {
-        await writer.write(["graphstart", data]);
+        await filter.writeGraphStart(data);
         break;
       }
       case "graphend": {
-        await writer.write(["graphend", data]);
+        await filter.writeGraphEnd(data);
         break;
       }
       case "nodestart": {
-        await writer.write(["nodestart", data]);
+        await filter.writeNodeStart(data);
         break;
       }
       case "nodeend": {
-        await writer.write(["nodeend", data]);
+        await filter.writeNodeEnd(data);
         break;
       }
       case "skip": {
-        await writer.write(["skip", data]);
+        await filter.writeSkip(data);
         break;
       }
       case "input": {
@@ -77,7 +79,7 @@ export const handleRunGraphRequest = async (
         } else {
           const reanimationState = state.lifecycle().reanimationState();
           const next = await stateStore.save(reanimationState);
-          await writer.write(["input", data, next]);
+          await filter.writeInput(data, next);
           await writer.close();
           return;
         }
@@ -87,21 +89,16 @@ export const handleRunGraphRequest = async (
           dataStore,
           data.outputs
         )) as OutputValues;
-        await writer.write(["output", { ...data, outputs }]);
+        await filter.writeOutput({ ...data, outputs });
         break;
       }
       case "error": {
-        await writer.write([
-          "error",
-          { error: formatRunError(data.error), timestamp: timestamp() },
-        ]);
+        await filter.writeError(data);
         await writer.close();
         return;
       }
       case "end": {
-        if (diagnostics) {
-          await writer.write(["end", data]);
-        }
+        await filter.writeEnd(data);
         await writer.close();
         return;
       }
