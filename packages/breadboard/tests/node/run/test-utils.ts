@@ -34,6 +34,7 @@ export const logEvents = (runner: HarnessRunner, events: EventLogEntry[]) => {
     "secret",
     "error",
     "skip",
+    "edge",
     "graphstart",
     "graphend",
     "nodestart",

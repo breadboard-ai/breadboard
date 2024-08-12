@@ -31,6 +31,7 @@ import {
   PauseEvent,
   ResumeEvent,
   StartEvent,
+  EdgeEvent,
 } from "./events.js";
 import { timestamp } from "../timestamp.js";
 import { chunkRepairTransform } from "../remote/chunk-repair.js";
@@ -282,6 +283,10 @@ export class RemoteRunner
       }
       case "skip": {
         this.dispatchEvent(new SkipEvent(data));
+        break;
+      }
+      case "edge": {
+        this.dispatchEvent(new EdgeEvent(data));
         break;
       }
       case "graphstart": {

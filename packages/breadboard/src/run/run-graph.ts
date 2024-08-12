@@ -128,6 +128,7 @@ export async function* runGraph(
           type: "edge",
           data: {
             edge: result.current,
+            timestamp: timestamp(),
           },
         });
       }

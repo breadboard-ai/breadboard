@@ -10,6 +10,7 @@ import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
 import {
+  EdgeProbeMessage,
   ErrorResponse,
   GraphDescriptor,
   GraphEndProbeMessage,
@@ -163,13 +164,15 @@ export type NodeEndRemoteMessage = AsRemoteMessage<NodeEndProbeMessage>;
 export type GraphStartRemoteMessage = AsRemoteMessage<GraphStartProbeMessage>;
 export type GraphEndRemoteMessage = AsRemoteMessage<GraphEndProbeMessage>;
 export type SkipRemoteMessage = AsRemoteMessage<SkipProbeMessage>;
+export type EdgeRemoteMessage = AsRemoteMessage<EdgeProbeMessage>;
 
 export type DiagnosticsRemoteMessage =
   | NodeStartRemoteMessage
   | NodeEndRemoteMessage
   | GraphStartRemoteMessage
   | GraphEndRemoteMessage
-  | SkipRemoteMessage;
+  | SkipRemoteMessage
+  | EdgeRemoteMessage;
 
 export type RemoteMessage =
   | OutputRemoteMessage

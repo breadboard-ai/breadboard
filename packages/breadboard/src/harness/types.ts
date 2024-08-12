@@ -33,6 +33,7 @@ import type {
   NodeEndResponse,
   NodeStartResponse,
   Schema,
+  EdgeResponse,
 } from "../types.js";
 import {
   TypedEventTargetType,
@@ -261,6 +262,11 @@ export type RunEndEvent = Event & {
 
 export type RunSkipEvent = Event & {
   data: SkipProbeMessage["data"];
+  running: true;
+};
+
+export type RunEdgeEvent = Event & {
+  data: EdgeResponse;
   running: true;
 };
 

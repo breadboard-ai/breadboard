@@ -7,6 +7,7 @@
 import { formatRunError } from "../harness/error.js";
 import { timestamp } from "../timestamp.js";
 import {
+  EdgeResponse,
   ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
@@ -46,6 +47,10 @@ export class DiagnosticsFilter {
   async writeSkip(_data: SkipProbeMessage["data"]) {
     // Do not write skip messages to the server.
     // await this.#writer.write(["skip", data]);
+  }
+
+  async writeEdge(data: EdgeResponse) {
+    await this.#writer.write(["edge", data]);
   }
 
   async writeInput(data: InputResponse, next: string) {

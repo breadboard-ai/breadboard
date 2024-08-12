@@ -507,9 +507,7 @@ export type NodeEndProbeMessage = {
 
 export type EdgeProbeMessage = {
   type: "edge";
-  data: {
-    edge: Edge;
-  };
+  data: EdgeResponse;
 };
 
 export type ProbeMessage =
@@ -562,6 +560,11 @@ export type NodeEndResponse = {
   outputs: OutputValues;
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
+  timestamp: number;
+};
+
+export type EdgeResponse = {
+  edge: Edge;
   timestamp: number;
 };
 
