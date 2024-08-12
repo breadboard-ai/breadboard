@@ -8,6 +8,7 @@ import { Schema, InputValues, GraphDescriptor } from "../types.js";
 import type {
   HarnessRunner,
   HarnessRunResult,
+  RunDiagnosticsLevel,
   RunEventTarget,
   SecretResult,
 } from "./types.js";
@@ -69,7 +70,7 @@ export class HttpClient {
    * The API key for the remote service.
    */
   #key: string;
-  #diagnostics: boolean;
+  #diagnostics: RunDiagnosticsLevel;
   #fetch: FetchType | undefined;
   #writer: MessageConsumer;
   #fetching = false;
@@ -78,7 +79,7 @@ export class HttpClient {
   constructor(
     url: string,
     key: string,
-    diagnostics: boolean,
+    diagnostics: RunDiagnosticsLevel,
     writer: MessageConsumer,
     fetch?: FetchType
   ) {

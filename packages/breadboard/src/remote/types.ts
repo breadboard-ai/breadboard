@@ -5,7 +5,7 @@
  */
 
 import { DataStore, StateStore } from "../data/types.js";
-import { RunConfig } from "../harness/types.js";
+import { RunConfig, RunDiagnosticsLevel } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
@@ -235,7 +235,7 @@ export type ClientRunResult<T> = T & ReplyFunction;
 export type ServerRunRequest = {
   inputs?: InputValues;
   next?: string;
-  diagnostics?: boolean;
+  diagnostics?: RunDiagnosticsLevel;
 };
 
 export type ServerRunConfig = {
@@ -247,7 +247,7 @@ export type ServerRunConfig = {
   dataStore: DataStore;
   stateStore: StateStore;
   inputs?: InputValues;
-  diagnostics?: boolean;
+  diagnostics?: RunDiagnosticsLevel;
 };
 
 export type RemoteRunConfig = Omit<RunConfig, "kits">;

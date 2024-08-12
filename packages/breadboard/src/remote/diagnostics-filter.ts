@@ -5,8 +5,9 @@
  */
 
 import { formatRunError } from "../harness/error.js";
+import type { RunDiagnosticsLevel } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
-import {
+import type {
   EdgeResponse,
   ErrorResponse,
   GraphEndProbeData,
@@ -21,9 +22,9 @@ import { End, RemoteMessageWriter } from "./types.js";
 
 export class DiagnosticsFilter {
   #writer: RemoteMessageWriter;
-  #diagnostics: boolean;
+  #diagnostics: RunDiagnosticsLevel;
 
-  constructor(writer: RemoteMessageWriter, diagnostics: boolean) {
+  constructor(writer: RemoteMessageWriter, diagnostics: RunDiagnosticsLevel) {
     this.#writer = writer;
     this.#diagnostics = diagnostics;
   }

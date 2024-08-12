@@ -19,6 +19,7 @@ import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "js
 import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
+import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -143,7 +144,7 @@ const runStateStore = {
 const scriptedRun = async (
   board: GraphDescriptor,
   script: RunScriptEntry[],
-  diagnostics = false
+  diagnostics: RunDiagnosticsLevel = false
 ) => {
   let next;
   const path = "/path/to/board";
