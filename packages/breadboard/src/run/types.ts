@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, OutputValues, TraversalResult } from "../types.js";
+import type {
+  Edge,
+  NodeIdentifier,
+  OutputValues,
+  TraversalResult,
+} from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -73,6 +78,7 @@ export type ManagedRunStateLifecycle = {
   ): Promise<void>;
   state(): RunState;
   reanimationState(): ReanimationState;
+  pathFor(node: NodeIdentifier): number[] | undefined;
 };
 
 /**

@@ -6,7 +6,12 @@
 
 import { loadRunnerState, saveRunnerState } from "../serialization.js";
 import { MachineResult } from "../traversal/result.js";
-import type { Edge, OutputValues, TraversalResult } from "../types.js";
+import type {
+  Edge,
+  NodeIdentifier,
+  OutputValues,
+  TraversalResult,
+} from "../types.js";
 import { Registry } from "./registry.js";
 import type {
   LifecyclePathRegistryEntry,
@@ -15,6 +20,7 @@ import type {
   RunStackEntry,
   RunState,
 } from "./types.js";
+import { VisitTracker } from "./visit-tracker.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
@@ -49,10 +55,12 @@ function toReanimationState(
 export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #registry: Registry<RunStackEntry>;
+  #visits: VisitTracker;
 
   constructor(stack: RunState) {
     this.#stack = stack;
     this.#registry = new Registry<RunStackEntry>();
+    this.#visits = new VisitTracker();
   }
 
   async supplyPartialOutputs(
@@ -91,6 +99,7 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     result: TraversalResult,
     invocationPath: number[]
   ): Promise<void> {
+    this.#visits.visit(result.descriptor.id, invocationPath);
     if (this.#stack.length === 0) {
       return;
     }
@@ -113,6 +122,10 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
 
   dispatchGraphEnd(): void {
     // TODO: implement
+  }
+
+  pathFor(node: NodeIdentifier): number[] | undefined {
+    return this.#visits.pathFor(node);
   }
 
   state(): RunState {
