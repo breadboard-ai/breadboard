@@ -194,6 +194,7 @@ export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  current: Edge;
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;

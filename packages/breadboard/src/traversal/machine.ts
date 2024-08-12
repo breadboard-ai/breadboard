@@ -43,6 +43,7 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
       { id: "$empty", type: "$empty" },
       {},
       [],
+      { from: "$entry", to: entries[0] },
       opportunities,
       [],
       new MachineEdgeState()
