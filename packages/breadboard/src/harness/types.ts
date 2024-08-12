@@ -233,6 +233,7 @@ export type RunEventMap = {
   secret: RunSecretEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
+  edge: RunEdgeEvent;
   graphstart: RunGraphStartEvent;
   graphend: RunGraphEndEvent;
   nodestart: RunNodeStartEvent;
