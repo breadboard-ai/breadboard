@@ -308,7 +308,6 @@ describe("Board Server Runs Boards", () => {
             { type: "nodeend", path: [2, 1] },
             { type: "nodestart", path: [2, 2] },
             { type: "nodeend", path: [2, 2] },
-            { type: "skip", path: [2, 3] },
             { type: "nodestart", path: [2, 4] },
             { type: "nodeend", path: [2, 4] },
             { type: "graphend", path: [2] },

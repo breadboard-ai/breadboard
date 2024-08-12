@@ -4,17 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { InspectableRunObserver } from "../inspector/types.js";
-import { Schema, InputValues } from "../types.js";
+import { Schema, InputValues, GraphDescriptor } from "../types.js";
 import type {
   HarnessRunner,
   HarnessRunResult,
   RunEventTarget,
   SecretResult,
 } from "./types.js";
-import {
-  chunkRepairTransform,
-  serverStreamEventDecoder,
-} from "../remote/http.js";
+import { serverStreamEventDecoder } from "../remote/http.js";
 import type {
   AsRemoteMessage,
   InputRemoteMessage,
@@ -36,6 +33,7 @@ import {
   StartEvent,
 } from "./events.js";
 import { timestamp } from "../timestamp.js";
+import { chunkRepairTransform } from "../remote/chunk-repair.js";
 
 export type SecretRemoteMessage = AsRemoteMessage<SecretResult>;
 
@@ -52,13 +50,17 @@ export const remoteMessageTransform = () => {
         const message = JSON.parse(chunk) as HarnessRemoteMessage;
         controller.enqueue(message);
       } catch (e) {
-        throw new Error("Chunk parsing error.");
+        throw new Error(
+          `Error transforming remote message: ${e}, message: ${chunk}`
+        );
       }
     },
   });
 };
 
 export const now = () => ({ timestamp: timestamp() });
+
+export const emptyGraph = () => ({}) as GraphDescriptor;
 
 export class HttpClient {
   #url: string;
@@ -67,7 +69,7 @@ export class HttpClient {
    */
   #key: string;
   #diagnostics: boolean;
-  #fetch: FetchType;
+  #fetch: FetchType | undefined;
   #writer: MessageConsumer;
   #fetching = false;
   #lastMessage: InputRemoteMessage | null = null;
@@ -77,13 +79,34 @@ export class HttpClient {
     key: string,
     diagnostics: boolean,
     writer: MessageConsumer,
-    fetch: FetchType = globalThis.fetch
+    fetch?: FetchType
   ) {
     this.#url = url;
-    this.#key = key;
     this.#diagnostics = diagnostics;
     this.#writer = writer;
     this.#fetch = fetch;
+    this.#key = key;
+  }
+
+  async #sendError(message: string) {
+    await this.#writer([
+      "graphstart",
+      {
+        path: [],
+        timestamp: timestamp(),
+        graph: emptyGraph(),
+      },
+    ]);
+
+    await this.#writer(["error", { error: message, timestamp: timestamp() }]);
+
+    await this.#writer([
+      "graphend",
+      {
+        path: [],
+        timestamp: timestamp(),
+      },
+    ]);
   }
 
   #createBody(inputs: InputValues): string {
@@ -116,14 +139,14 @@ export class HttpClient {
       throw new Error("Fetch is already in progress.");
     }
     this.#fetching = true;
-    const response = await this.#fetch(this.#url, {
+    const response = await (this.#fetch ? this.#fetch : fetch)(this.#url, {
       method: "POST",
       body: this.#createBody(inputs),
     });
     this.#lastMessage = null;
 
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      await this.#sendError(`HTTP error: ${response.status}`);
     }
 
     await response.body
@@ -134,6 +157,11 @@ export class HttpClient {
       .pipeTo(
         new WritableStream({
           write: async (message) => {
+            console.log(
+              "%cServer-Sent Event",
+              "background: #009; color: #FFF",
+              message
+            );
             const [type] = message;
             if (type === "input") {
               this.#lastMessage = message;
@@ -214,13 +242,9 @@ export class RemoteRunner
     if (!url) {
       throw new Error("Remote URL isn't specified.");
     }
-    const key = remote.key;
-    if (!key) {
-      throw new Error("Remote API Key isn't specified.");
-    }
     this.#client = new HttpClient(
       url,
-      key,
+      remote.key!,
       this.#config.diagnostics || false,
       async (message) => {
         await this.#processMessage(message);

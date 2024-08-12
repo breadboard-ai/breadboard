@@ -169,7 +169,6 @@ describe("RemoteRunner", async () => {
         "nodeend",
         "nodestart",
         "nodeend",
-        "skip",
         "nodestart",
         "nodeend",
         "graphend",

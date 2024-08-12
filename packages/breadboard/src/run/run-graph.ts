@@ -73,6 +73,8 @@ export async function* runGraph(
             outputs = await nodeInvoker.invokeNode(result, invocationPath);
             result.outputs = outputs;
             resumeFrom = result;
+          } else {
+            outputs = result.outputs;
           }
 
           lifecycle?.dispatchNodeEnd(outputs, invocationPath);

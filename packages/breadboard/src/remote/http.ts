@@ -144,6 +144,11 @@ export type HTTPClientTransportOptions = RequestInit & {
 };
 
 /**
+ * This is an older version of the chunk repair transform that
+ * eventually needs to be deleted.
+ *
+ * It is not used by the modern remote runner machinery.
+ *
  * When processing HTTP responses, the server may send chunks that are
  * broken in two ways:
  * - Multiple chunks might be merged together
@@ -154,7 +159,7 @@ export type HTTPClientTransportOptions = RequestInit & {
  *
  * @returns The transform stream that repaired chunks.
  */
-export const chunkRepairTransform = () => {
+const chunkRepairTransform = () => {
   let queue: string[] = [];
   return new TransformStream<string, string>({
     transform(chunk, controller) {

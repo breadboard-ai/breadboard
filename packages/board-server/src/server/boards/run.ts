@@ -8,29 +8,53 @@ import type { ApiHandler, BoardParseResult } from "../types.js";
 import { loadFromStore } from "./utils/board-server-provider.js";
 import { verifyKey } from "./utils/verify-key.js";
 import { secretsKit } from "../proxy/secrets.js";
-import { runBoard } from "./utils/run-board.js";
+import { runBoard, timestamp } from "./utils/run-board.js";
 import { getStore } from "../store.js";
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
-  const { $next: next, ...inputs } = body as Record<string, any>;
-  const keyVerificationResult = await verifyKey(inputs);
-  if (!keyVerificationResult.success) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ $error: keyVerificationResult.error }));
-    return true;
-  }
+  const {
+    $next: next,
+    $diagnostics: diagnostics,
+    ...inputs
+  } = body as Record<string, any>;
   const writer = new WritableStream<RemoteMessage>({
     write(chunk) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     },
   }).getWriter();
+  res.setHeader("Content-Type", "text/event-stream");
+  res.statusCode = 200;
+
+  const keyVerificationResult = await verifyKey(inputs);
+  if (!keyVerificationResult.success) {
+    await writer.write([
+      "graphstart",
+      {
+        path: [],
+        timestamp: timestamp(),
+        graph: { nodes: [], edges: [] },
+      },
+    ]);
+    await writer.write([
+      "error",
+      { error: "Invalid or missing key", timestamp: timestamp() },
+    ]);
+    await writer.write([
+      "graphend",
+      {
+        path: [],
+        timestamp: timestamp(),
+      },
+    ]);
+    await writer.close();
+    res.end();
+    return true;
+  }
 
   const runStateStore = getStore();
 
-  res.setHeader("Content-Type", "text/event-stream");
-  res.statusCode = 200;
   await runBoard({
     url,
     path: board,
@@ -41,8 +65,9 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     writer,
     next,
     runStateStore,
+    diagnostics,
   });
-  writer.close();
+  // await writer.close();
   res.end();
   return true;
 };
