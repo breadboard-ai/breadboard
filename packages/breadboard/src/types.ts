@@ -505,10 +505,18 @@ export type NodeEndProbeMessage = {
   data: NodeEndResponse;
 };
 
+export type EdgeProbeMessage = {
+  type: "edge";
+  data: {
+    edge: Edge;
+  };
+};
+
 export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
   | SkipProbeMessage
+  | EdgeProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
 

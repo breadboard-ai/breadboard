@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OutputValues, TraversalResult } from "../types.js";
+import type { Edge, OutputValues, TraversalResult } from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -66,6 +66,7 @@ export type ManagedRunStateLifecycle = {
   ): void;
   dispatchGraphEnd(): void;
   dispatchSkip(): void;
+  dispatchEdge(edge: Edge): void;
   supplyPartialOutputs(
     outputs: OutputValues,
     invocationPath: number[]

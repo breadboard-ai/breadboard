@@ -6,7 +6,7 @@
 
 import { loadRunnerState, saveRunnerState } from "../serialization.js";
 import { MachineResult } from "../traversal/result.js";
-import type { OutputValues, TraversalResult } from "../types.js";
+import type { Edge, OutputValues, TraversalResult } from "../types.js";
 import { Registry } from "./registry.js";
 import type {
   LifecyclePathRegistryEntry,
@@ -80,7 +80,11 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   }
 
   dispatchSkip(): void {
-    // TODO: implement
+    // Do nothing for now.
+  }
+
+  dispatchEdge(_edge: Edge): void {
+    // Do nothing for now.
   }
 
   async dispatchNodeStart(

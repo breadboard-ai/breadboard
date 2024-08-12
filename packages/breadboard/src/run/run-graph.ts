@@ -122,6 +122,14 @@ export async function* runGraph(
           },
         });
         continue;
+      } else {
+        lifecycle?.dispatchEdge(result.current);
+        await probe?.report?.({
+          type: "edge",
+          data: {
+            edge: result.current,
+          },
+        });
       }
 
       await lifecycle?.dispatchNodeStart(result, path());
