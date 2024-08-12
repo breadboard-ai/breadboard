@@ -20,6 +20,7 @@ import type {
 } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { NodeInvoker } from "./node-invoker.js";
+import { VisitTracker } from "./visit-tracker.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -93,6 +94,8 @@ export async function* runGraph(
       }
     }
 
+    const visits = new VisitTracker();
+
     const path = () => [...invocationPath, invocationId];
 
     const machine = new TraversalMachine(graph, resumeFrom, start);
@@ -128,10 +131,14 @@ export async function* runGraph(
           type: "edge",
           data: {
             edge: result.current,
+            to: path(),
+            from: visits.pathFor(result.current.from),
             timestamp: timestamp(),
           },
         });
       }
+
+      visits.visit(descriptor.id, path());
 
       await lifecycle?.dispatchNodeStart(result, path());
 

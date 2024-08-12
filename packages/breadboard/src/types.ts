@@ -565,6 +565,14 @@ export type NodeEndResponse = {
 
 export type EdgeResponse = {
   edge: Edge;
+  /**
+   * The path of the outgoing node.
+   */
+  from?: number[];
+  /**
+   * The path of the incoming node.
+   */
+  to: number[];
   timestamp: number;
 };
 

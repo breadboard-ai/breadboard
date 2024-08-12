@@ -59,6 +59,25 @@ const assertResults = (
         );
         break;
       }
+      case "edge": {
+        const [, data] = result;
+        const { from, to } = data;
+        if (expected.from) {
+          deepStrictEqual(
+            from,
+            expected.from,
+            `Expected from "${JSON.stringify(from)}" to match "${JSON.stringify(expected.from)}" at index ${index}`
+          );
+        }
+        if (expected.to) {
+          deepStrictEqual(
+            to,
+            expected.to,
+            `Expected to "${JSON.stringify(to)}" to match "${JSON.stringify(expected.to)}" at index ${index}`
+          );
+        }
+        break;
+      }
       case "graphstart":
       case "graphend":
       case "nodestart":
@@ -99,6 +118,8 @@ type ExpectedResult = {
   type: string;
   outputs?: OutputValues;
   path?: number[];
+  from?: number[];
+  to?: number[];
 };
 
 type RunScriptEntry = {
@@ -146,7 +167,7 @@ const scriptedRun = async (
   }
 };
 
-describe("Board Server Runs Boards", () => {
+describe.only("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
     const results: RemoteMessage[] = [];
@@ -281,14 +302,14 @@ describe("Board Server Runs Boards", () => {
     ]);
   });
 
-  test("can finish a board with bubbling inputs with diagnostics", async () => {
+  test.only("can finish a board with bubbling inputs with diagnostics", async () => {
     await scriptedRun(
       invokeWithBubblingInput as GraphDescriptor,
       [
         {
           expected: [
             { type: "graphstart", path: [] },
-            { type: "edge" },
+            { type: "edge", from: undefined, to: [1] },
             { type: "nodestart", path: [1] },
             { type: "input" },
           ],
@@ -297,10 +318,10 @@ describe("Board Server Runs Boards", () => {
           inputs: { name: "Bob" },
           expected: [
             { type: "nodeend", path: [1] },
-            { type: "edge" },
+            { type: "edge", from: undefined, to: [2] },
             { type: "nodestart", path: [2] },
             { type: "graphstart", path: [2] },
-            { type: "edge" },
+            { type: "edge", from: undefined, to: [2, 1] },
             { type: "nodestart", path: [2, 1] },
             { type: "input" },
           ],
@@ -309,18 +330,18 @@ describe("Board Server Runs Boards", () => {
           inputs: { location: "New York" },
           expected: [
             { type: "nodeend", path: [2, 1] },
-            { type: "edge" },
+            { type: "edge", from: undefined, to: [2, 2] },
             { type: "nodestart", path: [2, 2] },
             { type: "nodeend", path: [2, 2] },
-            { type: "edge" },
+            { type: "edge", from: [2, 2], to: [2, 4] },
             { type: "nodestart", path: [2, 4] },
             { type: "nodeend", path: [2, 4] },
             { type: "graphend", path: [2] },
             { type: "nodeend", path: [2] },
-            { type: "edge" },
+            { type: "edge", from: undefined, to: [3] },
             { type: "nodestart", path: [3] },
             { type: "nodeend", path: [3] },
-            { type: "edge" },
+            { type: "edge", from: [3], to: [4] },
             { type: "nodestart", path: [4] },
             {
               type: "output",
