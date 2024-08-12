@@ -157,6 +157,11 @@ export class HttpClient {
       .pipeTo(
         new WritableStream({
           write: async (message) => {
+            console.log(
+              "%cServer-Sent Event",
+              "background: #009; color: #FFF",
+              message
+            );
             const [type] = message;
             if (type === "input") {
               this.#lastMessage = message;
