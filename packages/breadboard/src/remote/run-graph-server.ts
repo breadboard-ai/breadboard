@@ -110,7 +110,7 @@ export const handleRunGraphRequest = async (
       }
     }
   }
-  writer.write([
+  await writer.write([
     "error",
     {
       error: "Run completed without signaling end or error.",

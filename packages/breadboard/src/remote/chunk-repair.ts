@@ -38,8 +38,6 @@ export const chunkRepairTransform = () => {
         controller.enqueue(`${chunk}\n\n`);
       };
 
-      console.log("🌻 transform:", chunk);
-
       const missingEndMarker = !chunk.endsWith("\n\n");
       const chunks = chunk.split("\n\n");
       if (!missingEndMarker) {
@@ -49,11 +47,9 @@ export const chunkRepairTransform = () => {
         const last = i === chunks.length - 1;
         // Is this particular chunk broken?
         const isBroken = last && missingEndMarker;
-        console.log("🌻 chunk iteration:", i, chunk, isBroken);
         if (isBroken) {
           if (brokenChunk !== null) {
             // Variant 3: x | x
-            console.log("🌻 variant 3", brokenChunk, chunk);
             const completeChunks = getCompleteChunks(brokenChunk, chunk);
             brokenChunk = completeChunks.pop() ?? null;
             for (const completeChunk of completeChunks) {
@@ -61,13 +57,11 @@ export const chunkRepairTransform = () => {
             }
           } else {
             // Variant 2: o | x
-            console.log("🌻 variant 2", brokenChunk, chunk);
             brokenChunk = chunk;
           }
         } else {
           if (brokenChunk !== null) {
             // Variant 1: x | o
-            console.log("🌻 variant 1", brokenChunk, chunk);
             const completeChunks = getCompleteChunks(brokenChunk, chunk);
             for (const completeChunk of completeChunks) {
               enqueue(completeChunk);
@@ -75,7 +69,6 @@ export const chunkRepairTransform = () => {
             brokenChunk = null;
           } else {
             // Variant 0: o | o
-            console.log("🌻 variant 0", brokenChunk, chunk);
             enqueue(chunk);
           }
         }

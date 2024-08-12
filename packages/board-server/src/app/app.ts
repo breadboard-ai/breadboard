@@ -58,6 +58,17 @@ const randomMessage: UserMessage[] = [
   },
 ];
 
+const getRemoteURL = () => {
+  const url = new URL(window.location.href);
+  url.pathname = url.pathname.replace(/app$/, "api/run");
+  return url.href;
+};
+
+const getApiKey = () => {
+  const url = new URL(window.location.href);
+  return url.searchParams.get("key") || undefined;
+};
+
 @customElement("bb-app-view")
 export class AppView extends LitElement {
   @property({ reflect: true })
@@ -405,6 +416,8 @@ export class AppView extends LitElement {
 
     this.#abortController = new AbortController();
 
+    const key = getApiKey();
+
     const config: RunConfig = {
       url: this.url,
       kits,
@@ -417,6 +430,14 @@ export class AppView extends LitElement {
         model: "gemini-1.5-flash-latest",
       },
     };
+
+    if (key) {
+      config.remote = {
+        url: getRemoteURL(),
+        type: "http",
+        key: getApiKey(),
+      };
+    }
 
     if (!this.#runObserver) {
       this.#runObserver = createRunObserver({ kits, logLevel: "debug" });

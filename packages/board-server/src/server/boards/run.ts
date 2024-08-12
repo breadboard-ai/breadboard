@@ -14,7 +14,11 @@ import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
   const { board, url } = parsed as BoardParseResult;
-  const { $next: next, ...inputs } = body as Record<string, any>;
+  const {
+    $next: next,
+    $diagnostics: diagnostics,
+    ...inputs
+  } = body as Record<string, any>;
   const writer = new WritableStream<RemoteMessage>({
     write(chunk) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
@@ -61,8 +65,9 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     writer,
     next,
     runStateStore,
+    diagnostics,
   });
-  writer.close();
+  // await writer.close();
   res.end();
   return true;
 };
