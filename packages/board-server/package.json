@@ -97,7 +97,8 @@
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../node-nursery-web:build:tsc"
+        "../node-nursery-web:build:tsc",
+        "../shared-ui:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

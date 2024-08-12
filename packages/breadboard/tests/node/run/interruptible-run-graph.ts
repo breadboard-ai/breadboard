@@ -46,7 +46,7 @@ describe("interruptibleRunGraph end-to-end", async () => {
       {
         expected: {
           type: "output",
-          outputs: [{ one: "foo" }, { two: "foo " }],
+          outputs: [{ one: "foo" }, { two: "foo" }],
         },
       },
     ]);

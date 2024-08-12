@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { brand, isBranded } from "../common/brand.js";
 import { type OutputPortReference } from "../common/port.js";
 import type { JsonSerializable } from "../type-system/type.js";
 import type { Input, InputWithDefault } from "./input.js";
@@ -29,6 +30,7 @@ export function constant<
     | InputWithDefault<JsonSerializable>,
 >(output: T): T {
   return {
+    [brand]: "Constant",
     ...output,
     [ConstantVersionOf]: output,
   };
@@ -37,6 +39,7 @@ export function constant<
 export const ConstantVersionOf = Symbol();
 
 interface Constant {
+  readonly [brand]: "Constant";
   [ConstantVersionOf]:
     | OutputPortReference<JsonSerializable>
     | Input<JsonSerializable>
@@ -44,9 +47,5 @@ interface Constant {
 }
 
 export function isConstant(value: unknown): value is Constant {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as Partial<Constant>)[ConstantVersionOf] !== undefined
-  );
+  return isBranded(value, "Constant");
 }

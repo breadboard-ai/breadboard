@@ -17,30 +17,49 @@ import {
   isTextCapabilityPart,
   LLMContent,
 } from "@google-labs/breadboard";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
   @property()
   value: LLMContent | null = null;
 
+  @property({ reflect: true })
+  clamped = true;
+
+  @property({ reflect: true })
+  lite = true;
+
   #partDataURLs = new Map<number, string>();
 
   static styles = css`
     :host {
       display: block;
-      resize: vertical;
-      overflow: auto;
-      height: 200px;
-      min-height: var(--bb-grid-size-6);
       border: 2px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0;
       margin-bottom: var(--bb-grid-size-2);
     }
 
+    :host([clamped="true"]) {
+      resize: vertical;
+      overflow: auto;
+      height: 200px;
+      min-height: var(--bb-grid-size-6);
+    }
+
+    :host([lite="true"]) {
+      border: 1px solid var(--bb-ui-100);
+      background: var(--bb-ui-50);
+    }
+
     .content {
       display: block;
       margin-bottom: var(--bb-grid-size-2);
+    }
+
+    .content:last-of-type {
+      margin-bottom: 0;
     }
 
     .value {
@@ -56,7 +75,7 @@ export class LLMOutput extends LitElement {
       padding: 0 var(--bb-grid-size-3);
 
       white-space: normal;
-      border-radius: none;
+      border-radius: initial;
       user-select: text;
     }
 
@@ -81,9 +100,7 @@ export class LLMOutput extends LitElement {
     }
 
     .value.markdown {
-      white-space: normal;
       line-height: 1.5;
-      user-select: text;
     }
 
     .value * {
@@ -92,24 +109,24 @@ export class LLMOutput extends LitElement {
 
     .value h1 {
       font-size: var(--bb-title-large);
-      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
     }
 
     .value h2 {
       font-size: var(--bb-title-medium);
-      margin: calc(var(--bb-grid-size) * 4) 0 calc(var(--bb-grid-size) * 1) 0;
+      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
     }
 
     .value h3,
     .value h4,
     .value h5 {
       font-size: var(--bb-title-small);
-      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+      margin: 0 0 var(--bb-grid-size-3) 0;
     }
 
     .value p {
       font-size: var(--bb-body-medium);
-      margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
+      margin: 0 0 var(--bb-grid-size-3) 0;
       white-space: pre-line;
     }
 
@@ -123,6 +140,15 @@ export class LLMOutput extends LitElement {
 
     .value p:last-of-type {
       margin-bottom: 0;
+    }
+
+    .value.no-data {
+      font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family-mono);
+    }
+
+    :host([lite="true"]) .value {
+      margin: 0;
     }
   `;
 
@@ -218,9 +244,15 @@ export class LLMOutput extends LitElement {
             value = html`Unrecognized part`;
           }
           return html`<div class="content">
-            <span class="value">${value}</span>
+            <span
+              class=${classMap({
+                value: true,
+                markdown: isTextCapabilityPart(part),
+              })}
+              >${value}</span
+            >
           </div>`;
         })}`
-      : html`No data set`;
+      : html`<span class="value no-data">No data set</span>`;
   }
 }

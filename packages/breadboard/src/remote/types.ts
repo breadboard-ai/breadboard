@@ -4,14 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DataStore, StateStore } from "../data/types.js";
+import { RunConfig } from "../harness/types.js";
+import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
+  GraphDescriptor,
   GraphEndProbeMessage,
   GraphStartProbeMessage,
   InputResponse,
   InputValues,
+  Kit,
   NodeDescriptor,
   NodeEndProbeMessage,
   NodeStartProbeMessage,
@@ -65,7 +70,11 @@ export type LoadResponse = {
 
 type GenericResult = { type: string; data: unknown };
 
-type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
+export type AsRemoteMessage<T extends GenericResult> = [
+  T["type"],
+  T["data"],
+  next?: string,
+];
 
 /**
  * A run request is an empty object.
@@ -73,8 +82,8 @@ type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
  */
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
-export type OutputResponseMessage = ["output", OutputResponse];
-export type InputResponseMessage = ["input", InputResponse, RunState];
+export type OutputRemoteMessage = ["output", OutputResponse];
+export type InputRemoteMessage = ["input", InputResponse, next?: string];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -83,7 +92,7 @@ export type InputResolveRequest = { inputs: InputValues };
 export type InputResolveRequestMessage = [
   "input",
   InputResolveRequest,
-  RunState,
+  next?: string,
 ];
 
 export type LastNode = {
@@ -99,10 +108,10 @@ export type End = {
   timestamp: number;
   last?: LastNode;
 };
-export type EndResponseMessage = ["end", End];
+export type EndRemoteMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 
-export type ErrorResponseMessage = ["error", ErrorResponse];
+export type ErrorRemoteMessage = ["error", ErrorResponse];
 
 /**
  * Sent by the client to request to proxy a node.
@@ -141,27 +150,36 @@ export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
 export type AnyProxyResponseMessage =
   | ProxyResponseMessage
-  | ErrorResponseMessage
+  | ErrorRemoteMessage
   | ProxyChunkResponseMessage
-  | EndResponseMessage;
+  | EndRemoteMessage;
 
 export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage;
 
-export type AnyProbeMessage =
-  | RemoteMessage<NodeStartProbeMessage>
-  | RemoteMessage<NodeEndProbeMessage>
-  | RemoteMessage<GraphStartProbeMessage>
-  | RemoteMessage<GraphEndProbeMessage>
-  | RemoteMessage<SkipProbeMessage>;
+export type NodeStartRemoteMessage = AsRemoteMessage<NodeStartProbeMessage>;
+export type NodeEndRemoteMessage = AsRemoteMessage<NodeEndProbeMessage>;
+export type GraphStartRemoteMessage = AsRemoteMessage<GraphStartProbeMessage>;
+export type GraphEndRemoteMessage = AsRemoteMessage<GraphEndProbeMessage>;
+export type SkipRemoteMessage = AsRemoteMessage<SkipProbeMessage>;
 
-export type AnyRunResponseMessage =
-  | OutputResponseMessage
-  | InputResponseMessage
-  | EndResponseMessage
-  | ErrorResponseMessage
-  | AnyProbeMessage;
+export type DiagnosticsRemoteMessage =
+  | NodeStartRemoteMessage
+  | NodeEndRemoteMessage
+  | GraphStartRemoteMessage
+  | GraphEndRemoteMessage
+  | SkipRemoteMessage;
+
+export type RemoteMessage =
+  | OutputRemoteMessage
+  | InputRemoteMessage
+  | EndRemoteMessage
+  | ErrorRemoteMessage
+  | DiagnosticsRemoteMessage;
+
+export type RemoteMessageWriter = WritableStreamDefaultWriter<RemoteMessage>;
+export type RemoteMessageWritableStream = WritableStream<RemoteMessage>;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;
@@ -183,7 +201,7 @@ export interface ClientTransport<Request, Response> {
 
 export type RunClientTransport = ClientTransport<
   AnyRunRequestMessage,
-  AnyRunResponseMessage
+  RemoteMessage
 >;
 
 type ReplyFunction = {
@@ -195,7 +213,7 @@ export type RunStateFunction = () => Promise<RunState>;
 type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   string,
   object,
-  RunState?,
+  string?,
 ]
   ? {
       type: ResponseMessage[0];
@@ -204,10 +222,35 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
     } & ReplyFunction
   : never;
 
-export type AnyClientRunResult =
-  ClientRunResultFromMessage<AnyRunResponseMessage>;
+export type AnyClientRunResult = ClientRunResultFromMessage<RemoteMessage>;
 
 export type AnyProbeClientRunResult =
-  ClientRunResultFromMessage<AnyProbeMessage>;
+  ClientRunResultFromMessage<DiagnosticsRemoteMessage>;
 
 export type ClientRunResult<T> = T & ReplyFunction;
+
+export type ServerRunRequest = {
+  inputs?: InputValues;
+  next?: string;
+  diagnostics?: boolean;
+};
+
+export type ServerRunConfig = {
+  graph?: GraphDescriptor;
+  url: string;
+  kits: Kit[];
+  writer: RemoteMessageWriter;
+  loader: GraphLoader;
+  dataStore: DataStore;
+  stateStore: StateStore;
+  inputs?: InputValues;
+  diagnostics?: boolean;
+};
+
+export type RemoteRunConfig = Omit<RunConfig, "kits">;
+
+export type RemoteRunRequestBody = {
+  $key: string;
+  $next?: string;
+  $diagnostics?: boolean;
+} & InputValues;

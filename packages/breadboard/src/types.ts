@@ -252,6 +252,10 @@ export type NodeDescriberContext = {
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
+  /**
+   * Kits that are available in the context of the node.
+   */
+  kits?: Kit[];
 };
 
 export type NodeDescriberWires = {

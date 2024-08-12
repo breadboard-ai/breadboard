@@ -16,7 +16,6 @@ console.debug("packageDir", packageDir);
 const dist = path.resolve(path.join(packageDir, "dist"));
 
 const cliPathJs = path.resolve(path.join(dist, "src", "index.js"));
-console.log("cliPath", path.resolve(cliPathJs));
 console.assert(fs.existsSync(cliPathJs));
 
 type ChildProcessCallback = {

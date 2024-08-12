@@ -254,7 +254,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.16.5",
+    "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
@@ -292,6 +292,6 @@
     "idb": "^8.0.0",
     "lit": "^3.2.0",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.2.6"
+    "pixi.js": "^8.3.2"
   }
 }

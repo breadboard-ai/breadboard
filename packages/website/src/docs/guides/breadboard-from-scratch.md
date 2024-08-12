@@ -2,6 +2,7 @@
 layout: docs.liquid
 title: Breadboard from scratch
 tags:
+  - guide
   - wip
 ---
 
@@ -29,43 +30,47 @@ local environment.
 
 ## Part 1: Google Cloud setup
 
-This guide will show you how to deploy Breadboard using Google Cloud. All three
-servers will be deployed using [App Engine](https://cloud.google.com/appengine).
-
-### Create a new Google Cloud project
-
 > [!NOTE]
 > These instructions assume that the reader has a normal consumer (gmail.com)
 > Google account. They will detail how to set up a new Google Cloud project. If
 > you are using an existing Cloud project, or are a Workspace user, some of these
-> steps may be different or may not apply.
+> steps may be different or may not apply. For Workspace users, some steps may
+> require administrator privileges.
 
-> [!NOTE]
-> For Workspace users, some steps may require administrator privileges.
+### Create a new Google Cloud project
 
-1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/) and
-   accept the Cloud terms of service if you haven't already.
-2. Click **Select a Project**, and click **NEW PROJECT**
-3. Give your project a name and complete the Cloud project setup
-
-### Configure the `gcloud` CLI
-
-Authenticate with the `gcloud` CLI.
+Log in to the gcloud CLI. Opens a browser on your local machine to complete the
+authentication flow.
 
 ```sh
 gcloud auth login
 ```
 
+Create a project ID for your new Google Cloud project (if you're not using an existing project).
+
 ```sh
-gcloud auth application-default login
+PROJECT_ID="YOUR-PROJECT-ID"
 ```
 
-This will open a browser on your local machine to complete the authentication flow.
+> [!TIP]
+> Google Cloud project IDs must be unique. You will get an error message when
+> creating a project if the ID you are trying to use is already in use by another
+> project.
 
-Set your project as the current project.
+Create a new Google Cloud project.
 
 ```sh
-gcloud config set project your-project-id
+gcloud projects create ${PROJECT_ID}
+```
+
+> [!TIP]
+> If you get the message "Callers must accept Terms of Service", visit the
+> [Google Cloud Console](https://console.cloud.google.com/) to accept the terms.
+
+Once the project is created, set it as the default project.
+
+```sh
+gcloud config set project ${PROJECT_ID}
 ```
 
 All future commands will now reference this project by default.
@@ -342,8 +347,206 @@ yourself and other users.
 
 ### Add an API connection
 
+The **Visual Editor** is a static frontend application. It has no built-in
+concept of identity or access control. Instead, it can be configured to use a
+**Connection Server** to provide it with access tokens that can be used to
+access remote APIs.
+
+In this section, we will walk through this process using the Google Drive API as
+an example.
+
+#### Connect the Visual Editor to the Connection Server
+
+The Visual Editor chooses a Connection Server based on a hard-coded origin map.
+To get your Visual Editor to connect to your Connection Server, you will need to
+edit this map.
+
+Open [`packages/visual-editor/src/index.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/src/index.ts)
+in a text editor.
+
+Update the value of **`ORIGIN_TO_CONNECTION_SERVER`** to contain the origins of
+your Visual Editor and Connection Server.
+
+```ts
+const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
+  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}",
+};
+```
+
+Open
+[`packages/shared-ui/src/elements/connection/connection-broker.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/shared-ui/src/elements/connection/connection-broker.ts)
+in a text editor.
+
+Update the value of **`ORIGIN_TO_GRANT_URL`**. This is the same as the change
+made above, but the target URL has a path of `/grant`.
+
+```ts
+const ORIGIN_TO_GRANT_URL: Record<string, string> = {
+  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}/grant",
+};
+```
+
+Re-deploy the Visual Editor.
+
+```sh
+cd packages-visual/editor
+```
+
+```sh
+npm run build
+```
+
+```sh
+gcloud app deploy
+```
+
+#### Add an API connection to the Connection Server
+
+Your Visual Editor is now configured to store boards on a Board Server, and to
+read connections from a Connection Server. However, our Connection Server is
+still not hosting any credentials. In this final step, we will add the ability
+for the Connection Server to serve access tokens for the [Google Drive
+API](https://developers.google.com/drive/api).
+
 > [!NOTE]
-> Coming soon
+> This guide will not provide an in-depth explanation of how OAuth and access
+> tokens work. For more information, see the
+> [README](https://github.com/breadboard-ai/breadboard/blob/main/packages/connection-server/README.md)
+> for Connection Server.
+
+##### Enable the Drive API
+
+```sh
+gcloud services enable drive.googleapis.com
+```
+
+##### Configure the OAuth consent screen
+
+The OAuth consent screen is the dialog that users see when they are asked to
+authorize your application to access Drive on their behalf. By consenting, the
+user grants your Cloud project permission to read their Drive files.
+
+1. Go to the [OAuth consent screen](https://console.cloud.google.com/apis/credentials/consent)
+   in the Google Cloud console
+2. Select the **External** user type
+
+   - If you are a Workspace user who only wants other members of your
+     organization to use your application, you may select the **Internal** user
+     type
+
+3. Provide **App name**, **User support email**, and **Developer contact
+   information**.
+
+   - Other fields may be skipped for now.
+
+4. For **Authorized Domains**, provide the domain of your Visual Editor instance
+
+   - The value of this field must match the domain of your Visual Editor, or your
+     users will not be able to complete the authorization flow.
+
+5. Click **Save and Continue**
+6. On the **Scopes** page, click **ADD OR REMOVE SCOPES** and add the
+   **`drive.file`** scope
+
+   - The full name of the scope is `https://www.googleapis.com/auth/drive.file`
+   - This permission allows your application to create new files, to access
+     created files, and to access files that the user explicitly selects in the
+     Drive picker dialog.
+   - This is a much less permissive scope than the full **`drive`** scope, which
+     gives the application complete, unrestricted access to the user's Drive.
+
+7. Add the users that you want to authorize to use your application.
+
+   - All applications begin in "Testing" mode. Access to your application is
+     restricted to specific test users while in testing mode, and users will see a
+     [warning screen](https://support.google.com/cloud/answer/7454865) when
+     authorizing the application.
+   - To open your application to all users, you will need to complete the [app
+     verification process](https://support.google.com/cloud/answer/13463073?hl=en)
+
+##### Create an OAuth credential
+
+1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
+   Google Cloud console
+2. Click **CREATE CREDENTIALS > OAuth Client ID**
+3. Set the **Application type** to **Web application**
+4. Give the credential a name.
+
+   - This is an internal identifier that is not shown to end users
+   - End users will see the name provided in the previous step when they are
+     asked to authorize the application
+
+5. Add an **Authorized JavaScript origin** and provide the origin for your Visual Editor instance
+6. Add an **Authorized redirect URI** and provide your Visual Editor origin plus `/oauth/`.
+
+   - For example, if your visual editor is deployed at
+     `https://example.appspot.com` then the redirect URI would be
+     `https://example.appspot.com/oauth/`
+   - Be sure not to omit the trailing slash. The authorization request will fail
+     without it.
+
+7. Click **CREATE** to finish creating the credential
+
+> [!WARNING]
+> You will be shown a confirmation dialog with details of your new credential,
+> including a client secret value. This client secret is highly sensitive. Do not
+> store it where anyone else will have access to it. Especially do not check it
+> into any version control system. There is no need to write this value down. You
+> can always access it later in Cloud Console.
+
+##### Add the credential to the Connections Server
+
+1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
+   Google Cloud console
+2. Find your OAuth client ID and click **Download OAuth client**
+3. Download the JSON file to your local filesystem
+
+> [!WARNING]
+> The downloaded client secret has sensitive data that can be used to
+> impersonate your application to Google's APIs. Ensure that no unauthorized users
+> have access to it. You can delete the file once you are done with this step.
+
+4. Edit `packages/connection-server/secrets/secrets.json` to add a connection to
+   Google Drive. You will need to provide the `"client_id"`, `"client_secret"`,
+   `"auth_uri"`, and `"token_uri"` values from your downloaded client secret.
+
+```json
+{
+  "connections": [
+    {
+      "id": "google-drive-limited",
+      "title": "Google Drive",
+      "description": "Read & write only the files in your Google Drive that you have shared with Breadboard.",
+      "oauth": {
+        "client_id": "{YOUR_CLIENT_ID}",
+        "client_secret": "{YOUR_CLIENT_SECRET}",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "scopes": ["https://www.googleapis.com/auth/drive.file"]
+      }
+    }
+  ]
+}
+```
+
+> [!NOTE]
+> The ID must be **`"google-drive-limited`**. This value is hard coded into the
+> Google Drive component. The title and description can be whatever you like.
+> These values will be shown in the Visual Editor UI.
+
+5. Redeploy the Connection Server
+
+```sh
+cd packages/connection-server
+```
+
+```sh
+gcloud app deploy
+```
+
+Your Connection Server is now configured to serve access tokens for the Google
+Drive API. You can see the configured connection (and sign in to the Drive API)
+in the **Settings > Connections** menu in the Visual Editor.
 
 ---
 

@@ -8,47 +8,22 @@ import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 import { deepStrictEqual, ok } from "node:assert";
 import test, { describe } from "node:test";
 import { LocalRunner } from "../../../src/harness/local-runner.js";
-import { HarnessRunner } from "../../../src/harness/types.js";
 import { createLoader } from "../../../src/loader/index.js";
 import { OutputResponse } from "../../../src/types.js";
 import { testKit } from "../test-kit.js";
+import {
+  EventLogEntry,
+  eventNamesFromLog,
+  logEvents,
+  queryLog,
+} from "./test-utils.js";
 
+import askForSecret from "../../bgl/ask-for-secret.bgl.json" with { type: "json" };
 import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
-import askForSecret from "../../bgl/ask-for-secret.bgl.json" with { type: "json" };
 
 const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
   .href;
-
-type EventLogEntry = [name: string, data: unknown];
-
-const eventNamesFromLog = (log: EventLogEntry[]) => log.map(([name]) => name);
-const queryLog = (log: EventLogEntry[], name: string) =>
-  log.find(([n]) => n == name)?.[1];
-
-const logEvents = (runner: HarnessRunner, events: EventLogEntry[]) => {
-  const eventNames = [
-    "start",
-    "pause",
-    "resume",
-    "input",
-    "output",
-    "secret",
-    "error",
-    "skip",
-    "graphstart",
-    "graphend",
-    "nodestart",
-    "nodeend",
-    "end",
-  ];
-  eventNames.forEach((name) => {
-    runner.addEventListener(name, (event) => {
-      const e = event as unknown as { data: unknown };
-      events.push([name, e.data]);
-    });
-  });
-};
 
 describe("LocalRunner", async () => {
   test("simple graph with no diagnostics", async () => {

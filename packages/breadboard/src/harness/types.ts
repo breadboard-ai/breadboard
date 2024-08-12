@@ -123,7 +123,6 @@ export type HarnessRemoteConfig =
   | {
       /**
        * The type of the remote runtime. Can be "http" or "worker".
-       * Currently, only "worker" is supported.
        */
       type: "http" | "worker";
       /**
@@ -132,6 +131,10 @@ export type HarnessRemoteConfig =
        * `type` is "http".
        */
       url: string;
+      /**
+       * API Key
+       */
+      key?: string;
     }
   | false;
 
