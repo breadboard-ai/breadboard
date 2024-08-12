@@ -129,7 +129,11 @@ type RunScriptEntry = {
 
 const runStateStore = {
   async loadReanimationState(user: string, ticket: string) {
-    return JSON.parse(ticket) as ReanimationState;
+    const state = JSON.parse(ticket) as ReanimationState;
+    if (!state.states) {
+      return undefined;
+    }
+    return state;
   },
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
@@ -167,7 +171,7 @@ const scriptedRun = async (
   }
 };
 
-describe.only("Board Server Runs Boards", () => {
+describe("Board Server Runs Boards", () => {
   test("can start a simple board", async () => {
     const path = "/path/to/board";
     const results: RemoteMessage[] = [];
@@ -302,7 +306,7 @@ describe.only("Board Server Runs Boards", () => {
     ]);
   });
 
-  test.only("can finish a board with bubbling inputs with diagnostics", async () => {
+  test("can finish a board with bubbling inputs with diagnostics", async () => {
     await scriptedRun(
       invokeWithBubblingInput as GraphDescriptor,
       [
@@ -318,7 +322,7 @@ describe.only("Board Server Runs Boards", () => {
           inputs: { name: "Bob" },
           expected: [
             { type: "nodeend", path: [1] },
-            { type: "edge", from: undefined, to: [2] },
+            { type: "edge", from: [1], to: [2] },
             { type: "nodestart", path: [2] },
             { type: "graphstart", path: [2] },
             { type: "edge", from: undefined, to: [2, 1] },
@@ -330,7 +334,7 @@ describe.only("Board Server Runs Boards", () => {
           inputs: { location: "New York" },
           expected: [
             { type: "nodeend", path: [2, 1] },
-            { type: "edge", from: undefined, to: [2, 2] },
+            { type: "edge", from: [2, 1], to: [2, 2] },
             { type: "nodestart", path: [2, 2] },
             { type: "nodeend", path: [2, 2] },
             { type: "edge", from: [2, 2], to: [2, 4] },
@@ -338,7 +342,7 @@ describe.only("Board Server Runs Boards", () => {
             { type: "nodeend", path: [2, 4] },
             { type: "graphend", path: [2] },
             { type: "nodeend", path: [2] },
-            { type: "edge", from: undefined, to: [3] },
+            { type: "edge", from: [2], to: [3] },
             { type: "nodestart", path: [3] },
             { type: "nodeend", path: [3] },
             { type: "edge", from: [3], to: [4] },

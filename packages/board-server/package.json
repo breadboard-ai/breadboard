@@ -114,7 +114,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
       "dependencies": [
         "build:tests"
       ],

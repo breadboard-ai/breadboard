@@ -93,7 +93,13 @@ export type ManagedRunState = {
   reanimation(): ReanimationController;
 };
 
-export type ReanimationState = Record<string, RunStackEntry>;
+export type ReanimationStateCache = Record<string, RunStackEntry>;
+export type ReanimationStateVisits = [NodeIdentifier, number[]][];
+
+export type ReanimationState = {
+  states?: ReanimationStateCache;
+  visits?: ReanimationStateVisits;
+};
 
 export type ReanimationMode =
   /**

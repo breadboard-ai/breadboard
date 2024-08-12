@@ -5,6 +5,7 @@
  */
 
 import { NodeIdentifier } from "../types.js";
+import { ReanimationStateVisits } from "./types.js";
 
 /**
  * Tracks paths of visited nodes. Uses the "last visited node" approach.
@@ -15,11 +16,19 @@ import { NodeIdentifier } from "../types.js";
 export class VisitTracker {
   #visited = new Map<NodeIdentifier, number[]>();
 
+  constructor(visits: ReanimationStateVisits = []) {
+    this.#visited = new Map(visits);
+  }
+
   visit(node: string, path: number[]) {
     this.#visited.set(node, path);
   }
 
   pathFor(node: string): number[] | undefined {
     return this.#visited.get(node);
+  }
+
+  visited(): [NodeIdentifier, number[]][] {
+    return Array.from(this.#visited.entries());
   }
 }

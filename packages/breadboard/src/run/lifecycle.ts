@@ -17,6 +17,8 @@ import type {
   LifecyclePathRegistryEntry,
   ManagedRunStateLifecycle,
   ReanimationState,
+  ReanimationStateCache,
+  ReanimationStateVisits,
   RunStackEntry,
   RunState,
 } from "./types.js";
@@ -26,7 +28,8 @@ import { VisitTracker } from "./visit-tracker.js";
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
 function toReanimationState(
-  root: LifecyclePathRegistryEntry<RunStackEntry>
+  root: LifecyclePathRegistryEntry<RunStackEntry>,
+  visits: VisitTracker
 ): ReanimationState {
   function pathToString(path: number[]): string {
     return path.join("-");
@@ -35,7 +38,7 @@ function toReanimationState(
   function descend(
     entry: LifecyclePathRegistryEntry<RunStackEntry>,
     path: number[],
-    result: ReanimationState
+    result: ReanimationStateCache
   ) {
     for (const [index, child] of entry.children.entries()) {
       if (!child) continue;
@@ -47,9 +50,9 @@ function toReanimationState(
     }
   }
 
-  const state: ReanimationState = {};
-  descend(root, [], state);
-  return state;
+  const states: ReanimationStateCache = {};
+  descend(root, [], states);
+  return { states, visits: visits.visited() };
 }
 
 export class LifecycleManager implements ManagedRunStateLifecycle {
@@ -57,10 +60,10 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   #registry: Registry<RunStackEntry>;
   #visits: VisitTracker;
 
-  constructor(stack: RunState) {
-    this.#stack = stack;
+  constructor(visits?: ReanimationStateVisits) {
+    this.#stack = [];
     this.#registry = new Registry<RunStackEntry>();
-    this.#visits = new VisitTracker();
+    this.#visits = new VisitTracker(visits);
   }
 
   async supplyPartialOutputs(
@@ -133,7 +136,7 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   }
 
   reanimationState(): ReanimationState {
-    return toReanimationState(this.#registry.root);
+    return toReanimationState(this.#registry.root, this.#visits);
   }
 }
 
