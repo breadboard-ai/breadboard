@@ -123,7 +123,7 @@ export class HttpClient {
       }
     }
     if (this.#diagnostics) {
-      body.$diagnostics = true;
+      body.$diagnostics = this.#diagnostics;
     }
     return JSON.stringify(body);
   }

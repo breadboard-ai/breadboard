@@ -363,4 +363,50 @@ describe("Board Server Runs Boards", () => {
       true
     );
   });
+
+  test('can finish a board with bubbling inputs with "top" diagnostics', async () => {
+    await scriptedRun(
+      invokeWithBubblingInput as GraphDescriptor,
+      [
+        {
+          expected: [
+            { type: "graphstart", path: [] },
+            { type: "edge", from: undefined, to: [1] },
+            { type: "nodestart", path: [1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { name: "Bob" },
+          expected: [
+            { type: "nodeend", path: [1] },
+            { type: "edge", from: [1], to: [2] },
+            { type: "nodestart", path: [2] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { location: "New York" },
+          expected: [
+            { type: "nodeend", path: [2] },
+            { type: "edge", from: [2], to: [3] },
+            { type: "nodestart", path: [3] },
+            { type: "nodeend", path: [3] },
+            { type: "edge", from: [3], to: [4] },
+            { type: "nodestart", path: [4] },
+            {
+              type: "output",
+              outputs: {
+                greeting: 'Greeting is: "Hello, Bob from New York!"',
+              },
+            },
+            { type: "nodeend", path: [4] },
+            { type: "graphend", path: [] },
+            { type: "end" },
+          ],
+        },
+      ],
+      "top"
+    );
+  });
 });

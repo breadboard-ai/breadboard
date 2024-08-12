@@ -29,19 +29,35 @@ export class DiagnosticsFilter {
     this.#diagnostics = diagnostics;
   }
 
+  #filterTop(pathLength: number) {
+    return this.#diagnostics === "top" && pathLength > 1;
+  }
+
   async writeGraphStart(data: GraphStartProbeData) {
+    if (this.#filterTop(data.path.length + 1)) {
+      return;
+    }
     await this.#writer.write(["graphstart", data]);
   }
 
   async writeGraphEnd(data: GraphEndProbeData) {
+    if (this.#filterTop(data.path.length + 1)) {
+      return;
+    }
     await this.#writer.write(["graphend", data]);
   }
 
   async writeNodeStart(data: NodeStartResponse) {
+    if (this.#filterTop(data.path.length)) {
+      return;
+    }
     await this.#writer.write(["nodestart", data]);
   }
 
   async writeNodeEnd(data: NodeEndResponse) {
+    if (this.#filterTop(data.path.length)) {
+      return;
+    }
     await this.#writer.write(["nodeend", data]);
   }
 
@@ -51,6 +67,9 @@ export class DiagnosticsFilter {
   }
 
   async writeEdge(data: EdgeResponse) {
+    if (this.#filterTop(data.to.length)) {
+      return;
+    }
     await this.#writer.write(["edge", data]);
   }
 
