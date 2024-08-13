@@ -131,6 +131,7 @@ export async function* runGraph(
             to: path(),
             from: lifecycle?.pathFor(result.current.from),
             timestamp: timestamp(),
+            value: inputs,
           },
         });
       }
