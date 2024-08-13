@@ -71,6 +71,10 @@ export const handleRunGraphRequest = async (
         await filter.writeSkip(data);
         break;
       }
+      case "edge": {
+        await filter.writeEdge(data);
+        break;
+      }
       case "input": {
         if (inputsToConsume && Object.keys(inputsToConsume).length > 0) {
           await reply({ inputs: inputsToConsume });

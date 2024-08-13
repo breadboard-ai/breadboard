@@ -194,6 +194,7 @@ export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  current: Edge;
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
@@ -504,10 +505,16 @@ export type NodeEndProbeMessage = {
   data: NodeEndResponse;
 };
 
+export type EdgeProbeMessage = {
+  type: "edge";
+  data: EdgeResponse;
+};
+
 export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
   | SkipProbeMessage
+  | EdgeProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
 
@@ -553,6 +560,19 @@ export type NodeEndResponse = {
   outputs: OutputValues;
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
+  timestamp: number;
+};
+
+export type EdgeResponse = {
+  edge: Edge;
+  /**
+   * The path of the outgoing node.
+   */
+  from?: number[];
+  /**
+   * The path of the incoming node.
+   */
+  to: number[];
   timestamp: number;
 };
 

@@ -5,16 +5,19 @@
  */
 
 import {
+  EdgeResponse,
   ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
+  InputValues,
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
   SkipProbeMessage,
-} from "@google-labs/breadboard";
+} from "../types.js";
 import {
+  RunEdgeEvent,
   RunEndEvent,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -27,8 +30,8 @@ import {
   RunSecretEvent,
   RunSkipEvent,
 } from "./types.js";
-import { SecretResult } from "@google-labs/breadboard/harness";
-import { End } from "@google-labs/breadboard/remote";
+import { SecretResult } from "./types.js";
+import { End } from "../remote/types.js";
 
 const opts = {
   composed: true,
@@ -102,6 +105,15 @@ export class SkipEvent extends Event implements RunSkipEvent {
   }
 }
 
+export class EdgeEvent extends Event implements RunEdgeEvent {
+  static readonly eventName = "edge";
+  readonly running = true;
+
+  constructor(public data: EdgeResponse) {
+    super(EdgeEvent.eventName, { ...opts });
+  }
+}
+
 export class GraphStartEvent extends Event implements RunGraphStartEvent {
   static readonly eventName = "graphstart";
   readonly running = true;
@@ -153,7 +165,7 @@ export class ResumeEvent extends Event implements RunLifecycleEvent {
   static readonly eventName = "resume";
   readonly running = true;
 
-  constructor(public data: { timestamp: number }) {
+  constructor(public data: { timestamp: number; inputs?: InputValues }) {
     super(ResumeEvent.eventName, { ...opts });
   }
 }
@@ -162,7 +174,7 @@ export class StartEvent extends Event implements RunLifecycleEvent {
   static readonly eventName = "start";
   readonly running = true;
 
-  constructor(public data: { timestamp: number }) {
+  constructor(public data: { timestamp: number; inputs?: InputValues }) {
     super(StartEvent.eventName, { ...opts });
   }
 }

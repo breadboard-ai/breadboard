@@ -33,6 +33,7 @@ import type {
   NodeEndResponse,
   NodeStartResponse,
   Schema,
+  EdgeResponse,
 } from "../types.js";
 import {
   TypedEventTargetType,
@@ -138,6 +139,16 @@ export type HarnessRemoteConfig =
     }
   | false;
 
+/**
+ * The level of diagnostics to supply during the run.
+ * If `true`, all probe events will be supplied.
+ * If `"top"`, only the top-level probe events will be supplied.
+ * If `false`, no probe events will be supplied.
+ *
+ * Defaults to `false`.
+ */
+export type RunDiagnosticsLevel = boolean | "top";
+
 export type RunConfig = {
   /**
    * The URL of the board to run.
@@ -174,7 +185,7 @@ export type RunConfig = {
    * Specifies whether to output diagnostics information.
    * Defaults to `false`.
    */
-  diagnostics?: boolean;
+  diagnostics?: RunDiagnosticsLevel;
   /**
    * Specifies a runner to use. This can be used instead of loading a board
    * from a URL.
@@ -222,6 +233,7 @@ export type RunEventMap = {
   secret: RunSecretEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
+  edge: RunEdgeEvent;
   graphstart: RunGraphStartEvent;
   graphend: RunGraphEndEvent;
   nodestart: RunNodeStartEvent;
@@ -231,7 +243,7 @@ export type RunEventMap = {
 
 export type RunLifecycleEvent = Event & {
   running: boolean;
-  data: { timestamp: number };
+  data: { timestamp: number; inputs?: InputValues };
 };
 
 export type RunInputEvent = Event & {
@@ -261,6 +273,11 @@ export type RunEndEvent = Event & {
 
 export type RunSkipEvent = Event & {
   data: SkipProbeMessage["data"];
+  running: true;
+};
+
+export type RunEdgeEvent = Event & {
+  data: EdgeResponse;
   running: true;
 };
 

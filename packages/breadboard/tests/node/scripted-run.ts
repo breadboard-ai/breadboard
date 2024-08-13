@@ -80,7 +80,7 @@ export async function interruptibleScriptedRun(
         for (const [key, expectedState] of Object.entries(
           scriptEntry.expected.state
         )) {
-          const entry = reanimationState[key];
+          const entry = reanimationState?.states?.[key];
           if (!entry) {
             fail(`Script entry ${index}: expected state at path "${key}"`);
           }

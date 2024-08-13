@@ -10,6 +10,7 @@ import type {
   Kit,
   ReanimationState,
 } from "@google-labs/breadboard";
+import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
 
@@ -99,7 +100,7 @@ export type RunBoardArguments = {
   inputs?: InputValues;
   kitOverrides?: Kit[];
   next?: string;
-  diagnostics?: boolean;
+  diagnostics?: RunDiagnosticsLevel;
 };
 
 export type RunBoardStateStore = {

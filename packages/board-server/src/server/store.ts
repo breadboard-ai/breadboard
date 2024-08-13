@@ -117,7 +117,11 @@ class Store implements RunBoardStateStore {
     if (!data.exists) {
       return undefined;
     }
-    return JSON.parse(data.get("state"));
+    const state = JSON.parse(data.get("state"));
+    if (!state.states) {
+      return undefined;
+    }
+    return state;
   }
 
   async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {

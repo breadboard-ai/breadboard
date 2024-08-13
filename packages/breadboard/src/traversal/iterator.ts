@@ -103,6 +103,7 @@ export class TraversalMachineIterator
       currentDescriptor,
       inputsWithConfiguration,
       missingInputs,
+      opportunity,
       this.#current.opportunities,
       newOpportunities,
       this.#current.state

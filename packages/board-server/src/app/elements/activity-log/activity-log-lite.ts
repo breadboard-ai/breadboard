@@ -712,7 +712,7 @@ export class ActivityLogLite extends LitElement {
               classes[icon] = true;
             }
 
-            if (event.bubbled || event.hidden) {
+            if (event.hidden) {
               return nothing;
             }
 
