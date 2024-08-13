@@ -1078,12 +1078,13 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver)
+    if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
+    }
 
     for await (const result of runner) {
       await this.#runObserver.observe(result);

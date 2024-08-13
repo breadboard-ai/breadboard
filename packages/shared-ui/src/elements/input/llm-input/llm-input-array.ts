@@ -20,8 +20,14 @@ export class LLMInputArray extends LitElement {
   @property()
   description: string | null = null;
 
+  @property()
+  showEntrySelector = true;
+
   @property({ reflect: true })
-  minimal = false;
+  clamped = true;
+
+  @property({ reflect: true })
+  inlineControls = false;
 
   @property()
   minItems = 0;
@@ -192,26 +198,28 @@ export class LLMInputArray extends LitElement {
         ${this.description ? html`${this.description}` : nothing}
       </header>
 
-      <div id="controls">
-        <h1>Role</h1>
-        ${this.values && this.values.length
-          ? map(this.values, (item, idx) => {
-              const roleClass = (item.role || "user")
-                .toLocaleLowerCase()
-                .replaceAll(/\s/gim, "-");
-              return html`<button
-                class=${classMap({ [roleClass]: true })}
-                ?disabled=${idx === this.selected}
-                title=${item.role || "User"}
-                @click=${() => {
-                  this.selected = idx;
-                }}
-              >
-                ${item.role || "User"}
-              </button>`;
-            })
-          : html`No items specified`}
-      </div>
+      ${this.showEntrySelector
+        ? html`<div id="controls">
+            <h1>Role</h1>
+            ${this.values && this.values.length
+              ? map(this.values, (item, idx) => {
+                  const roleClass = (item.role || "user")
+                    .toLocaleLowerCase()
+                    .replaceAll(/\s/gim, "-");
+                  return html`<button
+                    class=${classMap({ [roleClass]: true })}
+                    ?disabled=${idx === this.selected}
+                    title=${item.role || "User"}
+                    @click=${() => {
+                      this.selected = idx;
+                    }}
+                  >
+                    ${item.role || "User"}
+                  </button>`;
+                })
+              : html`No items specified`}
+          </div>`
+        : nothing}
 
       <div ${ref(this.#containerRef)}>
         ${this.values
@@ -238,8 +246,9 @@ export class LLMInputArray extends LitElement {
                   ? ref(this.#activeLLMContentRef)
                   : nothing}
                 .value=${value}
-                .minimal=${this.minimal}
                 .minItems=${this.minItems}
+                .clamped=${this.clamped}
+                .inlineControls=${this.inlineControls}
                 .allow=${this.allow}
               ></bb-llm-input>`;
             })
