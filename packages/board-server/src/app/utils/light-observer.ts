@@ -13,6 +13,7 @@ import type {
   InspectableRun,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
+  InspectableRunEdgeEvent,
   NodeDescriberResult,
   NodeDescriptor,
   NodeHandlerMetadata,
@@ -233,7 +234,20 @@ export class LightObserver {
   }
 
   #edge(event: RunEdgeEvent) {
-    //console.log("Edge", event);
+    if (!this.#run) {
+      throw new Error("Node started without a graph");
+    }
+
+    const edge: InspectableRunEdgeEvent = {
+      type: "edge",
+      id: "edge",
+      start: event.data.timestamp,
+      end: event.data.timestamp,
+      edge: event.data.edge,
+      value: event.data.value,
+    };
+
+    this.#run.events = [...this.#run.events, edge];
   }
 }
 

@@ -574,6 +574,7 @@ export type EdgeResponse = {
    */
   to: number[];
   timestamp: number;
+  value?: InputValues;
 };
 
 /**

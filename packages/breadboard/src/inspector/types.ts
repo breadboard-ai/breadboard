@@ -784,6 +784,32 @@ export type InspectableRunErrorEvent = {
   start: number;
 };
 
+export type InspectableRunEdgeEvent = {
+  type: "edge";
+  id: EventIdentifier;
+  edge: {
+    /**
+     * The outgoing node of the edge.
+     */
+    from?: string;
+    /**
+     * The name of the port of the outgoing node.
+     */
+    out: string;
+    /**
+     * The incoming node of the edge.
+     */
+    to?: string;
+    /**
+     * The name of the port of the incoming node.
+     */
+    in: string;
+  };
+  start: number;
+  end: number;
+  value?: InputValues;
+};
+
 export type InspectableRunSecretEvent = {
   type: "secret";
   id: EventIdentifier;
@@ -814,7 +840,8 @@ export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
   | InspectableRunSecretEvent
-  | InspectableRunErrorEvent;
+  | InspectableRunErrorEvent
+  | InspectableRunEdgeEvent;
 
 /**
  * Represents a single run of a graph.
