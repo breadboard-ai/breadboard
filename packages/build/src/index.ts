@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { board } from "./internal/board/board.js";
+export { board, inputNode, outputNode } from "./internal/board/board.js";
 export { constant } from "./internal/board/constant.js";
 export { converge } from "./internal/board/converge.js";
 export { input } from "./internal/board/input.js";
@@ -30,5 +30,6 @@ export { array } from "./internal/type-system/array.js";
 export { enumeration } from "./internal/type-system/enumeration.js";
 export { intersect } from "./internal/type-system/intersect.js";
 export { object, optional } from "./internal/type-system/object.js";
+export { string } from "./internal/type-system/string.js";
 export { toJSONSchema } from "./internal/type-system/type.js";
 export { unsafeType } from "./internal/type-system/unsafe.js";

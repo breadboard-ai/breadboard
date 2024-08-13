@@ -52,7 +52,7 @@ import { array } from "../type-system/array.js";
 import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
 import type { Convergence } from "../board/converge.js";
-import type { BoardDefinition } from "../board/board.js";
+import type { SerializableBoard } from "../common/serializable.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -475,12 +475,11 @@ type StrictInstantiateArgs<
   [K in keyof Omit<SI, OI | "$id" | "$metadata">]: IM[K extends keyof IM
     ? K
     : never]["board"] extends true
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      InstantiateArg<SI[K]> | BoardDefinition<any, any>
+    ? InstantiateArg<SI[K]> | SerializableBoard
     : InstantiateArg<SI[K]>;
 } & {
   [K in OI]?:
-    | InstantiateArg<SI[K]>
+    | InstantiateArg<SI[K] | undefined>
     | OutputPortReference<SI[K] | undefined>
     | undefined;
 } & {
@@ -510,13 +509,13 @@ type InstanceOutputs<
   ? Expand<SO & { [K in Exclude<keyof A, keyof SI | "$id" | "$metadata">]: DO }>
   : SO;
 
-type InstantiateArg<T extends JsonSerializable> =
+type InstantiateArg<T extends JsonSerializable | undefined> =
   | T
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Loopback<T>
-  | Convergence<T>;
+  | Loopback<Exclude<T, /* TODO(aomarks) questionable */ undefined>>
+  | Convergence<Exclude<T, /* TODO(aomarks) questionable */ undefined>>;
 
 function mergeStaticsAndUnsafeUserSchema(
   statics: JSONSchema4,

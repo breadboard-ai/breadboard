@@ -12,8 +12,8 @@ import {
   addKit,
   asRuntimeKit,
   board,
-  Board,
   inspect,
+  invokeGraph,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import assert from "node:assert/strict";
@@ -73,8 +73,8 @@ function setupKits<
   const strLenSerialized = await strLenBoard.serialize();
 
   test("monomorphic result via BoardRunner", async () => {
-    const runner = await Board.fromGraphDescriptor(strLenSerialized);
-    const result = await runner.runOnce(
+    const result = await invokeGraph(
+      strLenSerialized,
       { str: "12345" },
       { kits: [strLenRuntimeKit] }
     );
@@ -183,8 +183,8 @@ function setupKits<
   const adderSerialized = await adderBoard.serialize();
 
   test("polymorphic result via BoardRunner", async () => {
-    const runner = await Board.fromGraphDescriptor(adderSerialized);
-    const result = await runner.runOnce(
+    const result = await invokeGraph(
+      adderSerialized,
       { num1: 1, num2: 2, num3: 3 },
       { kits: [adderRuntimeKit] }
     );

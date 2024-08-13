@@ -110,7 +110,7 @@ export const remapData = async (
         throw new Error(`Could not find serialized data for handle: ${handle}`);
       }
       const blob = await asBlob(serialized);
-      return await store.store(blob);
+      return store.store(blob);
     }
     if (Array.isArray(value)) {
       const result = [];

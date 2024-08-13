@@ -1,5 +1,72 @@
 # @google-labs/breadboard-website
 
+## 2.5.1
+
+### Patch Changes
+
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [c5c39be]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @google-labs/agent-kit@0.9.1
+  - @google-labs/core-kit@0.13.0
+  - @google-labs/gemini-kit@0.5.4
+  - @google-labs/json-kit@0.3.5
+  - @google-labs/palm-kit@0.1.1
+  - @google-labs/template-kit@0.3.7
+
+## 2.5.0
+
+### Minor Changes
+
+- 5f6d97c: Separate playground and examples
+
+### Patch Changes
+
+- 645eb63: Minor UI tweaks to VE and website
+- a0852df: Update titles and help links in Core Kit.
+- a0fb0fa: Update navigation and templates
+- Updated dependencies [0519ebb]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [8d2e618]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [8dbbe20]
+- Updated dependencies [a0852df]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [8db38aa]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [1341291]
+- Updated dependencies [6ffa89c]
+  - @google-labs/gemini-kit@0.5.3
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @google-labs/agent-kit@0.9.0
+  - @google-labs/json-kit@0.3.4
+  - @google-labs/palm-kit@0.1.0
+
 ## 2.4.0
 
 ### Minor Changes

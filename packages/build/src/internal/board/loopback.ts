@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { brand, isBranded } from "../common/brand.js";
 import type { OutputPortReference } from "../common/port.js";
 import type {
   BreadboardType,
@@ -37,8 +38,6 @@ interface LoopbackParams<T extends BreadboardType> {
   type: T;
 }
 
-const LOOPBACK_ENTITY_NAME = "Loopback";
-
 export type { Loopback };
 /**
  * Loopbacks can be used in place of real output ports for situations where it
@@ -48,8 +47,8 @@ export type { Loopback };
  * IMPORTANT: The `resolve` method must be called on loopbacks before the
  * `board` function is called.
  */
-class Loopback<T extends JsonSerializable> {
-  readonly __BreadboardEntity__ = LOOPBACK_ENTITY_NAME;
+class Loopback<T extends JsonSerializable = JsonSerializable> {
+  readonly [brand] = "Loopback";
   readonly type: BreadboardType;
   #value?: OutputPortReference<T>;
 
@@ -79,17 +78,6 @@ class Loopback<T extends JsonSerializable> {
 /**
  * Test whether the given object is a Breadboard {@link Loopback}.
  */
-export function isLoopback(
-  value: unknown
-): value is Loopback<JsonSerializable> {
-  return isBreadboardEntity(value, LOOPBACK_ENTITY_NAME);
-}
-
-// TODO(aomarks) Use this pattern elsewhere.
-function isBreadboardEntity(value: unknown, type: string): boolean {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as { __BreadboardEntity__?: unknown }).__BreadboardEntity__ === type
-  );
+export function isLoopback(value: unknown): value is Loopback {
+  return isBranded(value, "Loopback");
 }

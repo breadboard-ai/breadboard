@@ -23,13 +23,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunInputs,
 } from "../types.js";
-import { DataStore } from "../../data/types.js";
-import {
-  asBlob,
-  isInlineData,
-  isLLMContent,
-  isStoredData,
-} from "../../data/index.js";
+import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -40,104 +34,176 @@ const isInput = (
     event.end !== null
   );
 };
+
 export class RunObserver implements InspectableRunObserver {
   #store: GraphDescriptorStore;
   #options: RunObserverOptions;
   #runs: Run[] = [];
+  #runLimit = 2;
+  #url: RunURL | null = null;
+  #timestamp: RunTimestamp | null = null;
 
   constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
     this.#store = store;
     this.#options = options;
   }
 
-  runs() {
+  async runs(): Promise<InspectableRun[]> {
     return this.#runs;
   }
 
-  async observe(result: HarnessRunResult): Promise<InspectableRun[]> {
+  async #convertRunInfoToRuns(
+    url: RunURL,
+    runInfo: Map<RunTimestamp, HarnessRunResult[]>
+  ): Promise<Run[]> {
+    const runs = await Promise.all(
+      [...runInfo]
+        .filter(([, events]) => events.length > 0)
+        .sort(([timeA], [timeB]) => {
+          return timeB - timeA;
+        })
+        .map(async ([timestamp, results]) => {
+          let run!: Run;
+
+          for (const result of results) {
+            if (result.type === "graphstart") {
+              const { path } = result.data;
+              if (path.length === 0) {
+                run = new Run(
+                  timestamp,
+                  this.#store,
+                  result.data.graph,
+                  this.#options
+                );
+
+                run.dataStoreKey = `${url}-${timestamp}`;
+                if (!this.#options.skipDataStore) {
+                  // Ensure that we release old blobs if we've encountered this
+                  // run before.
+                  this.#options.dataStore?.releaseGroup(run.dataStoreKey);
+                  this.#options.dataStore?.createGroup(run.dataStoreKey);
+                }
+              }
+            } else if (result.type === "graphend") {
+              const { path, timestamp } = result.data;
+              if (path.length === 0) {
+                run.end = timestamp;
+              }
+            }
+
+            if (!run) {
+              console.warn("Unable to restore run");
+            }
+
+            if (!this.#options.skipDataStore) {
+              await this.#options.dataStore?.replaceDataParts(
+                run.dataStoreKey,
+                result
+              );
+            }
+
+            run.addResult(result);
+          }
+
+          return run;
+        })
+    );
+
+    return runs;
+  }
+
+  async #storeInRunStore(
+    url: RunURL,
+    timestamp: RunTimestamp,
+    result: HarnessRunResult
+  ) {
+    const { runStore } = this.#options;
+    if (!runStore || !this.#url || !this.#timestamp) {
+      return Promise.resolve();
+    }
+
+    if (result.type === "error") {
+      await runStore?.abort(url, timestamp);
+    } else {
+      await runStore?.write(url, timestamp, result);
+    }
+  }
+
+  async observe(result: HarnessRunResult): Promise<void> {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
-        this.#options.store?.startGroup();
-        // start a new run
+        this.#url = result.data.graph.url ?? "no-url-graph";
+        if (this.#options.runStore) {
+          this.#timestamp = await this.#options.runStore.start(this.#url);
+          const runInfo = await this.#options.runStore.getStoredRuns(this.#url);
+          this.#runs = await this.#convertRunInfoToRuns(this.#url, runInfo);
+        } else {
+          this.#timestamp = timestamp;
+        }
+
         const run = new Run(
           timestamp,
           this.#store,
           result.data.graph,
           this.#options
         );
-        // For now, confine the `runs` array to two runs.
-        if (this.#runs.length === 0) {
-          this.#runs = [run];
-        } else {
-          if (this.#runs.length === 2) {
-            const removedRun = this.#runs.pop();
-            this.#options.store?.releaseGroup(removedRun!.dataStoreGroupId);
-          }
-          this.#runs = [run, this.#runs[0]];
+
+        if (!this.#options.skipDataStore) {
+          this.#options.dataStore?.createGroup(run.dataStoreKey);
+        }
+
+        this.#runs.unshift(run);
+
+        if (this.#options.runStore) {
+          await this.#options.runStore.truncate(this.#url, this.#runLimit);
         }
       }
-    } else if (result.type === "graphend") {
-      const { path, timestamp } = result.data;
-      if (path.length === 0) {
-        // close out the run
-        const run = this.#runs[0];
-        run.end = timestamp;
-
-        const dataStoreGroupId = this.#options.store?.endGroup();
-        run.dataStoreGroupId =
-          dataStoreGroupId !== undefined ? dataStoreGroupId : -1;
-      }
     }
-
-    await this.#storeInlineData(result);
 
     const run = this.#runs[0];
+    if (!run) {
+      console.warn(`No run available to store ${result.type} - stopping`);
+      return;
+    }
+
+    if (!this.#url || !this.#timestamp) {
+      console.warn("No URL or timestamp set for the current run - stopping");
+      return;
+    }
+
+    if (result.type === "graphend") {
+      const { path, timestamp } = result.data;
+      if (path.length === 0) {
+        run.end = timestamp;
+      }
+    }
+
+    if (!this.#options.skipDataStore) {
+      await this.#options.dataStore?.replaceDataParts(run.dataStoreKey, result);
+    }
+
     run.addResult(result);
-    return this.#runs;
-  }
-
-  async #storeInlineData(result: HarnessRunResult): Promise<void> {
-    if (result.type !== "nodeend" || result.data.node.type !== "input") {
-      return;
-    }
-
-    if (!this.#options.store) {
-      return;
-    }
-
-    for (const value of Object.values(result.data.outputs)) {
-      if (!isLLMContent(value)) {
-        continue;
-      }
-
-      for (let i = 0; i < value.parts.length; i++) {
-        const part = value.parts[i];
-        if (isInlineData(part)) {
-          const blob = await asBlob(part);
-          value.parts[i] = await this.#options.store.store(blob);
-        } else if (isStoredData(part)) {
-          value.parts[i] = await this.#options.store.copyToNewestGroup(part);
-        }
-      }
-    }
+    await this.#storeInRunStore(this.#url, this.#timestamp, result);
   }
 
   async load(
     o: unknown,
     options?: SerializedRunLoadingOptions
   ): Promise<InspectableRunLoadResult> {
-    if (!this.#options.store) {
+    if (!this.#options.dataStore) {
       throw new Error(
         "No data store provided to RunObserver, unable to load runs"
       );
     }
-    const loader = new RunLoader(this.#options.store, o, options || {});
+    const loader = new RunLoader(this.#options.dataStore, o, options || {});
     return await loader.load();
   }
 }
 
 export class Run implements InspectableRun {
+  public dataStoreKey: string = crypto.randomUUID();
+
   #events: EventManager;
 
   graphId: GraphUUID;
@@ -145,7 +211,6 @@ export class Run implements InspectableRun {
   end: number | null = null;
   graphVersion: number;
   messages: HarnessRunResult[] = [];
-  dataStoreGroupId: number = -1;
   #dataStore: DataStore | null;
 
   constructor(
@@ -155,7 +220,7 @@ export class Run implements InspectableRun {
     options: RunObserverOptions
   ) {
     this.#events = new EventManager(graphStore, options);
-    this.#dataStore = options.store || null;
+    this.#dataStore = options.dataStore || null;
     this.graphVersion = 0;
     this.start = timestamp;
     this.graphId = graphStore.add(graph, this.graphVersion).id;
@@ -190,8 +255,8 @@ export class Run implements InspectableRun {
 
   async serialize(options?: RunSerializationOptions): Promise<SerializedRun> {
     let data = null;
-    if (this.dataStoreGroupId !== -1 && this.#dataStore) {
-      data = await this.#dataStore.serializeGroup(this.dataStoreGroupId);
+    if (this.#dataStore) {
+      data = await this.#dataStore.serializeGroup(this.dataStoreKey);
     }
 
     return this.#events.serialize(data, options || {});

@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.8.1
+
+### Patch Changes
+
+- d88c37b: Add support for JSON Schema string formatting options with a new `string` function that takes an options object with format, pattern, minLength, and maxLength.
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+
+## 0.8.0
+
+### Minor Changes
+
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+
+### Patch Changes
+
+- ad8aa22: Add kit function to build for making kits
+- f78ec0a: Add intersect function to breadboard type expressions system for intersecting two objects
+- b76f9a1: Add id, metadata, and breadboardType to component definition classes
+- 15ae381: Fix optional output serialization
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [6ffa89c]
+  - @google-labs/breadboard@0.23.0
+
 ## 0.7.1
 
 ### Patch Changes

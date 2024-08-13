@@ -4,9 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type DataStore } from "@google-labs/breadboard";
-import { InMemoryStore } from "./in-memory-store.js";
+import {
+  type RunStore,
+  type DataStore,
+  createDefaultDataStore,
+  createDefaultRunStore,
+} from "@google-labs/breadboard";
+import { IDBRunStore } from "./run/idb-run-store.js";
 
+// TODO: Allow for other data stores.
 export function getDataStore(): DataStore {
-  return new InMemoryStore();
+  return createDefaultDataStore();
+}
+
+export function getRunStore(forceInMemoryStore = false): RunStore {
+  if (forceInMemoryStore) {
+    console.log("[Breadboard Run Store] Using In-Memory Store (forced)");
+    return createDefaultRunStore();
+  }
+
+  if ("indexedDB" in globalThis) {
+    console.log("[Breadboard Run Store] Using IDB Store");
+    return new IDBRunStore();
+  }
+
+  console.log("[Breadboard Run Store] Using In-Memory Store");
+  return createDefaultRunStore();
 }
