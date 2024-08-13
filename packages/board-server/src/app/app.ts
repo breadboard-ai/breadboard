@@ -392,14 +392,11 @@ export class AppView extends LitElement {
       return;
     }
 
-    console.log("🌻 stopping run");
-
     this.#abortController.abort();
     this.#runner = null;
   }
 
   async startRun() {
-    console.log("🌻 starting run");
     this.stopRun();
 
     const [graph, kits] = await Promise.all([
@@ -580,7 +577,6 @@ export class AppView extends LitElement {
             this.requestUpdate();
           }}
           @bbinputenter=${(event: InputEnterEvent) => {
-            console.log("🌻 input enter", event);
             let data = event.data as InputValues;
             const runner = this.#runner;
             if (!runner) {

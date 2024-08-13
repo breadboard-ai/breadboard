@@ -352,12 +352,9 @@ export class ActivityLogLite extends LitElement {
       [] as UserInputConfiguration[]
     );
 
-    console.log("🌻 rendering secret input", userInputs);
-
     // Potentially do the autosubmit.
     if (userInputs.every((secret) => secret.value !== undefined)) {
       for (const input of userInputs) {
-        console.log("🌻 dispatching secret", input);
         if (typeof input.value !== "string") {
           console.warn(
             `Expected secret as string, instead received ${typeof input.value}`
@@ -432,7 +429,6 @@ export class ActivityLogLite extends LitElement {
   }
 
   async #renderPendingInput(event: NodeLogEntry) {
-    console.log("🌻 rendering pending input", event);
     const schema = event.inputs.schema as Schema;
     if (!schema) {
       return html`Unable to render`;
@@ -598,17 +594,12 @@ export class ActivityLogLite extends LitElement {
   }
 
   #renderLog(entries: LogEntry[]) {
+    console.log("🌻 entries", entries);
     return html`${map(entries, (entry) => {
       switch (entry.type) {
         case "edge": {
-          if (entry.to && entry.to.length > 1) {
-            return nothing;
-          }
-
-          // TODO: Only include values that need to be presented to the user
-          // i.e., bubbled or tagged as such.
           if (entry.value) {
-            const schema = entry.value.schema as Schema;
+            const schema = entry.schema as Schema;
             if (schema && schema.properties) {
               const props = Object.entries(schema.properties);
               if (
@@ -618,10 +609,6 @@ export class ActivityLogLite extends LitElement {
               ) {
                 const nodeName = props[0][0];
                 const nodeValue = entry.value[nodeName];
-                if (entry.edge.from === "$entry") {
-                  return nothing;
-                }
-
                 return html`<section class="edge">
                   <bb-llm-output-array
                     .values=${nodeValue}
@@ -660,15 +647,25 @@ export class ActivityLogLite extends LitElement {
             classes[icon] = true;
           }
 
-          if (entry.hidden || entry.descriptor.type === "output") {
-            return nothing;
-          }
-
-          // TODO: It feels like this should be a part of the edge.
-          if (end === null) {
-            content = html`<section class="pending-input">
-              ${until(this.#renderPendingInput(entry))}
-            </section>`;
+          switch (type) {
+            case "output": {
+              content = html`<section class="completed-output">
+                ${until(this.#renderCompletedInputOrOutput(entry))}
+              </section>`;
+              break;
+            }
+            case "input": {
+              if (end !== null) {
+                content = html`<section class="completed-input">
+                  ${until(this.#renderCompletedInputOrOutput(entry))}
+                </section>`;
+              } else {
+                content = html`<section class="pending-input">
+                  ${until(this.#renderPendingInput(entry))}
+                </section>`;
+              }
+              break;
+            }
           }
 
           return html` <section class=${classMap(classes)}>

@@ -10,6 +10,7 @@ import type {
   InputValues,
   NodeDescriptor,
   OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
 
 export type NodeLogEntry = {
@@ -27,12 +28,8 @@ export type NodeLogEntry = {
 
 export type EdgeLogEntry = {
   type: "edge";
-  from?: number[];
-  to: number[];
-  start: number;
-  end: number | null;
+  schema?: Schema;
   value?: InputValues;
-  edge: Edge;
 };
 
 export type ErrorLogEntry = {

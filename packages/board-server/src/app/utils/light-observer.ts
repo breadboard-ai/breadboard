@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeDescriptor } from "@google-labs/breadboard";
+import type { NodeDescriptor, Schema } from "@google-labs/breadboard";
 import type {
   InputValues,
   OutputValues,
@@ -29,6 +29,25 @@ import type {
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
+};
+
+const insertBeforeLastNode = (
+  log: LogEntry[],
+  edge: EdgeLogEntry
+): LogEntry[] => {
+  // @ts-expect-error
+  const lastNode = log.findLastIndex((entry) => entry.type === "node");
+  if (lastNode === -1) {
+    return [...log, edge];
+  }
+  if (lastNode === 0) {
+    return [edge, ...log];
+  }
+  const maybeReplace = log[lastNode - 1] as LogEntry;
+  if (maybeReplace.type === "edge" && !maybeReplace.value) {
+    return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
+  }
+  return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 };
 
 /**
@@ -58,7 +77,6 @@ export class LightObserver {
     runner.addEventListener("graphend", this.#graphEnd.bind(this));
     runner.addEventListener("input", this.#input.bind(this));
     runner.addEventListener("output", this.#output.bind(this));
-    runner.addEventListener("edge", this.#edge.bind(this));
     runner.addEventListener("secret", this.#secret.bind(this));
     runner.addEventListener("error", (event) => {
       if (!this.#log) {
@@ -66,25 +84,25 @@ export class LightObserver {
       }
       this.#log = [...this.#log, { type: "error", error: event.data.error }];
     });
-    runner.addEventListener("pause", (event) => {
-      console.log("🌻 Pausing", event);
-    });
     runner.addEventListener("resume", (event) => {
-      console.log("🌻 Resuming", event);
-      if (this.#currentInput) {
-        this.#currentInput.end = globalThis.performance.now();
-        this.#currentInput.outputs = event.data.inputs!;
-        this.#currentInput = null;
-      } else if (this.#currentSecret) {
-        this.#currentSecret.end = globalThis.performance.now();
-        this.#currentSecret = null;
-      } else {
-        return;
-      }
-      if (this.#log) {
-        this.#log = [...this.#log];
-      }
+      this.#cleanUpPendingNodes(event.data.inputs || {});
     });
+  }
+
+  #cleanUpPendingNodes(inputs: OutputValues) {
+    if (this.#currentInput) {
+      this.#currentInput.end = globalThis.performance.now();
+      this.#currentInput.outputs = inputs;
+      this.#currentInput = null;
+    } else if (this.#currentSecret) {
+      this.#currentSecret.end = globalThis.performance.now();
+      this.#currentSecret = null;
+    } else {
+      return;
+    }
+    if (this.#log) {
+      this.#log = [...this.#log];
+    }
   }
 
   log(): LogEntry[] | null {
@@ -117,7 +135,7 @@ export class LightObserver {
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#log = [...this.#log, this.#currentNode];
+    this.#log = [...this.#log, this.#currentNode, new Edge()];
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
@@ -145,7 +163,6 @@ export class LightObserver {
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    console.log("Secret", this.#currentSecret);
     this.#log = [...this.#log, this.#currentSecret];
   }
 
@@ -166,29 +183,11 @@ export class LightObserver {
       // Non-bubbled events will present themselves as node ends.
       return;
     }
-    const output = new Node(event);
+    const output = new OutputEdge(event);
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#log = [...this.#log, output];
-  }
-
-  #edge(event: RunEdgeEvent) {
-    if (!this.#log) {
-      throw new Error("Edge started without a graph");
-    }
-
-    const edge: EdgeLogEntry = {
-      type: "edge",
-      start: event.data.timestamp,
-      end: event.data.timestamp,
-      edge: event.data.edge,
-      value: event.data.value,
-      from: event.data.from,
-      to: event.data.to,
-    };
-
-    this.#log = [...this.#log, edge];
+    this.#log = insertBeforeLastNode(this.#log, output);
   }
 }
 
@@ -209,23 +208,48 @@ class Node implements NodeLogEntry {
     this.descriptor = event.data.node;
     this.start = event.data.timestamp;
     this.end = null;
-    if (this.descriptor.type === "input") {
-      this.inputs = (event as RunInputEvent).data.inputArguments;
-    } else if (this.descriptor.type === "output") {
-      this.inputs = (event as RunOutputEvent).data.outputs;
-    } else {
-      this.inputs = (event as RunNodeStartEvent).data.inputs;
+
+    const type = this.descriptor.type;
+    switch (type) {
+      case "input": {
+        const inputEvent = event as RunInputEvent;
+        this.inputs = inputEvent.data.inputArguments;
+        this.bubbled = inputEvent.data.bubbled;
+        break;
+      }
+      case "output": {
+        const outputEvent = event as RunOutputEvent;
+        this.inputs = outputEvent.data.outputs;
+        this.end = event.data.timestamp;
+        this.bubbled = outputEvent.data.bubbled;
+        break;
+      }
+      default: {
+        this.inputs = (event as RunNodeStartEvent).data.inputs;
+        this.bubbled = false;
+      }
     }
     this.outputs = null;
-    if (event.type === "input" || event.type === "output") {
-      this.bubbled = (event as RunOutputEvent | RunInputEvent).data.bubbled;
-    } else {
-      this.bubbled = false;
-    }
     this.hidden = false;
   }
 
   title(): string {
     return this.descriptor.metadata?.title || this.descriptor.id;
+  }
+}
+
+class Edge implements EdgeLogEntry {
+  type: "edge" = "edge";
+  value?: InputValues | undefined;
+}
+
+class OutputEdge implements EdgeLogEntry {
+  type: "edge" = "edge";
+  value?: OutputValues | undefined;
+  schema: Schema | undefined;
+
+  constructor(event: RunOutputEvent) {
+    this.schema = event.data.node.configuration?.schema as Schema;
+    this.value = event.data.outputs;
   }
 }
